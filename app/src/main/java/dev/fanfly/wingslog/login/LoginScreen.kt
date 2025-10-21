@@ -1,8 +1,5 @@
 package dev.fanfly.wingslog.login
 
-import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -17,46 +14,35 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.common.api.ApiException
+import dev.fanfly.wingslog.login.data.AuthManager
+import kotlinx.coroutines.launch
+
 
 @Composable
 fun LoginScreen(
-  googleSignInClient: GoogleSignInClient,
+  authManager: AuthManager,
   onLoginSuccess: () -> Unit,
 ) {
-  val context = LocalContext.current
-  val account = remember { GoogleSignIn.getLastSignedInAccount(context) }
-
-  // Auto-skip login if already signed in
-  LaunchedEffect(Unit) {
-    if (account != null) onLoginSuccess()
-  }
-
+  val scope = rememberCoroutineScope()
   var error by remember { mutableStateOf<String?>(null) }
 
-  val launcher = rememberLauncherForActivityResult(
-    contract = ActivityResultContracts.StartActivityForResult()
-  ) { result ->
-    val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-    try {
-      task.getResult(ApiException::class.java)
-      onLoginSuccess()
-    } catch (e: ApiException) {
-      error = "Sign-in failed: ${e.statusCode}"
+  // Try silent sign-in first
+  LaunchedEffect(Unit) {
+    scope.launch {
+      val credential = authManager.login()
+      if (credential != null) {
+        onLoginSuccess()
+      }
     }
   }
 
-  Surface(
-    modifier = Modifier.fillMaxSize(),
-    color = MaterialTheme.colorScheme.background
-  ) {
+  // Manual sign-in button
+  Surface(modifier = Modifier.fillMaxSize()) {
     Column(
       modifier = Modifier.fillMaxSize(),
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -65,8 +51,14 @@ fun LoginScreen(
       Text("Login Screen", style = MaterialTheme.typography.headlineSmall)
       Spacer(Modifier.height(20.dp))
       Button(onClick = {
-        val signInIntent: Intent = googleSignInClient.signInIntent
-        launcher.launch(signInIntent)
+        scope.launch {
+          val credential = authManager.login()
+          if (credential != null) {
+            onLoginSuccess()
+          } else {
+            error = "Error signing in."
+          }
+        }
       }) {
         Text("Sign in with Google")
       }

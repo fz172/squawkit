@@ -4,24 +4,22 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import dev.fanfly.wingslog.dashboard.DashboardScreen
 import dev.fanfly.wingslog.login.LoginScreen
+import dev.fanfly.wingslog.login.data.AuthManager
 
 @Composable
-fun AppEntry(googleSignInClient: GoogleSignInClient) {
+fun AppEntry(authManager: AuthManager) {
   val navController = rememberNavController()
 
   NavHost(navController, startDestination = "login") {
     composable("login") {
       LoginScreen(
-        googleSignInClient = googleSignInClient,
-        onLoginSuccess = {
+        authManager = authManager, onLoginSuccess = {
           navController.navigate("main") {
             popUpTo("login") { inclusive = true }
           }
-        }
-      )
+        })
     }
     composable("main") { DashboardScreen() }
   }
