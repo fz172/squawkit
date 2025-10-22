@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.login.data
+package dev.fanfly.wingslog.dev.fanfly.wingslog.auth
 
 import android.content.Context
 import android.util.Log
@@ -20,7 +20,7 @@ import kotlinx.coroutines.tasks.await
 
 @Singleton
 class AuthManager @Inject internal constructor(@ApplicationContext private val context: Context) {
-  private val credentialManager: CredentialManager = CredentialManager.create(context = context)
+  private val credentialManager: CredentialManager = CredentialManager.Companion.create(context = context)
   private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
   fun getCurrentUser(): FirebaseUser? {
@@ -73,9 +73,9 @@ class AuthManager @Inject internal constructor(@ApplicationContext private val c
 
 
   private fun processCredential(credential: Credential): GoogleIdTokenCredential? {
-    if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+    if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.Companion.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
       try {
-        return GoogleIdTokenCredential.createFrom(credential.data)
+        return GoogleIdTokenCredential.Companion.createFrom(credential.data)
       } catch (e: GoogleIdTokenParsingException) {
         Log.e(TAG, "Received an invalid google id token response", e)
       }
@@ -115,4 +115,3 @@ class AuthManager @Inject internal constructor(@ApplicationContext private val c
       "811416892017-uul0d8vup8hie1o1172chid0q65k7vdi.apps.googleusercontent.com"
   }
 }
-

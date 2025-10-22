@@ -9,14 +9,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
-import dev.fanfly.wingslog.login.data.AuthManager
 import dev.fanfly.wingslog.ui.theme.WingslogTheme
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-  @Inject lateinit var authManager: AuthManager
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -25,7 +21,7 @@ class MainActivity : ComponentActivity() {
       WingslogTheme {
         Surface(
           modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
-        ) { AppEntry(authManager) }
+        ) { AppEntry() }
 
       }
     }

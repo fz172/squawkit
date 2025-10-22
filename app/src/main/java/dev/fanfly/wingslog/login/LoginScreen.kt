@@ -31,14 +31,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.fanfly.wingslog.R
-import dev.fanfly.wingslog.login.data.AuthManager
+import dev.fanfly.wingslog.dev.fanfly.wingslog.login.data.LoginViewModel
 import kotlinx.coroutines.launch
 
 
 @Composable
 fun LoginScreen(
-  authManager: AuthManager,
+  loginViewModel: LoginViewModel = hiltViewModel(),
   onLoginSuccess: () -> Unit,
 ) {
   val scope = rememberCoroutineScope()
@@ -47,7 +48,7 @@ fun LoginScreen(
   // Try silent sign-in first
   LaunchedEffect(Unit) {
     scope.launch {
-      val credential = authManager.trySilentLogin()
+      val credential = loginViewModel.silentLogin()
       if (credential != null) {
         onLoginSuccess()
       }
@@ -66,8 +67,7 @@ fun LoginScreen(
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
       Icon(
-        imageVector = Icons.Default.Flight,
-        contentDescription = stringResource(
+        imageVector = Icons.Default.Flight, contentDescription = stringResource(
           R.string.app_name
         ), modifier = Modifier.size(64.dp)
       )
@@ -77,15 +77,12 @@ fun LoginScreen(
       Text(
         stringResource(
           R.string.app_name
-        ), style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold
+        ), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold
       )
       Spacer(Modifier.height(8.dp))
       // --- Subtitle Text ---
       Text(
-        text = stringResource(R.string.login_prompt),
-        fontSize = 16.sp,
-        color = Color.Gray
+        text = stringResource(R.string.login_prompt), fontSize = 16.sp, color = Color.Gray
       )
 
       Spacer(modifier = Modifier.height(16.dp))
@@ -96,7 +93,7 @@ fun LoginScreen(
       OutlinedButton(
         onClick = {
           scope.launch {
-            val credential = authManager.signInWithGoogle()
+            val credential = loginViewModel.login()
             if (credential != null) {
               onLoginSuccess()
             } else {
