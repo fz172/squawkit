@@ -13,19 +13,38 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingExcept
 class AuthManager(private val context: Context) {
   private val credentialManager: CredentialManager = CredentialManager.create(context = context)
 
-  suspend fun login(): Credential? {
+  @Volatile
+  private var credential: GoogleIdTokenCredential? = null
+
+  private val credentialLock = Any()
+
+  fun getCredential(): GoogleIdTokenCredential? {
+    synchronized(credentialLock) {
+      return credential
+    }
+  }
+
+  suspend fun login(): GoogleIdTokenCredential? {
+    synchronized(credentialLock) {
+      if (credential != null) {
+        return credential
+      }
+    }
+
     try {
       val request = GetCredentialRequest.Builder().addCredentialOption(
         GetGoogleIdOption.Builder().setFilterByAuthorizedAccounts(true)
           .setServerClientId(WEB_CLIENT_ID).build()
       ).build()
       val result = credentialManager.getCredential(context, request)
-      return processCredential(result.credential)
+      synchronized(credentialLock) {
+        credential = processCredential(result.credential)
+      }
     } catch (e: Exception) {
       // No saved credential, show login button
       Log.d(TAG, "Error: " + e.message)
-      return null
     }
+    return credential
   }
 
 

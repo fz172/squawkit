@@ -7,6 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import dev.fanfly.wingslog.dashboard.DashboardScreen
 import dev.fanfly.wingslog.login.LoginScreen
 import dev.fanfly.wingslog.login.data.AuthManager
+import dev.fanfly.wingslog.settings.SettingsScreen
 
 @Composable
 fun AppEntry(authManager: AuthManager) {
@@ -21,6 +22,12 @@ fun AppEntry(authManager: AuthManager) {
           }
         })
     }
-    composable("main") { DashboardScreen() }
+    composable("main") {
+      DashboardScreen(
+        onOpenSettings = { navController.navigate("settings") })
+    }
+    composable("settings") {
+      SettingsScreen(authManager = authManager, navController = navController)
+    }
   }
 }
