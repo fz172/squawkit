@@ -4,7 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.login.data.AuthManager
+import dev.fanfly.wingslog.ui.theme.WingslogTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -14,7 +19,12 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     setContent {
-      AppEntry(authManager)
+      WingslogTheme {
+        Surface(
+          modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+        ) { AppEntry(authManager) }
+
+      }
     }
   }
 }
