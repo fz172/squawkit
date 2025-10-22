@@ -47,7 +47,7 @@ fun LoginScreen(
   // Try silent sign-in first
   LaunchedEffect(Unit) {
     scope.launch {
-      val credential = authManager.login()
+      val credential = authManager.trySilentLogin()
       if (credential != null) {
         onLoginSuccess()
       }
@@ -96,7 +96,7 @@ fun LoginScreen(
       OutlinedButton(
         onClick = {
           scope.launch {
-            val credential = authManager.login()
+            val credential = authManager.signInWithGoogle()
             if (credential != null) {
               onLoginSuccess()
             } else {

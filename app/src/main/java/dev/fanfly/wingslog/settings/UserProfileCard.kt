@@ -23,16 +23,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.auth.FirebaseUser
 import dev.fanfly.wingslog.R
 
 @Composable
-fun UserProfileCard(credential: GoogleIdTokenCredential?) {
+fun UserProfileCard(currentUser: FirebaseUser?) {
   Card(
     shape = RoundedCornerShape(16.dp),
     modifier = Modifier.fillMaxWidth()
   ) {
-    if (credential == null) {
+    if (currentUser == null) {
       return@Card
     }
     Column(
@@ -50,7 +50,7 @@ fun UserProfileCard(credential: GoogleIdTokenCredential?) {
         contentAlignment = Alignment.Center
       ) {
         AsyncImage(
-          model = credential.profilePictureUri,
+          model = currentUser.photoUrl,
           contentDescription = "Profile Picture",
           contentScale = ContentScale.Crop,
           modifier = Modifier.fillMaxSize()
@@ -61,7 +61,7 @@ fun UserProfileCard(credential: GoogleIdTokenCredential?) {
 
       // --- User Info ---
       Text(
-        text = credential.displayName ?: "",
+        text = currentUser.displayName ?: "",
         fontSize = 22.sp,
         fontWeight = FontWeight.Bold,
       )

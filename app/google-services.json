@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "811416892017",
+    "project_id": "wingslog-9ca4e",
+    "storage_bucket": "wingslog-9ca4e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:811416892017:android:27fbaf1c76bb16a3f961d0",
+        "android_client_info": {
+          "package_name": "dev.fanfly.wingslog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAo52Y7aQ4jhYGq4MioZK5mSffmmZES1qk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -25,7 +25,7 @@ fun SettingsScreen(authManager: AuthManager, navController: NavController) {
         .padding(horizontal = 16.dp, vertical = 20.dp),
       verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-      UserProfileCard(credential = authManager.getCredential())
+      UserProfileCard(currentUser = authManager.getCurrentUser())
     }
   }
 }

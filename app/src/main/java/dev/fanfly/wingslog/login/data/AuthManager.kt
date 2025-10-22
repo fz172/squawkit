@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.login.data
 
 import android.content.Context
 import android.util.Log
+import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -9,42 +10,61 @@ import androidx.credentials.GetCredentialRequest
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.tasks.await
 
 class AuthManager(private val context: Context) {
   private val credentialManager: CredentialManager = CredentialManager.create(context = context)
+  private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
-  @Volatile
-  private var credential: GoogleIdTokenCredential? = null
-
-  private val credentialLock = Any()
-
-  fun getCredential(): GoogleIdTokenCredential? {
-    synchronized(credentialLock) {
-      return credential
-    }
+  fun getCurrentUser(): FirebaseUser? {
+    return auth.currentUser
   }
 
-  suspend fun login(): GoogleIdTokenCredential? {
-    synchronized(credentialLock) {
-      if (credential != null) {
-        return credential
-      }
-    }
-
+  /**
+   * Tries to sign in silently.
+   * Uses filterByAuthorizedAccounts(true) to check for existing sessions.
+   */
+  suspend fun trySilentLogin(): FirebaseUser? {
     try {
       val request = GetCredentialRequest.Builder().addCredentialOption(
         GetGoogleIdOption.Builder().setFilterByAuthorizedAccounts(true)
           .setServerClientId(WEB_CLIENT_ID).build()
       ).build()
       val result = credentialManager.getCredential(context, request)
-      synchronized(credentialLock) {
-        credential = processCredential(result.credential)
+      val googleIdTokenCredential = processCredential(result.credential)
+      if (googleIdTokenCredential != null) {
+        return signInToFirebase(googleIdTokenCredential)
       }
     } catch (e: Exception) {
-      // No saved credential, show login button
-      Log.d(TAG, "Error: " + e.message)
+      // No saved credential
+      Log.d(TAG, "No silent credential found: " + e.message)
     }
-    return credential
+    return null
+  }
+
+  /**
+   * Initiates the Google Sign-in flow, showing the account picker if necessary.
+   * Uses filterByAuthorizedAccounts(false).
+   */
+  suspend fun signInWithGoogle(): FirebaseUser? {
+    try {
+      val request = GetCredentialRequest.Builder().addCredentialOption(
+        GetGoogleIdOption.Builder().setFilterByAuthorizedAccounts(false) // Show account picker
+          .setServerClientId(WEB_CLIENT_ID).build()
+      ).build()
+      val result = credentialManager.getCredential(context, request)
+      val googleIdTokenCredential = processCredential(result.credential)
+      if (googleIdTokenCredential != null) {
+        return signInToFirebase(googleIdTokenCredential)
+      }
+    } catch (e: Exception) {
+      // User cancelled or other error
+      Log.d(TAG, "Google Sign-in error: " + e.message)
+    }
+    return null
   }
 
 
@@ -61,11 +81,34 @@ class AuthManager(private val context: Context) {
     return null
   }
 
+  private suspend fun signInToFirebase(credential: GoogleIdTokenCredential): FirebaseUser? {
+    return try {
+      val firebaseCredential =
+        GoogleAuthProvider.getCredential(credential.idToken, null)
+      auth.signInWithCredential(firebaseCredential).await()
+      auth.currentUser
+    } catch (e: Exception) {
+      Log.e(TAG, "Firebase sign-in failed", e)
+      null
+    }
+  }
+
+
+  suspend fun logOut() {
+    try {
+      auth.signOut()
+      credentialManager.clearCredentialState(ClearCredentialStateRequest())
+    } catch (e: Exception) {
+      Log.e(TAG, "Error logging out: " + e.message)
+    }
+  }
+
+
   companion object {
 
     private const val TAG = "AuthManager"
     private const val WEB_CLIENT_ID =
-      "147122952565-fg865qq8rnofsd7699vpcjsqb2bp3sor.apps.googleusercontent.com"
+      "811416892017-uul0d8vup8hie1o1172chid0q65k7vdi.apps.googleusercontent.com"
   }
 }
 
