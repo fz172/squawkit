@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import dagger.hilt.android.AndroidEntryPoint
 import dev.fanfly.wingslog.login.data.AuthManager
 import dev.fanfly.wingslog.ui.theme.WingslogTheme
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
   private val authManager = AuthManager(this)

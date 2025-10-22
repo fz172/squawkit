@@ -3,12 +3,19 @@ plugins {
   alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.compose)
   id("com.google.gms.google-services")
+  id("com.google.devtools.ksp")
+  id("com.google.dagger.hilt.android")
 }
 
 android {
   namespace = "dev.fanfly.wingslog"
   compileSdk {
     version = release(36)
+  }
+
+  compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
   }
 
   defaultConfig {
@@ -59,6 +66,9 @@ dependencies {
   implementation(libs.androidx.material3)
   implementation(libs.androidx.compose.ui.text)
   implementation(platform(libs.firebase.bom))
+
+  implementation("com.google.dagger:hilt-android:2.57.2")
+  ksp("com.google.dagger:hilt-compiler:2.57.2")
   implementation(libs.firebase.auth)
   testImplementation(libs.junit)
   androidTestImplementation(libs.androidx.junit)

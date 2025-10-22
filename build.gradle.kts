@@ -3,5 +3,9 @@ plugins {
   alias(libs.plugins.android.application) apply false
   alias(libs.plugins.kotlin.android) apply false
   alias(libs.plugins.kotlin.compose) apply false
+  // Firebase
   id("com.google.gms.google-services") version "4.4.4" apply false // Use your current version
+  // Hilt
+  id("com.google.dagger.hilt.android") version "2.57.2" apply false
+  id("com.google.devtools.ksp") version "2.3.0" apply false // KSP for annotation processing
 }
