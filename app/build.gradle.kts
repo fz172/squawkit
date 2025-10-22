@@ -47,6 +47,8 @@ android {
 }
 
 dependencies {
+  implementation(platform(libs.androidx.compose.bom))
+  implementation(platform(libs.firebase.bom))
   implementation(libs.coil.compose)
   implementation(libs.androidx.compose.material.icons.core)
   implementation(libs.androidx.compose.material.icons.extended)
@@ -58,19 +60,20 @@ dependencies {
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.activity.compose)
-  implementation(platform(libs.androidx.compose.bom))
   implementation(libs.androidx.compose.ui)
   implementation(libs.androidx.compose.ui.graphics)
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.compose.material3)
   implementation(libs.androidx.material3)
   implementation(libs.androidx.compose.ui.text)
-  implementation(platform(libs.firebase.bom))
-
-  implementation("com.google.dagger:hilt-android:2.57.2")
-  ksp("com.google.dagger:hilt-compiler:2.57.2")
+  implementation(libs.hilt.android)
   implementation(libs.firebase.auth)
+  implementation(libs.androidx.hilt.navigation.compose)
+
+  ksp(libs.hilt.compiler)
+
   testImplementation(libs.junit)
+
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(platform(libs.androidx.compose.bom))

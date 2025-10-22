@@ -13,9 +13,13 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingExcept
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.tasks.await
 
-class AuthManager(private val context: Context) {
+@Singleton
+class AuthManager @Inject internal constructor(@ApplicationContext private val context: Context) {
   private val credentialManager: CredentialManager = CredentialManager.create(context = context)
   private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 

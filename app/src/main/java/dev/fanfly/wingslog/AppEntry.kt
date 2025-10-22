@@ -27,7 +27,7 @@ fun AppEntry(authManager: AuthManager) {
         onOpenSettings = { navController.navigate("settings") })
     }
     composable("settings") {
-      SettingsScreen(authManager = authManager, navController = navController)
+      SettingsScreen(navController = navController)
     }
   }
 }

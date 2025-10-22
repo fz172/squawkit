@@ -11,11 +11,12 @@ import androidx.compose.ui.Modifier
 import dagger.hilt.android.AndroidEntryPoint
 import dev.fanfly.wingslog.login.data.AuthManager
 import dev.fanfly.wingslog.ui.theme.WingslogTheme
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-  private val authManager = AuthManager(this)
+  @Inject lateinit var authManager: AuthManager
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
