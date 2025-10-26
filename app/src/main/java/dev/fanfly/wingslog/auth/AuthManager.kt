@@ -20,7 +20,8 @@ import kotlinx.coroutines.tasks.await
 
 @Singleton
 class AuthManager @Inject internal constructor(@ApplicationContext private val context: Context) {
-  private val credentialManager: CredentialManager = CredentialManager.Companion.create(context = context)
+  private val credentialManager: CredentialManager =
+    CredentialManager.Companion.create(context = context)
   private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
   fun getCurrentUser(): FirebaseUser? {
@@ -32,6 +33,9 @@ class AuthManager @Inject internal constructor(@ApplicationContext private val c
    * Uses filterByAuthorizedAccounts(true) to check for existing sessions.
    */
   suspend fun trySilentLogin(): FirebaseUser? {
+    if (auth.currentUser != null) {
+      return auth.currentUser
+    }
     try {
       val request = GetCredentialRequest.Builder().addCredentialOption(
         GetGoogleIdOption.Builder().setFilterByAuthorizedAccounts(true)

@@ -5,6 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.fanfly.wingslog.dashboard.DashboardScreen
+import dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile.EditProfileScreen
 import dev.fanfly.wingslog.login.LoginScreen
 import dev.fanfly.wingslog.settings.SettingsScreen
 
@@ -27,6 +28,10 @@ fun AppEntry() {
     }
     composable("settings") {
       SettingsScreen(navController = navController)
+    }
+
+    composable("edit_profile") {
+      EditProfileScreen(navController = navController)
     }
   }
 }

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.settings
+package dev.fanfly.wingslog.common
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -14,11 +14,11 @@ import dev.fanfly.wingslog.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsTopAppBar(onBackClick: () -> Unit) {
+fun WingsLogTopAppBar(title: String, onBackClick: () -> Unit) {
   CenterAlignedTopAppBar(
     title = {
       Text(
-        stringResource(R.string.settings),
+        text = title,
         fontWeight = FontWeight.Bold,
       )
     },

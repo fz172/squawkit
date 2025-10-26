@@ -17,6 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.R
+import dev.fanfly.wingslog.common.WingsLogTopAppBar
 import dev.fanfly.wingslog.dev.fanfly.wingslog.settings.SettingsLevel
 import dev.fanfly.wingslog.dev.fanfly.wingslog.settings.SettingsRow
 import dev.fanfly.wingslog.dev.fanfly.wingslog.settings.data.SettingsViewModel
@@ -45,9 +46,10 @@ fun SettingsScreen(
 
   Scaffold(
     topBar = {
-      SettingsTopAppBar(onBackClick = { navController.popBackStack() })
-    },
-  ) { innerPadding ->
+      WingsLogTopAppBar(
+        title = stringResource(R.string.settings),
+        onBackClick = { navController.popBackStack() })
+    }) { innerPadding ->
     Column(
       modifier = Modifier
         .padding(innerPadding)
@@ -55,7 +57,9 @@ fun SettingsScreen(
         .padding(horizontal = 16.dp, vertical = 20.dp),
       verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-      UserProfileCard(currentUser = user)
+      UserProfileCard(
+        currentUser = user,
+        onOpenEditProfile = { navController.navigate("edit_profile") })
       SettingsRow(
         icon = Icons.AutoMirrored.Filled.Logout,
         title = stringResource(R.string.sign_out),
