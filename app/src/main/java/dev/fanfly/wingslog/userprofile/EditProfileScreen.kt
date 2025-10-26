@@ -48,8 +48,10 @@ import dev.fanfly.wingslog.common.WingsLogTopAppBar
 import dev.fanfly.wingslog.dev.fanfly.wingslog.common.BottomButtons
 import dev.fanfly.wingslog.userprofile.data.EditProfileUiState
 import dev.fanfly.wingslog.userprofile.data.EditProfileViewModel
+import dev.fanfly.wingslog.userprofile.data.LicenseExpireLimit
 import dev.fanfly.wingslog.userprofile.data.LicenseType
 import dev.fanfly.wingslog.userprofile.data.displayResId
+import java.time.Instant
 
 
 @Composable
@@ -72,8 +74,7 @@ fun EditProfileScreen(
 
   Scaffold(topBar = {
     WingsLogTopAppBar(
-      title = stringResource(R.string.edit_profile),
-      onBackClick = { navController.popBackStack() })
+      title = stringResource(R.string.edit_profile), onBackClick = { navController.popBackStack() })
   }, bottomBar = {
     // This composable holds the buttons pinned to the bottom
     BottomButtons(
@@ -93,7 +94,7 @@ fun EditProfileScreen(
       ExposedDropdownMenuBox(
         expanded = expanded, onExpandedChange = { expanded = !expanded }) {
         OutlinedTextField(
-          value = stringResource(uiState.licenseType.displayResId()),
+          value = stringResource(uiState.licenceInfo.licenseType.displayResId()),
           onValueChange = {},
           readOnly = true,
           label = { Text(text = stringResource(R.string.license_type)) },
@@ -107,15 +108,12 @@ fun EditProfileScreen(
         )
         ExposedDropdownMenu(
           expanded = expanded, onDismissRequest = { expanded = false }) {
-          LicenseType.entries.filter { it != LicenseType.UNRECOGNIZED }
-            .forEach { type ->
-              DropdownMenuItem(
-                text = { Text(stringResource(id = type.displayResId())) },
-                onClick = {
-                  viewModel.onLicenseTypeChanged(type) // Update ViewModel
-                  expanded = false
-                })
-            }
+          LicenseType.entries.filter { it != LicenseType.UNRECOGNIZED }.forEach { type ->
+            DropdownMenuItem(text = { Text(stringResource(id = type.displayResId())) }, onClick = {
+              viewModel.onLicenseTypeChanged(type) // Update ViewModel
+              expanded = false
+            })
+          }
         }
       }
 
@@ -123,13 +121,13 @@ fun EditProfileScreen(
 
       // --- License Number ---
       OutlinedTextField(
-        value = uiState.licenseNumber, // Read from ViewModel
+        value = uiState.licenceInfo.licenseNumber, // Read from ViewModel
         onValueChange = { viewModel.onLicenseNumberChanged(it) }, // Update ViewModel
         label = { Text(stringResource(R.string.license_number)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
-        enabled = uiState.licenseType != LicenseType.NONE
+        enabled = uiState.licenceInfo.licenseType != LicenseType.NONE
       )
 
       Spacer(modifier = Modifier.height(20.dp))
@@ -141,10 +139,9 @@ fun EditProfileScreen(
         verticalAlignment = Alignment.CenterVertically
       ) {
         OutlinedTextField(
-          value = if (!uiState.licenseNeverExpires) {
-            uiState.expirationDate
-          } else "", // Read from ViewModel
-          onValueChange = { viewModel.onExpirationDateChanged(it) }, // Update ViewModel
+          value = if (uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES) uiState.licenceInfo.expirationDate.toString()
+          else "",
+          onValueChange = { viewModel.onExpirationDateChanged(Instant.now()) }, // Update ViewModel
           label = { Text(stringResource(R.string.license_expiration_date)) },
           leadingIcon = {
             Icon(
@@ -152,7 +149,7 @@ fun EditProfileScreen(
               contentDescription = stringResource(R.string.select_date)
             )
           },
-          enabled = !uiState.licenseNeverExpires && uiState.licenseType != LicenseType.NONE,
+          enabled = uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES && uiState.licenceInfo.licenseType != LicenseType.NONE,
           modifier = Modifier.weight(1f),
           singleLine = true,
           shape = RoundedCornerShape(12.dp)
@@ -160,9 +157,9 @@ fun EditProfileScreen(
         Spacer(modifier = Modifier.width(16.dp))
         Text(text = stringResource(R.string.never))
         Checkbox(
-          checked = uiState.licenseNeverExpires,
+          checked = uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES,
           onCheckedChange = { viewModel.onExpirationNeverFlagChanged(it) },
-          enabled = uiState.licenseType != LicenseType.NONE
+          enabled = uiState.licenceInfo.licenseType != LicenseType.NONE
         )
       }
     }

@@ -6,10 +6,7 @@ import android.net.Uri
 data class EditProfileUiState(
   val photoUri: Uri? = null,
   val displayName: String = "",
-  val licenseType: LicenseType = LicenseType.NONE,
-  val licenseNumber: String = "",
-  val expirationDate: String = "",
-  val licenseNeverExpires: Boolean = false,
+  val licenceInfo: LicenseInfo = licenseInfo { },
   val isLoading: Boolean = false,
   val isSaved: Boolean = false,
 )

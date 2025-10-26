@@ -3,13 +3,15 @@ package dev.fanfly.wingslog.userprofile.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseUser
+import com.google.protobuf.timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.dev.fanfly.wingslog.auth.AuthManager
+import java.time.Instant
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(private val authManager: AuthManager) : ViewModel() {
@@ -33,9 +35,11 @@ class EditProfileViewModel @Inject constructor(private val authManager: AuthMana
       // val userData = repository.getUserProfile()
       _uiState.update {
         it.copy(
-          // licenseType = userData.licenseType,
-          licenseNumber = "123456789", // Placeholder
-          expirationDate = "12/31/2025", // Placeholder
+          licenceInfo = licenseInfo {
+            licenseNumber = "123456789"
+            expirationDate = timestamp { seconds = Instant.now().epochSecond }
+            licenseType = LicenseType.REPAIRMAN
+          },
           isLoading = false
         )
       }
@@ -45,19 +49,31 @@ class EditProfileViewModel @Inject constructor(private val authManager: AuthMana
   // --- Event Handlers ---
 
   fun onLicenseTypeChanged(newType: LicenseType) {
-    _uiState.update { it.copy(licenseType = newType) }
+    _uiState.update { it.copy(licenceInfo = it.licenceInfo.copy { licenseType = newType }) }
   }
 
   fun onLicenseNumberChanged(newNumber: String) {
-    _uiState.update { it.copy(licenseNumber = newNumber) }
+    _uiState.update { it.copy(licenceInfo = it.licenceInfo.copy { licenseNumber = newNumber }) }
   }
 
-  fun onExpirationDateChanged(newDate: String) {
-    _uiState.update { it.copy(expirationDate = newDate) }
+  fun onExpirationDateChanged(newDate: Instant) {
+    _uiState.update {
+      it.copy(licenceInfo = it.licenceInfo.copy {
+        expirationDate = timestamp {
+          seconds = newDate.epochSecond
+          nanos = newDate.nano
+        }
+      })
+    }
   }
 
   fun onExpirationNeverFlagChanged(neverExpires: Boolean) {
-    _uiState.update { it.copy(licenseNeverExpires = neverExpires) }
+    _uiState.update {
+      it.copy(licenceInfo = it.licenceInfo.copy {
+        expireLimit =
+          if (neverExpires) LicenseExpireLimit.NEVER_EXPIRES else LicenseExpireLimit.EXPIRES
+      })
+    }
   }
 
   fun saveChanges() {
