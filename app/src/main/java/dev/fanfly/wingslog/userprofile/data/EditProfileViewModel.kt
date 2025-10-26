@@ -5,11 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.dev.fanfly.wingslog.auth.AuthManager
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(private val authManager: AuthManager) : ViewModel() {
@@ -44,7 +44,7 @@ class EditProfileViewModel @Inject constructor(private val authManager: AuthMana
 
   // --- Event Handlers ---
 
-  fun onLicenseTypeChanged(newType: String) {
+  fun onLicenseTypeChanged(newType: LicenseType) {
     _uiState.update { it.copy(licenseType = newType) }
   }
 
@@ -54,6 +54,10 @@ class EditProfileViewModel @Inject constructor(private val authManager: AuthMana
 
   fun onExpirationDateChanged(newDate: String) {
     _uiState.update { it.copy(expirationDate = newDate) }
+  }
+
+  fun onExpirationNeverFlagChanged(neverExpires: Boolean) {
+    _uiState.update { it.copy(licenseNeverExpires = neverExpires) }
   }
 
   fun saveChanges() {

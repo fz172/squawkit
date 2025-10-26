@@ -1,6 +1,10 @@
 package dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile.data
 
-object LicenseConstants {
+import androidx.annotation.StringRes
+import dev.fanfly.wingslog.R
 
-  val licenseTypes = listOf("Repairman", "AMT", "N/A")
+enum class LicenseType(@StringRes val displayResId: Int) {
+  NONE(R.string.license_type_none),
+  REPAIRMAN(R.string.license_type_repairman),
+  AMT(R.string.license_type_amt),
 }

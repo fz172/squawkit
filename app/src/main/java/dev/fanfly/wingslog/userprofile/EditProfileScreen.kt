@@ -4,17 +4,21 @@ package dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
@@ -44,7 +48,7 @@ import dev.fanfly.wingslog.common.WingsLogTopAppBar
 import dev.fanfly.wingslog.dev.fanfly.wingslog.common.BottomButtons
 import dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile.data.EditProfileUiState
 import dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile.data.EditProfileViewModel
-import dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile.data.LicenseConstants.licenseTypes
+import dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile.data.LicenseType
 
 @Composable
 fun EditProfileScreen(
@@ -92,25 +96,25 @@ fun EditProfileScreen(
         onExpandedChange = { expanded = !expanded }
       ) {
         OutlinedTextField(
-          value = uiState.licenseType, // Read from ViewModel
+          value = stringResource(uiState.licenseType.displayResId),
           onValueChange = {},
           readOnly = true,
-          label = { Text("License Type") },
+          label = { Text(text = stringResource(R.string.license_type)) },
           trailingIcon = {
             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
           },
           modifier = Modifier
             .fillMaxWidth()
-            .menuAnchor(), // This connects the text field to the dropdown
+            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
           shape = RoundedCornerShape(12.dp)
         )
         ExposedDropdownMenu(
           expanded = expanded,
           onDismissRequest = { expanded = false }
         ) {
-          licenseTypes.forEach { type ->
+          LicenseType.entries.forEach { type ->
             DropdownMenuItem(
-              text = { Text(type) },
+              text = { Text(stringResource(id = type.displayResId)) },
               onClick = {
                 viewModel.onLicenseTypeChanged(type) // Update ViewModel
                 expanded = false
@@ -126,29 +130,47 @@ fun EditProfileScreen(
       OutlinedTextField(
         value = uiState.licenseNumber, // Read from ViewModel
         onValueChange = { viewModel.onLicenseNumberChanged(it) }, // Update ViewModel
-        label = { Text("License Number") },
+        label = { Text(stringResource(R.string.license_number)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        enabled = uiState.licenseType != LicenseType.NONE
       )
 
       Spacer(modifier = Modifier.height(20.dp))
 
       // --- Expiration Date ---
-      OutlinedTextField(
-        value = uiState.expirationDate, // Read from ViewModel
-        onValueChange = { viewModel.onExpirationDateChanged(it) }, // Update ViewModel
-        label = { Text("License Expiration Date") },
-        trailingIcon = {
-          Icon(
-            imageVector = Icons.Default.CalendarToday,
-            contentDescription = "Select Date"
-          )
-        },
+      Row(
         modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        shape = RoundedCornerShape(12.dp)
-      )
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        OutlinedTextField(
+          value = if (!uiState.licenseNeverExpires) {
+            uiState.expirationDate
+          } else "", // Read from ViewModel
+          onValueChange = { viewModel.onExpirationDateChanged(it) }, // Update ViewModel
+          label = { Text(stringResource(R.string.license_expiration_date)) },
+          leadingIcon = {
+            Icon(
+              imageVector = Icons.Default.CalendarToday,
+              contentDescription = stringResource(R.string.select_date)
+            )
+          },
+          enabled = !uiState.licenseNeverExpires && uiState.licenseType != LicenseType.NONE,
+          modifier = Modifier.weight(1f),
+          singleLine = true,
+          shape = RoundedCornerShape(12.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(text = stringResource(R.string.never))
+        Checkbox(
+          checked = uiState.licenseNeverExpires,
+          onCheckedChange = { viewModel.onExpirationNeverFlagChanged(it) },
+          enabled = uiState.licenseType != LicenseType.NONE
+        )
+      }
+
     }
   }
 }
