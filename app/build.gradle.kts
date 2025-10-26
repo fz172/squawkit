@@ -5,6 +5,7 @@ plugins {
   id("com.google.gms.google-services")
   id("com.google.devtools.ksp")
   id("com.google.dagger.hilt.android")
+  id("com.google.protobuf")
 }
 
 android {
@@ -46,6 +47,26 @@ android {
   }
 }
 
+protobuf {
+  protoc {
+    artifact = "com.google.protobuf:protoc:3.21.7"
+  }
+  plugins {
+    generateProtoTasks {
+      all().forEach {
+        it.plugins {
+          create("java") {
+            option("lite")
+          }
+          create("kotlin") {
+            option("lite") // Crucial for Kotlin Lite
+          }
+        }
+      }
+    }
+  }
+}
+
 dependencies {
   implementation(platform(libs.androidx.compose.bom))
   implementation(platform(libs.firebase.bom))
@@ -69,6 +90,8 @@ dependencies {
   implementation(libs.hilt.android)
   implementation(libs.firebase.auth)
   implementation(libs.androidx.hilt.navigation.compose)
+  implementation(libs.protobuf.javalite)
+  implementation(libs.protobuf.kotlin.lite)
 
   ksp(libs.hilt.compiler)
 

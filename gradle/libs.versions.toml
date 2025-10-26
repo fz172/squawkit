@@ -20,6 +20,8 @@ materialIconsExtended = "1.7.8"
 navigationCompose = "2.9.5"
 playServicesAuth = "21.4.0"
 material3 = "1.4.0"
+protobufJavalite = "4.33.0"
+protobufKotlinLite = "4.33.0"
 uiText = "1.9.4"
 
 [libraries]
@@ -52,6 +54,8 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
+protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobufKotlinLite" }
+protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -46,9 +46,11 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.common.WingsLogTopAppBar
 import dev.fanfly.wingslog.dev.fanfly.wingslog.common.BottomButtons
-import dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile.data.EditProfileUiState
-import dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile.data.EditProfileViewModel
-import dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile.data.LicenseType
+import dev.fanfly.wingslog.userprofile.data.EditProfileUiState
+import dev.fanfly.wingslog.userprofile.data.EditProfileViewModel
+import dev.fanfly.wingslog.userprofile.data.LicenseType
+import dev.fanfly.wingslog.userprofile.data.displayResId
+
 
 @Composable
 fun EditProfileScreen(
@@ -68,19 +70,16 @@ fun EditProfileScreen(
     }
   }
 
-  Scaffold(
-    topBar = {
-      WingsLogTopAppBar(
-        title = stringResource(R.string.edit_profile),
-        onBackClick = { navController.popBackStack() })
-    },
-    bottomBar = {
-      // This composable holds the buttons pinned to the bottom
-      BottomButtons(
-        onSaveClick = { viewModel.saveChanges() }, // Call ViewModel to save
-        onCancelClick = { navController.popBackStack() }
-      )
-    }) { innerPadding ->
+  Scaffold(topBar = {
+    WingsLogTopAppBar(
+      title = stringResource(R.string.edit_profile),
+      onBackClick = { navController.popBackStack() })
+  }, bottomBar = {
+    // This composable holds the buttons pinned to the bottom
+    BottomButtons(
+      onSaveClick = { viewModel.saveChanges() }, // Call ViewModel to save
+      onCancelClick = { navController.popBackStack() })
+  }) { innerPadding ->
     Column(
       modifier = Modifier
         .padding(innerPadding)
@@ -92,11 +91,9 @@ fun EditProfileScreen(
 
       // --- License Type (Dropdown) ---
       ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-      ) {
+        expanded = expanded, onExpandedChange = { expanded = !expanded }) {
         OutlinedTextField(
-          value = stringResource(uiState.licenseType.displayResId),
+          value = stringResource(uiState.licenseType.displayResId()),
           onValueChange = {},
           readOnly = true,
           label = { Text(text = stringResource(R.string.license_type)) },
@@ -109,18 +106,16 @@ fun EditProfileScreen(
           shape = RoundedCornerShape(12.dp)
         )
         ExposedDropdownMenu(
-          expanded = expanded,
-          onDismissRequest = { expanded = false }
-        ) {
-          LicenseType.entries.forEach { type ->
-            DropdownMenuItem(
-              text = { Text(stringResource(id = type.displayResId)) },
-              onClick = {
-                viewModel.onLicenseTypeChanged(type) // Update ViewModel
-                expanded = false
-              }
-            )
-          }
+          expanded = expanded, onDismissRequest = { expanded = false }) {
+          LicenseType.entries.filter { it != LicenseType.UNRECOGNIZED }
+            .forEach { type ->
+              DropdownMenuItem(
+                text = { Text(stringResource(id = type.displayResId())) },
+                onClick = {
+                  viewModel.onLicenseTypeChanged(type) // Update ViewModel
+                  expanded = false
+                })
+            }
         }
       }
 
@@ -170,7 +165,6 @@ fun EditProfileScreen(
           enabled = uiState.licenseType != LicenseType.NONE
         )
       }
-
     }
   }
 }
@@ -178,8 +172,7 @@ fun EditProfileScreen(
 @Composable
 fun EditProfileNameCard(uiState: EditProfileUiState) {
   Card(
-    shape = RoundedCornerShape(16.dp),
-    modifier = Modifier.fillMaxWidth()
+    shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()
   ) {
     Column(
       modifier = Modifier

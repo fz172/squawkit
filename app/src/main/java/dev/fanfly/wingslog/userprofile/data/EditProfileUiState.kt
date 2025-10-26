@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile.data
+package dev.fanfly.wingslog.userprofile.data
 
 import android.net.Uri
 
