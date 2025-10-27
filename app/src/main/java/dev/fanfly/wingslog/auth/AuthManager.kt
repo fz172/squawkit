@@ -16,16 +16,19 @@ import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @Singleton
-class AuthManager @Inject internal constructor(@ApplicationContext private val context: Context) {
+class AuthManager @Inject internal constructor(
+  @ApplicationContext private val context: Context,
+  private val authProvider: Provider<FirebaseAuth>
+) {
   private val credentialManager: CredentialManager =
     CredentialManager.Companion.create(context = context)
-  private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
   fun getCurrentUser(): FirebaseUser? {
-    return auth.currentUser
+    return authProvider.get().currentUser
   }
 
   /**
@@ -33,8 +36,8 @@ class AuthManager @Inject internal constructor(@ApplicationContext private val c
    * Uses filterByAuthorizedAccounts(true) to check for existing sessions.
    */
   suspend fun trySilentLogin(): FirebaseUser? {
-    if (auth.currentUser != null) {
-      return auth.currentUser
+    if (authProvider.get().currentUser != null) {
+      return authProvider.get().currentUser
     }
     try {
       val request = GetCredentialRequest.Builder().addCredentialOption(
@@ -93,8 +96,8 @@ class AuthManager @Inject internal constructor(@ApplicationContext private val c
     return try {
       val firebaseCredential =
         GoogleAuthProvider.getCredential(credential.idToken, null)
-      auth.signInWithCredential(firebaseCredential).await()
-      auth.currentUser
+      authProvider.get().signInWithCredential(firebaseCredential).await()
+      authProvider.get().currentUser
     } catch (e: Exception) {
       Log.e(TAG, "Firebase sign-in failed", e)
       null
@@ -104,7 +107,7 @@ class AuthManager @Inject internal constructor(@ApplicationContext private val c
 
   suspend fun logOut() {
     try {
-      auth.signOut()
+      authProvider.get().signOut()
       credentialManager.clearCredentialState(ClearCredentialStateRequest())
     } catch (e: Exception) {
       Log.e(TAG, "Error logging out: " + e.message)
