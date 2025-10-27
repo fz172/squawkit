@@ -2,6 +2,7 @@
 
 package dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -25,6 +28,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,6 +57,9 @@ import dev.fanfly.wingslog.userprofile.data.LicenseExpireLimit
 import dev.fanfly.wingslog.userprofile.data.LicenseType
 import dev.fanfly.wingslog.userprofile.data.displayResId
 import java.time.Instant
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 @Composable
@@ -132,6 +140,8 @@ fun EditProfileScreen(
 
       Spacer(modifier = Modifier.height(20.dp))
 
+      var showDatePicker by remember { mutableStateOf(false) }
+
       // --- Expiration Date ---
       Row(
         modifier = Modifier.fillMaxWidth(),
@@ -141,7 +151,7 @@ fun EditProfileScreen(
         OutlinedTextField(
           value = if (uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES) uiState.licenceInfo.expirationDate.toString()
           else "",
-          onValueChange = { viewModel.onExpirationDateChanged(Instant.now()) }, // Update ViewModel
+          onValueChange = {  }, // Update ViewModel
           label = { Text(stringResource(R.string.license_expiration_date)) },
           leadingIcon = {
             Icon(
@@ -150,7 +160,9 @@ fun EditProfileScreen(
             )
           },
           enabled = uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES && uiState.licenceInfo.licenseType != LicenseType.NONE,
-          modifier = Modifier.weight(1f),
+          modifier = Modifier
+            .weight(1f)
+            .clickable { showDatePicker = true },
           singleLine = true,
           shape = RoundedCornerShape(12.dp)
         )
@@ -161,6 +173,34 @@ fun EditProfileScreen(
           onCheckedChange = { viewModel.onExpirationNeverFlagChanged(it) },
           enabled = uiState.licenceInfo.licenseType != LicenseType.NONE
         )
+      }
+      if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+          onDismissRequest = { showDatePicker = false },
+          confirmButton = {
+            TextButton(
+              onClick = {
+                val selectedDate = datePickerState.selectedDateMillis?.let {
+                  SimpleDateFormat("MM/dd/yyyy", Locale.getDefault()).format(Date(it))
+                } ?: ""
+                viewModel.onExpirationDateChanged(selectedDate)
+                showDatePicker = false
+              }
+            ) {
+              Text("OK")
+            }
+          },
+          dismissButton = {
+            TextButton(
+              onClick = { showDatePicker = false }
+            ) {
+              Text("Cancel")
+            }
+          }
+        ) {
+          DatePicker(state = datePickerState)
+        }
       }
     }
   }
