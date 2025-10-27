@@ -25,7 +25,9 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,15 +53,14 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.common.WingsLogTopAppBar
 import dev.fanfly.wingslog.dev.fanfly.wingslog.common.BottomButtons
+import dev.fanfly.wingslog.dev.fanfly.wingslog.common.toDisplayFormat
+import dev.fanfly.wingslog.dev.fanfly.wingslog.common.toLocalDate
 import dev.fanfly.wingslog.userprofile.data.EditProfileUiState
 import dev.fanfly.wingslog.userprofile.data.EditProfileViewModel
 import dev.fanfly.wingslog.userprofile.data.LicenseExpireLimit
 import dev.fanfly.wingslog.userprofile.data.LicenseType
 import dev.fanfly.wingslog.userprofile.data.displayResId
 import java.time.Instant
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 
 @Composable
@@ -148,10 +149,13 @@ fun EditProfileScreen(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
       ) {
+        val expirationDateEnabled =
+          uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES && uiState.licenceInfo.licenseType != LicenseType.NONE
         OutlinedTextField(
-          value = if (uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES) uiState.licenceInfo.expirationDate.toString()
-          else "",
-          onValueChange = {  }, // Update ViewModel
+          value = if (uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES)
+            uiState.licenceInfo.expirationDate.toLocalDate().toDisplayFormat() else "",
+          onValueChange = { }, // Update ViewModel
+          readOnly = true,
           label = { Text(stringResource(R.string.license_expiration_date)) },
           leadingIcon = {
             Icon(
@@ -159,17 +163,42 @@ fun EditProfileScreen(
               contentDescription = stringResource(R.string.select_date)
             )
           },
-          enabled = uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES && uiState.licenceInfo.licenseType != LicenseType.NONE,
+          enabled = false,
+          singleLine = true,
+          shape = RoundedCornerShape(12.dp),
           modifier = Modifier
             .weight(1f)
-            .clickable { showDatePicker = true },
-          singleLine = true,
-          shape = RoundedCornerShape(12.dp)
+            .clickable {
+              if (expirationDateEnabled) {
+                showDatePicker = true
+              }
+            },
+          colors = if (expirationDateEnabled) {
+            OutlinedTextFieldDefaults.colors(
+              // Tell Compose to use the "onSurface" color (your normal text color)
+              // INSTEAD of the default disabled grey color.
+              disabledTextColor = MaterialTheme.colorScheme.onSurface,
+
+              // Tell Compose to use the "outline" color (your normal border color)
+              // INSTEAD of the default disabled grey border.
+              disabledBorderColor = MaterialTheme.colorScheme.outline,
+
+              // Do the same for the label
+              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+
+              // ...and any other colors you need (icons, placeholders)
+              disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          } else {
+            OutlinedTextFieldDefaults.colors()
+          }
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(text = stringResource(R.string.never))
         Checkbox(
-          checked = uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES,
+          checked = uiState.licenceInfo.expireLimit == LicenseExpireLimit.NEVER_EXPIRES,
           onCheckedChange = { viewModel.onExpirationNeverFlagChanged(it) },
           enabled = uiState.licenceInfo.licenseType != LicenseType.NONE
         )
@@ -182,23 +211,20 @@ fun EditProfileScreen(
             TextButton(
               onClick = {
                 val selectedDate = datePickerState.selectedDateMillis?.let {
-                  SimpleDateFormat("MM/dd/yyyy", Locale.getDefault()).format(Date(it))
-                } ?: ""
+                  Instant.ofEpochMilli(it)
+                } ?: Instant.now()
                 viewModel.onExpirationDateChanged(selectedDate)
                 showDatePicker = false
-              }
-            ) {
-              Text("OK")
+              }) {
+              Text(text = stringResource(android.R.string.ok))
             }
           },
           dismissButton = {
             TextButton(
-              onClick = { showDatePicker = false }
-            ) {
-              Text("Cancel")
+              onClick = { showDatePicker = false }) {
+              Text(text = stringResource(R.string.cancel))
             }
-          }
-        ) {
+          }) {
           DatePicker(state = datePickerState)
         }
       }
