@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.dev.fanfly.wingslog.auth
+package dev.fanfly.wingslog.auth
 
 import android.content.Context
 import android.util.Log
@@ -14,9 +14,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.tasks.await
 
 @Singleton
 class AuthManager @Inject internal constructor(@ApplicationContext private val context: Context) {

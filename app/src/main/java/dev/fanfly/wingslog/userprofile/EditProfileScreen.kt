@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile
+package dev.fanfly.wingslog.userprofile
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,10 +51,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.R
-import dev.fanfly.wingslog.common.WingsLogTopAppBar
-import dev.fanfly.wingslog.dev.fanfly.wingslog.common.BottomButtons
-import dev.fanfly.wingslog.dev.fanfly.wingslog.common.toDisplayFormat
-import dev.fanfly.wingslog.dev.fanfly.wingslog.common.toLocalDate
+import dev.fanfly.wingslog.common.compose.BottomButtons
+import dev.fanfly.wingslog.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.common.toDisplayFormat
+import dev.fanfly.wingslog.common.toLocalDate
 import dev.fanfly.wingslog.userprofile.data.EditProfileUiState
 import dev.fanfly.wingslog.userprofile.data.EditProfileViewModel
 import dev.fanfly.wingslog.userprofile.data.LicenseExpireLimit

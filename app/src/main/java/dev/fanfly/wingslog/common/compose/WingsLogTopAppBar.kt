@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.common
+package dev.fanfly.wingslog.common.compose
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack

@@ -5,13 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseUser
 import com.google.protobuf.timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.fanfly.wingslog.dev.fanfly.wingslog.auth.AuthManager
-import java.time.Instant
-import javax.inject.Inject
+import dev.fanfly.wingslog.auth.AuthManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
+import javax.inject.Inject
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(private val authManager: AuthManager) : ViewModel() {

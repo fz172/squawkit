@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.fanfly.wingslog.R
-import dev.fanfly.wingslog.dev.fanfly.wingslog.login.data.LoginViewModel
+import dev.fanfly.wingslog.login.data.LoginViewModel
 import kotlinx.coroutines.launch
 
 

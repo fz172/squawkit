@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.dev.fanfly.wingslog.common
+package dev.fanfly.wingslog.common.compose
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column

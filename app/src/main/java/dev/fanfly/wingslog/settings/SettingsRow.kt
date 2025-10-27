@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.dev.fanfly.wingslog.settings
+package dev.fanfly.wingslog.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.dev.fanfly.wingslog.settings.SettingsLevel.DEFAULT
+import dev.fanfly.wingslog.settings.SettingsLevel.DEFAULT
 import dev.fanfly.wingslog.ui.theme.WingslogTheme
 
 enum class SettingsLevel {

@@ -17,10 +17,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.R
-import dev.fanfly.wingslog.common.WingsLogTopAppBar
-import dev.fanfly.wingslog.dev.fanfly.wingslog.settings.SettingsLevel
-import dev.fanfly.wingslog.dev.fanfly.wingslog.settings.SettingsRow
-import dev.fanfly.wingslog.dev.fanfly.wingslog.settings.data.SettingsViewModel
+import dev.fanfly.wingslog.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.settings.data.SettingsViewModel
 
 @Composable
 fun SettingsScreen(

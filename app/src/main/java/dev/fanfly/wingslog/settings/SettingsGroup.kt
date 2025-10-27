@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.dev.fanfly.wingslog.settings
+package dev.fanfly.wingslog.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.dev.fanfly.wingslog.settings.data.SettingItem
+import dev.fanfly.wingslog.settings.data.SettingItem
 import dev.fanfly.wingslog.ui.theme.WingslogTheme
 
 /**

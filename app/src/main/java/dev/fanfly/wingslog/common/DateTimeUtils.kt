@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.dev.fanfly.wingslog.common
+package dev.fanfly.wingslog.common
 
 import com.google.protobuf.Timestamp
 import java.time.Instant

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile
+package dev.fanfly.wingslog.userprofile
 
 import android.net.Uri
 import androidx.compose.foundation.layout.Box

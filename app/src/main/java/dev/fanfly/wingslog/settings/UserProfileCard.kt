@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseUser
 import dev.fanfly.wingslog.R
-import dev.fanfly.wingslog.dev.fanfly.wingslog.userprofile.ProfileImage
+import dev.fanfly.wingslog.userprofile.ProfileImage
 
 @Composable
 fun UserProfileCard(currentUser: FirebaseUser?, onOpenEditProfile: () -> Unit) {
