@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.dev.fanfly.wingslog.common.infra
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,5 +16,9 @@ internal object FirebaseModule {
   @Singleton
   fun provideFirebaseAuth(): FirebaseAuth =
     FirebaseAuth.getInstance()
-  
+
+  @Provides
+  @Singleton
+  fun provideFirestore(): FirebaseFirestore =
+    FirebaseFirestore.getInstance()
 }

@@ -89,6 +89,9 @@ dependencies {
   implementation(libs.androidx.compose.ui.text)
   implementation(libs.hilt.android)
   implementation(libs.firebase.auth)
+  implementation("com.google.firebase:firebase-firestore") {
+    exclude(group = "com.google.firebase", module = "protolite-well-known-types")
+  }
   implementation(libs.androidx.hilt.navigation.compose)
   implementation(libs.protobuf.javalite)
   implementation(libs.protobuf.kotlin.lite)
