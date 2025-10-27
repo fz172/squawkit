@@ -87,6 +87,7 @@ fun EditProfileScreen(
   }, bottomBar = {
     // This composable holds the buttons pinned to the bottom
     BottomButtons(
+      saveEnabled = !uiState.isLoading,
       onSaveClick = { viewModel.saveChanges() }, // Call ViewModel to save
       onCancelClick = { navController.popBackStack() })
   }) { innerPadding ->

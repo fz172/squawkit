@@ -29,6 +29,8 @@ import dev.fanfly.wingslog.R
 fun BottomButtons(
   onSaveClick: () -> Unit,
   onCancelClick: () -> Unit,
+  saveEnabled: Boolean = true,
+  cancelEnabled: Boolean = true
 ) {
   Column(
     modifier = Modifier
@@ -43,14 +45,18 @@ fun BottomButtons(
         .fillMaxWidth()
         .height(48.dp),
       shape = RoundedCornerShape(12.dp),
-      colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+      colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+      enabled = saveEnabled
     ) {
       Text(text = "Save Changes", fontSize = 16.sp)
     }
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    TextButton(onClick = onCancelClick) {
+    TextButton(
+      onClick = onCancelClick,
+      enabled = cancelEnabled
+    ) {
       Text(
         text = stringResource(R.string.cancel),
         color = MaterialTheme.colorScheme.primary,
