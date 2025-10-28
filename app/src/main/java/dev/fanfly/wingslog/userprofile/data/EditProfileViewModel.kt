@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.protobuf.timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.auth.AuthManager
+import dev.fanfly.wingslog.userprofile.manager.UserProfileManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -14,7 +15,10 @@ import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
-class EditProfileViewModel @Inject constructor(private val authManager: AuthManager) : ViewModel() {
+class EditProfileViewModel @Inject constructor(
+  private val userProfileManager: UserProfileManager,
+  authManager: AuthManager
+) : ViewModel() {
 
   // Private MutableStateFlow to hold the UI state
   private val _uiState: MutableStateFlow<EditProfileUiState> =
@@ -31,15 +35,10 @@ class EditProfileViewModel @Inject constructor(private val authManager: AuthMana
   private fun loadUserData() {
     viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true) }
-      // --- TODO: Load data from Firebase/Firestore ---
-      // val userData = repository.getUserProfile()
+      val userLicenseInfo = userProfileManager.loadLicenseInfo()
       _uiState.update {
         it.copy(
-          licenceInfo = licenseInfo {
-            licenseNumber = "123456789"
-            expirationDate = timestamp { seconds = Instant.now().epochSecond }
-            licenseType = LicenseType.REPAIRMAN
-          },
+          licenceInfo = userLicenseInfo.getOrElse { licenseInfo { } },
           isLoading = false
         )
       }
@@ -79,13 +78,13 @@ class EditProfileViewModel @Inject constructor(private val authManager: AuthMana
   fun saveChanges() {
     viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true) }
-      // --- TODO: Save data to Firebase/Firestore ---
-      // val success = repository.saveUserProfile(uiState.value)
-      // if (success) {
-      //     _uiState.update { it.copy(isSaved = true) }
-      // } else {
-      //     // Handle error
-      // }
+      val result = userProfileManager.updateLicenseInfo(uiState.value.licenceInfo)
+      if (result.isSuccess) {
+        _uiState.update { it.copy(isSaved = true) }
+      } else {
+        // TODO: handle errors.
+      }
+
       _uiState.update { it.copy(isLoading = false) }
     }
   }
