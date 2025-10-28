@@ -19,6 +19,8 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.settings.data.SettingsViewModel
+import dev.fanfly.wingslog.userprofile.compose.UserProfileCard
+import dev.fanfly.wingslog.userprofile.compose.UserProfileCardData
 
 @Composable
 fun SettingsScreen(
@@ -56,8 +58,12 @@ fun SettingsScreen(
       verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
       UserProfileCard(
-        currentUser = user.firebaseUser,
-        licenseInfo = user.licenseInfo,
+        data = UserProfileCardData(
+          displayName = user.firebaseUser?.displayName,
+          photoUri = user.firebaseUser?.photoUrl,
+          licenceInfo = user.licenseInfo,
+        ),
+
         onOpenEditProfile = { navController.navigate("edit_profile") })
       SettingsRow(
         icon = Icons.AutoMirrored.Filled.Logout,

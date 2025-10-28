@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.userprofile
+package dev.fanfly.wingslog.userprofile.compose
 
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
@@ -16,7 +16,7 @@ import coil.compose.AsyncImage
 import dev.fanfly.wingslog.R
 
 @Composable
-fun ProfileImage(photoUrl: Uri?) {
+fun ProfileImage(photoUri: Uri?) {
   Box(
     modifier = Modifier
       .size(100.dp)
@@ -24,7 +24,7 @@ fun ProfileImage(photoUrl: Uri?) {
     contentAlignment = Alignment.Center
   ) {
     AsyncImage(
-      model = photoUrl,
+      model = photoUri,
       contentDescription = stringResource(R.string.profile_picture),
       contentScale = ContentScale.Crop,
       modifier = Modifier.fillMaxSize()

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -41,12 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -55,7 +49,8 @@ import dev.fanfly.wingslog.common.compose.BottomButtons
 import dev.fanfly.wingslog.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.common.datetime.toLocalDate
-import dev.fanfly.wingslog.userprofile.data.EditProfileUiState
+import dev.fanfly.wingslog.userprofile.compose.UserProfileCard
+import dev.fanfly.wingslog.userprofile.compose.UserProfileCardData
 import dev.fanfly.wingslog.userprofile.data.EditProfileViewModel
 import dev.fanfly.wingslog.userprofile.data.LicenseExpireLimit
 import dev.fanfly.wingslog.userprofile.data.LicenseType
@@ -98,7 +93,12 @@ fun EditProfileScreen(
         .padding(horizontal = 16.dp, vertical = 20.dp),
       verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-      EditProfileNameCard(uiState = uiState)
+      UserProfileCard(
+        data = UserProfileCardData(
+          displayName = uiState.displayName,
+          photoUri = uiState.photoUri
+        )
+      )
 
       // --- License Type (Dropdown) ---
       ExposedDropdownMenuBox(
@@ -231,41 +231,4 @@ fun EditProfileScreen(
       }
     }
   }
-}
-
-@Composable
-fun EditProfileNameCard(uiState: EditProfileUiState) {
-  Card(
-    shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()
-  ) {
-    Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(24.dp),
-      horizontalAlignment = Alignment.CenterHorizontally
-
-    ) {
-      ProfileImage(uiState.photoUri)
-      Spacer(modifier = Modifier.height(16.dp))
-      Text(
-        text = uiState.displayName,
-        fontSize = 22.sp,
-        fontWeight = FontWeight.Bold,
-        textAlign = TextAlign.Center
-      )
-      Spacer(modifier = Modifier.height(16.dp))
-    }
-  }
-}
-
-
-@Preview
-@Composable
-fun EditProfileNameCardPreview() {
-  EditProfileNameCard(
-    uiState = EditProfileUiState(
-      displayName = "John Doe",
-      photoUri = "https://lh3.googleusercontent.com/a/ACg8ocKs05V94HHEYWWMl5EvFT2WO6g8tvrtOFpi4AhLRfZNRbRa0SsP=s512".toUri(),
-    )
-  )
 }

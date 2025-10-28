@@ -1,5 +1,6 @@
-package dev.fanfly.wingslog.settings
+package dev.fanfly.wingslog.userprofile.compose
 
+import android.net.Uri
 import android.text.TextUtils
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -17,29 +18,29 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseUser
 import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.common.datetime.toLocalDate
-import dev.fanfly.wingslog.userprofile.ProfileImage
 import dev.fanfly.wingslog.userprofile.data.LicenseExpireLimit
 import dev.fanfly.wingslog.userprofile.data.LicenseInfo
 import dev.fanfly.wingslog.userprofile.data.LicenseType
 import dev.fanfly.wingslog.userprofile.data.displayResId
 
+data class UserProfileCardData(
+  val photoUri: Uri? = null,
+  val displayName: String? = null,
+  val licenceInfo: LicenseInfo? = null
+)
+
 @Composable
 fun UserProfileCard(
-  currentUser: FirebaseUser?,
-  licenseInfo: LicenseInfo,
-  onOpenEditProfile: () -> Unit,
+  data: UserProfileCardData,
+  onOpenEditProfile: (() -> Unit)? = null,
 ) {
   Card(
     shape = RoundedCornerShape(16.dp),
     modifier = Modifier.fillMaxWidth(),
   ) {
-    if (currentUser == null) {
-      return@Card
-    }
     Column(
       modifier = Modifier
         .fillMaxWidth()
@@ -47,49 +48,52 @@ fun UserProfileCard(
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
       // --- Profile Image ---
-      ProfileImage(currentUser.photoUrl)
+      ProfileImage(data.photoUri)
 
       Spacer(modifier = Modifier.height(16.dp))
 
       // --- User Info ---
       Text(
-        text = currentUser.displayName ?: "",
+        text = data.displayName ?: "",
         fontSize = 22.sp,
         fontWeight = FontWeight.Bold,
       )
-      if (licenseInfo.licenseType != LicenseType.NONE) {
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-          text = stringResource(licenseInfo.licenseType.displayResId()),
-          fontSize = 16.sp,
-        )
-        if (!TextUtils.isEmpty(licenseInfo.licenseNumber)) {
+      if (data.licenceInfo != null) {
+        if (data.licenceInfo.licenseType != LicenseType.NONE) {
           Spacer(modifier = Modifier.height(4.dp))
           Text(
-            text = licenseInfo.licenseNumber,
-            fontSize = 14.sp,
+            text = stringResource(data.licenceInfo.licenseType.displayResId()),
+            fontSize = 16.sp,
           )
+          if (!TextUtils.isEmpty(data.licenceInfo.licenseNumber)) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+              text = data.licenceInfo.licenseNumber,
+              fontSize = 14.sp,
+            )
+          }
+          if (data.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+              text = data.licenceInfo.expirationDate.toLocalDate().toDisplayFormat(),
+              fontSize = 14.sp,
+            )
+          }
         }
-        if (licenseInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES) {
-          Spacer(modifier = Modifier.height(4.dp))
-          Text(
-            text = licenseInfo.expirationDate.toLocalDate().toDisplayFormat(),
-            fontSize = 14.sp,
-          )
-        }
+        Spacer(modifier = Modifier.height(20.dp))
       }
-
-      Spacer(modifier = Modifier.height(20.dp))
-
       // --- Edit Profile Button ---
-      Button(
-        onClick = onOpenEditProfile,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-      ) {
-        Text(
-          text = stringResource(R.string.edit_profile), modifier = Modifier.padding(vertical = 8.dp)
-        )
+      if (onOpenEditProfile != null) {
+        Button(
+          onClick = onOpenEditProfile,
+          modifier = Modifier.fillMaxWidth(),
+          shape = RoundedCornerShape(12.dp),
+        ) {
+          Text(
+            text = stringResource(R.string.edit_profile),
+            modifier = Modifier.padding(vertical = 8.dp)
+          )
+        }
       }
     }
   }
