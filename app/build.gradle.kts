@@ -89,7 +89,12 @@ dependencies {
   implementation(libs.androidx.compose.ui.text)
   implementation(libs.hilt.android)
   implementation(libs.firebase.auth)
-  implementation("com.google.firebase:firebase-firestore")
+  implementation(libs.firebase.firestore)
+  // Flogger API
+  implementation("com.google.flogger:flogger:0.9")
+
+  // Flogger backend for Android (uses java.util.logging)
+  implementation("com.google.flogger:flogger-system-backend:0.9")
   implementation(libs.androidx.hilt.navigation.compose)
   implementation(libs.protobuf.javalite)
   implementation(libs.protobuf.kotlin.lite)

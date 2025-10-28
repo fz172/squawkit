@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.userprofile.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.protobuf.timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.auth.AuthManager
@@ -20,11 +21,10 @@ class EditProfileViewModel @Inject constructor(
   authManager: AuthManager
 ) : ViewModel() {
 
-  // Private MutableStateFlow to hold the UI state
+  private var licenseInfoListener: ListenerRegistration? = null
+
   private val _uiState: MutableStateFlow<EditProfileUiState> =
     MutableStateFlow(authManager.getCurrentUser()?.toEditProfileUiState() ?: EditProfileUiState())
-
-  // Public immutable StateFlow for the UI to observe
   val uiState = _uiState.asStateFlow()
 
   init {
@@ -35,12 +35,13 @@ class EditProfileViewModel @Inject constructor(
   private fun loadUserData() {
     viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true) }
-      val userLicenseInfo = userProfileManager.loadLicenseInfo()
-      _uiState.update {
-        it.copy(
-          licenceInfo = userLicenseInfo.getOrElse { newUserLicenseProfile() },
-          isLoading = false
-        )
+      licenseInfoListener = userProfileManager.observeLicenseInfo { result: LicenseInfo ->
+        _uiState.update {
+          it.copy(
+            licenceInfo = result,
+            isLoading = false
+          )
+        }
       }
     }
   }
