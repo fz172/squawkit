@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.settings
 
+import android.text.TextUtils
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +24,7 @@ import dev.fanfly.wingslog.common.datetime.toLocalDate
 import dev.fanfly.wingslog.userprofile.ProfileImage
 import dev.fanfly.wingslog.userprofile.data.LicenseExpireLimit
 import dev.fanfly.wingslog.userprofile.data.LicenseInfo
+import dev.fanfly.wingslog.userprofile.data.LicenseType
 import dev.fanfly.wingslog.userprofile.data.displayResId
 
 @Composable
@@ -55,17 +57,26 @@ fun UserProfileCard(
         fontSize = 22.sp,
         fontWeight = FontWeight.Bold,
       )
-      Spacer(modifier = Modifier.height(4.dp))
-      Text(
-        text = stringResource(licenseInfo.licenseType.displayResId()),
-        fontSize = 16.sp,
-      )
-      if (licenseInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES) {
+      if (licenseInfo.licenseType != LicenseType.NONE) {
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-          text = licenseInfo.expirationDate.toLocalDate().toDisplayFormat(),
-          fontSize = 14.sp,
+          text = stringResource(licenseInfo.licenseType.displayResId()),
+          fontSize = 16.sp,
         )
+        if (!TextUtils.isEmpty(licenseInfo.licenseNumber)) {
+          Spacer(modifier = Modifier.height(4.dp))
+          Text(
+            text = licenseInfo.licenseNumber,
+            fontSize = 14.sp,
+          )
+        }
+        if (licenseInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES) {
+          Spacer(modifier = Modifier.height(4.dp))
+          Text(
+            text = licenseInfo.expirationDate.toLocalDate().toDisplayFormat(),
+            fontSize = 14.sp,
+          )
+        }
       }
 
       Spacer(modifier = Modifier.height(20.dp))
