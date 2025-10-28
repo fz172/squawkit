@@ -3,6 +3,8 @@ agp = "8.13.0"
 coilCompose = "2.7.0"
 credentials = "1.5.0"
 firebaseBom = "34.4.0"
+flogger = "0.9"
+floggerSystemBackend = "0.9"
 googleid = "1.1.1"
 hiltAndroid = "2.57.2"
 hiltCompiler = "2.57.2"
@@ -36,6 +38,8 @@ coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose"
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }
+flogger-system-backend = { module = "com.google.flogger:flogger-system-backend", version.ref = "floggerSystemBackend" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hiltCompiler" }
