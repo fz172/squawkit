@@ -16,19 +16,18 @@ import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
-import javax.inject.Provider
 import javax.inject.Singleton
 
 @Singleton
 class AuthManager @Inject internal constructor(
   @ApplicationContext private val context: Context,
-  private val authProvider: Provider<FirebaseAuth>
+  private val authProvider: FirebaseAuth
 ) {
   private val credentialManager: CredentialManager =
     CredentialManager.Companion.create(context = context)
 
   fun getCurrentUser(): FirebaseUser? {
-    return authProvider.get().currentUser
+    return authProvider.currentUser
   }
 
   /**
@@ -36,8 +35,8 @@ class AuthManager @Inject internal constructor(
    * Uses filterByAuthorizedAccounts(true) to check for existing sessions.
    */
   suspend fun trySilentLogin(): FirebaseUser? {
-    if (authProvider.get().currentUser != null) {
-      return authProvider.get().currentUser
+    if (authProvider.currentUser != null) {
+      return authProvider.currentUser
     }
     try {
       val request = GetCredentialRequest.Builder().addCredentialOption(
@@ -96,8 +95,8 @@ class AuthManager @Inject internal constructor(
     return try {
       val firebaseCredential =
         GoogleAuthProvider.getCredential(credential.idToken, null)
-      authProvider.get().signInWithCredential(firebaseCredential).await()
-      authProvider.get().currentUser
+      authProvider.signInWithCredential(firebaseCredential).await()
+      authProvider.currentUser
     } catch (e: Exception) {
       Log.e(TAG, "Firebase sign-in failed", e)
       null
@@ -107,7 +106,7 @@ class AuthManager @Inject internal constructor(
 
   suspend fun logOut() {
     try {
-      authProvider.get().signOut()
+      authProvider.signOut()
       credentialManager.clearCredentialState(ClearCredentialStateRequest())
     } catch (e: Exception) {
       Log.e(TAG, "Error logging out: " + e.message)

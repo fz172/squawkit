@@ -8,16 +8,15 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.protobuf.InvalidProtocolBufferException
 import dev.fanfly.wingslog.userprofile.data.LicenseInfo
-import dev.fanfly.wingslog.userprofile.data.licenseInfo
+import dev.fanfly.wingslog.userprofile.data.newUserLicenseProfile
 import dev.fanfly.wingslog.userprofile.manager.UserProfileManager
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
-import javax.inject.Provider
 
 
 class UserProfileManagerImpl @Inject constructor(
-  private val firebaseAuth: Provider<FirebaseAuth>,
-  private val firestore: Provider<FirebaseFirestore>,
+  private val firebaseAuth: FirebaseAuth,
+  private val firestore: FirebaseFirestore,
 ) : UserProfileManager {
 
   override suspend fun loadLicenseInfo(): Result<LicenseInfo> {
@@ -37,12 +36,12 @@ class UserProfileManagerImpl @Inject constructor(
         } catch (e: InvalidProtocolBufferException) {
           Log.e(TAG, "Failed to parse LicenseInfo proto", e)
           // Data is corrupt, return default
-          licenseInfo { }
+          newUserLicenseProfile()
         }
       } else {
         // No blob found (e.g., new user), return default
         Log.d(TAG, "No licenseInfoBlob found, returning default instance.")
-        licenseInfo { }
+        newUserLicenseProfile()
       }
 
       Log.d(TAG, "Profile loaded successfully.")
@@ -76,8 +75,8 @@ class UserProfileManagerImpl @Inject constructor(
 
 
   private fun getUserDocumentRef(): DocumentReference? {
-    val userId = firebaseAuth.get().currentUser?.uid ?: return null
-    return firestore.get().collection(USERS_COLLECTION).document(userId)
+    val userId = firebaseAuth.currentUser?.uid ?: return null
+    return firestore.collection(USERS_COLLECTION).document(userId)
   }
 
   private fun getProfileDocumentRef(): DocumentReference? =

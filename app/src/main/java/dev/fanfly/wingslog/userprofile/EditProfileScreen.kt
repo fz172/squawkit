@@ -53,8 +53,8 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.common.compose.BottomButtons
 import dev.fanfly.wingslog.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.common.toDisplayFormat
-import dev.fanfly.wingslog.common.toLocalDate
+import dev.fanfly.wingslog.common.datetime.toDisplayFormat
+import dev.fanfly.wingslog.common.datetime.toLocalDate
 import dev.fanfly.wingslog.userprofile.data.EditProfileUiState
 import dev.fanfly.wingslog.userprofile.data.EditProfileViewModel
 import dev.fanfly.wingslog.userprofile.data.LicenseExpireLimit

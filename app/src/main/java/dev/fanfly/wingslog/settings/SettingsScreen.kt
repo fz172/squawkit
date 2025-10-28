@@ -30,7 +30,7 @@ fun SettingsScreen(
 
   // This LaunchedEffect will run when 'user' state changes
   LaunchedEffect(user) {
-    if (user == null) {
+    if (!user.isLoading && user.firebaseUser == null) {
       // If user becomes null (logged out), go to login and clear all other pages
       navController.navigate("login") {
         popUpTo(navController.graph.startDestinationId) {
@@ -56,7 +56,8 @@ fun SettingsScreen(
       verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
       UserProfileCard(
-        currentUser = user,
+        currentUser = user.firebaseUser,
+        licenseInfo = user.licenseInfo,
         onOpenEditProfile = { navController.navigate("edit_profile") })
       SettingsRow(
         icon = Icons.AutoMirrored.Filled.Logout,

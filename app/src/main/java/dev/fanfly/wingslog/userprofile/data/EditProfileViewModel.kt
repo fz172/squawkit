@@ -38,7 +38,7 @@ class EditProfileViewModel @Inject constructor(
       val userLicenseInfo = userProfileManager.loadLicenseInfo()
       _uiState.update {
         it.copy(
-          licenceInfo = userLicenseInfo.getOrElse { licenseInfo { } },
+          licenceInfo = userLicenseInfo.getOrElse { newUserLicenseProfile() },
           isLoading = false
         )
       }

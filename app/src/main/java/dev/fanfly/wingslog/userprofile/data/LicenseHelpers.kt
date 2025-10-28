@@ -12,3 +12,8 @@ fun LicenseType.displayResId(): Int {
       R.string.license_type_none
   }
 }
+
+fun newUserLicenseProfile() = licenseInfo {
+  licenseType = LicenseType.NONE
+  expireLimit = LicenseExpireLimit.NEVER_EXPIRES
+}

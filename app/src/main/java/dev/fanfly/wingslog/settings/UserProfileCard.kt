@@ -18,13 +18,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseUser
 import dev.fanfly.wingslog.R
+import dev.fanfly.wingslog.common.datetime.toDisplayFormat
+import dev.fanfly.wingslog.common.datetime.toLocalDate
 import dev.fanfly.wingslog.userprofile.ProfileImage
+import dev.fanfly.wingslog.userprofile.data.LicenseExpireLimit
+import dev.fanfly.wingslog.userprofile.data.LicenseInfo
+import dev.fanfly.wingslog.userprofile.data.displayResId
 
 @Composable
-fun UserProfileCard(currentUser: FirebaseUser?, onOpenEditProfile: () -> Unit) {
+fun UserProfileCard(
+  currentUser: FirebaseUser?,
+  licenseInfo: LicenseInfo,
+  onOpenEditProfile: () -> Unit,
+) {
   Card(
     shape = RoundedCornerShape(16.dp),
-    modifier = Modifier.fillMaxWidth()
+    modifier = Modifier.fillMaxWidth(),
   ) {
     if (currentUser == null) {
       return@Card
@@ -48,14 +57,16 @@ fun UserProfileCard(currentUser: FirebaseUser?, onOpenEditProfile: () -> Unit) {
       )
       Spacer(modifier = Modifier.height(4.dp))
       Text(
-        text = "qualifications",
+        text = stringResource(licenseInfo.licenseType.displayResId()),
         fontSize = 16.sp,
       )
-      Spacer(modifier = Modifier.height(4.dp))
-      Text(
-        text = "licenseInfo",
-        fontSize = 14.sp,
-      )
+      if (licenseInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+          text = licenseInfo.expirationDate.toLocalDate().toDisplayFormat(),
+          fontSize = 14.sp,
+        )
+      }
 
       Spacer(modifier = Modifier.height(20.dp))
 
@@ -66,8 +77,7 @@ fun UserProfileCard(currentUser: FirebaseUser?, onOpenEditProfile: () -> Unit) {
         shape = RoundedCornerShape(12.dp),
       ) {
         Text(
-          text = stringResource(R.string.edit_profile),
-          modifier = Modifier.padding(vertical = 8.dp)
+          text = stringResource(R.string.edit_profile), modifier = Modifier.padding(vertical = 8.dp)
         )
       }
     }

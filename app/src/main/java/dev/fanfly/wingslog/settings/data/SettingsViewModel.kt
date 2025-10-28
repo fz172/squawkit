@@ -2,9 +2,9 @@ package dev.fanfly.wingslog.settings.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.auth.AuthManager
+import dev.fanfly.wingslog.userprofile.manager.UserProfileManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,10 +12,26 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SettingsViewModel @Inject constructor(private val authManager: AuthManager) : ViewModel() {
+class SettingsViewModel @Inject constructor(
+  private val authManager: AuthManager,
+  private val userProfileManager: UserProfileManager
+) : ViewModel() {
 
-  private val _user = MutableStateFlow(authManager.getCurrentUser())
-  val user: StateFlow<FirebaseUser?> = _user.asStateFlow()
+  private val _user = MutableStateFlow(SettingsUiState())
+  val user: StateFlow<SettingsUiState> = _user.asStateFlow()
+
+  init {
+    viewModelScope.launch {
+      val result = userProfileManager.loadLicenseInfo()
+      if (result.isSuccess) {
+        _user.value = SettingsUiState(
+          firebaseUser = authManager.getCurrentUser(),
+          licenseInfo = result.getOrThrow(),
+          isLoading = false
+        )
+      }
+    }
+  }
 
   /**
    * Logs the user out of Firebase and clears any saved credentials
@@ -27,7 +43,7 @@ class SettingsViewModel @Inject constructor(private val authManager: AuthManager
       // Sign out of Firebase
       authManager.logOut()
       // Update the UI state to reflect no user is logged in
-      _user.value = null
+      _user.value = SettingsUiState()
     }
   }
 }
