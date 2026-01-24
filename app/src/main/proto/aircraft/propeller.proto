@@ -1,0 +1,25 @@
+syntax = "proto3";
+import "userprofile/data/license_type.proto";
+import "google/protobuf/timestamp.proto";
+
+
+option java_package = "dev.fanfly.wingslog.aircraft";
+option java_multiple_files = true;
+
+message Propeller {
+  PropellerHub hub = 1;
+  repeated PropellerBlade blades = 2;
+}
+
+message PropellerHub {
+  string make = 1;
+  string model = 2;
+  string serial = 3;
+}
+
+
+message PropellerBlade {
+  string make = 1;
+  string model = 2;
+  string serial = 3;
+}

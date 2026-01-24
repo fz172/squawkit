@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+import "aircraft/engine.proto";
+
+option java_package = "dev.fanfly.wingslog.aircraft";
+option java_multiple_files = true;
+
+message Aircraft {
+
+  string make = 1;
+  string model = 2;
+  string serial = 3;
+
+  repeated Engine engine = 4;
+}
