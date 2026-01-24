@@ -8,6 +8,10 @@ plugins {
   id("com.google.protobuf")
 }
 
+kotlin {
+  jvmToolchain(11)
+}
+
 android {
   namespace = "dev.fanfly.wingslog"
   compileSdk {
@@ -39,9 +43,9 @@ android {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
-  kotlinOptions {
-    jvmTarget = "11"
-  }
+//  kotlinOptions {
+//    jvmTarget = "11"
+//  }
   buildFeatures {
     compose = true
   }
