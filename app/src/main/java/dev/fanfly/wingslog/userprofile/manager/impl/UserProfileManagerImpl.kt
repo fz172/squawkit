@@ -8,6 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.google.protobuf.InvalidProtocolBufferException
+import dev.fanfly.wingslog.dev.fanfly.wingslog.common.database.getUserDocumentRef
 import dev.fanfly.wingslog.userprofile.data.LicenseInfo
 import dev.fanfly.wingslog.userprofile.data.newUserLicenseProfile
 import dev.fanfly.wingslog.userprofile.manager.UserProfileManager
@@ -79,20 +80,14 @@ class UserProfileManagerImpl @Inject constructor(
     }
   }
 
-
-  private fun getUserDocumentRef(): DocumentReference? {
-    val userId = firebaseAuth.currentUser?.uid ?: return null
-    return firestore.collection(USERS_COLLECTION).document(userId)
-  }
-
   private fun getProfileDocumentRef(): DocumentReference? =
-    getUserDocumentRef()?.collection(PROFILE_COLLECTION)?.document(LICENSE_INFO_DOCUMENT)
+    firestore.getUserDocumentRef(firebaseAuth)?.collection(PROFILE_COLLECTION)
+      ?.document(LICENSE_INFO_DOCUMENT)
 
 
   companion object {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
-    private const val USERS_COLLECTION = "users"
     private const val PROFILE_COLLECTION = "profile"
     private const val LICENSE_INFO_DOCUMENT = "license_info"
     private const val LICENSE_INFO_BLOB = "license_info_blob"

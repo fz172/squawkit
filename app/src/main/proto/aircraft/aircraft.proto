@@ -6,10 +6,12 @@ option java_package = "dev.fanfly.wingslog.aircraft";
 option java_multiple_files = true;
 
 message Aircraft {
+  string id = 1;
 
-  string make = 1;
-  string model = 2;
-  string serial = 3;
+  string make = 2;
+  string model = 3;
+  string serial = 4;
+  string tail_number = 5;
 
-  repeated Engine engine = 4;
+  repeated Engine engine = 6;
 }

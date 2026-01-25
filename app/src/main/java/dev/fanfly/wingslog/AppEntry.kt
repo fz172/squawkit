@@ -4,10 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import dev.fanfly.wingslog.dashboard.DashboardScreen
-import dev.fanfly.wingslog.userprofile.EditProfileScreen
+import dev.fanfly.wingslog.fleet.DashboardScreen
 import dev.fanfly.wingslog.login.LoginScreen
 import dev.fanfly.wingslog.settings.SettingsScreen
+import dev.fanfly.wingslog.userprofile.EditProfileScreen
 
 @Composable
 fun AppEntry() {

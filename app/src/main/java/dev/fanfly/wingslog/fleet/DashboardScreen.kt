@@ -1,13 +1,15 @@
-package dev.fanfly.wingslog.dashboard
+package dev.fanfly.wingslog.fleet
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,11 +24,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.R
+import dev.fanfly.wingslog.fleet.data.FleetDashboardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(onOpenSettings: () -> Unit) {
+fun DashboardScreen(
+  viewModel: FleetDashboardViewModel = hiltViewModel(),
+  onOpenSettings: () -> Unit
+) {
+  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
   var menuExpanded by remember { mutableStateOf(false) }
 
   Scaffold(
@@ -54,14 +64,32 @@ fun DashboardScreen(onOpenSettings: () -> Unit) {
           }
         }
       )
+    },
+    floatingActionButton = {
+      // Extended FAB allows for both an icon and text
+      ExtendedFloatingActionButton(
+        onClick = { /* Handle Manage Fleet action */ },
+        icon = { Icon(Icons.Default.Build, contentDescription = null) },
+        text = { Text(stringResource(R.string.manage_fleet)) },
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+      )
     }
   ) { innerPadding ->
     Box(
       modifier = Modifier
         .fillMaxSize()
-        .padding(innerPadding), contentAlignment = Alignment.Center
+        .padding(innerPadding),
+      contentAlignment = Alignment.Center
     ) {
-      Text("Hello World – You’re Logged In!", style = MaterialTheme.typography.headlineMedium)
+      // Only show the text if isLoading is false
+      if (uiState.isLoading) {
+        Text("Loading", style = MaterialTheme.typography.headlineMedium)
+      } else if (uiState.fleet.isEmpty()) {
+        Text("No Fleet", style = MaterialTheme.typography.headlineMedium)
+      } else {
+        Text("Test", style = MaterialTheme.typography.headlineMedium)
+      }
     }
   }
 }
