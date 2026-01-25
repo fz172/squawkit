@@ -20,7 +20,7 @@ class FleetDashboardManagerImpl @Inject internal constructor(
   private val firestore: FirebaseFirestore,
 ) : FleetDashboardManager {
 
-  override fun observeFleetDashboard(licenseInfoListener: (List<Aircraft>) -> Unit): ListenerRegistration? {
+  override fun observeFleetDashboard(fleetListener: (List<Aircraft>) -> Unit): ListenerRegistration? {
     val fleetDocumentRef = getFleetRef() ?: return null
 
     val listener = fleetDocumentRef.addSnapshotListener { snapshot, e ->
@@ -30,9 +30,11 @@ class FleetDashboardManagerImpl @Inject internal constructor(
       }
       if (snapshot == null || snapshot.isEmpty) {
         logger.atWarning().withCause(e).log("No fleet data, returning empty")
-        listOf<Aircraft>()
+        fleetListener.invoke(listOf())
+        return@addSnapshotListener
+
       }
-      val fleet = snapshot?.documents ?: return@addSnapshotListener
+      val fleet = snapshot.documents
       val result = mutableListOf<Aircraft>()
       for (aircraft in fleet) {
         // 1. Extract the Blob from the document
@@ -43,8 +45,9 @@ class FleetDashboardManagerImpl @Inject internal constructor(
           // Now you have your typed object back!
           logger.atInfo().log("Recovered Aircraft: %s - %s", aircraft.tailNumber, aircraft.model)
         }
-        result
       }
+      fleetListener.invoke(result)
+      return@addSnapshotListener
     }
 
     return listener

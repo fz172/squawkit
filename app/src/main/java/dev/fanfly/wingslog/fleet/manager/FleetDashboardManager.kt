@@ -7,7 +7,7 @@ interface FleetDashboardManager {
   /**
    * Loads the current user's aircraft from the data source.
    */
-  fun observeFleetDashboard(licenseInfoListener: (result: List<Aircraft>) -> Unit): ListenerRegistration?
+  fun observeFleetDashboard(fleetListener: (result: List<Aircraft>) -> Unit): ListenerRegistration?
 
   suspend fun updateAircraft(aircraft: Aircraft): Result<Boolean>
 }
