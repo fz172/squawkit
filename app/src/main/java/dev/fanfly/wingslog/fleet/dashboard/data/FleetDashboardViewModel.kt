@@ -1,11 +1,11 @@
-package dev.fanfly.wingslog.fleet.data
+package dev.fanfly.wingslog.fleet.dashboard.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.fleet.manager.FleetDashboardManager
+import dev.fanfly.wingslog.fleet.dashboard.manager.FleetDashboardManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -41,5 +41,4 @@ class FleetDashboardViewModel @Inject constructor(private val fleetDashboardMana
       }
     }
   }
-
 }

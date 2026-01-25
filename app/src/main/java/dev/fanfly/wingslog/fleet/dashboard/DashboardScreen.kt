@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.fleet
+package dev.fanfly.wingslog.fleet.dashboard
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,13 +27,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.R
-import dev.fanfly.wingslog.fleet.data.FleetDashboardViewModel
+import dev.fanfly.wingslog.fleet.dashboard.data.FleetDashboardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
   viewModel: FleetDashboardViewModel = hiltViewModel(),
-  onOpenSettings: () -> Unit
+  onOpenSettings: () -> Unit,
+  onClickFab: () -> Unit
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -68,7 +69,7 @@ fun DashboardScreen(
     floatingActionButton = {
       // Extended FAB allows for both an icon and text
       ExtendedFloatingActionButton(
-        onClick = { /* Handle Manage Fleet action */ },
+        onClick = { onClickFab() },
         icon = { Icon(Icons.Default.Build, contentDescription = null) },
         text = { Text(stringResource(R.string.manage_fleet)) },
         containerColor = MaterialTheme.colorScheme.primaryContainer,

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.fleet.manager
+package dev.fanfly.wingslog.fleet.dashboard.manager
 
 import com.google.firebase.firestore.ListenerRegistration
 import dev.fanfly.wingslog.aircraft.Aircraft

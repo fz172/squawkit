@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.fleet.manager.impl
+package dev.fanfly.wingslog.fleet.dashboard.manager.impl
 
 import com.google.common.flogger.FluentLogger
 import com.google.firebase.auth.FirebaseAuth
@@ -11,7 +11,7 @@ import com.google.firebase.firestore.SetOptions
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.copy
 import dev.fanfly.wingslog.dev.fanfly.wingslog.common.database.getUserDocumentRef
-import dev.fanfly.wingslog.fleet.manager.FleetDashboardManager
+import dev.fanfly.wingslog.fleet.dashboard.manager.FleetDashboardManager
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 

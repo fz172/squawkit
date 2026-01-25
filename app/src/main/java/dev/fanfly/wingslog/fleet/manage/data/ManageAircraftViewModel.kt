@@ -1,0 +1,16 @@
+package dev.fanfly.wingslog.dev.fanfly.wingslog.fleet.manage.data
+
+import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
+
+@HiltViewModel
+class ManageAircraftViewModel @Inject constructor() : ViewModel() {
+
+  private val _uiState: MutableStateFlow<ManageAircraftUiState> =
+    MutableStateFlow(ManageAircraftUiState())
+  val uiState = _uiState.asStateFlow()
+
+}

@@ -7,6 +7,8 @@
     <string name="settings">Settings</string>
     <string name="back">Back</string>
     <string name="edit_profile">Edit Profile</string>
+    <string name="add_aircraft">Add Aircraft</string>
+    <string name="update_aircraft">Update Aircraft</string>
     <string name="cancel">Cancel</string>
     <string name="profile_picture">Profile Picture</string>
     <string name="license_type">License Type</string>
