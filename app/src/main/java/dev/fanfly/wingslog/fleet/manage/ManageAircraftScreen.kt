@@ -41,7 +41,7 @@ fun ManageAircraftScreen(
   }
 
   // This effect will run when isSaved becomes true
-  LaunchedEffect(aircraft) {
+  LaunchedEffect(uiState.isSaved) {
     if (uiState.isSaved) {
       // Navigate back when save is successful
       navController.popBackStack()
@@ -58,7 +58,7 @@ fun ManageAircraftScreen(
     BottomButtons(
       saveEnabled = !uiState.isLoading,
       onSaveClick = {
-        // TODO
+        viewModel.saveAircraft()
       }, // Call ViewModel to save
       onCancelClick = { navController.popBackStack() })
   }) { innerPadding ->
@@ -89,7 +89,7 @@ fun ManageAircraftScreen(
         shape = RoundedCornerShape(12.dp),
         enabled = uiState.aircraft.id == ""
       )
-      // --- Model Number ---
+      // --- Serial Number ---
       OutlinedTextField(
         value = uiState.aircraft.serial, // Read from ViewModel
         onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel

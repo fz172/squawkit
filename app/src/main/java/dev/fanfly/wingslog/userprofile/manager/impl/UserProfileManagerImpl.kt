@@ -8,7 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.google.protobuf.InvalidProtocolBufferException
-import dev.fanfly.wingslog.dev.fanfly.wingslog.common.database.getUserDocumentRef
+import dev.fanfly.wingslog.common.database.getUserDocumentRef
 import dev.fanfly.wingslog.userprofile.data.LicenseInfo
 import dev.fanfly.wingslog.userprofile.data.newUserLicenseProfile
 import dev.fanfly.wingslog.userprofile.manager.UserProfileManager
