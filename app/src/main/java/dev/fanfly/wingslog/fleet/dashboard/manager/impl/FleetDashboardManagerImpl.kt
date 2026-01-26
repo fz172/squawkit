@@ -6,6 +6,7 @@ import com.google.firebase.firestore.Blob
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.common.database.AIRCRAFT_INFO_BLOB
 import dev.fanfly.wingslog.common.database.getFleetCollectionRef
 import dev.fanfly.wingslog.fleet.dashboard.manager.FleetDashboardManager
 import javax.inject.Inject
@@ -33,7 +34,9 @@ class FleetDashboardManagerImpl @Inject internal constructor(
       val result = mutableListOf<Aircraft>()
       for (aircraft in fleet) {
         // 1. Extract the Blob from the document
-        val blob = aircraft.get("data") as? Blob
+        val blob = aircraft.get(
+          AIRCRAFT_INFO_BLOB
+        ) as? Blob
         if (blob != null) {
           val aircraft = Aircraft.parseFrom(blob.toBytes())
           result += aircraft
