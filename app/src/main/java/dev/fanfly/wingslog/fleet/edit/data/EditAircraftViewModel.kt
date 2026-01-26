@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.fleet.manage.data
+package dev.fanfly.wingslog.fleet.edit.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,11 +13,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ManageAircraftViewModel @Inject constructor(private val aircraftManager: AircraftManager) :
+class EditAircraftViewModel @Inject constructor(private val aircraftManager: AircraftManager) :
   ViewModel() {
 
-  private val _uiState: MutableStateFlow<ManageAircraftUiState> =
-    MutableStateFlow(ManageAircraftUiState())
+  private val _uiState: MutableStateFlow<EditAircraftUiState> =
+    MutableStateFlow(EditAircraftUiState())
   val uiState = _uiState.asStateFlow()
 
   fun loadAircraft(aircraft: Aircraft) {
@@ -35,15 +35,19 @@ class ManageAircraftViewModel @Inject constructor(private val aircraftManager: A
     }
   }
 
-  fun onMakeChanged(newMake: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy { make = newMake }) }
+  fun onMakeChanged(newValue: String) {
+    _uiState.update { it.copy(aircraft = it.aircraft.copy { make = newValue }) }
   }
 
-  fun onModelChanged(newModel: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy { model = newModel }) }
+  fun onModelChanged(newValue: String) {
+    _uiState.update { it.copy(aircraft = it.aircraft.copy { model = newValue }) }
   }
 
-  fun onSerialChanged(newSerial: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy { serial = newSerial }) }
+  fun onSerialChanged(newValue: String) {
+    _uiState.update { it.copy(aircraft = it.aircraft.copy { serial = newValue }) }
+  }
+
+  fun onTailNumberChanged(newValue: String) {
+    _uiState.update { it.copy(aircraft = it.aircraft.copy { tailNumber = newValue }) }
   }
 }

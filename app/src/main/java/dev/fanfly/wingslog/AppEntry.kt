@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import dev.fanfly.wingslog.fleet.manage.ManageAircraftScreen
+import dev.fanfly.wingslog.fleet.edit.ManageAircraftScreen
 import dev.fanfly.wingslog.fleet.dashboard.DashboardScreen
 import dev.fanfly.wingslog.login.LoginScreen
 import dev.fanfly.wingslog.settings.SettingsScreen

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.fleet.manage
+package dev.fanfly.wingslog.fleet.edit
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,12 +23,12 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.aircraft
 import dev.fanfly.wingslog.common.compose.BottomButtons
 import dev.fanfly.wingslog.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.fleet.manage.data.ManageAircraftViewModel
+import dev.fanfly.wingslog.fleet.edit.data.EditAircraftViewModel
 
 
 @Composable
 fun ManageAircraftScreen(
-  viewModel: ManageAircraftViewModel = hiltViewModel(),
+  viewModel: EditAircraftViewModel = hiltViewModel(),
   aircraft: Aircraft = aircraft {},
   navController: NavController
 ) {
@@ -92,6 +92,16 @@ fun ManageAircraftScreen(
       // --- Serial Number ---
       OutlinedTextField(
         value = uiState.aircraft.serial, // Read from ViewModel
+        onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel
+        label = { Text(stringResource(R.string.aircraft_serial)) },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        shape = RoundedCornerShape(12.dp),
+        enabled = uiState.aircraft.id == ""
+      )
+      // --- Tail Number ---
+      OutlinedTextField(
+        value = uiState.aircraft.tailNumber, // Read from ViewModel
         onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel
         label = { Text(stringResource(R.string.aircraft_serial)) },
         modifier = Modifier.fillMaxWidth(),
