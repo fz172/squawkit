@@ -24,5 +24,12 @@
     <string name="aircraft_make">Make</string>
     <string name="aircraft_model">Model</string>
     <string name="aircraft_serial">Serial Number</string>
+    <string name="serial_abbreviation">S/N: %1$s</string>
+    <string name="make_model_template">%1$s %2$s</string>
+    <string name="engine_with_index">Engine %1$d</string>
+    <string name="engine">Engine</string>
+    <string name="tail_number">Tail: %1$s</string>
+
+    <string name="propeller">Propeller</string>
 
 </resources>

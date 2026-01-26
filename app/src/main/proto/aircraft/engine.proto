@@ -13,5 +13,5 @@ message Engine {
   string model = 2;
   string serial = 3;
 
-  Propeller hub = 4;
+  Propeller propeller = 4;
 }

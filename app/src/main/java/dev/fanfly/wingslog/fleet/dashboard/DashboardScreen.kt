@@ -1,8 +1,11 @@
 package dev.fanfly.wingslog.fleet.dashboard
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.MoreVert
@@ -24,9 +27,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.R
+import dev.fanfly.wingslog.fleet.dashboard.compose.AircraftDashboardCard
 import dev.fanfly.wingslog.fleet.dashboard.data.FleetDashboardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,7 +94,16 @@ fun DashboardScreen(
       } else if (uiState.fleet.isEmpty()) {
         Text("No Fleet", style = MaterialTheme.typography.headlineMedium)
       } else {
-        Text("Test", style = MaterialTheme.typography.headlineMedium)
+        LazyColumn(
+          modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+          verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+          items(uiState.fleet, key = { it.id }) { aircraft ->
+            AircraftDashboardCard(aircraft)
+          }
+        }
       }
     }
   }
