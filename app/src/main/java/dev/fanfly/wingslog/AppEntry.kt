@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import dev.fanfly.wingslog.fleet.edit.ManageAircraftScreen
 import dev.fanfly.wingslog.fleet.dashboard.DashboardScreen
+import dev.fanfly.wingslog.fleet.edit.EditAircraftScreen
 import dev.fanfly.wingslog.login.LoginScreen
 import dev.fanfly.wingslog.settings.SettingsScreen
 import dev.fanfly.wingslog.userprofile.EditProfileScreen
@@ -37,7 +37,7 @@ fun AppEntry() {
     }
 
     composable("add_aircraft") {
-      ManageAircraftScreen(navController = navController)
+      EditAircraftScreen(navController = navController)
     }
   }
 }

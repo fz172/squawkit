@@ -21,15 +21,25 @@
     <string name="license_type_repairman">Repairman</string>
     <string name="manage_fleet">Manage fleet</string>
 
-    <string name="aircraft_make">Make</string>
-    <string name="aircraft_model">Model</string>
-    <string name="aircraft_serial">Serial Number</string>
+    <string name="make">Make</string>
+    <string name="model">Model</string>
+    <string name="serial">Serial Number</string>
+    <string name="tail_number">Tail Number</string>
+    <string name="engine">Engine</string>
+    <string name="engine_with_index">Engine %1$d</string>
+
     <string name="serial_abbreviation">S/N: %1$s</string>
     <string name="make_model_template">%1$s %2$s</string>
-    <string name="engine_with_index">Engine %1$d</string>
-    <string name="engine">Engine</string>
-    <string name="tail_number">Tail: %1$s</string>
+    <string name="tail_number_display_template">Tail: %1$s</string>
 
     <string name="propeller">Propeller</string>
+    <string name="propeller_hub">Propeller Hub</string>
+
+    <string name="airframe">Airframe</string>
+    <string name="powerplant">Powerplant</string>
+    <string name="blade_serial_numbers">Blade Serial numbers</string>
+    <string name="blade">Blade</string>
+    <string name="add_engine">Add Engine</string>
+    <string name="add_blade">Add blade</string>
 
 </resources>

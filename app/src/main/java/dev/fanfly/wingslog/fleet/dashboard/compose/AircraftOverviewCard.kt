@@ -85,7 +85,7 @@ fun AircraftDashboardCard(aircraft: Aircraft, modifier: Modifier = Modifier) {
           )
           Spacer(Modifier.width(4.dp))
           Text(
-            text = stringResource(R.string.tail_number, aircraft.tailNumber),
+            text = stringResource(R.string.tail_number_display_template, aircraft.tailNumber),
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
