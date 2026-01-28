@@ -111,4 +111,52 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
       })
     }
   }
+
+  fun onAddBlade(engineIndex: Int) {
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        engine[engineIndex] = engine[engineIndex].copy {
+          propeller = propeller.copy {
+            blades += dev.fanfly.wingslog.aircraft.propellerBlade { }
+          }
+        }
+      })
+    }
+  }
+
+  fun onAddEngine() {
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        engine += dev.fanfly.wingslog.aircraft.engine {
+          propeller = dev.fanfly.wingslog.aircraft.propeller {
+            blades += dev.fanfly.wingslog.aircraft.propellerBlade { }
+          }
+        }
+      })
+    }
+  }
+
+  fun onRemoveEngine(engineIndex: Int) {
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        val keptEngines = engine.toList().filterIndexed { index, _ -> index != engineIndex }
+        engine.clear()
+        engine.addAll(keptEngines)
+      })
+    }
+  }
+
+  fun onRemoveBlade(engineIndex: Int, bladeIndex: Int) {
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        engine[engineIndex] = engine[engineIndex].copy {
+          propeller = propeller.copy {
+            val keptBlades = blades.toList().filterIndexed { index, _ -> index != bladeIndex }
+            blades.clear()
+            blades.addAll(keptBlades)
+          }
+        }
+      })
+    }
+  }
 }

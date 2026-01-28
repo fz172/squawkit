@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.fleet.edit
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,12 +14,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -64,18 +70,7 @@ fun EditAircraftScreen(
 
   LaunchedEffect(aircraft) {
     if (uiState.isLoading) {
-      val initialAircraft = if (aircraft.engineCount == 0) {
-        aircraft.copy {
-          engine += engine {
-            propeller = propeller {
-              blades += propellerBlade { }
-            }
-          }
-        }
-      } else {
-        aircraft
-      }
-      viewModel.loadAircraft(initialAircraft)
+      viewModel.loadAircraft(aircraft)
     }
   }
 
@@ -95,7 +90,7 @@ fun EditAircraftScreen(
   }, bottomBar = {
     // This composable holds the buttons pinned to the bottom
     BottomButtons(
-      saveEnabled = !uiState.isLoading, onSaveClick = {
+      saveEnabled = !uiState.isLoading && uiState.isValid, onSaveClick = {
         viewModel.saveAircraft()
       }, // Call ViewModel to save
       onCancelClick = { navController.popBackStack() })
@@ -120,7 +115,6 @@ fun EditAircraftScreen(
       )
       uiState.aircraft.engineList.forEachIndexed { index, engine ->
         EngineSection(
-          engineNumber = index + 1,
           engineIndex = index,
           engine = engine,
           viewModel = viewModel
@@ -133,7 +127,7 @@ fun EditAircraftScreen(
         ),
         modifier = Modifier
           .fillMaxWidth(),
-        onClick = { }
+        onClick = { viewModel.onAddEngine() }
       )
 
       Spacer(modifier = Modifier.height(32.dp))
@@ -185,7 +179,6 @@ fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel) {
 
 @Composable
 fun EngineSection(
-  engineNumber: Int,
   engineIndex: Int,
   engine: Engine,
   viewModel: EditAircraftViewModel
@@ -195,16 +188,31 @@ fun EngineSection(
   ) {
 
     Column(modifier = Modifier.padding(12.dp)) {
-      Text(
-        stringResource(R.string.engine_with_index, engineNumber),
-        color = MaterialTheme.colorScheme.onPrimaryContainer
-      )
+      Box(modifier = Modifier.fillMaxWidth()) {
+        Text(
+          stringResource(R.string.engine_with_index, engineIndex + 1),
+          color = MaterialTheme.colorScheme.onPrimaryContainer,
+          modifier = Modifier.align(Alignment.CenterStart)
+        )
+        IconButton(
+          onClick = { viewModel.onRemoveEngine(engineIndex) },
+          modifier = Modifier
+            .align(Alignment.CenterEnd)
+            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+        ) {
+          Icon(
+            Icons.Default.Close,
+            contentDescription = "Remove Engine",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+        }
+      }
 
       InputField(label = stringResource(R.string.make), value = engine.make) {
         viewModel.onEngineMakeChanged(engineIndex, it)
       }
 
-      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      Row( horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         InputField(
           label = stringResource(R.string.model),
           value = engine.model,
@@ -224,7 +232,7 @@ fun EngineSection(
       // Propeller Section
       Text(stringResource(R.string.propeller_hub), style = MaterialTheme.typography.labelSmall)
       val hub = engine.propeller.hub
-      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      Row( horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         InputField(
           label = stringResource(R.string.make),
           value = hub.make,
@@ -251,7 +259,12 @@ fun EngineSection(
             InputField(
               label = stringResource(R.string.blade),
               value = blade.serial,
-              modifier = Modifier.weight(1f)
+              modifier = Modifier.weight(1f),
+              trailingIcon = {
+                IconButton(onClick = { viewModel.onRemoveBlade(engineIndex, bladeIndex) }) {
+                  Icon(Icons.Default.Close, contentDescription = "Remove Blade")
+                }
+              }
             ) {
               viewModel.onPropellerBladeSerialChanged(engineIndex, bladeIndex, it)
             }
@@ -267,7 +280,7 @@ fun EngineSection(
             .weight(1f)
             .padding(vertical = 8.dp),
 
-          onClick = { }
+          onClick = { viewModel.onAddBlade(engineIndex) }
         )
         Spacer(Modifier.weight(1f))
       }
@@ -281,6 +294,7 @@ fun InputField(
   value: String,
   modifier: Modifier = Modifier,
   enabled: Boolean = true,
+  trailingIcon: @Composable (() -> Unit)? = null,
   onValueChange: (String) -> Unit
 ) = OutlinedTextField(
   value = value,
@@ -289,7 +303,8 @@ fun InputField(
   modifier = modifier.padding(vertical = 4.dp),
   singleLine = true,
   shape = RoundedCornerShape(12.dp),
-  enabled = enabled
+  enabled = enabled,
+  trailingIcon = trailingIcon
 )
 
 @Composable
