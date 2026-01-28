@@ -224,8 +224,21 @@ fun EngineSection(
       // Propeller Section
       Text(stringResource(R.string.propeller_hub), style = MaterialTheme.typography.labelSmall)
       val hub = engine.propeller.hub
-      InputField(label = stringResource(R.string.make), value = hub.make) {
-        viewModel.onPropellerHubMakeChanged(engineIndex, it)
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        InputField(
+          label = stringResource(R.string.make),
+          value = hub.make,
+          modifier = Modifier.weight(1f)
+        ) {
+          viewModel.onPropellerHubMakeChanged(engineIndex, it)
+        }
+        InputField(
+          label = stringResource(R.string.model),
+          value = hub.model,
+          modifier = Modifier.weight(1f)
+        ) {
+          viewModel.onPropellerHubModelChanged(engineIndex, it)
+        }
       }
 
       // Blade Serial Numbers - Dynamic List

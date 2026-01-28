@@ -87,6 +87,18 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
     }
   }
 
+  fun onPropellerHubModelChanged(engineIndex: Int, newValue: String) {
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        engine[engineIndex] = engine[engineIndex].copy {
+          propeller = propeller.copy {
+            hub = hub.copy { model = newValue }
+          }
+        }
+      })
+    }
+  }
+
   fun onPropellerBladeSerialChanged(engineIndex: Int, bladeIndex: Int, newValue: String) {
     _uiState.update {
       it.copy(aircraft = it.aircraft.copy {
