@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,13 +65,12 @@ fun LoginScreen(
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
       Icon(
-        imageVector = Icons.Default.Flight, contentDescription = stringResource(
-          R.string.app_name
-        ), modifier = Modifier.size(64.dp)
+        painter = painterResource(id = R.mipmap.ic_launcher_foreground),
+        contentDescription = stringResource(R.string.app_name),
+        modifier = Modifier.size(256.dp),
+        tint = Color.Unspecified
       )
-      Spacer(
-        Modifier.height(20.dp)
-      )
+
       Text(
         stringResource(
           R.string.app_name

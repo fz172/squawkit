@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.fleet.edit
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,10 +48,6 @@ import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.aircraft
-import dev.fanfly.wingslog.aircraft.copy
-import dev.fanfly.wingslog.aircraft.engine
-import dev.fanfly.wingslog.aircraft.propeller
-import dev.fanfly.wingslog.aircraft.propellerBlade
 import dev.fanfly.wingslog.common.compose.BottomButtons
 import dev.fanfly.wingslog.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.fleet.edit.data.EditAircraftViewModel
