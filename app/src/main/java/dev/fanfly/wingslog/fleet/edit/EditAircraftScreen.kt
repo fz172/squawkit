@@ -120,11 +120,11 @@ fun EditAircraftScreen(
       )
       uiState.aircraft.engineList.forEachIndexed { index, engine ->
         EngineSection(
-          engineNumber = index + 1, engine = engine, onEngineChange = { updatedEngine ->
-            val newEngines = uiState.aircraft.engineList.toMutableList()
-            newEngines[index] = updatedEngine
-            // Update aircraft state logic here
-          })
+          engineNumber = index + 1,
+          engineIndex = index,
+          engine = engine,
+          viewModel = viewModel
+        )
       }
 
       DashedButton(
@@ -173,7 +173,7 @@ fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel) {
         // --- Tail Number ---
         InputField(
           value = aircraft.tailNumber, // Read from ViewModel
-          onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel
+          onValueChange = { viewModel.onTailNumberChanged(it) }, // Update ViewModel
           label = stringResource(R.string.tail_number),
           modifier = Modifier.weight(1f), // Takes up 50%
           enabled = aircraft.id == ""
@@ -184,7 +184,12 @@ fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel) {
 }
 
 @Composable
-fun EngineSection(engineNumber: Int, engine: Engine, onEngineChange: (Engine) -> Unit) {
+fun EngineSection(
+  engineNumber: Int,
+  engineIndex: Int,
+  engine: Engine,
+  viewModel: EditAircraftViewModel
+) {
   Card(
     modifier = Modifier.padding(vertical = 8.dp)
   ) {
@@ -196,7 +201,7 @@ fun EngineSection(engineNumber: Int, engine: Engine, onEngineChange: (Engine) ->
       )
 
       InputField(label = stringResource(R.string.make), value = engine.make) {
-        onEngineChange(engine.copy { make = it })
+        viewModel.onEngineMakeChanged(engineIndex, it)
       }
 
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -205,34 +210,38 @@ fun EngineSection(engineNumber: Int, engine: Engine, onEngineChange: (Engine) ->
           value = engine.model,
           modifier = Modifier.weight(1f)
         ) {
-          onEngineChange(engine.toBuilder().setModel(it).build())
+          viewModel.onEngineModelChanged(engineIndex, it)
         }
         InputField(
           label = stringResource(R.string.serial),
           value = engine.serial,
           modifier = Modifier.weight(1f)
         ) {
-          onEngineChange(engine.toBuilder().setSerial(it).build())
+          viewModel.onEngineSerialChanged(engineIndex, it)
         }
       }
 
       // Propeller Section
       Text(stringResource(R.string.propeller_hub), style = MaterialTheme.typography.labelSmall)
       val hub = engine.propeller.hub
-      InputField(label = stringResource(R.string.make), value = hub.make) { /* Update Hub Logic */ }
+      InputField(label = stringResource(R.string.make), value = hub.make) {
+        viewModel.onPropellerHubMakeChanged(engineIndex, it)
+      }
 
       // Blade Serial Numbers - Dynamic List
       Text(stringResource(R.string.blade_serial_numbers))
       val blades = engine.propeller.bladesList
       // Chunked(2) allows us to create rows of 2 for that 50/50 look
-      blades.chunked(2).forEach { pair ->
+      blades.withIndex().chunked(2).forEach { pair ->
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-          pair.forEach { blade ->
+          pair.forEach { (bladeIndex, blade) ->
             InputField(
               label = stringResource(R.string.blade),
               value = blade.serial,
               modifier = Modifier.weight(1f)
-            ) { }
+            ) {
+              viewModel.onPropellerBladeSerialChanged(engineIndex, bladeIndex, it)
+            }
           }
           if (pair.size == 1) Spacer(Modifier.weight(1f))
         }
@@ -240,7 +249,7 @@ fun EngineSection(engineNumber: Int, engine: Engine, onEngineChange: (Engine) ->
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         DashedButton(
           label =
-            stringResource(R.string.add_blade),
+          stringResource(R.string.add_blade),
           modifier = Modifier
             .weight(1f)
             .padding(vertical = 8.dp),

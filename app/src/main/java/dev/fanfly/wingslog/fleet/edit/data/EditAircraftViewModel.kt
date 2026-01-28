@@ -50,4 +50,52 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
   fun onTailNumberChanged(newValue: String) {
     _uiState.update { it.copy(aircraft = it.aircraft.copy { tailNumber = newValue }) }
   }
+
+  fun onEngineMakeChanged(engineIndex: Int, newValue: String) {
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        engine[engineIndex] = engine[engineIndex].copy { make = newValue }
+      })
+    }
+  }
+
+  fun onEngineModelChanged(engineIndex: Int, newValue: String) {
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        engine[engineIndex] = engine[engineIndex].copy { model = newValue }
+      })
+    }
+  }
+
+  fun onEngineSerialChanged(engineIndex: Int, newValue: String) {
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        engine[engineIndex] = engine[engineIndex].copy { serial = newValue }
+      })
+    }
+  }
+
+  fun onPropellerHubMakeChanged(engineIndex: Int, newValue: String) {
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        engine[engineIndex] = engine[engineIndex].copy {
+          propeller = propeller.copy {
+            hub = hub.copy { make = newValue }
+          }
+        }
+      })
+    }
+  }
+
+  fun onPropellerBladeSerialChanged(engineIndex: Int, bladeIndex: Int, newValue: String) {
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        engine[engineIndex] = engine[engineIndex].copy {
+          propeller = propeller.copy {
+            blades[bladeIndex] = blades[bladeIndex].copy { serial = newValue }
+          }
+        }
+      })
+    }
+  }
 }
