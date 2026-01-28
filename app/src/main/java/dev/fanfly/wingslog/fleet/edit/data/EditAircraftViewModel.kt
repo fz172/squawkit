@@ -99,6 +99,7 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
     }
   }
 
+
   fun onPropellerBladeSerialChanged(engineIndex: Int, bladeIndex: Int, newValue: String) {
     _uiState.update {
       it.copy(aircraft = it.aircraft.copy {
