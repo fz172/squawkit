@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.fleet.edit.data
+package dev.fanfly.wingslog.aircraft.edit.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -1,7 +1,5 @@
-package dev.fanfly.wingslog.fleet.edit
+package dev.fanfly.wingslog.aircraft.edit
 
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,12 +10,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -42,6 +41,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -51,9 +51,9 @@ import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.aircraft
+import dev.fanfly.wingslog.aircraft.edit.data.EditAircraftViewModel
 import dev.fanfly.wingslog.common.compose.BottomButtons
 import dev.fanfly.wingslog.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.fleet.edit.data.EditAircraftViewModel
 
 
 @Composable
@@ -122,11 +122,7 @@ fun EditAircraftScreen(
       DashedButton(
         label = stringResource(
           R.string.add_engine
-        ),
-        modifier = Modifier
-          .fillMaxWidth(),
-        onClick = { viewModel.onAddEngine() }
-      )
+        ), modifier = Modifier.fillMaxWidth(), onClick = { viewModel.onAddEngine() })
 
       Spacer(modifier = Modifier.height(32.dp))
     }
@@ -134,7 +130,11 @@ fun EditAircraftScreen(
 }
 
 @Composable
-fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel, showValidationErrors: Boolean) {
+fun AirframeSection(
+  aircraft: Aircraft,
+  viewModel: EditAircraftViewModel,
+  showValidationErrors: Boolean
+) {
   Card(
     modifier = Modifier.padding(vertical = 8.dp)
   ) {
@@ -144,14 +144,16 @@ fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel, showVa
       InputField(
         value = aircraft.make, // Read from ViewModel
         onValueChange = { viewModel.onMakeChanged(it) }, // Update ViewModel
-        label = stringResource(R.string.make), enabled = aircraft.id == "",
+        label = stringResource(R.string.make),
+        enabled = aircraft.id == "",
         isError = showValidationErrors && aircraft.make.isBlank()
       )
       // --- Model Number ---
       InputField(
         value = aircraft.model, // Read from ViewModel
         onValueChange = { viewModel.onModelChanged(it) }, // Update ViewModel
-        label = stringResource(R.string.model), enabled = aircraft.id == "",
+        label = stringResource(R.string.model),
+        enabled = aircraft.id == "",
         isError = showValidationErrors && aircraft.model.isBlank()
       )
       Row(
@@ -161,7 +163,8 @@ fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel, showVa
         InputField(
           value = aircraft.serial, // Read from ViewModel
           onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel
-          label = stringResource(R.string.serial), modifier = Modifier.weight(1f), // Takes up 50%
+          label = stringResource(R.string.serial),
+          modifier = Modifier.weight(1f), // Takes up 50%
           enabled = aircraft.id == "",
           isError = showValidationErrors && aircraft.serial.isBlank(),
           keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
@@ -182,10 +185,7 @@ fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel, showVa
 
 @Composable
 fun EngineSection(
-  engineIndex: Int,
-  engine: Engine,
-  viewModel: EditAircraftViewModel,
-  showValidationErrors: Boolean
+  engineIndex: Int, engine: Engine, viewModel: EditAircraftViewModel, showValidationErrors: Boolean
 ) {
   Card(
     modifier = Modifier.padding(vertical = 8.dp)
@@ -220,7 +220,7 @@ fun EngineSection(
         viewModel.onEngineMakeChanged(engineIndex, it)
       }
 
-      Row( horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+      Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         InputField(
           label = stringResource(R.string.model),
           value = engine.model,
@@ -244,14 +244,13 @@ fun EngineSection(
       Text(stringResource(R.string.propeller_hub), style = MaterialTheme.typography.labelSmall)
       val hub = engine.propeller.hub
       InputField(
-          label = stringResource(R.string.make),
-          value = hub.make,
-         
-          isError = showValidationErrors && hub.make.isBlank()
-        ) {
-          viewModel.onPropellerHubMakeChanged(engineIndex, it)
-        }
-      Row( horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        label = stringResource(R.string.make), value = hub.make,
+
+        isError = showValidationErrors && hub.make.isBlank()
+      ) {
+        viewModel.onPropellerHubMakeChanged(engineIndex, it)
+      }
+      Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         InputField(
           label = stringResource(R.string.model),
           value = hub.model,
@@ -260,16 +259,16 @@ fun EngineSection(
         ) {
           viewModel.onPropellerHubModelChanged(engineIndex, it)
         }
-         InputField(
+        InputField(
           label = stringResource(R.string.serial, ""),
           value = hub.serial,
-            modifier = Modifier.weight(1f),
+          modifier = Modifier.weight(1f),
           isError = showValidationErrors && hub.serial.isBlank()
         ) {
           viewModel.onPropellerHubSerialChanged(engineIndex, it)
         }
       }
-     
+
 
       // Blade Serial Numbers - Dynamic List
       Text(stringResource(R.string.blade_serial_numbers))
@@ -298,14 +297,12 @@ fun EngineSection(
       }
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         DashedButton(
-          label =
-          stringResource(R.string.add_blade),
+          label = stringResource(R.string.add_blade),
           modifier = Modifier
             .weight(1f)
             .padding(vertical = 8.dp),
 
-          onClick = { viewModel.onAddBlade(engineIndex) }
-        )
+          onClick = { viewModel.onAddBlade(engineIndex) })
         Spacer(Modifier.weight(1f))
       }
     }

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.aircraft.compose
+package dev.fanfly.wingslog.aircraft.overview.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,7 +9,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.R
-import dev.fanfly.wingslog.aircraft.BladeChipsOverview
 import dev.fanfly.wingslog.aircraft.Engine
 
 @Composable

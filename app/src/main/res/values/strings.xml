@@ -48,5 +48,9 @@
     <string name="model_and_sn">Model: %1$s %2$s\nS/N: %3$s\n</string>
     <string name="configuration">Configuration</string>
     <string name="airframe_s_n">Airframe S/N: %1$s</string>
+    <string name="delete_aircraft">Delete Aircraft?</string>
+    <string name="this_action_cannot_be_undone">This action cannot be undone.</string>
+    <string name="delete">Delete</string>
+    <string name="edit_aircraft">Edit aircraft</string>
 
 </resources>

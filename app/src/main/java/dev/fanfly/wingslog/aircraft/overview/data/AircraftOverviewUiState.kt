@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.aircraft.data
+package dev.fanfly.wingslog.aircraft.overview.data
 
 import dev.fanfly.wingslog.aircraft.Aircraft
 

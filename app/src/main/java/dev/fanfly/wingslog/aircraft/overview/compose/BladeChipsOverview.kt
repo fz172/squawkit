@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.aircraft
+package dev.fanfly.wingslog.aircraft.overview.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.R
+import dev.fanfly.wingslog.aircraft.PropellerBlade
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -36,9 +37,7 @@ fun BladeChipsOverview(blades: List<PropellerBlade>) {
         ) {
           Text(
             text = stringResource(
-              R.string.blade_abbreviation_with_index,
-              index + 1,
-              blade.serial
+              R.string.blade_abbreviation_with_index, index + 1, blade.serial
             ),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
