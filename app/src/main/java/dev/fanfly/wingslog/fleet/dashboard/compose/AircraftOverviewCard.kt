@@ -51,6 +51,7 @@ fun AircraftDashboardCard(
         modifier: Modifier = Modifier
 ) {
   Card(
+          onClick = { onClick(aircraft.id) },
           modifier = modifier.fillMaxWidth().padding(16.dp),
           shape = RoundedCornerShape(28.dp),
           colors =
@@ -102,34 +103,6 @@ fun AircraftDashboardCard(
               modifier = Modifier.padding(24.dp),
               verticalArrangement = Arrangement.spacedBy(24.dp)
       ) { aircraft.engineList.forEachIndexed { index, engine -> EngineItem(engine = engine) } }
-
-      // --- Action Footer ---
-      // Pinned to bottom of card, full width button for easy reach
-      Box(
-              modifier =
-                      Modifier.fillMaxWidth()
-                              .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                              .padding(horizontal = 16.dp, vertical = 16.dp)
-      ) {
-        Button(
-                onClick = { onClick(aircraft.id) },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors =
-                        ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-        ) {
-          Icon(Icons.Default.Book, contentDescription = null, modifier = Modifier.size(20.dp))
-          Spacer(Modifier.width(12.dp))
-          Text(
-                  text = "Open Logbook",
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = FontWeight.SemiBold
-          )
-        }
-      }
     }
   }
 }

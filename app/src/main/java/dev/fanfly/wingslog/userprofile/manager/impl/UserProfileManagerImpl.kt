@@ -12,6 +12,9 @@ import dev.fanfly.wingslog.common.database.getUserDocumentRef
 import dev.fanfly.wingslog.userprofile.data.LicenseInfo
 import dev.fanfly.wingslog.userprofile.data.newUserLicenseProfile
 import dev.fanfly.wingslog.userprofile.manager.UserProfileManager
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -21,14 +24,18 @@ class UserProfileManagerImpl @Inject constructor(
   private val firestore: FirebaseFirestore,
 ) : UserProfileManager {
 
-  override fun observeLicenseInfo(licenseInfoListener: (LicenseInfo) -> Unit): ListenerRegistration? {
+  override fun observeLicenseInfo(): Flow<LicenseInfo?> = callbackFlow {
     val docRef = getProfileDocumentRef()
     if (docRef == null) {
-      return null
+      trySend(null)
+      close(Exception("User not logged in."))
+      return@callbackFlow
     }
+
     val listener = docRef.addSnapshotListener { snapshot, e ->
       if (e != null) {
         logger.atWarning().withCause(e).log("Listen failed.")
+        close(e)
         return@addSnapshotListener
       }
       val licenseInfo = if (snapshot != null && snapshot.exists()) {
@@ -53,10 +60,10 @@ class UserProfileManagerImpl @Inject constructor(
         logger.atFine().log("Profile document does not exist, returning default.")
         newUserLicenseProfile()
       }
-      licenseInfoListener.invoke(licenseInfo)
+      trySend(licenseInfo)
     }
 
-    return listener
+    awaitClose { listener.remove() }
   }
 
   override suspend fun updateLicenseInfo(licenseInfo: LicenseInfo): Result<Boolean> {
