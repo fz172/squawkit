@@ -12,6 +12,9 @@ import dev.fanfly.wingslog.aircraft.copy
 import dev.fanfly.wingslog.common.database.AIRCRAFT_INFO_BLOB
 import dev.fanfly.wingslog.common.database.getFleetCollectionRef
 import dev.fanfly.wingslog.aircraft.manager.AircraftManager
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -38,9 +41,48 @@ class AircraftManagerImpl @Inject internal constructor(
     logger.atFine().log("Aircraft updated successfully.")
     Result.success(true)
   } catch (e: Exception) {
-    logger.atWarning().withCause(e).log("Error updating profile")
+    logger.atWarning().withCause(e).log("Error updating aircraft")
 
     Result.failure(e)
+  }
+
+  override fun loadAircraft(id: String): Flow<Aircraft?> = callbackFlow {
+    val fleetRef = firestore.getFleetCollectionRef(firebaseAuth)
+    if (fleetRef == null) {
+      trySend(null)
+      close(Exception("Fleet reference is null"))
+      return@callbackFlow
+    }
+
+    val docRef = fleetRef.document(id)
+    val listener = docRef.addSnapshotListener { snapshot, e ->
+      if (e != null) {
+        logger.atWarning().withCause(e).log("Listen failed for aircraft $id")
+        close(e)
+        return@addSnapshotListener
+      }
+
+      if (snapshot != null && snapshot.exists()) {
+        val blob = snapshot.get(AIRCRAFT_INFO_BLOB) as? Blob
+        if (blob != null) {
+          try {
+            val aircraft = Aircraft.parseFrom(blob.toBytes())
+            trySend(aircraft)
+          } catch (e: Exception) {
+            logger.atWarning().withCause(e).log("Failed to parse aircraft $id")
+            // Don't close, maybe next update fixes it? Or close?
+            // Usually if parse fails, it's bad data.
+            trySend(null)
+          }
+        } else {
+          trySend(null)
+        }
+      } else {
+        trySend(null)
+      }
+    }
+
+    awaitClose { listener.remove() }
   }
 
 
