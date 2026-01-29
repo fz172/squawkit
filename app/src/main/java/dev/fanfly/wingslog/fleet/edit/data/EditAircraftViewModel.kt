@@ -41,11 +41,11 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
   }
 
   fun onMakeChanged(newValue: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy { make = newValue }) }
+    _uiState.update { it.copy(aircraft = it.aircraft.copy { make = newValue.replaceFirstChar { char -> char.uppercase() } }) }
   }
 
   fun onModelChanged(newValue: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy { model = newValue }) }
+    _uiState.update { it.copy(aircraft = it.aircraft.copy { model = newValue.replaceFirstChar { char -> char.uppercase() } }) }
   }
 
   fun onSerialChanged(newValue: String) {
@@ -59,7 +59,7 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
   fun onEngineMakeChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
       it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy { make = newValue }
+        engine[engineIndex] = engine[engineIndex].copy { make = newValue.replaceFirstChar { char -> char.uppercase() } }
       })
     }
   }
@@ -67,7 +67,7 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
   fun onEngineModelChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
       it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy { model = newValue }
+        engine[engineIndex] = engine[engineIndex].copy { model = newValue.replaceFirstChar { char -> char.uppercase() } }
       })
     }
   }
@@ -85,7 +85,7 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
       it.copy(aircraft = it.aircraft.copy {
         engine[engineIndex] = engine[engineIndex].copy {
           propeller = propeller.copy {
-            hub = hub.copy { make = newValue }
+            hub = hub.copy { make = newValue.replaceFirstChar { char -> char.uppercase() } }
           }
         }
       })
@@ -97,7 +97,19 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
       it.copy(aircraft = it.aircraft.copy {
         engine[engineIndex] = engine[engineIndex].copy {
           propeller = propeller.copy {
-            hub = hub.copy { model = newValue }
+            hub = hub.copy { model = newValue.replaceFirstChar { char -> char.uppercase() } }
+          }
+        }
+      })
+    }
+  }
+
+  fun onPropellerHubSerialChanged(engineIndex: Int, newValue: String) {
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        engine[engineIndex] = engine[engineIndex].copy {
+          propeller = propeller.copy {
+            hub = hub.copy { serial = newValue.uppercase() }
           }
         }
       })
