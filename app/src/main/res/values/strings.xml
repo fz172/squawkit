@@ -39,7 +39,9 @@
     <string name="powerplant">Powerplant</string>
     <string name="blade_serial_numbers">Blade Serial numbers</string>
     <string name="blade">Blade</string>
+    <string name="blade_with_index">Blade %1$d</string>
     <string name="add_engine">Add Engine</string>
     <string name="add_blade">Add blade</string>
+    <string name="required">Required</string>
 
 </resources>

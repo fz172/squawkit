@@ -26,6 +26,11 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
 
   fun saveAircraft() {
     viewModelScope.launch {
+      if (!uiState.value.isValid) {
+        _uiState.update { it.copy(showValidationErrors = true) }
+        return@launch
+      }
+
       _uiState.update { it.copy(isLoading = true) }
       val result = aircraftManager.updateAircraft(uiState.value.aircraft)
       if (result.isSuccess) {
@@ -44,11 +49,11 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
   }
 
   fun onSerialChanged(newValue: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy { serial = newValue }) }
+    _uiState.update { it.copy(aircraft = it.aircraft.copy { serial = newValue.uppercase() }) }
   }
 
   fun onTailNumberChanged(newValue: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy { tailNumber = newValue }) }
+    _uiState.update { it.copy(aircraft = it.aircraft.copy { tailNumber = newValue.uppercase() }) }
   }
 
   fun onEngineMakeChanged(engineIndex: Int, newValue: String) {
@@ -70,7 +75,7 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
   fun onEngineSerialChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
       it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy { serial = newValue }
+        engine[engineIndex] = engine[engineIndex].copy { serial = newValue.uppercase() }
       })
     }
   }
@@ -105,7 +110,7 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
       it.copy(aircraft = it.aircraft.copy {
         engine[engineIndex] = engine[engineIndex].copy {
           propeller = propeller.copy {
-            blades[bladeIndex] = blades[bladeIndex].copy { serial = newValue }
+            blades[bladeIndex] = blades[bladeIndex].copy { serial = newValue.uppercase() }
           }
         }
       })

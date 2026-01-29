@@ -6,7 +6,8 @@ import dev.fanfly.wingslog.aircraft.aircraft
 data class EditAircraftUiState(
   val aircraft: Aircraft = aircraft {},
   val isLoading: Boolean = true,
-  val isSaved: Boolean = false
+  val isSaved: Boolean = false,
+  val showValidationErrors: Boolean = false
 ) {
   val isValid: Boolean
     get() {

@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.fleet.edit
 
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -81,10 +84,10 @@ fun EditAircraftScreen(
       title = if (uiState.aircraft.id == "") stringResource(R.string.add_aircraft) else stringResource(
         R.string.update_aircraft
       ), onBackClick = { navController.popBackStack() })
-  }, bottomBar = {
+  }, modifier = Modifier.imePadding(), bottomBar = {
     // This composable holds the buttons pinned to the bottom
     BottomButtons(
-      saveEnabled = !uiState.isLoading && uiState.isValid, onSaveClick = {
+      saveEnabled = !uiState.isLoading, onSaveClick = {
         viewModel.saveAircraft()
       }, // Call ViewModel to save
       onCancelClick = { navController.popBackStack() })
@@ -101,7 +104,7 @@ fun EditAircraftScreen(
       Text(
         text = stringResource(R.string.airframe).uppercase()
       )
-      AirframeSection(uiState.aircraft, viewModel)
+      AirframeSection(uiState.aircraft, viewModel, uiState.showValidationErrors)
 
       // ENGINE
       Text(
@@ -111,7 +114,8 @@ fun EditAircraftScreen(
         EngineSection(
           engineIndex = index,
           engine = engine,
-          viewModel = viewModel
+          viewModel = viewModel,
+          showValidationErrors = uiState.showValidationErrors
         )
       }
 
@@ -130,7 +134,7 @@ fun EditAircraftScreen(
 }
 
 @Composable
-fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel) {
+fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel, showValidationErrors: Boolean) {
   Card(
     modifier = Modifier.padding(vertical = 8.dp)
   ) {
@@ -140,13 +144,15 @@ fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel) {
       InputField(
         value = aircraft.make, // Read from ViewModel
         onValueChange = { viewModel.onMakeChanged(it) }, // Update ViewModel
-        label = stringResource(R.string.make), enabled = aircraft.id == ""
+        label = stringResource(R.string.make), enabled = aircraft.id == "",
+        isError = showValidationErrors && aircraft.make.isBlank()
       )
       // --- Model Number ---
       InputField(
         value = aircraft.model, // Read from ViewModel
         onValueChange = { viewModel.onModelChanged(it) }, // Update ViewModel
-        label = stringResource(R.string.model), enabled = aircraft.id == ""
+        label = stringResource(R.string.model), enabled = aircraft.id == "",
+        isError = showValidationErrors && aircraft.model.isBlank()
       )
       Row(
         modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -156,7 +162,9 @@ fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel) {
           value = aircraft.serial, // Read from ViewModel
           onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel
           label = stringResource(R.string.serial), modifier = Modifier.weight(1f), // Takes up 50%
-          enabled = aircraft.id == ""
+          enabled = aircraft.id == "",
+          isError = showValidationErrors && aircraft.serial.isBlank(),
+          keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
         )
         // --- Tail Number ---
         InputField(
@@ -164,7 +172,8 @@ fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel) {
           onValueChange = { viewModel.onTailNumberChanged(it) }, // Update ViewModel
           label = stringResource(R.string.tail_number),
           modifier = Modifier.weight(1f), // Takes up 50%
-          enabled = aircraft.id == ""
+          enabled = aircraft.id == "",
+          keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
         )
       }
     }
@@ -175,7 +184,8 @@ fun AirframeSection(aircraft: Aircraft, viewModel: EditAircraftViewModel) {
 fun EngineSection(
   engineIndex: Int,
   engine: Engine,
-  viewModel: EditAircraftViewModel
+  viewModel: EditAircraftViewModel,
+  showValidationErrors: Boolean
 ) {
   Card(
     modifier = Modifier.padding(vertical = 8.dp)
@@ -202,7 +212,11 @@ fun EngineSection(
         }
       }
 
-      InputField(label = stringResource(R.string.make), value = engine.make) {
+      InputField(
+        label = stringResource(R.string.make),
+        value = engine.make,
+        isError = showValidationErrors && engine.make.isBlank()
+      ) {
         viewModel.onEngineMakeChanged(engineIndex, it)
       }
 
@@ -210,14 +224,17 @@ fun EngineSection(
         InputField(
           label = stringResource(R.string.model),
           value = engine.model,
-          modifier = Modifier.weight(1f)
+          modifier = Modifier.weight(1f),
+          isError = showValidationErrors && engine.model.isBlank()
         ) {
           viewModel.onEngineModelChanged(engineIndex, it)
         }
         InputField(
           label = stringResource(R.string.serial),
           value = engine.serial,
-          modifier = Modifier.weight(1f)
+          modifier = Modifier.weight(1f),
+          isError = showValidationErrors && engine.serial.isBlank(),
+          keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
         ) {
           viewModel.onEngineSerialChanged(engineIndex, it)
         }
@@ -230,14 +247,16 @@ fun EngineSection(
         InputField(
           label = stringResource(R.string.make),
           value = hub.make,
-          modifier = Modifier.weight(1f)
+          modifier = Modifier.weight(1f),
+          isError = showValidationErrors && hub.make.isBlank()
         ) {
           viewModel.onPropellerHubMakeChanged(engineIndex, it)
         }
         InputField(
           label = stringResource(R.string.model),
           value = hub.model,
-          modifier = Modifier.weight(1f)
+          modifier = Modifier.weight(1f),
+          isError = showValidationErrors && hub.model.isBlank()
         ) {
           viewModel.onPropellerHubModelChanged(engineIndex, it)
         }
@@ -251,14 +270,16 @@ fun EngineSection(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
           pair.forEach { (bladeIndex, blade) ->
             InputField(
-              label = stringResource(R.string.blade),
+              label = stringResource(R.string.blade_with_index, bladeIndex + 1),
               value = blade.serial,
               modifier = Modifier.weight(1f),
               trailingIcon = {
                 IconButton(onClick = { viewModel.onRemoveBlade(engineIndex, bladeIndex) }) {
                   Icon(Icons.Default.Close, contentDescription = "Remove Blade")
                 }
-              }
+              },
+              isError = showValidationErrors && blade.serial.isBlank(),
+              keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
             ) {
               viewModel.onPropellerBladeSerialChanged(engineIndex, bladeIndex, it)
             }
@@ -288,6 +309,8 @@ fun InputField(
   value: String,
   modifier: Modifier = Modifier,
   enabled: Boolean = true,
+  isError: Boolean = false,
+  keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
   trailingIcon: @Composable (() -> Unit)? = null,
   onValueChange: (String) -> Unit
 ) = OutlinedTextField(
@@ -298,7 +321,10 @@ fun InputField(
   singleLine = true,
   shape = RoundedCornerShape(12.dp),
   enabled = enabled,
-  trailingIcon = trailingIcon
+  trailingIcon = trailingIcon,
+  isError = isError,
+  supportingText = { if (isError) Text(stringResource(R.string.required)) },
+  keyboardOptions = keyboardOptions
 )
 
 @Composable
