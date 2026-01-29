@@ -9,9 +9,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.copy
+import dev.fanfly.wingslog.aircraft.manager.AircraftManager
 import dev.fanfly.wingslog.common.database.AIRCRAFT_INFO_BLOB
 import dev.fanfly.wingslog.common.database.getFleetCollectionRef
-import dev.fanfly.wingslog.aircraft.manager.AircraftManager
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -38,7 +38,7 @@ class AircraftManagerImpl @Inject internal constructor(
 
     // Use SetOptions.merge() to only update this field
     aircraftRef.set(data, SetOptions.merge()).await()
-    logger.atFine().log("Aircraft updated successfully.")
+    logger.atFine().log("Aircraft updated successfully, new id is %s", aircraftWithId.id)
     Result.success(true)
   } catch (e: Exception) {
     logger.atWarning().withCause(e).log("Error updating aircraft")
@@ -109,6 +109,5 @@ class AircraftManagerImpl @Inject internal constructor(
 
   companion object {
     private val logger: FluentLogger = FluentLogger.forEnclosingClass()
-
   }
 }

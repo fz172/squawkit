@@ -51,12 +51,15 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.google.common.flogger.FluentLogger
 import dev.fanfly.wingslog.R
-import dev.fanfly.wingslog.aircraft.compose.ConfigurationCard
-import dev.fanfly.wingslog.aircraft.compose.InspectionCard
-import dev.fanfly.wingslog.aircraft.data.AircraftOverviewEvent
-import dev.fanfly.wingslog.aircraft.data.AircraftOverviewUiState
-import dev.fanfly.wingslog.aircraft.data.AircraftOverviewViewModel
+import dev.fanfly.wingslog.aircraft.overview.compose.ConfigurationCard
+import dev.fanfly.wingslog.aircraft.overview.compose.InspectionCard
+import dev.fanfly.wingslog.aircraft.overview.data.AircraftOverviewEvent
+import dev.fanfly.wingslog.aircraft.overview.data.AircraftOverviewUiState
+import dev.fanfly.wingslog.aircraft.overview.data.AircraftOverviewViewModel
+
+private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,8 +102,7 @@ fun AircraftOverviewScreen(
         TextButton(onClick = { showDeleteDialog = false }) {
           Text("Cancel")
         }
-      }
-    )
+      })
   }
 
   Scaffold(topBar = {
@@ -123,8 +125,7 @@ fun AircraftOverviewScreen(
     }, navigationIcon = {
       IconButton(onClick = { navController.popBackStack() }) {
         Icon(
-          Icons.AutoMirrored.Filled.ArrowBack,
-          contentDescription = stringResource(R.string.back)
+          Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back)
         )
       }
     }, actions = {
@@ -132,25 +133,20 @@ fun AircraftOverviewScreen(
         Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
       }
       DropdownMenu(
-        expanded = showSettingsMenu,
-        onDismissRequest = { showSettingsMenu = false }
-      ) {
-        DropdownMenuItem(
-          text = { Text("Edit Aircraft") },
-          onClick = {
-            showSettingsMenu = false
-            if (aircraft != null) {
-                navController.navigate("edit_aircraft/${aircraft.id}")
-            }
+        expanded = showSettingsMenu, onDismissRequest = { showSettingsMenu = false }) {
+        DropdownMenuItem(text = { Text("Edit Aircraft") }, onClick = {
+          showSettingsMenu = false
+          if (aircraft != null) {
+            logger.atInfo().log("Editing aircraft [id=%s]", aircraft.id)
+            navController.navigate("edit_aircraft/${aircraft.id}")
           }
-        )
+        })
         DropdownMenuItem(
           text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
           onClick = {
             showSettingsMenu = false
             showDeleteDialog = true
-          }
-        )
+          })
       }
     }, colors = TopAppBarDefaults.topAppBarColors(
       containerColor = MaterialTheme.colorScheme.background,

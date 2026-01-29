@@ -1,11 +1,14 @@
 package dev.fanfly.wingslog
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import dev.fanfly.wingslog.aircraft.AircraftOverviewScreen
+import dev.fanfly.wingslog.aircraft.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
 import dev.fanfly.wingslog.aircraft.edit.EditAircraftScreen
-import dev.fanfly.wingslog.aircraft.overview.AircraftOverviewScreen
 import dev.fanfly.wingslog.fleet.dashboard.DashboardScreen
 import dev.fanfly.wingslog.login.LoginScreen
 import dev.fanfly.wingslog.settings.SettingsScreen
@@ -39,14 +42,24 @@ fun AppEntry() {
       EditProfileScreen(navController = navController)
     }
 
-    composable("add_aircraft") {
+    composable(
+      route = "add_aircraft",
+    ) {
       EditAircraftScreen(navController = navController)
     }
 
     composable(
-      route = "aircraft_overview/{aircraftId}",
-      arguments = listOf(androidx.navigation.navArgument("aircraftId") {
-        type = androidx.navigation.NavType.StringType
+      route = "edit_aircraft/{${ARGUMENT_AIRCRAFT_ID}}", arguments = listOf(navArgument(ARGUMENT_AIRCRAFT_ID) {
+        type = NavType.StringType
+        nullable = true
+      })
+    ) {
+      EditAircraftScreen(navController = navController)
+    }
+
+    composable(
+      route = "aircraft_overview/{aircraftId}", arguments = listOf(navArgument("aircraftId") {
+        type = NavType.StringType
       })
     ) {
       AircraftOverviewScreen(navController = navController)

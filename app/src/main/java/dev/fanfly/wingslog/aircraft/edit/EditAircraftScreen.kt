@@ -50,7 +50,6 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
-import dev.fanfly.wingslog.aircraft.aircraft
 import dev.fanfly.wingslog.aircraft.edit.data.EditAircraftViewModel
 import dev.fanfly.wingslog.common.compose.BottomButtons
 import dev.fanfly.wingslog.common.compose.WingsLogTopAppBar
@@ -58,18 +57,10 @@ import dev.fanfly.wingslog.common.compose.WingsLogTopAppBar
 
 @Composable
 fun EditAircraftScreen(
-  viewModel: EditAircraftViewModel = hiltViewModel(),
-  aircraft: Aircraft = aircraft {},
-  navController: NavController
+  viewModel: EditAircraftViewModel = hiltViewModel(), navController: NavController
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val scrollState = rememberScrollState()
-
-  LaunchedEffect(aircraft) {
-    if (uiState.isLoading) {
-      viewModel.loadAircraft(aircraft)
-    }
-  }
 
   // This effect will run when isSaved becomes true
   LaunchedEffect(uiState.isSaved) {
@@ -131,9 +122,7 @@ fun EditAircraftScreen(
 
 @Composable
 fun AirframeSection(
-  aircraft: Aircraft,
-  viewModel: EditAircraftViewModel,
-  showValidationErrors: Boolean
+  aircraft: Aircraft, viewModel: EditAircraftViewModel, showValidationErrors: Boolean
 ) {
   Card(
     modifier = Modifier.padding(vertical = 8.dp)

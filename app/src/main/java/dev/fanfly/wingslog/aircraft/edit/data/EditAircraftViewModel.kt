@@ -1,11 +1,16 @@
 package dev.fanfly.wingslog.aircraft.edit.data
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.common.flogger.FluentLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.aircraft
 import dev.fanfly.wingslog.aircraft.copy
+import dev.fanfly.wingslog.aircraft.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
 import dev.fanfly.wingslog.aircraft.manager.AircraftManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -13,12 +18,47 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class EditAircraftViewModel @Inject constructor(private val aircraftManager: AircraftManager) :
-  ViewModel() {
+class EditAircraftViewModel @Inject constructor(
+  private val aircraftManager: AircraftManager, savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
   private val _uiState: MutableStateFlow<EditAircraftUiState> =
     MutableStateFlow(EditAircraftUiState())
   val uiState = _uiState.asStateFlow()
+
+  init {
+    val aircraftId: String? = savedStateHandle[ARGUMENT_AIRCRAFT_ID]
+    if (aircraftId.isNullOrEmpty()) {
+      logger.atInfo().log("Initializing the view model with empty aircraft")
+      loadAircraft(aircraft {})
+    } else {
+      logger.atInfo().log("Loading aircraft %s", aircraftId)
+      loadAircraftById(aircraftId)
+    }
+  }
+
+  fun loadAircraftById(id: String) {
+    _uiState.update { it.copy(isLoading = true) }
+    viewModelScope.launch {
+      // We need a way to get one aircraft. AircraftManager.loadAircraft returns a Flow.
+      // We can take the first emission.
+      try {
+        aircraftManager.loadAircraft(id).collect { aircraft ->
+          if (aircraft != null) {
+            _uiState.update { it.copy(aircraft = aircraft, isLoading = false) }
+          } else {
+            // Handle error or not found
+            _uiState.update { it.copy(isLoading = false) }
+          }
+        }
+      } catch (e: CancellationException) {
+        throw e
+      } catch (e: Exception) {
+        logger.atWarning().withCause(e).log("Failed to load aircraft by id: %s", id)
+        _uiState.update { it.copy(isLoading = false) }
+      }
+    }
+  }
 
   fun loadAircraft(aircraft: Aircraft) {
     _uiState.update { it.copy(aircraft = aircraft, isLoading = false) }
@@ -41,11 +81,19 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
   }
 
   fun onMakeChanged(newValue: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy { make = newValue.replaceFirstChar { char -> char.uppercase() } }) }
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        make = newValue.replaceFirstChar { char -> char.uppercase() }
+      })
+    }
   }
 
   fun onModelChanged(newValue: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy { model = newValue.replaceFirstChar { char -> char.uppercase() } }) }
+    _uiState.update {
+      it.copy(aircraft = it.aircraft.copy {
+        model = newValue.replaceFirstChar { char -> char.uppercase() }
+      })
+    }
   }
 
   fun onSerialChanged(newValue: String) {
@@ -59,7 +107,8 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
   fun onEngineMakeChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
       it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy { make = newValue.replaceFirstChar { char -> char.uppercase() } }
+        engine[engineIndex] =
+          engine[engineIndex].copy { make = newValue.replaceFirstChar { char -> char.uppercase() } }
       })
     }
   }
@@ -67,7 +116,9 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
   fun onEngineModelChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
       it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy { model = newValue.replaceFirstChar { char -> char.uppercase() } }
+        engine[engineIndex] = engine[engineIndex].copy {
+          model = newValue.replaceFirstChar { char -> char.uppercase() }
+        }
       })
     }
   }
@@ -175,5 +226,9 @@ class EditAircraftViewModel @Inject constructor(private val aircraftManager: Air
         }
       })
     }
+  }
+
+  companion object {
+    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
   }
 }
