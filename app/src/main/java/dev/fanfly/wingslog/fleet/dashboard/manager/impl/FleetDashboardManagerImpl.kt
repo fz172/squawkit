@@ -14,7 +14,7 @@ import javax.inject.Inject
 class FleetDashboardManagerImpl @Inject internal constructor(
   private val firebaseAuth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
-) : FleetDashboardManager {
+  ) : FleetDashboardManager {
 
   override fun observeFleetDashboard(fleetListener: (List<Aircraft>) -> Unit): ListenerRegistration? {
     val fleetDocumentRef = firestore.getFleetCollectionRef(firebaseAuth) ?: return null
