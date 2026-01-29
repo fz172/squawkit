@@ -85,6 +85,18 @@ class AircraftManagerImpl @Inject internal constructor(
     awaitClose { listener.remove() }
   }
 
+  override suspend fun deleteAircraft(id: String): Result<Boolean> = try {
+    val fleetRef = firestore.getFleetCollectionRef(firebaseAuth) ?: return Result.failure(
+      Exception("Fleet reference is null")
+    )
+    fleetRef.document(id).delete().await()
+    logger.atFine().log("Aircraft $id deleted successfully.")
+    Result.success(true)
+  } catch (e: Exception) {
+    logger.atWarning().withCause(e).log("Error deleting aircraft $id")
+    Result.failure(e)
+  }
+
 
   private fun getAircraftRefOrCreateNew(
     fleetRef: CollectionReference,

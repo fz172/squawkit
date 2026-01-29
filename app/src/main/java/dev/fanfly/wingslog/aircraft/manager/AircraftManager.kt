@@ -8,4 +8,6 @@ interface AircraftManager {
 
   fun loadAircraft(id: String): Flow<Aircraft?>
 
+  suspend fun deleteAircraft(id: String): Result<Boolean>
+
 }

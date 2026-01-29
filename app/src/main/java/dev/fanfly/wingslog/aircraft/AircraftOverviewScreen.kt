@@ -21,6 +21,10 @@ import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -29,10 +33,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +54,7 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.aircraft.compose.ConfigurationCard
 import dev.fanfly.wingslog.aircraft.compose.InspectionCard
+import dev.fanfly.wingslog.aircraft.data.AircraftOverviewEvent
 import dev.fanfly.wingslog.aircraft.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.aircraft.data.AircraftOverviewViewModel
 
@@ -57,6 +67,41 @@ fun AircraftOverviewScreen(
   val scrollState = rememberScrollState()
 
   val aircraft = (uiState as? AircraftOverviewUiState.Success)?.aircraft
+
+  var showSettingsMenu by remember { mutableStateOf(false) }
+  var showDeleteDialog by remember { mutableStateOf(false) }
+
+  LaunchedEffect(viewModel) {
+    viewModel.events.collect { event ->
+      when (event) {
+        AircraftOverviewEvent.NavigateBack -> navController.popBackStack()
+      }
+    }
+  }
+
+  if (showDeleteDialog) {
+    AlertDialog(
+      onDismissRequest = { showDeleteDialog = false },
+      title = { Text("Delete Aircraft?") },
+      text = { Text("This action cannot be undone.") },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            viewModel.deleteAircraft()
+            showDeleteDialog = false
+          },
+          colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+        ) {
+          Text("Delete")
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showDeleteDialog = false }) {
+          Text("Cancel")
+        }
+      }
+    )
+  }
 
   Scaffold(topBar = {
     TopAppBar(
@@ -83,8 +128,29 @@ fun AircraftOverviewScreen(
         )
       }
     }, actions = {
-      IconButton(onClick = { /* TODO: Settings/Edit */ }) {
+      IconButton(onClick = { showSettingsMenu = !showSettingsMenu }) {
         Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
+      }
+      DropdownMenu(
+        expanded = showSettingsMenu,
+        onDismissRequest = { showSettingsMenu = false }
+      ) {
+        DropdownMenuItem(
+          text = { Text("Edit Aircraft") },
+          onClick = {
+            showSettingsMenu = false
+            if (aircraft != null) {
+                navController.navigate("edit_aircraft/${aircraft.id}")
+            }
+          }
+        )
+        DropdownMenuItem(
+          text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+          onClick = {
+            showSettingsMenu = false
+            showDeleteDialog = true
+          }
+        )
       }
     }, colors = TopAppBarDefaults.topAppBarColors(
       containerColor = MaterialTheme.colorScheme.background,
