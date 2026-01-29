@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +27,7 @@ import dev.fanfly.wingslog.userprofile.compose.UserProfileCardData
 fun SettingsScreen(
   navController: NavController,
   settingsViewModel: SettingsViewModel = hiltViewModel(),
+  onAddAircraft: () -> Unit
 ) {
 
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
@@ -63,8 +65,13 @@ fun SettingsScreen(
           photoUri = user.firebaseUser?.photoUrl,
           licenceInfo = user.licenseInfo,
         ),
-
-        onOpenEditProfile = { navController.navigate("edit_profile") })
+        onOpenEditProfile = { navController.navigate("edit_profile") }
+      )
+      SettingsRow(
+        icon = Icons.Default.Add,
+        title = stringResource(R.string.add_aircraft),
+        onClick = { onAddAircraft() }
+      )
       SettingsRow(
         icon = Icons.AutoMirrored.Filled.Logout,
         title = stringResource(R.string.sign_out),

@@ -72,14 +72,16 @@ fun DashboardScreen(
       )
     },
     floatingActionButton = {
-      // Extended FAB allows for both an icon and text
-      ExtendedFloatingActionButton(
-        onClick = { onClickFab() },
-        icon = { Icon(Icons.Default.Build, contentDescription = null) },
-        text = { Text(stringResource(R.string.manage_fleet)) },
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-      )
+      // Only show FAB if fleet is empty
+      if (uiState.isLoading || uiState.fleet.isEmpty()) {
+        ExtendedFloatingActionButton(
+          onClick = { onClickFab() },
+          icon = { Icon(Icons.Default.Build, contentDescription = null) },
+          text = { Text(stringResource(R.string.add_aircraft)) },
+          containerColor = MaterialTheme.colorScheme.primaryContainer,
+          contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+      }
     }
   ) { innerPadding ->
     Box(

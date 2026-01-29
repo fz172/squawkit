@@ -29,7 +29,10 @@ fun AppEntry() {
         onClickFab = { navController.navigate("add_aircraft") })
     }
     composable("settings") {
-      SettingsScreen(navController = navController)
+      SettingsScreen(
+        navController = navController,
+        onAddAircraft = { navController.navigate("add_aircraft") }
+      )
     }
 
     composable("edit_profile") {

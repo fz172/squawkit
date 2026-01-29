@@ -19,7 +19,6 @@
     <string name="license_type_none">None</string>
     <string name="license_type_amt">AMT</string>
     <string name="license_type_repairman">Repairman</string>
-    <string name="manage_fleet">Manage fleet</string>
 
     <string name="make">Make</string>
     <string name="model">Model</string>
