@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "dev.fanfly.wingslog.aircraft";
+option java_multiple_files = true;
+
+message MaintenanceLog {
+  string id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string technician_id = 3;
+  string work_description = 4;
+
+  enum ComponentType {
+    UNKNOWN = 0;
+    AIRFRAME = 1;
+    ENGINE = 2;
+    PROPELLER = 3;
+  }
+  ComponentType component_type = 5;
+
+  string component_serial = 6; // References Engine/Prop/Blade Serial
+
+  // Status of the work, e.g. "ANNUAL", "100_HR", "ROUTINE", etc.
+  string inspection_status = 7;
+
+  double tach_time = 8;
+
+  repeated string attachment_urls = 9;
+}
