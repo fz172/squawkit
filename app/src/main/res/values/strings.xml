@@ -42,5 +42,7 @@
     <string name="add_engine">Add Engine</string>
     <string name="add_blade">Add blade</string>
     <string name="required">Required</string>
+    <string name="add_log">Add Log</string>
+    <string name="inspection_status">Inspection Status</string>
 
 </resources>

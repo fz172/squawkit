@@ -39,7 +39,8 @@ import dev.fanfly.wingslog.fleet.dashboard.data.FleetDashboardViewModel
 fun DashboardScreen(
   viewModel: FleetDashboardViewModel = hiltViewModel(),
   onOpenSettings: () -> Unit,
-  onClickFab: () -> Unit
+  onClickFab: () -> Unit,
+  onAircraftClick: (String) -> Unit
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -103,7 +104,9 @@ fun DashboardScreen(
           verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
           items(uiState.fleet, key = { it.id }) { aircraft ->
-            AircraftDashboardCard(aircraft)
+            AircraftDashboardCard(aircraft, onClick = { aircraftId ->
+              onAircraftClick(aircraftId)
+            })
           }
         }
       }

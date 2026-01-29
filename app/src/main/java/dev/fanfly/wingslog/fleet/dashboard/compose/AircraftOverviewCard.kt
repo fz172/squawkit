@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.fleet.dashboard.compose
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -46,7 +47,7 @@ import dev.fanfly.wingslog.aircraft.propellerBlade
 import dev.fanfly.wingslog.aircraft.propellerHub
 
 @Composable
-fun AircraftDashboardCard(aircraft: Aircraft, modifier: Modifier = Modifier) {
+fun AircraftDashboardCard(aircraft: Aircraft, onClick: (String) -> Unit, modifier: Modifier = Modifier) {
   Card(
     modifier = modifier
       .fillMaxWidth()
@@ -114,7 +115,7 @@ fun AircraftDashboardCard(aircraft: Aircraft, modifier: Modifier = Modifier) {
           .padding(horizontal = 16.dp, vertical = 16.dp)
       ) {
         Button(
-          onClick = { /* Open Logbook */ },
+          onClick = { onClick(aircraft.id) },
           modifier = Modifier
             .fillMaxWidth()
             .height(56.dp),
@@ -275,4 +276,4 @@ fun AircraftDetailCardPreview() = AircraftDashboardCard(aircraft = aircraft {
       }
     }
   }
-})
+  }, onClick = {})

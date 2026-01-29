@@ -26,7 +26,9 @@ fun AppEntry() {
     composable("main") {
       DashboardScreen(
         onOpenSettings = { navController.navigate("settings") },
-        onClickFab = { navController.navigate("add_aircraft") })
+        onClickFab = { navController.navigate("add_aircraft") },
+        onAircraftClick = { aircraftId -> navController.navigate("aircraft_overview/$aircraftId") }
+      )
     }
     composable("settings") {
       SettingsScreen(
@@ -41,6 +43,13 @@ fun AppEntry() {
 
     composable("add_aircraft") {
       EditAircraftScreen(navController = navController)
+    }
+
+    composable(
+      route = "aircraft_overview/{aircraftId}",
+      arguments = listOf(androidx.navigation.navArgument("aircraftId") { type = androidx.navigation.NavType.StringType })
+    ) {
+      dev.fanfly.wingslog.aircraft.AircraftOverviewScreen(navController = navController)
     }
   }
 }

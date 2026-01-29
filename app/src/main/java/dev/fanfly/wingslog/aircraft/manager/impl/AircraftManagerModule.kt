@@ -1,10 +1,10 @@
-package dev.fanfly.wingslog.fleet.manager.impl
+package dev.fanfly.wingslog.aircraft.manager.impl
 
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import dev.fanfly.wingslog.fleet.manager.AircraftManager
+import dev.fanfly.wingslog.aircraft.manager.AircraftManager
 
 @Module
 @InstallIn(SingletonComponent::class)
