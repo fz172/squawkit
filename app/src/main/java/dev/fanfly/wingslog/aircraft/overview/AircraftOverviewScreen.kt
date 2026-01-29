@@ -82,8 +82,8 @@ fun AircraftOverviewScreen(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text("Delete Aircraft?") },
-      text = { Text("This action cannot be undone.") },
+      title = { Text(stringResource(R.string.delete_aircraft)) },
+      text = { Text(stringResource(R.string.this_action_cannot_be_undone)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -92,15 +92,14 @@ fun AircraftOverviewScreen(
           },
           colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
         ) {
-          Text("Delete")
+          Text(stringResource(R.string.delete))
         }
       },
       dismissButton = {
         TextButton(onClick = { showDeleteDialog = false }) {
-          Text("Cancel")
+          Text(stringResource(android.R.string.cancel))
         }
-      }
-    )
+      })
   }
 
   Scaffold(topBar = {
@@ -123,8 +122,7 @@ fun AircraftOverviewScreen(
     }, navigationIcon = {
       IconButton(onClick = { navController.popBackStack() }) {
         Icon(
-          Icons.AutoMirrored.Filled.ArrowBack,
-          contentDescription = stringResource(R.string.back)
+          Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back)
         )
       }
     }, actions = {
@@ -132,25 +130,19 @@ fun AircraftOverviewScreen(
         Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
       }
       DropdownMenu(
-        expanded = showSettingsMenu,
-        onDismissRequest = { showSettingsMenu = false }
-      ) {
-        DropdownMenuItem(
-          text = { Text("Edit Aircraft") },
-          onClick = {
-            showSettingsMenu = false
-            if (aircraft != null) {
-                navController.navigate("edit_aircraft/${aircraft.id}")
-            }
+        expanded = showSettingsMenu, onDismissRequest = { showSettingsMenu = false }) {
+        DropdownMenuItem(text = { Text(stringResource(R.string.edit_aircraft)) }, onClick = {
+          showSettingsMenu = false
+          if (aircraft != null) {
+            navController.navigate("edit_aircraft/${aircraft.id}")
           }
-        )
+        })
         DropdownMenuItem(
           text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
           onClick = {
             showSettingsMenu = false
             showDeleteDialog = true
-          }
-        )
+          })
       }
     }, colors = TopAppBarDefaults.topAppBarColors(
       containerColor = MaterialTheme.colorScheme.background,
