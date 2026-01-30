@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.manager.MaintenanceLogManager
 import dev.fanfly.wingslog.fleet.dashboard.manager.FleetDashboardManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,9 +14,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class FleetDashboardViewModel @Inject constructor(private val fleetDashboardManager: FleetDashboardManager) :
-  ViewModel() {
-
+class FleetDashboardViewModel @Inject constructor(
+  private val fleetDashboardManager: FleetDashboardManager,
+  private val logManager: MaintenanceLogManager,
+) : ViewModel() {
 
   private var fleetInfoListener: ListenerRegistration? = null
 
@@ -34,8 +36,7 @@ class FleetDashboardViewModel @Inject constructor(private val fleetDashboardMana
       fleetInfoListener = fleetDashboardManager.observeFleetDashboard { result: List<Aircraft> ->
         _uiState.update {
           it.copy(
-            fleet = result,
-            isLoading = false
+            fleet = result, isLoading = false
           )
         }
       }

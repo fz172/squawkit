@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.manager.AircraftManager
+import dev.fanfly.wingslog.aircraft.manager.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AircraftOverviewViewModel @Inject constructor(
     private val aircraftManager: AircraftManager,
+    private val logManager: MaintenanceLogManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
