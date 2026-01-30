@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -163,35 +166,31 @@ fun AircraftOverviewScreen(
         modifier = Modifier
           .fillMaxSize()
           .padding(paddingValues)
-          .verticalScroll(scrollState)
-          .padding(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)
+          .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
       ) {
-        // --- Header Status Badge ---
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically
-        ) {
-          // Placeholder for status if needed, or just keep it in header.
-          // Mock showed "Airworthy" badge.
-          StatusBadge(status = "Airworthy", isGood = true)
+
+        // --- Configuration Section ---
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            ConfigurationCard(aircraft)
         }
 
         // --- Inspection Grid ---
-        Text(
-          text = stringResource(R.string.inspection_status),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold
-        )
+        Row(
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+          Text(
+            text = stringResource(R.string.inspection_status),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+          )
+          StatusBadge(status = "Airworthy", isGood = true)
+        }
         InspectionGrid()
-
-        // --- Configuration Section ---
-        Text(
-          text = stringResource(R.string.configuration),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold
-        )
-        ConfigurationCard(aircraft)
 
         Spacer(Modifier.height(80.dp)) // Clearance for FAB
       }
@@ -230,34 +229,44 @@ fun StatusBadge(status: String, isGood: Boolean) {
 
 @Composable
 fun InspectionGrid() {
-  Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+  LazyRow(
+    horizontalArrangement = Arrangement.spacedBy(12.dp),
+    contentPadding = PaddingValues(horizontal = 16.dp)
+  ) {
+    item {
       InspectionCard(
         title = "100 Hr",
         status = "Due in 14h",
         icon = Icons.Default.Schedule,
         statusColor = Color(0xFFFFD54F), // Yellowish
-        modifier = Modifier.weight(1f)
+        modifier = Modifier.width(150.dp)
       )
+    }
+    item {
       InspectionCard(
         title = "Annual",
         status = "Due Dec 2024",
         icon = Icons.Default.CalendarToday,
         statusColor = Color(0xFFA5D6A7), // Greenish
-        modifier = Modifier.weight(1f)
+        modifier = Modifier.width(150.dp)
       )
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    item {
       InspectionCard(
-        title = "Pitot-Static", status = "Due in 14h", // Mock data
-        icon = Icons.Default.Speed, statusColor = Color(0xFFFFD54F), modifier = Modifier.weight(1f)
+        title = "Pitot-Static",
+        status = "Due in 14h", // Mock data
+        icon = Icons.Default.Speed,
+        statusColor = Color(0xFFFFD54F),
+        modifier = Modifier.width(150.dp)
       )
+    }
+    item {
       InspectionCard(
         title = "Transponder",
         status = "Due Dec 2024",
         icon = Icons.Default.Radio,
         statusColor = Color(0xFFA5D6A7),
-        modifier = Modifier.weight(1f)
+        modifier = Modifier.width(150.dp)
       )
     }
   }
