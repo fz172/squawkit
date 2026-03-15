@@ -8,6 +8,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.aircraft.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
 import dev.fanfly.wingslog.aircraft.edit.EditAircraftScreen
+import dev.fanfly.wingslog.aircraft.maintenance.form.MaintenanceLogFormScreen
+import dev.fanfly.wingslog.aircraft.maintenance.log.MaintenanceLogListScreen
 import dev.fanfly.wingslog.aircraft.overview.AircraftOverviewScreen
 import dev.fanfly.wingslog.fleet.dashboard.DashboardScreen
 import dev.fanfly.wingslog.login.LoginScreen
@@ -64,6 +66,31 @@ fun AppEntry() {
       })
     ) {
       AircraftOverviewScreen(navController = navController)
+    }
+
+    // Maintenance Log routes
+    composable(
+      route = "maintenance_logs/{aircraftId}",
+      arguments = listOf(navArgument("aircraftId") { type = NavType.StringType })
+    ) {
+      MaintenanceLogListScreen(navController = navController)
+    }
+
+    composable(
+      route = "maintenance_log_create/{aircraftId}",
+      arguments = listOf(navArgument("aircraftId") { type = NavType.StringType })
+    ) {
+      MaintenanceLogFormScreen(navController = navController)
+    }
+
+    composable(
+      route = "maintenance_log_edit/{aircraftId}/{logId}",
+      arguments = listOf(
+        navArgument("aircraftId") { type = NavType.StringType },
+        navArgument("logId") { type = NavType.StringType }
+      )
+    ) {
+      MaintenanceLogFormScreen(navController = navController)
     }
   }
 }

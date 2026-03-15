@@ -1,0 +1,106 @@
+package dev.fanfly.wingslog.aircraft.maintenance.form.data
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.protobuf.Timestamp
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.manager.MaintenanceLogManager
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.util.UUID
+import javax.inject.Inject
+
+@HiltViewModel
+class MaintenanceLogFormViewModel @Inject constructor(
+    private val logManager: MaintenanceLogManager,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
+
+    val aircraftId: String = checkNotNull(savedStateHandle["aircraftId"])
+    private val logId: String? = savedStateHandle["logId"]
+    val isEditMode: Boolean get() = logId != null
+
+    private val _uiState = MutableStateFlow(MaintenanceLogFormUiState())
+    val uiState: StateFlow<MaintenanceLogFormUiState> = _uiState.asStateFlow()
+
+    private val _events = Channel<MaintenanceLogFormEvent>()
+    val events = _events.receiveAsFlow()
+
+    init {
+        if (isEditMode) loadLog()
+    }
+
+    private fun loadLog() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val log = logManager.observeLogs(aircraftId)
+                .firstOrNull()
+                ?.firstOrNull { it.id == logId }
+            if (log != null) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        workDescription = log.workDescription,
+                        inspectionStatus = log.inspectionStatus,
+                        tachTime = if (log.tachTime > 0.0) log.tachTime.toString() else "",
+                        componentType = log.componentType,
+                        componentSerial = log.componentSerial
+                    )
+                }
+            } else {
+                _uiState.update { it.copy(isLoading = false, error = "Log not found") }
+            }
+        }
+    }
+
+    fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
+    fun onInspectionStatusChange(value: String) = _uiState.update { it.copy(inspectionStatus = value) }
+    fun onTachTimeChange(value: String) = _uiState.update { it.copy(tachTime = value) }
+    fun onComponentTypeChange(value: MaintenanceLog.ComponentType) = _uiState.update { it.copy(componentType = value) }
+    fun onComponentSerialChange(value: String) = _uiState.update { it.copy(componentSerial = value) }
+
+    fun save() {
+        val state = _uiState.value
+        if (state.workDescription.isBlank()) {
+            _uiState.update { it.copy(error = "Work description is required") }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true, error = null) }
+            val now = System.currentTimeMillis() / 1000
+            val log = MaintenanceLog.newBuilder()
+                .setId(logId ?: UUID.randomUUID().toString())
+                .setTimestamp(Timestamp.newBuilder().setSeconds(now).build())
+                .setWorkDescription(state.workDescription)
+                .setInspectionStatus(state.inspectionStatus)
+                .setTachTime(state.tachTime.toDoubleOrNull() ?: 0.0)
+                .setComponentType(state.componentType)
+                .setComponentSerial(state.componentSerial)
+                .build()
+
+            val result = if (isEditMode) {
+                logManager.updateLog(aircraftId, log)
+            } else {
+                logManager.addLog(aircraftId, log)
+            }
+
+            result
+                .onSuccess { _events.send(MaintenanceLogFormEvent.SaveSuccess) }
+                .onFailure { e ->
+                    _uiState.update { it.copy(isSaving = false, error = e.message ?: "Save failed") }
+                }
+        }
+    }
+}
+
+sealed interface MaintenanceLogFormEvent {
+    data object SaveSuccess : MaintenanceLogFormEvent
+}

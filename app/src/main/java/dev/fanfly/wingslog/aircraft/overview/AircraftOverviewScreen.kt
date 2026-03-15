@@ -156,7 +156,7 @@ fun AircraftOverviewScreen(
     ExtendedFloatingActionButton(
       text = { Text(stringResource(R.string.add_log)) },
       icon = { Icon(Icons.Default.Add, contentDescription = null) },
-      onClick = { /* TODO: Add Log */ },
+      onClick = { if (aircraft != null) navController.navigate("maintenance_logs/${aircraft.id}") },
       containerColor = MaterialTheme.colorScheme.primaryContainer,
       contentColor = MaterialTheme.colorScheme.onPrimaryContainer
     )
