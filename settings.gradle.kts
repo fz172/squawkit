@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "wingslog"
 include(":app")
+include(":core:model")
