@@ -103,7 +103,7 @@ Each document in `maintenance_logs` will represent a single maintenance action.
 | `componentType` | String (Enum) | `AIRFRAME`, `ENGINE`, `PROPELLER`, `APPLIANCE` |
 | `componentId` | String | Serial Number of the specific component or "N/A" for Airframe. |
 | `componentReference` | Map/Object | Redundant/Helper to easily identify context: `{ type: "ENGINE", position: 1, serial: "..." }` |
-| `inspectionStatus` | String | E.g., `ANNUAL`, `100_HR`, `ELT_CHECK`, `AD_COMPLIANCE`, `SB_COMPLIANCE`, `ROUTINE`. |
+| `inspection` | List\<String\> | List of `InspectionType` enum names. E.g., `["ANNUAL", "OIL_CHANGE"]`. Allows a single log to represent multiple inspection types. |
 | `tachTime` | Double | Aircraft Tach time at the moment of entry. |
 | `attachments` | List<String> | List of URLs/paths to files in Firebase Storage (Photos, PDFs). |
 
@@ -167,7 +167,18 @@ message MaintenanceLog {
   
   string component_serial = 6; // References Engine/Prop/Blade Serial
   
-  string inspection_status = 7; // Could be enum or string
+  enum InspectionType {
+    INSPECTION_TYPE_UNKNOWN = 0;
+    ANNUAL = 1;
+    HUNDRED_HOUR = 2;
+    ROUTINE = 3;
+    TRANSPONDER_CHECK = 4;
+    CONDITIONAL = 5;
+    OIL_CHANGE = 6;
+    ELT = 7;
+    ALTIMETER_PITOT_STATIC = 8;
+  }
+  repeated InspectionType inspection = 7; // Multiple inspection types per log entry
   
   double tach_time = 8;
   

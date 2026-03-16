@@ -28,37 +28,42 @@ The application focuses on General Aviation (GA) aircraft management, specifical
 -   **Delete Aircraft**:
     -   Ability to remove an aircraft and its associated history from the database.
 
-### 3.2 Maintenance Log Management (New)
-**Goal**: comprehensive digital record-keeping for maintenance actions.
+### 3.2 Maintenance Log Management (Implemented)
+**Goal**: Comprehensive digital record-keeping for maintenance actions.
 
 -   **Log Entry Structure**:
     -   **Type/Category**: Airframe, Engine, or Propeller.
-    -   **Component Reference**: Must link to the specific Serial Number of the component worked on (e.g., "Engine 1 Serial #12345").
-    -   **Details**: Date, Tach/Hobbs time, Description of work, Signature/Certificate #.
+    -   **Component Reference**: Smart component picker — loads actual aircraft data (engines, prop hub/blades) from Firestore. Selecting a component auto-fills the serial number. No manual serial entry.
+        -   ENGINE: dropdown of configured engines (make/model/serial).
+        -   PROPELLER: dropdown of hub + individual blades with their serials.
+        -   AIRFRAME: auto-fills aircraft airframe serial.
+    -   **Details**: Tach time, description of work.
+    -   **Inspection Types**: Multi-select from enum: `ANNUAL`, `HUNDRED_HOUR`, `ROUTINE`, `TRANSPONDER_CHECK`, `CONDITIONAL`, `OIL_CHANGE`, `ELT`, `ALTIMETER_PITOT_STATIC`. A single log entry can represent multiple inspection types simultaneously.
 -   **CRUD Operations**:
-    -   List logs (filterable by component).
+    -   List logs (ordered by timestamp descending).
     -   Create new log entry.
     -   Edit existing entry.
-    -   Delete entry (with confirmation).
+    -   Delete entry (with confirmation dialog ✅).
 -   **Attachments**:
-    -   Goal: Store supporting documentation.
-    -   **File Types**:
-        -   **PDF**: For official forms (8130, STC paperwork).
-        -   **Images**: Photos of damage, repairs, or physical logbook pages.
-    -   **Input Methods**:
-        -   Select from device file storage.
-        -   Capture directly via Camera.
+    -   Goal: Store supporting documentation (not yet implemented).
+    -   **File Types**: PDF (8130, STC paperwork), Images (photos, physical logbook pages).
+    -   **Input Methods**: Device file storage, Camera capture.
 
-### 3.3 Maintenance Summary & Compliance (New)
+### 3.3 Maintenance Summary & Compliance (In Progress)
 **Goal**: Provide an "at-a-glance" view of airworthiness status based on log inputs.
 
--   **Automated Tracking**:
-    -   **Next 100-Hour Inspection**: Calculated based on last inspection Tach time + 100.
-    -   **Next Annual Inspection**: Calculated based on last Annual date + 12 calendar months.
+-   **Aircraft Overview Screen** (Implemented):
+    -   Inspection status displayed as a **2-column card grid** (not horizontal scroll).
+    -   **Log count stat cards**: Total logs + breakdown by Airframe / Engine / Propeller (live counts from Firestore).
+    -   "Log details" FAB navigates to maintenance log list.
+    -   Note: "Airworthy" status chip removed — airworthiness determination is deferred to Phase 4.
+-   **Automated Tracking** (Future):
+    -   **Next 100-Hour Inspection**: Based on last inspection Tach time + 100.
+    -   **Next Annual Inspection**: Based on last Annual date + 12 calendar months.
     -   **ELT Check**: Due date tracking.
--   **Reminders**:
-    -   **Push Notifications**: Alert the operator when service is approaching (e.g., "10 hours until 100hr inspection", "Annual due in 30 days").
-    -   **In-App Alerts**: Dashboard banners or highlights for due items.
+-   **Reminders** (Future):
+    -   **Push Notifications**: Alert when service approaching.
+    -   **In-App Alerts**: Dashboard banners for due items.
 
 ### 3.4 Weight & Balance (New)
 **Goal**: Ensure safe loading of the aircraft.
@@ -83,8 +88,8 @@ The application focuses on General Aviation (GA) aircraft management, specifical
     -   Easy navigation between Fleet -> Aircraft Details -> Logs/Tools.
 
 ## 5. Roadmap / Next Steps
-1.  **Phase 1** (Current): Finalize Aircraft Editor (Validation, UI polish).
-2.  **Phase 2**: Database Schema update for Logs and Attachments.
-3.  **Phase 3**: Log Entry UI (List & Editor) + Attachment handling.
-4.  **Phase 4**: Compliance Logic (Summary Page).
+1.  **Phase 1** ✅ Finalize Aircraft Editor (Validation, UI polish).
+2.  **Phase 2** ✅ Database Schema — `MaintenanceLog` proto with `repeated InspectionType inspection`, Firestore subcollection `maintenance_logs`.
+3.  **Phase 3** ✅ Log Entry UI (List, Create/Edit Form, Delete confirmation) + smart component picker. Attachment handling still pending.
+4.  **Phase 4** (Next): Compliance Logic — automated tracking of inspection due dates (100hr, Annual, ELT, Altimeter/Pitot-Static, Transponder). Surface in Aircraft Overview.
 5.  **Phase 5**: Weight & Balance Calculator.
