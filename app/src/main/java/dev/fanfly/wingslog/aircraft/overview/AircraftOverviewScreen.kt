@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.aircraft.overview
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,9 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -107,49 +106,49 @@ fun AircraftOverviewScreen(
   Scaffold(topBar = {
     TopAppBar(
       title = {
-      if (aircraft != null) {
-        Column {
-          Text(
-            text = "${aircraft.make} ${aircraft.model}",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-          )
-          Text(
-            text = aircraft.tailNumber,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        if (aircraft != null) {
+          Column {
+            Text(
+              text = "${aircraft.make} ${aircraft.model}",
+              style = MaterialTheme.typography.titleLarge,
+              fontWeight = FontWeight.Bold
+            )
+            Text(
+              text = aircraft.tailNumber,
+              style = MaterialTheme.typography.labelMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          }
+        }
+      }, navigationIcon = {
+        IconButton(onClick = { navController.popBackStack() }) {
+          Icon(
+            Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back)
           )
         }
-      }
-    }, navigationIcon = {
-      IconButton(onClick = { navController.popBackStack() }) {
-        Icon(
-          Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back)
-        )
-      }
-    }, actions = {
-      IconButton(onClick = { showSettingsMenu = !showSettingsMenu }) {
-        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
-      }
-      DropdownMenu(
-        expanded = showSettingsMenu, onDismissRequest = { showSettingsMenu = false }) {
-        DropdownMenuItem(text = { Text(stringResource(R.string.edit_aircraft)) }, onClick = {
-          showSettingsMenu = false
-          if (aircraft != null) {
-            navController.navigate("edit_aircraft/${aircraft.id}")
-          }
-        })
-        DropdownMenuItem(
-          text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
-          onClick = {
+      }, actions = {
+        IconButton(onClick = { showSettingsMenu = !showSettingsMenu }) {
+          Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
+        }
+        DropdownMenu(
+          expanded = showSettingsMenu, onDismissRequest = { showSettingsMenu = false }) {
+          DropdownMenuItem(text = { Text(stringResource(R.string.edit_aircraft)) }, onClick = {
             showSettingsMenu = false
-            showDeleteDialog = true
+            if (aircraft != null) {
+              navController.navigate("edit_aircraft/${aircraft.id}")
+            }
           })
-      }
-    }, colors = TopAppBarDefaults.topAppBarColors(
-      containerColor = MaterialTheme.colorScheme.background,
-      scrolledContainerColor = MaterialTheme.colorScheme.background
-    )
+          DropdownMenuItem(
+            text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+            onClick = {
+              showSettingsMenu = false
+              showDeleteDialog = true
+            })
+        }
+      }, colors = TopAppBarDefaults.topAppBarColors(
+        containerColor = MaterialTheme.colorScheme.background,
+        scrolledContainerColor = MaterialTheme.colorScheme.background
+      )
     )
   }, floatingActionButton = {
     ExtendedFloatingActionButton(
@@ -171,12 +170,12 @@ fun AircraftOverviewScreen(
 
         // --- Configuration Section ---
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            ConfigurationCard(aircraft)
+          ConfigurationCard(aircraft)
         }
 
         // --- Log Stats Section ---
         successState?.logStats?.let { stats ->
-            LogStatsSection(stats = stats, modifier = Modifier.padding(horizontal = 16.dp))
+          LogStatsSection(stats = stats, modifier = Modifier.padding(horizontal = 16.dp))
         }
 
         // --- Inspection Grid ---
@@ -197,51 +196,59 @@ fun AircraftOverviewScreen(
 
 @Composable
 private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = "Maintenance Summary",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            StatCard(label = "Total Logs", value = stats.total.toString(), modifier = Modifier.weight(1f))
-            StatCard(label = "Airframe", value = stats.airframe.toString(), modifier = Modifier.weight(1f))
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            StatCard(label = "Engine", value = stats.engine.toString(), modifier = Modifier.weight(1f))
-            StatCard(label = "Propeller", value = stats.propeller.toString(), modifier = Modifier.weight(1f))
-        }
+  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Text(
+      text = "Maintenance Summary",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold
+    )
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+      StatCard(label = "Total Logs", value = stats.total.toString(), modifier = Modifier.weight(1f))
+      StatCard(
+        label = "Airframe",
+        value = stats.airframe.toString(),
+        modifier = Modifier.weight(1f)
+      )
     }
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+      StatCard(label = "Engine", value = stats.engine.toString(), modifier = Modifier.weight(1f))
+      StatCard(
+        label = "Propeller",
+        value = stats.propeller.toString(),
+        modifier = Modifier.weight(1f)
+      )
+    }
+  }
 }
 
 @Composable
 private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+  Card(
+    modifier = modifier,
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+  ) {
+    Column(
+      modifier = Modifier.padding(12.dp),
+      verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+      Text(
+        text = value,
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold
+      )
+      Text(
+        text = label,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+      )
     }
+  }
 }
 
 @Composable
