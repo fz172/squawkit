@@ -35,15 +35,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.maintenance.form.data.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.aircraft.maintenance.form.data.MaintenanceLogFormViewModel
+import dev.fanfly.wingslog.aircraft.maintenance.util.displayName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,10 +67,10 @@ fun MaintenanceLogFormScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (viewModel.isEditMode) "Edit Log" else "Add Log") },
+                title = { Text(if (viewModel.isEditMode) stringResource(R.string.edit_log) else stringResource(R.string.add_log)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -90,7 +93,7 @@ fun MaintenanceLogFormScreen(
                 OutlinedTextField(
                     value = uiState.workDescription,
                     onValueChange = viewModel::onWorkDescriptionChange,
-                    label = { Text("Work Description *") },
+                    label = { Text(stringResource(R.string.work_description_required)) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     maxLines = 6,
@@ -112,7 +115,7 @@ fun MaintenanceLogFormScreen(
                 OutlinedTextField(
                     value = uiState.tachTime,
                     onValueChange = viewModel::onTachTimeChange,
-                    label = { Text("Tach Time (hours)") },
+                    label = { Text(stringResource(R.string.tach_time_hours)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -186,7 +189,7 @@ private fun ComponentSection(
                     value = serial,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Airframe Serial") },
+                    label = { Text(stringResource(R.string.airframe_serial)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -195,7 +198,7 @@ private fun ComponentSection(
             MaintenanceLog.ComponentType.ENGINE -> {
                 if (aircraft == null) {
                     Text(
-                        text = "Loading aircraft...",
+                        text = stringResource(R.string.loading_aircraft),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -203,7 +206,7 @@ private fun ComponentSection(
                     val engines = aircraft.engineList
                     if (engines.isEmpty()) {
                         Text(
-                            text = "No engines found for this aircraft.",
+                            text = stringResource(R.string.no_engines_found),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -220,7 +223,7 @@ private fun ComponentSection(
                             label to engine.serial
                         }
                         SubComponentDropdown(
-                            label = "Engine",
+                            label = stringResource(R.string.engine),
                             options = options,
                             selectedSerial = selectedSubComponent,
                             onSelected = onSubComponentChange,
@@ -233,7 +236,7 @@ private fun ComponentSection(
             MaintenanceLog.ComponentType.PROPELLER -> {
                 if (aircraft == null) {
                     Text(
-                        text = "Loading aircraft...",
+                        text = stringResource(R.string.loading_aircraft),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -267,13 +270,13 @@ private fun ComponentSection(
 
                     if (options.isEmpty()) {
                         Text(
-                            text = "No propeller components found for this aircraft.",
+                            text = stringResource(R.string.no_propeller_components_found),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
                         SubComponentDropdown(
-                            label = "Propeller Component",
+                            label = stringResource(R.string.propeller_component),
                             options = options,
                             selectedSerial = selectedSubComponent,
                             onSelected = onSubComponentChange,
@@ -355,7 +358,7 @@ private fun ComponentTypeDropdown(
             value = selected.name,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Component Type") },
+            label = { Text(stringResource(R.string.component_type)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -393,7 +396,8 @@ private fun InspectionTypeDropdown(
         MaintenanceLog.InspectionType.ALTIMETER_PITOT_STATIC,
     )
     var expanded by remember { mutableStateOf(false) }
-    val displayText = if (selected.isEmpty()) "None" else selected.joinToString(", ") { it.name }
+    val noneLabel = stringResource(R.string.none)
+    val displayText = if (selected.isEmpty()) noneLabel else selected.joinToString(", ") { it.name }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -404,7 +408,7 @@ private fun InspectionTypeDropdown(
             value = displayText,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Inspection Types") },
+            label = { Text(stringResource(R.string.inspection_types)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .fillMaxWidth()

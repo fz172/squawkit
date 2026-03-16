@@ -28,8 +28,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import dev.fanfly.wingslog.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.maintenance.log.compose.MaintenanceLogCard
@@ -60,17 +62,17 @@ fun MaintenanceLogListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Maintenance Logs") },
+                title = { Text(stringResource(R.string.maintenance_logs)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { viewModel.onAddLog() }) {
-                Icon(Icons.Default.Add, contentDescription = "Add log")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_log))
             }
         }
     ) { innerPadding ->
@@ -83,13 +85,13 @@ fun MaintenanceLogListScreen(
             when (val state = uiState) {
                 MaintenanceLogListUiState.Loading -> CircularProgressIndicator()
                 MaintenanceLogListUiState.Error -> Text(
-                    "Failed to load logs",
+                    stringResource(R.string.failed_to_load_logs),
                     style = MaterialTheme.typography.bodyLarge
                 )
                 is MaintenanceLogListUiState.Success -> {
                     if (state.logs.isEmpty()) {
                         Text(
-                            "No maintenance logs yet.\nTap + to add the first one.",
+                            stringResource(R.string.no_maintenance_logs_hint),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -117,8 +119,8 @@ fun MaintenanceLogListScreen(
     pendingDeleteLogId?.let { logId ->
         AlertDialog(
             onDismissRequest = { pendingDeleteLogId = null },
-            title = { Text("Delete Log?") },
-            text = { Text("This action cannot be undone.") },
+            title = { Text(stringResource(R.string.delete_log)) },
+            text = { Text(stringResource(R.string.this_action_cannot_be_undone)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -126,12 +128,12 @@ fun MaintenanceLogListScreen(
                         pendingDeleteLogId = null
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteLogId = null }) {
-                    Text("Cancel")
+                    Text(stringResource(android.R.string.cancel))
                 }
             }
         )

@@ -19,8 +19,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,10 +36,11 @@ fun MaintenanceLogCard(
     modifier: Modifier = Modifier
 ) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    val unknownDate = stringResource(R.string.unknown_date)
     val dateStr = if (log.hasTimestamp()) {
         dateFormat.format(Date(log.timestamp.seconds * 1000))
     } else {
-        "Unknown date"
+        unknownDate
     }
 
     Card(
@@ -62,13 +65,13 @@ fun MaintenanceLogCard(
                 )
                 Row {
                     IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit log")
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_log_content_description))
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                     IconButton(onClick = onDelete) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Delete log",
+                            contentDescription = stringResource(R.string.delete_log_content_description),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -94,7 +97,7 @@ fun MaintenanceLogCard(
             ) {
                 if (log.tachTime > 0.0) {
                     Text(
-                        text = "Tach: %.1f".format(log.tachTime),
+                        text = stringResource(R.string.tach_format, log.tachTime),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

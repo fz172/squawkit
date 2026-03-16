@@ -52,6 +52,31 @@
     <string name="this_action_cannot_be_undone">This action cannot be undone.</string>
     <string name="delete">Delete</string>
     <string name="edit_aircraft">Edit aircraft</string>
+    <!-- Maintenance log form -->
+    <string name="edit_log">Edit Log</string>
+    <string name="work_description_required">Work Description *</string>
+    <string name="tach_time_hours">Tach Time (hours)</string>
+    <string name="airframe_serial">Airframe Serial</string>
+    <string name="loading_aircraft">Loading aircraft…</string>
+    <string name="no_engines_found">No engines found for this aircraft.</string>
+    <string name="no_propeller_components_found">No propeller components found for this aircraft.</string>
+    <string name="propeller_component">Propeller Component</string>
+    <string name="component_type">Component Type</string>
+    <string name="inspection_types">Inspection Types</string>
+    <string name="none">None</string>
+
+    <!-- Maintenance log list -->
+    <string name="maintenance_logs">Maintenance Logs</string>
+    <string name="failed_to_load_logs">Failed to load logs</string>
+    <string name="no_maintenance_logs_hint">No maintenance logs yet.\nTap + to add the first one.</string>
+    <string name="delete_log">Delete Log?</string>
+
+    <!-- Maintenance log card -->
+    <string name="unknown_date">Unknown date</string>
+    <string name="edit_log_content_description">Edit log</string>
+    <string name="delete_log_content_description">Delete log</string>
+    <string name="tach_format">Tach: %.1f</string>
+
     <string name="maintenance_summary">Maintenance Summary</string>
     <string name="total_logs">Total Logs</string>
     <string name="log_details">Log details</string>
