@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.aircraft.overview
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -19,13 +22,13 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,8 +46,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -108,6 +113,7 @@ fun AircraftOverviewContent(
   modifier: Modifier = Modifier
 ) {
   val scrollState = rememberScrollState()
+  val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
   var showSettingsMenu by remember { mutableStateOf(false) }
   var showDeleteDialog by remember { mutableStateOf(false) }
@@ -136,10 +142,11 @@ fun AircraftOverviewContent(
   }
 
   Scaffold(
-    modifier = modifier,
+    modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
       TopAppBar(
+        scrollBehavior = scrollBehavior,
         title = {
           if (aircraft != null) {
             Column {
@@ -191,45 +198,91 @@ fun AircraftOverviewContent(
           scrolledContainerColor = MaterialTheme.colorScheme.background
         )
       )
-    }, floatingActionButton = {
-      ExtendedFloatingActionButton(
-        text = { Text(stringResource(R.string.log_details)) },
-        icon = { Icon(Icons.Default.Info, contentDescription = null) },
-        onClick = { if (aircraft != null) onLogDetailsClick(aircraft.id) },
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-      )
-    }) { paddingValues ->
+    }
+  ) { paddingValues ->
     if (aircraft != null) {
-      Column(
+      Box(
         modifier = Modifier
           .fillMaxSize()
           .padding(paddingValues)
-          .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
       ) {
+        Column(
+          modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState),
+          verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
 
-        // --- Configuration Section ---
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-          ConfigurationCard(aircraft)
+          // --- Configuration Section ---
+          Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            ConfigurationCard(aircraft)
+          }
+          // --- Log Stats Section ---
+          logStats?.let { stats ->
+            LogStatsSection(stats = stats, modifier = Modifier.padding(horizontal = 16.dp))
+          }
+
+          // --- Inspection Grid ---
+          Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Text(
+              text = stringResource(R.string.inspection_status),
+              style = MaterialTheme.typography.titleMedium,
+              fontWeight = FontWeight.Bold
+            )
+          }
+          InspectionGrid()
+
+          Spacer(Modifier.height(88.dp)) // Clearance for the floating bottom bar
         }
 
-        // --- Log Stats Section ---
-        logStats?.let { stats ->
-          LogStatsSection(stats = stats, modifier = Modifier.padding(horizontal = 16.dp))
-        }
+        // Floating Bottom Bar
+        LogDetailsBottomBar(
+          aircraft = aircraft,
+          modifier = Modifier.align(Alignment.BottomCenter),
+          onLogDetailsClick = onLogDetailsClick
+        )
+      }
+    }
+  }
+}
 
-        // --- Inspection Grid ---
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-          Text(
-            text = stringResource(R.string.inspection_status),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-          )
-        }
-        InspectionGrid()
 
-        Spacer(Modifier.height(80.dp)) // Clearance for FAB
+@Composable
+fun LogDetailsBottomBar(
+  aircraft: Aircraft?,
+  modifier: Modifier = Modifier,
+  onLogDetailsClick: (String) -> Unit
+) {
+  if (aircraft != null) {
+    Box(
+      modifier = modifier
+        .fillMaxWidth()
+        .background(androidx.compose.ui.graphics.Color.Transparent)
+        .padding(16.dp),
+      contentAlignment = Alignment.Center
+    ) {
+      Button(
+        onClick = { onLogDetailsClick(aircraft.id) },
+        modifier = Modifier
+          .widthIn(max = 600.dp)
+          .fillMaxWidth()
+          .height(64.dp),
+        colors = ButtonDefaults.buttonColors(
+          containerColor = MaterialTheme.colorScheme.primary,
+          contentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+      ) {
+        Icon(
+          Icons.Default.Info,
+          contentDescription = null,
+          modifier = Modifier.padding(end = 8.dp)
+        )
+        Text(
+          text = stringResource(R.string.log_details).uppercase(),
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.Bold
+        )
       }
     }
   }
