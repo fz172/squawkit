@@ -355,7 +355,7 @@ private fun ComponentTypeDropdown(
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = selected.name,
+            value = selected.displayName(),
             onValueChange = {},
             readOnly = true,
             label = { Text(stringResource(R.string.component_type)) },
@@ -367,7 +367,7 @@ private fun ComponentTypeDropdown(
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option.name) },
+                    text = { Text(option.displayName()) },
                     onClick = {
                         onSelected(option)
                         expanded = false
@@ -397,7 +397,7 @@ private fun InspectionTypeDropdown(
     )
     var expanded by remember { mutableStateOf(false) }
     val noneLabel = stringResource(R.string.none)
-    val displayText = if (selected.isEmpty()) noneLabel else selected.joinToString(", ") { it.name }
+    val displayText = if (selected.isEmpty()) noneLabel else selected.joinToString(", ") { it.displayName() }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -423,7 +423,7 @@ private fun InspectionTypeDropdown(
                                 checked = selected.contains(option),
                                 onCheckedChange = null
                             )
-                            Text(option.name)
+                            Text(option.displayName())
                         }
                     },
                     onClick = { onToggle(option) }

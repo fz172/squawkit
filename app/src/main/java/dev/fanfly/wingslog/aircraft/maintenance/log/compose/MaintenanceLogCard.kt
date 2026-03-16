@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.maintenance.util.displayName
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -81,7 +82,7 @@ fun MaintenanceLogCard(
 
             if (log.inspectionList.isNotEmpty()) {
                 Text(
-                    text = log.inspectionList.joinToString(", ") { it.name },
+                    text = log.inspectionList.joinToString(", ") { it.displayName() },
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
@@ -105,7 +106,7 @@ fun MaintenanceLogCard(
                 }
                 if (log.componentType != MaintenanceLog.ComponentType.UNKNOWN) {
                     Text(
-                        text = log.componentType.name,
+                        text = log.componentType.displayName(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
