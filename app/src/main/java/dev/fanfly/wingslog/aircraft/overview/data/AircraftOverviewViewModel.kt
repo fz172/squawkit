@@ -2,9 +2,8 @@ package dev.fanfly.wingslog.aircraft.overview.data
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-
-import dagger.hilt.android.lifecycle.HiltViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.manager.AircraftManager
 import dev.fanfly.wingslog.aircraft.manager.MaintenanceLogManager
