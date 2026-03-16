@@ -68,9 +68,8 @@ class AircraftOverviewViewModel @Inject constructor(
                 .onSuccess {
                     _events.send(AircraftOverviewEvent.NavigateBack)
                 }
-                .onFailure {
-                    // Start simplified: maybe show snackbar? For now just log or ignore
-                    // Could add Error event
+                .onFailure { error ->
+                    _events.send(AircraftOverviewEvent.ShowError(error.message ?: "Failed to delete aircraft"))
                 }
         }
     }
@@ -78,4 +77,5 @@ class AircraftOverviewViewModel @Inject constructor(
 
 sealed interface AircraftOverviewEvent {
     data object NavigateBack : AircraftOverviewEvent
+    data class ShowError(val message: String) : AircraftOverviewEvent
 }

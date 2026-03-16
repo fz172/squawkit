@@ -52,5 +52,14 @@
     <string name="this_action_cannot_be_undone">This action cannot be undone.</string>
     <string name="delete">Delete</string>
     <string name="edit_aircraft">Edit aircraft</string>
+    <string name="maintenance_summary">Maintenance Summary</string>
+    <string name="total_logs">Total Logs</string>
+    <string name="log_details">Log details</string>
+    <string name="due_in_14h">Due in 14h</string>
+    <string name="due_dec_2024">Due Dec 2024</string>
+    <string name="hundred_hr">100 Hr</string>
+    <string name="annual">Annual</string>
+    <string name="pitot_static">Pitot-Static</string>
+    <string name="transponder">Transponder</string>
 
 </resources>
