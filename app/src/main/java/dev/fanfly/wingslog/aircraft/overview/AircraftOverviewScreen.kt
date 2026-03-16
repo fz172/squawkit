@@ -50,6 +50,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import dev.fanfly.wingslog.ui.theme.StatusOk
+import dev.fanfly.wingslog.ui.theme.StatusWarning
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -257,7 +259,7 @@ fun LogDetailsBottomBar(
     Box(
       modifier = modifier
         .fillMaxWidth()
-        .background(androidx.compose.ui.graphics.Color.Transparent)
+        .background(Color.Transparent)
         .padding(16.dp),
       contentAlignment = Alignment.Center
     ) {
@@ -367,14 +369,14 @@ fun InspectionGrid(modifier: Modifier = Modifier) {
         title = stringResource(R.string.hundred_hr),
         status = stringResource(R.string.due_in_14h),
         icon = Icons.Default.Schedule,
-        statusColor = Color(0xFFFFD54F),
+        statusColor = StatusWarning,
         modifier = Modifier.weight(1f)
       )
       InspectionCard(
         title = stringResource(R.string.annual),
         status = stringResource(R.string.due_dec_2024),
         icon = Icons.Default.CalendarToday,
-        statusColor = Color(0xFFA5D6A7),
+        statusColor = StatusOk,
         modifier = Modifier.weight(1f)
       )
     }
@@ -386,14 +388,14 @@ fun InspectionGrid(modifier: Modifier = Modifier) {
         title = stringResource(R.string.pitot_static),
         status = stringResource(R.string.due_in_14h),
         icon = Icons.Default.Speed,
-        statusColor = Color(0xFFFFD54F),
+        statusColor = StatusWarning,
         modifier = Modifier.weight(1f)
       )
       InspectionCard(
         title = stringResource(R.string.transponder),
         status = stringResource(R.string.due_dec_2024),
         icon = Icons.Default.Radio,
-        statusColor = Color(0xFFA5D6A7),
+        statusColor = StatusOk,
         modifier = Modifier.weight(1f)
       )
     }
