@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
@@ -113,5 +114,21 @@ fun MaintenanceLogCard(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MaintenanceLogCardPreview() {
+    val log = dev.fanfly.wingslog.aircraft.MaintenanceLog.newBuilder()
+        .setId("preview-id")
+        .setWorkDescription("Performed annual inspection and oil change.")
+        .setTachTime(1234.5)
+        .setComponentType(dev.fanfly.wingslog.aircraft.MaintenanceLog.ComponentType.ENGINE)
+        .addInspection(dev.fanfly.wingslog.aircraft.MaintenanceLog.InspectionType.ANNUAL)
+        .addInspection(dev.fanfly.wingslog.aircraft.MaintenanceLog.InspectionType.OIL_CHANGE)
+        .build()
+    MaterialTheme {
+        MaintenanceLogCard(log = log, onEdit = {}, onDelete = {})
     }
 }

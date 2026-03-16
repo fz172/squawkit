@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.tooling.preview.Preview
 import dev.fanfly.wingslog.ui.theme.StatusOk
 import dev.fanfly.wingslog.ui.theme.StatusWarning
 import androidx.compose.ui.res.stringResource
@@ -399,5 +400,13 @@ fun InspectionGrid(modifier: Modifier = Modifier) {
         modifier = Modifier.weight(1f)
       )
     }
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun StatCardPreview() {
+  MaterialTheme {
+    StatCard(label = "Total Logs", value = "42")
   }
 }
