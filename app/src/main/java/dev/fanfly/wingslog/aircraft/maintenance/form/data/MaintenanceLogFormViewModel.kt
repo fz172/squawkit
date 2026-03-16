@@ -49,7 +49,7 @@ class MaintenanceLogFormViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         workDescription = log.workDescription,
-                        inspectionStatus = log.inspectionStatus,
+                        inspections = log.inspectionList,
                         tachTime = if (log.tachTime > 0.0) log.tachTime.toString() else "",
                         componentType = log.componentType,
                         componentSerial = log.componentSerial
@@ -62,7 +62,7 @@ class MaintenanceLogFormViewModel @Inject constructor(
     }
 
     fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
-    fun onInspectionStatusChange(value: String) = _uiState.update { it.copy(inspectionStatus = value) }
+    fun onInspectionsChange(value: List<MaintenanceLog.InspectionType>) = _uiState.update { it.copy(inspections = value) }
     fun onTachTimeChange(value: String) = _uiState.update { it.copy(tachTime = value) }
     fun onComponentTypeChange(value: MaintenanceLog.ComponentType) = _uiState.update { it.copy(componentType = value) }
     fun onComponentSerialChange(value: String) = _uiState.update { it.copy(componentSerial = value) }
@@ -80,7 +80,7 @@ class MaintenanceLogFormViewModel @Inject constructor(
                 .setId(logId ?: UUID.randomUUID().toString())
                 .setTimestamp(Timestamp.newBuilder().setSeconds(now).build())
                 .setWorkDescription(state.workDescription)
-                .setInspectionStatus(state.inspectionStatus)
+                .addAllInspection(state.inspections)
                 .setTachTime(state.tachTime.toDoubleOrNull() ?: 0.0)
                 .setComponentType(state.componentType)
                 .setComponentSerial(state.componentSerial)

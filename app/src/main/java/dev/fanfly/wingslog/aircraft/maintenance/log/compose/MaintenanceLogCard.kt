@@ -75,9 +75,9 @@ fun MaintenanceLogCard(
                 }
             }
 
-            if (log.inspectionStatus.isNotBlank()) {
+            if (log.inspectionList.isNotEmpty()) {
                 Text(
-                    text = log.inspectionStatus,
+                    text = log.inspectionList.joinToString(", ") { it.name },
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary

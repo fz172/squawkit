@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -95,13 +96,15 @@ fun MaintenanceLogFormScreen(
                     isError = uiState.error == "Work description is required"
                 )
 
-                // Inspection Status
-                OutlinedTextField(
-                    value = uiState.inspectionStatus,
-                    onValueChange = viewModel::onInspectionStatusChange,
-                    label = { Text("Inspection Status (e.g. ANNUAL, 100HR, ROUTINE)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                // Inspection Types
+                InspectionTypeDropdown(
+                    selected = uiState.inspections,
+                    onToggle = { type ->
+                        val current = uiState.inspections.toMutableList()
+                        if (current.contains(type)) current.remove(type) else current.add(type)
+                        viewModel.onInspectionsChange(current)
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 // Tach Time
@@ -200,6 +203,60 @@ private fun ComponentTypeDropdown(
                         onSelected(option)
                         expanded = false
                     }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun InspectionTypeDropdown(
+    selected: List<MaintenanceLog.InspectionType>,
+    onToggle: (MaintenanceLog.InspectionType) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val options = listOf(
+        MaintenanceLog.InspectionType.ANNUAL,
+        MaintenanceLog.InspectionType.HUNDRED_HOUR,
+        MaintenanceLog.InspectionType.ROUTINE,
+        MaintenanceLog.InspectionType.TRANSPONDER_CHECK,
+        MaintenanceLog.InspectionType.CONDITIONAL,
+        MaintenanceLog.InspectionType.OIL_CHANGE,
+        MaintenanceLog.InspectionType.ELT,
+        MaintenanceLog.InspectionType.ALTIMETER_PITOT_STATIC,
+    )
+    var expanded by remember { mutableStateOf(false) }
+    val displayText = if (selected.isEmpty()) "None" else selected.joinToString(", ") { it.name }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = displayText,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Inspection Types") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = selected.contains(option),
+                                onCheckedChange = null
+                            )
+                            Text(option.name)
+                        }
+                    },
+                    onClick = { onToggle(option) }
                 )
             }
         }
