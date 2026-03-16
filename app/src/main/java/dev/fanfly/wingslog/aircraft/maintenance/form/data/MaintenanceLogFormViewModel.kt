@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.protobuf.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.manager.AircraftManager
 import dev.fanfly.wingslog.aircraft.manager.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MaintenanceLogFormViewModel @Inject constructor(
     private val logManager: MaintenanceLogManager,
+    private val aircraftManager: AircraftManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -35,7 +37,16 @@ class MaintenanceLogFormViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
+        loadAircraft()
         if (isEditMode) loadLog()
+    }
+
+    private fun loadAircraft() {
+        viewModelScope.launch {
+            aircraftManager.loadAircraft(aircraftId).collect { aircraft ->
+                _uiState.update { it.copy(aircraft = aircraft) }
+            }
+        }
     }
 
     private fun loadLog() {
@@ -51,8 +62,8 @@ class MaintenanceLogFormViewModel @Inject constructor(
                         workDescription = log.workDescription,
                         inspections = log.inspectionList,
                         tachTime = if (log.tachTime > 0.0) log.tachTime.toString() else "",
-                        componentType = log.componentType,
-                        componentSerial = log.componentSerial
+                        selectedComponentType = log.componentType,
+                        selectedSubComponent = log.componentSerial.ifEmpty { null }
                     )
                 }
             } else {
@@ -64,8 +75,23 @@ class MaintenanceLogFormViewModel @Inject constructor(
     fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
     fun onInspectionsChange(value: List<MaintenanceLog.InspectionType>) = _uiState.update { it.copy(inspections = value) }
     fun onTachTimeChange(value: String) = _uiState.update { it.copy(tachTime = value) }
-    fun onComponentTypeChange(value: MaintenanceLog.ComponentType) = _uiState.update { it.copy(componentType = value) }
-    fun onComponentSerialChange(value: String) = _uiState.update { it.copy(componentSerial = value) }
+
+    fun onComponentTypeChange(value: MaintenanceLog.ComponentType) {
+        _uiState.update { state ->
+            // Auto-populate serial for AIRFRAME
+            val autoSerial = if (value == MaintenanceLog.ComponentType.AIRFRAME) {
+                state.aircraft?.serial?.takeIf { it.isNotEmpty() }
+            } else null
+            state.copy(
+                selectedComponentType = value,
+                selectedSubComponent = autoSerial
+            )
+        }
+    }
+
+    fun onSubComponentChange(serial: String?) {
+        _uiState.update { it.copy(selectedSubComponent = serial) }
+    }
 
     fun save() {
         val state = _uiState.value
@@ -76,14 +102,21 @@ class MaintenanceLogFormViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
             val now = System.currentTimeMillis() / 1000
+
+            // Determine componentSerial from state
+            val componentSerial = when (state.selectedComponentType) {
+                MaintenanceLog.ComponentType.AIRFRAME -> state.aircraft?.serial ?: ""
+                else -> state.selectedSubComponent ?: ""
+            }
+
             val log = MaintenanceLog.newBuilder()
                 .setId(logId ?: UUID.randomUUID().toString())
                 .setTimestamp(Timestamp.newBuilder().setSeconds(now).build())
                 .setWorkDescription(state.workDescription)
                 .addAllInspection(state.inspections)
                 .setTachTime(state.tachTime.toDoubleOrNull() ?: 0.0)
-                .setComponentType(state.componentType)
-                .setComponentSerial(state.componentSerial)
+                .setComponentType(state.selectedComponentType)
+                .setComponentSerial(componentSerial)
                 .build()
 
             val result = if (isEditMode) {

@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.aircraft.maintenance.form.data
 
+import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 
 data class MaintenanceLogFormUiState(
@@ -8,7 +9,8 @@ data class MaintenanceLogFormUiState(
     val workDescription: String = "",
     val inspections: List<MaintenanceLog.InspectionType> = emptyList(),
     val tachTime: String = "",
-    val componentType: MaintenanceLog.ComponentType = MaintenanceLog.ComponentType.UNKNOWN,
-    val componentSerial: String = "",
+    val aircraft: Aircraft? = null,
+    val selectedComponentType: MaintenanceLog.ComponentType = MaintenanceLog.ComponentType.UNKNOWN,
+    val selectedSubComponent: String? = null,
     val error: String? = null
 )

@@ -5,12 +5,14 @@ import androidx.lifecycle.ViewModel
 
 import dagger.hilt.android.lifecycle.HiltViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.manager.AircraftManager
 import dev.fanfly.wingslog.aircraft.manager.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -33,21 +35,30 @@ class AircraftOverviewViewModel @Inject constructor(
     val events = _events.receiveAsFlow()
 
     init {
-        loadAircraft()
+        loadAircraftAndStats()
     }
 
-    private fun loadAircraft() {
+    private fun loadAircraftAndStats() {
         viewModelScope.launch {
-            aircraftManager.loadAircraft(aircraftId)
-                .onStart { _uiState.update { AircraftOverviewUiState.Loading } }
-                .collect { aircraft ->
-                    if (aircraft != null) {
-                        _uiState.update { AircraftOverviewUiState.Success(aircraft) }
-                    } else {
-                        // If aircraft is null, it might be deleted or not found
-                        _uiState.update { AircraftOverviewUiState.Error }
-                    }
+            _uiState.update { AircraftOverviewUiState.Loading }
+            combine(
+                aircraftManager.loadAircraft(aircraftId),
+                logManager.observeLogs(aircraftId)
+            ) { aircraft, logs ->
+                if (aircraft != null) {
+                    val stats = LogStats(
+                        total = logs.size.toLong(),
+                        airframe = logs.count { it.componentType == MaintenanceLog.ComponentType.AIRFRAME }.toLong(),
+                        engine = logs.count { it.componentType == MaintenanceLog.ComponentType.ENGINE }.toLong(),
+                        propeller = logs.count { it.componentType == MaintenanceLog.ComponentType.PROPELLER }.toLong()
+                    )
+                    AircraftOverviewUiState.Success(aircraft = aircraft, logStats = stats)
+                } else {
+                    AircraftOverviewUiState.Error
                 }
+            }.collect { state ->
+                _uiState.update { state }
+            }
         }
     }
 
@@ -68,4 +79,3 @@ class AircraftOverviewViewModel @Inject constructor(
 sealed interface AircraftOverviewEvent {
     data object NavigateBack : AircraftOverviewEvent
 }
-

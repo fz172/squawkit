@@ -8,24 +8,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,7 +34,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -45,9 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -60,6 +57,7 @@ import dev.fanfly.wingslog.aircraft.overview.compose.InspectionCard
 import dev.fanfly.wingslog.aircraft.overview.data.AircraftOverviewEvent
 import dev.fanfly.wingslog.aircraft.overview.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.aircraft.overview.data.AircraftOverviewViewModel
+import dev.fanfly.wingslog.aircraft.overview.data.LogStats
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,7 +67,8 @@ fun AircraftOverviewScreen(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val scrollState = rememberScrollState()
 
-  val aircraft = (uiState as? AircraftOverviewUiState.Success)?.aircraft
+  val successState = uiState as? AircraftOverviewUiState.Success
+  val aircraft = successState?.aircraft
 
   var showSettingsMenu by remember { mutableStateOf(false) }
   var showDeleteDialog by remember { mutableStateOf(false) }
@@ -154,8 +153,8 @@ fun AircraftOverviewScreen(
     )
   }, floatingActionButton = {
     ExtendedFloatingActionButton(
-      text = { Text(stringResource(R.string.add_log)) },
-      icon = { Icon(Icons.Default.Add, contentDescription = null) },
+      text = { Text("Log details") },
+      icon = { Icon(Icons.Default.Info, contentDescription = null) },
       onClick = { if (aircraft != null) navController.navigate("maintenance_logs/${aircraft.id}") },
       containerColor = MaterialTheme.colorScheme.primaryContainer,
       contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -175,20 +174,18 @@ fun AircraftOverviewScreen(
             ConfigurationCard(aircraft)
         }
 
+        // --- Log Stats Section ---
+        successState?.logStats?.let { stats ->
+            LogStatsSection(stats = stats, modifier = Modifier.padding(horizontal = 16.dp))
+        }
+
         // --- Inspection Grid ---
-        Row(
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
           Text(
             text = stringResource(R.string.inspection_status),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
           )
-          StatusBadge(status = "Airworthy", isGood = true)
         }
         InspectionGrid()
 
@@ -199,47 +196,69 @@ fun AircraftOverviewScreen(
 }
 
 @Composable
-fun StatusBadge(status: String, isGood: Boolean) {
-  val containerColor = if (isGood) Color(0xFF1B5E20) else MaterialTheme.colorScheme.errorContainer
-  val contentColor = if (isGood) Color(0xFFA5D6A7) else MaterialTheme.colorScheme.onErrorContainer
-
-  Surface(
-    color = containerColor, shape = RoundedCornerShape(16.dp)
-  ) {
-    Row(
-      modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-      Icon(
-        imageVector = Icons.Default.CheckCircle,
-        contentDescription = null,
-        tint = contentColor,
-        modifier = Modifier.size(16.dp)
-      )
-      Text(
-        text = status,
-        style = MaterialTheme.typography.labelLarge,
-        color = contentColor,
-        fontWeight = FontWeight.Bold
-      )
+private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Maintenance Summary",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            StatCard(label = "Total Logs", value = stats.total.toString(), modifier = Modifier.weight(1f))
+            StatCard(label = "Airframe", value = stats.airframe.toString(), modifier = Modifier.weight(1f))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            StatCard(label = "Engine", value = stats.engine.toString(), modifier = Modifier.weight(1f))
+            StatCard(label = "Propeller", value = stats.propeller.toString(), modifier = Modifier.weight(1f))
+        }
     }
-  }
+}
+
+@Composable
+private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
 
 @Composable
 fun InspectionGrid() {
-  LazyRow(
+  LazyVerticalGrid(
+    columns = GridCells.Fixed(2),
     horizontalArrangement = Arrangement.spacedBy(12.dp),
-    contentPadding = PaddingValues(horizontal = 16.dp)
+    verticalArrangement = Arrangement.spacedBy(12.dp),
+    contentPadding = PaddingValues(horizontal = 16.dp),
+    modifier = Modifier.height(360.dp) // fixed height since inside verticalScroll
   ) {
     item {
       InspectionCard(
         title = "100 Hr",
         status = "Due in 14h",
         icon = Icons.Default.Schedule,
-        statusColor = Color(0xFFFFD54F), // Yellowish
-        modifier = Modifier.width(150.dp)
+        statusColor = androidx.compose.ui.graphics.Color(0xFFFFD54F)
       )
     }
     item {
@@ -247,17 +266,15 @@ fun InspectionGrid() {
         title = "Annual",
         status = "Due Dec 2024",
         icon = Icons.Default.CalendarToday,
-        statusColor = Color(0xFFA5D6A7), // Greenish
-        modifier = Modifier.width(150.dp)
+        statusColor = androidx.compose.ui.graphics.Color(0xFFA5D6A7)
       )
     }
     item {
       InspectionCard(
         title = "Pitot-Static",
-        status = "Due in 14h", // Mock data
+        status = "Due in 14h",
         icon = Icons.Default.Speed,
-        statusColor = Color(0xFFFFD54F),
-        modifier = Modifier.width(150.dp)
+        statusColor = androidx.compose.ui.graphics.Color(0xFFFFD54F)
       )
     }
     item {
@@ -265,10 +282,8 @@ fun InspectionGrid() {
         title = "Transponder",
         status = "Due Dec 2024",
         icon = Icons.Default.Radio,
-        statusColor = Color(0xFFA5D6A7),
-        modifier = Modifier.width(150.dp)
+        statusColor = androidx.compose.ui.graphics.Color(0xFFA5D6A7)
       )
     }
   }
 }
-

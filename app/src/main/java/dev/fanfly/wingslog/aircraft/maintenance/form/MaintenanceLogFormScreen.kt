@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.maintenance.form.data.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.aircraft.maintenance.form.data.MaintenanceLogFormViewModel
@@ -117,20 +118,14 @@ fun MaintenanceLogFormScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
 
-                // Component Type dropdown
-                ComponentTypeDropdown(
-                    selected = uiState.componentType,
-                    onSelected = viewModel::onComponentTypeChange,
+                // Component section
+                ComponentSection(
+                    aircraft = uiState.aircraft,
+                    selectedComponentType = uiState.selectedComponentType,
+                    selectedSubComponent = uiState.selectedSubComponent,
+                    onComponentTypeChange = viewModel::onComponentTypeChange,
+                    onSubComponentChange = viewModel::onSubComponentChange,
                     modifier = Modifier.fillMaxWidth()
-                )
-
-                // Component Serial
-                OutlinedTextField(
-                    value = uiState.componentSerial,
-                    onValueChange = viewModel::onComponentSerialChange,
-                    label = { Text("Component Serial") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
                 )
 
                 // Error message
@@ -160,6 +155,177 @@ fun MaintenanceLogFormScreen(
                         Text(if (viewModel.isEditMode) "Update" else "Save")
                     }
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ComponentSection(
+    aircraft: Aircraft?,
+    selectedComponentType: MaintenanceLog.ComponentType,
+    selectedSubComponent: String?,
+    onComponentTypeChange: (MaintenanceLog.ComponentType) -> Unit,
+    onSubComponentChange: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Component Type dropdown
+        ComponentTypeDropdown(
+            selected = selectedComponentType,
+            onSelected = onComponentTypeChange,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        when (selectedComponentType) {
+            MaintenanceLog.ComponentType.AIRFRAME -> {
+                // Display aircraft serial (read-only)
+                val serial = aircraft?.serial ?: ""
+                OutlinedTextField(
+                    value = serial,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Airframe Serial") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+
+            MaintenanceLog.ComponentType.ENGINE -> {
+                if (aircraft == null) {
+                    Text(
+                        text = "Loading aircraft...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    val engines = aircraft.engineList
+                    if (engines.isEmpty()) {
+                        Text(
+                            text = "No engines found for this aircraft.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        val options = engines.map { engine ->
+                            val label = buildString {
+                                if (engine.make.isNotEmpty()) append(engine.make)
+                                if (engine.model.isNotEmpty()) {
+                                    if (isNotEmpty()) append(" ")
+                                    append(engine.model)
+                                }
+                                if (engine.serial.isNotEmpty()) append(" (${engine.serial})")
+                            }
+                            label to engine.serial
+                        }
+                        SubComponentDropdown(
+                            label = "Engine",
+                            options = options,
+                            selectedSerial = selectedSubComponent,
+                            onSelected = onSubComponentChange,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            MaintenanceLog.ComponentType.PROPELLER -> {
+                if (aircraft == null) {
+                    Text(
+                        text = "Loading aircraft...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    // Collect all propeller components from all engines
+                    val options = mutableListOf<Pair<String, String>>()
+                    aircraft.engineList.forEach { engine ->
+                        val prop = engine.propeller
+                        val hub = prop.hub
+                        if (hub.serial.isNotEmpty()) {
+                            val label = buildString {
+                                append("Hub")
+                                if (hub.make.isNotEmpty()) append(" - ${hub.make}")
+                                if (hub.model.isNotEmpty()) append(" ${hub.model}")
+                                append(" (${hub.serial})")
+                            }
+                            options.add(label to hub.serial)
+                        }
+                        prop.bladesList.forEach { blade ->
+                            if (blade.serial.isNotEmpty()) {
+                                val label = buildString {
+                                    append("Blade")
+                                    if (blade.make.isNotEmpty()) append(" - ${blade.make}")
+                                    if (blade.model.isNotEmpty()) append(" ${blade.model}")
+                                    append(" (${blade.serial})")
+                                }
+                                options.add(label to blade.serial)
+                            }
+                        }
+                    }
+
+                    if (options.isEmpty()) {
+                        Text(
+                            text = "No propeller components found for this aircraft.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        SubComponentDropdown(
+                            label = "Propeller Component",
+                            options = options,
+                            selectedSerial = selectedSubComponent,
+                            onSelected = onSubComponentChange,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            else -> {
+                // UNKNOWN — no sub-component
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SubComponentDropdown(
+    label: String,
+    options: List<Pair<String, String>>, // display label to serial
+    selectedSerial: String?,
+    onSelected: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedLabel = options.firstOrNull { it.second == selectedSerial }?.first ?: ""
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selectedLabel,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { (displayLabel, serial) ->
+                DropdownMenuItem(
+                    text = { Text(displayLabel) },
+                    onClick = {
+                        onSelected(serial)
+                        expanded = false
+                    }
+                )
             }
         }
     }
