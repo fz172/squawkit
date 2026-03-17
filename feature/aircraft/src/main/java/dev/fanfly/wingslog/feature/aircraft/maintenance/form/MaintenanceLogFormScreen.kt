@@ -162,6 +162,26 @@ fun MaintenanceLogFormScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
 
+                // Airframe Time
+                OutlinedTextField(
+                    value = uiState.airframeTime,
+                    onValueChange = viewModel::onAirframeTimeChange,
+                    label = { Text(stringResource(R.string.airframe_time_hours)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+
+                // Prop Time
+                OutlinedTextField(
+                    value = uiState.propTime,
+                    onValueChange = viewModel::onPropTimeChange,
+                    label = { Text(stringResource(R.string.prop_time_hours)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+
                 // Component section
                 ComponentSection(
                     aircraft = uiState.aircraft,

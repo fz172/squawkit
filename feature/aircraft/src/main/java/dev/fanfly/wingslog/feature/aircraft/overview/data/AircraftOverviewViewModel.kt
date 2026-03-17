@@ -45,15 +45,17 @@ class AircraftOverviewViewModel @Inject constructor(
                 logManager.observeLogs(aircraftId)
             ) { aircraft, logs ->
                 if (aircraft != null) {
-                    val currentTachTime = logs
-                        .filter { it.tachTime > 0.0 }
-                        .maxOfOrNull { it.tachTime }
+                    val currentTachTime = logs.filter { it.tachTime > 0.0 }.maxOfOrNull { it.tachTime }
+                    val currentAirframeTime = logs.filter { it.airframeTime > 0.0 }.maxOfOrNull { it.airframeTime }
+                    val currentPropTime = logs.filter { it.propTime > 0.0 }.maxOfOrNull { it.propTime }
                     val stats = LogStats(
                         total = logs.size.toLong(),
                         airframe = logs.count { it.componentType == MaintenanceLog.ComponentType.AIRFRAME }.toLong(),
                         engine = logs.count { it.componentType == MaintenanceLog.ComponentType.ENGINE }.toLong(),
                         propeller = logs.count { it.componentType == MaintenanceLog.ComponentType.PROPELLER }.toLong(),
-                        currentTachTime = currentTachTime
+                        currentTachTime = currentTachTime,
+                        currentAirframeTime = currentAirframeTime,
+                        currentPropTime = currentPropTime
                     )
                     AircraftOverviewUiState.Success(aircraft = aircraft, logStats = stats)
                 } else {

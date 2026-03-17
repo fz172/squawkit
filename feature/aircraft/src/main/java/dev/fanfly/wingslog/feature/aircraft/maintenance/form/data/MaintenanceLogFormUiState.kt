@@ -9,6 +9,8 @@ data class MaintenanceLogFormUiState(
     val workDescription: String = "",
     val inspections: List<MaintenanceLog.InspectionType> = emptyList(),
     val tachTime: String = "",
+    val airframeTime: String = "",
+    val propTime: String = "",
     val aircraft: Aircraft? = null,
     val selectedComponentType: MaintenanceLog.ComponentType = MaintenanceLog.ComponentType.UNKNOWN,
     val selectedSubComponent: String? = null,

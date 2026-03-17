@@ -301,10 +301,25 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold
     )
-    // Tach time — displayed prominently as full-width card when available
+    // Flight time metrics — displayed as full-width cards when available
     stats.currentTachTime?.let { tachTime ->
-      TachTimeCard(
-        tachTime = tachTime,
+      FlightTimeCard(
+        label = stringResource(R.string.tach_time_label),
+        hours = tachTime,
+        modifier = Modifier.fillMaxWidth()
+      )
+    }
+    stats.currentAirframeTime?.let { afTime ->
+      FlightTimeCard(
+        label = stringResource(R.string.airframe_time_label),
+        hours = afTime,
+        modifier = Modifier.fillMaxWidth()
+      )
+    }
+    stats.currentPropTime?.let { propTime ->
+      FlightTimeCard(
+        label = stringResource(R.string.prop_time_label),
+        hours = propTime,
         modifier = Modifier.fillMaxWidth()
       )
     }
@@ -342,7 +357,7 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun TachTimeCard(tachTime: Double, modifier: Modifier = Modifier) {
+private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Modifier) {
   Card(
     modifier = modifier,
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -361,12 +376,12 @@ private fun TachTimeCard(tachTime: Double, modifier: Modifier = Modifier) {
       )
       Column {
         Text(
-          text = stringResource(R.string.tach_time_label),
+          text = label,
           style = MaterialTheme.typography.labelMedium,
           color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Text(
-          text = stringResource(R.string.tach_time_hours_format, tachTime),
+          text = stringResource(R.string.tach_time_hours_format, hours),
           style = MaterialTheme.typography.headlineSmall,
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onPrimaryContainer

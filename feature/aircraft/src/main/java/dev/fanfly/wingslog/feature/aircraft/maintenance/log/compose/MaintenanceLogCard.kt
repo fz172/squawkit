@@ -91,6 +91,20 @@ fun MaintenanceLogCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                if (log.airframeTime > 0.0) {
+                    Text(
+                        text = stringResource(R.string.airframe_time_format, log.airframeTime),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (log.propTime > 0.0) {
+                    Text(
+                        text = stringResource(R.string.prop_time_format, log.propTime),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 if (log.componentType != MaintenanceLog.ComponentType.UNKNOWN) {
                     Text(
                         text = log.componentType.displayName(),

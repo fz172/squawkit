@@ -37,4 +37,8 @@ message MaintenanceLog {
   double tach_time = 8;
 
   repeated string attachment_urls = 9;
+
+  // Separate time tracking for each component category
+  double airframe_time = 10;
+  double prop_time = 11;
 }
