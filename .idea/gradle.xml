@@ -11,7 +11,19 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/core" />
+            <option value="$PROJECT_DIR$/core/database" />
             <option value="$PROJECT_DIR$/core/model" />
+            <option value="$PROJECT_DIR$/core/network" />
+            <option value="$PROJECT_DIR$/core/ui" />
+            <option value="$PROJECT_DIR$/feature" />
+            <option value="$PROJECT_DIR$/feature/aircraft" />
+            <option value="$PROJECT_DIR$/feature/aircraft/database" />
+            <option value="$PROJECT_DIR$/feature/fleet" />
+            <option value="$PROJECT_DIR$/feature/fleet/database" />
+            <option value="$PROJECT_DIR$/feature/settings" />
+            <option value="$PROJECT_DIR$/feature/userprofile" />
+            <option value="$PROJECT_DIR$/feature/userprofile/database" />
+            <option value="$PROJECT_DIR$/feature/userprofile/userprofilecard" />
           </set>
         </option>
       </GradleProjectSettings>

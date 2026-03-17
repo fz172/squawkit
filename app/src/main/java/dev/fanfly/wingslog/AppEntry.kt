@@ -6,15 +6,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import dev.fanfly.wingslog.aircraft.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
-import dev.fanfly.wingslog.aircraft.edit.EditAircraftScreen
-import dev.fanfly.wingslog.aircraft.maintenance.form.MaintenanceLogFormScreen
-import dev.fanfly.wingslog.aircraft.maintenance.log.MaintenanceLogListScreen
-import dev.fanfly.wingslog.aircraft.overview.AircraftOverviewScreen
-import dev.fanfly.wingslog.fleet.dashboard.DashboardScreen
+import dev.fanfly.wingslog.feature.aircraft.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
+import dev.fanfly.wingslog.feature.aircraft.edit.EditAircraftScreen
+import dev.fanfly.wingslog.feature.aircraft.maintenance.form.MaintenanceLogFormScreen
+import dev.fanfly.wingslog.feature.aircraft.maintenance.log.MaintenanceLogListScreen
+import dev.fanfly.wingslog.feature.aircraft.overview.AircraftOverviewScreen
+import dev.fanfly.wingslog.feature.fleet.dashboard.DashboardScreen
 import dev.fanfly.wingslog.login.LoginScreen
-import dev.fanfly.wingslog.settings.SettingsScreen
-import dev.fanfly.wingslog.userprofile.EditProfileScreen
+import dev.fanfly.wingslog.feature.settings.SettingsScreen
+import dev.fanfly.wingslog.feature.userprofile.EditProfileScreen
 
 @Composable
 fun AppEntry() {

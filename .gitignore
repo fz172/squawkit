@@ -3,9 +3,12 @@
 /local.properties
 .idea
 .DS_Store
+.vscode
 /build
-/core/model/build
 /captures
+/core/model/bin
+/core/**/build
+/feature/**/build
 .externalNativeBuild
 .cxx
 local.properties

@@ -70,12 +70,21 @@ dependencies {
   implementation(libs.coil.compose)
   implementation(libs.googleid)
   implementation(libs.hilt.android)
-  implementation(libs.firebase.auth)
-  implementation(libs.firebase.firestore)
   implementation(libs.flogger)
   implementation(libs.flogger.system.backend)
   implementation(libs.play.services.auth)
+  // Project Features
+  implementation(project(":feature:settings"))
+  implementation(project(":feature:aircraft"))
   implementation(project(":core:model"))
+  implementation(project(":core:ui"))
+  implementation(project(":core:network"))
+  implementation(project(":core:database"))
+  implementation(project(":feature:userprofile:userprofilecard"))
+  implementation(project(":feature:userprofile"))
+  implementation(project(":feature:aircraft:database"))
+  implementation(project(":feature:fleet"))
+  implementation(project(":feature:fleet:database"))
 
   ksp(libs.hilt.compiler)
 

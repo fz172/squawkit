@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Wings Log</string>
+    <string name="license_type">License Type</string>
+    <string name="license_type_amt">AMT</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="profile_picture">Profile Picture</string>
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="settings">Settings</string>
+</resources>
