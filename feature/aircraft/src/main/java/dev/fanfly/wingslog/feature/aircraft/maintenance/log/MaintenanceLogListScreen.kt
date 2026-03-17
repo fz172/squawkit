@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -18,14 +17,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -46,7 +41,6 @@ fun MaintenanceLogListScreen(
     viewModel: MaintenanceLogListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var pendingDeleteLogId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -104,8 +98,7 @@ fun MaintenanceLogListScreen(
                             items(state.logs, key = { it.id }) { log ->
                                 MaintenanceLogCard(
                                     log = log,
-                                    onEdit = { viewModel.onEditLog(log.id) },
-                                    onDelete = { pendingDeleteLogId = log.id }
+                                    onEdit = { viewModel.onEditLog(log.id) }
                                 )
                             }
                         }
@@ -115,25 +108,4 @@ fun MaintenanceLogListScreen(
         }
     }
 
-    // Delete confirmation dialog
-    pendingDeleteLogId?.let { logId ->
-        AlertDialog(
-            onDismissRequest = { pendingDeleteLogId = null },
-            title = { Text(stringResource(R.string.delete_log)) },
-            text = { Text(stringResource(R.string.this_action_cannot_be_undone)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteLog(logId)
-                        pendingDeleteLogId = null
-                    }
-                ) {
-                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                    Text(stringResource(R.string.cancel))
-            }
-        )
-    }
 }

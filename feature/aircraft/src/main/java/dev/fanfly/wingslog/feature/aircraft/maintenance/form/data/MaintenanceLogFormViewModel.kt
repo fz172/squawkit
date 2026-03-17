@@ -134,6 +134,18 @@ class MaintenanceLogFormViewModel @Inject constructor(
     }
 }
 
+    fun deleteLog() {
+        val id = logId ?: return
+        viewModelScope.launch {
+            logManager.deleteLog(aircraftId, id)
+                .onSuccess { _events.send(MaintenanceLogFormEvent.DeleteSuccess) }
+                .onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Delete failed") }
+                }
+        }
+    }
+
 sealed interface MaintenanceLogFormEvent {
     data object SaveSuccess : MaintenanceLogFormEvent
+    data object DeleteSuccess : MaintenanceLogFormEvent
 }

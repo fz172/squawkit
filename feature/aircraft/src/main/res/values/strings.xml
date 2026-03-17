@@ -60,4 +60,7 @@
     <string name="transponder">Transponder</string>
     <string name="tach_time_label">Current Tach Time</string>
     <string name="tach_time_hours_format">%.1f hrs</string>
+    <string name="cancel">Cancel</string>
+    <string name="back">Back</string>
+    <string name="settings">Settings</string>
 </resources>
