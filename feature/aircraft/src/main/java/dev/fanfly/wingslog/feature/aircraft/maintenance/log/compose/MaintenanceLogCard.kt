@@ -129,6 +129,6 @@ private fun MaintenanceLogCardPreview() {
         .addInspection(dev.fanfly.wingslog.aircraft.MaintenanceLog.InspectionType.OIL_CHANGE)
         .build()
     MaterialTheme {
-        MaintenanceLogCard(log = log, onEdit = {}, onDelete = {})
+        MaintenanceLogCard(log = log, onEdit = {})
     }
 }

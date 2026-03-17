@@ -138,7 +138,6 @@ class MaintenanceLogFormViewModel @Inject constructor(
                 }
         }
     }
-}
 
     fun deleteLog() {
         val id = logId ?: return
@@ -150,6 +149,7 @@ class MaintenanceLogFormViewModel @Inject constructor(
                 }
         }
     }
+}
 
 sealed interface MaintenanceLogFormEvent {
     data object SaveSuccess : MaintenanceLogFormEvent
