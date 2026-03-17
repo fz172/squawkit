@@ -447,14 +447,14 @@ private fun InspectionTypeDropdown(
     modifier: Modifier = Modifier
 ) {
     val options = listOf(
+        MaintenanceLog.InspectionType.ROUTINE,
+        MaintenanceLog.InspectionType.OIL_CHANGE,
+        MaintenanceLog.InspectionType.CONDITIONAL,
         MaintenanceLog.InspectionType.ANNUAL,
         MaintenanceLog.InspectionType.HUNDRED_HOUR,
-        MaintenanceLog.InspectionType.ROUTINE,
         MaintenanceLog.InspectionType.TRANSPONDER_CHECK,
-        MaintenanceLog.InspectionType.CONDITIONAL,
-        MaintenanceLog.InspectionType.OIL_CHANGE,
-        MaintenanceLog.InspectionType.ELT,
         MaintenanceLog.InspectionType.ALTIMETER_PITOT_STATIC,
+        MaintenanceLog.InspectionType.ELT,
     )
     var expanded by remember { mutableStateOf(false) }
     val noneLabel = stringResource(R.string.none)
@@ -484,7 +484,10 @@ private fun InspectionTypeDropdown(
                                 checked = selected.contains(option),
                                 onCheckedChange = null
                             )
-                            Text(option.displayName())
+                            Text(
+                                text = option.displayName(),
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
                         }
                     },
                     onClick = { onToggle(option) }
