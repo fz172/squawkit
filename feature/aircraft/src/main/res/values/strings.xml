@@ -69,4 +69,5 @@
     <string name="prop_time_format">Prop: %.1f</string>
     <string name="airframe_time_label">Airframe Time</string>
     <string name="prop_time_label">Prop Time</string>
+    <string name="prop_inspection">Prop Inspection</string>
 </resources>

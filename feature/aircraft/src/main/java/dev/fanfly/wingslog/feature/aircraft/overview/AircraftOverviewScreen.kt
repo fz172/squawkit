@@ -235,7 +235,7 @@ fun AircraftOverviewContent(
               fontWeight = FontWeight.Bold
             )
           }
-          InspectionGrid()
+          InspectionGrid(aircraft = aircraft)
 
           Spacer(Modifier.height(88.dp)) // Clearance for the floating bottom bar
         }
@@ -415,49 +415,92 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
   }
 }
 
+/**
+ * Inspection grid that shows only the inspection cards relevant to this aircraft.
+ *
+ * Filtering rules:
+ * - Annual, ELT, Pitot-Static, Transponder — always shown (airframe-level)
+ * - 100-Hour — only if aircraft has at least one engine
+ * - Propeller inspection — only if aircraft has at least one engine with propeller blades
+ */
 @Composable
-fun InspectionGrid(modifier: Modifier = Modifier) {
+fun InspectionGrid(aircraft: dev.fanfly.wingslog.aircraft.Aircraft, modifier: Modifier = Modifier) {
+  val hasEngines = aircraft.engineList.isNotEmpty()
+  val hasPropeller = aircraft.engineList.any { engine ->
+    engine.propeller.hub.serial.isNotBlank() || engine.propeller.bladesList.isNotEmpty()
+  }
+
+  // Build the list of applicable inspection cards
+  data class InspectionItem(
+    val title: String,
+    val status: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val statusColor: androidx.compose.ui.graphics.Color
+  )
+
+  val items = buildList {
+    // Always shown — airframe-level
+    add(InspectionItem(
+      title = stringResource(R.string.annual),
+      status = stringResource(R.string.due_dec_2024),
+      icon = Icons.Default.CalendarToday,
+      statusColor = StatusOk
+    ))
+    add(InspectionItem(
+      title = stringResource(R.string.pitot_static),
+      status = stringResource(R.string.due_in_14h),
+      icon = Icons.Default.Speed,
+      statusColor = StatusWarning
+    ))
+    add(InspectionItem(
+      title = stringResource(R.string.transponder),
+      status = stringResource(R.string.due_dec_2024),
+      icon = Icons.Default.Radio,
+      statusColor = StatusOk
+    ))
+    // Engine-dependent
+    if (hasEngines) {
+      add(InspectionItem(
+        title = stringResource(R.string.hundred_hr),
+        status = stringResource(R.string.due_in_14h),
+        icon = Icons.Default.Schedule,
+        statusColor = StatusWarning
+      ))
+    }
+    // Propeller-dependent
+    if (hasPropeller) {
+      add(InspectionItem(
+        title = stringResource(R.string.prop_inspection),
+        status = stringResource(R.string.due_dec_2024),
+        icon = Icons.Default.Settings,
+        statusColor = StatusOk
+      ))
+    }
+  }
+
   Column(
     modifier = modifier.padding(horizontal = 16.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp)
   ) {
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-      InspectionCard(
-        title = stringResource(R.string.hundred_hr),
-        status = stringResource(R.string.due_in_14h),
-        icon = Icons.Default.Schedule,
-        statusColor = StatusWarning,
-        modifier = Modifier.weight(1f)
-      )
-      InspectionCard(
-        title = stringResource(R.string.annual),
-        status = stringResource(R.string.due_dec_2024),
-        icon = Icons.Default.CalendarToday,
-        statusColor = StatusOk,
-        modifier = Modifier.weight(1f)
-      )
-    }
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-      InspectionCard(
-        title = stringResource(R.string.pitot_static),
-        status = stringResource(R.string.due_in_14h),
-        icon = Icons.Default.Speed,
-        statusColor = StatusWarning,
-        modifier = Modifier.weight(1f)
-      )
-      InspectionCard(
-        title = stringResource(R.string.transponder),
-        status = stringResource(R.string.due_dec_2024),
-        icon = Icons.Default.Radio,
-        statusColor = StatusOk,
-        modifier = Modifier.weight(1f)
-      )
+    items.chunked(2).forEach { rowItems ->
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+      ) {
+        rowItems.forEach { item ->
+          InspectionCard(
+            title = item.title,
+            status = item.status,
+            icon = item.icon,
+            statusColor = item.statusColor,
+            modifier = Modifier.weight(1f)
+          )
+        }
+        // If the row has only one item, add a spacer to fill the second slot
+        if (rowItems.size == 1) {
+          androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
+        }
+      }
     }
   }
 }
