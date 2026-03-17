@@ -45,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -118,8 +119,8 @@ fun AircraftOverviewContent(
   val scrollState = rememberScrollState()
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-  var showSettingsMenu by remember { mutableStateOf(false) }
-  var showDeleteDialog by remember { mutableStateOf(false) }
+  var showSettingsMenu by rememberSaveable { mutableStateOf(false) }
+  var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
 
   if (showDeleteDialog) {
     AlertDialog(
