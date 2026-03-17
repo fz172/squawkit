@@ -6,7 +6,8 @@ data class LogStats(
     val total: Long,
     val airframe: Long,
     val engine: Long,
-    val propeller: Long
+    val propeller: Long,
+    val currentTachTime: Double? = null
 )
 
 sealed interface AircraftOverviewUiState {

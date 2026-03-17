@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -300,6 +301,13 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold
     )
+    // Tach time — displayed prominently as full-width card when available
+    stats.currentTachTime?.let { tachTime ->
+      TachTimeCard(
+        tachTime = tachTime,
+        modifier = Modifier.fillMaxWidth()
+      )
+    }
     Row(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -329,6 +337,41 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
         value = stats.propeller.toString(),
         modifier = Modifier.weight(1f)
       )
+    }
+  }
+}
+
+@Composable
+private fun TachTimeCard(tachTime: Double, modifier: Modifier = Modifier) {
+  Card(
+    modifier = modifier,
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+  ) {
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+      Icon(
+        Icons.Default.Timer,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onPrimaryContainer
+      )
+      Column {
+        Text(
+          text = stringResource(R.string.tach_time_label),
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        Text(
+          text = stringResource(R.string.tach_time_hours_format, tachTime),
+          style = MaterialTheme.typography.headlineSmall,
+          fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+      }
     }
   }
 }
