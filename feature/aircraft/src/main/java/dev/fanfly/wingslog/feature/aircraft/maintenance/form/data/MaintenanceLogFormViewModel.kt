@@ -7,6 +7,7 @@ import com.google.protobuf.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
+import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -23,6 +26,7 @@ import javax.inject.Inject
 class MaintenanceLogFormViewModel @Inject constructor(
     private val logManager: MaintenanceLogManager,
     private val aircraftManager: AircraftManager,
+    private val inspectionManager: InspectionManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -38,7 +42,16 @@ class MaintenanceLogFormViewModel @Inject constructor(
 
     init {
         loadAircraft()
+        observeInspections()
         if (isEditMode) loadLog()
+    }
+
+    private fun observeInspections() {
+        inspectionManager.observeInspections(aircraftId)
+            .onEach { cards ->
+                _uiState.update { it.copy(availableInspectionCards = cards) }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun loadAircraft() {
@@ -76,6 +89,23 @@ class MaintenanceLogFormViewModel @Inject constructor(
 
     fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
     fun onInspectionIdsChange(value: List<String>) = _uiState.update { it.copy(selectedInspectionIds = value) }
+
+    fun showInspectionPicker() = _uiState.update { it.copy(showInspectionPicker = true) }
+    fun hideInspectionPicker() = _uiState.update { it.copy(showInspectionPicker = false) }
+
+    fun toggleInspectionSelection(cardId: String) {
+        _uiState.update { state ->
+            val current = state.selectedInspectionIds.toMutableList()
+            if (cardId in current) current.remove(cardId) else current.add(cardId)
+            state.copy(selectedInspectionIds = current)
+        }
+    }
+
+    fun removeInspectionId(cardId: String) {
+        _uiState.update { state ->
+            state.copy(selectedInspectionIds = state.selectedInspectionIds.filter { it != cardId })
+        }
+    }
     fun onTachTimeChange(value: String) = _uiState.update { it.copy(tachTime = value) }
     fun onAirframeTimeChange(value: String) = _uiState.update { it.copy(airframeTime = value) }
     fun onPropTimeChange(value: String) = _uiState.update { it.copy(propTime = value) }

@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,6 +14,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -21,10 +25,12 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -47,6 +53,7 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.feature.aircraft.maintenance.form.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
@@ -140,7 +147,24 @@ fun MaintenanceLogFormScreen(
                     isError = uiState.error == "Work description is required"
                 )
 
-                // TODO(sub-task 6): InspectionPickerSheet for associating inspection cards
+                // Inspection Work section
+                InspectionWorkSection(
+                    selectedIds = uiState.selectedInspectionIds,
+                    availableCards = uiState.availableInspectionCards,
+                    onAddClick = viewModel::showInspectionPicker,
+                    onRemove = viewModel::removeInspectionId,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                // Inspection picker bottom sheet
+                if (uiState.showInspectionPicker) {
+                    InspectionPickerSheet(
+                        availableCards = uiState.availableInspectionCards,
+                        selectedIds = uiState.selectedInspectionIds,
+                        onToggle = viewModel::toggleInspectionSelection,
+                        onDismiss = viewModel::hideInspectionPicker,
+                    )
+                }
 
                 // Tach Time
                 OutlinedTextField(
@@ -430,3 +454,68 @@ private fun ComponentTypeDropdown(
 }
 
 // InspectionTypeDropdown removed — replaced by InspectionPickerSheet in sub-task 6
+
+@Composable
+private fun InspectionWorkSection(
+    selectedIds: List<String>,
+    availableCards: List<dev.fanfly.wingslog.aircraft.InspectionCard>,
+    onAddClick: () -> Unit,
+    onRemove: (cardId: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = "Inspection Work",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+            )
+            OutlinedButton(
+                onClick = onAddClick,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 12.dp, vertical = 4.dp
+                ),
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.width(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Add", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+
+        if (selectedIds.isEmpty()) {
+            Text(
+                text = "No inspection work recorded for this log.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            selectedIds.forEach { cardId ->
+                val card = availableCards.firstOrNull { it.id == cardId }
+                val title = card?.title ?: "Unknown inspection ($cardId)"
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(onClick = { onRemove(cardId) }) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Remove",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                HorizontalDivider()
+            }
+        }
+    }
+}

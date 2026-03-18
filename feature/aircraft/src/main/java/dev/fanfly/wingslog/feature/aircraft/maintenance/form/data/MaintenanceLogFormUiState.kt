@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.aircraft.maintenance.form.data
 
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 
 data class MaintenanceLogFormUiState(
@@ -14,5 +15,8 @@ data class MaintenanceLogFormUiState(
     val aircraft: Aircraft? = null,
     val selectedComponentType: MaintenanceLog.ComponentType = MaintenanceLog.ComponentType.UNKNOWN,
     val selectedSubComponent: String? = null,
-    val error: String? = null
+    val error: String? = null,
+    /** All inspection cards for this aircraft — used by InspectionPickerSheet */
+    val availableInspectionCards: List<InspectionCard> = emptyList(),
+    val showInspectionPicker: Boolean = false,
 )
