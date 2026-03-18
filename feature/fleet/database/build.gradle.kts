@@ -32,7 +32,7 @@ kotlin {
         androidMain.dependencies {
             implementation(project(":core:model"))
             implementation(project(":core:database"))
-            implementation(project(":core:network"))
+            implementation(project(":core:auth"))
 
             implementation(libs.firebase.firestore)
             implementation(libs.firebase.auth)

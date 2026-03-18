@@ -76,7 +76,7 @@ dependencies {
   implementation(project(":feature:aircraft"))
   implementation(project(":core:model"))
   implementation(project(":core:ui"))
-  implementation(project(":core:network"))
+  implementation(project(":core:auth"))
   implementation(project(":core:database"))
   implementation(project(":feature:userprofile:userprofilecard"))
   implementation(project(":feature:userprofile"))

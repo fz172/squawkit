@@ -38,7 +38,7 @@ kotlin {
             implementation(project(":core:ui"))
             implementation(project(":core:model"))
             implementation(project(":core:database"))
-            implementation(project(":core:network"))
+            implementation(project(":core:auth"))
             implementation(project(":feature:userprofile:userprofilecard"))
             implementation(project(":feature:userprofile:database"))
             

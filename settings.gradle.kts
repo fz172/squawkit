@@ -23,7 +23,7 @@ rootProject.name = "wingslog"
 include(":app")
 include(":core:model")
 include(":core:ui")
-include(":core:network")
+include(":core:auth")
 include(":core:database")
 include(":feature:settings")
 include(":feature:aircraft")

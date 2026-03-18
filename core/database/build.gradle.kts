@@ -19,19 +19,23 @@ android {
 }
 
 kotlin {
-    jvmToolchain(11)
-
     androidTarget {
         compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
 
     sourceSets {
-        commonMain {}
+        commonMain.dependencies {
+            api(libs.gitlive.firebase.firestore)
+            api(libs.gitlive.firebase.auth)
+            
+            // DI
+            api(libs.koin.core)
+        }
         androidMain.dependencies {
             api(project(":core:model"))
-            api(project(":core:network"))
+            api(project(":core:auth"))
             api(project(":core:ui"))
             
             // Firebase Data

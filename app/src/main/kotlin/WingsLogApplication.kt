@@ -3,8 +3,9 @@ package dev.fanfly.wingslog
 import android.app.Application
 import android.util.Log
 import com.google.firebase.FirebaseApp
+import dev.fanfly.wingslog.core.database.infra.commonFirebaseModule
 import dev.fanfly.wingslog.core.database.infra.firebaseModule
-import dev.fanfly.wingslog.core.network.di.networkModule
+import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.di.appModule
 import dev.fanfly.wingslog.feature.aircraft.database.impl.aircraftDatabaseModule
 import dev.fanfly.wingslog.feature.aircraft.di.aircraftModule
@@ -27,8 +28,9 @@ class WingsLogApplication : Application() {
     startKoin {
       androidContext(this@WingsLogApplication)
       modules(
+        commonFirebaseModule,
         firebaseModule,
-        networkModule,
+        authModule,
         userProfileDatabaseModule,
         aircraftDatabaseModule,
         fleetDatabaseModule,

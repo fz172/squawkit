@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.fanfly.wingslog.core.network"
+    namespace = "dev.fanfly.wingslog.core.auth"
     compileSdk = 36
 
     defaultConfig {
@@ -28,7 +28,9 @@ kotlin {
     }
 
     sourceSets {
-        commonMain {}
+        commonMain.dependencies {
+            api(libs.gitlive.firebase.auth)
+        }
         androidMain.dependencies {
             api(project(":core:model"))
             
