@@ -5,6 +5,7 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
+import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 
 @Module
@@ -16,4 +17,7 @@ interface AircraftManagerModule {
 
   @Binds
   fun bindMaintenanceLogManager(impl: MaintenanceLogManagerImpl): MaintenanceLogManager
+
+  @Binds
+  fun bindInspectionManager(impl: InspectionManagerImpl): InspectionManager
 }
