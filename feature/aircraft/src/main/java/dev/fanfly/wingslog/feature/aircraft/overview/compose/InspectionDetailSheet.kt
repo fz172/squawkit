@@ -113,7 +113,7 @@ fun InspectionDetailSheet(
                         timeRule != null -> "Every ${timeRule.interval_months} months"
                         tachRule != null -> "Every ${tachRule.interval_hours?.toInt() ?: 0} tach hours"
                         onConditionRule != null -> {
-                            val desc = onConditionRule.description ?: ""
+                            val desc = onConditionRule.description
                             if (desc.isBlank()) "On condition" else "On condition: $desc"
                         }
                         else -> "Unknown rule"
@@ -208,17 +208,17 @@ private fun LogHistoryItem(log: MaintenanceLog) {
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if ((log.tach_time ?: 0.0) > 0.0) {
+            if (log.tach_time > 0.0) {
                 Text(
-                    text = "${"%.1f".format(log.tach_time ?: 0.0)} tach",
+                    text = "${"%.1f".format(log.tach_time)} tach",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
-        if (!(log.work_description ?: "").isBlank()) {
+        if (!log.work_description.isBlank()) {
             Text(
-                text = log.work_description ?: "",
+                text = log.work_description,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 3,
             )

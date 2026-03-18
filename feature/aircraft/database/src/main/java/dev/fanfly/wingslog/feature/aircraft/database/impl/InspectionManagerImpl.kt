@@ -153,7 +153,7 @@ class InspectionManagerImpl(
                 }
             } else if (rule.tach_rule != null) {
                 val tachRule = rule.tach_rule!!
-                val intervalHours: Float = tachRule.interval_hours ?: 0f
+                val intervalHours: Float = tachRule.interval_hours
                 val baseTach: Float = if (associatedLogs.isNotEmpty()) {
                     // tach_time might be Double or Float in Wire, we must convert to Float
                     associatedLogs.first().tach_time.toFloat()
@@ -161,7 +161,7 @@ class InspectionManagerImpl(
                     0f
                 }
                 val candidate: Float = baseTach + intervalHours
-                if (resultTach == null || candidate < (resultTach ?: 0f)) {
+                if (resultTach == null || candidate < resultTach) {
                     resultTach = candidate
                 }
             } else if (rule.on_condition_rule != null) {

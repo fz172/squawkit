@@ -77,37 +77,37 @@ fun MaintenanceLogCard(
             }
 
             Text(
-                text = log.work_description ?: "",
+                text = log.work_description,
                 style = MaterialTheme.typography.bodyMedium
             )
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                if ((log.tach_time ?: 0.0) > 0.0) {
+                if (log.tach_time > 0.0) {
                     Text(
-                        text = stringResource(R.string.tach_format, log.tach_time ?: 0.0),
+                        text = stringResource(R.string.tach_format, log.tach_time),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if ((log.airframe_time ?: 0.0) > 0.0) {
+                if (log.airframe_time > 0.0) {
                     Text(
-                        text = stringResource(R.string.airframe_time_format, log.airframe_time ?: 0.0),
+                        text = stringResource(R.string.airframe_time_format, log.airframe_time),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if ((log.prop_time ?: 0.0) > 0.0) {
+                if (log.prop_time > 0.0) {
                     Text(
-                        text = stringResource(R.string.prop_time_format, log.prop_time ?: 0.0),
+                        text = stringResource(R.string.prop_time_format, log.prop_time),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 if (log.component_type != MaintenanceLog.ComponentType.UNKNOWN) {
                     Text(
-                        text = log.component_type?.displayName() ?: "",
+                        text = log.component_type.displayName(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

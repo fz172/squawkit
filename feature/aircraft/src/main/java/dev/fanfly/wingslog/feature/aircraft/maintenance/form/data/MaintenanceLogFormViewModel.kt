@@ -69,13 +69,13 @@ class MaintenanceLogFormViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        workDescription = log.work_description ?: "",
+                        workDescription = log.work_description,
                         selectedInspectionIds = log.inspection_ids,
-                        tachTime = if ((log.tach_time ?: 0.0) > 0.0) log.tach_time.toString() else "",
-                        airframeTime = if ((log.airframe_time ?: 0.0) > 0.0) log.airframe_time.toString() else "",
-                        propTime = if ((log.prop_time ?: 0.0) > 0.0) log.prop_time.toString() else "",
-                        selectedComponentType = log.component_type ?: MaintenanceLog.ComponentType.UNKNOWN,
-                        selectedSubComponent = (log.component_serial ?: "").ifEmpty { null }
+                        tachTime = if (log.tach_time > 0.0) log.tach_time.toString() else "",
+                        airframeTime = if (log.airframe_time > 0.0) log.airframe_time.toString() else "",
+                        propTime = if (log.prop_time > 0.0) log.prop_time.toString() else "",
+                        selectedComponentType = log.component_type,
+                        selectedSubComponent = log.component_serial.ifEmpty { null }
                     )
                 }
             } else {

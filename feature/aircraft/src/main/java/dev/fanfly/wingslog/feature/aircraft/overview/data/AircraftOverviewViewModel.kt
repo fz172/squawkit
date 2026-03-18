@@ -51,9 +51,9 @@ class AircraftOverviewViewModel(
             ) { aircraft, logs, inspectionCards ->
                 cachedLogs = logs
                 if (aircraft != null) {
-                    val currentTachTime = logs.filter { (it.tach_time ?: 0.0) > 0.0 }.maxOfOrNull { it.tach_time ?: 0.0 }
-                    val currentAirframeTime = logs.filter { (it.airframe_time ?: 0.0) > 0.0 }.maxOfOrNull { it.airframe_time ?: 0.0 }
-                    val currentPropTime = logs.filter { (it.prop_time ?: 0.0) > 0.0 }.maxOfOrNull { it.prop_time ?: 0.0 }
+                    val currentTachTime = logs.filter { it.tach_time > 0.0 }.maxOfOrNull { it.tach_time }
+                    val currentAirframeTime = logs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }
+                    val currentPropTime = logs.filter { it.prop_time > 0.0 }.maxOfOrNull { it.prop_time }
                     val stats = LogStats(
                         total = logs.size.toLong(),
                         airframe = logs.count { it.component_type == MaintenanceLog.ComponentType.AIRFRAME }.toLong(),
