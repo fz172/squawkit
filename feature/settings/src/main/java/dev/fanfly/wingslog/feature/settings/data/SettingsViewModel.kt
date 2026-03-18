@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
-import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.core.network.auth.AuthManager
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
@@ -12,11 +11,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-
-@HiltViewModel
-class SettingsViewModel @Inject constructor(
+class SettingsViewModel(
   private val authManager: AuthManager, private val userProfileManager: UserProfileManager
 ) : ViewModel() {
 

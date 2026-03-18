@@ -17,9 +17,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.firestore.AggregateSource
 import java.util.UUID
-import javax.inject.Inject
-
-class MaintenanceLogManagerImpl @Inject internal constructor(
+class MaintenanceLogManagerImpl(
   private val firebaseAuth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
 ) : MaintenanceLogManager {

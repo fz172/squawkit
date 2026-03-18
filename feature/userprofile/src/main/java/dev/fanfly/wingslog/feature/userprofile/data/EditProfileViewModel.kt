@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseUser
 
 import com.google.protobuf.timestamp
-import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.core.network.auth.AuthManager
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,13 +12,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
-import javax.inject.Inject
 
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.model.userprofile.copy
-@HiltViewModel
-class EditProfileViewModel @Inject constructor(
+
+class EditProfileViewModel(
   private val userProfileManager: UserProfileManager,
   authManager: AuthManager
 ) : ViewModel() {

@@ -1,8 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    id("com.google.dagger.hilt.android")
-    id("com.google.devtools.ksp")
 }
 
 android {
@@ -34,9 +32,8 @@ dependencies {
     api(libs.firebase.firestore)
 
     // DI
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
-    
+    implementation(libs.koin.android)
+
     // Logging
     implementation(libs.flogger)
     implementation(libs.flogger.system.backend)

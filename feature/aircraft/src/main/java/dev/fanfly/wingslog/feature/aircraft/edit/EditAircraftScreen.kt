@@ -44,8 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.Aircraft
@@ -57,7 +57,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 
 @Composable
 fun EditAircraftScreen(
-  viewModel: EditAircraftViewModel = hiltViewModel(), navController: NavController
+  viewModel: EditAircraftViewModel = koinViewModel(), navController: NavController
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val scrollState = rememberScrollState()

@@ -14,8 +14,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.settings.R
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
@@ -26,7 +26,7 @@ import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfi
 @Composable
 fun SettingsScreen(
   navController: NavController,
-  settingsViewModel: SettingsViewModel = hiltViewModel(),
+  settingsViewModel: SettingsViewModel = koinViewModel(),
   onAddAircraft: () -> Unit
 ) {
 

@@ -9,9 +9,7 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.database.common.AIRCRAFT_INFO_BLOB
 import dev.fanfly.wingslog.core.database.common.getFleetCollectionRef
 import dev.fanfly.wingslog.feature.fleet.database.FleetDashboardManager
-import javax.inject.Inject
-
-class FleetDashboardManagerImpl @Inject internal constructor(
+class FleetDashboardManagerImpl(
   private val firebaseAuth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
   ) : FleetDashboardManager {

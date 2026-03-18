@@ -29,15 +29,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.fanfly.wingslog.R
 import dev.fanfly.wingslog.login.data.LoginViewModel
+import org.koin.androidx.compose.koinViewModel
 import kotlinx.coroutines.launch
 
 
 @Composable
 fun LoginScreen(
-  loginViewModel: LoginViewModel = hiltViewModel(),
+  loginViewModel: LoginViewModel = koinViewModel(),
   onLoginSuccess: () -> Unit,
 ) {
   val scope = rememberCoroutineScope()

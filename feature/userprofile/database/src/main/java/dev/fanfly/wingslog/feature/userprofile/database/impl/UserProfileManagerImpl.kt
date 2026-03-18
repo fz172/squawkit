@@ -16,10 +16,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
-
-class UserProfileManagerImpl @Inject constructor(
+class UserProfileManagerImpl(
   private val firebaseAuth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
 ) : UserProfileManager {

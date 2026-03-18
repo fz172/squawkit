@@ -2,8 +2,6 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.dagger.hilt.android")
-    id("com.google.devtools.ksp")
 }
 
 android {
@@ -47,9 +45,7 @@ dependencies {
     
     // Lifecycle & DI
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
+    implementation(libs.koin.androidx.compose)
     
     // Logging
     implementation(libs.flogger)

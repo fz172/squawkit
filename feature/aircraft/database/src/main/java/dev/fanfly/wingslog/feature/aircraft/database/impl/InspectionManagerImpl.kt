@@ -20,9 +20,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.UUID
-import javax.inject.Inject
-
-class InspectionManagerImpl @Inject internal constructor(
+class InspectionManagerImpl(
     private val firebaseAuth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
 ) : InspectionManager {

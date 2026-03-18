@@ -47,8 +47,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.Aircraft
@@ -62,7 +62,7 @@ import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
 @Composable
 fun MaintenanceLogFormScreen(
     navController: NavController,
-    viewModel: MaintenanceLogFormViewModel = hiltViewModel()
+    viewModel: MaintenanceLogFormViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
