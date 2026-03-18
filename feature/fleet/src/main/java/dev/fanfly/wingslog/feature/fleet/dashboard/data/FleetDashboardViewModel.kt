@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.fleet.dashboard.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.ListenerRegistration
-import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.fleet.database.FleetDashboardManager
@@ -11,10 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class FleetDashboardViewModel @Inject constructor(
+class FleetDashboardViewModel(
   private val fleetDashboardManager: FleetDashboardManager,
   private val logManager: MaintenanceLogManager,
 ) : ViewModel() {

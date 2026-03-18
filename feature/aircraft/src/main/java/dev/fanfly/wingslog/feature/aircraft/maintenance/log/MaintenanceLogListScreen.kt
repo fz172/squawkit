@@ -25,9 +25,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.fanfly.wingslog.feature.aircraft.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.compose.MaintenanceLogCard
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListEvent
@@ -38,7 +38,7 @@ import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogL
 @Composable
 fun MaintenanceLogListScreen(
     navController: NavController,
-    viewModel: MaintenanceLogListViewModel = hiltViewModel()
+    viewModel: MaintenanceLogListViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

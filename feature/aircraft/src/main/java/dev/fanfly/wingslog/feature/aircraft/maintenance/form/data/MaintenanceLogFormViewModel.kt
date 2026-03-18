@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.protobuf.Timestamp
-import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
@@ -20,10 +19,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.util.UUID
-import javax.inject.Inject
 
-@HiltViewModel
-class MaintenanceLogFormViewModel @Inject constructor(
+class MaintenanceLogFormViewModel(
     private val logManager: MaintenanceLogManager,
     private val aircraftManager: AircraftManager,
     private val inspectionManager: InspectionManager,

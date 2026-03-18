@@ -3,8 +3,6 @@ plugins {
   alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.compose)
   id("com.google.gms.google-services")
-  id("com.google.devtools.ksp")
-  id("com.google.dagger.hilt.android")
 }
 
 kotlin {
@@ -63,13 +61,13 @@ dependencies {
   implementation(libs.androidx.compose.material3)
   implementation(libs.androidx.compose.ui.text)
   implementation(libs.androidx.core.ktx)
-  implementation(libs.androidx.hilt.navigation.compose)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.material3)
   implementation(libs.androidx.navigation.compose)
   implementation(libs.coil.compose)
   implementation(libs.googleid)
-  implementation(libs.hilt.android)
+  implementation(libs.koin.android)
+  implementation(libs.koin.androidx.compose)
   implementation(libs.flogger)
   implementation(libs.flogger.system.backend)
   implementation(libs.play.services.auth)
@@ -82,11 +80,10 @@ dependencies {
   implementation(project(":core:database"))
   implementation(project(":feature:userprofile:userprofilecard"))
   implementation(project(":feature:userprofile"))
+  implementation(project(":feature:userprofile:database"))
   implementation(project(":feature:aircraft:database"))
   implementation(project(":feature:fleet"))
   implementation(project(":feature:fleet:database"))
-
-  ksp(libs.hilt.compiler)
 
   testImplementation(libs.junit)
   testImplementation("io.mockk:mockk:1.13.10")

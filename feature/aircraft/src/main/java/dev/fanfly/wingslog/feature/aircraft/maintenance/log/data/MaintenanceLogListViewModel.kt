@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.aircraft.maintenance.log.data
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,10 +13,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class MaintenanceLogListViewModel @Inject constructor(
+class MaintenanceLogListViewModel(
     private val logManager: MaintenanceLogManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {

@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.aircraft.overview.data
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import com.google.protobuf.Timestamp
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
@@ -22,10 +21,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class AircraftOverviewViewModel @Inject constructor(
+class AircraftOverviewViewModel(
     private val aircraftManager: AircraftManager,
     private val logManager: MaintenanceLogManager,
     private val inspectionManager: InspectionManager,
