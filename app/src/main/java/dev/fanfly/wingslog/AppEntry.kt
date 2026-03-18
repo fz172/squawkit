@@ -12,9 +12,9 @@ import dev.fanfly.wingslog.feature.aircraft.maintenance.form.MaintenanceLogFormS
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.MaintenanceLogListScreen
 import dev.fanfly.wingslog.feature.aircraft.overview.AircraftOverviewScreen
 import dev.fanfly.wingslog.feature.fleet.dashboard.DashboardScreen
-import dev.fanfly.wingslog.login.LoginScreen
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
 import dev.fanfly.wingslog.feature.userprofile.EditProfileScreen
+import dev.fanfly.wingslog.login.LoginScreen
 
 @Composable
 fun AppEntry() {

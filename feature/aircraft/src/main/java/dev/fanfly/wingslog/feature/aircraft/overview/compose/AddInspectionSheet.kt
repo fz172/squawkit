@@ -49,19 +49,13 @@ private data class QuickTemplate(
 )
 
 private fun buildTimeRule(months: Int): InspectionRule =
-    InspectionRule.newBuilder()
-        .setTimeRule(TimeRule.newBuilder().setIntervalMonths(months).build())
-        .build()
+    InspectionRule(time_rule = TimeRule(interval_months = months))
 
 private fun buildTachRule(hours: Float): InspectionRule =
-    InspectionRule.newBuilder()
-        .setTachRule(TachRule.newBuilder().setIntervalHours(hours).build())
-        .build()
+    InspectionRule(tach_rule = TachRule(interval_hours = hours))
 
 private fun buildOnConditionRule(): InspectionRule =
-    InspectionRule.newBuilder()
-        .setOnConditionRule(OnConditionRule.newBuilder().build())
-        .build()
+    InspectionRule(on_condition_rule = OnConditionRule())
 
 private val quickTemplates = listOf(
     QuickTemplate(
@@ -117,16 +111,19 @@ fun AddInspectionSheet(
         tachRuleEnabled = false
         onConditionEnabled = false
         template.rules.forEach { rule ->
+            val timeRule = rule.time_rule
+            val tachRule = rule.tach_rule
+            val onConditionRule = rule.on_condition_rule
             when {
-                rule.hasTimeRule() -> {
+                timeRule != null -> {
                     timeRuleEnabled = true
-                    timeRuleMonths = rule.timeRule.intervalMonths.toString()
+                    timeRuleMonths = timeRule.interval_months.toString()
                 }
-                rule.hasTachRule() -> {
+                tachRule != null -> {
                     tachRuleEnabled = true
-                    tachRuleHours = rule.tachRule.intervalHours.toString()
+                    tachRuleHours = tachRule.interval_hours.toString()
                 }
-                rule.hasOnConditionRule() -> onConditionEnabled = true
+                onConditionRule != null -> onConditionEnabled = true
             }
         }
     }

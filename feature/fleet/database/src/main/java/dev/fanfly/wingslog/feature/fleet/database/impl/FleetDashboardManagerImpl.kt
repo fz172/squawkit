@@ -31,15 +31,13 @@ class FleetDashboardManagerImpl(
       val fleet = snapshot.documents
       val result = mutableListOf<Aircraft>()
       for (aircraft in fleet) {
-        // 1. Extract the Blob from the document
         val blob = aircraft.get(
           AIRCRAFT_INFO_BLOB
         ) as? Blob
         if (blob != null) {
-          val aircraft = Aircraft.parseFrom(blob.toBytes())
+          val aircraft = Aircraft.ADAPTER.decode(blob.toBytes())
           result += aircraft
-          // Now you have your typed object back!
-          logger.atInfo().log("Recovered Aircraft: %s - %s", aircraft.tailNumber, aircraft.model)
+          logger.atInfo().log("Recovered Aircraft: %s - %s", aircraft.tail_number, aircraft.model)
         }
       }
       fleetListener.invoke(result)

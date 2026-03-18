@@ -15,8 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.PropellerBlade
+import dev.fanfly.wingslog.feature.aircraft.R
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

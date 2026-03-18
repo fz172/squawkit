@@ -5,10 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -48,15 +48,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -278,7 +278,7 @@ private fun ComponentSection(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    val engines = aircraft.engineList
+                    val engines = aircraft.engine
                     if (engines.isEmpty()) {
                         Text(
                             text = stringResource(R.string.no_engines_found),
@@ -318,10 +318,10 @@ private fun ComponentSection(
                 } else {
                     // Collect all propeller components from all engines
                     val options = mutableListOf<Pair<String, String>>()
-                    aircraft.engineList.forEach { engine ->
+                    aircraft.engine.forEach { engine ->
                         val prop = engine.propeller
-                        val hub = prop.hub
-                        if (hub.serial.isNotEmpty()) {
+                        val hub = prop?.hub
+                        if (hub?.serial?.isNotEmpty() == true) {
                             val label = buildString {
                                 append("Hub")
                                 if (hub.make.isNotEmpty()) append(" - ${hub.make}")
@@ -330,7 +330,7 @@ private fun ComponentSection(
                             }
                             options.add(label to hub.serial)
                         }
-                        prop.bladesList.forEach { blade ->
+                        prop?.blades?.forEach { blade ->
                             if (blade.serial.isNotEmpty()) {
                                 val label = buildString {
                                     append("Blade")

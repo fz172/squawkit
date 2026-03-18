@@ -24,8 +24,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.feature.settings.SettingsLevel.DEFAULT
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
+import dev.fanfly.wingslog.feature.settings.SettingsLevel.DEFAULT
 
 enum class SettingsLevel {
   DEFAULT,

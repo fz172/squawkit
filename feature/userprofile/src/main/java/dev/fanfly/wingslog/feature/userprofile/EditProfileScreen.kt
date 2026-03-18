@@ -42,19 +42,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavController
-
+import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
+import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.feature.userprofile.data.EditProfileViewModel
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
-import dev.fanfly.wingslog.feature.userprofile.data.EditProfileViewModel
-import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
-import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
+import org.koin.androidx.compose.koinViewModel
 import java.time.Instant
 
 
@@ -104,7 +103,7 @@ fun EditProfileScreen(
       ExposedDropdownMenuBox(
         expanded = expanded, onExpandedChange = { expanded = !expanded }) {
         OutlinedTextField(
-          value = stringResource(uiState.licenceInfo.licenseType.displayResId()),
+          value = stringResource(uiState.licenceInfo.license_type.displayResId()),
           onValueChange = {},
           readOnly = true,
           label = { Text(text = stringResource(R.string.license_type)) },
@@ -118,7 +117,7 @@ fun EditProfileScreen(
         )
         ExposedDropdownMenu(
           expanded = expanded, onDismissRequest = { expanded = false }) {
-          LicenseType.entries.filter { it != LicenseType.UNRECOGNIZED }.forEach { type ->
+          LicenseType.entries.forEach { type ->
             DropdownMenuItem(text = { Text(stringResource(id = type.displayResId())) }, onClick = {
               viewModel.onLicenseTypeChanged(type) // Update ViewModel
               expanded = false
@@ -131,13 +130,13 @@ fun EditProfileScreen(
 
       // --- License Number ---
       OutlinedTextField(
-        value = uiState.licenceInfo.licenseNumber, // Read from ViewModel
+        value = uiState.licenceInfo.license_number, // Read from ViewModel
         onValueChange = { viewModel.onLicenseNumberChanged(it) }, // Update ViewModel
         label = { Text(stringResource(R.string.license_number)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
-        enabled = uiState.licenceInfo.licenseType != LicenseType.NONE
+        enabled = uiState.licenceInfo.license_type != LicenseType.NONE
       )
 
       Spacer(modifier = Modifier.height(20.dp))
@@ -151,10 +150,10 @@ fun EditProfileScreen(
         verticalAlignment = Alignment.CenterVertically
       ) {
         val expirationDateEnabled =
-          uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES && uiState.licenceInfo.licenseType != LicenseType.NONE
+          uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES && uiState.licenceInfo.license_type != LicenseType.NONE
         OutlinedTextField(
           value = if (uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES)
-            uiState.licenceInfo.expirationDate.toLocalDate().toDisplayFormat() else "",
+            uiState.licenceInfo.expiration_date?.toLocalDate()?.toDisplayFormat() ?: "" else "",
           onValueChange = { }, // Update ViewModel
           readOnly = true,
           label = { Text(stringResource(R.string.license_expiration_date)) },
@@ -201,7 +200,7 @@ fun EditProfileScreen(
         Checkbox(
           checked = uiState.licenceInfo.expireLimit == LicenseExpireLimit.NEVER_EXPIRES,
           onCheckedChange = { viewModel.onExpirationNeverFlagChanged(it) },
-          enabled = uiState.licenceInfo.licenseType != LicenseType.NONE
+          enabled = uiState.licenceInfo.license_type != LicenseType.NONE
         )
       }
       if (showDatePicker) {
