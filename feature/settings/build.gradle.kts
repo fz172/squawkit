@@ -43,6 +43,9 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
     
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
+
     // Lifecycle & DI
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.koin.androidx.compose)
