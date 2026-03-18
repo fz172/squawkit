@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "dev.fanfly.wingslog.aircraft";
+option java_multiple_files = true;
+
+// Mirrors ComponentType from MaintenanceLog — kept here for InspectionCard independence
+enum InspectionComponentType {
+  INSPECTION_COMPONENT_UNKNOWN = 0;
+  INSPECTION_COMPONENT_AIRFRAME = 1;
+  INSPECTION_COMPONENT_ENGINE = 2;
+  INSPECTION_COMPONENT_PROPELLER = 3;
+}
+
+// A time-interval-based rule (e.g. every 12 months)
+message TimeRule {
+  int32 interval_months = 1;
+}
+
+// A tach-hour-based rule (e.g. every 100 hours)
+message TachRule {
+  float interval_hours = 1;
+}
+
+// Inspection is performed on condition (no fixed interval)
+message OnConditionRule {
+  string description = 1;
+}
+
+// A single rule governing when an inspection is due
+message InspectionRule {
+  oneof rule {
+    TimeRule time_rule = 1;
+    TachRule tach_rule = 2;
+    OnConditionRule on_condition_rule = 3;
+  }
+}
+
+// A configured inspection card for an aircraft
+message InspectionCard {
+  string id = 1;
+  string title = 2;
+  InspectionComponentType component = 3;
+  repeated InspectionRule rules = 4;
+
+  // Optional force overrides — when set, skip computed due calculation
+  google.protobuf.Timestamp force_due_date = 5;
+  float force_due_tach = 6;
+}

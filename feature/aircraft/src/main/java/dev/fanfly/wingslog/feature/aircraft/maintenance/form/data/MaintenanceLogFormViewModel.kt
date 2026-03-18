@@ -60,7 +60,7 @@ class MaintenanceLogFormViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         workDescription = log.workDescription,
-                        inspections = log.inspectionList,
+                        selectedInspectionIds = log.inspectionIdsList,
                         tachTime = if (log.tachTime > 0.0) log.tachTime.toString() else "",
                         airframeTime = if (log.airframeTime > 0.0) log.airframeTime.toString() else "",
                         propTime = if (log.propTime > 0.0) log.propTime.toString() else "",
@@ -75,14 +75,13 @@ class MaintenanceLogFormViewModel @Inject constructor(
     }
 
     fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
-    fun onInspectionsChange(value: List<MaintenanceLog.InspectionType>) = _uiState.update { it.copy(inspections = value) }
+    fun onInspectionIdsChange(value: List<String>) = _uiState.update { it.copy(selectedInspectionIds = value) }
     fun onTachTimeChange(value: String) = _uiState.update { it.copy(tachTime = value) }
     fun onAirframeTimeChange(value: String) = _uiState.update { it.copy(airframeTime = value) }
     fun onPropTimeChange(value: String) = _uiState.update { it.copy(propTime = value) }
 
     fun onComponentTypeChange(value: MaintenanceLog.ComponentType) {
         _uiState.update { state ->
-            // Auto-populate serial for AIRFRAME
             val autoSerial = if (value == MaintenanceLog.ComponentType.AIRFRAME) {
                 state.aircraft?.serial?.takeIf { it.isNotEmpty() }
             } else null
@@ -107,7 +106,6 @@ class MaintenanceLogFormViewModel @Inject constructor(
             _uiState.update { it.copy(isSaving = true, error = null) }
             val now = System.currentTimeMillis() / 1000
 
-            // Determine componentSerial from state
             val componentSerial = when (state.selectedComponentType) {
                 MaintenanceLog.ComponentType.AIRFRAME -> state.aircraft?.serial ?: ""
                 else -> state.selectedSubComponent ?: ""
@@ -117,7 +115,7 @@ class MaintenanceLogFormViewModel @Inject constructor(
                 .setId(logId ?: UUID.randomUUID().toString())
                 .setTimestamp(Timestamp.newBuilder().setSeconds(now).build())
                 .setWorkDescription(state.workDescription)
-                .addAllInspection(state.inspections)
+                .addAllInspectionIds(state.selectedInspectionIds)
                 .setTachTime(state.tachTime.toDoubleOrNull() ?: 0.0)
                 .setAirframeTime(state.airframeTime.toDoubleOrNull() ?: 0.0)
                 .setPropTime(state.propTime.toDoubleOrNull() ?: 0.0)

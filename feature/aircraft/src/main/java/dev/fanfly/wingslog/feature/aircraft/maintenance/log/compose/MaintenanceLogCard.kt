@@ -67,9 +67,9 @@ fun MaintenanceLogCard(
                 }
             }
 
-            if (log.inspectionList.isNotEmpty()) {
+            if (log.inspectionIdsList.isNotEmpty()) {
                 Text(
-                    text = log.inspectionList.joinToString(", ") { it.displayName() },
+                    text = "${log.inspectionIdsList.size} inspection(s) logged",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
@@ -125,8 +125,8 @@ private fun MaintenanceLogCardPreview() {
         .setWorkDescription("Performed annual inspection and oil change.")
         .setTachTime(1234.5)
         .setComponentType(dev.fanfly.wingslog.aircraft.MaintenanceLog.ComponentType.ENGINE)
-        .addInspection(dev.fanfly.wingslog.aircraft.MaintenanceLog.InspectionType.ANNUAL)
-        .addInspection(dev.fanfly.wingslog.aircraft.MaintenanceLog.InspectionType.OIL_CHANGE)
+        .addInspectionIds("annual-card-id")
+        .addInspectionIds("oil-change-card-id")
         .build()
     MaterialTheme {
         MaintenanceLogCard(log = log, onEdit = {})

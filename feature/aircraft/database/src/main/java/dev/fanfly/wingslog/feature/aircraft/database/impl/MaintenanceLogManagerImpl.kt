@@ -126,7 +126,7 @@ class MaintenanceLogManagerImpl @Inject internal constructor(
       TIMESTAMP_FIELD to com.google.firebase.Timestamp(log.timestamp.seconds, log.timestamp.nanos),
       COMPONENT_TYPE_FIELD to log.componentType.name,
       TECHNICIAN_ID_FIELD to log.technicianId,
-      INSPECTION_FIELD to log.inspectionList.map { it.name }
+      INSPECTION_IDS_FIELD to log.inspectionIdsList
     )
     
     if (log.componentSerial.isNotEmpty()) {
@@ -152,7 +152,7 @@ class MaintenanceLogManagerImpl @Inject internal constructor(
     private const val TIMESTAMP_FIELD = "timestamp"
     private const val COMPONENT_TYPE_FIELD = "component_type"
     private const val TECHNICIAN_ID_FIELD = "technician_id"
-    private const val INSPECTION_FIELD = "inspection"
+    private const val INSPECTION_IDS_FIELD = "inspection_ids"
     private const val COMPONENT_SERIAL_FIELD = "component_serial"
     private const val TACH_TIME_FIELD = "tach_time"
   }

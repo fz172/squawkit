@@ -7,7 +7,7 @@ data class MaintenanceLogFormUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val workDescription: String = "",
-    val inspections: List<MaintenanceLog.InspectionType> = emptyList(),
+    val selectedInspectionIds: List<String> = emptyList(),
     val tachTime: String = "",
     val airframeTime: String = "",
     val propTime: String = "",

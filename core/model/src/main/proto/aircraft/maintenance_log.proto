@@ -21,19 +21,6 @@ message MaintenanceLog {
 
   string component_serial = 6; // References Engine/Prop/Blade Serial
 
-  enum InspectionType {
-    INSPECTION_TYPE_UNKNOWN = 0;
-    ANNUAL = 1;
-    HUNDRED_HOUR = 2;
-    ROUTINE = 3;
-    TRANSPONDER_CHECK = 4;
-    CONDITIONAL = 5;
-    OIL_CHANGE = 6;
-    ELT = 7;
-    ALTIMETER_PITOT_STATIC = 8;
-  }
-  repeated InspectionType inspection = 7;
-
   double tach_time = 8;
 
   repeated string attachment_urls = 9;
@@ -41,4 +28,7 @@ message MaintenanceLog {
   // Separate time tracking for each component category
   double airframe_time = 10;
   double prop_time = 11;
+
+  // Inspection cards associated with this log entry
+  repeated string inspection_ids = 12;
 }
