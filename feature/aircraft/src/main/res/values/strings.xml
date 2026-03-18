@@ -70,4 +70,24 @@
     <string name="airframe_time_label">Airframe Time</string>
     <string name="prop_time_label">Prop Time</string>
     <string name="prop_inspection">Prop Inspection</string>
+
+    <!-- Inspection cards -->
+    <string name="add_inspection">Add Inspection</string>
+    <string name="inspection_title">Inspection Title</string>
+    <string name="component">Component</string>
+    <string name="add_rule">Add Rule</string>
+    <string name="time_based_months">Time-based (months)</string>
+    <string name="tach_based_hours">Tach-based (hours)</string>
+    <string name="on_condition">On Condition</string>
+    <string name="interval_months">Interval (months)</string>
+    <string name="interval_hours">Interval (hours)</string>
+    <string name="no_inspections_yet">No inspections configured yet.\nTap + to add one.</string>
+    <string name="save">Save</string>
+    <string name="title_required">Title is required</string>
+    <string name="quick_add">Quick Add</string>
+    <string name="annual_condition_12mo">Annual Condition (12mo)</string>
+    <string name="elt_battery_12mo">ELT Battery (12mo)</string>
+    <string name="parachute_repack_180d">Parachute Repack (180d)</string>
+    <string name="hundred_hour_inspection">100-Hour Inspection</string>
+    <string name="oil_change_50hr">Oil Change (50hr)</string>
 </resources>

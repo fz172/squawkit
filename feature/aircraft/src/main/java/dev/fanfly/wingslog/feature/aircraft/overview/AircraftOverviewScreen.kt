@@ -68,6 +68,7 @@ import dev.fanfly.wingslog.feature.aircraft.overview.compose.InspectionCard
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewEvent
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewViewModel
+import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.data.LogStats
 import kotlinx.coroutines.launch
 
@@ -97,11 +98,18 @@ fun AircraftOverviewScreen(
   AircraftOverviewContent(
     aircraft = successState?.aircraft,
     logStats = successState?.logStats,
+    inspectionCards = successState?.inspectionCards ?: emptyList(),
+    showAddInspectionSheet = successState?.showAddInspectionSheet ?: false,
     snackbarHostState = snackbarHostState,
     onBackClick = { navController.popBackStack() },
     onEditClick = { aircraftId -> navController.navigate("edit_aircraft/$aircraftId") },
     onDeleteConfirm = { viewModel.deleteAircraft() },
-    onLogDetailsClick = { aircraftId -> navController.navigate("maintenance_logs/$aircraftId") }
+    onLogDetailsClick = { aircraftId -> navController.navigate("maintenance_logs/$aircraftId") },
+    onAddInspectionClick = { viewModel.showAddInspectionSheet() },
+    onDismissAddInspectionSheet = { viewModel.hideAddInspectionSheet() },
+    onSaveInspection = { title, component, rules ->
+      viewModel.saveNewInspection(title, component, rules)
+    },
   )
 }
 
@@ -110,11 +118,16 @@ fun AircraftOverviewScreen(
 fun AircraftOverviewContent(
   aircraft: Aircraft?,
   logStats: LogStats?,
+  inspectionCards: List<InspectionCardWithStatus>,
+  showAddInspectionSheet: Boolean,
   snackbarHostState: SnackbarHostState,
   onBackClick: () -> Unit,
   onEditClick: (String) -> Unit,
   onDeleteConfirm: () -> Unit,
   onLogDetailsClick: (String) -> Unit,
+  onAddInspectionClick: () -> Unit = {},
+  onDismissAddInspectionSheet: () -> Unit = {},
+  onSaveInspection: (title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>) -> Unit = { _, _, _ -> },
   modifier: Modifier = Modifier
 ) {
   val scrollState = rememberScrollState()
@@ -205,6 +218,16 @@ fun AircraftOverviewContent(
       )
     }
   ) { paddingValues ->
+    // Add inspection bottom sheet
+    if (showAddInspectionSheet) {
+      dev.fanfly.wingslog.feature.aircraft.overview.compose.AddInspectionSheet(
+        onDismiss = onDismissAddInspectionSheet,
+        onSave = { title, component, rules ->
+          onSaveInspection(title, component, rules)
+        },
+      )
+    }
+
     if (aircraft != null) {
       Box(
         modifier = Modifier
@@ -227,15 +250,12 @@ fun AircraftOverviewContent(
             LogStatsSection(stats = stats, modifier = Modifier.padding(horizontal = 16.dp))
           }
 
-          // --- Inspection Grid ---
-          Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Text(
-              text = stringResource(R.string.inspection_status),
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.Bold
-            )
-          }
-          InspectionGrid(aircraft = aircraft)
+          // --- Inspection Status Section ---
+          InspectionStatusSection(
+            inspectionCards = inspectionCards,
+            onAddClick = onAddInspectionClick,
+            modifier = Modifier.padding(horizontal = 16.dp),
+          )
 
           Spacer(Modifier.height(88.dp)) // Clearance for the floating bottom bar
         }
@@ -415,16 +435,84 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
   }
 }
 
-/**
- * Inspection grid that shows only the inspection cards relevant to this aircraft.
- *
- * Filtering rules:
- * - Annual, ELT, Pitot-Static, Transponder — always shown (airframe-level)
- * - 100-Hour — only if aircraft has at least one engine
- * - Propeller inspection — only if aircraft has at least one engine with propeller blades
- */
 @Composable
-fun InspectionGrid(aircraft: dev.fanfly.wingslog.aircraft.Aircraft, modifier: Modifier = Modifier) {
+private fun InspectionStatusSection(
+  inspectionCards: List<InspectionCardWithStatus>,
+  onAddClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+      Text(
+        text = stringResource(R.string.inspection_status),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+      )
+      androidx.compose.material3.TextButton(onClick = onAddClick) {
+        Text(stringResource(R.string.add_inspection))
+      }
+    }
+    if (inspectionCards.isEmpty()) {
+      Text(
+        text = stringResource(R.string.no_inspections_yet),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    } else {
+      inspectionCards.chunked(2).forEach { rowItems ->
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+          rowItems.forEach { item ->
+            InspectionCardItem(
+              cardWithStatus = item,
+              modifier = Modifier.weight(1f),
+            )
+          }
+          if (rowItems.size == 1) {
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
+          }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun InspectionCardItem(
+  cardWithStatus: InspectionCardWithStatus,
+  modifier: Modifier = Modifier,
+) {
+  val statusColor = when {
+    cardWithStatus.dueStatus.isOverdue -> MaterialTheme.colorScheme.error
+    cardWithStatus.dueStatus.isOnCondition -> MaterialTheme.colorScheme.onSurfaceVariant
+    cardWithStatus.dueStatus.nextDueDate != null -> dev.fanfly.wingslog.core.ui.theme.StatusOk
+    else -> MaterialTheme.colorScheme.onSurfaceVariant
+  }
+  val statusText = when {
+    cardWithStatus.dueStatus.isOnCondition -> "On Condition"
+    cardWithStatus.dueStatus.isOverdue -> "Overdue"
+    cardWithStatus.dueStatus.nextDueDate != null -> "Due ${cardWithStatus.dueStatus.nextDueDate}"
+    cardWithStatus.dueStatus.nextDueTach != null -> "Due @ ${cardWithStatus.dueStatus.nextDueTach}h"
+    else -> "—"
+  }
+  InspectionCard(
+    title = cardWithStatus.card.title,
+    status = statusText,
+    icon = Icons.Default.CalendarToday,
+    statusColor = statusColor,
+    modifier = modifier,
+  )
+}
+
+@Suppress("unused")
+@Composable
+private fun InspectionGrid(aircraft: dev.fanfly.wingslog.aircraft.Aircraft, modifier: Modifier = Modifier) {
   val hasEngines = aircraft.engineList.isNotEmpty()
   val hasPropeller = aircraft.engineList.any { engine ->
     engine.propeller.hub.serial.isNotBlank() || engine.propeller.bladesList.isNotEmpty()
