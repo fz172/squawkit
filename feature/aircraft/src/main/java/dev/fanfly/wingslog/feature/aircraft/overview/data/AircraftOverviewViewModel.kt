@@ -39,6 +39,9 @@ class AircraftOverviewViewModel @Inject constructor(
     private val _events = Channel<AircraftOverviewEvent>()
     val events = _events.receiveAsFlow()
 
+    /** Cached logs — kept in sync by the combine flow, used for detail sheet filtering. */
+    private var cachedLogs: List<MaintenanceLog> = emptyList()
+
     init {
         loadAircraftAndStats()
     }
@@ -51,6 +54,7 @@ class AircraftOverviewViewModel @Inject constructor(
                 logManager.observeLogs(aircraftId),
                 inspectionManager.observeInspections(aircraftId)
             ) { aircraft, logs, inspectionCards ->
+                cachedLogs = logs
                 if (aircraft != null) {
                     val currentTachTime = logs.filter { it.tachTime > 0.0 }.maxOfOrNull { it.tachTime }
                     val currentAirframeTime = logs.filter { it.airframeTime > 0.0 }.maxOfOrNull { it.airframeTime }
@@ -71,13 +75,23 @@ class AircraftOverviewViewModel @Inject constructor(
                             dueStatus = inspectionManager.computeNextDue(card, logs),
                         )
                     }
-                    val current = _uiState.value
-                    val showSheet = if (current is AircraftOverviewUiState.Success) current.showAddInspectionSheet else false
+                    val current = _uiState.value as? AircraftOverviewUiState.Success
+                    val showSheet = current?.showAddInspectionSheet ?: false
+                    // Refresh selected inspection due status if detail sheet is open
+                    val refreshedSelected = current?.selectedInspection?.let { sel ->
+                        cardsWithStatus.find { it.card.id == sel.card.id }
+                    }
+                    val refreshedDetailLogs = refreshedSelected?.let { sel ->
+                        logs.filter { sel.card.id in it.inspectionIdsList }
+                            .sortedByDescending { it.timestamp.seconds }
+                    } ?: emptyList()
                     AircraftOverviewUiState.Success(
                         aircraft = aircraft,
                         logStats = stats,
                         inspectionCards = cardsWithStatus,
                         showAddInspectionSheet = showSheet,
+                        selectedInspection = refreshedSelected,
+                        logsForSelectedInspection = refreshedDetailLogs,
                     )
                 } else {
                     AircraftOverviewUiState.Error
@@ -97,6 +111,28 @@ class AircraftOverviewViewModel @Inject constructor(
     fun hideAddInspectionSheet() {
         _uiState.update { state ->
             if (state is AircraftOverviewUiState.Success) state.copy(showAddInspectionSheet = false) else state
+        }
+    }
+
+    fun showInspectionDetail(cardWithStatus: InspectionCardWithStatus) {
+        val relevantLogs = cachedLogs
+            .filter { cardWithStatus.card.id in it.inspectionIdsList }
+            .sortedByDescending { it.timestamp.seconds }
+        _uiState.update { state ->
+            if (state is AircraftOverviewUiState.Success) {
+                state.copy(
+                    selectedInspection = cardWithStatus,
+                    logsForSelectedInspection = relevantLogs,
+                )
+            } else state
+        }
+    }
+
+    fun hideInspectionDetail() {
+        _uiState.update { state ->
+            if (state is AircraftOverviewUiState.Success) {
+                state.copy(selectedInspection = null, logsForSelectedInspection = emptyList())
+            } else state
         }
     }
 

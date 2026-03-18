@@ -32,9 +32,11 @@ fun InspectionCard(
   status: String,
   icon: ImageVector,
   statusColor: Color,
+  onClick: () -> Unit = {},
   modifier: Modifier = Modifier
 ) {
   Card(
+    onClick = onClick,
     modifier = modifier.height(100.dp),
     colors = CardDefaults.cardColors(
       containerColor = MaterialTheme.colorScheme.surfaceContainer

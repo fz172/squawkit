@@ -26,6 +26,9 @@ sealed interface AircraftOverviewUiState {
         val logStats: LogStats? = null,
         val inspectionCards: List<InspectionCardWithStatus> = emptyList(),
         val showAddInspectionSheet: Boolean = false,
+        // Detail sheet — non-null when user tapped a card
+        val selectedInspection: InspectionCardWithStatus? = null,
+        val logsForSelectedInspection: List<dev.fanfly.wingslog.aircraft.MaintenanceLog> = emptyList(),
     ) : AircraftOverviewUiState
     data object Error : AircraftOverviewUiState
 }

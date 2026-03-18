@@ -100,6 +100,8 @@ fun AircraftOverviewScreen(
     logStats = successState?.logStats,
     inspectionCards = successState?.inspectionCards ?: emptyList(),
     showAddInspectionSheet = successState?.showAddInspectionSheet ?: false,
+    selectedInspection = successState?.selectedInspection,
+    logsForSelectedInspection = successState?.logsForSelectedInspection ?: emptyList(),
     snackbarHostState = snackbarHostState,
     onBackClick = { navController.popBackStack() },
     onEditClick = { aircraftId -> navController.navigate("edit_aircraft/$aircraftId") },
@@ -110,6 +112,8 @@ fun AircraftOverviewScreen(
     onSaveInspection = { title, component, rules ->
       viewModel.saveNewInspection(title, component, rules)
     },
+    onInspectionCardClick = { card -> viewModel.showInspectionDetail(card) },
+    onDismissInspectionDetail = { viewModel.hideInspectionDetail() },
   )
 }
 
@@ -120,6 +124,8 @@ fun AircraftOverviewContent(
   logStats: LogStats?,
   inspectionCards: List<InspectionCardWithStatus>,
   showAddInspectionSheet: Boolean,
+  selectedInspection: InspectionCardWithStatus? = null,
+  logsForSelectedInspection: List<dev.fanfly.wingslog.aircraft.MaintenanceLog> = emptyList(),
   snackbarHostState: SnackbarHostState,
   onBackClick: () -> Unit,
   onEditClick: (String) -> Unit,
@@ -128,6 +134,8 @@ fun AircraftOverviewContent(
   onAddInspectionClick: () -> Unit = {},
   onDismissAddInspectionSheet: () -> Unit = {},
   onSaveInspection: (title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>) -> Unit = { _, _, _ -> },
+  onInspectionCardClick: (InspectionCardWithStatus) -> Unit = {},
+  onDismissInspectionDetail: () -> Unit = {},
   modifier: Modifier = Modifier
 ) {
   val scrollState = rememberScrollState()
@@ -228,6 +236,15 @@ fun AircraftOverviewContent(
       )
     }
 
+    // Inspection detail bottom sheet
+    if (selectedInspection != null) {
+      dev.fanfly.wingslog.feature.aircraft.overview.compose.InspectionDetailSheet(
+        cardWithStatus = selectedInspection,
+        logs = logsForSelectedInspection,
+        onDismiss = onDismissInspectionDetail,
+      )
+    }
+
     if (aircraft != null) {
       Box(
         modifier = Modifier
@@ -254,6 +271,7 @@ fun AircraftOverviewContent(
           InspectionStatusSection(
             inspectionCards = inspectionCards,
             onAddClick = onAddInspectionClick,
+            onCardClick = onInspectionCardClick,
             modifier = Modifier.padding(horizontal = 16.dp),
           )
 
@@ -439,6 +457,7 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
 private fun InspectionStatusSection(
   inspectionCards: List<InspectionCardWithStatus>,
   onAddClick: () -> Unit,
+  onCardClick: (InspectionCardWithStatus) -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -471,6 +490,7 @@ private fun InspectionStatusSection(
           rowItems.forEach { item ->
             InspectionCardItem(
               cardWithStatus = item,
+              onClick = { onCardClick(item) },
               modifier = Modifier.weight(1f),
             )
           }
@@ -486,6 +506,7 @@ private fun InspectionStatusSection(
 @Composable
 private fun InspectionCardItem(
   cardWithStatus: InspectionCardWithStatus,
+  onClick: () -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   val statusColor = when {
@@ -506,6 +527,7 @@ private fun InspectionCardItem(
     status = statusText,
     icon = Icons.Default.CalendarToday,
     statusColor = statusColor,
+    onClick = onClick,
     modifier = modifier,
   )
 }
