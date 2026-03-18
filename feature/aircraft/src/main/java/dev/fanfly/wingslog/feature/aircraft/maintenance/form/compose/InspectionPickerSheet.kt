@@ -26,7 +26,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import dev.fanfly.wingslog.aircraft.InspectionCard
+import dev.fanfly.wingslog.feature.aircraft.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +63,7 @@ fun InspectionPickerSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = "Select Inspection Work",
+                    text = stringResource(R.string.select_inspection_work),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
@@ -72,7 +74,7 @@ fun InspectionPickerSheet(
 
             if (availableCards.isEmpty()) {
                 Text(
-                    text = "No inspection cards configured for this aircraft.",
+                    text = stringResource(R.string.no_inspection_cards_configured),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 16.dp),
@@ -100,9 +102,9 @@ fun InspectionPickerSheet(
                                 style = MaterialTheme.typography.bodyLarge,
                             )
                             val componentLabel = when (card.component.name) {
-                                "INSPECTION_COMPONENT_ENGINE" -> "Engine"
-                                "INSPECTION_COMPONENT_PROPELLER" -> "Propeller"
-                                else -> "Airframe"
+                                "INSPECTION_COMPONENT_ENGINE" -> stringResource(R.string.engine)
+                                "INSPECTION_COMPONENT_PROPELLER" -> stringResource(R.string.propeller)
+                                else -> stringResource(R.string.airframe)
                             }
                             Text(
                                 text = componentLabel,
@@ -121,7 +123,7 @@ fun InspectionPickerSheet(
                     .fillMaxWidth()
                     .padding(top = 16.dp),
             ) {
-                Text("Done")
+                Text(stringResource(R.string.done))
             }
         }
     }

@@ -230,7 +230,7 @@ fun MaintenanceLogFormScreen(
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
-                        Text(if (viewModel.isEditMode) "Update" else "Save")
+                        Text(stringResource(if (viewModel.isEditMode) R.string.update else R.string.save))
                     }
                 }
             }
@@ -470,7 +470,7 @@ private fun InspectionWorkSection(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = "Inspection Work",
+                text = stringResource(R.string.inspection_work),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
             )
@@ -482,20 +482,20 @@ private fun InspectionWorkSection(
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.width(16.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Add", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.add), style = MaterialTheme.typography.labelMedium)
             }
         }
 
         if (selectedIds.isEmpty()) {
             Text(
-                text = "No inspection work recorded for this log.",
+                text = stringResource(R.string.no_inspection_work_recorded),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
             selectedIds.forEach { cardId ->
                 val card = availableCards.firstOrNull { it.id == cardId }
-                val title = card?.title ?: "Unknown inspection ($cardId)"
+                val title = card?.title ?: stringResource(R.string.unknown_inspection, cardId)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -509,7 +509,7 @@ private fun InspectionWorkSection(
                     IconButton(onClick = { onRemove(cardId) }) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = "Remove",
+                            contentDescription = stringResource(R.string.remove),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }

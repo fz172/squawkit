@@ -6,7 +6,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-
+import androidx.compose.ui.res.stringResource
+import dev.fanfly.wingslog.feature.aircraft.R
 @Composable
 fun DeleteInspectionConfirmDialog(
     inspectionTitle: String,
@@ -15,11 +16,10 @@ fun DeleteInspectionConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Delete Inspection") },
+        title = { Text(stringResource(R.string.delete_inspection)) },
         text = {
             Text(
-                "Delete \"$inspectionTitle\"? This cannot be undone. " +
-                        "Maintenance logs that reference this inspection will not be deleted."
+                stringResource(R.string.delete_inspection_confirmation, inspectionTitle)
             )
         },
         confirmButton = {
@@ -27,12 +27,12 @@ fun DeleteInspectionConfirmDialog(
                 onClick = onConfirm,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
             ) {
-                Text("Delete")
+                Text(stringResource(R.string.delete))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         },
     )

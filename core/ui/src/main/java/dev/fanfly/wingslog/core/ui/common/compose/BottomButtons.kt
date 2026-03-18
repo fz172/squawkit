@@ -48,7 +48,7 @@ fun BottomButtons(
       colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
       enabled = saveEnabled
     ) {
-      Text(text = "Save Changes", fontSize = 16.sp)
+      Text(text = stringResource(R.string.save_changes), fontSize = 16.sp)
     }
 
     Spacer(modifier = Modifier.height(8.dp))

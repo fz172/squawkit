@@ -201,9 +201,9 @@ fun AddInspectionSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 listOf(
-                    InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME to "Airframe",
-                    InspectionComponentType.INSPECTION_COMPONENT_ENGINE to "Engine",
-                    InspectionComponentType.INSPECTION_COMPONENT_PROPELLER to "Propeller",
+                    InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME to stringResource(R.string.airframe),
+                    InspectionComponentType.INSPECTION_COMPONENT_ENGINE to stringResource(R.string.engine),
+                    InspectionComponentType.INSPECTION_COMPONENT_PROPELLER to stringResource(R.string.propeller),
                 ).forEach { (type, label) ->
                     FilterChip(
                         selected = selectedComponent == type,
@@ -215,7 +215,7 @@ fun AddInspectionSheet(
 
             // Rules
             Text(
-                text = "Rules",
+                text = stringResource(R.string.rules),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

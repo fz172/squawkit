@@ -69,7 +69,7 @@ fun MaintenanceLogCard(
 
             if (log.inspection_ids.isNotEmpty()) {
                 Text(
-                    text = "Affects ${log.inspection_ids.size} inspection item(s)",
+                    text = stringResource(R.string.affects_n_inspection_items, log.inspection_ids.size),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary

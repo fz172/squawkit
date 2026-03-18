@@ -28,6 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
@@ -79,7 +81,7 @@ fun InspectionDetailSheet(
                 )
                 Row {
                     IconButton(onClick = { onEditClick(cardWithStatus) }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit inspection")
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_inspection))
                     }
                     IconButton(onClick = onDismiss) {
                         Icon(Icons.Default.Close, contentDescription = null)
@@ -89,9 +91,9 @@ fun InspectionDetailSheet(
 
             // Component badge
             val componentLabel = when (card.component.name) {
-                "INSPECTION_COMPONENT_ENGINE" -> "Engine"
-                "INSPECTION_COMPONENT_PROPELLER" -> "Propeller"
-                else -> "Airframe"
+                "INSPECTION_COMPONENT_ENGINE" -> stringResource(R.string.engine)
+                "INSPECTION_COMPONENT_PROPELLER" -> stringResource(R.string.propeller)
+                else -> stringResource(R.string.airframe)
             }
             SuggestionChip(
                 onClick = {},
@@ -101,7 +103,7 @@ fun InspectionDetailSheet(
             // Rules summary
             if (card.rules.isNotEmpty()) {
                 Text(
-                    text = "Rules",
+                    text = stringResource(R.string.rules),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -110,13 +112,13 @@ fun InspectionDetailSheet(
                     val tachRule = rule.tach_rule
                     val onConditionRule = rule.on_condition_rule
                     val ruleText = when {
-                        timeRule != null -> "Every ${timeRule.interval_months} months"
-                        tachRule != null -> "Every ${tachRule.interval_hours?.toInt() ?: 0} tach hours"
+                        timeRule != null -> stringResource(R.string.every_x_months, timeRule.interval_months)
+                        tachRule != null -> stringResource(R.string.every_x_tach_hours, tachRule.interval_hours?.toInt() ?: 0)
                         onConditionRule != null -> {
                             val desc = onConditionRule.description
-                            if (desc.isBlank()) "On condition" else "On condition: $desc"
+                            if (desc.isBlank()) stringResource(R.string.on_condition) else stringResource(R.string.on_condition_desc, desc)
                         }
-                        else -> "Unknown rule"
+                        else -> stringResource(R.string.unknown_rule)
                     }
                     Text(
                         text = "• $ruleText",
@@ -129,7 +131,7 @@ fun InspectionDetailSheet(
 
             // Next due status
             Text(
-                text = "Next Due",
+                text = stringResource(R.string.next_due),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -139,14 +141,14 @@ fun InspectionDetailSheet(
 
             // Maintenance log history
             Text(
-                text = "Maintenance History",
+                text = stringResource(R.string.maintenance_history),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             if (logs.isEmpty()) {
                 Text(
-                    text = "No maintenance logs for this inspection yet.",
+                    text = stringResource(R.string.no_maintenance_logs_for_inspection),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -165,13 +167,13 @@ fun InspectionDetailSheet(
 @Composable
 private fun DueStatusChip(dueStatus: DueStatus) {
     val (label, color) = when {
-        dueStatus.isOnCondition -> "On Condition" to MaterialTheme.colorScheme.onSurfaceVariant
+        dueStatus.isOnCondition -> stringResource(R.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
         dueStatus.isOverdue -> {
             val dateStr = dueStatus.nextDueDate?.format(dateFormatter) ?: ""
-            "Overdue${if (dateStr.isNotBlank()) " (was $dateStr)" else ""}" to MaterialTheme.colorScheme.error
+            (if (dateStr.isNotBlank()) stringResource(R.string.overdue_was, dateStr) else stringResource(R.string.overdue)) to MaterialTheme.colorScheme.error
         }
-        dueStatus.nextDueDate != null -> "Due ${dueStatus.nextDueDate?.format(dateFormatter)}" to StatusOk
-        dueStatus.nextDueTach != null -> "Due @ ${"%.1f".format(dueStatus.nextDueTach ?: 0f)} tach hrs" to StatusOk
+        dueStatus.nextDueDate != null -> stringResource(R.string.due_date, dueStatus.nextDueDate?.format(dateFormatter) ?: "") to StatusOk
+        dueStatus.nextDueTach != null -> stringResource(R.string.due_tach, "%.1f".format(dueStatus.nextDueTach ?: 0f)) to StatusOk
         else -> "—" to MaterialTheme.colorScheme.onSurfaceVariant
     }
     AssistChip(
@@ -189,7 +191,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
             .toLocalDate()
             .format(dateFormatter)
     } else {
-        "Unknown date"
+        stringResource(R.string.unknown_date)
     }
 
     Column(
@@ -210,7 +212,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
             )
             if (log.tach_time > 0.0) {
                 Text(
-                    text = "${"%.1f".format(log.tach_time)} tach",
+                    text = stringResource(R.string.tach_val, "%.1f".format(log.tach_time)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

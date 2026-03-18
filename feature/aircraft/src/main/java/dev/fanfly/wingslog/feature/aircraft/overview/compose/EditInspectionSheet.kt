@@ -31,8 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.OnConditionRule
@@ -116,7 +118,7 @@ fun EditInspectionSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = "Edit Inspection",
+                    text = stringResource(R.string.edit_inspection),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
@@ -129,10 +131,10 @@ fun EditInspectionSheet(
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it; titleError = false },
-                label = { Text("Inspection Title") },
+                label = { Text(stringResource(R.string.inspection_title)) },
                 isError = titleError,
                 supportingText = if (titleError) {
-                    { Text("Title is required") }
+                    { Text(stringResource(R.string.title_required)) }
                 } else null,
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -140,15 +142,15 @@ fun EditInspectionSheet(
 
             // Component chips
             Text(
-                text = "Component",
+                text = stringResource(R.string.component),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
-                    InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME to "Airframe",
-                    InspectionComponentType.INSPECTION_COMPONENT_ENGINE to "Engine",
-                    InspectionComponentType.INSPECTION_COMPONENT_PROPELLER to "Propeller",
+                    InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME to stringResource(R.string.airframe),
+                    InspectionComponentType.INSPECTION_COMPONENT_ENGINE to stringResource(R.string.engine),
+                    InspectionComponentType.INSPECTION_COMPONENT_PROPELLER to stringResource(R.string.propeller),
                 ).forEach { (type, label) ->
                     FilterChip(
                         selected = selectedComponent == type,
@@ -160,7 +162,7 @@ fun EditInspectionSheet(
 
             // Rules
             Text(
-                text = "Rules",
+                text = stringResource(R.string.rules),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -170,14 +172,14 @@ fun EditInspectionSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("Time-based (months)", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.time_based_months), style = MaterialTheme.typography.bodyMedium)
                 Switch(checked = timeRuleEnabled, onCheckedChange = { timeRuleEnabled = it })
             }
             if (timeRuleEnabled) {
                 OutlinedTextField(
                     value = timeRuleMonths,
                     onValueChange = { timeRuleMonths = it },
-                    label = { Text("Interval (months)") },
+                    label = { Text(stringResource(R.string.interval_months)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
@@ -188,14 +190,14 @@ fun EditInspectionSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("Tach-based (hours)", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.tach_based_hours), style = MaterialTheme.typography.bodyMedium)
                 Switch(checked = tachRuleEnabled, onCheckedChange = { tachRuleEnabled = it })
             }
             if (tachRuleEnabled) {
                 OutlinedTextField(
                     value = tachRuleHours,
                     onValueChange = { tachRuleHours = it },
-                    label = { Text("Interval (hours)") },
+                    label = { Text(stringResource(R.string.interval_hours)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
@@ -206,7 +208,7 @@ fun EditInspectionSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("On Condition", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.on_condition), style = MaterialTheme.typography.bodyMedium)
                 Switch(checked = onConditionEnabled, onCheckedChange = { onConditionEnabled = it })
             }
 
@@ -222,7 +224,7 @@ fun EditInspectionSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Override next due tach", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.override_next_due_tach), style = MaterialTheme.typography.bodyMedium)
                     Text(
                         text = "Skips computed calculation",
                         style = MaterialTheme.typography.bodySmall,
@@ -235,7 +237,7 @@ fun EditInspectionSheet(
                 OutlinedTextField(
                     value = forceTachHours,
                     onValueChange = { forceTachHours = it },
-                    label = { Text("Force Due Tach (hours)") },
+                    label = { Text(stringResource(R.string.force_due_tach_hours)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
@@ -274,7 +276,7 @@ fun EditInspectionSheet(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Save")
+                Text(stringResource(R.string.save))
             }
 
             // Delete
@@ -285,7 +287,7 @@ fun EditInspectionSheet(
                     contentColor = MaterialTheme.colorScheme.error,
                 ),
             ) {
-                Text("Delete Inspection")
+                Text(stringResource(R.string.delete_inspection))
             }
         }
     }

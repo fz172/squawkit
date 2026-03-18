@@ -195,7 +195,7 @@ fun EngineSection(
         ) {
           Icon(
             Icons.Default.Close,
-            contentDescription = "Remove Engine",
+            contentDescription = stringResource(R.string.remove_engine),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
@@ -272,7 +272,7 @@ fun EngineSection(
               modifier = Modifier.weight(1f),
               trailingIcon = {
                 IconButton(onClick = { viewModel.onRemoveBlade(engineIndex, bladeIndex) }) {
-                  Icon(Icons.Default.Close, contentDescription = "Remove Blade")
+                  Icon(Icons.Default.Close, contentDescription = stringResource(R.string.remove_blade))
                 }
               },
               isError = showValidationErrors && blade.serial.isBlank(),

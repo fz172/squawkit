@@ -34,11 +34,11 @@ WingsLog is currently an Android-only app built with Jetpack Compose, Hilt, Fire
 
 ---
 
-# Phase 1: KMP Migration (Android-first)
+# Phase 1: KMP Migration (Android-first) 
 
 Goal: Restructure the codebase to KMP without changing any user-visible behavior on Android. The app should remain fully functional on Android throughout this phase.
 
-## Step 1.0 — Data Model: Protobuf Lite → Square Wire
+## Step 1.0 — Data Model: Protobuf Lite → Square Wire  ✅ DONE
 
 The official `protobuf-kotlin-lite` is JVM-bound and cannot be compiled to KMP targets like iOS or Web (Wasm). Before migrating Android modules to KMP, we must switch to a KMP-compatible Protobuf library.
 

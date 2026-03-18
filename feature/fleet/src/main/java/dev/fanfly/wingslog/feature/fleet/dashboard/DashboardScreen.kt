@@ -93,9 +93,9 @@ fun DashboardScreen(
     ) {
       // Only show the text if isLoading is false
       if (uiState.isLoading) {
-        Text("Loading", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(R.string.loading), style = MaterialTheme.typography.headlineMedium)
       } else if (uiState.fleet.isEmpty()) {
-        Text("No Fleet", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(R.string.no_fleet), style = MaterialTheme.typography.headlineMedium)
       } else {
         LazyColumn(
           modifier = Modifier
