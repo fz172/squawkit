@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.google.protobuf.Timestamp
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
@@ -133,6 +134,74 @@ class AircraftOverviewViewModel @Inject constructor(
             if (state is AircraftOverviewUiState.Success) {
                 state.copy(selectedInspection = null, logsForSelectedInspection = emptyList())
             } else state
+        }
+    }
+
+    fun openEditInspection(cardWithStatus: InspectionCardWithStatus) {
+        _uiState.update { state ->
+            if (state is AircraftOverviewUiState.Success) {
+                state.copy(editingInspection = cardWithStatus, selectedInspection = null)
+            } else state
+        }
+    }
+
+    fun closeEditInspection() {
+        _uiState.update { state ->
+            if (state is AircraftOverviewUiState.Success) {
+                state.copy(editingInspection = null)
+            } else state
+        }
+    }
+
+    fun saveEditedInspection(
+        cardId: String,
+        title: String,
+        component: InspectionComponentType,
+        rules: List<InspectionRule>,
+        forceDueDate: Timestamp?,
+        forceDueTach: Float,
+    ) {
+        val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
+        viewModelScope.launch {
+            val builder = InspectionCard.newBuilder()
+                .setId(cardId)
+                .setTitle(title)
+                .setComponent(component)
+                .clearRules()
+                .addAllRules(rules)
+                .setForceDueTach(forceDueTach)
+            if (forceDueDate != null) builder.setForceDueDate(forceDueDate)
+            inspectionManager.updateInspection(state.aircraft.id, builder.build())
+            closeEditInspection()
+        }
+    }
+
+    fun requestDeleteInspection(cardId: String) {
+        _uiState.update { state ->
+            if (state is AircraftOverviewUiState.Success) {
+                state.copy(deletingInspectionId = cardId)
+            } else state
+        }
+    }
+
+    fun cancelDeleteInspection() {
+        _uiState.update { state ->
+            if (state is AircraftOverviewUiState.Success) {
+                state.copy(deletingInspectionId = null)
+            } else state
+        }
+    }
+
+    fun confirmDeleteInspection() {
+        val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
+        val cardId = state.deletingInspectionId ?: return
+        viewModelScope.launch {
+            inspectionManager.deleteInspection(state.aircraft.id, cardId)
+            _uiState.update { s ->
+                if (s is AircraftOverviewUiState.Success) {
+                    s.copy(deletingInspectionId = null, editingInspection = null, selectedInspection = null)
+                } else s
+            }
         }
     }
 

@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,6 +46,7 @@ fun InspectionDetailSheet(
     cardWithStatus: InspectionCardWithStatus,
     logs: List<MaintenanceLog>,
     onDismiss: () -> Unit,
+    onEditClick: (InspectionCardWithStatus) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -76,8 +78,13 @@ fun InspectionDetailSheet(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
                 )
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = null)
+                Row {
+                    IconButton(onClick = { onEditClick(cardWithStatus) }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit inspection")
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = null)
+                    }
                 }
             }
 

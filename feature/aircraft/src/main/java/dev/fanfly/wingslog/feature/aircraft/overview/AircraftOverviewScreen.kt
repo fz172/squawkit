@@ -58,6 +58,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.google.protobuf.Timestamp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -102,6 +103,10 @@ fun AircraftOverviewScreen(
     showAddInspectionSheet = successState?.showAddInspectionSheet ?: false,
     selectedInspection = successState?.selectedInspection,
     logsForSelectedInspection = successState?.logsForSelectedInspection ?: emptyList(),
+    editingInspection = successState?.editingInspection,
+    deletingInspectionId = successState?.deletingInspectionId,
+    inspectionCardTitleForDelete = successState?.inspectionCards
+      ?.find { it.card.id == successState.deletingInspectionId }?.card?.title ?: "",
     snackbarHostState = snackbarHostState,
     onBackClick = { navController.popBackStack() },
     onEditClick = { aircraftId -> navController.navigate("edit_aircraft/$aircraftId") },
@@ -114,6 +119,14 @@ fun AircraftOverviewScreen(
     },
     onInspectionCardClick = { card -> viewModel.showInspectionDetail(card) },
     onDismissInspectionDetail = { viewModel.hideInspectionDetail() },
+    onEditInspectionClick = { card -> viewModel.openEditInspection(card) },
+    onDismissEditInspection = { viewModel.closeEditInspection() },
+    onSaveEditedInspection = { cardId, title, component, rules, forceDueDate, forceDueTach ->
+      viewModel.saveEditedInspection(cardId, title, component, rules, forceDueDate, forceDueTach)
+    },
+    onDeleteInspectionRequest = { cardId -> viewModel.requestDeleteInspection(cardId) },
+    onCancelDeleteInspection = { viewModel.cancelDeleteInspection() },
+    onConfirmDeleteInspection = { viewModel.confirmDeleteInspection() },
   )
 }
 
@@ -126,6 +139,9 @@ fun AircraftOverviewContent(
   showAddInspectionSheet: Boolean,
   selectedInspection: InspectionCardWithStatus? = null,
   logsForSelectedInspection: List<dev.fanfly.wingslog.aircraft.MaintenanceLog> = emptyList(),
+  editingInspection: InspectionCardWithStatus? = null,
+  deletingInspectionId: String? = null,
+  inspectionCardTitleForDelete: String = "",
   snackbarHostState: SnackbarHostState,
   onBackClick: () -> Unit,
   onEditClick: (String) -> Unit,
@@ -136,6 +152,12 @@ fun AircraftOverviewContent(
   onSaveInspection: (title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>) -> Unit = { _, _, _ -> },
   onInspectionCardClick: (InspectionCardWithStatus) -> Unit = {},
   onDismissInspectionDetail: () -> Unit = {},
+  onEditInspectionClick: (InspectionCardWithStatus) -> Unit = {},
+  onDismissEditInspection: () -> Unit = {},
+  onSaveEditedInspection: (cardId: String, title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>, forceDueDate: Timestamp?, forceDueTach: Float) -> Unit = { _, _, _, _, _, _ -> },
+  onDeleteInspectionRequest: (cardId: String) -> Unit = {},
+  onCancelDeleteInspection: () -> Unit = {},
+  onConfirmDeleteInspection: () -> Unit = {},
   modifier: Modifier = Modifier
 ) {
   val scrollState = rememberScrollState()
@@ -242,6 +264,26 @@ fun AircraftOverviewContent(
         cardWithStatus = selectedInspection,
         logs = logsForSelectedInspection,
         onDismiss = onDismissInspectionDetail,
+        onEditClick = onEditInspectionClick,
+      )
+    }
+
+    // Edit inspection bottom sheet
+    if (editingInspection != null) {
+      dev.fanfly.wingslog.feature.aircraft.overview.compose.EditInspectionSheet(
+        cardWithStatus = editingInspection,
+        onDismiss = onDismissEditInspection,
+        onSave = onSaveEditedInspection,
+        onDeleteRequest = onDeleteInspectionRequest,
+      )
+    }
+
+    // Delete inspection confirm dialog
+    if (deletingInspectionId != null) {
+      dev.fanfly.wingslog.feature.aircraft.overview.compose.DeleteInspectionConfirmDialog(
+        inspectionTitle = inspectionCardTitleForDelete,
+        onConfirm = onConfirmDeleteInspection,
+        onDismiss = onCancelDeleteInspection,
       )
     }
 
