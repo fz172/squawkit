@@ -3,13 +3,10 @@ package dev.fanfly.wingslog.feature.aircraft.overview.data
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.protobuf.Timestamp
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.TachRule
-import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
@@ -54,14 +51,14 @@ class AircraftOverviewViewModel(
             ) { aircraft, logs, inspectionCards ->
                 cachedLogs = logs
                 if (aircraft != null) {
-                    val currentTachTime = logs.filter { it.tachTime > 0.0 }.maxOfOrNull { it.tachTime }
-                    val currentAirframeTime = logs.filter { it.airframeTime > 0.0 }.maxOfOrNull { it.airframeTime }
-                    val currentPropTime = logs.filter { it.propTime > 0.0 }.maxOfOrNull { it.propTime }
+                    val currentTachTime = logs.filter { it.tach_time > 0.0 }.maxOfOrNull { it.tach_time }
+                    val currentAirframeTime = logs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }
+                    val currentPropTime = logs.filter { it.prop_time > 0.0 }.maxOfOrNull { it.prop_time }
                     val stats = LogStats(
                         total = logs.size.toLong(),
-                        airframe = logs.count { it.componentType == MaintenanceLog.ComponentType.AIRFRAME }.toLong(),
-                        engine = logs.count { it.componentType == MaintenanceLog.ComponentType.ENGINE }.toLong(),
-                        propeller = logs.count { it.componentType == MaintenanceLog.ComponentType.PROPELLER }.toLong(),
+                        airframe = logs.count { it.component_type == MaintenanceLog.ComponentType.AIRFRAME }.toLong(),
+                        engine = logs.count { it.component_type == MaintenanceLog.ComponentType.ENGINE }.toLong(),
+                        propeller = logs.count { it.component_type == MaintenanceLog.ComponentType.PROPELLER }.toLong(),
                         currentTachTime = currentTachTime,
                         currentAirframeTime = currentAirframeTime,
                         currentPropTime = currentPropTime
@@ -80,8 +77,8 @@ class AircraftOverviewViewModel(
                         cardsWithStatus.find { it.card.id == sel.card.id }
                     }
                     val refreshedDetailLogs = refreshedSelected?.let { sel ->
-                        logs.filter { sel.card.id in it.inspectionIdsList }
-                            .sortedByDescending { it.timestamp.seconds }
+                        logs.filter { sel.card.id in it.inspection_ids }
+                            .sortedByDescending { it.timestamp?.epochSecond ?: 0L }
                     } ?: emptyList()
                     AircraftOverviewUiState.Success(
                         aircraft = aircraft,
@@ -114,8 +111,8 @@ class AircraftOverviewViewModel(
 
     fun showInspectionDetail(cardWithStatus: InspectionCardWithStatus) {
         val relevantLogs = cachedLogs
-            .filter { cardWithStatus.card.id in it.inspectionIdsList }
-            .sortedByDescending { it.timestamp.seconds }
+            .filter { cardWithStatus.card.id in it.inspection_ids }
+            .sortedByDescending { it.timestamp?.epochSecond ?: 0L }
         _uiState.update { state ->
             if (state is AircraftOverviewUiState.Success) {
                 state.copy(
@@ -155,20 +152,20 @@ class AircraftOverviewViewModel(
         title: String,
         component: InspectionComponentType,
         rules: List<InspectionRule>,
-        forceDueDate: Timestamp?,
+        forceDueDate: com.squareup.wire.Instant?,
         forceDueTach: Float,
     ) {
         val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
         viewModelScope.launch {
-            val builder = InspectionCard.newBuilder()
-                .setId(cardId)
-                .setTitle(title)
-                .setComponent(component)
-                .clearRules()
-                .addAllRules(rules)
-                .setForceDueTach(forceDueTach)
-            if (forceDueDate != null) builder.setForceDueDate(forceDueDate)
-            inspectionManager.updateInspection(state.aircraft.id, builder.build())
+            val newCard = InspectionCard(
+                id = cardId,
+                title = title,
+                component = component,
+                rules = rules,
+                force_due_tach = forceDueTach,
+                force_due_date = forceDueDate
+            )
+            inspectionManager.updateInspection(state.aircraft.id, newCard)
             closeEditInspection()
         }
     }
@@ -209,11 +206,11 @@ class AircraftOverviewViewModel(
     ) {
         val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
         viewModelScope.launch {
-            val card = InspectionCard.newBuilder()
-                .setTitle(title)
-                .setComponent(component)
-                .addAllRules(rules)
-                .build()
+            val card = InspectionCard(
+                title = title,
+                component = component,
+                rules = rules
+            )
             inspectionManager.addInspection(state.aircraft.id, card)
             hideAddInspectionSheet()
         }

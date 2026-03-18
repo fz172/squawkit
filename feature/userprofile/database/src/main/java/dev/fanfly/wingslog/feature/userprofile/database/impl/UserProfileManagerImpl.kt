@@ -5,9 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Blob
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
-import com.google.protobuf.InvalidProtocolBufferException
 import dev.fanfly.wingslog.core.database.common.getUserDocumentRef
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.newUserLicenseProfile
@@ -42,8 +40,8 @@ class UserProfileManagerImpl(
         if (blob != null) {
           // If blob exists, parse it
           try {
-            LicenseInfo.parseFrom(blob.toBytes())
-          } catch (e: InvalidProtocolBufferException) {
+            LicenseInfo.ADAPTER.decode(blob.toBytes())
+          } catch (e: Exception) {
             logger.atWarning().withCause(e).log("Failed to parse LicenseInfo proto")
             // Data is corrupt, return default
             newUserLicenseProfile()
@@ -70,7 +68,7 @@ class UserProfileManagerImpl(
         ?: return Result.failure(Exception("User not logged in."))
 
       // Create a map to set the blob field
-      val data = mapOf(LICENSE_INFO_BLOB to Blob.fromBytes(licenseInfo.toByteArray()))
+      val data = mapOf(LICENSE_INFO_BLOB to Blob.fromBytes(LicenseInfo.ADAPTER.encode(licenseInfo)))
 
       // Use SetOptions.merge() to only update this field
       docRef.set(data, SetOptions.merge()).await()

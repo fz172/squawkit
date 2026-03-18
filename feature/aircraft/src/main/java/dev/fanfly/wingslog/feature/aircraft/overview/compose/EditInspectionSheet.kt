@@ -33,11 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.google.protobuf.Timestamp
-import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
-import dev.fanfly.wingslog.aircraft.InspectionRule.RuleCase
 import dev.fanfly.wingslog.aircraft.OnConditionRule
 import dev.fanfly.wingslog.aircraft.TachRule
 import dev.fanfly.wingslog.aircraft.TimeRule
@@ -53,7 +50,7 @@ fun EditInspectionSheet(
         title: String,
         component: InspectionComponentType,
         rules: List<InspectionRule>,
-        forceDueDate: Timestamp?,
+        forceDueDate: com.squareup.wire.Instant?,
         forceDueTach: Float,
     ) -> Unit,
     onDeleteRequest: (cardId: String) -> Unit,
@@ -69,34 +66,34 @@ fun EditInspectionSheet(
 
     // Parse existing rules
     var timeRuleEnabled by remember {
-        mutableStateOf(card.rulesList.any { it.ruleCase == RuleCase.TIME_RULE })
+        mutableStateOf(card.rules.any { it.time_rule != null })
     }
     var timeRuleMonths by remember {
         mutableStateOf(
-            card.rulesList.firstOrNull { it.ruleCase == RuleCase.TIME_RULE }
-                ?.timeRule?.intervalMonths?.toString() ?: "12"
+            card.rules.firstOrNull { it.time_rule != null }
+                ?.time_rule?.interval_months?.toString() ?: "12"
         )
     }
     var tachRuleEnabled by remember {
-        mutableStateOf(card.rulesList.any { it.ruleCase == RuleCase.TACH_RULE })
+        mutableStateOf(card.rules.any { it.tach_rule != null })
     }
     var tachRuleHours by remember {
         mutableStateOf(
-            card.rulesList.firstOrNull { it.ruleCase == RuleCase.TACH_RULE }
-                ?.tachRule?.intervalHours?.toString() ?: "100"
+            card.rules.firstOrNull { it.tach_rule != null }
+                ?.tach_rule?.interval_hours?.toString() ?: "100"
         )
     }
     var onConditionEnabled by remember {
-        mutableStateOf(card.rulesList.any { it.ruleCase == RuleCase.ON_CONDITION_RULE })
+        mutableStateOf(card.rules.any { it.on_condition_rule != null })
     }
 
     // Force-override toggles
-    val hasForcedDate = card.hasForceDueDate() &&
-            (card.forceDueDate.seconds > 0 || card.forceDueDate.nanos > 0)
-    val hasForcedTach = card.forceDueTach > 0f
+    val hasForcedDate = card.force_due_date != null &&
+            ((card.force_due_date?.epochSecond ?: 0L) > 0L || (card.force_due_date?.nano ?: 0) > 0)
+    val hasForcedTach = card.force_due_tach > 0f
     var forceOverrideEnabled by remember { mutableStateOf(hasForcedDate || hasForcedTach) }
     var forceTachHours by remember {
-        mutableStateOf(if (hasForcedTach) card.forceDueTach.toString() else "")
+        mutableStateOf(if (hasForcedTach) card.force_due_tach.toString() else "")
     }
 
     ModalBottomSheet(
@@ -253,28 +250,22 @@ fun EditInspectionSheet(
                         titleError = true
                         return@Button
                     }
-                    val rules = buildList {
+                    val rules = buildList<InspectionRule> {
                         if (timeRuleEnabled) {
                             val months = timeRuleMonths.toIntOrNull() ?: 12
                             add(
-                                InspectionRule.newBuilder()
-                                    .setTimeRule(TimeRule.newBuilder().setIntervalMonths(months).build())
-                                    .build()
+                                InspectionRule(time_rule = TimeRule(interval_months = months))
                             )
                         }
                         if (tachRuleEnabled) {
                             val hours = tachRuleHours.toFloatOrNull() ?: 100f
                             add(
-                                InspectionRule.newBuilder()
-                                    .setTachRule(TachRule.newBuilder().setIntervalHours(hours).build())
-                                    .build()
+                                InspectionRule(tach_rule = TachRule(interval_hours = hours))
                             )
                         }
                         if (onConditionEnabled) {
                             add(
-                                InspectionRule.newBuilder()
-                                    .setOnConditionRule(OnConditionRule.newBuilder().build())
-                                    .build()
+                                InspectionRule(on_condition_rule = OnConditionRule())
                             )
                         }
                     }

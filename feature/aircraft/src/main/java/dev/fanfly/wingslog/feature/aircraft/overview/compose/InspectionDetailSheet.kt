@@ -28,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.aircraft.InspectionRule.RuleCase
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
@@ -100,18 +99,21 @@ fun InspectionDetailSheet(
             )
 
             // Rules summary
-            if (card.rulesList.isNotEmpty()) {
+            if (card.rules.isNotEmpty()) {
                 Text(
                     text = "Rules",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                card.rulesList.forEach { rule ->
-                    val ruleText = when (rule.ruleCase) {
-                        RuleCase.TIME_RULE -> "Every ${rule.timeRule.intervalMonths} months"
-                        RuleCase.TACH_RULE -> "Every ${rule.tachRule.intervalHours.toInt()} tach hours"
-                        RuleCase.ON_CONDITION_RULE -> {
-                            val desc = rule.onConditionRule.description
+                card.rules.forEach { rule ->
+                    val timeRule = rule.time_rule
+                    val tachRule = rule.tach_rule
+                    val onConditionRule = rule.on_condition_rule
+                    val ruleText = when {
+                        timeRule != null -> "Every ${timeRule.interval_months} months"
+                        tachRule != null -> "Every ${tachRule.interval_hours?.toInt() ?: 0} tach hours"
+                        onConditionRule != null -> {
+                            val desc = onConditionRule.description
                             if (desc.isBlank()) "On condition" else "On condition: $desc"
                         }
                         else -> "Unknown rule"
@@ -181,8 +183,8 @@ private fun DueStatusChip(dueStatus: DueStatus) {
 
 @Composable
 private fun LogHistoryItem(log: MaintenanceLog) {
-    val dateStr = if (log.timestamp.seconds > 0) {
-        Instant.ofEpochSecond(log.timestamp.seconds)
+    val dateStr = if ((log.timestamp?.epochSecond ?: 0L) > 0L) {
+        Instant.ofEpochSecond(log.timestamp?.epochSecond ?: 0L)
             .atZone(ZoneId.systemDefault())
             .toLocalDate()
             .format(dateFormatter)
@@ -206,17 +208,17 @@ private fun LogHistoryItem(log: MaintenanceLog) {
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (log.tachTime > 0.0) {
+            if (log.tach_time > 0.0) {
                 Text(
-                    text = "${"%.1f".format(log.tachTime)} tach",
+                    text = "${"%.1f".format(log.tach_time)} tach",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
-        if (log.workDescription.isNotBlank()) {
+        if (!log.work_description.isBlank()) {
             Text(
-                text = log.workDescription,
+                text = log.work_description,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 3,
             )

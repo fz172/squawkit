@@ -5,10 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.common.flogger.FluentLogger
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.aircraft.aircraft
-import dev.fanfly.wingslog.aircraft.copy
-import dev.fanfly.wingslog.feature.aircraft.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
+import dev.fanfly.wingslog.feature.aircraft.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +25,7 @@ class EditAircraftViewModel(
     val aircraftId: String? = savedStateHandle[ARGUMENT_AIRCRAFT_ID]
     if (aircraftId.isNullOrEmpty()) {
       logger.atInfo().log("Initializing the view model with empty aircraft")
-      loadAircraft(aircraft {})
+      loadAircraft(Aircraft())
     } else {
       logger.atInfo().log("Loading aircraft %s", aircraftId)
       loadAircraftById(aircraftId)
@@ -79,149 +77,153 @@ class EditAircraftViewModel(
 
   fun onMakeChanged(newValue: String) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
+      it.copy(aircraft = it.aircraft.copy(
         make = newValue.replaceFirstChar { char -> char.uppercase() }
-      })
+      ))
     }
   }
 
   fun onModelChanged(newValue: String) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
+      it.copy(aircraft = it.aircraft.copy(
         model = newValue.replaceFirstChar { char -> char.uppercase() }
-      })
+      ))
     }
   }
 
   fun onSerialChanged(newValue: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy { serial = newValue.uppercase() }) }
+    _uiState.update { it.copy(aircraft = it.aircraft.copy(serial = newValue.uppercase())) }
   }
 
   fun onTailNumberChanged(newValue: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy { tailNumber = newValue.uppercase() }) }
+    _uiState.update { it.copy(aircraft = it.aircraft.copy(tail_number = newValue.uppercase())) }
   }
 
   fun onEngineMakeChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] =
-          engine[engineIndex].copy { make = newValue.replaceFirstChar { char -> char.uppercase() } }
-      })
+      val newEngines = it.aircraft.engine.toMutableList()
+      newEngines[engineIndex] = newEngines[engineIndex].copy(
+        make = newValue.replaceFirstChar { char -> char.uppercase() }
+      )
+      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
 
   fun onEngineModelChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy {
-          model = newValue.replaceFirstChar { char -> char.uppercase() }
-        }
-      })
+      val newEngines = it.aircraft.engine.toMutableList()
+      newEngines[engineIndex] = newEngines[engineIndex].copy(
+        model = newValue.replaceFirstChar { char -> char.uppercase() }
+      )
+      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
 
   fun onEngineSerialChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy { serial = newValue.uppercase() }
-      })
+      val newEngines = it.aircraft.engine.toMutableList()
+      newEngines[engineIndex] = newEngines[engineIndex].copy(serial = newValue.uppercase())
+      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
 
   fun onPropellerHubMakeChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy {
-          propeller = propeller.copy {
-            hub = hub.copy { make = newValue.replaceFirstChar { char -> char.uppercase() } }
-          }
-        }
-      })
+      val newEngines = it.aircraft.engine.toMutableList()
+      val engine = newEngines[engineIndex]
+      val newHub = (engine.propeller?.hub ?: dev.fanfly.wingslog.aircraft.PropellerHub()).copy(make = newValue.replaceFirstChar { char -> char.uppercase() })
+      val newPropeller = (engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()).copy(hub = newHub)
+      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
+      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
 
   fun onPropellerHubModelChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy {
-          propeller = propeller.copy {
-            hub = hub.copy { model = newValue.replaceFirstChar { char -> char.uppercase() } }
-          }
-        }
-      })
+      val newEngines = it.aircraft.engine.toMutableList()
+      val engine = newEngines[engineIndex]
+      val newHub = (engine.propeller?.hub ?: dev.fanfly.wingslog.aircraft.PropellerHub()).copy(model = newValue.replaceFirstChar { char -> char.uppercase() })
+      val newPropeller = (engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()).copy(hub = newHub)
+      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
+      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
 
   fun onPropellerHubSerialChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy {
-          propeller = propeller.copy {
-            hub = hub.copy { serial = newValue.uppercase() }
-          }
-        }
-      })
+      val newEngines = it.aircraft.engine.toMutableList()
+      val engine = newEngines[engineIndex]
+      val newHub = (engine.propeller?.hub ?: dev.fanfly.wingslog.aircraft.PropellerHub()).copy(serial = newValue.uppercase())
+      val newPropeller = (engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()).copy(hub = newHub)
+      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
+      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
 
-
   fun onPropellerBladeSerialChanged(engineIndex: Int, bladeIndex: Int, newValue: String) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy {
-          propeller = propeller.copy {
-            blades[bladeIndex] = blades[bladeIndex].copy { serial = newValue.uppercase() }
-          }
-        }
-      })
+      val newEngines = it.aircraft.engine.toMutableList()
+      val engine = newEngines[engineIndex]
+      val propeller = engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()
+      val newBlades = propeller.blades.toMutableList()
+      if (bladeIndex < newBlades.size) {
+        newBlades[bladeIndex] = newBlades[bladeIndex].copy(serial = newValue.uppercase())
+      }
+      val newPropeller = propeller.copy(blades = newBlades)
+      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
+      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
 
   fun onAddBlade(engineIndex: Int) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy {
-          propeller = propeller.copy {
-            blades += dev.fanfly.wingslog.aircraft.propellerBlade { }
-          }
-        }
-      })
+      val newEngines = it.aircraft.engine.toMutableList()
+      val engine = newEngines[engineIndex]
+      val propeller = engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()
+      val newBlades = propeller.blades.toMutableList()
+      newBlades.add(dev.fanfly.wingslog.aircraft.PropellerBlade())
+      val newPropeller = propeller.copy(blades = newBlades)
+      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
+      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
 
   fun onAddEngine() {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
-        engine += dev.fanfly.wingslog.aircraft.engine {
-          propeller = dev.fanfly.wingslog.aircraft.propeller {
-            blades += dev.fanfly.wingslog.aircraft.propellerBlade { }
-          }
-        }
-      })
+      val newEngines = it.aircraft.engine.toMutableList()
+      newEngines.add(
+        dev.fanfly.wingslog.aircraft.Engine(
+          propeller = dev.fanfly.wingslog.aircraft.Propeller(
+             blades = listOf(dev.fanfly.wingslog.aircraft.PropellerBlade())
+          )
+        )
+      )
+      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
 
   fun onRemoveEngine(engineIndex: Int) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
-        val keptEngines = engine.toList().filterIndexed { index, _ -> index != engineIndex }
-        engine.clear()
-        engine.addAll(keptEngines)
-      })
+      val newEngines = it.aircraft.engine.toMutableList()
+      if (engineIndex in newEngines.indices) {
+        newEngines.removeAt(engineIndex)
+      }
+      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
 
   fun onRemoveBlade(engineIndex: Int, bladeIndex: Int) {
     _uiState.update {
-      it.copy(aircraft = it.aircraft.copy {
-        engine[engineIndex] = engine[engineIndex].copy {
-          propeller = propeller.copy {
-            val keptBlades = blades.toList().filterIndexed { index, _ -> index != bladeIndex }
-            blades.clear()
-            blades.addAll(keptBlades)
-          }
-        }
-      })
+      val newEngines = it.aircraft.engine.toMutableList()
+      val engine = newEngines[engineIndex]
+      val propeller = engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()
+      val newBlades = propeller.blades.toMutableList()
+      if (bladeIndex in newBlades.indices) {
+        newBlades.removeAt(bladeIndex)
+      }
+      val newPropeller = propeller.copy(blades = newBlades)
+      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
+      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
 

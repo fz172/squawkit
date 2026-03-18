@@ -3,8 +3,8 @@ package dev.fanfly.wingslog.feature.userprofile.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseUser
-
-import com.google.protobuf.timestamp
+import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
+import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.network.auth.AuthManager
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,10 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
-
-import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
-import dev.fanfly.wingslog.core.model.userprofile.LicenseType
-import dev.fanfly.wingslog.core.model.userprofile.copy
 
 class EditProfileViewModel(
   private val userProfileManager: UserProfileManager,
@@ -54,30 +50,26 @@ class EditProfileViewModel(
   // --- Event Handlers ---
 
   fun onLicenseTypeChanged(newType: LicenseType) {
-    _uiState.update { it.copy(licenceInfo = it.licenceInfo.copy { licenseType = newType }) }
+    _uiState.update { it.copy(licenceInfo = it.licenceInfo.copy(license_type = newType)) }
   }
 
   fun onLicenseNumberChanged(newNumber: String) {
-    _uiState.update { it.copy(licenceInfo = it.licenceInfo.copy { licenseNumber = newNumber }) }
+    _uiState.update { it.copy(licenceInfo = it.licenceInfo.copy(license_number = newNumber)) }
   }
 
   fun onExpirationDateChanged(newDate: Instant) {
     _uiState.update {
-      it.copy(licenceInfo = it.licenceInfo.copy {
-        expirationDate = timestamp {
-          seconds = newDate.epochSecond
-          nanos = newDate.nano
-        }
-      })
+      it.copy(licenceInfo = it.licenceInfo.copy(
+        expiration_date = newDate
+      ))
     }
   }
 
   fun onExpirationNeverFlagChanged(neverExpires: Boolean) {
     _uiState.update {
-      it.copy(licenceInfo = it.licenceInfo.copy {
-        expireLimit =
-          if (neverExpires) LicenseExpireLimit.NEVER_EXPIRES else LicenseExpireLimit.EXPIRES
-      })
+      it.copy(licenceInfo = it.licenceInfo.copy(
+        expireLimit = if (neverExpires) LicenseExpireLimit.NEVER_EXPIRES else LicenseExpireLimit.EXPIRES
+      ))
     }
   }
 

@@ -52,18 +52,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.tooling.preview.Preview
-import dev.fanfly.wingslog.core.ui.theme.StatusOk
-import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.google.protobuf.Timestamp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.core.ui.theme.StatusOk
+import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.ConfigurationCard
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.InspectionCard
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewEvent
@@ -72,6 +70,7 @@ import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewViewMo
 import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.data.LogStats
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun AircraftOverviewScreen(
@@ -154,7 +153,7 @@ fun AircraftOverviewContent(
   onDismissInspectionDetail: () -> Unit = {},
   onEditInspectionClick: (InspectionCardWithStatus) -> Unit = {},
   onDismissEditInspection: () -> Unit = {},
-  onSaveEditedInspection: (cardId: String, title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>, forceDueDate: Timestamp?, forceDueTach: Float) -> Unit = { _, _, _, _, _, _ -> },
+  onSaveEditedInspection: (cardId: String, title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>, forceDueDate: com.squareup.wire.Instant?, forceDueTach: Float) -> Unit = { _, _, _, _, _, _ -> },
   onDeleteInspectionRequest: (cardId: String) -> Unit = {},
   onCancelDeleteInspection: () -> Unit = {},
   onConfirmDeleteInspection: () -> Unit = {},
@@ -204,7 +203,7 @@ fun AircraftOverviewContent(
                 fontWeight = FontWeight.Bold
               )
               Text(
-                text = aircraft.tailNumber,
+                text = aircraft.tail_number,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
               )
@@ -577,9 +576,9 @@ private fun InspectionCardItem(
 @Suppress("unused")
 @Composable
 private fun InspectionGrid(aircraft: dev.fanfly.wingslog.aircraft.Aircraft, modifier: Modifier = Modifier) {
-  val hasEngines = aircraft.engineList.isNotEmpty()
-  val hasPropeller = aircraft.engineList.any { engine ->
-    engine.propeller.hub.serial.isNotBlank() || engine.propeller.bladesList.isNotEmpty()
+  val hasEngines = aircraft.engine.isNotEmpty()
+  val hasPropeller = aircraft.engine.any { engine ->
+    (engine.propeller?.hub?.serial ?: "").isNotBlank() || (engine.propeller?.blades?.isNotEmpty() == true)
   }
 
   // Build the list of applicable inspection cards

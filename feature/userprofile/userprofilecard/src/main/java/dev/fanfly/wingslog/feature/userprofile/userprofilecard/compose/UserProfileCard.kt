@@ -18,12 +18,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.ui.R
-import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
+import dev.fanfly.wingslog.core.ui.R
+import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
 
 data class UserProfileCardData(
@@ -59,23 +59,23 @@ fun UserProfileCard(
         fontWeight = FontWeight.Bold,
       )
       if (data.licenceInfo != null) {
-        if (data.licenceInfo.licenseType != LicenseType.NONE) {
+        if (data.licenceInfo.license_type != LicenseType.NONE) {
           Spacer(modifier = Modifier.height(4.dp))
           Text(
-            text = stringResource(data.licenceInfo.licenseType.displayResId()),
+            text = stringResource(data.licenceInfo.license_type.displayResId()),
             fontSize = 16.sp,
           )
-          if (!TextUtils.isEmpty(data.licenceInfo.licenseNumber)) {
+          if (!TextUtils.isEmpty(data.licenceInfo.license_number)) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-              text = data.licenceInfo.licenseNumber,
+              text = data.licenceInfo.license_number,
               fontSize = 14.sp,
             )
           }
           if (data.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-              text = data.licenceInfo.expirationDate.toLocalDate().toDisplayFormat(),
+              text = data.licenceInfo.expiration_date?.toLocalDate()?.toDisplayFormat() ?: "",
               fontSize = 14.sp,
             )
           }

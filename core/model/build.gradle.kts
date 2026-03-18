@@ -1,7 +1,14 @@
 plugins {
     id("java-library")
     id("org.jetbrains.kotlin.jvm")
-    id("com.google.protobuf")
+    alias(libs.plugins.wire)
+}
+
+wire {
+    sourcePath {
+        srcDir("src/main/proto")
+    }
+    kotlin {}
 }
 
 java {
@@ -13,25 +20,6 @@ kotlin {
     jvmToolchain(11)
 }
 
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:3.21.7"
-    }
-    generateProtoTasks {
-        all().forEach { task ->
-            task.builtins {
-                maybeCreate("java").apply {
-                    option("lite")
-                }
-                maybeCreate("kotlin").apply {
-                    option("lite")
-                }
-            }
-        }
-    }
-}
-
 dependencies {
-    api(libs.protobuf.javalite)
-    api(libs.protobuf.kotlin.lite)
+    api(libs.wire.runtime)
 }

@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.feature.aircraft.R
 
 @Composable
 fun ConfigurationCard(aircraft: Aircraft) {
@@ -43,7 +43,7 @@ fun ConfigurationCard(aircraft: Aircraft) {
       HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
       // Engines
-      aircraft.engineList.forEachIndexed { index, engine ->
+      aircraft.engine.forEachIndexed { index, engine ->
         EngineDetails(index, engine)
       }
     }

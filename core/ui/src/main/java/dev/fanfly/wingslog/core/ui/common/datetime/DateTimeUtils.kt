@@ -1,19 +1,15 @@
 package dev.fanfly.wingslog.core.ui.common.datetime
 
-import com.google.protobuf.Timestamp
-import com.google.protobuf.timestamp
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlin.time.ExperimentalTime
+import com.squareup.wire.Instant as WireInstant
 
 
-fun Timestamp.toLocalDate(): LocalDate {
-  return Instant.ofEpochSecond(seconds, nanos.toLong())
-    .atZone(ZoneId.of("UTC"))
-    .toLocalDate()
+fun WireInstant.toLocalDate(): LocalDate {
+  return atZone(ZoneId.of("UTC")).toLocalDate()
 }
 
 fun LocalDate.toDisplayFormat(): String {
@@ -22,11 +18,10 @@ fun LocalDate.toDisplayFormat(): String {
 }
 
 @OptIn(ExperimentalTime::class)
-fun Timestamp.toInstant() = kotlin.time.Instant.fromEpochSeconds(this.seconds, this.nanos)
+fun WireInstant.toInstant() = kotlin.time.Instant.fromEpochSeconds(this.epochSecond, this.nano)
 
 @OptIn(ExperimentalTime::class)
-fun kotlin.time.Instant.toTimestamp() = timestamp {
-  seconds = epochSeconds
-  nanos = nanosecondsOfSecond
-
-}
+fun kotlin.time.Instant.toTimestamp(): WireInstant = java.time.Instant.ofEpochSecond(
+  epochSeconds,
+  nanosecondsOfSecond.toLong()
+)

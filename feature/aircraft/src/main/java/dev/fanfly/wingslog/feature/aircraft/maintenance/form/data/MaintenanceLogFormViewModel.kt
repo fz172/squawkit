@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.feature.aircraft.maintenance.form.data
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.protobuf.Timestamp
+import com.squareup.wire.Instant
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -69,13 +69,13 @@ class MaintenanceLogFormViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        workDescription = log.workDescription,
-                        selectedInspectionIds = log.inspectionIdsList,
-                        tachTime = if (log.tachTime > 0.0) log.tachTime.toString() else "",
-                        airframeTime = if (log.airframeTime > 0.0) log.airframeTime.toString() else "",
-                        propTime = if (log.propTime > 0.0) log.propTime.toString() else "",
-                        selectedComponentType = log.componentType,
-                        selectedSubComponent = log.componentSerial.ifEmpty { null }
+                        workDescription = log.work_description,
+                        selectedInspectionIds = log.inspection_ids,
+                        tachTime = if (log.tach_time > 0.0) log.tach_time.toString() else "",
+                        airframeTime = if (log.airframe_time > 0.0) log.airframe_time.toString() else "",
+                        propTime = if (log.prop_time > 0.0) log.prop_time.toString() else "",
+                        selectedComponentType = log.component_type,
+                        selectedSubComponent = log.component_serial.ifEmpty { null }
                     )
                 }
             } else {
@@ -138,17 +138,17 @@ class MaintenanceLogFormViewModel(
                 else -> state.selectedSubComponent ?: ""
             }
 
-            val log = MaintenanceLog.newBuilder()
-                .setId(logId ?: UUID.randomUUID().toString())
-                .setTimestamp(Timestamp.newBuilder().setSeconds(now).build())
-                .setWorkDescription(state.workDescription)
-                .addAllInspectionIds(state.selectedInspectionIds)
-                .setTachTime(state.tachTime.toDoubleOrNull() ?: 0.0)
-                .setAirframeTime(state.airframeTime.toDoubleOrNull() ?: 0.0)
-                .setPropTime(state.propTime.toDoubleOrNull() ?: 0.0)
-                .setComponentType(state.selectedComponentType)
-                .setComponentSerial(componentSerial)
-                .build()
+            val log = MaintenanceLog(
+                id = logId ?: UUID.randomUUID().toString(),
+                timestamp = com.squareup.wire.Instant.ofEpochSecond(now),
+                work_description = state.workDescription,
+                inspection_ids = state.selectedInspectionIds,
+                tach_time = state.tachTime.toDoubleOrNull() ?: 0.0,
+                airframe_time = state.airframeTime.toDoubleOrNull() ?: 0.0,
+                prop_time = state.propTime.toDoubleOrNull() ?: 0.0,
+                component_type = state.selectedComponentType,
+                component_serial = componentSerial
+            )
 
             val result = if (isEditMode) {
                 logManager.updateLog(aircraftId, log)

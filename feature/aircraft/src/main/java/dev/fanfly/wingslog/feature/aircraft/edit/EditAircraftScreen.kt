@@ -45,14 +45,14 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
-import dev.fanfly.wingslog.feature.aircraft.edit.data.EditAircraftViewModel
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.feature.aircraft.R
+import dev.fanfly.wingslog.feature.aircraft.edit.data.EditAircraftViewModel
+import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
@@ -101,7 +101,7 @@ fun EditAircraftScreen(
       Text(
         text = stringResource(R.string.powerplant).uppercase()
       )
-      uiState.aircraft.engineList.forEachIndexed { index, engine ->
+      uiState.aircraft.engine.forEachIndexed { index, engine ->
         EngineSection(
           engineIndex = index,
           engine = engine,
@@ -160,7 +160,7 @@ fun AirframeSection(
         )
         // --- Tail Number ---
         InputField(
-          value = aircraft.tailNumber, // Read from ViewModel
+          value = aircraft.tail_number, // Read from ViewModel
           onValueChange = { viewModel.onTailNumberChanged(it) }, // Update ViewModel
           label = stringResource(R.string.tail_number),
           modifier = Modifier.weight(1f), // Takes up 50%
@@ -231,7 +231,7 @@ fun EngineSection(
 
       // Propeller Section
       Text(stringResource(R.string.propeller_hub), style = MaterialTheme.typography.labelSmall)
-      val hub = engine.propeller.hub
+      val hub = engine.propeller?.hub ?: dev.fanfly.wingslog.aircraft.PropellerHub()
       InputField(
         label = stringResource(R.string.make), value = hub.make,
 
@@ -261,7 +261,7 @@ fun EngineSection(
 
       // Blade Serial Numbers - Dynamic List
       Text(stringResource(R.string.blade_serial_numbers))
-      val blades = engine.propeller.bladesList
+      val blades = engine.propeller?.blades ?: emptyList()
       // Chunked(2) allows us to create rows of 2 for that 50/50 look
       blades.withIndex().chunked(2).forEach { pair ->
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

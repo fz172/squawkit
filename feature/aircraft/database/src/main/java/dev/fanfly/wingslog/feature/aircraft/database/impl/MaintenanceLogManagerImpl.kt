@@ -2,21 +2,20 @@ package dev.fanfly.wingslog.feature.aircraft.database.impl
 
 import com.google.common.flogger.FluentLogger
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.Blob
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.copy
-import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 import dev.fanfly.wingslog.core.database.common.getFleetCollectionRef
+import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.tasks.await
-import com.google.firebase.firestore.AggregateSource
-import java.util.UUID
+import java.util.concurrent.TimeUnit
+
 class MaintenanceLogManagerImpl(
   private val firebaseAuth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
@@ -45,7 +44,7 @@ class MaintenanceLogManagerImpl(
           val blob = doc.getBlob(LOG_INFO_BLOB)
           if (blob != null) {
             try {
-              val log = MaintenanceLog.parseFrom(blob.toBytes())
+              val log = MaintenanceLog.ADAPTER.decode(blob.toBytes())
               // ID should match document ID, just in case
               logs.add(log)
             } catch (e: Exception) {
@@ -66,7 +65,7 @@ class MaintenanceLogManagerImpl(
     // Generate an ID if needed, or let Firestore generate it.
     // However, since we store the ID inside the Proto, we should probably generate it first.
     val newDocRef = if (log.id.isEmpty()) logsRef.document() else logsRef.document(log.id)
-    val finalLog = if (log.id.isEmpty()) log.copy { id = newDocRef.id } else log
+    val finalLog = if (log.id.isEmpty()) log.copy(id = newDocRef.id) else log
 
     saveLog(newDocRef, finalLog)
     
@@ -120,19 +119,19 @@ class MaintenanceLogManagerImpl(
   private suspend fun saveLog(docRef: com.google.firebase.firestore.DocumentReference, log: MaintenanceLog) {
     // Map fields for querying
     val data = hashMapOf<String, Any>(
-      LOG_INFO_BLOB to Blob.fromBytes(log.toByteArray()),
-      TIMESTAMP_FIELD to com.google.firebase.Timestamp(log.timestamp.seconds, log.timestamp.nanos),
-      COMPONENT_TYPE_FIELD to log.componentType.name,
-      TECHNICIAN_ID_FIELD to log.technicianId,
-      INSPECTION_IDS_FIELD to log.inspectionIdsList
+      LOG_INFO_BLOB to Blob.fromBytes(MaintenanceLog.ADAPTER.encode(log)),
+      TIMESTAMP_FIELD to com.google.firebase.Timestamp(log.timestamp?.epochSecond ?: 0L, log.timestamp?.nano ?: 0),
+      COMPONENT_TYPE_FIELD to log.component_type.name,
+      TECHNICIAN_ID_FIELD to log.technician_id,
+      INSPECTION_IDS_FIELD to log.inspection_ids
     )
     
-    if (log.componentSerial.isNotEmpty()) {
-      data[COMPONENT_SERIAL_FIELD] = log.componentSerial
+    if (log.component_serial.isNotEmpty()) {
+      data[COMPONENT_SERIAL_FIELD] = log.component_serial
     }
     
-    if (log.tachTime > 0) {
-      data[TACH_TIME_FIELD] = log.tachTime
+    if (log.tach_time > 0) {
+      data[TACH_TIME_FIELD] = log.tach_time
     }
 
     docRef.set(data, SetOptions.merge()).await()

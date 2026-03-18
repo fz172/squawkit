@@ -7,11 +7,10 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import dev.fanfly.wingslog.aircraft.InspectionCard
-import dev.fanfly.wingslog.aircraft.InspectionRule.RuleCase
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.core.database.common.getFleetCollectionRef
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
-import dev.fanfly.wingslog.core.database.common.getFleetCollectionRef
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -19,7 +18,7 @@ import kotlinx.coroutines.tasks.await
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.UUID
+
 class InspectionManagerImpl(
     private val firebaseAuth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
@@ -46,7 +45,7 @@ class InspectionManagerImpl(
                     val blob = doc.getBlob(INSPECTION_CARD_BLOB)
                     if (blob != null) {
                         try {
-                            cards.add(InspectionCard.parseFrom(blob.toBytes()))
+                            cards.add(InspectionCard.ADAPTER.decode(blob.toBytes()))
                         } catch (ex: Exception) {
                             logger.atWarning().withCause(ex).log("Failed to parse inspection card ${doc.id}")
                         }
@@ -65,7 +64,7 @@ class InspectionManagerImpl(
 
         val docRef = if (card.id.isEmpty()) ref.document() else ref.document(card.id)
         val finalCard = if (card.id.isEmpty()) {
-            card.toBuilder().setId(docRef.id).build()
+            card.copy(id = docRef.id)
         } else {
             card
         }
@@ -103,15 +102,15 @@ class InspectionManagerImpl(
         logs: List<MaintenanceLog>,
     ): DueStatus {
         // Force overrides take precedence
-        val forceDueDate = card.forceDueDate
-        val forceDueTach = card.forceDueTach
+        val forceDueDate = card.force_due_date
+        val forceDueTach = card.force_due_tach
 
-        val hasForcedDate = forceDueDate != null && (forceDueDate.seconds > 0 || forceDueDate.nanos > 0)
+        val hasForcedDate = forceDueDate != null && (forceDueDate.epochSecond > 0 || forceDueDate.nano > 0)
         val hasForcedTach = forceDueTach > 0f
 
         if (hasForcedDate || hasForcedTach) {
             val nextDueDate = if (hasForcedDate) {
-                Instant.ofEpochSecond(forceDueDate.seconds)
+                Instant.ofEpochSecond(forceDueDate!!.epochSecond)
                     .atZone(ZoneId.systemDefault())
                     .toLocalDate()
             } else null
@@ -129,49 +128,44 @@ class InspectionManagerImpl(
 
         // Find most recent log associated with this card
         val associatedLogs = logs
-            .filter { card.id in it.inspectionIdsList }
-            .sortedByDescending { it.timestamp.seconds }
+            .filter { card.id in it.inspection_ids }
+            .sortedByDescending { it.timestamp?.epochSecond ?: 0L }
 
         val today = LocalDate.now()
         var resultDate: LocalDate? = null
         var resultTach: Float? = null
         var isOnCondition = false
 
-        for (rule in card.rulesList) {
-            when (rule.ruleCase) {
-                RuleCase.TIME_RULE -> {
-                    val intervalMonths = rule.timeRule.intervalMonths.toLong()
-                    val baseDate = if (associatedLogs.isNotEmpty()) {
-                        Instant.ofEpochSecond(associatedLogs.first().timestamp.seconds)
-                            .atZone(ZoneId.systemDefault())
-                            .toLocalDate()
-                    } else {
-                        today
-                    }
-                    val candidate = baseDate.plusMonths(intervalMonths)
-                    if (resultDate == null || candidate.isBefore(resultDate)) {
-                        resultDate = candidate
-                    }
+        for (rule in card.rules) {
+            if (rule.time_rule != null) {
+                val timeRule = rule.time_rule!!
+                val intervalMonths = timeRule.interval_months.toLong()
+                val baseDate = if (associatedLogs.isNotEmpty()) {
+                    Instant.ofEpochSecond(associatedLogs.first().timestamp?.epochSecond ?: 0L)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                } else {
+                    today
                 }
-
-                RuleCase.TACH_RULE -> {
-                    val intervalHours = rule.tachRule.intervalHours
-                    val baseTach = if (associatedLogs.isNotEmpty()) {
-                        associatedLogs.first().tachTime.toFloat()
-                    } else {
-                        0f
-                    }
-                    val candidate = baseTach + intervalHours
-                    if (resultTach == null || candidate < resultTach!!) {
-                        resultTach = candidate
-                    }
+                val candidate = baseDate.plusMonths(intervalMonths)
+                if (resultDate == null || candidate.isBefore(resultDate)) {
+                    resultDate = candidate
                 }
-
-                RuleCase.ON_CONDITION_RULE -> {
-                    isOnCondition = true
+            } else if (rule.tach_rule != null) {
+                val tachRule = rule.tach_rule!!
+                val intervalHours: Float = tachRule.interval_hours
+                val baseTach: Float = if (associatedLogs.isNotEmpty()) {
+                    // tach_time might be Double or Float in Wire, we must convert to Float
+                    associatedLogs.first().tach_time.toFloat()
+                } else {
+                    0f
                 }
-
-                else -> { /* ignore RULE_NOT_SET */ }
+                val candidate: Float = baseTach + intervalHours
+                if (resultTach == null || candidate < resultTach) {
+                    resultTach = candidate
+                }
+            } else if (rule.on_condition_rule != null) {
+                isOnCondition = true
             }
         }
 
@@ -190,7 +184,7 @@ class InspectionManagerImpl(
         card: InspectionCard,
     ) {
         val data = hashMapOf<String, Any>(
-            INSPECTION_CARD_BLOB to Blob.fromBytes(card.toByteArray()),
+            INSPECTION_CARD_BLOB to Blob.fromBytes(InspectionCard.ADAPTER.encode(card)),
             TITLE_FIELD to card.title,
             COMPONENT_FIELD to card.component.name,
         )

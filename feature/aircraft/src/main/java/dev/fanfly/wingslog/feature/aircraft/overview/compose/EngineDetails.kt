@@ -8,8 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.Engine
+import dev.fanfly.wingslog.feature.aircraft.R
 
 @Composable
 fun EngineDetails(index: Int, engine: Engine) {
@@ -45,9 +45,9 @@ fun EngineDetails(index: Int, engine: Engine) {
       Text(
         text = stringResource(
           R.string.model_and_sn,
-          engine.propeller.hub.make,
-          engine.propeller.hub.model,
-          engine.propeller.hub.serial
+          engine.propeller?.hub?.make ?: "",
+          engine.propeller?.hub?.model ?: "",
+          engine.propeller?.hub?.serial ?: ""
         ),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -55,8 +55,9 @@ fun EngineDetails(index: Int, engine: Engine) {
     }
 
     // Blades
-    if (engine.propeller.bladesList.isNotEmpty()) {
-      BladeChipsOverview(engine.propeller.bladesList)
+    val blades = engine.propeller?.blades ?: emptyList()
+    if (blades.isNotEmpty()) {
+      BladeChipsOverview(blades)
     }
   }
 }

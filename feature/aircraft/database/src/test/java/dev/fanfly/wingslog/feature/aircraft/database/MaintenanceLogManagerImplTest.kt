@@ -66,14 +66,14 @@ class MaintenanceLogManagerImplTest {
     }
 
     private fun buildTestLog(id: String = TEST_LOG_ID): MaintenanceLog {
-        return MaintenanceLog.newBuilder()
-            .setId(id)
-            .setWorkDescription("Oil change performed")
-            .setComponentType(MaintenanceLog.ComponentType.ENGINE)
-            .setComponentSerial("ENG-001")
-            .setTachTime(1234.5)
-            .setTimestamp(com.google.protobuf.Timestamp.newBuilder().setSeconds(1700000000L).build())
-            .build()
+        return MaintenanceLog(
+            id = id,
+            work_description = "Oil change performed",
+            component_type = MaintenanceLog.ComponentType.ENGINE,
+            component_serial = "ENG-001",
+            tach_time = 1234.5,
+            timestamp = java.time.Instant.ofEpochSecond(1700000000L)
+        )
     }
 
     // ---- observeLogs ----
@@ -120,10 +120,10 @@ class MaintenanceLogManagerImplTest {
 
     @Test
     fun addLog_withEmptyId_generatesNewDocumentReference() = runTest {
-        val logWithEmptyId = MaintenanceLog.newBuilder()
-            .setId("")
-            .setWorkDescription("Annual inspection")
-            .build()
+        val logWithEmptyId = MaintenanceLog(
+            id = "",
+            work_description = "Annual inspection"
+        )
 
         val generatedDocRef = mockk<DocumentReference>(relaxed = true)
         val generatedId = UUID.randomUUID().toString()
@@ -168,9 +168,9 @@ class MaintenanceLogManagerImplTest {
         manager.addLog(TEST_AIRCRAFT_ID, log)
 
         val capturedData = dataSlot.captured
-        assertThat(capturedData["component_type"]).isEqualTo(log.componentType.name)
-        assertThat(capturedData["component_serial"]).isEqualTo(log.componentSerial)
-        assertThat(capturedData["tach_time"]).isEqualTo(log.tachTime)
+        assertThat(capturedData["component_type"]).isEqualTo(log.component_type.name)
+        assertThat(capturedData["component_serial"]).isEqualTo(log.component_serial)
+        assertThat(capturedData["tach_time"]).isEqualTo(log.tach_time)
         assertThat(capturedData["log_info_blob"]).isNotNull()
     }
 

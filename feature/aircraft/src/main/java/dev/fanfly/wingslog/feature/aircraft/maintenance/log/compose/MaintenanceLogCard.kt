@@ -21,8 +21,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.feature.aircraft.R
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -36,8 +36,8 @@ fun MaintenanceLogCard(
 ) {
     val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     val unknownDate = stringResource(R.string.unknown_date)
-    val dateStr = if (log.hasTimestamp()) {
-        dateFormat.format(Date(log.timestamp.seconds * 1000))
+    val dateStr = if (log.timestamp != null) {
+        dateFormat.format(Date((log.timestamp?.epochSecond ?: 0L) * 1000))
     } else {
         unknownDate
     }
@@ -67,9 +67,9 @@ fun MaintenanceLogCard(
                 }
             }
 
-            if (log.inspectionIdsList.isNotEmpty()) {
+            if (log.inspection_ids.isNotEmpty()) {
                 Text(
-                    text = "${log.inspectionIdsList.size} inspection(s) logged",
+                    text = "Affects ${log.inspection_ids.size} inspection item(s)",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
@@ -77,37 +77,37 @@ fun MaintenanceLogCard(
             }
 
             Text(
-                text = log.workDescription,
+                text = log.work_description,
                 style = MaterialTheme.typography.bodyMedium
             )
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                if (log.tachTime > 0.0) {
+                if (log.tach_time > 0.0) {
                     Text(
-                        text = stringResource(R.string.tach_format, log.tachTime),
+                        text = stringResource(R.string.tach_format, log.tach_time),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if (log.airframeTime > 0.0) {
+                if (log.airframe_time > 0.0) {
                     Text(
-                        text = stringResource(R.string.airframe_time_format, log.airframeTime),
+                        text = stringResource(R.string.airframe_time_format, log.airframe_time),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if (log.propTime > 0.0) {
+                if (log.prop_time > 0.0) {
                     Text(
-                        text = stringResource(R.string.prop_time_format, log.propTime),
+                        text = stringResource(R.string.prop_time_format, log.prop_time),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if (log.componentType != MaintenanceLog.ComponentType.UNKNOWN) {
+                if (log.component_type != MaintenanceLog.ComponentType.UNKNOWN) {
                     Text(
-                        text = log.componentType.displayName(),
+                        text = log.component_type.displayName(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -120,14 +120,13 @@ fun MaintenanceLogCard(
 @Preview(showBackground = true)
 @Composable
 private fun MaintenanceLogCardPreview() {
-    val log = dev.fanfly.wingslog.aircraft.MaintenanceLog.newBuilder()
-        .setId("preview-id")
-        .setWorkDescription("Performed annual inspection and oil change.")
-        .setTachTime(1234.5)
-        .setComponentType(dev.fanfly.wingslog.aircraft.MaintenanceLog.ComponentType.ENGINE)
-        .addInspectionIds("annual-card-id")
-        .addInspectionIds("oil-change-card-id")
-        .build()
+    val log = dev.fanfly.wingslog.aircraft.MaintenanceLog(
+        id = "preview-id",
+        work_description = "Performed annual inspection and oil change.",
+        tach_time = 1234.5,
+        component_type = dev.fanfly.wingslog.aircraft.MaintenanceLog.ComponentType.ENGINE,
+        inspection_ids = listOf("annual-card-id", "oil-change-card-id")
+    )
     MaterialTheme {
         MaintenanceLogCard(log = log, onEdit = {})
     }

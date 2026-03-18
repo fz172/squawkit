@@ -8,10 +8,9 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.aircraft.copy
-import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
 import dev.fanfly.wingslog.core.database.common.AIRCRAFT_INFO_BLOB
 import dev.fanfly.wingslog.core.database.common.getFleetCollectionRef
+import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -30,10 +29,8 @@ class AircraftManagerImpl(
       )
     )
     val aircraftRef = getAircraftRefOrCreateNew(fleetRef, aircraft)
-    val aircraftWithId = aircraft.copy {
-      id = aircraftRef.id
-    }
-    val data = mapOf(AIRCRAFT_INFO_BLOB to Blob.fromBytes(aircraftWithId.toByteArray()))
+    val aircraftWithId = if (aircraft.id.isEmpty()) aircraft.copy(id = aircraftRef.id) else aircraft
+    val data = mapOf(AIRCRAFT_INFO_BLOB to Blob.fromBytes(Aircraft.ADAPTER.encode(aircraftWithId)))
 
     // Use SetOptions.merge() to only update this field
     aircraftRef.set(data, SetOptions.merge()).await()
@@ -65,7 +62,7 @@ class AircraftManagerImpl(
         val blob = snapshot.get(AIRCRAFT_INFO_BLOB) as? Blob
         if (blob != null) {
           try {
-            val aircraft = Aircraft.parseFrom(blob.toBytes())
+            val aircraft = Aircraft.ADAPTER.decode(blob.toBytes())
             trySend(aircraft)
           } catch (e: Exception) {
             logger.atWarning().withCause(e).log("Failed to parse aircraft $id")

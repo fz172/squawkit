@@ -1,8 +1,6 @@
 package dev.fanfly.wingslog.feature.fleet.dashboard.compose
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -16,10 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Air
-import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -30,18 +25,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.PropellerBlade
-import dev.fanfly.wingslog.aircraft.aircraft
-import dev.fanfly.wingslog.aircraft.engine
-import dev.fanfly.wingslog.aircraft.propeller
-import dev.fanfly.wingslog.aircraft.propellerBlade
-import dev.fanfly.wingslog.aircraft.propellerHub
 
 @Composable
 fun AircraftDashboardCard(
@@ -51,7 +40,7 @@ fun AircraftDashboardCard(
 ) {
   Card(
           onClick = { onClick(aircraft.id) },
-          modifier = modifier.fillMaxWidth().padding(16.dp),
+          modifier = modifier.fillMaxWidth(),
           shape = RoundedCornerShape(28.dp),
           colors =
                   CardDefaults.cardColors(
@@ -77,9 +66,9 @@ fun AircraftDashboardCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-          if (aircraft.tailNumber.isNotBlank()) {
+          if (aircraft.tail_number.isNotBlank()) {
             Badge(
-                    text = aircraft.tailNumber,
+                    text = aircraft.tail_number,
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -101,7 +90,7 @@ fun AircraftDashboardCard(
       Column(
               modifier = Modifier.padding(24.dp),
               verticalArrangement = Arrangement.spacedBy(24.dp)
-      ) { aircraft.engineList.forEachIndexed { index, engine -> EngineItem(engine = engine) } }
+      ) { aircraft.engine.forEachIndexed { index, engine -> EngineItem(engine = engine) } }
     }
   }
 }
@@ -166,16 +155,18 @@ fun EngineItem(engine: Engine) {
                   modifier = Modifier.size(18.dp)
           )
           Spacer(Modifier.width(8.dp))
+          val hub = engine.propeller?.hub ?: dev.fanfly.wingslog.aircraft.PropellerHub()
           Text(
-                  text = "${engine.propeller.hub.make} ${engine.propeller.hub.model}",
+                  text = "${hub.make} ${hub.model}",
                   style = MaterialTheme.typography.bodyMedium,
                   color = MaterialTheme.colorScheme.onSurface
           )
         }
 
         // Blades (Compact FlowRow)
-        if (engine.propeller.bladesList.isNotEmpty()) {
-          BladeChips(engine.propeller.bladesList)
+        val blades = engine.propeller?.blades ?: emptyList()
+        if (blades.isNotEmpty()) {
+          BladeChips(blades)
         }
       }
     }
@@ -226,28 +217,29 @@ fun BladeChips(blades: List<PropellerBlade>) {
 @Composable
 fun AircraftDetailCardPreview() =
         AircraftDashboardCard(
-                aircraft =
-                        aircraft {
-                          id = "123"
-                          make = "Sling"
-                          model = "TSi"
-                          serial = "SLING532"
-                          tailNumber = "N532SL"
-                          this.engine += engine {
-                            make = "Rotax"
-                            model = "915 iSa - 3"
-                            serial = "915-0001"
-                            this.propeller = propeller {
-                              hub = propellerHub {
-                                make = "Airmaster"
-                                model = "AP430"
+                aircraft = Aircraft(
+                          id = "123",
+                          make = "Sling",
+                          model = "TSi",
+                          serial = "SLING532",
+                          tail_number = "N532SL",
+                          engine = listOf(Engine(
+                            make = "Rotax",
+                            model = "915 iSa - 3",
+                            serial = "915-0001",
+                            propeller = dev.fanfly.wingslog.aircraft.Propeller(
+                              hub = dev.fanfly.wingslog.aircraft.PropellerHub(
+                                make = "Airmaster",
+                                model = "AP430",
                                 serial = "AP430-001"
-                              }
-                              blades += propellerBlade { serial = "B-001" }
-                              blades += propellerBlade { serial = "B-002" }
-                              blades += propellerBlade { serial = "B-003" }
-                            }
-                          }
-                        },
+                              ),
+                              blades = listOf(
+                                PropellerBlade(serial = "B-001"),
+                                PropellerBlade(serial = "B-002"),
+                                PropellerBlade(serial = "B-003")
+                              )
+                            )
+                          ))
+                        ),
                 onClick = {}
         )

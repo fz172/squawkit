@@ -1,10 +1,9 @@
 package dev.fanfly.wingslog.feature.aircraft.edit.data
 
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.aircraft.aircraft
 
 data class EditAircraftUiState(
-  val aircraft: Aircraft = aircraft {},
+  val aircraft: Aircraft = Aircraft(),
   val isLoading: Boolean = true,
   val isSaved: Boolean = false,
   val showValidationErrors: Boolean = false
@@ -12,10 +11,11 @@ data class EditAircraftUiState(
   val isValid: Boolean
     get() {
       if (aircraft.make.isBlank() || aircraft.model.isBlank() || aircraft.serial.isBlank()) return false
-      aircraft.engineList.forEach { engine ->
+      aircraft.engine.forEach { engine ->
         if (engine.make.isBlank() || engine.model.isBlank() || engine.serial.isBlank()) return false
-        if (engine.propeller.hub.make.isBlank() || engine.propeller.hub.model.isBlank()) return false
-        engine.propeller.bladesList.forEach { blade ->
+        val hub = engine.propeller?.hub ?: dev.fanfly.wingslog.aircraft.PropellerHub()
+        if (hub.make.isBlank() || hub.model.isBlank()) return false
+        engine.propeller?.blades?.forEach { blade ->
           if (blade.serial.isBlank()) return false
         }
       }
