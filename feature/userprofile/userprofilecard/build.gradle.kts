@@ -1,6 +1,6 @@
 plugins {
   alias(libs.plugins.android.library)
-  alias(libs.plugins.kotlin.android)
+  alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
 }
 
@@ -25,18 +25,30 @@ android {
 
 kotlin {
   jvmToolchain(11)
+
+  androidTarget {
+    compilerOptions {
+      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+    }
+  }
+
+  sourceSets {
+    commonMain {}
+    androidMain.dependencies {
+      implementation(project(":core:ui"))
+      implementation(project(":core:model"))
+
+      implementation(libs.androidx.core.ktx)
+      implementation(libs.androidx.lifecycle.runtime.ktx)
+      
+      // Compose
+      implementation(libs.androidx.compose.ui)
+      implementation(libs.androidx.compose.material3)
+      implementation(libs.coil.compose)
+    }
+  }
 }
 
 dependencies {
-  implementation(project(":core:ui"))
-  implementation(project(":core:model"))
-
-  implementation(libs.androidx.core.ktx)
-  implementation(libs.androidx.lifecycle.runtime.ktx)
-  
-  // Compose
-  implementation(platform(libs.androidx.compose.bom))
-  implementation(libs.androidx.compose.ui)
-  implementation(libs.androidx.compose.material3)
-  implementation(libs.coil.compose)
+    implementation(platform(libs.androidx.compose.bom))
 }

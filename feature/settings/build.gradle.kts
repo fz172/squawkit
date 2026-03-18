@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -25,32 +25,42 @@ android {
 
 kotlin {
     jvmToolchain(11)
+
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
+    }
+
+    sourceSets {
+        commonMain {}
+        androidMain.dependencies {
+            implementation(project(":core:ui"))
+            implementation(project(":core:model"))
+            implementation(project(":core:database"))
+            implementation(project(":core:network"))
+            implementation(project(":feature:userprofile:userprofilecard"))
+            implementation(project(":feature:userprofile:database"))
+            
+            // Compose
+            implementation(libs.androidx.compose.ui)
+            implementation(libs.androidx.compose.material3)
+            
+            // Navigation
+            implementation(libs.androidx.navigation.compose)
+
+            // Lifecycle & DI
+            implementation(libs.androidx.lifecycle.viewmodel.compose)
+            implementation(libs.koin.androidx.compose)
+            
+            // Logging
+            implementation(libs.flogger)
+            implementation(libs.flogger.system.backend)
+        }
+    }
 }
 
 dependencies {
-    implementation(project(":core:ui"))
-    implementation(project(":core:model"))
-    implementation(project(":core:database"))
-    implementation(project(":core:network"))
-    implementation(project(":feature:userprofile:userprofilecard"))
-    implementation(project(":feature:userprofile:database"))
-    
-    // Firebase Data
     implementation(platform(libs.firebase.bom))
-    
-    // Compose
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.material3)
-    
-    // Navigation
-    implementation(libs.androidx.navigation.compose)
-
-    // Lifecycle & DI
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.koin.androidx.compose)
-    
-    // Logging
-    implementation(libs.flogger)
-    implementation(libs.flogger.system.backend)
 }

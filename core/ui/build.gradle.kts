@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -25,20 +25,31 @@ android {
 
 kotlin {
     jvmToolchain(11)
+
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
+    }
+
+    sourceSets {
+        commonMain {}
+        androidMain.dependencies {
+            api(project(":core:model"))
+            api(libs.androidx.compose.ui)
+            api(libs.androidx.compose.ui.graphics)
+            api(libs.androidx.compose.ui.tooling.preview)
+            api(libs.androidx.compose.material3)
+            api(libs.androidx.compose.material.icons.extended)
+            
+            // Image Loading
+            implementation(libs.coil.compose)
+        }
+    }
 }
 
 dependencies {
-    api(project(":core:model"))
-  api(platform(libs.androidx.compose.bom))
-    api(libs.androidx.compose.ui)
-    api(libs.androidx.compose.ui.graphics)
-    api(libs.androidx.compose.ui.tooling.preview)
-    api(libs.androidx.compose.material3)
-    api(libs.androidx.compose.material.icons.extended)
-    
+    api(platform(libs.androidx.compose.bom))
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-// Image Loading
-    implementation(libs.coil.compose)
-    
 }

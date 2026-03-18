@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.multiplatform)
 }
 
 android {
@@ -20,22 +20,33 @@ android {
 
 kotlin {
     jvmToolchain(11)
+
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
+    }
+
+    sourceSets {
+        commonMain {}
+        androidMain.dependencies {
+            implementation(project(":core:model"))
+            implementation(project(":core:database"))
+            implementation(project(":core:network"))
+
+            implementation(libs.firebase.firestore)
+            implementation(libs.firebase.auth)
+
+            // DI
+            implementation(libs.koin.android)
+
+            // Logging
+            implementation(libs.flogger)
+            implementation(libs.flogger.system.backend)
+        }
+    }
 }
 
 dependencies {
-    implementation(project(":core:model"))
-    implementation(project(":core:database"))
-    implementation(project(":core:network"))
-
-    // Firebase platform to resolve transitive dependency versions
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.auth)
-
-    // DI
-    implementation(libs.koin.android)
-
-    // Logging
-    implementation(libs.flogger)
-    implementation(libs.flogger.system.backend)
 }

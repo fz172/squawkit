@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -25,36 +25,48 @@ android {
 
 kotlin {
     jvmToolchain(11)
+
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
+    }
+
+    sourceSets {
+        commonMain {}
+        androidMain.dependencies {
+            implementation(project(":core:model"))
+            implementation(project(":core:ui"))
+            implementation(project(":feature:fleet:database"))
+            implementation(project(":feature:aircraft:database"))
+
+            // Firebase
+            implementation(libs.firebase.firestore)
+
+            // Compose
+            implementation(libs.androidx.compose.ui)
+            implementation(libs.androidx.compose.ui.graphics)
+            implementation(libs.androidx.compose.ui.tooling.preview)
+            implementation(libs.androidx.compose.material3)
+            implementation(libs.androidx.compose.material.icons.extended)
+
+            // Navigation & Lifecycle
+            implementation(libs.androidx.lifecycle.viewmodel.compose)
+            implementation(libs.androidx.navigation.compose)
+            
+            // DI
+            implementation(libs.koin.androidx.compose)
+
+            // Logging
+            implementation(libs.flogger)
+            implementation(libs.flogger.system.backend)
+        }
+    }
 }
 
 dependencies {
-    implementation(project(":core:model"))
-    implementation(project(":core:ui"))
-    implementation(project(":feature:fleet:database"))
-    implementation(project(":feature:aircraft:database"))
-
-    // Firebase
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.firestore)
-
-    // Compose
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material.icons.extended)
-
-    // Navigation & Lifecycle
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.navigation.compose)
-    
-    // DI
-    implementation(libs.koin.androidx.compose)
-
-    // Logging
-    implementation(libs.flogger)
-    implementation(libs.flogger.system.backend)
 
     testImplementation(libs.junit)
     testImplementation("io.mockk:mockk:1.13.10")
