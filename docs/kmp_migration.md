@@ -83,7 +83,7 @@ Replaced Hilt (Android-only) with Koin across all modules.
 
 ---
 
-## Step 1.3 — Backend: Android Firebase SDK → Firebase KMP Wrapper 🔄 IN PROGRESS
+## Step 1.3 — Backend: Android Firebase SDK → Firebase KMP Wrapper ✅ DONE (2026-03-19)
 
 **Strategy: Migrate module by module.**
 Within a module, it is acceptable (and expected) to have both `com.google.firebase` and `dev.gitlive.firebase` imports coexisting as an intermediate step. The goal is to fully remove `com.google.firebase` from each module before considering that module done — not to do everything in one pass.
@@ -92,16 +92,13 @@ Within a module, it is acceptable (and expected) to have both `com.google.fireba
 - `core/auth` module migrated: `GitLiveAuthManager` + `GitLiveAuthManagerImpl` in `commonMain`/`androidMain` using `dev.gitlive.firebase.auth`
 - GitLive dependencies added to `libs.versions.toml` (`gitlive = "2.1.0"`)
 - `core/database` has `CommonFirebaseModule` and `GitLiveDocumentReferences` in `commonMain`
+- `feature/aircraft/database`, `feature/fleet/database`, `feature/userprofile/database` managers migrated and moved to `commonMain`
+- `feature/settings`, `feature/fleet`, `feature/userprofile` UI states and ViewModels successfully updated to use `dev.gitlive.firebase`
+- All Google Firebase SDK imports (`com.google.firebase`) have been fully replaced across all library modules
 
-**Remaining — modules still containing `com.google.firebase` imports:**
-- `feature/aircraft/database`: `AircraftManagerImpl`, `InspectionManagerImpl`, `MaintenanceLogManagerImpl`
-- `feature/fleet/database`: `FleetDashboardManagerImpl`, `FleetDashboardManager`
-- `feature/userprofile/database`: `UserProfileManagerImpl`
-- `feature/settings`: `SettingsUiState`
-- `feature/fleet`: `FleetDashboardViewModel`
-- `feature/userprofile`: `EditProfileViewModel`
-- `core/database`: `FirebaseModule`, `CommonDocumentReferences`
-- `app`: `WingsLogApplication`
+**Rest of GitLive Firebase to migrate:**
+- The ViewModels (`FleetDashboardViewModel`, `EditProfileViewModel`) and UI State classes (`SettingsUiState`) that use `dev.gitlive.firebase` are currently still located in `androidMain` because they depend on `androidx.compose.*` or Android ViewModels.
+- These will be moved to `commonMain` during Step 1.4 once Compose Multiplatform is configured.
 
 **Module completion criteria:** A module is considered fully migrated when it has **zero** `com.google.firebase` imports remaining (GitLive only).
 
