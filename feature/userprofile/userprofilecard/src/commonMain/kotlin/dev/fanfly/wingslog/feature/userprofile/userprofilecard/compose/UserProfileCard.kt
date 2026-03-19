@@ -20,10 +20,11 @@ import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
-import dev.fanfly.wingslog.core.ui.userprofile.compose.ProfileImage
+import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.edit_profile
+import wingslog.core.ui.generated.resources.profile_picture
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 
 data class UserProfileCardData(
@@ -48,7 +49,10 @@ fun UserProfileCard(
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
       // --- Profile Image ---
-      ProfileImage(data.photoUri)
+      CircularImage(
+        photoUri = data.photoUri,
+        contentDescription = cmpStringResource(Res.string.profile_picture)
+      )
 
       Spacer(modifier = Modifier.height(16.dp))
 
