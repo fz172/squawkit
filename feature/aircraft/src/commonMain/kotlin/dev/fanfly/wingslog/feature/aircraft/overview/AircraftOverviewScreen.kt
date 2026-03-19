@@ -59,7 +59,7 @@ import wingslog.feature.aircraft.generated.resources.*
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.core.ui.generated.resources.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -671,7 +671,7 @@ private fun InspectionGrid(aircraft: Aircraft, modifier: Modifier = Modifier) {
   }
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
 private fun StatCardPreview() {
   MaterialTheme {

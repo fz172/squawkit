@@ -24,7 +24,7 @@ import wingslog.feature.aircraft.generated.resources.*
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.core.ui.generated.resources.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
@@ -124,7 +124,7 @@ fun MaintenanceLogCard(
   }
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
 private fun MaintenanceLogCardPreview() {
   val log = dev.fanfly.wingslog.aircraft.MaintenanceLog(

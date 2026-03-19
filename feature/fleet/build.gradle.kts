@@ -61,9 +61,9 @@ kotlin {
 
       // Logging
       implementation(libs.kermit)
-    }
-    androidMain.dependencies {
-      implementation(libs.androidx.compose.ui.tooling.preview)
+      
+      // Tooling
+      implementation(compose.components.uiToolingPreview)
     }
   }
 }

@@ -49,7 +49,6 @@ kotlin {
       implementation(libs.ktor.client.core)
     }
     androidMain.dependencies {
-      api(libs.androidx.compose.ui.tooling.preview)
       implementation(libs.ktor.client.okhttp)
     }
   }
