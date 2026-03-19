@@ -12,4 +12,16 @@ fun WireInstant.toLocalDate(): LocalDate {
     return instant.toLocalDateTime(TimeZone.UTC).date
 }
 
-expect fun LocalDate.toDisplayFormat(): String
+import kotlinx.datetime.format.char
+
+private val DisplayDateFormat = LocalDate.Format {
+    monthNumber()
+    char('/')
+    dayOfMonth()
+    char('/')
+    year()
+}
+
+fun LocalDate.toDisplayFormat(): String {
+    return this.format(DisplayDateFormat)
+}
