@@ -2,11 +2,11 @@ package dev.fanfly.wingslog.feature.userprofile.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseUser
+import dev.fanfly.wingslog.core.auth.GitLiveAuthManager
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
-import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
+import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -15,7 +15,7 @@ import java.time.Instant
 
 class EditProfileViewModel(
   private val userProfileManager: UserProfileManager,
-  authManager: AuthManager
+  authManager: GitLiveAuthManager
 ) : ViewModel() {
 
 
@@ -90,6 +90,6 @@ class EditProfileViewModel(
 
 fun FirebaseUser.toEditProfileUiState() =
   EditProfileUiState(
-    photoUri = photoUrl,
+    photoUri = photoURL,
     displayName = displayName ?: "Guest"
   )

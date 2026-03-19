@@ -13,17 +13,17 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(17)
 
     androidTarget {
         compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
 
@@ -34,8 +34,8 @@ kotlin {
             implementation(project(":core:database"))
             implementation(project(":core:auth"))
 
-            implementation(libs.firebase.firestore)
-            implementation(libs.firebase.auth)
+            implementation(libs.gitlive.firebase.firestore)
+            implementation(libs.gitlive.firebase.auth)
 
             // DI
             implementation(libs.koin.android)
@@ -47,6 +47,6 @@ kotlin {
 }
 
 dependencies {
-    // Firebase platform to resolve transitive dependency versions
+    // Firebase BOM for transitive dependency version resolution (required by core:database)
     implementation(platform(libs.firebase.bom))
 }

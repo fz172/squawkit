@@ -1,84 +1,63 @@
 package dev.fanfly.wingslog.feature.userprofile.database.impl
 
 import co.touchlab.kermit.Logger
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Blob
-import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.firestore.DocumentReference
+import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.fanfly.wingslog.core.database.common.getUserDocumentRef
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.newUserLicenseProfile
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.map
 
 class UserProfileManagerImpl(
   private val firebaseAuth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
 ) : UserProfileManager {
 
-  override fun observeLicenseInfo(): Flow<LicenseInfo?> = callbackFlow {
+  override fun observeLicenseInfo(): Flow<LicenseInfo?> {
     val docRef = getProfileDocumentRef()
-    if (docRef == null) {
-      trySend(null)
-      close(Exception("User not logged in."))
-      return@callbackFlow
-    }
+      ?: return kotlinx.coroutines.flow.flowOf(null)
 
-    val listener = docRef.addSnapshotListener { snapshot, e ->
-      if (e != null) {
-        logger.w(e) { "Listen failed." }
-        close(e)
-        return@addSnapshotListener
-      }
-      val licenseInfo = if (snapshot != null && snapshot.exists()) {
-        // Get the blob from the snapshot
-        val blob = snapshot.getBlob(LICENSE_INFO_BLOB)
+    return docRef.snapshots.map { snapshot ->
+      if (snapshot.exists) {
+        // getEncoded returns the raw Firebase value; Blob comes through as com.google.firebase.firestore.Blob
+        @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+        val blob = snapshot.getEncoded(LICENSE_INFO_BLOB) as? Blob
         if (blob != null) {
-          // If blob exists, parse it
           try {
             LicenseInfo.ADAPTER.decode(blob.toBytes())
           } catch (e: Exception) {
             logger.w(e) { "Failed to parse LicenseInfo proto" }
-            // Data is corrupt, return default
             newUserLicenseProfile()
           }
         } else {
-          // No blob found (e.g., new user), return default
           logger.d { "No licenseInfoBlob found, returning default instance." }
           newUserLicenseProfile()
         }
       } else {
-        // Document itself doesn't exist (e.g., new user)
         logger.d { "Profile document does not exist, returning default." }
         newUserLicenseProfile()
       }
-      trySend(licenseInfo)
     }
-
-    awaitClose { listener.remove() }
   }
 
   override suspend fun updateLicenseInfo(licenseInfo: LicenseInfo): Result<Boolean> {
     return try {
-      val docRef = getProfileDocumentRef() // <-- UPDATED
+      val docRef = getProfileDocumentRef()
         ?: return Result.failure(Exception("User not logged in."))
 
-      // Create a map to set the blob field
       val data = mapOf(LICENSE_INFO_BLOB to Blob.fromBytes(LicenseInfo.ADAPTER.encode(licenseInfo)))
 
-      // Use SetOptions.merge() to only update this field
-      docRef.set(data, SetOptions.merge()).await()
+      docRef.set(data, merge = true)
 
       logger.d { "Profile updated successfully." }
       Result.success(true)
 
     } catch (e: Exception) {
       logger.w(e) { "Error updating profile" }
-
       Result.failure(e)
     }
   }
@@ -86,7 +65,6 @@ class UserProfileManagerImpl(
   private fun getProfileDocumentRef(): DocumentReference? =
     firestore.getUserDocumentRef(firebaseAuth)?.collection(PROFILE_COLLECTION)
       ?.document(LICENSE_INFO_DOCUMENT)
-
 
   companion object {
     private val logger = Logger.withTag("UserProfileManagerImpl")
