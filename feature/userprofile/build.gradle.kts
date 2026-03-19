@@ -1,27 +1,8 @@
 plugins {
-  alias(libs.plugins.android.library)
+  alias(libs.plugins.android.multiplatform.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.compose.multiplatform)
-}
-
-android {
-  namespace = "dev.fanfly.wingslog.feature.userprofile"
-  compileSdk = 36
-
-  defaultConfig {
-    minSdk = 33
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
-  buildFeatures {
-    compose = true
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-  }
 }
 
 compose.resources {
@@ -31,9 +12,10 @@ compose.resources {
 kotlin {
   jvmToolchain(21)
 
-  androidTarget {
-    compilerOptions {
-    }
+  androidLibrary {
+    namespace = "dev.fanfly.wingslog.feature.userprofile"
+    compileSdk = 36
+    minSdk = 33
   }
 
   sourceSets {
@@ -60,13 +42,11 @@ kotlin {
 
       // Logging
       implementation(libs.kermit)
+
+      implementation(project.dependencies.platform(libs.firebase.bom))
+      implementation(project.dependencies.platform(libs.androidx.compose.bom))
     }
     androidMain.dependencies {
     }
   }
-}
-
-dependencies {
-  implementation(platform(libs.firebase.bom))
-  implementation(platform(libs.androidx.compose.bom))
 }
