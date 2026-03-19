@@ -15,53 +15,54 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class MaintenanceLogListViewModel(
-    private val logManager: MaintenanceLogManager,
-    savedStateHandle: SavedStateHandle
+  private val logManager: MaintenanceLogManager,
+  savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    val aircraftId: String = checkNotNull(savedStateHandle["aircraftId"])
+  val aircraftId: String = checkNotNull(savedStateHandle["aircraftId"])
 
-    private val _uiState = MutableStateFlow<MaintenanceLogListUiState>(MaintenanceLogListUiState.Loading)
-    val uiState: StateFlow<MaintenanceLogListUiState> = _uiState.asStateFlow()
+  private val _uiState =
+    MutableStateFlow<MaintenanceLogListUiState>(MaintenanceLogListUiState.Loading)
+  val uiState: StateFlow<MaintenanceLogListUiState> = _uiState.asStateFlow()
 
-    private val _events = Channel<MaintenanceLogListEvent>()
-    val events = _events.receiveAsFlow()
+  private val _events = Channel<MaintenanceLogListEvent>()
+  val events = _events.receiveAsFlow()
 
-    init {
-        observeLogs()
-    }
+  init {
+    observeLogs()
+  }
 
-    private fun observeLogs() {
-        viewModelScope.launch {
-            logManager.observeLogs(aircraftId)
-                .onStart { _uiState.update { MaintenanceLogListUiState.Loading } }
-                .catch { _uiState.update { MaintenanceLogListUiState.Error } }
-                .collect { logs ->
-                    _uiState.update { MaintenanceLogListUiState.Success(logs) }
-                }
+  private fun observeLogs() {
+    viewModelScope.launch {
+      logManager.observeLogs(aircraftId)
+        .onStart { _uiState.update { MaintenanceLogListUiState.Loading } }
+        .catch { _uiState.update { MaintenanceLogListUiState.Error } }
+        .collect { logs ->
+          _uiState.update { MaintenanceLogListUiState.Success(logs) }
         }
     }
+  }
 
-    fun deleteLog(logId: String) {
-        viewModelScope.launch {
-            logManager.deleteLog(aircraftId, logId)
-        }
+  fun deleteLog(logId: String) {
+    viewModelScope.launch {
+      logManager.deleteLog(aircraftId, logId)
     }
+  }
 
-    fun onAddLog() {
-        viewModelScope.launch {
-            _events.send(MaintenanceLogListEvent.NavigateToCreateLog(aircraftId))
-        }
+  fun onAddLog() {
+    viewModelScope.launch {
+      _events.send(MaintenanceLogListEvent.NavigateToCreateLog(aircraftId))
     }
+  }
 
-    fun onEditLog(logId: String) {
-        viewModelScope.launch {
-            _events.send(MaintenanceLogListEvent.NavigateToEditLog(aircraftId, logId))
-        }
+  fun onEditLog(logId: String) {
+    viewModelScope.launch {
+      _events.send(MaintenanceLogListEvent.NavigateToEditLog(aircraftId, logId))
     }
+  }
 }
 
 sealed interface MaintenanceLogListEvent {
-    data class NavigateToCreateLog(val aircraftId: String) : MaintenanceLogListEvent
-    data class NavigateToEditLog(val aircraftId: String, val logId: String) : MaintenanceLogListEvent
+  data class NavigateToCreateLog(val aircraftId: String) : MaintenanceLogListEvent
+  data class NavigateToEditLog(val aircraftId: String, val logId: String) : MaintenanceLogListEvent
 }

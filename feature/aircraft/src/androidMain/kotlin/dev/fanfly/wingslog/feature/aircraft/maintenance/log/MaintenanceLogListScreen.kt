@@ -37,75 +37,80 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MaintenanceLogListScreen(
-    navController: NavController,
-    viewModel: MaintenanceLogListViewModel = koinViewModel()
+  navController: NavController,
+  viewModel: MaintenanceLogListViewModel = koinViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is MaintenanceLogListEvent.NavigateToCreateLog ->
-                    navController.navigate("maintenance_log_create/${event.aircraftId}")
-                is MaintenanceLogListEvent.NavigateToEditLog ->
-                    navController.navigate("maintenance_log_edit/${event.aircraftId}/${event.logId}")
-            }
-        }
+  LaunchedEffect(viewModel) {
+    viewModel.events.collect { event ->
+      when (event) {
+        is MaintenanceLogListEvent.NavigateToCreateLog ->
+          navController.navigate("maintenance_log_create/${event.aircraftId}")
+
+        is MaintenanceLogListEvent.NavigateToEditLog ->
+          navController.navigate("maintenance_log_edit/${event.aircraftId}/${event.logId}")
+      }
     }
+  }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.maintenance_logs)) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
-                }
+  Scaffold(
+    topBar = {
+      TopAppBar(
+        title = { Text(stringResource(R.string.maintenance_logs)) },
+        navigationIcon = {
+          IconButton(onClick = { navController.popBackStack() }) {
+            Icon(
+              Icons.AutoMirrored.Filled.ArrowBack,
+              contentDescription = stringResource(R.string.back)
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { viewModel.onAddLog() }) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_log))
-            }
+          }
         }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentAlignment = Alignment.Center
-        ) {
-            when (val state = uiState) {
-                MaintenanceLogListUiState.Loading -> CircularProgressIndicator()
-                MaintenanceLogListUiState.Error -> Text(
-                    stringResource(R.string.failed_to_load_logs),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                is MaintenanceLogListUiState.Success -> {
-                    if (state.logs.isEmpty()) {
-                        Text(
-                            stringResource(R.string.no_maintenance_logs_hint),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(state.logs, key = { it.id }) { log ->
-                                MaintenanceLogCard(
-                                    log = log,
-                                    onEdit = { viewModel.onEditLog(log.id) }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
+      )
+    },
+    floatingActionButton = {
+      FloatingActionButton(onClick = { viewModel.onAddLog() }) {
+        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_log))
+      }
     }
+  ) { innerPadding ->
+    Box(
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(innerPadding),
+      contentAlignment = Alignment.Center
+    ) {
+      when (val state = uiState) {
+        MaintenanceLogListUiState.Loading -> CircularProgressIndicator()
+        MaintenanceLogListUiState.Error -> Text(
+          stringResource(R.string.failed_to_load_logs),
+          style = MaterialTheme.typography.bodyLarge
+        )
+
+        is MaintenanceLogListUiState.Success -> {
+          if (state.logs.isEmpty()) {
+            Text(
+              stringResource(R.string.no_maintenance_logs_hint),
+              style = MaterialTheme.typography.bodyLarge,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          } else {
+            LazyColumn(
+              modifier = Modifier.fillMaxSize(),
+              contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+              verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+              items(state.logs, key = { it.id }) { log ->
+                MaintenanceLogCard(
+                  log = log,
+                  onEdit = { viewModel.onEditLog(log.id) }
+                )
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
 }

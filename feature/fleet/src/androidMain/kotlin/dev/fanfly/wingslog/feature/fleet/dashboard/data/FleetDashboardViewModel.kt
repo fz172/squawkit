@@ -2,8 +2,6 @@ package dev.fanfly.wingslog.feature.fleet.dashboard.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.firestore.ListenerRegistration
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.fleet.database.FleetDashboardManager
 import kotlinx.coroutines.Job

@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.userprofile.data
 import android.net.Uri
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.newUserLicenseProfile
+
 // This data class will hold the state of our form
 data class EditProfileUiState(
   val photoUri: Uri? = null,

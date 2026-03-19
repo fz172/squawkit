@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.userprofile.data
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.net.Uri
 import dev.fanfly.wingslog.core.auth.GitLiveAuthManager
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
@@ -18,7 +18,6 @@ class EditProfileViewModel(
   private val userProfileManager: UserProfileManager,
   authManager: GitLiveAuthManager
 ) : ViewModel() {
-
 
 
   private val _uiState: MutableStateFlow<EditProfileUiState> =
@@ -42,7 +41,7 @@ class EditProfileViewModel(
             )
           }
         } else {
-             _uiState.update { it.copy(isLoading = false) }
+          _uiState.update { it.copy(isLoading = false) }
         }
       }
     }
@@ -60,17 +59,21 @@ class EditProfileViewModel(
 
   fun onExpirationDateChanged(newDate: Instant) {
     _uiState.update {
-      it.copy(licenceInfo = it.licenceInfo.copy(
-        expiration_date = newDate
-      ))
+      it.copy(
+        licenceInfo = it.licenceInfo.copy(
+          expiration_date = newDate
+        )
+      )
     }
   }
 
   fun onExpirationNeverFlagChanged(neverExpires: Boolean) {
     _uiState.update {
-      it.copy(licenceInfo = it.licenceInfo.copy(
-        expireLimit = if (neverExpires) LicenseExpireLimit.NEVER_EXPIRES else LicenseExpireLimit.EXPIRES
-      ))
+      it.copy(
+        licenceInfo = it.licenceInfo.copy(
+          expireLimit = if (neverExpires) LicenseExpireLimit.NEVER_EXPIRES else LicenseExpireLimit.EXPIRES
+        )
+      )
     }
   }
 

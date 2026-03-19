@@ -24,7 +24,7 @@ android {
 }
 
 kotlin {
-    jvmToolchain(21)
+  jvmToolchain(21)
 
   androidTarget {
     compilerOptions {
@@ -39,7 +39,7 @@ kotlin {
 
       implementation(libs.androidx.core.ktx)
       implementation(libs.androidx.lifecycle.runtime.ktx)
-      
+
       // Compose
       implementation(libs.androidx.compose.ui)
       implementation(libs.androidx.compose.material3)
@@ -49,5 +49,5 @@ kotlin {
 }
 
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
+  implementation(platform(libs.androidx.compose.bom))
 }

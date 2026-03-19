@@ -24,107 +24,107 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.feature.aircraft.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InspectionPickerSheet(
-    availableCards: List<InspectionCard>,
-    selectedIds: List<String>,
-    onToggle: (cardId: String) -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
+  availableCards: List<InspectionCard>,
+  selectedIds: List<String>,
+  onToggle: (cardId: String) -> Unit,
+  onDismiss: () -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        modifier = modifier,
+  ModalBottomSheet(
+    onDismissRequest = onDismiss,
+    sheetState = sheetState,
+    modifier = modifier,
+  ) {
+    Column(
+      modifier = Modifier
+          .fillMaxWidth()
+          .verticalScroll(rememberScrollState())
+          .padding(horizontal = 24.dp)
+          .padding(bottom = 48.dp),
+      verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
-        Column(
+      // Header
+      Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+      ) {
+        Text(
+          text = stringResource(R.string.select_inspection_work),
+          style = MaterialTheme.typography.titleLarge,
+          fontWeight = FontWeight.Bold,
+        )
+        IconButton(onClick = onDismiss) {
+          Icon(Icons.Default.Close, contentDescription = null)
+        }
+      }
+
+      if (availableCards.isEmpty()) {
+        Text(
+          text = stringResource(R.string.no_inspection_cards_configured),
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.padding(vertical = 16.dp),
+        )
+      } else {
+        availableCards.forEach { card ->
+          val isSelected = card.id in selectedIds
+          Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 48.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp),
-        ) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = stringResource(R.string.select_inspection_work),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = null)
-                }
+                .clickable { onToggle(card.id) }
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+          ) {
+            Icon(
+              imageVector = if (isSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+              contentDescription = null,
+              tint = if (isSelected) MaterialTheme.colorScheme.primary
+              else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Column(modifier = Modifier.weight(1f)) {
+              Text(
+                text = card.title,
+                style = MaterialTheme.typography.bodyLarge,
+              )
+              val componentLabel = when (card.component.name) {
+                "INSPECTION_COMPONENT_ENGINE" -> stringResource(R.string.engine)
+                "INSPECTION_COMPONENT_PROPELLER" -> stringResource(R.string.propeller)
+                else -> stringResource(R.string.airframe)
+              }
+              Text(
+                text = componentLabel,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
             }
-
-            if (availableCards.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.no_inspection_cards_configured),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 16.dp),
-                )
-            } else {
-                availableCards.forEach { card ->
-                    val isSelected = card.id in selectedIds
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onToggle(card.id) }
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Icon(
-                            imageVector = if (isSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
-                            contentDescription = null,
-                            tint = if (isSelected) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = card.title,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                            val componentLabel = when (card.component.name) {
-                                "INSPECTION_COMPONENT_ENGINE" -> stringResource(R.string.engine)
-                                "INSPECTION_COMPONENT_PROPELLER" -> stringResource(R.string.propeller)
-                                else -> stringResource(R.string.airframe)
-                            }
-                            Text(
-                                text = componentLabel,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                    HorizontalDivider()
-                }
-            }
-
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-            ) {
-                Text(stringResource(R.string.done))
-            }
+          }
+          HorizontalDivider()
         }
+      }
+
+      Button(
+        onClick = onDismiss,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp),
+      ) {
+        Text(stringResource(R.string.done))
+      }
     }
+  }
 }
