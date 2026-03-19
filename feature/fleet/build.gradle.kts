@@ -48,7 +48,6 @@ kotlin {
       implementation(compose.components.uiToolingPreview)
 
       implementation(project.dependencies.platform(libs.firebase.bom))
-      implementation(project.dependencies.platform(libs.androidx.compose.bom))
     }
     commonTest.dependencies {
       implementation(libs.junit)

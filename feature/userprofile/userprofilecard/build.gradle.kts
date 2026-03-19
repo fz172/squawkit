@@ -28,7 +28,6 @@ kotlin {
       implementation(compose.material3)
       implementation(compose.components.resources)
 
-      implementation(project.dependencies.platform(libs.androidx.compose.bom))
     }
   }
 }

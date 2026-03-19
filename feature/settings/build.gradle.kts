@@ -43,7 +43,6 @@ kotlin {
       implementation(libs.kermit)
 
       implementation(project.dependencies.platform(libs.firebase.bom))
-      implementation(project.dependencies.platform(libs.androidx.compose.bom))
     }
   }
 }
