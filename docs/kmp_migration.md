@@ -85,12 +85,15 @@ Replaced Hilt (Android-only) with Koin across all modules.
 
 ## Step 1.3 — Backend: Android Firebase SDK → Firebase KMP Wrapper 🔄 IN PROGRESS
 
+**Strategy: Migrate module by module.**
+Within a module, it is acceptable (and expected) to have both `com.google.firebase` and `dev.gitlive.firebase` imports coexisting as an intermediate step. The goal is to fully remove `com.google.firebase` from each module before considering that module done — not to do everything in one pass.
+
 **What's done:**
 - `core/auth` module migrated: `GitLiveAuthManager` + `GitLiveAuthManagerImpl` in `commonMain`/`androidMain` using `dev.gitlive.firebase.auth`
 - GitLive dependencies added to `libs.versions.toml` (`gitlive = "2.1.0"`)
 - `core/database` has `CommonFirebaseModule` and `GitLiveDocumentReferences` in `commonMain`
 
-**Remaining — files still using `com.google.firebase`:**
+**Remaining — modules still containing `com.google.firebase` imports:**
 - `feature/aircraft/database`: `AircraftManagerImpl`, `InspectionManagerImpl`, `MaintenanceLogManagerImpl`
 - `feature/fleet/database`: `FleetDashboardManagerImpl`, `FleetDashboardManager`
 - `feature/userprofile/database`: `UserProfileManagerImpl`
@@ -99,6 +102,8 @@ Replaced Hilt (Android-only) with Koin across all modules.
 - `feature/userprofile`: `EditProfileViewModel`
 - `core/database`: `FirebaseModule`, `CommonDocumentReferences`
 - `app`: `WingsLogApplication`
+
+**Module completion criteria:** A module is considered fully migrated when it has **zero** `com.google.firebase` imports remaining (GitLive only).
 
 **Migration pattern** (import swap only — API is identical):
 ```kotlin
@@ -114,7 +119,8 @@ import dev.gitlive.firebase.firestore.firestore
 **Notes:**
 - `google-services.json` and existing Firestore collections stay unchanged
 - Wire `ADAPTER` calls are already in place — no serialization changes needed
-- Once imports are swapped, these files can move from `androidMain` → `commonMain`
+- Once all imports in a module are swapped, files can move from `androidMain` → `commonMain`
+- `app/` module may retain Google Firebase plugin config (`google-services` plugin, `google-services.json`) — this is intentional and separate from the SDK migration
 
 ---
 
