@@ -20,11 +20,11 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -55,10 +55,10 @@ import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResI
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.edit_profile
-import wingslog.core.ui.generated.resources.license_type
 import wingslog.core.ui.generated.resources.ok
 import wingslog.feature.userprofile.generated.resources.license_expiration_date
 import wingslog.feature.userprofile.generated.resources.license_number
+import wingslog.feature.userprofile.generated.resources.license_type
 import wingslog.feature.userprofile.generated.resources.never
 import wingslog.feature.userprofile.generated.resources.select_date
 import java.time.Instant
@@ -117,13 +117,13 @@ fun EditProfileScreen(
           value = cmpStringResource(uiState.licenceInfo.license_type.displayResId()),
           onValueChange = {},
           readOnly = true,
-          label = { Text(text = cmpStringResource(CoreUiRes.string.license_type)) },
+          label = { Text(text = cmpStringResource(UserProfileRes.string.license_type)) },
           trailingIcon = {
             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
           },
           modifier = Modifier
             .fillMaxWidth()
-            .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
           shape = RoundedCornerShape(12.dp)
         )
         ExposedDropdownMenu(
