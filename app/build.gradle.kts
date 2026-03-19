@@ -6,18 +6,13 @@ plugins {
 }
 
 kotlin {
-  jvmToolchain(11)
+    jvmToolchain(21)
 }
 
 android {
   namespace = "dev.fanfly.wingslog"
   compileSdk {
     version = release(36)
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
   }
 
   defaultConfig {
@@ -37,8 +32,8 @@ android {
     }
   }
   compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
   }
 
   buildFeatures {
