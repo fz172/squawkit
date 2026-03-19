@@ -272,7 +272,10 @@ fun EngineSection(
               modifier = Modifier.weight(1f),
               trailingIcon = {
                 IconButton(onClick = { viewModel.onRemoveBlade(engineIndex, bladeIndex) }) {
-                  Icon(Icons.Default.Close, contentDescription = stringResource(R.string.remove_blade))
+                  Icon(
+                    Icons.Default.Close,
+                    contentDescription = stringResource(R.string.remove_blade)
+                  )
                 }
               },
               isError = showValidationErrors && blade.serial.isBlank(),

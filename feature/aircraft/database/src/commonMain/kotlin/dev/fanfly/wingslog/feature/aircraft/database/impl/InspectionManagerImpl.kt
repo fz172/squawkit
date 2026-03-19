@@ -3,9 +3,9 @@ package dev.fanfly.wingslog.feature.aircraft.database.impl
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.core.database.common.generateRandomId
 import dev.fanfly.wingslog.core.database.common.getBlobAsBytes
 import dev.fanfly.wingslog.core.database.common.getGitLiveFleetCollectionRef
-import dev.fanfly.wingslog.core.database.common.generateRandomId
 import dev.fanfly.wingslog.core.database.common.setEncoded
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
@@ -40,30 +40,36 @@ class InspectionManagerImpl(
     }
   }
 
-  override suspend fun addInspection(aircraftId: String, card: InspectionCard): Result<Boolean> = try {
-    val cardsRef = getCardsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
-    val newDocRef = if (card.id.isEmpty()) cardsRef.document(generateRandomId()) else cardsRef.document(card.id)
-    val finalCard = if (card.id.isEmpty()) card.copy(id = newDocRef.id) else card
+  override suspend fun addInspection(aircraftId: String, card: InspectionCard): Result<Boolean> =
+    try {
+      val cardsRef =
+        getCardsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
+      val newDocRef =
+        if (card.id.isEmpty()) cardsRef.document(generateRandomId()) else cardsRef.document(card.id)
+      val finalCard = if (card.id.isEmpty()) card.copy(id = newDocRef.id) else card
 
-    saveCard(newDocRef, finalCard)
-    Result.success(true)
-  } catch (e: Exception) {
-    logger.w(e) { "Error adding card" }
-    Result.failure(e)
-  }
+      saveCard(newDocRef, finalCard)
+      Result.success(true)
+    } catch (e: Exception) {
+      logger.w(e) { "Error adding card" }
+      Result.failure(e)
+    }
 
-  override suspend fun updateInspection(aircraftId: String, card: InspectionCard): Result<Boolean> = try {
-    val cardsRef = getCardsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
-    val docRef = cardsRef.document(card.id)
-    saveCard(docRef, card)
-    Result.success(true)
-  } catch (e: Exception) {
-    logger.w(e) { "Error updating card ${card.id}" }
-    Result.failure(e)
-  }
+  override suspend fun updateInspection(aircraftId: String, card: InspectionCard): Result<Boolean> =
+    try {
+      val cardsRef =
+        getCardsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
+      val docRef = cardsRef.document(card.id)
+      saveCard(docRef, card)
+      Result.success(true)
+    } catch (e: Exception) {
+      logger.w(e) { "Error updating card ${card.id}" }
+      Result.failure(e)
+    }
 
   override suspend fun deleteInspection(aircraftId: String, cardId: String): Result<Boolean> = try {
-    val cardsRef = getCardsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
+    val cardsRef =
+      getCardsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
     cardsRef.document(cardId).delete()
     logger.d { "Card $cardId deleted successfully." }
     Result.success(true)
@@ -77,7 +83,10 @@ class InspectionManagerImpl(
     return DueStatus()
   }
 
-  private suspend fun saveCard(docRef: dev.gitlive.firebase.firestore.DocumentReference, card: InspectionCard) {
+  private suspend fun saveCard(
+    docRef: dev.gitlive.firebase.firestore.DocumentReference,
+    card: InspectionCard
+  ) {
     val data = mutableMapOf<String, Any>(
       INSPECTION_CARD_BLOB to InspectionCard.ADAPTER.encode(card),
       TITLE_FIELD to card.title,
@@ -87,7 +96,8 @@ class InspectionManagerImpl(
   }
 
   private fun getCardsCollectionRef(aircraftId: String): CollectionReference? {
-    return firestore.getGitLiveFleetCollectionRef(firebaseAuth)?.document(aircraftId)?.collection(INSPECTION_CARDS_COLLECTION)
+    return firestore.getGitLiveFleetCollectionRef(firebaseAuth)?.document(aircraftId)
+      ?.collection(INSPECTION_CARDS_COLLECTION)
   }
 
   companion object {

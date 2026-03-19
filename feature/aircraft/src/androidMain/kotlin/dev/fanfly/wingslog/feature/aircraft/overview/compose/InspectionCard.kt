@@ -74,8 +74,10 @@ fun InspectionCard(
 
 @Preview
 @Composable
-fun PreviewInspectionCard() = InspectionCard( title = "100 Hr",
+fun PreviewInspectionCard() = InspectionCard(
+  title = "100 Hr",
   status = "Due in 14h",
   icon = Icons.Default.Schedule,
   statusColor = Color(0xFFFFD54F), // Yellowish
-  modifier = Modifier.fillMaxWidth())
+  modifier = Modifier.fillMaxWidth()
+)

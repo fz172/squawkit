@@ -553,7 +553,7 @@ private fun InspectionCardItem(
   val statusColor = when {
     cardWithStatus.dueStatus.isOverdue -> MaterialTheme.colorScheme.error
     cardWithStatus.dueStatus.isOnCondition -> MaterialTheme.colorScheme.onSurfaceVariant
-    cardWithStatus.dueStatus.nextDueDate != null -> dev.fanfly.wingslog.core.ui.theme.StatusOk
+    cardWithStatus.dueStatus.nextDueDate != null -> StatusOk
     else -> MaterialTheme.colorScheme.onSurfaceVariant
   }
   val statusText = when {
@@ -575,10 +575,11 @@ private fun InspectionCardItem(
 
 @Suppress("unused")
 @Composable
-private fun InspectionGrid(aircraft: dev.fanfly.wingslog.aircraft.Aircraft, modifier: Modifier = Modifier) {
+private fun InspectionGrid(aircraft: Aircraft, modifier: Modifier = Modifier) {
   val hasEngines = aircraft.engine.isNotEmpty()
   val hasPropeller = aircraft.engine.any { engine ->
-    (engine.propeller?.hub?.serial ?: "").isNotBlank() || (engine.propeller?.blades?.isNotEmpty() == true)
+    (engine.propeller?.hub?.serial
+      ?: "").isNotBlank() || (engine.propeller?.blades?.isNotEmpty() == true)
   }
 
   // Build the list of applicable inspection cards
@@ -591,41 +592,51 @@ private fun InspectionGrid(aircraft: dev.fanfly.wingslog.aircraft.Aircraft, modi
 
   val items = buildList {
     // Always shown — airframe-level
-    add(InspectionItem(
-      title = stringResource(R.string.annual),
-      status = stringResource(R.string.due_dec_2024),
-      icon = Icons.Default.CalendarToday,
-      statusColor = StatusOk
-    ))
-    add(InspectionItem(
-      title = stringResource(R.string.pitot_static),
-      status = stringResource(R.string.due_in_14h),
-      icon = Icons.Default.Speed,
-      statusColor = StatusWarning
-    ))
-    add(InspectionItem(
-      title = stringResource(R.string.transponder),
-      status = stringResource(R.string.due_dec_2024),
-      icon = Icons.Default.Radio,
-      statusColor = StatusOk
-    ))
+    add(
+      InspectionItem(
+        title = stringResource(R.string.annual),
+        status = stringResource(R.string.due_dec_2024),
+        icon = Icons.Default.CalendarToday,
+        statusColor = StatusOk
+      )
+    )
+    add(
+      InspectionItem(
+        title = stringResource(R.string.pitot_static),
+        status = stringResource(R.string.due_in_14h),
+        icon = Icons.Default.Speed,
+        statusColor = StatusWarning
+      )
+    )
+    add(
+      InspectionItem(
+        title = stringResource(R.string.transponder),
+        status = stringResource(R.string.due_dec_2024),
+        icon = Icons.Default.Radio,
+        statusColor = StatusOk
+      )
+    )
     // Engine-dependent
     if (hasEngines) {
-      add(InspectionItem(
-        title = stringResource(R.string.hundred_hr),
-        status = stringResource(R.string.due_in_14h),
-        icon = Icons.Default.Schedule,
-        statusColor = StatusWarning
-      ))
+      add(
+        InspectionItem(
+          title = stringResource(R.string.hundred_hr),
+          status = stringResource(R.string.due_in_14h),
+          icon = Icons.Default.Schedule,
+          statusColor = StatusWarning
+        )
+      )
     }
     // Propeller-dependent
     if (hasPropeller) {
-      add(InspectionItem(
-        title = stringResource(R.string.prop_inspection),
-        status = stringResource(R.string.due_dec_2024),
-        icon = Icons.Default.Settings,
-        statusColor = StatusOk
-      ))
+      add(
+        InspectionItem(
+          title = stringResource(R.string.prop_inspection),
+          status = stringResource(R.string.due_dec_2024),
+          icon = Icons.Default.Settings,
+          statusColor = StatusOk
+        )
+      )
     }
   }
 
