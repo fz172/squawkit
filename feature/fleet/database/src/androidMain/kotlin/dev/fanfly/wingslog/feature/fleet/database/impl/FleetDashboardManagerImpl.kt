@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.fleet.database.impl
 
-import com.google.common.flogger.FluentLogger
+import co.touchlab.kermit.Logger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Blob
 import com.google.firebase.firestore.FirebaseFirestore
@@ -19,11 +19,11 @@ class FleetDashboardManagerImpl(
 
     val listener = fleetDocumentRef.addSnapshotListener { snapshot, e ->
       if (e != null) {
-        logger.atWarning().withCause(e).log("Listen failed.")
+        logger.w(e) { "Listen failed." }
         return@addSnapshotListener
       }
       if (snapshot == null || snapshot.isEmpty) {
-        logger.atWarning().withCause(e).log("No fleet data, returning empty")
+        logger.w { "No fleet data, returning empty" }
         fleetListener.invoke(listOf())
         return@addSnapshotListener
 
@@ -37,7 +37,7 @@ class FleetDashboardManagerImpl(
         if (blob != null) {
           val aircraft = Aircraft.ADAPTER.decode(blob.toBytes())
           result += aircraft
-          logger.atInfo().log("Recovered Aircraft: %s - %s", aircraft.tail_number, aircraft.model)
+          logger.i { "Recovered Aircraft: ${aircraft.tail_number} - ${aircraft.model}" }
         }
       }
       fleetListener.invoke(result)
@@ -49,7 +49,6 @@ class FleetDashboardManagerImpl(
 
 
   companion object {
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
-
+    private val logger = Logger.withTag("FleetDashboardManagerImpl")
   }
 }

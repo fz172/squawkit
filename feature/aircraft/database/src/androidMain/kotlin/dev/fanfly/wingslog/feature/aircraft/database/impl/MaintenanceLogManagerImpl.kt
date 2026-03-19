@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.aircraft.database.impl
 
-import com.google.common.flogger.FluentLogger
+import co.touchlab.kermit.Logger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.Blob
@@ -33,7 +33,7 @@ class MaintenanceLogManagerImpl(
       .orderBy(TIMESTAMP_FIELD, com.google.firebase.firestore.Query.Direction.DESCENDING)
       .addSnapshotListener { snapshot, e ->
       if (e != null) {
-        logger.atWarning().withCause(e).log("Listen failed for logs of aircraft $aircraftId")
+        logger.w(e) { "Listen failed for logs of aircraft $aircraftId" }
         close(e)
         return@addSnapshotListener
       }
@@ -48,7 +48,7 @@ class MaintenanceLogManagerImpl(
               // ID should match document ID, just in case
               logs.add(log)
             } catch (e: Exception) {
-              logger.atWarning().withCause(e).log("Failed to parse log ${doc.id}")
+              logger.w(e) { "Failed to parse log ${doc.id}" }
             }
           }
         }
@@ -71,7 +71,7 @@ class MaintenanceLogManagerImpl(
     
     Result.success(true)
   } catch (e: Exception) {
-    logger.atWarning().withCause(e).log("Error adding log")
+    logger.w(e) { "Error adding log" }
     Result.failure(e)
   }
 
@@ -83,17 +83,17 @@ class MaintenanceLogManagerImpl(
     
     Result.success(true)
   } catch (e: Exception) {
-    logger.atWarning().withCause(e).log("Error updating log ${log.id}")
+    logger.w(e) { "Error updating log ${log.id}" }
     Result.failure(e)
   }
 
   override suspend fun deleteLog(aircraftId: String, logId: String): Result<Boolean> = try {
     val logsRef = getLogsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
     logsRef.document(logId).delete().await()
-    logger.atFine().log("Log $logId deleted successfully.")
+    logger.d { "Log $logId deleted successfully." }
     Result.success(true)
   } catch (e: Exception) {
-    logger.atWarning().withCause(e).log("Error deleting log $logId")
+    logger.w(e) { "Error deleting log $logId" }
     Result.failure(e)
   }
 
@@ -112,7 +112,7 @@ class MaintenanceLogManagerImpl(
 
     Result.success(snapshot.count)
   } catch (e: Exception) {
-    logger.atWarning().withCause(e).log("Error counting recent logs")
+    logger.w(e) { "Error counting recent logs" }
     Result.failure(e)
   }
 
@@ -142,7 +142,7 @@ class MaintenanceLogManagerImpl(
   }
 
   companion object {
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
+    private val logger = Logger.withTag("MaintenanceLogManagerImpl")
     private const val MAINTENANCE_LOGS_COLLECTION = "maintenance_logs"
     private const val LOG_INFO_BLOB = "log_info_blob"
     

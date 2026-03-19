@@ -68,8 +68,7 @@ dependencies {
   implementation(libs.googleid)
   implementation(libs.koin.android)
   implementation(libs.koin.androidx.compose)
-  implementation(libs.flogger)
-  implementation(libs.flogger.system.backend)
+  implementation(libs.kermit)
   implementation(libs.play.services.auth)
   // Project Features
   implementation(project(":feature:settings"))

@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.userprofile.database.impl
 
-import com.google.common.flogger.FluentLogger
+import co.touchlab.kermit.Logger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Blob
 import com.google.firebase.firestore.DocumentReference
@@ -30,7 +30,7 @@ class UserProfileManagerImpl(
 
     val listener = docRef.addSnapshotListener { snapshot, e ->
       if (e != null) {
-        logger.atWarning().withCause(e).log("Listen failed.")
+        logger.w(e) { "Listen failed." }
         close(e)
         return@addSnapshotListener
       }
@@ -42,18 +42,18 @@ class UserProfileManagerImpl(
           try {
             LicenseInfo.ADAPTER.decode(blob.toBytes())
           } catch (e: Exception) {
-            logger.atWarning().withCause(e).log("Failed to parse LicenseInfo proto")
+            logger.w(e) { "Failed to parse LicenseInfo proto" }
             // Data is corrupt, return default
             newUserLicenseProfile()
           }
         } else {
           // No blob found (e.g., new user), return default
-          logger.atFine().log("No licenseInfoBlob found, returning default instance.")
+          logger.d { "No licenseInfoBlob found, returning default instance." }
           newUserLicenseProfile()
         }
       } else {
         // Document itself doesn't exist (e.g., new user)
-        logger.atFine().log("Profile document does not exist, returning default.")
+        logger.d { "Profile document does not exist, returning default." }
         newUserLicenseProfile()
       }
       trySend(licenseInfo)
@@ -73,11 +73,11 @@ class UserProfileManagerImpl(
       // Use SetOptions.merge() to only update this field
       docRef.set(data, SetOptions.merge()).await()
 
-      logger.atFine().log("Profile updated successfully.")
+      logger.d { "Profile updated successfully." }
       Result.success(true)
 
     } catch (e: Exception) {
-      logger.atWarning().withCause(e).log("Error updating profile")
+      logger.w(e) { "Error updating profile" }
 
       Result.failure(e)
     }
@@ -89,7 +89,7 @@ class UserProfileManagerImpl(
 
 
   companion object {
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
+    private val logger = Logger.withTag("UserProfileManagerImpl")
 
     private const val PROFILE_COLLECTION = "profile"
     private const val LICENSE_INFO_DOCUMENT = "license_info"

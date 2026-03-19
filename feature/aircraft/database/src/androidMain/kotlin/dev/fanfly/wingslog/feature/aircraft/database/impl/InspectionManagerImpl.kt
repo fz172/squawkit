@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.aircraft.database.impl
 
-import com.google.common.flogger.FluentLogger
+import co.touchlab.kermit.Logger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Blob
 import com.google.firebase.firestore.CollectionReference
@@ -34,7 +34,7 @@ class InspectionManagerImpl(
 
         val listener = ref.addSnapshotListener { snapshot, e ->
             if (e != null) {
-                logger.atWarning().withCause(e).log("Listen failed for inspections of aircraft $aircraftId")
+                logger.w(e) { "Listen failed for inspections of aircraft $aircraftId" }
                 close(e)
                 return@addSnapshotListener
             }
@@ -47,7 +47,7 @@ class InspectionManagerImpl(
                         try {
                             cards.add(InspectionCard.ADAPTER.decode(blob.toBytes()))
                         } catch (ex: Exception) {
-                            logger.atWarning().withCause(ex).log("Failed to parse inspection card ${doc.id}")
+                            logger.w(ex) { "Failed to parse inspection card ${doc.id}" }
                         }
                     }
                 }
@@ -72,7 +72,7 @@ class InspectionManagerImpl(
         saveCard(docRef, finalCard)
         Result.success(true)
     } catch (e: Exception) {
-        logger.atWarning().withCause(e).log("Error adding inspection card")
+        logger.w(e) { "Error adding inspection card" }
         Result.failure(e)
     }
 
@@ -82,7 +82,7 @@ class InspectionManagerImpl(
         saveCard(ref.document(card.id), card)
         Result.success(true)
     } catch (e: Exception) {
-        logger.atWarning().withCause(e).log("Error updating inspection card ${card.id}")
+        logger.w(e) { "Error updating inspection card ${card.id}" }
         Result.failure(e)
     }
 
@@ -90,10 +90,10 @@ class InspectionManagerImpl(
         val ref = getInspectionsCollectionRef(aircraftId)
             ?: return Result.failure(Exception("User not logged in"))
         ref.document(cardId).delete().await()
-        logger.atFine().log("Inspection card $cardId deleted.")
+        logger.d { "Inspection card $cardId deleted." }
         Result.success(true)
     } catch (e: Exception) {
-        logger.atWarning().withCause(e).log("Error deleting inspection card $cardId")
+        logger.w(e) { "Error deleting inspection card $cardId" }
         Result.failure(e)
     }
 
@@ -198,7 +198,7 @@ class InspectionManagerImpl(
     }
 
     companion object {
-        private val logger: FluentLogger = FluentLogger.forEnclosingClass()
+        private val logger = Logger.withTag("InspectionManagerImpl")
         private const val INSPECTIONS_COLLECTION = "inspections"
         private const val INSPECTION_CARD_BLOB = "inspection_card_blob"
         private const val TITLE_FIELD = "title"

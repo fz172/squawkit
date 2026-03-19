@@ -4,8 +4,7 @@ coilCompose = "2.7.0"
 credentials = "1.5.0"
 firebaseBom = "32.8.0"
 gitlive = "2.1.0"
-flogger = "0.9"
-floggerSystemBackend = "0.9"
+kermit = "2.0.5"
 googleid = "1.2.0"
 koin = "4.0.4"
 kotlin = "2.3.0"
@@ -39,8 +38,7 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fir
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 gitlive-firebase-firestore = { group = "dev.gitlive", name = "firebase-firestore", version.ref = "gitlive" }
 gitlive-firebase-auth = { group = "dev.gitlive", name = "firebase-auth", version.ref = "gitlive" }
-flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }
-flogger-system-backend = { module = "com.google.flogger:flogger-system-backend", version.ref = "floggerSystemBackend" }
+kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }

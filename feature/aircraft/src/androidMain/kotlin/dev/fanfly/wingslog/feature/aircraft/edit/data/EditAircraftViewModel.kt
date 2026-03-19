@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.feature.aircraft.edit.data
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.common.flogger.FluentLogger
+import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
 import dev.fanfly.wingslog.feature.aircraft.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
@@ -24,10 +24,10 @@ class EditAircraftViewModel(
   init {
     val aircraftId: String? = savedStateHandle[ARGUMENT_AIRCRAFT_ID]
     if (aircraftId.isNullOrEmpty()) {
-      logger.atInfo().log("Initializing the view model with empty aircraft")
+      logger.i { "Initializing the view model with empty aircraft" }
       loadAircraft(Aircraft())
     } else {
-      logger.atInfo().log("Loading aircraft %s", aircraftId)
+      logger.i { "Loading aircraft $aircraftId" }
       loadAircraftById(aircraftId)
     }
   }
@@ -49,7 +49,7 @@ class EditAircraftViewModel(
       } catch (e: CancellationException) {
         throw e
       } catch (e: Exception) {
-        logger.atWarning().withCause(e).log("Failed to load aircraft by id: %s", id)
+        logger.w(e) { "Failed to load aircraft by id: $id" }
         _uiState.update { it.copy(isLoading = false) }
       }
     }
@@ -228,6 +228,6 @@ class EditAircraftViewModel(
   }
 
   companion object {
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
+    private val logger = Logger.withTag("EditAircraftViewModel")
   }
 }

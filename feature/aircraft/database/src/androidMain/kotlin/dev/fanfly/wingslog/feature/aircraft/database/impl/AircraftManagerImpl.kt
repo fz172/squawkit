@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.aircraft.database.impl
 
-import com.google.common.flogger.FluentLogger
+import co.touchlab.kermit.Logger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.Blob
 import com.google.firebase.firestore.CollectionReference
@@ -34,10 +34,10 @@ class AircraftManagerImpl(
 
     // Use SetOptions.merge() to only update this field
     aircraftRef.set(data, SetOptions.merge()).await()
-    logger.atFine().log("Aircraft updated successfully, new id is %s", aircraftWithId.id)
+    logger.d { "Aircraft updated successfully, new id is ${aircraftWithId.id}" }
     Result.success(true)
   } catch (e: Exception) {
-    logger.atWarning().withCause(e).log("Error updating aircraft")
+    logger.w(e) { "Error updating aircraft" }
 
     Result.failure(e)
   }
@@ -53,7 +53,7 @@ class AircraftManagerImpl(
     val docRef = fleetRef.document(id)
     val listener = docRef.addSnapshotListener { snapshot, e ->
       if (e != null) {
-        logger.atWarning().withCause(e).log("Listen failed for aircraft $id")
+        logger.w(e) { "Listen failed for aircraft $id" }
         close(e)
         return@addSnapshotListener
       }
@@ -65,7 +65,7 @@ class AircraftManagerImpl(
             val aircraft = Aircraft.ADAPTER.decode(blob.toBytes())
             trySend(aircraft)
           } catch (e: Exception) {
-            logger.atWarning().withCause(e).log("Failed to parse aircraft $id")
+            logger.w(e) { "Failed to parse aircraft $id" }
             // Don't close, maybe next update fixes it? Or close?
             // Usually if parse fails, it's bad data.
             trySend(null)
@@ -86,10 +86,10 @@ class AircraftManagerImpl(
       Exception("Fleet reference is null")
     )
     fleetRef.document(id).delete().await()
-    logger.atFine().log("Aircraft $id deleted successfully.")
+    logger.d { "Aircraft $id deleted successfully." }
     Result.success(true)
   } catch (e: Exception) {
-    logger.atWarning().withCause(e).log("Error deleting aircraft $id")
+    logger.w(e) { "Error deleting aircraft $id" }
     Result.failure(e)
   }
 
@@ -104,6 +104,6 @@ class AircraftManagerImpl(
   }
 
   companion object {
-    private val logger: FluentLogger = FluentLogger.forEnclosingClass()
+    private val logger = Logger.withTag("AircraftManagerImpl")
   }
 }

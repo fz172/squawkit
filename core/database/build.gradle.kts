@@ -45,8 +45,7 @@ kotlin {
             implementation(libs.koin.android)
 
             // Logging
-            implementation(libs.flogger)
-            implementation(libs.flogger.system.backend)
+            implementation(libs.kermit)
             
             // Coroutines
             implementation(libs.androidx.core.ktx)
