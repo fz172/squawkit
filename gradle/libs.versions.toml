@@ -6,7 +6,6 @@ firebaseBom = "32.8.0"
 gitlive = "2.1.0"
 kermit = "2.0.5"
 googleid = "1.2.0"
-kermit = "2.0.4"
 koin = "4.0.4"
 kotlin = "2.3.0"
 coreKtx = "1.17.0"
@@ -39,7 +38,6 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fir
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 gitlive-firebase-firestore = { group = "dev.gitlive", name = "firebase-firestore", version.ref = "gitlive" }
 gitlive-firebase-auth = { group = "dev.gitlive", name = "firebase-auth", version.ref = "gitlive" }
-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
@@ -72,4 +70,3 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 wire = { id = "com.squareup.wire", version.ref = "wire" }
-

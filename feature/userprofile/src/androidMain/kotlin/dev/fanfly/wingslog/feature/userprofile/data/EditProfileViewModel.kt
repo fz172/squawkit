@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.userprofile.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.net.Uri
 import dev.fanfly.wingslog.core.auth.GitLiveAuthManager
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
@@ -90,6 +91,6 @@ class EditProfileViewModel(
 
 fun FirebaseUser.toEditProfileUiState() =
   EditProfileUiState(
-    photoUri = photoURL,
+    photoUri = photoURL?.let { Uri.parse(it) },
     displayName = displayName ?: "Guest"
   )
