@@ -2,6 +2,7 @@ plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
+  alias(libs.plugins.compose.multiplatform)
 }
 
 android {
@@ -23,6 +24,10 @@ android {
   }
 }
 
+compose.resources {
+  publicResClass = true
+}
+
 kotlin {
   jvmToolchain(21)
 
@@ -32,8 +37,7 @@ kotlin {
   }
 
   sourceSets {
-    commonMain {}
-    androidMain.dependencies {
+    commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:ui"))
       implementation(project(":feature:fleet:database"))
@@ -42,21 +46,24 @@ kotlin {
       // Firebase
 
       // Compose
-      implementation(libs.androidx.compose.ui)
-      implementation(libs.androidx.compose.ui.graphics)
-      implementation(libs.androidx.compose.ui.tooling.preview)
-      implementation(libs.androidx.compose.material3)
-      implementation(libs.androidx.compose.material.icons.extended)
+      implementation(compose.ui)
+      implementation(compose.material3)
+      implementation(compose.materialIconsExtended)
+      implementation(compose.components.resources)
 
       // Navigation & Lifecycle
-      implementation(libs.androidx.lifecycle.viewmodel.compose)
+      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
       implementation(libs.androidx.navigation.compose)
 
       // DI
-      implementation(libs.koin.androidx.compose)
+      implementation(libs.koin.compose)
+      implementation(libs.koin.compose.viewmodel)
 
       // Logging
       implementation(libs.kermit)
+    }
+    androidMain.dependencies {
+      implementation(libs.androidx.compose.ui.tooling.preview)
     }
   }
 }

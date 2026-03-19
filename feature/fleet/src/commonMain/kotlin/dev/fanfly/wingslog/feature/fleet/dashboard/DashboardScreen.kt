@@ -26,16 +26,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import wingslog.core.ui.generated.resources.Res
-import wingslog.core.ui.generated.resources.*
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import dev.fanfly.wingslog.feature.fleet.R
+import wingslog.core.ui.generated.resources.Res as CoreUiRes
+import wingslog.core.ui.generated.resources.*
+import wingslog.feature.fleet.generated.resources.Res as FleetRes
+import wingslog.feature.fleet.generated.resources.*
+import org.koin.compose.viewmodel.koinViewModel
 import dev.fanfly.wingslog.feature.fleet.dashboard.compose.AircraftDashboardCard
 import dev.fanfly.wingslog.feature.fleet.dashboard.data.FleetDashboardViewModel
-import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,18 +53,18 @@ fun DashboardScreen(
     modifier = Modifier.fillMaxSize(),
     topBar = {
       TopAppBar(
-        title = { Text(text = cmpStringResource(Res.string.app_name)) },
+        title = { Text(text = cmpStringResource(CoreUiRes.string.app_name)) },
         actions = {
           Box {
             IconButton(onClick = { menuExpanded = true }) {
-              Icon(Icons.Default.MoreVert, contentDescription = cmpStringResource(Res.string.settings))
+              Icon(Icons.Default.MoreVert, contentDescription = cmpStringResource(CoreUiRes.string.settings))
             }
             DropdownMenu(
               expanded = menuExpanded,
               onDismissRequest = { menuExpanded = false }
             ) {
               DropdownMenuItem(
-                text = { Text(cmpStringResource(Res.string.settings)) },
+                text = { Text(cmpStringResource(CoreUiRes.string.settings)) },
                 onClick = {
                   menuExpanded = false
                   onOpenSettings()
@@ -81,7 +81,7 @@ fun DashboardScreen(
         ExtendedFloatingActionButton(
           onClick = { onClickFab() },
           icon = { Icon(Icons.Default.Build, contentDescription = null) },
-          text = { Text(stringResource(R.string.add_aircraft)) },
+          text = { Text(cmpStringResource(FleetRes.string.add_aircraft)) },
           containerColor = MaterialTheme.colorScheme.primaryContainer,
           contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         )
@@ -96,9 +96,9 @@ fun DashboardScreen(
     ) {
       // Only show the text if isLoading is false
       if (uiState.isLoading) {
-        Text(stringResource(R.string.loading), style = MaterialTheme.typography.headlineMedium)
+        Text(cmpStringResource(FleetRes.string.loading), style = MaterialTheme.typography.headlineMedium)
       } else if (uiState.fleet.isEmpty()) {
-        Text(stringResource(R.string.no_fleet), style = MaterialTheme.typography.headlineMedium)
+        Text(cmpStringResource(FleetRes.string.no_fleet), style = MaterialTheme.typography.headlineMedium)
       } else {
         LazyColumn(
           modifier = Modifier
