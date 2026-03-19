@@ -28,14 +28,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
-import wingslog.feature.fleet.generated.resources.Res as FleetRes
-import wingslog.feature.fleet.generated.resources.*
-import org.koin.compose.viewmodel.koinViewModel
 import dev.fanfly.wingslog.feature.fleet.dashboard.compose.AircraftDashboardCard
 import dev.fanfly.wingslog.feature.fleet.dashboard.data.FleetDashboardViewModel
+import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.app_name
+import wingslog.core.ui.generated.resources.settings
+import wingslog.feature.fleet.generated.resources.add_aircraft
+import wingslog.feature.fleet.generated.resources.loading
+import wingslog.feature.fleet.generated.resources.no_fleet
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.Res as CoreUiRes
+import wingslog.feature.fleet.generated.resources.Res as FleetRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +60,10 @@ fun DashboardScreen(
         actions = {
           Box {
             IconButton(onClick = { menuExpanded = true }) {
-              Icon(Icons.Default.MoreVert, contentDescription = cmpStringResource(CoreUiRes.string.settings))
+              Icon(
+                Icons.Default.MoreVert,
+                contentDescription = cmpStringResource(CoreUiRes.string.settings)
+              )
             }
             DropdownMenu(
               expanded = menuExpanded,
@@ -96,9 +102,15 @@ fun DashboardScreen(
     ) {
       // Only show the text if isLoading is false
       if (uiState.isLoading) {
-        Text(cmpStringResource(FleetRes.string.loading), style = MaterialTheme.typography.headlineMedium)
+        Text(
+          cmpStringResource(FleetRes.string.loading),
+          style = MaterialTheme.typography.headlineMedium
+        )
       } else if (uiState.fleet.isEmpty()) {
-        Text(cmpStringResource(FleetRes.string.no_fleet), style = MaterialTheme.typography.headlineMedium)
+        Text(
+          cmpStringResource(FleetRes.string.no_fleet),
+          style = MaterialTheme.typography.headlineMedium
+        )
       } else {
         LazyColumn(
           modifier = Modifier

@@ -44,12 +44,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import org.jetbrains.compose.resources.StringResource
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.generated.resources.*
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -61,6 +55,35 @@ import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLog
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.aircraft.generated.resources.add
+import wingslog.feature.aircraft.generated.resources.add_log
+import wingslog.feature.aircraft.generated.resources.airframe_serial
+import wingslog.feature.aircraft.generated.resources.airframe_time_hours
+import wingslog.feature.aircraft.generated.resources.back
+import wingslog.feature.aircraft.generated.resources.cancel
+import wingslog.feature.aircraft.generated.resources.component_type
+import wingslog.feature.aircraft.generated.resources.delete
+import wingslog.feature.aircraft.generated.resources.delete_log
+import wingslog.feature.aircraft.generated.resources.delete_log_content_description
+import wingslog.feature.aircraft.generated.resources.edit_log
+import wingslog.feature.aircraft.generated.resources.engine
+import wingslog.feature.aircraft.generated.resources.inspection_work
+import wingslog.feature.aircraft.generated.resources.loading_aircraft
+import wingslog.feature.aircraft.generated.resources.no_engines_found
+import wingslog.feature.aircraft.generated.resources.no_inspection_work_recorded
+import wingslog.feature.aircraft.generated.resources.no_propeller_components_found
+
+import wingslog.feature.aircraft.generated.resources.prop_time_hours
+import wingslog.feature.aircraft.generated.resources.propeller_component
+import wingslog.feature.aircraft.generated.resources.remove
+import wingslog.feature.aircraft.generated.resources.save
+import wingslog.feature.aircraft.generated.resources.tach_time_hours
+import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
+import wingslog.feature.aircraft.generated.resources.unknown_inspection
+import wingslog.feature.aircraft.generated.resources.update
+import wingslog.feature.aircraft.generated.resources.work_description_required
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -495,7 +518,10 @@ private fun InspectionWorkSection(
       ) {
         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.width(16.dp))
         Spacer(Modifier.width(4.dp))
-        Text(cmpStringResource(AircraftRes.string.add), style = MaterialTheme.typography.labelMedium)
+        Text(
+          cmpStringResource(AircraftRes.string.add),
+          style = MaterialTheme.typography.labelMedium
+        )
       }
     }
 

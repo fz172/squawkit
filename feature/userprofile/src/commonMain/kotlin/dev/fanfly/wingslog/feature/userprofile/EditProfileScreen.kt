@@ -39,12 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import androidx.compose.ui.unit.dp
-import wingslog.feature.userprofile.generated.resources.Res as UserProfileRes
-import wingslog.feature.userprofile.generated.resources.*
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
@@ -58,7 +53,18 @@ import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfi
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.cancel
+import wingslog.core.ui.generated.resources.edit_profile
+import wingslog.core.ui.generated.resources.license_type
+import wingslog.core.ui.generated.resources.ok
+import wingslog.feature.userprofile.generated.resources.license_expiration_date
+import wingslog.feature.userprofile.generated.resources.license_number
+import wingslog.feature.userprofile.generated.resources.never
+import wingslog.feature.userprofile.generated.resources.select_date
 import java.time.Instant
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.Res as CoreUiRes
+import wingslog.feature.userprofile.generated.resources.Res as UserProfileRes
 
 
 @Composable
@@ -81,7 +87,8 @@ fun EditProfileScreen(
 
   Scaffold(topBar = {
     WingsLogTopAppBar(
-      title = cmpStringResource(CoreUiRes.string.edit_profile), onBackClick = { navController.popBackStack() })
+      title = cmpStringResource(CoreUiRes.string.edit_profile),
+      onBackClick = { navController.popBackStack() })
   }, bottomBar = {
     // This composable holds the buttons pinned to the bottom
     BottomButtons(

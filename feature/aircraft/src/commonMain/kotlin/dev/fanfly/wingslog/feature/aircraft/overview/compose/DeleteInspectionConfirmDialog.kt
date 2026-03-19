@@ -6,12 +6,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import wingslog.feature.aircraft.generated.resources.cancel
+import wingslog.feature.aircraft.generated.resources.delete
+import wingslog.feature.aircraft.generated.resources.delete_inspection
+import wingslog.feature.aircraft.generated.resources.delete_inspection_confirmation
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import org.jetbrains.compose.resources.StringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.generated.resources.*
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
 
 @Composable
 fun DeleteInspectionConfirmDialog(

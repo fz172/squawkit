@@ -13,14 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import org.jetbrains.compose.resources.StringResource
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.generated.resources.*
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.PropellerBlade
+import wingslog.feature.aircraft.generated.resources.blade_abbreviation_with_index
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

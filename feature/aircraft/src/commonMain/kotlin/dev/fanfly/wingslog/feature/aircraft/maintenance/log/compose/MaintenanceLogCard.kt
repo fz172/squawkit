@@ -17,20 +17,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import org.jetbrains.compose.resources.StringResource
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.generated.resources.*
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import wingslog.feature.aircraft.generated.resources.affects_n_inspection_items
+import wingslog.feature.aircraft.generated.resources.airframe_time_format
+import wingslog.feature.aircraft.generated.resources.edit_log_content_description
+import wingslog.feature.aircraft.generated.resources.prop_time_format
+import wingslog.feature.aircraft.generated.resources.tach_format
+import wingslog.feature.aircraft.generated.resources.unknown_date
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @Composable
 fun MaintenanceLogCard(
@@ -76,7 +78,10 @@ fun MaintenanceLogCard(
 
       if (log.inspection_ids.isNotEmpty()) {
         Text(
-          text = cmpStringResource(AircraftRes.string.affects_n_inspection_items, log.inspection_ids.size),
+          text = cmpStringResource(
+            AircraftRes.string.affects_n_inspection_items,
+            log.inspection_ids.size
+          ),
           style = MaterialTheme.typography.titleSmall,
           fontWeight = FontWeight.SemiBold,
           color = MaterialTheme.colorScheme.primary

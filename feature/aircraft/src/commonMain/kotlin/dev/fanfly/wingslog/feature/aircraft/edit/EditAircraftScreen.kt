@@ -39,12 +39,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import org.jetbrains.compose.resources.StringResource
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.generated.resources.*
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -57,6 +51,25 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.feature.aircraft.edit.data.EditAircraftViewModel
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.aircraft.generated.resources.add_aircraft
+import wingslog.feature.aircraft.generated.resources.add_blade
+import wingslog.feature.aircraft.generated.resources.add_engine
+import wingslog.feature.aircraft.generated.resources.airframe
+import wingslog.feature.aircraft.generated.resources.blade_serial_numbers
+import wingslog.feature.aircraft.generated.resources.blade_with_index
+import wingslog.feature.aircraft.generated.resources.engine_with_index
+import wingslog.feature.aircraft.generated.resources.make
+import wingslog.feature.aircraft.generated.resources.model
+import wingslog.feature.aircraft.generated.resources.powerplant
+import wingslog.feature.aircraft.generated.resources.propeller_hub
+import wingslog.feature.aircraft.generated.resources.remove_blade
+import wingslog.feature.aircraft.generated.resources.remove_engine
+import wingslog.feature.aircraft.generated.resources.required
+import wingslog.feature.aircraft.generated.resources.serial
+import wingslog.feature.aircraft.generated.resources.tail_number
+import wingslog.feature.aircraft.generated.resources.update_aircraft
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 
 @Composable
@@ -234,7 +247,10 @@ fun EngineSection(
       }
 
       // Propeller Section
-      Text(cmpStringResource(AircraftRes.string.propeller_hub), style = MaterialTheme.typography.labelSmall)
+      Text(
+        cmpStringResource(AircraftRes.string.propeller_hub),
+        style = MaterialTheme.typography.labelSmall
+      )
       val hub = engine.propeller?.hub ?: dev.fanfly.wingslog.aircraft.PropellerHub()
       InputField(
         label = cmpStringResource(AircraftRes.string.make), value = hub.make,

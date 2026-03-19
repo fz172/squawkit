@@ -61,7 +61,7 @@ kotlin {
 
       // Logging
       implementation(libs.kermit)
-      
+
       // Tooling
       implementation(compose.components.uiToolingPreview)
     }

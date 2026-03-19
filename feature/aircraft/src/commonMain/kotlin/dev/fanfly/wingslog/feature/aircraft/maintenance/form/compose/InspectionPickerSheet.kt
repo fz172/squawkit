@@ -24,15 +24,17 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import org.jetbrains.compose.resources.StringResource
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.generated.resources.*
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.InspectionCard
+import wingslog.feature.aircraft.generated.resources.airframe
+import wingslog.feature.aircraft.generated.resources.done
+import wingslog.feature.aircraft.generated.resources.engine
+import wingslog.feature.aircraft.generated.resources.no_inspection_cards_configured
+import wingslog.feature.aircraft.generated.resources.propeller
+import wingslog.feature.aircraft.generated.resources.select_inspection_work
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,17 +54,17 @@ fun InspectionPickerSheet(
   ) {
     Column(
       modifier = Modifier
-          .fillMaxWidth()
-          .verticalScroll(rememberScrollState())
-          .padding(horizontal = 24.dp)
-          .padding(bottom = 48.dp),
+        .fillMaxWidth()
+        .verticalScroll(rememberScrollState())
+        .padding(horizontal = 24.dp)
+        .padding(bottom = 48.dp),
       verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
       // Header
       Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp),
+          .fillMaxWidth()
+          .padding(bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
       ) {
@@ -88,9 +90,9 @@ fun InspectionPickerSheet(
           val isSelected = card.id in selectedIds
           Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onToggle(card.id) }
-                .padding(vertical = 12.dp),
+              .fillMaxWidth()
+              .clickable { onToggle(card.id) }
+              .padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
           ) {
@@ -124,8 +126,8 @@ fun InspectionPickerSheet(
       Button(
         onClick = onDismiss,
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp),
+          .fillMaxWidth()
+          .padding(top = 16.dp),
       ) {
         Text(cmpStringResource(AircraftRes.string.done))
       }

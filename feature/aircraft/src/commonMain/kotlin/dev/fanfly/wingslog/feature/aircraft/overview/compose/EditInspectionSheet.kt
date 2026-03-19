@@ -31,12 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import org.jetbrains.compose.resources.StringResource
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.generated.resources.*
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
@@ -45,6 +39,25 @@ import dev.fanfly.wingslog.aircraft.OnConditionRule
 import dev.fanfly.wingslog.aircraft.TachRule
 import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
+import wingslog.feature.aircraft.generated.resources.airframe
+import wingslog.feature.aircraft.generated.resources.component
+import wingslog.feature.aircraft.generated.resources.delete_inspection
+import wingslog.feature.aircraft.generated.resources.edit_inspection
+import wingslog.feature.aircraft.generated.resources.engine
+import wingslog.feature.aircraft.generated.resources.force_due_tach_hours
+import wingslog.feature.aircraft.generated.resources.inspection_title
+import wingslog.feature.aircraft.generated.resources.interval_hours
+import wingslog.feature.aircraft.generated.resources.interval_months
+import wingslog.feature.aircraft.generated.resources.on_condition
+import wingslog.feature.aircraft.generated.resources.override_next_due_tach
+import wingslog.feature.aircraft.generated.resources.propeller
+import wingslog.feature.aircraft.generated.resources.rules
+import wingslog.feature.aircraft.generated.resources.save
+import wingslog.feature.aircraft.generated.resources.tach_based_hours
+import wingslog.feature.aircraft.generated.resources.time_based_months
+import wingslog.feature.aircraft.generated.resources.title_required
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,10 +122,10 @@ fun EditInspectionSheet(
   ) {
     Column(
       modifier = Modifier
-          .fillMaxWidth()
-          .verticalScroll(rememberScrollState())
-          .padding(horizontal = 24.dp)
-          .padding(bottom = 48.dp),
+        .fillMaxWidth()
+        .verticalScroll(rememberScrollState())
+        .padding(horizontal = 24.dp)
+        .padding(bottom = 48.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
       // Header
@@ -197,7 +210,10 @@ fun EditInspectionSheet(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
       ) {
-        Text(cmpStringResource(AircraftRes.string.tach_based_hours), style = MaterialTheme.typography.bodyMedium)
+        Text(
+          cmpStringResource(AircraftRes.string.tach_based_hours),
+          style = MaterialTheme.typography.bodyMedium
+        )
         Switch(checked = tachRuleEnabled, onCheckedChange = { tachRuleEnabled = it })
       }
       if (tachRuleEnabled) {
@@ -215,7 +231,10 @@ fun EditInspectionSheet(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
       ) {
-        Text(cmpStringResource(AircraftRes.string.on_condition), style = MaterialTheme.typography.bodyMedium)
+        Text(
+          cmpStringResource(AircraftRes.string.on_condition),
+          style = MaterialTheme.typography.bodyMedium
+        )
         Switch(checked = onConditionEnabled, onCheckedChange = { onConditionEnabled = it })
       }
 

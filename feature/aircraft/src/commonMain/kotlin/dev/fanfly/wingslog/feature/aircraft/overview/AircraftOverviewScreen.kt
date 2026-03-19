@@ -52,14 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import org.jetbrains.compose.resources.StringResource
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.generated.resources.*
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -74,7 +67,38 @@ import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewViewMo
 import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.data.LogStats
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.aircraft.generated.resources.add_inspection
+import wingslog.feature.aircraft.generated.resources.airframe
+import wingslog.feature.aircraft.generated.resources.airframe_time_label
+import wingslog.feature.aircraft.generated.resources.annual
+import wingslog.feature.aircraft.generated.resources.back
+import wingslog.feature.aircraft.generated.resources.cancel
+import wingslog.feature.aircraft.generated.resources.delete
+import wingslog.feature.aircraft.generated.resources.delete_aircraft
+import wingslog.feature.aircraft.generated.resources.due_dec_2024
+import wingslog.feature.aircraft.generated.resources.due_in_14h
+import wingslog.feature.aircraft.generated.resources.edit_aircraft
+import wingslog.feature.aircraft.generated.resources.engine
+import wingslog.feature.aircraft.generated.resources.hundred_hr
+import wingslog.feature.aircraft.generated.resources.inspection_status
+import wingslog.feature.aircraft.generated.resources.log_details
+import wingslog.feature.aircraft.generated.resources.maintenance_summary
+import wingslog.feature.aircraft.generated.resources.make_model_template
+import wingslog.feature.aircraft.generated.resources.no_inspections_yet
+import wingslog.feature.aircraft.generated.resources.pitot_static
+import wingslog.feature.aircraft.generated.resources.prop_inspection
+import wingslog.feature.aircraft.generated.resources.prop_time_label
+import wingslog.feature.aircraft.generated.resources.propeller
+import wingslog.feature.aircraft.generated.resources.settings
+import wingslog.feature.aircraft.generated.resources.tach_time_hours_format
+import wingslog.feature.aircraft.generated.resources.tach_time_label
+import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
+import wingslog.feature.aircraft.generated.resources.total_logs
+import wingslog.feature.aircraft.generated.resources.transponder
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @Composable
 fun AircraftOverviewScreen(
@@ -202,7 +226,11 @@ fun AircraftOverviewContent(
           if (aircraft != null) {
             Column {
               Text(
-                text = cmpStringResource(AircraftRes.string.make_model_template, aircraft.make, aircraft.model),
+                text = cmpStringResource(
+                  AircraftRes.string.make_model_template,
+                  aircraft.make,
+                  aircraft.model
+                ),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
               )
@@ -222,16 +250,21 @@ fun AircraftOverviewContent(
           }
         }, actions = {
           IconButton(onClick = { showSettingsMenu = !showSettingsMenu }) {
-            Icon(Icons.Default.Settings, contentDescription = cmpStringResource(AircraftRes.string.settings))
+            Icon(
+              Icons.Default.Settings,
+              contentDescription = cmpStringResource(AircraftRes.string.settings)
+            )
           }
           DropdownMenu(
             expanded = showSettingsMenu, onDismissRequest = { showSettingsMenu = false }) {
-            DropdownMenuItem(text = { Text(cmpStringResource(AircraftRes.string.edit_aircraft)) }, onClick = {
-              showSettingsMenu = false
-              if (aircraft != null) {
-                onEditClick(aircraft.id)
-              }
-            })
+            DropdownMenuItem(
+              text = { Text(cmpStringResource(AircraftRes.string.edit_aircraft)) },
+              onClick = {
+                showSettingsMenu = false
+                if (aircraft != null) {
+                  onEditClick(aircraft.id)
+                }
+              })
             DropdownMenuItem(
               text = {
                 Text(

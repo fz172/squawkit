@@ -79,8 +79,8 @@ class EditAircraftViewModel(
     _uiState.update {
       it.copy(
         aircraft = it.aircraft.copy(
-        make = newValue.replaceFirstChar { char -> char.uppercase() }
-      ))
+          make = newValue.replaceFirstChar { char -> char.uppercase() }
+        ))
     }
   }
 
@@ -88,8 +88,8 @@ class EditAircraftViewModel(
     _uiState.update {
       it.copy(
         aircraft = it.aircraft.copy(
-        model = newValue.replaceFirstChar { char -> char.uppercase() }
-      ))
+          model = newValue.replaceFirstChar { char -> char.uppercase() }
+        ))
     }
   }
 

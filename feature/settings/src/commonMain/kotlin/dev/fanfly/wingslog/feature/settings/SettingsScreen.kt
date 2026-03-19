@@ -12,21 +12,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import wingslog.feature.settings.generated.resources.Res as SettingsRes
-import wingslog.feature.settings.generated.resources.add_aircraft
-import wingslog.feature.settings.generated.resources.sign_out
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res
-import wingslog.core.ui.generated.resources.*
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.Res
+import wingslog.core.ui.generated.resources.settings
+import wingslog.feature.settings.generated.resources.add_aircraft
+import wingslog.feature.settings.generated.resources.sign_out
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.settings.generated.resources.Res as SettingsRes
 
 @Composable
 fun SettingsScreen(

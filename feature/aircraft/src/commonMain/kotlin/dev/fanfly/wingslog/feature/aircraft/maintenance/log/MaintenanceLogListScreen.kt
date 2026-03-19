@@ -23,12 +23,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import org.jetbrains.compose.resources.StringResource
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.generated.resources.*
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -37,6 +31,13 @@ import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogL
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListUiState
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListViewModel
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.aircraft.generated.resources.add_log
+import wingslog.feature.aircraft.generated.resources.back
+import wingslog.feature.aircraft.generated.resources.failed_to_load_logs
+import wingslog.feature.aircraft.generated.resources.maintenance_logs
+import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_hint
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

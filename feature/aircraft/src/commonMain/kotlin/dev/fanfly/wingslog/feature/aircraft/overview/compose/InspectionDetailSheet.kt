@@ -25,22 +25,29 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import org.jetbrains.compose.resources.StringResource
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.generated.resources.*
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.core.ui.generated.resources.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import kotlinx.datetime.toJavaLocalDate
+import wingslog.feature.aircraft.generated.resources.done
+import wingslog.feature.aircraft.generated.resources.due_date
+import wingslog.feature.aircraft.generated.resources.due_tach
+import wingslog.feature.aircraft.generated.resources.edit_inspection
+import wingslog.feature.aircraft.generated.resources.maintenance_history
+import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_for_inspection
+import wingslog.feature.aircraft.generated.resources.on_condition
+import wingslog.feature.aircraft.generated.resources.overdue
+import wingslog.feature.aircraft.generated.resources.overdue_was
+import wingslog.feature.aircraft.generated.resources.tach_format
+import wingslog.feature.aircraft.generated.resources.unknown_date
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 private val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
 
@@ -78,10 +85,16 @@ fun InspectionDetailSheet(
         )
         Row {
           IconButton(onClick = onEditClick) {
-            Icon(Icons.Default.Edit, contentDescription = cmpStringResource(AircraftRes.string.edit_inspection))
+            Icon(
+              Icons.Default.Edit,
+              contentDescription = cmpStringResource(AircraftRes.string.edit_inspection)
+            )
           }
           IconButton(onClick = onDismiss) {
-            Icon(Icons.Default.Close, contentDescription = cmpStringResource(AircraftRes.string.done))
+            Icon(
+              Icons.Default.Close,
+              contentDescription = cmpStringResource(AircraftRes.string.done)
+            )
           }
         }
       }

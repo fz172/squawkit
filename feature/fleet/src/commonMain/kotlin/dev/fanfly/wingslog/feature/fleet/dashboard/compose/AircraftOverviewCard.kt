@@ -26,11 +26,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.PropellerBlade
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun AircraftDashboardCard(
