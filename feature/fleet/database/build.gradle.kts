@@ -36,21 +36,7 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.kermit)
         }
-        androidMain.dependencies {
-            implementation(project(":core:model"))
-            implementation(project(":core:database"))
-            implementation(project(":core:auth"))
-
-            implementation(libs.firebase.firestore)
-            implementation(libs.firebase.auth)
-
-            // DI
-            implementation(libs.koin.android)
-
-            // Logging
-            implementation(libs.flogger)
-            implementation(libs.flogger.system.backend)
-        }
+        androidMain.dependencies {}
     }
 }
 
