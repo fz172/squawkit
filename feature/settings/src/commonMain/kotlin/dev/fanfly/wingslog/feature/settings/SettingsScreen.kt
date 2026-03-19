@@ -14,18 +14,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
-import dev.fanfly.wingslog.feature.settings.R
+import wingslog.feature.settings.generated.resources.Res as SettingsRes
+import wingslog.feature.settings.generated.resources.add_aircraft
+import wingslog.feature.settings.generated.resources.sign_out
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.*
+import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun SettingsScreen(
@@ -66,19 +67,19 @@ fun SettingsScreen(
       UserProfileCard(
         data = UserProfileCardData(
           displayName = user.firebaseUser?.displayName,
-          photoUri = user.firebaseUser?.photoURL?.toUri(),
+          photoUri = user.firebaseUser?.photoURL?.toString(),
           licenceInfo = user.licenseInfo,
         ),
         onOpenEditProfile = { navController.navigate("edit_profile") }
       )
       SettingsRow(
         icon = Icons.Default.Add,
-        title = stringResource(R.string.add_aircraft),
+        title = cmpStringResource(SettingsRes.string.add_aircraft),
         onClick = { onAddAircraft() }
       )
       SettingsRow(
         icon = Icons.AutoMirrored.Filled.Logout,
-        title = stringResource(R.string.sign_out),
+        title = cmpStringResource(SettingsRes.string.sign_out),
         onClick = { settingsViewModel.logOut() },
         settingsLevel = SettingsLevel.DANGER
       )

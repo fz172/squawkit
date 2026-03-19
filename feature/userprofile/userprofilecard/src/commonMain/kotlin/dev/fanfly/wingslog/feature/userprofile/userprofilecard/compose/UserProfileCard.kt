@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose
 
-import android.net.Uri
-import android.text.TextUtils
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,7 +28,7 @@ import wingslog.core.ui.generated.resources.edit_profile
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 
 data class UserProfileCardData(
-  val photoUri: Uri? = null,
+  val photoUri: String? = null,
   val displayName: String? = null,
   val licenceInfo: LicenseInfo? = null
 )
@@ -68,7 +66,7 @@ fun UserProfileCard(
             text = stringResource(data.licenceInfo.license_type.displayResId()),
             fontSize = 16.sp,
           )
-          if (!TextUtils.isEmpty(data.licenceInfo.license_number)) {
+          if (!data.licenceInfo.license_number.isNullOrEmpty()) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
               text = data.licenceInfo.license_number,

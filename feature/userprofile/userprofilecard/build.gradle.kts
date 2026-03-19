@@ -2,6 +2,7 @@ plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
+  alias(libs.plugins.compose.multiplatform)
 }
 
 android {
@@ -32,18 +33,14 @@ kotlin {
   }
 
   sourceSets {
-    commonMain {}
-    androidMain.dependencies {
+    commonMain.dependencies {
       implementation(project(":core:ui"))
       implementation(project(":core:model"))
 
-      implementation(libs.androidx.core.ktx)
-      implementation(libs.androidx.lifecycle.runtime.ktx)
-
       // Compose
-      implementation(libs.androidx.compose.ui)
-      implementation(libs.androidx.compose.material3)
-      implementation(libs.coil.compose)
+      implementation(compose.ui)
+      implementation(compose.material3)
+      implementation(compose.components.resources)
     }
   }
 }

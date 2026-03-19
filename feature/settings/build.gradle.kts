@@ -2,6 +2,7 @@ plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
+  alias(libs.plugins.compose.multiplatform)
 }
 
 android {
@@ -23,6 +24,10 @@ android {
   }
 }
 
+compose.resources {
+  publicResClass = true
+}
+
 kotlin {
   jvmToolchain(21)
 
@@ -32,8 +37,7 @@ kotlin {
   }
 
   sourceSets {
-    commonMain {}
-    androidMain.dependencies {
+    commonMain.dependencies {
       implementation(project(":core:ui"))
       implementation(project(":core:model"))
       implementation(project(":core:database"))
@@ -42,15 +46,16 @@ kotlin {
       implementation(project(":feature:userprofile:database"))
 
       // Compose
-      implementation(libs.androidx.compose.ui)
-      implementation(libs.androidx.compose.material3)
+      implementation(compose.ui)
+      implementation(compose.material3)
+      implementation(compose.components.resources)
 
       // Navigation
       implementation(libs.androidx.navigation.compose)
 
       // Lifecycle & DI
-      implementation(libs.androidx.lifecycle.viewmodel.compose)
-      implementation(libs.koin.androidx.compose)
+      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+      implementation(libs.koin.compose.viewmodel)
 
       // Logging
       implementation(libs.kermit)

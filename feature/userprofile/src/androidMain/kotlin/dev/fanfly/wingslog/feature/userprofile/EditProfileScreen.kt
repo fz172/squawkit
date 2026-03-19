@@ -99,7 +99,7 @@ fun EditProfileScreen(
       UserProfileCard(
         data = UserProfileCardData(
           displayName = uiState.displayName,
-          photoUri = uiState.photoUri
+          photoUri = uiState.photoUri?.toString(),
         )
       )
 

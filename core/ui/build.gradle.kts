@@ -44,11 +44,13 @@ kotlin {
       api(compose.material3)
       api(compose.materialIconsExtended)
       api(compose.components.resources)
+      implementation(libs.coil.compose)
+      implementation(libs.coil.network.ktor3)
+      implementation(libs.ktor.client.core)
     }
     androidMain.dependencies {
       api(libs.androidx.compose.ui.tooling.preview)
-      // Image Loading
-      implementation(libs.coil.compose)
+      implementation(libs.ktor.client.okhttp)
     }
   }
 }
