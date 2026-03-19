@@ -13,22 +13,29 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
 kotlin {
-    jvmToolchain(11)
-
     androidTarget {
         compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
 
     sourceSets {
-        commonMain {}
+        commonMain.dependencies {
+            implementation(project(":core:model"))
+            implementation(project(":core:database"))
+            implementation(project(":core:auth"))
+
+            implementation(libs.gitlive.firebase.auth)
+            implementation(libs.gitlive.firebase.firestore)
+            implementation(libs.koin.core)
+            implementation(libs.kermit)
+        }
         androidMain.dependencies {
             implementation(project(":core:model"))
             implementation(project(":core:database"))

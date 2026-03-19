@@ -6,6 +6,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.fleet.database.FleetDashboardManager
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -16,7 +17,7 @@ class FleetDashboardViewModel(
   private val logManager: MaintenanceLogManager,
 ) : ViewModel() {
 
-  private var fleetInfoListener: ListenerRegistration? = null
+  private var fleetInfoJob: Job? = null
 
   private val _uiState: MutableStateFlow<FleetDashboardUiState> =
     MutableStateFlow(FleetDashboardUiState(isLoading = true))
@@ -28,9 +29,10 @@ class FleetDashboardViewModel(
   }
 
   private fun loadFleetData() {
-    viewModelScope.launch {
+    fleetInfoJob?.cancel()
+    fleetInfoJob = viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true) }
-      fleetInfoListener = fleetDashboardManager.observeFleetDashboard { result: List<Aircraft> ->
+      fleetDashboardManager.observeFleetDashboard().collect { result ->
         _uiState.update {
           it.copy(
             fleet = result, isLoading = false
