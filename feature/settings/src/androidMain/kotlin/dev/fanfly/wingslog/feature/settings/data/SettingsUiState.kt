@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.settings.data
 
-import com.google.firebase.auth.FirebaseUser
+import dev.gitlive.firebase.auth.FirebaseUser
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.newUserLicenseProfile
 

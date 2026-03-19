@@ -2,9 +2,9 @@ package dev.fanfly.wingslog.feature.fleet.database.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.core.database.common.GITLIVE_AIRCRAFT_INFO_BLOB
-import dev.fanfly.wingslog.core.database.common.getBlobAsBytes
-import dev.fanfly.wingslog.core.database.common.getGitLiveFleetCollectionRef
+import dev.fanfly.wingslog.core.database.GITLIVE_AIRCRAFT_INFO_BLOB
+import dev.fanfly.wingslog.core.database.getBlobAsBytes
+import dev.fanfly.wingslog.core.database.getGitLiveFleetCollectionRef
 import dev.fanfly.wingslog.feature.fleet.database.FleetDashboardManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
