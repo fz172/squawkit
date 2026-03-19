@@ -26,6 +26,7 @@ kotlin {
       api(compose.material3)
       api(compose.materialIconsExtended)
       api(compose.components.resources)
+      api(libs.kotlinx.datetime)
       implementation(libs.coil.compose)
       implementation(libs.coil.network.ktor3)
       implementation(libs.ktor.client.core)
