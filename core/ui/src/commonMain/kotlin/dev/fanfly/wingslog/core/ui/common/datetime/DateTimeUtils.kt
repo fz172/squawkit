@@ -6,13 +6,13 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import com.squareup.wire.Instant as WireInstant
 
+import kotlinx.datetime.format.char
+
 fun WireInstant.toLocalDate(): LocalDate {
     // Convert WireInstant (epoch seconds and nanos) to kotlinx.datetime.Instant
     val instant = Instant.fromEpochSeconds(this.epochSecond, this.nano.toInt())
     return instant.toLocalDateTime(TimeZone.UTC).date
 }
-
-import kotlinx.datetime.format.char
 
 private val DisplayDateFormat = LocalDate.Format {
     monthNumber()
@@ -23,5 +23,5 @@ private val DisplayDateFormat = LocalDate.Format {
 }
 
 fun LocalDate.toDisplayFormat(): String {
-    return this.format(DisplayDateFormat)
+    return DisplayDateFormat.format(this)
 }
