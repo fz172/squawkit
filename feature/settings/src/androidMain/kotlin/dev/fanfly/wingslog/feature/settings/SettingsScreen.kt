@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
@@ -61,7 +62,7 @@ fun SettingsScreen(
       UserProfileCard(
         data = UserProfileCardData(
           displayName = user.firebaseUser?.displayName,
-          photoUri = user.firebaseUser?.photoUrl,
+          photoUri = user.firebaseUser?.photoURL?.toUri(),
           licenceInfo = user.licenseInfo,
         ),
         onOpenEditProfile = { navController.navigate("edit_profile") }

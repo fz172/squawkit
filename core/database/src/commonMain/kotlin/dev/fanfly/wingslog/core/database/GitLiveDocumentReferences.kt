@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.database.common
+package dev.fanfly.wingslog.core.database
 
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference

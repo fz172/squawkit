@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.database.infra
+package dev.fanfly.wingslog.core.database.di
 
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth

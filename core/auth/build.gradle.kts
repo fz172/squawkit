@@ -34,7 +34,6 @@ kotlin {
       api(project(":core:model"))
 
       // Auth & Network
-      api(libs.firebase.auth)
       api(libs.play.services.auth)
       api(libs.androidx.credentials)
       api(libs.googleid)

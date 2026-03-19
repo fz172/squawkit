@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.database.common
+package dev.fanfly.wingslog.core.database
 
 import com.google.firebase.firestore.Blob
 import com.google.firebase.firestore.SetOptions.merge

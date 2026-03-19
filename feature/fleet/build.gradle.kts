@@ -40,7 +40,6 @@ kotlin {
       implementation(project(":feature:aircraft:database"))
 
       // Firebase
-      implementation(libs.firebase.firestore)
 
       // Compose
       implementation(libs.androidx.compose.ui)
