@@ -14,6 +14,13 @@ import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 
 class InspectionManagerImpl(
   private val firebaseAuth: FirebaseAuth,
@@ -79,8 +86,65 @@ class InspectionManagerImpl(
   }
 
   override suspend fun computeNextDue(card: InspectionCard, logs: List<MaintenanceLog>): DueStatus {
-    // TODO: Implement calculation logic
-    return DueStatus()
+    // 1. Force overrides
+    val hasForcedDate = card.force_due_date != null && (card.force_due_date!!.epochSecond > 0L)
+    val hasForcedTach = card.force_due_tach > 0f
+
+    if (hasForcedDate || hasForcedTach) {
+      return DueStatus(
+        nextDueDate = if (hasForcedDate) {
+          Instant.fromEpochSeconds(card.force_due_date!!.epochSecond, card.force_due_date!!.nano)
+            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+        } else null,
+        nextDueTach = if (hasForcedTach) card.force_due_tach else null,
+        isOverdue = false
+      )
+    }
+
+    // 2. Compute based on rules and last maintenance
+    val relevantLogs = logs.filter { card.id in it.inspection_ids }
+      .sortedByDescending { it.timestamp?.epochSecond ?: 0L }
+    val latestLog = relevantLogs.firstOrNull()
+
+    var nextDueDate: LocalDate? = null
+    var nextDueTach: Float? = null
+    var isOnCondition = false
+
+    for (rule in card.rules) {
+      when {
+        rule.time_rule != null -> {
+          val baseDate = if (latestLog?.timestamp != null) {
+            Instant.fromEpochSeconds(latestLog.timestamp!!.epochSecond, latestLog.timestamp!!.nano)
+              .toLocalDateTime(TimeZone.currentSystemDefault()).date
+          } else {
+            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+          }
+          val calculated = baseDate.plus(rule.time_rule!!.interval_months, DateTimeUnit.MONTH)
+          if (nextDueDate == null || calculated < nextDueDate) {
+            nextDueDate = calculated
+          }
+        }
+
+        rule.tach_rule != null -> {
+          val baseTach = latestLog?.tach_time?.toFloat() ?: 0f
+          val calculated = baseTach + rule.tach_rule!!.interval_hours.toFloat()
+          if (nextDueTach == null || calculated < nextDueTach) {
+            nextDueTach = calculated
+          }
+        }
+
+        rule.on_condition_rule != null -> {
+          isOnCondition = true
+        }
+      }
+    }
+
+    return DueStatus(
+      nextDueDate = nextDueDate,
+      nextDueTach = nextDueTach,
+      isOnCondition = isOnCondition,
+      isOverdue = false
+    )
   }
 
   private suspend fun saveCard(
