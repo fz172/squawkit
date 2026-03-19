@@ -1,14 +1,28 @@
 plugins {
-  alias(libs.plugins.android.multiplatform.library)
+  alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
+}
+
+android {
+  namespace = "dev.fanfly.wingslog.core.database"
+  compileSdk = 36
+
+  defaultConfig {
+    minSdk = 33
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  }
+
+  compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+  }
 }
 
 kotlin {
   jvmToolchain(21)
-  androidLibrary {
-    namespace = "dev.fanfly.wingslog.core.database"
-    compileSdk = 36
-    minSdk = 33
+  androidTarget {
+    compilerOptions {
+    }
   }
 
   sourceSets {
@@ -19,8 +33,6 @@ kotlin {
 
       // DI
       api(libs.koin.core)
-
-      implementation(project.dependencies.platform(libs.firebase.bom))
     }
     androidMain.dependencies {
       api(project(":core:model"))
@@ -40,4 +52,9 @@ kotlin {
       implementation(libs.androidx.core.ktx)
     }
   }
+}
+
+dependencies {
+  // Firebase BOM inside standard dependencies block
+  implementation(platform(libs.firebase.bom))
 }

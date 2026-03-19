@@ -1,8 +1,27 @@
 plugins {
-  alias(libs.plugins.android.multiplatform.library)
+  alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.compose.multiplatform)
+}
+
+android {
+  namespace = "dev.fanfly.wingslog.feature.fleet"
+  compileSdk = 36
+
+  defaultConfig {
+    minSdk = 33
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  }
+
+  buildFeatures {
+    compose = true
+  }
+
+  compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+  }
 }
 
 compose.resources {
@@ -12,10 +31,9 @@ compose.resources {
 kotlin {
   jvmToolchain(21)
 
-  androidLibrary {
-    namespace = "dev.fanfly.wingslog.feature.fleet"
-    compileSdk = 36
-    minSdk = 33
+  androidTarget {
+    compilerOptions {
+    }
   }
 
   sourceSets {
@@ -46,14 +64,16 @@ kotlin {
 
       // Tooling
       implementation(compose.components.uiToolingPreview)
-
-      implementation(project.dependencies.platform(libs.firebase.bom))
-    }
-    commonTest.dependencies {
-      implementation(libs.junit)
-      implementation("io.mockk:mockk:1.13.10")
-      implementation("com.google.truth:truth:1.4.2")
-      implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
     }
   }
+}
+
+dependencies {
+  implementation(platform(libs.firebase.bom))
+  implementation(platform(libs.androidx.compose.bom))
+
+  testImplementation(libs.junit)
+  testImplementation("io.mockk:mockk:1.13.10")
+  testImplementation("com.google.truth:truth:1.4.2")
+  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
 }

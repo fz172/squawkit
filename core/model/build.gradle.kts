@@ -1,7 +1,20 @@
 plugins {
-  alias(libs.plugins.android.multiplatform.library)
+  alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.wire)
+}
+
+android {
+  namespace = "dev.fanfly.wingslog.core.model"
+  compileSdk = 36
+
+  defaultConfig {
+    minSdk = 33
+  }
+  compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+  }
 }
 
 wire {
@@ -14,10 +27,9 @@ wire {
 kotlin {
   jvmToolchain(21)
 
-  androidLibrary {
-    namespace = "dev.fanfly.wingslog.core.model"
-    compileSdk = 36
-    minSdk = 33
+  androidTarget {
+    compilerOptions {
+    }
   }
 
   sourceSets {

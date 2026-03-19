@@ -1,15 +1,29 @@
 plugins {
-  alias(libs.plugins.android.multiplatform.library)
+  alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
+}
+
+android {
+  namespace = "dev.fanfly.wingslog.feature.aircraft.database"
+  compileSdk = 36
+
+  defaultConfig {
+    minSdk = 33
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  }
+
+  compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+  }
 }
 
 kotlin {
   jvmToolchain(21)
 
-  androidLibrary {
-    namespace = "dev.fanfly.wingslog.feature.aircraft.database"
-    compileSdk = 36
-    minSdk = 33
+  androidTarget {
+    compilerOptions {
+    }
   }
 
   sourceSets {
@@ -24,16 +38,16 @@ kotlin {
 
       implementation(libs.koin.core)
       implementation(libs.kermit)
-
-      implementation(project.dependencies.platform(libs.firebase.bom))
     }
     androidMain.dependencies {
     }
-    commonTest.dependencies {
-      implementation(libs.junit)
-      implementation("io.mockk:mockk:1.13.10")
-      implementation("com.google.truth:truth:1.4.2")
-      implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
-    }
   }
+}
+
+dependencies {
+  implementation(platform(libs.firebase.bom))
+  testImplementation(libs.junit)
+  testImplementation("io.mockk:mockk:1.13.10")
+  testImplementation("com.google.truth:truth:1.4.2")
+  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
 }
