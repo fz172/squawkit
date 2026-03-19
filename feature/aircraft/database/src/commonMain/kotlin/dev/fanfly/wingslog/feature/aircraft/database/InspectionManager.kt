@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.feature.aircraft.database
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import kotlinx.coroutines.flow.Flow
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
 /**
  * Status computed for an inspection card, describing when it is next due.

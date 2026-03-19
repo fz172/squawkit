@@ -1,74 +1,60 @@
 package dev.fanfly.wingslog.feature.aircraft.database.impl
 
 import co.touchlab.kermit.Logger
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.AggregateSource
-import com.google.firebase.firestore.Blob
-import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.core.database.common.getFleetCollectionRef
+import dev.fanfly.wingslog.core.database.common.getBlobAsBytes
+import dev.fanfly.wingslog.core.database.common.getGitLiveFleetCollectionRef
+import dev.fanfly.wingslog.core.database.common.generateRandomId
+import dev.fanfly.wingslog.core.database.common.setEncoded
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
-import kotlinx.coroutines.channels.awaitClose
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.firestore.CollectionReference
+import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.gitlive.firebase.firestore.where
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.flow.map
+import kotlin.time.Duration.Companion.days
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
 class MaintenanceLogManagerImpl(
   private val firebaseAuth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
 ) : MaintenanceLogManager {
 
-  override fun observeLogs(aircraftId: String): Flow<List<MaintenanceLog>> = callbackFlow {
+  override fun observeLogs(aircraftId: String): Flow<List<MaintenanceLog>> {
     val logsRef = getLogsCollectionRef(aircraftId)
-    if (logsRef == null) {
-      trySend(emptyList())
-      close(Exception("Logs reference is null (user likely not logged in)"))
-      return@callbackFlow
-    }
+      ?: return kotlinx.coroutines.flow.flowOf(emptyList())
 
-    val listener = logsRef
-      .orderBy(TIMESTAMP_FIELD, com.google.firebase.firestore.Query.Direction.DESCENDING)
-      .addSnapshotListener { snapshot, e ->
-      if (e != null) {
-        logger.w(e) { "Listen failed for logs of aircraft $aircraftId" }
-        close(e)
-        return@addSnapshotListener
-      }
-
+    return logsRef.snapshots.map { snapshot ->
       val logs = mutableListOf<MaintenanceLog>()
-      if (snapshot != null && !snapshot.isEmpty) {
-        for (doc in snapshot.documents) {
-          val blob = doc.getBlob(LOG_INFO_BLOB)
-          if (blob != null) {
-            try {
-              val log = MaintenanceLog.ADAPTER.decode(blob.toBytes())
-              // ID should match document ID, just in case
-              logs.add(log)
-            } catch (e: Exception) {
-              logger.w(e) { "Failed to parse log ${doc.id}" }
-            }
+      for (doc in snapshot.documents) {
+        val blobBytes = doc.getBlobAsBytes(LOG_INFO_BLOB)
+        if (blobBytes != null) {
+          try {
+            logs.add(MaintenanceLog.ADAPTER.decode(blobBytes))
+          } catch (e: Exception) {
+            logger.w(e) { "Failed to parse log ${doc.id}" }
           }
         }
       }
-      trySend(logs)
+      // Use epochSecond from Wire Instant for sorting
+      logs.sortedByDescending { it.timestamp?.epochSecond ?: 0L }
     }
-
-    awaitClose { listener.remove() }
   }
 
   override suspend fun addLog(aircraftId: String, log: MaintenanceLog): Result<Boolean> = try {
     val logsRef = getLogsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
     
-    // Generate an ID if needed, or let Firestore generate it.
-    // However, since we store the ID inside the Proto, we should probably generate it first.
-    val newDocRef = if (log.id.isEmpty()) logsRef.document() else logsRef.document(log.id)
+    val newDocRef = if (log.id.isEmpty()) {
+        logsRef.document(generateRandomId()) 
+    } else {
+        logsRef.document(log.id)
+    }
+    
     val finalLog = if (log.id.isEmpty()) log.copy(id = newDocRef.id) else log
 
     saveLog(newDocRef, finalLog)
-    
     Result.success(true)
   } catch (e: Exception) {
     logger.w(e) { "Error adding log" }
@@ -78,9 +64,7 @@ class MaintenanceLogManagerImpl(
   override suspend fun updateLog(aircraftId: String, log: MaintenanceLog): Result<Boolean> = try {
     val logsRef = getLogsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
     val docRef = logsRef.document(log.id)
-    
     saveLog(docRef, log)
-    
     Result.success(true)
   } catch (e: Exception) {
     logger.w(e) { "Error updating log ${log.id}" }
@@ -89,7 +73,7 @@ class MaintenanceLogManagerImpl(
 
   override suspend fun deleteLog(aircraftId: String, logId: String): Result<Boolean> = try {
     val logsRef = getLogsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
-    logsRef.document(logId).delete().await()
+    logsRef.document(logId).delete()
     logger.d { "Log $logId deleted successfully." }
     Result.success(true)
   } catch (e: Exception) {
@@ -100,27 +84,18 @@ class MaintenanceLogManagerImpl(
   override suspend fun getRecentLogCount(aircraftId: String, days: Int): Result<Long> = try {
     val logsRef = getLogsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
 
-    val cutoffMillis = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(days.toLong())
-    // Convert to seconds and nanoseconds for Timestamp
-    val cutoffTimestamp = com.google.firebase.Timestamp(cutoffMillis / 1000, ((cutoffMillis % 1000) * 1000000).toInt())
-
-    val snapshot = logsRef
-      .whereGreaterThan(TIMESTAMP_FIELD, cutoffTimestamp)
-      .count()
-      .get(AggregateSource.SERVER)
-      .await()
-
-    Result.success(snapshot.count)
+    val cutoff = Clock.System.now().minus(days.days)
+    val snapshot = logsRef.where(TIMESTAMP_FIELD, greaterThan = cutoff).get()
+    Result.success(snapshot.documents.size.toLong())
   } catch (e: Exception) {
     logger.w(e) { "Error counting recent logs" }
     Result.failure(e)
   }
 
-  private suspend fun saveLog(docRef: com.google.firebase.firestore.DocumentReference, log: MaintenanceLog) {
-    // Map fields for querying
-    val data = hashMapOf<String, Any>(
-      LOG_INFO_BLOB to Blob.fromBytes(MaintenanceLog.ADAPTER.encode(log)),
-      TIMESTAMP_FIELD to com.google.firebase.Timestamp(log.timestamp?.epochSecond ?: 0L, log.timestamp?.nano ?: 0),
+  private suspend fun saveLog(docRef: dev.gitlive.firebase.firestore.DocumentReference, log: MaintenanceLog) {
+    val data = mutableMapOf<String, Any>(
+      LOG_INFO_BLOB to MaintenanceLog.ADAPTER.encode(log),
+      TIMESTAMP_FIELD to (log.timestamp?.let { Instant.fromEpochSeconds(it.epochSecond, it.nano) } ?: Instant.fromEpochSeconds(0L)),
       COMPONENT_TYPE_FIELD to log.component_type.name,
       TECHNICIAN_ID_FIELD to log.technician_id,
       INSPECTION_IDS_FIELD to log.inspection_ids
@@ -130,15 +105,15 @@ class MaintenanceLogManagerImpl(
       data[COMPONENT_SERIAL_FIELD] = log.component_serial
     }
     
-    if (log.tach_time > 0) {
+    if (log.tach_time > 0.0) {
       data[TACH_TIME_FIELD] = log.tach_time
     }
 
-    docRef.set(data, SetOptions.merge()).await()
+    docRef.setEncoded(data, merge = true)
   }
 
   private fun getLogsCollectionRef(aircraftId: String): CollectionReference? {
-    return firestore.getFleetCollectionRef(firebaseAuth)?.document(aircraftId)?.collection(MAINTENANCE_LOGS_COLLECTION)
+    return firestore.getGitLiveFleetCollectionRef(firebaseAuth)?.document(aircraftId)?.collection(MAINTENANCE_LOGS_COLLECTION)
   }
 
   companion object {

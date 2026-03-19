@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.userprofile.database.impl
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.database.common.getBlobAsBytes
 import dev.fanfly.wingslog.core.database.common.getGitLiveUserDocumentRef
+import dev.fanfly.wingslog.core.database.common.setEncoded
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.newUserLicenseProfile
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
@@ -49,7 +50,7 @@ class UserProfileManagerImpl(
 
       val data = mapOf(LICENSE_INFO_BLOB to LicenseInfo.ADAPTER.encode(licenseInfo))
 
-      docRef.set(data, merge = true)
+      docRef.setEncoded(data, merge = true)
 
       logger.d { "Profile updated successfully." }
       Result.success(true)

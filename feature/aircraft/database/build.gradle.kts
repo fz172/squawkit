@@ -27,28 +27,26 @@ kotlin {
     }
 
     sourceSets {
-        commonMain {}
-        androidMain.dependencies {
+        commonMain.dependencies {
             implementation(project(":core:model"))
             implementation(project(":core:database"))
             implementation(project(":core:auth"))
 
-            implementation(libs.firebase.firestore)
-            implementation(libs.firebase.auth)
+            implementation(libs.gitlive.firebase.firestore)
+            implementation(libs.gitlive.firebase.auth)
+            implementation(libs.kotlinx.datetime)
 
-            // DI
-            implementation(libs.koin.android)
-
-            // Logging
+            implementation(libs.koin.core)
             implementation(libs.kermit)
+        }
+        androidMain.dependencies {
+            implementation(libs.koin.android)
         }
     }
 }
 
 dependencies {
     implementation(platform(libs.firebase.bom))
-
-    testImplementation(project(":core:model"))
     testImplementation(libs.junit)
     testImplementation("io.mockk:mockk:1.13.10")
     testImplementation("com.google.truth:truth:1.4.2")

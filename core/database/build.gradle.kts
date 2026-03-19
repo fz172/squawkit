@@ -29,6 +29,7 @@ kotlin {
         commonMain.dependencies {
             api(libs.gitlive.firebase.firestore)
             api(libs.gitlive.firebase.auth)
+            api(libs.kotlinx.datetime)
             
             // DI
             api(libs.koin.core)

@@ -263,7 +263,7 @@ fun AircraftOverviewContent(
         cardWithStatus = selectedInspection,
         logs = logsForSelectedInspection,
         onDismiss = onDismissInspectionDetail,
-        onEditClick = onEditInspectionClick,
+        onEditClick = { onEditInspectionClick(selectedInspection) },
       )
     }
 

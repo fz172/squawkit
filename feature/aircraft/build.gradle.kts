@@ -41,6 +41,8 @@ kotlin {
             
             implementation(project(":feature:aircraft:database"))
             
+            implementation(libs.kotlinx.datetime)
+
             // Compose
             implementation(libs.androidx.compose.ui)
             implementation(libs.androidx.compose.material3)
