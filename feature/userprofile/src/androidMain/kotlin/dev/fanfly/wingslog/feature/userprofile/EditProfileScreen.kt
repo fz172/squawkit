@@ -41,6 +41,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.feature.userprofile.R
+import wingslog.core.ui.generated.resources.Res
+import wingslog.core.ui.generated.resources.*
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
@@ -77,7 +81,7 @@ fun EditProfileScreen(
 
   Scaffold(topBar = {
     WingsLogTopAppBar(
-      title = stringResource(R.string.edit_profile), onBackClick = { navController.popBackStack() })
+      title = cmpStringResource(Res.string.edit_profile), onBackClick = { navController.popBackStack() })
   }, bottomBar = {
     // This composable holds the buttons pinned to the bottom
     BottomButtons(
@@ -106,7 +110,7 @@ fun EditProfileScreen(
           value = stringResource(uiState.licenceInfo.license_type.displayResId()),
           onValueChange = {},
           readOnly = true,
-          label = { Text(text = stringResource(R.string.license_type)) },
+          label = { Text(text = cmpStringResource(Res.string.license_type)) },
           trailingIcon = {
             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
           },
@@ -222,7 +226,7 @@ fun EditProfileScreen(
           dismissButton = {
             TextButton(
               onClick = { showDatePicker = false }) {
-              Text(text = stringResource(R.string.cancel))
+              Text(text = cmpStringResource(Res.string.cancel))
             }
           }) {
           DatePicker(state = datePickerState)

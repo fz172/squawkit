@@ -16,6 +16,7 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.2"
 composeBom = "2026.01.00"
+composeMultiplatform = "1.7.3"
 lifecycleRuntimeKtxVersion = "2.10.0"
 materialIconsExtended = "1.7.8"
 navigationCompose = "2.9.6"
@@ -71,4 +72,5 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 wire = { id = "com.squareup.wire", version.ref = "wire" }

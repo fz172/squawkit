@@ -21,10 +21,13 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
-import dev.fanfly.wingslog.core.ui.R
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.core.ui.userprofile.compose.ProfileImage
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
+import wingslog.core.ui.generated.resources.Res
+import wingslog.core.ui.generated.resources.edit_profile
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
 
 data class UserProfileCardData(
   val photoUri: Uri? = null,
@@ -90,7 +93,7 @@ fun UserProfileCard(
           shape = RoundedCornerShape(12.dp),
         ) {
           Text(
-            text = stringResource(R.string.edit_profile),
+            text = cmpStringResource(Res.string.edit_profile),
             modifier = Modifier.padding(vertical = 8.dp)
           )
         }

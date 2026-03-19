@@ -125,13 +125,17 @@ import dev.gitlive.firebase.firestore.firestore
 
 31 UI files currently use `androidx.compose.*` imports. API surface is nearly identical — mostly import path changes.
 
-**Steps:**
-- Add JetBrains Compose Multiplatform plugin to root `build.gradle.kts`
-- Replace `androidx.compose.*` BOM with Compose Multiplatform BOM in `core/ui` and feature modules
-- Move UI composables from `androidMain` to `commonMain` after import updates
-- Replace `androidx.navigation.compose` with `org.jetbrains.androidx.navigation`
-- Replace Coil Compose with Coil 3.x KMP (`io.coil-kt.coil3:coil-compose-core`)
-- Any Android-specific code (Activity, lifecycle hooks) stays in `androidMain` via `expect/actual`
+**Strategy: Staged feature-by-feature transition.**
+Since JetBrains Compose Multiplatform binary-matches Jetpack Compose on Android, this migration will be executed in sequential stages to guarantee stability.
+
+**Sub-Steps:**
+- **Step 1.4.1:** Build Layer & Core — Apply CMP plugin (`1.7.3`) to root `build.gradle.kts` and `libs.versions.toml`. Migrate `core/ui` dependencies to CMP, moving foundational UI (Themes, etc.) to `commonMain`.
+- **Step 1.4.2:** Feature Migration — Sequentially migrate modules (Apply CMP plugin, configure CMP ViewModel, move `androidMain` files to `commonMain`):
+  - **Step 1.4.2.1:** `feature/settings`
+  - **Step 1.4.2.2:** `feature/userprofile` (Handle `android.net.Uri` appropriately)
+  - **Step 1.4.2.3:** `feature/fleet`
+  - **Step 1.4.2.4:** `feature/aircraft`
+- **Step 1.4.3:** App-Level Dependencies — Replace `androidx.navigation.compose` with CMP Navigation globally, update Coil to Coil 3.x KMP, and configure final `app` module entry points.
 
 ---
 

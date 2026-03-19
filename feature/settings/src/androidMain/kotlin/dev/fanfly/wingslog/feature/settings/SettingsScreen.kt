@@ -17,6 +17,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.feature.settings.R
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.Res
+import wingslog.core.ui.generated.resources.*
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
@@ -49,7 +53,7 @@ fun SettingsScreen(
   Scaffold(
     topBar = {
       WingsLogTopAppBar(
-        title = stringResource(R.string.settings),
+        title = cmpStringResource(Res.string.settings),
         onBackClick = { navController.popBackStack() })
     }) { innerPadding ->
     Column(

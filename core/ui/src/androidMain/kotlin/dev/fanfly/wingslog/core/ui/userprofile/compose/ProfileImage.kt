@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose
+package dev.fanfly.wingslog.core.ui.userprofile.compose
 
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
@@ -10,10 +10,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import dev.fanfly.wingslog.core.ui.R
+import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res
+import wingslog.core.ui.generated.resources.profile_picture
 
 @Composable
 fun ProfileImage(photoUri: Uri?) {
@@ -25,7 +26,7 @@ fun ProfileImage(photoUri: Uri?) {
   ) {
     AsyncImage(
       model = photoUri,
-      contentDescription = stringResource(R.string.profile_picture),
+      contentDescription = stringResource(Res.string.profile_picture),
       contentScale = ContentScale.Crop,
       modifier = Modifier.fillMaxSize()
     )

@@ -2,6 +2,7 @@ plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
+  alias(libs.plugins.compose.multiplatform)
 }
 
 android {
@@ -23,6 +24,10 @@ android {
   }
 }
 
+compose.resources {
+  publicResClass = true
+}
+
 kotlin {
   jvmToolchain(21)
 
@@ -32,15 +37,16 @@ kotlin {
   }
 
   sourceSets {
-    commonMain {}
-    androidMain.dependencies {
+    commonMain.dependencies {
       api(project(":core:model"))
-      api(libs.androidx.compose.ui)
-      api(libs.androidx.compose.ui.graphics)
+      api(compose.ui)
+      api(compose.components.uiToolingPreview)
+      api(compose.material3)
+      api(compose.materialIconsExtended)
+      api(compose.components.resources)
+    }
+    androidMain.dependencies {
       api(libs.androidx.compose.ui.tooling.preview)
-      api(libs.androidx.compose.material3)
-      api(libs.androidx.compose.material.icons.extended)
-
       // Image Loading
       implementation(libs.coil.compose)
     }
@@ -48,7 +54,6 @@ kotlin {
 }
 
 dependencies {
-  api(platform(libs.androidx.compose.bom))
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

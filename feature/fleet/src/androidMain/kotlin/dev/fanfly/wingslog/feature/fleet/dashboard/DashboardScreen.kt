@@ -29,6 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import wingslog.core.ui.generated.resources.Res
+import wingslog.core.ui.generated.resources.*
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import dev.fanfly.wingslog.feature.fleet.R
 import dev.fanfly.wingslog.feature.fleet.dashboard.compose.AircraftDashboardCard
 import dev.fanfly.wingslog.feature.fleet.dashboard.data.FleetDashboardViewModel
@@ -50,18 +53,18 @@ fun DashboardScreen(
     modifier = Modifier.fillMaxSize(),
     topBar = {
       TopAppBar(
-        title = { Text(text = stringResource(R.string.app_name)) },
+        title = { Text(text = cmpStringResource(Res.string.app_name)) },
         actions = {
           Box {
             IconButton(onClick = { menuExpanded = true }) {
-              Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.settings))
+              Icon(Icons.Default.MoreVert, contentDescription = cmpStringResource(Res.string.settings))
             }
             DropdownMenu(
               expanded = menuExpanded,
               onDismissRequest = { menuExpanded = false }
             ) {
               DropdownMenuItem(
-                text = { Text(stringResource(R.string.settings)) },
+                text = { Text(cmpStringResource(Res.string.settings)) },
                 onClick = {
                   menuExpanded = false
                   onOpenSettings()

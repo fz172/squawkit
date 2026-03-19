@@ -15,11 +15,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.ui.R
+import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res
+import wingslog.core.ui.generated.resources.cancel
+import wingslog.core.ui.generated.resources.save_changes
 
 
 /**
@@ -48,7 +50,7 @@ fun BottomButtons(
       colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
       enabled = saveEnabled
     ) {
-      Text(text = stringResource(R.string.save_changes), fontSize = 16.sp)
+      Text(text = stringResource(Res.string.save_changes), fontSize = 16.sp)
     }
 
     Spacer(modifier = Modifier.height(8.dp))
@@ -58,7 +60,7 @@ fun BottomButtons(
       enabled = cancelEnabled
     ) {
       Text(
-        text = stringResource(R.string.cancel),
+        text = stringResource(Res.string.cancel),
         color = MaterialTheme.colorScheme.primary,
         fontSize = 16.sp
       )
