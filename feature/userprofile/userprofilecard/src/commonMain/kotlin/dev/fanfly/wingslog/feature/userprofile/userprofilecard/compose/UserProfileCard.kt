@@ -24,7 +24,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.edit_profile
-import wingslog.core.ui.generated.resources.profile_picture
+import wingslog.feature.userprofile.userprofilecard.generated.resources.Res as CardRes
+import wingslog.feature.userprofile.userprofilecard.generated.resources.profile_picture
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 
 data class UserProfileCardData(
@@ -51,7 +52,7 @@ fun UserProfileCard(
       // --- Profile Image ---
       CircularImage(
         photoUri = data.photoUri,
-        contentDescription = cmpStringResource(Res.string.profile_picture)
+        contentDescription = cmpStringResource(CardRes.string.profile_picture)
       )
 
       Spacer(modifier = Modifier.height(16.dp))
