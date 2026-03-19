@@ -27,20 +27,23 @@ kotlin {
     }
 
     sourceSets {
-        commonMain {}
-        androidMain.dependencies {
+        commonMain.dependencies {
             implementation(project(":core:model"))
             implementation(project(":core:database"))
             implementation(project(":core:auth"))
 
             implementation(libs.gitlive.firebase.firestore)
             implementation(libs.gitlive.firebase.auth)
-
+            
             // DI
-            implementation(libs.koin.android)
+            implementation(libs.koin.core)
 
             // Logging
             implementation(libs.kermit)
+        }
+        androidMain.dependencies {
+            // DI
+            implementation(libs.koin.android)
         }
     }
 }

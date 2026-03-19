@@ -1,14 +1,14 @@
 package dev.fanfly.wingslog.feature.userprofile.database.impl
 
 import co.touchlab.kermit.Logger
-import com.google.firebase.firestore.Blob
-import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.firestore.DocumentReference
-import dev.gitlive.firebase.firestore.FirebaseFirestore
-import dev.fanfly.wingslog.core.database.common.getUserDocumentRef
+import dev.fanfly.wingslog.core.database.common.getBlobAsBytes
+import dev.fanfly.wingslog.core.database.common.getGitLiveUserDocumentRef
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.newUserLicenseProfile
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.firestore.DocumentReference
+import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -23,12 +23,10 @@ class UserProfileManagerImpl(
 
     return docRef.snapshots.map { snapshot ->
       if (snapshot.exists) {
-        // getEncoded returns the raw Firebase value; Blob comes through as com.google.firebase.firestore.Blob
-        @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-        val blob = snapshot.getEncoded(LICENSE_INFO_BLOB) as? Blob
-        if (blob != null) {
+        val blobBytes = snapshot.getBlobAsBytes(LICENSE_INFO_BLOB)
+        if (blobBytes != null) {
           try {
-            LicenseInfo.ADAPTER.decode(blob.toBytes())
+            LicenseInfo.ADAPTER.decode(blobBytes)
           } catch (e: Exception) {
             logger.w(e) { "Failed to parse LicenseInfo proto" }
             newUserLicenseProfile()
@@ -49,7 +47,7 @@ class UserProfileManagerImpl(
       val docRef = getProfileDocumentRef()
         ?: return Result.failure(Exception("User not logged in."))
 
-      val data = mapOf(LICENSE_INFO_BLOB to Blob.fromBytes(LicenseInfo.ADAPTER.encode(licenseInfo)))
+      val data = mapOf(LICENSE_INFO_BLOB to LicenseInfo.ADAPTER.encode(licenseInfo))
 
       docRef.set(data, merge = true)
 
@@ -63,7 +61,7 @@ class UserProfileManagerImpl(
   }
 
   private fun getProfileDocumentRef(): DocumentReference? =
-    firestore.getUserDocumentRef(firebaseAuth)?.collection(PROFILE_COLLECTION)
+    firestore.getGitLiveUserDocumentRef(firebaseAuth)?.collection(PROFILE_COLLECTION)
       ?.document(LICENSE_INFO_DOCUMENT)
 
   companion object {

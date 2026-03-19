@@ -13,14 +13,6 @@ fun FirebaseFirestore.getUserDocumentRef(firebaseAuth: FirebaseAuth): DocumentRe
 fun FirebaseFirestore.getFleetCollectionRef(firebaseAuth: FirebaseAuth): CollectionReference? =
   getUserDocumentRef(firebaseAuth)?.collection(FLEET_COLLECTION)
 
-// GitLive overloads
-fun dev.gitlive.firebase.firestore.FirebaseFirestore.getUserDocumentRef(
-  firebaseAuth: dev.gitlive.firebase.auth.FirebaseAuth
-): dev.gitlive.firebase.firestore.DocumentReference? {
-  val userId = firebaseAuth.currentUser?.uid ?: return null
-  return collection(USERS_COLLECTION).document(userId)
-}
-
 private const val USERS_COLLECTION = "users"
 
 
