@@ -1,13 +1,15 @@
 package dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils
 
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
-import dev.fanfly.wingslog.feature.userprofile.userprofilecard.R
+import org.jetbrains.compose.resources.StringResource
+import wingslog.feature.userprofile.userprofilecard.generated.resources.Res as UserProfileCardRes
+import wingslog.feature.userprofile.userprofilecard.generated.resources.*
 
-fun LicenseType.displayResId(): Int {
+fun LicenseType.displayResId(): StringResource {
   return when (this) {
-    LicenseType.NONE -> R.string.license_type_none
-    LicenseType.REPAIRMAN -> R.string.license_type_repairman
-    LicenseType.AMT -> R.string.license_type_amt
-    else -> R.string.license_type_none
+    LicenseType.NONE -> UserProfileCardRes.string.license_type_none
+    LicenseType.REPAIRMAN -> UserProfileCardRes.string.license_type_repairman
+    LicenseType.AMT -> UserProfileCardRes.string.license_type_amt
+    else -> UserProfileCardRes.string.license_type_none
   }
 }

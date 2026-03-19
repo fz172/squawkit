@@ -39,12 +39,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.feature.userprofile.R
-import wingslog.core.ui.generated.resources.Res
-import wingslog.core.ui.generated.resources.*
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import androidx.compose.ui.unit.dp
+import wingslog.feature.userprofile.generated.resources.Res as UserProfileRes
+import wingslog.feature.userprofile.generated.resources.*
+import wingslog.core.ui.generated.resources.Res as CoreUiRes
+import wingslog.core.ui.generated.resources.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
@@ -57,7 +57,7 @@ import dev.fanfly.wingslog.feature.userprofile.data.EditProfileViewModel
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import java.time.Instant
 
 
@@ -81,7 +81,7 @@ fun EditProfileScreen(
 
   Scaffold(topBar = {
     WingsLogTopAppBar(
-      title = cmpStringResource(Res.string.edit_profile), onBackClick = { navController.popBackStack() })
+      title = cmpStringResource(CoreUiRes.string.edit_profile), onBackClick = { navController.popBackStack() })
   }, bottomBar = {
     // This composable holds the buttons pinned to the bottom
     BottomButtons(
@@ -99,7 +99,7 @@ fun EditProfileScreen(
       UserProfileCard(
         data = UserProfileCardData(
           displayName = uiState.displayName,
-          photoUri = uiState.photoUri?.toString(),
+          photoUri = uiState.photoUri,
         )
       )
 
@@ -107,10 +107,10 @@ fun EditProfileScreen(
       ExposedDropdownMenuBox(
         expanded = expanded, onExpandedChange = { expanded = !expanded }) {
         OutlinedTextField(
-          value = stringResource(uiState.licenceInfo.license_type.displayResId()),
+          value = cmpStringResource(uiState.licenceInfo.license_type.displayResId()),
           onValueChange = {},
           readOnly = true,
-          label = { Text(text = cmpStringResource(Res.string.license_type)) },
+          label = { Text(text = cmpStringResource(CoreUiRes.string.license_type)) },
           trailingIcon = {
             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
           },
@@ -122,7 +122,7 @@ fun EditProfileScreen(
         ExposedDropdownMenu(
           expanded = expanded, onDismissRequest = { expanded = false }) {
           LicenseType.entries.forEach { type ->
-            DropdownMenuItem(text = { Text(stringResource(id = type.displayResId())) }, onClick = {
+            DropdownMenuItem(text = { Text(cmpStringResource(type.displayResId())) }, onClick = {
               viewModel.onLicenseTypeChanged(type) // Update ViewModel
               expanded = false
             })
@@ -136,7 +136,7 @@ fun EditProfileScreen(
       OutlinedTextField(
         value = uiState.licenceInfo.license_number, // Read from ViewModel
         onValueChange = { viewModel.onLicenseNumberChanged(it) }, // Update ViewModel
-        label = { Text(stringResource(R.string.license_number)) },
+        label = { Text(cmpStringResource(UserProfileRes.string.license_number)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
@@ -160,11 +160,11 @@ fun EditProfileScreen(
             uiState.licenceInfo.expiration_date?.toLocalDate()?.toDisplayFormat() ?: "" else "",
           onValueChange = { }, // Update ViewModel
           readOnly = true,
-          label = { Text(stringResource(R.string.license_expiration_date)) },
+          label = { Text(cmpStringResource(UserProfileRes.string.license_expiration_date)) },
           leadingIcon = {
             Icon(
               imageVector = Icons.Default.CalendarToday,
-              contentDescription = stringResource(R.string.select_date)
+              contentDescription = cmpStringResource(UserProfileRes.string.select_date)
             )
           },
           enabled = false,
@@ -200,7 +200,7 @@ fun EditProfileScreen(
           }
         )
         Spacer(modifier = Modifier.width(16.dp))
-        Text(text = stringResource(R.string.never))
+        Text(text = cmpStringResource(UserProfileRes.string.never))
         Checkbox(
           checked = uiState.licenceInfo.expireLimit == LicenseExpireLimit.NEVER_EXPIRES,
           onCheckedChange = { viewModel.onExpirationNeverFlagChanged(it) },
@@ -220,13 +220,13 @@ fun EditProfileScreen(
                 viewModel.onExpirationDateChanged(selectedDate)
                 showDatePicker = false
               }) {
-              Text(text = stringResource(android.R.string.ok))
+              Text(text = cmpStringResource(CoreUiRes.string.ok))
             }
           },
           dismissButton = {
             TextButton(
               onClick = { showDatePicker = false }) {
-              Text(text = cmpStringResource(Res.string.cancel))
+              Text(text = cmpStringResource(CoreUiRes.string.cancel))
             }
           }) {
           DatePicker(state = datePickerState)

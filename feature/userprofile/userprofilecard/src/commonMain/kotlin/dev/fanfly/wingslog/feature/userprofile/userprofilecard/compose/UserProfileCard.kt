@@ -12,7 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,7 +62,7 @@ fun UserProfileCard(
         if (data.licenceInfo.license_type != LicenseType.NONE) {
           Spacer(modifier = Modifier.height(4.dp))
           Text(
-            text = stringResource(data.licenceInfo.license_type.displayResId()),
+            text = cmpStringResource(data.licenceInfo.license_type.displayResId()),
             fontSize = 16.sp,
           )
           if (!data.licenceInfo.license_number.isNullOrEmpty()) {

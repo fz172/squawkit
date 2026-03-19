@@ -24,6 +24,10 @@ android {
   }
 }
 
+compose.resources {
+  publicResClass = true
+}
+
 kotlin {
   jvmToolchain(21)
 
