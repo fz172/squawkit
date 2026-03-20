@@ -5,7 +5,7 @@ import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
-import dev.fanfly.wingslog.core.database.getGitLiveFleetCollectionRef
+import dev.fanfly.wingslog.core.database.getFleetCollectionRef
 import dev.fanfly.wingslog.core.database.setEncoded
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
@@ -160,7 +160,7 @@ class InspectionManagerImpl(
   }
 
   private fun getCardsCollectionRef(aircraftId: String): CollectionReference? {
-    return firestore.getGitLiveFleetCollectionRef(firebaseAuth)?.document(aircraftId)
+    return firestore.getFleetCollectionRef(firebaseAuth)?.document(aircraftId)
       ?.collection(INSPECTION_CARDS_COLLECTION)
   }
 

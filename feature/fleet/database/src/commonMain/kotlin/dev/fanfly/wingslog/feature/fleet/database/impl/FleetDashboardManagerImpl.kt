@@ -2,9 +2,9 @@ package dev.fanfly.wingslog.feature.fleet.database.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.core.database.GITLIVE_AIRCRAFT_INFO_BLOB
+import dev.fanfly.wingslog.core.database.AIRCRAFT_INFO_BLOB
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
-import dev.fanfly.wingslog.core.database.getGitLiveFleetCollectionRef
+import dev.fanfly.wingslog.core.database.getFleetCollectionRef
 import dev.fanfly.wingslog.feature.fleet.database.FleetDashboardManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -20,7 +20,7 @@ class FleetDashboardManagerImpl(
 
   override fun observeFleetDashboard(): Flow<List<Aircraft>> {
     val fleetCollectionRef =
-      firestore.getGitLiveFleetCollectionRef(firebaseAuth) ?: return emptyFlow()
+      firestore.getFleetCollectionRef(firebaseAuth) ?: return emptyFlow()
 
     return fleetCollectionRef.snapshots.map { snapshot ->
       if (snapshot.documents.isEmpty()) {
@@ -31,7 +31,7 @@ class FleetDashboardManagerImpl(
       val result = mutableListOf<Aircraft>()
       for (document in snapshot.documents) {
         // Wire 5.x uses camelCase for properties
-        val blobBytes = document.getBlobAsBytes(GITLIVE_AIRCRAFT_INFO_BLOB)
+        val blobBytes = document.getBlobAsBytes(AIRCRAFT_INFO_BLOB)
         if (blobBytes == null || blobBytes.isEmpty()) {
           Logger.w { "Missing or empty aircraft info blob, skipping ${document.id}" }
           continue

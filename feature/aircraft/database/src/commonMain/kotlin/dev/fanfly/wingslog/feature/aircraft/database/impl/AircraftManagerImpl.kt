@@ -4,7 +4,7 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
-import dev.fanfly.wingslog.core.database.getGitLiveFleetCollectionRef
+import dev.fanfly.wingslog.core.database.getFleetCollectionRef
 import dev.fanfly.wingslog.core.database.setEncoded
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -20,7 +20,7 @@ class AircraftManagerImpl(
 ) : AircraftManager {
 
   override suspend fun updateAircraft(aircraft: Aircraft): Result<Boolean> = try {
-    val fleetRef = firestore.getGitLiveFleetCollectionRef(firebaseAuth) ?: return Result.failure(
+    val fleetRef = firestore.getFleetCollectionRef(firebaseAuth) ?: return Result.failure(
       Exception("Fleet reference is null")
     )
     val aircraftRef = getAircraftRefOrCreateNew(fleetRef, aircraft)
@@ -36,7 +36,7 @@ class AircraftManagerImpl(
   }
 
   override fun loadAircraft(id: String): Flow<Aircraft?> {
-    val fleetRef = firestore.getGitLiveFleetCollectionRef(firebaseAuth)
+    val fleetRef = firestore.getFleetCollectionRef(firebaseAuth)
       ?: return kotlinx.coroutines.flow.flowOf(null)
 
     val docRef = fleetRef.document(id)
@@ -60,7 +60,7 @@ class AircraftManagerImpl(
   }
 
   override suspend fun deleteAircraft(id: String): Result<Boolean> = try {
-    val fleetRef = firestore.getGitLiveFleetCollectionRef(firebaseAuth) ?: return Result.failure(
+    val fleetRef = firestore.getFleetCollectionRef(firebaseAuth) ?: return Result.failure(
       Exception("Fleet reference is null")
     )
     fleetRef.document(id).delete()

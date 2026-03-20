@@ -14,10 +14,10 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.auth.GoogleAuthProvider
 
-class GitLiveAuthManagerImpl(
+class AuthManagerImpl(
   private val context: Context,
   private val authProvider: FirebaseAuth,
-) : GitLiveAuthManager {
+) : AuthManager {
   private val credentialManager: CredentialManager =
     CredentialManager.create(context = context)
 
@@ -107,7 +107,7 @@ class GitLiveAuthManagerImpl(
   }
 
   companion object {
-    private val logger = Logger.withTag("GitLiveAuthManagerImpl")
+    private val logger = Logger.withTag("AuthManagerImpl")
     private const val WEB_CLIENT_ID =
       "811416892017-uul0d8vup8hie1o1172chid0q65k7vdi.apps.googleusercontent.com"
   }

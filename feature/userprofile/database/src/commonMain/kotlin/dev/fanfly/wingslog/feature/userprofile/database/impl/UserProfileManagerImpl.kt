@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.userprofile.database.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
-import dev.fanfly.wingslog.core.database.getGitLiveUserDocumentRef
+import dev.fanfly.wingslog.core.database.getUserDocumentRef
 import dev.fanfly.wingslog.core.database.setEncoded
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.newUserLicenseProfile
@@ -62,7 +62,7 @@ class UserProfileManagerImpl(
   }
 
   private fun getProfileDocumentRef(): DocumentReference? =
-    firestore.getGitLiveUserDocumentRef(firebaseAuth)?.collection(PROFILE_COLLECTION)
+    firestore.getUserDocumentRef(firebaseAuth)?.collection(PROFILE_COLLECTION)
       ?.document(LICENSE_INFO_DOCUMENT)
 
   companion object {

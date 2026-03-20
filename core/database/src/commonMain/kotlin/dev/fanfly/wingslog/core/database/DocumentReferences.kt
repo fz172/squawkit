@@ -15,14 +15,14 @@ fun generateRandomId(): String {
   return (1..20).map { chars.random() }.joinToString("")
 }
 
-fun FirebaseFirestore.getGitLiveUserDocumentRef(firebaseAuth: FirebaseAuth): DocumentReference? {
+fun FirebaseFirestore.getUserDocumentRef(firebaseAuth: FirebaseAuth): DocumentReference? {
   val userId = firebaseAuth.currentUser?.uid ?: return null
-  return collection(GITLIVE_USERS_COLLECTION).document(userId)
+  return collection(USERS_COLLECTION).document(userId)
 }
 
-fun FirebaseFirestore.getGitLiveFleetCollectionRef(firebaseAuth: FirebaseAuth): CollectionReference? =
-  getGitLiveUserDocumentRef(firebaseAuth)?.collection(GITLIVE_FLEET_COLLECTION)
+fun FirebaseFirestore.getFleetCollectionRef(firebaseAuth: FirebaseAuth): CollectionReference? =
+  getUserDocumentRef(firebaseAuth)?.collection(FLEET_COLLECTION)
 
-private const val GITLIVE_USERS_COLLECTION = "users"
-private const val GITLIVE_FLEET_COLLECTION = "fleet"
-const val GITLIVE_AIRCRAFT_INFO_BLOB = "aircraft_info_blob"
+private const val USERS_COLLECTION = "users"
+private const val FLEET_COLLECTION = "fleet"
+const val AIRCRAFT_INFO_BLOB = "aircraft_info_blob"
