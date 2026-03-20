@@ -11,10 +11,14 @@ class WingsLogApplication : Application() {
   override fun onCreate() {
     super.onCreate()
     // Firebase is initialized implicitly by the google-services plugin on Android.
-    Logger.d("WingsLogApplication") { "WingsLogApplication started" }
+    logger.d { "WingsLogApplication started" }
 
     initKoin {
       androidContext(this@WingsLogApplication)
     }
+  }
+
+  companion object {
+    private val logger = Logger.withTag("WingsLogApplication")
   }
 }
