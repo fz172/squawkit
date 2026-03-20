@@ -215,25 +215,23 @@ Add iOS via Kotlin/Native. Compose Multiplatform on iOS is production-ready as o
 
 ---
 
-# Phase 3: Web Target (On Hold)
+# Phase 3: Web Target
 
-*Note: Hold off on this phase until GitLive Firebase introduces `wasmJs` support, or we switch to a different Web backend.*
+Add a Kotlin/JS web target using Compose Multiplatform Canvas. Since GitLive Firebase KMP natively provides robust support for the standard `js` target (by wrapping the official Firebase JS SDK under the hood), this phase is fully feasible with our current technology stack.
 
-Add a Kotlin/Wasm web target by creating a dedicated web module. This keeps the build scripts clean without mixing Web and Android Application plugin.
-
-- Create a new `webApp` module applying the KMP plugin with a `wasmJs()` target.
+- Create a new `webApp` module applying the KMP plugin and configuring the `js(IR) { browser() }` target.
 - Add `webApp` to `settings.gradle.kts`.
-- Setup a `wasmJsMain` entry point (`Main.kt`) that depends on `composeApp` and launches `AppEntry()`.
-- GitLive Firebase KMP does **not natively support** `wasmJs` currently, necessitating custom bindings or waiting for upstream updates.
-- Auth: Google OAuth on web uses browser redirect flow.
-- Navigation: URL/deep-link handling in browser via `window.location`.
-- Deploy as static site (Vercel, Cloudflare Pages, etc.)
+- Set up a `jsMain` entry point (`Main.kt`) that depends on `composeApp` and launches `AppEntry()` using `CanvasBasedWindow`.
+- Dependencies: Web browser environments natively run the `js` artifacts produced by `compose.ui` and `dev.gitlive.firebase`.
+- Auth: For Web targets, we will implement Firebase Google OAuth through browser popup/redirect flows via `Firebase.auth.signInWithPopup()`.
+- Navigation: Jetpack Navigation Compose supports JS targets out-of-the-box. Internal links function automatically; full address bar sync requires minor interoperability code handling `window.location`.
+- Deployment: Deploy as a standard static site using Vercel, Firebase Hosting, or Cloudflare Pages via a standard Gradle JS build process.
 
-> ⚠️ Compose Multiplatform web is Wasm-based (not JS/DOM). Bundle sizes are large (~5MB+). Not SEO-friendly. Best for a logged-in dashboard, not a public landing page.
+> ⚠️ Compose Multiplatform Canvas on JS (Skia Canvas) yields larger bundle sizes (approx. 5-10MB minimum) because the Skia rendering engine is shipped to the client via Wasm (CanvasKit). The business logic runs natively as JS. It is not SEO-compatible nor fully text-selectable as a standard DOM page natively. Since this is an authenticated "Dashboard Tool" app, SEO trade-offs are acceptable.
 
 **Completion criteria:**
-- Web build produces deployable Wasm bundle.
-- Login, fleet view, aircraft overview, maintenance log functional in browser.
+- Web build completes successfully and produces a static JS deployment folder (`index.html` + JS blobs).
+- Login, fleet views, and maintenance logs render cleanly in a desktop Chrome/Safari browser.
 - Deployed to a staging URL.
 
 ---
