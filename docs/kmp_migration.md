@@ -243,7 +243,6 @@ Add a Kotlin/JS web target using Compose Multiplatform Canvas. Since GitLive Fir
 | GitLive `firebase-kotlin-sdk` is community-maintained, may lag Firebase releases | Pin versions carefully, watch GitHub releases |
 | No data migration needed | GitLive Firebase uses the existing Firestore collections completely untouched |
 | Koin runtime errors (no compile-time DI validation) | Add `checkModules()` in tests to catch missing bindings early |
-| Compose Multiplatform Web (Wasm) still maturing | Pin stable CMP version, update carefully |
 | Kotlin/Native compile times (iOS) | Use Xcode incremental builds and Kotlin caching flags |
 
 ---
