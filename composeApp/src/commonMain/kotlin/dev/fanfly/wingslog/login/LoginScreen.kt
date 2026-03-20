@@ -24,15 +24,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.R
+import wingslog.composeapp.generated.resources.Res
+import wingslog.composeapp.generated.resources.*
 import dev.fanfly.wingslog.login.data.LoginViewModel
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 
 @Composable
@@ -65,21 +66,20 @@ fun LoginScreen(
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
       Icon(
-        painter = painterResource(id = R.drawable.ic_launcher_foreground),
-        contentDescription = stringResource(R.string.app_name),
+        painter = painterResource(Res.drawable.ic_launcher_foreground),
+        contentDescription = stringResource(Res.string.app_name),
         modifier = Modifier.size(256.dp),
         tint = Color.Unspecified
       )
 
       Text(
-        stringResource(
-          R.string.app_name
-        ), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold
+        stringResource(Res.string.app_name),
+        style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold
       )
       Spacer(Modifier.height(8.dp))
       // --- Subtitle Text ---
       Text(
-        text = stringResource(R.string.login_prompt), fontSize = 16.sp, color = Color.Gray
+        text = stringResource(Res.string.login_prompt), fontSize = 16.sp, color = Color.Gray
       )
 
       Spacer(modifier = Modifier.height(16.dp))
@@ -99,13 +99,13 @@ fun LoginScreen(
           }
         }) {
         Icon(
-          painter = painterResource(id = R.drawable.ic_google_rd_na),
-          contentDescription = stringResource(R.string.google_logo),
+          painter = painterResource(Res.drawable.ic_google_rd_na),
+          contentDescription = stringResource(Res.string.google_logo),
           modifier = Modifier.size(24.dp),
           tint = Color.Unspecified // Use original colors
         )
         Spacer(modifier = Modifier.width(16.dp))
-        Text(stringResource(R.string.sign_in_with_google))
+        Text(stringResource(Res.string.sign_in_with_google))
       }
       error?.let {
         Spacer(Modifier.height(10.dp))

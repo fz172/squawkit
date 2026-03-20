@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.core.auth
 
 import android.content.Context
-import android.util.Log
+import co.touchlab.kermit.Logger
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
@@ -45,7 +45,7 @@ class GitLiveAuthManagerImpl(
       }
     } catch (e: Exception) {
       // No saved credential
-      Log.d(TAG, "No silent credential found: " + e.message)
+      Logger.d(TAG) { "No silent credential found: " + e.message }
     }
     return null
   }
@@ -67,7 +67,7 @@ class GitLiveAuthManagerImpl(
       }
     } catch (e: Exception) {
       // User cancelled or other error
-      Log.d(TAG, "Google Sign-in error: " + e.message)
+      Logger.d(TAG) { "Google Sign-in error: " + e.message }
     }
     return null
   }
@@ -77,10 +77,10 @@ class GitLiveAuthManagerImpl(
       try {
         return GoogleIdTokenCredential.createFrom(credential.data)
       } catch (e: GoogleIdTokenParsingException) {
-        Log.e(TAG, "Received an invalid google id token response", e)
+        Logger.e(TAG, e) { "Received an invalid google id token response" }
       }
     } else {
-      Log.w(TAG, "Unexpected type of credential: " + credential.type)
+      Logger.w(TAG) { "Unexpected type of credential: " + credential.type }
     }
     return null
   }
@@ -92,7 +92,7 @@ class GitLiveAuthManagerImpl(
       authProvider.signInWithCredential(firebaseCredential)
       authProvider.currentUser
     } catch (e: Exception) {
-      Log.e(TAG, "Firebase sign-in failed", e)
+      Logger.e(TAG, e) { "Firebase sign-in failed" }
       null
     }
   }
@@ -102,7 +102,7 @@ class GitLiveAuthManagerImpl(
       authProvider.signOut()
       credentialManager.clearCredentialState(ClearCredentialStateRequest())
     } catch (e: Exception) {
-      Log.e(TAG, "Error logging out: " + e.message)
+      Logger.e(TAG) { "Error logging out: " + e.message }
     }
   }
 
