@@ -8,6 +8,7 @@ pluginManagement {
       }
     }
     mavenCentral()
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     gradlePluginPortal()
   }
 }
@@ -16,11 +17,13 @@ dependencyResolutionManagement {
   repositories {
     google()
     mavenCentral()
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
   }
 }
 
 rootProject.name = "wingslog"
 include(":app")
+include(":composeApp")
 include(":core:model")
 include(":core:ui")
 include(":core:auth")

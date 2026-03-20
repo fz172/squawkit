@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.login.data
 
 import androidx.lifecycle.ViewModel
-import dev.fanfly.wingslog.core.auth.GitLiveAuthManager
+import dev.fanfly.wingslog.core.auth.AuthManager
 
-class LoginViewModel(private val authManager: GitLiveAuthManager) : ViewModel() {
+class LoginViewModel(private val authManager: AuthManager) : ViewModel() {
 
   suspend fun silentLogin() = authManager.trySilentLogin()
 

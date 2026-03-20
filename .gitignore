@@ -6,6 +6,7 @@
 .vscode
 /build
 /captures
+/composeApp/build
 /core/model/bin
 /core/**/build
 /feature/**/build

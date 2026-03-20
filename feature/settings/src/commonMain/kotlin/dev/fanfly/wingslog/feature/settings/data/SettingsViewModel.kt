@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.settings.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.core.auth.GitLiveAuthManager
+import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-  private val authManager: GitLiveAuthManager, private val userProfileManager: UserProfileManager
+  private val authManager: AuthManager, private val userProfileManager: UserProfileManager
 ) : ViewModel() {
 
   private val _user = MutableStateFlow(SettingsUiState())

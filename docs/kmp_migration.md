@@ -1,6 +1,6 @@
 # WingsLog: KMP Migration Design Doc
 
-> **Phase order:** (1) KMP Migration — Android-first, (2) Web, (3) iOS
+> **Phase order:** (1) KMP Migration — Android-first, (2) iOS, (3) Web (On Hold)
 >
 > **Current status:** Steps 1.0, 1.1, 1.2, 1.5 complete. Step 1.3 (Firebase KMP) in progress. Step
 > 1.4 (Compose MP) not started.
@@ -152,22 +152,20 @@ import dev.gitlive.firebase.firestore.firestore
 import path changes.
 
 **Strategy: Staged feature-by-feature transition.**
-Since JetBrains Compose Multiplatform binary-matches Jetpack Compose on Android, this migration will
-be executed in sequential stages to guarantee stability.
+Since JetBrains Compose Multiplatform binary-matches Jetpack Compose on Android, this migration will be executed in sequential stages to guarantee stability.
 
 **Sub-Steps:**
-
-- **Step 1.4.1:** Build Layer & Core — Apply CMP plugin (`1.7.3`) to root `build.gradle.kts` and
-  `libs.versions.toml`. Migrate `core/ui` dependencies to CMP, moving foundational UI (Themes, etc.)
-  to `commonMain`.
-- **Step 1.4.2:** Feature Migration — Sequentially migrate modules (Apply CMP plugin, configure CMP
-  ViewModel, move `androidMain` files to `commonMain`):
+- **Step 1.4.1:** Build Layer & Core — Apply CMP plugin (`1.7.3`) to root `build.gradle.kts` and `libs.versions.toml`. Migrate `core/ui` dependencies to CMP, moving foundational UI (Themes, etc.) to `commonMain`.
+- **Step 1.4.2:** Feature Migration — Sequentially migrate modules (Apply CMP plugin, configure CMP ViewModel, move `androidMain` files to `commonMain`):
     - **Step 1.4.2.1:** `feature/settings`
     - **Step 1.4.2.2:** `feature/userprofile` (Handle `android.net.Uri` appropriately)
     - **Step 1.4.2.3:** `feature/fleet`
     - **Step 1.4.2.4:** `feature/aircraft`
-- **Step 1.4.3:** App-Level Dependencies — Replace `androidx.navigation.compose` with CMP Navigation
-  globally, update Coil to Coil 3.x KMP, and configure final `app` module entry points.
+- **Step 1.4.3:** Module Restructuring & App-Level Dependencies
+    - Create a new `composeApp` (or `shared-app`) KMP library module. Move `AppEntry.kt` and cross-platform Koin initialization here (this becomes the shared UI root).
+    - Modify the existing `app` module to remain a pure Android Application. It will depend on `composeApp` and simply set `setContent { AppEntry() }` in `MainActivity.kt`.
+    - Replace `androidx.navigation.compose` with CMP Navigation globally.
+    - Update Coil to Coil 3.x KMP.
 
 ---
 
@@ -198,60 +196,57 @@ Replaced Google Flogger (JVM-only) with TouchLab Kermit (`co.touchlab:kermit`, K
 
 ---
 
-# Phase 2: Web Target
+# Phase 2: iOS Target
 
-Add a Kotlin/Wasm web target. By this point all shared code is already in `commonMain`, so this is
-mostly a build/entry-point addition.
+Add iOS via Kotlin/Native. Compose Multiplatform on iOS is production-ready as of 2024. This will build upon the `composeApp` shared UI module created in Phase 1.
 
-- Add `wasmJs()` target to root app module
-- Add `wasmJsMain` entry point
-- Supabase-kt / Firebase KMP supports Wasm via `ktor-client-js` — no backend changes needed
-- Auth: Google OAuth on web uses browser redirect flow — implement in `wasmJsMain` via
-  `expect/actual`
-- Navigation: URL/deep-link handling in browser via `window.location`
-- Deploy as static site (Vercel, Cloudflare Pages, etc.)
-
-> ⚠️ Compose Multiplatform web is Wasm-based (not JS/DOM). Bundle sizes are large (~5MB+). Not
-> SEO-friendly. Best for a logged-in dashboard, not a public landing page.
+- Add `iosArm64()`, `iosSimulatorArm64()`, `iosX64()` targets to the `composeApp` build config.
+- Create Xcode project (`iosApp`) wrapping the KMP framework.
+- iOS entry point: `MainViewController.kt` in `iosMain` calling `ComposeUIViewController { AppEntry() }`.
+- Firebase KMP wraps native Firebase iOS SDK — add `GoogleService-Info.plist` to iOS target.
+- Auth: Apple Sign-In + Google Sign-In via Firebase Auth KMP via `expect/actual`.
+- File attachments: `UIImagePickerController` / `PHPicker` via `expect/actual`.
+- Platform quirks: iOS keyboard, safe area insets, back gesture — test thoroughly.
 
 **Completion criteria:**
-
-- Web build produces deployable Wasm bundle
-- Login, fleet view, aircraft overview, maintenance log functional in browser
-- Deployed to a staging URL
+- iOS app installs and runs on device simulator.
+- Feature parity with Android.
+- Authentication implemented.
 
 ---
 
-# Phase 3: iOS Target
+# Phase 3: Web Target (On Hold)
 
-Add iOS via Kotlin/Native. Compose Multiplatform on iOS is production-ready as of 2024.
+*Note: Hold off on this phase until GitLive Firebase introduces `wasmJs` support, or we switch to a different Web backend.*
 
-- Add `iosArm64()`, `iosSimulatorArm64()`, `iosX64()` targets to build config
-- Create Xcode project wrapping the KMP framework
-- iOS entry point: `MainViewController.kt` in `iosMain` calling `ComposeUIViewController { App() }`
-- Firebase KMP wraps native Firebase iOS SDK — add `GoogleService-Info.plist` to iOS target
-- Auth: Apple Sign-In + Google Sign-In via Firebase Auth KMP with `ASWebAuthenticationSession`
-- File attachments: `UIImagePickerController` / `PHPicker` via `expect/actual`
-- Platform quirks: iOS keyboard, safe area insets, back gesture — test thoroughly
-- Distribute via TestFlight initially, then App Store
+Add a Kotlin/Wasm web target by creating a dedicated web module. This keeps the build scripts clean without mixing Web and Android Application plugin.
+
+- Create a new `webApp` module applying the KMP plugin with a `wasmJs()` target.
+- Add `webApp` to `settings.gradle.kts`.
+- Setup a `wasmJsMain` entry point (`Main.kt`) that depends on `composeApp` and launches `AppEntry()`.
+- GitLive Firebase KMP does **not natively support** `wasmJs` currently, necessitating custom bindings or waiting for upstream updates.
+- Auth: Google OAuth on web uses browser redirect flow.
+- Navigation: URL/deep-link handling in browser via `window.location`.
+- Deploy as static site (Vercel, Cloudflare Pages, etc.)
+
+> ⚠️ Compose Multiplatform web is Wasm-based (not JS/DOM). Bundle sizes are large (~5MB+). Not SEO-friendly. Best for a logged-in dashboard, not a public landing page.
 
 **Completion criteria:**
-
-- iOS app installs and runs on device via TestFlight
-- Feature parity with Android
-- Apple Sign-In implemented (required by App Store for apps with social auth)
+- Web build produces deployable Wasm bundle.
+- Login, fleet view, aircraft overview, maintenance log functional in browser.
+- Deployed to a staging URL.
 
 ---
 
 # Risks & Mitigations
 
-| Risk                                                                             | Mitigation                                                                     |
-|----------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| GitLive `firebase-kotlin-sdk` is community-maintained, may lag Firebase releases | Pin versions carefully, watch GitHub releases                                  |
-| No data migration needed                                                         | Biggest advantage over switching to Supabase — Firestore collections untouched |
-| Koin runtime errors (no compile-time DI validation)                              | Add `checkModules()` in tests to catch missing bindings early                  |
-| Compose Multiplatform Web (Wasm) still maturing                                  | Pin stable CMP version, update carefully                                       |
-| Kotlin/Native compile times (iOS)                                                | Use Xcode incremental builds and Kotlin caching flags                          |
+| Risk | Mitigation |
+|---|---|
+| GitLive `firebase-kotlin-sdk` is community-maintained, may lag Firebase releases | Pin versions carefully, watch GitHub releases |
+| No data migration needed | GitLive Firebase uses the existing Firestore collections completely untouched |
+| Koin runtime errors (no compile-time DI validation) | Add `checkModules()` in tests to catch missing bindings early |
+| Compose Multiplatform Web (Wasm) still maturing | Pin stable CMP version, update carefully |
+| Kotlin/Native compile times (iOS) | Use Xcode incremental builds and Kotlin caching flags |
 
 ---
 
