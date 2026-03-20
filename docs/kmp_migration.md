@@ -2,68 +2,78 @@
 
 > **Phase order:** (1) KMP Migration — Android-first, (2) iOS, (3) Web (On Hold)
 >
-> **Current status:** Steps 1.0, 1.1, 1.2, 1.5 complete. Step 1.3 (Firebase KMP) in progress. Step 1.4 (Compose MP) not started.
+> **Current status:** Steps 1.0, 1.1, 1.2, 1.5 complete. Step 1.3 (Firebase KMP) in progress. Step
+> 1.4 (Compose MP) not started.
 
 ---
 
 # Overview
 
-WingsLog is currently an Android-only app built with Jetpack Compose, Koin, Firebase/Firestore, and Square Wire Protobuf. This document outlines a phased migration to Kotlin Multiplatform (KMP) with Compose Multiplatform UI and the GitLive Firebase KMP wrapper — enabling Android, Web, and iOS clients from a shared codebase while keeping Firebase as the backend.
+WingsLog is currently an Android-only app built with Jetpack Compose, Koin, Firebase/Firestore, and
+Square Wire Protobuf. This document outlines a phased migration to Kotlin Multiplatform (KMP) with
+Compose Multiplatform UI and the GitLive Firebase KMP wrapper — enabling Android, Web, and iOS
+clients from a shared codebase while keeping Firebase as the backend.
 
 ---
 
 # Current Stack
 
-| Layer | Library |
-|---|---|
-| Language | Kotlin (Android-only → migrating to KMP) |
-| UI | Jetpack Compose (`androidx.compose.*`) |
-| DI | Koin |
-| Backend | Firebase Firestore + Firebase Auth |
-| Data model | Square Wire (`com.squareup.wire`) |
-| Navigation | `androidx.navigation.compose` |
-| Image loading | Coil (Compose) |
-| Logging | Kermit (`co.touchlab:kermit`) |
-| Build | Gradle multi-module, all modules already have `kotlin.multiplatform` plugin |
+| Layer         | Library                                                                     |
+|---------------|-----------------------------------------------------------------------------|
+| Language      | Kotlin (Android-only → migrating to KMP)                                    |
+| UI            | Jetpack Compose (`androidx.compose.*`)                                      |
+| DI            | Koin                                                                        |
+| Backend       | Firebase Firestore + Firebase Auth                                          |
+| Data model    | Square Wire (`com.squareup.wire`)                                           |
+| Navigation    | `androidx.navigation.compose`                                               |
+| Image loading | Coil (Compose)                                                              |
+| Logging       | Kermit (`co.touchlab:kermit`)                                               |
+| Build         | Gradle multi-module, all modules already have `kotlin.multiplatform` plugin |
 
 ---
 
 # Target Stack (Post-Migration)
 
-| Layer | Library |
-|---|---|
-| UI | Compose Multiplatform (JetBrains) — shared across Android, Web, iOS |
-| DI | Koin (already done ✅) |
-| Backend | Firebase Firestore + Firebase Auth via GitLive `firebase-kotlin-sdk` |
-| Data model | Square Wire (already KMP-compatible ✅) |
-| Navigation | Compose Multiplatform Navigation (`org.jetbrains.androidx.navigation`) |
-| Image loading | Coil 3.x (`io.coil-kt.coil3:coil-compose-core`) |
-| Logging | Kermit (already done ✅) |
-| Auth | Firebase Auth KMP (Google Sign-In, Apple Sign-In via platform expect/actual) |
+| Layer         | Library                                                                      |
+|---------------|------------------------------------------------------------------------------|
+| UI            | Compose Multiplatform (JetBrains) — shared across Android, Web, iOS          |
+| DI            | Koin (already done ✅)                                                        |
+| Backend       | Firebase Firestore + Firebase Auth via GitLive `firebase-kotlin-sdk`         |
+| Data model    | Square Wire (already KMP-compatible ✅)                                       |
+| Navigation    | Compose Multiplatform Navigation (`org.jetbrains.androidx.navigation`)       |
+| Image loading | Coil 3.x (`io.coil-kt.coil3:coil-compose-core`)                              |
+| Logging       | Kermit (already done ✅)                                                      |
+| Auth          | Firebase Auth KMP (Google Sign-In, Apple Sign-In via platform expect/actual) |
 
 ---
 
 # Phase 1: KMP Migration (Android-first)
 
-**Goal:** Restructure the codebase to KMP without changing any user-visible behavior on Android. The app should remain fully functional on Android throughout this phase.
+**Goal:** Restructure the codebase to KMP without changing any user-visible behavior on Android. The
+app should remain fully functional on Android throughout this phase.
 
 ---
 
 ## Step 1.0 — Data Model: Protobuf Lite → Square Wire ✅ DONE
 
-Migrated from `com.google.protobuf:protobuf-kotlin-lite` (JVM-bound) to Square Wire (`com.squareup.wire`), which is KMP-compatible.
+Migrated from `com.google.protobuf:protobuf-kotlin-lite` (JVM-bound) to Square Wire (
+`com.squareup.wire`), which is KMP-compatible.
 
 - Wire Gradle plugin configured in all affected modules
-- All Firestore Managers updated to use `ADAPTER.encode()` / `ADAPTER.decode()` instead of `toByteArray()` / `parseFrom()`
-- Managers updated: `AircraftManagerImpl`, `MaintenanceLogManagerImpl`, `InspectionManagerImpl`, `UserProfileManagerImpl`, `FleetDashboardManagerImpl`
+- All Firestore Managers updated to use `ADAPTER.encode()` / `ADAPTER.decode()` instead of
+  `toByteArray()` / `parseFrom()`
+- Managers updated: `AircraftManagerImpl`, `MaintenanceLogManagerImpl`, `InspectionManagerImpl`,
+  `UserProfileManagerImpl`, `FleetDashboardManagerImpl`
 
 ---
 
 ## Step 1.1 — Build System: Android → KMP modules ✅ DONE
 
-All 13 library modules converted to use the `kotlin.multiplatform` plugin alongside `android.library`. All existing Kotlin source files moved to `src/androidMain/kotlin/`.
+All 13 library modules converted to use the `kotlin.multiplatform` plugin alongside
+`android.library`. All existing Kotlin source files moved to `src/androidMain/kotlin/`.
 
 **Modules migrated:**
+
 - `core/model`, `core/ui`, `core/database`, `core/auth`
 - `feature/aircraft`, `feature/aircraft/database`
 - `feature/fleet`, `feature/fleet/database`
@@ -86,23 +96,36 @@ Replaced Hilt (Android-only) with Koin across all modules.
 ## Step 1.3 — Backend: Android Firebase SDK → Firebase KMP Wrapper ✅ DONE (2026-03-19)
 
 **Strategy: Migrate module by module.**
-Within a module, it is acceptable (and expected) to have both `com.google.firebase` and `dev.gitlive.firebase` imports coexisting as an intermediate step. The goal is to fully remove `com.google.firebase` from each module before considering that module done — not to do everything in one pass.
+Within a module, it is acceptable (and expected) to have both `com.google.firebase` and
+`dev.gitlive.firebase` imports coexisting as an intermediate step. The goal is to fully remove
+`com.google.firebase` from each module before considering that module done — not to do everything in
+one pass.
 
 **What's done:**
-- `core/auth` module migrated: `GitLiveAuthManager` + `GitLiveAuthManagerImpl` in `commonMain`/`androidMain` using `dev.gitlive.firebase.auth`
+
+- `core/auth` module migrated: `GitLiveAuthManager` + `GitLiveAuthManagerImpl` in `commonMain`/
+  `androidMain` using `dev.gitlive.firebase.auth`
 - GitLive dependencies added to `libs.versions.toml` (`gitlive = "2.1.0"`)
 - `core/database` has `CommonFirebaseModule` and `GitLiveDocumentReferences` in `commonMain`
-- `feature/aircraft/database`, `feature/fleet/database`, `feature/userprofile/database` managers migrated and moved to `commonMain`
-- `feature/settings`, `feature/fleet`, `feature/userprofile` UI states and ViewModels successfully updated to use `dev.gitlive.firebase`
-- All Google Firebase SDK imports (`com.google.firebase`) have been fully replaced across all library modules
+- `feature/aircraft/database`, `feature/fleet/database`, `feature/userprofile/database` managers
+  migrated and moved to `commonMain`
+- `feature/settings`, `feature/fleet`, `feature/userprofile` UI states and ViewModels successfully
+  updated to use `dev.gitlive.firebase`
+- All Google Firebase SDK imports (`com.google.firebase`) have been fully replaced across all
+  library modules
 
 **Rest of GitLive Firebase to migrate:**
-- The ViewModels (`FleetDashboardViewModel`, `EditProfileViewModel`) and UI State classes (`SettingsUiState`) that use `dev.gitlive.firebase` are currently still located in `androidMain` because they depend on `androidx.compose.*` or Android ViewModels.
+
+- The ViewModels (`FleetDashboardViewModel`, `EditProfileViewModel`) and UI State classes (
+  `SettingsUiState`) that use `dev.gitlive.firebase` are currently still located in `androidMain`
+  because they depend on `androidx.compose.*` or Android ViewModels.
 - These will be moved to `commonMain` during Step 1.4 once Compose Multiplatform is configured.
 
-**Module completion criteria:** A module is considered fully migrated when it has **zero** `com.google.firebase` imports remaining (GitLive only).
+**Module completion criteria:** A module is considered fully migrated when it has **zero**
+`com.google.firebase` imports remaining (GitLive only).
 
 **Migration pattern** (import swap only — API is identical):
+
 ```kotlin
 // Before (Android-only)
 import com.google.firebase.firestore.ktx.firestore
@@ -114,32 +137,42 @@ import dev.gitlive.firebase.firestore.firestore
 ```
 
 **Notes:**
+
 - `google-services.json` and existing Firestore collections stay unchanged
 - Wire `ADAPTER` calls are already in place — no serialization changes needed
 - Once all imports in a module are swapped, files can move from `androidMain` → `commonMain`
-- `app/` module may retain Google Firebase plugin config (`google-services` plugin, `google-services.json`) — this is intentional and separate from the SDK migration
+- `app/` module may retain Google Firebase plugin config (`google-services` plugin,
+  `google-services.json`) — this is intentional and separate from the SDK migration
 
 ---
 
 ## Step 1.4 — UI: Jetpack Compose → Compose Multiplatform ⏳ NOT STARTED
 
-31 UI files currently use `androidx.compose.*` imports. API surface is nearly identical — mostly import path changes.
+31 UI files currently use `androidx.compose.*` imports. API surface is nearly identical — mostly
+import path changes.
 
-**Steps:**
-- Add JetBrains Compose Multiplatform plugin to root `build.gradle.kts`.
-- Replace `androidx.compose.*` BOM with Compose Multiplatform BOM in `core/ui` and feature modules.
-- Move UI composables from `androidMain` to `commonMain` after import updates.
-- Replace `androidx.navigation.compose` with `org.jetbrains.androidx.navigation`.
-- Replace Coil Compose with Coil 3.x KMP (`io.coil-kt.coil3:coil-compose-core`).
-- **Module Restructuring:**
-  - Create a new `composeApp` (or `shared-app`) KMP library module. Move `AppEntry.kt` and cross-platform Koin initialization here (this becomes the shared UI root).
-  - Modify the existing `app` module to remain a pure Android Application. It will depend on `composeApp` and simply set `setContent { AppEntry() }` in `MainActivity.kt`. Any Android-specific integrations (Google Services, etc.) stay in `app`.
+**Strategy: Staged feature-by-feature transition.**
+Since JetBrains Compose Multiplatform binary-matches Jetpack Compose on Android, this migration will be executed in sequential stages to guarantee stability.
+
+**Sub-Steps:**
+- **Step 1.4.1:** Build Layer & Core — Apply CMP plugin (`1.7.3`) to root `build.gradle.kts` and `libs.versions.toml`. Migrate `core/ui` dependencies to CMP, moving foundational UI (Themes, etc.) to `commonMain`.
+- **Step 1.4.2:** Feature Migration — Sequentially migrate modules (Apply CMP plugin, configure CMP ViewModel, move `androidMain` files to `commonMain`):
+    - **Step 1.4.2.1:** `feature/settings`
+    - **Step 1.4.2.2:** `feature/userprofile` (Handle `android.net.Uri` appropriately)
+    - **Step 1.4.2.3:** `feature/fleet`
+    - **Step 1.4.2.4:** `feature/aircraft`
+- **Step 1.4.3:** Module Restructuring & App-Level Dependencies
+    - Create a new `composeApp` (or `shared-app`) KMP library module. Move `AppEntry.kt` and cross-platform Koin initialization here (this becomes the shared UI root).
+    - Modify the existing `app` module to remain a pure Android Application. It will depend on `composeApp` and simply set `setContent { AppEntry() }` in `MainActivity.kt`.
+    - Replace `androidx.navigation.compose` with CMP Navigation globally.
+    - Update Coil to Coil 3.x KMP.
 
 ---
 
 ## Step 1.5 — Resources: Android strings.xml → Compose Multiplatform Resources ✅ DONE
 
-Hardcoded strings externalized to `strings.xml` and migration guide written (`docs/kmp_migration.md` companion). See `docs/` for Compose Multiplatform resource migration notes.
+Hardcoded strings externalized to `strings.xml` and migration guide written (`docs/kmp_migration.md`
+companion). See `docs/` for Compose Multiplatform resource migration notes.
 
 ---
 
