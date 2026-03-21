@@ -48,7 +48,7 @@
     <string name="unknown_date">Unknown date</string>
     <string name="edit_log_content_description">Edit log</string>
     <string name="delete_log_content_description">Delete log</string>
-    <string name="tach_format">Tach: %.1f</string>
+    <string name="tach_format">Tach: %1$.1f</string>
     <string name="maintenance_summary">Maintenance Summary</string>
     <string name="total_logs">Total Logs</string>
     <string name="log_details">Log details</string>
@@ -59,14 +59,14 @@
     <string name="pitot_static">Pitot-Static</string>
     <string name="transponder">Transponder</string>
     <string name="tach_time_label">Current Tach Time</string>
-    <string name="tach_time_hours_format">%.1f hrs</string>
+    <string name="tach_time_hours_format">%1$.1f hrs</string>
     <string name="cancel">Cancel</string>
     <string name="back">Back</string>
     <string name="settings">Settings</string>
     <string name="airframe_time_hours">Airframe Time (hours)</string>
     <string name="prop_time_hours">Prop Time (hours)</string>
-    <string name="airframe_time_format">AF: %.1f</string>
-    <string name="prop_time_format">Prop: %.1f</string>
+    <string name="airframe_time_format">AF: %1$.1f</string>
+    <string name="prop_time_format">Prop: %1$.1f</string>
     <string name="airframe_time_label">Airframe Time</string>
     <string name="prop_time_label">Prop Time</string>
     <string name="prop_inspection">Prop Inspection</string>
