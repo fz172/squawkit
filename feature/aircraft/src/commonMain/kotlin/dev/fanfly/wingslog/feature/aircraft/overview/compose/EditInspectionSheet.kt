@@ -24,6 +24,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -114,6 +116,7 @@ fun EditInspectionSheet(
   var forceTachHours by remember {
     mutableStateOf(if (hasForcedTach) card.force_due_tach.toString() else "")
   }
+  var forceTachError by remember { mutableStateOf(false) }
 
   ModalBottomSheet(
     onDismissRequest = onDismiss,
@@ -265,10 +268,15 @@ fun EditInspectionSheet(
       if (forceOverrideEnabled) {
         OutlinedTextField(
           value = forceTachHours,
-          onValueChange = { forceTachHours = it },
+          onValueChange = { forceTachHours = it; forceTachError = false },
           label = { Text(cmpStringResource(AircraftRes.string.force_due_tach_hours)) },
+          isError = forceTachError,
+          supportingText = if (forceTachError) {
+            { Text("Enter a valid tach value (e.g. 1250.5)") }
+          } else null,
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
+          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         )
       }
 
@@ -280,6 +288,14 @@ fun EditInspectionSheet(
           if (title.isBlank()) {
             titleError = true
             return@Button
+          }
+          // Validate force tach: if enabled, must be a positive number
+          if (forceOverrideEnabled) {
+            val parsedTach = forceTachHours.toFloatOrNull()
+            if (parsedTach == null || parsedTach <= 0f) {
+              forceTachError = true
+              return@Button
+            }
           }
           val rules = buildList<InspectionRule> {
             if (timeRuleEnabled) {

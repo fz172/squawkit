@@ -84,6 +84,11 @@ class AircraftOverviewViewModel(
             logs.filter { sel.card.id in it.inspection_ids }
               .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
           } ?: emptyList()
+          // Preserve editing and deletion states across Firestore real-time updates so that
+          // in-flight edits (e.g. force-override inputs) are not wiped when the listener fires.
+          val refreshedEditing = current?.editingInspection?.let { editing ->
+            cardsWithStatus.find { it.card.id == editing.card.id }
+          }
           AircraftOverviewUiState.Success(
             aircraft = aircraft,
             logStats = stats,
@@ -91,6 +96,8 @@ class AircraftOverviewViewModel(
             showAddInspectionSheet = showSheet,
             selectedInspection = refreshedSelected,
             logsForSelectedInspection = refreshedDetailLogs,
+            editingInspection = refreshedEditing,
+            deletingInspectionId = current?.deletingInspectionId,
           )
         } else {
           AircraftOverviewUiState.Error
