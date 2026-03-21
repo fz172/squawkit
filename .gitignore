@@ -6,6 +6,8 @@
 .vscode
 /build
 /captures
+/app/build
+/webApp/build
 /composeApp/build
 /core/model/bin
 /core/**/build

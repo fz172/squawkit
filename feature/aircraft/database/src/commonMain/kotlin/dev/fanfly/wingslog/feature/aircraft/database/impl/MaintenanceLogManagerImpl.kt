@@ -11,6 +11,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.where
+import dev.fanfly.wingslog.core.database.observeSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
@@ -26,7 +27,7 @@ class MaintenanceLogManagerImpl(
     val logsRef = getLogsCollectionRef(aircraftId)
       ?: return kotlinx.coroutines.flow.flowOf(emptyList())
 
-    return logsRef.snapshots.map { snapshot ->
+    return logsRef.observeSnapshot().map { snapshot ->
       val logs = mutableListOf<MaintenanceLog>()
       for (doc in snapshot.documents) {
         val blobBytes = doc.getBlobAsBytes(LOG_INFO_BLOB)
@@ -39,7 +40,7 @@ class MaintenanceLogManagerImpl(
         }
       }
       // Use epochSecond from Wire Instant for sorting
-      logs.sortedByDescending { it.timestamp?.epochSecond ?: 0L }
+      logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
     }
   }
 
@@ -102,7 +103,7 @@ class MaintenanceLogManagerImpl(
   ) {
     val data = mutableMapOf<String, Any>(
       LOG_INFO_BLOB to MaintenanceLog.ADAPTER.encode(log),
-      TIMESTAMP_FIELD to (log.timestamp?.let { Instant.fromEpochSeconds(it.epochSecond, it.nano) }
+      TIMESTAMP_FIELD to (log.timestamp?.let { Instant.fromEpochSeconds(it.getEpochSecond(), it.getNano()) }
         ?: Instant.fromEpochSeconds(0L)),
       COMPONENT_TYPE_FIELD to log.component_type.name,
       TECHNICIAN_ID_FIELD to log.technician_id,

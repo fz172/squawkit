@@ -29,6 +29,9 @@ compose.resources {
 }
 
 kotlin {
+  js(IR) {
+    browser()
+  }
   jvmToolchain(21)
   
   androidTarget {

@@ -108,7 +108,7 @@ fun EditInspectionSheet(
 
   // Force-override toggles
   val hasForcedDate = card.force_due_date != null &&
-      ((card.force_due_date?.epochSecond ?: 0L) > 0L || (card.force_due_date?.nano ?: 0) > 0)
+      ((card.force_due_date?.getEpochSecond() ?: 0L) > 0L || (card.force_due_date?.getNano() ?: 0) > 0)
   val hasForcedTach = card.force_due_tach > 0f
   var forceOverrideEnabled by remember { mutableStateOf(hasForcedDate || hasForcedTach) }
   var forceTachHours by remember {

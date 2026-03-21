@@ -19,6 +19,9 @@ android {
 }
 
 kotlin {
+  js(IR) {
+    browser()
+  }
   jvmToolchain(21)
   androidTarget {
     compilerOptions {

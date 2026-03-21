@@ -11,6 +11,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.fanfly.wingslog.core.database.observeSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -40,7 +41,7 @@ class AircraftManagerImpl(
       ?: return kotlinx.coroutines.flow.flowOf(null)
 
     val docRef = fleetRef.document(id)
-    return docRef.snapshots.map { snapshot ->
+    return docRef.observeSnapshot().map { snapshot ->
       if (snapshot.exists) {
         val blobBytes = snapshot.getBlobAsBytes(AIRCRAFT_INFO_BLOB)
         if (blobBytes != null) {

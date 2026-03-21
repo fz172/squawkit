@@ -19,6 +19,9 @@ android {
 }
 
 kotlin {
+  js(IR) {
+    browser()
+  }
   jvmToolchain(21)
   androidTarget {
     compilerOptions {
@@ -30,6 +33,7 @@ kotlin {
       api(libs.gitlive.firebase.firestore)
       api(libs.gitlive.firebase.auth)
       api(libs.kotlinx.datetime)
+      api(libs.kotlinx.coroutines.core)
 
       // DI
       api(libs.koin.core)

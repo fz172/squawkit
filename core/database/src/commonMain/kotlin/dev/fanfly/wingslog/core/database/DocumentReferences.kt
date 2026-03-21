@@ -10,6 +10,10 @@ expect fun DocumentSnapshot.getBlobAsBytes(field: String): ByteArray?
 
 expect suspend fun DocumentReference.setEncoded(data: Map<String, Any>, merge: Boolean = false)
 
+expect fun DocumentReference.observeSnapshot(): kotlinx.coroutines.flow.Flow<DocumentSnapshot>
+
+expect fun dev.gitlive.firebase.firestore.Query.observeSnapshot(): kotlinx.coroutines.flow.Flow<dev.gitlive.firebase.firestore.QuerySnapshot>
+
 fun generateRandomId(): String {
   val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
   return (1..20).map { chars.random() }.joinToString("")

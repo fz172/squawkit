@@ -10,7 +10,7 @@ import kotlinx.datetime.format.char
 
 fun WireInstant.toLocalDate(): LocalDate {
     // Convert WireInstant (epoch seconds and nanos) to kotlinx.datetime.Instant
-    val instant = Instant.fromEpochSeconds(this.epochSecond, this.nano.toInt())
+    val instant = Instant.fromEpochSeconds(this.getEpochSecond(), this.getNano())
     return instant.toLocalDateTime(TimeZone.UTC).date
 }
 

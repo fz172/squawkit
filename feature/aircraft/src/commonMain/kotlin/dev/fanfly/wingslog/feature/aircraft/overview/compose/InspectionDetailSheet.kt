@@ -30,7 +30,8 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
-import kotlinx.datetime.toJavaLocalDate
+import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import wingslog.feature.aircraft.generated.resources.done
 import wingslog.feature.aircraft.generated.resources.due_date
 import wingslog.feature.aircraft.generated.resources.due_tach
@@ -42,14 +43,9 @@ import wingslog.feature.aircraft.generated.resources.overdue
 import wingslog.feature.aircraft.generated.resources.overdue_was
 import wingslog.feature.aircraft.generated.resources.tach_format
 import wingslog.feature.aircraft.generated.resources.unknown_date
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+// dateFormatter removed
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-
-private val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,7 +132,7 @@ private fun DueStatusChip(dueStatus: DueStatus) {
   val (label, color) = when {
     dueStatus.isOnCondition -> cmpStringResource(AircraftRes.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
     dueStatus.isOverdue -> {
-      val dateStr = dueStatus.nextDueDate?.toJavaLocalDate()?.format(dateFormatter) ?: ""
+      val dateStr = dueStatus.nextDueDate?.toDisplayFormat() ?: ""
       (if (dateStr.isNotBlank()) cmpStringResource(
         AircraftRes.string.overdue_was,
         dateStr
@@ -145,12 +141,12 @@ private fun DueStatusChip(dueStatus: DueStatus) {
 
     dueStatus.nextDueDate != null -> cmpStringResource(
       AircraftRes.string.due_date,
-      dueStatus.nextDueDate?.toJavaLocalDate()?.format(dateFormatter) ?: ""
+      dueStatus.nextDueDate?.toDisplayFormat() ?: ""
     ) to StatusOk
 
     dueStatus.nextDueTach != null -> cmpStringResource(
       AircraftRes.string.due_tach,
-      String.format(Locale.getDefault(), "%.1f", dueStatus.nextDueTach ?: 0f)
+      "${((dueStatus.nextDueTach ?: 0f) * 10).toInt() / 10f}"
     ) to StatusOk
 
     else -> "—" to MaterialTheme.colorScheme.onSurfaceVariant
@@ -164,11 +160,8 @@ private fun DueStatusChip(dueStatus: DueStatus) {
 
 @Composable
 private fun LogHistoryItem(log: MaintenanceLog) {
-  val dateStr = if ((log.timestamp?.epochSecond ?: 0L) > 0L) {
-    Instant.ofEpochSecond(log.timestamp?.epochSecond ?: 0L)
-      .atZone(ZoneId.systemDefault())
-      .toLocalDate()
-      .format(dateFormatter)
+  val dateStr = if ((log.timestamp?.getEpochSecond() ?: 0L) > 0L) {
+    log.timestamp!!.toLocalDate().toDisplayFormat()
   } else {
     cmpStringResource(AircraftRes.string.unknown_date)
   }

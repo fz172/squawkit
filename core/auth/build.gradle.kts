@@ -19,6 +19,9 @@ android {
 }
 
 kotlin {
+  js(IR) {
+    browser()
+  }
   jvmToolchain(21)
 
   androidTarget {
@@ -29,6 +32,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(libs.gitlive.firebase.auth)
+      api(libs.koin.core)
     }
     androidMain.dependencies {
       api(project(":core:model"))

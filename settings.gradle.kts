@@ -13,7 +13,7 @@ pluginManagement {
   }
 }
 dependencyResolutionManagement {
-  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
   repositories {
     google()
     mavenCentral()
@@ -36,3 +36,4 @@ include(":feature:userprofile:database")
 include(":feature:aircraft:database")
 include(":feature:fleet:database")
 include(":feature:fleet")
+

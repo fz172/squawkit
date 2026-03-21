@@ -28,9 +28,9 @@ import wingslog.feature.aircraft.generated.resources.edit_log_content_descriptio
 import wingslog.feature.aircraft.generated.resources.prop_time_format
 import wingslog.feature.aircraft.generated.resources.tach_format
 import wingslog.feature.aircraft.generated.resources.unknown_date
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import kotlinx.datetime.Instant
+import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
@@ -40,13 +40,7 @@ fun MaintenanceLogCard(
   onEdit: () -> Unit,
   modifier: Modifier = Modifier
 ) {
-  val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
-  val unknownDate = cmpStringResource(AircraftRes.string.unknown_date)
-  val dateStr = if (log.timestamp != null) {
-    dateFormat.format(Date((log.timestamp?.epochSecond ?: 0L) * 1000))
-  } else {
-    unknownDate
-  }
+  val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat() ?: cmpStringResource(AircraftRes.string.unknown_date)
 
   Card(
     modifier = modifier.fillMaxWidth(),

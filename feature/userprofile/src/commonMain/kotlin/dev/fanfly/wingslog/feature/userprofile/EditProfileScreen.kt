@@ -20,7 +20,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
+// removed ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
@@ -61,7 +61,7 @@ import wingslog.feature.userprofile.generated.resources.license_number
 import wingslog.feature.userprofile.generated.resources.license_type
 import wingslog.feature.userprofile.generated.resources.never
 import wingslog.feature.userprofile.generated.resources.select_date
-import java.time.Instant
+import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.feature.userprofile.generated.resources.Res as UserProfileRes
@@ -123,7 +123,7 @@ fun EditProfileScreen(
           },
           modifier = Modifier
             .fillMaxWidth()
-            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+            .menuAnchor(),
           shape = RoundedCornerShape(12.dp)
         )
         ExposedDropdownMenu(
@@ -222,8 +222,8 @@ fun EditProfileScreen(
             TextButton(
               onClick = {
                 val selectedDate = datePickerState.selectedDateMillis?.let {
-                  Instant.ofEpochMilli(it)
-                } ?: Instant.now()
+                  Instant.fromEpochMilliseconds(it)
+                } ?: kotlinx.datetime.Clock.System.now()
                 viewModel.onExpirationDateChanged(selectedDate)
                 showDatePicker = false
               }) {

@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
+// removed uuid
 
 class MaintenanceLogFormViewModel(
   private val logManager: MaintenanceLogManager,
@@ -132,16 +132,17 @@ class MaintenanceLogFormViewModel(
     }
     viewModelScope.launch {
       _uiState.update { it.copy(isSaving = true, error = null) }
-      val now = System.currentTimeMillis() / 1000
-
       val componentSerial = when (state.selectedComponentType) {
         MaintenanceLog.ComponentType.AIRFRAME -> state.aircraft?.serial ?: ""
         else -> state.selectedSubComponent ?: ""
       }
 
       val log = MaintenanceLog(
-        id = logId ?: UUID.randomUUID().toString(),
-        timestamp = com.squareup.wire.Instant.ofEpochSecond(now),
+        id = logId ?: dev.fanfly.wingslog.core.database.generateRandomId(),
+        timestamp = dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant(
+            kotlinx.datetime.Clock.System.now().epochSeconds,
+            kotlinx.datetime.Clock.System.now().nanosecondsOfSecond
+        ),
         work_description = state.workDescription,
         inspection_ids = state.selectedInspectionIds,
         tach_time = state.tachTime.toDoubleOrNull() ?: 0.0,

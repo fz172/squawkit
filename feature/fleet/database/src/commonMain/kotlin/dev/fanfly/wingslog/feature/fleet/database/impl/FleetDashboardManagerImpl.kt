@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.database.getFleetCollectionRef
 import dev.fanfly.wingslog.feature.fleet.database.FleetDashboardManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.fanfly.wingslog.core.database.observeSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
@@ -22,7 +23,7 @@ class FleetDashboardManagerImpl(
     val fleetCollectionRef =
       firestore.getFleetCollectionRef(firebaseAuth) ?: return emptyFlow()
 
-    return fleetCollectionRef.snapshots.map { snapshot ->
+    return fleetCollectionRef.observeSnapshot().map { snapshot ->
       if (snapshot.documents.isEmpty()) {
         Logger.w { "No fleet data, returning empty" }
         return@map emptyList()

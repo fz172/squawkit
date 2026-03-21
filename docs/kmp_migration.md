@@ -1,9 +1,8 @@
 # WingsLog: KMP Migration Design Doc
 
-> **Phase order:** (1) KMP Migration — Android-first, (2) iOS, (3) Web (On Hold)
+> **Phase order:** (1) KMP Migration — Android-first, (2) iOS (Skipped), (3) Web (Active)
 >
-> **Current status:** Steps 1.0, 1.1, 1.2, 1.5 complete. Step 1.3 (Firebase KMP) in progress. Step
-> 1.4 (Compose MP) not started.
+> **Current status:** Phase 1 complete. Phase 2 skipped. Phase 3 (Web) started.
 
 ---
 
@@ -146,7 +145,7 @@ import dev.gitlive.firebase.firestore.firestore
 
 ---
 
-## Step 1.4 — UI: Jetpack Compose → Compose Multiplatform ⏳ NOT STARTED
+## Step 1.4 — UI: Jetpack Compose → Compose Multiplatform ✅ DONE
 
 31 UI files currently use `androidx.compose.*` imports. API surface is nearly identical — mostly
 import path changes.
@@ -188,15 +187,15 @@ Replaced Google Flogger (JVM-only) with TouchLab Kermit (`co.touchlab:kermit`, K
 
 ## Phase 1 Completion Criteria
 
-- [ ] All Managers migrated to GitLive Firebase SDK (Step 1.3)
-- [ ] All UI composables moved to `commonMain` with Compose Multiplatform (Step 1.4)
-- [ ] Android app builds and all features work end-to-end
-- [ ] No `com.google.firebase` imports remaining outside of `app/` module
-- [ ] No `androidx.compose` imports in `commonMain`
+- [x] All Managers migrated to GitLive Firebase SDK (Step 1.3)
+- [x] All UI composables moved to `commonMain` with Compose Multiplatform (Step 1.4)
+- [x] Android app builds and all features work end-to-end
+- [x] No `com.google.firebase` imports remaining outside of `app/` module
+- [x] No `androidx.compose` imports in `commonMain`
 
 ---
 
-# Phase 2: iOS Target
+# Phase 2: iOS Target (SKIPPED / ON HOLD)
 
 Add iOS via Kotlin/Native. Compose Multiplatform on iOS is production-ready as of 2024. This will build upon the `composeApp` shared UI module created in Phase 1.
 
@@ -215,7 +214,7 @@ Add iOS via Kotlin/Native. Compose Multiplatform on iOS is production-ready as o
 
 ---
 
-# Phase 3: Web Target
+# Phase 3: Web Target (ACTIVE)
 
 Add a Kotlin/JS web target using Compose Multiplatform Canvas. Since GitLive Firebase KMP natively provides robust support for the standard `js` target (by wrapping the official Firebase JS SDK under the hood), this phase is fully feasible with our current technology stack.
 

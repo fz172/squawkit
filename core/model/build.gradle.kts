@@ -38,3 +38,9 @@ kotlin {
     }
   }
 }
+
+kotlin {
+  js(IR) {
+    browser()
+  }
+}

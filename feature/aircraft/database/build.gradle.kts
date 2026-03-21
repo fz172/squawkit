@@ -19,6 +19,9 @@ android {
 }
 
 kotlin {
+  js(IR) {
+    browser()
+  }
   jvmToolchain(21)
 
   androidTarget {
@@ -49,5 +52,5 @@ dependencies {
   testImplementation(libs.junit)
   testImplementation("io.mockk:mockk:1.13.10")
   testImplementation("com.google.truth:truth:1.4.2")
-  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+  testImplementation(libs.kotlinx.coroutines.test)
 }

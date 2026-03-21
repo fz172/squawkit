@@ -4,7 +4,7 @@ coilCompose = "3.4.0"
 ktor = "3.1.0"
 credentials = "1.5.0"
 firebaseBom = "32.8.0"
-gitlive = "2.1.0"
+gitlive = "2.4.0"
 kermit = "2.0.5"
 googleid = "1.2.0"
 koin = "4.0.4"
@@ -28,6 +28,7 @@ protobufJavalite = "4.26.1"
 protobufKotlinLite = "4.26.1"
 uiText = "1.10.1"
 wire = "5.1.0"
+kotlinxCoroutines = "1.9.0"
 
 [libraries]
 androidx-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "materialIconsExtended" }
@@ -73,6 +74,8 @@ androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", ve
 protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobufKotlinLite" }
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
 wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wire" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -82,3 +85,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 wire = { id = "com.squareup.wire", version.ref = "wire" }
+

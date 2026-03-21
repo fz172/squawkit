@@ -82,7 +82,7 @@ class AircraftOverviewViewModel(
           }
           val refreshedDetailLogs = refreshedSelected?.let { sel ->
             logs.filter { sel.card.id in it.inspection_ids }
-              .sortedByDescending { it.timestamp?.epochSecond ?: 0L }
+              .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
           } ?: emptyList()
           AircraftOverviewUiState.Success(
             aircraft = aircraft,
@@ -116,7 +116,7 @@ class AircraftOverviewViewModel(
   fun showInspectionDetail(cardWithStatus: InspectionCardWithStatus) {
     val relevantLogs = cachedLogs
       .filter { cardWithStatus.card.id in it.inspection_ids }
-      .sortedByDescending { it.timestamp?.epochSecond ?: 0L }
+      .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
     _uiState.update { state ->
       if (state is AircraftOverviewUiState.Success) {
         state.copy(

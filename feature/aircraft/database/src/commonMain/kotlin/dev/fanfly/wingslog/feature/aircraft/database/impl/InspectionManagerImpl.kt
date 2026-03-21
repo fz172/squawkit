@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.fanfly.wingslog.core.database.observeSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
@@ -31,7 +32,7 @@ class InspectionManagerImpl(
     val cardsRef = getCardsCollectionRef(aircraftId)
       ?: return kotlinx.coroutines.flow.flowOf(emptyList())
 
-    return cardsRef.snapshots.map { snapshot ->
+    return cardsRef.observeSnapshot().map { snapshot ->
       val cards = mutableListOf<InspectionCard>()
       for (doc in snapshot.documents) {
         val blobBytes = doc.getBlobAsBytes(INSPECTION_CARD_BLOB)
@@ -87,13 +88,13 @@ class InspectionManagerImpl(
 
   override suspend fun computeNextDue(card: InspectionCard, logs: List<MaintenanceLog>): DueStatus {
     // 1. Force overrides
-    val hasForcedDate = card.force_due_date != null && (card.force_due_date!!.epochSecond > 0L)
+    val hasForcedDate = card.force_due_date != null && (card.force_due_date!!.getEpochSecond() > 0L)
     val hasForcedTach = card.force_due_tach > 0f
 
     if (hasForcedDate || hasForcedTach) {
       return DueStatus(
         nextDueDate = if (hasForcedDate) {
-          Instant.fromEpochSeconds(card.force_due_date!!.epochSecond, card.force_due_date!!.nano)
+          Instant.fromEpochSeconds(card.force_due_date!!.getEpochSecond(), card.force_due_date!!.getNano())
             .toLocalDateTime(TimeZone.currentSystemDefault()).date
         } else null,
         nextDueTach = if (hasForcedTach) card.force_due_tach else null,
@@ -103,7 +104,7 @@ class InspectionManagerImpl(
 
     // 2. Compute based on rules and last maintenance
     val relevantLogs = logs.filter { card.id in it.inspection_ids }
-      .sortedByDescending { it.timestamp?.epochSecond ?: 0L }
+      .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
     val latestLog = relevantLogs.firstOrNull()
 
     var nextDueDate: LocalDate? = null
@@ -114,7 +115,7 @@ class InspectionManagerImpl(
       when {
         rule.time_rule != null -> {
           val baseDate = if (latestLog?.timestamp != null) {
-            Instant.fromEpochSeconds(latestLog.timestamp!!.epochSecond, latestLog.timestamp!!.nano)
+            Instant.fromEpochSeconds(latestLog.timestamp!!.getEpochSecond(), latestLog.timestamp!!.getNano())
               .toLocalDateTime(TimeZone.currentSystemDefault()).date
           } else {
             Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date

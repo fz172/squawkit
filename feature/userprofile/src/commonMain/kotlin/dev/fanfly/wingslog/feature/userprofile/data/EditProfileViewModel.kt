@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.Instant
+import kotlinx.datetime.Instant
 
 class EditProfileViewModel(
   private val userProfileManager: UserProfileManager,
@@ -60,7 +60,10 @@ class EditProfileViewModel(
     _uiState.update {
       it.copy(
         licenceInfo = it.licenceInfo.copy(
-          expiration_date = newDate
+          expiration_date = dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant(
+            newDate.epochSeconds,
+            newDate.nanosecondsOfSecond
+          )
         )
       )
     }
