@@ -12,6 +12,5 @@ fun LicenseType.displayResId(): StringResource {
     LicenseType.NONE -> UserProfileCardRes.string.license_type_none
     LicenseType.REPAIRMAN -> UserProfileCardRes.string.license_type_repairman
     LicenseType.AMT -> UserProfileCardRes.string.license_type_amt
-    else -> UserProfileCardRes.string.license_type_none
   }
 }
