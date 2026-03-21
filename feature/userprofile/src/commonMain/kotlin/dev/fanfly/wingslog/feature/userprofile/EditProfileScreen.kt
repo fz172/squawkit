@@ -223,7 +223,7 @@ fun EditProfileScreen(
               onClick = {
                 val selectedDate = datePickerState.selectedDateMillis?.let {
                   Instant.fromEpochMilliseconds(it)
-                } ?: kotlinx.datetime.Clock.System.now()
+                } ?: kotlin.time.Clock.System.now()
                 viewModel.onExpirationDateChanged(selectedDate)
                 showDatePicker = false
               }) {

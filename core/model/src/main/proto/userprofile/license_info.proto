@@ -1,5 +1,5 @@
 syntax = "proto3";
-import "userprofile/data/license_type.proto";
+import "userprofile/license_type.proto";
 import "google/protobuf/timestamp.proto";
 
 

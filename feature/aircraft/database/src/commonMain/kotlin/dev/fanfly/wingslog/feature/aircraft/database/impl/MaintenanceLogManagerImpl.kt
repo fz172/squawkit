@@ -5,17 +5,17 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
 import dev.fanfly.wingslog.core.database.getFleetCollectionRef
+import dev.fanfly.wingslog.core.database.observeSnapshot
 import dev.fanfly.wingslog.core.database.setEncoded
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.where
-import dev.fanfly.wingslog.core.database.observeSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
 class MaintenanceLogManagerImpl(
@@ -103,7 +103,12 @@ class MaintenanceLogManagerImpl(
   ) {
     val data = mutableMapOf<String, Any>(
       LOG_INFO_BLOB to MaintenanceLog.ADAPTER.encode(log),
-      TIMESTAMP_FIELD to (log.timestamp?.let { Instant.fromEpochSeconds(it.getEpochSecond(), it.getNano()) }
+      TIMESTAMP_FIELD to (log.timestamp?.let {
+        Instant.fromEpochSeconds(
+          it.getEpochSecond(),
+          it.getNano()
+        )
+      }
         ?: Instant.fromEpochSeconds(0L)),
       COMPONENT_TYPE_FIELD to log.component_type.name,
       TECHNICIAN_ID_FIELD to log.technician_id,
