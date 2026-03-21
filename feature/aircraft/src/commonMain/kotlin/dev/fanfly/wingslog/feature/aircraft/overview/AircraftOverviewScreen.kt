@@ -57,9 +57,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
-import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.ConfigurationCard
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.InspectionCard
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewEvent
@@ -498,7 +498,10 @@ private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Mo
           color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Text(
-          text = cmpStringResource(AircraftRes.string.tach_time_hours_format, hours.formatToOneDecimalPlace()),
+          text = cmpStringResource(
+            AircraftRes.string.tach_time_hours_format,
+            hours.formatToOneDecimalPlace()
+          ),
           style = MaterialTheme.typography.headlineSmall,
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -574,7 +577,7 @@ private fun InspectionStatusSection(
             )
           }
           if (rowItems.size == 1) {
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1f))
           }
         }
       }
@@ -625,7 +628,7 @@ private fun InspectionGrid(aircraft: Aircraft, modifier: Modifier = Modifier) {
     val title: String,
     val status: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val statusColor: androidx.compose.ui.graphics.Color
+    val statusColor: Color
   )
 
   val items = buildList {
@@ -698,7 +701,7 @@ private fun InspectionGrid(aircraft: Aircraft, modifier: Modifier = Modifier) {
         }
         // If the row has only one item, add a spacer to fill the second slot
         if (rowItems.size == 1) {
-          androidx.compose.foundation.layout.Spacer(modifier = Modifier.weight(1f))
+          Spacer(modifier = Modifier.weight(1f))
         }
       }
     }
