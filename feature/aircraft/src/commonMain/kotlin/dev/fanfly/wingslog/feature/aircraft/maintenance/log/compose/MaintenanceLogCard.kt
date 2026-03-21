@@ -31,6 +31,7 @@ import wingslog.feature.aircraft.generated.resources.unknown_date
 import kotlinx.datetime.Instant
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
@@ -92,21 +93,21 @@ fun MaintenanceLogCard(
       ) {
         if (log.tach_time > 0.0) {
           Text(
-            text = cmpStringResource(AircraftRes.string.tach_format, log.tach_time),
+            text = cmpStringResource(AircraftRes.string.tach_format, log.tach_time.formatToOneDecimalPlace()),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
         if (log.airframe_time > 0.0) {
           Text(
-            text = cmpStringResource(AircraftRes.string.airframe_time_format, log.airframe_time),
+            text = cmpStringResource(AircraftRes.string.airframe_time_format, log.airframe_time.formatToOneDecimalPlace()),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
         if (log.prop_time > 0.0) {
           Text(
-            text = cmpStringResource(AircraftRes.string.prop_time_format, log.prop_time),
+            text = cmpStringResource(AircraftRes.string.prop_time_format, log.prop_time.formatToOneDecimalPlace()),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )

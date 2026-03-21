@@ -59,6 +59,7 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.ConfigurationCard
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.InspectionCard
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewEvent
@@ -497,7 +498,7 @@ private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Mo
           color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Text(
-          text = cmpStringResource(AircraftRes.string.tach_time_hours_format, hours),
+          text = cmpStringResource(AircraftRes.string.tach_time_hours_format, hours.formatToOneDecimalPlace()),
           style = MaterialTheme.typography.headlineSmall,
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onPrimaryContainer

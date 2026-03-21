@@ -32,6 +32,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import wingslog.feature.aircraft.generated.resources.done
 import wingslog.feature.aircraft.generated.resources.due_date
 import wingslog.feature.aircraft.generated.resources.due_tach
@@ -182,7 +183,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
         fontWeight = FontWeight.Medium
       )
       Text(
-        text = cmpStringResource(AircraftRes.string.tach_format, log.tach_time),
+        text = cmpStringResource(AircraftRes.string.tach_format, log.tach_time.formatToOneDecimalPlace()),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
       )
