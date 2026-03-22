@@ -14,13 +14,31 @@ unless explicitly exported by the user.
 
 ---
 
+## ⚠️ KMP Constraint: Android-Only Solutions Are Out
+
+WingsLog targets **Android, iOS, and Web** via KMP + Compose Multiplatform. This rules out
+Android-only storage APIs:
+
+| Library | Android | iOS | Web | Verdict |
+|---|---|---|---|---|
+| Jetpack Room | ✅ | ❌ | ❌ | **Not viable** |
+| Proto DataStore | ✅ | ❌ partial | ❌ | **Not viable as-is** |
+| SQLDelight | ✅ | ✅ | ✅ (WASM) | ✅ **Recommended** |
+| Multiplatform Settings | ✅ | ✅ | ✅ | ✅ **Recommended** |
+| Files (expect/actual) | ✅ | ✅ | limited | ✅ for attachments |
+
+All storage choices must be **KMP-native** and work across all three targets.
+
+---
+
 ## What Needs to Be Stored
 
-| Data | Current Home | Size Characteristics |
+| Data | Current Home | Size / Query Needs |
 |---|---|---|
-| License info | Firestore blob (`users/{uid}/profile/license_info`) | Single object, rarely changes |
-| Fleet metadata | Firestore blobs (`users/{uid}/fleet/{aircraftId}`) | Small collection, nested protos |
-| Maintenance logs | Firestore subcollection (`fleet/{id}/maintenance_logs`) | Grows over time, needs querying |
+| License info | Firestore blob (`users/{uid}/profile/license_info`) | Single object, rarely changes, no queries |
+| Fleet metadata | Firestore blobs (`users/{uid}/fleet/{aircraftId}`) | Small collection, nested components |
+| Maintenance logs | Firestore subcollection (`fleet/{id}/maintenance_logs`) | Grows over time, filter/sort by date, component, inspection type |
+| Attachments (PDFs, photos) | Firebase Storage | Binary blobs, platform filesystem |
 
 ---
 
@@ -37,27 +55,281 @@ Fan's suggestion of Markdown files deserves honest analysis.
 - No schema enforcement → any manual edit can break parsing
 - Concurrent writes unsafe (multiple coroutines racing to update a file)
 - Querying (e.g., "show all ENGINE logs since tach 1234") requires parsing every file
+- No KMP standard library for safe, atomic file I/O across iOS and Android
 
 **Where Markdown *does* make sense:** as an export/print format. A "Export logbook as Markdown"
-feature would produce beautiful, portable, human-readable records. Great for sending to an A&P,
-printing, or archiving in git. But not the internal database.
+feature would produce beautiful, portable, human-readable records — perfect for sending to an A&P,
+printing, or archiving in git. This is included in the export strategy below.
 
-### ✅ Recommended: Room (SQLite) + Proto DataStore
+### ✅ Recommended: SQLDelight + Multiplatform Settings
 
 | Use | Technology | Why |
 |---|---|---|
-| License info | **Jetpack Proto DataStore** | Single object, typed, coroutine-friendly, atomic |
-| Fleet + Aircraft components | **Room (SQLite)** | Queryable, relational, ACID, Hilt-compatible |
-| Maintenance logs | **Room (SQLite)** | Needs filtering/sorting by date, component, inspection type |
-| Attachments (PDFs, photos) | **Internal app storage** (files/) | Large binary blobs belong on filesystem, not in DB |
+| License info | **Multiplatform Settings** | Single object, key-value typed, KMP-native, no boilerplate |
+| Fleet + maintenance logs | **SQLDelight** | KMP SQLite, typed queries, Kotlin Flow, compile-time SQL verification |
+| Attachments | **expect/actual filesystem** | Large blobs on native filesystem, paths stored in SQLDelight |
 
-**Why Room over raw SQLite:** Less boilerplate, compile-time query verification, Kotlin Flow
-integration, migration support via `@Migration`, works seamlessly with Hilt.
+---
 
-**Why Proto DataStore over SharedPreferences for license:** Already have the `LicenseInfo` proto.
-DataStore is coroutine-native and atomic. SharedPreferences is deprecated for complex objects.
+## SQLDelight
 
-**Why not JSON files:** Same atomicity and querying problems as Markdown, just less readable.
+[SQLDelight](https://cashapp.github.io/sqldelight/) is the standard KMP SQL database library by
+Cash App. It generates type-safe Kotlin APIs from `.sq` files at compile time.
+
+**Platform drivers:**
+
+| Platform | Driver |
+|---|---|
+| Android | `AndroidSqliteDriver` (standard Android SQLite) |
+| iOS | `NativeSqliteDriver` (SQLite bundled in iOS) |
+| Web (JS/WASM) | `WebWorkerDriver` (SQLite compiled to WASM via `sql.js`) |
+
+All platforms share the same `.sq` schema and query files in `commonMain`. Zero platform-specific
+SQL needed.
+
+### Dependency Setup
+
+```toml
+# libs.versions.toml
+sqldelight = "2.0.2"
+multiplatformSettings = "1.1.1"
+```
+
+```kotlin
+// build.gradle.kts (commonMain)
+plugins {
+    id("app.cash.sqldelight") version "2.0.2"
+}
+
+sqldelight {
+    databases {
+        create("WingsLogDatabase") {
+            packageName.set("com.wingslog.db")
+            schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
+        }
+    }
+}
+
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("app.cash.sqldelight:coroutines-extensions:2.0.2")
+        }
+        androidMain.dependencies {
+            implementation("app.cash.sqldelight:android-driver:2.0.2")
+        }
+        iosMain.dependencies {
+            implementation("app.cash.sqldelight:native-driver:2.0.2")
+        }
+        jsMain.dependencies {
+            implementation("app.cash.sqldelight:web-worker-driver:2.0.2")
+        }
+    }
+}
+```
+
+### Schema (`.sq` files in `commonMain/sqldelight/`)
+
+#### `Aircraft.sq`
+
+```sql
+CREATE TABLE aircraft (
+    id TEXT NOT NULL PRIMARY KEY,
+    tail_number TEXT NOT NULL,
+    make TEXT NOT NULL,
+    model TEXT NOT NULL,
+    airframe_serial TEXT NOT NULL,
+    created_at INTEGER NOT NULL,   -- epoch ms
+    updated_at INTEGER NOT NULL
+);
+
+selectAll:
+SELECT * FROM aircraft ORDER BY tail_number ASC;
+
+selectById:
+SELECT * FROM aircraft WHERE id = ?;
+
+upsert:
+INSERT OR REPLACE INTO aircraft VALUES (?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM aircraft WHERE id = ?;
+```
+
+#### `Engine.sq`
+
+```sql
+CREATE TABLE engine (
+    id TEXT NOT NULL PRIMARY KEY,
+    aircraft_id TEXT NOT NULL,
+    position INTEGER NOT NULL,          -- 1-indexed
+    make TEXT NOT NULL,
+    model TEXT NOT NULL,
+    serial TEXT NOT NULL,
+    FOREIGN KEY (aircraft_id) REFERENCES aircraft(id) ON DELETE CASCADE
+);
+
+selectByAircraft:
+SELECT * FROM engine WHERE aircraft_id = ? ORDER BY position ASC;
+
+upsert:
+INSERT OR REPLACE INTO engine VALUES (?, ?, ?, ?, ?, ?);
+
+deleteByAircraft:
+DELETE FROM engine WHERE aircraft_id = ?;
+```
+
+#### `Propeller.sq`
+
+```sql
+CREATE TABLE propeller (
+    id TEXT NOT NULL PRIMARY KEY,
+    engine_id TEXT NOT NULL,
+    hub_make TEXT NOT NULL,
+    hub_model TEXT NOT NULL,
+    hub_serial TEXT NOT NULL,
+    blades_json TEXT NOT NULL,          -- JSON array of blade serials/make/model
+    FOREIGN KEY (engine_id) REFERENCES engine(id) ON DELETE CASCADE
+);
+
+selectByEngine:
+SELECT * FROM propeller WHERE engine_id = ?;
+
+upsert:
+INSERT OR REPLACE INTO propeller VALUES (?, ?, ?, ?, ?, ?);
+```
+
+#### `MaintenanceLog.sq`
+
+```sql
+CREATE TABLE maintenance_log (
+    id TEXT NOT NULL PRIMARY KEY,
+    aircraft_id TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,         -- epoch ms
+    technician_name TEXT NOT NULL,
+    work_description TEXT NOT NULL,
+    component_type TEXT NOT NULL,       -- AIRFRAME | ENGINE | PROPELLER
+    component_serial TEXT NOT NULL,
+    component_reference TEXT NOT NULL,  -- JSON: { type, position, serial }
+    inspections_json TEXT NOT NULL,     -- JSON array: ["ANNUAL","OIL_CHANGE"]
+    tach_time REAL NOT NULL,
+    attachment_paths TEXT NOT NULL,     -- JSON array of local file paths
+    FOREIGN KEY (aircraft_id) REFERENCES aircraft(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_log_aircraft ON maintenance_log(aircraft_id);
+CREATE INDEX idx_log_timestamp ON maintenance_log(timestamp);
+CREATE INDEX idx_log_component_type ON maintenance_log(component_type);
+
+selectByAircraft:
+SELECT * FROM maintenance_log
+WHERE aircraft_id = ?
+ORDER BY timestamp DESC;
+
+selectByAircraftAndComponent:
+SELECT * FROM maintenance_log
+WHERE aircraft_id = ? AND component_type = ?
+ORDER BY timestamp DESC;
+
+selectLatestByAircraft:
+SELECT * FROM maintenance_log
+WHERE aircraft_id = ?
+ORDER BY timestamp DESC
+LIMIT 1;
+
+upsert:
+INSERT OR REPLACE INTO maintenance_log
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM maintenance_log WHERE id = ?;
+```
+
+### Platform Driver Setup (expect/actual)
+
+```kotlin
+// commonMain
+expect fun createDriver(schema: SqlSchema<QueryResult.AsyncValue<Unit>>): SqlDriver
+
+// androidMain
+actual fun createDriver(schema: SqlSchema<QueryResult.AsyncValue<Unit>>): SqlDriver =
+    AndroidSqliteDriver(schema, context, "wingslog.db")
+
+// iosMain
+actual fun createDriver(schema: SqlSchema<QueryResult.AsyncValue<Unit>>): SqlDriver =
+    NativeSqliteDriver(schema, "wingslog.db")
+
+// jsMain
+actual fun createDriver(schema: SqlSchema<QueryResult.AsyncValue<Unit>>): SqlDriver =
+    WebWorkerDriver(Worker(js("""new URL("@cashapp/sqldelight-sqljs-worker/sqljs.worker.js", import.meta.url)""")))
+```
+
+---
+
+## Multiplatform Settings for License Info
+
+[Multiplatform Settings](https://github.com/russhwolf/multiplatform-settings) (Russell Wolf) is the
+standard KMP key-value store.
+
+**Platform backing:**
+
+| Platform | Backing Store |
+|---|---|
+| Android | `SharedPreferences` |
+| iOS | `NSUserDefaults` |
+| Web | `LocalStorage` |
+
+Since `LicenseInfo` is a Wire proto, encode it to bytes and store as a Base64 string:
+
+```kotlin
+// commonMain
+class LicenseRepository(private val settings: Settings) {
+    private val KEY = "license_info_proto"
+
+    fun getLicense(): LicenseInfo? {
+        val encoded = settings.getStringOrNull(KEY) ?: return null
+        return LicenseInfo.ADAPTER.decode(encoded.decodeBase64Bytes())
+    }
+
+    fun saveLicense(info: LicenseInfo) {
+        val encoded = LicenseInfo.ADAPTER.encode(info).encodeBase64()
+        settings.putString(KEY, encoded)
+    }
+}
+```
+
+Dependencies:
+```kotlin
+commonMain.dependencies {
+    implementation("com.russhwolf:multiplatform-settings:1.1.1")
+    implementation("com.russhwolf:multiplatform-settings-no-arg:1.1.1")
+}
+```
+
+---
+
+## Attachment Storage (Platform-Specific Paths)
+
+PDFs and photos are stored on the native filesystem. Only the path is stored in SQLDelight.
+
+**Path roots per platform:**
+
+| Platform | Directory | Notes |
+|---|---|---|
+| Android | `context.filesDir` | Private to app, auto-backed up |
+| iOS | `NSFileManager.defaultManager.applicationSupportDirectory` | Private, included in iCloud Backup by default |
+| Web | N/A | Attachments not supported on web (no persistent filesystem) |
+
+```kotlin
+// expect/actual for platform-specific base path
+expect fun attachmentDirectory(): Path  // okio Path
+
+// Structure (same on Android + iOS):
+// <app-files>/attachments/{aircraftId}/{logId}/filename.pdf
+```
+
+Use [Okio](https://square.github.io/okio/) (`com.squareup.okio:okio`) for KMP filesystem access —
+already Wire's dependency, so it's likely already in the build.
 
 ---
 
@@ -65,233 +337,35 @@ DataStore is coroutine-native and atomic. SharedPreferences is deprecated for co
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                   Compose UI Layer                   │
+│           Compose Multiplatform UI (commonMain)      │
 └────────────────────────┬────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────┐
-│              ViewModels (Hilt injected)              │
+│              ViewModels (commonMain, Koin)           │
 └────────────────────────┬────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────┐
-│              Repository Interfaces                   │
-│   FleetRepository  |  MaintenanceRepository         │
-│   LicenseRepository                                 │
+│         Repository Interfaces (commonMain)           │
+│  FleetRepository | MaintenanceRepo | LicenseRepo    │
 └──────┬─────────────────────────────────┬────────────┘
        │                                 │
 ┌──────▼──────────┐         ┌────────────▼───────────┐
-│  Room Database  │         │   Proto DataStore       │
-│  (SQLite)       │         │   (license_info.pb)     │
-│  wingslog.db    │         └────────────────────────┘
-└─────────────────┘
+│   SQLDelight    │         │  Multiplatform Settings │
+│  (wingslog.db)  │         │  (NSUserDefaults /      │
+│  Android/iOS/   │         │   SharedPrefs /         │
+│  Web WASM       │         │   LocalStorage)         │
+└─────────────────┘         └────────────────────────┘
 ```
 
-The Repository layer is the critical abstraction. This means:
-1. ViewModels never talk to Room or DataStore directly
-2. If we ever add cloud sync, it slots in at the Repository layer — no UI changes
-3. Unit-testable with fake repositories
-
----
-
-## Room Database Schema
-
-### `aircraft` table
-
-```kotlin
-@Entity(tableName = "aircraft")
-data class AircraftEntity(
-    @PrimaryKey val id: String,           // UUID
-    val tailNumber: String,
-    val make: String,
-    val model: String,
-    val airframeSerial: String,
-    val createdAt: Long,                  // epoch ms
-    val updatedAt: Long
-)
-```
-
-### `engine` table
-
-```kotlin
-@Entity(
-    tableName = "engine",
-    foreignKeys = [ForeignKey(
-        entity = AircraftEntity::class,
-        parentColumns = ["id"],
-        childColumns = ["aircraftId"],
-        onDelete = CASCADE
-    )]
-)
-data class EngineEntity(
-    @PrimaryKey val id: String,           // UUID
-    val aircraftId: String,
-    val position: Int,                    // 1-indexed (engine 1, engine 2)
-    val make: String,
-    val model: String,
-    val serial: String
-)
-```
-
-### `propeller` table
-
-```kotlin
-@Entity(
-    tableName = "propeller",
-    foreignKeys = [ForeignKey(
-        entity = EngineEntity::class,
-        parentColumns = ["id"],
-        childColumns = ["engineId"],
-        onDelete = CASCADE
-    )]
-)
-data class PropellerEntity(
-    @PrimaryKey val id: String,
-    val engineId: String,
-    val hubMake: String,
-    val hubModel: String,
-    val hubSerial: String,
-    val bladesJson: String                // JSON array of PropellerBlade
-)
-```
-
-### `maintenance_log` table
-
-```kotlin
-@Entity(
-    tableName = "maintenance_log",
-    foreignKeys = [ForeignKey(
-        entity = AircraftEntity::class,
-        parentColumns = ["id"],
-        childColumns = ["aircraftId"],
-        onDelete = CASCADE
-    )],
-    indices = [
-        Index("aircraftId"),
-        Index("timestamp"),
-        Index("componentType")
-    ]
-)
-data class MaintenanceLogEntity(
-    @PrimaryKey val id: String,           // UUID
-    val aircraftId: String,
-    val timestamp: Long,                  // epoch ms
-    val technicianName: String,
-    val workDescription: String,
-    val componentType: String,            // AIRFRAME | ENGINE | PROPELLER
-    val componentSerial: String,
-    val componentReference: String,       // JSON: { type, position, serial }
-    val inspectionsJson: String,          // JSON array: ["ANNUAL","OIL_CHANGE"]
-    val tachTime: Double,
-    val attachmentPaths: String           // JSON array of local file paths
-)
-```
-
-**Indices:** `aircraftId`, `timestamp`, and `componentType` are indexed for fast filtering —
-the compliance screen will query "all ANNUAL inspections for this aircraft ordered by timestamp desc".
-
-### Full Database
-
-```kotlin
-@Database(
-    entities = [
-        AircraftEntity::class,
-        EngineEntity::class,
-        PropellerEntity::class,
-        MaintenanceLogEntity::class
-    ],
-    version = 1,
-    exportSchema = true                   // enables migration audit trail
-)
-abstract class WingsLogDatabase : RoomDatabase() {
-    abstract fun aircraftDao(): AircraftDao
-    abstract fun engineDao(): EngineDao
-    abstract fun propellerDao(): PropellerDao
-    abstract fun maintenanceLogDao(): MaintenanceLogDao
-}
-```
-
----
-
-## Proto DataStore for License Info
-
-Reuse the existing `LicenseInfo` proto:
-
-```kotlin
-// In :core:datastore module
-val Context.licenseDataStore: DataStore<LicenseInfo> by dataStore(
-    fileName = "license_info.pb",
-    serializer = LicenseInfoSerializer       // implements Serializer<LicenseInfo>
-)
-```
-
-Read/write are simple coroutine flows:
-```kotlin
-val license: Flow<LicenseInfo> = context.licenseDataStore.data
-suspend fun updateLicense(info: LicenseInfo) = context.licenseDataStore.updateData { info }
-```
-
----
-
-## Attachment Storage
-
-PDFs and photos are stored as files in the app's internal storage (not in the DB):
-
-```
-/data/data/com.wingslog/files/
-  attachments/
-    {aircraftId}/
-      {logId}/
-        8130_form.pdf
-        annual_inspection_photo.jpg
-```
-
-The `maintenance_log.attachmentPaths` field stores the relative paths. The full path is
-reconstructed at runtime using `context.filesDir`. This avoids storing large blobs in SQLite (which
-degrades performance).
-
-**Important:** Android's internal storage is private to the app. For user export/backup, we'll need
-an explicit "Export" flow using `FileProvider` to share with other apps.
-
----
-
-## Migration from Firebase
-
-A one-time migration is needed to move existing Firestore data to Room.
-
-### Migration Strategy
-
-```
-Phase 1: Add Room alongside Firebase (dual-write)
-  - All writes go to both Room and Firestore
-  - All reads come from Room (local-first)
-  - Firebase kept as backup
-
-Phase 2: One-time import
-  - On first launch after update: pull all Firestore data → write to Room
-  - Show migration progress screen
-  - Mark migration complete in DataStore
-
-Phase 3: Remove Firebase (optional)
-  - Once users have migrated, remove Firestore dependency
-  - Keep Firebase Auth if cloud login is still desired
-  - Or move to local-only with no auth
-```
-
-### Data Shape Mapping
-
-| Firestore | Room |
-|---|---|
-| `users/{uid}/profile/license_info` blob | Proto DataStore `license_info.pb` |
-| `users/{uid}/fleet/{id}` Aircraft blob | `aircraft` + `engine` + `propeller` tables |
-| `fleet/{id}/maintenance_logs/{logId}` | `maintenance_log` table |
-
-The nested `Aircraft` proto (Engine → Propeller → Blades) gets normalized into separate tables.
-This enables queries like "show all engines with serial X" without deserializing blobs.
+The repository abstraction is critical. ViewModels never touch SQLDelight or Settings directly. If
+cloud sync is added later, it plugs in at the repository layer with zero UI changes.
 
 ---
 
 ## Repository Interface Design
 
 ```kotlin
+// commonMain — all interfaces
 interface FleetRepository {
     fun observeFleet(): Flow<List<Aircraft>>
     suspend fun getAircraft(id: String): Aircraft?
@@ -301,20 +375,18 @@ interface FleetRepository {
 
 interface MaintenanceRepository {
     fun observeLogs(aircraftId: String): Flow<List<MaintenanceLog>>
-    fun observeLogsFiltered(
+    fun observeLogsByComponent(
         aircraftId: String,
-        componentType: ComponentType? = null,
-        inspectionType: InspectionType? = null
+        componentType: ComponentType
     ): Flow<List<MaintenanceLog>>
-    suspend fun getLog(id: String): MaintenanceLog?
     suspend fun upsertLog(log: MaintenanceLog)
     suspend fun deleteLog(id: String)
     suspend fun getLastInspection(aircraftId: String, type: InspectionType): MaintenanceLog?
 }
 
 interface LicenseRepository {
-    fun observeLicense(): Flow<LicenseInfo>
-    suspend fun updateLicense(info: LicenseInfo)
+    fun getLicense(): LicenseInfo?
+    fun saveLicense(info: LicenseInfo)
 }
 ```
 
@@ -324,68 +396,173 @@ interface LicenseRepository {
 
 ```
 :core
-  :core:database          ← Room DB, DAOs, entities, type converters
-  :core:datastore         ← Proto DataStore for license info
+  :core:database          ← SQLDelight schema (.sq files), generated DAOs, platform drivers
+  :core:settings          ← Multiplatform Settings, LicenseRepository
   :core:model             ← Domain models (Aircraft, MaintenanceLog, etc.)
-  :core:data              ← Repository implementations (Hilt-provided)
+  :core:data              ← Repository implementations (Koin-provided)
+  :core:filesystem        ← expect/actual attachment path helpers (Okio)
 ```
 
-Each feature module (`:feature:fleet`, `:feature:maintenance`) depends only on `:core:data`
-interfaces — never directly on Room or DataStore.
+Each feature module depends only on `:core:data` interfaces. Never on SQLDelight or Settings
+directly.
+
+---
+
+## iOS-Specific Notes
+
+### Storage Location
+- SQLite DB: placed in `Library/Application Support/` (not in `Documents/`) per Apple guidelines.
+  This keeps it private and prevents it from appearing in the Files app.
+- `Library/Application Support/` is **included in iCloud Backup** automatically.
+- `Library/Caches/` is excluded from backup — do NOT put the database here.
+
+### Performance
+- SQLDelight's `NativeSqliteDriver` is synchronous on iOS/Kotlin/Native. For large result sets,
+  dispatch reads off the main thread. SQLDelight coroutines extension handles this automatically
+  when using `Flow`.
+- WAL (Write-Ahead Logging) mode is recommended for concurrent read/write. Enable via pragma:
+  ```sql
+  PRAGMA journal_mode=WAL;
+  ```
+
+### File Attachments
+- Attachments go in `Application Support/wingslog/attachments/` — included in iCloud Backup.
+- For user-initiated export, use `UIDocumentInteractionController` (via expect/actual interop).
+
+### App Sandbox
+- iOS apps are sandboxed. Files are not accessible by other apps unless explicitly shared via
+  `UIActivityViewController` / `FileProvider`.
+
+---
+
+## Android-Specific Notes
+
+### Storage Location
+- `context.filesDir` — private to the app, not visible in Files app, included in Auto Backup.
+- For the SQLite file, SQLDelight/Android driver handles placement automatically.
+
+### Android Auto Backup
+- Declare `android:allowBackup="true"` in `AndroidManifest.xml`.
+- Add `backup_rules.xml` to include `wingslog.db` and exclude caches:
+  ```xml
+  <full-backup-content>
+      <include domain="database" path="wingslog.db"/>
+      <include domain="file" path="attachments/"/>
+  </full-backup-content>
+  ```
+- Auto Backup stores up to 25MB encrypted to the user's Google account.
+
+---
+
+## Web-Specific Notes
+
+### SQLite WASM
+- SQLDelight's `WebWorkerDriver` uses `sql.js` (SQLite compiled to WASM) running in a Web Worker.
+- Data persists to `IndexedDB` between sessions (via `sql.js-httpvfs` or `absurd-sql` backend).
+- **Bundle size impact**: ~1.5MB additional WASM payload. Acceptable for an authenticated tool app.
+- Storage limits: browsers may cap IndexedDB at 1-5GB; more than sufficient for logbook data.
+
+### Attachments on Web
+- No persistent native filesystem. Attachments are not supported on the web target.
+- Web UI should display a notice: *"Attachment upload/download is only available on mobile."*
+- Multiplatform Settings falls back to `LocalStorage` on Web — fine for license info.
+
+---
+
+## Migration from Firebase
+
+A one-time migration is needed to move existing Firestore data to SQLDelight.
+
+### Migration Strategy
+
+```
+Phase 1: Dual-write (backward-compatible)
+  - All writes → SQLDelight (primary) + Firestore (mirror)
+  - All reads → SQLDelight only
+
+Phase 2: One-time import on first launch
+  - Show migration progress screen
+  - Pull all Firestore data → write to SQLDelight
+  - Write migration_complete flag to Multiplatform Settings
+
+Phase 3: Remove Firebase Firestore
+  - Remove GitLive Firestore dependency
+  - Optionally keep Firebase Auth if cloud login still desired
+  - Or go fully local (no auth)
+```
+
+### Data Shape Mapping
+
+| Firestore | SQLDelight / Settings |
+|---|---|
+| `users/{uid}/profile/license_info` blob | Multiplatform Settings (`license_info_proto`) |
+| `users/{uid}/fleet/{id}` Aircraft blob | `aircraft` + `engine` + `propeller` tables |
+| `fleet/{id}/maintenance_logs/{logId}` | `maintenance_log` table |
+
+The nested `Aircraft` proto gets normalized into separate tables — enables queries like
+"all engines with serial X" without deserializing blobs.
 
 ---
 
 ## Backup & Export Strategy
 
-Since data is fully local, backup becomes the user's responsibility. We should provide:
+Since data is fully local, backup becomes the user's responsibility. WingsLog should provide:
 
-1. **Markdown Export** (as Fan originally envisioned) — per-aircraft logbook export:
-   ```
-   # N12345 - Cessna 172 (S/N 17280001)
-   
+1. **Platform Auto-Backup** (free, automatic)
+   - Android: Google Auto Backup (encrypted, 25MB limit)
+   - iOS: iCloud Backup (included automatically via `Application Support/`)
+   - Web: browser `LocalStorage` persists until cleared
+
+2. **Markdown Export** — human-readable per-aircraft logbook:
+   ```markdown
+   # N12345 — Cessna 172 (S/N 17280001)
+
    ## Annual Inspection — 2024-03-15
-   **Tach:** 1234.5 hrs
-   **Component:** Airframe (S/N 17280001)
-   **Work performed:** Annual inspection per FAR 43...
+   **Tach:** 1234.5 hrs  
+   **Component:** Airframe (S/N 17280001)  
+   **Work performed:** Annual inspection per FAR 43 Appendix D...
    ```
 
-2. **JSON/ZIP Export** — machine-readable full backup, importable into a new device
+3. **JSON/ZIP Export** — full backup, importable on a new device. Produced in `commonMain`
+   using Kotlin serialization + Okio; exported via platform share sheet.
 
-3. **Android Auto Backup** — declare `android:allowBackup="true"` with a `backup_rules.xml`
-   that includes `wingslog.db` and `license_info.pb`. Google will back these up to the user's
-   Google account automatically (up to 25MB, encrypted).
-
-4. **Manual backup** — "Export to file" using `FileProvider` → user saves ZIP to Google Drive,
-   iCloud, etc.
+4. **Manual share** — "Export to Files / Google Drive / iCloud Drive" via
+   `UIActivityViewController` (iOS) / `FileProvider` (Android).
 
 ---
 
 ## Implementation Checklist
 
-- [ ] Add Room dependency to `:core:database`
-- [ ] Define entities + DAOs + `WingsLogDatabase`
-- [ ] Add Proto DataStore dependency to `:core:datastore`
-- [ ] Implement `LicenseInfoSerializer`
-- [ ] Implement Repository interfaces in `:core:data`
-- [ ] Provide via Hilt (`@Singleton` scope)
-- [ ] Build Firebase → Room migration utility
+- [ ] Add SQLDelight Gradle plugin + dependencies (Android, iOS, JS drivers)
+- [ ] Write `.sq` schema files: `Aircraft.sq`, `Engine.sq`, `Propeller.sq`, `MaintenanceLog.sq`
+- [ ] Add `app.cash.sqldelight:coroutines-extensions` for Flow support
+- [ ] Add `com.russhwolf:multiplatform-settings` for license info
+- [ ] Implement `expect/actual createDriver(...)` for each platform
+- [ ] Implement `expect/actual attachmentDirectory()` using Okio
+- [ ] Create `:core:database` and `:core:settings` modules
+- [ ] Implement Repository interfaces in `:core:data` (Koin-provided)
+- [ ] Build Firebase → SQLDelight one-time migration utility
+- [ ] Enable WAL mode pragma in database setup
+- [ ] Add `backup_rules.xml` for Android Auto Backup
+- [ ] Verify iOS storage location is `Application Support/` not `Documents/` or `Caches/`
+- [ ] Add web attachment-unsupported notice in UI
 - [ ] Add Markdown export feature
-- [ ] Add backup_rules.xml for Android Auto Backup
-- [ ] Update PRD and database_schema_design.md
+- [ ] Update `PRD.md` and `database_schema_design.md`
 
 ---
 
 ## Open Questions
 
-1. **Multi-device sync**: If Fan ever wants to use WingsLog on multiple devices (phone + tablet),
-   local-only means manual export/import. Is this acceptable, or should sync be a future phase?
+1. **Multi-device sync**: Local-only means no sync between phone and tablet. Is manual
+   export/import sufficient, or should sync be a future phase (e.g., CloudKit on iOS, Google
+   Drive sync on Android)?
 
-2. **Auth**: If Firebase is fully removed, there's no login. The app becomes single-user,
-   device-local. Is this the intent?
+2. **Auth**: If Firebase Firestore is fully removed, is Firebase Auth also removed? If so, the
+   app becomes single-user device-local — is this the intent?
 
-3. **Room vs SQLite directly**: Room is strongly recommended for Android. Any reason to drop down
-   to raw SQLite?
+3. **Protobuf domain model**: Keep Wire proto types as the domain model passed between layers
+   (ViewModel ↔ Repository), with SQLDelight-generated types used only internally in
+   `:core:database`? This is the recommended approach — keeps domain model clean.
 
-4. **Protobuf reuse**: Existing proto definitions can still be used as the domain model layer
-   (passed around in ViewModels), even if Room stores the data relationally. Type converters handle
-   the translation. Worth keeping protos as the canonical domain model?
+4. **Web attachment support**: Since the web platform has no persistent filesystem, is the web
+   target considered read-only, or should we support upload via `IndexedDB`/`File API`?
