@@ -15,12 +15,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -32,10 +35,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,6 +52,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.Aircraft
@@ -57,6 +67,9 @@ import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.aircraft.generated.resources.add
 import wingslog.feature.aircraft.generated.resources.add_log
+import wingslog.feature.aircraft.generated.resources.maintenance_date
+import wingslog.feature.aircraft.generated.resources.ok
+import wingslog.feature.aircraft.generated.resources.tap_to_change_date
 import wingslog.feature.aircraft.generated.resources.airframe_serial
 import wingslog.feature.aircraft.generated.resources.airframe_time_hours
 import wingslog.feature.aircraft.generated.resources.back
@@ -93,6 +106,7 @@ fun MaintenanceLogFormScreen(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   var showDeleteDialog by remember { mutableStateOf(false) }
+  var showDatePicker by remember { mutableStateOf(false) }
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
@@ -172,6 +186,70 @@ fun MaintenanceLogFormScreen(
           .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
       ) {
+        // Maintenance Date
+        val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat()
+          ?: cmpStringResource(AircraftRes.string.tap_to_change_date)
+        OutlinedTextField(
+          value = dateDisplayText,
+          onValueChange = {},
+          readOnly = true,
+          label = { Text(cmpStringResource(AircraftRes.string.maintenance_date)) },
+          leadingIcon = {
+            Icon(
+              Icons.Default.CalendarToday,
+              contentDescription = cmpStringResource(AircraftRes.string.maintenance_date)
+            )
+          },
+          modifier = Modifier
+            .fillMaxWidth()
+            .clickable { showDatePicker = true },
+          singleLine = true,
+          enabled = false,
+          colors = OutlinedTextFieldDefaults.colors(
+            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+            disabledBorderColor = MaterialTheme.colorScheme.outline,
+            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        )
+
+        if (showDatePicker) {
+          val initialMs = uiState.maintenanceDate?.let { date ->
+            date.let {
+              kotlinx.datetime.LocalDateTime(it.year, it.month, it.dayOfMonth, 12, 0, 0)
+                .let { ldt ->
+                  Instant.fromEpochSeconds(
+                    ldt.date.toEpochDays().toLong() * 86400L
+                  ).toEpochMilliseconds()
+                }
+            }
+          }
+          val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMs)
+          DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+              TextButton(onClick = {
+                val selectedMs = datePickerState.selectedDateMillis
+                if (selectedMs != null) {
+                  val selectedDate = Instant.fromEpochMilliseconds(selectedMs)
+                    .toLocalDateTime(TimeZone.UTC).date
+                  viewModel.onMaintenanceDateChange(selectedDate)
+                }
+                showDatePicker = false
+              }) {
+                Text(cmpStringResource(AircraftRes.string.ok))
+              }
+            },
+            dismissButton = {
+              TextButton(onClick = { showDatePicker = false }) {
+                Text(cmpStringResource(AircraftRes.string.cancel))
+              }
+            }
+          ) {
+            DatePicker(state = datePickerState)
+          }
+        }
+
         // Work Description (required)
         OutlinedTextField(
           value = uiState.workDescription,

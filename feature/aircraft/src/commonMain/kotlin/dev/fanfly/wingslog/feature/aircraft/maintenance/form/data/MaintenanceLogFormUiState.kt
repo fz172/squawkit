@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.aircraft.maintenance.form.data
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import kotlinx.datetime.LocalDate
 
 data class MaintenanceLogFormUiState(
   val isLoading: Boolean = false,
@@ -19,4 +20,6 @@ data class MaintenanceLogFormUiState(
   /** All inspection cards for this aircraft — used by InspectionPickerSheet */
   val availableInspectionCards: List<InspectionCard> = emptyList(),
   val showInspectionPicker: Boolean = false,
+  /** The maintenance date for this log entry (date only, no time). Null means "use current time". */
+  val maintenanceDate: LocalDate? = null,
 )

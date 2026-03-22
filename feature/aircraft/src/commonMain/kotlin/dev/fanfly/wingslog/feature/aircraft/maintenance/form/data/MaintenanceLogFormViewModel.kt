@@ -17,6 +17,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
 // removed uuid
@@ -67,6 +71,13 @@ class MaintenanceLogFormViewModel(
         .firstOrNull()
         ?.firstOrNull { it.id == logId }
       if (log != null) {
+        val logDate = log.timestamp?.let { ts ->
+          val epochSec = ts.getEpochSecond()
+          if (epochSec > 0L) {
+            kotlinx.datetime.Instant.fromEpochSeconds(epochSec, ts.getNano())
+              .toLocalDateTime(TimeZone.currentSystemDefault()).date
+          } else null
+        }
         _uiState.update {
           it.copy(
             isLoading = false,
@@ -76,13 +87,18 @@ class MaintenanceLogFormViewModel(
             airframeTime = if (log.airframe_time > 0.0) log.airframe_time.toString() else "",
             propTime = if (log.prop_time > 0.0) log.prop_time.toString() else "",
             selectedComponentType = log.component_type,
-            selectedSubComponent = log.component_serial.ifEmpty { null }
+            selectedSubComponent = log.component_serial.ifEmpty { null },
+            maintenanceDate = logDate,
           )
         }
       } else {
         _uiState.update { it.copy(isLoading = false, error = "Log not found") }
       }
     }
+  }
+
+  fun onMaintenanceDateChange(date: LocalDate?) {
+    _uiState.update { it.copy(maintenanceDate = date) }
   }
 
   fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
@@ -139,11 +155,16 @@ class MaintenanceLogFormViewModel(
         else -> state.selectedSubComponent ?: ""
       }
 
+      val now = Clock.System.now()
+      val timestampInstant = state.maintenanceDate?.let { date ->
+        date.atStartOfDayIn(TimeZone.currentSystemDefault())
+      } ?: now
+
       val log = MaintenanceLog(
         id = logId ?: dev.fanfly.wingslog.core.database.generateRandomId(),
         timestamp = dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant(
-          Clock.System.now().epochSeconds,
-          Clock.System.now().nanosecondsOfSecond
+          timestampInstant.epochSeconds,
+          timestampInstant.nanosecondsOfSecond
         ),
         work_description = state.workDescription,
         inspection_ids = state.selectedInspectionIds,

@@ -120,4 +120,10 @@
     <string name="due_date">Due %1$s</string>
     <string name="due_tach">Due @ %1$s tach hrs</string>
     <string name="tach_val">%1$s tach</string>
+    <string name="maintenance_date">Maintenance Date</string>
+    <string name="select_date">Select date</string>
+    <string name="tap_to_change_date">Tap to change date</string>
+    <string name="ok">OK</string>
+    <string name="inspection_notes">Notes</string>
+    <string name="inspection_notes_hint">Add any notes or comments…</string>
 </resources>
