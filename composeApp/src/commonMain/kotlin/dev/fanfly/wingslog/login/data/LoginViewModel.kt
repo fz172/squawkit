@@ -8,4 +8,6 @@ class LoginViewModel(private val authManager: AuthManager) : ViewModel() {
   suspend fun silentLogin() = authManager.trySilentLogin()
 
   suspend fun login() = authManager.signInWithGoogle()
+
+  suspend fun loginWithApple() = authManager.signInWithApple()
 }

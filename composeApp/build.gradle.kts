@@ -77,6 +77,11 @@ kotlin {
       implementation(libs.coil.network.ktor3)
     }
 
+    val androidMain = sourceSets.findByName("androidMain") ?: sourceSets.create("androidMain")
+    androidMain.apply {
+      dependsOn(commonMain.get())
+    }
+
     val iosMain = sourceSets.findByName("iosMain") ?: sourceSets.create("iosMain")
     iosMain.apply {
       dependsOn(commonMain.get())

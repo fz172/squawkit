@@ -6,5 +6,6 @@ interface AuthManager {
   fun getCurrentUser(): FirebaseUser?
   suspend fun trySilentLogin(): FirebaseUser?
   suspend fun signInWithGoogle(): FirebaseUser?
+  suspend fun signInWithApple(): FirebaseUser?
   suspend fun logOut()
 }

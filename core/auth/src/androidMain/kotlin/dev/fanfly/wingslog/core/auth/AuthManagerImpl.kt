@@ -51,6 +51,15 @@ class AuthManagerImpl(
   }
 
   /**
+   * Apple Sign-In is only supported on iOS.
+   * Returns null on Android.
+   */
+  override suspend fun signInWithApple(): FirebaseUser? {
+    logger.w { "signInWithApple() is not supported on Android" }
+    return null
+  }
+
+  /**
    * Initiates the Google Sign-in flow, showing the account picker if necessary.
    * Uses filterByAuthorizedAccounts(false).
    */
