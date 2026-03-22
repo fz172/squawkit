@@ -20,7 +20,7 @@ ktor = "3.4.1"
 lifecycleRuntimeKtx = "2.10.0"
 navigationCompose = "2.9.2"
 playServicesAuth = "21.5.1"
-wire = "5.5.1"
+wire = "6.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -65,4 +65,3 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 wire = { id = "com.squareup.wire", version.ref = "wire" }
-

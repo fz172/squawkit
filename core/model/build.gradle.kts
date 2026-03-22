@@ -17,13 +17,6 @@ android {
   }
 }
 
-wire {
-  sourcePath {
-    srcDir("src/main/proto")
-  }
-  kotlin {}
-}
-
 kotlin {
   jvmToolchain(21)
 
@@ -33,14 +26,32 @@ kotlin {
   }
 
   sourceSets {
-    commonMain.dependencies {
-      api(libs.wire.runtime)
+    commonMain {
+      dependencies {
+        api(libs.wire.runtime)
+      }
+      kotlin.srcDir(layout.buildDirectory.dir("generated/source/wire/kmp"))
     }
   }
-}
 
-kotlin {
   js(IR) {
     browser()
   }
+}
+
+wire {
+  sourcePath {
+    srcDir("src/commonMain/proto")
+  }
+  kotlin {
+    out = "build/generated/source/wire/kmp"
+    android = false
+  }
+}
+
+// Fix the "Implicit dependency" error by ensuring compile tasks depend on generateProtos
+tasks.configureEach {
+    if (name.startsWith("compile") && name.contains("Kotlin")) {
+        dependsOn("generateProtos")
+    }
 }
