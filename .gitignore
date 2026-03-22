@@ -17,3 +17,7 @@
 local.properties
 .kotlin/
 kotlin-js-store/
+
+# Xcode
+**/xcuserdata/
+*.xcuserdata
