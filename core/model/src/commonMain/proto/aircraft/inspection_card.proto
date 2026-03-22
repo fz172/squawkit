@@ -47,4 +47,7 @@ message InspectionCard {
   // Optional force overrides — when set, skip computed due calculation
   google.protobuf.Timestamp force_due_date = 5;
   float force_due_tach = 6;
+
+  // Optional free-text notes or comments for this inspection card
+  string notes = 7;
 }

@@ -165,6 +165,7 @@ class AircraftOverviewViewModel(
     rules: List<InspectionRule>,
     forceDueDate: com.squareup.wire.Instant?,
     forceDueTach: Float,
+    notes: String = "",
   ) {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     viewModelScope.launch {
@@ -174,7 +175,8 @@ class AircraftOverviewViewModel(
         component = component,
         rules = rules,
         force_due_tach = forceDueTach,
-        force_due_date = forceDueDate
+        force_due_date = forceDueDate,
+        notes = notes,
       )
       inspectionManager.updateInspection(state.aircraft.id, newCard)
       closeEditInspection()
@@ -214,13 +216,15 @@ class AircraftOverviewViewModel(
     title: String,
     component: InspectionComponentType,
     rules: List<InspectionRule>,
+    notes: String = "",
   ) {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     viewModelScope.launch {
       val card = InspectionCard(
         title = title,
         component = component,
-        rules = rules
+        rules = rules,
+        notes = notes,
       )
       inspectionManager.addInspection(state.aircraft.id, card)
       hideAddInspectionSheet()

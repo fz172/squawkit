@@ -100,6 +100,15 @@ fun InspectionDetailSheet(
 
       DueStatusChip(cardWithStatus.dueStatus)
 
+      if (cardWithStatus.card.notes.isNotBlank()) {
+        Spacer(Modifier.height(12.dp))
+        Text(
+          text = cardWithStatus.card.notes,
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+
       Spacer(Modifier.height(16.dp))
 
       Text(

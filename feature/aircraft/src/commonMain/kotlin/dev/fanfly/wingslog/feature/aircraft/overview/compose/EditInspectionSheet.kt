@@ -47,6 +47,8 @@ import wingslog.feature.aircraft.generated.resources.delete_inspection
 import wingslog.feature.aircraft.generated.resources.edit_inspection
 import wingslog.feature.aircraft.generated.resources.engine
 import wingslog.feature.aircraft.generated.resources.force_due_tach_hours
+import wingslog.feature.aircraft.generated.resources.inspection_notes
+import wingslog.feature.aircraft.generated.resources.inspection_notes_hint
 import wingslog.feature.aircraft.generated.resources.inspection_title
 import wingslog.feature.aircraft.generated.resources.interval_hours
 import wingslog.feature.aircraft.generated.resources.interval_months
@@ -73,6 +75,7 @@ fun EditInspectionSheet(
     rules: List<InspectionRule>,
     forceDueDate: com.squareup.wire.Instant?,
     forceDueTach: Float,
+    notes: String,
   ) -> Unit,
   onDeleteRequest: (cardId: String) -> Unit,
   modifier: Modifier = Modifier,
@@ -84,6 +87,7 @@ fun EditInspectionSheet(
   var title by remember { mutableStateOf(card.title) }
   var titleError by remember { mutableStateOf(false) }
   var selectedComponent by remember { mutableStateOf(card.component) }
+  var notes by remember { mutableStateOf(card.notes) }
 
   // Parse existing rules
   var timeRuleEnabled by remember {
@@ -280,6 +284,17 @@ fun EditInspectionSheet(
         )
       }
 
+      // Notes
+      OutlinedTextField(
+        value = notes,
+        onValueChange = { notes = it },
+        label = { Text(cmpStringResource(AircraftRes.string.inspection_notes)) },
+        placeholder = { Text(cmpStringResource(AircraftRes.string.inspection_notes_hint)) },
+        modifier = Modifier.fillMaxWidth(),
+        minLines = 2,
+        maxLines = 5,
+      )
+
       Spacer(Modifier.height(8.dp))
 
       // Save
@@ -317,7 +332,7 @@ fun EditInspectionSheet(
             }
           }
           val forcedTach = if (forceOverrideEnabled) forceTachHours.toFloatOrNull() ?: 0f else 0f
-          onSave(card.id, title.trim(), selectedComponent, rules, null, forcedTach)
+          onSave(card.id, title.trim(), selectedComponent, rules, null, forcedTach, notes.trim())
         },
         modifier = Modifier.fillMaxWidth(),
       ) {

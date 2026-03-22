@@ -43,6 +43,8 @@ import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.airframe
 import wingslog.feature.aircraft.generated.resources.component
 import wingslog.feature.aircraft.generated.resources.engine
+import wingslog.feature.aircraft.generated.resources.inspection_notes
+import wingslog.feature.aircraft.generated.resources.inspection_notes_hint
 import wingslog.feature.aircraft.generated.resources.inspection_title
 import wingslog.feature.aircraft.generated.resources.interval_hours
 import wingslog.feature.aircraft.generated.resources.interval_months
@@ -104,7 +106,7 @@ private val quickTemplates = listOf(
 @Composable
 fun AddInspectionSheet(
   onDismiss: () -> Unit,
-  onSave: (title: String, component: InspectionComponentType, rules: List<InspectionRule>) -> Unit,
+  onSave: (title: String, component: InspectionComponentType, rules: List<InspectionRule>, notes: String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -118,6 +120,7 @@ fun AddInspectionSheet(
   var tachRuleEnabled by remember { mutableStateOf(false) }
   var tachRuleHours by remember { mutableStateOf("100") }
   var onConditionEnabled by remember { mutableStateOf(false) }
+  var notes by remember { mutableStateOf("") }
 
   fun applyTemplate(template: QuickTemplate) {
     title = template.title
@@ -125,6 +128,7 @@ fun AddInspectionSheet(
     timeRuleEnabled = false
     tachRuleEnabled = false
     onConditionEnabled = false
+    notes = ""
     template.rules.forEach { rule ->
       val timeRule = rule.time_rule
       val tachRule = rule.tach_rule
@@ -294,6 +298,17 @@ fun AddInspectionSheet(
         Switch(checked = onConditionEnabled, onCheckedChange = { onConditionEnabled = it })
       }
 
+      // Notes
+      OutlinedTextField(
+        value = notes,
+        onValueChange = { notes = it },
+        label = { Text(cmpStringResource(AircraftRes.string.inspection_notes)) },
+        placeholder = { Text(cmpStringResource(AircraftRes.string.inspection_notes_hint)) },
+        modifier = Modifier.fillMaxWidth(),
+        minLines = 2,
+        maxLines = 5,
+      )
+
       Spacer(Modifier.height(8.dp))
 
       // Save button
@@ -316,7 +331,7 @@ fun AddInspectionSheet(
               add(buildOnConditionRule())
             }
           }
-          onSave(title.trim(), selectedComponent, rules)
+          onSave(title.trim(), selectedComponent, rules, notes.trim())
         },
         modifier = Modifier.fillMaxWidth(),
       ) {

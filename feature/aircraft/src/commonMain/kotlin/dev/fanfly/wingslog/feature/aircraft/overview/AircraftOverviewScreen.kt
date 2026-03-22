@@ -143,15 +143,15 @@ fun AircraftOverviewScreen(
     onLogDetailsClick = { aircraftId -> navController.navigate("maintenance_logs/$aircraftId") },
     onAddInspectionClick = { viewModel.showAddInspectionSheet() },
     onDismissAddInspectionSheet = { viewModel.hideAddInspectionSheet() },
-    onSaveInspection = { title, component, rules ->
-      viewModel.saveNewInspection(title, component, rules)
+    onSaveInspection = { title, component, rules, notes ->
+      viewModel.saveNewInspection(title, component, rules, notes)
     },
     onInspectionCardClick = { card -> viewModel.showInspectionDetail(card) },
     onDismissInspectionDetail = { viewModel.hideInspectionDetail() },
     onEditInspectionClick = { card -> viewModel.openEditInspection(card) },
     onDismissEditInspection = { viewModel.closeEditInspection() },
-    onSaveEditedInspection = { cardId, title, component, rules, forceDueDate, forceDueTach ->
-      viewModel.saveEditedInspection(cardId, title, component, rules, forceDueDate, forceDueTach)
+    onSaveEditedInspection = { cardId, title, component, rules, forceDueDate, forceDueTach, notes ->
+      viewModel.saveEditedInspection(cardId, title, component, rules, forceDueDate, forceDueTach, notes)
     },
     onDeleteInspectionRequest = { cardId -> viewModel.requestDeleteInspection(cardId) },
     onCancelDeleteInspection = { viewModel.cancelDeleteInspection() },
@@ -178,12 +178,12 @@ fun AircraftOverviewContent(
   onLogDetailsClick: (String) -> Unit,
   onAddInspectionClick: () -> Unit = {},
   onDismissAddInspectionSheet: () -> Unit = {},
-  onSaveInspection: (title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>) -> Unit = { _, _, _ -> },
+  onSaveInspection: (title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>, notes: String) -> Unit = { _, _, _, _ -> },
   onInspectionCardClick: (InspectionCardWithStatus) -> Unit = {},
   onDismissInspectionDetail: () -> Unit = {},
   onEditInspectionClick: (InspectionCardWithStatus) -> Unit = {},
   onDismissEditInspection: () -> Unit = {},
-  onSaveEditedInspection: (cardId: String, title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>, forceDueDate: com.squareup.wire.Instant?, forceDueTach: Float) -> Unit = { _, _, _, _, _, _ -> },
+  onSaveEditedInspection: (cardId: String, title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>, forceDueDate: com.squareup.wire.Instant?, forceDueTach: Float, notes: String) -> Unit = { _, _, _, _, _, _, _ -> },
   onDeleteInspectionRequest: (cardId: String) -> Unit = {},
   onCancelDeleteInspection: () -> Unit = {},
   onConfirmDeleteInspection: () -> Unit = {},
@@ -290,8 +290,8 @@ fun AircraftOverviewContent(
     if (showAddInspectionSheet) {
       dev.fanfly.wingslog.feature.aircraft.overview.compose.AddInspectionSheet(
         onDismiss = onDismissAddInspectionSheet,
-        onSave = { title, component, rules ->
-          onSaveInspection(title, component, rules)
+        onSave = { title, component, rules, notes ->
+          onSaveInspection(title, component, rules, notes)
         },
       )
     }
