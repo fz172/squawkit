@@ -147,7 +147,7 @@ private fun DueStatusChip(dueStatus: DueStatus) {
 
     dueStatus.nextDueTach != null -> cmpStringResource(
       AircraftRes.string.due_tach,
-      "${((dueStatus.nextDueTach ?: 0f) * 10).toInt() / 10f}"
+      (dueStatus.nextDueTach ?: 0f).toDouble().formatToOneDecimalPlace()
     ) to StatusOk
 
     else -> "—" to MaterialTheme.colorScheme.onSurfaceVariant

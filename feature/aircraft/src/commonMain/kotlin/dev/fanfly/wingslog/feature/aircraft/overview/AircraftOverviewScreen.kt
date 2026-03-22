@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
@@ -595,13 +596,17 @@ private fun InspectionCardItem(
     cardWithStatus.dueStatus.isOverdue -> MaterialTheme.colorScheme.error
     cardWithStatus.dueStatus.isOnCondition -> MaterialTheme.colorScheme.onSurfaceVariant
     cardWithStatus.dueStatus.nextDueDate != null -> StatusOk
+    cardWithStatus.dueStatus.nextDueTach != null -> StatusOk
     else -> MaterialTheme.colorScheme.onSurfaceVariant
   }
   val statusText = when {
     cardWithStatus.dueStatus.isOnCondition -> "On Condition"
-    cardWithStatus.dueStatus.isOverdue -> "Overdue"
-    cardWithStatus.dueStatus.nextDueDate != null -> "Due ${cardWithStatus.dueStatus.nextDueDate}"
-    cardWithStatus.dueStatus.nextDueTach != null -> "Due @ ${cardWithStatus.dueStatus.nextDueTach}h"
+    cardWithStatus.dueStatus.isOverdue -> {
+      val dateStr = cardWithStatus.dueStatus.nextDueDate?.toDisplayFormat()
+      if (dateStr != null) "Overdue (was $dateStr)" else "Overdue"
+    }
+    cardWithStatus.dueStatus.nextDueDate != null -> "Due ${cardWithStatus.dueStatus.nextDueDate!!.toDisplayFormat()}"
+    cardWithStatus.dueStatus.nextDueTach != null -> "Due @ ${cardWithStatus.dueStatus.nextDueTach!!.toDouble().formatToOneDecimalPlace()} tach hrs"
     else -> "—"
   }
   InspectionCard(
