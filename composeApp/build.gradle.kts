@@ -29,13 +29,21 @@ compose.resources {
 }
 
 kotlin {
-  js(IR) {
-    browser()
-  }
   jvmToolchain(21)
   
   androidTarget {
     compilerOptions {
+    }
+  }
+
+  listOf(
+    iosX64(),
+    iosArm64(),
+    iosSimulatorArm64()
+  ).forEach {
+    it.binaries.framework {
+      baseName = "ComposeApp"
+      isStatic = true
     }
   }
 
@@ -66,7 +74,20 @@ kotlin {
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.kermit)
       implementation(libs.coil.compose)
+      implementation(libs.coil.network.ktor3)
     }
+
+    val iosMain = sourceSets.findByName("iosMain") ?: sourceSets.create("iosMain")
+    iosMain.apply {
+      dependsOn(commonMain.get())
+      dependencies {
+        implementation(libs.ktor.client.darwin)
+      }
+    }
+
+    sourceSets.findByName("iosX64Main")?.dependsOn(iosMain)
+    sourceSets.findByName("iosArm64Main")?.dependsOn(iosMain)
+    sourceSets.findByName("iosSimulatorArm64Main")?.dependsOn(iosMain)
   }
 }
 
