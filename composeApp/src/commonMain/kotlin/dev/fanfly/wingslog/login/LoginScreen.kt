@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import wingslog.composeapp.generated.resources.Res
 import wingslog.composeapp.generated.resources.*
 import dev.fanfly.wingslog.login.data.LoginViewModel
+import dev.fanfly.wingslog.platform.isAppleSignInSupported
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -87,26 +88,55 @@ fun LoginScreen(
         thickness = 1.dp
       )
       Spacer(modifier = Modifier.height(20.dp))
-      OutlinedButton(
-        onClick = {
-          scope.launch {
-            val credential = loginViewModel.login()
-            if (credential != null) {
-              onLoginSuccess()
-            } else {
-              error = "Error signing in."
+
+      // Google Sign-In button (Android only)
+      if (!isAppleSignInSupported) {
+        OutlinedButton(
+          onClick = {
+            scope.launch {
+              val credential = loginViewModel.login()
+              if (credential != null) {
+                onLoginSuccess()
+              } else {
+                error = "Error signing in."
+              }
             }
-          }
-        }) {
-        Icon(
-          painter = painterResource(Res.drawable.ic_google_rd_na),
-          contentDescription = stringResource(Res.string.google_logo),
-          modifier = Modifier.size(24.dp),
-          tint = Color.Unspecified // Use original colors
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(stringResource(Res.string.sign_in_with_google))
+          }) {
+          Icon(
+            painter = painterResource(Res.drawable.ic_google_rd_na),
+            contentDescription = stringResource(Res.string.google_logo),
+            modifier = Modifier.size(24.dp),
+            tint = Color.Unspecified // Use original colors
+          )
+          Spacer(modifier = Modifier.width(16.dp))
+          Text(stringResource(Res.string.sign_in_with_google))
+        }
       }
+
+      // Apple Sign-In button (iOS only)
+      if (isAppleSignInSupported) {
+        OutlinedButton(
+          onClick = {
+            scope.launch {
+              val credential = loginViewModel.loginWithApple()
+              if (credential != null) {
+                onLoginSuccess()
+              } else {
+                error = "Error signing in with Apple."
+              }
+            }
+          }) {
+          Icon(
+            painter = painterResource(Res.drawable.ic_apple),
+            contentDescription = stringResource(Res.string.apple_logo),
+            modifier = Modifier.size(24.dp),
+            tint = Color.Unspecified
+          )
+          Spacer(modifier = Modifier.width(16.dp))
+          Text(stringResource(Res.string.sign_in_with_apple))
+        }
+      }
+
       error?.let {
         Spacer(Modifier.height(10.dp))
         Text(it, color = MaterialTheme.colorScheme.error)
