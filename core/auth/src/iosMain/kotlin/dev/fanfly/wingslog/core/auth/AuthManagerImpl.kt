@@ -111,6 +111,24 @@ class AuthManagerImpl(
         }
     }
 
+    /**
+     * Signs in anonymously using Firebase Authentication.
+     * Does not interfere with [trySilentLogin] — if a user is already signed in
+     * (including anonymously), this is a no-op and returns the current user.
+     */
+    override suspend fun signInAnonymously(): FirebaseUser? {
+        if (authProvider.currentUser != null) {
+            return authProvider.currentUser
+        }
+        return try {
+            authProvider.signInAnonymously()
+            authProvider.currentUser
+        } catch (e: Exception) {
+            logger.e(e) { "Anonymous sign-in failed" }
+            null
+        }
+    }
+
     override suspend fun logOut() {
         try {
             authProvider.signOut()
