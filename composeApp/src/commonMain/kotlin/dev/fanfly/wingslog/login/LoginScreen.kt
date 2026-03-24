@@ -137,6 +137,22 @@ fun LoginScreen(
         }
       }
 
+      // Anonymous / Guest sign-in button (all platforms)
+      Spacer(modifier = Modifier.height(8.dp))
+      OutlinedButton(
+        onClick = {
+          scope.launch {
+            val credential = loginViewModel.loginAnonymously()
+            if (credential != null) {
+              onLoginSuccess()
+            } else {
+              error = "Error signing in as guest."
+            }
+          }
+        }) {
+        Text(stringResource(Res.string.continue_as_guest))
+      }
+
       error?.let {
         Spacer(Modifier.height(10.dp))
         Text(it, color = MaterialTheme.colorScheme.error)
