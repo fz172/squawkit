@@ -27,6 +27,7 @@ class FleetDashboardManagerImpl(
         Logger.w { "No fleet data, returning empty" }
         return@map emptyList()
       }
+      Logger.w { "Fleet data size {${snapshot.documents.size}}" }
 
       val result = mutableListOf<Aircraft>()
       for (document in snapshot.documents) {

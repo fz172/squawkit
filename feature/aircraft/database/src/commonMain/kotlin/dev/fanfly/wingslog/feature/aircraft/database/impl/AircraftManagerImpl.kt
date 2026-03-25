@@ -28,7 +28,7 @@ class AircraftManagerImpl(
     val data = mapOf(AIRCRAFT_INFO_BLOB to Aircraft.ADAPTER.encode(aircraftWithId))
 
     aircraftRef.setEncoded(data, merge = true)
-    logger.d { "Aircraft updated successfully, new id is ${aircraftWithId.id}" }
+    logger.d { "Aircraft updated successfully, new id is ${aircraftWithId.id}, data is $data" }
     Result.success(true)
   } catch (e: Exception) {
     logger.w(e) { "Error updating aircraft" }

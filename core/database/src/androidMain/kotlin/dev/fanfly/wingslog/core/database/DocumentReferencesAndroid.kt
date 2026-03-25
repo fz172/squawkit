@@ -4,8 +4,6 @@ import com.google.firebase.firestore.Blob
 import com.google.firebase.firestore.SetOptions.merge
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.DocumentSnapshot
-import dev.gitlive.firebase.firestore.Query
-import dev.gitlive.firebase.firestore.QuerySnapshot
 import dev.gitlive.firebase.firestore.android
 import kotlinx.coroutines.tasks.await
 
