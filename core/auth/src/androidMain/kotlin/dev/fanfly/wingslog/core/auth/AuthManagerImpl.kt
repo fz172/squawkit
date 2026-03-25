@@ -51,15 +51,6 @@ class AuthManagerImpl(
   }
 
   /**
-   * Apple Sign-In is only supported on iOS.
-   * Returns null on Android.
-   */
-  override suspend fun signInWithApple(): FirebaseUser? {
-    logger.w { "signInWithApple() is not supported on Android" }
-    return null
-  }
-
-  /**
    * Signs in anonymously using Firebase Authentication.
    * Does not interfere with [trySilentLogin] — if a user is already signed in
    * (including anonymously), this is a no-op and returns the current user.

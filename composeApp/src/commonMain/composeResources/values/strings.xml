@@ -3,8 +3,6 @@
     <string name="login_prompt">Log in to manage your aircraft</string>
     <string name="google_logo">Google Logo</string>
     <string name="sign_in_with_google">Log in with Google</string>
-    <string name="sign_in_with_apple">Log in with Apple</string>
-    <string name="apple_logo">Apple Logo</string>
     <string name="back">Back</string>
     <string name="cancel">Cancel</string>
     <string name="continue_as_guest">Continue as Guest</string>
