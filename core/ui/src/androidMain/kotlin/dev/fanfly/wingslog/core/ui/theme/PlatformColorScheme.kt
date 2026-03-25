@@ -9,11 +9,11 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): ColorScheme? {
-    val dynamicColorAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    return if (dynamicColor && dynamicColorAvailable) {
-        val context = LocalContext.current
-        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    } else {
-        null
-    }
+  val dynamicColorAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+  return if (dynamicColor && dynamicColorAvailable) {
+    val context = LocalContext.current
+    if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+  } else {
+    null
+  }
 }

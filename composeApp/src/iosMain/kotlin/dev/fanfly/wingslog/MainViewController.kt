@@ -5,11 +5,11 @@ import dev.fanfly.wingslog.di.initKoin
 import platform.UIKit.UIViewController
 
 object MainEntry {
-    fun mainViewController(): UIViewController = ComposeUIViewController {
-        AppEntry()
-    }
+  fun mainViewController(): UIViewController = ComposeUIViewController {
+    AppEntry()
+  }
 
-    fun doInitKoin() {
-        initKoin {}
-    }
+  fun doInitKoin() {
+    initKoin {}
+  }
 }

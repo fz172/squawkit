@@ -59,6 +59,7 @@ kotlin {
 
       // Lifecycle & DI
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+      implementation(libs.jetbrains.lifecycle.runtime.compose)
       implementation(libs.koin.compose)
       implementation(libs.koin.compose.viewmodel)
 

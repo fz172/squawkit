@@ -5,5 +5,5 @@ import androidx.compose.runtime.Composable
 
 @Composable
 actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): ColorScheme? {
-    return null // Dynamic colors not available on iOS in this way
+  return null // Dynamic colors not available on iOS in this way
 }

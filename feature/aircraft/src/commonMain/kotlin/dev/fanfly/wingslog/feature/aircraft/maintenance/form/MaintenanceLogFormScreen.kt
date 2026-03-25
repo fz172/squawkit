@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.aircraft.maintenance.form
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +42,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.foundation.clickable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,24 +52,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.aircraft.generated.resources.add
 import wingslog.feature.aircraft.generated.resources.add_log
-import wingslog.feature.aircraft.generated.resources.maintenance_date
-import wingslog.feature.aircraft.generated.resources.ok
-import wingslog.feature.aircraft.generated.resources.tap_to_change_date
 import wingslog.feature.aircraft.generated.resources.airframe_serial
 import wingslog.feature.aircraft.generated.resources.airframe_time_hours
 import wingslog.feature.aircraft.generated.resources.back
@@ -82,15 +79,17 @@ import wingslog.feature.aircraft.generated.resources.edit_log
 import wingslog.feature.aircraft.generated.resources.engine
 import wingslog.feature.aircraft.generated.resources.inspection_work
 import wingslog.feature.aircraft.generated.resources.loading_aircraft
+import wingslog.feature.aircraft.generated.resources.maintenance_date
 import wingslog.feature.aircraft.generated.resources.no_engines_found
 import wingslog.feature.aircraft.generated.resources.no_inspection_work_recorded
 import wingslog.feature.aircraft.generated.resources.no_propeller_components_found
-
+import wingslog.feature.aircraft.generated.resources.ok
 import wingslog.feature.aircraft.generated.resources.prop_time_hours
 import wingslog.feature.aircraft.generated.resources.propeller_component
 import wingslog.feature.aircraft.generated.resources.remove
 import wingslog.feature.aircraft.generated.resources.save
 import wingslog.feature.aircraft.generated.resources.tach_time_hours
+import wingslog.feature.aircraft.generated.resources.tap_to_change_date
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.unknown_inspection
 import wingslog.feature.aircraft.generated.resources.update

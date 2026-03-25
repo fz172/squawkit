@@ -7,20 +7,20 @@ import kotlin.math.roundToInt
  * E.g., 12.34 -> "12.3", 12.0 -> "12.0", 12 -> "12.0"
  */
 fun Double.formatToOneDecimalPlace(): String {
-    val rounded = (this * 10.0).roundToInt()
-    val isNegative = rounded < 0
-    val absRounded = kotlin.math.abs(rounded)
-    val str = absRounded.toString()
-    
-    val formatted = if (str.length == 1) {
-        "0.$str"
-    } else {
-        str.dropLast(1) + "." + str.last()
-    }
-    
-    return if (isNegative) {
-        "-$formatted"
-    } else {
-        formatted
-    }
+  val rounded = (this * 10.0).roundToInt()
+  val isNegative = rounded < 0
+  val absRounded = kotlin.math.abs(rounded)
+  val str = absRounded.toString()
+
+  val formatted = if (str.length == 1) {
+    "0.$str"
+  } else {
+    str.dropLast(1) + "." + str.last()
+  }
+
+  return if (isNegative) {
+    "-$formatted"
+  } else {
+    formatted
+  }
 }

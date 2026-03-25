@@ -18,15 +18,15 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
+import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
-import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.edit_profile
-import wingslog.feature.userprofile.userprofilecard.generated.resources.Res as CardRes
 import wingslog.feature.userprofile.userprofilecard.generated.resources.profile_picture
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.userprofile.userprofilecard.generated.resources.Res as CardRes
 
 data class UserProfileCardData(
   val photoUri: String? = null,

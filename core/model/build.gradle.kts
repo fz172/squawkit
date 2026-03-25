@@ -51,7 +51,7 @@ wire {
 
 // Fix the "Implicit dependency" error by ensuring compile tasks depend on generateProtos
 tasks.configureEach {
-    if (name.startsWith("compile") && name.contains("Kotlin")) {
-        dependsOn("generateProtos")
-    }
+  if (name.startsWith("compile") && name.contains("Kotlin")) {
+    dependsOn("generateProtos")
+  }
 }

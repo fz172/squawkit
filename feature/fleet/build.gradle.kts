@@ -57,6 +57,7 @@ kotlin {
 
       // Navigation & Lifecycle
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+      implementation(libs.jetbrains.lifecycle.runtime.compose)
       implementation(libs.androidx.navigation.compose)
 
       // DI

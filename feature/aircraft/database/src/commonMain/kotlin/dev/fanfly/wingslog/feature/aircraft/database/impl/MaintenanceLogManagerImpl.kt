@@ -5,7 +5,6 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
 import dev.fanfly.wingslog.core.database.getFleetCollectionRef
-import dev.fanfly.wingslog.core.database.observeSnapshot
 import dev.fanfly.wingslog.core.database.setEncoded
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -27,7 +26,7 @@ class MaintenanceLogManagerImpl(
     val logsRef = getLogsCollectionRef(aircraftId)
       ?: return kotlinx.coroutines.flow.flowOf(emptyList())
 
-    return logsRef.observeSnapshot().map { snapshot ->
+    return logsRef.snapshots.map { snapshot ->
       val logs = mutableListOf<MaintenanceLog>()
       for (doc in snapshot.documents) {
         val blobBytes = doc.getBlobAsBytes(LOG_INFO_BLOB)

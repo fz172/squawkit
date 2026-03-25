@@ -14,21 +14,21 @@ import coil3.compose.AsyncImage
 
 @Composable
 fun CircularImage(
-    photoUri: String?,
-    contentDescription: String?,
-    modifier: Modifier = Modifier
+  photoUri: String?,
+  contentDescription: String?,
+  modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .size(100.dp)
-            .clip(CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        AsyncImage(
-            model = photoUri,
-            contentDescription = contentDescription,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-    }
+  Box(
+    modifier = modifier
+      .size(100.dp)
+      .clip(CircleShape),
+    contentAlignment = Alignment.Center
+  ) {
+    AsyncImage(
+      model = photoUri,
+      contentDescription = contentDescription,
+      contentScale = ContentScale.Crop,
+      modifier = Modifier.fillMaxSize()
+    )
+  }
 }

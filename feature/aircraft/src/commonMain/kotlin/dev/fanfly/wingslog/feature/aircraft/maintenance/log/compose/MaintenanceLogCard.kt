@@ -14,12 +14,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import wingslog.feature.aircraft.generated.resources.affects_n_inspection_items
@@ -28,10 +30,6 @@ import wingslog.feature.aircraft.generated.resources.edit_log_content_descriptio
 import wingslog.feature.aircraft.generated.resources.prop_time_format
 import wingslog.feature.aircraft.generated.resources.tach_format
 import wingslog.feature.aircraft.generated.resources.unknown_date
-import kotlinx.datetime.Instant
-import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
-import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
@@ -41,7 +39,8 @@ fun MaintenanceLogCard(
   onEdit: () -> Unit,
   modifier: Modifier = Modifier
 ) {
-  val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat() ?: cmpStringResource(AircraftRes.string.unknown_date)
+  val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
+    ?: cmpStringResource(AircraftRes.string.unknown_date)
 
   Card(
     modifier = modifier.fillMaxWidth(),
@@ -93,21 +92,30 @@ fun MaintenanceLogCard(
       ) {
         if (log.tach_time > 0.0) {
           Text(
-            text = cmpStringResource(AircraftRes.string.tach_format, log.tach_time.formatToOneDecimalPlace()),
+            text = cmpStringResource(
+              AircraftRes.string.tach_format,
+              log.tach_time.formatToOneDecimalPlace()
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
         if (log.airframe_time > 0.0) {
           Text(
-            text = cmpStringResource(AircraftRes.string.airframe_time_format, log.airframe_time.formatToOneDecimalPlace()),
+            text = cmpStringResource(
+              AircraftRes.string.airframe_time_format,
+              log.airframe_time.formatToOneDecimalPlace()
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
         if (log.prop_time > 0.0) {
           Text(
-            text = cmpStringResource(AircraftRes.string.prop_time_format, log.prop_time.formatToOneDecimalPlace()),
+            text = cmpStringResource(
+              AircraftRes.string.prop_time_format,
+              log.prop_time.formatToOneDecimalPlace()
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )

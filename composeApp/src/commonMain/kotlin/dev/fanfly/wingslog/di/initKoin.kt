@@ -13,18 +13,18 @@ import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
 
 fun initKoin(appDeclaration: KoinAppDeclaration = {}) =
-    startKoin {
-        appDeclaration()
-        modules(
-            commonFirebaseModule,
-            authModule,
-            userProfileDatabaseModule,
-            aircraftDatabaseModule,
-            fleetDatabaseModule,
-            appModule,
-            userProfileModule,
-            settingsModule,
-            fleetModule,
-            aircraftModule,
-        )
-    }
+  startKoin {
+    appDeclaration()
+    modules(
+      commonFirebaseModule,
+      authModule,
+      userProfileDatabaseModule,
+      aircraftDatabaseModule,
+      fleetDatabaseModule,
+      appModule,
+      userProfileModule,
+      settingsModule,
+      fleetModule,
+      aircraftModule,
+    )
+  }

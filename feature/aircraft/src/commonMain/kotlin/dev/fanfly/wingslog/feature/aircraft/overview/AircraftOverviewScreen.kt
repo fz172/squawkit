@@ -151,7 +151,15 @@ fun AircraftOverviewScreen(
     onEditInspectionClick = { card -> viewModel.openEditInspection(card) },
     onDismissEditInspection = { viewModel.closeEditInspection() },
     onSaveEditedInspection = { cardId, title, component, rules, forceDueDate, forceDueTach, notes ->
-      viewModel.saveEditedInspection(cardId, title, component, rules, forceDueDate, forceDueTach, notes)
+      viewModel.saveEditedInspection(
+        cardId,
+        title,
+        component,
+        rules,
+        forceDueDate,
+        forceDueTach,
+        notes
+      )
     },
     onDeleteInspectionRequest = { cardId -> viewModel.requestDeleteInspection(cardId) },
     onCancelDeleteInspection = { viewModel.cancelDeleteInspection() },
@@ -605,8 +613,12 @@ private fun InspectionCardItem(
       val dateStr = cardWithStatus.dueStatus.nextDueDate?.toDisplayFormat()
       if (dateStr != null) "Overdue (was $dateStr)" else "Overdue"
     }
+
     cardWithStatus.dueStatus.nextDueDate != null -> "Due ${cardWithStatus.dueStatus.nextDueDate!!.toDisplayFormat()}"
-    cardWithStatus.dueStatus.nextDueTach != null -> "Due @ ${cardWithStatus.dueStatus.nextDueTach!!.toDouble().formatToOneDecimalPlace()} tach hrs"
+    cardWithStatus.dueStatus.nextDueTach != null -> "Due @ ${
+      cardWithStatus.dueStatus.nextDueTach!!.toDouble().formatToOneDecimalPlace()
+    } tach hrs"
+
     else -> "—"
   }
   InspectionCard(

@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.aircraft.overview.compose
 
+// dateFormatter removed
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,11 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.core.ui.theme.StatusOk
-import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
+import dev.fanfly.wingslog.core.ui.theme.StatusOk
+import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import wingslog.feature.aircraft.generated.resources.done
 import wingslog.feature.aircraft.generated.resources.due_date
 import wingslog.feature.aircraft.generated.resources.due_tach
@@ -44,7 +45,6 @@ import wingslog.feature.aircraft.generated.resources.overdue
 import wingslog.feature.aircraft.generated.resources.overdue_was
 import wingslog.feature.aircraft.generated.resources.tach_format
 import wingslog.feature.aircraft.generated.resources.unknown_date
-// dateFormatter removed
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
@@ -192,7 +192,10 @@ private fun LogHistoryItem(log: MaintenanceLog) {
         fontWeight = FontWeight.Medium
       )
       Text(
-        text = cmpStringResource(AircraftRes.string.tach_format, log.tach_time.formatToOneDecimalPlace()),
+        text = cmpStringResource(
+          AircraftRes.string.tach_format,
+          log.tach_time.formatToOneDecimalPlace()
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
       )

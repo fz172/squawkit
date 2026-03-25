@@ -30,7 +30,7 @@ compose.resources {
 
 kotlin {
   jvmToolchain(21)
-  
+
   androidTarget {
     compilerOptions {
     }
@@ -70,6 +70,7 @@ kotlin {
 
       implementation(libs.androidx.navigation.compose)
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+      implementation(libs.jetbrains.lifecycle.runtime.compose)
       implementation(libs.koin.compose)
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.kermit)

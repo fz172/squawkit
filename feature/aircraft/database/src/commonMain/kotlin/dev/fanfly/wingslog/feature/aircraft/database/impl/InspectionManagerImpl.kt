@@ -12,7 +12,6 @@ import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
-import dev.fanfly.wingslog.core.database.observeSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
@@ -32,7 +31,7 @@ class InspectionManagerImpl(
     val cardsRef = getCardsCollectionRef(aircraftId)
       ?: return kotlinx.coroutines.flow.flowOf(emptyList())
 
-    return cardsRef.observeSnapshot().map { snapshot ->
+    return cardsRef.snapshots.map { snapshot ->
       val cards = mutableListOf<InspectionCard>()
       for (doc in snapshot.documents) {
         val blobBytes = doc.getBlobAsBytes(INSPECTION_CARD_BLOB)
@@ -94,7 +93,10 @@ class InspectionManagerImpl(
     if (hasForcedDate || hasForcedTach) {
       return DueStatus(
         nextDueDate = if (hasForcedDate) {
-          Instant.fromEpochSeconds(card.force_due_date!!.getEpochSecond(), card.force_due_date!!.getNano())
+          Instant.fromEpochSeconds(
+            card.force_due_date!!.getEpochSecond(),
+            card.force_due_date!!.getNano()
+          )
             .toLocalDateTime(TimeZone.currentSystemDefault()).date
         } else null,
         nextDueTach = if (hasForcedTach) card.force_due_tach else null,
@@ -115,7 +117,10 @@ class InspectionManagerImpl(
       when {
         rule.time_rule != null -> {
           val baseDate = if (latestLog?.timestamp != null) {
-            Instant.fromEpochSeconds(latestLog.timestamp!!.getEpochSecond(), latestLog.timestamp!!.getNano())
+            Instant.fromEpochSeconds(
+              latestLog.timestamp!!.getEpochSecond(),
+              latestLog.timestamp!!.getNano()
+            )
               .toLocalDateTime(TimeZone.currentSystemDefault()).date
           } else {
             Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date

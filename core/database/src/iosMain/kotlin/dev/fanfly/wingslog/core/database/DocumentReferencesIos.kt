@@ -5,20 +5,19 @@ import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.Query
 import dev.gitlive.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.flow.Flow
+import platform.Foundation.NSData
 
 actual fun DocumentSnapshot.getBlobAsBytes(field: String): ByteArray? {
-    // Return null or stub for now. Ideally should use native iOS Firestore APIs.
-    return null
+//  val value = this.get(field) ?: return null
+//  if (value is NSData) {
+//    return (value as NSData).toByteArray()
+//  }
+//  if (value is ByteArray) {
+//    return value
+//  }
+  return null
 }
 
 actual suspend fun DocumentReference.setEncoded(data: Map<String, Any>, merge: Boolean) {
-    // Stub for now. Ideally should use native iOS Firestore APIs.
-}
-
-actual fun DocumentReference.observeSnapshot(): Flow<DocumentSnapshot> {
-    return this.snapshots
-}
-
-actual fun Query.observeSnapshot(): Flow<QuerySnapshot> {
-    return this.snapshots
+  this.set(data, merge = merge)
 }

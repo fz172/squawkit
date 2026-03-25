@@ -6,14 +6,10 @@ import dev.fanfly.wingslog.core.database.getUserDocumentRef
 import dev.fanfly.wingslog.core.database.setEncoded
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.newUserLicenseProfile
-// UserProfile removed
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
-import dev.fanfly.wingslog.core.database.getBlobAsBytes
-import dev.fanfly.wingslog.core.database.setEncoded
-import dev.fanfly.wingslog.core.database.observeSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -26,7 +22,7 @@ class UserProfileManagerImpl(
     val docRef = getProfileDocumentRef()
       ?: return kotlinx.coroutines.flow.flowOf(null)
 
-    return docRef.observeSnapshot().map { snapshot ->
+    return docRef.snapshots.map { snapshot ->
       if (snapshot.exists) {
         val blobBytes = snapshot.getBlobAsBytes(LICENSE_INFO_BLOB)
         if (blobBytes != null) {
