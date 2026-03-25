@@ -34,6 +34,7 @@ kotlin {
     commonMain.dependencies {
       api(libs.gitlive.firebase.auth)
       api(libs.koin.core)
+      implementation(libs.kermit)
     }
     androidMain.dependencies {
       api(project(":core:model"))
@@ -45,9 +46,6 @@ kotlin {
 
       // DI
       implementation(libs.koin.android)
-
-      // Logging
-      implementation(libs.kermit)
 
       // Coroutines
       implementation(libs.androidx.core.ktx)
