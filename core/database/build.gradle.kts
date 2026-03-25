@@ -39,6 +39,9 @@ kotlin {
 
       // DI
       api(libs.koin.core)
+
+      // Logging
+      implementation(libs.kermit)
     }
     androidMain.dependencies {
       api(project(":core:model"))
@@ -51,9 +54,6 @@ kotlin {
       // DI
       implementation(libs.koin.android)
 
-      // Logging
-      implementation(libs.kermit)
-
       // Coroutines
       implementation(libs.androidx.core.ktx)
     }
@@ -63,4 +63,5 @@ kotlin {
 dependencies {
   // Firebase BOM inside standard dependencies block
   implementation(platform(libs.firebase.bom))
+
 }
