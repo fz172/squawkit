@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,8 +17,15 @@ class SettingsViewModel(
   private val _user = MutableStateFlow(SettingsUiState())
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
 
+  private var observeLicenseJob: Job? = null
+
   init {
-    viewModelScope.launch {
+    observeLicense()
+  }
+
+  private fun observeLicense() {
+    observeLicenseJob?.cancel()
+    observeLicenseJob = viewModelScope.launch {
       userProfileManager.observeLicenseInfo().collect { result ->
         if (result != null) {
           _user.value = SettingsUiState(
@@ -35,10 +43,12 @@ class SettingsViewModel(
   fun logOut() {
     // Clear credentials from Credential Manager
     viewModelScope.launch {
+      // Cancel observation first to avoid permission errors
+      observeLicenseJob?.cancel()
       // Sign out of Firebase
       authManager.logOut()
       // Update the UI state to reflect no user is logged in
-      _user.value = SettingsUiState()
+      _user.value = SettingsUiState(firebaseUser = null, isLoading = false)
     }
   }
 }

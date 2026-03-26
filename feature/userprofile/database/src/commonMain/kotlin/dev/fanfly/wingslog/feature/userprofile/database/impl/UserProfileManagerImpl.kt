@@ -11,6 +11,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
 class UserProfileManagerImpl(
@@ -22,25 +23,31 @@ class UserProfileManagerImpl(
     val docRef = getProfileDocumentRef()
       ?: return kotlinx.coroutines.flow.flowOf(null)
 
-    return docRef.snapshots.map { snapshot ->
-      if (snapshot.exists) {
-        val blobBytes = snapshot.getBlobAsBytes(LICENSE_INFO_BLOB)
-        if (blobBytes != null) {
-          try {
-            LicenseInfo.ADAPTER.decode(blobBytes)
-          } catch (e: Exception) {
-            logger.w(e) { "Failed to parse LicenseInfo proto" }
+    return docRef.snapshots
+      .map { snapshot ->
+        val licenseInfo: LicenseInfo? = if (snapshot.exists) {
+          val blobBytes = snapshot.getBlobAsBytes(LICENSE_INFO_BLOB)
+          if (blobBytes != null) {
+            try {
+              LicenseInfo.ADAPTER.decode(blobBytes)
+            } catch (e: Exception) {
+              logger.w(e) { "Failed to parse LicenseInfo proto" }
+              newUserLicenseProfile()
+            }
+          } else {
+            logger.d { "No licenseInfoBlob found, returning default instance." }
             newUserLicenseProfile()
           }
         } else {
-          logger.d { "No licenseInfoBlob found, returning default instance." }
+          logger.d { "Profile document does not exist, returning default." }
           newUserLicenseProfile()
         }
-      } else {
-        logger.d { "Profile document does not exist, returning default." }
-        newUserLicenseProfile()
+        licenseInfo
       }
-    }
+      .catch { e ->
+        logger.w(e) { "Error observing license info. Stopping observation." }
+        emit(null)
+      }
   }
 
   override suspend fun updateLicenseInfo(licenseInfo: LicenseInfo): Result<Boolean> {
