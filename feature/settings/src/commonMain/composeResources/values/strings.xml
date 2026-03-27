@@ -2,4 +2,5 @@
 <resources>
     <string name="add_aircraft">Add Aircraft</string>
     <string name="sign_out">Log out</string>
+    <string name="app_version">App Version: %1$s</string>
 </resources>
