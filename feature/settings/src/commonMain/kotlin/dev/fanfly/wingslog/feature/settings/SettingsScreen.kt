@@ -39,9 +39,9 @@ fun SettingsScreen(
   // This LaunchedEffect will run when 'user' state changes
   LaunchedEffect(user) {
     if (!user.isLoading && user.firebaseUser == null) {
-      // If user becomes null (logged out), go to login and clear all other pages
+      // If user becomes null (logged out), go to login and clear everything up to main
       navController.navigate("login") {
-        popUpTo(navController.graph.startDestinationId) {
+        popUpTo("main") {
           inclusive = true
         }
         // Ensure only one copy of the login screen
