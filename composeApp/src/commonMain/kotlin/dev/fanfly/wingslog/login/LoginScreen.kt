@@ -5,10 +5,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -94,6 +97,7 @@ fun LoginScreen(
       )
       Spacer(modifier = Modifier.height(20.dp))
       OutlinedButton(
+        modifier = Modifier.fillMaxWidth(),
         onClick = {
           scope.launch {
             val credential = loginViewModel.login()
@@ -117,6 +121,7 @@ fun LoginScreen(
       // Anonymous / Guest sign-in button (all platforms)
       Spacer(modifier = Modifier.height(8.dp))
       OutlinedButton(
+        modifier = Modifier.fillMaxWidth(),
         onClick = {
           scope.launch {
             val credential = loginViewModel.loginAnonymously()
@@ -127,6 +132,12 @@ fun LoginScreen(
             }
           }
         }) {
+        Icon(
+          imageVector = Icons.Filled.Person,
+          contentDescription = null,
+          modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
         Text(stringResource(Res.string.continue_without_account))
       }
 
