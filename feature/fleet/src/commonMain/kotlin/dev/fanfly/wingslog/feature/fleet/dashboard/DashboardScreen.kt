@@ -33,7 +33,6 @@ import dev.fanfly.wingslog.feature.fleet.dashboard.data.FleetDashboardViewModel
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.app_name
 import wingslog.core.ui.generated.resources.settings
-import wingslog.feature.fleet.generated.resources.add_aircraft
 import wingslog.feature.fleet.generated.resources.loading
 import wingslog.feature.fleet.generated.resources.no_fleet
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
@@ -45,7 +44,6 @@ import wingslog.feature.fleet.generated.resources.Res as FleetRes
 fun DashboardScreen(
   viewModel: FleetDashboardViewModel = koinViewModel(),
   onOpenSettings: () -> Unit,
-  onClickFab: () -> Unit,
   onAircraftClick: (String) -> Unit
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -80,18 +78,6 @@ fun DashboardScreen(
           }
         }
       )
-    },
-    floatingActionButton = {
-      // Only show FAB if fleet is empty
-      if (uiState.isLoading || uiState.fleet.isEmpty()) {
-        ExtendedFloatingActionButton(
-          onClick = { onClickFab() },
-          icon = { Icon(Icons.Default.Build, contentDescription = null) },
-          text = { Text(cmpStringResource(FleetRes.string.add_aircraft)) },
-          containerColor = MaterialTheme.colorScheme.primaryContainer,
-          contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-      }
     }
   ) { innerPadding ->
     Box(

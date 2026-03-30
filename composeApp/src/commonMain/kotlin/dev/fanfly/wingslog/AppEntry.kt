@@ -42,7 +42,6 @@ fun AppEntry() {
         composable("main") {
           DashboardScreen(
             onOpenSettings = { navController.navigate("settings") },
-            onClickFab = { navController.navigate("add_aircraft") },
             onAircraftClick = { aircraftId -> navController.navigate("aircraft_overview/$aircraftId") })
         }
         composable("settings") {
