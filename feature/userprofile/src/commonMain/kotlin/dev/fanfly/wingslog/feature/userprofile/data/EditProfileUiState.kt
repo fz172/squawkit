@@ -6,7 +6,7 @@ import dev.fanfly.wingslog.core.model.userprofile.newUserLicenseProfile
 // This data class will hold the state of our form
 data class EditProfileUiState(
   val photoUri: String? = null,
-  val displayName: String = "",
+  val displayName: String? = null,
   val licenceInfo: LicenseInfo = newUserLicenseProfile(),
   val isLoading: Boolean = false,
   val isSaved: Boolean = false,

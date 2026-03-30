@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fanfly.wingslog.core.ui.common.compose.EmptyStateText
 import dev.fanfly.wingslog.feature.fleet.dashboard.compose.AircraftDashboardCard
 import dev.fanfly.wingslog.feature.fleet.dashboard.data.FleetDashboardViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -51,40 +50,29 @@ fun DashboardScreen(
   var menuExpanded by remember { mutableStateOf(false) }
 
   Scaffold(
-    modifier = Modifier.fillMaxSize(),
-    topBar = {
-      TopAppBar(
-        title = { Text(text = cmpStringResource(CoreUiRes.string.app_name)) },
-        actions = {
-          Box {
-            IconButton(onClick = { menuExpanded = true }) {
-              Icon(
-                Icons.Default.MoreVert,
-                contentDescription = cmpStringResource(CoreUiRes.string.settings)
-              )
-            }
-            DropdownMenu(
-              expanded = menuExpanded,
-              onDismissRequest = { menuExpanded = false }
-            ) {
-              DropdownMenuItem(
-                text = { Text(cmpStringResource(CoreUiRes.string.settings)) },
-                onClick = {
-                  menuExpanded = false
-                  onOpenSettings()
-                }
-              )
-            }
+    modifier = Modifier.fillMaxSize(), topBar = {
+      TopAppBar(title = { Text(text = cmpStringResource(CoreUiRes.string.app_name)) }, actions = {
+        Box {
+          IconButton(onClick = { menuExpanded = true }) {
+            Icon(
+              Icons.Default.MoreVert,
+              contentDescription = cmpStringResource(CoreUiRes.string.settings)
+            )
+          }
+          DropdownMenu(
+            expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+            DropdownMenuItem(
+              text = { Text(cmpStringResource(CoreUiRes.string.settings)) },
+              onClick = {
+                menuExpanded = false
+                onOpenSettings()
+              })
           }
         }
-      )
-    }
-  ) { innerPadding ->
+      })
+    }) { innerPadding ->
     Box(
-      modifier = Modifier
-        .fillMaxSize()
-        .padding(innerPadding),
-      contentAlignment = Alignment.Center
+      modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center
     ) {
       // Only show the text if isLoading is false
       if (uiState.isLoading) {
@@ -93,15 +81,12 @@ fun DashboardScreen(
           style = MaterialTheme.typography.headlineMedium
         )
       } else if (uiState.fleet.isEmpty()) {
-        Text(
-          cmpStringResource(FleetRes.string.no_fleet),
-          style = MaterialTheme.typography.headlineMedium
+        EmptyStateText(
+          text = cmpStringResource(FleetRes.string.no_fleet), modifier = Modifier.padding(16.dp)
         )
       } else {
         LazyColumn(
-          modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+          modifier = Modifier.fillMaxSize().padding(16.dp),
           verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
           items(uiState.fleet, key = { it.id }) { aircraft ->

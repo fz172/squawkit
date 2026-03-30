@@ -48,6 +48,7 @@ kotlin {
       implementation(project(":core:auth"))
       implementation(project(":feature:userprofile:userprofilecard"))
       implementation(project(":feature:userprofile:database"))
+      implementation(project(":feature:userprofile:sharedassets"))
 
       // Compose
       implementation(compose.ui)

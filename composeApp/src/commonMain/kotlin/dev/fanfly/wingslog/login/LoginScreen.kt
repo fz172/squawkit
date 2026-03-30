@@ -34,7 +34,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.composeapp.generated.resources.Res
 import wingslog.composeapp.generated.resources.app_name
-import wingslog.composeapp.generated.resources.continue_as_guest
+import wingslog.composeapp.generated.resources.continue_without_account
 import wingslog.composeapp.generated.resources.google_logo
 import wingslog.composeapp.generated.resources.ic_google_rd_na
 import wingslog.composeapp.generated.resources.ic_launcher_foreground
@@ -123,11 +123,11 @@ fun LoginScreen(
             if (credential != null) {
               onLoginSuccess()
             } else {
-              error = "Error signing in as guest."
+              error = "Error signing in without account."
             }
           }
         }) {
-        Text(stringResource(Res.string.continue_as_guest))
+        Text(stringResource(Res.string.continue_without_account))
       }
 
       error?.let {

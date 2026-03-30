@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.userprofile.userprofilecard"
+  namespace = "dev.fanfly.wingslog.feature.userprofile.sharedassets"
   compileSdk = 36
 
   defaultConfig {
@@ -42,13 +42,8 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":core:ui"))
-      implementation(project(":core:model"))
-      implementation(project(":feature:userprofile:sharedassets"))
-
       // Compose
-      implementation(compose.ui)
-      implementation(compose.material3)
+      implementation(compose.runtime)
       implementation(compose.components.resources)
     }
   }

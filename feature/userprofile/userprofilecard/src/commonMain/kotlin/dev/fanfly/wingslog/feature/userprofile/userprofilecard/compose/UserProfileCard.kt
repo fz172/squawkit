@@ -24,8 +24,11 @@ import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.edit_profile
+import wingslog.feature.userprofile.sharedassets.generated.resources.anonymous_user
+import wingslog.feature.userprofile.sharedassets.generated.resources.ic_anonymous_user
 import wingslog.feature.userprofile.userprofilecard.generated.resources.profile_picture
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.userprofile.sharedassets.generated.resources.Res as SharedAssetsRes
 import wingslog.feature.userprofile.userprofilecard.generated.resources.Res as CardRes
 
 data class UserProfileCardData(
@@ -52,14 +55,15 @@ fun UserProfileCard(
       // --- Profile Image ---
       CircularImage(
         photoUri = data.photoUri,
-        contentDescription = cmpStringResource(CardRes.string.profile_picture)
+        contentDescription = cmpStringResource(CardRes.string.profile_picture),
+        fallbackRes = SharedAssetsRes.drawable.ic_anonymous_user
       )
 
       Spacer(modifier = Modifier.height(16.dp))
 
       // --- User Info ---
       Text(
-        text = data.displayName ?: "",
+        text = if (data.displayName?.isEmpty() ?: true) cmpStringResource(SharedAssetsRes.string.anonymous_user) else data.displayName,
         fontSize = 22.sp,
         fontWeight = FontWeight.Bold,
       )

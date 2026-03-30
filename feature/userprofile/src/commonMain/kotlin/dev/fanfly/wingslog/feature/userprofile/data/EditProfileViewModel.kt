@@ -36,7 +36,7 @@ class EditProfileViewModel(
           _uiState.update {
             it.copy(
               licenceInfo = result,
-              isLoading = false
+              isLoading = false,
             )
           }
         } else {
@@ -97,5 +97,5 @@ class EditProfileViewModel(
 fun FirebaseUser.toEditProfileUiState() =
   EditProfileUiState(
     photoUri = photoURL,
-    displayName = displayName ?: "Guest"
+    displayName = displayName
   )

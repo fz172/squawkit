@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.ui.common.compose.EmptyStateText
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.compose.MaintenanceLogCard
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListUiState
@@ -94,10 +95,9 @@ fun MaintenanceLogListScreen(
 
         is MaintenanceLogListUiState.Success -> {
           if (state.logs.isEmpty()) {
-            Text(
-              cmpStringResource(AircraftRes.string.no_maintenance_logs_hint),
-              style = MaterialTheme.typography.bodyLarge,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
+            EmptyStateText(
+              text = cmpStringResource(AircraftRes.string.no_maintenance_logs_hint),
+              modifier = Modifier.padding(16.dp)
             )
           } else {
             LazyColumn(

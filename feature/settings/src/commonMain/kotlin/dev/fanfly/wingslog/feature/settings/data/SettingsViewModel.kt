@@ -20,21 +20,25 @@ class SettingsViewModel(
   private var observeLicenseJob: Job? = null
 
   init {
-    observeLicense()
+    loadUserProfile()
   }
 
-  private fun observeLicense() {
+  private fun loadUserProfile() {
+    _user.value = SettingsUiState(userStatus = UserStatus.LOADING)
     observeLicenseJob?.cancel()
     observeLicenseJob = viewModelScope.launch {
       userProfileManager.observeLicenseInfo().collect { result ->
         if (result != null) {
           _user.value = SettingsUiState(
-            firebaseUser = authManager.getCurrentUser(), licenseInfo = result, isLoading = false
+            photoUri = authManager.getCurrentUser()?.photoURL,
+            displayName = authManager.getCurrentUser()?.displayName,
+            licenseInfo = result,
+            userStatus = UserStatus.LOGGED_IN
           )
         }
       }
     }
-  }
+  } 
 
   /**
    * Logs the user out of Firebase and clears any saved credentials
@@ -48,7 +52,7 @@ class SettingsViewModel(
       // Sign out of Firebase
       authManager.logOut()
       // Update the UI state to reflect no user is logged in
-      _user.value = SettingsUiState(firebaseUser = null, isLoading = false)
+      _user.value = SettingsUiState(displayName = null, photoUri = null, userStatus = UserStatus.LOGGED_OUT)
     }
   }
 }
