@@ -27,9 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.login.data.LoginViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -83,12 +81,15 @@ fun LoginScreen(
 
       Text(
         stringResource(Res.string.app_name),
-        style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold
+        style = MaterialTheme.typography.headlineMedium,
+        color = MaterialTheme.colorScheme.onSurface
       )
       Spacer(Modifier.height(8.dp))
       // --- Subtitle Text ---
       Text(
-        text = stringResource(Res.string.login_prompt), fontSize = 16.sp, color = Color.Gray
+        text = stringResource(Res.string.login_prompt),
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
       )
 
       Spacer(modifier = Modifier.height(16.dp))

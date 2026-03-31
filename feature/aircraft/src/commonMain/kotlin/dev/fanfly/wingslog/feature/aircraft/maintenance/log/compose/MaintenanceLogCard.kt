@@ -33,6 +33,8 @@ import wingslog.feature.aircraft.generated.resources.unknown_date
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+
 @Composable
 fun MaintenanceLogCard(
   log: MaintenanceLog,
@@ -59,7 +61,7 @@ fun MaintenanceLogCard(
       ) {
         Text(
           text = dateStr,
-          style = MaterialTheme.typography.labelMedium,
+          style = WingslogTypography.dataSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         IconButton(onClick = onEdit) {
@@ -96,7 +98,7 @@ fun MaintenanceLogCard(
               AircraftRes.string.tach_format,
               log.tach_time.formatToOneDecimalPlace()
             ),
-            style = MaterialTheme.typography.bodySmall,
+            style = WingslogTypography.dataSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
@@ -106,7 +108,7 @@ fun MaintenanceLogCard(
               AircraftRes.string.airframe_time_format,
               log.airframe_time.formatToOneDecimalPlace()
             ),
-            style = MaterialTheme.typography.bodySmall,
+            style = WingslogTypography.dataSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
@@ -116,14 +118,14 @@ fun MaintenanceLogCard(
               AircraftRes.string.prop_time_format,
               log.prop_time.formatToOneDecimalPlace()
             ),
-            style = MaterialTheme.typography.bodySmall,
+            style = WingslogTypography.dataSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
         if (log.component_type != MaintenanceLog.ComponentType.UNKNOWN) {
           Text(
             text = log.component_type.displayName(),
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }

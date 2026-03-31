@@ -25,11 +25,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.PropellerBlade
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -59,7 +60,6 @@ fun AircraftDashboardCard(
         Text(
           text = "${aircraft.make} ${aircraft.model}",
           style = MaterialTheme.typography.headlineSmall,
-          fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(Modifier.height(8.dp))
@@ -76,7 +76,7 @@ fun AircraftDashboardCard(
           }
           Text(
             text = "S/N: ${aircraft.serial}",
-            style = MaterialTheme.typography.bodyMedium,
+            style = WingslogTypography.dataMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
@@ -109,8 +109,7 @@ fun Badge(
     Text(
       text = text,
       modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-      style = MaterialTheme.typography.labelMedium,
-      fontWeight = FontWeight.Bold,
+      style = WingslogTypography.dataSmall,
       color = contentColor
     )
   }
@@ -131,13 +130,12 @@ fun EngineItem(engine: Engine) {
       Column {
         Text(
           text = "${engine.make} ${engine.model}",
-          style = MaterialTheme.typography.bodyLarge,
-          fontWeight = FontWeight.SemiBold,
+          style = MaterialTheme.typography.titleMedium,
           color = MaterialTheme.colorScheme.onSurface
         )
         Text(
           text = "S/N: ${engine.serial}",
-          style = MaterialTheme.typography.bodySmall,
+          style = WingslogTypography.dataSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
       }
@@ -198,14 +196,13 @@ fun BladeChips(blades: List<PropellerBlade>) {
         ) {
           Text(
             text = "B${index + 1}",
-            style = MaterialTheme.typography.labelSmall,
+            style = WingslogTypography.dataSmall.copy(fontSize = 10.sp),
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
           )
           Spacer(Modifier.width(4.dp))
           Text(
             text = blade.serial,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Medium,
+            style = WingslogTypography.dataSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }

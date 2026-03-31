@@ -16,7 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
@@ -56,7 +56,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.squareup.wire.Instant
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.InspectionComponentType
+import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
@@ -134,8 +137,8 @@ fun AircraftOverviewScreen(
     logsForSelectedInspection = successState?.logsForSelectedInspection ?: emptyList(),
     editingInspection = successState?.editingInspection,
     deletingInspectionId = successState?.deletingInspectionId,
-    inspectionCardTitleForDelete = successState?.inspectionCards
-      ?.find { it.card.id == successState.deletingInspectionId }?.card?.title ?: "",
+    inspectionCardTitleForDelete = successState?.inspectionCards?.find { it.card.id == successState.deletingInspectionId }?.card?.title
+      ?: "",
     snackbarHostState = snackbarHostState,
     onBackClick = { navController.popBackStack() },
     onEditClick = { aircraftId -> navController.navigate("edit_aircraft/$aircraftId") },
@@ -152,13 +155,7 @@ fun AircraftOverviewScreen(
     onDismissEditInspection = { viewModel.closeEditInspection() },
     onSaveEditedInspection = { cardId, title, component, rules, forceDueDate, forceDueTach, notes ->
       viewModel.saveEditedInspection(
-        cardId,
-        title,
-        component,
-        rules,
-        forceDueDate,
-        forceDueTach,
-        notes
+        cardId, title, component, rules, forceDueDate, forceDueTach, notes
       )
     },
     onDeleteInspectionRequest = { cardId -> viewModel.requestDeleteInspection(cardId) },
@@ -186,12 +183,12 @@ fun AircraftOverviewContent(
   onLogDetailsClick: (String) -> Unit,
   onAddInspectionClick: () -> Unit = {},
   onDismissAddInspectionSheet: () -> Unit = {},
-  onSaveInspection: (title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>, notes: String) -> Unit = { _, _, _, _ -> },
+  onSaveInspection: (title: String, component: InspectionComponentType, rules: List<InspectionRule>, notes: String) -> Unit = { _, _, _, _ -> },
   onInspectionCardClick: (InspectionCardWithStatus) -> Unit = {},
   onDismissInspectionDetail: () -> Unit = {},
   onEditInspectionClick: (InspectionCardWithStatus) -> Unit = {},
   onDismissEditInspection: () -> Unit = {},
-  onSaveEditedInspection: (cardId: String, title: String, component: dev.fanfly.wingslog.aircraft.InspectionComponentType, rules: List<dev.fanfly.wingslog.aircraft.InspectionRule>, forceDueDate: com.squareup.wire.Instant?, forceDueTach: Float, notes: String) -> Unit = { _, _, _, _, _, _, _ -> },
+  onSaveEditedInspection: (cardId: String, title: String, component: InspectionComponentType, rules: List<InspectionRule>, forceDueDate: Instant?, forceDueTach: Float, notes: String) -> Unit = { _, _, _, _, _, _, _ -> },
   onDeleteInspectionRequest: (cardId: String) -> Unit = {},
   onCancelDeleteInspection: () -> Unit = {},
   onConfirmDeleteInspection: () -> Unit = {},
@@ -231,15 +228,12 @@ fun AircraftOverviewContent(
     snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
       TopAppBar(
-        scrollBehavior = scrollBehavior,
-        title = {
+        scrollBehavior = scrollBehavior, title = {
           if (aircraft != null) {
             Column {
               Text(
                 text = cmpStringResource(
-                  AircraftRes.string.make_model_template,
-                  aircraft.make,
-                  aircraft.model
+                  AircraftRes.string.make_model_template, aircraft.make, aircraft.model
                 )
               )
               Text(
@@ -273,25 +267,22 @@ fun AircraftOverviewContent(
                   onEditClick(aircraft.id)
                 }
               })
-            DropdownMenuItem(
-              text = {
-                Text(
-                  cmpStringResource(AircraftRes.string.delete),
-                  color = MaterialTheme.colorScheme.error
-                )
-              },
-              onClick = {
-                showSettingsMenu = false
-                showDeleteDialog = true
-              })
+            DropdownMenuItem(text = {
+              Text(
+                cmpStringResource(AircraftRes.string.delete),
+                color = MaterialTheme.colorScheme.error
+              )
+            }, onClick = {
+              showSettingsMenu = false
+              showDeleteDialog = true
+            })
           }
         }, colors = TopAppBarDefaults.topAppBarColors(
           containerColor = MaterialTheme.colorScheme.background,
           scrolledContainerColor = MaterialTheme.colorScheme.background
         )
       )
-    }
-  ) { paddingValues ->
+    }) { paddingValues ->
     // Add inspection bottom sheet
     if (showAddInspectionSheet) {
       dev.fanfly.wingslog.feature.aircraft.overview.compose.AddInspectionSheet(
@@ -333,14 +324,10 @@ fun AircraftOverviewContent(
 
     if (aircraft != null) {
       Box(
-        modifier = Modifier
-          .fillMaxSize()
-          .padding(paddingValues)
+        modifier = Modifier.fillMaxSize().padding(paddingValues)
       ) {
         Column(
-          modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState),
+          modifier = Modifier.fillMaxSize().verticalScroll(scrollState),
           verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
@@ -378,24 +365,16 @@ fun AircraftOverviewContent(
 
 @Composable
 fun LogDetailsBottomBar(
-  aircraft: Aircraft?,
-  modifier: Modifier = Modifier,
-  onLogDetailsClick: (String) -> Unit
+  aircraft: Aircraft?, modifier: Modifier = Modifier, onLogDetailsClick: (String) -> Unit
 ) {
   if (aircraft != null) {
     Box(
-      modifier = modifier
-        .fillMaxWidth()
-        .background(Color.Transparent)
-        .padding(16.dp),
+      modifier = modifier.fillMaxWidth().background(Color.Transparent).padding(16.dp),
       contentAlignment = Alignment.Center
     ) {
       Button(
         onClick = { onLogDetailsClick(aircraft.id) },
-        modifier = Modifier
-          .widthIn(max = 600.dp)
-          .fillMaxWidth()
-          .height(64.dp),
+        modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().height(64.dp),
         colors = ButtonDefaults.buttonColors(
           containerColor = MaterialTheme.colorScheme.primary,
           contentColor = MaterialTheme.colorScheme.onPrimary
@@ -403,9 +382,7 @@ fun LogDetailsBottomBar(
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
       ) {
         Icon(
-          Icons.Default.Info,
-          contentDescription = null,
-          modifier = Modifier.padding(end = 8.dp)
+          Icons.Default.History, contentDescription = null, modifier = Modifier.padding(end = 8.dp)
         )
         Text(
           text = cmpStringResource(AircraftRes.string.log_details).uppercase(),
@@ -448,8 +425,7 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
       )
     }
     Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(8.dp)
+      modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
       StatCard(
         label = cmpStringResource(AircraftRes.string.total_logs),
@@ -463,8 +439,7 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
       )
     }
     Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(8.dp)
+      modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
       StatCard(
         label = cmpStringResource(AircraftRes.string.engine),
@@ -487,9 +462,7 @@ private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Mo
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
   ) {
     Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(16.dp),
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -506,8 +479,7 @@ private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Mo
         )
         Text(
           text = cmpStringResource(
-            AircraftRes.string.tach_time_hours_format,
-            hours.formatToOneDecimalPlace()
+            AircraftRes.string.tach_time_hours_format, hours.formatToOneDecimalPlace()
           ),
           style = MaterialTheme.typography.headlineSmall,
           fontWeight = FontWeight.Bold,
@@ -525,13 +497,10 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
   ) {
     Column(
-      modifier = Modifier.padding(12.dp),
-      verticalArrangement = Arrangement.spacedBy(4.dp)
+      modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
       Text(
-        text = value,
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold
+        text = value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold
       )
       Text(
         text = label,
@@ -702,8 +671,7 @@ private fun InspectionGrid(aircraft: Aircraft, modifier: Modifier = Modifier) {
   ) {
     items.chunked(2).forEach { rowItems ->
       Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)
       ) {
         rowItems.forEach { item ->
           InspectionCard(
