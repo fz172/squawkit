@@ -44,6 +44,9 @@
     <string name="maintenance_logs">Maintenance Logs</string>
     <string name="failed_to_load_logs">Failed to load logs</string>
     <string name="no_maintenance_logs_hint">No maintenance logs yet.\nTap + to add the first one.</string>
+    <string name="no_maintenance_logs_title">No Logs Recorded</string>
+    <string name="no_maintenance_logs_description">Start building your digital logbook. Add airframe, engine, or propeller maintenance records here.</string>
+    <string name="add_first_maintenance_log">Add Your First Log</string>
     <string name="delete_log">Delete Log?</string>
     <string name="unknown_date">Unknown date</string>
     <string name="edit_log_content_description">Edit log</string>

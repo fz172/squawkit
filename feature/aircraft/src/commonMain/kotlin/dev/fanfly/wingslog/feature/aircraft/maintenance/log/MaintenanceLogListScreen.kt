@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.ui.common.compose.EmptyStateText
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.compose.MaintenanceLogCard
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListUiState
@@ -39,6 +38,12 @@ import wingslog.feature.aircraft.generated.resources.maintenance_logs
 import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_hint
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+
+import androidx.compose.material.icons.filled.History
+import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
+import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_description
+import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_title
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,9 +100,12 @@ fun MaintenanceLogListScreen(
 
         is MaintenanceLogListUiState.Success -> {
           if (state.logs.isEmpty()) {
-            EmptyStateText(
-              text = cmpStringResource(AircraftRes.string.no_maintenance_logs_hint),
-              modifier = Modifier.padding(16.dp)
+            EmptyState(
+              title = cmpStringResource(AircraftRes.string.no_maintenance_logs_title),
+              description = cmpStringResource(AircraftRes.string.no_maintenance_logs_description),
+              icon = Icons.Default.History,
+              actionText = cmpStringResource(AircraftRes.string.add_first_maintenance_log),
+              onActionClick = { viewModel.onAddLog() }
             )
           } else {
             LazyColumn(

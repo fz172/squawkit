@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.fanfly.wingslog.core.ui.common.compose.EmptyStateText
 import dev.fanfly.wingslog.feature.fleet.dashboard.compose.AircraftDashboardCard
 import dev.fanfly.wingslog.feature.fleet.dashboard.data.FleetDashboardViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -38,11 +37,20 @@ import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.feature.fleet.generated.resources.Res as FleetRes
 
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AirplanemodeActive
+import androidx.compose.material3.FloatingActionButton
+import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import wingslog.feature.fleet.generated.resources.add_first_aircraft
+import wingslog.feature.fleet.generated.resources.no_fleet_description
+import wingslog.feature.fleet.generated.resources.no_fleet_title
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
   viewModel: FleetDashboardViewModel = koinViewModel(),
   onOpenSettings: () -> Unit,
+  onAddAircraft: () -> Unit,
   onAircraftClick: (String) -> Unit
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -50,7 +58,8 @@ fun DashboardScreen(
   var menuExpanded by remember { mutableStateOf(false) }
 
   Scaffold(
-    modifier = Modifier.fillMaxSize(), topBar = {
+    modifier = Modifier.fillMaxSize(),
+    topBar = {
       TopAppBar(title = { Text(text = cmpStringResource(CoreUiRes.string.app_name)) }, actions = {
         Box {
           IconButton(onClick = { menuExpanded = true }) {
@@ -70,19 +79,23 @@ fun DashboardScreen(
           }
         }
       })
-    }) { innerPadding ->
+    }
+  ) { innerPadding ->
     Box(
       modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center
     ) {
-      // Only show the text if isLoading is false
       if (uiState.isLoading) {
         Text(
           cmpStringResource(FleetRes.string.loading),
           style = MaterialTheme.typography.headlineMedium
         )
       } else if (uiState.fleet.isEmpty()) {
-        EmptyStateText(
-          text = cmpStringResource(FleetRes.string.no_fleet), modifier = Modifier.padding(16.dp)
+        EmptyState(
+          title = cmpStringResource(FleetRes.string.no_fleet_title),
+          description = cmpStringResource(FleetRes.string.no_fleet_description),
+          icon = Icons.Default.AirplanemodeActive,
+          actionText = cmpStringResource(FleetRes.string.add_first_aircraft),
+          onActionClick = onAddAircraft
         )
       } else {
         LazyColumn(
