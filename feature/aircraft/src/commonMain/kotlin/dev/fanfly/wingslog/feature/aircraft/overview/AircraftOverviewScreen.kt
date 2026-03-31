@@ -240,9 +240,7 @@ fun AircraftOverviewContent(
                   AircraftRes.string.make_model_template,
                   aircraft.make,
                   aircraft.model
-                ),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                )
               )
               Text(
                 text = aircraft.tail_number,
