@@ -67,6 +67,7 @@ import wingslog.feature.userprofile.generated.resources.never
 import wingslog.feature.userprofile.generated.resources.select_date
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import wingslog.feature.userprofile.generated.resources.Res as UserProfileRes
 
 
@@ -98,8 +99,8 @@ fun EditProfileScreen(
       modifier = Modifier
         .fillMaxSize()
         .verticalScroll(rememberScrollState())
-        .padding(horizontal = 16.dp, vertical = 20.dp),
-      verticalArrangement = Arrangement.spacedBy(20.dp)
+        .padding(Spacing.screenPadding),
+      verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
     ) {
       UserProfileCard(
         data = UserProfileCardData(
@@ -122,7 +123,7 @@ fun EditProfileScreen(
           modifier = Modifier
             .fillMaxWidth()
             .menuAnchor(),
-          shape = RoundedCornerShape(12.dp)
+          shape = RoundedCornerShape(Spacing.buttonCornerRadius)
         )
         ExposedDropdownMenu(
           expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -135,8 +136,6 @@ fun EditProfileScreen(
         }
       }
 
-      Spacer(modifier = Modifier.height(20.dp))
-
       // --- License Number ---
       OutlinedTextField(
         value = uiState.licenceInfo.license_number, // Read from ViewModel
@@ -144,11 +143,9 @@ fun EditProfileScreen(
         label = { Text(cmpStringResource(UserProfileRes.string.license_number)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         enabled = uiState.licenceInfo.license_type != LicenseType.NONE
       )
-
-      Spacer(modifier = Modifier.height(20.dp))
 
       var showDatePicker by remember { mutableStateOf(false) }
 
@@ -174,7 +171,7 @@ fun EditProfileScreen(
           },
           enabled = false,
           singleLine = true,
-          shape = RoundedCornerShape(12.dp),
+          shape = RoundedCornerShape(Spacing.buttonCornerRadius),
           modifier = Modifier
             .weight(1f)
             .clickable {
@@ -204,7 +201,7 @@ fun EditProfileScreen(
             OutlinedTextFieldDefaults.colors()
           }
         )
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(Spacing.large))
         Text(text = cmpStringResource(UserProfileRes.string.never))
         Checkbox(
           checked = uiState.licenceInfo.expireLimit == LicenseExpireLimit.NEVER_EXPIRES,

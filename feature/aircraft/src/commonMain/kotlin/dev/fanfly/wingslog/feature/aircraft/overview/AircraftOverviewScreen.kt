@@ -68,6 +68,8 @@ import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.aircraft.database.DueMetadata
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.ConfigurationCard
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.InspectionCard
@@ -332,11 +334,11 @@ fun AircraftOverviewContent(
       ) {
         Column(
           modifier = Modifier.fillMaxSize().verticalScroll(scrollState),
-          verticalArrangement = Arrangement.spacedBy(24.dp)
+          verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
         ) {
 
           // --- Configuration Section ---
-          Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+          Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
             ConfigurationCard(aircraft)
           }
 
@@ -346,13 +348,13 @@ fun AircraftOverviewContent(
             CriticalAlertsSection(
               overdueInspections = overdueInspections,
               onCardClick = onInspectionCardClick,
-              modifier = Modifier.padding(horizontal = 16.dp)
+              modifier = Modifier.padding(horizontal = Spacing.screenPadding)
             )
           }
 
           // --- Log Stats Section ---
           logStats?.let { stats ->
-            LogStatsSection(stats = stats, modifier = Modifier.padding(horizontal = 16.dp))
+            LogStatsSection(stats = stats, modifier = Modifier.padding(horizontal = Spacing.screenPadding))
           }
 
           // --- Inspection Status Section ---
@@ -360,10 +362,10 @@ fun AircraftOverviewContent(
             inspectionCards = inspectionCards,
             onAddClick = onAddInspectionClick,
             onCardClick = onInspectionCardClick,
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = Spacing.screenPadding),
           )
 
-          Spacer(Modifier.height(88.dp)) // Clearance for the floating bottom bar
+          Spacer(Modifier.height(Spacing.massive)) // Clearance for the floating bottom bar
         }
 
         // Floating Bottom Bar
@@ -384,13 +386,13 @@ fun LogDetailsBottomBar(
 ) {
   if (aircraft != null) {
     Box(
-      modifier = modifier.fillMaxWidth().background(Color.Transparent).padding(16.dp),
+      modifier = modifier.fillMaxWidth().background(Color.Transparent).padding(Spacing.screenPadding),
       contentAlignment = Alignment.Center
     ) {
       Button(
         onClick = { onLogDetailsClick(aircraft.id) },
-        modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().height(56.dp),
-        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().height(Spacing.buttonHeight),
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.buttonColors(
           containerColor = MaterialTheme.colorScheme.primary,
           contentColor = MaterialTheme.colorScheme.onPrimary
@@ -398,7 +400,7 @@ fun LogDetailsBottomBar(
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
       ) {
         Icon(
-          Icons.Default.History, contentDescription = null, modifier = Modifier.padding(end = 8.dp)
+          Icons.Default.History, contentDescription = null, modifier = Modifier.padding(end = Spacing.small)
         )
         Text(
           text = cmpStringResource(AircraftRes.string.log_details).uppercase(),
@@ -412,7 +414,7 @@ fun LogDetailsBottomBar(
 
 @Composable
 private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
     Text(
       text = cmpStringResource(AircraftRes.string.maintenance_summary),
       style = MaterialTheme.typography.titleMedium,
@@ -427,7 +429,7 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
     }
 
     if (flightTimes.isNotEmpty()) {
-      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
         flightTimes.forEach { (label, hours) ->
           FlightTimeCard(
             label = label,
@@ -439,9 +441,9 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
     }
 
     // Secondary Stats - 2x2 Grid
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
       Row(
-        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.small)
       ) {
         StatCard(
           label = cmpStringResource(AircraftRes.string.total_logs),
@@ -455,7 +457,7 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
         )
       }
       Row(
-        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.small)
       ) {
         StatCard(
           label = cmpStringResource(AircraftRes.string.engine),
@@ -476,11 +478,12 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
 private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Modifier) {
   Card(
     modifier = modifier,
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+    shape = RoundedCornerShape(Spacing.small)
   ) {
     Column(
-      modifier = Modifier.fillMaxWidth().padding(12.dp),
-      verticalArrangement = Arrangement.spacedBy(2.dp)
+      modifier = Modifier.fillMaxWidth().padding(Spacing.medium),
+      verticalArrangement = Arrangement.spacedBy(Spacing.tiny)
     ) {
       Text(
         text = label,
@@ -502,12 +505,13 @@ private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Mo
 private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
   Card(
     modifier = modifier,
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    shape = RoundedCornerShape(Spacing.small)
   ) {
     Row(
-      modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+      modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
       verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(8.dp)
+      horizontalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
       Text(
         text = value,
@@ -531,7 +535,7 @@ private fun InspectionStatusSection(
   onCardClick: (InspectionCardWithStatus) -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
     Row(
       modifier = Modifier.fillMaxWidth(),
       verticalAlignment = Alignment.CenterVertically,
@@ -549,7 +553,7 @@ private fun InspectionStatusSection(
       }
     }
     if (inspectionCards.isEmpty()) {
-      Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+      Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
         Text(
           text = cmpStringResource(AircraftRes.string.no_inspections_yet),
           style = MaterialTheme.typography.bodyMedium,
@@ -563,7 +567,7 @@ private fun InspectionStatusSection(
       inspectionCards.chunked(2).forEach { rowItems ->
         Row(
           modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-          horizontalArrangement = Arrangement.spacedBy(12.dp),
+          horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
           rowItems.forEach { item ->
             InspectionCardItem(
@@ -592,12 +596,13 @@ private fun CriticalAlertsSection(
     colors = CardDefaults.cardColors(
       containerColor = MaterialTheme.colorScheme.errorContainer
     ),
-    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+    shape = RoundedCornerShape(Spacing.small)
   ) {
-    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = Modifier.padding(Spacing.large), verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
       ) {
         Icon(
           imageVector = Icons.Filled.Warning,

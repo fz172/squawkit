@@ -25,9 +25,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.fleet.dashboard.compose.AircraftDashboardCard
 import dev.fanfly.wingslog.feature.fleet.dashboard.data.FleetDashboardViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -91,8 +91,8 @@ fun DashboardScreen(
         )
       } else {
         LazyColumn(
-          modifier = Modifier.fillMaxSize().padding(16.dp),
-          verticalArrangement = Arrangement.spacedBy(16.dp)
+          modifier = Modifier.fillMaxSize().padding(Spacing.screenPadding),
+          verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
         ) {
           items(uiState.fleet, key = { it.id }) { aircraft ->
             AircraftDashboardCard(aircraft, onClick = { aircraftId ->

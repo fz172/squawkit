@@ -17,11 +17,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.getAppVersion
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
@@ -69,8 +69,8 @@ fun SettingsScreen(
       modifier = Modifier
         .padding(innerPadding)
         .fillMaxSize()
-        .padding(horizontal = 16.dp, vertical = 20.dp),
-      verticalArrangement = Arrangement.spacedBy(20.dp)
+        .padding(Spacing.screenPadding),
+      verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
     ) {
       UserProfileCard(
         data = UserProfileCardData(
