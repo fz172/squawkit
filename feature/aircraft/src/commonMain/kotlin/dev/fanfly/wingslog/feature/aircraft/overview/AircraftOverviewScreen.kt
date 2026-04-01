@@ -66,10 +66,9 @@ import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
-import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.aircraft.database.DueMetadata
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.ConfigurationCard
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.InspectionCard
@@ -81,13 +80,13 @@ import dev.fanfly.wingslog.feature.aircraft.overview.data.LogStats
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.delete
 import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.airframe
 import wingslog.feature.aircraft.generated.resources.airframe_time_label
 import wingslog.feature.aircraft.generated.resources.annual
 import wingslog.feature.aircraft.generated.resources.back
 import wingslog.feature.aircraft.generated.resources.cancel
-import wingslog.feature.aircraft.generated.resources.delete
 import wingslog.feature.aircraft.generated.resources.delete_aircraft
 import wingslog.feature.aircraft.generated.resources.due_dec_2024
 import wingslog.feature.aircraft.generated.resources.due_in_14h
@@ -109,6 +108,7 @@ import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undon
 import wingslog.feature.aircraft.generated.resources.total_logs
 import wingslog.feature.aircraft.generated.resources.transponder
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @Composable
@@ -219,7 +219,7 @@ fun AircraftOverviewContent(
           },
           colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
         ) {
-          Text(cmpStringResource(AircraftRes.string.delete))
+          Text(cmpStringResource(CoreRes.string.delete))
         }
       },
       dismissButton = {
@@ -275,7 +275,7 @@ fun AircraftOverviewContent(
               })
             DropdownMenuItem(text = {
               Text(
-                cmpStringResource(AircraftRes.string.delete),
+                cmpStringResource(CoreRes.string.delete),
                 color = MaterialTheme.colorScheme.error
               )
             }, onClick = {
@@ -343,7 +343,8 @@ fun AircraftOverviewContent(
           }
 
           // --- Critical Alerts Section ---
-          val overdueInspections = inspectionCards.filter { it.dueStatus.status == DueStatus.OVERDUE }
+          val overdueInspections =
+            inspectionCards.filter { it.dueStatus.status == DueStatus.OVERDUE }
           if (overdueInspections.isNotEmpty()) {
             CriticalAlertsSection(
               overdueInspections = overdueInspections,
@@ -354,7 +355,10 @@ fun AircraftOverviewContent(
 
           // --- Log Stats Section ---
           logStats?.let { stats ->
-            LogStatsSection(stats = stats, modifier = Modifier.padding(horizontal = Spacing.screenPadding))
+            LogStatsSection(
+              stats = stats,
+              modifier = Modifier.padding(horizontal = Spacing.screenPadding)
+            )
           }
 
           // --- Inspection Status Section ---
@@ -386,7 +390,8 @@ fun LogDetailsBottomBar(
 ) {
   if (aircraft != null) {
     Box(
-      modifier = modifier.fillMaxWidth().background(Color.Transparent).padding(Spacing.screenPadding),
+      modifier = modifier.fillMaxWidth().background(Color.Transparent)
+        .padding(Spacing.screenPadding),
       contentAlignment = Alignment.Center
     ) {
       Button(
@@ -400,7 +405,9 @@ fun LogDetailsBottomBar(
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
       ) {
         Icon(
-          Icons.Default.History, contentDescription = null, modifier = Modifier.padding(end = Spacing.small)
+          Icons.Default.History,
+          contentDescription = null,
+          modifier = Modifier.padding(end = Spacing.small)
         )
         Text(
           text = cmpStringResource(AircraftRes.string.log_details).uppercase(),
@@ -429,7 +436,10 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
     }
 
     if (flightTimes.isNotEmpty()) {
-      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+      ) {
         flightTimes.forEach { (label, hours) ->
           FlightTimeCard(
             label = label,
@@ -443,7 +453,8 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
     // Secondary Stats - 2x2 Grid
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
       Row(
-        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
       ) {
         StatCard(
           label = cmpStringResource(AircraftRes.string.total_logs),
@@ -457,7 +468,8 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
         )
       }
       Row(
-        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
       ) {
         StatCard(
           label = cmpStringResource(AircraftRes.string.engine),
@@ -599,7 +611,10 @@ private fun CriticalAlertsSection(
     border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error),
     shape = RoundedCornerShape(Spacing.small)
   ) {
-    Column(modifier = Modifier.padding(Spacing.large), verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+    Column(
+      modifier = Modifier.padding(Spacing.large),
+      verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+    ) {
       Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.small)

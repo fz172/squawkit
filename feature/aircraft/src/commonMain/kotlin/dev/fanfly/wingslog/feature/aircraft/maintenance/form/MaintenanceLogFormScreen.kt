@@ -66,6 +66,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.delete
 import wingslog.feature.aircraft.generated.resources.add
 import wingslog.feature.aircraft.generated.resources.add_log
 import wingslog.feature.aircraft.generated.resources.airframe_serial
@@ -73,7 +74,6 @@ import wingslog.feature.aircraft.generated.resources.airframe_time_hours
 import wingslog.feature.aircraft.generated.resources.back
 import wingslog.feature.aircraft.generated.resources.cancel
 import wingslog.feature.aircraft.generated.resources.component_type
-import wingslog.feature.aircraft.generated.resources.delete
 import wingslog.feature.aircraft.generated.resources.delete_log
 import wingslog.feature.aircraft.generated.resources.edit_log
 import wingslog.feature.aircraft.generated.resources.engine
@@ -96,6 +96,7 @@ import wingslog.feature.aircraft.generated.resources.update
 import wingslog.feature.aircraft.generated.resources.work_description_required
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -130,7 +131,7 @@ fun MaintenanceLogFormScreen(
           },
           colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
         ) {
-          Text(cmpStringResource(AircraftRes.string.delete))
+          Text(cmpStringResource(CoreRes.string.delete))
         }
       },
       dismissButton = {
@@ -331,7 +332,7 @@ fun MaintenanceLogFormScreen(
           onDeleteClick = if (viewModel.isEditMode) {
             { showDeleteDialog = true }
           } else null,
-          deleteLabel = cmpStringResource(AircraftRes.string.delete),
+          deleteLabel = cmpStringResource(CoreRes.string.delete),
           saveEnabled = !uiState.isSaving,
           isSaving = uiState.isSaving,
           saveLabel = saveLabel,
