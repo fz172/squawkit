@@ -42,7 +42,8 @@
     <string name="inspection_types">Inspection Types</string>
     <string name="none">None</string>
     <string name="maintenance_logs">Maintenance Logs</string>
-    <string name="failed_to_load_logs">Failed to load logs</string>
+    <string name="failed_to_load_logs">Could not load maintenance logs</string>
+    <string name="retry">Try Again</string>
     <string name="no_maintenance_logs_hint">No maintenance logs yet.\nTap + to add the first one.</string>
     <string name="no_maintenance_logs_title">No Logs Recorded</string>
     <string name="no_maintenance_logs_description">Start building your digital logbook. Add airframe, engine, or propeller maintenance records here.</string>

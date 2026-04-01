@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.aircraft.maintenance.log
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -36,6 +38,7 @@ import wingslog.feature.aircraft.generated.resources.back
 import wingslog.feature.aircraft.generated.resources.failed_to_load_logs
 import wingslog.feature.aircraft.generated.resources.maintenance_logs
 import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_hint
+import wingslog.feature.aircraft.generated.resources.retry
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
@@ -93,10 +96,19 @@ fun MaintenanceLogListScreen(
     ) {
       when (val state = uiState) {
         MaintenanceLogListUiState.Loading -> CircularProgressIndicator()
-        MaintenanceLogListUiState.Error -> Text(
-          cmpStringResource(AircraftRes.string.failed_to_load_logs),
-          style = MaterialTheme.typography.bodyLarge
-        )
+        MaintenanceLogListUiState.Error -> Column(
+          horizontalAlignment = Alignment.CenterHorizontally,
+          verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+          Text(
+            cmpStringResource(AircraftRes.string.failed_to_load_logs),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+          Button(onClick = { viewModel.retryLoading() }) {
+            Text(cmpStringResource(AircraftRes.string.retry))
+          }
+        }
 
         is MaintenanceLogListUiState.Success -> {
           if (state.logs.isEmpty()) {

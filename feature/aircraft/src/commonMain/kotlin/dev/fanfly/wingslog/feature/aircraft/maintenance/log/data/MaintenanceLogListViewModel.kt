@@ -49,6 +49,10 @@ class MaintenanceLogListViewModel(
     }
   }
 
+  fun retryLoading() {
+    observeLogs()
+  }
+
   fun onAddLog() {
     viewModelScope.launch {
       _events.send(MaintenanceLogListEvent.NavigateToCreateLog(aircraftId))

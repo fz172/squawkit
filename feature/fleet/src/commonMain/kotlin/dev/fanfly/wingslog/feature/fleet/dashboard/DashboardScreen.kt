@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,8 +32,6 @@ import dev.fanfly.wingslog.feature.fleet.dashboard.data.FleetDashboardViewModel
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.app_name
 import wingslog.core.ui.generated.resources.settings
-import wingslog.feature.fleet.generated.resources.loading
-import wingslog.feature.fleet.generated.resources.no_fleet
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.feature.fleet.generated.resources.Res as FleetRes
@@ -85,10 +84,7 @@ fun DashboardScreen(
       modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center
     ) {
       if (uiState.isLoading) {
-        Text(
-          cmpStringResource(FleetRes.string.loading),
-          style = MaterialTheme.typography.headlineMedium
-        )
+        CircularProgressIndicator()
       } else if (uiState.fleet.isEmpty()) {
         EmptyState(
           title = cmpStringResource(FleetRes.string.no_fleet_title),

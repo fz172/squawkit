@@ -40,6 +40,8 @@ import wingslog.composeapp.generated.resources.google_logo
 import wingslog.composeapp.generated.resources.ic_google_rd_na
 import wingslog.composeapp.generated.resources.ic_launcher_foreground
 import wingslog.composeapp.generated.resources.login_prompt
+import wingslog.composeapp.generated.resources.sign_in_anonymous_error
+import wingslog.composeapp.generated.resources.sign_in_error
 import wingslog.composeapp.generated.resources.sign_in_with_google
 
 
@@ -50,6 +52,8 @@ fun LoginScreen(
 ) {
   val scope = rememberCoroutineScope()
   var error by remember { mutableStateOf<String?>(null) }
+  val signInErrorMessage = stringResource(Res.string.sign_in_error)
+  val signInAnonymousErrorMessage = stringResource(Res.string.sign_in_anonymous_error)
 
   // Try silent sign-in first
   LaunchedEffect(Unit) {
@@ -105,7 +109,7 @@ fun LoginScreen(
             if (credential != null) {
               onLoginSuccess()
             } else {
-              error = "Error signing in."
+              error = signInErrorMessage
             }
           }
         }) {
@@ -129,7 +133,7 @@ fun LoginScreen(
             if (credential != null) {
               onLoginSuccess()
             } else {
-              error = "Error signing in without account."
+              error = signInAnonymousErrorMessage
             }
           }
         }) {

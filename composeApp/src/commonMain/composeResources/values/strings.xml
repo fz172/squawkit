@@ -6,4 +6,6 @@
     <string name="back">Back</string>
     <string name="cancel">Cancel</string>
     <string name="continue_without_account">Continue Anonymously</string>
+    <string name="sign_in_error">Sign-in failed. Check your connection and try again.</string>
+    <string name="sign_in_anonymous_error">Could not continue anonymously. Please try again.</string>
 </resources>
