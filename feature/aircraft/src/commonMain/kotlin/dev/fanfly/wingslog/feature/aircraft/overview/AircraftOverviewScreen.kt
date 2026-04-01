@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -371,12 +372,13 @@ fun LogDetailsBottomBar(
 ) {
   if (aircraft != null) {
     Box(
-      modifier = modifier.fillMaxWidth().background(Color.Transparent).padding(8.dp),
+      modifier = modifier.fillMaxWidth().background(Color.Transparent).padding(16.dp),
       contentAlignment = Alignment.Center
     ) {
       Button(
         onClick = { onLogDetailsClick(aircraft.id) },
-        modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().height(64.dp),
+        modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().height(56.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
           containerColor = MaterialTheme.colorScheme.primary,
           contentColor = MaterialTheme.colorScheme.onPrimary
@@ -398,61 +400,62 @@ fun LogDetailsBottomBar(
 
 @Composable
 private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
     Text(
       text = cmpStringResource(AircraftRes.string.maintenance_summary),
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold
     )
-    // Flight time metrics — displayed as full-width cards when available
-    stats.currentTachTime?.let { tachTime ->
-      FlightTimeCard(
-        label = cmpStringResource(AircraftRes.string.tach_time_label),
-        hours = tachTime,
-        modifier = Modifier.fillMaxWidth()
-      )
+
+    // Primary Flight Times - Compact Grid
+    val flightTimes = buildList {
+      stats.currentTachTime?.let { add(cmpStringResource(AircraftRes.string.tach_time_label) to it) }
+      stats.currentAirframeTime?.let { add(cmpStringResource(AircraftRes.string.airframe_time_label) to it) }
+      stats.currentPropTime?.let { add(cmpStringResource(AircraftRes.string.prop_time_label) to it) }
     }
-    stats.currentAirframeTime?.let { afTime ->
-      FlightTimeCard(
-        label = cmpStringResource(AircraftRes.string.airframe_time_label),
-        hours = afTime,
-        modifier = Modifier.fillMaxWidth()
-      )
+
+    if (flightTimes.isNotEmpty()) {
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        flightTimes.forEach { (label, hours) ->
+          FlightTimeCard(
+            label = label,
+            hours = hours,
+            modifier = Modifier.weight(1f)
+          )
+        }
+      }
     }
-    stats.currentPropTime?.let { propTime ->
-      FlightTimeCard(
-        label = cmpStringResource(AircraftRes.string.prop_time_label),
-        hours = propTime,
-        modifier = Modifier.fillMaxWidth()
-      )
-    }
-    Row(
-      modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-      StatCard(
-        label = cmpStringResource(AircraftRes.string.total_logs),
-        value = stats.total.toString(),
-        modifier = Modifier.weight(1f)
-      )
-      StatCard(
-        label = cmpStringResource(AircraftRes.string.airframe),
-        value = stats.airframe.toString(),
-        modifier = Modifier.weight(1f)
-      )
-    }
-    Row(
-      modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-      StatCard(
-        label = cmpStringResource(AircraftRes.string.engine),
-        value = stats.engine.toString(),
-        modifier = Modifier.weight(1f)
-      )
-      StatCard(
-        label = cmpStringResource(AircraftRes.string.propeller),
-        value = stats.propeller.toString(),
-        modifier = Modifier.weight(1f)
-      )
+
+    // Secondary Stats - 2x2 Grid
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      Row(
+        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
+      ) {
+        StatCard(
+          label = cmpStringResource(AircraftRes.string.total_logs),
+          value = stats.total.toString(),
+          modifier = Modifier.weight(1f)
+        )
+        StatCard(
+          label = cmpStringResource(AircraftRes.string.airframe),
+          value = stats.airframe.toString(),
+          modifier = Modifier.weight(1f)
+        )
+      }
+      Row(
+        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
+      ) {
+        StatCard(
+          label = cmpStringResource(AircraftRes.string.engine),
+          value = stats.engine.toString(),
+          modifier = Modifier.weight(1f)
+        )
+        StatCard(
+          label = cmpStringResource(AircraftRes.string.propeller),
+          value = stats.propeller.toString(),
+          modifier = Modifier.weight(1f)
+        )
+      }
     }
   }
 }
@@ -463,31 +466,22 @@ private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Mo
     modifier = modifier,
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
   ) {
-    Row(
-      modifier = Modifier.fillMaxWidth().padding(16.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(12.dp)
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(12.dp),
+      verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-      Icon(
-        Icons.Default.Timer,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onPrimaryContainer
+      Text(
+        text = label,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onPrimaryContainer,
+        maxLines = 1
       )
-      Column {
-        Text(
-          text = label,
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        Text(
-          text = cmpStringResource(
-            AircraftRes.string.tach_time_hours_format, hours.formatToOneDecimalPlace()
-          ),
-          style = MaterialTheme.typography.headlineSmall,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-      }
+      Text(
+        text = hours.formatToOneDecimalPlace(),
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onPrimaryContainer
+      )
     }
   }
 }
@@ -498,16 +492,21 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
     modifier = modifier,
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
   ) {
-    Column(
-      modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)
+    Row(
+      modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
       Text(
-        text = value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold
+        text = value,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold
       )
       Text(
         text = label,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.weight(1f)
       )
     }
   }

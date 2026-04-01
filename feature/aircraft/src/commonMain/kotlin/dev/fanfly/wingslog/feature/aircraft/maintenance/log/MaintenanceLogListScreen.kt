@@ -18,11 +18,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -50,6 +52,7 @@ fun MaintenanceLogListScreen(
   viewModel: MaintenanceLogListViewModel = koinViewModel()
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
@@ -64,10 +67,12 @@ fun MaintenanceLogListScreen(
   }
 
   Scaffold(
+    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
       WingsLogTopAppBar(
         title = cmpStringResource(AircraftRes.string.maintenance_logs),
-        onBackClick = { navController.popBackStack() }
+        onBackClick = { navController.popBackStack() },
+        scrollBehavior = scrollBehavior
       )
     },
     floatingActionButton = {

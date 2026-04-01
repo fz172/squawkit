@@ -2,7 +2,7 @@
 <resources>
     <string name="loading">Loading</string>
     <string name="no_fleet">No Fleet. Add your first aircraft in Settings to get started.</string>
-    <string name="no_fleet_title">Hangar\'s Empty</string>
-    <string name="no_fleet_description">Add your aircraft to start tracking inspection due dates, tach time, and airworthiness items — all in one logbook.</string>
-    <string name="add_first_aircraft">Add Aircraft</string>
+    <string name="no_fleet_title">Ready for Takeoff?</string>
+    <string name="no_fleet_description">Keep your aircraft details, maintenance logs, and compliance records in one place.</string>
+    <string name="add_first_aircraft">Add Your First Aircraft</string>
 </resources>
