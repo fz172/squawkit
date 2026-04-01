@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -495,7 +496,7 @@ private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Mo
 private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
   Card(
     modifier = modifier,
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
   ) {
     Column(
       modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -530,8 +531,10 @@ private fun InspectionStatusSection(
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
       )
-      androidx.compose.material3.TextButton(onClick = onAddClick) {
-        Text(cmpStringResource(AircraftRes.string.add_inspection))
+      if (!inspectionCards.isEmpty()) {
+        androidx.compose.material3.TextButton(onClick = onAddClick) {
+          Text(cmpStringResource(AircraftRes.string.add_inspection))
+        }
       }
     }
     if (inspectionCards.isEmpty()) {
@@ -548,7 +551,7 @@ private fun InspectionStatusSection(
     } else {
       inspectionCards.chunked(2).forEach { rowItems ->
         Row(
-          modifier = Modifier.fillMaxWidth(),
+          modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
           horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
           rowItems.forEach { item ->

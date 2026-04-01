@@ -4,8 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -37,14 +38,14 @@ fun InspectionCard(
 ) {
   Card(
     onClick = onClick,
-    modifier = modifier.height(100.dp),
+    modifier = modifier.fillMaxHeight(),
     colors = CardDefaults.cardColors(
       containerColor = MaterialTheme.colorScheme.surfaceContainer
     ),
     shape = RoundedCornerShape(20.dp)
   ) {
     Column(
-      modifier = Modifier.padding(16.dp),
+      modifier = Modifier.fillMaxSize().padding(16.dp),
       verticalArrangement = Arrangement.SpaceBetween,
       horizontalAlignment = Alignment.Start
     ) {
@@ -76,8 +77,8 @@ fun InspectionCard(
 @Composable
 fun PreviewInspectionCard() = InspectionCard(
   title = "100 Hr",
-  status = "Due in 14h",
+  status = "Overdue (was Dec 12, 2024)",
   icon = Icons.Default.Schedule,
-  statusColor = Color(0xFFFFD54F), // Yellowish
+  statusColor = Color(0xFF8B5E00),
   modifier = Modifier.fillMaxWidth()
 )
