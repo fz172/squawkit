@@ -33,6 +33,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -534,11 +535,16 @@ private fun InspectionStatusSection(
       }
     }
     if (inspectionCards.isEmpty()) {
-      Text(
-        text = cmpStringResource(AircraftRes.string.no_inspections_yet),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
+      Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+          text = cmpStringResource(AircraftRes.string.no_inspections_yet),
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedButton(onClick = onAddClick) {
+          Text(cmpStringResource(AircraftRes.string.add_inspection))
+        }
+      }
     } else {
       inspectionCards.chunked(2).forEach { rowItems ->
         Row(
