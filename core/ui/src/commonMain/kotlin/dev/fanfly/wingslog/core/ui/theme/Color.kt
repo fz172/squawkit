@@ -2,13 +2,42 @@ package dev.fanfly.wingslog.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// --- Aviation Blue (primary) ---
+// References glass cockpit displays: Garmin G1000, ForeFlight, Jeppesen charts.
+// A deep, confident instrument blue — nothing else in the productivity space uses this exact tone.
+val AviationBlue80 = Color(0xFFA7C8FF)   // Primary — dark mode
+val AviationBlue40 = Color(0xFF1A5FAE)   // Primary — light mode
+val AviationBlue30 = Color(0xFF004785)   // Primary container — dark mode
+val AviationBlue90 = Color(0xFFD5E3FF)   // Primary container — light mode (soft sky blue)
+val AviationBlue10 = Color(0xFF001849)   // On primary container — light mode (deep navy)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// --- Blue-Gray (secondary) ---
+// Cool, grounded. Pairs naturally with the blue primary and reads as "instrument panel."
+val BlueGray80 = Color(0xFFBAC8E0)       // Secondary — dark mode
+val BlueGray40 = Color(0xFF525E72)       // Secondary — light mode
+val BlueGray30 = Color(0xFF3A4557)       // Secondary container — dark mode
+val BlueGray90 = Color(0xFFD6E4F5)       // Secondary container — light mode
+val BlueGray10 = Color(0xFF0E1C2B)       // On secondary container — light mode
 
-val StatusWarning = Color(0xFFFFD54F)
-val StatusOk = Color(0xFFA5D6A7)
+// --- Instrument Amber (tertiary) ---
+// The brand personality accent. References the amber glow of classic 6-pack gauges,
+// advisory annunciators, and amber wingtip/taxi lights. Used sparingly — 10% of color moments.
+val Amber80 = Color(0xFFFFBA4E)          // Tertiary — dark mode
+val Amber40 = Color(0xFF7A5200)          // Tertiary — light mode
+val Amber30 = Color(0xFF5B3D00)          // Tertiary container — dark mode
+val Amber90 = Color(0xFFFFDFA6)          // Tertiary container — light mode (warm amber tint)
+val Amber10 = Color(0xFF271900)          // On tertiary container — light mode
+
+// --- Semantic Status ---
+// These are used as TEXT colors on neutral surfaces, so they must meet WCAG 4.5:1.
+// Previous pastel values (yellow #FFD54F, green #A5D6A7) failed contrast as text colors.
+//
+// Aviation semantics:
+//   StatusOk     → "in the green" / airworthy / go
+//   StatusWarning → amber caution annunciator — action required but not immediate
+val StatusOk = Color(0xFF276B39)         // Dark forest green — airworthy / compliant
+val StatusWarning = Color(0xFF8B5E00)    // Dark amber — caution / due soon
+
+// Container variants for when status color is used as a surface background (not text)
+val StatusOkContainer = Color(0xFFC8E6C9)
+val StatusWarningContainer = Color(0xFFFFECB3)
