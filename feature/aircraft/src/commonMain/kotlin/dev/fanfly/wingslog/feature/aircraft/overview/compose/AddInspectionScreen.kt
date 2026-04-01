@@ -104,24 +104,25 @@ fun AddInspectionScreen(
 
             Spacer(modifier = Modifier.height(Spacing.medium))
 
-            if (type == ComplianceType.COMPLIANCE_TYPE_RECURRING_INSPECTION) {
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-                    OutlinedTextField(
-                        value = intervalMonths,
-                        onValueChange = { intervalMonths = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(AircraftRes.string.interval_months)) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = intervalHours,
-                        onValueChange = { intervalHours = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(AircraftRes.string.interval_hours)) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+            // Regular Interval Inputs (Always visible)
+            Text("INTERVALS", style = MaterialTheme.typography.labelLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+                OutlinedTextField(
+                    value = intervalMonths,
+                    onValueChange = { intervalMonths = it.filter { c -> c.isDigit() } },
+                    label = { Text(stringResource(AircraftRes.string.interval_months)) },
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = intervalHours,
+                    onValueChange = { intervalHours = it.filter { c -> c.isDigit() || c == '.' } },
+                    label = { Text(stringResource(AircraftRes.string.interval_hours)) },
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             if (type == ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN || type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
+                Spacer(modifier = Modifier.height(Spacing.medium))
                 OutlinedTextField(
                     value = refNumber,
                     onValueChange = { refNumber = it },
