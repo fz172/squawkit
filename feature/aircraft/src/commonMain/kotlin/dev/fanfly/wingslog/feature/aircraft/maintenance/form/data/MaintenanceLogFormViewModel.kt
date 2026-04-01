@@ -22,6 +22,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 // removed uuid
 
@@ -74,7 +75,7 @@ class MaintenanceLogFormViewModel(
         val logDate = log.timestamp?.let { ts ->
           val epochSec = ts.getEpochSecond()
           if (epochSec > 0L) {
-            kotlinx.datetime.Instant.fromEpochSeconds(epochSec, ts.getNano())
+            Instant.fromEpochSeconds(epochSec, ts.getNano())
               .toLocalDateTime(TimeZone.currentSystemDefault()).date
           } else null
         }

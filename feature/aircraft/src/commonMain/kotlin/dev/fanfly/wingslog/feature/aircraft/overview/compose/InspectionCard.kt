@@ -34,15 +34,29 @@ fun InspectionCard(
   status: String,
   icon: ImageVector,
   statusColor: Color,
+  isOverdue: Boolean = false,
   onClick: () -> Unit = {},
   modifier: Modifier = Modifier
 ) {
+  val containerColor = if (isOverdue) {
+    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
+  } else {
+    MaterialTheme.colorScheme.surfaceContainer
+  }
+
+  val borderColor = if (isOverdue) {
+    MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+  } else {
+    Color.Transparent
+  }
+
   Card(
     onClick = onClick,
     modifier = modifier.fillMaxHeight().heightIn(min = 88.dp),
     colors = CardDefaults.cardColors(
-      containerColor = MaterialTheme.colorScheme.surfaceContainer
+      containerColor = containerColor
     ),
+    border = androidx.compose.foundation.BorderStroke(2.dp, borderColor),
     shape = RoundedCornerShape(20.dp)
   ) {
     Column(
@@ -54,21 +68,22 @@ fun InspectionCard(
         Icon(
           imageVector = icon,
           contentDescription = null,
-          modifier = Modifier.size(20.dp),
-          tint = MaterialTheme.colorScheme.onSurface
+          modifier = Modifier.size(18.dp),
+          tint = if (isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
         )
         Spacer(Modifier.width(8.dp))
         Text(
           text = title,
-          style = MaterialTheme.typography.bodyMedium,
-          fontWeight = FontWeight.SemiBold
+          style = MaterialTheme.typography.titleSmall,
+          fontWeight = FontWeight.Bold,
+          color = if (isOverdue) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface
         )
       }
       Text(
         text = status,
         style = MaterialTheme.typography.labelMedium,
-        color = statusColor,
-        fontWeight = FontWeight.Bold
+        color = if (isOverdue) MaterialTheme.colorScheme.error else statusColor,
+        fontWeight = FontWeight.ExtraBold
       )
     }
   }

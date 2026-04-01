@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.aircraft.overview.data
 
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.InspectionCard
-import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
+import dev.fanfly.wingslog.feature.aircraft.database.DueMetadata
 
 data class LogStats(
   val total: Long,
@@ -16,7 +16,7 @@ data class LogStats(
 
 data class InspectionCardWithStatus(
   val card: InspectionCard,
-  val dueStatus: DueStatus,
+  val dueStatus: DueMetadata,
 )
 
 sealed interface AircraftOverviewUiState {

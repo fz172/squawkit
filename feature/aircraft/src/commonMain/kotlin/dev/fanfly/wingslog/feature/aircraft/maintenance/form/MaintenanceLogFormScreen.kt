@@ -28,13 +28,13 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -63,7 +63,7 @@ import dev.fanfly.wingslog.feature.aircraft.maintenance.form.compose.InspectionP
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
-import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
@@ -96,6 +96,7 @@ import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undon
 import wingslog.feature.aircraft.generated.resources.unknown_inspection
 import wingslog.feature.aircraft.generated.resources.update
 import wingslog.feature.aircraft.generated.resources.work_description_required
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
@@ -142,7 +143,8 @@ fun MaintenanceLogFormScreen(
     )
   }
 
-  val saveLabel = cmpStringResource(if (viewModel.isEditMode) AircraftRes.string.update else AircraftRes.string.save)
+  val saveLabel =
+    cmpStringResource(if (viewModel.isEditMode) AircraftRes.string.update else AircraftRes.string.save)
 
   Scaffold(
     topBar = {
@@ -182,167 +184,167 @@ fun MaintenanceLogFormScreen(
       }
     } else {
       Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-      Column(
-        modifier = Modifier
-          .fillMaxSize()
-          .imePadding()
-          .verticalScroll(rememberScrollState())
-          .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-      ) {
-        // Maintenance Date
-        val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat()
-          ?: cmpStringResource(AircraftRes.string.tap_to_change_date)
-        OutlinedTextField(
-          value = dateDisplayText,
-          onValueChange = {},
-          readOnly = true,
-          label = { Text(cmpStringResource(AircraftRes.string.maintenance_date)) },
-          leadingIcon = {
-            Icon(
-              Icons.Default.CalendarToday,
-              contentDescription = cmpStringResource(AircraftRes.string.maintenance_date)
-            )
-          },
+        Column(
           modifier = Modifier
-            .fillMaxWidth()
-            .clickable { showDatePicker = true },
-          singleLine = true,
-          enabled = false,
-          colors = OutlinedTextFieldDefaults.colors(
-            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-            disabledBorderColor = MaterialTheme.colorScheme.outline,
-            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        )
-
-        if (showDatePicker) {
-          val initialMs = uiState.maintenanceDate?.let { date ->
-            date.let {
-              kotlinx.datetime.LocalDateTime(it.year, it.month, it.dayOfMonth, 12, 0, 0)
-                .let { ldt ->
-                  Instant.fromEpochSeconds(
-                    ldt.date.toEpochDays().toLong() * 86400L
-                  ).toEpochMilliseconds()
-                }
-            }
-          }
-          val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMs)
-          DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-              TextButton(onClick = {
-                val selectedMs = datePickerState.selectedDateMillis
-                if (selectedMs != null) {
-                  val selectedDate = Instant.fromEpochMilliseconds(selectedMs)
-                    .toLocalDateTime(TimeZone.UTC).date
-                  viewModel.onMaintenanceDateChange(selectedDate)
-                }
-                showDatePicker = false
-              }) {
-                Text(cmpStringResource(AircraftRes.string.ok))
-              }
+            .fillMaxSize()
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+          verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+          // Maintenance Date
+          val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat()
+            ?: cmpStringResource(AircraftRes.string.tap_to_change_date)
+          OutlinedTextField(
+            value = dateDisplayText,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(cmpStringResource(AircraftRes.string.maintenance_date)) },
+            leadingIcon = {
+              Icon(
+                Icons.Default.CalendarToday,
+                contentDescription = cmpStringResource(AircraftRes.string.maintenance_date)
+              )
             },
-            dismissButton = {
-              TextButton(onClick = { showDatePicker = false }) {
-                Text(cmpStringResource(AircraftRes.string.cancel))
+            modifier = Modifier
+              .fillMaxWidth()
+              .clickable { showDatePicker = true },
+            singleLine = true,
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+              disabledTextColor = MaterialTheme.colorScheme.onSurface,
+              disabledBorderColor = MaterialTheme.colorScheme.outline,
+              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          )
+
+          if (showDatePicker) {
+            val initialMs = uiState.maintenanceDate?.let { date ->
+              date.let {
+                LocalDateTime(it.year, it.month, it.day, 12, 0, 0)
+                  .let { ldt ->
+                    Instant.fromEpochSeconds(
+                      ldt.date.toEpochDays() * 86400L
+                    ).toEpochMilliseconds()
+                  }
               }
             }
-          ) {
-            DatePicker(state = datePickerState)
+            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMs)
+            DatePickerDialog(
+              onDismissRequest = { showDatePicker = false },
+              confirmButton = {
+                TextButton(onClick = {
+                  val selectedMs = datePickerState.selectedDateMillis
+                  if (selectedMs != null) {
+                    val selectedDate = Instant.fromEpochMilliseconds(selectedMs)
+                      .toLocalDateTime(TimeZone.UTC).date
+                    viewModel.onMaintenanceDateChange(selectedDate)
+                  }
+                  showDatePicker = false
+                }) {
+                  Text(cmpStringResource(AircraftRes.string.ok))
+                }
+              },
+              dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                  Text(cmpStringResource(AircraftRes.string.cancel))
+                }
+              }
+            ) {
+              DatePicker(state = datePickerState)
+            }
           }
-        }
 
-        // Work Description (required)
-        OutlinedTextField(
-          value = uiState.workDescription,
-          onValueChange = viewModel::onWorkDescriptionChange,
-          label = { Text(cmpStringResource(AircraftRes.string.work_description_required)) },
-          modifier = Modifier.fillMaxWidth(),
-          minLines = 3,
-          maxLines = 6,
-          isError = uiState.error == "Work description is required"
-        )
+          // Work Description (required)
+          OutlinedTextField(
+            value = uiState.workDescription,
+            onValueChange = viewModel::onWorkDescriptionChange,
+            label = { Text(cmpStringResource(AircraftRes.string.work_description_required)) },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 3,
+            maxLines = 6,
+            isError = uiState.error == "Work description is required"
+          )
 
-        // Inspection Work section
-        InspectionWorkSection(
-          selectedIds = uiState.selectedInspectionIds,
-          availableCards = uiState.availableInspectionCards,
-          onAddClick = viewModel::showInspectionPicker,
-          onRemove = viewModel::removeInspectionId,
-          modifier = Modifier.fillMaxWidth(),
-        )
-
-        // Inspection picker bottom sheet
-        if (uiState.showInspectionPicker) {
-          InspectionPickerSheet(
-            availableCards = uiState.availableInspectionCards,
+          // Inspection Work section
+          InspectionWorkSection(
             selectedIds = uiState.selectedInspectionIds,
-            onToggle = viewModel::toggleInspectionSelection,
-            onDismiss = viewModel::hideInspectionPicker,
+            availableCards = uiState.availableInspectionCards,
+            onAddClick = viewModel::showInspectionPicker,
+            onRemove = viewModel::removeInspectionId,
+            modifier = Modifier.fillMaxWidth(),
           )
-        }
 
-        // Tach Time
-        OutlinedTextField(
-          value = uiState.tachTime,
-          onValueChange = viewModel::onTachTimeChange,
-          label = { Text(cmpStringResource(AircraftRes.string.tach_time_hours)) },
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true,
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-        )
+          // Inspection picker bottom sheet
+          if (uiState.showInspectionPicker) {
+            InspectionPickerSheet(
+              availableCards = uiState.availableInspectionCards,
+              selectedIds = uiState.selectedInspectionIds,
+              onToggle = viewModel::toggleInspectionSelection,
+              onDismiss = viewModel::hideInspectionPicker,
+            )
+          }
 
-        // Airframe Time
-        OutlinedTextField(
-          value = uiState.airframeTime,
-          onValueChange = viewModel::onAirframeTimeChange,
-          label = { Text(cmpStringResource(AircraftRes.string.airframe_time_hours)) },
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true,
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-        )
-
-        // Prop Time
-        OutlinedTextField(
-          value = uiState.propTime,
-          onValueChange = viewModel::onPropTimeChange,
-          label = { Text(cmpStringResource(AircraftRes.string.prop_time_hours)) },
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true,
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-        )
-
-        // Component section
-        ComponentSection(
-          aircraft = uiState.aircraft,
-          selectedComponentType = uiState.selectedComponentType,
-          selectedSubComponent = uiState.selectedSubComponent,
-          onComponentTypeChange = viewModel::onComponentTypeChange,
-          onSubComponentChange = viewModel::onSubComponentChange,
-          modifier = Modifier.fillMaxWidth()
-        )
-
-        // Error message
-        if (uiState.error != null) {
-          Text(
-            text = uiState.error!!,
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall
+          // Tach Time
+          OutlinedTextField(
+            value = uiState.tachTime,
+            onValueChange = viewModel::onTachTimeChange,
+            label = { Text(cmpStringResource(AircraftRes.string.tach_time_hours)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
           )
-        }
 
-        Spacer(Modifier.height(88.dp))
-      }
-      BottomButtons(
-        modifier = Modifier.align(Alignment.BottomCenter),
-        onSaveClick = viewModel::save,
-        onCancelClick = { navController.popBackStack() },
-        saveEnabled = !uiState.isSaving,
-        isSaving = uiState.isSaving,
-        saveLabel = saveLabel,
-      )
+          // Airframe Time
+          OutlinedTextField(
+            value = uiState.airframeTime,
+            onValueChange = viewModel::onAirframeTimeChange,
+            label = { Text(cmpStringResource(AircraftRes.string.airframe_time_hours)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+          )
+
+          // Prop Time
+          OutlinedTextField(
+            value = uiState.propTime,
+            onValueChange = viewModel::onPropTimeChange,
+            label = { Text(cmpStringResource(AircraftRes.string.prop_time_hours)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+          )
+
+          // Component section
+          ComponentSection(
+            aircraft = uiState.aircraft,
+            selectedComponentType = uiState.selectedComponentType,
+            selectedSubComponent = uiState.selectedSubComponent,
+            onComponentTypeChange = viewModel::onComponentTypeChange,
+            onSubComponentChange = viewModel::onSubComponentChange,
+            modifier = Modifier.fillMaxWidth()
+          )
+
+          // Error message
+          if (uiState.error != null) {
+            Text(
+              text = uiState.error!!,
+              color = MaterialTheme.colorScheme.error,
+              style = MaterialTheme.typography.bodySmall
+            )
+          }
+
+          Spacer(Modifier.height(88.dp))
+        }
+        BottomButtons(
+          modifier = Modifier.align(Alignment.BottomCenter),
+          onSaveClick = viewModel::save,
+          onCancelClick = { navController.popBackStack() },
+          saveEnabled = !uiState.isSaving,
+          isSaving = uiState.isSaving,
+          saveLabel = saveLabel,
+        )
       }
     }
   }
@@ -503,7 +505,7 @@ private fun SubComponentDropdown(
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
       modifier = Modifier
         .fillMaxWidth()
-        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
     )
     ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
       options.forEach { (displayLabel, serial) ->
@@ -547,7 +549,7 @@ private fun ComponentTypeDropdown(
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
       modifier = Modifier
         .fillMaxWidth()
-        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
     )
     ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
       options.forEach { option ->
@@ -562,8 +564,6 @@ private fun ComponentTypeDropdown(
     }
   }
 }
-
-// InspectionTypeDropdown removed — replaced by InspectionPickerSheet in sub-task 6
 
 @Composable
 private fun InspectionWorkSection(

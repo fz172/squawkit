@@ -7,14 +7,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AirplanemodeActive
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -27,22 +27,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.feature.fleet.dashboard.compose.AircraftDashboardCard
 import dev.fanfly.wingslog.feature.fleet.dashboard.data.FleetDashboardViewModel
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.app_name
 import wingslog.core.ui.generated.resources.settings
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.feature.fleet.generated.resources.Res as FleetRes
-
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AirplanemodeActive
-import androidx.compose.material3.FloatingActionButton
-import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import wingslog.feature.fleet.generated.resources.add_first_aircraft
 import wingslog.feature.fleet.generated.resources.no_fleet_description
 import wingslog.feature.fleet.generated.resources.no_fleet_title
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.Res as CoreUiRes
+import wingslog.feature.fleet.generated.resources.Res as FleetRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

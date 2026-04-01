@@ -5,14 +5,20 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 
+enum class DueStatus {
+  NORMAL,
+  DUE_SOON,
+  OVERDUE
+}
+
 /**
- * Status computed for an inspection card, describing when it is next due.
+ * Metadata computed for an inspection card, describing when it is next due and its current status.
  */
-data class DueStatus(
+data class DueMetadata(
   val nextDueDate: LocalDate? = null,
   val nextDueTach: Float? = null,
   val isOnCondition: Boolean = false,
-  val isOverdue: Boolean = false,
+  val status: DueStatus = DueStatus.NORMAL,
 )
 
 interface InspectionManager {
@@ -49,5 +55,5 @@ interface InspectionManager {
   suspend fun computeNextDue(
     card: InspectionCard,
     logs: List<MaintenanceLog>,
-  ): DueStatus
+  ): DueMetadata
 }

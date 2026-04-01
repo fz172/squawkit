@@ -18,12 +18,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -67,6 +68,7 @@ import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.ConfigurationCard
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.InspectionCard
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewEvent
@@ -100,7 +102,6 @@ import wingslog.feature.aircraft.generated.resources.prop_inspection
 import wingslog.feature.aircraft.generated.resources.prop_time_label
 import wingslog.feature.aircraft.generated.resources.propeller
 import wingslog.feature.aircraft.generated.resources.settings
-import wingslog.feature.aircraft.generated.resources.tach_time_hours_format
 import wingslog.feature.aircraft.generated.resources.tach_time_label
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.total_logs
@@ -230,7 +231,7 @@ fun AircraftOverviewContent(
     modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
-    TopAppBar(
+      TopAppBar(
         scrollBehavior = scrollBehavior, title = {
           if (aircraft != null) {
             Column {
@@ -338,6 +339,17 @@ fun AircraftOverviewContent(
           Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             ConfigurationCard(aircraft)
           }
+
+          // --- Critical Alerts Section ---
+          val overdueInspections = inspectionCards.filter { it.dueStatus.status == DueStatus.OVERDUE }
+          if (overdueInspections.isNotEmpty()) {
+            CriticalAlertsSection(
+              overdueInspections = overdueInspections,
+              onCardClick = onInspectionCardClick,
+              modifier = Modifier.padding(horizontal = 16.dp)
+            )
+          }
+
           // --- Log Stats Section ---
           logStats?.let { stats ->
             LogStatsSection(stats = stats, modifier = Modifier.padding(horizontal = 16.dp))
@@ -570,21 +582,67 @@ private fun InspectionStatusSection(
 }
 
 @Composable
+private fun CriticalAlertsSection(
+  overdueInspections: List<InspectionCardWithStatus>,
+  onCardClick: (InspectionCardWithStatus) -> Unit,
+  modifier: Modifier = Modifier
+) {
+  Card(
+    modifier = modifier.fillMaxWidth(),
+    colors = CardDefaults.cardColors(
+      containerColor = MaterialTheme.colorScheme.errorContainer
+    ),
+    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+  ) {
+    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+      ) {
+        Icon(
+          imageVector = Icons.Filled.Warning,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.error
+        )
+        Text(
+          text = "CRITICAL: AIRWORTHINESS",
+          style = MaterialTheme.typography.labelLarge,
+          color = MaterialTheme.colorScheme.error,
+          fontWeight = FontWeight.Black
+        )
+      }
+
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        overdueInspections.forEach { inspection ->
+          InspectionCardItem(
+            cardWithStatus = inspection,
+            onClick = { onCardClick(inspection) },
+            modifier = Modifier.fillMaxWidth()
+          )
+        }
+      }
+    }
+  }
+}
+
+@Composable
 private fun InspectionCardItem(
   cardWithStatus: InspectionCardWithStatus,
   onClick: () -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
-  val statusColor = when {
-    cardWithStatus.dueStatus.isOverdue -> MaterialTheme.colorScheme.error
-    cardWithStatus.dueStatus.isOnCondition -> MaterialTheme.colorScheme.onSurfaceVariant
-    cardWithStatus.dueStatus.nextDueDate != null -> StatusOk
-    cardWithStatus.dueStatus.nextDueTach != null -> StatusOk
-    else -> MaterialTheme.colorScheme.onSurfaceVariant
+  val status = cardWithStatus.dueStatus.status
+  val statusColor = when (status) {
+    DueStatus.OVERDUE -> MaterialTheme.colorScheme.error
+    DueStatus.DUE_SOON -> StatusWarning
+    DueStatus.NORMAL -> {
+      if (cardWithStatus.dueStatus.isOnCondition) MaterialTheme.colorScheme.onSurfaceVariant
+      else StatusOk
+    }
   }
   val statusText = when {
     cardWithStatus.dueStatus.isOnCondition -> "On Condition"
-    cardWithStatus.dueStatus.isOverdue -> {
+    status == DueStatus.OVERDUE -> {
       val dateStr = cardWithStatus.dueStatus.nextDueDate?.toDisplayFormat()
       if (dateStr != null) "Overdue (was $dateStr)" else "Overdue"
     }
@@ -599,8 +657,9 @@ private fun InspectionCardItem(
   InspectionCard(
     title = cardWithStatus.card.title,
     status = statusText,
-    icon = Icons.Default.CalendarToday,
+    icon = if (status == DueStatus.OVERDUE) Icons.Filled.Error else Icons.Default.CalendarToday,
     statusColor = statusColor,
+    isOverdue = status == DueStatus.OVERDUE,
     onClick = onClick,
     modifier = modifier,
   )

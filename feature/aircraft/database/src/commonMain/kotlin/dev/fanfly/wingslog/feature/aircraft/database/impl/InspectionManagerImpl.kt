@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
 import dev.fanfly.wingslog.core.database.getFleetCollectionRef
 import dev.fanfly.wingslog.core.database.setEncoded
+import dev.fanfly.wingslog.feature.aircraft.database.DueMetadata
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -15,12 +16,12 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 class InspectionManagerImpl(
   private val firebaseAuth: FirebaseAuth,
@@ -85,22 +86,42 @@ class InspectionManagerImpl(
     Result.failure(e)
   }
 
-  override suspend fun computeNextDue(card: InspectionCard, logs: List<MaintenanceLog>): DueStatus {
+  override suspend fun computeNextDue(
+    card: InspectionCard,
+    logs: List<MaintenanceLog>
+  ): DueMetadata {
     // 1. Force overrides
     val hasForcedDate = card.force_due_date != null && (card.force_due_date!!.getEpochSecond() > 0L)
     val hasForcedTach = card.force_due_tach > 0f
 
+    val currentTach =
+      logs.filter { it.tach_time > 0.0 }.maxOfOrNull { it.tach_time }?.toFloat() ?: 0f
+    val currentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
     if (hasForcedDate || hasForcedTach) {
-      return DueStatus(
-        nextDueDate = if (hasForcedDate) {
-          Instant.fromEpochSeconds(
-            card.force_due_date!!.getEpochSecond(),
-            card.force_due_date!!.getNano()
-          )
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
-        } else null,
-        nextDueTach = if (hasForcedTach) card.force_due_tach else null,
-        isOverdue = false
+      val nextDueDate = if (hasForcedDate) {
+        Instant.fromEpochSeconds(
+          card.force_due_date!!.getEpochSecond(),
+          card.force_due_date!!.getNano()
+        )
+          .toLocalDateTime(TimeZone.currentSystemDefault()).date
+      } else null
+      val nextDueTach = if (hasForcedTach) card.force_due_tach else null
+
+      val status = when {
+        (nextDueDate != null && nextDueDate < currentDate) ||
+            (nextDueTach != null && nextDueTach < currentTach) -> DueStatus.OVERDUE
+
+        (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
+            (nextDueTach != null && nextDueTach <= currentTach + 10f) -> DueStatus.DUE_SOON
+
+        else -> DueStatus.NORMAL
+      }
+
+      return DueMetadata(
+        nextDueDate = nextDueDate,
+        nextDueTach = nextDueTach,
+        status = status
       )
     }
 
@@ -114,42 +135,50 @@ class InspectionManagerImpl(
     var isOnCondition = false
 
     for (rule in card.rules) {
-      when {
-        rule.time_rule != null -> {
-          val baseDate = if (latestLog?.timestamp != null) {
-            Instant.fromEpochSeconds(
-              latestLog.timestamp!!.getEpochSecond(),
-              latestLog.timestamp!!.getNano()
-            )
-              .toLocalDateTime(TimeZone.currentSystemDefault()).date
-          } else {
-            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-          }
-          val calculated = baseDate.plus(rule.time_rule!!.interval_months, DateTimeUnit.MONTH)
-          if (nextDueDate == null || calculated < nextDueDate) {
-            nextDueDate = calculated
-          }
+      if (rule.time_rule != null) {
+        val baseDate = if (latestLog?.timestamp != null) {
+          Instant.fromEpochSeconds(
+            latestLog.timestamp!!.getEpochSecond(),
+            latestLog.timestamp!!.getNano()
+          )
+            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+        } else {
+          currentDate
         }
+        val calculated = baseDate.plus(rule.time_rule!!.interval_months, DateTimeUnit.MONTH)
+        if (nextDueDate == null || calculated < nextDueDate) {
+          nextDueDate = calculated
+        }
+      }
 
-        rule.tach_rule != null -> {
-          val baseTach = latestLog?.tach_time?.toFloat() ?: 0f
-          val calculated = baseTach + rule.tach_rule!!.interval_hours.toFloat()
-          if (nextDueTach == null || calculated < nextDueTach) {
-            nextDueTach = calculated
-          }
+      if (rule.tach_rule != null) {
+        val baseTach = latestLog?.tach_time?.toFloat() ?: 0f
+        val calculated = baseTach + rule.tach_rule!!.interval_hours.toFloat()
+        if (nextDueTach == null || calculated < nextDueTach) {
+          nextDueTach = calculated
         }
+      }
 
-        rule.on_condition_rule != null -> {
-          isOnCondition = true
-        }
+      if (rule.on_condition_rule != null) {
+        isOnCondition = true
       }
     }
 
-    return DueStatus(
+    val status = when {
+      (nextDueDate != null && nextDueDate < currentDate) ||
+          (nextDueTach != null && nextDueTach < currentTach) -> DueStatus.OVERDUE
+
+      (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
+          (nextDueTach != null && nextDueTach <= currentTach + 10f) -> DueStatus.DUE_SOON
+
+      else -> DueStatus.NORMAL
+    }
+
+    return DueMetadata(
       nextDueDate = nextDueDate,
       nextDueTach = nextDueTach,
       isOnCondition = isOnCondition,
-      isOverdue = false
+      status = status
     )
   }
 
@@ -157,7 +186,7 @@ class InspectionManagerImpl(
     docRef: dev.gitlive.firebase.firestore.DocumentReference,
     card: InspectionCard
   ) {
-    val data = mutableMapOf<String, Any>(
+    val data = mutableMapOf(
       INSPECTION_CARD_BLOB to InspectionCard.ADAPTER.encode(card),
       TITLE_FIELD to card.title,
       COMPONENT_FIELD to card.component.name

@@ -33,6 +33,8 @@ import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
+import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.feature.aircraft.database.DueMetadata
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import wingslog.feature.aircraft.generated.resources.done
 import wingslog.feature.aircraft.generated.resources.due_date
@@ -138,10 +140,10 @@ fun InspectionDetailSheet(
 }
 
 @Composable
-private fun DueStatusChip(dueStatus: DueStatus) {
+private fun DueStatusChip(dueStatus: DueMetadata) {
   val (label, color) = when {
     dueStatus.isOnCondition -> cmpStringResource(AircraftRes.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
-    dueStatus.isOverdue -> {
+    dueStatus.status == DueStatus.OVERDUE -> {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat() ?: ""
       (if (dateStr.isNotBlank()) cmpStringResource(
         AircraftRes.string.overdue_was,
@@ -149,14 +151,25 @@ private fun DueStatusChip(dueStatus: DueStatus) {
       ) else cmpStringResource(AircraftRes.string.overdue)) to MaterialTheme.colorScheme.error
     }
 
+    dueStatus.status == DueStatus.DUE_SOON -> {
+      val dateStr = dueStatus.nextDueDate?.toDisplayFormat()
+      val tachStr = dueStatus.nextDueTach?.toDouble()?.formatToOneDecimalPlace()
+      when {
+        dateStr != null && tachStr != null -> "Due Soon: $dateStr / $tachStr hrs"
+        dateStr != null -> "Due Soon: $dateStr"
+        tachStr != null -> "Due Soon: @ $tachStr hrs"
+        else -> "Due Soon"
+      } to StatusWarning
+    }
+
     dueStatus.nextDueDate != null -> cmpStringResource(
       AircraftRes.string.due_date,
-      dueStatus.nextDueDate?.toDisplayFormat() ?: ""
+      dueStatus.nextDueDate!!.toDisplayFormat()
     ) to StatusOk
 
     dueStatus.nextDueTach != null -> cmpStringResource(
       AircraftRes.string.due_tach,
-      (dueStatus.nextDueTach ?: 0f).toDouble().formatToOneDecimalPlace()
+      dueStatus.nextDueTach!!.toDouble().formatToOneDecimalPlace()
     ) to StatusOk
 
     else -> "—" to MaterialTheme.colorScheme.onSurfaceVariant
