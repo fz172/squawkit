@@ -35,15 +35,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.aircraft.EngineHourRule
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.OnConditionRule
-import dev.fanfly.wingslog.aircraft.TachRule
 import dev.fanfly.wingslog.aircraft.TimeRule
 import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.airframe
 import wingslog.feature.aircraft.generated.resources.component
 import wingslog.feature.aircraft.generated.resources.engine
+import wingslog.feature.aircraft.generated.resources.engine_based_hours
 import wingslog.feature.aircraft.generated.resources.inspection_notes
 import wingslog.feature.aircraft.generated.resources.inspection_notes_hint
 import wingslog.feature.aircraft.generated.resources.inspection_title
@@ -54,7 +55,6 @@ import wingslog.feature.aircraft.generated.resources.propeller
 import wingslog.feature.aircraft.generated.resources.quick_add
 import wingslog.feature.aircraft.generated.resources.rules
 import wingslog.feature.aircraft.generated.resources.save
-import wingslog.feature.aircraft.generated.resources.tach_based_hours
 import wingslog.feature.aircraft.generated.resources.time_based_months
 import wingslog.feature.aircraft.generated.resources.title_required
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
@@ -69,8 +69,8 @@ private data class QuickTemplate(
 private fun buildTimeRule(months: Int): InspectionRule =
   InspectionRule(time_rule = TimeRule(interval_months = months))
 
-private fun buildTachRule(hours: Float): InspectionRule =
-  InspectionRule(tach_rule = TachRule(interval_hours = hours))
+private fun buildEngineRule(hours: Float): InspectionRule =
+  InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = hours))
 
 private fun buildOnConditionRule(): InspectionRule =
   InspectionRule(on_condition_rule = OnConditionRule())
@@ -94,12 +94,12 @@ private val quickTemplates = listOf(
   QuickTemplate(
     title = "100-Hour Inspection",
     component = InspectionComponentType.INSPECTION_COMPONENT_ENGINE,
-    rules = listOf(buildTachRule(100f)),
+    rules = listOf(buildEngineRule(100f)),
   ),
   QuickTemplate(
     title = "Oil Change",
     component = InspectionComponentType.INSPECTION_COMPONENT_ENGINE,
-    rules = listOf(buildTachRule(50f)),
+    rules = listOf(buildEngineRule(50f)),
   ),
 )
 
@@ -118,8 +118,8 @@ fun AddInspectionSheet(
 
   var timeRuleEnabled by remember { mutableStateOf(false) }
   var timeRuleMonths by remember { mutableStateOf("12") }
-  var tachRuleEnabled by remember { mutableStateOf(false) }
-  var tachRuleHours by remember { mutableStateOf("100") }
+  var engineRuleEnabled by remember { mutableStateOf(false) }
+  var engineRuleHours by remember { mutableStateOf("100") }
   var onConditionEnabled by remember { mutableStateOf(false) }
   var notes by remember { mutableStateOf("") }
 
@@ -127,12 +127,12 @@ fun AddInspectionSheet(
     title = template.title
     selectedComponent = template.component
     timeRuleEnabled = false
-    tachRuleEnabled = false
+    engineRuleEnabled = false
     onConditionEnabled = false
     notes = ""
     template.rules.forEach { rule ->
       val timeRule = rule.time_rule
-      val tachRule = rule.tach_rule
+      val engineRule = rule.engine_hour_rule
       val onConditionRule = rule.on_condition_rule
       when {
         timeRule != null -> {
@@ -140,9 +140,9 @@ fun AddInspectionSheet(
           timeRuleMonths = timeRule.interval_months.toString()
         }
 
-        tachRule != null -> {
-          tachRuleEnabled = true
-          tachRuleHours = tachRule.interval_hours.toString()
+        engineRule != null -> {
+          engineRuleEnabled = true
+          engineRuleHours = engineRule.interval_hours.toString()
         }
 
         onConditionRule != null -> onConditionEnabled = true
@@ -271,15 +271,15 @@ fun AddInspectionSheet(
         horizontalArrangement = Arrangement.SpaceBetween,
       ) {
         Text(
-          cmpStringResource(AircraftRes.string.tach_based_hours),
+          cmpStringResource(AircraftRes.string.engine_based_hours),
           style = MaterialTheme.typography.bodyMedium
         )
-        Switch(checked = tachRuleEnabled, onCheckedChange = { tachRuleEnabled = it })
+        Switch(checked = engineRuleEnabled, onCheckedChange = { engineRuleEnabled = it })
       }
-      if (tachRuleEnabled) {
+      if (engineRuleEnabled) {
         OutlinedTextField(
-          value = tachRuleHours,
-          onValueChange = { tachRuleHours = it },
+          value = engineRuleHours,
+          onValueChange = { engineRuleHours = it },
           label = { Text(cmpStringResource(AircraftRes.string.interval_hours)) },
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
@@ -324,9 +324,9 @@ fun AddInspectionSheet(
               val months = timeRuleMonths.toIntOrNull() ?: 12
               add(buildTimeRule(months))
             }
-            if (tachRuleEnabled) {
-              val hours = tachRuleHours.toFloatOrNull() ?: 100f
-              add(buildTachRule(hours))
+            if (engineRuleEnabled) {
+              val hours = engineRuleHours.toFloatOrNull() ?: 100f
+              add(buildEngineRule(hours))
             }
             if (onConditionEnabled) {
               add(buildOnConditionRule())

@@ -8,20 +8,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -36,31 +32,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.aircraft.EngineHourRule
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.OnConditionRule
-import dev.fanfly.wingslog.aircraft.TachRule
 import dev.fanfly.wingslog.aircraft.TimeRule
-import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
 import wingslog.feature.aircraft.generated.resources.airframe
 import wingslog.feature.aircraft.generated.resources.component
 import wingslog.feature.aircraft.generated.resources.delete_inspection
 import wingslog.feature.aircraft.generated.resources.edit_inspection
 import wingslog.feature.aircraft.generated.resources.engine
-import wingslog.feature.aircraft.generated.resources.force_due_tach_hours
+import wingslog.feature.aircraft.generated.resources.engine_based_hours
+import wingslog.feature.aircraft.generated.resources.force_due_engine_hours
 import wingslog.feature.aircraft.generated.resources.inspection_notes
 import wingslog.feature.aircraft.generated.resources.inspection_notes_hint
 import wingslog.feature.aircraft.generated.resources.inspection_title
 import wingslog.feature.aircraft.generated.resources.interval_hours
 import wingslog.feature.aircraft.generated.resources.interval_months
 import wingslog.feature.aircraft.generated.resources.on_condition
-import wingslog.feature.aircraft.generated.resources.override_next_due_tach
+import wingslog.feature.aircraft.generated.resources.override_next_due_engine
 import wingslog.feature.aircraft.generated.resources.propeller
 import wingslog.feature.aircraft.generated.resources.rules
 import wingslog.feature.aircraft.generated.resources.save
-import wingslog.feature.aircraft.generated.resources.tach_based_hours
 import wingslog.feature.aircraft.generated.resources.time_based_months
 import wingslog.feature.aircraft.generated.resources.title_required
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
@@ -77,7 +73,7 @@ fun EditInspectionSheet(
     component: InspectionComponentType,
     rules: List<InspectionRule>,
     forceDueDate: com.squareup.wire.Instant?,
-    forceDueTach: Float,
+    forceDueEngine: Float,
     notes: String,
   ) -> Unit,
   onDeleteRequest: (cardId: String) -> Unit,
@@ -102,13 +98,13 @@ fun EditInspectionSheet(
         ?.time_rule?.interval_months?.toString() ?: "12"
     )
   }
-  var tachRuleEnabled by remember {
-    mutableStateOf(card.rules.any { it.tach_rule != null })
+  var engineRuleEnabled by remember {
+    mutableStateOf(card.rules.any { it.engine_hour_rule != null })
   }
-  var tachRuleHours by remember {
+  var engineRuleHours by remember {
     mutableStateOf(
-      card.rules.firstOrNull { it.tach_rule != null }
-        ?.tach_rule?.interval_hours?.toString() ?: "100"
+      card.rules.firstOrNull { it.engine_hour_rule != null }
+        ?.engine_hour_rule?.interval_hours?.toString() ?: "100"
     )
   }
   var onConditionEnabled by remember {
@@ -119,12 +115,12 @@ fun EditInspectionSheet(
   val hasForcedDate = card.force_due_date != null &&
       ((card.force_due_date?.getEpochSecond() ?: 0L) > 0L || (card.force_due_date?.getNano()
         ?: 0) > 0)
-  val hasForcedTach = card.force_due_tach > 0f
+  val hasForcedTach = card.force_due_engine_hour > 0f
   var forceOverrideEnabled by remember { mutableStateOf(hasForcedDate || hasForcedTach) }
-  var forceTachHours by remember {
-    mutableStateOf(if (hasForcedTach) card.force_due_tach.toString() else "")
+  var forceEngineHours by remember {
+    mutableStateOf(if (hasForcedTach) card.force_due_engine_hour.toString() else "")
   }
-  var forceTachError by remember { mutableStateOf(false) }
+  var forceEngineError by remember { mutableStateOf(false) }
 
   ModalBottomSheet(
     onDismissRequest = onDismiss,
@@ -222,15 +218,15 @@ fun EditInspectionSheet(
         horizontalArrangement = Arrangement.SpaceBetween,
       ) {
         Text(
-          cmpStringResource(AircraftRes.string.tach_based_hours),
+          cmpStringResource(AircraftRes.string.engine_based_hours),
           style = MaterialTheme.typography.bodyMedium
         )
-        Switch(checked = tachRuleEnabled, onCheckedChange = { tachRuleEnabled = it })
+        Switch(checked = engineRuleEnabled, onCheckedChange = { engineRuleEnabled = it })
       }
-      if (tachRuleEnabled) {
+      if (engineRuleEnabled) {
         OutlinedTextField(
-          value = tachRuleHours,
-          onValueChange = { tachRuleHours = it },
+          value = engineRuleHours,
+          onValueChange = { engineRuleHours = it },
           label = { Text(cmpStringResource(AircraftRes.string.interval_hours)) },
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
@@ -262,7 +258,7 @@ fun EditInspectionSheet(
       ) {
         Column(modifier = Modifier.weight(1f)) {
           Text(
-            cmpStringResource(AircraftRes.string.override_next_due_tach),
+            cmpStringResource(AircraftRes.string.override_next_due_engine),
             style = MaterialTheme.typography.bodyMedium
           )
           Text(
@@ -275,20 +271,21 @@ fun EditInspectionSheet(
       }
       if (forceOverrideEnabled) {
         OutlinedTextField(
-          value = forceTachHours,
-          onValueChange = { forceTachHours = it; forceTachError = false },
-          label = { Text(cmpStringResource(AircraftRes.string.force_due_tach_hours)) },
-          isError = forceTachError,
-          supportingText = if (forceTachError) {
-            { Text("Enter a valid tach value (e.g. 1250.5)") }
+          value = forceEngineHours,
+          onValueChange = { forceEngineHours = it; forceEngineError = false },
+          label = { Text(cmpStringResource(AircraftRes.string.force_due_engine_hours)) },
+          isError = forceEngineError,
+          supportingText = if (forceEngineError) {
+            { Text("Enter a valid engine value (e.g. 1250.5)") }
           } else null,
+
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
           keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-          )
-          }
+        )
+      }
 
-          // Notes
+      // Notes
 
       OutlinedTextField(
         value = notes,
@@ -309,27 +306,28 @@ fun EditInspectionSheet(
             return@BottomButtons
           }
           if (forceOverrideEnabled) {
-            val parsedTach = forceTachHours.toFloatOrNull()
-            if (parsedTach == null || parsedTach <= 0f) {
-              forceTachError = true
+            val parsedEngine = forceEngineHours.toFloatOrNull()
+            if (parsedEngine == null || parsedEngine <= 0f) {
+              forceEngineError = true
               return@BottomButtons
             }
           }
-          val rules = buildList<InspectionRule> {
+          val rules = buildList {
             if (timeRuleEnabled) {
               val months = timeRuleMonths.toIntOrNull() ?: 12
               add(InspectionRule(time_rule = TimeRule(interval_months = months)))
             }
-            if (tachRuleEnabled) {
-              val hours = tachRuleHours.toFloatOrNull() ?: 100f
-              add(InspectionRule(tach_rule = TachRule(interval_hours = hours)))
+            if (engineRuleEnabled) {
+              val hours = engineRuleHours.toFloatOrNull() ?: 100f
+              add(InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = hours)))
             }
             if (onConditionEnabled) {
               add(InspectionRule(on_condition_rule = OnConditionRule()))
             }
           }
-          val forcedTach = if (forceOverrideEnabled) forceTachHours.toFloatOrNull() ?: 0f else 0f
-          onSave(card.id, title.trim(), selectedComponent, rules, null, forcedTach, notes.trim())
+          val forcedEngine =
+            if (forceOverrideEnabled) forceEngineHours.toFloatOrNull() ?: 0f else 0f
+          onSave(card.id, title.trim(), selectedComponent, rules, null, forcedEngine, notes.trim())
         },
         onCancelClick = onDismiss,
         onDeleteClick = { onDeleteRequest(card.id) },

@@ -31,7 +31,7 @@
     <string name="edit_aircraft">Edit aircraft</string>
     <string name="edit_log">Edit Log</string>
     <string name="work_description_required">Work Description *</string>
-    <string name="tach_time_hours">Tach Time (hours)</string>
+    <string name="engine_time_hours">Engine Time (hours)</string>
     <string name="airframe_serial">Airframe Serial</string>
     <string name="loading_aircraft">Loading aircraft…</string>
     <string name="no_engines_found">No engines found for this aircraft.</string>
@@ -51,7 +51,7 @@
     <string name="unknown_date">Unknown date</string>
     <string name="edit_log_content_description">Edit log</string>
     <string name="delete_log_content_description">Delete log</string>
-    <string name="tach_format">Tach: %1$s</string>
+    <string name="engine_format">Engine: %1$s</string>
     <string name="maintenance_summary">Maintenance Summary</string>
     <string name="total_logs">Total Logs</string>
     <string name="log_details">Log details</string>
@@ -61,8 +61,8 @@
     <string name="annual">Annual</string>
     <string name="pitot_static">Pitot-Static</string>
     <string name="transponder">Transponder</string>
-    <string name="tach_time_label">Current Tach Time</string>
-    <string name="tach_time_hours_format">%1$s hrs</string>
+    <string name="engine_time_label">Engine Time</string>
+    <string name="engine_time_hours_format">%1$s hrs</string>
     <string name="cancel">Cancel</string>
     <string name="back">Back</string>
     <string name="settings">Settings</string>
@@ -80,7 +80,7 @@
     <string name="component">Component</string>
     <string name="add_rule">Add Rule</string>
     <string name="time_based_months">Time-based (months)</string>
-    <string name="tach_based_hours">Tach-based (hours)</string>
+    <string name="engine_based_hours">Engine-based (hours)</string>
     <string name="on_condition">On Condition</string>
     <string name="interval_months">Interval (months)</string>
     <string name="interval_hours">Interval (hours)</string>
@@ -94,8 +94,8 @@
     <string name="hundred_hour_inspection">100-Hour Inspection</string>
     <string name="oil_change_50hr">Oil Change (50hr)</string>
     <string name="delete_inspection">Delete Inspection</string>
-    <string name="override_next_due_tach">Override next due tach</string>
-    <string name="force_due_tach_hours">Force Due Tach (hours)</string>
+    <string name="override_next_due_engine">Override next due engine</string>
+    <string name="force_due_engine_hours">Force Due Engine (hours)</string>
     <string name="done">Done</string>
     <string name="update">Update</string>
     <string name="add">Add</string>
@@ -115,14 +115,14 @@
     <string name="maintenance_history">Maintenance History</string>
     <string name="no_maintenance_logs_for_inspection">No maintenance logs for this inspection yet.</string>
     <string name="every_x_months">Every %1$d months</string>
-    <string name="every_x_tach_hours">Every %1$d tach hours</string>
+    <string name="every_x_engine_hours">Every %1$d engine hours</string>
     <string name="on_condition_desc">On condition: %1$s</string>
     <string name="unknown_rule">Unknown rule</string>
     <string name="overdue">Overdue</string>
     <string name="overdue_was">Overdue (was %1$s)</string>
     <string name="due_date">Due %1$s</string>
-    <string name="due_tach">Due @ %1$s tach hrs</string>
-    <string name="tach_val">%1$s tach</string>
+    <string name="due_engine">Due @ %1$s engine hrs</string>
+    <string name="engine_val">%1$s engine</string>
     <string name="maintenance_date">Maintenance Date</string>
     <string name="select_date">Select date</string>
     <string name="tap_to_change_date">Tap to change date</string>

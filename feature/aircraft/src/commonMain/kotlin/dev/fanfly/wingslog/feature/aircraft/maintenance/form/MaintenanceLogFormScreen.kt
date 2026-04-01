@@ -88,7 +88,7 @@ import wingslog.feature.aircraft.generated.resources.prop_time_hours
 import wingslog.feature.aircraft.generated.resources.propeller_component
 import wingslog.feature.aircraft.generated.resources.remove
 import wingslog.feature.aircraft.generated.resources.save
-import wingslog.feature.aircraft.generated.resources.tach_time_hours
+import wingslog.feature.aircraft.generated.resources.engine_time_hours
 import wingslog.feature.aircraft.generated.resources.tap_to_change_date
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.unknown_inspection
@@ -274,11 +274,11 @@ fun MaintenanceLogFormScreen(
             )
           }
 
-          // Tach Time
+          // Engine Time
           OutlinedTextField(
-            value = uiState.tachTime,
-            onValueChange = viewModel::onTachTimeChange,
-            label = { Text(cmpStringResource(AircraftRes.string.tach_time_hours)) },
+            value = uiState.engineTime,
+            onValueChange = viewModel::onEngineTimeChange,
+            label = { Text(cmpStringResource(AircraftRes.string.engine_time_hours)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)

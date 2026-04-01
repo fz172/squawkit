@@ -18,8 +18,8 @@ message TimeRule {
   int32 interval_months = 1;
 }
 
-// A tach-hour-based rule (e.g. every 100 hours)
-message TachRule {
+// A engine-hour-based rule (e.g. every 100 hours)
+message EngineHourRule {
   float interval_hours = 1;
 }
 
@@ -32,7 +32,7 @@ message OnConditionRule {
 message InspectionRule {
   oneof rule {
     TimeRule time_rule = 1;
-    TachRule tach_rule = 2;
+    EngineHourRule engine_hour_rule = 2;
     OnConditionRule on_condition_rule = 3;
   }
 }
@@ -46,7 +46,7 @@ message InspectionCard {
 
   // Optional force overrides — when set, skip computed due calculation
   google.protobuf.Timestamp force_due_date = 5;
-  float force_due_tach = 6;
+  float force_due_engine_hour = 6;
 
   // Optional free-text notes or comments for this inspection card
   string notes = 7;

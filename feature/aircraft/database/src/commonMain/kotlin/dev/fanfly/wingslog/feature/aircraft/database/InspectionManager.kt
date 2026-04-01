@@ -16,7 +16,7 @@ enum class DueStatus {
  */
 data class DueMetadata(
   val nextDueDate: LocalDate? = null,
-  val nextDueTach: Float? = null,
+  val nextDueEngine: Float? = null,
   val isOnCondition: Boolean = false,
   val status: DueStatus = DueStatus.NORMAL,
 )

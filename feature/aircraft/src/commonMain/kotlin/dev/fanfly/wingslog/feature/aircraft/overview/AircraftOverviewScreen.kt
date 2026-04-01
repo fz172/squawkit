@@ -92,6 +92,7 @@ import wingslog.feature.aircraft.generated.resources.due_dec_2024
 import wingslog.feature.aircraft.generated.resources.due_in_14h
 import wingslog.feature.aircraft.generated.resources.edit_aircraft
 import wingslog.feature.aircraft.generated.resources.engine
+import wingslog.feature.aircraft.generated.resources.engine_time_label
 import wingslog.feature.aircraft.generated.resources.hundred_hr
 import wingslog.feature.aircraft.generated.resources.inspection_status
 import wingslog.feature.aircraft.generated.resources.log_details
@@ -103,7 +104,6 @@ import wingslog.feature.aircraft.generated.resources.prop_inspection
 import wingslog.feature.aircraft.generated.resources.prop_time_label
 import wingslog.feature.aircraft.generated.resources.propeller
 import wingslog.feature.aircraft.generated.resources.settings
-import wingslog.feature.aircraft.generated.resources.tach_time_label
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.total_logs
 import wingslog.feature.aircraft.generated.resources.transponder
@@ -430,8 +430,8 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
 
     // Primary Flight Times - Compact Grid
     val flightTimes = buildList {
-      stats.currentTachTime?.let { add(cmpStringResource(AircraftRes.string.tach_time_label) to it) }
       stats.currentAirframeTime?.let { add(cmpStringResource(AircraftRes.string.airframe_time_label) to it) }
+      stats.currentEngineTime?.let { add(cmpStringResource(AircraftRes.string.engine_time_label) to it) }
       stats.currentPropTime?.let { add(cmpStringResource(AircraftRes.string.prop_time_label) to it) }
     }
 
@@ -668,9 +668,9 @@ private fun InspectionCardItem(
     }
 
     cardWithStatus.dueStatus.nextDueDate != null -> "Due ${cardWithStatus.dueStatus.nextDueDate!!.toDisplayFormat()}"
-    cardWithStatus.dueStatus.nextDueTach != null -> "Due @ ${
-      cardWithStatus.dueStatus.nextDueTach!!.toDouble().formatToOneDecimalPlace()
-    } tach hrs"
+    cardWithStatus.dueStatus.nextDueEngine != null -> "Due @ ${
+      cardWithStatus.dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
+    } engine hrs"
 
     else -> "—"
   }

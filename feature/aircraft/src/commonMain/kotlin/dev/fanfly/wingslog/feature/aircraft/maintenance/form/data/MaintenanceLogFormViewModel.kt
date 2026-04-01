@@ -84,7 +84,7 @@ class MaintenanceLogFormViewModel(
             isLoading = false,
             workDescription = log.work_description,
             selectedInspectionIds = log.inspection_ids,
-            tachTime = if (log.tach_time > 0.0) log.tach_time.toString() else "",
+            engineTime = if (log.tach_time > 0.0) log.tach_time.toString() else "",
             airframeTime = if (log.airframe_time > 0.0) log.airframe_time.toString() else "",
             propTime = if (log.prop_time > 0.0) log.prop_time.toString() else "",
             selectedComponentType = log.component_type,
@@ -123,7 +123,7 @@ class MaintenanceLogFormViewModel(
     }
   }
 
-  fun onTachTimeChange(value: String) = _uiState.update { it.copy(tachTime = value) }
+  fun onEngineTimeChange(value: String) = _uiState.update { it.copy(engineTime = value) }
   fun onAirframeTimeChange(value: String) = _uiState.update { it.copy(airframeTime = value) }
   fun onPropTimeChange(value: String) = _uiState.update { it.copy(propTime = value) }
 
@@ -169,7 +169,7 @@ class MaintenanceLogFormViewModel(
         ),
         work_description = state.workDescription,
         inspection_ids = state.selectedInspectionIds,
-        tach_time = state.tachTime.toDoubleOrNull() ?: 0.0,
+        tach_time = state.engineTime.toDoubleOrNull() ?: 0.0,
         airframe_time = state.airframeTime.toDoubleOrNull() ?: 0.0,
         prop_time = state.propTime.toDoubleOrNull() ?: 0.0,
         component_type = state.selectedComponentType,

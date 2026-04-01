@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.aircraft.overview.compose
 
 // dateFormatter removed
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,14 +39,14 @@ import dev.fanfly.wingslog.feature.aircraft.database.DueMetadata
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import wingslog.feature.aircraft.generated.resources.done
 import wingslog.feature.aircraft.generated.resources.due_date
-import wingslog.feature.aircraft.generated.resources.due_tach
+import wingslog.feature.aircraft.generated.resources.due_engine
 import wingslog.feature.aircraft.generated.resources.edit_inspection
+import wingslog.feature.aircraft.generated.resources.engine_format
 import wingslog.feature.aircraft.generated.resources.maintenance_history
 import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_for_inspection
 import wingslog.feature.aircraft.generated.resources.on_condition
 import wingslog.feature.aircraft.generated.resources.overdue
 import wingslog.feature.aircraft.generated.resources.overdue_was
-import wingslog.feature.aircraft.generated.resources.tach_format
 import wingslog.feature.aircraft.generated.resources.unknown_date
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
@@ -67,9 +68,7 @@ fun InspectionDetailSheet(
     modifier = modifier,
   ) {
     Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp)
+      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
         .verticalScroll(rememberScrollState())
     ) {
       Row(
@@ -91,8 +90,7 @@ fun InspectionDetailSheet(
           }
           IconButton(onClick = onDismiss) {
             Icon(
-              Icons.Default.Close,
-              contentDescription = cmpStringResource(AircraftRes.string.done)
+              Icons.Default.Close, contentDescription = cmpStringResource(AircraftRes.string.done)
             )
           }
         }
@@ -146,30 +144,27 @@ private fun DueStatusChip(dueStatus: DueMetadata) {
     dueStatus.status == DueStatus.OVERDUE -> {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat() ?: ""
       (if (dateStr.isNotBlank()) cmpStringResource(
-        AircraftRes.string.overdue_was,
-        dateStr
+        AircraftRes.string.overdue_was, dateStr
       ) else cmpStringResource(AircraftRes.string.overdue)) to MaterialTheme.colorScheme.error
     }
 
     dueStatus.status == DueStatus.DUE_SOON -> {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat()
-      val tachStr = dueStatus.nextDueTach?.toDouble()?.formatToOneDecimalPlace()
+      val engineStr = dueStatus.nextDueEngine?.toDouble()?.formatToOneDecimalPlace()
       when {
-        dateStr != null && tachStr != null -> "Due Soon: $dateStr / $tachStr hrs"
+        dateStr != null && engineStr != null -> "Due Soon: $dateStr / $engineStr hrs"
         dateStr != null -> "Due Soon: $dateStr"
-        tachStr != null -> "Due Soon: @ $tachStr hrs"
+        engineStr != null -> "Due Soon: @ $engineStr hrs"
         else -> "Due Soon"
       } to StatusWarning
     }
 
     dueStatus.nextDueDate != null -> cmpStringResource(
-      AircraftRes.string.due_date,
-      dueStatus.nextDueDate!!.toDisplayFormat()
+      AircraftRes.string.due_date, dueStatus.nextDueDate!!.toDisplayFormat()
     ) to StatusOk
 
-    dueStatus.nextDueTach != null -> cmpStringResource(
-      AircraftRes.string.due_tach,
-      dueStatus.nextDueTach!!.toDouble().formatToOneDecimalPlace()
+    dueStatus.nextDueEngine != null -> cmpStringResource(
+      AircraftRes.string.due_engine, dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
     ) to StatusOk
 
     else -> "—" to MaterialTheme.colorScheme.onSurfaceVariant
@@ -190,32 +185,26 @@ private fun LogHistoryItem(log: MaintenanceLog) {
   }
 
   Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(vertical = 4.dp),
+    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
     verticalArrangement = Arrangement.spacedBy(2.dp),
   ) {
     Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.SpaceBetween
+      modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
     ) {
       Text(
-        text = dateStr,
-        style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.Medium
+        text = dateStr, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium
       )
       Text(
         text = cmpStringResource(
-          AircraftRes.string.tach_format,
-          log.tach_time.formatToOneDecimalPlace()
+          AircraftRes.string.engine_format, log.tach_time.formatToOneDecimalPlace()
         ),
+
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
       )
     }
     Text(
-      text = log.work_description,
-      style = MaterialTheme.typography.bodyMedium
+      text = log.work_description, style = MaterialTheme.typography.bodyMedium
     )
   }
 }

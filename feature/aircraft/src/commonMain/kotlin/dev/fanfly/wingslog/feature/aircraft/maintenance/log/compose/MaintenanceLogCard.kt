@@ -29,7 +29,7 @@ import wingslog.feature.aircraft.generated.resources.affects_n_inspection_items
 import wingslog.feature.aircraft.generated.resources.airframe_time_format
 import wingslog.feature.aircraft.generated.resources.edit_log_content_description
 import wingslog.feature.aircraft.generated.resources.prop_time_format
-import wingslog.feature.aircraft.generated.resources.tach_format
+import wingslog.feature.aircraft.generated.resources.engine_format
 import wingslog.feature.aircraft.generated.resources.unknown_date
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
@@ -89,7 +89,7 @@ fun MaintenanceLogCard(
         if (log.tach_time > 0.0) {
           Text(
             text = cmpStringResource(
-              AircraftRes.string.tach_format,
+              AircraftRes.string.engine_format,
               log.tach_time.formatToOneDecimalPlace()
             ),
             style = WingslogTypography.dataSmall,

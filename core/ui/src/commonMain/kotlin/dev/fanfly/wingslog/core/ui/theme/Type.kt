@@ -127,7 +127,7 @@ fun rememberWingslogTypography(): Typography {
 }
 
 /**
- * Custom typography for technical aviation data: tail numbers, serial numbers, tach times.
+ * Custom typography for technical aviation data: tail numbers, serial numbers, engine times.
  *
  * Uses JetBrains Mono — designed specifically for precision data readability.
  * The zero-letterSpacing is intentional: monospace identifiers should not have

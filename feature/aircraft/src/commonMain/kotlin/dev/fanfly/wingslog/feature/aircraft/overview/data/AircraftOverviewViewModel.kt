@@ -51,7 +51,7 @@ class AircraftOverviewViewModel(
       ) { aircraft, logs, inspectionCards ->
         cachedLogs = logs
         if (aircraft != null) {
-          val currentTachTime = logs.filter { it.tach_time > 0.0 }.maxOfOrNull { it.tach_time }
+          val currentEngineTime = logs.filter { it.tach_time > 0.0 }.maxOfOrNull { it.tach_time }
           val currentAirframeTime =
             logs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }
           val currentPropTime = logs.filter { it.prop_time > 0.0 }.maxOfOrNull { it.prop_time }
@@ -63,7 +63,7 @@ class AircraftOverviewViewModel(
               .toLong(),
             propeller = logs.count { it.component_type == MaintenanceLog.ComponentType.PROPELLER }
               .toLong(),
-            currentTachTime = currentTachTime,
+            currentEngineTime = currentEngineTime,
             currentAirframeTime = currentAirframeTime,
             currentPropTime = currentPropTime
           )
@@ -164,7 +164,7 @@ class AircraftOverviewViewModel(
     component: InspectionComponentType,
     rules: List<InspectionRule>,
     forceDueDate: com.squareup.wire.Instant?,
-    forceDueTach: Float,
+    forceDueEngine: Float,
     notes: String = "",
   ) {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
@@ -174,7 +174,7 @@ class AircraftOverviewViewModel(
         title = title,
         component = component,
         rules = rules,
-        force_due_tach = forceDueTach,
+        force_due_engine_hour = forceDueEngine,
         force_due_date = forceDueDate,
         notes = notes,
       )

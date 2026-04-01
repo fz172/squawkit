@@ -92,13 +92,13 @@ class InspectionManagerImpl(
   ): DueMetadata {
     // 1. Force overrides
     val hasForcedDate = card.force_due_date != null && (card.force_due_date!!.getEpochSecond() > 0L)
-    val hasForcedTach = card.force_due_tach > 0f
+    val hasForcedEngine = card.force_due_engine_hour > 0f
 
-    val currentTach =
+    val currentEngine =
       logs.filter { it.tach_time > 0.0 }.maxOfOrNull { it.tach_time }?.toFloat() ?: 0f
     val currentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
-    if (hasForcedDate || hasForcedTach) {
+    if (hasForcedDate || hasForcedEngine) {
       val nextDueDate = if (hasForcedDate) {
         Instant.fromEpochSeconds(
           card.force_due_date!!.getEpochSecond(),
@@ -106,21 +106,21 @@ class InspectionManagerImpl(
         )
           .toLocalDateTime(TimeZone.currentSystemDefault()).date
       } else null
-      val nextDueTach = if (hasForcedTach) card.force_due_tach else null
+      val nextDueEngine = if (hasForcedEngine) card.force_due_engine_hour else null
 
       val status = when {
         (nextDueDate != null && nextDueDate < currentDate) ||
-            (nextDueTach != null && nextDueTach < currentTach) -> DueStatus.OVERDUE
+            (nextDueEngine != null && nextDueEngine < currentEngine) -> DueStatus.OVERDUE
 
         (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
-            (nextDueTach != null && nextDueTach <= currentTach + 10f) -> DueStatus.DUE_SOON
+            (nextDueEngine != null && nextDueEngine <= currentEngine + 10f) -> DueStatus.DUE_SOON
 
         else -> DueStatus.NORMAL
       }
 
       return DueMetadata(
         nextDueDate = nextDueDate,
-        nextDueTach = nextDueTach,
+        nextDueEngine = nextDueEngine,
         status = status
       )
     }
@@ -131,7 +131,7 @@ class InspectionManagerImpl(
     val latestLog = relevantLogs.firstOrNull()
 
     var nextDueDate: LocalDate? = null
-    var nextDueTach: Float? = null
+    var nextDueEngine: Float? = null
     var isOnCondition = false
 
     for (rule in card.rules) {
@@ -151,11 +151,12 @@ class InspectionManagerImpl(
         }
       }
 
-      if (rule.tach_rule != null) {
-        val baseTach = latestLog?.tach_time?.toFloat() ?: 0f
-        val calculated = baseTach + rule.tach_rule!!.interval_hours.toFloat()
-        if (nextDueTach == null || calculated < nextDueTach) {
-          nextDueTach = calculated
+      if (rule.engine_hour_rule != null) {
+        val baseEngine = latestLog?.tach_time?.toFloat() ?: 0f
+        val calculated = baseEngine + rule.engine_hour_rule!!.interval_hours
+
+        if (nextDueEngine == null || calculated < nextDueEngine) {
+          nextDueEngine = calculated
         }
       }
 
@@ -166,17 +167,17 @@ class InspectionManagerImpl(
 
     val status = when {
       (nextDueDate != null && nextDueDate < currentDate) ||
-          (nextDueTach != null && nextDueTach < currentTach) -> DueStatus.OVERDUE
+          (nextDueEngine != null && nextDueEngine < currentEngine) -> DueStatus.OVERDUE
 
       (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
-          (nextDueTach != null && nextDueTach <= currentTach + 10f) -> DueStatus.DUE_SOON
+          (nextDueEngine != null && nextDueEngine <= currentEngine + 10f) -> DueStatus.DUE_SOON
 
       else -> DueStatus.NORMAL
     }
 
     return DueMetadata(
       nextDueDate = nextDueDate,
-      nextDueTach = nextDueTach,
+      nextDueEngine = nextDueEngine,
       isOnCondition = isOnCondition,
       status = status
     )
