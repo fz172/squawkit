@@ -21,7 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
+import dev.fanfly.wingslog.aircraft.Propeller
 import dev.fanfly.wingslog.aircraft.PropellerBlade
+import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -88,8 +90,8 @@ fun AircraftDetailCardPreview() =
           make = "Rotax",
           model = "915 iSa - 3",
           serial = "915-0001",
-          propeller = dev.fanfly.wingslog.aircraft.Propeller(
-            hub = dev.fanfly.wingslog.aircraft.PropellerHub(
+          propeller = Propeller(
+            hub = PropellerHub(
               make = "Airmaster",
               model = "AP430",
               serial = "AP430-001"

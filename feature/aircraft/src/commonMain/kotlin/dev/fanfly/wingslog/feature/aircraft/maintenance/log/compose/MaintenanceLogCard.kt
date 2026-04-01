@@ -37,13 +37,14 @@ import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 @Composable
 fun MaintenanceLogCard(
   log: MaintenanceLog,
-  onEdit: () -> Unit,
+  onClick: () -> Unit,
   modifier: Modifier = Modifier
 ) {
   val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
     ?: cmpStringResource(AircraftRes.string.unknown_date)
 
   Card(
+    onClick = onClick,
     modifier = modifier.fillMaxWidth(),
     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
   ) {
@@ -63,12 +64,6 @@ fun MaintenanceLogCard(
           style = WingslogTypography.dataSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        IconButton(onClick = onEdit) {
-          Icon(
-            Icons.Default.Edit,
-            contentDescription = cmpStringResource(AircraftRes.string.edit_log_content_description)
-          )
-        }
       }
 
       if (log.inspection_ids.isNotEmpty()) {
@@ -144,6 +139,6 @@ private fun MaintenanceLogCardPreview() {
     inspection_ids = listOf("annual-card-id", "oil-change-card-id")
   )
   MaterialTheme {
-    MaintenanceLogCard(log = log, onEdit = {})
+    MaintenanceLogCard(log = log, onClick = {})
   }
 }

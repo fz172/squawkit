@@ -42,6 +42,8 @@ import dev.fanfly.wingslog.aircraft.OnConditionRule
 import dev.fanfly.wingslog.aircraft.TachRule
 import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
+import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import wingslog.feature.aircraft.generated.resources.airframe
 import wingslog.feature.aircraft.generated.resources.component
 import wingslog.feature.aircraft.generated.resources.delete_inspection
@@ -283,10 +285,11 @@ fun EditInspectionSheet(
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
           keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        )
-      }
+          )
+          }
 
-      // Notes
+          // Notes
+
       OutlinedTextField(
         value = notes,
         onValueChange = { notes = it },
@@ -297,60 +300,42 @@ fun EditInspectionSheet(
         maxLines = 5,
       )
 
-      Spacer(Modifier.height(8.dp))
+      Spacer(Modifier.height(Spacing.small))
 
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-      ) {
-        // Delete
-        OutlinedButton(
-          onClick = { onDeleteRequest(card.id) },
-          modifier = Modifier.weight(1f).height(56.dp),
-          shape = RoundedCornerShape(12.dp),
-          colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = MaterialTheme.colorScheme.error,
-          ),
-          border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error),
-        ) {
-          Text(cmpStringResource(AircraftRes.string.delete_inspection))
-        }
-        // Save
-        Button(
-          onClick = {
-            if (title.isBlank()) {
-              titleError = true
-              return@Button
+      BottomButtons(
+        onSaveClick = {
+          if (title.isBlank()) {
+            titleError = true
+            return@BottomButtons
+          }
+          if (forceOverrideEnabled) {
+            val parsedTach = forceTachHours.toFloatOrNull()
+            if (parsedTach == null || parsedTach <= 0f) {
+              forceTachError = true
+              return@BottomButtons
             }
-            if (forceOverrideEnabled) {
-              val parsedTach = forceTachHours.toFloatOrNull()
-              if (parsedTach == null || parsedTach <= 0f) {
-                forceTachError = true
-                return@Button
-              }
+          }
+          val rules = buildList<InspectionRule> {
+            if (timeRuleEnabled) {
+              val months = timeRuleMonths.toIntOrNull() ?: 12
+              add(InspectionRule(time_rule = TimeRule(interval_months = months)))
             }
-            val rules = buildList<InspectionRule> {
-              if (timeRuleEnabled) {
-                val months = timeRuleMonths.toIntOrNull() ?: 12
-                add(InspectionRule(time_rule = TimeRule(interval_months = months)))
-              }
-              if (tachRuleEnabled) {
-                val hours = tachRuleHours.toFloatOrNull() ?: 100f
-                add(InspectionRule(tach_rule = TachRule(interval_hours = hours)))
-              }
-              if (onConditionEnabled) {
-                add(InspectionRule(on_condition_rule = OnConditionRule()))
-              }
+            if (tachRuleEnabled) {
+              val hours = tachRuleHours.toFloatOrNull() ?: 100f
+              add(InspectionRule(tach_rule = TachRule(interval_hours = hours)))
             }
-            val forcedTach = if (forceOverrideEnabled) forceTachHours.toFloatOrNull() ?: 0f else 0f
-            onSave(card.id, title.trim(), selectedComponent, rules, null, forcedTach, notes.trim())
-          },
-          modifier = Modifier.weight(1f).height(56.dp),
-          shape = RoundedCornerShape(12.dp),
-        ) {
-          Text(cmpStringResource(AircraftRes.string.save))
-        }
-      }
+            if (onConditionEnabled) {
+              add(InspectionRule(on_condition_rule = OnConditionRule()))
+            }
+          }
+          val forcedTach = if (forceOverrideEnabled) forceTachHours.toFloatOrNull() ?: 0f else 0f
+          onSave(card.id, title.trim(), selectedComponent, rules, null, forcedTach, notes.trim())
+        },
+        onCancelClick = onDismiss,
+        onDeleteClick = { onDeleteRequest(card.id) },
+        deleteLabel = cmpStringResource(AircraftRes.string.delete_inspection),
+        saveLabel = cmpStringResource(AircraftRes.string.save)
+      )
     }
   }
 }

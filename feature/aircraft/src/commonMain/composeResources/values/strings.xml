@@ -28,7 +28,6 @@
     <string name="airframe_s_n">Airframe S/N: %1$s</string>
     <string name="delete_aircraft">Delete Aircraft?</string>
     <string name="this_action_cannot_be_undone">This action cannot be undone.</string>
-    <string name="delete">Delete</string>
     <string name="edit_aircraft">Edit aircraft</string>
     <string name="edit_log">Edit Log</string>
     <string name="work_description_required">Work Description *</string>

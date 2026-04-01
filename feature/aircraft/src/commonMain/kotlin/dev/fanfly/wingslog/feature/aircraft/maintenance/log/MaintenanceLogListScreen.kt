@@ -121,7 +121,7 @@ fun MaintenanceLogListScreen(
               items(state.logs, key = { it.id }) { log ->
                 MaintenanceLogCard(
                   log = log,
-                  onEdit = { viewModel.onEditLog(log.id) }
+                  onClick = { viewModel.onEditLog(log.id) }
                 )
               }
             }

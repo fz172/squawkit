@@ -20,7 +20,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -76,7 +75,6 @@ import wingslog.feature.aircraft.generated.resources.cancel
 import wingslog.feature.aircraft.generated.resources.component_type
 import wingslog.feature.aircraft.generated.resources.delete
 import wingslog.feature.aircraft.generated.resources.delete_log
-import wingslog.feature.aircraft.generated.resources.delete_log_content_description
 import wingslog.feature.aircraft.generated.resources.edit_log
 import wingslog.feature.aircraft.generated.resources.engine
 import wingslog.feature.aircraft.generated.resources.inspection_work
@@ -162,17 +160,6 @@ fun MaintenanceLogFormScreen(
               Icons.AutoMirrored.Filled.ArrowBack,
               contentDescription = cmpStringResource(AircraftRes.string.back)
             )
-          }
-        },
-        actions = {
-          if (viewModel.isEditMode) {
-            IconButton(onClick = { showDeleteDialog = true }) {
-              Icon(
-                Icons.Default.Delete,
-                contentDescription = cmpStringResource(AircraftRes.string.delete_log_content_description),
-                tint = MaterialTheme.colorScheme.error
-              )
-            }
           }
         }
       )
@@ -341,6 +328,10 @@ fun MaintenanceLogFormScreen(
           modifier = Modifier.align(Alignment.BottomCenter),
           onSaveClick = viewModel::save,
           onCancelClick = { navController.popBackStack() },
+          onDeleteClick = if (viewModel.isEditMode) {
+            { showDeleteDialog = true }
+          } else null,
+          deleteLabel = cmpStringResource(AircraftRes.string.delete),
           saveEnabled = !uiState.isSaving,
           isSaving = uiState.isSaving,
           saveLabel = saveLabel,

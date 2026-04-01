@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.ui.common.compose
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,25 +23,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.cancel
+import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.save_changes
 
-
-/**
- * Primary + cancel action buttons, pinned to the bottom of a screen.
- * Buttons are side-by-side with equal width and a transparent background,
- * matching the LogDetailsBottomBar pattern.
- */
 @Composable
 fun BottomButtons(
   onSaveClick: () -> Unit,
   onCancelClick: () -> Unit,
   modifier: Modifier = Modifier,
+  onDeleteClick: (() -> Unit)? = null,
+  deleteLabel: String = stringResource(Res.string.delete),
   saveEnabled: Boolean = true,
   cancelEnabled: Boolean = true,
   isSaving: Boolean = false,
@@ -50,40 +50,84 @@ fun BottomButtons(
     modifier = modifier
       .fillMaxWidth()
       .background(Color.Transparent)
-      .padding(16.dp),
+      .padding(Spacing.screenPadding),
     contentAlignment = Alignment.Center
   ) {
     Row(
       modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(12.dp)
+      horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+      verticalAlignment = Alignment.CenterVertically
     ) {
+      // 1. Cancel Button
       OutlinedButton(
         onClick = onCancelClick,
         enabled = cancelEnabled && !isSaving,
-        modifier = Modifier.weight(1f).height(56.dp),
-        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.outlinedButtonColors(
           containerColor = MaterialTheme.colorScheme.surface,
         ),
       ) {
-        Text(text = stringResource(Res.string.cancel), fontSize = 16.sp)
+        Text(
+          text = stringResource(Res.string.cancel).uppercase(),
+          fontWeight = FontWeight.Bold,
+          maxLines = 1,
+          textAlign = TextAlign.Center,
+          modifier = Modifier.fillMaxWidth()
+        )
       }
+
+      // 2. Delete Button (Optional)
+      if (onDeleteClick != null) {
+        OutlinedButton(
+          onClick = onDeleteClick,
+          enabled = !isSaving,
+          modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
+          shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+          colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.error
+          ),
+          border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+        ) {
+          Text(
+            text = deleteLabel.uppercase(),
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+          )
+        }
+      }
+
+      // 3. Save Button
       Button(
         onClick = onSaveClick,
-        modifier = Modifier.weight(1f).height(56.dp),
-        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
         enabled = saveEnabled && !isSaving,
       ) {
-        if (isSaving) {
-          CircularProgressIndicator(
-            modifier = Modifier.size(18.dp),
-            color = Color.White,
-            strokeWidth = 2.dp
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.Center,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          if (isSaving) {
+            CircularProgressIndicator(
+              modifier = Modifier.size(18.dp),
+              color = MaterialTheme.colorScheme.onPrimary,
+              strokeWidth = 2.dp
+            )
+            Spacer(Modifier.width(8.dp))
+          }
+          Text(
+            text = saveLabel.uppercase(),
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            textAlign = TextAlign.Center
           )
-          Spacer(Modifier.width(8.dp))
         }
-        Text(text = saveLabel, fontSize = 16.sp)
       }
     }
   }
@@ -94,5 +138,6 @@ fun BottomButtons(
 fun BottomButtonsPreview() {
   BottomButtons(
     onSaveClick = {},
-    onCancelClick = {})
+    onCancelClick = {},
+    onDeleteClick = {})
 }
