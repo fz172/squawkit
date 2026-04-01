@@ -15,7 +15,9 @@ import dev.fanfly.wingslog.feature.aircraft.edit.EditAircraftConstants.ARGUMENT_
 import dev.fanfly.wingslog.feature.aircraft.edit.EditAircraftScreen
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.MaintenanceLogListScreen
+import dev.fanfly.wingslog.feature.aircraft.overview.AddInspectionRoute
 import dev.fanfly.wingslog.feature.aircraft.overview.AircraftOverviewScreen
+import dev.fanfly.wingslog.feature.aircraft.overview.EditInspectionRoute
 import dev.fanfly.wingslog.feature.fleet.dashboard.DashboardScreen
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
 import dev.fanfly.wingslog.feature.userprofile.EditProfileScreen
@@ -77,6 +79,24 @@ fun AppEntry() {
           })
         ) {
           AircraftOverviewScreen(navController = navController)
+        }
+
+        composable(
+          route = "aircraft_inspection_create/{aircraftId}",
+          arguments = listOf(navArgument("aircraftId") { type = NavType.StringType })
+        ) {
+          AddInspectionRoute(navController = navController)dd
+        }
+
+        composable(
+          route = "aircraft_inspection_edit/{aircraftId}/{cardId}",
+          arguments = listOf(
+            navArgument("aircraftId") { type = NavType.StringType },
+            navArgument("cardId") { type = NavType.StringType }
+          )
+        ) { backStackEntry ->
+          val cardId = backStackEntry.arguments?.getString("cardId") ?: ""
+          EditInspectionRoute(cardId = cardId, navController = navController)
         }
 
         // Maintenance Log routes

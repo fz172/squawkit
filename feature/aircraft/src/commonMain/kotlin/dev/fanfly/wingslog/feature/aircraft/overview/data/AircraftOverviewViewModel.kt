@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
+import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
@@ -71,11 +72,13 @@ class AircraftOverviewViewModel(
           val cardsWithStatus = inspectionCards.map { card ->
             InspectionCardWithStatus(
               card = card,
-              dueStatus = inspectionManager.computeNextDue(card, logs),
+              dueStatus = inspectionManager.computeNextDue(card, logs, inspectionCards),
             )
           }
+          val active = cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
+          val complied = cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
+
           val current = _uiState.value as? AircraftOverviewUiState.Success
-          val showSheet = current?.showAddInspectionSheet ?: false
           // Refresh selected inspection due status if detail sheet is open
           val refreshedSelected = current?.selectedInspection?.let { sel ->
             cardsWithStatus.find { it.card.id == sel.card.id }
@@ -84,19 +87,14 @@ class AircraftOverviewViewModel(
             logs.filter { sel.card.id in it.inspection_ids }
               .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
           } ?: emptyList()
-          // Preserve editing and deletion states across Firestore real-time updates so that
-          // in-flight edits (e.g. force-override inputs) are not wiped when the listener fires.
-          val refreshedEditing = current?.editingInspection?.let { editing ->
-            cardsWithStatus.find { it.card.id == editing.card.id }
-          }
+
           AircraftOverviewUiState.Success(
             aircraft = aircraft,
             logStats = stats,
-            inspectionCards = cardsWithStatus,
-            showAddInspectionSheet = showSheet,
+            activeInspections = active,
+            compliedInspections = complied,
             selectedInspection = refreshedSelected,
             logsForSelectedInspection = refreshedDetailLogs,
-            editingInspection = refreshedEditing,
             deletingInspectionId = current?.deletingInspectionId,
           )
         } else {
@@ -105,18 +103,6 @@ class AircraftOverviewViewModel(
       }.collect { state ->
         _uiState.update { state }
       }
-    }
-  }
-
-  fun showAddInspectionSheet() {
-    _uiState.update { state ->
-      if (state is AircraftOverviewUiState.Success) state.copy(showAddInspectionSheet = true) else state
-    }
-  }
-
-  fun hideAddInspectionSheet() {
-    _uiState.update { state ->
-      if (state is AircraftOverviewUiState.Success) state.copy(showAddInspectionSheet = false) else state
     }
   }
 
@@ -142,46 +128,40 @@ class AircraftOverviewViewModel(
     }
   }
 
-  fun openEditInspection(cardWithStatus: InspectionCardWithStatus) {
-    _uiState.update { state ->
-      if (state is AircraftOverviewUiState.Success) {
-        state.copy(editingInspection = cardWithStatus, selectedInspection = null)
-      } else state
-    }
-  }
-
-  fun closeEditInspection() {
-    _uiState.update { state ->
-      if (state is AircraftOverviewUiState.Success) {
-        state.copy(editingInspection = null)
-      } else state
-    }
-  }
-
   fun saveEditedInspection(
     cardId: String,
     title: String,
+    type: dev.fanfly.wingslog.aircraft.ComplianceType,
     component: InspectionComponentType,
     rules: List<InspectionRule>,
+    referenceNumber: String,
+    sbUrl: String,
+    complianceDetails: String,
+    isOneTime: Boolean,
     forceDueDate: com.squareup.wire.Instant?,
     forceDueEngine: Float,
-    notes: String = "",
+    notes: String,
   ) {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     viewModelScope.launch {
-      val newCard = InspectionCard(
+      val updatedCard = InspectionCard(
         id = cardId,
         title = title,
+        type = type,
         component = component,
         rules = rules,
-        force_due_engine_hour = forceDueEngine,
+        reference_number = referenceNumber,
+        sb_url = sbUrl,
+        compliance_details = complianceDetails,
+        is_one_time = isOneTime,
         force_due_date = forceDueDate,
+        force_due_engine_hour = forceDueEngine,
         notes = notes,
       )
-      inspectionManager.updateInspection(state.aircraft.id, newCard)
-      closeEditInspection()
+      inspectionManager.updateInspection(state.aircraft.id, updatedCard)
     }
   }
+
 
   fun requestDeleteInspection(cardId: String) {
     _uiState.update { state ->
@@ -206,7 +186,7 @@ class AircraftOverviewViewModel(
       inspectionManager.deleteInspection(state.aircraft.id, cardId)
       _uiState.update { s ->
         if (s is AircraftOverviewUiState.Success) {
-          s.copy(deletingInspectionId = null, editingInspection = null, selectedInspection = null)
+          s.copy(deletingInspectionId = null, selectedInspection = null)
         } else s
       }
     }
@@ -214,20 +194,29 @@ class AircraftOverviewViewModel(
 
   fun saveNewInspection(
     title: String,
+    type: dev.fanfly.wingslog.aircraft.ComplianceType,
     component: InspectionComponentType,
     rules: List<InspectionRule>,
+    referenceNumber: String,
+    sbUrl: String,
+    complianceDetails: String,
+    isOneTime: Boolean,
     notes: String = "",
   ) {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     viewModelScope.launch {
       val card = InspectionCard(
         title = title,
+        type = type,
         component = component,
         rules = rules,
+        reference_number = referenceNumber,
+        sb_url = sbUrl,
+        compliance_details = complianceDetails,
+        is_one_time = isOneTime,
         notes = notes,
       )
       inspectionManager.addInspection(state.aircraft.id, card)
-      hideAddInspectionSheet()
     }
   }
 

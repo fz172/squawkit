@@ -8,7 +8,8 @@ import kotlinx.datetime.LocalDate
 enum class DueStatus {
   NORMAL,
   DUE_SOON,
-  OVERDUE
+  OVERDUE,
+  COMPLIED
 }
 
 /**
@@ -55,5 +56,6 @@ interface InspectionManager {
   suspend fun computeNextDue(
     card: InspectionCard,
     logs: List<MaintenanceLog>,
+    allCards: List<InspectionCard> = emptyList(),
   ): DueMetadata
 }

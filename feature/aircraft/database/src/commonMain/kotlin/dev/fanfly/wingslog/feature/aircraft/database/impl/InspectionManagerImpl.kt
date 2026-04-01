@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.aircraft.database.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.InspectionCard
+import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
@@ -88,14 +89,46 @@ class InspectionManagerImpl(
 
   override suspend fun computeNextDue(
     card: InspectionCard,
-    logs: List<MaintenanceLog>
+    logs: List<MaintenanceLog>,
+    allCards: List<InspectionCard>
   ): DueMetadata {
+    return computeNextDueRecursive(card, logs, allCards, mutableSetOf())
+  }
+
+  private suspend fun computeNextDueRecursive(
+    card: InspectionCard,
+    logs: List<MaintenanceLog>,
+    allCards: List<InspectionCard>,
+    visited: MutableSet<String>
+  ): DueMetadata {
+    if (card.id in visited) {
+      // Cycle detected or already computed in this chain
+      return DueMetadata(status = DueStatus.NORMAL)
+    }
+    visited.add(card.id)
+
+    // 0. Check One-Time Completion
+    val relevantLogs = logs.filter { card.id in it.inspection_ids }
+      .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
+    val latestLog = relevantLogs.firstOrNull()
+
+    if (card.is_one_time && latestLog != null) {
+      return DueMetadata(status = DueStatus.COMPLIED)
+    }
+
     // 1. Force overrides
     val hasForcedDate = card.force_due_date != null && (card.force_due_date!!.getEpochSecond() > 0L)
     val hasForcedEngine = card.force_due_engine_hour > 0f
 
-    val currentEngine =
-      logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }?.toFloat() ?: 0f
+    // Determine which metric to track against based on component type
+    // Airframe tracks airframe_time, others track engine_hour
+    val currentMetricTime =
+      if (card.component == InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME) {
+        logs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }?.toFloat() ?: 0f
+      } else {
+        logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }?.toFloat() ?: 0f
+      }
+
     val currentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
     if (hasForcedDate || hasForcedEngine) {
@@ -110,10 +143,10 @@ class InspectionManagerImpl(
 
       val status = when {
         (nextDueDate != null && nextDueDate < currentDate) ||
-            (nextDueEngine != null && nextDueEngine < currentEngine) -> DueStatus.OVERDUE
+            (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
 
         (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
-            (nextDueEngine != null && nextDueEngine <= currentEngine + 10f) -> DueStatus.DUE_SOON
+            (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
 
         else -> DueStatus.NORMAL
       }
@@ -125,52 +158,81 @@ class InspectionManagerImpl(
       )
     }
 
-    // 2. Compute based on rules and last maintenance
-    val relevantLogs = logs.filter { card.id in it.inspection_ids }
-      .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
-    val latestLog = relevantLogs.firstOrNull()
-
+    // 2. Compute based on rules
     var nextDueDate: LocalDate? = null
     var nextDueEngine: Float? = null
     var isOnCondition = false
+    var isImmediate = false
 
     for (rule in card.rules) {
-      if (rule.time_rule != null) {
-        val baseDate = if (latestLog?.timestamp != null) {
-          Instant.fromEpochSeconds(
-            latestLog.timestamp!!.getEpochSecond(),
-            latestLog.timestamp!!.getNano()
-          )
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
-        } else {
-          currentDate
-        }
-        val calculated = baseDate.plus(rule.time_rule!!.interval_months, DateTimeUnit.MONTH)
-        if (nextDueDate == null || calculated < nextDueDate) {
-          nextDueDate = calculated
-        }
-      }
+      val timeRule = rule.time_rule
+      val engineRule = rule.engine_hour_rule
+      val onConditionRule = rule.on_condition_rule
+      val linkedRule = rule.linked_rule
+      val immediateRule = rule.immediate_rule
 
-      if (rule.engine_hour_rule != null) {
-        val baseEngine = latestLog?.engine_hour?.toFloat() ?: 0f
-        val calculated = baseEngine + rule.engine_hour_rule!!.interval_hours
-
-        if (nextDueEngine == null || calculated < nextDueEngine) {
-          nextDueEngine = calculated
+      when {
+        timeRule != null -> {
+          val baseDate = if (latestLog?.timestamp != null) {
+            Instant.fromEpochSeconds(
+              latestLog.timestamp!!.getEpochSecond(),
+              latestLog.timestamp!!.getNano()
+            )
+              .toLocalDateTime(TimeZone.currentSystemDefault()).date
+          } else {
+            currentDate
+          }
+          val calculated = baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH)
+          if (nextDueDate == null || calculated < nextDueDate) {
+            nextDueDate = calculated
+          }
         }
-      }
 
-      if (rule.on_condition_rule != null) {
-        isOnCondition = true
+        engineRule != null -> {
+          val baseEngine =
+            if (card.component == InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME) {
+              latestLog?.airframe_time?.toFloat() ?: 0f
+            } else {
+              latestLog?.engine_hour?.toFloat() ?: 0f
+            }
+          val calculated = baseEngine + engineRule.interval_hours
+          if (nextDueEngine == null || calculated < nextDueEngine) {
+            nextDueEngine = calculated
+          }
+        }
+
+        onConditionRule != null -> {
+          isOnCondition = true
+        }
+
+        immediateRule != null -> {
+          isImmediate = true
+        }
+
+        linkedRule != null -> {
+          val parentCard = allCards.find { it.id == linkedRule.parent_inspection_id }
+          if (parentCard != null) {
+            val parentMetadata = computeNextDueRecursive(parentCard, logs, allCards, visited)
+            // Inherit due dates from parent
+            if (parentMetadata.nextDueDate != null && (nextDueDate == null || parentMetadata.nextDueDate < nextDueDate)) {
+              nextDueDate = parentMetadata.nextDueDate
+            }
+            if (parentMetadata.nextDueEngine != null && (nextDueEngine == null || parentMetadata.nextDueEngine < nextDueEngine)) {
+              nextDueEngine = parentMetadata.nextDueEngine
+            }
+            if (parentMetadata.isOnCondition) isOnCondition = true
+          }
+        }
       }
     }
 
     val status = when {
+      isImmediate -> DueStatus.OVERDUE
       (nextDueDate != null && nextDueDate < currentDate) ||
-          (nextDueEngine != null && nextDueEngine < currentEngine) -> DueStatus.OVERDUE
+          (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
 
       (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
-          (nextDueEngine != null && nextDueEngine <= currentEngine + 10f) -> DueStatus.DUE_SOON
+          (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
 
       else -> DueStatus.NORMAL
     }

@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.aircraft.overview.compose
 
-// dateFormatter removed
-
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -29,15 +30,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.aircraft.database.DueMetadata
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
-import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
 import wingslog.feature.aircraft.generated.resources.done
 import wingslog.feature.aircraft.generated.resources.due_date
 import wingslog.feature.aircraft.generated.resources.due_engine
@@ -55,7 +58,7 @@ import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InspectionDetailSheet(
-  cardWithStatus: dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus,
+  cardWithStatus: InspectionCardWithStatus,
   logs: List<MaintenanceLog>,
   onDismiss: () -> Unit,
   onEditClick: () -> Unit,
@@ -69,7 +72,7 @@ fun InspectionDetailSheet(
     modifier = modifier,
   ) {
     Column(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+      modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.extraLarge)
         .verticalScroll(rememberScrollState())
     ) {
       Row(
@@ -77,11 +80,47 @@ fun InspectionDetailSheet(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
       ) {
-        Text(
-          text = cardWithStatus.card.title,
-          style = MaterialTheme.typography.headlineSmall,
-          fontWeight = FontWeight.Bold
-        )
+        Column(modifier = Modifier.weight(1f)) {
+          val typeLabel = when (cardWithStatus.card.type) {
+            ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> "SB"
+            ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> "AD"
+            else -> null
+          }
+          if (typeLabel != null) {
+            Text(
+              text = typeLabel,
+              style = MaterialTheme.typography.labelSmall,
+              color = if (cardWithStatus.card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
+                MaterialTheme.colorScheme.onErrorContainer
+              } else {
+                MaterialTheme.colorScheme.onPrimaryContainer
+              },
+              modifier = Modifier
+                .background(
+                  if (cardWithStatus.card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
+                    MaterialTheme.colorScheme.errorContainer
+                  } else {
+                    MaterialTheme.colorScheme.primaryContainer
+                  },
+                  RoundedCornerShape(4.dp)
+                )
+                .padding(horizontal = 6.dp, vertical = 2.dp)
+            )
+            Spacer(Modifier.height(Spacing.tiny))
+          }
+          Text(
+            text = cardWithStatus.card.title,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+          )
+          if (cardWithStatus.card.reference_number.isNotBlank()) {
+            Text(
+              text = cardWithStatus.card.reference_number,
+              style = MaterialTheme.typography.labelMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          }
+        }
         Row {
           IconButton(onClick = onEditClick) {
             Icon(
@@ -100,6 +139,35 @@ fun InspectionDetailSheet(
       Spacer(Modifier.height(Spacing.small))
 
       DueStatusChip(cardWithStatus.dueStatus)
+
+      if (cardWithStatus.card.sb_url.isNotBlank()) {
+        Spacer(Modifier.height(Spacing.medium))
+        Text(
+          text = "View Bulletin (URL)",
+          style = MaterialTheme.typography.labelLarge,
+          color = MaterialTheme.colorScheme.primary,
+          modifier = Modifier.clickable { /* Link handling would go here */ }
+        )
+        Text(
+          text = cardWithStatus.card.sb_url,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 1
+        )
+      }
+
+      if (cardWithStatus.card.compliance_details.isNotBlank()) {
+        Spacer(Modifier.height(Spacing.large))
+        Text(
+          text = "Compliance Details",
+          style = MaterialTheme.typography.labelLarge,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+          text = cardWithStatus.card.compliance_details,
+          style = MaterialTheme.typography.bodyMedium,
+        )
+      }
 
       if (cardWithStatus.card.notes.isNotBlank()) {
         Spacer(Modifier.height(Spacing.medium))
@@ -141,6 +209,7 @@ fun InspectionDetailSheet(
 @Composable
 private fun DueStatusChip(dueStatus: DueMetadata) {
   val (label, color) = when {
+    dueStatus.status == DueStatus.COMPLIED -> "Complied" to StatusOk
     dueStatus.isOnCondition -> cmpStringResource(AircraftRes.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
     dueStatus.status == DueStatus.OVERDUE -> {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat() ?: ""

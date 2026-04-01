@@ -11,6 +11,13 @@ enum InspectionComponentType {
   INSPECTION_COMPONENT_AIRFRAME = 1;
   INSPECTION_COMPONENT_ENGINE = 2;
   INSPECTION_COMPONENT_PROPELLER = 3;
+  INSPECTION_COMPONENT_AVIONICS = 4;
+}
+
+enum ComplianceType {
+  COMPLIANCE_TYPE_RECURRING_INSPECTION = 0;
+  COMPLIANCE_TYPE_SERVICE_BULLETIN = 1;
+  COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE = 2;
 }
 
 // A time-interval-based rule (e.g. every 12 months)
@@ -28,12 +35,20 @@ message OnConditionRule {
   string description = 1;
 }
 
+message LinkedRule {
+  string parent_inspection_id = 1; // e.g., ID of the "Annual" card
+}
+
+message ImmediateRule {}
+
 // A single rule governing when an inspection is due
 message InspectionRule {
   oneof rule {
     TimeRule time_rule = 1;
     EngineHourRule engine_hour_rule = 2;
     OnConditionRule on_condition_rule = 3;
+    LinkedRule linked_rule = 4;
+    ImmediateRule immediate_rule = 5;
   }
 }
 
@@ -50,4 +65,11 @@ message InspectionCard {
 
   // Optional free-text notes or comments for this inspection card
   string notes = 7;
+
+  // v2 Compliance Tracking
+  ComplianceType type = 8;
+  string reference_number = 9; // e.g., "SB-2024-01"
+  string sb_url = 10;
+  string compliance_details = 11;
+  bool is_one_time = 12; // If true, moves to history after first log
 }

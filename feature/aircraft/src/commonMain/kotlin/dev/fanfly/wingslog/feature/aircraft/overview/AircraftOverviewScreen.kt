@@ -18,12 +18,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Radio
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -38,6 +36,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -60,10 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.squareup.wire.Instant
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.aircraft.InspectionComponentType
-import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -84,29 +82,21 @@ import wingslog.core.ui.generated.resources.delete
 import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.airframe
 import wingslog.feature.aircraft.generated.resources.airframe_time_label
-import wingslog.feature.aircraft.generated.resources.annual
 import wingslog.feature.aircraft.generated.resources.back
 import wingslog.feature.aircraft.generated.resources.cancel
 import wingslog.feature.aircraft.generated.resources.delete_aircraft
-import wingslog.feature.aircraft.generated.resources.due_dec_2024
-import wingslog.feature.aircraft.generated.resources.due_in_14h
 import wingslog.feature.aircraft.generated.resources.edit_aircraft
 import wingslog.feature.aircraft.generated.resources.engine
 import wingslog.feature.aircraft.generated.resources.engine_time_label
-import wingslog.feature.aircraft.generated.resources.hundred_hr
-import wingslog.feature.aircraft.generated.resources.inspection_status
 import wingslog.feature.aircraft.generated.resources.log_details
 import wingslog.feature.aircraft.generated.resources.maintenance_summary
 import wingslog.feature.aircraft.generated.resources.make_model_template
 import wingslog.feature.aircraft.generated.resources.no_inspections_yet
-import wingslog.feature.aircraft.generated.resources.pitot_static
-import wingslog.feature.aircraft.generated.resources.prop_inspection
 import wingslog.feature.aircraft.generated.resources.prop_time_label
 import wingslog.feature.aircraft.generated.resources.propeller
 import wingslog.feature.aircraft.generated.resources.settings
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.total_logs
-import wingslog.feature.aircraft.generated.resources.transponder
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
@@ -137,33 +127,25 @@ fun AircraftOverviewScreen(
   AircraftOverviewContent(
     aircraft = successState?.aircraft,
     logStats = successState?.logStats,
-    inspectionCards = successState?.inspectionCards ?: emptyList(),
-    showAddInspectionSheet = successState?.showAddInspectionSheet ?: false,
+    activeInspections = successState?.activeInspections ?: emptyList(),
+    compliedInspections = successState?.compliedInspections ?: emptyList(),
     selectedInspection = successState?.selectedInspection,
     logsForSelectedInspection = successState?.logsForSelectedInspection ?: emptyList(),
-    editingInspection = successState?.editingInspection,
     deletingInspectionId = successState?.deletingInspectionId,
-    inspectionCardTitleForDelete = successState?.inspectionCards?.find { it.card.id == successState.deletingInspectionId }?.card?.title
+    inspectionCardTitleForDelete = (successState?.activeInspections ?: emptyList())
+      .find { it.card.id == successState?.deletingInspectionId }?.card?.title
+      ?: (successState?.compliedInspections ?: emptyList())
+        .find { it.card.id == successState?.deletingInspectionId }?.card?.title
       ?: "",
     snackbarHostState = snackbarHostState,
     onBackClick = { navController.popBackStack() },
     onEditClick = { aircraftId -> navController.navigate("edit_aircraft/$aircraftId") },
     onDeleteConfirm = { viewModel.deleteAircraft() },
     onLogDetailsClick = { aircraftId -> navController.navigate("maintenance_logs/$aircraftId") },
-    onAddInspectionClick = { viewModel.showAddInspectionSheet() },
-    onDismissAddInspectionSheet = { viewModel.hideAddInspectionSheet() },
-    onSaveInspection = { title, component, rules, notes ->
-      viewModel.saveNewInspection(title, component, rules, notes)
-    },
+    onAddInspectionClick = { aircraftId -> navController.navigate("aircraft_inspection_create/$aircraftId") },
     onInspectionCardClick = { card -> viewModel.showInspectionDetail(card) },
     onDismissInspectionDetail = { viewModel.hideInspectionDetail() },
-    onEditInspectionClick = { card -> viewModel.openEditInspection(card) },
-    onDismissEditInspection = { viewModel.closeEditInspection() },
-    onSaveEditedInspection = { cardId, title, component, rules, forceDueDate, forceDueTach, notes ->
-      viewModel.saveEditedInspection(
-        cardId, title, component, rules, forceDueDate, forceDueTach, notes
-      )
-    },
+    onEditInspectionClick = { aircraftId, cardId -> navController.navigate("aircraft_inspection_edit/$aircraftId/$cardId") },
     onDeleteInspectionRequest = { cardId -> viewModel.requestDeleteInspection(cardId) },
     onCancelDeleteInspection = { viewModel.cancelDeleteInspection() },
     onConfirmDeleteInspection = { viewModel.confirmDeleteInspection() },
@@ -175,11 +157,10 @@ fun AircraftOverviewScreen(
 fun AircraftOverviewContent(
   aircraft: Aircraft?,
   logStats: LogStats?,
-  inspectionCards: List<InspectionCardWithStatus>,
-  showAddInspectionSheet: Boolean,
+  activeInspections: List<InspectionCardWithStatus>,
+  compliedInspections: List<InspectionCardWithStatus>,
   selectedInspection: InspectionCardWithStatus? = null,
   logsForSelectedInspection: List<dev.fanfly.wingslog.aircraft.MaintenanceLog> = emptyList(),
-  editingInspection: InspectionCardWithStatus? = null,
   deletingInspectionId: String? = null,
   inspectionCardTitleForDelete: String = "",
   snackbarHostState: SnackbarHostState,
@@ -187,14 +168,10 @@ fun AircraftOverviewContent(
   onEditClick: (String) -> Unit,
   onDeleteConfirm: () -> Unit,
   onLogDetailsClick: (String) -> Unit,
-  onAddInspectionClick: () -> Unit = {},
-  onDismissAddInspectionSheet: () -> Unit = {},
-  onSaveInspection: (title: String, component: InspectionComponentType, rules: List<InspectionRule>, notes: String) -> Unit = { _, _, _, _ -> },
+  onAddInspectionClick: (String) -> Unit = {},
   onInspectionCardClick: (InspectionCardWithStatus) -> Unit = {},
   onDismissInspectionDetail: () -> Unit = {},
-  onEditInspectionClick: (InspectionCardWithStatus) -> Unit = {},
-  onDismissEditInspection: () -> Unit = {},
-  onSaveEditedInspection: (cardId: String, title: String, component: InspectionComponentType, rules: List<InspectionRule>, forceDueDate: Instant?, forceDueTach: Float, notes: String) -> Unit = { _, _, _, _, _, _, _ -> },
+  onEditInspectionClick: (String, String) -> Unit = { _, _ -> },
   onDeleteInspectionRequest: (cardId: String) -> Unit = {},
   onCancelDeleteInspection: () -> Unit = {},
   onConfirmDeleteInspection: () -> Unit = {},
@@ -205,6 +182,7 @@ fun AircraftOverviewContent(
 
   var showSettingsMenu by rememberSaveable { mutableStateOf(false) }
   var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+  var showComplied by rememberSaveable { mutableStateOf(false) }
 
   if (showDeleteDialog) {
     AlertDialog(
@@ -289,15 +267,6 @@ fun AircraftOverviewContent(
         )
       )
     }) { paddingValues ->
-    // Add inspection bottom sheet
-    if (showAddInspectionSheet) {
-      dev.fanfly.wingslog.feature.aircraft.overview.compose.AddInspectionSheet(
-        onDismiss = onDismissAddInspectionSheet,
-        onSave = { title, component, rules, notes ->
-          onSaveInspection(title, component, rules, notes)
-        },
-      )
-    }
 
     // Inspection detail bottom sheet
     if (selectedInspection != null) {
@@ -305,17 +274,11 @@ fun AircraftOverviewContent(
         cardWithStatus = selectedInspection,
         logs = logsForSelectedInspection,
         onDismiss = onDismissInspectionDetail,
-        onEditClick = { onEditInspectionClick(selectedInspection) },
-      )
-    }
-
-    // Edit inspection bottom sheet
-    if (editingInspection != null) {
-      dev.fanfly.wingslog.feature.aircraft.overview.compose.EditInspectionSheet(
-        cardWithStatus = editingInspection,
-        onDismiss = onDismissEditInspection,
-        onSave = onSaveEditedInspection,
-        onDeleteRequest = onDeleteInspectionRequest,
+        onEditClick = { 
+          if (aircraft != null) {
+            onEditInspectionClick(aircraft.id, selectedInspection.card.id)
+          }
+        },
       )
     }
 
@@ -344,7 +307,7 @@ fun AircraftOverviewContent(
 
           // --- Critical Alerts Section ---
           val overdueInspections =
-            inspectionCards.filter { it.dueStatus.status == DueStatus.OVERDUE }
+            activeInspections.filter { it.dueStatus.status == DueStatus.OVERDUE }
           if (overdueInspections.isNotEmpty()) {
             CriticalAlertsSection(
               overdueInspections = overdueInspections,
@@ -361,10 +324,13 @@ fun AircraftOverviewContent(
             )
           }
 
-          // --- Inspection Status Section ---
-          InspectionStatusSection(
-            inspectionCards = inspectionCards,
-            onAddClick = onAddInspectionClick,
+          // --- Compliance & Inspections Section ---
+          ComplianceSection(
+            activeInspections = activeInspections,
+            compliedInspections = compliedInspections,
+            showComplied = showComplied,
+            onToggleComplied = { showComplied = it },
+            onAddClick = { onAddInspectionClick(aircraft.id) },
             onCardClick = onInspectionCardClick,
             modifier = Modifier.padding(horizontal = Spacing.screenPadding),
           )
@@ -540,63 +506,6 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun InspectionStatusSection(
-  inspectionCards: List<InspectionCardWithStatus>,
-  onAddClick: () -> Unit,
-  onCardClick: (InspectionCardWithStatus) -> Unit = {},
-  modifier: Modifier = Modifier,
-) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-      Text(
-        text = cmpStringResource(AircraftRes.string.inspection_status),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-      )
-      if (!inspectionCards.isEmpty()) {
-        androidx.compose.material3.TextButton(onClick = onAddClick) {
-          Text(cmpStringResource(AircraftRes.string.add_inspection))
-        }
-      }
-    }
-    if (inspectionCards.isEmpty()) {
-      Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-        Text(
-          text = cmpStringResource(AircraftRes.string.no_inspections_yet),
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        OutlinedButton(onClick = onAddClick) {
-          Text(cmpStringResource(AircraftRes.string.add_inspection))
-        }
-      }
-    } else {
-      inspectionCards.chunked(2).forEach { rowItems ->
-        Row(
-          modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-          horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-        ) {
-          rowItems.forEach { item ->
-            InspectionCardItem(
-              cardWithStatus = item,
-              onClick = { onCardClick(item) },
-              modifier = Modifier.weight(1f),
-            )
-          }
-          if (rowItems.size == 1) {
-            Spacer(modifier = Modifier.weight(1f))
-          }
-        }
-      }
-    }
-  }
-}
-
-@Composable
 private fun CriticalAlertsSection(
   overdueInspections: List<InspectionCardWithStatus>,
   onCardClick: (InspectionCardWithStatus) -> Unit,
@@ -654,12 +563,14 @@ private fun InspectionCardItem(
   val statusColor = when (status) {
     DueStatus.OVERDUE -> MaterialTheme.colorScheme.error
     DueStatus.DUE_SOON -> StatusWarning
+    DueStatus.COMPLIED -> StatusOk
     DueStatus.NORMAL -> {
       if (cardWithStatus.dueStatus.isOnCondition) MaterialTheme.colorScheme.onSurfaceVariant
       else StatusOk
     }
   }
   val statusText = when {
+    status == DueStatus.COMPLIED -> "Complied"
     cardWithStatus.dueStatus.isOnCondition -> "On Condition"
     status == DueStatus.OVERDUE -> {
       val dateStr = cardWithStatus.dueStatus.nextDueDate?.toDisplayFormat()
@@ -673,10 +584,15 @@ private fun InspectionCardItem(
 
     else -> "—"
   }
+  val icon = when (status) {
+    DueStatus.OVERDUE -> Icons.Filled.Error
+    DueStatus.COMPLIED -> Icons.Default.CheckCircle
+    else -> Icons.Default.CalendarToday
+  }
   InspectionCard(
     title = cardWithStatus.card.title,
     status = statusText,
-    icon = if (status == DueStatus.OVERDUE) Icons.Filled.Error else Icons.Default.CalendarToday,
+    icon = icon,
     statusColor = statusColor,
     isOverdue = status == DueStatus.OVERDUE,
     onClick = onClick,
@@ -684,93 +600,83 @@ private fun InspectionCardItem(
   )
 }
 
-@Suppress("unused")
 @Composable
-private fun InspectionGrid(aircraft: Aircraft, modifier: Modifier = Modifier) {
-  val hasEngines = aircraft.engine.isNotEmpty()
-  val hasPropeller = aircraft.engine.any { engine ->
-    (engine.propeller?.hub?.serial
-      ?: "").isNotBlank() || (engine.propeller?.blades?.isNotEmpty() == true)
-  }
-
-  // Build the list of applicable inspection cards
-  data class InspectionItem(
-    val title: String,
-    val status: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val statusColor: Color
-  )
-
-  val items = buildList {
-    // Always shown — airframe-level
-    add(
-      InspectionItem(
-        title = cmpStringResource(AircraftRes.string.annual),
-        status = cmpStringResource(AircraftRes.string.due_dec_2024),
-        icon = Icons.Default.CalendarToday,
-        statusColor = StatusOk
+private fun ComplianceSection(
+  activeInspections: List<InspectionCardWithStatus>,
+  compliedInspections: List<InspectionCardWithStatus>,
+  showComplied: Boolean,
+  onToggleComplied: (Boolean) -> Unit,
+  onAddClick: () -> Unit,
+  onCardClick: (InspectionCardWithStatus) -> Unit = {},
+  modifier: Modifier = Modifier,
+) {
+  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+      Text(
+        text = "Compliance & Inspections",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
       )
-    )
-    add(
-      InspectionItem(
-        title = cmpStringResource(AircraftRes.string.pitot_static),
-        status = cmpStringResource(AircraftRes.string.due_in_14h),
-        icon = Icons.Default.Speed,
-        statusColor = StatusWarning
-      )
-    )
-    add(
-      InspectionItem(
-        title = cmpStringResource(AircraftRes.string.transponder),
-        status = cmpStringResource(AircraftRes.string.due_dec_2024),
-        icon = Icons.Default.Radio,
-        statusColor = StatusOk
-      )
-    )
-    // Engine-dependent
-    if (hasEngines) {
-      add(
-        InspectionItem(
-          title = cmpStringResource(AircraftRes.string.hundred_hr),
-          status = cmpStringResource(AircraftRes.string.due_in_14h),
-          icon = Icons.Default.Schedule,
-          statusColor = StatusWarning
-        )
-      )
+      androidx.compose.material3.TextButton(onClick = onAddClick) {
+        Text(cmpStringResource(AircraftRes.string.add_inspection))
+      }
     }
-    // Propeller-dependent
-    if (hasPropeller) {
-      add(
-        InspectionItem(
-          title = cmpStringResource(AircraftRes.string.prop_inspection),
-          status = cmpStringResource(AircraftRes.string.due_dec_2024),
-          icon = Icons.Default.Settings,
-          statusColor = StatusOk
-        )
-      )
-    }
-  }
 
-  Column(
-    modifier = modifier.padding(horizontal = 16.dp),
-    verticalArrangement = Arrangement.spacedBy(12.dp)
-  ) {
-    items.chunked(2).forEach { rowItems ->
-      Row(
-        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)
+    // View Toggle (Due vs History)
+    SingleChoiceSegmentedButtonRow(
+      modifier = Modifier.fillMaxWidth()
+    ) {
+      SegmentedButton(
+        selected = !showComplied,
+        onClick = { onToggleComplied(false) },
+        shape = SegmentedButtonDefaults.itemShape(
+          index = 0,
+          count = 2
+        )
       ) {
-        rowItems.forEach { item ->
-          InspectionCard(
-            title = item.title,
-            status = item.status,
-            icon = item.icon,
-            statusColor = item.statusColor,
-            modifier = Modifier.weight(1f)
-          )
-        }
-        // If the row has only one item, add a spacer to fill the second slot
-        if (rowItems.size == 1) {
-          Spacer(modifier = Modifier.weight(1f))
+        Text("DUE (${activeInspections.size})")
+      }
+      SegmentedButton(
+        selected = showComplied,
+        onClick = { onToggleComplied(true) },
+        shape = SegmentedButtonDefaults.itemShape(
+          index = 1,
+          count = 2
+        )
+      ) {
+        Text("HISTORY (${compliedInspections.size})")
+      }
+    }
+
+    val displayList = if (showComplied) compliedInspections else activeInspections
+
+    if (displayList.isEmpty()) {
+      Text(
+        text = if (showComplied) "No items complied with yet." else "No items currently due.",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(vertical = Spacing.large)
+      )
+    } else {
+      displayList.chunked(2).forEach { rowItems ->
+        Row(
+          modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+          horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+        ) {
+          rowItems.forEach { item ->
+            InspectionCardItem(
+              cardWithStatus = item,
+              onClick = { onCardClick(item) },
+              modifier = Modifier.weight(1f),
+            )
+          }
+          if (rowItems.size == 1) {
+            Spacer(modifier = Modifier.weight(1f))
+          }
         }
       }
     }
