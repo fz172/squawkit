@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +53,7 @@ fun LoginScreen(
 ) {
   val scope = rememberCoroutineScope()
   var error by remember { mutableStateOf<String?>(null) }
+  var isSigningIn by remember { mutableStateOf(false) }
   val signInErrorMessage = stringResource(Res.string.sign_in_error)
   val signInAnonymousErrorMessage = stringResource(Res.string.sign_in_anonymous_error)
 
@@ -103,22 +105,32 @@ fun LoginScreen(
       Spacer(modifier = Modifier.height(20.dp))
       OutlinedButton(
         modifier = Modifier.fillMaxWidth(),
+        enabled = !isSigningIn,
         onClick = {
           scope.launch {
-            val credential = loginViewModel.login()
-            if (credential != null) {
-              onLoginSuccess()
-            } else {
-              error = signInErrorMessage
+            isSigningIn = true
+            try {
+              val credential = loginViewModel.login()
+              if (credential != null) {
+                onLoginSuccess()
+              } else {
+                error = signInErrorMessage
+              }
+            } finally {
+              isSigningIn = false
             }
           }
         }) {
-        Icon(
-          painter = painterResource(Res.drawable.ic_google_rd_na),
-          contentDescription = stringResource(Res.string.google_logo),
-          modifier = Modifier.size(24.dp),
-          tint = Color.Unspecified // Use original colors
-        )
+        if (isSigningIn) {
+          CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+        } else {
+          Icon(
+            painter = painterResource(Res.drawable.ic_google_rd_na),
+            contentDescription = stringResource(Res.string.google_logo),
+            modifier = Modifier.size(24.dp),
+            tint = Color.Unspecified
+          )
+        }
         Spacer(modifier = Modifier.width(16.dp))
         Text(stringResource(Res.string.sign_in_with_google))
       }
@@ -127,13 +139,19 @@ fun LoginScreen(
       Spacer(modifier = Modifier.height(8.dp))
       OutlinedButton(
         modifier = Modifier.fillMaxWidth(),
+        enabled = !isSigningIn,
         onClick = {
           scope.launch {
-            val credential = loginViewModel.loginAnonymously()
-            if (credential != null) {
-              onLoginSuccess()
-            } else {
-              error = signInAnonymousErrorMessage
+            isSigningIn = true
+            try {
+              val credential = loginViewModel.loginAnonymously()
+              if (credential != null) {
+                onLoginSuccess()
+              } else {
+                error = signInAnonymousErrorMessage
+              }
+            } finally {
+              isSigningIn = false
             }
           }
         }) {
