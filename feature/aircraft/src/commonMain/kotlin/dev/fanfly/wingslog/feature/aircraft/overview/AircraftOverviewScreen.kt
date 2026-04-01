@@ -229,7 +229,7 @@ fun AircraftOverviewContent(
     modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
-      TopAppBar(
+    TopAppBar(
         scrollBehavior = scrollBehavior, title = {
           if (aircraft != null) {
             Column {

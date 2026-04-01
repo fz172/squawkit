@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,7 +35,7 @@ import wingslog.feature.settings.generated.resources.sign_out
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.settings.generated.resources.Res as SettingsRes
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
   navController: NavController,
@@ -47,7 +48,7 @@ fun SettingsScreen(
   // This LaunchedEffect will run when 'user' state changes
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {
-      // If the user becomes logged out, go to login and clear everything up to main
+      // If the user becomes logged out, go to log in and clear everything up to main
       navController.navigate("login") {
         popUpTo("main") {
           inclusive = true

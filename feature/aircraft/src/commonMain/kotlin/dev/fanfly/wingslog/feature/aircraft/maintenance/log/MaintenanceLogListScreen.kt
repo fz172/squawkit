@@ -8,18 +8,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,25 +26,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.compose.MaintenanceLogCard
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListUiState
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListViewModel
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
 import wingslog.feature.aircraft.generated.resources.add_log
-import wingslog.feature.aircraft.generated.resources.back
 import wingslog.feature.aircraft.generated.resources.failed_to_load_logs
 import wingslog.feature.aircraft.generated.resources.maintenance_logs
-import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_hint
+import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_description
+import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_title
 import wingslog.feature.aircraft.generated.resources.retry
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-
-import androidx.compose.material.icons.filled.History
-import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
-import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
-import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_description
-import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_title
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,16 +65,9 @@ fun MaintenanceLogListScreen(
 
   Scaffold(
     topBar = {
-      TopAppBar(
-        title = { Text(cmpStringResource(AircraftRes.string.maintenance_logs)) },
-        navigationIcon = {
-          IconButton(onClick = { navController.popBackStack() }) {
-            Icon(
-              Icons.AutoMirrored.Filled.ArrowBack,
-              contentDescription = cmpStringResource(AircraftRes.string.back)
-            )
-          }
-        }
+      WingsLogTopAppBar(
+        title = cmpStringResource(AircraftRes.string.maintenance_logs),
+        onBackClick = { navController.popBackStack() }
       )
     },
     floatingActionButton = {
