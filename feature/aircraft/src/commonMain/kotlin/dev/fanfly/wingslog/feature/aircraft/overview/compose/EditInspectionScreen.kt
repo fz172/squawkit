@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.EngineHourRule
 import dev.fanfly.wingslog.aircraft.ImmediateRule
+import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.LinkedRule
@@ -74,6 +75,7 @@ import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 @Composable
 fun EditInspectionScreen(
   cardWithStatus: InspectionCardWithStatus,
+  availableRecurringInspections: List<InspectionCard>,
   onBackClick: () -> Unit,
   onSave: (
     cardId: String,
@@ -169,7 +171,7 @@ fun EditInspectionScreen(
           .fillMaxSize()
           .verticalScroll(rememberScrollState())
           .padding(horizontal = Spacing.screenPadding)
-          .padding(bottom = Spacing.huge),
+          .padding(bottom = 120.dp), // Clearance for bottom buttons
         verticalArrangement = Arrangement.spacedBy(Spacing.large),
       ) {
         // 1. Compliance Type
@@ -356,13 +358,31 @@ fun EditInspectionScreen(
           })
         }
         if (linkedRuleEnabled) {
-          OutlinedTextField(
-            value = parentInspectionId,
-            onValueChange = { parentInspectionId = it },
-            label = { Text("Parent Inspection ID") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-          )
+          if (availableRecurringInspections.isEmpty()) {
+            Text(
+              text = "No other recurring inspections available to link to. Add a parent inspection (like Annual) first.",
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.error,
+              modifier = Modifier.padding(vertical = Spacing.small)
+            )
+          } else {
+            Text(
+              text = "Select an existing inspection to sync due dates with:",
+              style = MaterialTheme.typography.labelSmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            FlowRow(
+              horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+              availableRecurringInspections.forEach { inspection ->
+                FilterChip(
+                  selected = parentInspectionId == inspection.id,
+                  onClick = { parentInspectionId = inspection.id },
+                  label = { Text(inspection.title) },
+                )
+              }
+            }
+          }
         }
 
         // On Condition
@@ -481,7 +501,7 @@ fun EditInspectionScreen(
               if (onConditionEnabled) {
                 add(InspectionRule(on_condition_rule = OnConditionRule()))
               }
-              if (linkedRuleEnabled) {
+              if (linkedRuleEnabled && parentInspectionId.isNotBlank()) {
                 add(InspectionRule(linked_rule = LinkedRule(parent_inspection_id = parentInspectionId)))
               }
             }

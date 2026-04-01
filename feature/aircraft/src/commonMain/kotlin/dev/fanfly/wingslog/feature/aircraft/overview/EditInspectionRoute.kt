@@ -23,8 +23,13 @@ fun EditInspectionRoute(
     ?: successState?.compliedInspections?.find { it.card.id == cardId }
 
   if (cardWithStatus != null) {
+    val recurringInspections = (successState?.activeInspections ?: emptyList())
+      .map { it.card }
+      .filter { it.type == dev.fanfly.wingslog.aircraft.ComplianceType.COMPLIANCE_TYPE_RECURRING_INSPECTION && it.id != cardId }
+
     EditInspectionScreen(
       cardWithStatus = cardWithStatus,
+      availableRecurringInspections = recurringInspections,
       onBackClick = { navController.popBackStack() },
       onSave = { id, title, type, component, rules, refNum, url, details, oneTime, forceDate, forceEngine, notes ->
         viewModel.saveEditedInspection(id, title, type, component, rules, refNum, url, details, oneTime, forceDate, forceEngine, notes)
