@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import wingslog.feature.aircraft.generated.resources.affects_n_inspection_items
@@ -32,8 +33,6 @@ import wingslog.feature.aircraft.generated.resources.tach_format
 import wingslog.feature.aircraft.generated.resources.unknown_date
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-
-import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 
 @Composable
 fun MaintenanceLogCard(
@@ -137,11 +136,11 @@ fun MaintenanceLogCard(
 @Preview
 @Composable
 private fun MaintenanceLogCardPreview() {
-  val log = dev.fanfly.wingslog.aircraft.MaintenanceLog(
+  val log = MaintenanceLog(
     id = "preview-id",
     work_description = "Performed annual inspection and oil change.",
     tach_time = 1234.5,
-    component_type = dev.fanfly.wingslog.aircraft.MaintenanceLog.ComponentType.ENGINE,
+    component_type = MaintenanceLog.ComponentType.ENGINE,
     inspection_ids = listOf("annual-card-id", "oil-change-card-id")
   )
   MaterialTheme {

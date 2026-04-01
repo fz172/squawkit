@@ -42,7 +42,7 @@ fun WingslogTheme(
 
   MaterialTheme(
     colorScheme = colorScheme,
-    typography = Typography,
+    typography = rememberWingslogTypography(),
     content = content
   )
 }
