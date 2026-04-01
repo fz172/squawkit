@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -20,7 +22,6 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
@@ -56,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormEvent
@@ -140,6 +142,8 @@ fun MaintenanceLogFormScreen(
     )
   }
 
+  val saveLabel = cmpStringResource(if (viewModel.isEditMode) AircraftRes.string.update else AircraftRes.string.save)
+
   Scaffold(
     topBar = {
       TopAppBar(
@@ -177,10 +181,11 @@ fun MaintenanceLogFormScreen(
         CircularProgressIndicator()
       }
     } else {
+      Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
       Column(
         modifier = Modifier
           .fillMaxSize()
-          .padding(innerPadding)
+          .imePadding()
           .verticalScroll(rememberScrollState())
           .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -328,24 +333,16 @@ fun MaintenanceLogFormScreen(
           )
         }
 
-        // Save button
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.End
-        ) {
-          Button(
-            onClick = viewModel::save,
-            enabled = !uiState.isSaving
-          ) {
-            if (uiState.isSaving) {
-              CircularProgressIndicator(
-                modifier = Modifier.padding(end = 8.dp),
-                color = MaterialTheme.colorScheme.onPrimary
-              )
-            }
-            Text(cmpStringResource(if (viewModel.isEditMode) AircraftRes.string.update else AircraftRes.string.save))
-          }
-        }
+        Spacer(Modifier.height(88.dp))
+      }
+      BottomButtons(
+        modifier = Modifier.align(Alignment.BottomCenter),
+        onSaveClick = viewModel::save,
+        onCancelClick = { navController.popBackStack() },
+        saveEnabled = !uiState.isSaving,
+        isSaving = uiState.isSaving,
+        saveLabel = saveLabel,
+      )
       }
     }
   }

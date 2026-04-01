@@ -5,6 +5,7 @@ package dev.fanfly.wingslog.feature.userprofile
 // removed ExposedDropdownMenuAnchorType
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.Checkbox
@@ -89,17 +92,12 @@ fun EditProfileScreen(
     WingsLogTopAppBar(
       title = cmpStringResource(CoreUiRes.string.edit_profile),
       onBackClick = { navController.popBackStack() })
-  }, bottomBar = {
-    // This composable holds the buttons pinned to the bottom
-    BottomButtons(
-      saveEnabled = !uiState.isLoading,
-      onSaveClick = { viewModel.saveChanges() }, // Call ViewModel to save
-      onCancelClick = { navController.popBackStack() })
   }) { innerPadding ->
+    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
     Column(
       modifier = Modifier
-        .padding(innerPadding)
         .fillMaxSize()
+        .verticalScroll(rememberScrollState())
         .padding(horizontal = 16.dp, vertical = 20.dp),
       verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
@@ -239,6 +237,14 @@ fun EditProfileScreen(
           DatePicker(state = datePickerState)
         }
       }
+      Spacer(Modifier.height(88.dp))
     }
+    BottomButtons(
+      modifier = Modifier.align(Alignment.BottomCenter),
+      saveEnabled = !uiState.isLoading,
+      onSaveClick = { viewModel.saveChanges() },
+      onCancelClick = { navController.popBackStack() }
+    )
+  }
   }
 }

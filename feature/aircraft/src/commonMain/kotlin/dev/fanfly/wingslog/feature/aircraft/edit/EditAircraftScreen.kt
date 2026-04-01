@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -92,20 +93,14 @@ fun EditAircraftScreen(
       title = if (uiState.aircraft.id == "") cmpStringResource(AircraftRes.string.add_aircraft) else cmpStringResource(
         AircraftRes.string.update_aircraft
       ), onBackClick = { navController.popBackStack() })
-  }, modifier = Modifier.imePadding(), bottomBar = {
-    // This composable holds the buttons pinned to the bottom
-    BottomButtons(
-      saveEnabled = !uiState.isLoading, onSaveClick = {
-        viewModel.saveAircraft()
-      }, // Call ViewModel to save
-      onCancelClick = { navController.popBackStack() })
   }) { innerPadding ->
+    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
     Column(
       modifier = Modifier
-        .padding(innerPadding)
         .fillMaxSize()
-        .padding(horizontal = 16.dp, vertical = 20.dp)
-        .verticalScroll(scrollState),
+        .imePadding()
+        .verticalScroll(scrollState)
+        .padding(horizontal = 16.dp, vertical = 20.dp),
       verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
       // AIRFRAME
@@ -132,8 +127,16 @@ fun EditAircraftScreen(
           AircraftRes.string.add_engine
         ), modifier = Modifier.fillMaxWidth(), onClick = { viewModel.onAddEngine() })
 
-      Spacer(modifier = Modifier.height(32.dp))
+      Spacer(Modifier.height(88.dp))
     }
+    BottomButtons(
+      modifier = Modifier.align(Alignment.BottomCenter),
+      saveEnabled = !uiState.isLoading,
+      onSaveClick = { viewModel.saveAircraft() },
+      onCancelClick = { navController.popBackStack() },
+      saveLabel = if (uiState.aircraft.id == "") cmpStringResource(AircraftRes.string.add_aircraft) else cmpStringResource(AircraftRes.string.update_aircraft)
+    )
+  }
   }
 }
 
@@ -142,7 +145,8 @@ fun AirframeSection(
   aircraft: Aircraft, viewModel: EditAircraftViewModel, showValidationErrors: Boolean
 ) {
   Card(
-    modifier = Modifier.padding(vertical = 8.dp)
+    modifier = Modifier.padding(vertical = 8.dp),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
   ) {
     Column(modifier = Modifier.padding(12.dp)) {
 
@@ -194,7 +198,8 @@ fun EngineSection(
   engineIndex: Int, engine: Engine, viewModel: EditAircraftViewModel, showValidationErrors: Boolean
 ) {
   Card(
-    modifier = Modifier.padding(vertical = 8.dp)
+    modifier = Modifier.padding(vertical = 8.dp),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
   ) {
 
     Column(modifier = Modifier.padding(12.dp)) {

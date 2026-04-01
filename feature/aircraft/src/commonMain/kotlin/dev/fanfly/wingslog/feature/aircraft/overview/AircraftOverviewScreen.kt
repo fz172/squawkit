@@ -371,7 +371,7 @@ fun LogDetailsBottomBar(
 ) {
   if (aircraft != null) {
     Box(
-      modifier = modifier.fillMaxWidth().background(Color.Transparent).padding(16.dp),
+      modifier = modifier.fillMaxWidth().background(Color.Transparent).padding(8.dp),
       contentAlignment = Alignment.Center
     ) {
       Button(

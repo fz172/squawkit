@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -298,57 +299,57 @@ fun EditInspectionSheet(
 
       Spacer(Modifier.height(8.dp))
 
-      // Save
-      Button(
-        onClick = {
-          if (title.isBlank()) {
-            titleError = true
-            return@Button
-          }
-          // Validate force tach: if enabled, must be a positive number
-          if (forceOverrideEnabled) {
-            val parsedTach = forceTachHours.toFloatOrNull()
-            if (parsedTach == null || parsedTach <= 0f) {
-              forceTachError = true
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+      ) {
+        // Delete
+        OutlinedButton(
+          onClick = { onDeleteRequest(card.id) },
+          modifier = Modifier.weight(1f).height(56.dp),
+          shape = RoundedCornerShape(12.dp),
+          colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colorScheme.error,
+          ),
+          border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+        ) {
+          Text(cmpStringResource(AircraftRes.string.delete_inspection))
+        }
+        // Save
+        Button(
+          onClick = {
+            if (title.isBlank()) {
+              titleError = true
               return@Button
             }
-          }
-          val rules = buildList<InspectionRule> {
-            if (timeRuleEnabled) {
-              val months = timeRuleMonths.toIntOrNull() ?: 12
-              add(
-                InspectionRule(time_rule = TimeRule(interval_months = months))
-              )
+            if (forceOverrideEnabled) {
+              val parsedTach = forceTachHours.toFloatOrNull()
+              if (parsedTach == null || parsedTach <= 0f) {
+                forceTachError = true
+                return@Button
+              }
             }
-            if (tachRuleEnabled) {
-              val hours = tachRuleHours.toFloatOrNull() ?: 100f
-              add(
-                InspectionRule(tach_rule = TachRule(interval_hours = hours))
-              )
+            val rules = buildList<InspectionRule> {
+              if (timeRuleEnabled) {
+                val months = timeRuleMonths.toIntOrNull() ?: 12
+                add(InspectionRule(time_rule = TimeRule(interval_months = months)))
+              }
+              if (tachRuleEnabled) {
+                val hours = tachRuleHours.toFloatOrNull() ?: 100f
+                add(InspectionRule(tach_rule = TachRule(interval_hours = hours)))
+              }
+              if (onConditionEnabled) {
+                add(InspectionRule(on_condition_rule = OnConditionRule()))
+              }
             }
-            if (onConditionEnabled) {
-              add(
-                InspectionRule(on_condition_rule = OnConditionRule())
-              )
-            }
-          }
-          val forcedTach = if (forceOverrideEnabled) forceTachHours.toFloatOrNull() ?: 0f else 0f
-          onSave(card.id, title.trim(), selectedComponent, rules, null, forcedTach, notes.trim())
-        },
-        modifier = Modifier.fillMaxWidth(),
-      ) {
-        Text(cmpStringResource(AircraftRes.string.save))
-      }
-
-      // Delete
-      OutlinedButton(
-        onClick = { onDeleteRequest(card.id) },
-        modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.outlinedButtonColors(
-          contentColor = MaterialTheme.colorScheme.error,
-        ),
-      ) {
-        Text(cmpStringResource(AircraftRes.string.delete_inspection))
+            val forcedTach = if (forceOverrideEnabled) forceTachHours.toFloatOrNull() ?: 0f else 0f
+            onSave(card.id, title.trim(), selectedComponent, rules, null, forcedTach, notes.trim())
+          },
+          modifier = Modifier.weight(1f).height(56.dp),
+          shape = RoundedCornerShape(12.dp),
+        ) {
+          Text(cmpStringResource(AircraftRes.string.save))
+        }
       }
     }
   }
