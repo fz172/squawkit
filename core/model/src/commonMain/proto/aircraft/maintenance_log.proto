@@ -21,7 +21,7 @@ message MaintenanceLog {
 
   string component_serial = 6; // References Engine/Prop/Blade Serial
 
-  double tach_time = 8;
+  double engine_hour = 8;
 
   repeated string attachment_urls = 9;
 

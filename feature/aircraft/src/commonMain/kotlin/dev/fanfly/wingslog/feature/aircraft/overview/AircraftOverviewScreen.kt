@@ -527,8 +527,7 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
     ) {
       Text(
         text = value,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold
+        style = MaterialTheme.typography.titleMedium
       )
       Text(
         text = label,
@@ -632,7 +631,7 @@ private fun CriticalAlertsSection(
         )
       }
 
-      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
         overdueInspections.forEach { inspection ->
           InspectionCardItem(
             cardWithStatus = inspection,

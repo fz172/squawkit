@@ -13,8 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.PropellerBlade
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import wingslog.feature.aircraft.generated.resources.blade_abbreviation_with_index
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
@@ -24,16 +24,16 @@ import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 fun BladeChipsOverview(blades: List<PropellerBlade>) {
   FlowRow(
     modifier = Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.spacedBy(8.dp),
-    verticalArrangement = Arrangement.spacedBy(8.dp)
+    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+    verticalArrangement = Arrangement.spacedBy(Spacing.small)
   ) {
     blades.forEachIndexed { index, blade ->
       Surface(
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(Spacing.small),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
       ) {
         Row(
-          modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+          modifier = Modifier.padding(horizontal = Spacing.small, vertical = Spacing.extraSmall),
           verticalAlignment = Alignment.CenterVertically
         ) {
           Text(

@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.settings.SettingsLevel.DEFAULT
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -48,31 +48,31 @@ fun SettingsRow(
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
-      .padding(16.dp),
+      .padding(Spacing.large),
     verticalAlignment = Alignment.CenterVertically
   ) {
     // --- Icon ---
     Box(
       modifier = Modifier
         .size(40.dp)
-        .clip(RoundedCornerShape(10.dp))
+        .clip(RoundedCornerShape(Spacing.small))
         .background(MaterialTheme.colorScheme.surfaceVariant),
       contentAlignment = Alignment.Center
     ) {
       Icon(
         imageVector = icon,
         contentDescription = title,
-        modifier = Modifier.size(24.dp),
+        modifier = Modifier.size(Spacing.extraLarge),
         tint = tint
       )
     }
 
-    Spacer(modifier = Modifier.width(16.dp))
+    Spacer(modifier = Modifier.width(Spacing.large))
 
     // --- Title ---
     Text(
       text = title,
-      fontSize = 16.sp,
+      style = MaterialTheme.typography.bodyLarge,
       modifier = Modifier.weight(1f),
       color = tint,
     )

@@ -143,8 +143,7 @@ fun EditInspectionSheet(
       ) {
         Text(
           text = cmpStringResource(AircraftRes.string.edit_inspection),
-          style = MaterialTheme.typography.titleLarge,
-          fontWeight = FontWeight.Bold,
+          style = MaterialTheme.typography.titleLarge
         )
         IconButton(onClick = onDismiss) {
           Icon(Icons.Default.Close, contentDescription = null)
@@ -170,7 +169,7 @@ fun EditInspectionSheet(
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
-      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
         listOf(
           InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME to cmpStringResource(AircraftRes.string.airframe),
           InspectionComponentType.INSPECTION_COMPONENT_ENGINE to cmpStringResource(AircraftRes.string.engine),

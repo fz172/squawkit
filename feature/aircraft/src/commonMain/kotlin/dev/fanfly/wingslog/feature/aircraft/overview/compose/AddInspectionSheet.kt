@@ -40,6 +40,7 @@ import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.OnConditionRule
 import dev.fanfly.wingslog.aircraft.TimeRule
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.airframe
 import wingslog.feature.aircraft.generated.resources.component
@@ -159,9 +160,9 @@ fun AddInspectionSheet(
       modifier = Modifier
         .fillMaxWidth()
         .verticalScroll(rememberScrollState())
-        .padding(horizontal = 24.dp)
-        .padding(bottom = 32.dp),
-      verticalArrangement = Arrangement.spacedBy(16.dp),
+        .padding(horizontal = Spacing.extraLarge)
+        .padding(bottom = Spacing.huge),
+      verticalArrangement = Arrangement.spacedBy(Spacing.large),
     ) {
       // Header
       Row(
@@ -171,8 +172,7 @@ fun AddInspectionSheet(
       ) {
         Text(
           text = cmpStringResource(AircraftRes.string.add_inspection),
-          style = MaterialTheme.typography.titleLarge,
-          fontWeight = FontWeight.Bold,
+          style = MaterialTheme.typography.titleLarge
         )
         IconButton(onClick = onDismiss) {
           Icon(Icons.Default.Close, contentDescription = null)
@@ -334,8 +334,8 @@ fun AddInspectionSheet(
           }
           onSave(title.trim(), selectedComponent, rules, notes.trim())
         },
-        modifier = Modifier.fillMaxWidth().height(56.dp),
-        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth().height(Spacing.buttonHeight),
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
       ) {
         Text(cmpStringResource(AircraftRes.string.save))
       }

@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.InspectionCard
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import wingslog.feature.aircraft.generated.resources.airframe
 import wingslog.feature.aircraft.generated.resources.done
 import wingslog.feature.aircraft.generated.resources.engine
@@ -70,8 +71,7 @@ fun InspectionPickerSheet(
       ) {
         Text(
           text = cmpStringResource(AircraftRes.string.select_inspection_work),
-          style = MaterialTheme.typography.titleLarge,
-          fontWeight = FontWeight.Bold,
+          style = MaterialTheme.typography.titleLarge
         )
         IconButton(onClick = onDismiss) {
           Icon(Icons.Default.Close, contentDescription = null)
@@ -92,9 +92,9 @@ fun InspectionPickerSheet(
             modifier = Modifier
               .fillMaxWidth()
               .clickable { onToggle(card.id) }
-              .padding(vertical = 12.dp),
+              .padding(vertical = Spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
           ) {
             Icon(
               imageVector = if (isSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,

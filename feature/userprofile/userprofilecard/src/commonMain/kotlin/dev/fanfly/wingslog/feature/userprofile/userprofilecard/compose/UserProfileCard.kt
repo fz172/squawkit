@@ -21,6 +21,7 @@ import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.edit_profile
@@ -59,37 +60,39 @@ fun UserProfileCard(
         fallbackRes = SharedAssetsRes.drawable.ic_anonymous_user
       )
 
-      Spacer(modifier = Modifier.height(16.dp))
+      Spacer(modifier = Modifier.height(Spacing.large))
 
       // --- User Info ---
       Text(
-        text = if (data.displayName?.isEmpty() ?: true) cmpStringResource(SharedAssetsRes.string.anonymous_user) else data.displayName,
+        text = if (data.displayName?.isEmpty()
+            ?: true
+        ) cmpStringResource(SharedAssetsRes.string.anonymous_user) else data.displayName,
         fontSize = 22.sp,
         fontWeight = FontWeight.Bold,
       )
       if (data.licenceInfo != null) {
         if (data.licenceInfo.license_type != LicenseType.NONE) {
-          Spacer(modifier = Modifier.height(4.dp))
+          Spacer(modifier = Modifier.height(Spacing.extraSmall))
           Text(
             text = cmpStringResource(data.licenceInfo.license_type.displayResId()),
             fontSize = 16.sp,
           )
           if (!data.licenceInfo.license_number.isNullOrEmpty()) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(Spacing.extraSmall))
             Text(
               text = data.licenceInfo.license_number,
               fontSize = 14.sp,
             )
           }
           if (data.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(Spacing.extraSmall))
             Text(
               text = data.licenceInfo.expiration_date?.toLocalDate()?.toDisplayFormat() ?: "",
               fontSize = 14.sp,
             )
           }
         }
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(Spacing.rowGap))
       }
       // --- Edit Profile Button ---
       if (onOpenEditProfile != null) {
@@ -100,7 +103,7 @@ fun UserProfileCard(
         ) {
           Text(
             text = cmpStringResource(Res.string.edit_profile),
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = Spacing.small)
           )
         }
       }

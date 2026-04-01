@@ -37,6 +37,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.aircraft.database.DueMetadata
 import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import wingslog.feature.aircraft.generated.resources.done
 import wingslog.feature.aircraft.generated.resources.due_date
 import wingslog.feature.aircraft.generated.resources.due_engine
@@ -96,12 +97,12 @@ fun InspectionDetailSheet(
         }
       }
 
-      Spacer(Modifier.height(8.dp))
+      Spacer(Modifier.height(Spacing.small))
 
       DueStatusChip(cardWithStatus.dueStatus)
 
       if (cardWithStatus.card.notes.isNotBlank()) {
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(Spacing.medium))
         Text(
           text = cardWithStatus.card.notes,
           style = MaterialTheme.typography.bodyMedium,
@@ -109,7 +110,7 @@ fun InspectionDetailSheet(
         )
       }
 
-      Spacer(Modifier.height(16.dp))
+      Spacer(Modifier.height(Spacing.large))
 
       Text(
         text = cmpStringResource(AircraftRes.string.maintenance_history),
@@ -117,7 +118,7 @@ fun InspectionDetailSheet(
         fontWeight = FontWeight.SemiBold
       )
 
-      Spacer(Modifier.height(8.dp))
+      Spacer(Modifier.height(Spacing.small))
 
       if (logs.isEmpty()) {
         Text(
@@ -128,11 +129,11 @@ fun InspectionDetailSheet(
       } else {
         logs.forEach { log ->
           LogHistoryItem(log)
-          HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+          HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.extraSmall))
         }
       }
 
-      Spacer(Modifier.height(32.dp))
+      Spacer(Modifier.height(Spacing.huge))
     }
   }
 }
@@ -196,7 +197,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
       )
       Text(
         text = cmpStringResource(
-          AircraftRes.string.engine_format, log.tach_time.formatToOneDecimalPlace()
+          AircraftRes.string.engine_format, log.engine_hour.formatToOneDecimalPlace()
         ),
 
         style = MaterialTheme.typography.bodySmall,

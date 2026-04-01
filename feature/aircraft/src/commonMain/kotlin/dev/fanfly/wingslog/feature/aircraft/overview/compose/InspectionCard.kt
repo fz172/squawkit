@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -57,10 +58,10 @@ fun InspectionCard(
       containerColor = containerColor
     ),
     border = androidx.compose.foundation.BorderStroke(2.dp, borderColor),
-    shape = RoundedCornerShape(20.dp)
+    shape = RoundedCornerShape(Spacing.cardCornerRadius)
   ) {
     Column(
-      modifier = Modifier.fillMaxSize().padding(16.dp),
+      modifier = Modifier.fillMaxSize().padding(Spacing.large),
       verticalArrangement = Arrangement.SpaceBetween,
       horizontalAlignment = Alignment.Start
     ) {
@@ -71,7 +72,7 @@ fun InspectionCard(
           modifier = Modifier.size(18.dp),
           tint = if (isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
         )
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(Spacing.small))
         Text(
           text = title,
           style = MaterialTheme.typography.titleSmall,

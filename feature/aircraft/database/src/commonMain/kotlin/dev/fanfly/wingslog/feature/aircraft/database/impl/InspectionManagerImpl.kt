@@ -95,7 +95,7 @@ class InspectionManagerImpl(
     val hasForcedEngine = card.force_due_engine_hour > 0f
 
     val currentEngine =
-      logs.filter { it.tach_time > 0.0 }.maxOfOrNull { it.tach_time }?.toFloat() ?: 0f
+      logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }?.toFloat() ?: 0f
     val currentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
     if (hasForcedDate || hasForcedEngine) {
@@ -152,7 +152,7 @@ class InspectionManagerImpl(
       }
 
       if (rule.engine_hour_rule != null) {
-        val baseEngine = latestLog?.tach_time?.toFloat() ?: 0f
+        val baseEngine = latestLog?.engine_hour?.toFloat() ?: 0f
         val calculated = baseEngine + rule.engine_hour_rule!!.interval_hours
 
         if (nextDueEngine == null || calculated < nextDueEngine) {

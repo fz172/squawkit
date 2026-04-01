@@ -118,8 +118,8 @@ class MaintenanceLogManagerImpl(
       data[COMPONENT_SERIAL_FIELD] = log.component_serial
     }
 
-    if (log.tach_time > 0.0) {
-      data[TACH_TIME_FIELD] = log.tach_time
+    if (log.engine_hour > 0.0) {
+      data[TACH_TIME_FIELD] = log.engine_hour
     }
 
     docRef.setEncoded(data, merge = true)
