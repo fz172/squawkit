@@ -201,6 +201,8 @@ class AircraftOverviewViewModel(
     sbUrl: String,
     complianceDetails: String,
     isOneTime: Boolean,
+    forceDueDate: com.squareup.wire.Instant?,
+    forceDueEngine: Float,
     notes: String = "",
   ) {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
@@ -214,6 +216,8 @@ class AircraftOverviewViewModel(
         sb_url = sbUrl,
         compliance_details = complianceDetails,
         is_one_time = isOneTime,
+        force_due_date = forceDueDate,
+        force_due_engine_hour = forceDueEngine,
         notes = notes,
       )
       inspectionManager.addInspection(state.aircraft.id, card)

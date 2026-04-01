@@ -11,12 +11,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
@@ -58,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -79,6 +83,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.delete
+import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
 import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.airframe
 import wingslog.feature.aircraft.generated.resources.airframe_time_label
@@ -142,6 +147,7 @@ fun AircraftOverviewScreen(
     onEditClick = { aircraftId -> navController.navigate("edit_aircraft/$aircraftId") },
     onDeleteConfirm = { viewModel.deleteAircraft() },
     onLogDetailsClick = { aircraftId -> navController.navigate("maintenance_logs/$aircraftId") },
+    onAddLogClick = { aircraftId -> navController.navigate("maintenance_log_create/$aircraftId") },
     onAddInspectionClick = { aircraftId -> navController.navigate("aircraft_inspection_create/$aircraftId") },
     onInspectionCardClick = { card -> viewModel.showInspectionDetail(card) },
     onDismissInspectionDetail = { viewModel.hideInspectionDetail() },
@@ -168,6 +174,7 @@ fun AircraftOverviewContent(
   onEditClick: (String) -> Unit,
   onDeleteConfirm: () -> Unit,
   onLogDetailsClick: (String) -> Unit,
+  onAddLogClick: (String) -> Unit = {},
   onAddInspectionClick: (String) -> Unit = {},
   onInspectionCardClick: (InspectionCardWithStatus) -> Unit = {},
   onDismissInspectionDetail: () -> Unit = {},
@@ -274,7 +281,7 @@ fun AircraftOverviewContent(
         cardWithStatus = selectedInspection,
         logs = logsForSelectedInspection,
         onDismiss = onDismissInspectionDetail,
-        onEditClick = { 
+        onEditClick = {
           if (aircraft != null) {
             onEditInspectionClick(aircraft.id, selectedInspection.card.id)
           }
@@ -318,10 +325,17 @@ fun AircraftOverviewContent(
 
           // --- Log Stats Section ---
           logStats?.let { stats ->
-            LogStatsSection(
-              stats = stats,
-              modifier = Modifier.padding(horizontal = Spacing.screenPadding)
-            )
+            if (stats.total == 0L) {
+              dev.fanfly.wingslog.feature.aircraft.overview.compose.LogOnboardingCard(
+                onAddLogClick = { onAddLogClick(aircraft.id) },
+                modifier = Modifier.padding(horizontal = Spacing.screenPadding)
+              )
+            } else {
+              LogStatsSection(
+                stats = stats,
+                modifier = Modifier.padding(horizontal = Spacing.screenPadding)
+              )
+            }
           }
 
           // --- Compliance & Inspections Section ---
@@ -341,8 +355,10 @@ fun AircraftOverviewContent(
         // Floating Bottom Bar
         LogDetailsBottomBar(
           aircraft = aircraft,
+          logStats = logStats,
           modifier = Modifier.align(Alignment.BottomCenter),
-          onLogDetailsClick = onLogDetailsClick
+          onLogDetailsClick = onLogDetailsClick,
+          onAddLogClick = onAddLogClick
         )
       }
     }
@@ -352,7 +368,11 @@ fun AircraftOverviewContent(
 
 @Composable
 fun LogDetailsBottomBar(
-  aircraft: Aircraft?, modifier: Modifier = Modifier, onLogDetailsClick: (String) -> Unit
+  aircraft: Aircraft?,
+  logStats: LogStats?,
+  modifier: Modifier = Modifier,
+  onLogDetailsClick: (String) -> Unit,
+  onAddLogClick: (String) -> Unit = {}
 ) {
   if (aircraft != null) {
     Box(
@@ -361,7 +381,10 @@ fun LogDetailsBottomBar(
       contentAlignment = Alignment.Center
     ) {
       Button(
-        onClick = { onLogDetailsClick(aircraft.id) },
+        onClick = {
+          if (logStats?.total == 0L) onAddLogClick(aircraft.id)
+          else onLogDetailsClick(aircraft.id)
+        },
         modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().height(Spacing.buttonHeight),
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.buttonColors(
@@ -375,8 +398,13 @@ fun LogDetailsBottomBar(
           contentDescription = null,
           modifier = Modifier.padding(end = Spacing.small)
         )
+        val text = if (logStats?.total == 0L) {
+          cmpStringResource(AircraftRes.string.add_first_maintenance_log)
+        } else {
+          cmpStringResource(AircraftRes.string.log_details)
+        }
         Text(
-          text = cmpStringResource(AircraftRes.string.log_details).uppercase(),
+          text = text.uppercase(),
           style = MaterialTheme.typography.titleMedium,
           fontWeight = FontWeight.Bold
         )
@@ -655,12 +683,47 @@ private fun ComplianceSection(
     val displayList = if (showComplied) compliedInspections else activeInspections
 
     if (displayList.isEmpty()) {
-      Text(
-        text = if (showComplied) "No items complied with yet." else "No items currently due.",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(vertical = Spacing.large)
-      )
+      if (!showComplied) {
+        Card(
+          modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.medium),
+          colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+          shape = RoundedCornerShape(Spacing.cardCornerRadius)
+        ) {
+          Column(
+            modifier = Modifier.padding(Spacing.extraLarge),
+            verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+            horizontalAlignment = Alignment.CenterHorizontally
+          ) {
+            Icon(
+              Icons.Default.CalendarToday,
+              contentDescription = null,
+              modifier = Modifier.size(48.dp),
+              tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
+            Text(
+              text = cmpStringResource(AircraftRes.string.no_inspections_yet),
+              style = MaterialTheme.typography.bodyMedium,
+              textAlign = TextAlign.Center,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            OutlinedButton(
+              onClick = onAddClick,
+              shape = RoundedCornerShape(Spacing.buttonCornerRadius)
+            ) {
+              Icon(Icons.Default.Add, contentDescription = null)
+              Spacer(Modifier.width(Spacing.small))
+              Text(cmpStringResource(AircraftRes.string.add_inspection).uppercase())
+            }
+          }
+        }
+      } else {
+        Text(
+          text = "No items complied with yet.",
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.padding(vertical = Spacing.large)
+        )
+      }
     } else {
       displayList.chunked(2).forEach { rowItems ->
         Row(

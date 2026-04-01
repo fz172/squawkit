@@ -95,7 +95,9 @@
     <string name="oil_change_50hr">Oil Change (50hr)</string>
     <string name="delete_inspection">Delete Inspection</string>
     <string name="override_next_due_engine">Override next due engine</string>
+    <string name="override_next_due_date">Override next due date</string>
     <string name="force_due_engine_hours">Force Due Engine (hours)</string>
+    <string name="force_due_date">Force Due Date</string>
     <string name="done">Done</string>
     <string name="update">Update</string>
     <string name="add">Add</string>

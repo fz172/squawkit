@@ -85,7 +85,7 @@ fun AppEntry() {
           route = "aircraft_inspection_create/{aircraftId}",
           arguments = listOf(navArgument("aircraftId") { type = NavType.StringType })
         ) {
-          AddInspectionRoute(navController = navController)dd
+          AddInspectionRoute(navController = navController)
         }
 
         composable(

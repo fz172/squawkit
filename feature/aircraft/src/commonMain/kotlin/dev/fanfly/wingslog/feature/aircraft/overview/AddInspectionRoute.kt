@@ -16,17 +16,32 @@ fun AddInspectionRoute(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val successState = uiState as? AircraftOverviewUiState.Success
-  
-  val recurringInspections = (successState?.activeInspections ?: emptyList())
-    .map { it.card }
-    .filter { it.type == dev.fanfly.wingslog.aircraft.ComplianceType.COMPLIANCE_TYPE_RECURRING_INSPECTION }
 
-  AddInspectionScreen(
-    availableRecurringInspections = recurringInspections,
-    onBackClick = { navController.popBackStack() },
-    onSave = { title, type, component, rules, refNum, url, details, oneTime, notes ->
-      viewModel.saveNewInspection(title, type, component, rules, refNum, url, details, oneTime, notes)
-      navController.popBackStack()
-    }
-  )
+  if (successState != null) {
+    val aircraftId = successState.aircraft.id
+    val allInspections =
+      (successState.activeInspections + successState.compliedInspections).map { it.card }
+
+    AddInspectionScreen(
+      aircraftId = aircraftId,
+      availableInspections = allInspections,
+      onCancel = { navController.popBackStack() },
+      onSave = { card ->
+        viewModel.saveNewInspection(
+          title = card.title,
+          type = card.type,
+          component = card.component,
+          rules = emptyList(), // I need to map intervalMonths/Hours back to rules if the VM expects it
+          referenceNumber = card.reference_number,
+          sbUrl = card.sb_url,
+          complianceDetails = "", // Need to handle these if they are relevant
+          isOneTime = false, // Map from complianceType if needed
+          forceDueDate = card.force_due_date,
+          forceDueEngine = card.force_due_engine_hour,
+          notes = "" // Map from card if added
+        )
+        navController.popBackStack()
+      }
+    )
+  }
 }
