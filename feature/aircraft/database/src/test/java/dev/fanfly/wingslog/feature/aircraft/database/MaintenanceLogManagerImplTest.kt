@@ -61,7 +61,7 @@ class MaintenanceLogManagerImplTest {
       work_description = "Oil change performed",
       component_type = MaintenanceLog.ComponentType.ENGINE,
       component_serial = "ENG-001",
-      tach_time = 1234.5,
+      engine_hour = 1234.5,
       timestamp = com.squareup.wire.Instant.ofEpochSecond(1700000000L)
     )
   }
