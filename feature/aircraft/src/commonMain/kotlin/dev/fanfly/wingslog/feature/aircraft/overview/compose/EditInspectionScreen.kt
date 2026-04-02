@@ -16,8 +16,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Checkbox
@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.EngineHourRule
 import dev.fanfly.wingslog.aircraft.InspectionCard
+import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.TimeRule
@@ -62,20 +63,38 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.aircraft.generated.resources.back
-import wingslog.feature.aircraft.generated.resources.component
-import wingslog.feature.aircraft.generated.resources.edit_inspection
-import wingslog.feature.aircraft.generated.resources.force_due_engine_hours
-import wingslog.feature.aircraft.generated.resources.inspection_title
-import wingslog.feature.aircraft.generated.resources.interval_hours
-import wingslog.feature.aircraft.generated.resources.interval_months
-import wingslog.feature.aircraft.generated.resources.ok
-import wingslog.feature.aircraft.generated.resources.override_next_due_date
-import wingslog.feature.aircraft.generated.resources.override_next_due_engine
-import wingslog.feature.aircraft.generated.resources.schedule_with_another_work
-import wingslog.feature.aircraft.generated.resources.schedule_with_another_work_description
-import wingslog.feature.aircraft.generated.resources.select_date
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+import wingslog.core.ui.generated.resources.back
+import wingslog.core.ui.generated.resources.ok
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_ad_short
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_routine_short
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_sb_short
+import wingslog.feature.aircraft.inspection.generated.resources.component
+import wingslog.feature.aircraft.inspection.generated.resources.component_airframe
+import wingslog.feature.aircraft.inspection.generated.resources.component_avionics
+import wingslog.feature.aircraft.inspection.generated.resources.component_engine
+import wingslog.feature.aircraft.inspection.generated.resources.component_propeller
+import wingslog.feature.aircraft.inspection.generated.resources.edit_inspection
+import wingslog.feature.aircraft.inspection.generated.resources.force_due_engine_hours
+import wingslog.feature.aircraft.inspection.generated.resources.force_overrides_safety
+import wingslog.feature.aircraft.inspection.generated.resources.inspection_title
+import wingslog.feature.aircraft.inspection.generated.resources.interval_hours
+import wingslog.feature.aircraft.inspection.generated.resources.interval_months
+import wingslog.feature.aircraft.inspection.generated.resources.intervals
+import wingslog.feature.aircraft.inspection.generated.resources.link_to_inspection
+import wingslog.feature.aircraft.inspection.generated.resources.manufacturer_url
+import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance
+import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance_desc
+import wingslog.feature.aircraft.inspection.generated.resources.override_next_due_date
+import wingslog.feature.aircraft.inspection.generated.resources.override_next_due_engine
+import wingslog.feature.aircraft.inspection.generated.resources.reference_number
+import wingslog.feature.aircraft.inspection.generated.resources.remove_link
+import wingslog.feature.aircraft.inspection.generated.resources.schedule_with_another_work
+import wingslog.feature.aircraft.inspection.generated.resources.schedule_with_another_work_description
+import wingslog.feature.aircraft.inspection.generated.resources.select_date
+import wingslog.feature.aircraft.inspection.generated.resources.unknown
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,7 +139,7 @@ fun EditInspectionScreen(
       TopAppBar(
         title = {
           Text(
-            stringResource(AircraftRes.string.edit_inspection).uppercase(),
+            stringResource(InspectionRes.string.edit_inspection).uppercase(),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
           )
@@ -128,8 +147,8 @@ fun EditInspectionScreen(
         navigationIcon = {
           IconButton(onClick = onCancel) {
             Icon(
-              Icons.Default.ArrowBack,
-              contentDescription = stringResource(AircraftRes.string.back)
+              Icons.AutoMirrored.Default.ArrowBack,
+              contentDescription = stringResource(CoreRes.string.back)
             )
           }
         }
@@ -147,7 +166,7 @@ fun EditInspectionScreen(
       OutlinedTextField(
         value = title,
         onValueChange = { title = it },
-        label = { Text(stringResource(AircraftRes.string.inspection_title)) },
+        label = { Text(stringResource(InspectionRes.string.inspection_title)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true
       )
@@ -156,7 +175,7 @@ fun EditInspectionScreen(
 
       // Component Type (Static in Edit)
       Text(
-        stringResource(AircraftRes.string.component),
+        stringResource(InspectionRes.string.component),
         style = MaterialTheme.typography.labelLarge
       )
       Box(
@@ -168,7 +187,13 @@ fun EditInspectionScreen(
           .padding(horizontal = Spacing.medium, vertical = Spacing.small)
       ) {
         Text(
-          text = component.name.removePrefix("INSPECTION_COMPONENT_"),
+          text = when (component) {
+            InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME -> stringResource(InspectionRes.string.component_airframe)
+            InspectionComponentType.INSPECTION_COMPONENT_ENGINE -> stringResource(InspectionRes.string.component_engine)
+            InspectionComponentType.INSPECTION_COMPONENT_PROPELLER -> stringResource(InspectionRes.string.component_propeller)
+            InspectionComponentType.INSPECTION_COMPONENT_AVIONICS -> stringResource(InspectionRes.string.component_avionics)
+            else -> component.name.removePrefix("INSPECTION_COMPONENT_")
+          },
           style = MaterialTheme.typography.bodyMedium,
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -178,7 +203,10 @@ fun EditInspectionScreen(
       Spacer(modifier = Modifier.height(Spacing.medium))
 
       // Compliance Type (Static in Edit)
-      Text("COMPLIANCE TYPE", style = MaterialTheme.typography.labelLarge)
+      Text(
+        stringResource(InspectionRes.string.compliance_type),
+        style = MaterialTheme.typography.labelLarge
+      )
       Box(
         modifier = Modifier
           .background(
@@ -188,7 +216,12 @@ fun EditInspectionScreen(
           .padding(horizontal = Spacing.medium, vertical = Spacing.small)
       ) {
         Text(
-          text = type.name.removePrefix("COMPLIANCE_TYPE_"),
+          text = when (type) {
+            ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> stringResource(InspectionRes.string.compliance_type_ad_short)
+            ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> stringResource(InspectionRes.string.compliance_type_sb_short)
+            ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION -> stringResource(InspectionRes.string.compliance_type_routine_short)
+            else -> type.name.removePrefix("COMPLIANCE_TYPE_")
+          },
           style = MaterialTheme.typography.bodyMedium,
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -196,28 +229,6 @@ fun EditInspectionScreen(
       }
 
       Spacer(modifier = Modifier.height(Spacing.medium))
-
-      // Regular Interval Inputs
-      if (linkedToId == null) {
-        Text("INTERVALS", style = MaterialTheme.typography.labelLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-          OutlinedTextField(
-            value = intervalMonths,
-            onValueChange = { intervalMonths = it.filter { c -> c.isDigit() } },
-            label = { Text(stringResource(AircraftRes.string.interval_months)) },
-            modifier = Modifier.weight(1f)
-          )
-          OutlinedTextField(
-            value = intervalHours,
-            onValueChange = { intervalHours = it.filter { c -> c.isDigit() || c == '.' } },
-            label = { Text(stringResource(AircraftRes.string.interval_hours)) },
-            modifier = Modifier.weight(1f)
-          )
-        }
-
-        Spacer(modifier = Modifier.height(Spacing.small))
-      }
-
       // One-time compliance toggle
       Row(
         modifier = Modifier.fillMaxWidth(),
@@ -225,14 +236,42 @@ fun EditInspectionScreen(
         horizontalArrangement = Arrangement.SpaceBetween
       ) {
         Column(modifier = Modifier.weight(1f)) {
-          Text("One-Time Compliance", style = MaterialTheme.typography.bodyLarge)
           Text(
-            "Moves to history after first log",
+            stringResource(InspectionRes.string.one_time_compliance),
+            style = MaterialTheme.typography.bodyLarge
+          )
+          Text(
+            stringResource(InspectionRes.string.one_time_compliance_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
         Switch(checked = isOneTime, onCheckedChange = { isOneTime = it })
+      }
+      Spacer(modifier = Modifier.height(Spacing.medium))
+
+      // Regular Interval Inputs
+      if (linkedToId == null) {
+        Text(
+          stringResource(InspectionRes.string.intervals),
+          style = MaterialTheme.typography.labelLarge
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+          OutlinedTextField(
+            value = intervalMonths,
+            onValueChange = { intervalMonths = it.filter { c -> c.isDigit() } },
+            label = { Text(stringResource(InspectionRes.string.interval_months)) },
+            modifier = Modifier.weight(1f)
+          )
+          OutlinedTextField(
+            value = intervalHours,
+            onValueChange = { intervalHours = it.filter { c -> c.isDigit() || c == '.' } },
+            label = { Text(stringResource(InspectionRes.string.interval_hours)) },
+            modifier = Modifier.weight(1f)
+          )
+        }
+
+        Spacer(modifier = Modifier.height(Spacing.small))
       }
 
       if (type == ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN || type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
@@ -240,14 +279,14 @@ fun EditInspectionScreen(
         OutlinedTextField(
           value = refNumber,
           onValueChange = { refNumber = it },
-          label = { Text("Reference Number") },
+          label = { Text(stringResource(InspectionRes.string.reference_number)) },
           modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(Spacing.small))
         OutlinedTextField(
           value = manufacturerUrl,
           onValueChange = { manufacturerUrl = it },
-          label = { Text("Manufacturer URL") },
+          label = { Text(stringResource(InspectionRes.string.manufacturer_url)) },
           modifier = Modifier.fillMaxWidth()
         )
       }
@@ -256,11 +295,11 @@ fun EditInspectionScreen(
 
       // Linked Inspection
       Text(
-        stringResource(AircraftRes.string.schedule_with_another_work).uppercase(),
+        stringResource(InspectionRes.string.schedule_with_another_work),
         style = MaterialTheme.typography.labelLarge
       )
       Text(
-        stringResource(AircraftRes.string.schedule_with_another_work_description),
+        stringResource(InspectionRes.string.schedule_with_another_work_description),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
       )
@@ -273,14 +312,14 @@ fun EditInspectionScreen(
         ) {
           Icon(Icons.Default.Add, contentDescription = null)
           Spacer(modifier = Modifier.width(Spacing.small))
-          Text("Link to inspection")
+          Text(stringResource(InspectionRes.string.link_to_inspection))
         }
       } else {
         val linkedInsp = availableInspections.find { it.id == linkedToId }
         InputChip(
           selected = true,
           onClick = { showLinkedPicker = true },
-          label = { Text(linkedInsp?.title ?: "Unknown") },
+          label = { Text(linkedInsp?.title ?: stringResource(InspectionRes.string.unknown)) },
           trailingIcon = {
             IconButton(
               onClick = { linkedToId = null },
@@ -288,7 +327,7 @@ fun EditInspectionScreen(
             ) {
               Icon(
                 Icons.Default.Close,
-                contentDescription = "Remove link",
+                contentDescription = stringResource(InspectionRes.string.remove_link),
                 modifier = Modifier.size(InputChipDefaults.IconSize)
               )
             }
@@ -315,27 +354,27 @@ fun EditInspectionScreen(
 
       // Overrides
       Text(
-        "FORCE OVERRIDES (SAFETY)",
+        stringResource(InspectionRes.string.force_overrides_safety),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.error
       )
 
       Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(checked = forceOverrideEngine, onCheckedChange = { forceOverrideEngine = it })
-        Text(stringResource(AircraftRes.string.override_next_due_engine))
+        Text(stringResource(InspectionRes.string.override_next_due_engine))
       }
       if (forceOverrideEngine) {
         OutlinedTextField(
           value = forcedEngineHours,
           onValueChange = { forcedEngineHours = it.filter { c -> c.isDigit() || c == '.' } },
-          label = { Text(stringResource(AircraftRes.string.force_due_engine_hours)) },
+          label = { Text(stringResource(InspectionRes.string.force_due_engine_hours)) },
           modifier = Modifier.fillMaxWidth().padding(start = 32.dp)
         )
       }
 
       Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(checked = forceOverrideDate, onCheckedChange = { forceOverrideDate = it })
-        Text(stringResource(AircraftRes.string.override_next_due_date))
+        Text(stringResource(InspectionRes.string.override_next_due_date))
       }
       if (forceOverrideDate) {
         OutlinedCard(
@@ -351,7 +390,7 @@ fun EditInspectionScreen(
             val dateText = forcedDateMillis?.let {
               Instant.fromEpochMilliseconds(it)
                 .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-            } ?: stringResource(AircraftRes.string.select_date)
+            } ?: stringResource(InspectionRes.string.select_date)
             Text(dateText)
           }
         }
@@ -419,7 +458,7 @@ fun EditInspectionScreen(
         TextButton(onClick = {
           forcedDateMillis = datePickerState.selectedDateMillis
           showDatePicker = false
-        }) { Text(stringResource(AircraftRes.string.ok)) }
+        }) { Text(stringResource(CoreRes.string.ok)) }
       }
     ) {
       DatePicker(state = datePickerState)

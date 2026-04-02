@@ -6,8 +6,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
-import wingslog.feature.aircraft.generated.resources.cancel
 import wingslog.feature.aircraft.generated.resources.delete_inspection
 import wingslog.feature.aircraft.generated.resources.delete_inspection_confirmation
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
@@ -38,7 +38,7 @@ fun DeleteInspectionConfirmDialog(
     },
     dismissButton = {
       TextButton(onClick = onDismiss) {
-        Text(cmpStringResource(AircraftRes.string.cancel))
+        Text(cmpStringResource(CoreRes.string.cancel))
       }
     },
   )

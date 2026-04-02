@@ -63,8 +63,6 @@
     <string name="transponder">Transponder</string>
     <string name="engine_time_label">Engine Time</string>
     <string name="engine_time_hours_format">%1$s hrs</string>
-    <string name="cancel">Cancel</string>
-    <string name="back">Back</string>
     <string name="settings">Settings</string>
     <string name="airframe_time_hours">Airframe Time (hours)</string>
     <string name="prop_time_hours">Prop Time (hours)</string>

@@ -66,17 +66,18 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.back
+import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
 import wingslog.feature.aircraft.generated.resources.add
 import wingslog.feature.aircraft.generated.resources.add_log
 import wingslog.feature.aircraft.generated.resources.airframe_serial
 import wingslog.feature.aircraft.generated.resources.airframe_time_hours
-import wingslog.feature.aircraft.generated.resources.back
-import wingslog.feature.aircraft.generated.resources.cancel
 import wingslog.feature.aircraft.generated.resources.component_type
 import wingslog.feature.aircraft.generated.resources.delete_log
 import wingslog.feature.aircraft.generated.resources.edit_log
 import wingslog.feature.aircraft.generated.resources.engine
+import wingslog.feature.aircraft.generated.resources.engine_time_hours
 import wingslog.feature.aircraft.generated.resources.inspection_work
 import wingslog.feature.aircraft.generated.resources.loading_aircraft
 import wingslog.feature.aircraft.generated.resources.maintenance_date
@@ -88,7 +89,6 @@ import wingslog.feature.aircraft.generated.resources.prop_time_hours
 import wingslog.feature.aircraft.generated.resources.propeller_component
 import wingslog.feature.aircraft.generated.resources.remove
 import wingslog.feature.aircraft.generated.resources.save
-import wingslog.feature.aircraft.generated.resources.engine_time_hours
 import wingslog.feature.aircraft.generated.resources.tap_to_change_date
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.unknown_inspection
@@ -136,7 +136,7 @@ fun MaintenanceLogFormScreen(
       },
       dismissButton = {
         TextButton(onClick = { showDeleteDialog = false }) {
-          Text(cmpStringResource(AircraftRes.string.cancel))
+          Text(cmpStringResource(CoreRes.string.cancel))
         }
       }
     )
@@ -159,7 +159,7 @@ fun MaintenanceLogFormScreen(
           IconButton(onClick = { navController.popBackStack() }) {
             Icon(
               Icons.AutoMirrored.Filled.ArrowBack,
-              contentDescription = cmpStringResource(AircraftRes.string.back)
+              contentDescription = cmpStringResource(CoreRes.string.back)
             )
           }
         }
@@ -236,7 +236,7 @@ fun MaintenanceLogFormScreen(
               },
               dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                  Text(cmpStringResource(AircraftRes.string.cancel))
+                  Text(cmpStringResource(CoreRes.string.cancel))
                 }
               }
             ) {

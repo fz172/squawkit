@@ -1,6 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="compliance_type_ad">Airworthiness Directives (AD)</string>
-  <string name="compliance_type_sb">Service Bulletins (SB)</string>
-  <string name="compliance_type_routine">Routine Inspections</string>
+    <string name="compliance_type_ad">Airworthiness Directives (AD)</string>
+    <string name="compliance_type_sb">Service Bulletins (SB)</string>
+    <string name="compliance_type_routine">Routine Inspections</string>
+    <string name="add_inspection">Add Inspection</string>
+    <string name="edit_inspection">Edit inspection</string>
+    <string name="component">Component</string>
+    <string name="component_airframe">Airframe</string>
+    <string name="component_engine">Engine</string>
+    <string name="component_propeller">Propeller</string>
+    <string name="component_avionics">Avionics</string>
+    <string name="inspection_title">Inspection Title</string>
+    <string name="interval_months">Interval (months)</string>
+    <string name="interval_hours">Interval (hours)</string>
+    <string name="schedule_with_another_work">Schedule With Another Work</string>
+    <string name="schedule_with_another_work_description">This work will be due whenever the selected work is next due.</string>
+    <string name="override_next_due_engine">Override next due engine</string>
+    <string name="override_next_due_date">Override next due date</string>
+    <string name="force_due_engine_hours">Force Due Engine (hours)</string>
+    <string name="select_date">Select date</string>
+
+    <string name="compliance_type">Compliance Type</string>
+    <string name="compliance_type_ad_short">AD</string>
+    <string name="compliance_type_sb_short">SB</string>
+    <string name="compliance_type_routine_short">Routine</string>
+    <string name="intervals">Intervals</string>
+    <string name="one_time_compliance">One-Time Compliance</string>
+    <string name="one_time_compliance_desc">Moves to history after first log</string>
+    <string name="reference_number">Reference Number</string>
+    <string name="manufacturer_url">Manufacturer URL</string>
+    <string name="link_to_inspection">Link to inspection</string>
+    <string name="unknown">Unknown</string>
+    <string name="remove_link">Remove link</string>
+    <string name="force_overrides_safety">Force Override</string>
 </resources>

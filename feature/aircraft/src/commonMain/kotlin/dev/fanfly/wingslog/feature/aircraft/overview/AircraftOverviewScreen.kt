@@ -82,13 +82,13 @@ import dev.fanfly.wingslog.feature.aircraft.overview.data.LogStats
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.back
+import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
 import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
 import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.airframe
 import wingslog.feature.aircraft.generated.resources.airframe_time_label
-import wingslog.feature.aircraft.generated.resources.back
-import wingslog.feature.aircraft.generated.resources.cancel
 import wingslog.feature.aircraft.generated.resources.delete_aircraft
 import wingslog.feature.aircraft.generated.resources.edit_aircraft
 import wingslog.feature.aircraft.generated.resources.engine
@@ -209,7 +209,7 @@ fun AircraftOverviewContent(
       },
       dismissButton = {
         TextButton(onClick = { showDeleteDialog = false }) {
-          Text(cmpStringResource(AircraftRes.string.cancel))
+          Text(cmpStringResource(CoreRes.string.cancel))
         }
       })
   }
@@ -238,7 +238,7 @@ fun AircraftOverviewContent(
           IconButton(onClick = onBackClick) {
             Icon(
               Icons.AutoMirrored.Filled.ArrowBack,
-              contentDescription = cmpStringResource(AircraftRes.string.back)
+              contentDescription = cmpStringResource(CoreRes.string.back)
             )
           }
         }, actions = {
