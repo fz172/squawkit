@@ -78,8 +78,8 @@ fun EditInspectionScreen(
   onDeleteRequest: (String) -> Unit,
 ) {
   var title by remember { mutableStateOf(card.title) }
-  var component by remember { mutableStateOf(card.component) }
-  var type by remember { mutableStateOf(card.type) }
+  val component = card.component
+  val type = card.type
   var isOneTime by remember { mutableStateOf(card.is_one_time) }
 
   val initialIntervalMonths =
@@ -143,7 +143,7 @@ fun EditInspectionScreen(
 
       Spacer(modifier = Modifier.height(Spacing.medium))
 
-      // Component Type
+      // Component Type (Read-only in Edit)
       Text(
         stringResource(AircraftRes.string.component),
         style = MaterialTheme.typography.labelLarge
@@ -156,7 +156,8 @@ fun EditInspectionScreen(
           .forEach { entry ->
             FilterChip(
               selected = component == entry,
-              onClick = { component = entry },
+              onClick = { },
+              enabled = false,
               label = { Text(entry.name.removePrefix("INSPECTION_COMPONENT_")) }
             )
           }
@@ -164,7 +165,7 @@ fun EditInspectionScreen(
 
       Spacer(modifier = Modifier.height(Spacing.medium))
 
-      // Compliance Type
+      // Compliance Type (Read-only in Edit)
       Text("COMPLIANCE TYPE", style = MaterialTheme.typography.labelLarge)
       FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -173,7 +174,8 @@ fun EditInspectionScreen(
         ComplianceType.entries.forEach { entry ->
           FilterChip(
             selected = type == entry,
-            onClick = { type = entry },
+            onClick = { },
+            enabled = false,
             label = { Text(entry.name.removePrefix("COMPLIANCE_TYPE_")) }
           )
         }
