@@ -51,7 +51,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.EngineHourRule
@@ -63,6 +62,7 @@ import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.aircraft.inspection.compose.IntervalFields
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.compose.InspectionPickerSheet
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -71,6 +71,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.ok
+import wingslog.core.ui.generated.resources.unknown
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority_hint
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_notes
@@ -88,9 +89,6 @@ import wingslog.feature.aircraft.inspection.generated.resources.edit_inspection
 import wingslog.feature.aircraft.inspection.generated.resources.force_due_engine_hours
 import wingslog.feature.aircraft.inspection.generated.resources.force_overrides_safety
 import wingslog.feature.aircraft.inspection.generated.resources.inspection_title
-import wingslog.feature.aircraft.inspection.generated.resources.interval_hours
-import wingslog.feature.aircraft.inspection.generated.resources.interval_months
-import wingslog.feature.aircraft.inspection.generated.resources.intervals
 import wingslog.feature.aircraft.inspection.generated.resources.link_to_inspection
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance_desc
@@ -102,7 +100,6 @@ import wingslog.feature.aircraft.inspection.generated.resources.remove_link
 import wingslog.feature.aircraft.inspection.generated.resources.schedule_with_another_work
 import wingslog.feature.aircraft.inspection.generated.resources.schedule_with_another_work_description
 import wingslog.feature.aircraft.inspection.generated.resources.select_date
-import wingslog.feature.aircraft.inspection.generated.resources.unknown
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
@@ -331,57 +328,12 @@ fun EditInspectionScreen(
 
               // Regular Interval Inputs
               if (linkedToId == null) {
-                Text(
-                  stringResource(InspectionRes.string.intervals),
-                  style = MaterialTheme.typography.labelLarge
+                IntervalFields(
+                  intervalMonths = intervalMonths,
+                  onMonthsChange = { intervalMonths = it },
+                  intervalHours = intervalHours,
+                  onHoursChange = { intervalHours = it }
                 )
-                Spacer(modifier = Modifier.height(Spacing.small))
-                Row(
-                  horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-                  verticalAlignment = Alignment.CenterVertically
-                ) {
-                  OutlinedTextField(
-                    value = intervalMonths,
-                    onValueChange = { intervalMonths = it.filter { c -> c.isDigit() } },
-                    label = { Text(stringResource(InspectionRes.string.interval_months)) },
-                    placeholder = { Text("e.g. 12") },
-                    modifier = Modifier.weight(1f),
-                  )
-                  Text(
-                    "OR",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.outline
-                  )
-                  OutlinedTextField(
-                    value = intervalHours,
-                    onValueChange = { intervalHours = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text(stringResource(InspectionRes.string.interval_hours)) },
-                    placeholder = { Text("e.g. 100") },
-                    modifier = Modifier.weight(1f),
-                  )
-                }
-
-                if (intervalMonths.isNotBlank() || intervalHours.isNotBlank()) {
-                  Spacer(modifier = Modifier.height(Spacing.small))
-                  Text(
-                    "Note: This inspection will be due on whichever comes first.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                  )
-                } else {
-                  Spacer(modifier = Modifier.height(Spacing.small))
-                  Text(
-                    "Set a recurring interval based on time, engine hours, or both.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                  )
-                }
               }
 
               Spacer(modifier = Modifier.height(Spacing.large))
@@ -414,7 +366,7 @@ fun EditInspectionScreen(
                   onClick = { showLinkedPicker = true },
                   label = {
                     Text(
-                      linkedInsp?.title ?: stringResource(InspectionRes.string.unknown)
+                      linkedInsp?.title ?: stringResource(CoreRes.string.unknown)
                     )
                   },
                   trailingIcon = {
