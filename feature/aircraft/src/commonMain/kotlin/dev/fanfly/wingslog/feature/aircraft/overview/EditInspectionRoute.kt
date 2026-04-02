@@ -36,13 +36,13 @@ fun EditInspectionRoute(
           type = updatedCard.type,
           component = updatedCard.component,
           rules = updatedCard.rules,
-          referenceNumber = updatedCard.reference_number ?: "",
-          sbUrl = updatedCard.sb_url ?: "",
-          complianceDetails = updatedCard.compliance_details ?: "",
+          referenceNumber = updatedCard.reference_number,
+          sbUrl = updatedCard.sb_url,
+          complianceDetails = updatedCard.compliance_details,
           isOneTime = updatedCard.is_one_time,
           forceDueDate = updatedCard.force_due_date,
           forceDueEngine = updatedCard.force_due_engine_hour,
-          notes = updatedCard.notes ?: ""
+          notes = updatedCard.notes
         )
         navController.popBackStack()
       },

@@ -33,6 +33,7 @@ fun EditInspectionScreen(
     var title by remember { mutableStateOf(card.title) }
     var component by remember { mutableStateOf(card.component) }
     var type by remember { mutableStateOf(card.type) }
+    var isOneTime by remember { mutableStateOf(card.is_one_time) }
     
     val initialIntervalMonths = card.rules.mapNotNull { it.time_rule?.interval_months }.firstOrNull()?.toString() ?: ""
     val initialIntervalHours = card.rules.mapNotNull { it.engine_hour_rule?.interval_hours }.firstOrNull()?.toString() ?: ""
@@ -127,6 +128,21 @@ fun EditInspectionScreen(
                     label = { Text(stringResource(AircraftRes.string.interval_hours)) },
                     modifier = Modifier.weight(1f)
                 )
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.small))
+
+            // One-time compliance toggle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("One-Time Compliance", style = MaterialTheme.typography.bodyLarge)
+                    Text("Moves to history after first log", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = isOneTime, onCheckedChange = { isOneTime = it })
             }
 
             if (type == ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN || type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
@@ -226,6 +242,7 @@ fun EditInspectionScreen(
                         component = component,
                         type = type,
                         rules = ruleList,
+                        is_one_time = isOneTime,
                         reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
                         sb_url = manufacturerUrl.takeIf { it.isNotBlank() } ?: "",
                         force_due_engine_hour = if (forceOverrideEngine) forcedEngineHours.toFloatOrNull() ?: 0f else 0f,

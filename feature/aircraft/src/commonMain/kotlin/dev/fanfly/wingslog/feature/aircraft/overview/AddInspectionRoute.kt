@@ -16,7 +16,7 @@ fun AddInspectionRoute(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val successState = uiState as? AircraftOverviewUiState.Success
-
+  
   if (successState != null) {
     val aircraftId = successState.aircraft.id
     val allInspections =
@@ -31,14 +31,14 @@ fun AddInspectionRoute(
           title = card.title,
           type = card.type,
           component = card.component,
-          rules = emptyList(), // I need to map intervalMonths/Hours back to rules if the VM expects it
+          rules = card.rules,
           referenceNumber = card.reference_number,
           sbUrl = card.sb_url,
-          complianceDetails = "", // Need to handle these if they are relevant
-          isOneTime = false, // Map from complianceType if needed
+          complianceDetails = card.compliance_details,
+          isOneTime = card.is_one_time,
           forceDueDate = card.force_due_date,
           forceDueEngine = card.force_due_engine_hour,
-          notes = "" // Map from card if added
+          notes = card.notes
         )
         navController.popBackStack()
       }

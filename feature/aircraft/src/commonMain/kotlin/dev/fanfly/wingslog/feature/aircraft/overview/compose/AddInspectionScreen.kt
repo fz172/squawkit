@@ -34,6 +34,7 @@ fun AddInspectionScreen(
     var type by remember { mutableStateOf(ComplianceType.COMPLIANCE_TYPE_RECURRING_INSPECTION) }
     var intervalMonths by remember { mutableStateOf("") }
     var intervalHours by remember { mutableStateOf("") }
+    var isOneTime by remember { mutableStateOf(false) }
     var refNumber by remember { mutableStateOf("") }
     var manufacturerUrl by remember { mutableStateOf("") }
     var linkedToId by remember { mutableStateOf<String?>(null) }
@@ -119,6 +120,21 @@ fun AddInspectionScreen(
                     label = { Text(stringResource(AircraftRes.string.interval_hours)) },
                     modifier = Modifier.weight(1f)
                 )
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.small))
+
+            // One-time compliance toggle
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("One-Time Compliance", style = MaterialTheme.typography.bodyLarge)
+                    Text("Moves to history after first log", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = isOneTime, onCheckedChange = { isOneTime = it })
             }
 
             if (type == ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN || type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
@@ -222,7 +238,7 @@ fun AddInspectionScreen(
                         reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
                         sb_url = manufacturerUrl.takeIf { it.isNotBlank() } ?: "",
                         compliance_details = "",
-                        is_one_time = false,
+                        is_one_time = isOneTime,
                         force_due_engine_hour = if (forceOverrideEngine) forcedEngineHours.toFloatOrNull() ?: 0f else 0f,
                         force_due_date = if (forceOverrideDate) forcedDateMillis?.let { createWireInstant(it / 1000, 0) } else null,
                         notes = ""
