@@ -195,23 +195,23 @@ fun AddInspectionScreen(
         }
 
         Spacer(modifier = Modifier.height(Spacing.small))
+      }
 
-        // One-time compliance toggle
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-          Column(modifier = Modifier.weight(1f)) {
-            Text("One-Time Compliance", style = MaterialTheme.typography.bodyLarge)
-            Text(
-              "Moves to history after first log",
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-          Switch(checked = isOneTime, onCheckedChange = { isOneTime = it })
+      // One-time compliance toggle
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+      ) {
+        Column(modifier = Modifier.weight(1f)) {
+          Text("One-Time Compliance", style = MaterialTheme.typography.bodyLarge)
+          Text(
+            "Moves to history after first log",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
         }
+        Switch(checked = isOneTime, onCheckedChange = { isOneTime = it })
       }
 
       if (type == ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN || type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
@@ -318,7 +318,7 @@ fun AddInspectionScreen(
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
             sb_url = manufacturerUrl.takeIf { it.isNotBlank() } ?: "",
             compliance_details = "",
-            is_one_time = isOneTime && linkedToId == null,
+            is_one_time = isOneTime,
             force_due_engine_hour = 0f,
             force_due_date = null,
             notes = ""
