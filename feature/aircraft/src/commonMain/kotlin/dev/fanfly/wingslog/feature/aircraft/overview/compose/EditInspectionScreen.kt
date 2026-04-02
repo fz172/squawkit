@@ -82,7 +82,8 @@ import wingslog.feature.aircraft.inspection.generated.resources.interval_hours
 import wingslog.feature.aircraft.inspection.generated.resources.interval_months
 import wingslog.feature.aircraft.inspection.generated.resources.intervals
 import wingslog.feature.aircraft.inspection.generated.resources.link_to_inspection
-import wingslog.feature.aircraft.inspection.generated.resources.manufacturer_url
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority_hint
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance_desc
 import wingslog.feature.aircraft.inspection.generated.resources.override_next_due_date
@@ -119,7 +120,7 @@ fun EditInspectionScreen(
   var intervalMonths by remember { mutableStateOf(initialIntervalMonths) }
   var intervalHours by remember { mutableStateOf(initialIntervalHours) }
   var refNumber by remember { mutableStateOf(card.reference_number) }
-  var manufacturerUrl by remember { mutableStateOf(card.sb_url) }
+  var complianceAuthority by remember { mutableStateOf(card.compliance_authority) }
   var linkedToId by remember { mutableStateOf(initialLinkedId) }
   var showLinkedPicker by remember { mutableStateOf(false) }
 
@@ -284,9 +285,10 @@ fun EditInspectionScreen(
         )
         Spacer(modifier = Modifier.height(Spacing.small))
         OutlinedTextField(
-          value = manufacturerUrl,
-          onValueChange = { manufacturerUrl = it },
-          label = { Text(stringResource(InspectionRes.string.manufacturer_url)) },
+          value = complianceAuthority,
+          onValueChange = { complianceAuthority = it },
+          label = { Text(stringResource(InspectionRes.string.compliance_authority)) },
+          placeholder = { Text(stringResource(InspectionRes.string.compliance_authority_hint)) },
           modifier = Modifier.fillMaxWidth()
         )
       }
@@ -420,7 +422,7 @@ fun EditInspectionScreen(
             rules = ruleList,
             is_one_time = isOneTime,
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
-            sb_url = manufacturerUrl.takeIf { it.isNotBlank() } ?: "",
+            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() } ?: "",
             force_due_engine_hour = if (forceOverrideEngine) forcedEngineHours.toFloatOrNull()
               ?: 0f else 0f,
             force_due_date = if (forceOverrideDate) forcedDateMillis?.let {

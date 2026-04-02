@@ -40,7 +40,7 @@ message InspectionCard {
   // v2 Additions
   ComplianceType type = 8;
   string reference_number = 9; // e.g., "SB-2024-01"
-  string sb_url = 10;
+  string compliance_authority = 10;
   string compliance_details = 11;
   bool is_one_time = 12; // If true, moves to history after first log
   
@@ -83,7 +83,7 @@ A new sheet or a mode in `AddInspectionSheet`:
     - *Linked*: Show a dropdown of existing routine inspections (Annual, etc.).
     - *Immediate*: No further inputs.
     - *Interval*: Existing Time/Engine hour inputs.
-- **Step 4**: URL and Compliance Detail text areas.
+- **Step 4**: Compliance Authority and Compliance Detail text areas.
 
 ### 4.3 Log Integration
 The `InspectionPickerSheet` used during maintenance logging will now group items by type:

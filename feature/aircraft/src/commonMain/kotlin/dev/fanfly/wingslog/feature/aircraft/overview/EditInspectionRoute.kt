@@ -37,7 +37,7 @@ fun EditInspectionRoute(
           component = updatedCard.component,
           rules = updatedCard.rules,
           referenceNumber = updatedCard.reference_number,
-          sbUrl = updatedCard.sb_url,
+          complianceAuthority = updatedCard.compliance_authority,
           complianceDetails = updatedCard.compliance_details,
           isOneTime = updatedCard.is_one_time,
           forceDueDate = updatedCard.force_due_date,

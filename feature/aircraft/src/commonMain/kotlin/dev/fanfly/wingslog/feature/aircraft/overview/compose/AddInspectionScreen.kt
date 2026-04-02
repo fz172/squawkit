@@ -67,7 +67,8 @@ import wingslog.feature.aircraft.inspection.generated.resources.interval_hours
 import wingslog.feature.aircraft.inspection.generated.resources.interval_months
 import wingslog.feature.aircraft.inspection.generated.resources.intervals
 import wingslog.feature.aircraft.inspection.generated.resources.link_to_inspection
-import wingslog.feature.aircraft.inspection.generated.resources.manufacturer_url
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority_hint
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance_desc
 import wingslog.feature.aircraft.inspection.generated.resources.reference_number
@@ -93,7 +94,7 @@ fun AddInspectionScreen(
   var intervalHours by remember { mutableStateOf("") }
   var isOneTime by remember { mutableStateOf(false) }
   var refNumber by remember { mutableStateOf("") }
-  var manufacturerUrl by remember { mutableStateOf("") }
+  var complianceAuthority by remember { mutableStateOf("") }
   var linkedToId by remember { mutableStateOf<String?>(null) }
   var showLinkedPicker by remember { mutableStateOf(false) }
 
@@ -265,9 +266,10 @@ fun AddInspectionScreen(
         )
         Spacer(modifier = Modifier.height(Spacing.small))
         OutlinedTextField(
-          value = manufacturerUrl,
-          onValueChange = { manufacturerUrl = it },
-          label = { Text(stringResource(InspectionRes.string.manufacturer_url)) },
+          value = complianceAuthority,
+          onValueChange = { complianceAuthority = it },
+          label = { Text(stringResource(InspectionRes.string.compliance_authority)) },
+          placeholder = { Text(stringResource(InspectionRes.string.compliance_authority_hint)) },
           modifier = Modifier.fillMaxWidth()
         )
       }
@@ -350,7 +352,7 @@ fun AddInspectionScreen(
             type = type,
             rules = ruleList,
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
-            sb_url = manufacturerUrl.takeIf { it.isNotBlank() } ?: "",
+            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() } ?: "",
             compliance_details = "",
             is_one_time = isOneTime,
             force_due_engine_hour = 0f,

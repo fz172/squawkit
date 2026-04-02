@@ -69,7 +69,7 @@ message InspectionCard {
   // v2 Compliance Tracking
   ComplianceType type = 8;
   string reference_number = 9; // e.g., "SB-2024-01"
-  string sb_url = 10;
+  string compliance_authority = 10;
   string compliance_details = 11;
   bool is_one_time = 12; // If true, moves to history after first log
 }

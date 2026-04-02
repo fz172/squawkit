@@ -52,8 +52,10 @@ import wingslog.feature.aircraft.generated.resources.on_condition
 import wingslog.feature.aircraft.generated.resources.overdue
 import wingslog.feature.aircraft.generated.resources.overdue_was
 import wingslog.feature.aircraft.generated.resources.unknown_date
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -140,16 +142,15 @@ fun InspectionDetailSheet(
 
       DueStatusChip(cardWithStatus.dueStatus)
 
-      if (cardWithStatus.card.sb_url.isNotBlank()) {
+      if (cardWithStatus.card.compliance_authority.isNotBlank()) {
         Spacer(Modifier.height(Spacing.medium))
         Text(
-          text = "View Bulletin (URL)",
+          text = cmpStringResource(InspectionRes.string.compliance_authority),
           style = MaterialTheme.typography.labelLarge,
-          color = MaterialTheme.colorScheme.primary,
-          modifier = Modifier.clickable { /* Link handling would go here */ }
+          color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-          text = cardWithStatus.card.sb_url,
+          text = cardWithStatus.card.compliance_authority,
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           maxLines = 1
@@ -178,7 +179,7 @@ fun InspectionDetailSheet(
         )
       }
 
-      Spacer(Modifier.height(Spacing.large))
+      Spacer(modifier = Modifier.height(Spacing.large))
 
       Text(
         text = cmpStringResource(AircraftRes.string.maintenance_history),
@@ -186,7 +187,7 @@ fun InspectionDetailSheet(
         fontWeight = FontWeight.SemiBold
       )
 
-      Spacer(Modifier.height(Spacing.small))
+      Spacer(modifier = Modifier.height(Spacing.small))
 
       if (logs.isEmpty()) {
         Text(
@@ -201,7 +202,7 @@ fun InspectionDetailSheet(
         }
       }
 
-      Spacer(Modifier.height(Spacing.huge))
+      Spacer(modifier = Modifier.height(Spacing.huge))
     }
   }
 }

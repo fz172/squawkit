@@ -33,7 +33,7 @@ fun AddInspectionRoute(
           component = card.component,
           rules = card.rules,
           referenceNumber = card.reference_number,
-          sbUrl = card.sb_url,
+          complianceAuthority = card.compliance_authority,
           complianceDetails = card.compliance_details,
           isOneTime = card.is_one_time,
           forceDueDate = card.force_due_date,
