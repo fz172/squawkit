@@ -3,6 +3,8 @@ package dev.fanfly.wingslog.feature.aircraft.overview.data
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.squareup.wire.Instant
+import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
@@ -52,7 +54,8 @@ class AircraftOverviewViewModel(
       ) { aircraft, logs, inspectionCards ->
         cachedLogs = logs
         if (aircraft != null) {
-          val currentEngineTime = logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }
+          val currentEngineTime =
+            logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }
           val currentAirframeTime =
             logs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }
           val currentPropTime = logs.filter { it.prop_time > 0.0 }.maxOfOrNull { it.prop_time }
@@ -131,14 +134,14 @@ class AircraftOverviewViewModel(
   fun saveEditedInspection(
     cardId: String,
     title: String,
-    type: dev.fanfly.wingslog.aircraft.ComplianceType,
+    type: ComplianceType,
     component: InspectionComponentType,
     rules: List<InspectionRule>,
     referenceNumber: String,
     sbUrl: String,
     complianceDetails: String,
     isOneTime: Boolean,
-    forceDueDate: com.squareup.wire.Instant?,
+    forceDueDate: Instant?,
     forceDueEngine: Float,
     notes: String,
   ) {
@@ -194,14 +197,14 @@ class AircraftOverviewViewModel(
 
   fun saveNewInspection(
     title: String,
-    type: dev.fanfly.wingslog.aircraft.ComplianceType,
+    type: ComplianceType,
     component: InspectionComponentType,
     rules: List<InspectionRule>,
     referenceNumber: String,
     sbUrl: String,
     complianceDetails: String,
     isOneTime: Boolean,
-    forceDueDate: com.squareup.wire.Instant?,
+    forceDueDate: Instant?,
     forceDueEngine: Float,
     notes: String = "",
   ) {

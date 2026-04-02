@@ -5,18 +5,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.*
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
-import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import kotlinx.datetime.*
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 import wingslog.feature.aircraft.generated.resources.*
@@ -38,14 +34,6 @@ fun AddInspectionScreen(
     var refNumber by remember { mutableStateOf("") }
     var manufacturerUrl by remember { mutableStateOf("") }
     var linkedToId by remember { mutableStateOf<String?>(null) }
-    
-    // Force Override States
-    var forceOverrideEngine by remember { mutableStateOf(false) }
-    var forcedEngineHours by remember { mutableStateOf("") }
-    var forceOverrideDate by remember { mutableStateOf(false) }
-    var forcedDateMillis by remember { mutableStateOf<Long?>(null) }
-    
-    var showDatePicker by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -173,46 +161,6 @@ fun AddInspectionScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(Spacing.large))
-            Divider()
-            Spacer(modifier = Modifier.height(Spacing.large))
-
-            // Overrides
-            Text("FORCE OVERRIDES (SAFETY)", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
-            
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = forceOverrideEngine, onCheckedChange = { forceOverrideEngine = it })
-                Text(stringResource(AircraftRes.string.override_next_due_engine))
-            }
-            if (forceOverrideEngine) {
-                OutlinedTextField(
-                    value = forcedEngineHours,
-                    onValueChange = { forcedEngineHours = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text(stringResource(AircraftRes.string.force_due_engine_hours)) },
-                    modifier = Modifier.fillMaxWidth().padding(start = 32.dp)
-                )
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = forceOverrideDate, onCheckedChange = { forceOverrideDate = it })
-                Text(stringResource(AircraftRes.string.override_next_due_date))
-            }
-            if (forceOverrideDate) {
-                OutlinedCard(
-                    onClick = { showDatePicker = true },
-                    modifier = Modifier.fillMaxWidth().padding(start = 32.dp)
-                ) {
-                    Row(modifier = Modifier.padding(Spacing.medium), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.DateRange, contentDescription = null)
-                        Spacer(modifier = Modifier.width(Spacing.small))
-                        val dateText = forcedDateMillis?.let { 
-                            Instant.fromEpochMilliseconds(it).toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-                        } ?: stringResource(AircraftRes.string.select_date)
-                        Text(dateText)
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.height(Spacing.large))
 
@@ -239,8 +187,8 @@ fun AddInspectionScreen(
                         sb_url = manufacturerUrl.takeIf { it.isNotBlank() } ?: "",
                         compliance_details = "",
                         is_one_time = isOneTime,
-                        force_due_engine_hour = if (forceOverrideEngine) forcedEngineHours.toFloatOrNull() ?: 0f else 0f,
-                        force_due_date = if (forceOverrideDate) forcedDateMillis?.let { createWireInstant(it / 1000, 0) } else null,
+                        force_due_engine_hour = 0f,
+                        force_due_date = null,
                         notes = ""
                     )
                     onSave(card)
@@ -248,21 +196,6 @@ fun AddInspectionScreen(
                 onCancelClick = onCancel,
                 saveEnabled = title.isNotBlank()
             )
-        }
-    }
-
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState()
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    forcedDateMillis = datePickerState.selectedDateMillis
-                    showDatePicker = false
-                }) { Text(stringResource(AircraftRes.string.ok)) }
-            }
-        ) {
-            DatePicker(state = datePickerState)
         }
     }
 }

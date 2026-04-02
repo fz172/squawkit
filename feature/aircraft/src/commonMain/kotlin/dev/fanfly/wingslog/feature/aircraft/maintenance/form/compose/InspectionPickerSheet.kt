@@ -92,7 +92,7 @@ fun InspectionPickerSheet(
         listOf(
           ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to "Airworthiness Directives (AD)",
           ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN to "Service Bulletins (SB)",
-          ComplianceType.COMPLIANCE_TYPE_RECURRING_INSPECTION to "Recurring Inspections",
+          ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to "Recurring Inspections",
         ).forEach { (type, header) ->
           val cards = grouped[type] ?: emptyList()
           if (cards.isNotEmpty()) {

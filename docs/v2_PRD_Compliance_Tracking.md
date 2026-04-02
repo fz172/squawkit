@@ -13,7 +13,7 @@ Expand WingsLog to track **Service Bulletins (SBs)** and **Airworthiness Directi
 
 ### 3.1 Compliance Type
 Add a `Type` field to the existing `InspectionCard` model:
-- `RECURRING_INSPECTION` (e.g., Annual, 100-Hr)
+- `ROUTINE_INSPECTION` (e.g., Annual, 100-Hr)
 - `SERVICE_BULLETIN` (SB)
 - `AIRWORTHINESS_DIRECTIVE` (AD)
 

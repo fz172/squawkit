@@ -95,7 +95,7 @@ class InspectionManagerImpl(
     return computeNextDueRecursive(card, logs, allCards, mutableSetOf())
   }
 
-  private suspend fun computeNextDueRecursive(
+  private fun computeNextDueRecursive(
     card: InspectionCard,
     logs: List<MaintenanceLog>,
     allCards: List<InspectionCard>,

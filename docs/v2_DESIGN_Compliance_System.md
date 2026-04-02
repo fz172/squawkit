@@ -10,7 +10,7 @@ We will modify `inspection_card.proto` to support different compliance categorie
 
 ```protobuf
 enum ComplianceType {
-  COMPLIANCE_TYPE_RECURRING_INSPECTION = 0;
+  COMPLIANCE_TYPE_ROUTINE_INSPECTION = 0;
   COMPLIANCE_TYPE_SERVICE_BULLETIN = 1;
   COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE = 2;
 }
