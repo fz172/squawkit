@@ -286,7 +286,8 @@ fun EditInspectionScreen(
           onValueChange = { refNumber = it },
           label = { Text(stringResource(InspectionRes.string.reference_number)) },
           placeholder = { Text(stringResource(InspectionRes.string.reference_number_hint)) },
-          modifier = Modifier.fillMaxWidth()
+          modifier = Modifier.fillMaxWidth(),
+          singleLine = true
         )
         Spacer(modifier = Modifier.height(Spacing.small))
         OutlinedTextField(
@@ -294,17 +295,19 @@ fun EditInspectionScreen(
           onValueChange = { complianceAuthority = it },
           label = { Text(stringResource(InspectionRes.string.compliance_authority)) },
           placeholder = { Text(stringResource(InspectionRes.string.compliance_authority_hint)) },
-          modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(Spacing.small))
-        OutlinedTextField(
-          value = complianceNotes,
-          onValueChange = { complianceNotes = it },
-          label = { Text(stringResource(InspectionRes.string.compliance_notes)) },
-          placeholder = { Text(stringResource(InspectionRes.string.compliance_notes_hint)) },
-          modifier = Modifier.fillMaxWidth()
+          modifier = Modifier.fillMaxWidth(),
+          singleLine = true
         )
       }
+
+      Spacer(modifier = Modifier.height(Spacing.small))
+      OutlinedTextField(
+        value = complianceNotes,
+        onValueChange = { complianceNotes = it },
+        label = { Text(stringResource(InspectionRes.string.compliance_notes)) },
+        placeholder = { Text(stringResource(InspectionRes.string.compliance_notes_hint)) },
+        modifier = Modifier.fillMaxWidth()
+      )
 
       Spacer(modifier = Modifier.height(Spacing.medium))
 
