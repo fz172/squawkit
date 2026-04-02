@@ -16,5 +16,6 @@ data class DueMetadata(
   val nextDueDate: LocalDate? = null,
   val nextDueEngine: Float? = null,
   val isOnCondition: Boolean = false,
+  val isImmediate: Boolean = false,
   val status: DueStatus = DueStatus.NORMAL,
 )

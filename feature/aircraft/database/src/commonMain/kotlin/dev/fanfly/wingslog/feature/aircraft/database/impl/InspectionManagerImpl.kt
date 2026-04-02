@@ -92,12 +92,13 @@ class InspectionManagerImpl(
     logs: List<MaintenanceLog>,
     allCards: List<InspectionCard>
   ): DueMetadata {
-    return computeNextDueRecursive(card, logs, allCards, mutableSetOf())
+    return computeNextDueRecursive(card, logs, logs, allCards, mutableSetOf())
   }
 
   private fun computeNextDueRecursive(
     card: InspectionCard,
     logs: List<MaintenanceLog>,
+    allLogs: List<MaintenanceLog>,
     allCards: List<InspectionCard>,
     visited: MutableSet<String>
   ): DueMetadata {
@@ -124,9 +125,9 @@ class InspectionManagerImpl(
     // Airframe tracks airframe_time, others track engine_hour
     val currentMetricTime =
       if (card.component == InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME) {
-        logs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }?.toFloat() ?: 0f
+        allLogs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }?.toFloat() ?: 0f
       } else {
-        logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }?.toFloat() ?: 0f
+        allLogs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }?.toFloat() ?: 0f
       }
 
     val currentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -180,7 +181,13 @@ class InspectionManagerImpl(
             )
               .toLocalDateTime(TimeZone.currentSystemDefault()).date
           } else {
-            currentDate
+            // If never done, we assume it's due from the beginning of the aircraft logs or now.
+            // Using aircraft creation date would be better, but we don't have it here easily.
+            // Using the earliest log date as a proxy.
+            allLogs.lastOrNull()?.timestamp?.let {
+              Instant.fromEpochSeconds(it.getEpochSecond(), it.getNano())
+                .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            } ?: currentDate
           }
           val calculated = baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH)
           if (nextDueDate == null || calculated < nextDueDate) {
@@ -212,15 +219,31 @@ class InspectionManagerImpl(
         linkedRule != null -> {
           val parentCard = allCards.find { it.id == linkedRule.parent_inspection_id }
           if (parentCard != null) {
-            val parentMetadata = computeNextDueRecursive(parentCard, logs, allCards, visited)
-            // Inherit due dates from parent
-            if (parentMetadata.nextDueDate != null && (nextDueDate == null || parentMetadata.nextDueDate!! < nextDueDate)) {
-              nextDueDate = parentMetadata.nextDueDate
+            // Find when THIS card was last completed
+            val latestLogEpoch = latestLog?.timestamp?.getEpochSecond() ?: 0L
+
+            // Compute parent's due status as of the last time THIS card was completed.
+            // This ensures that if the parent is done but THIS card is skipped, 
+            // THIS card remains due/overdue based on the OLD parent cycle.
+            val parentLogs = if (latestLog == null) {
+              emptyList()
+            } else {
+              allLogs.filter { (it.timestamp?.getEpochSecond() ?: 0L) <= latestLogEpoch }
             }
-            if (parentMetadata.nextDueEngine != null && (nextDueEngine == null || parentMetadata.nextDueEngine!! < nextDueEngine)) {
-              nextDueEngine = parentMetadata.nextDueEngine
+
+            val parentMetadata = computeNextDueRecursive(parentCard, parentLogs, allLogs, allCards, visited)
+            
+            // Inherit due properties from parent
+            val pNextDate = parentMetadata.nextDueDate
+            if (pNextDate != null && (nextDueDate == null || pNextDate < nextDueDate)) {
+              nextDueDate = pNextDate
+            }
+            val pNextEngine = parentMetadata.nextDueEngine
+            if (pNextEngine != null && (nextDueEngine == null || pNextEngine < nextDueEngine)) {
+              nextDueEngine = pNextEngine
             }
             if (parentMetadata.isOnCondition) isOnCondition = true
+            if (parentMetadata.isImmediate) isImmediate = true
           }
         }
       }
@@ -241,6 +264,7 @@ class InspectionManagerImpl(
       nextDueDate = nextDueDate,
       nextDueEngine = nextDueEngine,
       isOnCondition = isOnCondition,
+      isImmediate = isImmediate,
       status = status
     )
   }
