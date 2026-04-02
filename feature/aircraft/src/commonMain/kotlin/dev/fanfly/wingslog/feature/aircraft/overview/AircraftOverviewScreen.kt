@@ -106,6 +106,7 @@ import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
+
 @Composable
 fun AircraftOverviewScreen(
   navController: NavController, viewModel: AircraftOverviewViewModel = koinViewModel()
@@ -152,7 +153,6 @@ fun AircraftOverviewScreen(
     onInspectionCardClick = { card -> viewModel.showInspectionDetail(card) },
     onDismissInspectionDetail = { viewModel.hideInspectionDetail() },
     onEditInspectionClick = { aircraftId, cardId -> navController.navigate("aircraft_inspection_edit/$aircraftId/$cardId") },
-    onDeleteInspectionRequest = { cardId -> viewModel.requestDeleteInspection(cardId) },
     onCancelDeleteInspection = { viewModel.cancelDeleteInspection() },
     onConfirmDeleteInspection = { viewModel.confirmDeleteInspection() },
   )
@@ -179,7 +179,6 @@ fun AircraftOverviewContent(
   onInspectionCardClick: (InspectionCardWithStatus) -> Unit = {},
   onDismissInspectionDetail: () -> Unit = {},
   onEditInspectionClick: (String, String) -> Unit = { _, _ -> },
-  onDeleteInspectionRequest: (cardId: String) -> Unit = {},
   onCancelDeleteInspection: () -> Unit = {},
   onConfirmDeleteInspection: () -> Unit = {},
   modifier: Modifier = Modifier
@@ -258,15 +257,17 @@ fun AircraftOverviewContent(
                   onEditClick(aircraft.id)
                 }
               })
-            DropdownMenuItem(text = {
-              Text(
-                cmpStringResource(CoreRes.string.delete),
-                color = MaterialTheme.colorScheme.error
-              )
-            }, onClick = {
-              showSettingsMenu = false
-              showDeleteDialog = true
-            })
+            DropdownMenuItem(
+              text = {
+                Text(
+                  cmpStringResource(CoreRes.string.delete),
+                  color = MaterialTheme.colorScheme.error
+                )
+              },
+              onClick = {
+                showSettingsMenu = false
+                showDeleteDialog = true
+              })
           }
         }, colors = TopAppBarDefaults.topAppBarColors(
           containerColor = MaterialTheme.colorScheme.background,

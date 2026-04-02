@@ -81,11 +81,6 @@ fun SettingsScreen(
         onOpenEditProfile = { navController.navigate("edit_profile") }
       )
       SettingsRow(
-        icon = Icons.Default.Add,
-        title = cmpStringResource(SettingsRes.string.add_aircraft),
-        onClick = { onAddAircraft() }
-      )
-      SettingsRow(
         icon = Icons.AutoMirrored.Filled.Logout,
         title = cmpStringResource(SettingsRes.string.sign_out),
         onClick = { settingsViewModel.logOut() },
