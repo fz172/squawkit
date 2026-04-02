@@ -37,6 +37,10 @@ import wingslog.feature.aircraft.generated.resources.propeller
 import wingslog.feature.aircraft.generated.resources.select_inspection_work
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_ad
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_sb
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_routine
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,9 +94,9 @@ fun InspectionPickerSheet(
         val grouped = availableCards.groupBy { it.type }
 
         listOf(
-          ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to "Airworthiness Directives (AD)",
-          ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN to "Service Bulletins (SB)",
-          ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to "Routine Inspections",
+          ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to cmpStringResource(InspectionRes.string.compliance_type_ad),
+          ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN to cmpStringResource(InspectionRes.string.compliance_type_sb),
+          ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to cmpStringResource(InspectionRes.string.compliance_type_routine),
         ).forEach { (type, header) ->
           val cards = grouped[type] ?: emptyList()
           if (cards.isNotEmpty()) {

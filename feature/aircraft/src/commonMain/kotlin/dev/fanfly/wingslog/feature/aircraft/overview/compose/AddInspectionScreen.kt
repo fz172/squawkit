@@ -47,7 +47,11 @@ import wingslog.feature.aircraft.generated.resources.component
 import wingslog.feature.aircraft.generated.resources.inspection_title
 import wingslog.feature.aircraft.generated.resources.interval_hours
 import wingslog.feature.aircraft.generated.resources.interval_months
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_ad
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_routine
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_sb
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -137,7 +141,18 @@ fun AddInspectionScreen(
           FilterChip(
             selected = type == entry,
             onClick = { type = entry },
-            label = { Text(entry.name.removePrefix("COMPLIANCE_TYPE_")) }
+            label = {
+              val labelText = when (entry) {
+                ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> stringResource(
+                  InspectionRes.string.compliance_type_ad
+                )
+
+                ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> stringResource(InspectionRes.string.compliance_type_sb)
+                ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION -> stringResource(InspectionRes.string.compliance_type_routine)
+                else -> entry.name.removePrefix("COMPLIANCE_TYPE_")
+              }
+              Text(labelText)
+            }
           )
         }
       }

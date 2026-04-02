@@ -1,6 +1,8 @@
 plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
+  alias(libs.plugins.kotlin.compose)
+  alias(libs.plugins.compose.multiplatform)
 }
 
 android {
@@ -12,10 +14,18 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
+  buildFeatures {
+    compose = true
+  }
+
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
   }
+}
+
+compose.resources {
+  publicResClass = true
 }
 
 kotlin {
@@ -33,6 +43,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(libs.kotlinx.datetime)
+      implementation(compose.runtime)
+      implementation(compose.components.resources)
     }
   }
 }

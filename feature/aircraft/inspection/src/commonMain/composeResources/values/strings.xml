@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="compliance_type_ad">Airworthiness Directives (AD)</string>
+  <string name="compliance_type_sb">Service Bulletins (SB)</string>
+  <string name="compliance_type_routine">Routine Inspections</string>
+</resources>
