@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.aircraft.overview.compose
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -46,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.EngineHourRule
 import dev.fanfly.wingslog.aircraft.InspectionCard
-import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.TimeRule
@@ -152,7 +152,10 @@ fun EditInspectionScreen(
       )
       Box(
         modifier = Modifier
-          .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Spacing.cardCornerRadius))
+          .background(
+            MaterialTheme.colorScheme.surfaceVariant,
+            RoundedCornerShape(Spacing.cardCornerRadius)
+          )
           .padding(horizontal = Spacing.medium, vertical = Spacing.small)
       ) {
         Text(
@@ -169,7 +172,10 @@ fun EditInspectionScreen(
       Text("COMPLIANCE TYPE", style = MaterialTheme.typography.labelLarge)
       Box(
         modifier = Modifier
-          .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Spacing.cardCornerRadius))
+          .background(
+            MaterialTheme.colorScheme.surfaceVariant,
+            RoundedCornerShape(Spacing.cardCornerRadius)
+          )
           .padding(horizontal = Spacing.medium, vertical = Spacing.small)
       ) {
         Text(

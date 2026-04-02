@@ -20,6 +20,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -115,43 +118,44 @@ fun AddInspectionScreen(
         stringResource(AircraftRes.string.component),
         style = MaterialTheme.typography.labelLarge
       )
-      FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-      ) {
-        InspectionComponentType.entries.filter { it != InspectionComponentType.INSPECTION_COMPONENT_UNKNOWN }
-          .forEach { entry ->
-            FilterChip(
-              selected = component == entry,
-              onClick = { component = entry },
-              label = { Text(entry.name.removePrefix("INSPECTION_COMPONENT_")) }
-            )
-          }
+      Spacer(modifier = Modifier.height(Spacing.small))
+      val components = InspectionComponentType.entries.filter { it != InspectionComponentType.INSPECTION_COMPONENT_UNKNOWN }
+      SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        components.forEachIndexed { index, entry ->
+          SegmentedButton(
+            selected = component == entry,
+            onClick = { component = entry },
+            shape = SegmentedButtonDefaults.itemShape(index = index, count = components.size),
+            label = {
+              Text(
+                text = entry.name.removePrefix("INSPECTION_COMPONENT_"),
+                style = MaterialTheme.typography.bodySmall
+              )
+            }
+          )
+        }
       }
 
       Spacer(modifier = Modifier.height(Spacing.medium))
 
       // Compliance Type
       Text("COMPLIANCE TYPE", style = MaterialTheme.typography.labelLarge)
-      FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-      ) {
-        ComplianceType.entries.forEach { entry ->
-          FilterChip(
+      Spacer(modifier = Modifier.height(Spacing.small))
+      val types = ComplianceType.entries
+      SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        types.forEachIndexed { index, entry ->
+          SegmentedButton(
             selected = type == entry,
             onClick = { type = entry },
+            shape = SegmentedButtonDefaults.itemShape(index = index, count = types.size),
             label = {
               val labelText = when (entry) {
-                ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> stringResource(
-                  InspectionRes.string.compliance_type_ad
-                )
-
+                ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> stringResource(InspectionRes.string.compliance_type_ad)
                 ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> stringResource(InspectionRes.string.compliance_type_sb)
                 ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION -> stringResource(InspectionRes.string.compliance_type_routine)
                 else -> entry.name.removePrefix("COMPLIANCE_TYPE_")
               }
-              Text(labelText)
+              Text(text = labelText, style = MaterialTheme.typography.bodySmall)
             }
           )
         }
