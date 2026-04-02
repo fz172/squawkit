@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.aircraft.overview.compose
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -143,42 +145,39 @@ fun EditInspectionScreen(
 
       Spacer(modifier = Modifier.height(Spacing.medium))
 
-      // Component Type (Read-only in Edit)
+      // Component Type (Static in Edit)
       Text(
         stringResource(AircraftRes.string.component),
         style = MaterialTheme.typography.labelLarge
       )
-      FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+      Box(
+        modifier = Modifier
+          .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Spacing.cardCornerRadius))
+          .padding(horizontal = Spacing.medium, vertical = Spacing.small)
       ) {
-        InspectionComponentType.entries.filter { it != InspectionComponentType.INSPECTION_COMPONENT_UNKNOWN }
-          .forEach { entry ->
-            FilterChip(
-              selected = component == entry,
-              onClick = { },
-              enabled = false,
-              label = { Text(entry.name.removePrefix("INSPECTION_COMPONENT_")) }
-            )
-          }
+        Text(
+          text = component.name.removePrefix("INSPECTION_COMPONENT_"),
+          style = MaterialTheme.typography.bodyMedium,
+          fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
       }
 
       Spacer(modifier = Modifier.height(Spacing.medium))
 
-      // Compliance Type (Read-only in Edit)
+      // Compliance Type (Static in Edit)
       Text("COMPLIANCE TYPE", style = MaterialTheme.typography.labelLarge)
-      FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+      Box(
+        modifier = Modifier
+          .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(Spacing.cardCornerRadius))
+          .padding(horizontal = Spacing.medium, vertical = Spacing.small)
       ) {
-        ComplianceType.entries.forEach { entry ->
-          FilterChip(
-            selected = type == entry,
-            onClick = { },
-            enabled = false,
-            label = { Text(entry.name.removePrefix("COMPLIANCE_TYPE_")) }
-          )
-        }
+        Text(
+          text = type.name.removePrefix("COMPLIANCE_TYPE_"),
+          style = MaterialTheme.typography.bodyMedium,
+          fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
       }
 
       Spacer(modifier = Modifier.height(Spacing.medium))
