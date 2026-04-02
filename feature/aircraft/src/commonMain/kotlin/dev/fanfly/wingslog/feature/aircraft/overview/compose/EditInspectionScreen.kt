@@ -65,6 +65,10 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.ok
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority_hint
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_notes
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_notes_hint
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_type
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_ad_short
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_routine_short
@@ -82,13 +86,12 @@ import wingslog.feature.aircraft.inspection.generated.resources.interval_hours
 import wingslog.feature.aircraft.inspection.generated.resources.interval_months
 import wingslog.feature.aircraft.inspection.generated.resources.intervals
 import wingslog.feature.aircraft.inspection.generated.resources.link_to_inspection
-import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority
-import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority_hint
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance_desc
 import wingslog.feature.aircraft.inspection.generated.resources.override_next_due_date
 import wingslog.feature.aircraft.inspection.generated.resources.override_next_due_engine
 import wingslog.feature.aircraft.inspection.generated.resources.reference_number
+import wingslog.feature.aircraft.inspection.generated.resources.reference_number_hint
 import wingslog.feature.aircraft.inspection.generated.resources.remove_link
 import wingslog.feature.aircraft.inspection.generated.resources.schedule_with_another_work
 import wingslog.feature.aircraft.inspection.generated.resources.schedule_with_another_work_description
@@ -121,6 +124,7 @@ fun EditInspectionScreen(
   var intervalHours by remember { mutableStateOf(initialIntervalHours) }
   var refNumber by remember { mutableStateOf(card.reference_number) }
   var complianceAuthority by remember { mutableStateOf(card.compliance_authority) }
+  var complianceNotes by remember { mutableStateOf(card.compliance_details) }
   var linkedToId by remember { mutableStateOf(initialLinkedId) }
   var showLinkedPicker by remember { mutableStateOf(false) }
 
@@ -281,6 +285,7 @@ fun EditInspectionScreen(
           value = refNumber,
           onValueChange = { refNumber = it },
           label = { Text(stringResource(InspectionRes.string.reference_number)) },
+          placeholder = { Text(stringResource(InspectionRes.string.reference_number_hint)) },
           modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(Spacing.small))
@@ -289,6 +294,14 @@ fun EditInspectionScreen(
           onValueChange = { complianceAuthority = it },
           label = { Text(stringResource(InspectionRes.string.compliance_authority)) },
           placeholder = { Text(stringResource(InspectionRes.string.compliance_authority_hint)) },
+          modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(Spacing.small))
+        OutlinedTextField(
+          value = complianceNotes,
+          onValueChange = { complianceNotes = it },
+          label = { Text(stringResource(InspectionRes.string.compliance_notes)) },
+          placeholder = { Text(stringResource(InspectionRes.string.compliance_notes_hint)) },
           modifier = Modifier.fillMaxWidth()
         )
       }
@@ -423,6 +436,7 @@ fun EditInspectionScreen(
             is_one_time = isOneTime,
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
             compliance_authority = complianceAuthority.takeIf { it.isNotBlank() } ?: "",
+            compliance_details = complianceNotes.takeIf { it.isNotBlank() } ?: "",
             force_due_engine_hour = if (forceOverrideEngine) forcedEngineHours.toFloatOrNull()
               ?: 0f else 0f,
             force_due_date = if (forceOverrideDate) forcedDateMillis?.let {

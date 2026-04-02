@@ -28,8 +28,11 @@
     <string name="one_time_compliance">One-Time Compliance</string>
     <string name="one_time_compliance_desc">Moves to history after first log</string>
     <string name="reference_number">Reference Number</string>
+    <string name="reference_number_hint">e.g. SB-001</string>
     <string name="compliance_authority">Compliance authority</string>
     <string name="compliance_authority_hint">e.g. Rotax / Lycoming</string>
+    <string name="compliance_notes">Compliance Notes</string>
+    <string name="compliance_notes_hint">e.g. One-time inspection of fuel lines...</string>
     <string name="link_to_inspection">Link to inspection</string>
     <string name="unknown">Unknown</string>
     <string name="remove_link">Remove link</string>
