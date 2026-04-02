@@ -185,6 +185,11 @@ class AircraftOverviewViewModel(
   fun confirmDeleteInspection() {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     val cardId = state.deletingInspectionId ?: return
+    deleteInspection(cardId)
+  }
+
+  fun deleteInspection(cardId: String) {
+    val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     viewModelScope.launch {
       inspectionManager.deleteInspection(state.aircraft.id, cardId)
       _uiState.update { s ->

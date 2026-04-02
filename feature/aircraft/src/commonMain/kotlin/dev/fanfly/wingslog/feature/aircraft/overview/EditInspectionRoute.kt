@@ -47,7 +47,7 @@ fun EditInspectionRoute(
         navController.popBackStack()
       },
       onDeleteRequest = { id ->
-        viewModel.requestDeleteInspection(id)
+        viewModel.deleteInspection(id)
         navController.popBackStack()
       }
     )

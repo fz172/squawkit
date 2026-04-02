@@ -113,6 +113,7 @@ fun EditInspectionScreen(
   }
 
   var showDatePicker by remember { mutableStateOf(false) }
+  var showDeleteConfirm by remember { mutableStateOf(false) }
 
   Scaffold(
     topBar = {
@@ -393,10 +394,21 @@ fun EditInspectionScreen(
           onSave(updated)
         },
         onCancelClick = onCancel,
-        onDeleteClick = { onDeleteRequest(card.id) },
+        onDeleteClick = { showDeleteConfirm = true },
         saveEnabled = title.isNotBlank()
       )
     }
+  }
+
+  if (showDeleteConfirm) {
+    DeleteInspectionConfirmDialog(
+      inspectionTitle = title,
+      onConfirm = {
+        showDeleteConfirm = false
+        onDeleteRequest(card.id)
+      },
+      onDismiss = { showDeleteConfirm = false }
+    )
   }
 
   if (showDatePicker) {
