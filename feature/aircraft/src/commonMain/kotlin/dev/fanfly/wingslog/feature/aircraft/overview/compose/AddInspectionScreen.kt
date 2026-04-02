@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.EngineHourRule
 import dev.fanfly.wingslog.aircraft.InspectionCard
@@ -50,11 +51,7 @@ import wingslog.feature.aircraft.generated.resources.component
 import wingslog.feature.aircraft.generated.resources.inspection_title
 import wingslog.feature.aircraft.generated.resources.interval_hours
 import wingslog.feature.aircraft.generated.resources.interval_months
-import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_ad
-import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_routine
-import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_sb
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,10 +123,12 @@ fun AddInspectionScreen(
             selected = component == entry,
             onClick = { component = entry },
             shape = SegmentedButtonDefaults.itemShape(index = index, count = components.size),
+            icon = {}, // Hide icon for cleaner alignment
             label = {
               Text(
                 text = entry.name.removePrefix("INSPECTION_COMPONENT_"),
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.Center
               )
             }
           )
@@ -148,14 +147,19 @@ fun AddInspectionScreen(
             selected = type == entry,
             onClick = { type = entry },
             shape = SegmentedButtonDefaults.itemShape(index = index, count = types.size),
+            icon = {}, // Hide icon for cleaner alignment
             label = {
               val labelText = when (entry) {
-                ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> stringResource(InspectionRes.string.compliance_type_ad)
-                ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> stringResource(InspectionRes.string.compliance_type_sb)
-                ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION -> stringResource(InspectionRes.string.compliance_type_routine)
+                ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> "AD"
+                ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> "SB"
+                ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION -> "ROUTINE"
                 else -> entry.name.removePrefix("COMPLIANCE_TYPE_")
               }
-              Text(text = labelText, style = MaterialTheme.typography.bodySmall)
+              Text(
+                text = labelText, 
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.Center
+              )
             }
           )
         }
