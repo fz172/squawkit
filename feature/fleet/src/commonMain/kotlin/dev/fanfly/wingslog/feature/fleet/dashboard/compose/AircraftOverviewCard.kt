@@ -18,12 +18,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.Propeller
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.aircraft.PropellerHub
-import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -36,17 +36,17 @@ fun AircraftDashboardCard(
   Card(
     onClick = { onClick(aircraft.id) },
     modifier = modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
+    shape = RoundedCornerShape(24.dp),
     colors =
       CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
       ),
-    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none)
+    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
   ) {
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(Spacing.extraLarge),
+        .padding(24.dp),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -56,7 +56,7 @@ fun AircraftDashboardCard(
           style = MaterialTheme.typography.titleLarge,
           color = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(Modifier.height(Spacing.extraSmall))
+        Spacer(Modifier.height(4.dp))
         Text(
           text = aircraft.tail_number,
           style = WingslogTypography.dataMedium,

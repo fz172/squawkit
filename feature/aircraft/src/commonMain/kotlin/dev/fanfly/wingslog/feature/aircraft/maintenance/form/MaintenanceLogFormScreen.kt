@@ -68,6 +68,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
+import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.delete
 import wingslog.feature.aircraft.generated.resources.add
 import wingslog.feature.aircraft.generated.resources.add_log
@@ -84,7 +85,6 @@ import wingslog.feature.aircraft.generated.resources.maintenance_date
 import wingslog.feature.aircraft.generated.resources.no_engines_found
 import wingslog.feature.aircraft.generated.resources.no_inspection_work_recorded
 import wingslog.feature.aircraft.generated.resources.no_propeller_components_found
-import wingslog.feature.aircraft.generated.resources.ok
 import wingslog.feature.aircraft.generated.resources.prop_time_hours
 import wingslog.feature.aircraft.generated.resources.propeller_component
 import wingslog.feature.aircraft.generated.resources.remove
@@ -231,7 +231,7 @@ fun MaintenanceLogFormScreen(
                   }
                   showDatePicker = false
                 }) {
-                  Text(cmpStringResource(AircraftRes.string.ok))
+                  Text(cmpStringResource(CoreRes.string.ok))
                 }
               },
               dismissButton = {

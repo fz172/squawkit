@@ -183,7 +183,20 @@ class MaintenanceLogFormViewModel(
       }
 
       result
-        .onSuccess { _events.send(MaintenanceLogFormEvent.SaveSuccess) }
+        .onSuccess {
+          // Reset overrides for connected inspections
+          state.selectedInspectionIds.forEach { cardId ->
+            state.availableInspectionCards.find { it.id == cardId }?.let { card ->
+              if (card.force_due_date != null || card.force_due_engine_hour > 0f) {
+                inspectionManager.updateInspection(
+                  aircraftId,
+                  card.copy(force_due_date = null, force_due_engine_hour = 0f)
+                )
+              }
+            }
+          }
+          _events.send(MaintenanceLogFormEvent.SaveSuccess)
+        }
         .onFailure { e ->
           _uiState.update { it.copy(isSaving = false, error = e.message ?: "Save failed") }
         }
