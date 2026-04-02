@@ -48,6 +48,7 @@ kotlin {
       implementation(project(":core:auth"))
 
       implementation(project(":feature:aircraft:database"))
+      implementation(project(":feature:aircraft:inspection"))
 
       implementation(libs.kotlinx.datetime)
 

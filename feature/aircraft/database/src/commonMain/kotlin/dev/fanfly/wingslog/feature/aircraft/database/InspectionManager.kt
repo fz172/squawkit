@@ -2,25 +2,9 @@ package dev.fanfly.wingslog.feature.aircraft.database
 
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueMetadata
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.LocalDate
 
-enum class DueStatus {
-  NORMAL,
-  DUE_SOON,
-  OVERDUE,
-  COMPLIED
-}
-
-/**
- * Metadata computed for an inspection card, describing when it is next due and its current status.
- */
-data class DueMetadata(
-  val nextDueDate: LocalDate? = null,
-  val nextDueEngine: Float? = null,
-  val isOnCondition: Boolean = false,
-  val status: DueStatus = DueStatus.NORMAL,
-)
 
 interface InspectionManager {
 

@@ -8,9 +8,9 @@ import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
 import dev.fanfly.wingslog.core.database.getFleetCollectionRef
 import dev.fanfly.wingslog.core.database.setEncoded
-import dev.fanfly.wingslog.feature.aircraft.database.DueMetadata
-import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
+import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueMetadata
+import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueStatus
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -214,10 +214,10 @@ class InspectionManagerImpl(
           if (parentCard != null) {
             val parentMetadata = computeNextDueRecursive(parentCard, logs, allCards, visited)
             // Inherit due dates from parent
-            if (parentMetadata.nextDueDate != null && (nextDueDate == null || parentMetadata.nextDueDate < nextDueDate)) {
+            if (parentMetadata.nextDueDate != null && (nextDueDate == null || parentMetadata.nextDueDate!! < nextDueDate)) {
               nextDueDate = parentMetadata.nextDueDate
             }
-            if (parentMetadata.nextDueEngine != null && (nextDueEngine == null || parentMetadata.nextDueEngine < nextDueEngine)) {
+            if (parentMetadata.nextDueEngine != null && (nextDueEngine == null || parentMetadata.nextDueEngine!! < nextDueEngine)) {
               nextDueEngine = parentMetadata.nextDueEngine
             }
             if (parentMetadata.isOnCondition) isOnCondition = true

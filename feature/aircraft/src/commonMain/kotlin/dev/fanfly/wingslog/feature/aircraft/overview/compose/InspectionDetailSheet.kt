@@ -38,8 +38,8 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
-import dev.fanfly.wingslog.feature.aircraft.database.DueMetadata
-import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
+import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueMetadata
+import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
 import wingslog.feature.aircraft.generated.resources.done
 import wingslog.feature.aircraft.generated.resources.due_date

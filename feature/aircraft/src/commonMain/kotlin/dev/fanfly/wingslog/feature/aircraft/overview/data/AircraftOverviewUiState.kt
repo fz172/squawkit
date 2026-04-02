@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.aircraft.overview.data
 
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.InspectionCard
-import dev.fanfly.wingslog.feature.aircraft.database.DueMetadata
+import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueMetadata
 
 data class LogStats(
   val total: Long,

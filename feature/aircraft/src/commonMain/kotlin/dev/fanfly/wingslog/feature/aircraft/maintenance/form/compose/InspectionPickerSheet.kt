@@ -88,11 +88,11 @@ fun InspectionPickerSheet(
         )
       } else {
         val grouped = availableCards.groupBy { it.type }
-        
+
         listOf(
           ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to "Airworthiness Directives (AD)",
           ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN to "Service Bulletins (SB)",
-          ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to "Recurring Inspections",
+          ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to "Routine Inspections",
         ).forEach { (type, header) ->
           val cards = grouped[type] ?: emptyList()
           if (cards.isNotEmpty()) {
@@ -124,8 +124,14 @@ fun InspectionPickerSheet(
                     style = MaterialTheme.typography.bodyLarge,
                   )
                   val componentLabel = when (card.component) {
-                    InspectionComponentType.INSPECTION_COMPONENT_ENGINE -> cmpStringResource(AircraftRes.string.engine)
-                    InspectionComponentType.INSPECTION_COMPONENT_PROPELLER -> cmpStringResource(AircraftRes.string.propeller)
+                    InspectionComponentType.INSPECTION_COMPONENT_ENGINE -> cmpStringResource(
+                      AircraftRes.string.engine
+                    )
+
+                    InspectionComponentType.INSPECTION_COMPONENT_PROPELLER -> cmpStringResource(
+                      AircraftRes.string.propeller
+                    )
+
                     InspectionComponentType.INSPECTION_COMPONENT_AVIONICS -> "Avionics"
                     else -> cmpStringResource(AircraftRes.string.airframe)
                   }

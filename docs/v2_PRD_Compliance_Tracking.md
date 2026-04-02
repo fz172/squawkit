@@ -23,7 +23,7 @@ Support new compliance triggers:
 - **One-Time**: Once referenced in a `MaintenanceLog`, the item is marked `COMPLIED_WITH` and no longer computes a "Next Due" date.
 - **Fixed Hour/Date**: Existing `force_due` logic handles this (e.g., "Comply by 500 engine hours").
 - **Linked Compliance (Due by Next Major Inspection)**:
-    - Item is linked to a specific recurring inspection (usually "Annual").
+    - Item is linked to a specific routine inspection (usually "Annual").
     - The "Next Due" for this item is inherited from the linked inspection's due date.
     - This ensures that if the Annual is due in Dec 2024, the SB is also flagged as due in Dec 2024.
     - If the linked inspection is performed (logged), this item must also be marked as completed in that same log, or it becomes immediately **OVERDUE**.

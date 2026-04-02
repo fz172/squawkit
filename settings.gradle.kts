@@ -35,6 +35,7 @@ include(":feature:userprofile")
 include(":feature:userprofile:database")
 include(":feature:userprofile:sharedassets")
 include(":feature:aircraft:database")
+include(":feature:aircraft:inspection")
 include(":feature:fleet:database")
 include(":feature:fleet")
 

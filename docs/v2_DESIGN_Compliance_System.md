@@ -80,7 +80,7 @@ A new sheet or a mode in `AddInspectionSheet`:
 - **Step 1**: Select Type (Inspection vs SB/AD).
 - **Step 2**: If SB/AD, show "Reference Number" and "Origin" fields.
 - **Step 3**: "Due Strategy" picker:
-    - *Linked*: Show a dropdown of existing recurring inspections (Annual, etc.).
+    - *Linked*: Show a dropdown of existing routine inspections (Annual, etc.).
     - *Immediate*: No further inputs.
     - *Interval*: Existing Time/Engine hour inputs.
 - **Step 4**: URL and Compliance Detail text areas.

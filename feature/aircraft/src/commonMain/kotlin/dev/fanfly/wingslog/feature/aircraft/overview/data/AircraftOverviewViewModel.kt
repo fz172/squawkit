@@ -10,7 +10,7 @@ import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
-import dev.fanfly.wingslog.feature.aircraft.database.DueStatus
+import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
