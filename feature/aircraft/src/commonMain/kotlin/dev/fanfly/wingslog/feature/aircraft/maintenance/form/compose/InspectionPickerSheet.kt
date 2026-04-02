@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.RadioButtonChecked
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Close
@@ -50,6 +52,7 @@ fun InspectionPickerSheet(
   onToggle: (cardId: String) -> Unit,
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
+  singleSelect: Boolean = false,
 ) {
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -117,7 +120,12 @@ fun InspectionPickerSheet(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
               ) {
                 Icon(
-                  imageVector = if (isSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+                  imageVector = when {
+                    singleSelect && isSelected -> Icons.Default.RadioButtonChecked
+                    singleSelect && !isSelected -> Icons.Default.RadioButtonUnchecked
+                    isSelected -> Icons.Default.CheckBox
+                    else -> Icons.Default.CheckBoxOutlineBlank
+                  },
                   contentDescription = null,
                   tint = if (isSelected) MaterialTheme.colorScheme.primary
                   else MaterialTheme.colorScheme.onSurfaceVariant,

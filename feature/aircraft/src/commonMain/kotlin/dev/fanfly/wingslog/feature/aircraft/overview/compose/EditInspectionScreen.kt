@@ -4,29 +4,33 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -53,6 +57,7 @@ import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.aircraft.maintenance.form.compose.InspectionPickerSheet
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -67,6 +72,8 @@ import wingslog.feature.aircraft.generated.resources.interval_months
 import wingslog.feature.aircraft.generated.resources.ok
 import wingslog.feature.aircraft.generated.resources.override_next_due_date
 import wingslog.feature.aircraft.generated.resources.override_next_due_engine
+import wingslog.feature.aircraft.generated.resources.schedule_with_another_work
+import wingslog.feature.aircraft.generated.resources.schedule_with_another_work_description
 import wingslog.feature.aircraft.generated.resources.select_date
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
@@ -95,6 +102,7 @@ fun EditInspectionScreen(
   var refNumber by remember { mutableStateOf(card.reference_number) }
   var manufacturerUrl by remember { mutableStateOf(card.sb_url) }
   var linkedToId by remember { mutableStateOf(initialLinkedId) }
+  var showLinkedPicker by remember { mutableStateOf(false) }
 
   // Force Override States
   var forceOverrideEngine by remember { mutableStateOf(card.force_due_engine_hour > 0f) }
@@ -188,44 +196,50 @@ fun EditInspectionScreen(
 
       Spacer(modifier = Modifier.height(Spacing.medium))
 
-      // Regular Interval Inputs (Always visible)
-      Text("INTERVALS", style = MaterialTheme.typography.labelLarge)
-      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-        OutlinedTextField(
-          value = intervalMonths,
-          onValueChange = { intervalMonths = it.filter { c -> c.isDigit() } },
-          label = { Text(stringResource(AircraftRes.string.interval_months)) },
-          modifier = Modifier.weight(1f)
-        )
-        OutlinedTextField(
-          value = intervalHours,
-          onValueChange = { intervalHours = it.filter { c -> c.isDigit() || c == '.' } },
-          label = { Text(stringResource(AircraftRes.string.interval_hours)) },
-          modifier = Modifier.weight(1f)
-        )
-      }
-
-      Spacer(modifier = Modifier.height(Spacing.small))
-
-      // One-time compliance toggle
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text("One-Time Compliance", style = MaterialTheme.typography.bodyLarge)
-          Text(
-            "Moves to history after first log",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+      // Regular Interval Inputs
+      if (linkedToId == null) {
+        Text("INTERVALS", style = MaterialTheme.typography.labelLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+          OutlinedTextField(
+            value = intervalMonths,
+            onValueChange = { intervalMonths = it.filter { c -> c.isDigit() } },
+            label = { Text(stringResource(AircraftRes.string.interval_months)) },
+            modifier = Modifier.weight(1f)
+          )
+          OutlinedTextField(
+            value = intervalHours,
+            onValueChange = { intervalHours = it.filter { c -> c.isDigit() || c == '.' } },
+            label = { Text(stringResource(AircraftRes.string.interval_hours)) },
+            modifier = Modifier.weight(1f)
           )
         }
-        Switch(checked = isOneTime, onCheckedChange = { isOneTime = it })
+
+        Spacer(modifier = Modifier.height(Spacing.small))
+
+        // One-time compliance toggle
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+          Column(modifier = Modifier.weight(1f)) {
+            Text("One-Time Compliance", style = MaterialTheme.typography.bodyLarge)
+            Text(
+              "Moves to history after first log",
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          }
+          Switch(checked = isOneTime, onCheckedChange = { isOneTime = it })
+        }
       }
 
       if (type == ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN || type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
-        Spacer(modifier = Modifier.height(Spacing.medium))
+        if (linkedToId != null) {
+          Spacer(modifier = Modifier.height(Spacing.medium))
+        } else {
+          Spacer(modifier = Modifier.height(Spacing.small))
+        }
         OutlinedTextField(
           value = refNumber,
           onValueChange = { refNumber = it },
@@ -244,20 +258,58 @@ fun EditInspectionScreen(
       Spacer(modifier = Modifier.height(Spacing.medium))
 
       // Linked Inspection
-      Text("LINKED TO (OPTIONAL)", style = MaterialTheme.typography.labelLarge)
-      FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-        FilterChip(
-          selected = linkedToId == null,
-          onClick = { linkedToId = null },
-          label = { Text("None") }
-        )
-        availableInspections.filter { it.id != card.id }.forEach { insp ->
-          FilterChip(
-            selected = linkedToId == insp.id,
-            onClick = { linkedToId = insp.id },
-            label = { Text(insp.title) }
-          )
+      Text(
+        stringResource(AircraftRes.string.schedule_with_another_work).uppercase(),
+        style = MaterialTheme.typography.labelLarge
+      )
+      Text(
+        stringResource(AircraftRes.string.schedule_with_another_work_description),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+      )
+      Spacer(modifier = Modifier.height(Spacing.small))
+
+      if (linkedToId == null) {
+        OutlinedButton(
+          onClick = { showLinkedPicker = true },
+          modifier = Modifier.fillMaxWidth()
+        ) {
+          Icon(Icons.Default.Add, contentDescription = null)
+          Spacer(modifier = Modifier.width(Spacing.small))
+          Text("Link to inspection")
         }
+      } else {
+        val linkedInsp = availableInspections.find { it.id == linkedToId }
+        InputChip(
+          selected = true,
+          onClick = { showLinkedPicker = true },
+          label = { Text(linkedInsp?.title ?: "Unknown") },
+          trailingIcon = {
+            IconButton(
+              onClick = { linkedToId = null },
+              modifier = Modifier.size(InputChipDefaults.IconSize)
+            ) {
+              Icon(
+                Icons.Default.Close,
+                contentDescription = "Remove link",
+                modifier = Modifier.size(InputChipDefaults.IconSize)
+              )
+            }
+          }
+        )
+      }
+
+      if (showLinkedPicker) {
+        InspectionPickerSheet(
+          availableCards = availableInspections.filter { it.id != card.id },
+          selectedIds = listOfNotNull(linkedToId),
+          onToggle = { id ->
+            linkedToId = if (linkedToId == id) null else id
+            showLinkedPicker = false
+          },
+          onDismiss = { showLinkedPicker = false },
+          singleSelect = true
+        )
       }
 
       Spacer(modifier = Modifier.height(Spacing.large))
@@ -314,14 +366,15 @@ fun EditInspectionScreen(
       BottomButtons(
         onSaveClick = {
           val ruleList = mutableListOf<InspectionRule>()
-          intervalMonths.toIntOrNull()?.let {
-            ruleList.add(InspectionRule(time_rule = TimeRule(interval_months = it)))
-          }
-          intervalHours.toFloatOrNull()?.let {
-            ruleList.add(InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = it)))
-          }
-          linkedToId?.let {
-            ruleList.add(InspectionRule(linked_rule = LinkedRule(parent_inspection_id = it)))
+          if (linkedToId != null) {
+            ruleList.add(InspectionRule(linked_rule = LinkedRule(parent_inspection_id = linkedToId!!)))
+          } else {
+            intervalMonths.toIntOrNull()?.let {
+              ruleList.add(InspectionRule(time_rule = TimeRule(interval_months = it)))
+            }
+            intervalHours.toFloatOrNull()?.let {
+              ruleList.add(InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = it)))
+            }
           }
 
           val updated = card.copy(
@@ -329,7 +382,7 @@ fun EditInspectionScreen(
             component = component,
             type = type,
             rules = ruleList,
-            is_one_time = isOneTime,
+            is_one_time = isOneTime && linkedToId == null,
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
             sb_url = manufacturerUrl.takeIf { it.isNotBlank() } ?: "",
             force_due_engine_hour = if (forceOverrideEngine) forcedEngineHours.toFloatOrNull()

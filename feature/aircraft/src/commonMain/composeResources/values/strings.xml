@@ -131,4 +131,6 @@
     <string name="ok">OK</string>
     <string name="inspection_notes">Notes</string>
     <string name="inspection_notes_hint">Add any notes or comments…</string>
+    <string name="schedule_with_another_work">Schedule With Another Work (Optional)</string>
+    <string name="schedule_with_another_work_description">This work will be due whenever the selected work is next due.</string>
 </resources>

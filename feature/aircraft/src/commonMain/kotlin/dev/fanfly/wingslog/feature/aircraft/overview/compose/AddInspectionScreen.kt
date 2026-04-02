@@ -2,22 +2,27 @@ package dev.fanfly.wingslog.feature.aircraft.overview.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -44,6 +49,7 @@ import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.aircraft.maintenance.form.compose.InspectionPickerSheet
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.back
@@ -51,6 +57,8 @@ import wingslog.feature.aircraft.generated.resources.component
 import wingslog.feature.aircraft.generated.resources.inspection_title
 import wingslog.feature.aircraft.generated.resources.interval_hours
 import wingslog.feature.aircraft.generated.resources.interval_months
+import wingslog.feature.aircraft.generated.resources.schedule_with_another_work
+import wingslog.feature.aircraft.generated.resources.schedule_with_another_work_description
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,6 +78,7 @@ fun AddInspectionScreen(
   var refNumber by remember { mutableStateOf("") }
   var manufacturerUrl by remember { mutableStateOf("") }
   var linkedToId by remember { mutableStateOf<String?>(null) }
+  var showLinkedPicker by remember { mutableStateOf(false) }
 
   Scaffold(
     topBar = {
@@ -167,44 +176,50 @@ fun AddInspectionScreen(
 
       Spacer(modifier = Modifier.height(Spacing.medium))
 
-      // Regular Interval Inputs (Always visible)
-      Text("INTERVALS", style = MaterialTheme.typography.labelLarge)
-      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-        OutlinedTextField(
-          value = intervalMonths,
-          onValueChange = { intervalMonths = it.filter { c -> c.isDigit() } },
-          label = { Text(stringResource(AircraftRes.string.interval_months)) },
-          modifier = Modifier.weight(1f)
-        )
-        OutlinedTextField(
-          value = intervalHours,
-          onValueChange = { intervalHours = it.filter { c -> c.isDigit() || c == '.' } },
-          label = { Text(stringResource(AircraftRes.string.interval_hours)) },
-          modifier = Modifier.weight(1f)
-        )
-      }
-
-      Spacer(modifier = Modifier.height(Spacing.small))
-
-      // One-time compliance toggle
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text("One-Time Compliance", style = MaterialTheme.typography.bodyLarge)
-          Text(
-            "Moves to history after first log",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+      // Regular Interval Inputs
+      if (linkedToId == null) {
+        Text("INTERVALS", style = MaterialTheme.typography.labelLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+          OutlinedTextField(
+            value = intervalMonths,
+            onValueChange = { intervalMonths = it.filter { c -> c.isDigit() } },
+            label = { Text(stringResource(AircraftRes.string.interval_months)) },
+            modifier = Modifier.weight(1f)
+          )
+          OutlinedTextField(
+            value = intervalHours,
+            onValueChange = { intervalHours = it.filter { c -> c.isDigit() || c == '.' } },
+            label = { Text(stringResource(AircraftRes.string.interval_hours)) },
+            modifier = Modifier.weight(1f)
           )
         }
-        Switch(checked = isOneTime, onCheckedChange = { isOneTime = it })
+
+        Spacer(modifier = Modifier.height(Spacing.small))
+
+        // One-time compliance toggle
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+          Column(modifier = Modifier.weight(1f)) {
+            Text("One-Time Compliance", style = MaterialTheme.typography.bodyLarge)
+            Text(
+              "Moves to history after first log",
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          }
+          Switch(checked = isOneTime, onCheckedChange = { isOneTime = it })
+        }
       }
 
       if (type == ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN || type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
-        Spacer(modifier = Modifier.height(Spacing.medium))
+        if (linkedToId != null) {
+            Spacer(modifier = Modifier.height(Spacing.medium))
+        } else {
+            Spacer(modifier = Modifier.height(Spacing.small))
+        }
         OutlinedTextField(
           value = refNumber,
           onValueChange = { refNumber = it },
@@ -223,20 +238,58 @@ fun AddInspectionScreen(
       Spacer(modifier = Modifier.height(Spacing.medium))
 
       // Linked Inspection
-      Text("LINKED TO (OPTIONAL)", style = MaterialTheme.typography.labelLarge)
-      FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-        FilterChip(
-          selected = linkedToId == null,
-          onClick = { linkedToId = null },
-          label = { Text("None") }
-        )
-        availableInspections.forEach { insp ->
-          FilterChip(
-            selected = linkedToId == insp.id,
-            onClick = { linkedToId = insp.id },
-            label = { Text(insp.title) }
-          )
+      Text(
+        stringResource(AircraftRes.string.schedule_with_another_work).uppercase(),
+        style = MaterialTheme.typography.labelLarge
+      )
+      Text(
+        stringResource(AircraftRes.string.schedule_with_another_work_description),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+      )
+      Spacer(modifier = Modifier.height(Spacing.small))
+
+      if (linkedToId == null) {
+        OutlinedButton(
+          onClick = { showLinkedPicker = true },
+          modifier = Modifier.fillMaxWidth()
+        ) {
+          Icon(Icons.Default.Add, contentDescription = null)
+          Spacer(modifier = Modifier.width(Spacing.small))
+          Text("Link to inspection")
         }
+      } else {
+        val linkedInsp = availableInspections.find { it.id == linkedToId }
+        InputChip(
+          selected = true,
+          onClick = { showLinkedPicker = true },
+          label = { Text(linkedInsp?.title ?: "Unknown") },
+          trailingIcon = {
+            IconButton(
+              onClick = { linkedToId = null },
+              modifier = Modifier.size(InputChipDefaults.IconSize)
+            ) {
+              Icon(
+                Icons.Default.Close,
+                contentDescription = "Remove link",
+                modifier = Modifier.size(InputChipDefaults.IconSize)
+              )
+            }
+          }
+        )
+      }
+
+      if (showLinkedPicker) {
+        InspectionPickerSheet(
+          availableCards = availableInspections,
+          selectedIds = listOfNotNull(linkedToId),
+          onToggle = { id ->
+            linkedToId = if (linkedToId == id) null else id
+            showLinkedPicker = false
+          },
+          onDismiss = { showLinkedPicker = false },
+          singleSelect = true
+        )
       }
 
       Spacer(modifier = Modifier.weight(1f))
@@ -245,14 +298,15 @@ fun AddInspectionScreen(
       BottomButtons(
         onSaveClick = {
           val ruleList = mutableListOf<InspectionRule>()
-          intervalMonths.toIntOrNull()?.let {
-            ruleList.add(InspectionRule(time_rule = TimeRule(interval_months = it)))
-          }
-          intervalHours.toDoubleOrNull()?.let {
-            ruleList.add(InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = it.toFloat())))
-          }
-          linkedToId?.let {
-            ruleList.add(InspectionRule(linked_rule = LinkedRule(parent_inspection_id = it)))
+          if (linkedToId != null) {
+            ruleList.add(InspectionRule(linked_rule = LinkedRule(parent_inspection_id = linkedToId!!)))
+          } else {
+            intervalMonths.toIntOrNull()?.let {
+              ruleList.add(InspectionRule(time_rule = TimeRule(interval_months = it)))
+            }
+            intervalHours.toDoubleOrNull()?.let {
+              ruleList.add(InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = it.toFloat())))
+            }
           }
 
           val card = InspectionCard(
@@ -264,7 +318,7 @@ fun AddInspectionScreen(
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
             sb_url = manufacturerUrl.takeIf { it.isNotBlank() } ?: "",
             compliance_details = "",
-            is_one_time = isOneTime,
+            is_one_time = isOneTime && linkedToId == null,
             force_due_engine_hour = 0f,
             force_due_date = null,
             notes = ""
