@@ -83,7 +83,7 @@ fun DashboardScreen(
         ) {
           Icon(
             Icons.Default.Add,
-            contentDescription = cmpStringResource(FleetRes.string.add_first_aircraft)
+            contentDescription = cmpStringResource(FleetRes.string.add_aircraft)
           )
         }
       }

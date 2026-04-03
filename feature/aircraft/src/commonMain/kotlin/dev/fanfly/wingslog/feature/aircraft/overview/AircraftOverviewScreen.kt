@@ -93,6 +93,8 @@ import wingslog.feature.aircraft.generated.resources.engine_time_label
 import wingslog.feature.aircraft.generated.resources.log_details
 import wingslog.feature.aircraft.generated.resources.maintenance_summary
 import wingslog.feature.aircraft.generated.resources.make_model_template
+import wingslog.feature.aircraft.generated.resources.inspections
+import wingslog.feature.aircraft.generated.resources.no_complied_yet
 import wingslog.feature.aircraft.generated.resources.no_inspections_yet
 import wingslog.feature.aircraft.generated.resources.prop_time_label
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
@@ -542,7 +544,7 @@ private fun ComplianceSection(
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
       Text(
-        text = "Compliance & Inspections",
+        text = cmpStringResource(AircraftRes.string.inspections),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
       )
@@ -615,7 +617,7 @@ private fun ComplianceSection(
         }
       } else {
         Text(
-          text = "No items complied with yet.",
+          text = cmpStringResource(AircraftRes.string.no_complied_yet),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(vertical = Spacing.large)

@@ -35,6 +35,6 @@
     <string name="remove_link">Remove link</string>
     <string name="force_overrides_safety">Force Override</string>
 
-    <string name="no_inspection_cards_configured">No inspection cards configured for this aircraft.</string>
+    <string name="no_inspection_cards_configured">No inspections configured. Add them from the aircraft overview to track recurring maintenance.</string>
 
 </resources>

@@ -84,13 +84,15 @@
     <string name="remove_blade">Remove Blade</string>
     <string name="affects_n_inspection_items">Affects %1$d inspection item(s)</string>
     <string name="delete_inspection_confirmation">Delete "%1$s"? This cannot be undone. Maintenance logs that reference this inspection will not be deleted.</string>
+    <string name="inspections">Inspections</string>
+    <string name="no_complied_yet">Log work against an inspection to see its history here.</string>
     <string name="inspection_work">Inspection Work</string>
     <string name="no_inspection_work_recorded">No inspection work recorded for this log.</string>
     <string name="unknown_inspection">Unknown inspection (%1$s)</string>
     <string name="rules">Rules</string>
     <string name="next_due">Next Due</string>
     <string name="maintenance_history">Maintenance History</string>
-    <string name="no_maintenance_logs_for_inspection">No maintenance logs for this inspection yet.</string>
+    <string name="no_maintenance_logs_for_inspection">No logs yet. Add a maintenance entry and tag this inspection to see history here.</string>
     <string name="every_x_months">Every %1$d months</string>
     <string name="every_x_engine_hours">Every %1$d engine hours</string>
     <string name="on_condition_desc">On condition: %1$s</string>
