@@ -58,7 +58,7 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
-import dev.fanfly.wingslog.feature.aircraft.maintenance.form.compose.InspectionPickerSheet
+import dev.fanfly.wingslog.feature.aircraft.inspection.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.data.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
@@ -66,18 +66,21 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.ok
+import wingslog.core.ui.generated.resources.component_engine
+import wingslog.core.ui.generated.resources.component_type
 import wingslog.core.ui.generated.resources.delete
-import wingslog.feature.aircraft.generated.resources.add
+import wingslog.core.ui.generated.resources.ok
+import wingslog.core.ui.generated.resources.remove
+import wingslog.core.ui.generated.resources.save
+import wingslog.core.ui.generated.resources.update
 import wingslog.feature.aircraft.generated.resources.add_log
 import wingslog.feature.aircraft.generated.resources.airframe_serial
 import wingslog.feature.aircraft.generated.resources.airframe_time_hours
-import wingslog.feature.aircraft.generated.resources.component_type
 import wingslog.feature.aircraft.generated.resources.delete_log
 import wingslog.feature.aircraft.generated.resources.edit_log
-import wingslog.feature.aircraft.generated.resources.engine
 import wingslog.feature.aircraft.generated.resources.engine_time_hours
 import wingslog.feature.aircraft.generated.resources.inspection_work
 import wingslog.feature.aircraft.generated.resources.loading_aircraft
@@ -87,12 +90,9 @@ import wingslog.feature.aircraft.generated.resources.no_inspection_work_recorded
 import wingslog.feature.aircraft.generated.resources.no_propeller_components_found
 import wingslog.feature.aircraft.generated.resources.prop_time_hours
 import wingslog.feature.aircraft.generated.resources.propeller_component
-import wingslog.feature.aircraft.generated.resources.remove
-import wingslog.feature.aircraft.generated.resources.save
 import wingslog.feature.aircraft.generated.resources.tap_to_change_date
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.unknown_inspection
-import wingslog.feature.aircraft.generated.resources.update
 import wingslog.feature.aircraft.generated.resources.work_description_required
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
@@ -143,7 +143,7 @@ fun MaintenanceLogFormScreen(
   }
 
   val saveLabel =
-    cmpStringResource(if (viewModel.isEditMode) AircraftRes.string.update else AircraftRes.string.save)
+    cmpStringResource(if (viewModel.isEditMode) CoreRes.string.update else CoreRes.string.save)
 
   Scaffold(
     topBar = {
@@ -402,7 +402,7 @@ private fun ComponentSection(
               label to engine.serial
             }
             SubComponentDropdown(
-              label = cmpStringResource(AircraftRes.string.engine),
+              label = cmpStringResource(CoreRes.string.component_engine),
               options = options,
               selectedSerial = selectedSubComponent,
               onSelected = onSubComponentChange,
@@ -537,7 +537,7 @@ private fun ComponentTypeDropdown(
       value = selected.displayName(),
       onValueChange = {},
       readOnly = true,
-      label = { Text(cmpStringResource(AircraftRes.string.component_type)) },
+      label = { Text(cmpStringResource(CoreRes.string.component_type)) },
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
       modifier = Modifier
         .fillMaxWidth()
@@ -585,7 +585,7 @@ private fun InspectionWorkSection(
         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.width(16.dp))
         Spacer(Modifier.width(4.dp))
         Text(
-          cmpStringResource(AircraftRes.string.add),
+          cmpStringResource(CoreRes.string.add),
           style = MaterialTheme.typography.labelMedium
         )
       }
@@ -614,7 +614,7 @@ private fun InspectionWorkSection(
           IconButton(onClick = { onRemove(cardId) }) {
             Icon(
               Icons.Default.Close,
-              contentDescription = cmpStringResource(AircraftRes.string.remove),
+              contentDescription = cmpStringResource(CoreRes.string.remove),
               tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }
