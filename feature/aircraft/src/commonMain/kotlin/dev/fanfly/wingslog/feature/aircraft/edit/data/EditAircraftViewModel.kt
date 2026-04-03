@@ -75,6 +75,17 @@ class EditAircraftViewModel(
     }
   }
 
+  fun deleteAircraft() {
+    viewModelScope.launch {
+      _uiState.update { it.copy(isLoading = true) }
+      val result = aircraftManager.deleteAircraft(uiState.value.aircraft.id)
+      if (result.isSuccess) {
+        _uiState.update { it.copy(isDeleted = true) }
+      }
+      _uiState.update { it.copy(isLoading = false) }
+    }
+  }
+
   fun onMakeChanged(newValue: String) {
     _uiState.update {
       it.copy(

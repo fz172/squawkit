@@ -24,15 +24,12 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -90,12 +87,10 @@ import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.core.ui.generated.resources.delete
-import wingslog.core.ui.generated.resources.settings
 import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
 import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.airframe_time_label
 import wingslog.feature.aircraft.generated.resources.delete_aircraft
-import wingslog.feature.aircraft.generated.resources.edit_aircraft
 import wingslog.feature.aircraft.generated.resources.engine_time_label
 import wingslog.feature.aircraft.generated.resources.log_details
 import wingslog.feature.aircraft.generated.resources.maintenance_summary
@@ -188,7 +183,6 @@ fun AircraftOverviewContent(
   val scrollState = rememberScrollState()
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-  var showSettingsMenu by rememberSaveable { mutableStateOf(false) }
   var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
   var showComplied by rememberSaveable { mutableStateOf(false) }
 
@@ -243,34 +237,7 @@ fun AircraftOverviewContent(
             )
           }
         }, actions = {
-          IconButton(onClick = { showSettingsMenu = !showSettingsMenu }) {
-            Icon(
-              Icons.Default.Settings,
-              contentDescription = cmpStringResource(CoreRes.string.settings)
-            )
-          }
-          DropdownMenu(
-            expanded = showSettingsMenu, onDismissRequest = { showSettingsMenu = false }) {
-            DropdownMenuItem(
-              text = { Text(cmpStringResource(AircraftRes.string.edit_aircraft)) },
-              onClick = {
-                showSettingsMenu = false
-                if (aircraft != null) {
-                  onEditClick(aircraft.id)
-                }
-              })
-            DropdownMenuItem(
-              text = {
-                Text(
-                  cmpStringResource(CoreRes.string.delete),
-                  color = MaterialTheme.colorScheme.error
-                )
-              },
-              onClick = {
-                showSettingsMenu = false
-                showDeleteDialog = true
-              })
-          }
+          // Actions moved to ConfigurationCard
         }, colors = TopAppBarDefaults.topAppBarColors(
           containerColor = MaterialTheme.colorScheme.background,
           scrolledContainerColor = MaterialTheme.colorScheme.background
@@ -312,7 +279,7 @@ fun AircraftOverviewContent(
 
           // --- Configuration Section ---
           Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
-            ConfigurationCard(aircraft)
+            ConfigurationCard(aircraft, onEditClick = onEditClick)
           }
 
           // --- Critical Alerts Section ---

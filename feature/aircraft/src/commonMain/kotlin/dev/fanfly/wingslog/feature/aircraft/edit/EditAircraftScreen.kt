@@ -21,6 +21,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,10 +33,14 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,14 +61,17 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.feature.aircraft.edit.data.EditAircraftViewModel
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
+import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.required
 import wingslog.feature.aircraft.generated.resources.add_aircraft
 import wingslog.feature.aircraft.generated.resources.add_blade
 import wingslog.feature.aircraft.generated.resources.add_engine
 import wingslog.feature.aircraft.generated.resources.blade_serial_numbers
 import wingslog.feature.aircraft.generated.resources.blade_with_index
+import wingslog.feature.aircraft.generated.resources.delete_aircraft
 import wingslog.feature.aircraft.generated.resources.engine_with_index
 import wingslog.feature.aircraft.generated.resources.make
 import wingslog.feature.aircraft.generated.resources.model
@@ -71,6 +80,7 @@ import wingslog.feature.aircraft.generated.resources.remove_blade
 import wingslog.feature.aircraft.generated.resources.remove_engine
 import wingslog.feature.aircraft.generated.resources.serial
 import wingslog.feature.aircraft.generated.resources.tail_number
+import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.update_aircraft
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -85,12 +95,41 @@ fun EditAircraftScreen(
   val scrollState = rememberScrollState()
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
+  var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+
   // This effect will run when isSaved becomes true
-  LaunchedEffect(uiState.isSaved) {
-    if (uiState.isSaved) {
-      // Navigate back when save is successful
-      navController.popBackStack()
+  LaunchedEffect(uiState.isSaved, uiState.isDeleted) {
+    if (uiState.isSaved || uiState.isDeleted) {
+      // Navigate back when save or delete is successful
+      if (uiState.isDeleted) {
+        navController.popBackStack("dashboard", inclusive = false)
+      } else {
+        navController.popBackStack()
+      }
     }
+  }
+
+  if (showDeleteDialog) {
+    AlertDialog(
+      onDismissRequest = { showDeleteDialog = false },
+      title = { Text(cmpStringResource(AircraftRes.string.delete_aircraft)) },
+      text = { Text(cmpStringResource(AircraftRes.string.this_action_cannot_be_undone)) },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            viewModel.deleteAircraft()
+            showDeleteDialog = false
+          },
+          colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+        ) {
+          Text(cmpStringResource(CoreRes.string.delete))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showDeleteDialog = false }) {
+          Text(cmpStringResource(CoreRes.string.cancel))
+        }
+      })
   }
 
   Scaffold(
@@ -144,6 +183,9 @@ fun EditAircraftScreen(
         saveEnabled = !uiState.isLoading,
         onSaveClick = { viewModel.saveAircraft() },
         onCancelClick = { navController.popBackStack() },
+        onDeleteClick = if (uiState.aircraft.id != "") {
+          { showDeleteDialog = true }
+        } else null,
         saveLabel = if (uiState.aircraft.id == "") cmpStringResource(AircraftRes.string.add_aircraft) else cmpStringResource(
           AircraftRes.string.update_aircraft
         )
