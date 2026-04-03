@@ -26,12 +26,12 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 import wingslog.feature.aircraft.inspection.generated.resources.force_due_engine_hours
 import wingslog.feature.aircraft.inspection.generated.resources.force_overrides_safety
 import wingslog.feature.aircraft.inspection.generated.resources.override_next_due_date
 import wingslog.feature.aircraft.inspection.generated.resources.override_next_due_engine
 import wingslog.feature.aircraft.inspection.generated.resources.select_date
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable
 fun ForcedOverrideFields(

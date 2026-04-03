@@ -13,9 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance_desc
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable
 fun OneTimeComplianceFields(

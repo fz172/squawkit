@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -29,7 +28,6 @@ import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfi
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.settings
-import wingslog.feature.settings.generated.resources.add_aircraft
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.sign_out
 import org.jetbrains.compose.resources.stringResource as cmpStringResource

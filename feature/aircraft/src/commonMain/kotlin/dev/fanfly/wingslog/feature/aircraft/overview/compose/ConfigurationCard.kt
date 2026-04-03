@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -34,11 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import wingslog.core.ui.generated.resources.delete
 import wingslog.feature.aircraft.generated.resources.airframe_s_n
 import wingslog.feature.aircraft.generated.resources.edit_aircraft
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @Composable

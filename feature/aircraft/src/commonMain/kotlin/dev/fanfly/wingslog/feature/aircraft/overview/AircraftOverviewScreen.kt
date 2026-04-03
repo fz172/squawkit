@@ -27,12 +27,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -43,7 +41,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -77,28 +74,28 @@ import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewViewMo
 import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.data.LogStats
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
 import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.add_log
 import wingslog.feature.aircraft.generated.resources.airframe_time_label
 import wingslog.feature.aircraft.generated.resources.delete_aircraft
 import wingslog.feature.aircraft.generated.resources.engine_time_label
+import wingslog.feature.aircraft.generated.resources.inspections
 import wingslog.feature.aircraft.generated.resources.log_details
 import wingslog.feature.aircraft.generated.resources.maintenance_summary
 import wingslog.feature.aircraft.generated.resources.make_model_template
-import wingslog.feature.aircraft.generated.resources.inspections
 import wingslog.feature.aircraft.generated.resources.no_complied_yet
 import wingslog.feature.aircraft.generated.resources.no_inspections_yet
 import wingslog.feature.aircraft.generated.resources.prop_time_label
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.total_logs
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 
 @Composable

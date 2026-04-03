@@ -51,6 +51,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.userprofile.data.EditProfileViewModel
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
@@ -67,7 +68,6 @@ import wingslog.feature.userprofile.generated.resources.never
 import wingslog.feature.userprofile.generated.resources.select_date
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import dev.fanfly.wingslog.core.ui.theme.Spacing
 import wingslog.feature.userprofile.generated.resources.Res as UserProfileRes
 
 

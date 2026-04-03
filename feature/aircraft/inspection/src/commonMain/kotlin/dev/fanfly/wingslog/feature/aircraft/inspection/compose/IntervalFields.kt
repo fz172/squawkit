@@ -16,10 +16,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 import wingslog.feature.aircraft.inspection.generated.resources.interval_hours
 import wingslog.feature.aircraft.inspection.generated.resources.interval_months
 import wingslog.feature.aircraft.inspection.generated.resources.intervals
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable
 fun IntervalFields(
