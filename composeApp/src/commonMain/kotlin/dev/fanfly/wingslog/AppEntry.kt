@@ -13,11 +13,11 @@ import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.aircraft.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
 import dev.fanfly.wingslog.feature.aircraft.edit.EditAircraftScreen
+import dev.fanfly.wingslog.feature.aircraft.inspection.ui.AddInspectionRoute
+import dev.fanfly.wingslog.feature.aircraft.inspection.ui.EditInspectionRoute
 import dev.fanfly.wingslog.feature.aircraft.maintenance.form.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.MaintenanceLogListScreen
 import dev.fanfly.wingslog.feature.aircraft.overview.AircraftOverviewScreen
-import dev.fanfly.wingslog.feature.aircraft.inspection.ui.AddInspectionRoute
-import dev.fanfly.wingslog.feature.aircraft.inspection.ui.EditInspectionRoute
 import dev.fanfly.wingslog.feature.fleet.dashboard.DashboardScreen
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
 import dev.fanfly.wingslog.feature.userprofile.EditProfileScreen
@@ -95,8 +95,7 @@ fun AppEntry() {
             navArgument("cardId") { type = NavType.StringType }
           )
         ) {
-          val cardId = it.arguments?.getString("cardId") ?: ""
-          EditInspectionRoute(cardId = cardId, navController = navController)
+          EditInspectionRoute(navController = navController)
         }
 
         // Maintenance Log routes

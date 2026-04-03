@@ -34,6 +34,7 @@ class InspectionViewModel(
 ) : ViewModel() {
 
   private val aircraftId: String = checkNotNull(savedStateHandle["aircraftId"])
+  val cardId: String? = savedStateHandle["cardId"]
 
   private val _uiState = MutableStateFlow<InspectionUiState>(InspectionUiState.Loading)
   val uiState: StateFlow<InspectionUiState> = _uiState.asStateFlow()

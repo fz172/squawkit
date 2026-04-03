@@ -13,7 +13,6 @@ import wingslog.feature.aircraft.inspection.generated.resources.Res as Inspectio
 
 @Composable
 fun EditInspectionRoute(
-  cardId: String,
   navController: NavController,
   viewModel: InspectionViewModel = koinViewModel()
 ) {
@@ -24,7 +23,7 @@ fun EditInspectionRoute(
   val deletedMessage = stringResource(InspectionRes.string.inspection_deleted)
 
   // Find the card in the list
-  val card = successState?.allInspections?.find { it.id == cardId }
+  val card = successState?.allInspections?.find { it.id == viewModel.cardId }
 
   if (card != null && successState != null) {
     EditInspectionScreen(
