@@ -9,10 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AirplanemodeActive
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -25,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,7 +52,6 @@ fun DashboardScreen(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-  var menuExpanded by remember { mutableStateOf(false) }
   var hasAutoForwarded by rememberSaveable { mutableStateOf(false) }
 
   // Auto-forward for single-aircraft owners on cold start
@@ -70,22 +66,11 @@ fun DashboardScreen(
     modifier = Modifier.fillMaxSize(),
     topBar = {
       TopAppBar(title = { Text(text = cmpStringResource(CoreUiRes.string.app_name)) }, actions = {
-        Box {
-          IconButton(onClick = { menuExpanded = true }) {
-            Icon(
-              Icons.Default.MoreVert,
-              contentDescription = cmpStringResource(CoreUiRes.string.settings)
-            )
-          }
-          DropdownMenu(
-            expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-            DropdownMenuItem(
-              text = { Text(cmpStringResource(CoreUiRes.string.settings)) },
-              onClick = {
-                menuExpanded = false
-                onOpenSettings()
-              })
-          }
+        IconButton(onClick = onOpenSettings) {
+          Icon(
+            Icons.Default.Settings,
+            contentDescription = cmpStringResource(CoreUiRes.string.settings)
+          )
         }
       })
     },
@@ -123,9 +108,11 @@ fun DashboardScreen(
           verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
         ) {
           items(uiState.fleet, key = { it.id }) { aircraft ->
-            AircraftDashboardCard(aircraft, onClick = { aircraftId ->
-              onAircraftClick(aircraftId)
-            })
+            AircraftDashboardCard(
+              aircraft = aircraft,
+              onClick = { aircraftId -> onAircraftClick(aircraftId) },
+              healthStatus = uiState.aircraftHealthStatus[aircraft.id]
+            )
           }
         }
       }

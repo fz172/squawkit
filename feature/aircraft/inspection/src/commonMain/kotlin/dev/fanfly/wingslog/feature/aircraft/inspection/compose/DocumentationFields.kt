@@ -11,13 +11,13 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority_hint
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_notes
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_notes_hint
 import wingslog.feature.aircraft.inspection.generated.resources.reference_number
 import wingslog.feature.aircraft.inspection.generated.resources.reference_number_hint
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable
 fun DocumentationFields(

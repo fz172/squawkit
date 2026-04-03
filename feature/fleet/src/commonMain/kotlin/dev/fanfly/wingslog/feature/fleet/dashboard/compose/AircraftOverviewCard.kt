@@ -1,12 +1,16 @@
 package dev.fanfly.wingslog.feature.fleet.dashboard.compose
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowRight
@@ -18,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
@@ -25,13 +30,15 @@ import dev.fanfly.wingslog.aircraft.Propeller
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueStatus
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun AircraftDashboardCard(
   aircraft: Aircraft,
   onClick: (String) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  healthStatus: DueStatus? = null,
 ) {
   Card(
     onClick = { onClick(aircraft.id) },
@@ -64,15 +71,33 @@ fun AircraftDashboardCard(
         )
       }
 
-      // High-level status or summary could go here (e.g. "Airworthy" or "Overdue")
-      // For now, keeping it minimal as requested.
-      Icon(
-        imageVector = Icons.AutoMirrored.Filled.ArrowRight,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-      )
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+      ) {
+        val dotColor = healthStatus?.dotColor()
+        if (dotColor != null) {
+          Box(
+            modifier = Modifier
+              .size(10.dp)
+              .background(color = dotColor, shape = CircleShape)
+          )
+        }
+        Icon(
+          imageVector = Icons.AutoMirrored.Filled.ArrowRight,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+        )
+      }
     }
   }
+}
+
+@Composable
+private fun DueStatus.dotColor(): Color? = when (this) {
+  DueStatus.OVERDUE -> MaterialTheme.colorScheme.error
+  DueStatus.DUE_SOON -> Color(0xFFF59E0B)
+  else -> null
 }
 
 @Preview
@@ -105,5 +130,6 @@ fun AircraftDetailCardPreview() =
         )
       )
     ),
-    onClick = {}
+    onClick = {},
+    healthStatus = DueStatus.OVERDUE
   )

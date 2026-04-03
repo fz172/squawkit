@@ -110,7 +110,7 @@ fun AddInspectionScreen(
           Tab(
             selected = pagerState.currentPage == 0,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
-            text = { Text("Identity") }
+            text = { Text("Basics") }
           )
           Tab(
             selected = pagerState.currentPage == 1,

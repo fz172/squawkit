@@ -46,6 +46,7 @@ kotlin {
       implementation(project(":core:ui"))
       implementation(project(":feature:fleet:database"))
       implementation(project(":feature:aircraft:database"))
+      implementation(project(":feature:aircraft:inspection"))
 
       // Firebase
 
