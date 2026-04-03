@@ -55,6 +55,8 @@ kotlin {
       implementation(libs.kermit)
       implementation(libs.gitlive.firebase.firestore)
       implementation(libs.androidx.navigation.compose)
+      implementation(libs.jetbrains.lifecycle.runtime.compose)
+      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
 
       implementation(compose.runtime)
       implementation(compose.ui)

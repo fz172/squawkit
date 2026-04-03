@@ -6,11 +6,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.aircraft.inspection.ui.EditInspectionScreen
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-import wingslog.feature.aircraft.inspection.generated.resources.*
-import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
-import wingslog.feature.aircraft.inspection.generated.resources.inspection_deleted
 import wingslog.feature.aircraft.inspection.generated.resources.inspection_updated
+import wingslog.feature.aircraft.inspection.generated.resources.inspection_deleted
+import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable
 fun EditInspectionRoute(

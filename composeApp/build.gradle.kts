@@ -59,6 +59,7 @@ kotlin {
       implementation(project(":feature:userprofile"))
       implementation(project(":feature:userprofile:database"))
       implementation(project(":feature:aircraft:database"))
+      implementation(project(":feature:aircraft:inspection"))
       implementation(project(":feature:fleet"))
       implementation(project(":feature:fleet:database"))
 

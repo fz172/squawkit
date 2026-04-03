@@ -42,10 +42,8 @@
     <string name="no_maintenance_logs_description">Log your first entry — oil change, annual, 100-hour, or any other airframe, engine, or prop work.</string>
     <string name="add_first_maintenance_log">Log First Entry</string>
     <string name="delete_log">Delete Log?</string>
-    <string name="unknown_date">Unknown date</string>
     <string name="edit_log_content_description">Edit log</string>
     <string name="delete_log_content_description">Delete log</string>
-    <string name="engine_format">Engine: %1$s</string>
     <string name="maintenance_summary">Maintenance Summary</string>
     <string name="total_logs">Total Logs</string>
     <string name="log_details">Log details</string>
@@ -60,22 +58,10 @@
     <string name="airframe_time_label">Airframe Time</string>
     <string name="prop_time_label">Prop Time</string>
 
-    <!-- Inspection cards -->
-    <string name="add_inspection">Add Inspection</string>
-    <string name="inspection_title">Inspection Title</string>
-    <string name="on_condition">On Condition</string>
-    <string name="interval_months">Interval (months)</string>
-    <string name="interval_hours">Interval (hours)</string>
-    <string name="override_next_due_date">Override next due date</string>
-    <string name="force_due_engine_hours">Force Due Engine (hours)</string>
-    <string name="edit_inspection">Edit inspection</string>
     <string name="remove_engine">Remove Engine</string>
     <string name="remove_blade">Remove Blade</string>
     <string name="maintenance_date">Maintenance Date</string>
-    <string name="select_date">Select date</string>
     <string name="tap_to_change_date">Tap to change date</string>
-    <string name="schedule_with_another_work">Schedule With Another Work (Optional)</string>
-    <string name="schedule_with_another_work_description">This work will be due whenever the selected work is next due.</string>
     <string name="log_onboarding_description">Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.</string>
     <string name="collapse_details">Collapse details</string>
     <string name="expand_details">Expand details</string>
@@ -83,8 +69,4 @@
     <string name="log_updated">Log updated</string>
     <string name="log_saved">Log saved</string>
     <string name="log_deleted">Log deleted</string>
-    <string name="interval_months_placeholder">e.g. 12</string>
-    <string name="interval_hours_placeholder">e.g. 100</string>
-    <string name="inspection_due_warning">Note: This inspection will be due on whichever comes first.</string>
-    <string name="inspection_interval_description">Set a recurring interval based on time, engine hours, or both.</string>
 </resources>
