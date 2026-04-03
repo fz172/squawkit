@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.fleet"
+  namespace = "dev.fanfly.wingslog.feature.inspection"
   compileSdk = 36
 
   defaultConfig {
@@ -42,44 +42,32 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":core:model"))
       implementation(project(":core:ui"))
-      implementation(project(":feature:fleet:database"))
+      implementation(project(":core:database"))
+      implementation(project(":core:auth"))
+      implementation(project(":core:model"))
       implementation(project(":feature:maintenance:database"))
-      implementation(project(":feature:inspection"))
 
-      // Firebase
+      implementation(libs.kotlinx.datetime)
+      implementation(libs.koin.core)
+      implementation(libs.koin.compose)
+      implementation(libs.koin.compose.viewmodel)
+      implementation(libs.kermit)
+      implementation(libs.gitlive.firebase.firestore)
+      implementation(libs.androidx.navigation.compose)
+      implementation(libs.jetbrains.lifecycle.runtime.compose)
+      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
 
-      // Compose
+      implementation(compose.runtime)
       implementation(compose.ui)
+      implementation(compose.foundation)
       implementation(compose.material3)
       implementation(compose.materialIconsExtended)
       implementation(compose.components.resources)
-
-      // Navigation & Lifecycle
-      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
-      implementation(libs.jetbrains.lifecycle.runtime.compose)
-      implementation(libs.androidx.navigation.compose)
-
-      // DI
-      implementation(libs.koin.compose)
-      implementation(libs.koin.compose.viewmodel)
-
-      // Logging
-      implementation(libs.kermit)
-
-      // Tooling
-      implementation(compose.components.uiToolingPreview)
     }
   }
 }
 
 dependencies {
   implementation(platform(libs.firebase.bom))
-  implementation(platform(libs.androidx.compose.bom))
-
-  testImplementation(libs.junit)
-  testImplementation("io.mockk:mockk:1.13.10")
-  testImplementation("com.google.truth:truth:1.4.2")
-  testImplementation(libs.kotlinx.coroutines.test)
 }
