@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.database
+package dev.fanfly.wingslog.feature.maintenance.database.impl
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
