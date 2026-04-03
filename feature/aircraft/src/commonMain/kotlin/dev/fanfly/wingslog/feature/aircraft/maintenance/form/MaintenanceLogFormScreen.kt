@@ -112,8 +112,15 @@ fun MaintenanceLogFormScreen(
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {
-        MaintenanceLogFormEvent.SaveSuccess -> navController.popBackStack()
-        MaintenanceLogFormEvent.DeleteSuccess -> navController.popBackStack()
+        MaintenanceLogFormEvent.SaveSuccess -> {
+          val message = if (viewModel.isEditMode) "Log updated" else "Log saved"
+          navController.previousBackStackEntry?.savedStateHandle?.set("success_message", message)
+          navController.popBackStack()
+        }
+        MaintenanceLogFormEvent.DeleteSuccess -> {
+          navController.previousBackStackEntry?.savedStateHandle?.set("success_message", "Log deleted")
+          navController.popBackStack()
+        }
       }
     }
   }
@@ -327,15 +334,15 @@ fun MaintenanceLogFormScreen(
         }
         BottomButtons(
           modifier = Modifier.align(Alignment.BottomCenter),
-          onSaveClick = viewModel::save,
-          onCancelClick = { navController.popBackStack() },
-          onDeleteClick = if (viewModel.isEditMode) {
+          onPrimaryClick = viewModel::save,
+          onSecondaryClick = { navController.popBackStack() },
+          onDangerClick = if (viewModel.isEditMode) {
             { showDeleteDialog = true }
           } else null,
-          deleteLabel = cmpStringResource(CoreRes.string.delete),
-          saveEnabled = !uiState.isSaving,
-          isSaving = uiState.isSaving,
-          saveLabel = saveLabel,
+          dangerLabel = cmpStringResource(CoreRes.string.delete),
+          primaryEnabled = !uiState.isSaving,
+          isPrimaryFunctionInProgress = uiState.isSaving,
+          primaryLabel = saveLabel,
         )
       }
     }

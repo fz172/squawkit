@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.aircraft.overview.compose
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,6 +25,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +46,8 @@ fun ConfigurationCard(
   aircraft: Aircraft,
   onEditClick: (String) -> Unit
 ) {
+  var expanded by rememberSaveable { mutableStateOf(false) }
+
   Card(
     modifier = Modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
@@ -47,8 +56,7 @@ fun ConfigurationCard(
     )
   ) {
     Column(
-      modifier = Modifier.padding(Spacing.extraLarge),
-      verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
+      modifier = Modifier.padding(Spacing.extraLarge)
     ) {
       // Airframe & Edit Action
       Row(
@@ -65,28 +73,46 @@ fun ConfigurationCard(
           )
         }
 
-        OutlinedButton(
-          onClick = { onEditClick(aircraft.id) },
-          shape = RoundedCornerShape(Spacing.small)
+        Row(
+          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+          verticalAlignment = Alignment.CenterVertically
         ) {
-          Icon(
-            imageVector = Icons.Default.Edit,
-            contentDescription = null,
-            modifier = Modifier.size(ButtonDefaults.IconSize)
-          )
-          Spacer(Modifier.width(Spacing.small))
-          Text(
-            text = cmpStringResource(AircraftRes.string.edit_aircraft),
-            style = MaterialTheme.typography.labelMedium
-          )
+          IconButton(onClick = { expanded = !expanded }) {
+            Icon(
+              imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+              contentDescription = if (expanded) "Collapse details" else "Expand details",
+              tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          }
+          OutlinedButton(
+            onClick = { onEditClick(aircraft.id) },
+            shape = RoundedCornerShape(Spacing.small)
+          ) {
+            Icon(
+              imageVector = Icons.Default.Edit,
+              contentDescription = null,
+              modifier = Modifier.size(ButtonDefaults.IconSize)
+            )
+            Spacer(Modifier.width(Spacing.small))
+            Text(
+              text = cmpStringResource(AircraftRes.string.edit_aircraft),
+              style = MaterialTheme.typography.labelMedium
+            )
+          }
         }
       }
 
-      HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-      // Engines
-      aircraft.engine.forEachIndexed { index, engine ->
-        EngineDetails(index, engine)
+      // Collapsible engine details
+      AnimatedVisibility(visible = expanded) {
+        Column(
+          modifier = Modifier.padding(top = Spacing.extraLarge),
+          verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
+        ) {
+          HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+          aircraft.engine.forEachIndexed { index, engine ->
+            EngineDetails(index, engine)
+          }
+        }
       }
     }
   }

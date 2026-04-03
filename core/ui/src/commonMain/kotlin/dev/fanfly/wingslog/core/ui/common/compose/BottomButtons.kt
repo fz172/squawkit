@@ -36,52 +36,52 @@ import wingslog.core.ui.generated.resources.save_changes
 
 @Composable
 fun BottomButtons(
-  onSaveClick: () -> Unit,
-  onCancelClick: () -> Unit,
+  onPrimaryClick: () -> Unit,
+  onSecondaryClick: (() -> Unit)? = null,
   modifier: Modifier = Modifier,
-  onDeleteClick: (() -> Unit)? = null,
-  deleteLabel: String = stringResource(Res.string.delete),
-  saveEnabled: Boolean = true,
-  cancelEnabled: Boolean = true,
-  isSaving: Boolean = false,
-  saveLabel: String = stringResource(Res.string.save_changes),
+  onDangerClick: (() -> Unit)? = null,
+  dangerLabel: String = stringResource(Res.string.delete),
+  primaryEnabled: Boolean = true,
+  secondaryEnabled: Boolean = true,
+  isPrimaryFunctionInProgress: Boolean = false,
+  primaryLabel: String = stringResource(Res.string.save_changes),
+  secondaryLabel: String = stringResource(Res.string.cancel),
 ) {
   Box(
-    modifier = modifier
-      .fillMaxWidth()
-      .background(Color.Transparent)
-      .padding(Spacing.screenPadding),
-    contentAlignment = Alignment.Center
+    modifier = modifier.fillMaxWidth().background(Color.Transparent)
+      .padding(Spacing.screenPadding), contentAlignment = Alignment.Center
   ) {
     Row(
       modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
       horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
       verticalAlignment = Alignment.CenterVertically
     ) {
-      // 1. Cancel Button
-      OutlinedButton(
-        onClick = onCancelClick,
-        enabled = cancelEnabled && !isSaving,
-        modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
-        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-        colors = ButtonDefaults.outlinedButtonColors(
-          containerColor = MaterialTheme.colorScheme.surface,
-        ),
-      ) {
-        Text(
-          text = stringResource(Res.string.cancel).uppercase(),
-          fontWeight = FontWeight.Bold,
-          maxLines = 1,
-          textAlign = TextAlign.Center,
-          modifier = Modifier.fillMaxWidth()
-        )
+      // 1. Cancel Button (optional)
+      if (onSecondaryClick != null) {
+        OutlinedButton(
+          onClick = onSecondaryClick,
+          enabled = secondaryEnabled && !isPrimaryFunctionInProgress,
+          modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
+          shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+          colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+          ),
+        ) {
+          Text(
+            text = secondaryLabel.uppercase(),
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+          )
+        }
       }
 
       // 2. Delete Button (Optional)
-      if (onDeleteClick != null) {
+      if (onDangerClick != null) {
         OutlinedButton(
-          onClick = onDeleteClick,
-          enabled = !isSaving,
+          onClick = onDangerClick,
+          enabled = !isPrimaryFunctionInProgress,
           modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
           shape = RoundedCornerShape(Spacing.buttonCornerRadius),
           colors = ButtonDefaults.outlinedButtonColors(
@@ -91,7 +91,7 @@ fun BottomButtons(
           border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
         ) {
           Text(
-            text = deleteLabel.uppercase(),
+            text = dangerLabel.uppercase(),
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             textAlign = TextAlign.Center,
@@ -102,18 +102,18 @@ fun BottomButtons(
 
       // 3. Save Button
       Button(
-        onClick = onSaveClick,
+        onClick = onPrimaryClick,
         modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-        enabled = saveEnabled && !isSaving,
+        enabled = primaryEnabled && !isPrimaryFunctionInProgress,
       ) {
         Row(
           modifier = Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.Center,
           verticalAlignment = Alignment.CenterVertically
         ) {
-          if (isSaving) {
+          if (isPrimaryFunctionInProgress) {
             CircularProgressIndicator(
               modifier = Modifier.size(18.dp),
               color = MaterialTheme.colorScheme.onPrimary,
@@ -122,7 +122,7 @@ fun BottomButtons(
             Spacer(Modifier.width(8.dp))
           }
           Text(
-            text = saveLabel.uppercase(),
+            text = primaryLabel.uppercase(),
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             textAlign = TextAlign.Center
@@ -136,8 +136,5 @@ fun BottomButtons(
 @Preview
 @Composable
 fun BottomButtonsPreview() {
-  BottomButtons(
-    onSaveClick = {},
-    onCancelClick = {},
-    onDeleteClick = {})
+  BottomButtons(onPrimaryClick = {}, onSecondaryClick = {}, onDangerClick = {})
 }

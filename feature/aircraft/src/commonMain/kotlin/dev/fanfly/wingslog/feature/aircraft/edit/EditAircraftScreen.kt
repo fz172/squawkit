@@ -180,13 +180,13 @@ fun EditAircraftScreen(
       }
       BottomButtons(
         modifier = Modifier.align(Alignment.BottomCenter),
-        saveEnabled = !uiState.isLoading,
-        onSaveClick = { viewModel.saveAircraft() },
-        onCancelClick = { navController.popBackStack() },
-        onDeleteClick = if (uiState.aircraft.id != "") {
+        primaryEnabled = !uiState.isLoading,
+        onPrimaryClick = { viewModel.saveAircraft() },
+        onSecondaryClick = { navController.popBackStack() },
+        onDangerClick = if (uiState.aircraft.id != "") {
           { showDeleteDialog = true }
         } else null,
-        saveLabel = if (uiState.aircraft.id == "") cmpStringResource(AircraftRes.string.add_aircraft) else cmpStringResource(
+        primaryLabel = if (uiState.aircraft.id == "") cmpStringResource(AircraftRes.string.add_aircraft) else cmpStringResource(
           AircraftRes.string.update_aircraft
         )
       )

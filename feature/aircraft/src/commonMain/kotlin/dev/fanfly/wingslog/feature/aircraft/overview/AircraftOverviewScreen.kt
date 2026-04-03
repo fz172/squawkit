@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.aircraft.overview
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -23,10 +21,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -58,14 +54,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -80,15 +77,19 @@ import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewViewMo
 import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.data.LogStats
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.core.ui.generated.resources.delete
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
 import wingslog.feature.aircraft.generated.resources.add_inspection
+import wingslog.feature.aircraft.generated.resources.add_log
 import wingslog.feature.aircraft.generated.resources.airframe_time_label
 import wingslog.feature.aircraft.generated.resources.delete_aircraft
 import wingslog.feature.aircraft.generated.resources.engine_time_label
@@ -99,14 +100,11 @@ import wingslog.feature.aircraft.generated.resources.no_inspections_yet
 import wingslog.feature.aircraft.generated.resources.prop_time_label
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.total_logs
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 
 @Composable
 fun AircraftOverviewScreen(
-  navController: NavController, viewModel: AircraftOverviewViewModel = koinViewModel()
+  navController: NavController, viewModel: AircraftOverviewViewModel = koinViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
@@ -122,6 +120,19 @@ fun AircraftOverviewScreen(
           }
         }
       }
+    }
+  }
+
+  // Show success messages from child screens (maintenance log, inspection forms)
+  val navBackStackEntry by navController.currentBackStackEntryAsState()
+  LaunchedEffect(navBackStackEntry) {
+    val handle = navBackStackEntry?.savedStateHandle ?: return@LaunchedEffect
+    val message = handle.get<String>("success_message").orEmpty()
+    if (message.isNotEmpty()) {
+      coroutineScope.launch {
+        snackbarHostState.showSnackbar(message)
+      }
+      handle.set("success_message", "")
     }
   }
 
@@ -178,7 +189,7 @@ fun AircraftOverviewContent(
   onEditInspectionClick: (String, String) -> Unit = { _, _ -> },
   onCancelDeleteInspection: () -> Unit = {},
   onConfirmDeleteInspection: () -> Unit = {},
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   val scrollState = rememberScrollState()
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -342,44 +353,18 @@ fun LogDetailsBottomBar(
   logStats: LogStats?,
   modifier: Modifier = Modifier,
   onLogDetailsClick: (String) -> Unit,
-  onAddLogClick: (String) -> Unit = {}
+  onAddLogClick: (String) -> Unit = {},
 ) {
   if (aircraft != null) {
-    Box(
-      modifier = modifier.fillMaxWidth().background(Color.Transparent)
-        .padding(Spacing.screenPadding),
-      contentAlignment = Alignment.Center
-    ) {
-      Button(
-        onClick = {
-          if (logStats?.total == 0L) onAddLogClick(aircraft.id)
-          else onLogDetailsClick(aircraft.id)
-        },
-        modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().height(Spacing.buttonHeight),
-        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-        colors = ButtonDefaults.buttonColors(
-          containerColor = MaterialTheme.colorScheme.primary,
-          contentColor = MaterialTheme.colorScheme.onPrimary
-        ),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
-      ) {
-        Icon(
-          Icons.Default.History,
-          contentDescription = null,
-          modifier = Modifier.padding(end = Spacing.small)
-        )
-        val text = if (logStats?.total == 0L) {
-          cmpStringResource(AircraftRes.string.add_first_maintenance_log)
-        } else {
-          cmpStringResource(AircraftRes.string.log_details)
-        }
-        Text(
-          text = text.uppercase(),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold
-        )
-      }
-    }
+    val hasLogs = (logStats?.total ?: 0L) > 0L
+    BottomButtons(
+      modifier = modifier,
+      onPrimaryClick = { onAddLogClick(aircraft.id) },
+      primaryLabel = if (hasLogs) cmpStringResource(AircraftRes.string.add_log)
+      else cmpStringResource(AircraftRes.string.add_first_maintenance_log),
+      onSecondaryClick = if (hasLogs) ({ onLogDetailsClick(aircraft.id) }) else null,
+      secondaryLabel = cmpStringResource(AircraftRes.string.log_details),
+    )
   }
 }
 
@@ -506,7 +491,7 @@ private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Mo
 private fun CriticalAlertsSection(
   overdueInspections: List<InspectionCardWithStatus>,
   onCardClick: (InspectionCardWithStatus) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   Card(
     modifier = modifier.fillMaxWidth(),

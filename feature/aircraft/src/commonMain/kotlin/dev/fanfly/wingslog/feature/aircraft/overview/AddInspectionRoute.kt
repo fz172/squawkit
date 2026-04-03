@@ -38,6 +38,7 @@ fun AddInspectionRoute(
           forceDueEngine = card.force_due_engine_hour,
           notes = card.notes
         )
+        navController.previousBackStackEntry?.savedStateHandle?.set("success_message", "Inspection added")
         navController.popBackStack()
       }
     )

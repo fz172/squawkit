@@ -238,9 +238,9 @@ fun EditProfileScreen(
     }
     BottomButtons(
       modifier = Modifier.align(Alignment.BottomCenter),
-      saveEnabled = !uiState.isLoading,
-      onSaveClick = { viewModel.saveChanges() },
-      onCancelClick = { navController.popBackStack() }
+      primaryEnabled = !uiState.isLoading,
+      onPrimaryClick = { viewModel.saveChanges() },
+      onSecondaryClick = { navController.popBackStack() }
     )
   }
   }

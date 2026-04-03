@@ -286,7 +286,7 @@ fun AddInspectionScreen(
       }
 
       BottomButtons(
-        onSaveClick = {
+        onPrimaryClick = {
           val ruleList = mutableListOf<InspectionRule>()
           if (linkedToId != null) {
             ruleList.add(InspectionRule(linked_rule = LinkedRule(parent_inspection_id = linkedToId!!)))
@@ -315,8 +315,8 @@ fun AddInspectionScreen(
           )
           onSave(card)
         },
-        onCancelClick = onCancel,
-        saveEnabled = title.isNotBlank()
+        onSecondaryClick = onCancel,
+        primaryEnabled = title.isNotBlank()
       )
     }
   }

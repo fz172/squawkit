@@ -44,10 +44,12 @@ fun EditInspectionRoute(
           forceDueEngine = updatedCard.force_due_engine_hour,
           notes = updatedCard.notes
         )
+        navController.previousBackStackEntry?.savedStateHandle?.set("success_message", "Inspection updated")
         navController.popBackStack()
       },
       onDeleteRequest = { id ->
         viewModel.deleteInspection(id)
+        navController.previousBackStackEntry?.savedStateHandle?.set("success_message", "Inspection deleted")
         navController.popBackStack()
       }
     )
