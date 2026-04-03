@@ -241,7 +241,7 @@ class AircraftOverviewViewModel(
         .onFailure { error ->
           _events.send(
             AircraftOverviewEvent.ShowError(
-              error.message ?: "Failed to delete aircraft"
+              error.message
             )
           )
         }
@@ -251,5 +251,5 @@ class AircraftOverviewViewModel(
 
 sealed interface AircraftOverviewEvent {
   data object NavigateBack : AircraftOverviewEvent
-  data class ShowError(val message: String) : AircraftOverviewEvent
+  data class ShowError(val message: String?) : AircraftOverviewEvent
 }

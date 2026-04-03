@@ -7,6 +7,13 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
+import dev.fanfly.wingslog.core.ui.common.UiText
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+import wingslog.feature.aircraft.generated.resources.log_not_found
+import wingslog.feature.aircraft.generated.resources.work_description_required
+import wingslog.core.ui.generated.resources.save_failed
+import wingslog.core.ui.generated.resources.delete_failed
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -93,7 +100,7 @@ class MaintenanceLogFormViewModel(
           )
         }
       } else {
-        _uiState.update { it.copy(isLoading = false, error = "Log not found") }
+        _uiState.update { it.copy(isLoading = false, error = UiText.StringRes(AircraftRes.string.log_not_found)) }
       }
     }
   }
@@ -146,7 +153,7 @@ class MaintenanceLogFormViewModel(
   fun save() {
     val state = _uiState.value
     if (state.workDescription.isBlank()) {
-      _uiState.update { it.copy(error = "Work description is required") }
+      _uiState.update { it.copy(error = UiText.StringRes(AircraftRes.string.work_description_required)) }
       return
     }
     viewModelScope.launch {
@@ -198,7 +205,7 @@ class MaintenanceLogFormViewModel(
           _events.send(MaintenanceLogFormEvent.SaveSuccess)
         }
         .onFailure { e ->
-          _uiState.update { it.copy(isSaving = false, error = e.message ?: "Save failed") }
+          _uiState.update { it.copy(isSaving = false, error = e.message?.let { UiText.DynamicString(it) } ?: UiText.StringRes(CoreRes.string.save_failed)) }
         }
     }
   }
@@ -209,7 +216,7 @@ class MaintenanceLogFormViewModel(
       logManager.deleteLog(aircraftId, id)
         .onSuccess { _events.send(MaintenanceLogFormEvent.DeleteSuccess) }
         .onFailure { e ->
-          _uiState.update { it.copy(error = e.message ?: "Delete failed") }
+          _uiState.update { it.copy(error = e.message?.let { UiText.DynamicString(it) } ?: UiText.StringRes(CoreRes.string.delete_failed)) }
         }
     }
   }

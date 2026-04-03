@@ -56,6 +56,9 @@ import wingslog.core.ui.generated.resources.component_avionics
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.core.ui.generated.resources.component_type
+import wingslog.feature.aircraft.generated.resources.basics
+import wingslog.feature.aircraft.generated.resources.details
+import wingslog.feature.aircraft.generated.resources.schedule
 import wingslog.feature.aircraft.inspection.generated.resources.add_inspection
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_type
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_ad_short
@@ -63,6 +66,7 @@ import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_sb_short
 import wingslog.feature.aircraft.inspection.generated.resources.inspection_title
 import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -110,17 +114,17 @@ fun AddInspectionScreen(
           Tab(
             selected = pagerState.currentPage == 0,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
-            text = { Text("Basics") }
+            text = { Text(stringResource(AircraftRes.string.basics)) }
           )
           Tab(
             selected = pagerState.currentPage == 1,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
-            text = { Text("Schedule") }
+            text = { Text(stringResource(AircraftRes.string.schedule)) }
           )
           Tab(
             selected = pagerState.currentPage == 2,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(2) } },
-            text = { Text("Details") }
+            text = { Text(stringResource(AircraftRes.string.details)) }
           )
         }
       }

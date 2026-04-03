@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
+import wingslog.feature.aircraft.generated.resources.log_onboarding_description
 import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_title
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
@@ -65,7 +66,7 @@ fun LogOnboardingCard(
       }
 
       Text(
-        text = "Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.",
+        text = stringResource(AircraftRes.string.log_onboarding_description),
         style = MaterialTheme.typography.bodyLarge
       )
 

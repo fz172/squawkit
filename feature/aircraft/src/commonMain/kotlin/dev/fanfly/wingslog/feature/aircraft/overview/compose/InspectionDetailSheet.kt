@@ -40,9 +40,16 @@ import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueMetadata
 import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
+import wingslog.core.ui.generated.resources.dash
 import wingslog.core.ui.generated.resources.done
+import wingslog.feature.aircraft.generated.resources.compliance_details
+import wingslog.feature.aircraft.generated.resources.complied
 import wingslog.feature.aircraft.generated.resources.due_date
 import wingslog.feature.aircraft.generated.resources.due_engine
+import wingslog.feature.aircraft.generated.resources.due_soon
+import wingslog.feature.aircraft.generated.resources.due_soon_date
+import wingslog.feature.aircraft.generated.resources.due_soon_date_engine
+import wingslog.feature.aircraft.generated.resources.due_soon_engine
 import wingslog.feature.aircraft.generated.resources.edit_inspection
 import wingslog.feature.aircraft.generated.resources.engine_format
 import wingslog.feature.aircraft.generated.resources.maintenance_history
@@ -52,6 +59,8 @@ import wingslog.feature.aircraft.generated.resources.overdue
 import wingslog.feature.aircraft.generated.resources.overdue_was
 import wingslog.feature.aircraft.generated.resources.unknown_date
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_ad_short
+import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_sb_short
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
@@ -84,8 +93,8 @@ fun InspectionDetailSheet(
       ) {
         Column(modifier = Modifier.weight(1f)) {
           val typeLabel = when (cardWithStatus.card.type) {
-            ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> "SB"
-            ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> "AD"
+            ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> cmpStringResource(InspectionRes.string.compliance_type_sb_short)
+            ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> cmpStringResource(InspectionRes.string.compliance_type_ad_short)
             else -> null
           }
           if (typeLabel != null) {
@@ -160,7 +169,7 @@ fun InspectionDetailSheet(
       if (cardWithStatus.card.compliance_details.isNotBlank()) {
         Spacer(Modifier.height(Spacing.large))
         Text(
-          text = "Compliance Details",
+          text = cmpStringResource(AircraftRes.string.compliance_details),
           style = MaterialTheme.typography.labelLarge,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -210,7 +219,7 @@ fun InspectionDetailSheet(
 @Composable
 private fun DueStatusChip(dueStatus: DueMetadata) {
   val (label, color) = when {
-    dueStatus.status == DueStatus.COMPLIED -> "Complied" to StatusOk
+    dueStatus.status == DueStatus.COMPLIED -> cmpStringResource(AircraftRes.string.complied) to StatusOk
     dueStatus.isOnCondition -> cmpStringResource(AircraftRes.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
     dueStatus.status == DueStatus.OVERDUE -> {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat() ?: ""
@@ -223,10 +232,10 @@ private fun DueStatusChip(dueStatus: DueMetadata) {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat()
       val engineStr = dueStatus.nextDueEngine?.toDouble()?.formatToOneDecimalPlace()
       when {
-        dateStr != null && engineStr != null -> "Due Soon: $dateStr / $engineStr hrs"
-        dateStr != null -> "Due Soon: $dateStr"
-        engineStr != null -> "Due Soon: @ $engineStr hrs"
-        else -> "Due Soon"
+        dateStr != null && engineStr != null -> cmpStringResource(AircraftRes.string.due_soon_date_engine, dateStr, engineStr)
+        dateStr != null -> cmpStringResource(AircraftRes.string.due_soon_date, dateStr)
+        engineStr != null -> cmpStringResource(AircraftRes.string.due_soon_engine, engineStr)
+        else -> cmpStringResource(AircraftRes.string.due_soon)
       } to StatusWarning
     }
 
@@ -238,7 +247,7 @@ private fun DueStatusChip(dueStatus: DueMetadata) {
       AircraftRes.string.due_engine, dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
     ) to StatusOk
 
-    else -> "—" to MaterialTheme.colorScheme.onSurfaceVariant
+    else -> cmpStringResource(CoreRes.string.dash) to MaterialTheme.colorScheme.onSurfaceVariant
   }
   AssistChip(
     onClick = {},

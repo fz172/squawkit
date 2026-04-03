@@ -7,7 +7,10 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.AddInspectionScreen
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewViewModel
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+import wingslog.feature.aircraft.generated.resources.inspection_added
 
 @Composable
 fun AddInspectionRoute(
@@ -16,6 +19,8 @@ fun AddInspectionRoute(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val successState = uiState as? AircraftOverviewUiState.Success
+
+  val successMessage = stringResource(AircraftRes.string.inspection_added)
 
   if (successState != null) {
     val allInspections =
@@ -38,7 +43,7 @@ fun AddInspectionRoute(
           forceDueEngine = card.force_due_engine_hour,
           notes = card.notes
         )
-        navController.previousBackStackEntry?.savedStateHandle?.set("success_message", "Inspection added")
+        navController.previousBackStackEntry?.savedStateHandle?.set("success_message", successMessage)
         navController.popBackStack()
       }
     )

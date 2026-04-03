@@ -34,7 +34,9 @@ import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import wingslog.feature.aircraft.generated.resources.airframe_s_n
+import wingslog.feature.aircraft.generated.resources.collapse_details
 import wingslog.feature.aircraft.generated.resources.edit_aircraft
+import wingslog.feature.aircraft.generated.resources.expand_details
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
@@ -77,7 +79,7 @@ fun ConfigurationCard(
           IconButton(onClick = { expanded = !expanded }) {
             Icon(
               imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-              contentDescription = if (expanded) "Collapse details" else "Expand details",
+              contentDescription = if (expanded) cmpStringResource(AircraftRes.string.collapse_details) else cmpStringResource(AircraftRes.string.expand_details),
               tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
           }

@@ -79,17 +79,22 @@ import wingslog.core.ui.generated.resources.update
 import wingslog.feature.aircraft.generated.resources.add_log
 import wingslog.feature.aircraft.generated.resources.airframe_serial
 import wingslog.feature.aircraft.generated.resources.airframe_time_hours
+import wingslog.feature.aircraft.generated.resources.blade
 import wingslog.feature.aircraft.generated.resources.delete_log
 import wingslog.feature.aircraft.generated.resources.edit_log
 import wingslog.feature.aircraft.generated.resources.engine_time_hours
 import wingslog.feature.aircraft.generated.resources.inspection_work
 import wingslog.feature.aircraft.generated.resources.loading_aircraft
+import wingslog.feature.aircraft.generated.resources.log_deleted
+import wingslog.feature.aircraft.generated.resources.log_saved
+import wingslog.feature.aircraft.generated.resources.log_updated
 import wingslog.feature.aircraft.generated.resources.maintenance_date
 import wingslog.feature.aircraft.generated.resources.no_engines_found
 import wingslog.feature.aircraft.generated.resources.no_inspection_work_recorded
 import wingslog.feature.aircraft.generated.resources.no_propeller_components_found
 import wingslog.feature.aircraft.generated.resources.prop_time_hours
 import wingslog.feature.aircraft.generated.resources.propeller_component
+import wingslog.feature.aircraft.generated.resources.propeller_hub
 import wingslog.feature.aircraft.generated.resources.tap_to_change_date
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.unknown_inspection
@@ -109,16 +114,24 @@ fun MaintenanceLogFormScreen(
   var showDeleteDialog by remember { mutableStateOf(false) }
   var showDatePicker by remember { mutableStateOf(false) }
 
+  val logUpdatedMessage = cmpStringResource(AircraftRes.string.log_updated)
+  val logSavedMessage = cmpStringResource(AircraftRes.string.log_saved)
+  val logDeletedMessage = cmpStringResource(AircraftRes.string.log_deleted)
+
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {
         MaintenanceLogFormEvent.SaveSuccess -> {
-          val message = if (viewModel.isEditMode) "Log updated" else "Log saved"
+          val message = if (viewModel.isEditMode) logUpdatedMessage else logSavedMessage
           navController.previousBackStackEntry?.savedStateHandle?.set("success_message", message)
           navController.popBackStack()
         }
+
         MaintenanceLogFormEvent.DeleteSuccess -> {
-          navController.previousBackStackEntry?.savedStateHandle?.set("success_message", "Log deleted")
+          navController.previousBackStackEntry?.savedStateHandle?.set(
+            "success_message",
+            logDeletedMessage
+          )
           navController.popBackStack()
         }
       }
@@ -259,7 +272,7 @@ fun MaintenanceLogFormScreen(
             modifier = Modifier.fillMaxWidth(),
             minLines = 3,
             maxLines = 6,
-            isError = uiState.error == "Work description is required"
+            isError = uiState.error != null
           )
 
           // Inspection Work section
@@ -324,7 +337,7 @@ fun MaintenanceLogFormScreen(
           // Error message
           if (uiState.error != null) {
             Text(
-              text = uiState.error!!,
+              text = uiState.error!!.asString(),
               color = MaterialTheme.colorScheme.error,
               style = MaterialTheme.typography.bodySmall
             )
@@ -434,7 +447,7 @@ private fun ComponentSection(
             val hub = prop?.hub
             if (hub?.serial?.isNotEmpty() == true) {
               val label = buildString {
-                append("Hub")
+                append(cmpStringResource(AircraftRes.string.propeller_hub))
                 if (hub.make.isNotEmpty()) append(" - ${hub.make}")
                 if (hub.model.isNotEmpty()) append(" ${hub.model}")
                 append(" (${hub.serial})")
@@ -444,7 +457,7 @@ private fun ComponentSection(
             prop?.blades?.forEach { blade ->
               if (blade.serial.isNotEmpty()) {
                 val label = buildString {
-                  append("Blade")
+                  append(cmpStringResource(AircraftRes.string.blade))
                   if (blade.make.isNotEmpty()) append(" - ${blade.make}")
                   if (blade.model.isNotEmpty()) append(" ${blade.model}")
                   append(" (${blade.serial})")

@@ -62,6 +62,10 @@ import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.core.ui.generated.resources.component_type
 import wingslog.core.ui.generated.resources.ok
+import wingslog.feature.aircraft.generated.resources.details
+import wingslog.feature.aircraft.generated.resources.identity
+import wingslog.feature.aircraft.generated.resources.overrides
+import wingslog.feature.aircraft.generated.resources.schedule
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_type
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_ad_short
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_routine_short
@@ -69,6 +73,7 @@ import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_
 import wingslog.feature.aircraft.inspection.generated.resources.edit_inspection
 import wingslog.feature.aircraft.inspection.generated.resources.inspection_title
 import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -140,19 +145,19 @@ fun EditInspectionScreen(
           Tab(
             selected = pagerState.currentPage == 0,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
-            text = { Text("Identity") })
+            text = { Text(stringResource(AircraftRes.string.identity)) })
           Tab(
             selected = pagerState.currentPage == 1,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
-            text = { Text("Schedule") })
+            text = { Text(stringResource(AircraftRes.string.schedule)) })
           Tab(
             selected = pagerState.currentPage == 2,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(2) } },
-            text = { Text("Details") })
+            text = { Text(stringResource(AircraftRes.string.details)) })
           Tab(
             selected = pagerState.currentPage == 3,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(3) } },
-            text = { Text("Overrides") })
+            text = { Text(stringResource(AircraftRes.string.overrides)) })
         }
       }
     }) { padding ->

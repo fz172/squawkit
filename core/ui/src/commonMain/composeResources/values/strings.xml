@@ -20,6 +20,13 @@
     <string name="none">None</string>
     <string name="unknown">Unknown</string>
     <string name="required">Required</string>
+    <string name="all">All</string>
+    <string name="or">OR</string>
+    <string name="dash">—</string>
+    <string name="save_failed">Save failed</string>
+    <string name="delete_failed">Delete failed</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="every">Every </string>
     <!-- Component names -->
     <string name="component_type">Component Type</string>
     <string name="component_airframe">Airframe</string>

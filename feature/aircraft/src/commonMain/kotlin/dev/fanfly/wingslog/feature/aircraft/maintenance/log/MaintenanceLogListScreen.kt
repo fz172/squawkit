@@ -48,6 +48,7 @@ import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogL
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.all
 import wingslog.core.ui.generated.resources.retry
 import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
 import wingslog.feature.aircraft.generated.resources.add_log
@@ -167,7 +168,7 @@ fun MaintenanceLogListScreen(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.small)
               ) {
                 components.forEach { component ->
-                  val label = component?.displayName() ?: "All"
+                  val label = component?.displayName() ?: cmpStringResource(CoreRes.string.all)
                   FilterChip(
                     selected = state.filter.component == component,
                     onClick = { viewModel.onComponentFilterChange(component) },

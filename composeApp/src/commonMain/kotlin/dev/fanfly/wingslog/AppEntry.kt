@@ -94,8 +94,8 @@ fun AppEntry() {
             navArgument("aircraftId") { type = NavType.StringType },
             navArgument("cardId") { type = NavType.StringType }
           )
-        ) { backStackEntry ->
-          val cardId = backStackEntry.arguments?.getString("cardId") ?: ""
+        ) {
+          val cardId = it.arguments?.getString("cardId") ?: ""
           EditInspectionRoute(cardId = cardId, navController = navController)
         }
 

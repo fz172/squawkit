@@ -31,6 +31,7 @@ import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_avionics
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.component_propeller
@@ -144,8 +145,8 @@ fun InspectionPickerSheet(
                       CoreRes.string.component_propeller
                     )
 
-                    InspectionComponentType.INSPECTION_COMPONENT_AVIONICS -> "Avionics"
-                    else -> cmpStringResource(CoreRes.string.component_avionics)
+                    InspectionComponentType.INSPECTION_COMPONENT_AVIONICS -> cmpStringResource(CoreRes.string.component_avionics)
+                    else -> cmpStringResource(CoreRes.string.component_airframe)
                   }
                   Text(
                     text = if (card.reference_number.isNotBlank()) "${card.reference_number} • $componentLabel" else componentLabel,

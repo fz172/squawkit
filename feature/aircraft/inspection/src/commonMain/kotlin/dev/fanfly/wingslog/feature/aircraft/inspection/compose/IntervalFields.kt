@@ -16,9 +16,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.every
+import wingslog.core.ui.generated.resources.or
+import wingslog.feature.aircraft.inspection.generated.resources.inspection_due_warning
+import wingslog.feature.aircraft.inspection.generated.resources.inspection_interval_description
 import wingslog.feature.aircraft.inspection.generated.resources.interval_hours
+import wingslog.feature.aircraft.inspection.generated.resources.interval_hours_placeholder
 import wingslog.feature.aircraft.inspection.generated.resources.interval_months
+import wingslog.feature.aircraft.inspection.generated.resources.interval_months_placeholder
 import wingslog.feature.aircraft.inspection.generated.resources.intervals
+import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable
@@ -43,18 +50,18 @@ fun IntervalFields(
                 value = intervalMonths,
                 onValueChange = { onMonthsChange(it.filter { c -> c.isDigit() }) },
                 label = { Text(stringResource(InspectionRes.string.interval_months)) },
-                placeholder = { Text("e.g. 12") },
+                placeholder = { Text(stringResource(InspectionRes.string.interval_months_placeholder)) },
                 modifier = Modifier.weight(1f),
                 prefix = {
                     Text(
-                        "Every ",
+                        stringResource(CoreUiRes.string.every),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             )
             Text(
-                "OR",
+                stringResource(CoreUiRes.string.or),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.outline
@@ -63,11 +70,11 @@ fun IntervalFields(
                 value = intervalHours,
                 onValueChange = { onHoursChange(it.filter { c -> c.isDigit() || c == '.' }) },
                 label = { Text(stringResource(InspectionRes.string.interval_hours)) },
-                placeholder = { Text("e.g. 100") },
+                placeholder = { Text(stringResource(InspectionRes.string.interval_hours_placeholder)) },
                 modifier = Modifier.weight(1f),
                 prefix = {
                     Text(
-                        "Every ",
+                        stringResource(CoreUiRes.string.every),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -78,7 +85,7 @@ fun IntervalFields(
         if (intervalMonths.isNotBlank() || intervalHours.isNotBlank()) {
             Spacer(modifier = Modifier.height(Spacing.small))
             Text(
-                "Note: This inspection will be due on whichever comes first.",
+                stringResource(InspectionRes.string.inspection_due_warning),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Medium,
@@ -88,7 +95,7 @@ fun IntervalFields(
         } else {
             Spacer(modifier = Modifier.height(Spacing.small))
             Text(
-                "Set a recurring interval based on time, engine hours, or both.",
+                stringResource(InspectionRes.string.inspection_interval_description),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth(),

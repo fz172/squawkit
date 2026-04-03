@@ -7,7 +7,11 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.EditInspectionScreen
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewViewModel
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+import wingslog.feature.aircraft.generated.resources.inspection_deleted
+import wingslog.feature.aircraft.generated.resources.inspection_updated
 
 @Composable
 fun EditInspectionRoute(
@@ -17,6 +21,9 @@ fun EditInspectionRoute(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val successState = uiState as? AircraftOverviewUiState.Success
+
+  val updatedMessage = stringResource(AircraftRes.string.inspection_updated)
+  val deletedMessage = stringResource(AircraftRes.string.inspection_deleted)
   
   // Find the card in the list
   val cardWithStatus = successState?.activeInspections?.find { it.card.id == cardId }
@@ -44,12 +51,12 @@ fun EditInspectionRoute(
           forceDueEngine = updatedCard.force_due_engine_hour,
           notes = updatedCard.notes
         )
-        navController.previousBackStackEntry?.savedStateHandle?.set("success_message", "Inspection updated")
+        navController.previousBackStackEntry?.savedStateHandle?.set("success_message", updatedMessage)
         navController.popBackStack()
       },
       onDeleteRequest = { id ->
         viewModel.deleteInspection(id)
-        navController.previousBackStackEntry?.savedStateHandle?.set("success_message", "Inspection deleted")
+        navController.previousBackStackEntry?.savedStateHandle?.set("success_message", deletedMessage)
         navController.popBackStack()
       }
     )

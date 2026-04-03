@@ -77,19 +77,30 @@ import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
+import wingslog.core.ui.generated.resources.dash
 import wingslog.core.ui.generated.resources.delete
+import wingslog.core.ui.generated.resources.error_occurred
 import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
 import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.add_log
 import wingslog.feature.aircraft.generated.resources.airframe_time_label
+import wingslog.feature.aircraft.generated.resources.complied
+import wingslog.feature.aircraft.generated.resources.critical_airworthiness
 import wingslog.feature.aircraft.generated.resources.delete_aircraft
+import wingslog.feature.aircraft.generated.resources.due_date
+import wingslog.feature.aircraft.generated.resources.due_engine
+import wingslog.feature.aircraft.generated.resources.due_with_count
 import wingslog.feature.aircraft.generated.resources.engine_time_label
+import wingslog.feature.aircraft.generated.resources.history_with_count
 import wingslog.feature.aircraft.generated.resources.inspections
 import wingslog.feature.aircraft.generated.resources.log_details
 import wingslog.feature.aircraft.generated.resources.maintenance_summary
 import wingslog.feature.aircraft.generated.resources.make_model_template
 import wingslog.feature.aircraft.generated.resources.no_complied_yet
 import wingslog.feature.aircraft.generated.resources.no_inspections_yet
+import wingslog.feature.aircraft.generated.resources.on_condition
+import wingslog.feature.aircraft.generated.resources.overdue
+import wingslog.feature.aircraft.generated.resources.overdue_was
 import wingslog.feature.aircraft.generated.resources.prop_time_label
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.total_logs
@@ -106,20 +117,22 @@ fun AircraftOverviewScreen(
   val snackbarHostState = remember { SnackbarHostState() }
   val coroutineScope = rememberCoroutineScope()
 
+
+  val errorOccurredMessage = cmpStringResource(CoreRes.string.error_occurred)
+
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {
         is AircraftOverviewEvent.NavigateBack -> navController.popBackStack()
         is AircraftOverviewEvent.ShowError -> {
-          coroutineScope.launch {
-            snackbarHostState.showSnackbar(event.message)
-          }
+          val message = event.message ?: errorOccurredMessage
+          snackbarHostState.showSnackbar(message)
         }
       }
     }
   }
 
-  // Show success messages from child screens (maintenance log, inspection forms)
+// Show success messages from child screens (maintenance log, inspection forms)
   val navBackStackEntry by navController.currentBackStackEntryAsState()
   LaunchedEffect(navBackStackEntry) {
     val handle = navBackStackEntry?.savedStateHandle ?: return@LaunchedEffect
@@ -457,7 +470,7 @@ private fun CriticalAlertsSection(
           tint = MaterialTheme.colorScheme.error
         )
         Text(
-          text = "CRITICAL: AIRWORTHINESS",
+          text = cmpStringResource(AircraftRes.string.critical_airworthiness),
           style = MaterialTheme.typography.labelLarge,
           color = MaterialTheme.colorScheme.error,
           fontWeight = FontWeight.Black
@@ -494,19 +507,25 @@ private fun InspectionCardItem(
     }
   }
   val statusText = when {
-    status == DueStatus.COMPLIED -> "Complied"
-    cardWithStatus.dueStatus.isOnCondition -> "On Condition"
+    status == DueStatus.COMPLIED -> cmpStringResource(AircraftRes.string.complied)
+    cardWithStatus.dueStatus.isOnCondition -> cmpStringResource(AircraftRes.string.on_condition)
     status == DueStatus.OVERDUE -> {
       val dateStr = cardWithStatus.dueStatus.nextDueDate?.toDisplayFormat()
-      if (dateStr != null) "Overdue (was $dateStr)" else "Overdue"
+      if (dateStr != null) cmpStringResource(AircraftRes.string.overdue_was, dateStr)
+      else cmpStringResource(AircraftRes.string.overdue)
     }
 
-    cardWithStatus.dueStatus.nextDueDate != null -> "Due ${cardWithStatus.dueStatus.nextDueDate!!.toDisplayFormat()}"
-    cardWithStatus.dueStatus.nextDueEngine != null -> "Due @ ${
-      cardWithStatus.dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
-    } engine hrs"
+    cardWithStatus.dueStatus.nextDueDate != null -> cmpStringResource(
+      AircraftRes.string.due_date,
+      cardWithStatus.dueStatus.nextDueDate!!.toDisplayFormat()
+    )
 
-    else -> "—"
+    cardWithStatus.dueStatus.nextDueEngine != null -> cmpStringResource(
+      AircraftRes.string.due_engine,
+      cardWithStatus.dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
+    )
+
+    else -> cmpStringResource(CoreRes.string.dash)
   }
   val icon = when (status) {
     DueStatus.OVERDUE -> Icons.Filled.Error
@@ -562,7 +581,7 @@ private fun ComplianceSection(
           count = 2
         )
       ) {
-        Text("DUE (${activeInspections.size})")
+        Text(cmpStringResource(AircraftRes.string.due_with_count, activeInspections.size))
       }
       SegmentedButton(
         selected = showComplied,
@@ -572,7 +591,7 @@ private fun ComplianceSection(
           count = 2
         )
       ) {
-        Text("HISTORY (${compliedInspections.size})")
+        Text(cmpStringResource(AircraftRes.string.history_with_count, compliedInspections.size))
       }
     }
 
