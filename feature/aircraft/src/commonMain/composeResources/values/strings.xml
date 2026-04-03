@@ -33,6 +33,10 @@
     <string name="propeller_component">Propeller Component</string>
     <string name="inspection_types">Inspection Types</string>
     <string name="maintenance_logs">Maintenance Logs</string>
+    <string name="search_logs">Search logs…</string>
+    <string name="showing_x_of_y">Showing %1$d of %2$d</string>
+    <string name="no_logs_match_filter">No logs match your filter.</string>
+    <string name="clear_filter">Clear Filter</string>
     <string name="failed_to_load_logs">Could not load maintenance logs</string>
     <string name="no_maintenance_logs_hint">No maintenance logs yet.\nTap + to add the first one.</string>
     <string name="no_maintenance_logs_title">Logbook Is Empty</string>

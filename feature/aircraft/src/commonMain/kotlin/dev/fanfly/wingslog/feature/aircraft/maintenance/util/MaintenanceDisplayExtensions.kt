@@ -6,5 +6,6 @@ fun MaintenanceLog.ComponentType.displayName(): String = when (this) {
   MaintenanceLog.ComponentType.AIRFRAME -> "Airframe"
   MaintenanceLog.ComponentType.ENGINE -> "Engine"
   MaintenanceLog.ComponentType.PROPELLER -> "Propeller"
+  MaintenanceLog.ComponentType.AVIONICS -> "Avionics"
   else -> "Unknown"
 }
