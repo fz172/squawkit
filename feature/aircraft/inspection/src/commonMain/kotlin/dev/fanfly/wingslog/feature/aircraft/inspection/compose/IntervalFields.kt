@@ -26,7 +26,6 @@ import wingslog.feature.aircraft.inspection.generated.resources.interval_months
 import wingslog.feature.aircraft.inspection.generated.resources.interval_months_placeholder
 import wingslog.feature.aircraft.inspection.generated.resources.intervals
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.feature.aircraft.inspection.generated.resources.*
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable

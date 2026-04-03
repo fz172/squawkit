@@ -31,7 +31,6 @@ import wingslog.feature.aircraft.inspection.generated.resources.override_next_du
 import wingslog.feature.aircraft.inspection.generated.resources.override_next_due_engine
 import wingslog.feature.aircraft.inspection.generated.resources.select_date
 import kotlin.time.Instant
-import wingslog.feature.aircraft.inspection.generated.resources.*
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable

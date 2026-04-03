@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.aircraft
+package dev.fanfly.wingslog.feature.aircraft.inspection.data
 
 import kotlinx.datetime.LocalDate
 

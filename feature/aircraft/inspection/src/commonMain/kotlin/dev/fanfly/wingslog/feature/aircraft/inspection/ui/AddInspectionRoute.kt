@@ -5,8 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.aircraft.inspection.generated.resources.inspection_added
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.aircraft.inspection.generated.resources.inspection_added
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable

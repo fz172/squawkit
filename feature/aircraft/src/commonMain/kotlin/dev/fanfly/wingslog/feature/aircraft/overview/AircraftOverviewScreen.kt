@@ -59,18 +59,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueStatus
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.feature.aircraft.inspection.compose.DeleteInspectionConfirmDialog
 import dev.fanfly.wingslog.feature.aircraft.inspection.compose.InspectionCard
-import dev.fanfly.wingslog.aircraft.DueStatus
-import dev.fanfly.wingslog.aircraft.DueStatus.*
 import dev.fanfly.wingslog.feature.aircraft.inspection.data.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.aircraft.inspection.ui.InspectionDetailSheet
-import dev.fanfly.wingslog.feature.aircraft.inspection.compose.DeleteInspectionConfirmDialog
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.ConfigurationCard
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewEvent
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewUiState
@@ -94,10 +93,22 @@ import wingslog.feature.aircraft.generated.resources.make_model_template
 import wingslog.feature.aircraft.generated.resources.prop_time_label
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.total_logs
+import wingslog.feature.aircraft.inspection.generated.resources.add_inspection
+import wingslog.feature.aircraft.inspection.generated.resources.complied
+import wingslog.feature.aircraft.inspection.generated.resources.critical_airworthiness
+import wingslog.feature.aircraft.inspection.generated.resources.due_date
+import wingslog.feature.aircraft.inspection.generated.resources.due_engine
+import wingslog.feature.aircraft.inspection.generated.resources.due_with_count
+import wingslog.feature.aircraft.inspection.generated.resources.history_with_count
+import wingslog.feature.aircraft.inspection.generated.resources.inspections
+import wingslog.feature.aircraft.inspection.generated.resources.no_complied_yet
+import wingslog.feature.aircraft.inspection.generated.resources.no_inspections_yet
+import wingslog.feature.aircraft.inspection.generated.resources.on_condition
+import wingslog.feature.aircraft.inspection.generated.resources.overdue
+import wingslog.feature.aircraft.inspection.generated.resources.overdue_was
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.inspection.generated.resources.*
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 

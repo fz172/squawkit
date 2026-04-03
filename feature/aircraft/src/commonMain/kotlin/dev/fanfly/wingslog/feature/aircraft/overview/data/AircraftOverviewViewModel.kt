@@ -5,15 +5,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.wire.Instant
 import dev.fanfly.wingslog.aircraft.ComplianceType
+import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueStatus
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
-import dev.fanfly.wingslog.feature.aircraft.inspection.database.InspectionManager
-import dev.fanfly.wingslog.aircraft.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.inspection.data.InspectionCardWithStatus
+import dev.fanfly.wingslog.feature.aircraft.inspection.database.InspectionManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

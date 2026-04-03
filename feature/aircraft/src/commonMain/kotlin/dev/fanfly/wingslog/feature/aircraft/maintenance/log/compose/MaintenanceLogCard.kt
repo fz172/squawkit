@@ -25,13 +25,12 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import wingslog.feature.aircraft.generated.resources.airframe_time_format
+import wingslog.feature.aircraft.generated.resources.prop_time_format
 import wingslog.feature.aircraft.inspection.generated.resources.affects_n_inspection_items
 import wingslog.feature.aircraft.inspection.generated.resources.engine_format
 import wingslog.feature.aircraft.inspection.generated.resources.unknown_date
-import wingslog.feature.aircraft.generated.resources.airframe_time_format
-import wingslog.feature.aircraft.generated.resources.prop_time_format
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
