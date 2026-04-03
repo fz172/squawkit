@@ -38,7 +38,7 @@ class SettingsViewModel(
         }
       }
     }
-  } 
+  }
 
   /**
    * Logs the user out of Firebase and clears any saved credentials
@@ -52,7 +52,8 @@ class SettingsViewModel(
       // Sign out of Firebase
       authManager.logOut()
       // Update the UI state to reflect no user is logged in
-      _user.value = SettingsUiState(displayName = null, photoUri = null, userStatus = UserStatus.LOGGED_OUT)
+      _user.value =
+        SettingsUiState(displayName = null, photoUri = null, userStatus = UserStatus.LOGGED_OUT)
     }
   }
 }

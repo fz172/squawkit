@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
@@ -31,6 +30,7 @@ import wingslog.feature.aircraft.inspection.generated.resources.force_overrides_
 import wingslog.feature.aircraft.inspection.generated.resources.override_next_due_date
 import wingslog.feature.aircraft.inspection.generated.resources.override_next_due_engine
 import wingslog.feature.aircraft.inspection.generated.resources.select_date
+import kotlin.time.Instant
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable

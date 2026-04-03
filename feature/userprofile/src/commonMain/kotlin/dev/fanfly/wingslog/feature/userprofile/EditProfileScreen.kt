@@ -2,7 +2,6 @@
 
 package dev.fanfly.wingslog.feature.userprofile
 
-// removed ExposedDropdownMenuAnchorType
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,7 +55,6 @@ import dev.fanfly.wingslog.feature.userprofile.data.EditProfileViewModel
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
-import kotlinx.datetime.Instant
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.edit_profile
@@ -66,6 +64,7 @@ import wingslog.feature.userprofile.generated.resources.license_number
 import wingslog.feature.userprofile.generated.resources.license_type
 import wingslog.feature.userprofile.generated.resources.never
 import wingslog.feature.userprofile.generated.resources.select_date
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.feature.userprofile.generated.resources.Res as UserProfileRes
@@ -95,153 +94,153 @@ fun EditProfileScreen(
       onBackClick = { navController.popBackStack() })
   }) { innerPadding ->
     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-    Column(
-      modifier = Modifier
-        .fillMaxSize()
-        .verticalScroll(rememberScrollState())
-        .padding(Spacing.screenPadding),
-      verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
-    ) {
-      UserProfileCard(
-        data = UserProfileCardData(
-          displayName = uiState.displayName,
-          photoUri = uiState.photoUri,
+      Column(
+        modifier = Modifier
+          .fillMaxSize()
+          .verticalScroll(rememberScrollState())
+          .padding(Spacing.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
+      ) {
+        UserProfileCard(
+          data = UserProfileCardData(
+            displayName = uiState.displayName,
+            photoUri = uiState.photoUri,
+          )
         )
-      )
 
-      // --- License Type (Dropdown) ---
-      ExposedDropdownMenuBox(
-        expanded = expanded, onExpandedChange = { expanded = !expanded }) {
-        OutlinedTextField(
-          value = cmpStringResource(uiState.licenceInfo.license_type.displayResId()),
-          onValueChange = {},
-          readOnly = true,
-          label = { Text(text = cmpStringResource(UserProfileRes.string.license_type)) },
-          trailingIcon = {
-            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-          },
-          modifier = Modifier
-            .fillMaxWidth()
-            .menuAnchor(),
-          shape = RoundedCornerShape(Spacing.buttonCornerRadius)
-        )
-        ExposedDropdownMenu(
-          expanded = expanded, onDismissRequest = { expanded = false }) {
-          LicenseType.entries.forEach { type ->
-            DropdownMenuItem(text = { Text(cmpStringResource(type.displayResId())) }, onClick = {
-              viewModel.onLicenseTypeChanged(type) // Update ViewModel
-              expanded = false
-            })
+        // --- License Type (Dropdown) ---
+        ExposedDropdownMenuBox(
+          expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+          OutlinedTextField(
+            value = cmpStringResource(uiState.licenceInfo.license_type.displayResId()),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(text = cmpStringResource(UserProfileRes.string.license_type)) },
+            trailingIcon = {
+              ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+              .fillMaxWidth()
+              .menuAnchor(),
+            shape = RoundedCornerShape(Spacing.buttonCornerRadius)
+          )
+          ExposedDropdownMenu(
+            expanded = expanded, onDismissRequest = { expanded = false }) {
+            LicenseType.entries.forEach { type ->
+              DropdownMenuItem(text = { Text(cmpStringResource(type.displayResId())) }, onClick = {
+                viewModel.onLicenseTypeChanged(type) // Update ViewModel
+                expanded = false
+              })
+            }
           }
         }
-      }
 
-      // --- License Number ---
-      OutlinedTextField(
-        value = uiState.licenceInfo.license_number, // Read from ViewModel
-        onValueChange = { viewModel.onLicenseNumberChanged(it) }, // Update ViewModel
-        label = { Text(cmpStringResource(UserProfileRes.string.license_number)) },
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-        enabled = uiState.licenceInfo.license_type != LicenseType.NONE
-      )
-
-      var showDatePicker by remember { mutableStateOf(false) }
-
-      // --- Expiration Date ---
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        val expirationDateEnabled =
-          uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES && uiState.licenceInfo.license_type != LicenseType.NONE
+        // --- License Number ---
         OutlinedTextField(
-          value = if (uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES)
-            uiState.licenceInfo.expiration_date?.toLocalDate()?.toDisplayFormat() ?: "" else "",
-          onValueChange = { }, // Update ViewModel
-          readOnly = true,
-          label = { Text(cmpStringResource(UserProfileRes.string.license_expiration_date)) },
-          leadingIcon = {
-            Icon(
-              imageVector = Icons.Default.CalendarToday,
-              contentDescription = cmpStringResource(UserProfileRes.string.select_date)
-            )
-          },
-          enabled = false,
+          value = uiState.licenceInfo.license_number, // Read from ViewModel
+          onValueChange = { viewModel.onLicenseNumberChanged(it) }, // Update ViewModel
+          label = { Text(cmpStringResource(UserProfileRes.string.license_number)) },
+          modifier = Modifier.fillMaxWidth(),
           singleLine = true,
           shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-          modifier = Modifier
-            .weight(1f)
-            .clickable {
-              if (expirationDateEnabled) {
-                showDatePicker = true
-              }
-            },
-          colors = if (expirationDateEnabled) {
-            OutlinedTextFieldDefaults.colors(
-              // Tell Compose to use the "onSurface" color (your normal text color)
-              // INSTEAD of the default disabled grey color.
-              disabledTextColor = MaterialTheme.colorScheme.onSurface,
-
-              // Tell Compose to use the "outline" color (your normal border color)
-              // INSTEAD of the default disabled grey border.
-              disabledBorderColor = MaterialTheme.colorScheme.outline,
-
-              // Do the same for the label
-              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-
-              // ...and any other colors you need (icons, placeholders)
-              disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-              disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          } else {
-            OutlinedTextFieldDefaults.colors()
-          }
-        )
-        Spacer(modifier = Modifier.width(Spacing.large))
-        Text(text = cmpStringResource(UserProfileRes.string.never))
-        Checkbox(
-          checked = uiState.licenceInfo.expireLimit == LicenseExpireLimit.NEVER_EXPIRES,
-          onCheckedChange = { viewModel.onExpirationNeverFlagChanged(it) },
           enabled = uiState.licenceInfo.license_type != LicenseType.NONE
         )
-      }
-      if (showDatePicker) {
-        val datePickerState = rememberDatePickerState()
-        DatePickerDialog(
-          onDismissRequest = { showDatePicker = false },
-          confirmButton = {
-            TextButton(
-              onClick = {
-                val selectedDate = datePickerState.selectedDateMillis?.let {
-                  Instant.fromEpochMilliseconds(it)
-                } ?: kotlin.time.Clock.System.now()
-                viewModel.onExpirationDateChanged(selectedDate)
-                showDatePicker = false
-              }) {
-              Text(text = cmpStringResource(CoreUiRes.string.ok))
+
+        var showDatePicker by remember { mutableStateOf(false) }
+
+        // --- Expiration Date ---
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          val expirationDateEnabled =
+            uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES && uiState.licenceInfo.license_type != LicenseType.NONE
+          OutlinedTextField(
+            value = if (uiState.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES)
+              uiState.licenceInfo.expiration_date?.toLocalDate()?.toDisplayFormat() ?: "" else "",
+            onValueChange = { }, // Update ViewModel
+            readOnly = true,
+            label = { Text(cmpStringResource(UserProfileRes.string.license_expiration_date)) },
+            leadingIcon = {
+              Icon(
+                imageVector = Icons.Default.CalendarToday,
+                contentDescription = cmpStringResource(UserProfileRes.string.select_date)
+              )
+            },
+            enabled = false,
+            singleLine = true,
+            shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+            modifier = Modifier
+              .weight(1f)
+              .clickable {
+                if (expirationDateEnabled) {
+                  showDatePicker = true
+                }
+              },
+            colors = if (expirationDateEnabled) {
+              OutlinedTextFieldDefaults.colors(
+                // Tell Compose to use the "onSurface" color (your normal text color)
+                // INSTEAD of the default disabled grey color.
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+
+                // Tell Compose to use the "outline" color (your normal border color)
+                // INSTEAD of the default disabled grey border.
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+
+                // Do the same for the label
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+
+                // ...and any other colors you need (icons, placeholders)
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+              )
+            } else {
+              OutlinedTextFieldDefaults.colors()
             }
-          },
-          dismissButton = {
-            TextButton(
-              onClick = { showDatePicker = false }) {
-              Text(text = cmpStringResource(CoreUiRes.string.cancel))
-            }
-          }) {
-          DatePicker(state = datePickerState)
+          )
+          Spacer(modifier = Modifier.width(Spacing.large))
+          Text(text = cmpStringResource(UserProfileRes.string.never))
+          Checkbox(
+            checked = uiState.licenceInfo.expireLimit == LicenseExpireLimit.NEVER_EXPIRES,
+            onCheckedChange = { viewModel.onExpirationNeverFlagChanged(it) },
+            enabled = uiState.licenceInfo.license_type != LicenseType.NONE
+          )
         }
+        if (showDatePicker) {
+          val datePickerState = rememberDatePickerState()
+          DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+              TextButton(
+                onClick = {
+                  val selectedDate = datePickerState.selectedDateMillis?.let {
+                    Instant.fromEpochMilliseconds(it)
+                  } ?: kotlin.time.Clock.System.now()
+                  viewModel.onExpirationDateChanged(selectedDate)
+                  showDatePicker = false
+                }) {
+                Text(text = cmpStringResource(CoreUiRes.string.ok))
+              }
+            },
+            dismissButton = {
+              TextButton(
+                onClick = { showDatePicker = false }) {
+                Text(text = cmpStringResource(CoreUiRes.string.cancel))
+              }
+            }) {
+            DatePicker(state = datePickerState)
+          }
+        }
+        Spacer(Modifier.height(88.dp))
       }
-      Spacer(Modifier.height(88.dp))
+      BottomButtons(
+        modifier = Modifier.align(Alignment.BottomCenter),
+        primaryEnabled = !uiState.isLoading,
+        onPrimaryClick = { viewModel.saveChanges() },
+        onSecondaryClick = { navController.popBackStack() }
+      )
     }
-    BottomButtons(
-      modifier = Modifier.align(Alignment.BottomCenter),
-      primaryEnabled = !uiState.isLoading,
-      onPrimaryClick = { viewModel.saveChanges() },
-      onSecondaryClick = { navController.popBackStack() }
-    )
-  }
   }
 }

@@ -30,77 +30,77 @@ import wingslog.feature.aircraft.inspection.generated.resources.Res as Inspectio
 
 @Composable
 fun IntervalFields(
-    intervalMonths: String,
-    onMonthsChange: (String) -> Unit,
-    intervalHours: String,
-    onHoursChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+  intervalMonths: String,
+  onMonthsChange: (String) -> Unit,
+  intervalHours: String,
+  onHoursChange: (String) -> Unit,
+  modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        Text(
-            stringResource(InspectionRes.string.intervals),
-            style = MaterialTheme.typography.labelLarge
-        )
-        Spacer(modifier = Modifier.height(Spacing.small))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                value = intervalMonths,
-                onValueChange = { onMonthsChange(it.filter { c -> c.isDigit() }) },
-                label = { Text(stringResource(InspectionRes.string.interval_months)) },
-                placeholder = { Text(stringResource(InspectionRes.string.interval_months_placeholder)) },
-                modifier = Modifier.weight(1f),
-                prefix = {
-                    Text(
-                        stringResource(CoreUiRes.string.every),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            )
-            Text(
-                stringResource(CoreUiRes.string.or),
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.outline
-            )
-            OutlinedTextField(
-                value = intervalHours,
-                onValueChange = { onHoursChange(it.filter { c -> c.isDigit() || c == '.' }) },
-                label = { Text(stringResource(InspectionRes.string.interval_hours)) },
-                placeholder = { Text(stringResource(InspectionRes.string.interval_hours_placeholder)) },
-                modifier = Modifier.weight(1f),
-                prefix = {
-                    Text(
-                        stringResource(CoreUiRes.string.every),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            )
+  Column(modifier = modifier) {
+    Text(
+      stringResource(InspectionRes.string.intervals),
+      style = MaterialTheme.typography.labelLarge
+    )
+    Spacer(modifier = Modifier.height(Spacing.small))
+    Row(
+      horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      OutlinedTextField(
+        value = intervalMonths,
+        onValueChange = { onMonthsChange(it.filter { c -> c.isDigit() }) },
+        label = { Text(stringResource(InspectionRes.string.interval_months)) },
+        placeholder = { Text(stringResource(InspectionRes.string.interval_months_placeholder)) },
+        modifier = Modifier.weight(1f),
+        prefix = {
+          Text(
+            stringResource(CoreUiRes.string.every),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
         }
-
-        if (intervalMonths.isNotBlank() || intervalHours.isNotBlank()) {
-            Spacer(modifier = Modifier.height(Spacing.small))
-            Text(
-                stringResource(InspectionRes.string.inspection_due_warning),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
-        } else {
-            Spacer(modifier = Modifier.height(Spacing.small))
-            Text(
-                stringResource(InspectionRes.string.inspection_interval_description),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
+      )
+      Text(
+        stringResource(CoreUiRes.string.or),
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.outline
+      )
+      OutlinedTextField(
+        value = intervalHours,
+        onValueChange = { onHoursChange(it.filter { c -> c.isDigit() || c == '.' }) },
+        label = { Text(stringResource(InspectionRes.string.interval_hours)) },
+        placeholder = { Text(stringResource(InspectionRes.string.interval_hours_placeholder)) },
+        modifier = Modifier.weight(1f),
+        prefix = {
+          Text(
+            stringResource(CoreUiRes.string.every),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
         }
+      )
     }
+
+    if (intervalMonths.isNotBlank() || intervalHours.isNotBlank()) {
+      Spacer(modifier = Modifier.height(Spacing.small))
+      Text(
+        stringResource(InspectionRes.string.inspection_due_warning),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.primary,
+        fontWeight = FontWeight.Medium,
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Center
+      )
+    } else {
+      Spacer(modifier = Modifier.height(Spacing.small))
+      Text(
+        stringResource(InspectionRes.string.inspection_interval_description),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Center
+      )
+    }
+  }
 }

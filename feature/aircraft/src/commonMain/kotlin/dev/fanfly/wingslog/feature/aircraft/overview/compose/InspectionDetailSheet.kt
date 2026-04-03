@@ -94,7 +94,10 @@ fun InspectionDetailSheet(
         Column(modifier = Modifier.weight(1f)) {
           val typeLabel = when (cardWithStatus.card.type) {
             ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> cmpStringResource(InspectionRes.string.compliance_type_sb_short)
-            ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> cmpStringResource(InspectionRes.string.compliance_type_ad_short)
+            ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> cmpStringResource(
+              InspectionRes.string.compliance_type_ad_short
+            )
+
             else -> null
           }
           if (typeLabel != null) {
@@ -232,7 +235,12 @@ private fun DueStatusChip(dueStatus: DueMetadata) {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat()
       val engineStr = dueStatus.nextDueEngine?.toDouble()?.formatToOneDecimalPlace()
       when {
-        dateStr != null && engineStr != null -> cmpStringResource(AircraftRes.string.due_soon_date_engine, dateStr, engineStr)
+        dateStr != null && engineStr != null -> cmpStringResource(
+          AircraftRes.string.due_soon_date_engine,
+          dateStr,
+          engineStr
+        )
+
         dateStr != null -> cmpStringResource(AircraftRes.string.due_soon_date, dateStr)
         engineStr != null -> cmpStringResource(AircraftRes.string.due_soon_engine, engineStr)
         else -> cmpStringResource(AircraftRes.string.due_soon)

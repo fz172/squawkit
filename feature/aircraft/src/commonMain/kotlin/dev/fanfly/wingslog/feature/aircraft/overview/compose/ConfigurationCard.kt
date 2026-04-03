@@ -79,7 +79,9 @@ fun ConfigurationCard(
           IconButton(onClick = { expanded = !expanded }) {
             Icon(
               imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-              contentDescription = if (expanded) cmpStringResource(AircraftRes.string.collapse_details) else cmpStringResource(AircraftRes.string.expand_details),
+              contentDescription = if (expanded) cmpStringResource(AircraftRes.string.collapse_details) else cmpStringResource(
+                AircraftRes.string.expand_details
+              ),
               tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
           }

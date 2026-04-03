@@ -21,44 +21,44 @@ import wingslog.feature.aircraft.inspection.generated.resources.Res as Inspectio
 
 @Composable
 fun DocumentationFields(
-    type: ComplianceType,
-    refNumber: String,
-    onRefNumberChange: (String) -> Unit,
-    complianceAuthority: String,
-    onComplianceAuthorityChange: (String) -> Unit,
-    complianceNotes: String,
-    onComplianceNotesChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+  type: ComplianceType,
+  refNumber: String,
+  onRefNumberChange: (String) -> Unit,
+  complianceAuthority: String,
+  onComplianceAuthorityChange: (String) -> Unit,
+  complianceNotes: String,
+  onComplianceNotesChange: (String) -> Unit,
+  modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        if (type == ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN || type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
-            OutlinedTextField(
-                value = refNumber,
-                onValueChange = onRefNumberChange,
-                label = { Text(stringResource(InspectionRes.string.reference_number)) },
-                placeholder = { Text(stringResource(InspectionRes.string.reference_number_hint)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.height(Spacing.medium))
-            OutlinedTextField(
-                value = complianceAuthority,
-                onValueChange = onComplianceAuthorityChange,
-                label = { Text(stringResource(InspectionRes.string.compliance_authority)) },
-                placeholder = { Text(stringResource(InspectionRes.string.compliance_authority_hint)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.height(Spacing.medium))
-        }
-
-        OutlinedTextField(
-            value = complianceNotes,
-            onValueChange = onComplianceNotesChange,
-            label = { Text(stringResource(InspectionRes.string.compliance_notes)) },
-            placeholder = { Text(stringResource(InspectionRes.string.compliance_notes_hint)) },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 3
-        )
+  Column(modifier = modifier) {
+    if (type == ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN || type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
+      OutlinedTextField(
+        value = refNumber,
+        onValueChange = onRefNumberChange,
+        label = { Text(stringResource(InspectionRes.string.reference_number)) },
+        placeholder = { Text(stringResource(InspectionRes.string.reference_number_hint)) },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true
+      )
+      Spacer(modifier = Modifier.height(Spacing.medium))
+      OutlinedTextField(
+        value = complianceAuthority,
+        onValueChange = onComplianceAuthorityChange,
+        label = { Text(stringResource(InspectionRes.string.compliance_authority)) },
+        placeholder = { Text(stringResource(InspectionRes.string.compliance_authority_hint)) },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true
+      )
+      Spacer(modifier = Modifier.height(Spacing.medium))
     }
+
+    OutlinedTextField(
+      value = complianceNotes,
+      onValueChange = onComplianceNotesChange,
+      label = { Text(stringResource(InspectionRes.string.compliance_notes)) },
+      placeholder = { Text(stringResource(InspectionRes.string.compliance_notes_hint)) },
+      modifier = Modifier.fillMaxWidth(),
+      minLines = 3
+    )
+  }
 }

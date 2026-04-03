@@ -42,10 +42,10 @@ class MaintenanceLogListViewModel(
           is LogsLoadState.Loaded -> {
             val filtered = logsState.logs.filter { log ->
               (filter.component == null || log.component_type == filter.component) &&
-                (filter.query.isBlank() || log.work_description.contains(
-                  filter.query,
-                  ignoreCase = true
-                ))
+                  (filter.query.isBlank() || log.work_description.contains(
+                    filter.query,
+                    ignoreCase = true
+                  ))
             }
             MaintenanceLogListUiState.Success(filtered, logsState.logs.size, filter)
           }

@@ -4,16 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.aircraft.database.AircraftManager
 import dev.fanfly.wingslog.feature.aircraft.database.InspectionManager
 import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
-import dev.fanfly.wingslog.core.ui.common.UiText
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
-import wingslog.feature.aircraft.generated.resources.log_not_found
-import wingslog.feature.aircraft.generated.resources.work_description_required
-import wingslog.core.ui.generated.resources.save_failed
-import wingslog.core.ui.generated.resources.delete_failed
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,8 +22,14 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import wingslog.core.ui.generated.resources.delete_failed
+import wingslog.core.ui.generated.resources.save_failed
+import wingslog.feature.aircraft.generated.resources.log_not_found
+import wingslog.feature.aircraft.generated.resources.work_description_required
 import kotlin.time.Clock
 import kotlin.time.Instant
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 // removed uuid
 
@@ -100,7 +100,12 @@ class MaintenanceLogFormViewModel(
           )
         }
       } else {
-        _uiState.update { it.copy(isLoading = false, error = UiText.StringRes(AircraftRes.string.log_not_found)) }
+        _uiState.update {
+          it.copy(
+            isLoading = false,
+            error = UiText.StringRes(AircraftRes.string.log_not_found)
+          )
+        }
       }
     }
   }
@@ -205,7 +210,12 @@ class MaintenanceLogFormViewModel(
           _events.send(MaintenanceLogFormEvent.SaveSuccess)
         }
         .onFailure { e ->
-          _uiState.update { it.copy(isSaving = false, error = e.message?.let { UiText.DynamicString(it) } ?: UiText.StringRes(CoreRes.string.save_failed)) }
+          _uiState.update {
+            it.copy(
+              isSaving = false,
+              error = e.message?.let { UiText.DynamicString(it) }
+                ?: UiText.StringRes(CoreRes.string.save_failed))
+          }
         }
     }
   }
@@ -216,7 +226,10 @@ class MaintenanceLogFormViewModel(
       logManager.deleteLog(aircraftId, id)
         .onSuccess { _events.send(MaintenanceLogFormEvent.DeleteSuccess) }
         .onFailure { e ->
-          _uiState.update { it.copy(error = e.message?.let { UiText.DynamicString(it) } ?: UiText.StringRes(CoreRes.string.delete_failed)) }
+          _uiState.update {
+            it.copy(error = e.message?.let { UiText.DynamicString(it) }
+              ?: UiText.StringRes(CoreRes.string.delete_failed))
+          }
         }
     }
   }

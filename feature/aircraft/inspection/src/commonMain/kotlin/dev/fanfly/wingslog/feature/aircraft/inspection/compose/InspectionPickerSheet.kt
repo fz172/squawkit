@@ -145,7 +145,10 @@ fun InspectionPickerSheet(
                       CoreRes.string.component_propeller
                     )
 
-                    InspectionComponentType.INSPECTION_COMPONENT_AVIONICS -> cmpStringResource(CoreRes.string.component_avionics)
+                    InspectionComponentType.INSPECTION_COMPONENT_AVIONICS -> cmpStringResource(
+                      CoreRes.string.component_avionics
+                    )
+
                     else -> cmpStringResource(CoreRes.string.component_airframe)
                   }
                   Text(

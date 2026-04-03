@@ -19,31 +19,31 @@ import wingslog.feature.aircraft.inspection.generated.resources.Res as Inspectio
 
 @Composable
 fun OneTimeComplianceFields(
-    isOneTime: Boolean,
-    onOneTimeChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
+  isOneTime: Boolean,
+  onOneTimeChange: (Boolean) -> Unit,
+  modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Switch) { onOneTimeChange(!isOneTime) },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                stringResource(InspectionRes.string.one_time_compliance),
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Text(
-                stringResource(InspectionRes.string.one_time_compliance_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Switch(
-            checked = isOneTime,
-            onCheckedChange = null // Click handled by Row
-        )
+  Row(
+    modifier = modifier
+      .fillMaxWidth()
+      .clickable(role = Role.Switch) { onOneTimeChange(!isOneTime) },
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.SpaceBetween
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        stringResource(InspectionRes.string.one_time_compliance),
+        style = MaterialTheme.typography.bodyLarge
+      )
+      Text(
+        stringResource(InspectionRes.string.one_time_compliance_desc),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+      )
     }
+    Switch(
+      checked = isOneTime,
+      onCheckedChange = null // Click handled by Row
+    )
+  }
 }

@@ -231,8 +231,9 @@ class InspectionManagerImpl(
               allLogs.filter { (it.timestamp?.getEpochSecond() ?: 0L) <= latestLogEpoch }
             }
 
-            val parentMetadata = computeNextDueRecursive(parentCard, parentLogs, allLogs, allCards, visited)
-            
+            val parentMetadata =
+              computeNextDueRecursive(parentCard, parentLogs, allLogs, allCards, visited)
+
             // Inherit due properties from parent
             val pNextDate = parentMetadata.nextDueDate
             if (pNextDate != null && (nextDueDate == null || pNextDate < nextDueDate)) {

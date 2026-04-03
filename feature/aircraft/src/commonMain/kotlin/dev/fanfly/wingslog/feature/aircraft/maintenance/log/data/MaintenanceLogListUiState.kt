@@ -16,5 +16,6 @@ sealed interface MaintenanceLogListUiState {
     val totalCount: Int,
     val filter: LogFilter = LogFilter(),
   ) : MaintenanceLogListUiState
+
   data object Error : MaintenanceLogListUiState
 }

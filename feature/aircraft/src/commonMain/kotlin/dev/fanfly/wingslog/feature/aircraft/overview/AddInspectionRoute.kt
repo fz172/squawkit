@@ -9,8 +9,8 @@ import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewUiStat
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 import wingslog.feature.aircraft.generated.resources.inspection_added
+import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 
 @Composable
 fun AddInspectionRoute(
@@ -43,7 +43,10 @@ fun AddInspectionRoute(
           forceDueEngine = card.force_due_engine_hour,
           notes = card.notes
         )
-        navController.previousBackStackEntry?.savedStateHandle?.set("success_message", successMessage)
+        navController.previousBackStackEntry?.savedStateHandle?.set(
+          "success_message",
+          successMessage
+        )
         navController.popBackStack()
       }
     )
