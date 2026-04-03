@@ -1,33 +1,28 @@
-package dev.fanfly.wingslog.feature.aircraft.overview
+package dev.fanfly.wingslog.feature.aircraft.inspection.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.feature.aircraft.overview.compose.AddInspectionScreen
-import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewUiState
-import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.feature.aircraft.generated.resources.inspection_added
-import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+import wingslog.feature.aircraft.inspection.generated.resources.*
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
+import wingslog.feature.aircraft.inspection.generated.resources.inspection_added
 
 @Composable
 fun AddInspectionRoute(
   navController: NavController,
-  viewModel: AircraftOverviewViewModel = koinViewModel()
+  viewModel: InspectionViewModel = koinViewModel()
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-  val successState = uiState as? AircraftOverviewUiState.Success
+  val successState = uiState as? InspectionUiState.Success
 
-  val successMessage = stringResource(AircraftRes.string.inspection_added)
+  val successMessage = stringResource(InspectionRes.string.inspection_added)
 
   if (successState != null) {
-    val allInspections =
-      (successState.activeInspections + successState.compliedInspections).map { it.card }
-
     AddInspectionScreen(
-      availableInspections = allInspections,
+      availableInspections = successState.allInspections,
       onCancel = { navController.popBackStack() },
       onSave = { card ->
         viewModel.saveNewInspection(
@@ -41,14 +36,17 @@ fun AddInspectionRoute(
           isOneTime = card.is_one_time,
           forceDueDate = card.force_due_date,
           forceDueEngine = card.force_due_engine_hour,
-          notes = card.notes
+          notes = card.notes,
+          onSuccess = {
+            navController.previousBackStackEntry?.savedStateHandle?.set(
+              "success_message",
+              successMessage
+            )
+            navController.popBackStack()
+          }
         )
-        navController.previousBackStackEntry?.savedStateHandle?.set(
-          "success_message",
-          successMessage
-        )
-        navController.popBackStack()
       }
     )
   }
 }
+

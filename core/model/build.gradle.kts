@@ -33,6 +33,7 @@ kotlin {
     commonMain {
       dependencies {
         api(libs.wire.runtime)
+        implementation(libs.kotlinx.datetime)
       }
       kotlin.srcDir(layout.buildDirectory.dir("generated/source/wire/kmp"))
     }

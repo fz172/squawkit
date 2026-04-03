@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.di
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.database.di.commonFirebaseModule
 import dev.fanfly.wingslog.feature.aircraft.database.impl.aircraftDatabaseModule
+import dev.fanfly.wingslog.feature.aircraft.inspection.database.inspectionModule
 import dev.fanfly.wingslog.feature.aircraft.di.aircraftModule
 import dev.fanfly.wingslog.feature.fleet.database.impl.fleetDatabaseModule
 import dev.fanfly.wingslog.feature.fleet.di.fleetModule
@@ -20,6 +21,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) =
       authModule,
       userProfileDatabaseModule,
       aircraftDatabaseModule,
+      inspectionModule,
       fleetDatabaseModule,
       appModule,
       userProfileModule,

@@ -42,7 +42,9 @@ import wingslog.feature.aircraft.inspection.generated.resources.compliance_type_
 import wingslog.feature.aircraft.inspection.generated.resources.no_inspection_cards_configured
 import wingslog.feature.aircraft.inspection.generated.resources.select_inspection_work
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.*
 import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.aircraft.inspection.generated.resources.*
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class)

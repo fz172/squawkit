@@ -36,8 +36,6 @@ kotlin {
       implementation(project(":core:database"))
       implementation(project(":core:auth"))
 
-      implementation(project(":feature:aircraft:inspection"))
-
       implementation(libs.gitlive.firebase.firestore)
       implementation(libs.gitlive.firebase.auth)
       implementation(libs.kotlinx.datetime)

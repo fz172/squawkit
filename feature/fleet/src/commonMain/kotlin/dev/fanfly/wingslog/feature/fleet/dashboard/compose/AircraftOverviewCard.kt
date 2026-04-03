@@ -30,7 +30,7 @@ import dev.fanfly.wingslog.aircraft.Propeller
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
-import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueStatus
+import dev.fanfly.wingslog.aircraft.DueStatus
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

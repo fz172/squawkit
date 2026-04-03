@@ -25,13 +25,14 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.aircraft.maintenance.util.displayName
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import wingslog.feature.aircraft.generated.resources.affects_n_inspection_items
+import wingslog.feature.aircraft.inspection.generated.resources.affects_n_inspection_items
 import wingslog.feature.aircraft.generated.resources.airframe_time_format
 import wingslog.feature.aircraft.generated.resources.engine_format
 import wingslog.feature.aircraft.generated.resources.prop_time_format
 import wingslog.feature.aircraft.generated.resources.unknown_date
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable
 fun MaintenanceLogCard(
@@ -40,7 +41,7 @@ fun MaintenanceLogCard(
   modifier: Modifier = Modifier
 ) {
   val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
-    ?: cmpStringResource(AircraftRes.string.unknown_date)
+    ?: cmpStringResource(InspectionRes.string.unknown_date)
 
   Card(
 
@@ -71,7 +72,7 @@ fun MaintenanceLogCard(
         if (log.inspection_ids.isNotEmpty()) {
           Text(
             text = cmpStringResource(
-              AircraftRes.string.affects_n_inspection_items,
+              InspectionRes.string.affects_n_inspection_items,
               log.inspection_ids.size
             ),
             style = MaterialTheme.typography.titleSmall,
@@ -91,7 +92,7 @@ fun MaintenanceLogCard(
           if (log.engine_hour > 0.0) {
             Text(
               text = cmpStringResource(
-                AircraftRes.string.engine_format,
+                InspectionRes.string.engine_format,
                 log.engine_hour.formatToOneDecimalPlace()
               ),
               style = WingslogTypography.dataSmall,

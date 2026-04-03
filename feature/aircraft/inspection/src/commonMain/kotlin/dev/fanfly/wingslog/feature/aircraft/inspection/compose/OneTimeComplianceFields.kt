@@ -15,6 +15,7 @@ import androidx.compose.ui.semantics.Role
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance
 import wingslog.feature.aircraft.inspection.generated.resources.one_time_compliance_desc
+import wingslog.feature.aircraft.inspection.generated.resources.*
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable

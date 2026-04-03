@@ -83,26 +83,28 @@ import wingslog.feature.aircraft.generated.resources.blade
 import wingslog.feature.aircraft.generated.resources.delete_log
 import wingslog.feature.aircraft.generated.resources.edit_log
 import wingslog.feature.aircraft.generated.resources.engine_time_hours
-import wingslog.feature.aircraft.generated.resources.inspection_work
+import wingslog.feature.aircraft.inspection.generated.resources.inspection_work
 import wingslog.feature.aircraft.generated.resources.loading_aircraft
 import wingslog.feature.aircraft.generated.resources.log_deleted
 import wingslog.feature.aircraft.generated.resources.log_saved
 import wingslog.feature.aircraft.generated.resources.log_updated
 import wingslog.feature.aircraft.generated.resources.maintenance_date
 import wingslog.feature.aircraft.generated.resources.no_engines_found
-import wingslog.feature.aircraft.generated.resources.no_inspection_work_recorded
+import wingslog.feature.aircraft.inspection.generated.resources.no_inspection_work_recorded
 import wingslog.feature.aircraft.generated.resources.no_propeller_components_found
 import wingslog.feature.aircraft.generated.resources.prop_time_hours
 import wingslog.feature.aircraft.generated.resources.propeller_component
 import wingslog.feature.aircraft.generated.resources.propeller_hub
 import wingslog.feature.aircraft.generated.resources.tap_to_change_date
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.aircraft.generated.resources.unknown_inspection
+import wingslog.feature.aircraft.inspection.generated.resources.unknown_inspection
 import wingslog.feature.aircraft.generated.resources.work_description_required
 import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+import wingslog.feature.aircraft.inspection.generated.resources.*
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -591,7 +593,7 @@ private fun InspectionWorkSection(
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
       Text(
-        text = cmpStringResource(AircraftRes.string.inspection_work),
+        text = cmpStringResource(InspectionRes.string.inspection_work),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
       )
@@ -612,14 +614,14 @@ private fun InspectionWorkSection(
 
     if (selectedIds.isEmpty()) {
       Text(
-        text = cmpStringResource(AircraftRes.string.no_inspection_work_recorded),
+        text = cmpStringResource(InspectionRes.string.no_inspection_work_recorded),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     } else {
       selectedIds.forEach { cardId ->
         val card = availableCards.firstOrNull { it.id == cardId }
-        val title = card?.title ?: cmpStringResource(AircraftRes.string.unknown_inspection, cardId)
+        val title = card?.title ?: cmpStringResource(InspectionRes.string.unknown_inspection, cardId)
         Row(
           modifier = Modifier.fillMaxWidth(),
           verticalAlignment = Alignment.CenterVertically,

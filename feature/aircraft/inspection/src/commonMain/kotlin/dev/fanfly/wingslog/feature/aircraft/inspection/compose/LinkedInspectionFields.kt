@@ -30,7 +30,9 @@ import wingslog.feature.aircraft.inspection.generated.resources.link_to_inspecti
 import wingslog.feature.aircraft.inspection.generated.resources.remove_link
 import wingslog.feature.aircraft.inspection.generated.resources.schedule_with_another_work
 import wingslog.feature.aircraft.inspection.generated.resources.schedule_with_another_work_description
+import wingslog.core.ui.generated.resources.*
 import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.aircraft.inspection.generated.resources.*
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable

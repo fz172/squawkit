@@ -17,6 +17,7 @@ import wingslog.feature.aircraft.inspection.generated.resources.compliance_notes
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_notes_hint
 import wingslog.feature.aircraft.inspection.generated.resources.reference_number
 import wingslog.feature.aircraft.inspection.generated.resources.reference_number_hint
+import wingslog.feature.aircraft.inspection.generated.resources.*
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 @Composable

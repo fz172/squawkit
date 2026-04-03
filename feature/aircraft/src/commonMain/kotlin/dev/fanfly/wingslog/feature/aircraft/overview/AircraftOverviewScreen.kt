@@ -65,13 +65,15 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
-import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueStatus
+import dev.fanfly.wingslog.feature.aircraft.inspection.compose.InspectionCard
+import dev.fanfly.wingslog.aircraft.DueStatus
+import dev.fanfly.wingslog.feature.aircraft.inspection.data.InspectionCardWithStatus
+import dev.fanfly.wingslog.feature.aircraft.inspection.ui.InspectionDetailSheet
+import dev.fanfly.wingslog.feature.aircraft.inspection.compose.DeleteInspectionConfirmDialog
 import dev.fanfly.wingslog.feature.aircraft.overview.compose.ConfigurationCard
-import dev.fanfly.wingslog.feature.aircraft.overview.compose.InspectionCard
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewEvent
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewViewModel
-import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.data.LogStats
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -81,32 +83,21 @@ import wingslog.core.ui.generated.resources.dash
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.error_occurred
 import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
-import wingslog.feature.aircraft.generated.resources.add_inspection
 import wingslog.feature.aircraft.generated.resources.add_log
 import wingslog.feature.aircraft.generated.resources.airframe_time_label
-import wingslog.feature.aircraft.generated.resources.complied
-import wingslog.feature.aircraft.generated.resources.critical_airworthiness
 import wingslog.feature.aircraft.generated.resources.delete_aircraft
-import wingslog.feature.aircraft.generated.resources.due_date
-import wingslog.feature.aircraft.generated.resources.due_engine
-import wingslog.feature.aircraft.generated.resources.due_with_count
 import wingslog.feature.aircraft.generated.resources.engine_time_label
-import wingslog.feature.aircraft.generated.resources.history_with_count
-import wingslog.feature.aircraft.generated.resources.inspections
 import wingslog.feature.aircraft.generated.resources.log_details
 import wingslog.feature.aircraft.generated.resources.maintenance_summary
 import wingslog.feature.aircraft.generated.resources.make_model_template
-import wingslog.feature.aircraft.generated.resources.no_complied_yet
-import wingslog.feature.aircraft.generated.resources.no_inspections_yet
-import wingslog.feature.aircraft.generated.resources.on_condition
-import wingslog.feature.aircraft.generated.resources.overdue
-import wingslog.feature.aircraft.generated.resources.overdue_was
 import wingslog.feature.aircraft.generated.resources.prop_time_label
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.total_logs
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+import wingslog.feature.aircraft.inspection.generated.resources.*
+import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
 
 @Composable
@@ -267,7 +258,7 @@ fun AircraftOverviewContent(
 
     // Inspection detail bottom sheet
     if (selectedInspection != null) {
-      dev.fanfly.wingslog.feature.aircraft.overview.compose.InspectionDetailSheet(
+      InspectionDetailSheet(
         cardWithStatus = selectedInspection,
         logs = logsForSelectedInspection,
         onDismiss = onDismissInspectionDetail,
@@ -281,7 +272,7 @@ fun AircraftOverviewContent(
 
     // Delete inspection confirm dialog
     if (deletingInspectionId != null) {
-      dev.fanfly.wingslog.feature.aircraft.overview.compose.DeleteInspectionConfirmDialog(
+      DeleteInspectionConfirmDialog(
         inspectionTitle = inspectionCardTitleForDelete,
         onConfirm = onConfirmDeleteInspection,
         onDismiss = onCancelDeleteInspection,
@@ -470,7 +461,7 @@ private fun CriticalAlertsSection(
           tint = MaterialTheme.colorScheme.error
         )
         Text(
-          text = cmpStringResource(AircraftRes.string.critical_airworthiness),
+          text = cmpStringResource(InspectionRes.string.critical_airworthiness),
           style = MaterialTheme.typography.labelLarge,
           color = MaterialTheme.colorScheme.error,
           fontWeight = FontWeight.Black
@@ -507,21 +498,21 @@ private fun InspectionCardItem(
     }
   }
   val statusText = when {
-    status == DueStatus.COMPLIED -> cmpStringResource(AircraftRes.string.complied)
-    cardWithStatus.dueStatus.isOnCondition -> cmpStringResource(AircraftRes.string.on_condition)
+    status == DueStatus.COMPLIED -> cmpStringResource(InspectionRes.string.complied)
+    cardWithStatus.dueStatus.isOnCondition -> cmpStringResource(InspectionRes.string.on_condition)
     status == DueStatus.OVERDUE -> {
       val dateStr = cardWithStatus.dueStatus.nextDueDate?.toDisplayFormat()
-      if (dateStr != null) cmpStringResource(AircraftRes.string.overdue_was, dateStr)
-      else cmpStringResource(AircraftRes.string.overdue)
+      if (dateStr != null) cmpStringResource(InspectionRes.string.overdue_was, dateStr)
+      else cmpStringResource(InspectionRes.string.overdue)
     }
 
     cardWithStatus.dueStatus.nextDueDate != null -> cmpStringResource(
-      AircraftRes.string.due_date,
+      InspectionRes.string.due_date,
       cardWithStatus.dueStatus.nextDueDate!!.toDisplayFormat()
     )
 
     cardWithStatus.dueStatus.nextDueEngine != null -> cmpStringResource(
-      AircraftRes.string.due_engine,
+      InspectionRes.string.due_engine,
       cardWithStatus.dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
     )
 
@@ -560,12 +551,12 @@ private fun ComplianceSection(
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
       Text(
-        text = cmpStringResource(AircraftRes.string.inspections),
+        text = cmpStringResource(InspectionRes.string.inspections),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
       )
       androidx.compose.material3.TextButton(onClick = onAddClick) {
-        Text(cmpStringResource(AircraftRes.string.add_inspection))
+        Text(cmpStringResource(InspectionRes.string.add_inspection))
       }
     }
 
@@ -581,7 +572,7 @@ private fun ComplianceSection(
           count = 2
         )
       ) {
-        Text(cmpStringResource(AircraftRes.string.due_with_count, activeInspections.size))
+        Text(cmpStringResource(InspectionRes.string.due_with_count, activeInspections.size))
       }
       SegmentedButton(
         selected = showComplied,
@@ -591,7 +582,7 @@ private fun ComplianceSection(
           count = 2
         )
       ) {
-        Text(cmpStringResource(AircraftRes.string.history_with_count, compliedInspections.size))
+        Text(cmpStringResource(InspectionRes.string.history_with_count, compliedInspections.size))
       }
     }
 
@@ -616,7 +607,7 @@ private fun ComplianceSection(
               tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
             Text(
-              text = cmpStringResource(AircraftRes.string.no_inspections_yet),
+              text = cmpStringResource(InspectionRes.string.no_inspections_yet),
               style = MaterialTheme.typography.bodyMedium,
               textAlign = TextAlign.Center,
               color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -627,13 +618,13 @@ private fun ComplianceSection(
             ) {
               Icon(Icons.Default.Add, contentDescription = null)
               Spacer(Modifier.width(Spacing.small))
-              Text(cmpStringResource(AircraftRes.string.add_inspection).uppercase())
+              Text(cmpStringResource(InspectionRes.string.add_inspection).uppercase())
             }
           }
         }
       } else {
         Text(
-          text = cmpStringResource(AircraftRes.string.no_complied_yet),
+          text = cmpStringResource(InspectionRes.string.no_complied_yet),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(vertical = Spacing.large)

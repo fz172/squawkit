@@ -1,8 +1,8 @@
-package dev.fanfly.wingslog.feature.aircraft.database
+package dev.fanfly.wingslog.feature.aircraft.inspection.database
 
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueMetadata
+import dev.fanfly.wingslog.aircraft.DueMetadata
 import kotlinx.coroutines.flow.Flow
 
 
