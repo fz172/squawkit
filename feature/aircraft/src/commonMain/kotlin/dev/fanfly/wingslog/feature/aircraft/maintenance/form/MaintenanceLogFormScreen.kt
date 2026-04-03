@@ -528,7 +528,6 @@ private fun ComponentTypeDropdown(
   modifier: Modifier = Modifier
 ) {
   val options = listOf(
-    MaintenanceLog.ComponentType.UNKNOWN,
     MaintenanceLog.ComponentType.AIRFRAME,
     MaintenanceLog.ComponentType.ENGINE,
     MaintenanceLog.ComponentType.PROPELLER

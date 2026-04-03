@@ -14,7 +14,7 @@ data class MaintenanceLogFormUiState(
   val airframeTime: String = "",
   val propTime: String = "",
   val aircraft: Aircraft? = null,
-  val selectedComponentType: MaintenanceLog.ComponentType = MaintenanceLog.ComponentType.UNKNOWN,
+  val selectedComponentType: MaintenanceLog.ComponentType = MaintenanceLog.ComponentType.AIRFRAME,
   val selectedSubComponent: String? = null,
   val error: String? = null,
   /** All inspection cards for this aircraft — used by InspectionPickerSheet */

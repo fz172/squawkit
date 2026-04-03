@@ -82,9 +82,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.component_airframe
-import wingslog.core.ui.generated.resources.component_engine
-import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.core.ui.generated.resources.delete
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
@@ -377,113 +374,59 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
       fontWeight = FontWeight.Bold
     )
 
-    // Primary Flight Times - Compact Grid
-    val flightTimes = buildList {
-      stats.currentAirframeTime?.let { add(cmpStringResource(AircraftRes.string.airframe_time_label) to it) }
-      stats.currentEngineTime?.let { add(cmpStringResource(AircraftRes.string.engine_time_label) to it) }
-      stats.currentPropTime?.let { add(cmpStringResource(AircraftRes.string.prop_time_label) to it) }
-    }
-
-    if (flightTimes.isNotEmpty()) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-      ) {
-        flightTimes.forEach { (label, hours) ->
-          FlightTimeCard(
-            label = label,
-            hours = hours,
-            modifier = Modifier.weight(1f)
-          )
-        }
-      }
-    }
-
-    // Secondary Stats - Consolidated Surface
-    OutlinedCard(
+    Row(
       modifier = Modifier.fillMaxWidth(),
-      shape = RoundedCornerShape(Spacing.small),
-      colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+      horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
     ) {
-      Row(
-        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          StatItem(
-            label = cmpStringResource(AircraftRes.string.total_logs),
-            value = stats.total.toString(),
-            modifier = Modifier.fillMaxWidth()
-          )
-          HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.medium))
-          StatItem(
-            label = cmpStringResource(CoreRes.string.component_engine),
-            value = stats.engine.toString(),
-            modifier = Modifier.fillMaxWidth()
-          )
-        }
-        VerticalDivider()
-        Column(modifier = Modifier.weight(1f)) {
-          StatItem(
-            label = cmpStringResource(CoreRes.string.component_airframe),
-            value = stats.airframe.toString(),
-            modifier = Modifier.fillMaxWidth()
-          )
-          HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.medium))
-          StatItem(
-            label = cmpStringResource(CoreRes.string.component_propeller),
-            value = stats.propeller.toString(),
-            modifier = Modifier.fillMaxWidth()
-          )
-        }
+      stats.currentAirframeTime?.let {
+        StatCell(
+          label = cmpStringResource(AircraftRes.string.airframe_time_label),
+          value = it.formatToOneDecimalPlace(),
+          modifier = Modifier.weight(1f)
+        )
       }
+      stats.currentEngineTime?.let {
+        StatCell(
+          label = cmpStringResource(AircraftRes.string.engine_time_label),
+          value = it.formatToOneDecimalPlace(),
+          modifier = Modifier.weight(1f)
+        )
+      }
+      stats.currentPropTime?.let {
+        StatCell(
+          label = cmpStringResource(AircraftRes.string.prop_time_label),
+          value = it.formatToOneDecimalPlace(),
+          modifier = Modifier.weight(1f)
+        )
+      }
+      StatCell(
+        label = cmpStringResource(AircraftRes.string.total_logs),
+        value = stats.total.toString(),
+        modifier = Modifier.weight(1f)
+      )
     }
   }
 }
 
+
 @Composable
-private fun StatItem(label: String, value: String, modifier: Modifier = Modifier) {
-  Row(
-    modifier = modifier.padding(Spacing.medium),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.SpaceBetween
+private fun StatCell(label: String, value: String, modifier: Modifier = Modifier) {
+  Column(
+    modifier = modifier,
+    verticalArrangement = Arrangement.spacedBy(Spacing.tiny)
   ) {
-    Text(
-      text = label,
-      style = MaterialTheme.typography.labelMedium,
-      color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
     Text(
       text = value,
       style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold
+      fontWeight = FontWeight.Bold,
+      color = MaterialTheme.colorScheme.primary
     )
-  }
-}
-
-@Composable
-private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Modifier) {
-  Card(
-    modifier = modifier,
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-    shape = RoundedCornerShape(Spacing.small)
-  ) {
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(Spacing.medium),
-      verticalArrangement = Arrangement.spacedBy(Spacing.tiny)
-    ) {
-      Text(
-        text = label,
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onPrimaryContainer,
-        maxLines = 1
-      )
-      Text(
-        text = hours.formatToOneDecimalPlace(),
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onPrimaryContainer
-      )
-    }
+    Text(
+      text = label,
+      style = MaterialTheme.typography.labelSmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      maxLines = 1
+    )
   }
 }
 
