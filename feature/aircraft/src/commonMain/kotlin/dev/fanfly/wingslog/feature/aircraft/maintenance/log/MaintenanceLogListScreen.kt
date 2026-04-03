@@ -158,7 +158,6 @@ fun MaintenanceLogListScreen(
                 MaintenanceLog.ComponentType.AIRFRAME,
                 MaintenanceLog.ComponentType.ENGINE,
                 MaintenanceLog.ComponentType.PROPELLER,
-                MaintenanceLog.ComponentType.AVIONICS,
               )
               Row(
                 modifier = Modifier
