@@ -34,10 +34,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -48,6 +50,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -80,26 +83,25 @@ import dev.fanfly.wingslog.feature.aircraft.overview.data.AircraftOverviewViewMo
 import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.data.LogStats
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
+import wingslog.core.ui.generated.resources.component_airframe
+import wingslog.core.ui.generated.resources.component_engine
+import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.core.ui.generated.resources.delete
+import wingslog.core.ui.generated.resources.settings
 import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
 import wingslog.feature.aircraft.generated.resources.add_inspection
-import wingslog.feature.aircraft.generated.resources.airframe
 import wingslog.feature.aircraft.generated.resources.airframe_time_label
 import wingslog.feature.aircraft.generated.resources.delete_aircraft
 import wingslog.feature.aircraft.generated.resources.edit_aircraft
-import wingslog.feature.aircraft.generated.resources.engine
 import wingslog.feature.aircraft.generated.resources.engine_time_label
 import wingslog.feature.aircraft.generated.resources.log_details
 import wingslog.feature.aircraft.generated.resources.maintenance_summary
 import wingslog.feature.aircraft.generated.resources.make_model_template
 import wingslog.feature.aircraft.generated.resources.no_inspections_yet
 import wingslog.feature.aircraft.generated.resources.prop_time_label
-import wingslog.feature.aircraft.generated.resources.propeller
-import wingslog.feature.aircraft.generated.resources.settings
 import wingslog.feature.aircraft.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.aircraft.generated.resources.total_logs
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
@@ -244,7 +246,7 @@ fun AircraftOverviewContent(
           IconButton(onClick = { showSettingsMenu = !showSettingsMenu }) {
             Icon(
               Icons.Default.Settings,
-              contentDescription = cmpStringResource(AircraftRes.string.settings)
+              contentDescription = cmpStringResource(CoreRes.string.settings)
             )
           }
           DropdownMenu(
@@ -445,39 +447,64 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
       }
     }
 
-    // Secondary Stats - 2x2 Grid
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+    // Secondary Stats - Consolidated Surface
+    OutlinedCard(
+      modifier = Modifier.fillMaxWidth(),
+      shape = RoundedCornerShape(Spacing.small),
+      colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
       Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
       ) {
-        StatCard(
-          label = cmpStringResource(AircraftRes.string.total_logs),
-          value = stats.total.toString(),
-          modifier = Modifier.weight(1f)
-        )
-        StatCard(
-          label = cmpStringResource(AircraftRes.string.airframe),
-          value = stats.airframe.toString(),
-          modifier = Modifier.weight(1f)
-        )
-      }
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-      ) {
-        StatCard(
-          label = cmpStringResource(AircraftRes.string.engine),
-          value = stats.engine.toString(),
-          modifier = Modifier.weight(1f)
-        )
-        StatCard(
-          label = cmpStringResource(AircraftRes.string.propeller),
-          value = stats.propeller.toString(),
-          modifier = Modifier.weight(1f)
-        )
+        Column(modifier = Modifier.weight(1f)) {
+          StatItem(
+            label = cmpStringResource(AircraftRes.string.total_logs),
+            value = stats.total.toString(),
+            modifier = Modifier.fillMaxWidth()
+          )
+          HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.medium))
+          StatItem(
+            label = cmpStringResource(CoreRes.string.component_engine),
+            value = stats.engine.toString(),
+            modifier = Modifier.fillMaxWidth()
+          )
+        }
+        VerticalDivider()
+        Column(modifier = Modifier.weight(1f)) {
+          StatItem(
+            label = cmpStringResource(CoreRes.string.component_airframe),
+            value = stats.airframe.toString(),
+            modifier = Modifier.fillMaxWidth()
+          )
+          HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.medium))
+          StatItem(
+            label = cmpStringResource(CoreRes.string.component_propeller),
+            value = stats.propeller.toString(),
+            modifier = Modifier.fillMaxWidth()
+          )
+        }
       }
     }
+  }
+}
+
+@Composable
+private fun StatItem(label: String, value: String, modifier: Modifier = Modifier) {
+  Row(
+    modifier = modifier.padding(Spacing.medium),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.SpaceBetween
+  ) {
+    Text(
+      text = label,
+      style = MaterialTheme.typography.labelMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Text(
+      text = value,
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold
+    )
   }
 }
 
@@ -503,32 +530,6 @@ private fun FlightTimeCard(label: String, hours: Double, modifier: Modifier = Mo
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onPrimaryContainer
-      )
-    }
-  }
-}
-
-@Composable
-private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
-  Card(
-    modifier = modifier,
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    shape = RoundedCornerShape(Spacing.small)
-  ) {
-    Row(
-      modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-    ) {
-      Text(
-        text = value,
-        style = MaterialTheme.typography.titleMedium
-      )
-      Text(
-        text = label,
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.weight(1f)
       )
     }
   }
@@ -744,13 +745,5 @@ private fun ComplianceSection(
         }
       }
     }
-  }
-}
-
-@Preview
-@Composable
-private fun StatCardPreview() {
-  MaterialTheme {
-    StatCard(label = "Total Logs", value = "42")
   }
 }

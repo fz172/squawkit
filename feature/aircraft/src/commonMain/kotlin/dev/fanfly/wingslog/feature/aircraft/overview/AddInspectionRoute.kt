@@ -16,14 +16,12 @@ fun AddInspectionRoute(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val successState = uiState as? AircraftOverviewUiState.Success
-  
+
   if (successState != null) {
-    val aircraftId = successState.aircraft.id
     val allInspections =
       (successState.activeInspections + successState.compliedInspections).map { it.card }
 
     AddInspectionScreen(
-      aircraftId = aircraftId,
       availableInspections = allInspections,
       onCancel = { navController.popBackStack() },
       onSave = { card ->

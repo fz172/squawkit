@@ -35,15 +35,17 @@ import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogL
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListUiState
 import dev.fanfly.wingslog.feature.aircraft.maintenance.log.data.MaintenanceLogListViewModel
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.retry
 import wingslog.feature.aircraft.generated.resources.add_first_maintenance_log
 import wingslog.feature.aircraft.generated.resources.add_log
 import wingslog.feature.aircraft.generated.resources.failed_to_load_logs
 import wingslog.feature.aircraft.generated.resources.maintenance_logs
 import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_description
 import wingslog.feature.aircraft.generated.resources.no_maintenance_logs_title
-import wingslog.feature.aircraft.generated.resources.retry
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,7 +101,7 @@ fun MaintenanceLogListScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
           Button(onClick = { viewModel.retryLoading() }) {
-            Text(cmpStringResource(AircraftRes.string.retry))
+            Text(cmpStringResource(CoreRes.string.retry))
           }
         }
 

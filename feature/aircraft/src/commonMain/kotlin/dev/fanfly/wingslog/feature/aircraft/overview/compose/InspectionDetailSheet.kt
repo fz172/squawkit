@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.aircraft.overview.compose
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,7 +40,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueMetadata
 import dev.fanfly.wingslog.feature.aircraft.inspection.data.DueStatus
 import dev.fanfly.wingslog.feature.aircraft.overview.data.InspectionCardWithStatus
-import wingslog.feature.aircraft.generated.resources.done
+import wingslog.core.ui.generated.resources.done
 import wingslog.feature.aircraft.generated.resources.due_date
 import wingslog.feature.aircraft.generated.resources.due_engine
 import wingslog.feature.aircraft.generated.resources.edit_inspection
@@ -54,6 +53,7 @@ import wingslog.feature.aircraft.generated.resources.overdue_was
 import wingslog.feature.aircraft.generated.resources.unknown_date
 import wingslog.feature.aircraft.inspection.generated.resources.compliance_authority
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.aircraft.generated.resources.Res as AircraftRes
 import wingslog.feature.aircraft.inspection.generated.resources.Res as InspectionRes
 
@@ -132,7 +132,7 @@ fun InspectionDetailSheet(
           }
           IconButton(onClick = onDismiss) {
             Icon(
-              Icons.Default.Close, contentDescription = cmpStringResource(AircraftRes.string.done)
+              Icons.Default.Close, contentDescription = cmpStringResource(CoreRes.string.done)
             )
           }
         }

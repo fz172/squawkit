@@ -6,18 +6,16 @@
     <string name="add_inspection">Add Inspection</string>
     <string name="edit_inspection">Edit inspection</string>
     <string name="component">Component</string>
-    <string name="component_airframe">Airframe</string>
-    <string name="component_engine">Engine</string>
-    <string name="component_propeller">Propeller</string>
-    <string name="component_avionics">Avionics</string>
     <string name="inspection_title">Inspection Title</string>
     <string name="interval_months">Interval (months)</string>
     <string name="interval_hours">Interval (hours)</string>
     <string name="schedule_with_another_work">Schedule With Another Work</string>
     <string name="schedule_with_another_work_description">This work will be due whenever the selected work is next due.</string>
-    <string name="override_next_due_engine">Override next due engine</string>
+    <string name="override_next_due_engine">Override next due engine hour</string>
     <string name="override_next_due_date">Override next due date</string>
     <string name="force_due_engine_hours">Force Due Engine (hours)</string>
+
+    <string name="select_inspection_work">Select Inspection Work</string>
     <string name="select_date">Select date</string>
 
     <string name="compliance_type">Compliance Type</string>
@@ -34,7 +32,9 @@
     <string name="compliance_notes">Compliance Notes</string>
     <string name="compliance_notes_hint">e.g. One-time inspection of fuel lines...</string>
     <string name="link_to_inspection">Link to inspection</string>
-    <string name="unknown">Unknown</string>
     <string name="remove_link">Remove link</string>
     <string name="force_overrides_safety">Force Override</string>
+
+    <string name="no_inspection_cards_configured">No inspection cards configured for this aircraft.</string>
+
 </resources>
