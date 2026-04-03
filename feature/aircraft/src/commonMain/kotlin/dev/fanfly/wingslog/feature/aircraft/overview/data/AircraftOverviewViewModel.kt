@@ -50,27 +50,42 @@ class AircraftOverviewViewModel(
       combine(
         aircraftManager.loadAircraft(aircraftId),
         logManager.observeLogs(aircraftId),
-        inspectionManager.observeInspections(aircraftId)
-      ) { aircraft, logs, inspectionCards ->
+        inspectionManager.observeInspections(aircraftId),
+        logManager.observeMaintenanceOverview(aircraftId)
+      ) { aircraft, logs, inspectionCards, overview ->
         cachedLogs = logs
         if (aircraft != null) {
-          val currentEngineTime =
-            logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }
-          val currentAirframeTime =
-            logs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }
-          val currentPropTime = logs.filter { it.prop_time > 0.0 }.maxOfOrNull { it.prop_time }
-          val stats = LogStats(
-            total = logs.size.toLong(),
-            airframe = logs.count { it.component_type == MaintenanceLog.ComponentType.AIRFRAME }
-              .toLong(),
-            engine = logs.count { it.component_type == MaintenanceLog.ComponentType.ENGINE }
-              .toLong(),
-            propeller = logs.count { it.component_type == MaintenanceLog.ComponentType.PROPELLER }
-              .toLong(),
-            currentEngineTime = currentEngineTime,
-            currentAirframeTime = currentAirframeTime,
-            currentPropTime = currentPropTime
-          )
+          val stats = if (overview != null) {
+            LogStats(
+              total = overview.total_log_count.toLong(),
+              airframe = overview.airframe_log_count.toLong(),
+              engine = overview.engine_log_count.toLong(),
+              propeller = overview.propeller_log_count.toLong(),
+              currentAirframeTime = overview.current_airframe_time,
+              currentEngineTime = overview.current_engine_time,
+              currentPropTime = overview.current_propeller_time
+            )
+          } else {
+            // Fallback to manual compute if overview doesn't exist yet
+            val currentEngineTime =
+              logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }
+            val currentAirframeTime =
+              logs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }
+            val currentPropTime = logs.filter { it.prop_time > 0.0 }.maxOfOrNull { it.prop_time }
+            LogStats(
+              total = logs.size.toLong(),
+              airframe = logs.count { it.component_type == MaintenanceLog.ComponentType.AIRFRAME }
+                .toLong(),
+              engine = logs.count { it.component_type == MaintenanceLog.ComponentType.ENGINE }
+                .toLong(),
+              propeller = logs.count { it.component_type == MaintenanceLog.ComponentType.PROPELLER }
+                .toLong(),
+              currentEngineTime = currentEngineTime,
+              currentAirframeTime = currentAirframeTime,
+              currentPropTime = currentPropTime
+            )
+          }
+
           // Compute due status for each inspection card
           val cardsWithStatus = inspectionCards.map { card ->
             InspectionCardWithStatus(

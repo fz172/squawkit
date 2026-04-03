@@ -3,7 +3,21 @@ syntax = "proto3";
 option java_package = "dev.fanfly.wingslog.aircraft";
 option java_multiple_files = true;
 
+/**
+ * Summary data for an aircraft's maintenance history.
+ * Used to avoid recomputing statistics from the full log list.
+ */
 message MaintenanceOverview {
   string aircraft_id = 1;
-  uint32 logCount = 2;
+  uint32 total_log_count = 2;
+
+  // Counts by component type
+  uint32 airframe_log_count = 3;
+  uint32 engine_log_count = 4;
+  uint32 propeller_log_count = 5;
+
+  // Current accumulated times
+  double current_airframe_time = 6;
+  double current_engine_time = 7;
+  double current_propeller_time = 8;
 }
