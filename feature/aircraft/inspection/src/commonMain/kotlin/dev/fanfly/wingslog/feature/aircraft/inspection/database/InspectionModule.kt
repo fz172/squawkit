@@ -7,5 +7,5 @@ import org.koin.dsl.module
 
 val inspectionModule = module {
   single<InspectionManager> { InspectionManagerImpl(get(), get()) }
-  viewModel { InspectionViewModel(get(), get(), get()) }
+  viewModel { InspectionViewModel(get(), get()) }
 }

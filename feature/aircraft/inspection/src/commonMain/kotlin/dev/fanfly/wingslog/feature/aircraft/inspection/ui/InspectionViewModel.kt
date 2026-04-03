@@ -9,12 +9,9 @@ import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.feature.aircraft.inspection.database.InspectionManager
-import dev.fanfly.wingslog.feature.aircraft.database.MaintenanceLogManager
-import dev.fanfly.wingslog.feature.aircraft.inspection.data.InspectionCardWithStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -24,12 +21,10 @@ sealed interface InspectionUiState {
     val aircraftId: String,
     val allInspections: List<InspectionCard> = emptyList(),
   ) : InspectionUiState
-  data object Error : InspectionUiState
 }
 
 class InspectionViewModel(
   private val inspectionManager: InspectionManager,
-  private val logManager: MaintenanceLogManager,
   savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
