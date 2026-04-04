@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.inspection.ui
+package dev.fanfly.wingslog.feature.inspection.viewing
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -42,29 +42,29 @@ import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import wingslog.core.ui.generated.resources.dash
 import wingslog.core.ui.generated.resources.done
-import wingslog.feature.inspection.generated.resources.compliance_authority
-import wingslog.feature.inspection.generated.resources.compliance_details
-import wingslog.feature.inspection.generated.resources.compliance_type_ad_short
-import wingslog.feature.inspection.generated.resources.compliance_type_sb_short
-import wingslog.feature.inspection.generated.resources.edit_inspection
-import wingslog.feature.inspection.generated.resources.maintenance_history
-import wingslog.feature.inspection.generated.resources.no_maintenance_logs_for_inspection
-import wingslog.feature.inspection.sharedassets.generated.resources.complied
-import wingslog.feature.inspection.sharedassets.generated.resources.due_date
-import wingslog.feature.inspection.sharedassets.generated.resources.due_engine
-import wingslog.feature.inspection.sharedassets.generated.resources.due_soon
-import wingslog.feature.inspection.sharedassets.generated.resources.due_soon_date
-import wingslog.feature.inspection.sharedassets.generated.resources.due_soon_date_engine
-import wingslog.feature.inspection.sharedassets.generated.resources.due_soon_engine
+import wingslog.feature.inspection.sharedassets.generated.resources.compliance_authority
+import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_ad_short
+import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_sb_short
+import wingslog.feature.inspection.sharedassets.generated.resources.edit_inspection
 import wingslog.feature.inspection.sharedassets.generated.resources.engine_format
-import wingslog.feature.inspection.sharedassets.generated.resources.on_condition
-import wingslog.feature.inspection.sharedassets.generated.resources.overdue
-import wingslog.feature.inspection.sharedassets.generated.resources.overdue_was
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
+import wingslog.feature.inspection.viewing.generated.resources.compliance_details
+import wingslog.feature.inspection.viewing.generated.resources.complied
+import wingslog.feature.inspection.viewing.generated.resources.due_date
+import wingslog.feature.inspection.viewing.generated.resources.due_engine
+import wingslog.feature.inspection.viewing.generated.resources.due_soon
+import wingslog.feature.inspection.viewing.generated.resources.due_soon_date
+import wingslog.feature.inspection.viewing.generated.resources.due_soon_date_engine
+import wingslog.feature.inspection.viewing.generated.resources.due_soon_engine
+import wingslog.feature.inspection.viewing.generated.resources.maintenance_history
+import wingslog.feature.inspection.viewing.generated.resources.no_maintenance_logs_for_inspection
+import wingslog.feature.inspection.viewing.generated.resources.on_condition
+import wingslog.feature.inspection.viewing.generated.resources.overdue
+import wingslog.feature.inspection.viewing.generated.resources.overdue_was
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,9 +93,9 @@ fun InspectionDetailSheet(
       ) {
         Column(modifier = Modifier.weight(1f)) {
           val typeLabel = when (cardWithStatus.card.type) {
-            ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> cmpStringResource(InspectionRes.string.compliance_type_sb_short)
+            ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> cmpStringResource(SharedRes.string.compliance_type_sb_short)
             ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> cmpStringResource(
-              InspectionRes.string.compliance_type_ad_short
+              SharedRes.string.compliance_type_ad_short
             )
 
             else -> null
@@ -139,7 +139,7 @@ fun InspectionDetailSheet(
           IconButton(onClick = onEditClick) {
             Icon(
               Icons.Default.Edit,
-              contentDescription = cmpStringResource(InspectionRes.string.edit_inspection)
+              contentDescription = cmpStringResource(SharedRes.string.edit_inspection)
             )
           }
           IconButton(onClick = onDismiss) {
@@ -157,7 +157,7 @@ fun InspectionDetailSheet(
       if (cardWithStatus.card.compliance_authority.isNotBlank()) {
         Spacer(Modifier.height(Spacing.medium))
         Text(
-          text = cmpStringResource(InspectionRes.string.compliance_authority),
+          text = cmpStringResource(SharedRes.string.compliance_authority),
           style = MaterialTheme.typography.labelLarge,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -172,7 +172,7 @@ fun InspectionDetailSheet(
       if (cardWithStatus.card.compliance_details.isNotBlank()) {
         Spacer(Modifier.height(Spacing.large))
         Text(
-          text = cmpStringResource(InspectionRes.string.compliance_details),
+          text = cmpStringResource(ViewingRes.string.compliance_details),
           style = MaterialTheme.typography.labelLarge,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -194,7 +194,7 @@ fun InspectionDetailSheet(
       Spacer(modifier = Modifier.height(Spacing.large))
 
       Text(
-        text = cmpStringResource(InspectionRes.string.maintenance_history),
+        text = cmpStringResource(ViewingRes.string.maintenance_history),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold
       )
@@ -203,7 +203,7 @@ fun InspectionDetailSheet(
 
       if (logs.isEmpty()) {
         Text(
-          text = cmpStringResource(InspectionRes.string.no_maintenance_logs_for_inspection),
+          text = cmpStringResource(ViewingRes.string.no_maintenance_logs_for_inspection),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -222,13 +222,13 @@ fun InspectionDetailSheet(
 @Composable
 private fun DueStatusChip(dueStatus: DueMetadata) {
   val (label, color) = when {
-    dueStatus.status == DueStatus.COMPLIED -> cmpStringResource(SharedRes.string.complied) to StatusOk
-    dueStatus.isOnCondition -> cmpStringResource(SharedRes.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
+    dueStatus.status == DueStatus.COMPLIED -> cmpStringResource(ViewingRes.string.complied) to StatusOk
+    dueStatus.isOnCondition -> cmpStringResource(ViewingRes.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
     dueStatus.status == DueStatus.OVERDUE -> {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat() ?: ""
       (if (dateStr.isNotBlank()) cmpStringResource(
-        SharedRes.string.overdue_was, dateStr
-      ) else cmpStringResource(SharedRes.string.overdue)) to MaterialTheme.colorScheme.error
+        ViewingRes.string.overdue_was, dateStr
+      ) else cmpStringResource(ViewingRes.string.overdue)) to MaterialTheme.colorScheme.error
     }
 
     dueStatus.status == DueStatus.DUE_SOON -> {
@@ -236,23 +236,23 @@ private fun DueStatusChip(dueStatus: DueMetadata) {
       val engineStr = dueStatus.nextDueEngine?.toDouble()?.formatToOneDecimalPlace()
       when {
         dateStr != null && engineStr != null -> cmpStringResource(
-          SharedRes.string.due_soon_date_engine,
+          ViewingRes.string.due_soon_date_engine,
           dateStr,
           engineStr
         )
 
-        dateStr != null -> cmpStringResource(SharedRes.string.due_soon_date, dateStr)
-        engineStr != null -> cmpStringResource(SharedRes.string.due_soon_engine, engineStr)
-        else -> cmpStringResource(SharedRes.string.due_soon)
+        dateStr != null -> cmpStringResource(ViewingRes.string.due_soon_date, dateStr)
+        engineStr != null -> cmpStringResource(ViewingRes.string.due_soon_engine, engineStr)
+        else -> cmpStringResource(ViewingRes.string.due_soon)
       } to StatusWarning
     }
 
     dueStatus.nextDueDate != null -> cmpStringResource(
-      SharedRes.string.due_date, dueStatus.nextDueDate!!.toDisplayFormat()
+      ViewingRes.string.due_date, dueStatus.nextDueDate!!.toDisplayFormat()
     ) to StatusOk
 
     dueStatus.nextDueEngine != null -> cmpStringResource(
-      SharedRes.string.due_engine,
+      ViewingRes.string.due_engine,
       dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
     ) to StatusOk
 

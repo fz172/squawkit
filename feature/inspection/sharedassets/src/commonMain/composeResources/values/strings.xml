@@ -2,16 +2,13 @@
 <resources>
     <string name="unknown_date">Unknown date</string>
     <string name="engine_format">Engine: %1$s</string>
-    <string name="on_condition">On Condition</string>
-    <string name="complied">Complied</string>
-    <string name="overdue">Overdue</string>
-    <string name="overdue_was">Overdue (was %1$s)</string>
-    <string name="due_date">Due %1$s</string>
-    <string name="due_engine">Due @ %1$s engine hrs</string>
-    <string name="due_soon">Due Soon</string>
-    <string name="due_soon_date">Due Soon: %1$s</string>
-    <string name="due_soon_engine">Due Soon: @ %1$s hrs</string>
-    <string name="due_soon_date_engine">Due Soon: %1$s / %2$s hrs</string>
+
     <string name="due_with_count">DUE (%1$d)</string>
     <string name="history_with_count">HISTORY (%1$d)</string>
+
+    <string name="edit_inspection">Edit inspection</string>
+
+    <string name="compliance_authority">Compliance authority</string>
+    <string name="compliance_type_ad_short">AD</string>
+    <string name="compliance_type_sb_short">SB</string>
 </resources>

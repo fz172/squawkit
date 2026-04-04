@@ -59,14 +59,15 @@ import wingslog.core.ui.generated.resources.component_type
 import wingslog.feature.inspection.generated.resources.add_inspection
 import wingslog.feature.inspection.generated.resources.basics
 import wingslog.feature.inspection.generated.resources.compliance_type
-import wingslog.feature.inspection.generated.resources.compliance_type_ad_short
 import wingslog.feature.inspection.generated.resources.compliance_type_routine_short
-import wingslog.feature.inspection.generated.resources.compliance_type_sb_short
 import wingslog.feature.inspection.generated.resources.details
 import wingslog.feature.inspection.generated.resources.inspection_title
 import wingslog.feature.inspection.generated.resources.schedule
+import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_ad_short
+import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_sb_short
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.inspection.generated.resources.Res as InspectionRes
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -222,18 +223,16 @@ fun AddInspectionScreen(
                     label = {
                       val labelText = when (entry) {
                         ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> stringResource(
-                          InspectionRes.string.compliance_type_ad_short
+                          SharedInspectionRes.string.compliance_type_ad_short
                         )
 
                         ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> stringResource(
-                          InspectionRes.string.compliance_type_sb_short
+                          SharedInspectionRes.string.compliance_type_sb_short
                         )
 
                         ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION -> stringResource(
                           InspectionRes.string.compliance_type_routine_short
                         )
-
-                        else -> entry.name.removePrefix("COMPLIANCE_TYPE_")
                       }
                       Text(
                         text = labelText,

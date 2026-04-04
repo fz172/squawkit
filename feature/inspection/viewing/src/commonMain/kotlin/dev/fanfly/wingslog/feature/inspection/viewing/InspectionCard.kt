@@ -1,5 +1,6 @@
-package dev.fanfly.wingslog.feature.inspection.compose
+package dev.fanfly.wingslog.feature.inspection.viewing
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,7 +59,7 @@ fun InspectionCard(
     colors = CardDefaults.cardColors(
       containerColor = containerColor
     ),
-    border = androidx.compose.foundation.BorderStroke(2.dp, borderColor),
+    border = BorderStroke(2.dp, borderColor),
     shape = RoundedCornerShape(Spacing.cardCornerRadius)
   ) {
     Column(

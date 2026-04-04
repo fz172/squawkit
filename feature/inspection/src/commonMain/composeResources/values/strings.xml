@@ -4,7 +4,6 @@
     <string name="compliance_type_sb">Service Bulletins (SB)</string>
     <string name="compliance_type_routine">Routine Inspections</string>
     <string name="add_inspection">Add Inspection</string>
-    <string name="edit_inspection">Edit inspection</string>
     <string name="component">Component</string>
     <string name="inspection_title">Inspection Title</string>
     <string name="interval_months">Interval (months)</string>
@@ -18,15 +17,12 @@
     <string name="select_inspection_work">Select Inspection Work</string>
 
     <string name="compliance_type">Compliance Type</string>
-    <string name="compliance_type_ad_short">AD</string>
-    <string name="compliance_type_sb_short">SB</string>
     <string name="compliance_type_routine_short">Routine</string>
     <string name="intervals">Intervals</string>
     <string name="one_time_compliance">One-Time Compliance</string>
     <string name="one_time_compliance_desc">Moves to history after first log</string>
     <string name="reference_number">Reference Number</string>
     <string name="reference_number_hint">e.g. SB-001</string>
-    <string name="compliance_authority">Compliance authority</string>
     <string name="compliance_authority_hint">e.g. Rotax / Lycoming</string>
     <string name="compliance_notes">Compliance Notes</string>
     <string name="compliance_notes_hint">e.g. One-time inspection of fuel lines...</string>
@@ -59,8 +55,6 @@
     <string name="no_inspection_work_recorded">No inspection work recorded for this log.</string>
     <string name="unknown_inspection">Unknown inspection (%1$s)</string>
     <string name="rules">Rules</string>
-    <string name="maintenance_history">Maintenance History</string>
-    <string name="no_maintenance_logs_for_inspection">No logs yet. Add a maintenance entry and tag this inspection to see history here.</string>
     <string name="every_x_months">Every %1$d months</string>
     <string name="every_x_engine_hours">Every %1$d engine hours</string>
     <string name="on_condition_desc">On condition: %1$s</string>
@@ -73,11 +67,9 @@
     <string name="details">Details</string>
     <string name="identity">Identity</string>
     <string name="overrides">Overrides</string>
-    <string name="compliance_details">Compliance Details</string>
     <string name="inspection_updated">Inspection updated</string>
     <string name="inspection_deleted">Inspection deleted</string>
     <string name="inspection_added">Inspection added</string>
-    <string name="critical_airworthiness">CRITICAL: AIRWORTHINESS</string>
     <string name="inspection_status">Inspection Status</string>
     <string name="prop_inspection">Prop Inspection</string>
 

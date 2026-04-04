@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.inspection.ui
+package dev.fanfly.wingslog.feature.inspection.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel

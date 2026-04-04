@@ -11,13 +11,14 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.generated.resources.compliance_authority
 import wingslog.feature.inspection.generated.resources.compliance_authority_hint
 import wingslog.feature.inspection.generated.resources.compliance_notes
 import wingslog.feature.inspection.generated.resources.compliance_notes_hint
 import wingslog.feature.inspection.generated.resources.reference_number
 import wingslog.feature.inspection.generated.resources.reference_number_hint
+import wingslog.feature.inspection.sharedassets.generated.resources.compliance_authority
 import wingslog.feature.inspection.generated.resources.Res as InspectionRes
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 
 @Composable
 fun DocumentationFields(
@@ -44,7 +45,7 @@ fun DocumentationFields(
       OutlinedTextField(
         value = complianceAuthority,
         onValueChange = onComplianceAuthorityChange,
-        label = { Text(stringResource(InspectionRes.string.compliance_authority)) },
+        label = { Text(stringResource(SharedInspectionRes.string.compliance_authority)) },
         placeholder = { Text(stringResource(InspectionRes.string.compliance_authority_hint)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true

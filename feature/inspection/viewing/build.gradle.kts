@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.inspection"
+  namespace = "dev.fanfly.wingslog.feature.inspection.viewing"
   compileSdk = 36
 
   defaultConfig {
@@ -14,16 +14,11 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
-  buildFeatures {
-    compose = true
-  }
-
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
   }
 }
-
 compose.resources {
   publicResClass = true
 }
@@ -42,16 +37,12 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":feature:inspection:model"))
-      implementation(project(":feature:inspection:datamanager"))
-      implementation(project(":feature:inspection:sharedassets"))
-      implementation(project(":feature:inspection:viewing"))
-
-      implementation(project(":core:ui"))
-      implementation(project(":core:database"))
-      implementation(project(":core:auth"))
       implementation(project(":core:model"))
-      implementation(project(":feature:maintenance:database"))
+      implementation(project(":core:ui"))
+      implementation(project(":feature:inspection:model"))
+      implementation(project(":feature:inspection:sharedassets"))
+      implementation(libs.kotlinx.datetime)
+
 
       implementation(libs.kotlinx.datetime)
       implementation(libs.koin.core)

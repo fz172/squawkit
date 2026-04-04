@@ -37,6 +37,7 @@ include(":feature:userprofile:sharedassets")
 include(":feature:maintenance:database")
 include(":feature:inspection")
 include(":feature:inspection:model")
+include(":feature:inspection:viewing")
 include(":feature:inspection:sharedassets")
 
 include(":feature:inspection:datamanager")
