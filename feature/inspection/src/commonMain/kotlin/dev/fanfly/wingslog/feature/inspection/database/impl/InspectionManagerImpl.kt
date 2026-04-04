@@ -8,9 +8,9 @@ import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
 import dev.fanfly.wingslog.core.database.getFleetCollectionRef
 import dev.fanfly.wingslog.core.database.setEncoded
-import dev.fanfly.wingslog.feature.inspection.data.DueMetadata
-import dev.fanfly.wingslog.feature.inspection.data.DueStatus
 import dev.fanfly.wingslog.feature.inspection.database.InspectionManager
+import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
+import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore

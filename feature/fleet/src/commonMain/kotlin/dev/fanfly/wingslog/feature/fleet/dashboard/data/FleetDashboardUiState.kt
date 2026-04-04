@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.fleet.dashboard.data
 
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceOverview
-import dev.fanfly.wingslog.feature.inspection.data.DueStatus
+import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 
 /**
  * Holds the aircraft fleet dashboard data

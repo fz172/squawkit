@@ -37,9 +37,9 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
-import dev.fanfly.wingslog.feature.inspection.data.DueMetadata
-import dev.fanfly.wingslog.feature.inspection.data.DueStatus
-import dev.fanfly.wingslog.feature.inspection.data.InspectionCardWithStatus
+import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
+import dev.fanfly.wingslog.feature.inspection.model.DueStatus
+import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import wingslog.core.ui.generated.resources.dash
 import wingslog.core.ui.generated.resources.done
 import wingslog.feature.inspection.generated.resources.compliance_authority

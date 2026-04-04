@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.maintenance.overview.data
 
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.feature.inspection.data.InspectionCardWithStatus
+import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 
 data class LogStats(
   val total: Long,

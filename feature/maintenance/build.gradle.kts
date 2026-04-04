@@ -42,13 +42,13 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":feature:inspection:data"))
       implementation(project(":core:ui"))
       implementation(project(":core:model"))
       implementation(project(":core:database"))
       implementation(project(":core:auth"))
 
       implementation(project(":feature:maintenance:database"))
+      implementation(project(":feature:inspection:model"))
       implementation(project(":feature:inspection"))
 
       implementation(libs.kotlinx.datetime)

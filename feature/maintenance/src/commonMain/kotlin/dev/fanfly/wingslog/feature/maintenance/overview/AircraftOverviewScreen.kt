@@ -67,8 +67,8 @@ import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.inspection.compose.DeleteInspectionConfirmDialog
 import dev.fanfly.wingslog.feature.inspection.compose.InspectionCard
-import dev.fanfly.wingslog.feature.inspection.data.DueStatus
-import dev.fanfly.wingslog.feature.inspection.data.InspectionCardWithStatus
+import dev.fanfly.wingslog.feature.inspection.model.DueStatus
+import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.inspection.ui.InspectionDetailSheet
 import dev.fanfly.wingslog.feature.maintenance.overview.compose.ConfigurationCard
 import dev.fanfly.wingslog.feature.maintenance.overview.data.AircraftOverviewEvent

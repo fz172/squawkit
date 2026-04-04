@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.inspection.data"
+  namespace = "dev.fanfly.wingslog.feature.inspection.model"
   compileSdk = 36
 
   defaultConfig {

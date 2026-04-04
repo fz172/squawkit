@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.fleet.database.FleetDashboardManager
-import dev.fanfly.wingslog.feature.inspection.data.DueStatus
+import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.database.InspectionManager
 import dev.fanfly.wingslog.feature.maintenance.database.MaintenanceLogManager
 import kotlinx.coroutines.Job
