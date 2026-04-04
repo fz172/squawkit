@@ -83,18 +83,18 @@ import wingslog.core.ui.generated.resources.dash
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.error_occurred
 import wingslog.feature.inspection.generated.resources.add_inspection
-import wingslog.feature.inspection.generated.resources.complied
 import wingslog.feature.inspection.generated.resources.critical_airworthiness
-import wingslog.feature.inspection.generated.resources.due_date
-import wingslog.feature.inspection.generated.resources.due_engine
-import wingslog.feature.inspection.generated.resources.due_with_count
-import wingslog.feature.inspection.generated.resources.history_with_count
 import wingslog.feature.inspection.generated.resources.inspections
 import wingslog.feature.inspection.generated.resources.no_complied_yet
 import wingslog.feature.inspection.generated.resources.no_inspections_yet
-import wingslog.feature.inspection.generated.resources.on_condition
-import wingslog.feature.inspection.generated.resources.overdue
-import wingslog.feature.inspection.generated.resources.overdue_was
+import wingslog.feature.inspection.sharedassets.generated.resources.complied
+import wingslog.feature.inspection.sharedassets.generated.resources.due_date
+import wingslog.feature.inspection.sharedassets.generated.resources.due_engine
+import wingslog.feature.inspection.sharedassets.generated.resources.due_with_count
+import wingslog.feature.inspection.sharedassets.generated.resources.history_with_count
+import wingslog.feature.inspection.sharedassets.generated.resources.on_condition
+import wingslog.feature.inspection.sharedassets.generated.resources.overdue
+import wingslog.feature.inspection.sharedassets.generated.resources.overdue_was
 import wingslog.feature.maintenance.generated.resources.add_first_maintenance_log
 import wingslog.feature.maintenance.generated.resources.add_log
 import wingslog.feature.maintenance.generated.resources.airframe_time_label
@@ -109,7 +109,8 @@ import wingslog.feature.maintenance.generated.resources.total_logs
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.inspection.generated.resources.Res as InspectionRes
-import wingslog.feature.maintenance.generated.resources.Res as AircraftRes
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 
 @Composable
@@ -212,8 +213,8 @@ fun AircraftOverviewContent(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(cmpStringResource(AircraftRes.string.delete_aircraft)) },
-      text = { Text(cmpStringResource(AircraftRes.string.this_action_cannot_be_undone)) },
+      title = { Text(cmpStringResource(MaintenanceRes.string.delete_aircraft)) },
+      text = { Text(cmpStringResource(MaintenanceRes.string.this_action_cannot_be_undone)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -242,7 +243,7 @@ fun AircraftOverviewContent(
             Column {
               Text(
                 text = cmpStringResource(
-                  AircraftRes.string.make_model_template, aircraft.make, aircraft.model
+                  MaintenanceRes.string.make_model_template, aircraft.make, aircraft.model
                 )
               )
               Text(
@@ -372,10 +373,10 @@ fun LogDetailsBottomBar(
     BottomButtons(
       modifier = modifier,
       onPrimaryClick = { onAddLogClick(aircraft.id) },
-      primaryLabel = if (hasLogs) cmpStringResource(AircraftRes.string.add_log)
-      else cmpStringResource(AircraftRes.string.add_first_maintenance_log),
+      primaryLabel = if (hasLogs) cmpStringResource(MaintenanceRes.string.add_log)
+      else cmpStringResource(MaintenanceRes.string.add_first_maintenance_log),
       onSecondaryClick = if (hasLogs) ({ onLogDetailsClick(aircraft.id) }) else null,
-      secondaryLabel = cmpStringResource(AircraftRes.string.log_details),
+      secondaryLabel = cmpStringResource(MaintenanceRes.string.log_details),
     )
   }
 }
@@ -384,7 +385,7 @@ fun LogDetailsBottomBar(
 private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
     Text(
-      text = cmpStringResource(AircraftRes.string.maintenance_summary),
+      text = cmpStringResource(MaintenanceRes.string.maintenance_summary),
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold
     )
@@ -395,27 +396,27 @@ private fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
     ) {
       stats.currentAirframeTime?.let {
         StatCell(
-          label = cmpStringResource(AircraftRes.string.airframe_time_label),
+          label = cmpStringResource(MaintenanceRes.string.airframe_time_label),
           value = it.formatToOneDecimalPlace(),
           modifier = Modifier.weight(1f)
         )
       }
       stats.currentEngineTime?.let {
         StatCell(
-          label = cmpStringResource(AircraftRes.string.engine_time_label),
+          label = cmpStringResource(MaintenanceRes.string.engine_time_label),
           value = it.formatToOneDecimalPlace(),
           modifier = Modifier.weight(1f)
         )
       }
       stats.currentPropTime?.let {
         StatCell(
-          label = cmpStringResource(AircraftRes.string.prop_time_label),
+          label = cmpStringResource(MaintenanceRes.string.prop_time_label),
           value = it.formatToOneDecimalPlace(),
           modifier = Modifier.weight(1f)
         )
       }
       StatCell(
-        label = cmpStringResource(AircraftRes.string.total_logs),
+        label = cmpStringResource(MaintenanceRes.string.total_logs),
         value = stats.total.toString(),
         modifier = Modifier.weight(1f)
       )
@@ -510,21 +511,21 @@ private fun InspectionCardItem(
     }
   }
   val statusText = when {
-    status == DueStatus.COMPLIED -> cmpStringResource(InspectionRes.string.complied)
-    cardWithStatus.dueStatus.isOnCondition -> cmpStringResource(InspectionRes.string.on_condition)
+    status == DueStatus.COMPLIED -> cmpStringResource(SharedRes.string.complied)
+    cardWithStatus.dueStatus.isOnCondition -> cmpStringResource(SharedRes.string.on_condition)
     status == DueStatus.OVERDUE -> {
       val dateStr = cardWithStatus.dueStatus.nextDueDate?.toDisplayFormat()
-      if (dateStr != null) cmpStringResource(InspectionRes.string.overdue_was, dateStr)
-      else cmpStringResource(InspectionRes.string.overdue)
+      if (dateStr != null) cmpStringResource(SharedRes.string.overdue_was, dateStr)
+      else cmpStringResource(SharedRes.string.overdue)
     }
 
     cardWithStatus.dueStatus.nextDueDate != null -> cmpStringResource(
-      InspectionRes.string.due_date,
+      SharedRes.string.due_date,
       cardWithStatus.dueStatus.nextDueDate!!.toDisplayFormat()
     )
 
     cardWithStatus.dueStatus.nextDueEngine != null -> cmpStringResource(
-      InspectionRes.string.due_engine,
+      SharedRes.string.due_engine,
       cardWithStatus.dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
     )
 
@@ -584,7 +585,7 @@ private fun ComplianceSection(
           count = 2
         )
       ) {
-        Text(cmpStringResource(InspectionRes.string.due_with_count, activeInspections.size))
+        Text(cmpStringResource(SharedRes.string.due_with_count, activeInspections.size))
       }
       SegmentedButton(
         selected = showComplied,
@@ -594,7 +595,7 @@ private fun ComplianceSection(
           count = 2
         )
       ) {
-        Text(cmpStringResource(InspectionRes.string.history_with_count, compliedInspections.size))
+        Text(cmpStringResource(SharedRes.string.history_with_count, compliedInspections.size))
       }
     }
 

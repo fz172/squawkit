@@ -30,7 +30,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.maintenance.generated.resources.add_first_maintenance_log
 import wingslog.feature.maintenance.generated.resources.log_onboarding_description
 import wingslog.feature.maintenance.generated.resources.no_maintenance_logs_title
-import wingslog.feature.maintenance.generated.resources.Res as AircraftRes
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @Composable
 fun LogOnboardingCard(
@@ -59,14 +59,14 @@ fun LogOnboardingCard(
           modifier = Modifier.size(32.dp)
         )
         Text(
-          text = stringResource(AircraftRes.string.no_maintenance_logs_title),
+          text = stringResource(MaintenanceRes.string.no_maintenance_logs_title),
           style = MaterialTheme.typography.titleLarge,
           fontWeight = FontWeight.Bold
         )
       }
 
       Text(
-        text = stringResource(AircraftRes.string.log_onboarding_description),
+        text = stringResource(MaintenanceRes.string.log_onboarding_description),
         style = MaterialTheme.typography.bodyLarge
       )
 
@@ -82,7 +82,7 @@ fun LogOnboardingCard(
         Icon(Icons.Default.Add, contentDescription = null)
         Spacer(Modifier.width(Spacing.small))
         Text(
-          text = stringResource(AircraftRes.string.add_first_maintenance_log).uppercase(),
+          text = stringResource(MaintenanceRes.string.add_first_maintenance_log).uppercase(),
           fontWeight = FontWeight.Bold
         )
       }

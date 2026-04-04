@@ -62,6 +62,7 @@ import dev.fanfly.wingslog.feature.inspection.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.maintenance.maintenance.form.data.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.maintenance.maintenance.form.data.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.maintenance.maintenance.util.displayName
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -99,11 +100,10 @@ import wingslog.feature.maintenance.generated.resources.propeller_hub
 import wingslog.feature.maintenance.generated.resources.tap_to_change_date
 import wingslog.feature.maintenance.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.maintenance.generated.resources.work_description_required
-import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.inspection.generated.resources.Res as InspectionRes
-import wingslog.feature.maintenance.generated.resources.Res as AircraftRes
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,9 +115,9 @@ fun MaintenanceLogFormScreen(
   var showDeleteDialog by remember { mutableStateOf(false) }
   var showDatePicker by remember { mutableStateOf(false) }
 
-  val logUpdatedMessage = cmpStringResource(AircraftRes.string.log_updated)
-  val logSavedMessage = cmpStringResource(AircraftRes.string.log_saved)
-  val logDeletedMessage = cmpStringResource(AircraftRes.string.log_deleted)
+  val logUpdatedMessage = cmpStringResource(MaintenanceRes.string.log_updated)
+  val logSavedMessage = cmpStringResource(MaintenanceRes.string.log_saved)
+  val logDeletedMessage = cmpStringResource(MaintenanceRes.string.log_deleted)
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
@@ -142,8 +142,8 @@ fun MaintenanceLogFormScreen(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(cmpStringResource(AircraftRes.string.delete_log)) },
-      text = { Text(cmpStringResource(AircraftRes.string.this_action_cannot_be_undone)) },
+      title = { Text(cmpStringResource(MaintenanceRes.string.delete_log)) },
+      text = { Text(cmpStringResource(MaintenanceRes.string.this_action_cannot_be_undone)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -171,8 +171,8 @@ fun MaintenanceLogFormScreen(
       TopAppBar(
         title = {
           Text(
-            if (viewModel.isEditMode) cmpStringResource(AircraftRes.string.edit_log) else cmpStringResource(
-              AircraftRes.string.add_log
+            if (viewModel.isEditMode) cmpStringResource(MaintenanceRes.string.edit_log) else cmpStringResource(
+              MaintenanceRes.string.add_log
             )
           )
         },
@@ -203,16 +203,16 @@ fun MaintenanceLogFormScreen(
         ) {
           // Maintenance Date
           val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat()
-            ?: cmpStringResource(AircraftRes.string.tap_to_change_date)
+            ?: cmpStringResource(MaintenanceRes.string.tap_to_change_date)
           OutlinedTextField(
             value = dateDisplayText,
             onValueChange = {},
             readOnly = true,
-            label = { Text(cmpStringResource(AircraftRes.string.maintenance_date)) },
+            label = { Text(cmpStringResource(MaintenanceRes.string.maintenance_date)) },
             leadingIcon = {
               Icon(
                 Icons.Default.CalendarToday,
-                contentDescription = cmpStringResource(AircraftRes.string.maintenance_date)
+                contentDescription = cmpStringResource(MaintenanceRes.string.maintenance_date)
               )
             },
             modifier = Modifier
@@ -269,7 +269,7 @@ fun MaintenanceLogFormScreen(
           OutlinedTextField(
             value = uiState.workDescription,
             onValueChange = viewModel::onWorkDescriptionChange,
-            label = { Text(cmpStringResource(AircraftRes.string.work_description_required)) },
+            label = { Text(cmpStringResource(MaintenanceRes.string.work_description_required)) },
             modifier = Modifier.fillMaxWidth(),
             minLines = 3,
             maxLines = 6,
@@ -299,7 +299,7 @@ fun MaintenanceLogFormScreen(
           OutlinedTextField(
             value = uiState.engineTime,
             onValueChange = viewModel::onEngineTimeChange,
-            label = { Text(cmpStringResource(AircraftRes.string.engine_time_hours)) },
+            label = { Text(cmpStringResource(MaintenanceRes.string.engine_time_hours)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -309,7 +309,7 @@ fun MaintenanceLogFormScreen(
           OutlinedTextField(
             value = uiState.airframeTime,
             onValueChange = viewModel::onAirframeTimeChange,
-            label = { Text(cmpStringResource(AircraftRes.string.airframe_time_hours)) },
+            label = { Text(cmpStringResource(MaintenanceRes.string.airframe_time_hours)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -319,7 +319,7 @@ fun MaintenanceLogFormScreen(
           OutlinedTextField(
             value = uiState.propTime,
             onValueChange = viewModel::onPropTimeChange,
-            label = { Text(cmpStringResource(AircraftRes.string.prop_time_hours)) },
+            label = { Text(cmpStringResource(MaintenanceRes.string.prop_time_hours)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -336,9 +336,9 @@ fun MaintenanceLogFormScreen(
           )
 
           // Error message
-          if (uiState.error != null) {
+          uiState.error?.let { error ->
             Text(
-              text = uiState.error!!.asString(),
+              text = error.asString(),
               color = MaterialTheme.colorScheme.error,
               style = MaterialTheme.typography.bodySmall
             )
@@ -389,7 +389,7 @@ private fun ComponentSection(
           value = serial,
           onValueChange = {},
           readOnly = true,
-          label = { Text(cmpStringResource(AircraftRes.string.airframe_serial)) },
+          label = { Text(cmpStringResource(MaintenanceRes.string.airframe_serial)) },
           modifier = Modifier.fillMaxWidth(),
           singleLine = true
         )
@@ -398,7 +398,7 @@ private fun ComponentSection(
       MaintenanceLog.ComponentType.ENGINE -> {
         if (aircraft == null) {
           Text(
-            text = cmpStringResource(AircraftRes.string.loading_aircraft),
+            text = cmpStringResource(MaintenanceRes.string.loading_aircraft),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
@@ -406,7 +406,7 @@ private fun ComponentSection(
           val engines = aircraft.engine
           if (engines.isEmpty()) {
             Text(
-              text = cmpStringResource(AircraftRes.string.no_engines_found),
+              text = cmpStringResource(MaintenanceRes.string.no_engines_found),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -436,7 +436,7 @@ private fun ComponentSection(
       MaintenanceLog.ComponentType.PROPELLER -> {
         if (aircraft == null) {
           Text(
-            text = cmpStringResource(AircraftRes.string.loading_aircraft),
+            text = cmpStringResource(MaintenanceRes.string.loading_aircraft),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
@@ -448,7 +448,7 @@ private fun ComponentSection(
             val hub = prop?.hub
             if (hub?.serial?.isNotEmpty() == true) {
               val label = buildString {
-                append(cmpStringResource(AircraftRes.string.propeller_hub))
+                append(cmpStringResource(MaintenanceRes.string.propeller_hub))
                 if (hub.make.isNotEmpty()) append(" - ${hub.make}")
                 if (hub.model.isNotEmpty()) append(" ${hub.model}")
                 append(" (${hub.serial})")
@@ -458,7 +458,7 @@ private fun ComponentSection(
             prop?.blades?.forEach { blade ->
               if (blade.serial.isNotEmpty()) {
                 val label = buildString {
-                  append(cmpStringResource(AircraftRes.string.blade))
+                  append(cmpStringResource(MaintenanceRes.string.blade))
                   if (blade.make.isNotEmpty()) append(" - ${blade.make}")
                   if (blade.model.isNotEmpty()) append(" ${blade.model}")
                   append(" (${blade.serial})")
@@ -470,13 +470,13 @@ private fun ComponentSection(
 
           if (options.isEmpty()) {
             Text(
-              text = cmpStringResource(AircraftRes.string.no_propeller_components_found),
+              text = cmpStringResource(MaintenanceRes.string.no_propeller_components_found),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
           } else {
             SubComponentDropdown(
-              label = cmpStringResource(AircraftRes.string.propeller_component),
+              label = cmpStringResource(MaintenanceRes.string.propeller_component),
               options = options,
               selectedSerial = selectedSubComponent,
               onSelected = onSubComponentChange,

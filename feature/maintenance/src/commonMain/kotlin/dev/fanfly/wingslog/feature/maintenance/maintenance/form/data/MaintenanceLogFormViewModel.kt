@@ -29,7 +29,7 @@ import wingslog.feature.maintenance.generated.resources.work_description_require
 import kotlin.time.Clock
 import kotlin.time.Instant
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.generated.resources.Res as AircraftRes
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 // removed uuid
 
@@ -103,7 +103,7 @@ class MaintenanceLogFormViewModel(
         _uiState.update {
           it.copy(
             isLoading = false,
-            error = UiText.StringRes(AircraftRes.string.log_not_found)
+            error = UiText.StringRes(MaintenanceRes.string.log_not_found)
           )
         }
       }
@@ -158,7 +158,7 @@ class MaintenanceLogFormViewModel(
   fun save() {
     val state = _uiState.value
     if (state.workDescription.isBlank()) {
-      _uiState.update { it.copy(error = UiText.StringRes(AircraftRes.string.work_description_required)) }
+      _uiState.update { it.copy(error = UiText.StringRes(MaintenanceRes.string.work_description_required)) }
       return
     }
     viewModelScope.launch {

@@ -26,13 +26,15 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.maintenance.maintenance.util.displayName
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import wingslog.feature.inspection.generated.resources.affects_n_inspection_items
-import wingslog.feature.inspection.generated.resources.engine_format
-import wingslog.feature.inspection.generated.resources.unknown_date
+import wingslog.feature.inspection.sharedassets.generated.resources.engine_format
+import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
 import wingslog.feature.maintenance.generated.resources.airframe_time_format
 import wingslog.feature.maintenance.generated.resources.prop_time_format
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.inspection.generated.resources.Res as InspectionRes
-import wingslog.feature.maintenance.generated.resources.Res as AircraftRes
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
+
 
 @Composable
 fun MaintenanceLogCard(
@@ -41,7 +43,7 @@ fun MaintenanceLogCard(
   modifier: Modifier = Modifier
 ) {
   val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
-    ?: cmpStringResource(InspectionRes.string.unknown_date)
+    ?: cmpStringResource(SharedRes.string.unknown_date)
 
   Card(
 
@@ -92,7 +94,7 @@ fun MaintenanceLogCard(
           if (log.engine_hour > 0.0) {
             Text(
               text = cmpStringResource(
-                InspectionRes.string.engine_format,
+                SharedRes.string.engine_format,
                 log.engine_hour.formatToOneDecimalPlace()
               ),
               style = WingslogTypography.dataSmall,
@@ -102,7 +104,7 @@ fun MaintenanceLogCard(
           if (log.airframe_time > 0.0) {
             Text(
               text = cmpStringResource(
-                AircraftRes.string.airframe_time_format,
+                MaintenanceRes.string.airframe_time_format,
                 log.airframe_time.formatToOneDecimalPlace()
               ),
               style = WingslogTypography.dataSmall,
@@ -112,7 +114,7 @@ fun MaintenanceLogCard(
           if (log.prop_time > 0.0) {
             Text(
               text = cmpStringResource(
-                AircraftRes.string.prop_time_format,
+                MaintenanceRes.string.prop_time_format,
                 log.prop_time.formatToOneDecimalPlace()
               ),
               style = WingslogTypography.dataSmall,

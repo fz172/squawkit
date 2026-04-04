@@ -25,12 +25,13 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.select_date
 import wingslog.feature.inspection.generated.resources.force_due_engine_hours
 import wingslog.feature.inspection.generated.resources.force_overrides_safety
 import wingslog.feature.inspection.generated.resources.override_next_due_date
 import wingslog.feature.inspection.generated.resources.override_next_due_engine
-import wingslog.feature.inspection.generated.resources.select_date
 import kotlin.time.Instant
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.inspection.generated.resources.Res as InspectionRes
 
 @Composable
@@ -101,7 +102,7 @@ fun ForcedOverrideFields(
           val dateText = forcedDateMillis?.let {
             Instant.fromEpochMilliseconds(it)
               .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-          } ?: stringResource(InspectionRes.string.select_date)
+          } ?: stringResource(CoreRes.string.select_date)
           Text(dateText)
         }
       }

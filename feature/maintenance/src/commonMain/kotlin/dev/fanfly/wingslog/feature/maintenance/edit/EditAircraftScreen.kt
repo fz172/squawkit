@@ -84,7 +84,7 @@ import wingslog.feature.maintenance.generated.resources.this_action_cannot_be_un
 import wingslog.feature.maintenance.generated.resources.update_aircraft
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.generated.resources.Res as AircraftRes
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,8 +112,8 @@ fun EditAircraftScreen(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(cmpStringResource(AircraftRes.string.delete_aircraft)) },
-      text = { Text(cmpStringResource(AircraftRes.string.this_action_cannot_be_undone)) },
+      title = { Text(cmpStringResource(MaintenanceRes.string.delete_aircraft)) },
+      text = { Text(cmpStringResource(MaintenanceRes.string.this_action_cannot_be_undone)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -136,8 +136,8 @@ fun EditAircraftScreen(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
       WingsLogTopAppBar(
-        title = if (uiState.aircraft.id == "") cmpStringResource(AircraftRes.string.add_aircraft)
-        else cmpStringResource(AircraftRes.string.update_aircraft),
+        title = if (uiState.aircraft.id == "") cmpStringResource(MaintenanceRes.string.add_aircraft)
+        else cmpStringResource(MaintenanceRes.string.update_aircraft),
         onBackClick = { navController.popBackStack() },
         scrollBehavior = scrollBehavior,
       )
@@ -173,7 +173,8 @@ fun EditAircraftScreen(
 
         DashedButton(
           label = cmpStringResource(
-            AircraftRes.string.add_engine
+            MaintenanceRes.string
+              .add_engine
           ), modifier = Modifier.fillMaxWidth(), onClick = { viewModel.onAddEngine() })
 
         Spacer(Modifier.height(88.dp))
@@ -186,8 +187,8 @@ fun EditAircraftScreen(
         onDangerClick = if (uiState.aircraft.id != "") {
           { showDeleteDialog = true }
         } else null,
-        primaryLabel = if (uiState.aircraft.id == "") cmpStringResource(AircraftRes.string.add_aircraft) else cmpStringResource(
-          AircraftRes.string.update_aircraft
+        primaryLabel = if (uiState.aircraft.id == "") cmpStringResource(MaintenanceRes.string.add_aircraft) else cmpStringResource(
+          MaintenanceRes.string.update_aircraft
         )
       )
     }
@@ -208,7 +209,7 @@ fun AirframeSection(
       InputField(
         value = aircraft.make, // Read from ViewModel
         onValueChange = { viewModel.onMakeChanged(it) }, // Update ViewModel
-        label = cmpStringResource(AircraftRes.string.make),
+        label = cmpStringResource(MaintenanceRes.string.make),
         enabled = aircraft.id == "",
         isError = showValidationErrors && aircraft.make.isBlank()
       )
@@ -216,7 +217,7 @@ fun AirframeSection(
       InputField(
         value = aircraft.model, // Read from ViewModel
         onValueChange = { viewModel.onModelChanged(it) }, // Update ViewModel
-        label = cmpStringResource(AircraftRes.string.model),
+        label = cmpStringResource(MaintenanceRes.string.model),
         enabled = aircraft.id == "",
         isError = showValidationErrors && aircraft.model.isBlank()
       )
@@ -228,7 +229,7 @@ fun AirframeSection(
         InputField(
           value = aircraft.serial, // Read from ViewModel
           onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel
-          label = cmpStringResource(AircraftRes.string.serial),
+          label = cmpStringResource(MaintenanceRes.string.serial),
           modifier = Modifier.weight(1f), // Takes up 50%
           enabled = aircraft.id == "",
           isError = showValidationErrors && aircraft.serial.isBlank(),
@@ -238,7 +239,7 @@ fun AirframeSection(
         InputField(
           value = aircraft.tail_number, // Read from ViewModel
           onValueChange = { viewModel.onTailNumberChanged(it) }, // Update ViewModel
-          label = cmpStringResource(AircraftRes.string.tail_number),
+          label = cmpStringResource(MaintenanceRes.string.tail_number),
           modifier = Modifier.weight(1f), // Takes up 50%
           enabled = aircraft.id == "",
           keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
@@ -263,7 +264,7 @@ fun EngineSection(
     Column(modifier = Modifier.padding(12.dp)) {
       Box(modifier = Modifier.fillMaxWidth()) {
         Text(
-          cmpStringResource(AircraftRes.string.engine_with_index, engineIndex + 1),
+          cmpStringResource(MaintenanceRes.string.engine_with_index, engineIndex + 1),
           color = MaterialTheme.colorScheme.onPrimaryContainer,
           modifier = Modifier.align(Alignment.CenterStart)
         )
@@ -275,14 +276,14 @@ fun EngineSection(
         ) {
           Icon(
             Icons.Default.Close,
-            contentDescription = cmpStringResource(AircraftRes.string.remove_engine),
+            contentDescription = cmpStringResource(MaintenanceRes.string.remove_engine),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
       }
 
       InputField(
-        label = cmpStringResource(AircraftRes.string.make),
+        label = cmpStringResource(MaintenanceRes.string.make),
         value = engine.make,
         isError = showValidationErrors && engine.make.isBlank()
       ) {
@@ -291,7 +292,7 @@ fun EngineSection(
 
       Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         InputField(
-          label = cmpStringResource(AircraftRes.string.model),
+          label = cmpStringResource(MaintenanceRes.string.model),
           value = engine.model,
           modifier = Modifier.weight(1f),
           isError = showValidationErrors && engine.model.isBlank()
@@ -299,7 +300,7 @@ fun EngineSection(
           viewModel.onEngineModelChanged(engineIndex, it)
         }
         InputField(
-          label = cmpStringResource(AircraftRes.string.serial),
+          label = cmpStringResource(MaintenanceRes.string.serial),
           value = engine.serial,
           modifier = Modifier.weight(1f),
           isError = showValidationErrors && engine.serial.isBlank(),
@@ -311,12 +312,12 @@ fun EngineSection(
 
       // Propeller Section
       Text(
-        cmpStringResource(AircraftRes.string.propeller_hub),
+        cmpStringResource(MaintenanceRes.string.propeller_hub),
         style = MaterialTheme.typography.labelSmall
       )
       val hub = engine.propeller?.hub ?: dev.fanfly.wingslog.aircraft.PropellerHub()
       InputField(
-        label = cmpStringResource(AircraftRes.string.make), value = hub.make,
+        label = cmpStringResource(MaintenanceRes.string.make), value = hub.make,
 
         isError = showValidationErrors && hub.make.isBlank()
       ) {
@@ -324,7 +325,7 @@ fun EngineSection(
       }
       Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         InputField(
-          label = cmpStringResource(AircraftRes.string.model),
+          label = cmpStringResource(MaintenanceRes.string.model),
           value = hub.model,
           modifier = Modifier.weight(1f),
           isError = showValidationErrors && hub.model.isBlank()
@@ -332,7 +333,7 @@ fun EngineSection(
           viewModel.onPropellerHubModelChanged(engineIndex, it)
         }
         InputField(
-          label = cmpStringResource(AircraftRes.string.serial, ""),
+          label = cmpStringResource(MaintenanceRes.string.serial, ""),
           value = hub.serial,
           modifier = Modifier.weight(1f),
           isError = showValidationErrors && hub.serial.isBlank()
@@ -343,7 +344,7 @@ fun EngineSection(
 
 
       // Blade Serial Numbers - Dynamic List
-      Text(cmpStringResource(AircraftRes.string.blade_serial_numbers))
+      Text(cmpStringResource(MaintenanceRes.string.blade_serial_numbers))
       val blades = engine.propeller?.blades ?: emptyList()
       // Chunked(2) allows us to create rows of 2 for that 50/50 look
       blades.withIndex().chunked(2).forEach { pair ->
@@ -351,7 +352,8 @@ fun EngineSection(
           pair.forEach { (bladeIndex, blade) ->
             InputField(
               label = cmpStringResource(
-                AircraftRes.string.blade_with_index,
+                MaintenanceRes.string
+                  .blade_with_index,
                 bladeIndex + 1
               ),
               value = blade.serial,
@@ -365,7 +367,7 @@ fun EngineSection(
                 }) {
                   Icon(
                     Icons.Default.Close,
-                    contentDescription = cmpStringResource(AircraftRes.string.remove_blade)
+                    contentDescription = cmpStringResource(MaintenanceRes.string.remove_blade)
                   )
                 }
               },
@@ -380,7 +382,7 @@ fun EngineSection(
       }
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         DashedButton(
-          label = cmpStringResource(AircraftRes.string.add_blade),
+          label = cmpStringResource(MaintenanceRes.string.add_blade),
           modifier = Modifier
             .weight(1f)
             .padding(vertical = 8.dp),

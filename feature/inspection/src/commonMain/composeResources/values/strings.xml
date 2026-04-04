@@ -16,7 +16,6 @@
     <string name="force_due_engine_hours">Force Due Engine (hours)</string>
 
     <string name="select_inspection_work">Select Inspection Work</string>
-    <string name="select_date">Select date</string>
 
     <string name="compliance_type">Compliance Type</string>
     <string name="compliance_type_ad_short">AD</string>
@@ -60,17 +59,12 @@
     <string name="no_inspection_work_recorded">No inspection work recorded for this log.</string>
     <string name="unknown_inspection">Unknown inspection (%1$s)</string>
     <string name="rules">Rules</string>
-    <string name="next_due">Next Due</string>
     <string name="maintenance_history">Maintenance History</string>
     <string name="no_maintenance_logs_for_inspection">No logs yet. Add a maintenance entry and tag this inspection to see history here.</string>
     <string name="every_x_months">Every %1$d months</string>
     <string name="every_x_engine_hours">Every %1$d engine hours</string>
     <string name="on_condition_desc">On condition: %1$s</string>
     <string name="unknown_rule">Unknown rule</string>
-    <string name="overdue">Overdue</string>
-    <string name="overdue_was">Overdue (was %1$s)</string>
-    <string name="due_date">Due %1$s</string>
-    <string name="due_engine">Due @ %1$s engine hrs</string>
     <string name="engine_val">%1$s engine</string>
     <string name="inspection_notes">Notes</string>
     <string name="inspection_notes_hint">Add any notes or comments…</string>
@@ -80,23 +74,12 @@
     <string name="identity">Identity</string>
     <string name="overrides">Overrides</string>
     <string name="compliance_details">Compliance Details</string>
-    <string name="complied">Complied</string>
-    <string name="due_soon_date_engine">Due Soon: %1$s / %2$s hrs</string>
-    <string name="due_soon_date">Due Soon: %1$s</string>
-    <string name="due_soon_engine">Due Soon: @ %1$s hrs</string>
-    <string name="due_soon">Due Soon</string>
     <string name="inspection_updated">Inspection updated</string>
     <string name="inspection_deleted">Inspection deleted</string>
     <string name="inspection_added">Inspection added</string>
     <string name="critical_airworthiness">CRITICAL: AIRWORTHINESS</string>
-    <string name="due_with_count">DUE (%1$d)</string>
-    <string name="history_with_count">HISTORY (%1$d)</string>
     <string name="inspection_status">Inspection Status</string>
     <string name="prop_inspection">Prop Inspection</string>
 
     <string name="no_inspection_cards_configured">No inspections configured. Add them from the aircraft overview to track recurring maintenance.</string>
-
-    <string name="unknown_date">Unknown date</string>
-    <string name="engine_format">Engine: %1$s</string>
-    <string name="on_condition">On Condition</string>
 </resources>

@@ -17,7 +17,7 @@ import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import wingslog.feature.maintenance.generated.resources.blade_abbreviation_with_index
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.feature.maintenance.generated.resources.Res as AircraftRes
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -38,7 +38,7 @@ fun BladeChipsOverview(blades: List<PropellerBlade>) {
         ) {
           Text(
             text = cmpStringResource(
-              AircraftRes.string.blade_abbreviation_with_index, index + 1, blade.serial
+              MaintenanceRes.string.blade_abbreviation_with_index, index + 1, blade.serial
             ),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant

@@ -62,7 +62,7 @@ import wingslog.feature.maintenance.generated.resources.search_logs
 import wingslog.feature.maintenance.generated.resources.showing_x_of_y
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.generated.resources.Res as AircraftRes
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,14 +89,17 @@ fun MaintenanceLogListScreen(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
       WingsLogTopAppBar(
-        title = cmpStringResource(AircraftRes.string.maintenance_logs),
+        title = cmpStringResource(MaintenanceRes.string.maintenance_logs),
         onBackClick = { navController.popBackStack() },
         scrollBehavior = scrollBehavior
       )
     },
     floatingActionButton = {
       FloatingActionButton(onClick = { viewModel.onAddLog() }) {
-        Icon(Icons.Default.Add, contentDescription = cmpStringResource(AircraftRes.string.add_log))
+        Icon(
+          Icons.Default.Add,
+          contentDescription = cmpStringResource(MaintenanceRes.string.add_log)
+        )
       }
     }
   ) { innerPadding ->
@@ -114,7 +117,7 @@ fun MaintenanceLogListScreen(
           verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
           Text(
-            cmpStringResource(AircraftRes.string.failed_to_load_logs),
+            cmpStringResource(MaintenanceRes.string.failed_to_load_logs),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
@@ -126,10 +129,10 @@ fun MaintenanceLogListScreen(
         is MaintenanceLogListUiState.Success -> {
           if (state.totalCount == 0) {
             EmptyState(
-              title = cmpStringResource(AircraftRes.string.no_maintenance_logs_title),
-              description = cmpStringResource(AircraftRes.string.no_maintenance_logs_description),
+              title = cmpStringResource(MaintenanceRes.string.no_maintenance_logs_title),
+              description = cmpStringResource(MaintenanceRes.string.no_maintenance_logs_description),
               icon = Icons.Default.History,
-              actionText = cmpStringResource(AircraftRes.string.add_first_maintenance_log),
+              actionText = cmpStringResource(MaintenanceRes.string.add_first_maintenance_log),
               onActionClick = { viewModel.onAddLog() }
             )
           } else {
@@ -141,7 +144,7 @@ fun MaintenanceLogListScreen(
                 modifier = Modifier
                   .fillMaxWidth()
                   .padding(horizontal = Spacing.screenPadding, vertical = Spacing.small),
-                placeholder = { Text(cmpStringResource(AircraftRes.string.search_logs)) },
+                placeholder = { Text(cmpStringResource(MaintenanceRes.string.search_logs)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
                   if (state.filter.query.isNotBlank()) {
@@ -181,7 +184,8 @@ fun MaintenanceLogListScreen(
               if (state.filter.isActive) {
                 Text(
                   text = cmpStringResource(
-                    AircraftRes.string.showing_x_of_y,
+                    MaintenanceRes.string
+                      .showing_x_of_y,
                     state.logs.size,
                     state.totalCount
                   ),
@@ -207,12 +211,12 @@ fun MaintenanceLogListScreen(
                     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
                   ) {
                     Text(
-                      text = cmpStringResource(AircraftRes.string.no_logs_match_filter),
+                      text = cmpStringResource(MaintenanceRes.string.no_logs_match_filter),
                       style = MaterialTheme.typography.bodyLarge,
                       color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Button(onClick = { viewModel.clearFilter() }) {
-                      Text(cmpStringResource(AircraftRes.string.clear_filter))
+                      Text(cmpStringResource(MaintenanceRes.string.clear_filter))
                     }
                   }
                 }

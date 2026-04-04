@@ -27,6 +27,7 @@
     <string name="delete_failed">Delete failed</string>
     <string name="error_occurred">An error occurred</string>
     <string name="every">Every </string>
+    <string name="select_date">Select date</string>
     <!-- Component names -->
     <string name="component_type">Component Type</string>
     <string name="component_airframe">Airframe</string>

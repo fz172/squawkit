@@ -13,7 +13,7 @@ import wingslog.feature.maintenance.generated.resources.engine_with_index
 import wingslog.feature.maintenance.generated.resources.model_and_sn
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.generated.resources.Res as AircraftRes
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @Composable
 fun EngineDetails(index: Int, engine: Engine) {
@@ -21,14 +21,14 @@ fun EngineDetails(index: Int, engine: Engine) {
     // Engine Header
     Column {
       Text(
-        text = cmpStringResource(AircraftRes.string.engine_with_index, index + 1),
+        text = cmpStringResource(MaintenanceRes.string.engine_with_index, index + 1),
         style = MaterialTheme.typography.bodyLarge,
         fontWeight = FontWeight.Companion.Bold,
         color = MaterialTheme.colorScheme.onSurface
       )
       Text(
         text = cmpStringResource(
-          AircraftRes.string.model_and_sn,
+          MaintenanceRes.string.model_and_sn,
           engine.make,
           engine.model,
           engine.serial
@@ -48,7 +48,7 @@ fun EngineDetails(index: Int, engine: Engine) {
       )
       Text(
         text = cmpStringResource(
-          AircraftRes.string.model_and_sn,
+          MaintenanceRes.string.model_and_sn,
           engine.propeller?.hub?.make ?: "",
           engine.propeller?.hub?.model ?: "",
           engine.propeller?.hub?.serial ?: ""

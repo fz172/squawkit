@@ -38,7 +38,7 @@ import wingslog.feature.maintenance.generated.resources.collapse_details
 import wingslog.feature.maintenance.generated.resources.edit_aircraft
 import wingslog.feature.maintenance.generated.resources.expand_details
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.feature.maintenance.generated.resources.Res as AircraftRes
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @Composable
 fun ConfigurationCard(
@@ -65,7 +65,7 @@ fun ConfigurationCard(
       ) {
         Column(modifier = Modifier.weight(1f)) {
           Text(
-            text = cmpStringResource(AircraftRes.string.airframe_s_n, aircraft.serial),
+            text = cmpStringResource(MaintenanceRes.string.airframe_s_n, aircraft.serial),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -79,8 +79,8 @@ fun ConfigurationCard(
           IconButton(onClick = { expanded = !expanded }) {
             Icon(
               imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-              contentDescription = if (expanded) cmpStringResource(AircraftRes.string.collapse_details) else cmpStringResource(
-                AircraftRes.string.expand_details
+              contentDescription = if (expanded) cmpStringResource(MaintenanceRes.string.collapse_details) else cmpStringResource(
+                MaintenanceRes.string.expand_details
               ),
               tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -96,7 +96,7 @@ fun ConfigurationCard(
             )
             Spacer(Modifier.width(Spacing.small))
             Text(
-              text = cmpStringResource(AircraftRes.string.edit_aircraft),
+              text = cmpStringResource(MaintenanceRes.string.edit_aircraft),
               style = MaterialTheme.typography.labelMedium
             )
           }

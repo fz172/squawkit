@@ -46,24 +46,25 @@ import wingslog.feature.inspection.generated.resources.compliance_authority
 import wingslog.feature.inspection.generated.resources.compliance_details
 import wingslog.feature.inspection.generated.resources.compliance_type_ad_short
 import wingslog.feature.inspection.generated.resources.compliance_type_sb_short
-import wingslog.feature.inspection.generated.resources.complied
-import wingslog.feature.inspection.generated.resources.due_date
-import wingslog.feature.inspection.generated.resources.due_engine
-import wingslog.feature.inspection.generated.resources.due_soon
-import wingslog.feature.inspection.generated.resources.due_soon_date
-import wingslog.feature.inspection.generated.resources.due_soon_date_engine
-import wingslog.feature.inspection.generated.resources.due_soon_engine
 import wingslog.feature.inspection.generated.resources.edit_inspection
-import wingslog.feature.inspection.generated.resources.engine_format
 import wingslog.feature.inspection.generated.resources.maintenance_history
 import wingslog.feature.inspection.generated.resources.no_maintenance_logs_for_inspection
-import wingslog.feature.inspection.generated.resources.on_condition
-import wingslog.feature.inspection.generated.resources.overdue
-import wingslog.feature.inspection.generated.resources.overdue_was
-import wingslog.feature.inspection.generated.resources.unknown_date
+import wingslog.feature.inspection.sharedassets.generated.resources.complied
+import wingslog.feature.inspection.sharedassets.generated.resources.due_date
+import wingslog.feature.inspection.sharedassets.generated.resources.due_engine
+import wingslog.feature.inspection.sharedassets.generated.resources.due_soon
+import wingslog.feature.inspection.sharedassets.generated.resources.due_soon_date
+import wingslog.feature.inspection.sharedassets.generated.resources.due_soon_date_engine
+import wingslog.feature.inspection.sharedassets.generated.resources.due_soon_engine
+import wingslog.feature.inspection.sharedassets.generated.resources.engine_format
+import wingslog.feature.inspection.sharedassets.generated.resources.on_condition
+import wingslog.feature.inspection.sharedassets.generated.resources.overdue
+import wingslog.feature.inspection.sharedassets.generated.resources.overdue_was
+import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.inspection.generated.resources.Res as InspectionRes
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -221,13 +222,13 @@ fun InspectionDetailSheet(
 @Composable
 private fun DueStatusChip(dueStatus: DueMetadata) {
   val (label, color) = when {
-    dueStatus.status == DueStatus.COMPLIED -> cmpStringResource(InspectionRes.string.complied) to StatusOk
-    dueStatus.isOnCondition -> cmpStringResource(InspectionRes.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
+    dueStatus.status == DueStatus.COMPLIED -> cmpStringResource(SharedRes.string.complied) to StatusOk
+    dueStatus.isOnCondition -> cmpStringResource(SharedRes.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
     dueStatus.status == DueStatus.OVERDUE -> {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat() ?: ""
       (if (dateStr.isNotBlank()) cmpStringResource(
-        InspectionRes.string.overdue_was, dateStr
-      ) else cmpStringResource(InspectionRes.string.overdue)) to MaterialTheme.colorScheme.error
+        SharedRes.string.overdue_was, dateStr
+      ) else cmpStringResource(SharedRes.string.overdue)) to MaterialTheme.colorScheme.error
     }
 
     dueStatus.status == DueStatus.DUE_SOON -> {
@@ -235,23 +236,23 @@ private fun DueStatusChip(dueStatus: DueMetadata) {
       val engineStr = dueStatus.nextDueEngine?.toDouble()?.formatToOneDecimalPlace()
       when {
         dateStr != null && engineStr != null -> cmpStringResource(
-          InspectionRes.string.due_soon_date_engine,
+          SharedRes.string.due_soon_date_engine,
           dateStr,
           engineStr
         )
 
-        dateStr != null -> cmpStringResource(InspectionRes.string.due_soon_date, dateStr)
-        engineStr != null -> cmpStringResource(InspectionRes.string.due_soon_engine, engineStr)
-        else -> cmpStringResource(InspectionRes.string.due_soon)
+        dateStr != null -> cmpStringResource(SharedRes.string.due_soon_date, dateStr)
+        engineStr != null -> cmpStringResource(SharedRes.string.due_soon_engine, engineStr)
+        else -> cmpStringResource(SharedRes.string.due_soon)
       } to StatusWarning
     }
 
     dueStatus.nextDueDate != null -> cmpStringResource(
-      InspectionRes.string.due_date, dueStatus.nextDueDate!!.toDisplayFormat()
+      SharedRes.string.due_date, dueStatus.nextDueDate!!.toDisplayFormat()
     ) to StatusOk
 
     dueStatus.nextDueEngine != null -> cmpStringResource(
-      InspectionRes.string.due_engine,
+      SharedRes.string.due_engine,
       dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
     ) to StatusOk
 
@@ -269,7 +270,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
   val dateStr = if ((log.timestamp?.getEpochSecond() ?: 0L) > 0L) {
     log.timestamp!!.toLocalDate().toDisplayFormat()
   } else {
-    cmpStringResource(InspectionRes.string.unknown_date)
+    cmpStringResource(SharedRes.string.unknown_date)
   }
 
   Column(
@@ -284,7 +285,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
       )
       Text(
         text = cmpStringResource(
-          InspectionRes.string.engine_format, log.engine_hour.formatToOneDecimalPlace()
+          SharedRes.string.engine_format, log.engine_hour.formatToOneDecimalPlace()
         ),
 
         style = MaterialTheme.typography.bodySmall,
