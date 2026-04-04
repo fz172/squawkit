@@ -33,8 +33,9 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import wingslog.feature.fleet.generated.resources.Res as FleetRes
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.inspection.sharedassets.generated.resources.due_soon
+import wingslog.feature.inspection.sharedassets.generated.resources.overdue
 
 @Composable
 fun AircraftDashboardCard(
@@ -84,11 +85,13 @@ fun AircraftDashboardCard(
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer,
           )
+
           DueStatus.DUE_SOON -> HealthStatusBadge(
             label = stringResource(SharedInspectionRes.string.due_soon),
             containerColor = StatusWarningContainer,
             contentColor = StatusWarning,
           )
+
           else -> {}
         }
         Icon(

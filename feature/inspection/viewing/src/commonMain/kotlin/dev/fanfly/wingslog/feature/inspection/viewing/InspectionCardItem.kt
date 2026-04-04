@@ -13,16 +13,17 @@ import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.dash
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.inspection.sharedassets.generated.resources.overdue
+import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.inspection.viewing.generated.resources.complied
 import wingslog.feature.inspection.viewing.generated.resources.due_date
 import wingslog.feature.inspection.viewing.generated.resources.due_engine
 import wingslog.feature.inspection.viewing.generated.resources.on_condition
 import wingslog.feature.inspection.viewing.generated.resources.overdue_was
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 
 @Composable
 fun InspectionCardItem(

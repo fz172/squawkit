@@ -40,14 +40,20 @@ import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.dash
 import wingslog.core.ui.generated.resources.done
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_authority
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_ad_short
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_sb_short
+import wingslog.feature.inspection.sharedassets.generated.resources.due_soon
 import wingslog.feature.inspection.sharedassets.generated.resources.edit_inspection
 import wingslog.feature.inspection.sharedassets.generated.resources.engine_format
+import wingslog.feature.inspection.sharedassets.generated.resources.overdue
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
+import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.inspection.viewing.generated.resources.compliance_details
 import wingslog.feature.inspection.viewing.generated.resources.complied
 import wingslog.feature.inspection.viewing.generated.resources.due_date
@@ -59,10 +65,6 @@ import wingslog.feature.inspection.viewing.generated.resources.maintenance_histo
 import wingslog.feature.inspection.viewing.generated.resources.no_maintenance_logs_for_inspection
 import wingslog.feature.inspection.viewing.generated.resources.on_condition
 import wingslog.feature.inspection.viewing.generated.resources.overdue_was
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +73,7 @@ fun InspectionDetailSheet(
   logs: List<MaintenanceLog>,
   onDismiss: () -> Unit,
   onEditClick: () -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
