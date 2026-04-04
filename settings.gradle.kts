@@ -36,6 +36,7 @@ include(":feature:userprofile:database")
 include(":feature:userprofile:sharedassets")
 include(":feature:maintenance:database")
 include(":feature:inspection")
+include(":feature:inspection:data")
 include(":feature:fleet:database")
 include(":feature:fleet")
 
