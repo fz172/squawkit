@@ -1,21 +1,24 @@
 package dev.fanfly.wingslog.login
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +31,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
+import dev.fanfly.wingslog.core.ui.theme.AviationBlue30
+import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.login.data.LoginViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -45,6 +53,12 @@ import wingslog.composeapp.generated.resources.sign_in_anonymous_error
 import wingslog.composeapp.generated.resources.sign_in_error
 import wingslog.composeapp.generated.resources.sign_in_with_google
 
+// Deep navy derived from the AviationBlue10 palette token
+private val LoginBackground = AviationBlue10          // #001849
+private val LoginSurface = AviationBlue30             // #004785 — subtle card lift
+private val LoginOnBackground = Color(0xFFF0F4FF)     // near-white with a blue tint
+private val LoginOnBackgroundMuted = Color(0xFF8AAAD4) // muted sky — secondary text
+private val LoginAccent = AviationBlue80              // #A7C8FF — bright on dark
 
 @Composable
 fun LoginScreen(
@@ -67,45 +81,71 @@ fun LoginScreen(
     }
   }
 
-  // Manual sign-in button
   Box(
-    modifier = Modifier.fillMaxSize()
+    modifier = Modifier
+      .fillMaxSize()
+      .background(LoginBackground)
   ) {
+    // Subtle watermark — large app icon desaturated in the background
+    Icon(
+      painter = painterResource(Res.drawable.ic_launcher_foreground),
+      contentDescription = null,
+      modifier = Modifier
+        .size(380.dp)
+        .align(Alignment.TopEnd)
+        .padding(top = 32.dp),
+      tint = LoginSurface,
+    )
+
     Column(
       modifier = Modifier
         .fillMaxSize()
-        .padding(horizontal = 24.dp),
-      verticalArrangement = Arrangement.Center,
-      horizontalAlignment = Alignment.CenterHorizontally
+        .padding(horizontal = 32.dp),
+      verticalArrangement = Arrangement.Bottom,
     ) {
+      // --- App identity ---
       Icon(
         painter = painterResource(Res.drawable.ic_launcher_foreground),
         contentDescription = stringResource(Res.string.app_name),
-        modifier = Modifier.size(256.dp),
-        tint = Color.Unspecified
+        modifier = Modifier.size(72.dp),
+        tint = LoginAccent,
       )
 
+      Spacer(Modifier.height(20.dp))
+
       Text(
-        stringResource(Res.string.app_name),
-        style = MaterialTheme.typography.headlineMedium,
-        color = MaterialTheme.colorScheme.onSurface
+        text = stringResource(Res.string.app_name),
+        color = LoginOnBackground,
+        fontWeight = FontWeight.Bold,
+        fontSize = 40.sp,
+        letterSpacing = (-1).sp,
+        lineHeight = 44.sp,
       )
+
       Spacer(Modifier.height(8.dp))
-      // --- Subtitle Text ---
+
       Text(
         text = stringResource(Res.string.login_prompt),
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = LoginOnBackgroundMuted,
+        fontSize = 16.sp,
+        lineHeight = 22.sp,
       )
 
-      Spacer(modifier = Modifier.height(16.dp))
-      HorizontalDivider(
-        thickness = 1.dp
-      )
-      Spacer(modifier = Modifier.height(20.dp))
-      OutlinedButton(
-        modifier = Modifier.fillMaxWidth(),
+      Spacer(Modifier.height(48.dp))
+
+      // --- Primary CTA: Google sign-in ---
+      Button(
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(52.dp),
         enabled = !isSigningIn,
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(
+          containerColor = LoginOnBackground,
+          contentColor = LoginBackground,
+          disabledContainerColor = LoginOnBackground.copy(alpha = 0.4f),
+          disabledContentColor = LoginBackground.copy(alpha = 0.4f),
+        ),
         onClick = {
           scope.launch {
             isSigningIn = true
@@ -120,26 +160,47 @@ fun LoginScreen(
               isSigningIn = false
             }
           }
-        }) {
-        if (isSigningIn) {
-          CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-        } else {
-          Icon(
-            painter = painterResource(Res.drawable.ic_google_rd_na),
-            contentDescription = stringResource(Res.string.google_logo),
-            modifier = Modifier.size(24.dp),
-            tint = Color.Unspecified
-          )
         }
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(stringResource(Res.string.sign_in_with_google))
+      ) {
+        if (isSigningIn) {
+          CircularProgressIndicator(
+            modifier = Modifier.size(20.dp),
+            strokeWidth = 2.dp,
+            color = LoginBackground,
+          )
+        } else {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+          ) {
+            Icon(
+              painter = painterResource(Res.drawable.ic_google_rd_na),
+              contentDescription = stringResource(Res.string.google_logo),
+              modifier = Modifier.size(20.dp),
+              tint = Color.Unspecified,
+            )
+            Text(
+              text = stringResource(Res.string.sign_in_with_google),
+              fontWeight = FontWeight.SemiBold,
+              fontSize = 15.sp,
+            )
+          }
+        }
       }
 
-      // Anonymous / Guest sign-in button (all platforms)
-      Spacer(modifier = Modifier.height(8.dp))
+      Spacer(Modifier.height(12.dp))
+
+      // --- Secondary: anonymous / guest ---
       OutlinedButton(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(52.dp),
         enabled = !isSigningIn,
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.outlinedButtonColors(
+          contentColor = LoginOnBackgroundMuted,
+        ),
+        border = BorderStroke(1.dp, LoginOnBackgroundMuted.copy(alpha = 0.4f)),
         onClick = {
           scope.launch {
             isSigningIn = true
@@ -154,19 +215,33 @@ fun LoginScreen(
               isSigningIn = false
             }
           }
-        }) {
-        Icon(
-          imageVector = Icons.Filled.Person,
-          contentDescription = null,
-          modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(stringResource(Res.string.continue_without_account))
+        }
+      ) {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+          Icon(
+            imageVector = Icons.Filled.Person,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+          )
+          Text(
+            text = stringResource(Res.string.continue_without_account),
+            fontSize = 15.sp,
+          )
+        }
       }
 
+      Spacer(Modifier.height(48.dp))
+
       error?.let {
-        Spacer(Modifier.height(10.dp))
-        Text(it, color = MaterialTheme.colorScheme.error)
+        Text(
+          text = it,
+          color = Color(0xFFFF8A80), // light red readable on dark navy
+          fontSize = 13.sp,
+          modifier = Modifier.padding(bottom = 16.dp)
+        )
       }
     }
   }

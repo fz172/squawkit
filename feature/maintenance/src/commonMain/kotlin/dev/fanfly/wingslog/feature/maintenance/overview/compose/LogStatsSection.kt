@@ -4,11 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.overview.data.LogStats
@@ -30,36 +35,43 @@ fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
       fontWeight = FontWeight.Bold
     )
 
-    Row(
+    Card(
       modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+      shape = RoundedCornerShape(Spacing.cardCornerRadius),
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+      elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-      stats.currentAirframeTime?.let {
+      Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.extraLarge, vertical = Spacing.large),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+      ) {
+        stats.currentAirframeTime?.let {
+          StatCell(
+            label = cmpStringResource(MaintenanceRes.string.airframe_time_label),
+            value = it.formatToOneDecimalPlace(),
+            modifier = Modifier.weight(1f)
+          )
+        }
+        stats.currentEngineTime?.let {
+          StatCell(
+            label = cmpStringResource(MaintenanceRes.string.engine_time_label),
+            value = it.formatToOneDecimalPlace(),
+            modifier = Modifier.weight(1f)
+          )
+        }
+        stats.currentPropTime?.let {
+          StatCell(
+            label = cmpStringResource(MaintenanceRes.string.prop_time_label),
+            value = it.formatToOneDecimalPlace(),
+            modifier = Modifier.weight(1f)
+          )
+        }
         StatCell(
-          label = cmpStringResource(MaintenanceRes.string.airframe_time_label),
-          value = it.formatToOneDecimalPlace(),
+          label = cmpStringResource(MaintenanceRes.string.total_logs),
+          value = stats.total.toString(),
           modifier = Modifier.weight(1f)
         )
       }
-      stats.currentEngineTime?.let {
-        StatCell(
-          label = cmpStringResource(MaintenanceRes.string.engine_time_label),
-          value = it.formatToOneDecimalPlace(),
-          modifier = Modifier.weight(1f)
-        )
-      }
-      stats.currentPropTime?.let {
-        StatCell(
-          label = cmpStringResource(MaintenanceRes.string.prop_time_label),
-          value = it.formatToOneDecimalPlace(),
-          modifier = Modifier.weight(1f)
-        )
-      }
-      StatCell(
-        label = cmpStringResource(MaintenanceRes.string.total_logs),
-        value = stats.total.toString(),
-        modifier = Modifier.weight(1f)
-      )
     }
   }
 }

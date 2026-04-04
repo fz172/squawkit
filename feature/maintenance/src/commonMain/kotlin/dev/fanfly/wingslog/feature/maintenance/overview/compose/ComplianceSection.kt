@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -28,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
@@ -105,25 +102,17 @@ fun ComplianceSection(
     if (displayList.isEmpty()) {
       if (!showComplied) {
         Card(
-          modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.medium),
+          modifier = Modifier.fillMaxWidth(),
           colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
           shape = RoundedCornerShape(Spacing.cardCornerRadius)
         ) {
           Column(
-            modifier = Modifier.padding(Spacing.extraLarge),
+            modifier = Modifier.padding(Spacing.large),
             verticalArrangement = Arrangement.spacedBy(Spacing.medium),
-            horizontalAlignment = Alignment.CenterHorizontally
           ) {
-            Icon(
-              Icons.Default.CalendarToday,
-              contentDescription = null,
-              modifier = Modifier.size(48.dp),
-              tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-            )
             Text(
               text = cmpStringResource(InspectionRes.string.no_inspections_yet),
               style = MaterialTheme.typography.bodyMedium,
-              textAlign = TextAlign.Center,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             OutlinedButton(
