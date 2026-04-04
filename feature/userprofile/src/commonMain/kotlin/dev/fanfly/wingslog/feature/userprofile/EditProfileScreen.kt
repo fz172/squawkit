@@ -64,7 +64,6 @@ import wingslog.feature.userprofile.generated.resources.license_expiration_date
 import wingslog.feature.userprofile.generated.resources.license_number
 import wingslog.feature.userprofile.generated.resources.license_type
 import wingslog.feature.userprofile.generated.resources.never
-import wingslog.feature.userprofile.generated.resources.select_date
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.feature.userprofile.generated.resources.Res as UserProfileRes
@@ -165,7 +164,7 @@ fun EditProfileScreen(
             leadingIcon = {
               Icon(
                 imageVector = Icons.Default.CalendarToday,
-                contentDescription = cmpStringResource(UserProfileRes.string.select_date)
+                contentDescription = cmpStringResource(CoreUiRes.string.select_date)
               )
             },
             enabled = false,

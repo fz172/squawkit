@@ -34,8 +34,7 @@ import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import wingslog.feature.fleet.generated.resources.Res as FleetRes
-import wingslog.feature.fleet.generated.resources.due_soon
-import wingslog.feature.fleet.generated.resources.overdue
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 
 @Composable
 fun AircraftDashboardCard(
@@ -81,12 +80,12 @@ fun AircraftDashboardCard(
       ) {
         when (healthStatus) {
           DueStatus.OVERDUE -> HealthStatusBadge(
-            label = stringResource(FleetRes.string.overdue),
+            label = stringResource(SharedInspectionRes.string.overdue),
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer,
           )
           DueStatus.DUE_SOON -> HealthStatusBadge(
-            label = stringResource(FleetRes.string.due_soon),
+            label = stringResource(SharedInspectionRes.string.due_soon),
             containerColor = StatusWarningContainer,
             contentColor = StatusWarning,
           )

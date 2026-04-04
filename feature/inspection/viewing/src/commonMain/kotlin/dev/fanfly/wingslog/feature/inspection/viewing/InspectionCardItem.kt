@@ -18,10 +18,10 @@ import wingslog.feature.inspection.viewing.generated.resources.complied
 import wingslog.feature.inspection.viewing.generated.resources.due_date
 import wingslog.feature.inspection.viewing.generated.resources.due_engine
 import wingslog.feature.inspection.viewing.generated.resources.on_condition
-import wingslog.feature.inspection.viewing.generated.resources.overdue
 import wingslog.feature.inspection.viewing.generated.resources.overdue_was
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 
 @Composable
@@ -46,7 +46,7 @@ fun InspectionCardItem(
     status == DueStatus.OVERDUE -> {
       val dateStr = cardWithStatus.dueStatus.nextDueDate?.toDisplayFormat()
       if (dateStr != null) cmpStringResource(ViewingRes.string.overdue_was, dateStr)
-      else cmpStringResource(ViewingRes.string.overdue)
+      else cmpStringResource(SharedRes.string.overdue)
     }
 
     cardWithStatus.dueStatus.nextDueDate != null -> cmpStringResource(

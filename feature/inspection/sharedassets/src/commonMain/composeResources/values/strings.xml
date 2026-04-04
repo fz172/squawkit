@@ -8,6 +8,9 @@
 
     <string name="edit_inspection">Edit inspection</string>
 
+    <string name="overdue">Overdue</string>
+    <string name="due_soon">Due Soon</string>
+
     <string name="compliance_authority">Compliance authority</string>
     <string name="compliance_type_ad_short">AD</string>
     <string name="compliance_type_sb_short">SB</string>

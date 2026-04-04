@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="complied">Complied</string>
-    <string name="overdue">Overdue</string>
     <string name="overdue_was">Overdue (was %1$s)</string>
-    <string name="due_soon">Due Soon</string>
     <string name="due_soon_date">Due Soon: %1$s</string>
     <string name="due_date">Due %1$s</string>
     <string name="due_engine">Due @ %1$s engine hrs</string>

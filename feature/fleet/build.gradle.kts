@@ -46,9 +46,9 @@ kotlin {
       implementation(project(":core:ui"))
       implementation(project(":feature:inspection:model"))
       implementation(project(":feature:inspection:datamanager"))
+      implementation(project(":feature:inspection:sharedassets"))
       implementation(project(":feature:fleet:database"))
       implementation(project(":feature:maintenance:database"))
-      implementation(project(":feature:inspection:update"))
 
       // Firebase
 

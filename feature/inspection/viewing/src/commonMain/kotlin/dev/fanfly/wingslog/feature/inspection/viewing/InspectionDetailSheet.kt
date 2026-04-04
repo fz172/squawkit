@@ -52,14 +52,12 @@ import wingslog.feature.inspection.viewing.generated.resources.compliance_detail
 import wingslog.feature.inspection.viewing.generated.resources.complied
 import wingslog.feature.inspection.viewing.generated.resources.due_date
 import wingslog.feature.inspection.viewing.generated.resources.due_engine
-import wingslog.feature.inspection.viewing.generated.resources.due_soon
 import wingslog.feature.inspection.viewing.generated.resources.due_soon_date
 import wingslog.feature.inspection.viewing.generated.resources.due_soon_date_engine
 import wingslog.feature.inspection.viewing.generated.resources.due_soon_engine
 import wingslog.feature.inspection.viewing.generated.resources.maintenance_history
 import wingslog.feature.inspection.viewing.generated.resources.no_maintenance_logs_for_inspection
 import wingslog.feature.inspection.viewing.generated.resources.on_condition
-import wingslog.feature.inspection.viewing.generated.resources.overdue
 import wingslog.feature.inspection.viewing.generated.resources.overdue_was
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -228,7 +226,7 @@ private fun DueStatusChip(dueStatus: DueMetadata) {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat() ?: ""
       (if (dateStr.isNotBlank()) cmpStringResource(
         ViewingRes.string.overdue_was, dateStr
-      ) else cmpStringResource(ViewingRes.string.overdue)) to MaterialTheme.colorScheme.error
+      ) else cmpStringResource(SharedRes.string.overdue)) to MaterialTheme.colorScheme.error
     }
 
     dueStatus.status == DueStatus.DUE_SOON -> {
@@ -243,7 +241,7 @@ private fun DueStatusChip(dueStatus: DueMetadata) {
 
         dateStr != null -> cmpStringResource(ViewingRes.string.due_soon_date, dateStr)
         engineStr != null -> cmpStringResource(ViewingRes.string.due_soon_engine, engineStr)
-        else -> cmpStringResource(ViewingRes.string.due_soon)
+        else -> cmpStringResource(SharedRes.string.due_soon)
       } to StatusWarning
     }
 
