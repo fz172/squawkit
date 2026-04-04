@@ -77,9 +77,9 @@ import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.remove
 import wingslog.core.ui.generated.resources.save
 import wingslog.core.ui.generated.resources.update
-import wingslog.feature.inspection.update.generated.resources.inspection_work
-import wingslog.feature.inspection.update.generated.resources.no_inspection_work_recorded
-import wingslog.feature.inspection.update.generated.resources.unknown_inspection
+import wingslog.feature.inspection.sharedassets.generated.resources.inspection_work
+import wingslog.feature.inspection.sharedassets.generated.resources.no_inspection_work_recorded
+import wingslog.feature.inspection.sharedassets.generated.resources.unknown_inspection
 import wingslog.feature.maintenance.generated.resources.add_log
 import wingslog.feature.maintenance.generated.resources.airframe_serial
 import wingslog.feature.maintenance.generated.resources.airframe_time_hours
@@ -102,7 +102,7 @@ import wingslog.feature.maintenance.generated.resources.this_action_cannot_be_un
 import wingslog.feature.maintenance.generated.resources.work_description_required
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -592,7 +592,7 @@ private fun InspectionWorkSection(
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
       Text(
-        text = cmpStringResource(InspectionRes.string.inspection_work),
+        text = cmpStringResource(SharedInspectionRes.string.inspection_work),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
       )
@@ -613,7 +613,7 @@ private fun InspectionWorkSection(
 
     if (selectedIds.isEmpty()) {
       Text(
-        text = cmpStringResource(InspectionRes.string.no_inspection_work_recorded),
+        text = cmpStringResource(SharedInspectionRes.string.no_inspection_work_recorded),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -621,7 +621,7 @@ private fun InspectionWorkSection(
       selectedIds.forEach { cardId ->
         val card = availableCards.firstOrNull { it.id == cardId }
         val title =
-          card?.title ?: cmpStringResource(InspectionRes.string.unknown_inspection, cardId)
+          card?.title ?: cmpStringResource(SharedInspectionRes.string.unknown_inspection, cardId)
         Row(
           modifier = Modifier.fillMaxWidth(),
           verticalAlignment = Alignment.CenterVertically,

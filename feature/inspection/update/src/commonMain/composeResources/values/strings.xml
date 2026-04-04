@@ -3,7 +3,6 @@
     <string name="compliance_type_ad">Airworthiness Directives (AD)</string>
     <string name="compliance_type_sb">Service Bulletins (SB)</string>
     <string name="compliance_type_routine">Routine Inspections</string>
-    <string name="add_inspection">Add Inspection</string>
     <string name="inspection_title">Inspection Title</string>
     <string name="interval_months">Interval (months)</string>
     <string name="interval_hours">Interval (hours)</string>
@@ -33,15 +32,8 @@
     <string name="inspection_due_warning">Note: This inspection will be due on whichever comes first.</string>
     <string name="inspection_interval_description">Set a recurring interval based on time, engine hours, or both.</string>
 
-    <string name="no_inspections_yet">No inspection cards. Add annual, 100-hr, pitot-static, transponder, and other recurring checks to track due dates automatically.</string>
     <string name="delete_inspection">Delete Inspection</string>
-    <string name="affects_n_inspection_items">Affects %1$d inspection item(s)</string>
     <string name="delete_inspection_confirmation">Delete "%1$s"? This cannot be undone. Maintenance logs that reference this inspection will not be deleted.</string>
-    <string name="inspections">Inspections</string>
-    <string name="no_complied_yet">Log work against an inspection to see its history here.</string>
-    <string name="inspection_work">Inspection Work</string>
-    <string name="no_inspection_work_recorded">No inspection work recorded for this log.</string>
-    <string name="unknown_inspection">Unknown inspection (%1$s)</string>
     <string name="basics">Basics</string>
     <string name="schedule">Schedule</string>
     <string name="details">Details</string>

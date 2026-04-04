@@ -27,12 +27,11 @@ import dev.fanfly.wingslog.feature.maintenance.maintenance.util.displayName
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import wingslog.feature.inspection.sharedassets.generated.resources.engine_format
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
-import wingslog.feature.inspection.update.generated.resources.affects_n_inspection_items
+import wingslog.feature.inspection.sharedassets.generated.resources.affects_n_inspection_items
 import wingslog.feature.maintenance.generated.resources.airframe_time_format
 import wingslog.feature.maintenance.generated.resources.prop_time_format
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 
@@ -74,7 +73,7 @@ fun MaintenanceLogCard(
         if (log.inspection_ids.isNotEmpty()) {
           Text(
             text = cmpStringResource(
-              InspectionRes.string.affects_n_inspection_items,
+              SharedRes.string.affects_n_inspection_items,
               log.inspection_ids.size
             ),
             style = MaterialTheme.typography.titleSmall,

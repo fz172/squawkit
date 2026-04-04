@@ -30,15 +30,14 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.inspection.viewing.InspectionCardItem
+import wingslog.feature.inspection.sharedassets.generated.resources.add_inspection
 import wingslog.feature.inspection.sharedassets.generated.resources.due_with_count
 import wingslog.feature.inspection.sharedassets.generated.resources.history_with_count
-import wingslog.feature.inspection.update.generated.resources.add_inspection
-import wingslog.feature.inspection.update.generated.resources.inspections
-import wingslog.feature.inspection.update.generated.resources.no_complied_yet
-import wingslog.feature.inspection.update.generated.resources.no_inspections_yet
+import wingslog.feature.inspection.sharedassets.generated.resources.inspections
+import wingslog.feature.inspection.sharedassets.generated.resources.no_complied_yet
+import wingslog.feature.inspection.sharedassets.generated.resources.no_inspections_yet
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun ComplianceSection(
@@ -57,12 +56,12 @@ fun ComplianceSection(
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
       Text(
-        text = cmpStringResource(InspectionRes.string.inspections),
+        text = cmpStringResource(SharedInspectionRes.string.inspections),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
       )
       TextButton(onClick = onAddClick) {
-        Text(cmpStringResource(InspectionRes.string.add_inspection))
+        Text(cmpStringResource(SharedInspectionRes.string.add_inspection))
       }
     }
 
@@ -111,7 +110,7 @@ fun ComplianceSection(
             verticalArrangement = Arrangement.spacedBy(Spacing.medium),
           ) {
             Text(
-              text = cmpStringResource(InspectionRes.string.no_inspections_yet),
+              text = cmpStringResource(SharedInspectionRes.string.no_inspections_yet),
               style = MaterialTheme.typography.bodyMedium,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -121,13 +120,13 @@ fun ComplianceSection(
             ) {
               Icon(Icons.Default.Add, contentDescription = null)
               Spacer(Modifier.width(Spacing.small))
-              Text(cmpStringResource(InspectionRes.string.add_inspection).uppercase())
+              Text(cmpStringResource(SharedInspectionRes.string.add_inspection).uppercase())
             }
           }
         }
       } else {
         Text(
-          text = cmpStringResource(InspectionRes.string.no_complied_yet),
+          text = cmpStringResource(SharedInspectionRes.string.no_complied_yet),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(vertical = Spacing.large)
