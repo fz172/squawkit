@@ -60,6 +60,7 @@ kotlin {
       implementation(project(":feature:userprofile:database"))
       implementation(project(":feature:maintenance:database"))
       implementation(project(":feature:inspection"))
+      implementation(project(":feature:inspection:datamanager"))
       implementation(project(":feature:fleet"))
       implementation(project(":feature:fleet:database"))
 

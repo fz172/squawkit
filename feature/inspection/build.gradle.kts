@@ -43,6 +43,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":feature:inspection:model"))
+      implementation(project(":feature:inspection:datamanager"))
+
       implementation(project(":core:ui"))
       implementation(project(":core:database"))
       implementation(project(":core:auth"))

@@ -1,11 +1,14 @@
 # Design Doc: Unified Compliance & Inspection System
 
 ## 1. Overview
-This document outlines the technical implementation for WingsLog v2, integrating **Service Bulletins (SBs)** and **Airworthiness Directives (ADs)** into the existing Inspection framework. 
+
+This document outlines the technical implementation for WingsLog v2, integrating **Service
+Bulletins (SBs)** and **Airworthiness Directives (ADs)** into the existing Inspection framework.
 
 ## 2. Data Model Changes (Protobuf)
 
 ### 2.1 Inspection Card Extensions
+
 We will modify `inspection_card.proto` to support different compliance categories and metadata.
 
 ```protobuf
@@ -51,32 +54,40 @@ message InspectionCard {
 ## 3. Logic & State Management
 
 ### 3.1 The `ComplianceManager` (Refactor of InspectionManager)
+
 The logic for `computeNextDue` must be expanded:
-1.  **Immediate**: Always returns `DueStatus.OVERDUE`.
-2.  **Linked**: 
+
+1. **Immediate**: Always returns `DueStatus.OVERDUE`.
+2. **Linked**:
     - Fetch the `parent_inspection_id`.
     - Retrieve the calculated `DueMetadata` for that parent.
     - Inherit the `nextDueDate` or `nextDueEngine` from the parent.
-3.  **One-Time Completion**: 
-    - When a `MaintenanceLog` contains an `inspection_id` where `is_one_time == true`, the `DueStatus` becomes `COMPLIED`.
+3. **One-Time Completion**:
+    - When a `MaintenanceLog` contains an `inspection_id` where `is_one_time == true`, the
+      `DueStatus` becomes `COMPLIED`.
     - These items will be filtered out of the active "Due" list.
 
 ### 3.2 Component-Specific Tracking
+
 The `Origin/Component` field determines which metric to use:
+
 - **Engine/Propeller/Avionics**: Tracks against `engine_hour`.
 - **Airframe**: Tracks against `airframe_time`.
 
 ## 4. UX & UI Components
 
 ### 4.1 "Compliance & Inspections" Section (Overview)
-- **Visual Hierarchy**: 
+
+- **Visual Hierarchy**:
     - **ADs**: Red "AD" badge + Warning icon.
     - **SBs**: Amber "SB" badge.
     - **Inspections**: Standard Blue icon.
 - **Filtering**: Add a toggle for `Active` vs `History (Complied)`.
 
 ### 4.2 Entry Flow: The "Compliance Creator"
+
 A new sheet or a mode in `AddInspectionSheet`:
+
 - **Step 1**: Select Type (Inspection vs SB/AD).
 - **Step 2**: If SB/AD, show "Reference Number" and "Origin" fields.
 - **Step 3**: "Due Strategy" picker:
@@ -86,12 +97,15 @@ A new sheet or a mode in `AddInspectionSheet`:
 - **Step 4**: Compliance Authority and Compliance Detail text areas.
 
 ### 4.3 Log Integration
+
 The `InspectionPickerSheet` used during maintenance logging will now group items by type:
+
 - **Section 1: Due Items** (Inspections/SBs that are currently due).
 - **Section 2: All Compliance** (Searchable list of all ADs/SBs).
 
 ## 5. Implementation Phases
-1.  **Phase 1**: Update Protos and regenerate code.
-2.  **Phase 2**: Implement `Immediate` and `Linked` logic in `InspectionManagerImpl`.
-3.  **Phase 3**: Build the specialized SB/AD entry UI.
-4.  **Phase 4**: Update Overview and Log Form to handle the new grouping/history.
+
+1. **Phase 1**: Update Protos and regenerate code.
+2. **Phase 2**: Implement `Immediate` and `Linked` logic in `InspectionManagerImpl`.
+3. **Phase 3**: Build the specialized SB/AD entry UI.
+4. **Phase 4**: Update Overview and Log Form to handle the new grouping/history.

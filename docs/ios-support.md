@@ -31,22 +31,22 @@ The architecture follows a clean layered structure:
 
 ### Module Map
 
-| Module | Purpose | KMP Status |
-|---|---|---|
-| `app/` | Android `Application` + `MainActivity` | Android-only (thin wrapper) |
-| `composeApp/` | Shared `AppEntry.kt`, navigation, DI initialization | `commonMain`, `androidTarget`, `js` |
-| `core/auth` | `AuthManager` interface + per-platform impl | `commonMain` interface, `androidMain`/`iosMain`/`jsMain` impls |
-| `core/database` | Firestore document helpers (`setEncoded`, `getBlobAsBytes`, `observeSnapshot`) | `commonMain` `expect`, `androidMain`/`jsMain` `actual` — **iOS `actual` needed** |
-| `core/model` | Square Wire protobuf models | `commonMain` (fully KMP) |
-| `core/ui` | Compose themes, reusable composables, `DateTimeUtils` | `commonMain` + platform color scheme `actual` |
-| `feature/aircraft` | Aircraft overview, edit, inspections, maintenance logs | `commonMain` |
-| `feature/aircraft/database` | Firestore managers: `AircraftManager`, `InspectionManager`, `MaintenanceLogManager` | `commonMain` |
-| `feature/fleet` | Dashboard screen | `commonMain` |
-| `feature/fleet/database` | `FleetDashboardManager` | `commonMain` |
-| `feature/settings` | Settings screen + ViewModel | `commonMain` |
-| `feature/userprofile` | Edit profile screen + ViewModel | `commonMain` |
-| `feature/userprofile/database` | `UserProfileManager` | `commonMain` |
-| `feature/userprofile/userprofilecard` | Profile card composable | `commonMain` |
+| Module                                | Purpose                                                                             | KMP Status                                                                       |
+|---------------------------------------|-------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| `app/`                                | Android `Application` + `MainActivity`                                              | Android-only (thin wrapper)                                                      |
+| `composeApp/`                         | Shared `AppEntry.kt`, navigation, DI initialization                                 | `commonMain`, `androidTarget`, `js`                                              |
+| `core/auth`                           | `AuthManager` interface + per-platform impl                                         | `commonMain` interface, `androidMain`/`iosMain`/`jsMain` impls                   |
+| `core/database`                       | Firestore document helpers (`setEncoded`, `getBlobAsBytes`, `observeSnapshot`)      | `commonMain` `expect`, `androidMain`/`jsMain` `actual` — **iOS `actual` needed** |
+| `core/model`                          | Square Wire protobuf models                                                         | `commonMain` (fully KMP)                                                         |
+| `core/ui`                             | Compose themes, reusable composables, `DateTimeUtils`                               | `commonMain` + platform color scheme `actual`                                    |
+| `feature/aircraft`                    | Aircraft overview, edit, inspections, maintenance logs                              | `commonMain`                                                                     |
+| `feature/aircraft/database`           | Firestore managers: `AircraftManager`, `InspectionManager`, `MaintenanceLogManager` | `commonMain`                                                                     |
+| `feature/fleet`                       | Dashboard screen                                                                    | `commonMain`                                                                     |
+| `feature/fleet/database`              | `FleetDashboardManager`                                                             | `commonMain`                                                                     |
+| `feature/settings`                    | Settings screen + ViewModel                                                         | `commonMain`                                                                     |
+| `feature/userprofile`                 | Edit profile screen + ViewModel                                                     | `commonMain`                                                                     |
+| `feature/userprofile/database`        | `UserProfileManager`                                                                | `commonMain`                                                                     |
+| `feature/userprofile/userprofilecard` | Profile card composable                                                             | `commonMain`                                                                     |
 
 ---
 
@@ -174,6 +174,7 @@ users/{userId}/
 ```
 
 **Encoding/Decoding pattern (same across all platforms):**
+
 ```kotlin
 // Encode
 val bytes: ByteArray = Aircraft.ADAPTER.encode(aircraft)
@@ -192,6 +193,7 @@ WingsLog uses **Koin 4.0.4** — the DI framework was migrated from Hilt specifi
 KMP-compatible. Each module defines its bindings in a `Module` object.
 
 **Initialization in `composeApp/commonMain/di/initKoin.kt`:**
+
 ```kotlin
 fun initKoin(appDeclaration: KoinAppDeclaration = {}) = startKoin {
     appDeclaration()
@@ -211,6 +213,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) = startKoin {
 ```
 
 **iOS will call this from `iosMain` with an iOS-specific app declaration:**
+
 ```kotlin
 // iosMain/MainViewController.kt (to be created)
 fun MainViewController() = ComposeUIViewController {
@@ -240,20 +243,21 @@ ViewModels are injected via `koinViewModel()` in composables — this works on i
 
 ### 4.3 Navigation
 
-Navigation uses **JetBrains Navigation Compose** (`org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha11`),
+Navigation uses **JetBrains Navigation Compose** (
+`org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha11`),
 which is fully multiplatform. All routes are defined in `composeApp/AppEntry.kt`:
 
-| Route | Screen |
-|---|---|
-| `login` | `LoginScreen` |
-| `main` | `DashboardScreen` |
-| `settings` | `SettingsScreen` |
-| `edit_profile` | `EditProfileScreen` |
-| `add_aircraft` | `EditAircraftScreen` |
-| `edit_aircraft/{aircraftId}` | `EditAircraftScreen` |
-| `aircraft_overview/{aircraftId}` | `AircraftOverviewScreen` |
-| `maintenance_logs/{aircraftId}` | `MaintenanceLogListScreen` |
-| `maintenance_log_create/{aircraftId}` | `MaintenanceLogFormScreen` |
+| Route                                       | Screen                     |
+|---------------------------------------------|----------------------------|
+| `login`                                     | `LoginScreen`              |
+| `main`                                      | `DashboardScreen`          |
+| `settings`                                  | `SettingsScreen`           |
+| `edit_profile`                              | `EditProfileScreen`        |
+| `add_aircraft`                              | `EditAircraftScreen`       |
+| `edit_aircraft/{aircraftId}`                | `EditAircraftScreen`       |
+| `aircraft_overview/{aircraftId}`            | `AircraftOverviewScreen`   |
+| `maintenance_logs/{aircraftId}`             | `MaintenanceLogListScreen` |
+| `maintenance_log_create/{aircraftId}`       | `MaintenanceLogFormScreen` |
 | `maintenance_log_edit/{aircraftId}/{logId}` | `MaintenanceLogFormScreen` |
 
 ### 4.4 Firebase via GitLive KMP Wrapper
@@ -314,7 +318,8 @@ interface AuthManager {
 `InspectionManagerImpl.computeNextDue()` computes the next-due date/tach for each `InspectionCard`:
 
 1. If `force_due_tach > 0f` or `force_due_date` is set → return those values directly (override)
-2. Otherwise: find the most recent `MaintenanceLog` that references this card's ID (`inspection_ids`)
+2. Otherwise: find the most recent `MaintenanceLog` that references this card's ID (
+   `inspection_ids`)
 3. Add the rule interval (months or tach hours) to the last-service date/tach
 
 ---
@@ -324,6 +329,7 @@ interface AuthManager {
 The codebase has iOS scaffolding in place from the Phase 1 KMP migration:
 
 ### `core/auth/src/iosMain/` — Auth stub
+
 ```kotlin
 // core/auth/src/iosMain/kotlin/.../di/AuthModule.kt
 class AuthManagerIosStub : AuthManager {
@@ -340,10 +346,12 @@ actual val authModule: Module = module {
 This means `core/auth` already has a valid `iosMain` source set and compiles for iOS.
 
 ### `core/database/src/androidMain/` — Pattern to follow
+
 The `androidMain` actuals for `DocumentReferences.kt` show exactly what the iOS actuals need to
 implement (real-time Firestore snapshot listeners via `snapshots` Flow).
 
 ### `composeApp` — No iOS target yet
+
 The `composeApp/build.gradle.kts` defines `androidTarget` and `js(IR)` but no iOS targets. Adding
 `iosArm64()`, `iosSimulatorArm64()`, and `iosX64()` is the primary build step.
 
@@ -454,6 +462,7 @@ Replace `AuthManagerIosStub` with a real implementation in
 `core/auth/src/iosMain/`:
 
 **Option A: Firebase Google Sign-In (cross-platform parity)**
+
 ```kotlin
 class AuthManagerIosImpl(private val authProvider: FirebaseAuth) : AuthManager {
     override fun getCurrentUser(): FirebaseUser? = authProvider.currentUser
@@ -479,6 +488,7 @@ class AuthManagerIosImpl(private val authProvider: FirebaseAuth) : AuthManager {
 ```
 
 **Option B: Apple Sign-In (iOS-native, recommended for App Store)**
+
 ```kotlin
 // Uses ASAuthorizationAppleIDProvider via expect/actual
 // Firebase Auth KMP supports OAuthProvider for Apple
@@ -489,6 +499,7 @@ class AuthManagerIosImpl(private val authProvider: FirebaseAuth) : AuthManager {
 Create an Xcode project that wraps the KMP framework:
 
 **`iosApp/iosApp/ContentView.swift`:**
+
 ```swift
 import SwiftUI
 import composeApp  // The KMP framework
@@ -509,6 +520,7 @@ struct ComposeView: UIViewControllerRepresentable {
 ```
 
 **`composeApp/src/iosMain/kotlin/MainViewController.kt`:**
+
 ```kotlin
 import androidx.compose.ui.window.ComposeUIViewController
 import dev.fanfly.wingslog.AppEntry
@@ -521,6 +533,7 @@ fun MainViewController() = ComposeUIViewController {
 ```
 
 **`iosApp/iosApp/WingsLogApp.swift`:**
+
 ```swift
 import SwiftUI
 import Firebase
@@ -569,40 +582,50 @@ implementation(libs.coil.compose)
 ## 7. Platform-Specific Considerations for iOS
 
 ### 7.1 Keyboard Insets
+
 On iOS, the keyboard pushes up the entire screen. Wrap `AppEntry()` in the iOS entrypoint with
 `.ignoresSafeArea(.keyboard)` in SwiftUI.
 
 ### 7.2 Back Navigation
+
 iOS uses a swipe-from-left gesture for back navigation. JetBrains Navigation Compose handles this
 automatically on iOS — no additional work needed.
 
 ### 7.3 BottomSheet Behavior
+
 `ModalBottomSheet` from Compose Multiplatform renders correctly on iOS. The
 `skipPartiallyExpanded = true` used in `EditInspectionSheet` and `AddInspectionSheet` is respected.
 
 ### 7.4 Image Loading (Coil)
+
 Coil 3.x (`io.coil-kt.coil3:coil-compose`) is KMP-compatible and iOS-ready. Profile images in
 `CircularImage.kt` will render on iOS without changes.
 
 ### 7.5 File Attachments (Future Feature)
+
 The PRD mentions PDF/image attachments. On iOS this will require:
+
 - `UIImagePickerController` / `PHPickerViewController` for photos
 - `UIDocumentPickerViewController` for files
 - Wrap these in `expect/actual` under a `FilePicker` abstraction in `core/ui` or `core/platform`
 
 ### 7.6 Date/Time
+
 `DateTimeUtils.kt` in `core/ui/commonMain` uses `kotlinx.datetime` — fully KMP-compatible. The
 `WireInstantFactory` helpers exist in both `androidMain` and `jsMain`; an `iosMain` version should
 mirror the `jsMain` implementation (simple delegation to `kotlinx.datetime`).
 
 ### 7.7 Safe Area Insets
+
 On iOS, use `.ignoresSafeArea(.all, edges: .bottom)` for full-screen Compose content. The Scaffold
 composables in WingsLog handle padding internally, so this should work without UI changes.
 
 ### 7.8 Koin Initialization
+
 Koin on iOS must be initialized before any composable runs. Call `initKoin()` inside
 `ComposeUIViewController { ... }` block (before `AppEntry()`), or in the Swift `AppDelegate`/`App`
 init:
+
 ```swift
 // Alternative: init Koin from Swift
 init() {
@@ -614,26 +637,28 @@ init() {
 
 ## 8. Missing `iosMain` Actuals — Full Checklist
 
-| Module | `expect` declaration | Status | Action needed |
-|---|---|---|---|
-| `core/auth` | `authModule: Module` | Stub exists ✅ | Implement real `AuthManagerIosImpl` |
-| `core/database` | `getBlobAsBytes()` | ❌ Missing | Create `DocumentReferencesIos.kt` |
-| `core/database` | `setEncoded()` | ❌ Missing | Create `DocumentReferencesIos.kt` |
-| `core/database` | `DocumentReference.observeSnapshot()` | ❌ Missing | Create `DocumentReferencesIos.kt` |
-| `core/database` | `Query.observeSnapshot()` | ❌ Missing | Create `DocumentReferencesIos.kt` |
-| `core/ui` | `PlatformColorScheme.kt` | ❌ Missing | Create static light/dark scheme |
-| `core/ui` | `WireInstantFactory.kt` | ❌ Missing | Mirror `jsMain` implementation |
-| `composeApp` | `MainViewController.kt` | ❌ Missing | Create iOS entry point |
+| Module          | `expect` declaration                  | Status        | Action needed                       |
+|-----------------|---------------------------------------|---------------|-------------------------------------|
+| `core/auth`     | `authModule: Module`                  | Stub exists ✅ | Implement real `AuthManagerIosImpl` |
+| `core/database` | `getBlobAsBytes()`                    | ❌ Missing     | Create `DocumentReferencesIos.kt`   |
+| `core/database` | `setEncoded()`                        | ❌ Missing     | Create `DocumentReferencesIos.kt`   |
+| `core/database` | `DocumentReference.observeSnapshot()` | ❌ Missing     | Create `DocumentReferencesIos.kt`   |
+| `core/database` | `Query.observeSnapshot()`             | ❌ Missing     | Create `DocumentReferencesIos.kt`   |
+| `core/ui`       | `PlatformColorScheme.kt`              | ❌ Missing     | Create static light/dark scheme     |
+| `core/ui`       | `WireInstantFactory.kt`               | ❌ Missing     | Mirror `jsMain` implementation      |
+| `composeApp`    | `MainViewController.kt`               | ❌ Missing     | Create iOS entry point              |
 
 ---
 
 ## 9. Build Configuration Changes Summary
 
 ### `settings.gradle.kts` — Add `iosApp` module (when Xcode project is created)
+
 No change needed for the Gradle project itself — the Xcode project is standalone and references
 the built KMP framework.
 
 ### `libs.versions.toml` — iOS additions
+
 ```toml
 # Already present — no changes needed for core libs
 # gitlive = "2.4.0"   ← wraps native Firebase iOS SDK automatically
@@ -642,7 +667,9 @@ the built KMP framework.
 ```
 
 ### Each module's `build.gradle.kts`
+
 Add iOS targets to the `kotlin { }` block:
+
 ```kotlin
 iosX64()
 iosArm64()
@@ -650,6 +677,7 @@ iosSimulatorArm64()
 ```
 
 For modules with `iosMain` `actual` files, add the source set:
+
 ```kotlin
 val iosMain by creating { dependsOn(commonMain.get()) }
 val iosX64Main by getting { dependsOn(iosMain) }
@@ -661,17 +689,17 @@ val iosSimulatorArm64Main by getting { dependsOn(iosMain) }
 
 ## 10. Effort Estimate
 
-| Task | Effort | Complexity |
-|---|---|---|
-| Add iOS targets to all `build.gradle.kts` files | 2-3 hrs | Low |
-| Implement `core/database` iOS actuals | 1 hr | Low (copy from jsMain/adapt from androidMain) |
-| Implement `core/ui` iOS actuals (`PlatformColorScheme`, `WireInstantFactory`) | 1 hr | Low |
-| Create `iosApp/` Xcode project + Swift wrapper | 2-4 hrs | Medium |
-| Add `GoogleService-Info.plist` + Firebase iOS SDK via SPM | 1 hr | Low |
-| Implement real `AuthManagerIosImpl` (Google Sign-In) | 3-4 hrs | Medium |
-| Implement `AuthManagerIosImpl` (Apple Sign-In) | 3-5 hrs | Medium-High |
-| End-to-end testing on iOS Simulator | 4-8 hrs | Medium |
-| **Total** | **~17-26 hrs** | |
+| Task                                                                          | Effort         | Complexity                                    |
+|-------------------------------------------------------------------------------|----------------|-----------------------------------------------|
+| Add iOS targets to all `build.gradle.kts` files                               | 2-3 hrs        | Low                                           |
+| Implement `core/database` iOS actuals                                         | 1 hr           | Low (copy from jsMain/adapt from androidMain) |
+| Implement `core/ui` iOS actuals (`PlatformColorScheme`, `WireInstantFactory`) | 1 hr           | Low                                           |
+| Create `iosApp/` Xcode project + Swift wrapper                                | 2-4 hrs        | Medium                                        |
+| Add `GoogleService-Info.plist` + Firebase iOS SDK via SPM                     | 1 hr           | Low                                           |
+| Implement real `AuthManagerIosImpl` (Google Sign-In)                          | 3-4 hrs        | Medium                                        |
+| Implement `AuthManagerIosImpl` (Apple Sign-In)                                | 3-5 hrs        | Medium-High                                   |
+| End-to-end testing on iOS Simulator                                           | 4-8 hrs        | Medium                                        |
+| **Total**                                                                     | **~17-26 hrs** |                                               |
 
 The small estimate reflects how much was already done during Phase 1 (KMP migration). The shared
 UI, business logic, navigation, data managers, and DI all compile for KMP targets today — iOS is
@@ -684,6 +712,7 @@ largely a matter of wiring up platform entry points and filling in the handful o
 - [kmp_migration.md](./kmp_migration.md) — Full migration history and phase plan
 - [database_schema_design.md](./database_schema_design.md) — Firestore schema details
 - [PRD.md](./PRD.md) — Product requirements
-- [GitLive Firebase KMP SDK](https://github.com/GitLiveApp/firebase-kotlin-sdk) — The Firebase wrapper in use
+- [GitLive Firebase KMP SDK](https://github.com/GitLiveApp/firebase-kotlin-sdk) — The Firebase
+  wrapper in use
 - [Compose Multiplatform iOS](https://www.jetbrains.com/help/kotlin-multiplatform-dev/compose-multiplatform-ios-getting-started.html)
 - [Koin Multiplatform](https://insert-koin.io/docs/setup/koin#multiplatform)

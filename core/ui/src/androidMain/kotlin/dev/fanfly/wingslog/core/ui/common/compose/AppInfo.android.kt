@@ -6,11 +6,11 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 actual fun getAppVersion(): String {
-    val context = LocalContext.current
-    return try {
-        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        packageInfo.versionName ?: "Unknown"
-    } catch (e: PackageManager.NameNotFoundException) {
-        "Unknown"
-    }
+  val context = LocalContext.current
+  return try {
+    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    packageInfo.versionName ?: "Unknown"
+  } catch (e: PackageManager.NameNotFoundException) {
+    "Unknown"
+  }
 }

@@ -56,7 +56,7 @@ fun EmptyState(
       textAlign = TextAlign.Center,
       color = MaterialTheme.colorScheme.onSurfaceVariant
     )
-    
+
     if (actionText != null && onActionClick != null) {
       Spacer(modifier = Modifier.height(32.dp))
       Button(onClick = onActionClick) {

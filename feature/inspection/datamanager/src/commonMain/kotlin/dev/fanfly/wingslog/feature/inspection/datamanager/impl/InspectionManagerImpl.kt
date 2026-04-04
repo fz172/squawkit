@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.inspection.database.impl
+package dev.fanfly.wingslog.feature.inspection.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.InspectionCard
@@ -8,7 +8,7 @@ import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
 import dev.fanfly.wingslog.core.database.getFleetCollectionRef
 import dev.fanfly.wingslog.core.database.setEncoded
-import dev.fanfly.wingslog.feature.inspection.database.InspectionManager
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.gitlive.firebase.auth.FirebaseAuth

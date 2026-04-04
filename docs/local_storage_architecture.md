@@ -7,6 +7,7 @@ WingsLog data: user license info, fleet metadata, and maintenance logs. No data 
 unless explicitly exported by the user.
 
 **Motivation:**
+
 - Privacy: sensitive aviation records stay on-device
 - No Firebase dependency / billing / auth complexity
 - Full offline operation with no degraded mode
@@ -19,13 +20,13 @@ unless explicitly exported by the user.
 WingsLog targets **Android, iOS, and Web** via KMP + Compose Multiplatform. This rules out
 Android-only storage APIs:
 
-| Library | Android | iOS | Web | Verdict |
-|---|---|---|---|---|
-| Jetpack Room | ✅ | ❌ | ❌ | **Not viable** |
-| Proto DataStore | ✅ | ❌ partial | ❌ | **Not viable as-is** |
-| SQLDelight | ✅ | ✅ | ✅ (WASM) | ✅ **Recommended** |
-| Multiplatform Settings | ✅ | ✅ | ✅ | ✅ **Recommended** |
-| Files (expect/actual) | ✅ | ✅ | limited | ✅ for attachments |
+| Library                | Android | iOS       | Web      | Verdict              |
+|------------------------|---------|-----------|----------|----------------------|
+| Jetpack Room           | ✅       | ❌         | ❌        | **Not viable**       |
+| Proto DataStore        | ✅       | ❌ partial | ❌        | **Not viable as-is** |
+| SQLDelight             | ✅       | ✅         | ✅ (WASM) | ✅ **Recommended**    |
+| Multiplatform Settings | ✅       | ✅         | ✅        | ✅ **Recommended**    |
+| Files (expect/actual)  | ✅       | ✅         | limited  | ✅ for attachments    |
 
 All storage choices must be **KMP-native** and work across all three targets.
 
@@ -33,12 +34,12 @@ All storage choices must be **KMP-native** and work across all three targets.
 
 ## What Needs to Be Stored
 
-| Data | Current Home | Size / Query Needs |
-|---|---|---|
-| License info | Firestore blob (`users/{uid}/profile/license_info`) | Single object, rarely changes, no queries |
-| Fleet metadata | Firestore blobs (`users/{uid}/fleet/{aircraftId}`) | Small collection, nested components |
-| Maintenance logs | Firestore subcollection (`fleet/{id}/maintenance_logs`) | Grows over time, filter/sort by date, component, inspection type |
-| Attachments (PDFs, photos) | Firebase Storage | Binary blobs, platform filesystem |
+| Data                       | Current Home                                            | Size / Query Needs                                               |
+|----------------------------|---------------------------------------------------------|------------------------------------------------------------------|
+| License info               | Firestore blob (`users/{uid}/profile/license_info`)     | Single object, rarely changes, no queries                        |
+| Fleet metadata             | Firestore blobs (`users/{uid}/fleet/{aircraftId}`)      | Small collection, nested components                              |
+| Maintenance logs           | Firestore subcollection (`fleet/{id}/maintenance_logs`) | Grows over time, filter/sort by date, component, inspection type |
+| Attachments (PDFs, photos) | Firebase Storage                                        | Binary blobs, platform filesystem                                |
 
 ---
 
@@ -49,6 +50,7 @@ All storage choices must be **KMP-native** and work across all three targets.
 Fan's suggestion of Markdown files deserves honest analysis.
 
 **Why it won't work as the database:**
+
 - No indexing → filtering/sorting requires full file scan across all records
 - No atomic writes → a crash mid-save corrupts the record
 - No relationships → linking logs to aircraft requires fragile filename conventions
@@ -63,11 +65,11 @@ printing, or archiving in git. This is included in the export strategy below.
 
 ### ✅ Recommended: SQLDelight + Multiplatform Settings
 
-| Use | Technology | Why |
-|---|---|---|
-| License info | **Multiplatform Settings** | Single object, key-value typed, KMP-native, no boilerplate |
-| Fleet + maintenance logs | **SQLDelight** | KMP SQLite, typed queries, Kotlin Flow, compile-time SQL verification |
-| Attachments | **expect/actual filesystem** | Large blobs on native filesystem, paths stored in SQLDelight |
+| Use                      | Technology                   | Why                                                                   |
+|--------------------------|------------------------------|-----------------------------------------------------------------------|
+| License info             | **Multiplatform Settings**   | Single object, key-value typed, KMP-native, no boilerplate            |
+| Fleet + maintenance logs | **SQLDelight**               | KMP SQLite, typed queries, Kotlin Flow, compile-time SQL verification |
+| Attachments              | **expect/actual filesystem** | Large blobs on native filesystem, paths stored in SQLDelight          |
 
 ---
 
@@ -78,10 +80,10 @@ Cash App. It generates type-safe Kotlin APIs from `.sq` files at compile time.
 
 **Platform drivers:**
 
-| Platform | Driver |
-|---|---|
-| Android | `AndroidSqliteDriver` (standard Android SQLite) |
-| iOS | `NativeSqliteDriver` (SQLite bundled in iOS) |
+| Platform      | Driver                                                   |
+|---------------|----------------------------------------------------------|
+| Android       | `AndroidSqliteDriver` (standard Android SQLite)          |
+| iOS           | `NativeSqliteDriver` (SQLite bundled in iOS)             |
 | Web (JS/WASM) | `WebWorkerDriver` (SQLite compiled to WASM via `sql.js`) |
 
 All platforms share the same `.sq` schema and query files in `commonMain`. Zero platform-specific
@@ -273,11 +275,11 @@ standard KMP key-value store.
 
 **Platform backing:**
 
-| Platform | Backing Store |
-|---|---|
-| Android | `SharedPreferences` |
-| iOS | `NSUserDefaults` |
-| Web | `LocalStorage` |
+| Platform | Backing Store       |
+|----------|---------------------|
+| Android  | `SharedPreferences` |
+| iOS      | `NSUserDefaults`    |
+| Web      | `LocalStorage`      |
 
 Since `LicenseInfo` is a Wire proto, encode it to bytes and store as a Base64 string:
 
@@ -299,6 +301,7 @@ class LicenseRepository(private val settings: Settings) {
 ```
 
 Dependencies:
+
 ```kotlin
 commonMain.dependencies {
     implementation("com.russhwolf:multiplatform-settings:1.1.1")
@@ -314,11 +317,11 @@ PDFs and photos are stored on the native filesystem. Only the path is stored in 
 
 **Path roots per platform:**
 
-| Platform | Directory | Notes |
-|---|---|---|
-| Android | `context.filesDir` | Private to app, auto-backed up |
-| iOS | `NSFileManager.defaultManager.applicationSupportDirectory` | Private, included in iCloud Backup by default |
-| Web | N/A | Attachments not supported on web (no persistent filesystem) |
+| Platform | Directory                                                  | Notes                                                       |
+|----------|------------------------------------------------------------|-------------------------------------------------------------|
+| Android  | `context.filesDir`                                         | Private to app, auto-backed up                              |
+| iOS      | `NSFileManager.defaultManager.applicationSupportDirectory` | Private, included in iCloud Backup by default               |
+| Web      | N/A                                                        | Attachments not supported on web (no persistent filesystem) |
 
 ```kotlin
 // expect/actual for platform-specific base path
@@ -411,12 +414,14 @@ directly.
 ## iOS-Specific Notes
 
 ### Storage Location
+
 - SQLite DB: placed in `Library/Application Support/` (not in `Documents/`) per Apple guidelines.
   This keeps it private and prevents it from appearing in the Files app.
 - `Library/Application Support/` is **included in iCloud Backup** automatically.
 - `Library/Caches/` is excluded from backup — do NOT put the database here.
 
 ### Performance
+
 - SQLDelight's `NativeSqliteDriver` is synchronous on iOS/Kotlin/Native. For large result sets,
   dispatch reads off the main thread. SQLDelight coroutines extension handles this automatically
   when using `Flow`.
@@ -426,10 +431,12 @@ directly.
   ```
 
 ### File Attachments
+
 - Attachments go in `Application Support/wingslog/attachments/` — included in iCloud Backup.
 - For user-initiated export, use `UIDocumentInteractionController` (via expect/actual interop).
 
 ### App Sandbox
+
 - iOS apps are sandboxed. Files are not accessible by other apps unless explicitly shared via
   `UIActivityViewController` / `FileProvider`.
 
@@ -438,10 +445,12 @@ directly.
 ## Android-Specific Notes
 
 ### Storage Location
+
 - `context.filesDir` — private to the app, not visible in Files app, included in Auto Backup.
 - For the SQLite file, SQLDelight/Android driver handles placement automatically.
 
 ### Android Auto Backup
+
 - Declare `android:allowBackup="true"` in `AndroidManifest.xml`.
 - Add `backup_rules.xml` to include `wingslog.db` and exclude caches:
   ```xml
@@ -457,12 +466,14 @@ directly.
 ## Web-Specific Notes
 
 ### SQLite WASM
+
 - SQLDelight's `WebWorkerDriver` uses `sql.js` (SQLite compiled to WASM) running in a Web Worker.
 - Data persists to `IndexedDB` between sessions (via `sql.js-httpvfs` or `absurd-sql` backend).
 - **Bundle size impact**: ~1.5MB additional WASM payload. Acceptable for an authenticated tool app.
 - Storage limits: browsers may cap IndexedDB at 1-5GB; more than sufficient for logbook data.
 
 ### Attachments on Web
+
 - No persistent native filesystem. Attachments are not supported on the web target.
 - Web UI should display a notice: *"Attachment upload/download is only available on mobile."*
 - Multiplatform Settings falls back to `LocalStorage` on Web — fine for license info.
@@ -493,11 +504,11 @@ Phase 3: Remove Firebase Firestore
 
 ### Data Shape Mapping
 
-| Firestore | SQLDelight / Settings |
-|---|---|
+| Firestore                               | SQLDelight / Settings                         |
+|-----------------------------------------|-----------------------------------------------|
 | `users/{uid}/profile/license_info` blob | Multiplatform Settings (`license_info_proto`) |
-| `users/{uid}/fleet/{id}` Aircraft blob | `aircraft` + `engine` + `propeller` tables |
-| `fleet/{id}/maintenance_logs/{logId}` | `maintenance_log` table |
+| `users/{uid}/fleet/{id}` Aircraft blob  | `aircraft` + `engine` + `propeller` tables    |
+| `fleet/{id}/maintenance_logs/{logId}`   | `maintenance_log` table                       |
 
 The nested `Aircraft` proto gets normalized into separate tables — enables queries like
 "all engines with serial X" without deserializing blobs.
@@ -509,9 +520,9 @@ The nested `Aircraft` proto gets normalized into separate tables — enables que
 Since data is fully local, backup becomes the user's responsibility. WingsLog should provide:
 
 1. **Platform Auto-Backup** (free, automatic)
-   - Android: Google Auto Backup (encrypted, 25MB limit)
-   - iOS: iCloud Backup (included automatically via `Application Support/`)
-   - Web: browser `LocalStorage` persists until cleared
+    - Android: Google Auto Backup (encrypted, 25MB limit)
+    - iOS: iCloud Backup (included automatically via `Application Support/`)
+    - Web: browser `LocalStorage` persists until cleared
 
 2. **Markdown Export** — human-readable per-aircraft logbook:
    ```markdown

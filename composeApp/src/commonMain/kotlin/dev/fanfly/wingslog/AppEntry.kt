@@ -11,14 +11,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
-import dev.fanfly.wingslog.feature.maintenance.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
-import dev.fanfly.wingslog.feature.maintenance.edit.EditAircraftScreen
+import dev.fanfly.wingslog.feature.fleet.dashboard.DashboardScreen
 import dev.fanfly.wingslog.feature.inspection.ui.AddInspectionRoute
 import dev.fanfly.wingslog.feature.inspection.ui.EditInspectionRoute
+import dev.fanfly.wingslog.feature.maintenance.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
+import dev.fanfly.wingslog.feature.maintenance.edit.EditAircraftScreen
 import dev.fanfly.wingslog.feature.maintenance.maintenance.form.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.maintenance.maintenance.log.MaintenanceLogListScreen
 import dev.fanfly.wingslog.feature.maintenance.overview.AircraftOverviewScreen
-import dev.fanfly.wingslog.feature.fleet.dashboard.DashboardScreen
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
 import dev.fanfly.wingslog.feature.userprofile.EditProfileScreen
 import dev.fanfly.wingslog.login.LoginScreen
@@ -74,7 +74,8 @@ fun AppEntry() {
         }
 
         composable(
-          route = "maintenance_overview/{aircraftId}", arguments = listOf(navArgument("aircraftId") {
+          route = "maintenance_overview/{aircraftId}",
+          arguments = listOf(navArgument("aircraftId") {
             type = NavType.StringType
           })
         ) {

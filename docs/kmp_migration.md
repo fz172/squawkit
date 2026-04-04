@@ -151,18 +151,25 @@ import dev.gitlive.firebase.firestore.firestore
 import path changes.
 
 **Strategy: Staged feature-by-feature transition.**
-Since JetBrains Compose Multiplatform binary-matches Jetpack Compose on Android, this migration will be executed in sequential stages to guarantee stability.
+Since JetBrains Compose Multiplatform binary-matches Jetpack Compose on Android, this migration will
+be executed in sequential stages to guarantee stability.
 
 **Sub-Steps:**
-- **Step 1.4.1:** Build Layer & Core — Apply CMP plugin (`1.7.3`) to root `build.gradle.kts` and `libs.versions.toml`. Migrate `core/ui` dependencies to CMP, moving foundational UI (Themes, etc.) to `commonMain`.
-- **Step 1.4.2:** Feature Migration — Sequentially migrate modules (Apply CMP plugin, configure CMP ViewModel, move `androidMain` files to `commonMain`):
+
+- **Step 1.4.1:** Build Layer & Core — Apply CMP plugin (`1.7.3`) to root `build.gradle.kts` and
+  `libs.versions.toml`. Migrate `core/ui` dependencies to CMP, moving foundational UI (Themes, etc.)
+  to `commonMain`.
+- **Step 1.4.2:** Feature Migration — Sequentially migrate modules (Apply CMP plugin, configure CMP
+  ViewModel, move `androidMain` files to `commonMain`):
     - **Step 1.4.2.1:** `feature/settings`
     - **Step 1.4.2.2:** `feature/userprofile` (Handle `android.net.Uri` appropriately)
     - **Step 1.4.2.3:** `feature/fleet`
     - **Step 1.4.2.4:** `feature/aircraft`
 - **Step 1.4.3:** Module Restructuring & App-Level Dependencies
-    - Create a new `composeApp` (or `shared-app`) KMP library module. Move `AppEntry.kt` and cross-platform Koin initialization here (this becomes the shared UI root).
-    - Modify the existing `app` module to remain a pure Android Application. It will depend on `composeApp` and simply set `setContent { AppEntry() }` in `MainActivity.kt`.
+    - Create a new `composeApp` (or `shared-app`) KMP library module. Move `AppEntry.kt` and
+      cross-platform Koin initialization here (this becomes the shared UI root).
+    - Modify the existing `app` module to remain a pure Android Application. It will depend on
+      `composeApp` and simply set `setContent { AppEntry() }` in `MainActivity.kt`.
     - Replace `androidx.navigation.compose` with CMP Navigation globally.
     - Update Coil to Coil 3.x KMP.
 
@@ -197,17 +204,20 @@ Replaced Google Flogger (JVM-only) with TouchLab Kermit (`co.touchlab:kermit`, K
 
 # Phase 2: iOS Target (SKIPPED / ON HOLD)
 
-Add iOS via Kotlin/Native. Compose Multiplatform on iOS is production-ready as of 2024. This will build upon the `composeApp` shared UI module created in Phase 1.
+Add iOS via Kotlin/Native. Compose Multiplatform on iOS is production-ready as of 2024. This will
+build upon the `composeApp` shared UI module created in Phase 1.
 
 - Add `iosArm64()`, `iosSimulatorArm64()`, `iosX64()` targets to the `composeApp` build config.
 - Create Xcode project (`iosApp`) wrapping the KMP framework.
-- iOS entry point: `MainViewController.kt` in `iosMain` calling `ComposeUIViewController { AppEntry() }`.
+- iOS entry point: `MainViewController.kt` in `iosMain` calling
+  `ComposeUIViewController { AppEntry() }`.
 - Firebase KMP wraps native Firebase iOS SDK — add `GoogleService-Info.plist` to iOS target.
 - Auth: Apple Sign-In + Google Sign-In via Firebase Auth KMP via `expect/actual`.
 - File attachments: `UIImagePickerController` / `PHPicker` via `expect/actual`.
 - Platform quirks: iOS keyboard, safe area insets, back gesture — test thoroughly.
 
 **Completion criteria:**
+
 - iOS app installs and runs on device simulator.
 - Feature parity with Android.
 - Authentication implemented.
@@ -216,20 +226,35 @@ Add iOS via Kotlin/Native. Compose Multiplatform on iOS is production-ready as o
 
 # Phase 3: Web Target (ACTIVE)
 
-Add a Kotlin/JS web target using Compose Multiplatform Canvas. Since GitLive Firebase KMP natively provides robust support for the standard `js` target (by wrapping the official Firebase JS SDK under the hood), this phase is fully feasible with our current technology stack.
+Add a Kotlin/JS web target using Compose Multiplatform Canvas. Since GitLive Firebase KMP natively
+provides robust support for the standard `js` target (by wrapping the official Firebase JS SDK under
+the hood), this phase is fully feasible with our current technology stack.
 
-- Create a new `webApp` module applying the KMP plugin and configuring the `js(IR) { browser() }` target.
+- Create a new `webApp` module applying the KMP plugin and configuring the `js(IR) { browser() }`
+  target.
 - Add `webApp` to `settings.gradle.kts`.
-- Set up a `jsMain` entry point (`Main.kt`) that depends on `composeApp` and launches `AppEntry()` using `CanvasBasedWindow`.
-- Dependencies: Web browser environments natively run the `js` artifacts produced by `compose.ui` and `dev.gitlive.firebase`.
-- Auth: For Web targets, we will implement Firebase Google OAuth through browser popup/redirect flows via `Firebase.auth.signInWithPopup()`.
-- Navigation: Jetpack Navigation Compose supports JS targets out-of-the-box. Internal links function automatically; full address bar sync requires minor interoperability code handling `window.location`.
-- Deployment: Deploy as a standard static site using Vercel, Firebase Hosting, or Cloudflare Pages via a standard Gradle JS build process.
+- Set up a `jsMain` entry point (`Main.kt`) that depends on `composeApp` and launches `AppEntry()`
+  using `CanvasBasedWindow`.
+- Dependencies: Web browser environments natively run the `js` artifacts produced by `compose.ui`
+  and `dev.gitlive.firebase`.
+- Auth: For Web targets, we will implement Firebase Google OAuth through browser popup/redirect
+  flows via `Firebase.auth.signInWithPopup()`.
+- Navigation: Jetpack Navigation Compose supports JS targets out-of-the-box. Internal links function
+  automatically; full address bar sync requires minor interoperability code handling
+  `window.location`.
+- Deployment: Deploy as a standard static site using Vercel, Firebase Hosting, or Cloudflare Pages
+  via a standard Gradle JS build process.
 
-> ⚠️ Compose Multiplatform Canvas on JS (Skia Canvas) yields larger bundle sizes (approx. 5-10MB minimum) because the Skia rendering engine is shipped to the client via Wasm (CanvasKit). The business logic runs natively as JS. It is not SEO-compatible nor fully text-selectable as a standard DOM page natively. Since this is an authenticated "Dashboard Tool" app, SEO trade-offs are acceptable.
+> ⚠️ Compose Multiplatform Canvas on JS (Skia Canvas) yields larger bundle sizes (approx. 5-10MB
+> minimum) because the Skia rendering engine is shipped to the client via Wasm (CanvasKit). The
+> business logic runs natively as JS. It is not SEO-compatible nor fully text-selectable as a standard
+> DOM page natively. Since this is an authenticated "Dashboard Tool" app, SEO trade-offs are
+> acceptable.
 
 **Completion criteria:**
-- Web build completes successfully and produces a static JS deployment folder (`index.html` + JS blobs).
+
+- Web build completes successfully and produces a static JS deployment folder (`index.html` + JS
+  blobs).
 - Login, fleet views, and maintenance logs render cleanly in a desktop Chrome/Safari browser.
 - Deployed to a staging URL.
 
@@ -237,12 +262,12 @@ Add a Kotlin/JS web target using Compose Multiplatform Canvas. Since GitLive Fir
 
 # Risks & Mitigations
 
-| Risk | Mitigation |
-|---|---|
-| GitLive `firebase-kotlin-sdk` is community-maintained, may lag Firebase releases | Pin versions carefully, watch GitHub releases |
-| No data migration needed | GitLive Firebase uses the existing Firestore collections completely untouched |
-| Koin runtime errors (no compile-time DI validation) | Add `checkModules()` in tests to catch missing bindings early |
-| Kotlin/Native compile times (iOS) | Use Xcode incremental builds and Kotlin caching flags |
+| Risk                                                                             | Mitigation                                                                    |
+|----------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| GitLive `firebase-kotlin-sdk` is community-maintained, may lag Firebase releases | Pin versions carefully, watch GitHub releases                                 |
+| No data migration needed                                                         | GitLive Firebase uses the existing Firestore collections completely untouched |
+| Koin runtime errors (no compile-time DI validation)                              | Add `checkModules()` in tests to catch missing bindings early                 |
+| Kotlin/Native compile times (iOS)                                                | Use Xcode incremental builds and Kotlin caching flags                         |
 
 ---
 

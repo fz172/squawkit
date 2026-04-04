@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.inspection.database
+package dev.fanfly.wingslog.feature.inspection.datamanager
 
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog

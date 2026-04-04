@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.maintenance.database.impl
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.feature.maintenance.database.impl.MaintenanceLogManagerImpl
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.firestore.CollectionReference

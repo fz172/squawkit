@@ -49,6 +49,7 @@ kotlin {
 
       implementation(project(":feature:maintenance:database"))
       implementation(project(":feature:inspection:model"))
+      implementation(project(":feature:inspection:datamanager"))
       implementation(project(":feature:inspection"))
 
       implementation(libs.kotlinx.datetime)

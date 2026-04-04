@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.UiText
-import dev.fanfly.wingslog.feature.inspection.database.InspectionManager
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.maintenance.database.AircraftManager
 import dev.fanfly.wingslog.feature.maintenance.database.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
