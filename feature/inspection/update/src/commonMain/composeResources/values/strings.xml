@@ -4,7 +4,6 @@
     <string name="compliance_type_sb">Service Bulletins (SB)</string>
     <string name="compliance_type_routine">Routine Inspections</string>
     <string name="add_inspection">Add Inspection</string>
-    <string name="component">Component</string>
     <string name="inspection_title">Inspection Title</string>
     <string name="interval_months">Interval (months)</string>
     <string name="interval_hours">Interval (hours)</string>
@@ -34,19 +33,8 @@
     <string name="inspection_due_warning">Note: This inspection will be due on whichever comes first.</string>
     <string name="inspection_interval_description">Set a recurring interval based on time, engine hours, or both.</string>
 
-    <string name="add_rule">Add Rule</string>
-    <string name="time_based_months">Time-based (months)</string>
-    <string name="engine_based_hours">Engine-based (hours)</string>
     <string name="no_inspections_yet">No inspection cards. Add annual, 100-hr, pitot-static, transponder, and other recurring checks to track due dates automatically.</string>
-    <string name="title_required">Title is required</string>
-    <string name="quick_add">Quick Add</string>
-    <string name="annual_condition_12mo">Annual Condition (12mo)</string>
-    <string name="elt_battery_12mo">ELT Battery (12mo)</string>
-    <string name="parachute_repack_180d">Parachute Repack (180d)</string>
-    <string name="hundred_hour_inspection">100-Hour Inspection</string>
-    <string name="oil_change_50hr">Oil Change (50hr)</string>
     <string name="delete_inspection">Delete Inspection</string>
-    <string name="force_due_date">Force Due Date</string>
     <string name="affects_n_inspection_items">Affects %1$d inspection item(s)</string>
     <string name="delete_inspection_confirmation">Delete "%1$s"? This cannot be undone. Maintenance logs that reference this inspection will not be deleted.</string>
     <string name="inspections">Inspections</string>
@@ -54,14 +42,6 @@
     <string name="inspection_work">Inspection Work</string>
     <string name="no_inspection_work_recorded">No inspection work recorded for this log.</string>
     <string name="unknown_inspection">Unknown inspection (%1$s)</string>
-    <string name="rules">Rules</string>
-    <string name="every_x_months">Every %1$d months</string>
-    <string name="every_x_engine_hours">Every %1$d engine hours</string>
-    <string name="on_condition_desc">On condition: %1$s</string>
-    <string name="unknown_rule">Unknown rule</string>
-    <string name="engine_val">%1$s engine</string>
-    <string name="inspection_notes">Notes</string>
-    <string name="inspection_notes_hint">Add any notes or comments…</string>
     <string name="basics">Basics</string>
     <string name="schedule">Schedule</string>
     <string name="details">Details</string>
@@ -70,8 +50,5 @@
     <string name="inspection_updated">Inspection updated</string>
     <string name="inspection_deleted">Inspection deleted</string>
     <string name="inspection_added">Inspection added</string>
-    <string name="inspection_status">Inspection Status</string>
-    <string name="prop_inspection">Prop Inspection</string>
-
     <string name="no_inspection_cards_configured">No inspections configured. Add them from the aircraft overview to track recurring maintenance.</string>
 </resources>
