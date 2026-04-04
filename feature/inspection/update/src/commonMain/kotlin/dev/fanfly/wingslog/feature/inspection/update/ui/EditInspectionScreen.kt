@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.inspection.ui
+package dev.fanfly.wingslog.feature.inspection.update.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -48,12 +48,12 @@ import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.inspection.compose.DeleteInspectionConfirmDialog
-import dev.fanfly.wingslog.feature.inspection.compose.DocumentationFields
-import dev.fanfly.wingslog.feature.inspection.compose.ForcedOverrideFields
-import dev.fanfly.wingslog.feature.inspection.compose.IntervalFields
-import dev.fanfly.wingslog.feature.inspection.compose.LinkedInspectionFields
-import dev.fanfly.wingslog.feature.inspection.compose.OneTimeComplianceFields
+import dev.fanfly.wingslog.feature.inspection.update.compose.DeleteInspectionConfirmDialog
+import dev.fanfly.wingslog.feature.inspection.update.compose.DocumentationFields
+import dev.fanfly.wingslog.feature.inspection.update.compose.ForcedOverrideFields
+import dev.fanfly.wingslog.feature.inspection.update.compose.IntervalFields
+import dev.fanfly.wingslog.feature.inspection.update.compose.LinkedInspectionFields
+import dev.fanfly.wingslog.feature.inspection.update.compose.OneTimeComplianceFields
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.back
@@ -63,19 +63,19 @@ import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.core.ui.generated.resources.component_type
 import wingslog.core.ui.generated.resources.ok
-import wingslog.feature.inspection.generated.resources.compliance_type
-import wingslog.feature.inspection.generated.resources.compliance_type_routine_short
-import wingslog.feature.inspection.generated.resources.details
-import wingslog.feature.inspection.generated.resources.identity
-import wingslog.feature.inspection.generated.resources.inspection_title
-import wingslog.feature.inspection.generated.resources.overrides
-import wingslog.feature.inspection.generated.resources.schedule
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_ad_short
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_sb_short
 import wingslog.feature.inspection.sharedassets.generated.resources.edit_inspection
+import wingslog.feature.inspection.update.generated.resources.compliance_type
+import wingslog.feature.inspection.update.generated.resources.compliance_type_routine_short
+import wingslog.feature.inspection.update.generated.resources.details
+import wingslog.feature.inspection.update.generated.resources.identity
+import wingslog.feature.inspection.update.generated.resources.inspection_title
+import wingslog.feature.inspection.update.generated.resources.overrides
+import wingslog.feature.inspection.update.generated.resources.schedule
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

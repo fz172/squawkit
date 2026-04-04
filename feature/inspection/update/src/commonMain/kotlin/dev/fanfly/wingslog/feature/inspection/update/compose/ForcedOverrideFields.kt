@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.inspection.compose
+package dev.fanfly.wingslog.feature.inspection.update.compose
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Checkbox
@@ -20,19 +21,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.select_date
-import wingslog.feature.inspection.generated.resources.force_due_engine_hours
-import wingslog.feature.inspection.generated.resources.force_overrides_safety
-import wingslog.feature.inspection.generated.resources.override_next_due_date
-import wingslog.feature.inspection.generated.resources.override_next_due_engine
+import wingslog.feature.inspection.update.generated.resources.force_due_engine_hours
+import wingslog.feature.inspection.update.generated.resources.force_overrides_safety
+import wingslog.feature.inspection.update.generated.resources.override_next_due_date
+import wingslog.feature.inspection.update.generated.resources.override_next_due_engine
 import kotlin.time.Instant
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.generated.resources.Res as InspectionRes
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun ForcedOverrideFields(
@@ -69,9 +72,11 @@ fun ForcedOverrideFields(
     if (forceOverrideEngine) {
       OutlinedTextField(
         value = forcedEngineHours,
-        onValueChange = onForcedEngineHoursChange,
+        onValueChange = { onForcedEngineHoursChange(it.filter { c -> c.isDigit() || c == '.' }) },
         label = { Text(stringResource(InspectionRes.string.force_due_engine_hours)) },
-        modifier = Modifier.fillMaxWidth().padding(start = 32.dp)
+        modifier = Modifier.fillMaxWidth().padding(start = 32.dp),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
       )
       Spacer(modifier = Modifier.height(Spacing.medium))
     }

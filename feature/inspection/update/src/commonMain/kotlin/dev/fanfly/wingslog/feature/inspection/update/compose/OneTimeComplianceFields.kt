@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.inspection.compose
+package dev.fanfly.wingslog.feature.inspection.update.compose
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,9 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.generated.resources.one_time_compliance
-import wingslog.feature.inspection.generated.resources.one_time_compliance_desc
-import wingslog.feature.inspection.generated.resources.Res as InspectionRes
+import wingslog.feature.inspection.update.generated.resources.one_time_compliance
+import wingslog.feature.inspection.update.generated.resources.one_time_compliance_desc
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun OneTimeComplianceFields(

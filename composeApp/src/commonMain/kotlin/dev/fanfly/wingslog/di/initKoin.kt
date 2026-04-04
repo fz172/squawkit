@@ -5,7 +5,7 @@ import dev.fanfly.wingslog.core.database.di.commonFirebaseModule
 import dev.fanfly.wingslog.feature.fleet.database.impl.fleetDatabaseModule
 import dev.fanfly.wingslog.feature.fleet.di.fleetModule
 import dev.fanfly.wingslog.feature.inspection.datamanager.inspectionModule
-import dev.fanfly.wingslog.feature.inspection.viewmodel.inspectionUiModule
+import dev.fanfly.wingslog.feature.inspection.update.viewmodel.inspectionUiModule
 import dev.fanfly.wingslog.feature.maintenance.database.impl.maintenanceDatabaseModule
 import dev.fanfly.wingslog.feature.maintenance.di.maintenanceModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule

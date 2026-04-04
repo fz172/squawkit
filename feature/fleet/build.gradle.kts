@@ -48,7 +48,7 @@ kotlin {
       implementation(project(":feature:inspection:datamanager"))
       implementation(project(":feature:fleet:database"))
       implementation(project(":feature:maintenance:database"))
-      implementation(project(":feature:inspection"))
+      implementation(project(":feature:inspection:update"))
 
       // Firebase
 

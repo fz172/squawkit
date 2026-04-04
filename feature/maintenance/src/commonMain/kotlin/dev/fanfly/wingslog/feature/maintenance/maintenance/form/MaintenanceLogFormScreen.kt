@@ -58,7 +58,7 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
-import dev.fanfly.wingslog.feature.inspection.compose.InspectionPickerSheet
+import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.maintenance.maintenance.form.data.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.maintenance.maintenance.form.data.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.maintenance.maintenance.util.displayName
@@ -77,9 +77,9 @@ import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.remove
 import wingslog.core.ui.generated.resources.save
 import wingslog.core.ui.generated.resources.update
-import wingslog.feature.inspection.generated.resources.inspection_work
-import wingslog.feature.inspection.generated.resources.no_inspection_work_recorded
-import wingslog.feature.inspection.generated.resources.unknown_inspection
+import wingslog.feature.inspection.update.generated.resources.inspection_work
+import wingslog.feature.inspection.update.generated.resources.no_inspection_work_recorded
+import wingslog.feature.inspection.update.generated.resources.unknown_inspection
 import wingslog.feature.maintenance.generated.resources.add_log
 import wingslog.feature.maintenance.generated.resources.airframe_serial
 import wingslog.feature.maintenance.generated.resources.airframe_time_hours
@@ -102,7 +102,7 @@ import wingslog.feature.maintenance.generated.resources.this_action_cannot_be_un
 import wingslog.feature.maintenance.generated.resources.work_description_required
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.generated.resources.Res as InspectionRes
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)

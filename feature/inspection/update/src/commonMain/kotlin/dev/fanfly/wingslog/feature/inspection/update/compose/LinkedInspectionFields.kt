@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.inspection.compose
+package dev.fanfly.wingslog.feature.inspection.update.compose
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,12 +26,12 @@ import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.unknown
-import wingslog.feature.inspection.generated.resources.link_to_inspection
-import wingslog.feature.inspection.generated.resources.remove_link
-import wingslog.feature.inspection.generated.resources.schedule_with_another_work
-import wingslog.feature.inspection.generated.resources.schedule_with_another_work_description
+import wingslog.feature.inspection.update.generated.resources.link_to_inspection
+import wingslog.feature.inspection.update.generated.resources.remove_link
+import wingslog.feature.inspection.update.generated.resources.schedule_with_another_work
+import wingslog.feature.inspection.update.generated.resources.schedule_with_another_work_description
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.generated.resources.Res as InspectionRes
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun LinkedInspectionFields(

@@ -12,8 +12,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.fleet.dashboard.DashboardScreen
-import dev.fanfly.wingslog.feature.inspection.ui.AddInspectionRoute
-import dev.fanfly.wingslog.feature.inspection.ui.EditInspectionRoute
+import dev.fanfly.wingslog.feature.inspection.update.ui.AddInspectionRoute
+import dev.fanfly.wingslog.feature.inspection.update.ui.EditInspectionRoute
 import dev.fanfly.wingslog.feature.maintenance.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
 import dev.fanfly.wingslog.feature.maintenance.edit.EditAircraftScreen
 import dev.fanfly.wingslog.feature.maintenance.maintenance.form.MaintenanceLogFormScreen

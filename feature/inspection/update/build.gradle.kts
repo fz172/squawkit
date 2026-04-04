@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.inspection"
+  namespace = "dev.fanfly.wingslog.feature.inspection.update"
   compileSdk = 36
 
   defaultConfig {

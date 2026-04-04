@@ -52,7 +52,7 @@ kotlin {
       implementation(project(":feature:inspection:datamanager"))
       implementation(project(":feature:inspection:sharedassets"))
       implementation(project(":feature:inspection:viewing"))
-      implementation(project(":feature:inspection"))
+      implementation(project(":feature:inspection:update"))
 
       implementation(libs.kotlinx.datetime)
 

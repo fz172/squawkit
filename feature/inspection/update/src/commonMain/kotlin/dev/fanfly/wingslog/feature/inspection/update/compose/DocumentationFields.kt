@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.inspection.compose
+package dev.fanfly.wingslog.feature.inspection.update.compose
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -11,14 +11,14 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.generated.resources.compliance_authority_hint
-import wingslog.feature.inspection.generated.resources.compliance_notes
-import wingslog.feature.inspection.generated.resources.compliance_notes_hint
-import wingslog.feature.inspection.generated.resources.reference_number
-import wingslog.feature.inspection.generated.resources.reference_number_hint
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_authority
-import wingslog.feature.inspection.generated.resources.Res as InspectionRes
+import wingslog.feature.inspection.update.generated.resources.compliance_authority_hint
+import wingslog.feature.inspection.update.generated.resources.compliance_notes
+import wingslog.feature.inspection.update.generated.resources.compliance_notes_hint
+import wingslog.feature.inspection.update.generated.resources.reference_number
+import wingslog.feature.inspection.update.generated.resources.reference_number_hint
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun DocumentationFields(
