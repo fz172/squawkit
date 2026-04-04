@@ -274,7 +274,6 @@ fun AddInspectionScreen(
             2 -> {
               // --- Page 2: Documentation & Notes ---
               DocumentationFields(
-                type = type,
                 refNumber = refNumber,
                 onRefNumberChange = { refNumber = it },
                 complianceAuthority = complianceAuthority,

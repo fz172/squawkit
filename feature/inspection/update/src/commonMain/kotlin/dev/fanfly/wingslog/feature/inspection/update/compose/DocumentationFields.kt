@@ -8,7 +8,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_authority
@@ -22,7 +21,6 @@ import wingslog.feature.inspection.update.generated.resources.Res as InspectionR
 
 @Composable
 fun DocumentationFields(
-  type: ComplianceType,
   refNumber: String,
   onRefNumberChange: (String) -> Unit,
   complianceAuthority: String,
@@ -32,26 +30,24 @@ fun DocumentationFields(
   modifier: Modifier = Modifier
 ) {
   Column(modifier = modifier) {
-    if (type == ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN || type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
-      OutlinedTextField(
-        value = refNumber,
-        onValueChange = onRefNumberChange,
-        label = { Text(stringResource(InspectionRes.string.reference_number)) },
-        placeholder = { Text(stringResource(InspectionRes.string.reference_number_hint)) },
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true
-      )
-      Spacer(modifier = Modifier.height(Spacing.medium))
-      OutlinedTextField(
-        value = complianceAuthority,
-        onValueChange = onComplianceAuthorityChange,
-        label = { Text(stringResource(SharedInspectionRes.string.compliance_authority)) },
-        placeholder = { Text(stringResource(InspectionRes.string.compliance_authority_hint)) },
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true
-      )
-      Spacer(modifier = Modifier.height(Spacing.medium))
-    }
+    OutlinedTextField(
+      value = refNumber,
+      onValueChange = onRefNumberChange,
+      label = { Text(stringResource(InspectionRes.string.reference_number)) },
+      placeholder = { Text(stringResource(InspectionRes.string.reference_number_hint)) },
+      modifier = Modifier.fillMaxWidth(),
+      singleLine = true
+    )
+    Spacer(modifier = Modifier.height(Spacing.medium))
+    OutlinedTextField(
+      value = complianceAuthority,
+      onValueChange = onComplianceAuthorityChange,
+      label = { Text(stringResource(SharedInspectionRes.string.compliance_authority)) },
+      placeholder = { Text(stringResource(InspectionRes.string.compliance_authority_hint)) },
+      modifier = Modifier.fillMaxWidth(),
+      singleLine = true
+    )
+    Spacer(modifier = Modifier.height(Spacing.medium))
 
     OutlinedTextField(
       value = complianceNotes,

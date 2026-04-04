@@ -289,7 +289,6 @@ fun EditInspectionScreen(
             2 -> {
               // --- Page 2: Details ---
               DocumentationFields(
-                type = type,
                 refNumber = refNumber,
                 onRefNumberChange = { refNumber = it },
                 complianceAuthority = complianceAuthority,
