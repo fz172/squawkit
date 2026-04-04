@@ -102,7 +102,7 @@ fun EditAircraftScreen(
     if (uiState.isSaved || uiState.isDeleted) {
       // Navigate back when save or delete is successful
       if (uiState.isDeleted) {
-        navController.popBackStack("dashboard", inclusive = false)
+        navController.popBackStack("main", inclusive = false)
       } else {
         navController.popBackStack()
       }
