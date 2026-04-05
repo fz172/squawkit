@@ -13,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,18 +38,15 @@ import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.done
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
-import wingslog.feature.inspection.sharedassets.generated.resources.engine_format
 import wingslog.feature.inspection.sharedassets.generated.resources.inspection_work
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_inspection
 import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
-import wingslog.feature.maintenance.generated.resources.airframe_time_format
 import wingslog.feature.maintenance.generated.resources.airframe_time_label
 import wingslog.feature.maintenance.generated.resources.edit_log
 import wingslog.feature.maintenance.generated.resources.engine_time_label
 import wingslog.feature.maintenance.generated.resources.log_details
 import wingslog.feature.maintenance.generated.resources.maintenance_date
-import wingslog.feature.maintenance.generated.resources.prop_time_format
 import wingslog.feature.maintenance.generated.resources.prop_time_label
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -164,7 +160,8 @@ fun MaintenanceLogDetailSheet(
         Spacer(Modifier.height(Spacing.small))
         log.inspection_ids.forEach { cardId ->
           val card = availableCards.find { it.id == cardId }
-          val title = card?.title ?: cmpStringResource(SharedInspectionRes.string.unknown_inspection, cardId)
+          val title =
+            card?.title ?: cmpStringResource(SharedInspectionRes.string.unknown_inspection, cardId)
           Text(
             text = "• $title",
             style = MaterialTheme.typography.bodyMedium,
