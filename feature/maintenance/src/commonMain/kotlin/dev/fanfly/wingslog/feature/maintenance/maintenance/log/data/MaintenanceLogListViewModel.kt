@@ -51,7 +51,8 @@ class MaintenanceLogListViewModel(
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
           LogsLoadState.Error -> MaintenanceLogListUiState.Error
           is LogsLoadState.Loaded -> {
-            val filtered = logsState.logs.filter { log ->
+            val sorted = logsState.logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
+            val filtered = sorted.filter { log ->
               (filter.component == null || log.component_type == filter.component) &&
                 (filter.query.isBlank() || log.work_description.contains(
                   filter.query,

@@ -32,6 +32,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -49,6 +50,7 @@ import dev.fanfly.wingslog.feature.maintenance.maintenance.log.data.MaintenanceL
 import dev.fanfly.wingslog.feature.maintenance.maintenance.log.data.MaintenanceLogListUiState
 import dev.fanfly.wingslog.feature.maintenance.maintenance.log.data.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.feature.maintenance.maintenance.util.displayName
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -76,6 +78,7 @@ fun MaintenanceLogListScreen(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+  val coroutineScope = rememberCoroutineScope()
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
@@ -257,7 +260,9 @@ fun MaintenanceLogListScreen(
                     viewModel.onEditLog(log.id)
                   },
                   onAttachmentTap = { attachment ->
-                    attachmentOpener.open(attachment)
+                    coroutineScope.launch {
+                      attachmentOpener.open(attachment).collect {}
+                    }
                   }
                 )
               }
