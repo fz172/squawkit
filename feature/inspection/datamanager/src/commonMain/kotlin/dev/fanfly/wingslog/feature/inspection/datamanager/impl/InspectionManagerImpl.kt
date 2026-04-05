@@ -14,6 +14,8 @@ import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
@@ -21,8 +23,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
-import kotlin.time.Instant
 
 class InspectionManagerImpl(
   private val firebaseAuth: FirebaseAuth,
@@ -90,7 +90,7 @@ class InspectionManagerImpl(
   override suspend fun computeNextDue(
     card: InspectionCard,
     logs: List<MaintenanceLog>,
-    allCards: List<InspectionCard>
+    allCards: List<InspectionCard>,
   ): DueMetadata {
     return computeNextDueRecursive(card, logs, logs, allCards, mutableSetOf())
   }
@@ -100,7 +100,7 @@ class InspectionManagerImpl(
     logs: List<MaintenanceLog>,
     allLogs: List<MaintenanceLog>,
     allCards: List<InspectionCard>,
-    visited: MutableSet<String>
+    visited: MutableSet<String>,
   ): DueMetadata {
     if (card.id in visited) {
       // Cycle detected or already computed in this chain
@@ -144,10 +144,10 @@ class InspectionManagerImpl(
 
       val status = when {
         (nextDueDate != null && nextDueDate < currentDate) ||
-            (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
+          (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
 
         (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
-            (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
+          (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
 
         else -> DueStatus.NORMAL
       }
@@ -253,10 +253,10 @@ class InspectionManagerImpl(
     val status = when {
       isImmediate -> DueStatus.OVERDUE
       (nextDueDate != null && nextDueDate < currentDate) ||
-          (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
+        (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
 
       (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
-          (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
+        (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
 
       else -> DueStatus.NORMAL
     }
@@ -272,7 +272,7 @@ class InspectionManagerImpl(
 
   private suspend fun saveCard(
     docRef: dev.gitlive.firebase.firestore.DocumentReference,
-    card: InspectionCard
+    card: InspectionCard,
   ) {
     val data = mutableMapOf(
       INSPECTION_CARD_BLOB to InspectionCard.ADAPTER.encode(card),

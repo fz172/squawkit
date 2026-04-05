@@ -10,14 +10,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_authority
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.update.generated.resources.compliance_authority_hint
 import wingslog.feature.inspection.update.generated.resources.compliance_notes
 import wingslog.feature.inspection.update.generated.resources.compliance_notes_hint
 import wingslog.feature.inspection.update.generated.resources.reference_number
 import wingslog.feature.inspection.update.generated.resources.reference_number_hint
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun DocumentationFields(
@@ -27,7 +27,7 @@ fun DocumentationFields(
   onComplianceAuthorityChange: (String) -> Unit,
   complianceNotes: String,
   onComplianceNotesChange: (String) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier) {
     OutlinedTextField(

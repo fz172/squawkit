@@ -15,9 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import wingslog.feature.maintenance.generated.resources.blade_abbreviation_with_index
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.generated.resources.blade_abbreviation_with_index
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

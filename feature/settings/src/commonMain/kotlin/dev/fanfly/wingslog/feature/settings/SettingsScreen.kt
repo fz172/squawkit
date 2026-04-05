@@ -25,20 +25,20 @@ import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.settings
+import wingslog.feature.settings.generated.resources.Res as SettingsRes
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.sign_out
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.feature.settings.generated.resources.Res as SettingsRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
   navController: NavController,
   settingsViewModel: SettingsViewModel = koinViewModel(),
-  onAddAircraft: () -> Unit
+  onAddAircraft: () -> Unit,
 ) {
 
   val user by settingsViewModel.user.collectAsStateWithLifecycle()

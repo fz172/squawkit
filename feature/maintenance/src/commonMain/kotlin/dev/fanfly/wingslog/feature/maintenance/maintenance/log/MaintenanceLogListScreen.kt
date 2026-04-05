@@ -39,17 +39,23 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.maintenance.log.compose.MaintenanceLogCard
+import dev.fanfly.wingslog.feature.maintenance.maintenance.log.compose.MaintenanceLogDetailSheet
 import dev.fanfly.wingslog.feature.maintenance.maintenance.log.data.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.maintenance.maintenance.log.data.MaintenanceLogListUiState
 import dev.fanfly.wingslog.feature.maintenance.maintenance.log.data.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.feature.maintenance.maintenance.util.displayName
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.all
 import wingslog.core.ui.generated.resources.retry
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.generated.resources.add_first_maintenance_log
 import wingslog.feature.maintenance.generated.resources.add_log
 import wingslog.feature.maintenance.generated.resources.clear_filter
@@ -60,15 +66,13 @@ import wingslog.feature.maintenance.generated.resources.no_maintenance_logs_desc
 import wingslog.feature.maintenance.generated.resources.no_maintenance_logs_title
 import wingslog.feature.maintenance.generated.resources.search_logs
 import wingslog.feature.maintenance.generated.resources.showing_x_of_y
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MaintenanceLogListScreen(
   navController: NavController,
-  viewModel: MaintenanceLogListViewModel = koinViewModel()
+  viewModel: MaintenanceLogListViewModel = koinViewModel(),
+  attachmentOpener: AttachmentOpener = koinInject(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -236,10 +240,26 @@ fun MaintenanceLogListScreen(
                   items(state.logs, key = { it.id }) { log ->
                     MaintenanceLogCard(
                       log = log,
-                      onClick = { viewModel.onEditLog(log.id) }
+                      onClick = { viewModel.onLogClick(log) }
                     )
                   }
                 }
+              }
+
+              // Detail Sheet
+              state.selectedLog?.let { log ->
+                MaintenanceLogDetailSheet(
+                  log = log,
+                  availableCards = state.availableCards,
+                  onDismiss = { viewModel.onDismissDetail() },
+                  onEditClick = {
+                    viewModel.onDismissDetail()
+                    viewModel.onEditLog(log.id)
+                  },
+                  onAttachmentTap = { attachment ->
+                    attachmentOpener.open(attachment)
+                  }
+                )
               }
             }
           }

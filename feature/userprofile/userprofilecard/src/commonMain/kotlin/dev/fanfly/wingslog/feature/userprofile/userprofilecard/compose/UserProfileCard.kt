@@ -23,19 +23,19 @@ import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
-import wingslog.core.ui.generated.resources.edit_profile
-import wingslog.feature.userprofile.sharedassets.generated.resources.anonymous_user
-import wingslog.feature.userprofile.sharedassets.generated.resources.ic_anonymous_user
-import wingslog.feature.userprofile.userprofilecard.generated.resources.profile_picture
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.ui.generated.resources.edit_profile
 import wingslog.feature.userprofile.sharedassets.generated.resources.Res as SharedAssetsRes
+import wingslog.feature.userprofile.sharedassets.generated.resources.anonymous_user
+import wingslog.feature.userprofile.sharedassets.generated.resources.ic_anonymous_user
 import wingslog.feature.userprofile.userprofilecard.generated.resources.Res as CardRes
+import wingslog.feature.userprofile.userprofilecard.generated.resources.profile_picture
 
 data class UserProfileCardData(
   val photoUri: String? = null,
   val displayName: String? = null,
-  val licenceInfo: LicenseInfo? = null
+  val licenceInfo: LicenseInfo? = null,
 )
 
 @Composable

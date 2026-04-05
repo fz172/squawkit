@@ -17,13 +17,13 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.overview.data.LogStats
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.generated.resources.airframe_time_label
 import wingslog.feature.maintenance.generated.resources.engine_time_label
 import wingslog.feature.maintenance.generated.resources.maintenance_summary
 import wingslog.feature.maintenance.generated.resources.prop_time_label
 import wingslog.feature.maintenance.generated.resources.total_logs
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 
 @Composable
@@ -42,7 +42,8 @@ fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
       elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
       Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.extraLarge, vertical = Spacing.large),
+        modifier = Modifier.fillMaxWidth()
+          .padding(horizontal = Spacing.extraLarge, vertical = Spacing.large),
         horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
       ) {
         stats.currentAirframeTime?.let {

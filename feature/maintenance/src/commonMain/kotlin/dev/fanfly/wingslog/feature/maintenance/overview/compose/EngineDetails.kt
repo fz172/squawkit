@@ -8,12 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Engine
-import wingslog.core.ui.generated.resources.component_propeller
-import wingslog.feature.maintenance.generated.resources.engine_with_index
-import wingslog.feature.maintenance.generated.resources.model_and_sn
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.generated.resources.engine_with_index
+import wingslog.feature.maintenance.generated.resources.model_and_sn
 
 @Composable
 fun EngineDetails(index: Int, engine: Engine) {

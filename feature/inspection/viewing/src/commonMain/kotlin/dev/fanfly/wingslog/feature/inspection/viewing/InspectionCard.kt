@@ -39,7 +39,7 @@ fun InspectionCard(
   statusColor: Color,
   isOverdue: Boolean = false,
   onClick: () -> Unit = {},
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   val containerColor = if (isOverdue) {
     MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)

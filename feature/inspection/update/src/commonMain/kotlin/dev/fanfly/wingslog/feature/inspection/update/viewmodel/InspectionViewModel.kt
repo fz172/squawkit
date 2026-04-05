@@ -15,7 +15,6 @@ import dev.fanfly.wingslog.core.attachments.datamanager.PickedFile
 import dev.fanfly.wingslog.core.attachments.datamanager.UploadState
 import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.fileCount
-import dev.fanfly.wingslog.core.attachments.model.visible
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -77,21 +76,40 @@ class InspectionViewModel(
 
   // ── Attachment management ────────────────────────────────────────────────
 
-  fun showAttachmentPicker() { _showAttachmentPicker.value = true }
-  fun hideAttachmentPicker() { _showAttachmentPicker.value = false }
+  fun showAttachmentPicker() {
+    _showAttachmentPicker.value = true
+  }
+
+  fun hideAttachmentPicker() {
+    _showAttachmentPicker.value = false
+  }
 
   fun addLocalFiles(files: List<PickedFile>) {
     val remaining = MAX_FILE_ATTACHMENTS - _pendingAttachments.value.fileCount()
     val toAdd = files
       .filter { it.sizeBytes <= MAX_FILE_SIZE_BYTES }
       .take(remaining)
-      .map { PendingAttachment.LocalFile(generateRandomId(), it.name, it.uri, it.mimeType, it.sizeBytes) }
+      .map {
+        PendingAttachment.LocalFile(
+          generateRandomId(),
+          it.name,
+          it.uri,
+          it.mimeType,
+          it.sizeBytes
+        )
+      }
     _pendingAttachments.update { it + toAdd }
   }
 
   fun addLink(url: String, name: String) {
     val displayName = name.ifBlank { url.take(40) }
-    _pendingAttachments.update { it + PendingAttachment.LocalLink(generateRandomId(), displayName, url) }
+    _pendingAttachments.update {
+      it + PendingAttachment.LocalLink(
+        generateRandomId(),
+        displayName,
+        url
+      )
+    }
   }
 
   fun removeAttachment(id: String) {
@@ -118,8 +136,9 @@ class InspectionViewModel(
 
     if (!isAnonymous) {
       for (pf in pending.filterIsInstance<PendingAttachment.LocalFile>()) {
-        val storagePath = attachmentManager.buildInspectionCardPath(aircraftId, cardId, pf.tempId, pf.name)
-          ?: return null
+        val storagePath =
+          attachmentManager.buildInspectionCardPath(aircraftId, cardId, pf.tempId, pf.name)
+            ?: return null
         var error: Throwable? = null
         attachmentManager.uploadFile(storagePath, pf.localUri, pf.mimeType, pf.name, pf.tempId)
           .collect { state ->

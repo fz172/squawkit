@@ -10,7 +10,7 @@ data class LogStats(
   val propeller: Long,
   val currentEngineTime: Double? = null,
   val currentAirframeTime: Double? = null,
-  val currentPropTime: Double? = null
+  val currentPropTime: Double? = null,
 )
 
 sealed interface AircraftOverviewUiState {

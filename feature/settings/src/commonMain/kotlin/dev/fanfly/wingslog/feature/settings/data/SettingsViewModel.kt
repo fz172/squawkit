@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-  private val authManager: AuthManager, private val userProfileManager: UserProfileManager
+  private val authManager: AuthManager, private val userProfileManager: UserProfileManager,
 ) : ViewModel() {
 
   private val _user = MutableStateFlow(SettingsUiState())

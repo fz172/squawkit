@@ -7,7 +7,7 @@ data class SettingsUiState(
   val photoUri: String? = null,
   val displayName: String? = null,
   val licenseInfo: LicenseInfo = newUserLicenseProfile(),
-  val userStatus: UserStatus = UserStatus.UNKNOWN
+  val userStatus: UserStatus = UserStatus.UNKNOWN,
 )
 
 enum class UserStatus {
