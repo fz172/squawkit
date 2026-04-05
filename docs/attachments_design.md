@@ -255,44 +255,105 @@ Step 4 is the existing `MaintenanceLogManager.addLog/updateLog` or `InspectionMa
 
 ## View Flow — Opening Attachments
 
+There is no in-app viewer of any kind. All files are downloaded to the device and handed off to the OS; the OS decides which app opens them. Links open in the default browser. This keeps the app simple and lets the platform handle format support, zooming, sharing, etc.
+
+### Platform abstraction
+
 ```kotlin
-fun onAttachmentTap(attachment: Attachment, navController: NavController, platformContext: PlatformContext) {
-  when (attachment.type) {
-    ATTACHMENT_TYPE_IMAGE -> navController.navigate(ImageViewerRoute(attachment.download_url, attachment.name))
-    ATTACHMENT_TYPE_LINK  -> platformContext.openUrl(attachment.url)
-    ATTACHMENT_TYPE_PDF,
-    ATTACHMENT_TYPE_FILE  -> platformContext.openWithSystemViewer(attachment.download_url, attachment.mime_type)
-  }
+// commonMain
+expect class AttachmentOpener {
+  /**
+   * For LINK type: open attachment.url in the system browser.
+   * For all file types: download attachment.download_url to a local path,
+   * then hand off to the OS native open mechanism.
+   * Emits OpenState so the caller can show a progress indicator.
+   */
+  fun open(attachment: Attachment): Flow<OpenState>
+}
+
+sealed class OpenState {
+  object Downloading : OpenState()              // download in progress
+  object Done        : OpenState()              // OS handed off successfully
+  data class Failed(val error: Throwable) : OpenState()
 }
 ```
 
-This handler lives in the screen composable (or ViewModel) that hosts the detail view. `AttachmentSection` and `AttachmentRow` are stateless and receive `onTap: (Attachment) -> Unit` as a lambda.
+`AttachmentOpener` is injected via Koin as a platform-specific singleton. The handler lives in the screen composable (or ViewModel) that hosts the detail view; `AttachmentSection` and `AttachmentRow` are stateless and receive `onTap: (Attachment) -> Unit` as a lambda.
 
-For `openWithSystemViewer`:
-- **Android**: `Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl)).setType(mimeType)` — passes the Firebase Storage download URL directly to the system. No local download required; Android can stream the file.
-- **iOS**: `UIApplication.shared.open(URL(string: downloadUrl))` — same approach.
+### Android implementation
 
-**Image viewer:** A dedicated full-screen route `AttachmentImageViewerScreen`, not a `ModalBottomSheet`. Stacking a bottom sheet on top of an existing bottom sheet (`InspectionDetailSheet`) is fragile on both platforms and breaks the back-stack. The screen renders:
-- `AsyncImage` filling the screen with `ContentScale.Fit`, using `memoryCacheKey = downloadUrl` so Coil reuses the thumbnail already loaded in `AttachmentRow`.
-- A single close/back button (top-left); no app bar chrome.
-- `placeholder` set to the generic image icon from `core/attachments/sharedassets`.
+**Links:**
+```kotlin
+val intent = Intent(Intent.ACTION_VIEW, Uri.parse(attachment.url))
+context.startActivity(intent)
+```
 
-**Stale `download_url` fallback:** If the initial image load fails, the viewer calls `attachmentManager.getDownloadUrl(storagePath)`. On success, the ViewModel writes the refreshed URL back to Firestore via the parent document manager and re-triggers the image load. This is a background coroutine — the UI shows a loading indicator, not an error, while the refresh is in flight.
+**Files:** Use the system `DownloadManager` service. This is the right tool for the job: it runs in a separate process, continues if the app is backgrounded, shows a system notification with progress, and puts the file in the Downloads folder so the user can find it again.
+
+```kotlin
+val request = DownloadManager.Request(Uri.parse(attachment.download_url))
+  .setTitle(attachment.name)
+  .setMimeType(attachment.mime_type.ifEmpty { "*/*" })
+  .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+  .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, attachment.name)
+val downloadId = downloadManager.enqueue(request)
+
+// Listen for completion via BroadcastReceiver on ACTION_DOWNLOAD_COMPLETE,
+// then open the downloaded file:
+val uri = downloadManager.getUriForDownloadedFile(downloadId)
+val intent = Intent(Intent.ACTION_VIEW).apply {
+  setDataAndType(uri, attachment.mime_type.ifEmpty { "*/*" })
+  addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+}
+context.startActivity(Intent.createChooser(intent, null))
+```
+
+`DownloadManager` requires `WRITE_EXTERNAL_STORAGE` on API < 29 and `android.permission.DOWNLOAD_WITHOUT_NOTIFICATION` — both standard and auto-granted on the target SDK.
+
+### iOS implementation
+
+**Links:**
+```swift
+UIApplication.shared.open(URL(string: attachment.url)!!)
+```
+
+**Files:** Download to the app's temp directory using `URLSession`, then open with `UIDocumentInteractionController`:
+```swift
+let tempUrl = FileManager.default.temporaryDirectory
+  .appendingPathComponent(attachment.name)
+let (data, _) = try await URLSession.shared.data(from: URL(string: attachment.download_url)!!)
+try data.write(to: tempUrl)
+
+let controller = UIDocumentInteractionController(url: tempUrl)
+controller.presentPreview(animated: true)  // uses QuickLook: PDF, images, etc.
+// Falls back to open-with sheet if QuickLook can't handle the type.
+```
+
+iOS temp directory is cleaned up by the OS; no manual cache management needed.
+
+### Stale `download_url`
+
+Firebase Storage download URLs can expire or be revoked. If the download fails with a 403:
+- `DownloadManager` / `URLSession` will surface an HTTP error to the user via a system notification or the `OpenState.Failed` emission.
+- The app shows a snackbar: "Could not open attachment. Try again."
+- On retry, call `attachmentManager.getDownloadUrl(storagePath)` first to get a fresh URL, use that for the download, and silently write the refreshed URL back to the proto in Firestore as a background fire-and-forget.
+
+This is only needed on retry — the happy path trusts the stored `download_url`.
 
 ---
 
 ## View Flow — Attachment List Composables
 
-These live in `core/attachments/viewing` and are stateless.
+These live in `core/attachments/viewing` and are stateless. No Coil dependency — the list uses type icons only; there is no in-app rendering of file contents.
 
 ### `AttachmentRow`
 
-Each attachment is a full-width tappable row. Images show a 48×48dp thumbnail loaded by Coil; all other types show a type icon.
+Each attachment is a full-width tappable row with a type icon, name, and subtitle.
 
 ```
 ┌──────────────────────────────────────────────────┐
-│  [thumb/icon]  Service Bulletin SB-23-15          │
-│                PDF · 340 KB              [↗ open] │
+│  [icon]  Service Bulletin SB-23-15                │
+│          PDF · 340 KB                    [↗ open] │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -311,7 +372,12 @@ fun AttachmentRow(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    AttachmentThumbnail(attachment, size = 48.dp)
+    Icon(
+      imageVector = attachment.typeIcon(),
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.size(24.dp),
+    )
     Column(modifier = Modifier.weight(1f)) {
       Text(
         text = attachment.name,
@@ -333,50 +399,16 @@ fun AttachmentRow(
   }
 }
 
-private fun attachmentSubtitle(attachment: Attachment): String = when (attachment.type) {
-  ATTACHMENT_TYPE_LINK -> attachment.url.toDisplayDomain()  // e.g. "rgl.faa.gov"
-  else -> "${attachment.mimeTypeLabel()} · ${attachment.size_bytes.toFileSize()}"
-}
-```
-
-### `AttachmentThumbnail`
-
-```kotlin
-@Composable
-private fun AttachmentThumbnail(attachment: Attachment, size: Dp) {
-  val shape = RoundedCornerShape(6.dp)
-  if (attachment.type == ATTACHMENT_TYPE_IMAGE && attachment.download_url.isNotEmpty()) {
-    AsyncImage(
-      model = ImageRequest.Builder(LocalContext.current)
-        .data(attachment.download_url)
-        .memoryCacheKey(attachment.download_url)
-        .build(),
-      contentDescription = null,
-      contentScale = ContentScale.Crop,
-      modifier = Modifier.size(size).clip(shape)
-        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-    )
-  } else {
-    Box(
-      modifier = Modifier.size(size).clip(shape)
-        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-      contentAlignment = Alignment.Center,
-    ) {
-      Icon(
-        imageVector = attachment.typeIcon(),
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(24.dp),
-      )
-    }
-  }
-}
-
 private fun Attachment.typeIcon() = when (type) {
   ATTACHMENT_TYPE_PDF   -> Icons.Outlined.PictureAsPdf
   ATTACHMENT_TYPE_LINK  -> Icons.Outlined.Link
   ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
   else                  -> Icons.Outlined.InsertDriveFile
+}
+
+private fun attachmentSubtitle(attachment: Attachment): String = when (attachment.type) {
+  ATTACHMENT_TYPE_LINK -> attachment.url.toDisplayDomain()  // e.g. "rgl.faa.gov"
+  else -> "${attachment.mimeTypeLabel()} · ${attachment.size_bytes.toFileSize()}"
 }
 ```
 
@@ -412,6 +444,50 @@ fun AttachmentSection(
 
 ---
 
+## Upload and Download Reliability
+
+### What the Firebase Storage SDK handles for you
+
+- **Automatic retry on transient failures.** The native Firebase Storage SDKs (wrapped by GitLive) retry with exponential backoff on network blips. You do not need to write retry logic.
+- **Resumable (multipart) uploads.** The SDK switches to multipart upload automatically for files above ~5 MB. If the connection drops mid-upload the SDK retries the in-flight chunk — it does not restart from byte 0. This is transparent.
+- **Resumable downloads (Android DownloadManager).** `DownloadManager` uses HTTP range requests internally; if a download is interrupted it resumes from where it left off.
+
+### What you do need to handle
+
+**Uploads:**
+
+| Scenario | What happens | What to build |
+|---|---|---|
+| Network blip during upload | SDK retries automatically | Nothing |
+| Persistent network loss | SDK eventually fails the upload | `UploadState.Failed` → show error + Retry button |
+| User taps Save and immediately backgrounds the app | Upload coroutine is cancelled if the process is killed by Android | Acceptable for V1. Show error on return; user re-taps Save. |
+| User backgrounds app on iOS | iOS suspends the app; upload likely fails | Same as above. |
+| Upload partially succeeds (some files done, one fails) | Save sequence aborts and cleans up already-uploaded files | Already handled in the save sequence (step 1 rollback) |
+
+**Background uploads are not worth building for V1.** A proper background upload service requires `WorkManager` + a `ForegroundService` on Android, and a background `URLSession` transfer on iOS. That is significant platform-specific complexity for a personal logbook app where saves are short, intentional actions with the user present. If a user backgrounds the app mid-save and the process is killed, they get an error on return and can save again — this is acceptable.
+
+**Downloads (opening attachments):**
+
+| Scenario | What happens | What to build |
+|---|---|---|
+| Network blip | `DownloadManager` / `URLSession` retries automatically | Nothing |
+| Persistent failure | System download fails; user gets a system notification | `OpenState.Failed` → snackbar "Could not open — check connection" |
+| User backgrounds app mid-download (Android) | `DownloadManager` is a system service and continues independently | Nothing — this is free |
+| User backgrounds app mid-download (iOS) | `URLSession` download is paused; resumes when app returns to foreground | Acceptable |
+| Stale `download_url` (403) | Download fails | On retry, call `getDownloadUrl(storagePath)` first; write refreshed URL back in background |
+| File already downloaded | `DownloadManager` downloads again to Downloads folder | Acceptable for V1 |
+
+**Large files (up to 25 MB limit):**
+- Progress is surfaced automatically by `DownloadManager` via system notification on Android.
+- On iOS, emit `OpenState.Downloading` while `URLSession` is in flight and show a loading indicator in the UI.
+- The 25 MB cap means worst-case ~3 min on a poor connection — acceptable since the user initiates the open deliberately.
+
+### Summary
+
+For a personal logbook app with a 25 MB file size cap, you get retry and resumability for free from the platform. The only thing to build is: progress indicators, an error state with a retry button, and stale-URL refresh on retry. Do not build a background upload service for V1.
+
+---
+
 ## Deletion of Parent Document
 
 When a maintenance log or inspection card is deleted, its associated Firebase Storage files must also be deleted.
@@ -440,12 +516,13 @@ This is best-effort: if Storage deletion fails, the Firestore document is still 
 
 ```
 core/model                    ← Attachment proto message added here
-core/attachments/datamanager  ← AttachmentManager, UploadState, AttachmentStoragePath
+core/attachments/datamanager  ← AttachmentManager, UploadState, OpenState,
+                                  AttachmentOpener (expect), AttachmentStoragePath
   depends on: core/model, Firebase Storage, Koin
 core/attachments/sharedassets ← strings (attachments label, add attachment, …), type icons
   depends on: Compose resources only
-core/attachments/viewing      ← AttachmentRow, AttachmentThumbnail, AttachmentSection (read-only)
-  depends on: core/model, core/attachments/sharedassets, core/ui, Compose, Coil
+core/attachments/viewing      ← AttachmentRow, AttachmentSection (read-only, no Coil)
+  depends on: core/model, core/attachments/sharedassets, core/ui, Compose
 
 feature/maintenance            ← adds dep on core/attachments/viewing
                                   picker sheet lives here (update submodule)
@@ -464,4 +541,3 @@ feature/inspection/update     ← picker sheet lives here; adds dep on core/atta
 3. **Image compression.** Should picked images be compressed before upload? Reduces cost and upload time at the expense of some quality. Recommend yes, compress to max 2048px and 85% JPEG quality for `ATTACHMENT_TYPE_IMAGE`.
 4. **Anonymous users.** Anonymous users can currently create logs. Firebase Storage security rules must be decided: allow anonymous uploads (storage billed to the project) or require sign-in. Recommendation: require sign-in to upload files; show a prompt to sign in if the user tries to add an attachment while anonymous.
 5. **Firebase Storage pricing.** Free tier: 5 GB storage, 1 GB/day download. For a personal logbook this is more than sufficient. Document in the release notes that attachments count against project storage quota.
-6. **`download_url` refresh write-back.** Decide which manager method handles writing a refreshed URL back to Firestore when the stale-URL fallback fires (e.g. `MaintenanceLogManager.updateLogAttachmentUrl` / `InspectionManager.updateCardAttachmentUrl`). Must be defined before implementing the image viewer.
