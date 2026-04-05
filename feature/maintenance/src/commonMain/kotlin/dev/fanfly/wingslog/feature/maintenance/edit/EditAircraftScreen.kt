@@ -57,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
+import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.feature.maintenance.edit.data.EditAircraftViewModel
@@ -315,7 +316,7 @@ fun EngineSection(
         cmpStringResource(MaintenanceRes.string.propeller_hub),
         style = MaterialTheme.typography.labelSmall
       )
-      val hub = engine.propeller?.hub ?: dev.fanfly.wingslog.aircraft.PropellerHub()
+      val hub = engine.propeller?.hub ?: PropellerHub()
       InputField(
         label = cmpStringResource(MaintenanceRes.string.make), value = hub.make,
 

@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.attachments.model
 
 import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.aircraft.AttachmentType
 
 /**
  * Represents an attachment in the form's pending state before the parent document is saved.
@@ -48,7 +49,7 @@ sealed class PendingAttachment {
 fun List<PendingAttachment>.fileCount(): Int = count { pending ->
   when (pending) {
     is PendingAttachment.LocalFile -> true
-    is PendingAttachment.Saved -> pending.attachment.type != dev.fanfly.wingslog.aircraft.AttachmentType.ATTACHMENT_TYPE_LINK
+    is PendingAttachment.Saved -> pending.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK
     else -> false
   }
 }

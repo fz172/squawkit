@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.maintenance.edit.data
 
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.PropellerHub
 
 data class EditAircraftUiState(
   val aircraft: Aircraft = Aircraft(),
@@ -14,7 +15,7 @@ data class EditAircraftUiState(
       if (aircraft.make.isBlank() || aircraft.model.isBlank() || aircraft.serial.isBlank()) return false
       aircraft.engine.forEach { engine ->
         if (engine.make.isBlank() || engine.model.isBlank() || engine.serial.isBlank()) return false
-        val hub = engine.propeller?.hub ?: dev.fanfly.wingslog.aircraft.PropellerHub()
+        val hub = engine.propeller?.hub ?: PropellerHub()
         if (hub.make.isBlank() || hub.model.isBlank()) return false
         engine.propeller?.blades?.forEach { blade ->
           if (blade.serial.isBlank()) return false
