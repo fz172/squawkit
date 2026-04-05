@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.maintenance.overview.data
 
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 
 data class LogStats(
@@ -22,7 +23,7 @@ sealed interface AircraftOverviewUiState {
     val compliedInspections: List<InspectionCardWithStatus> = emptyList(),
     // Detail sheet — non-null when user tapped a card
     val selectedInspection: InspectionCardWithStatus? = null,
-    val logsForSelectedInspection: List<dev.fanfly.wingslog.aircraft.MaintenanceLog> = emptyList(),
+    val logsForSelectedInspection: List<MaintenanceLog> = emptyList(),
     // Delete confirm dialog — non-null when user taps delete
     val deletingInspectionId: String? = null,
   ) : AircraftOverviewUiState

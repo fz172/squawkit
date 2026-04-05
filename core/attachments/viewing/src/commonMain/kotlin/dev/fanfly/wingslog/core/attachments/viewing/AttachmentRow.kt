@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import java.net.URI
 
 @Composable
 fun AttachmentRow(
@@ -88,7 +89,7 @@ private fun Attachment.subtitle(): String = when (type) {
 
 private fun String.displayDomain(): String = try {
   val withScheme = if (startsWith("http")) this else "https://$this"
-  val host = java.net.URI(withScheme).host ?: this
+  val host = URI(withScheme).host ?: this
   if (host.length > 40) host.take(37) + "…" else host
 } catch (e: Exception) {
   take(40)

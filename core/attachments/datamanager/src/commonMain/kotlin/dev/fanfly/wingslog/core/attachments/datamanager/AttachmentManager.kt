@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.attachments.datamanager
 
 import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.aircraft.AttachmentType
 import kotlinx.coroutines.flow.Flow
 
 interface AttachmentManager {
@@ -41,7 +42,7 @@ interface AttachmentManager {
   ): Flow<UploadState>
 
   /**
-   * Deletes a file from Firebase Storage. No-op for [dev.fanfly.wingslog.aircraft.AttachmentType.ATTACHMENT_TYPE_LINK].
+   * Deletes a file from Firebase Storage. No-op for [AttachmentType.ATTACHMENT_TYPE_LINK].
    */
   suspend fun deleteFile(attachment: Attachment): Result<Unit>
 

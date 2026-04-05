@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.core.attachments.viewing
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,10 +11,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material.icons.outlined.InsertDriveFile
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.attachments.datamanager.PickedFile
@@ -90,7 +92,7 @@ fun AttachmentFormSection(
       if (!isAnonymous) {
         OutlinedButton(
           onClick = onAddClick,
-          contentPadding = androidx.compose.foundation.layout.PaddingValues(
+          contentPadding = PaddingValues(
             horizontal = 12.dp,
             vertical = 4.dp
           ),
@@ -149,7 +151,7 @@ private fun PendingAttachmentRow(
       style = MaterialTheme.typography.bodyMedium,
       modifier = Modifier.weight(1f),
       maxLines = 1,
-      overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+      overflow = TextOverflow.Ellipsis,
     )
     IconButton(onClick = onRemove) {
       Icon(
@@ -168,16 +170,16 @@ private fun PendingAttachment.typeIcon() = when (this) {
     AttachmentType.ATTACHMENT_TYPE_PDF -> Icons.Outlined.PictureAsPdf
     AttachmentType.ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
     AttachmentType.ATTACHMENT_TYPE_LINK -> Icons.Outlined.Link
-    else -> Icons.Outlined.InsertDriveFile
+    else -> Icons.AutoMirrored.Outlined.InsertDriveFile
   }
 
   is PendingAttachment.LocalFile -> when {
     mimeType.startsWith("image/") -> Icons.Outlined.Image
     mimeType == "application/pdf" -> Icons.Outlined.PictureAsPdf
-    else -> Icons.Outlined.InsertDriveFile
+    else -> Icons.AutoMirrored.Outlined.InsertDriveFile
   }
 
-  else -> Icons.Outlined.InsertDriveFile
+  else -> Icons.AutoMirrored.Outlined.InsertDriveFile
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
