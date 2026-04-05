@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.AttachmentType
@@ -244,23 +245,27 @@ private fun AttachmentPickerSheet(
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
       if (!showLinkField) {
-        TextButton(
-          onClick = onChooseFile,
-          enabled = !filesAtLimit,
+        Row(
           modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
-          Icon(Icons.Default.Add, contentDescription = null)
-          Spacer(Modifier.width(Spacing.small))
-          Text(stringResource(AttachRes.string.choose_file))
-        }
-
-        TextButton(
-          onClick = { showLinkField = true },
-          modifier = Modifier.fillMaxWidth(),
-        ) {
-          Icon(Icons.Outlined.Link, contentDescription = null)
-          Spacer(Modifier.width(Spacing.small))
-          Text(stringResource(AttachRes.string.add_link))
+          OutlinedButton(
+            onClick = onChooseFile,
+            enabled = !filesAtLimit,
+            modifier = Modifier.weight(1f),
+          ) {
+            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(Spacing.small))
+            Text(stringResource(AttachRes.string.choose_file))
+          }
+          OutlinedButton(
+            onClick = { showLinkField = true },
+            modifier = Modifier.weight(1f),
+          ) {
+            Icon(Icons.Outlined.Link, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(Spacing.small))
+            Text(stringResource(AttachRes.string.add_link))
+          }
         }
         Text(
           text = if (filesAtLimit) {
@@ -270,6 +275,8 @@ private fun AttachmentPickerSheet(
           },
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
+          textAlign = TextAlign.Center,
+          modifier = Modifier.fillMaxWidth(),
         )
       } else {
         OutlinedTextField(
