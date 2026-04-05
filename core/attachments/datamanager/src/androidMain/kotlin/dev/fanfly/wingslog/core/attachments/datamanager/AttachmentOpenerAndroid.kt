@@ -3,8 +3,8 @@ package dev.fanfly.wingslog.core.attachments.datamanager
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Environment
+import androidx.core.net.toUri
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import kotlinx.coroutines.delay
@@ -18,14 +18,19 @@ class AttachmentOpenerAndroid(private val context: Context) : AttachmentOpener {
     try {
       when (attachment.type) {
         AttachmentType.ATTACHMENT_TYPE_LINK -> {
-          val intent = Intent(Intent.ACTION_VIEW, Uri.parse(attachment.url))
+          val url = attachment.url.let {
+            if (!it.startsWith("http://") && !it.startsWith("https://")) "https://$it" else it
+          }
+          val intent = Intent(Intent.ACTION_VIEW, url.toUri())
           intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
           context.startActivity(intent)
           emit(OpenState.Done)
         }
+
         else -> {
-          val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-          val request = DownloadManager.Request(Uri.parse(attachment.download_url))
+          val downloadManager =
+            context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+          val request = DownloadManager.Request(attachment.download_url.toUri())
             .setTitle(attachment.name)
             .setMimeType(attachment.mime_type.ifEmpty { "*/*" })
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -53,6 +58,7 @@ class AttachmentOpenerAndroid(private val context: Context) : AttachmentOpener {
                     })
                     done = true
                   }
+
                   DownloadManager.STATUS_FAILED -> {
                     val reasonCol = cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)
                     throw Exception("Download failed: reason=${cursor.getInt(reasonCol)}")
