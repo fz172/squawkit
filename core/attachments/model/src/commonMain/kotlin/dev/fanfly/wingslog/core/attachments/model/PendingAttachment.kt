@@ -25,6 +25,18 @@ sealed class PendingAttachment {
     override val id: String get() = tempId
   }
 
+  /**
+   * A [LocalFile] that is currently being uploaded to Firebase Storage.
+   * [progress] is 0–1; 0f means indeterminate.
+   */
+  data class Uploading(
+    val tempId: String,
+    override val name: String,
+    val progress: Float = 0f,
+  ) : PendingAttachment() {
+    override val id: String get() = tempId
+  }
+
   data class LocalLink(
     val tempId: String,
     override val name: String,
@@ -49,6 +61,7 @@ sealed class PendingAttachment {
 fun List<PendingAttachment>.fileCount(): Int = count { pending ->
   when (pending) {
     is PendingAttachment.LocalFile -> true
+    is PendingAttachment.Uploading -> true
     is PendingAttachment.Saved -> pending.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK
     else -> false
   }
