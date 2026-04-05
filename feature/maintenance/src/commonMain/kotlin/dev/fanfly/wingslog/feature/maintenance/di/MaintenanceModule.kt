@@ -11,5 +11,5 @@ val maintenanceModule = module {
   viewModel { AircraftOverviewViewModel(get(), get(), get(), get()) }
   viewModel { EditAircraftViewModel(get(), get()) }
   viewModel { MaintenanceLogListViewModel(get(), get()) }
-  viewModel { MaintenanceLogFormViewModel(get(), get(), get(), get()) }
+  viewModel { MaintenanceLogFormViewModel(get(), get(), get(), get(), get(), get()) }
 }

@@ -85,6 +85,7 @@ fun EditInspectionScreen(
   onSave: (InspectionCard) -> Unit,
   onCancel: () -> Unit,
   onDeleteRequest: (String) -> Unit,
+  attachmentSection: @Composable () -> Unit = {},
 ) {
   var title by remember { mutableStateOf(card.title) }
   val component = card.component
@@ -295,6 +296,10 @@ fun EditInspectionScreen(
                 onComplianceAuthorityChange = { complianceAuthority = it },
                 complianceNotes = complianceNotes,
                 onComplianceNotesChange = { complianceNotes = it })
+
+              Spacer(modifier = Modifier.height(Spacing.large))
+
+              attachmentSection()
             }
 
             3 -> {

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "dev.fanfly.wingslog.aircraft";
+option java_multiple_files = true;
+
+enum AttachmentType {
+  ATTACHMENT_TYPE_UNKNOWN = 0;
+  ATTACHMENT_TYPE_IMAGE   = 1;
+  ATTACHMENT_TYPE_PDF     = 2;
+  ATTACHMENT_TYPE_LINK    = 3;
+  ATTACHMENT_TYPE_FILE    = 4;
+}
+
+message Attachment {
+  string id           = 1;
+  string name         = 2;
+  AttachmentType type = 3;
+  string storage_path = 4;
+  string download_url = 5;
+  string url          = 6;
+  string mime_type    = 7;
+  int64  size_bytes   = 8;
+  google.protobuf.Timestamp created_at = 9;
+}

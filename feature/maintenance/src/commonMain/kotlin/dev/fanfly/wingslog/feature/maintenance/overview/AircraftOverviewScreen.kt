@@ -39,6 +39,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
@@ -54,6 +56,7 @@ import dev.fanfly.wingslog.feature.maintenance.overview.data.AircraftOverviewUiS
 import dev.fanfly.wingslog.feature.maintenance.overview.data.AircraftOverviewViewModel
 import dev.fanfly.wingslog.feature.maintenance.overview.data.LogStats
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
@@ -72,7 +75,9 @@ import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @Composable
 fun AircraftOverviewScreen(
-  navController: NavController, viewModel: AircraftOverviewViewModel = koinViewModel(),
+  navController: NavController,
+  viewModel: AircraftOverviewViewModel = koinViewModel(),
+  attachmentOpener: AttachmentOpener = koinInject(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
@@ -133,6 +138,7 @@ fun AircraftOverviewScreen(
     onEditInspectionClick = { aircraftId, cardId -> navController.navigate("maintenance_inspection_edit/$aircraftId/$cardId") },
     onCancelDeleteInspection = { viewModel.cancelDeleteInspection() },
     onConfirmDeleteInspection = { viewModel.confirmDeleteInspection() },
+    onAttachmentTap = { attachment -> coroutineScope.launch { attachmentOpener.open(attachment).collect {} } },
   )
 }
 
@@ -159,6 +165,7 @@ fun AircraftOverviewContent(
   onEditInspectionClick: (String, String) -> Unit = { _, _ -> },
   onCancelDeleteInspection: () -> Unit = {},
   onConfirmDeleteInspection: () -> Unit = {},
+  onAttachmentTap: (Attachment) -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   val scrollState = rememberScrollState()
@@ -237,6 +244,7 @@ fun AircraftOverviewContent(
             onEditInspectionClick(aircraft.id, selectedInspection.card.id)
           }
         },
+        onAttachmentTap = onAttachmentTap,
       )
     }
 

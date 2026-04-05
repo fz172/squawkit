@@ -54,6 +54,10 @@ kotlin {
       implementation(project(":feature:inspection:viewing"))
       implementation(project(":feature:inspection:update"))
 
+      implementation(project(":core:attachments:model"))
+      implementation(project(":core:attachments:datamanager"))
+      implementation(project(":core:attachments:viewing"))
+
       implementation(libs.kotlinx.datetime)
 
       // Compose

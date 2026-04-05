@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="attachments">Attachments</string>
+  <string name="add_attachment">Add attachment</string>
+  <string name="choose_file">Choose file</string>
+  <string name="add_link">Add link</string>
+  <string name="link_url">URL</string>
+  <string name="link_name">Name (optional)</string>
+  <string name="max_files_reached">Maximum 3 files reached</string>
+  <string name="file_too_large">File exceeds 25 MB limit</string>
+  <string name="sign_in_to_add_attachments">Sign in to add attachments</string>
+  <string name="invalid_url">Enter a valid URL</string>
+  <string name="opening_attachment">Opening…</string>
+  <string name="open_failed">Could not open attachment. Try again.</string>
+  <string name="remove_attachment">Remove attachment</string>
+  <string name="attachment_type_pdf">PDF</string>
+  <string name="attachment_type_image">Image</string>
+  <string name="attachment_type_link">Link</string>
+  <string name="attachment_type_file">File</string>
+</resources>

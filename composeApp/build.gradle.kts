@@ -64,6 +64,11 @@ kotlin {
       implementation(project(":feature:fleet"))
       implementation(project(":feature:fleet:database"))
 
+      implementation(project(":core:attachments:model"))
+      implementation(project(":core:attachments:datamanager"))
+      implementation(project(":core:attachments:sharedassets"))
+      implementation(project(":core:attachments:viewing"))
+
       implementation(compose.ui)
       implementation(compose.material3)
       implementation(compose.components.resources)

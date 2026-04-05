@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
+import "aircraft/attachment.proto";
 
 option java_package = "dev.fanfly.wingslog.aircraft";
 option java_multiple_files = true;
@@ -72,4 +73,5 @@ message InspectionCard {
   string compliance_authority = 10;
   string compliance_details = 11;
   bool is_one_time = 12; // If true, moves to history after first log
+  repeated Attachment attachments = 13;
 }

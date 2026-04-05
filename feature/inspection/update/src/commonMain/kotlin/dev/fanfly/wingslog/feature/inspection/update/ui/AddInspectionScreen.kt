@@ -75,6 +75,7 @@ fun AddInspectionScreen(
   availableInspections: List<InspectionCard>,
   onSave: (InspectionCard) -> Unit,
   onCancel: () -> Unit,
+  attachmentSection: @Composable () -> Unit = {},
 ) {
   var title by remember { mutableStateOf("") }
   var component by remember { mutableStateOf(InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME) }
@@ -281,6 +282,10 @@ fun AddInspectionScreen(
                 complianceNotes = complianceNotes,
                 onComplianceNotesChange = { complianceNotes = it }
               )
+
+              Spacer(modifier = Modifier.height(Spacing.large))
+
+              attachmentSection()
             }
           }
         }
