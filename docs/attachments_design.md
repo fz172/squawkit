@@ -218,6 +218,12 @@ sealed class PendingAttachment {
 }
 ```
 
+### Attachment limits enforced in the picker
+
+- **Files**: maximum 3 per log/card (across `Local` + `Saved` items, excluding `PendingDelete`). The "Choose file" button is disabled and shows "Maximum 3 files reached" when the count is at 3.
+- **Links**: unlimited.
+- **File size**: 25 MB per file. Size is checked from `PickedFile.sizeBytes` before the file is added to the pending list. If exceeded, show an inline error: "File exceeds 25 MB limit."
+
 ### Add-link UX
 
 The picker sheet "Add link" option presents an inline text field. On confirmation:
@@ -534,10 +540,14 @@ feature/inspection/update     ← picker sheet lives here; adds dep on core/atta
 
 ---
 
-## Open Questions / Decisions Needed
+## Decisions
 
-1. **Max attachment count per item.** Recommend 10 for V1. Beyond that the embedded proto grows large and the save-time upload becomes slow.
-2. **Max file size.** Firebase Storage has no enforced limit, but large uploads on mobile are poor UX. Recommend a 25 MB soft limit enforced in the picker with a user-facing error.
-3. **Image compression.** Should picked images be compressed before upload? Reduces cost and upload time at the expense of some quality. Recommend yes, compress to max 2048px and 85% JPEG quality for `ATTACHMENT_TYPE_IMAGE`.
-4. **Anonymous users.** Anonymous users can currently create logs. Firebase Storage security rules must be decided: allow anonymous uploads (storage billed to the project) or require sign-in. Recommendation: require sign-in to upload files; show a prompt to sign in if the user tries to add an attachment while anonymous.
+1. **Max attachment count per item.** Maximum **3 uploaded files** per log/card. Hyperlinks are unlimited. The picker disables the "Choose file" option and shows an inline message ("Maximum 3 files reached") once the file count hits 3; the "Add link" option remains available.
+
+2. **Max file size.** **25 MB** hard limit enforced in the picker before upload begins. If the selected file exceeds 25 MB, show an error and do not add it to the pending list.
+
+3. **Image compression.** None. Files are uploaded as-is.
+
+4. **Anonymous users.** Anonymous users cannot use the attachment feature. If an anonymous user taps "Add attachment", show a prompt: "Sign in to add attachments." The attachment section is hidden entirely on the view side for anonymous users. Firebase Storage security rules must enforce this at the backend: only authenticated (non-anonymous) users may read or write under `users/{uid}/`.
+
 5. **Firebase Storage pricing.** Free tier: 5 GB storage, 1 GB/day download. For a personal logbook this is more than sufficient. Document in the release notes that attachments count against project storage quota.
