@@ -73,6 +73,7 @@ import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
 import wingslog.core.attachments.sharedassets.generated.resources.file_added
+import wingslog.core.attachments.sharedassets.generated.resources.file_read_error
 import wingslog.core.attachments.sharedassets.generated.resources.link_added
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.add
@@ -127,6 +128,7 @@ fun MaintenanceLogFormScreen(
   val logDeletedMessage = cmpStringResource(MaintenanceRes.string.log_deleted)
   val fileAddedMessage = cmpStringResource(AttachRes.string.file_added)
   val linkAddedMessage = cmpStringResource(AttachRes.string.link_added)
+  val fileReadErrorMessage = cmpStringResource(AttachRes.string.file_read_error)
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
@@ -147,6 +149,7 @@ fun MaintenanceLogFormScreen(
 
         MaintenanceLogFormEvent.FileAdded -> snackbarHostState.showSnackbar(fileAddedMessage)
         MaintenanceLogFormEvent.LinkAdded -> snackbarHostState.showSnackbar(linkAddedMessage)
+        MaintenanceLogFormEvent.PickError -> snackbarHostState.showSnackbar(fileReadErrorMessage)
       }
     }
   }
@@ -359,6 +362,7 @@ fun MaintenanceLogFormScreen(
             onPickFiles = viewModel::addLocalFiles,
             onAddLink = viewModel::addLink,
             onDismissSheet = viewModel::hideAttachmentPicker,
+            onPickError = viewModel::onFilePickError,
             modifier = Modifier.fillMaxWidth(),
           )
 

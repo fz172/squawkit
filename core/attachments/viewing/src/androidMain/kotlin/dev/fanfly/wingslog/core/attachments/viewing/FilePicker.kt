@@ -8,7 +8,10 @@ import androidx.compose.ui.platform.LocalContext
 import dev.fanfly.wingslog.core.attachments.datamanager.PickedFile
 
 @Composable
-actual fun rememberFilePicker(onResult: (List<PickedFile>) -> Unit): () -> Unit {
+actual fun rememberFilePicker(
+  onResult: (List<PickedFile>) -> Unit,
+  onReadError: () -> Unit,
+): () -> Unit {
   val context = LocalContext.current
   val launcher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.OpenMultipleDocuments(),
@@ -24,6 +27,7 @@ actual fun rememberFilePicker(onResult: (List<PickedFile>) -> Unit): () -> Unit 
         null
       }
     }
+    if (uris.isNotEmpty() && files.size < uris.size) onReadError()
     onResult(files)
   }
   return { launcher.launch(arrayOf("*/*")) }
