@@ -35,6 +35,9 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachmentRes
 import wingslog.core.attachments.sharedassets.generated.resources.file_too_large
+import wingslog.core.attachments.sharedassets.generated.resources.upload_failed
+import wingslog.core.attachments.sharedassets.generated.resources.upload_network_error
+import wingslog.core.attachments.sharedassets.generated.resources.upload_permission_error
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.delete_failed
 import wingslog.core.ui.generated.resources.save_failed
@@ -174,6 +177,10 @@ class MaintenanceLogFormViewModel(
   fun showAttachmentPicker() = _uiState.update { it.copy(showAttachmentPicker = true) }
   fun hideAttachmentPicker() = _uiState.update { it.copy(showAttachmentPicker = false) }
 
+  fun onFilePickError() {
+    viewModelScope.launch { _events.send(MaintenanceLogFormEvent.PickError) }
+  }
+
   fun addLocalFiles(files: List<PickedFile>) {
     var anyAdded = false
     _uiState.update { state ->
@@ -273,10 +280,7 @@ class MaintenanceLogFormViewModel(
             // Rollback any files uploaded so far in this batch
             coroutineScope { uploadedAttachments.forEach { launch { attachmentManager.deleteFile(it) } } }
             _uiState.update {
-              it.copy(
-                isSaving = false, error = uploadError!!.message
-                  ?.let { msg -> UiText.DynamicString(msg) }
-                  ?: UiText.StringRes(CoreRes.string.save_failed))
+              it.copy(isSaving = false, error = uploadError!!.toUploadErrorText())
             }
             return@launch
           }
@@ -394,4 +398,16 @@ sealed interface MaintenanceLogFormEvent {
   data object DeleteSuccess : MaintenanceLogFormEvent
   data object FileAdded : MaintenanceLogFormEvent
   data object LinkAdded : MaintenanceLogFormEvent
+  data object PickError : MaintenanceLogFormEvent
+}
+
+private fun Throwable.toUploadErrorText(): UiText {
+  val msg = message?.lowercase() ?: ""
+  return when {
+    msg.contains("network") || msg.contains("timeout") || msg.contains("unable to resolve") ->
+      UiText.StringRes(AttachmentRes.string.upload_network_error)
+    msg.contains("permission") || msg.contains("unauthorized") || msg.contains("403") ->
+      UiText.StringRes(AttachmentRes.string.upload_permission_error)
+    else -> UiText.StringRes(AttachmentRes.string.upload_failed)
+  }
 }

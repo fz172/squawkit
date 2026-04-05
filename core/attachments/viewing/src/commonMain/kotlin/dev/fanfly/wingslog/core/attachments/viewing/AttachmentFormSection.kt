@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -52,6 +53,8 @@ import wingslog.core.attachments.sharedassets.generated.resources.invalid_url
 import wingslog.core.attachments.sharedassets.generated.resources.link_name
 import wingslog.core.attachments.sharedassets.generated.resources.link_url
 import wingslog.core.attachments.sharedassets.generated.resources.attachment_limits_hint
+import wingslog.core.attachments.sharedassets.generated.resources.delete_saved_attachment_message
+import wingslog.core.attachments.sharedassets.generated.resources.delete_saved_attachment_title
 import wingslog.core.attachments.sharedassets.generated.resources.max_files_reached
 import wingslog.core.attachments.sharedassets.generated.resources.no_attachments
 import wingslog.core.attachments.sharedassets.generated.resources.remove_attachment
@@ -59,6 +62,7 @@ import wingslog.core.attachments.sharedassets.generated.resources.sign_in_to_add
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.ok
+import wingslog.core.ui.generated.resources.remove
 
 /**
  * Attachment section for forms (add/edit).
@@ -77,8 +81,12 @@ fun AttachmentFormSection(
   onAddLink: (url: String, name: String) -> Unit,
   onDismissSheet: () -> Unit,
   modifier: Modifier = Modifier,
+  onPickError: () -> Unit = {},
 ) {
-  val pickFiles = rememberFilePicker { files -> onPickFiles(files) }
+  val pickFiles = rememberFilePicker(
+    onResult = { files -> onPickFiles(files) },
+    onReadError = onPickError,
+  )
 
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     Row(
@@ -145,6 +153,28 @@ private fun PendingAttachmentRow(
   onRemove: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val isSavedFile = pending is PendingAttachment.Saved &&
+    pending.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK
+  var showConfirmDialog by remember { mutableStateOf(false) }
+
+  if (showConfirmDialog) {
+    AlertDialog(
+      onDismissRequest = { showConfirmDialog = false },
+      title = { Text(stringResource(AttachRes.string.delete_saved_attachment_title)) },
+      text = { Text(stringResource(AttachRes.string.delete_saved_attachment_message)) },
+      confirmButton = {
+        TextButton(onClick = { onRemove(); showConfirmDialog = false }) {
+          Text(stringResource(CoreRes.string.remove))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showConfirmDialog = false }) {
+          Text(stringResource(CoreRes.string.cancel))
+        }
+      },
+    )
+  }
+
   Row(
     modifier = modifier.fillMaxWidth(),
     verticalAlignment = Alignment.CenterVertically,
@@ -163,7 +193,7 @@ private fun PendingAttachmentRow(
       maxLines = 1,
       overflow = TextOverflow.Ellipsis,
     )
-    IconButton(onClick = onRemove) {
+    IconButton(onClick = { if (isSavedFile) showConfirmDialog = true else onRemove() }) {
       Icon(
         Icons.Default.Close,
         contentDescription = stringResource(AttachRes.string.remove_attachment),
@@ -282,6 +312,12 @@ private fun AttachmentPickerSheet(
 
 private fun isValidUrl(url: String): Boolean {
   if (url.isBlank()) return false
-  val full = if (url.startsWith("http://") || url.startsWith("https://")) url else "https://$url"
-  return full.length > 8 && full.contains(".") && !full.contains(" ")
+  val lower = url.lowercase().trim()
+  // Reject non-web protocols
+  if (lower.startsWith("ftp://") || lower.startsWith("file://") || lower.startsWith("mailto:")) return false
+  val normalized = if (lower.startsWith("http://") || lower.startsWith("https://")) lower else "https://$lower"
+  val withoutProtocol = normalized.substringAfter("://")
+  val dotIndex = withoutProtocol.indexOf('.')
+  // Must have content before and after the first dot, and no spaces
+  return dotIndex > 0 && dotIndex < withoutProtocol.lastIndex && !withoutProtocol.contains(' ')
 }
