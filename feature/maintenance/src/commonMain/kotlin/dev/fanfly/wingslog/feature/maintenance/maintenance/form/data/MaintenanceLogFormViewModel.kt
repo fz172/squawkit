@@ -16,6 +16,8 @@ import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.maintenance.database.AircraftManager
 import dev.fanfly.wingslog.feature.maintenance.database.MaintenanceLogManager
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,14 +33,14 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachmentRes
+import wingslog.core.attachments.sharedassets.generated.resources.file_too_large
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.delete_failed
 import wingslog.core.ui.generated.resources.save_failed
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.generated.resources.log_not_found
 import wingslog.feature.maintenance.generated.resources.work_description_required
-import kotlin.time.Clock
-import kotlin.time.Instant
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 class MaintenanceLogFormViewModel(
   private val logManager: MaintenanceLogManager,
@@ -129,9 +131,13 @@ class MaintenanceLogFormViewModel(
 
   // ── Inspection ─────────────────────────────────────────────────────────────
 
-  fun onMaintenanceDateChange(date: LocalDate?) = _uiState.update { it.copy(maintenanceDate = date) }
+  fun onMaintenanceDateChange(date: LocalDate?) =
+    _uiState.update { it.copy(maintenanceDate = date) }
+
   fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
-  fun onInspectionIdsChange(value: List<String>) = _uiState.update { it.copy(selectedInspectionIds = value) }
+  fun onInspectionIdsChange(value: List<String>) =
+    _uiState.update { it.copy(selectedInspectionIds = value) }
+
   fun showInspectionPicker() = _uiState.update { it.copy(showInspectionPicker = true) }
   fun hideInspectionPicker() = _uiState.update { it.copy(showInspectionPicker = false) }
   fun toggleInspectionSelection(cardId: String) {
@@ -141,11 +147,13 @@ class MaintenanceLogFormViewModel(
       state.copy(selectedInspectionIds = current)
     }
   }
+
   fun removeInspectionId(cardId: String) {
     _uiState.update { state ->
       state.copy(selectedInspectionIds = state.selectedInspectionIds.filter { it != cardId })
     }
   }
+
   fun onEngineTimeChange(value: String) = _uiState.update { it.copy(engineTime = value) }
   fun onAirframeTimeChange(value: String) = _uiState.update { it.copy(airframeTime = value) }
   fun onPropTimeChange(value: String) = _uiState.update { it.copy(propTime = value) }
@@ -157,7 +165,9 @@ class MaintenanceLogFormViewModel(
       state.copy(selectedComponentType = value, selectedSubComponent = autoSerial)
     }
   }
-  fun onSubComponentChange(serial: String?) = _uiState.update { it.copy(selectedSubComponent = serial) }
+
+  fun onSubComponentChange(serial: String?) =
+    _uiState.update { it.copy(selectedSubComponent = serial) }
 
   // ── Attachments ─────────────────────────────────────────────────────────────
 
@@ -169,11 +179,19 @@ class MaintenanceLogFormViewModel(
       val remaining = MaintenanceLogFormUiState.MAX_FILE_ATTACHMENTS - state.fileAttachmentCount
       val toAdd = files.filter { it.sizeBytes <= MaintenanceLogFormUiState.MAX_FILE_SIZE_BYTES }
         .take(remaining)
-        .map { PendingAttachment.LocalFile(generateRandomId(), it.name, it.uri, it.mimeType, it.sizeBytes) }
+        .map {
+          PendingAttachment.LocalFile(
+            generateRandomId(),
+            it.name,
+            it.uri,
+            it.mimeType,
+            it.sizeBytes
+          )
+        }
       val oversized = files.any { it.sizeBytes > MaintenanceLogFormUiState.MAX_FILE_SIZE_BYTES }
       state.copy(
         pendingAttachments = state.pendingAttachments + toAdd,
-        error = if (oversized) UiText.StringRes(wingslog.core.attachments.sharedassets.generated.resources.Res.string.file_too_large) else state.error,
+        error = if (oversized) UiText.StringRes(AttachmentRes.string.file_too_large) else state.error,
       )
     }
   }
@@ -224,11 +242,22 @@ class MaintenanceLogFormViewModel(
             aircraftId, resolvedLogId, pending.tempId, pending.name
           )
           if (storagePath == null) {
-            _uiState.update { it.copy(isSaving = false, error = UiText.StringRes(CoreRes.string.save_failed)) }
+            _uiState.update {
+              it.copy(
+                isSaving = false,
+                error = UiText.StringRes(CoreRes.string.save_failed)
+              )
+            }
             return@launch
           }
           var uploadError: Throwable? = null
-          attachmentManager.uploadFile(storagePath, pending.localUri, pending.mimeType, pending.name, pending.tempId)
+          attachmentManager.uploadFile(
+            storagePath,
+            pending.localUri,
+            pending.mimeType,
+            pending.name,
+            pending.tempId
+          )
             .collect { uploadState ->
               when (uploadState) {
                 is UploadState.Done -> uploadedAttachments.add(uploadState.attachment)
@@ -240,9 +269,10 @@ class MaintenanceLogFormViewModel(
             // Rollback any files uploaded so far in this batch
             coroutineScope { uploadedAttachments.forEach { launch { attachmentManager.deleteFile(it) } } }
             _uiState.update {
-              it.copy(isSaving = false, error = uploadError!!.message
-                ?.let { msg -> UiText.DynamicString(msg) }
-                ?: UiText.StringRes(CoreRes.string.save_failed))
+              it.copy(
+                isSaving = false, error = uploadError!!.message
+                  ?.let { msg -> UiText.DynamicString(msg) }
+                  ?: UiText.StringRes(CoreRes.string.save_failed))
             }
             return@launch
           }
@@ -281,7 +311,8 @@ class MaintenanceLogFormViewModel(
         else -> state.selectedSubComponent ?: ""
       }
       val now = Clock.System.now()
-      val timestampInstant = state.maintenanceDate?.let { it.atStartOfDayIn(TimeZone.currentSystemDefault()) } ?: now
+      val timestampInstant =
+        state.maintenanceDate?.let { it.atStartOfDayIn(TimeZone.currentSystemDefault()) } ?: now
       val log = MaintenanceLog(
         id = resolvedLogId,
         timestamp = dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant(
@@ -298,13 +329,22 @@ class MaintenanceLogFormViewModel(
         attachments = finalAttachments,
       )
 
-      val result = if (isEditMode) logManager.updateLog(aircraftId, log) else logManager.addLog(aircraftId, log)
+      val result = if (isEditMode) logManager.updateLog(aircraftId, log) else logManager.addLog(
+        aircraftId,
+        log
+      )
       result
         .onSuccess {
           state.selectedInspectionIds.forEach { cardId ->
             state.availableInspectionCards.find { it.id == cardId }?.let { card ->
               if (card.force_due_date != null || card.force_due_engine_hour > 0f) {
-                inspectionManager.updateInspection(aircraftId, card.copy(force_due_date = null, force_due_engine_hour = 0f))
+                inspectionManager.updateInspection(
+                  aircraftId,
+                  card.copy(
+                    force_due_date = null,
+                    force_due_engine_hour = 0f
+                  )
+                )
               }
             }
           }
@@ -312,7 +352,10 @@ class MaintenanceLogFormViewModel(
         }
         .onFailure { e ->
           _uiState.update {
-            it.copy(isSaving = false, error = e.message?.let { UiText.DynamicString(it) } ?: UiText.StringRes(CoreRes.string.save_failed))
+            it.copy(
+              isSaving = false,
+              error = e.message?.let { UiText.DynamicString(it) }
+                ?: UiText.StringRes(CoreRes.string.save_failed))
           }
         }
     }
@@ -334,7 +377,8 @@ class MaintenanceLogFormViewModel(
         .onSuccess { _events.send(MaintenanceLogFormEvent.DeleteSuccess) }
         .onFailure { e ->
           _uiState.update {
-            it.copy(error = e.message?.let { UiText.DynamicString(it) } ?: UiText.StringRes(CoreRes.string.delete_failed))
+            it.copy(error = e.message?.let { UiText.DynamicString(it) }
+              ?: UiText.StringRes(CoreRes.string.delete_failed))
           }
         }
     }
