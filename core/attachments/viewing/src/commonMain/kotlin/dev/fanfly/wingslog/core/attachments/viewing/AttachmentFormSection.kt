@@ -47,14 +47,14 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
 import wingslog.core.attachments.sharedassets.generated.resources.add_attachment
 import wingslog.core.attachments.sharedassets.generated.resources.add_link
+import wingslog.core.attachments.sharedassets.generated.resources.attachment_limits_hint
 import wingslog.core.attachments.sharedassets.generated.resources.attachments
 import wingslog.core.attachments.sharedassets.generated.resources.choose_file
+import wingslog.core.attachments.sharedassets.generated.resources.delete_saved_attachment_message
+import wingslog.core.attachments.sharedassets.generated.resources.delete_saved_attachment_title
 import wingslog.core.attachments.sharedassets.generated.resources.invalid_url
 import wingslog.core.attachments.sharedassets.generated.resources.link_name
 import wingslog.core.attachments.sharedassets.generated.resources.link_url
-import wingslog.core.attachments.sharedassets.generated.resources.attachment_limits_hint
-import wingslog.core.attachments.sharedassets.generated.resources.delete_saved_attachment_message
-import wingslog.core.attachments.sharedassets.generated.resources.delete_saved_attachment_title
 import wingslog.core.attachments.sharedassets.generated.resources.max_files_reached
 import wingslog.core.attachments.sharedassets.generated.resources.no_attachments
 import wingslog.core.attachments.sharedassets.generated.resources.remove_attachment
@@ -253,6 +253,15 @@ private fun AttachmentPickerSheet(
           Spacer(Modifier.width(Spacing.small))
           Text(stringResource(AttachRes.string.choose_file))
         }
+
+        TextButton(
+          onClick = { showLinkField = true },
+          modifier = Modifier.fillMaxWidth(),
+        ) {
+          Icon(Icons.Outlined.Link, contentDescription = null)
+          Spacer(Modifier.width(Spacing.small))
+          Text(stringResource(AttachRes.string.add_link))
+        }
         Text(
           text = if (filesAtLimit) {
             stringResource(AttachRes.string.max_files_reached)
@@ -262,14 +271,6 @@ private fun AttachmentPickerSheet(
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        TextButton(
-          onClick = { showLinkField = true },
-          modifier = Modifier.fillMaxWidth(),
-        ) {
-          Icon(Icons.Outlined.Link, contentDescription = null)
-          Spacer(Modifier.width(Spacing.small))
-          Text(stringResource(AttachRes.string.add_link))
-        }
       } else {
         OutlinedTextField(
           value = linkUrl,
@@ -298,7 +299,12 @@ private fun AttachmentPickerSheet(
             if (!isValidUrl(trimmed)) {
               urlError = true
             } else {
-              onAddLink(trimmed, linkName.trim())
+              val normalized = if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+                trimmed
+              } else {
+                "https://$trimmed"
+              }
+              onAddLink(normalized, linkName.trim())
             }
           }) {
             Text(stringResource(CoreRes.string.ok))
@@ -315,7 +321,8 @@ private fun isValidUrl(url: String): Boolean {
   val lower = url.lowercase().trim()
   // Reject non-web protocols
   if (lower.startsWith("ftp://") || lower.startsWith("file://") || lower.startsWith("mailto:")) return false
-  val normalized = if (lower.startsWith("http://") || lower.startsWith("https://")) lower else "https://$lower"
+  val normalized =
+    if (lower.startsWith("http://") || lower.startsWith("https://")) lower else "https://$lower"
   val withoutProtocol = normalized.substringAfter("://")
   val dotIndex = withoutProtocol.indexOf('.')
   // Must have content before and after the first dot, and no spaces
