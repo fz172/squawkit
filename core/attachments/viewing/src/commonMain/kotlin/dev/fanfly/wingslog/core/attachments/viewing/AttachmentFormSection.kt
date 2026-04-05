@@ -209,6 +209,8 @@ private fun PendingAttachmentRow(
             modifier = Modifier.size(18.dp),
           )
         }
+      } else {
+        Spacer(Modifier.size(48.dp))
       }
     }
     if (isUploading) {
@@ -223,6 +225,9 @@ private fun PendingAttachmentRow(
           modifier = Modifier.fillMaxWidth().padding(start = 28.dp, end = Spacing.medium, top = 2.dp),
         )
       }
+    } else {
+      // Reserve the same vertical space as the progress bar so the divider below doesn't shift.
+      Spacer(Modifier.fillMaxWidth().height(6.dp))
     }
   }
 }

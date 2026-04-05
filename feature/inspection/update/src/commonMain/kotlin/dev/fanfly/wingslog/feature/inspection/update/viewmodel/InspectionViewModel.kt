@@ -22,8 +22,11 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.SharingStarted
 
 sealed interface InspectionUiState {
   data object Loading : InspectionUiState
@@ -52,6 +55,10 @@ class InspectionViewModel(
 
   private val _showAttachmentPicker = MutableStateFlow(false)
   val showAttachmentPicker: StateFlow<Boolean> = _showAttachmentPicker.asStateFlow()
+
+  val isUploading: StateFlow<Boolean> = _pendingAttachments
+    .map { list -> list.any { it is PendingAttachment.Uploading } }
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
   val isAnonymous: Boolean get() = auth.currentUser?.isAnonymous ?: true
   val filesAtLimit: Boolean get() = _pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS
