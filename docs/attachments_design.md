@@ -15,7 +15,7 @@ users/{uid}/fleet/{aircraftId}/inspection_cards/{cardId}
   inspection_info_blob: bytes   ← InspectionCard proto
 ```
 
-The current `MaintenanceLog` proto already has an unused `repeated string attachment_urls = 9`. This field will be replaced (repurposed by reusing field 9's slot) with a structured `repeated Attachment` message. `InspectionCard` has no existing attachment field.
+The current `MaintenanceLog` proto already has an unused `repeated string attachment_urls = 9`. This field will be repurposed by reusing field 9's slot with a structured `repeated Attachment` message. **This is only safe because no data was ever written to field 9.** If any client had previously persisted strings at field 9, reusing the field number would produce corrupt decodes (wire type 2 would be reinterpreted as a nested message). The safety assumption must be verified before migration — do not treat this as a general protobuf feature. `InspectionCard` has no existing attachment field.
 
 ---
 
@@ -54,12 +54,11 @@ message Attachment {
 
 ### Changes to existing protos
 
-**`maintenance_log.proto`** — replace the unused field 9:
+**`maintenance_log.proto`** — replace the unused field 9 (safe only because no data was ever written to this field — see Context):
 ```proto
 // was: repeated string attachment_urls = 9;
 repeated Attachment attachments = 9;
 ```
-Wire handles the in-place replacement cleanly because the field number is reused and old clients that wrote empty string lists will decode to an empty Attachment list (no stored data existed).
 
 **`inspection_card.proto`** — add new field:
 ```proto
@@ -94,22 +93,24 @@ Embedding the `repeated Attachment` metadata in the parent protobuf keeps reads 
 
 **Download URL strategy:**
 
-`download_url` is fetched once via `FirebaseStorage.getDownloadUrl(storagePath)` immediately after upload and stored in the `Attachment` message inside the protobuf. This avoids calling `getDownloadUrl()` on every view. If the URL is ever invalidated (e.g. file re-uploaded), the stored URL will fail and the app falls back to `getDownloadUrl()` on demand.
+`download_url` is fetched once via `FirebaseStorage.getDownloadUrl(storagePath)` immediately after upload and stored in the `Attachment` message inside the protobuf. This avoids calling `getDownloadUrl()` on every view. If the URL is ever invalidated (e.g. file re-uploaded), the viewer calls `AttachmentManager.getDownloadUrl(storagePath)` as a fallback. The ViewModel that triggered the open is responsible for writing the refreshed URL back to Firestore — the `AttachmentManager` interface has no reference to the parent document, so the re-write must be handled at the call site (e.g. `MaintenanceLogManager.updateLogAttachmentUrl`). Without this, the fallback only fixes the current session.
 
 ---
 
 ## Module Design
 
-Following the canonical feature module pattern, attachments are a cross-cutting concern shared by `feature/maintenance` and `feature/inspection`. They belong in `core/`:
+Following the canonical feature module pattern, attachments are a cross-cutting concern shared by `feature/maintenance` and `feature/inspection`. They belong in `core/`, and follow the same layered structure used in feature modules:
 
 ```
 core/
   attachments/
     model/          ← AttachmentType enum, any domain wrappers around the proto
     datamanager/    ← AttachmentManager interface + Firebase Storage impl + Koin module
-    ui/             ← Shared composables: AttachmentChip, AttachmentList,
-                       AttachmentPickerSheet, AttachmentViewerSheet
+    sharedassets/   ← strings ("Attachments", "Add attachment", …), type icons
+    viewing/        ← AttachmentRow, AttachmentThumbnail, AttachmentSection (read-only, stateless)
 ```
+
+The picker sheet (edit-time UI) lives in the consuming feature's `update` module, not in `core/attachments/viewing`, because it requires ViewModel interaction. Shared strings and icons used by both picker and viewer belong in `core/attachments/sharedassets/`.
 
 The `Attachment` proto message itself lives in `core/model` alongside the other proto messages (same as today — all protos compile there).
 
@@ -118,15 +119,16 @@ The `Attachment` proto message itself lives in `core/model` alongside the other 
 ```kotlin
 interface AttachmentManager {
   /**
-   * Upload a local file and return the resulting Attachment with storage_path
-   * and download_url populated. Emits progress as a Flow<UploadProgress>.
+   * Upload a local file and emit progress until the upload completes.
+   * Terminal emission is Done(attachment) with storage_path and download_url populated,
+   * or Failed(error) if the upload cannot be completed.
    */
-  suspend fun uploadFile(
+  fun uploadFile(
     storagePath: String,
     localUri: String,
     mimeType: String,
     displayName: String,
-  ): Result<Attachment>
+  ): Flow<UploadState>
 
   /**
    * Delete a file from Firebase Storage. No-op for LINK type attachments.
@@ -138,7 +140,15 @@ interface AttachmentManager {
    */
   suspend fun getDownloadUrl(storagePath: String): Result<String>
 }
+
+sealed class UploadState {
+  data class Uploading(val progress: Float) : UploadState()  // 0f..1f
+  data class Done(val attachment: Attachment) : UploadState()
+  data class Failed(val error: Throwable) : UploadState()
+}
 ```
+
+The original `suspend fun uploadFile(…): Result<Attachment>` signature is replaced with a `Flow<UploadState>` so that upload progress can be surfaced in the form UI while the upload is in flight (required by N2 in the PRD).
 
 `AttachmentManagerImpl` uses `dev.gitlive.firebase.storage.FirebaseStorage` (already in the GitLive KMP SDK dependency).
 
@@ -208,17 +218,27 @@ sealed class PendingAttachment {
 }
 ```
 
+### Add-link UX
+
+The picker sheet "Add link" option presents an inline text field. On confirmation:
+- Validate that the input is a well-formed URL (`Url.parse` or `URI` constructor); show an inline error if not.
+- Default `name` to the URL's host+path truncated at 40 characters (e.g. `rgl.faa.gov/Regulatory…`).
+- Allow the user to edit the name before confirming.
+- Empty or whitespace-only URLs must be rejected before adding to the pending list.
+
 ### Save sequence
 
 ```
 User taps Save
   │
   ├─ 1. Upload all PendingAttachment.Local items in parallel
-  │      AttachmentManager.uploadFile(storagePath, localUri, …)
+  │      attachmentManager.uploadFile(storagePath, localUri, …)
+  │        .collect { state -> when (state) { is Uploading -> updateProgress(); is Done -> …; is Failed -> … } }
   │      On failure: delete any files successfully uploaded in this batch → return error
   │
   ├─ 2. Delete all PendingAttachment.PendingDelete items
-  │      AttachmentManager.deleteFile(attachment)
+  │      coroutineScope { pendingDeletes.map { launch { attachmentManager.deleteFile(it) } }.joinAll() }
+  │      Log errors; do not block save on Storage deletion failures.
   │
   ├─ 3. Build final Attachment list:
   │      (Saved items) + (newly uploaded items)
@@ -236,23 +256,159 @@ Step 4 is the existing `MaintenanceLogManager.addLog/updateLog` or `InspectionMa
 ## View Flow — Opening Attachments
 
 ```kotlin
-fun openAttachment(attachment: Attachment, context: PlatformContext) {
+fun onAttachmentTap(attachment: Attachment, navController: NavController, platformContext: PlatformContext) {
   when (attachment.type) {
-    ATTACHMENT_TYPE_LINK  -> openUrl(attachment.url, context)
-    ATTACHMENT_TYPE_IMAGE -> showInAppImageViewer(attachment.download_url)
+    ATTACHMENT_TYPE_IMAGE -> navController.navigate(ImageViewerRoute(attachment.download_url, attachment.name))
+    ATTACHMENT_TYPE_LINK  -> platformContext.openUrl(attachment.url)
     ATTACHMENT_TYPE_PDF,
-    ATTACHMENT_TYPE_FILE  -> openWithSystemViewer(attachment.download_url, attachment.mime_type, context)
+    ATTACHMENT_TYPE_FILE  -> platformContext.openWithSystemViewer(attachment.download_url, attachment.mime_type)
   }
 }
 ```
+
+This handler lives in the screen composable (or ViewModel) that hosts the detail view. `AttachmentSection` and `AttachmentRow` are stateless and receive `onTap: (Attachment) -> Unit` as a lambda.
 
 For `openWithSystemViewer`:
 - **Android**: `Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl)).setType(mimeType)` — passes the Firebase Storage download URL directly to the system. No local download required; Android can stream the file.
 - **iOS**: `UIApplication.shared.open(URL(string: downloadUrl))` — same approach.
 
-For `showInAppImageViewer`: a full-screen `ModalBottomSheet` (or dedicated screen) with a Coil `AsyncImage` loading from `download_url`. Coil's disk cache applies automatically.
+**Image viewer:** A dedicated full-screen route `AttachmentImageViewerScreen`, not a `ModalBottomSheet`. Stacking a bottom sheet on top of an existing bottom sheet (`InspectionDetailSheet`) is fragile on both platforms and breaks the back-stack. The screen renders:
+- `AsyncImage` filling the screen with `ContentScale.Fit`, using `memoryCacheKey = downloadUrl` so Coil reuses the thumbnail already loaded in `AttachmentRow`.
+- A single close/back button (top-left); no app bar chrome.
+- `placeholder` set to the generic image icon from `core/attachments/sharedassets`.
 
-If `download_url` is empty or stale (first open fails), the viewer calls `AttachmentManager.getDownloadUrl(storagePath)` as a fallback and updates the stored URL via a background write.
+**Stale `download_url` fallback:** If the initial image load fails, the viewer calls `attachmentManager.getDownloadUrl(storagePath)`. On success, the ViewModel writes the refreshed URL back to Firestore via the parent document manager and re-triggers the image load. This is a background coroutine — the UI shows a loading indicator, not an error, while the refresh is in flight.
+
+---
+
+## View Flow — Attachment List Composables
+
+These live in `core/attachments/viewing` and are stateless.
+
+### `AttachmentRow`
+
+Each attachment is a full-width tappable row. Images show a 48×48dp thumbnail loaded by Coil; all other types show a type icon.
+
+```
+┌──────────────────────────────────────────────────┐
+│  [thumb/icon]  Service Bulletin SB-23-15          │
+│                PDF · 340 KB              [↗ open] │
+└──────────────────────────────────────────────────┘
+```
+
+```kotlin
+@Composable
+fun AttachmentRow(
+  attachment: Attachment,
+  onTap: (Attachment) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Row(
+    modifier = modifier
+      .fillMaxWidth()
+      .clickable { onTap(attachment) }
+      .padding(vertical = Spacing.small),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+  ) {
+    AttachmentThumbnail(attachment, size = 48.dp)
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = attachment.name,
+        style = MaterialTheme.typography.bodyMedium,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
+      Text(
+        text = attachmentSubtitle(attachment),
+        style = WingslogTypography.dataSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+    Icon(
+      Icons.AutoMirrored.Filled.OpenInNew,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+    )
+  }
+}
+
+private fun attachmentSubtitle(attachment: Attachment): String = when (attachment.type) {
+  ATTACHMENT_TYPE_LINK -> attachment.url.toDisplayDomain()  // e.g. "rgl.faa.gov"
+  else -> "${attachment.mimeTypeLabel()} · ${attachment.size_bytes.toFileSize()}"
+}
+```
+
+### `AttachmentThumbnail`
+
+```kotlin
+@Composable
+private fun AttachmentThumbnail(attachment: Attachment, size: Dp) {
+  val shape = RoundedCornerShape(6.dp)
+  if (attachment.type == ATTACHMENT_TYPE_IMAGE && attachment.download_url.isNotEmpty()) {
+    AsyncImage(
+      model = ImageRequest.Builder(LocalContext.current)
+        .data(attachment.download_url)
+        .memoryCacheKey(attachment.download_url)
+        .build(),
+      contentDescription = null,
+      contentScale = ContentScale.Crop,
+      modifier = Modifier.size(size).clip(shape)
+        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+    )
+  } else {
+    Box(
+      modifier = Modifier.size(size).clip(shape)
+        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+      contentAlignment = Alignment.Center,
+    ) {
+      Icon(
+        imageVector = attachment.typeIcon(),
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(24.dp),
+      )
+    }
+  }
+}
+
+private fun Attachment.typeIcon() = when (type) {
+  ATTACHMENT_TYPE_PDF   -> Icons.Outlined.PictureAsPdf
+  ATTACHMENT_TYPE_LINK  -> Icons.Outlined.Link
+  ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
+  else                  -> Icons.Outlined.InsertDriveFile
+}
+```
+
+### `AttachmentSection`
+
+Used in `InspectionDetailSheet` and the maintenance log detail view. Hidden when the list is empty (per PRD F3/F4).
+
+```kotlin
+@Composable
+fun AttachmentSection(
+  attachments: List<Attachment>,
+  onAttachmentTap: (Attachment) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  if (attachments.isEmpty()) return
+
+  Column(modifier = modifier) {
+    Text(
+      text = stringResource(SharedRes.string.attachments),
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.SemiBold,
+    )
+    Spacer(Modifier.height(Spacing.small))
+    attachments.forEach { attachment ->
+      AttachmentRow(attachment = attachment, onTap = onAttachmentTap)
+      HorizontalDivider()
+    }
+  }
+}
+```
+
+`AttachmentSection` is added below the existing content in `InspectionDetailSheet` and below the work description in the maintenance log detail view, separated by `Spacer(Modifier.height(Spacing.large))`.
 
 ---
 
@@ -262,33 +418,39 @@ When a maintenance log or inspection card is deleted, its associated Firebase St
 
 **Approach:** The existing `deleteLog` and `deleteInspection` methods are extended to:
 1. Fetch the document's current `Attachment` list (already in memory in the ViewModel that triggered the delete, passed as a parameter).
-2. Call `AttachmentManager.deleteFile(attachment)` for each non-link attachment.
+2. Delete all non-link attachments in parallel; log errors but do not block the Firestore delete on Storage failures.
 3. Proceed with the Firestore document delete.
-
-This is best-effort: if Storage deletion fails, the Firestore document is still deleted and orphaned Storage objects are acceptable (no data loss for the user; storage can be cleaned up via Firebase console or a future Cloud Function).
 
 ```kotlin
 suspend fun deleteLog(aircraftId: String, log: MaintenanceLog): Result<Boolean> {
-  log.attachments
-    .filter { it.type != AttachmentType.ATTACHMENT_TYPE_LINK }
-    .forEach { attachmentManager.deleteFile(it) }
+  coroutineScope {
+    log.attachments
+      .filter { it.type != AttachmentType.ATTACHMENT_TYPE_LINK }
+      .map { launch { attachmentManager.deleteFile(it) } }
+  }
   return deleteLogDocument(aircraftId, log.id)
 }
 ```
+
+This is best-effort: if Storage deletion fails, the Firestore document is still deleted and orphaned Storage objects are acceptable (no data loss for the user; storage can be cleaned up via Firebase console or a future Cloud Function). Errors from `deleteFile` are logged, not silently swallowed.
 
 ---
 
 ## Dependency Graph (additions only)
 
 ```
-core/model               ← Attachment proto message added here
-core/attachments/datamanager  ← AttachmentManager, AttachmentStoragePath
+core/model                    ← Attachment proto message added here
+core/attachments/datamanager  ← AttachmentManager, UploadState, AttachmentStoragePath
   depends on: core/model, Firebase Storage, Koin
-core/attachments/ui      ← AttachmentChip, AttachmentPickerSheet, AttachmentViewerSheet
-  depends on: core/model, core/attachments/datamanager, core/ui, Compose, Coil
+core/attachments/sharedassets ← strings (attachments label, add attachment, …), type icons
+  depends on: Compose resources only
+core/attachments/viewing      ← AttachmentRow, AttachmentThumbnail, AttachmentSection (read-only)
+  depends on: core/model, core/attachments/sharedassets, core/ui, Compose, Coil
 
-feature/maintenance      ← adds dep on core/attachments/ui
-feature/inspection/update ← adds dep on core/attachments/ui
+feature/maintenance            ← adds dep on core/attachments/viewing
+                                  picker sheet lives here (update submodule)
+feature/inspection/viewing    ← adds dep on core/attachments/viewing
+feature/inspection/update     ← picker sheet lives here; adds dep on core/attachments/datamanager
 ```
 
 `feature/maintenance/database` and `feature/inspection/datamanager` gain the `AttachmentManager` as an injected dependency (for file deletion on parent delete).
@@ -302,3 +464,4 @@ feature/inspection/update ← adds dep on core/attachments/ui
 3. **Image compression.** Should picked images be compressed before upload? Reduces cost and upload time at the expense of some quality. Recommend yes, compress to max 2048px and 85% JPEG quality for `ATTACHMENT_TYPE_IMAGE`.
 4. **Anonymous users.** Anonymous users can currently create logs. Firebase Storage security rules must be decided: allow anonymous uploads (storage billed to the project) or require sign-in. Recommendation: require sign-in to upload files; show a prompt to sign in if the user tries to add an attachment while anonymous.
 5. **Firebase Storage pricing.** Free tier: 5 GB storage, 1 GB/day download. For a personal logbook this is more than sufficient. Document in the release notes that attachments count against project storage quota.
+6. **`download_url` refresh write-back.** Decide which manager method handles writing a refreshed URL back to Firestore when the stale-URL fallback fires (e.g. `MaintenanceLogManager.updateLogAttachmentUrl` / `InspectionManager.updateCardAttachmentUrl`). Must be defined before implementing the image viewer.
