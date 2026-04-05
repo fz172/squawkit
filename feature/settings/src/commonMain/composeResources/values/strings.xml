@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="sign_out">Log out</string>
-    <string name="app_version">App Version: %1$s</string>
+  <string name="sign_out">Log out</string>
+  <string name="app_version">App Version: %1$s</string>
 </resources>

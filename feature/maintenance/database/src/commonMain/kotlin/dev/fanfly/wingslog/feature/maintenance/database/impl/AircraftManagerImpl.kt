@@ -73,7 +73,7 @@ class AircraftManagerImpl(
 
   private fun getAircraftRefOrCreateNew(
     fleetRef: CollectionReference,
-    aircraft: Aircraft
+    aircraft: Aircraft,
   ): DocumentReference = if (aircraft.id.isEmpty()) {
     fleetRef.document(generateRandomId())
   } else {

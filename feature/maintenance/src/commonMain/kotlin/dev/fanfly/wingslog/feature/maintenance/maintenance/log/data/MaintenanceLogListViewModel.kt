@@ -3,7 +3,9 @@ package dev.fanfly.wingslog.feature.maintenance.maintenance.log.data
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.maintenance.database.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +19,8 @@ import kotlinx.coroutines.launch
 
 class MaintenanceLogListViewModel(
   private val logManager: MaintenanceLogManager,
-  savedStateHandle: SavedStateHandle
+  private val inspectionManager: InspectionManager,
+  savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
   val aircraftId: String = checkNotNull(savedStateHandle["aircraftId"])
@@ -31,23 +34,37 @@ class MaintenanceLogListViewModel(
 
   private val _logsLoadState = MutableStateFlow<LogsLoadState>(LogsLoadState.Loading)
   private val _filter = MutableStateFlow(LogFilter())
+  private val _selectedLog = MutableStateFlow<MaintenanceLog?>(null)
+  private val _availableCards = MutableStateFlow<List<InspectionCard>>(emptyList())
 
   init {
     observeLogs()
+    observeInspections()
     viewModelScope.launch {
-      combine(_logsLoadState, _filter) { logsState, filter ->
+      combine(
+        _logsLoadState,
+        _filter,
+        _selectedLog,
+        _availableCards
+      ) { logsState, filter, selectedLog, availableCards ->
         when (logsState) {
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
           LogsLoadState.Error -> MaintenanceLogListUiState.Error
           is LogsLoadState.Loaded -> {
             val filtered = logsState.logs.filter { log ->
               (filter.component == null || log.component_type == filter.component) &&
-                  (filter.query.isBlank() || log.work_description.contains(
-                    filter.query,
-                    ignoreCase = true
-                  ))
+                (filter.query.isBlank() || log.work_description.contains(
+                  filter.query,
+                  ignoreCase = true
+                ))
             }
-            MaintenanceLogListUiState.Success(filtered, logsState.logs.size, filter)
+            MaintenanceLogListUiState.Success(
+              logs = filtered,
+              totalCount = logsState.logs.size,
+              filter = filter,
+              selectedLog = selectedLog,
+              availableCards = availableCards
+            )
           }
         }
       }.collect { _uiState.value = it }
@@ -60,6 +77,14 @@ class MaintenanceLogListViewModel(
         .onStart { _logsLoadState.value = LogsLoadState.Loading }
         .catch { _logsLoadState.value = LogsLoadState.Error }
         .collect { logs -> _logsLoadState.value = LogsLoadState.Loaded(logs) }
+    }
+  }
+
+  private fun observeInspections() {
+    viewModelScope.launch {
+      inspectionManager.observeInspections(aircraftId)
+        .catch { _availableCards.value = emptyList() }
+        .collect { _availableCards.value = it }
     }
   }
 
@@ -83,6 +108,15 @@ class MaintenanceLogListViewModel(
 
   fun retryLoading() {
     observeLogs()
+    observeInspections()
+  }
+
+  fun onLogClick(log: MaintenanceLog) {
+    _selectedLog.value = log
+  }
+
+  fun onDismissDetail() {
+    _selectedLog.value = null
   }
 
   fun onAddLog() {

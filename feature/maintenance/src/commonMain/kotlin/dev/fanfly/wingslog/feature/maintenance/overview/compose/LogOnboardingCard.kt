@@ -27,15 +27,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.generated.resources.add_first_maintenance_log
 import wingslog.feature.maintenance.generated.resources.log_onboarding_description
 import wingslog.feature.maintenance.generated.resources.no_maintenance_logs_title
-import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @Composable
 fun LogOnboardingCard(
   onAddLogClick: () -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   Card(
     modifier = modifier.fillMaxWidth(),

@@ -60,12 +60,15 @@ import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.feature.maintenance.edit.data.EditAircraftViewModel
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.required
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.generated.resources.add_aircraft
 import wingslog.feature.maintenance.generated.resources.add_blade
 import wingslog.feature.maintenance.generated.resources.add_engine
@@ -82,14 +85,11 @@ import wingslog.feature.maintenance.generated.resources.serial
 import wingslog.feature.maintenance.generated.resources.tail_number
 import wingslog.feature.maintenance.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.maintenance.generated.resources.update_aircraft
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditAircraftScreen(
-  viewModel: EditAircraftViewModel = koinViewModel(), navController: NavController
+  viewModel: EditAircraftViewModel = koinViewModel(), navController: NavController,
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val scrollState = rememberScrollState()
@@ -197,7 +197,7 @@ fun EditAircraftScreen(
 
 @Composable
 fun AirframeSection(
-  aircraft: Aircraft, viewModel: EditAircraftViewModel, showValidationErrors: Boolean
+  aircraft: Aircraft, viewModel: EditAircraftViewModel, showValidationErrors: Boolean,
 ) {
   Card(
     modifier = Modifier.padding(vertical = 8.dp),
@@ -254,7 +254,7 @@ fun EngineSection(
   engineIndex: Int,
   engine: Engine,
   viewModel: EditAircraftViewModel,
-  showValidationErrors: Boolean
+  showValidationErrors: Boolean,
 ) {
   Card(
     modifier = Modifier.padding(vertical = 8.dp),
@@ -403,7 +403,7 @@ fun InputField(
   isError: Boolean = false,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
   trailingIcon: @Composable (() -> Unit)? = null,
-  onValueChange: (String) -> Unit
+  onValueChange: (String) -> Unit,
 ) = OutlinedTextField(
   value = value,
   onValueChange = onValueChange,

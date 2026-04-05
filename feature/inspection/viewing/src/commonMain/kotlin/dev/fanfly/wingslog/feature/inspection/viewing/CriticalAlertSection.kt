@@ -20,9 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
-import wingslog.feature.inspection.viewing.generated.resources.critical_airworthiness
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
+import wingslog.feature.inspection.viewing.generated.resources.critical_airworthiness
 
 
 @Composable

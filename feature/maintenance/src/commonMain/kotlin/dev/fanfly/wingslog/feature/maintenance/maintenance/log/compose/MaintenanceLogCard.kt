@@ -24,22 +24,22 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.maintenance.maintenance.util.displayName
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.inspection.sharedassets.generated.resources.affects_n_inspection_items
 import wingslog.feature.inspection.sharedassets.generated.resources.engine_format
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
-import wingslog.feature.inspection.sharedassets.generated.resources.affects_n_inspection_items
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.generated.resources.airframe_time_format
 import wingslog.feature.maintenance.generated.resources.prop_time_format
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 
 @Composable
 fun MaintenanceLogCard(
   log: MaintenanceLog,
   onClick: () -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
     ?: cmpStringResource(SharedRes.string.unknown_date)

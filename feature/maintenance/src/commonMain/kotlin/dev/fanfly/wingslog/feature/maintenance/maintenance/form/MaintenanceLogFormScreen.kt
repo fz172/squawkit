@@ -56,8 +56,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
+import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.maintenance.maintenance.form.data.MaintenanceLogFormEvent
@@ -67,7 +67,9 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
@@ -78,9 +80,11 @@ import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.remove
 import wingslog.core.ui.generated.resources.save
 import wingslog.core.ui.generated.resources.update
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.inspection_work
 import wingslog.feature.inspection.sharedassets.generated.resources.no_inspection_work_recorded
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_inspection
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.generated.resources.add_log
 import wingslog.feature.maintenance.generated.resources.airframe_serial
 import wingslog.feature.maintenance.generated.resources.airframe_time_hours
@@ -101,16 +105,12 @@ import wingslog.feature.maintenance.generated.resources.propeller_hub
 import wingslog.feature.maintenance.generated.resources.tap_to_change_date
 import wingslog.feature.maintenance.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.maintenance.generated.resources.work_description_required
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
-import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MaintenanceLogFormScreen(
   navController: NavController,
-  viewModel: MaintenanceLogFormViewModel = koinViewModel()
+  viewModel: MaintenanceLogFormViewModel = koinViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   var showDeleteDialog by remember { mutableStateOf(false) }
@@ -386,7 +386,7 @@ private fun ComponentSection(
   selectedSubComponent: String?,
   onComponentTypeChange: (MaintenanceLog.ComponentType) -> Unit,
   onSubComponentChange: (String?) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
     // Component Type dropdown
@@ -515,7 +515,7 @@ private fun SubComponentDropdown(
   options: List<Pair<String, String>>, // display label to serial
   selectedSerial: String?,
   onSelected: (String?) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   var expanded by remember { mutableStateOf(false) }
   val selectedLabel = options.firstOrNull { it.second == selectedSerial }?.first ?: ""
@@ -554,7 +554,7 @@ private fun SubComponentDropdown(
 private fun ComponentTypeDropdown(
   selected: MaintenanceLog.ComponentType,
   onSelected: (MaintenanceLog.ComponentType) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   val options = listOf(
     MaintenanceLog.ComponentType.AIRFRAME,

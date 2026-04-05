@@ -7,7 +7,7 @@ data class EditAircraftUiState(
   val isLoading: Boolean = true,
   val isSaved: Boolean = false,
   val isDeleted: Boolean = false,
-  val showValidationErrors: Boolean = false
+  val showValidationErrors: Boolean = false,
 ) {
   val isValid: Boolean
     get() {

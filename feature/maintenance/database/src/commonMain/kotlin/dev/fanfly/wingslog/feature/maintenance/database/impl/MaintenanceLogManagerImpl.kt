@@ -13,12 +13,12 @@ import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.where
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 class MaintenanceLogManagerImpl(
   private val firebaseAuth: FirebaseAuth,
@@ -125,7 +125,7 @@ class MaintenanceLogManagerImpl(
 
   private suspend fun saveLog(
     docRef: DocumentReference,
-    log: MaintenanceLog
+    log: MaintenanceLog,
   ) {
     val data = mutableMapOf(
       LOG_INFO_BLOB to MaintenanceLog.ADAPTER.encode(log),

@@ -65,6 +65,8 @@ fun BottomButtons(
           shape = RoundedCornerShape(Spacing.buttonCornerRadius),
           colors = ButtonDefaults.outlinedButtonColors(
             containerColor = MaterialTheme.colorScheme.surface,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            disabledContentColor = MaterialTheme.colorScheme.outline
           ),
         ) {
           Text(
@@ -86,9 +88,15 @@ fun BottomButtons(
           shape = RoundedCornerShape(Spacing.buttonCornerRadius),
           colors = ButtonDefaults.outlinedButtonColors(
             containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.error
+            contentColor = MaterialTheme.colorScheme.error,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            disabledContentColor = MaterialTheme.colorScheme.outline
           ),
-          border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+          border = BorderStroke(
+            1.dp,
+            if (!isPrimaryFunctionInProgress) MaterialTheme.colorScheme.error
+            else MaterialTheme.colorScheme.outline
+          )
         ) {
           Text(
             text = dangerLabel.uppercase(),
@@ -105,7 +113,11 @@ fun BottomButtons(
         onClick = onPrimaryClick,
         modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+        colors = ButtonDefaults.buttonColors(
+          containerColor = MaterialTheme.colorScheme.primary,
+          disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+          disabledContentColor = MaterialTheme.colorScheme.outline
+        ),
         enabled = primaryEnabled && !isPrimaryFunctionInProgress,
       ) {
         Row(

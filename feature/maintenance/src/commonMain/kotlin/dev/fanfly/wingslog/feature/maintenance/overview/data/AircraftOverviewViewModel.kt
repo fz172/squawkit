@@ -27,7 +27,7 @@ class AircraftOverviewViewModel(
   private val aircraftManager: AircraftManager,
   private val logManager: MaintenanceLogManager,
   private val inspectionManager: InspectionManager,
-  savedStateHandle: SavedStateHandle
+  savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
   private val aircraftId: String = checkNotNull(savedStateHandle["aircraftId"])

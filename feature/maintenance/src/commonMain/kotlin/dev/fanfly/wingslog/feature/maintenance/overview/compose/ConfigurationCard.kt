@@ -33,17 +33,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.generated.resources.airframe_s_n
 import wingslog.feature.maintenance.generated.resources.collapse_details
 import wingslog.feature.maintenance.generated.resources.edit_aircraft
 import wingslog.feature.maintenance.generated.resources.expand_details
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 @Composable
 fun ConfigurationCard(
   aircraft: Aircraft,
-  onEditClick: (String) -> Unit
+  onEditClick: (String) -> Unit,
 ) {
   var expanded by rememberSaveable { mutableStateOf(false) }
 

@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class EditAircraftViewModel(
-  private val aircraftManager: AircraftManager, savedStateHandle: SavedStateHandle
+  private val aircraftManager: AircraftManager, savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
   private val _uiState: MutableStateFlow<EditAircraftUiState> =

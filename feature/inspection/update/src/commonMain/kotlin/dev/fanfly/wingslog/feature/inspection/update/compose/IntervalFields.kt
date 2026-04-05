@@ -18,8 +18,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.core.ui.generated.resources.every
 import wingslog.core.ui.generated.resources.or
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.update.generated.resources.inspection_due_warning
 import wingslog.feature.inspection.update.generated.resources.inspection_interval_description
 import wingslog.feature.inspection.update.generated.resources.interval_hours
@@ -27,8 +29,6 @@ import wingslog.feature.inspection.update.generated.resources.interval_hours_pla
 import wingslog.feature.inspection.update.generated.resources.interval_months
 import wingslog.feature.inspection.update.generated.resources.interval_months_placeholder
 import wingslog.feature.inspection.update.generated.resources.intervals
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun IntervalFields(
@@ -36,7 +36,7 @@ fun IntervalFields(
   onMonthsChange: (String) -> Unit,
   intervalHours: String,
   onHoursChange: (String) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier) {
     Text(

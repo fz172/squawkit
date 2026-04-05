@@ -13,15 +13,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.update.generated.resources.one_time_compliance
 import wingslog.feature.inspection.update.generated.resources.one_time_compliance_desc
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun OneTimeComplianceFields(
   isOneTime: Boolean,
   onOneTimeChange: (Boolean) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   Row(
     modifier = modifier

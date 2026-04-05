@@ -23,19 +23,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.select_date
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.update.generated.resources.force_due_engine_hours
 import wingslog.feature.inspection.update.generated.resources.force_overrides_safety
 import wingslog.feature.inspection.update.generated.resources.override_next_due_date
 import wingslog.feature.inspection.update.generated.resources.override_next_due_engine
-import kotlin.time.Instant
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun ForcedOverrideFields(
@@ -47,7 +46,7 @@ fun ForcedOverrideFields(
   onForceOverrideDateChange: (Boolean) -> Unit,
   forcedDateMillis: Long?,
   onDateClick: () -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier) {
     Text(

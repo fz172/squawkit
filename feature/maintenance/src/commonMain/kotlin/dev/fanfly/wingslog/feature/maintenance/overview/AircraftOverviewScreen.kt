@@ -56,21 +56,21 @@ import dev.fanfly.wingslog.feature.maintenance.overview.data.AircraftOverviewUiS
 import dev.fanfly.wingslog.feature.maintenance.overview.data.AircraftOverviewViewModel
 import dev.fanfly.wingslog.feature.maintenance.overview.data.LogStats
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.error_occurred
+import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.generated.resources.add_first_maintenance_log
 import wingslog.feature.maintenance.generated.resources.add_log
 import wingslog.feature.maintenance.generated.resources.delete_aircraft
 import wingslog.feature.maintenance.generated.resources.log_details
 import wingslog.feature.maintenance.generated.resources.make_model_template
 import wingslog.feature.maintenance.generated.resources.this_action_cannot_be_undone
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 
 
 @Composable
@@ -138,7 +138,11 @@ fun AircraftOverviewScreen(
     onEditInspectionClick = { aircraftId, cardId -> navController.navigate("maintenance_inspection_edit/$aircraftId/$cardId") },
     onCancelDeleteInspection = { viewModel.cancelDeleteInspection() },
     onConfirmDeleteInspection = { viewModel.confirmDeleteInspection() },
-    onAttachmentTap = { attachment -> coroutineScope.launch { attachmentOpener.open(attachment).collect {} } },
+    onAttachmentTap = { attachment ->
+      coroutineScope.launch {
+        attachmentOpener.open(attachment).collect {}
+      }
+    },
   )
 }
 
