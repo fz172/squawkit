@@ -249,6 +249,19 @@ class MaintenanceLogFormViewModel(
       if (!state.isAnonymous) {
         val localFiles = state.pendingAttachments.filterIsInstance<PendingAttachment.LocalFile>()
         for (pending in localFiles) {
+          // Show this file as uploading in the UI
+          _uiState.update { s ->
+            s.copy(
+              pendingAttachments = s.pendingAttachments.map {
+                if (it.id == pending.tempId) PendingAttachment.Uploading(
+                  pending.tempId,
+                  pending.name
+                )
+                else it
+              }
+            )
+          }
+
           val storagePath = attachmentManager.buildMaintenanceLogPath(
             aircraftId, resolvedLogId, pending.tempId, pending.name
           )
@@ -271,9 +284,25 @@ class MaintenanceLogFormViewModel(
           )
             .collect { uploadState ->
               when (uploadState) {
+                is UploadState.Uploading -> {
+                  if (uploadState.progress > 0f) {
+                    _uiState.update { s ->
+                      s.copy(
+                        pendingAttachments = s.pendingAttachments.map {
+                          if (it.id == pending.tempId) PendingAttachment.Uploading(
+                            pending.tempId,
+                            pending.name,
+                            uploadState.progress
+                          )
+                          else it
+                        }
+                      )
+                    }
+                  }
+                }
+
                 is UploadState.Done -> uploadedAttachments.add(uploadState.attachment)
                 is UploadState.Failed -> uploadError = uploadState.error
-                else -> {}
               }
             }
           if (uploadError != null) {
@@ -406,8 +435,10 @@ private fun Throwable.toUploadErrorText(): UiText {
   return when {
     msg.contains("network") || msg.contains("timeout") || msg.contains("unable to resolve") ->
       UiText.StringRes(AttachmentRes.string.upload_network_error)
+
     msg.contains("permission") || msg.contains("unauthorized") || msg.contains("403") ->
       UiText.StringRes(AttachmentRes.string.upload_permission_error)
+
     else -> UiText.StringRes(AttachmentRes.string.upload_failed)
   }
 }

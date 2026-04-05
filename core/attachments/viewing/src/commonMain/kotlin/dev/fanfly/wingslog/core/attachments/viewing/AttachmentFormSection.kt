@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -156,6 +157,7 @@ private fun PendingAttachmentRow(
 ) {
   val isSavedFile = pending is PendingAttachment.Saved &&
     pending.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK
+  val isUploading = pending is PendingAttachment.Uploading
   var showConfirmDialog by remember { mutableStateOf(false) }
 
   if (showConfirmDialog) {
@@ -176,37 +178,58 @@ private fun PendingAttachmentRow(
     )
   }
 
-  Row(
-    modifier = modifier.fillMaxWidth(),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-  ) {
-    Icon(
-      imageVector = pending.typeIcon(),
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.size(20.dp),
-    )
-    Text(
-      text = pending.name,
-      style = MaterialTheme.typography.bodyMedium,
-      modifier = Modifier.weight(1f),
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis,
-    )
-    IconButton(onClick = { if (isSavedFile) showConfirmDialog = true else onRemove() }) {
+  Column(modifier = modifier.fillMaxWidth()) {
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+    ) {
       Icon(
-        Icons.Default.Close,
-        contentDescription = stringResource(AttachRes.string.remove_attachment),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(18.dp),
+        imageVector = pending.typeIcon(),
+        contentDescription = null,
+        tint = if (isUploading) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+               else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(20.dp),
       )
+      Text(
+        text = pending.name,
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (isUploading) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.weight(1f),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
+      if (!isUploading) {
+        IconButton(onClick = { if (isSavedFile) showConfirmDialog = true else onRemove() }) {
+          Icon(
+            Icons.Default.Close,
+            contentDescription = stringResource(AttachRes.string.remove_attachment),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+          )
+        }
+      }
+    }
+    if (isUploading) {
+      val progress = (pending as PendingAttachment.Uploading).progress
+      if (progress > 0f) {
+        LinearProgressIndicator(
+          progress = { progress },
+          modifier = Modifier.fillMaxWidth().padding(start = 28.dp, end = Spacing.medium, top = 2.dp),
+        )
+      } else {
+        LinearProgressIndicator(
+          modifier = Modifier.fillMaxWidth().padding(start = 28.dp, end = Spacing.medium, top = 2.dp),
+        )
+      }
     }
   }
 }
 
 private fun PendingAttachment.typeIcon() = when (this) {
   is PendingAttachment.LocalLink -> Icons.Outlined.Link
+  is PendingAttachment.Uploading -> Icons.AutoMirrored.Outlined.InsertDriveFile
   is PendingAttachment.Saved -> when (attachment.type) {
     AttachmentType.ATTACHMENT_TYPE_PDF -> Icons.Outlined.PictureAsPdf
     AttachmentType.ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
