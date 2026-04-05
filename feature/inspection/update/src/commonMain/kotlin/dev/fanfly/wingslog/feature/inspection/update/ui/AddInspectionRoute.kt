@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.attachments.model.visible
+import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.inspection.update.viewmodel.InspectionUiState
 import dev.fanfly.wingslog.feature.inspection.update.viewmodel.InspectionViewModel
 import org.jetbrains.compose.resources.stringResource
@@ -17,6 +19,8 @@ fun AddInspectionRoute(
   viewModel: InspectionViewModel = koinViewModel()
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
+  val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
   val successState = uiState as? InspectionUiState.Success
 
   val successMessage = stringResource(InspectionRes.string.inspection_added)
@@ -46,7 +50,20 @@ fun AddInspectionRoute(
             navController.popBackStack()
           }
         )
-      }
+      },
+      attachmentSection = {
+        AttachmentFormSection(
+          visibleAttachments = pendingAttachments.visible(),
+          isAnonymous = viewModel.isAnonymous,
+          filesAtLimit = viewModel.filesAtLimit,
+          showPickerSheet = showAttachmentPicker,
+          onAddClick = viewModel::showAttachmentPicker,
+          onRemove = viewModel::removeAttachment,
+          onPickFiles = viewModel::addLocalFiles,
+          onAddLink = viewModel::addLink,
+          onDismissSheet = viewModel::hideAttachmentPicker,
+        )
+      },
     )
   }
 }

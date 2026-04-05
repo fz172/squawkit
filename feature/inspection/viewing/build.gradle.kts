@@ -39,6 +39,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:ui"))
+      implementation(project(":core:attachments:viewing"))
       implementation(project(":feature:inspection:model"))
       implementation(project(":feature:inspection:sharedassets"))
       implementation(libs.kotlinx.datetime)

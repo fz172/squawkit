@@ -29,8 +29,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.core.attachments.viewing.AttachmentSection
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
@@ -73,6 +75,7 @@ fun InspectionDetailSheet(
   logs: List<MaintenanceLog>,
   onDismiss: () -> Unit,
   onEditClick: () -> Unit,
+  onAttachmentTap: (Attachment) -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -192,6 +195,15 @@ fun InspectionDetailSheet(
       }
 
       Spacer(modifier = Modifier.height(Spacing.large))
+
+      AttachmentSection(
+        attachments = cardWithStatus.card.attachments,
+        onAttachmentTap = onAttachmentTap,
+      )
+
+      if (cardWithStatus.card.attachments.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(Spacing.large))
+      }
 
       Text(
         text = cmpStringResource(ViewingRes.string.maintenance_history),

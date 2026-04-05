@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.di
 
+import dev.fanfly.wingslog.core.attachments.datamanager.impl.attachmentModule
+import dev.fanfly.wingslog.core.attachments.datamanager.impl.platformAttachmentModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.database.di.commonFirebaseModule
 import dev.fanfly.wingslog.feature.fleet.database.impl.fleetDatabaseModule
@@ -20,6 +22,8 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) =
     modules(
       commonFirebaseModule,
       authModule,
+      attachmentModule,
+      platformAttachmentModule,
       userProfileDatabaseModule,
       maintenanceDatabaseModule,
       inspectionModule,

@@ -43,4 +43,8 @@ include(":feature:inspection:sharedassets")
 include(":feature:inspection:datamanager")
 include(":feature:fleet:database")
 include(":feature:fleet")
+include(":core:attachments:model")
+include(":core:attachments:datamanager")
+include(":core:attachments:sharedassets")
+include(":core:attachments:viewing")
 

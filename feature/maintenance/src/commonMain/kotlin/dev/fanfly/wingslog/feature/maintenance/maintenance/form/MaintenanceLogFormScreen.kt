@@ -57,6 +57,7 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.maintenance.maintenance.form.data.MaintenanceLogFormEvent
@@ -333,6 +334,20 @@ fun MaintenanceLogFormScreen(
             onComponentTypeChange = viewModel::onComponentTypeChange,
             onSubComponentChange = viewModel::onSubComponentChange,
             modifier = Modifier.fillMaxWidth()
+          )
+
+          // Attachments
+          AttachmentFormSection(
+            visibleAttachments = uiState.visibleAttachments,
+            isAnonymous = uiState.isAnonymous,
+            filesAtLimit = uiState.filesAtLimit,
+            showPickerSheet = uiState.showAttachmentPicker,
+            onAddClick = viewModel::showAttachmentPicker,
+            onRemove = viewModel::removeAttachment,
+            onPickFiles = viewModel::addLocalFiles,
+            onAddLink = viewModel::addLink,
+            onDismissSheet = viewModel::hideAttachmentPicker,
+            modifier = Modifier.fillMaxWidth(),
           )
 
           // Error message

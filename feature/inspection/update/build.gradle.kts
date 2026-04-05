@@ -53,6 +53,10 @@ kotlin {
       implementation(project(":core:model"))
       implementation(project(":feature:maintenance:database"))
 
+      implementation(project(":core:attachments:model"))
+      implementation(project(":core:attachments:datamanager"))
+      implementation(project(":core:attachments:viewing"))
+
       implementation(libs.kotlinx.datetime)
       implementation(libs.koin.core)
       implementation(libs.koin.compose)
