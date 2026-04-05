@@ -175,6 +175,7 @@ class MaintenanceLogFormViewModel(
   fun hideAttachmentPicker() = _uiState.update { it.copy(showAttachmentPicker = false) }
 
   fun addLocalFiles(files: List<PickedFile>) {
+    var anyAdded = false
     _uiState.update { state ->
       val remaining = MaintenanceLogFormUiState.MAX_FILE_ATTACHMENTS - state.fileAttachmentCount
       val toAdd = files.filter { it.sizeBytes <= MaintenanceLogFormUiState.MAX_FILE_SIZE_BYTES }
@@ -189,11 +190,13 @@ class MaintenanceLogFormViewModel(
           )
         }
       val oversized = files.any { it.sizeBytes > MaintenanceLogFormUiState.MAX_FILE_SIZE_BYTES }
+      anyAdded = toAdd.isNotEmpty()
       state.copy(
         pendingAttachments = state.pendingAttachments + toAdd,
         error = if (oversized) UiText.StringRes(AttachmentRes.string.file_too_large) else state.error,
       )
     }
+    if (anyAdded) viewModelScope.launch { _events.send(MaintenanceLogFormEvent.FileAdded) }
   }
 
   fun addLink(url: String, name: String) {
@@ -202,6 +205,7 @@ class MaintenanceLogFormViewModel(
       val link = PendingAttachment.LocalLink(generateRandomId(), displayName, url)
       state.copy(pendingAttachments = state.pendingAttachments + link)
     }
+    viewModelScope.launch { _events.send(MaintenanceLogFormEvent.LinkAdded) }
   }
 
   fun removeAttachment(id: String) {
@@ -388,4 +392,6 @@ class MaintenanceLogFormViewModel(
 sealed interface MaintenanceLogFormEvent {
   data object SaveSuccess : MaintenanceLogFormEvent
   data object DeleteSuccess : MaintenanceLogFormEvent
+  data object FileAdded : MaintenanceLogFormEvent
+  data object LinkAdded : MaintenanceLogFormEvent
 }
