@@ -136,6 +136,11 @@ class InspectionViewModel(
 
     if (!isAnonymous) {
       for (pf in pending.filterIsInstance<PendingAttachment.LocalFile>()) {
+        // Show this file as uploading in the UI
+        _pendingAttachments.update { list ->
+          list.map { if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name) else it }
+        }
+
         val storagePath =
           attachmentManager.buildInspectionCardPath(aircraftId, cardId, pf.tempId, pf.name)
             ?: return null
@@ -143,9 +148,15 @@ class InspectionViewModel(
         attachmentManager.uploadFile(storagePath, pf.localUri, pf.mimeType, pf.name, pf.tempId)
           .collect { state ->
             when (state) {
+              is UploadState.Uploading -> {
+                if (state.progress > 0f) {
+                  _pendingAttachments.update { list ->
+                    list.map { if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name, state.progress) else it }
+                  }
+                }
+              }
               is UploadState.Done -> uploadedAttachments.add(state.attachment)
               is UploadState.Failed -> error = state.error
-              else -> {}
             }
           }
         if (error != null) {
