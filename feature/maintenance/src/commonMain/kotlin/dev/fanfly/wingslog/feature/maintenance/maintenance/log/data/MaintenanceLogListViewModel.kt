@@ -100,12 +100,6 @@ class MaintenanceLogListViewModel(
     _filter.value = LogFilter()
   }
 
-  fun deleteLog(logId: String) {
-    viewModelScope.launch {
-      logManager.deleteLog(aircraftId, logId)
-    }
-  }
-
   fun retryLoading() {
     observeLogs()
     observeInspections()
