@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -89,11 +90,17 @@ fun AttachmentFormSection(
       if (!isAnonymous) {
         OutlinedButton(
           onClick = onAddClick,
-          contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+          contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            horizontal = 12.dp,
+            vertical = 4.dp
+          ),
         ) {
           Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
           Spacer(Modifier.width(4.dp))
-          Text(stringResource(AttachRes.string.add_attachment), style = MaterialTheme.typography.labelMedium)
+          Text(
+            stringResource(AttachRes.string.add_attachment),
+            style = MaterialTheme.typography.labelMedium
+          )
         }
       } else {
         Text(
@@ -163,11 +170,13 @@ private fun PendingAttachment.typeIcon() = when (this) {
     AttachmentType.ATTACHMENT_TYPE_LINK -> Icons.Outlined.Link
     else -> Icons.Outlined.InsertDriveFile
   }
+
   is PendingAttachment.LocalFile -> when {
     mimeType.startsWith("image/") -> Icons.Outlined.Image
     mimeType == "application/pdf" -> Icons.Outlined.PictureAsPdf
     else -> Icons.Outlined.InsertDriveFile
   }
+
   else -> Icons.Outlined.InsertDriveFile
 }
 
@@ -189,7 +198,7 @@ private fun AttachmentPickerSheet(
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .androidx.compose.foundation.layout.padding(horizontal = Spacing.extraLarge),
+        .padding(horizontal = Spacing.extraLarge),
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
       if (!showLinkField) {

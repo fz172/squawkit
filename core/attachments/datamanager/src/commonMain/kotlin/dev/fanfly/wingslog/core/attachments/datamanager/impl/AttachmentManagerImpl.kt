@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentStoragePath
 import dev.fanfly.wingslog.core.attachments.datamanager.FileByteReader
 import dev.fanfly.wingslog.core.attachments.datamanager.UploadState
 import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.storage.Data
 import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -47,11 +48,11 @@ class AttachmentManagerImpl(
   ): Flow<UploadState> = flow {
     emit(UploadState.Uploading(0f))
     try {
-      val bytes = fileByteReader.readBytes(localUri)
-        ?: throw Exception("Could not read file at: $localUri")
+      val bytes: ByteArray =
+        fileByteReader.readBytes(localUri) ?: throw Exception("Could not read file at: $localUri")
 
       val ref = storage.reference.child(storagePath)
-      ref.putData(bytes)
+      ref.putData(Data(bytes))
 
       val downloadUrl = ref.getDownloadUrl()
 

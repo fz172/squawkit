@@ -55,6 +55,7 @@ kotlin {
       implementation(project(":feature:inspection:update"))
 
       implementation(project(":core:attachments:model"))
+      implementation(project(":core:attachments:sharedassets"))
       implementation(project(":core:attachments:datamanager"))
       implementation(project(":core:attachments:viewing"))
 

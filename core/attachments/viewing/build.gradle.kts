@@ -31,6 +31,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:ui"))
+      implementation(project(":core:attachments:model"))
       implementation(project(":core:attachments:sharedassets"))
       implementation(project(":core:attachments:datamanager"))
 
