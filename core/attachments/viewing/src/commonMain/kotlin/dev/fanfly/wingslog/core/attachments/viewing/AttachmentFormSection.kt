@@ -51,7 +51,9 @@ import wingslog.core.attachments.sharedassets.generated.resources.choose_file
 import wingslog.core.attachments.sharedassets.generated.resources.invalid_url
 import wingslog.core.attachments.sharedassets.generated.resources.link_name
 import wingslog.core.attachments.sharedassets.generated.resources.link_url
+import wingslog.core.attachments.sharedassets.generated.resources.attachment_limits_hint
 import wingslog.core.attachments.sharedassets.generated.resources.max_files_reached
+import wingslog.core.attachments.sharedassets.generated.resources.no_attachments
 import wingslog.core.attachments.sharedassets.generated.resources.remove_attachment
 import wingslog.core.attachments.sharedassets.generated.resources.sign_in_to_add_attachments
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -113,9 +115,17 @@ fun AttachmentFormSection(
       }
     }
 
-    visibleAttachments.forEach { pending ->
-      PendingAttachmentRow(pending = pending, onRemove = { onRemove(pending.id) })
-      HorizontalDivider()
+    if (visibleAttachments.isEmpty()) {
+      Text(
+        text = stringResource(AttachRes.string.no_attachments),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    } else {
+      visibleAttachments.forEach { pending ->
+        PendingAttachmentRow(pending = pending, onRemove = { onRemove(pending.id) })
+        HorizontalDivider()
+      }
     }
   }
 
@@ -213,13 +223,15 @@ private fun AttachmentPickerSheet(
           Spacer(Modifier.width(Spacing.small))
           Text(stringResource(AttachRes.string.choose_file))
         }
-        if (filesAtLimit) {
-          Text(
-            text = stringResource(AttachRes.string.max_files_reached),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
+        Text(
+          text = if (filesAtLimit) {
+            stringResource(AttachRes.string.max_files_reached)
+          } else {
+            stringResource(AttachRes.string.attachment_limits_hint)
+          },
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         TextButton(
           onClick = { showLinkField = true },
           modifier = Modifier.fillMaxWidth(),

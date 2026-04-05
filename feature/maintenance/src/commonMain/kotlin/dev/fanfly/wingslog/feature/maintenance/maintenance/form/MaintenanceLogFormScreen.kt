@@ -38,6 +38,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -69,6 +71,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
+import wingslog.core.attachments.sharedassets.generated.resources.file_added
+import wingslog.core.attachments.sharedassets.generated.resources.link_added
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.back
@@ -115,10 +120,13 @@ fun MaintenanceLogFormScreen(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   var showDeleteDialog by remember { mutableStateOf(false) }
   var showDatePicker by remember { mutableStateOf(false) }
+  val snackbarHostState = remember { SnackbarHostState() }
 
   val logUpdatedMessage = cmpStringResource(MaintenanceRes.string.log_updated)
   val logSavedMessage = cmpStringResource(MaintenanceRes.string.log_saved)
   val logDeletedMessage = cmpStringResource(MaintenanceRes.string.log_deleted)
+  val fileAddedMessage = cmpStringResource(AttachRes.string.file_added)
+  val linkAddedMessage = cmpStringResource(AttachRes.string.link_added)
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
@@ -136,6 +144,9 @@ fun MaintenanceLogFormScreen(
           )
           navController.popBackStack()
         }
+
+        MaintenanceLogFormEvent.FileAdded -> snackbarHostState.showSnackbar(fileAddedMessage)
+        MaintenanceLogFormEvent.LinkAdded -> snackbarHostState.showSnackbar(linkAddedMessage)
       }
     }
   }
@@ -186,7 +197,8 @@ fun MaintenanceLogFormScreen(
           }
         }
       )
-    }
+    },
+    snackbarHost = { SnackbarHost(snackbarHostState) },
   ) { innerPadding ->
     if (uiState.isLoading) {
       Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
