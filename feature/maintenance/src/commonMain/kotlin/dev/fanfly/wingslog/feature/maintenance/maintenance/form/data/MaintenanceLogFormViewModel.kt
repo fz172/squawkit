@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentManager
 import dev.fanfly.wingslog.core.attachments.datamanager.PickedFile
 import dev.fanfly.wingslog.core.attachments.datamanager.UploadState
 import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
+import dev.fanfly.wingslog.core.attachments.model.toLocalFile
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
@@ -18,6 +19,7 @@ import dev.fanfly.wingslog.feature.maintenance.database.MaintenanceLogManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlin.time.Clock
 import kotlin.time.Instant
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,6 +60,7 @@ class MaintenanceLogFormViewModel(
   private val logId: String? = savedStateHandle["logId"]
   val isEditMode: Boolean get() = logId != null
 
+  private var saveJob: Job? = null
   private val _uiState = MutableStateFlow(MaintenanceLogFormUiState())
   val uiState: StateFlow<MaintenanceLogFormUiState> = _uiState.asStateFlow()
 
@@ -222,12 +225,36 @@ class MaintenanceLogFormViewModel(
           pending.id != id -> pending
           pending is PendingAttachment.LocalFile -> null
           pending is PendingAttachment.LocalLink -> null
+          pending is PendingAttachment.Failed -> null
           pending is PendingAttachment.Saved && pending.attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK -> null
           pending is PendingAttachment.Saved -> PendingAttachment.PendingDelete(pending.attachment)
           else -> pending
         }
       }
       state.copy(pendingAttachments = updated)
+    }
+  }
+
+  fun cancelUpload(id: String) {
+    saveJob?.cancel()
+    saveJob = null
+    _uiState.update { state ->
+      state.copy(
+        isSaving = false,
+        pendingAttachments = state.pendingAttachments.map {
+          if (it is PendingAttachment.Uploading && it.id == id) it.toLocalFile() else it
+        },
+      )
+    }
+  }
+
+  fun retryUpload(id: String) {
+    _uiState.update { state ->
+      state.copy(
+        pendingAttachments = state.pendingAttachments.map {
+          if (it is PendingAttachment.Failed && it.id == id) it.toLocalFile() else it
+        },
+      )
     }
   }
 
@@ -239,7 +266,7 @@ class MaintenanceLogFormViewModel(
       _uiState.update { it.copy(error = UiText.StringRes(MaintenanceRes.string.work_description_required)) }
       return
     }
-    viewModelScope.launch {
+    saveJob = viewModelScope.launch {
       _uiState.update { it.copy(isSaving = true, error = null) }
 
       val resolvedLogId = logId ?: generateRandomId()
@@ -257,6 +284,8 @@ class MaintenanceLogFormViewModel(
                   pending.tempId,
                   pending.name,
                   mimeType = pending.mimeType,
+                  localUri = pending.localUri,
+                  sizeBytes = pending.sizeBytes,
                 )
                 else it
               }
@@ -295,6 +324,8 @@ class MaintenanceLogFormViewModel(
                             pending.name,
                             uploadState.progress,
                             pending.mimeType,
+                            pending.localUri,
+                            pending.sizeBytes,
                           )
                           else it
                         }
@@ -308,11 +339,19 @@ class MaintenanceLogFormViewModel(
               }
             }
           if (uploadError != null) {
+            _uiState.update { s ->
+              s.copy(
+                isSaving = false,
+                error = uploadError!!.toUploadErrorText(),
+                pendingAttachments = s.pendingAttachments.map {
+                  if (it is PendingAttachment.Uploading && it.id == pending.tempId)
+                    PendingAttachment.Failed(pending.tempId, pending.name, pending.mimeType, pending.localUri, pending.sizeBytes)
+                  else it
+                },
+              )
+            }
             // Rollback any files uploaded so far in this batch
             coroutineScope { uploadedAttachments.forEach { launch { attachmentManager.deleteFile(it) } } }
-            _uiState.update {
-              it.copy(isSaving = false, error = uploadError!!.toUploadErrorText())
-            }
             return@launch
           }
         }

@@ -15,9 +15,11 @@ import dev.fanfly.wingslog.core.attachments.datamanager.PickedFile
 import dev.fanfly.wingslog.core.attachments.datamanager.UploadState
 import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.fileCount
+import dev.fanfly.wingslog.core.attachments.model.toLocalFile
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,6 +52,7 @@ class InspectionViewModel(
   val uiState: StateFlow<InspectionUiState> = _uiState.asStateFlow()
 
   // Attachment state is kept separate so it survives inspection list reloads.
+  private var saveJob: Job? = null
   private val _pendingAttachments = MutableStateFlow<List<PendingAttachment>>(emptyList())
   val pendingAttachments: StateFlow<List<PendingAttachment>> = _pendingAttachments.asStateFlow()
 
@@ -126,11 +129,26 @@ class InspectionViewModel(
           pending.id != id -> pending
           pending is PendingAttachment.LocalFile -> null
           pending is PendingAttachment.LocalLink -> null
+          pending is PendingAttachment.Failed -> null
           pending is PendingAttachment.Saved && pending.attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK -> null
           pending is PendingAttachment.Saved -> PendingAttachment.PendingDelete(pending.attachment)
           else -> pending
         }
       }
+    }
+  }
+
+  fun cancelUpload(id: String) {
+    saveJob?.cancel()
+    saveJob = null
+    _pendingAttachments.update { list ->
+      list.map { if (it is PendingAttachment.Uploading && it.id == id) it.toLocalFile() else it }
+    }
+  }
+
+  fun retryUpload(id: String) {
+    _pendingAttachments.update { list ->
+      list.map { if (it is PendingAttachment.Failed && it.id == id) it.toLocalFile() else it }
     }
   }
 
@@ -145,7 +163,10 @@ class InspectionViewModel(
       for (pf in pending.filterIsInstance<PendingAttachment.LocalFile>()) {
         // Show this file as uploading in the UI
         _pendingAttachments.update { list ->
-          list.map { if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name, mimeType = pf.mimeType) else it }
+          list.map {
+            if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name, mimeType = pf.mimeType, localUri = pf.localUri, sizeBytes = pf.sizeBytes)
+            else it
+          }
         }
 
         val storagePath =
@@ -158,7 +179,10 @@ class InspectionViewModel(
               is UploadState.Uploading -> {
                 if (state.progress > 0f) {
                   _pendingAttachments.update { list ->
-                    list.map { if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name, state.progress, pf.mimeType) else it }
+                    list.map {
+                      if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name, state.progress, pf.mimeType, pf.localUri, pf.sizeBytes)
+                      else it
+                    }
                   }
                 }
               }
@@ -167,6 +191,13 @@ class InspectionViewModel(
             }
           }
         if (error != null) {
+          _pendingAttachments.update { list ->
+            list.map {
+              if (it is PendingAttachment.Uploading && it.id == pf.tempId)
+                PendingAttachment.Failed(pf.tempId, pf.name, pf.mimeType, pf.localUri, pf.sizeBytes)
+              else it
+            }
+          }
           coroutineScope { uploadedAttachments.forEach { launch { attachmentManager.deleteFile(it) } } }
           return null
         }
@@ -197,7 +228,7 @@ class InspectionViewModel(
     complianceDetails: String, isOneTime: Boolean, forceDueDate: Instant?,
     forceDueEngine: Float, notes: String = "", onSuccess: () -> Unit, onError: () -> Unit = {},
   ) {
-    viewModelScope.launch {
+    saveJob = viewModelScope.launch {
       val newCardId = generateRandomId()
       val attachments = resolveAttachments(newCardId) ?: run { onError(); return@launch }
       val card = InspectionCard(
@@ -217,7 +248,7 @@ class InspectionViewModel(
     complianceDetails: String, isOneTime: Boolean, forceDueDate: Instant?,
     forceDueEngine: Float, notes: String, onSuccess: () -> Unit, onError: () -> Unit = {},
   ) {
-    viewModelScope.launch {
+    saveJob = viewModelScope.launch {
       val attachments = resolveAttachments(cardId) ?: run { onError(); return@launch }
       val updatedCard = InspectionCard(
         id = cardId, title = title, type = type, component = component, rules = rules,

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
@@ -61,7 +62,9 @@ import wingslog.core.attachments.sharedassets.generated.resources.link_url
 import wingslog.core.attachments.sharedassets.generated.resources.max_files_reached
 import wingslog.core.attachments.sharedassets.generated.resources.no_attachments
 import wingslog.core.attachments.sharedassets.generated.resources.remove_attachment
+import wingslog.core.attachments.sharedassets.generated.resources.retry_upload
 import wingslog.core.attachments.sharedassets.generated.resources.sign_in_to_add_attachments
+import wingslog.core.attachments.sharedassets.generated.resources.upload_failed
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.ok
@@ -84,6 +87,8 @@ fun AttachmentFormSection(
   onAddLink: (url: String, name: String) -> Unit,
   onDismissSheet: () -> Unit,
   modifier: Modifier = Modifier,
+  onCancelUpload: (String) -> Unit = {},
+  onRetryUpload: (String) -> Unit = {},
   onPickError: () -> Unit = {},
 ) {
   val pickFiles = rememberFilePicker(
@@ -134,7 +139,12 @@ fun AttachmentFormSection(
       )
     } else {
       visibleAttachments.forEach { pending ->
-        PendingAttachmentRow(pending = pending, onRemove = { onRemove(pending.id) })
+        PendingAttachmentRow(
+          pending = pending,
+          onRemove = { onRemove(pending.id) },
+          onCancelUpload = { onCancelUpload(pending.id) },
+          onRetryUpload = { onRetryUpload(pending.id) },
+        )
         HorizontalDivider()
       }
     }
@@ -154,11 +164,14 @@ fun AttachmentFormSection(
 private fun PendingAttachmentRow(
   pending: PendingAttachment,
   onRemove: () -> Unit,
+  onCancelUpload: () -> Unit,
+  onRetryUpload: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val isSavedFile = pending is PendingAttachment.Saved &&
     pending.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK
   val isUploading = pending is PendingAttachment.Uploading
+  val isFailed = pending is PendingAttachment.Failed
   var showConfirmDialog by remember { mutableStateOf(false) }
 
   if (showConfirmDialog) {
@@ -188,21 +201,49 @@ private fun PendingAttachmentRow(
       Icon(
         imageVector = pending.typeIcon(),
         contentDescription = null,
-        tint = if (isUploading) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-               else MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = when {
+          isUploading -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+          isFailed -> MaterialTheme.colorScheme.error
+          else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
         modifier = Modifier.size(20.dp),
       )
-      Text(
-        text = pending.name,
-        style = MaterialTheme.typography.bodyMedium,
-        color = if (isUploading) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.weight(1f),
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
-      if (!isUploading) {
-        IconButton(onClick = { if (isSavedFile) showConfirmDialog = true else onRemove() }) {
+      Column(modifier = Modifier.weight(1f)) {
+        Text(
+          text = pending.name,
+          style = MaterialTheme.typography.bodyMedium,
+          color = if (isUploading) MaterialTheme.colorScheme.onSurfaceVariant
+                  else MaterialTheme.colorScheme.onSurface,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+        )
+        if (isFailed) {
+          Text(
+            text = stringResource(AttachRes.string.upload_failed),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+          )
+        }
+      }
+      if (isUploading) {
+        IconButton(onClick = onCancelUpload) {
+          Icon(
+            Icons.Default.Close,
+            contentDescription = stringResource(AttachRes.string.remove_attachment),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+          )
+        }
+      } else if (isFailed) {
+        IconButton(onClick = onRetryUpload) {
+          Icon(
+            Icons.Outlined.Refresh,
+            contentDescription = stringResource(AttachRes.string.retry_upload),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+          )
+        }
+        IconButton(onClick = onRemove) {
           Icon(
             Icons.Default.Close,
             contentDescription = stringResource(AttachRes.string.remove_attachment),
@@ -211,7 +252,14 @@ private fun PendingAttachmentRow(
           )
         }
       } else {
-        Spacer(Modifier.size(48.dp))
+        IconButton(onClick = { if (isSavedFile) showConfirmDialog = true else onRemove() }) {
+          Icon(
+            Icons.Default.Close,
+            contentDescription = stringResource(AttachRes.string.remove_attachment),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+          )
+        }
       }
     }
     if (isUploading) {
@@ -248,6 +296,12 @@ private fun PendingAttachment.typeIcon() = when (this) {
   }
 
   is PendingAttachment.LocalFile -> when {
+    mimeType.startsWith("image/") -> Icons.Outlined.Image
+    mimeType == "application/pdf" -> Icons.Outlined.PictureAsPdf
+    else -> Icons.AutoMirrored.Outlined.InsertDriveFile
+  }
+
+  is PendingAttachment.Failed -> when {
     mimeType.startsWith("image/") -> Icons.Outlined.Image
     mimeType == "application/pdf" -> Icons.Outlined.PictureAsPdf
     else -> Icons.AutoMirrored.Outlined.InsertDriveFile

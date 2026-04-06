@@ -19,6 +19,7 @@
   <string name="link_added">Link added</string>
   <string name="file_read_error">Could not read selected file</string>
   <string name="upload_failed">Upload failed</string>
+  <string name="retry_upload">Retry upload</string>
   <string name="upload_network_error">Upload failed. Check your connection.</string>
   <string name="upload_permission_error">Upload failed: permission denied</string>
   <string name="delete_saved_attachment_title">Remove file?</string>

@@ -83,6 +83,8 @@ fun EditInspectionRoute(
           onPickFiles = viewModel::addLocalFiles,
           onAddLink = viewModel::addLink,
           onDismissSheet = viewModel::hideAttachmentPicker,
+          onCancelUpload = viewModel::cancelUpload,
+          onRetryUpload = viewModel::retryUpload,
         )
       },
     )

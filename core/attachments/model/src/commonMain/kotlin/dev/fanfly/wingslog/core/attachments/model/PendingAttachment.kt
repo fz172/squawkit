@@ -28,13 +28,27 @@ sealed class PendingAttachment {
   /**
    * A [LocalFile] that is currently being uploaded to Firebase Storage.
    * [progress] is 0–1; 0f means indeterminate.
-   * [mimeType] is preserved from [LocalFile] so the correct type icon is shown during upload.
+   * [mimeType], [localUri], and [sizeBytes] are preserved from [LocalFile] so the correct icon is
+   * shown during upload and the item can be rolled back to [LocalFile] on cancel.
    */
   data class Uploading(
     val tempId: String,
     override val name: String,
     val progress: Float = 0f,
     val mimeType: String = "",
+    val localUri: String = "",
+    val sizeBytes: Long = 0L,
+  ) : PendingAttachment() {
+    override val id: String get() = tempId
+  }
+
+  /** A [LocalFile] whose upload failed. Carries original file data so the user can retry. */
+  data class Failed(
+    val tempId: String,
+    override val name: String,
+    val mimeType: String = "",
+    val localUri: String = "",
+    val sizeBytes: Long = 0L,
   ) : PendingAttachment() {
     override val id: String get() = tempId
   }
@@ -64,10 +78,19 @@ fun List<PendingAttachment>.fileCount(): Int = count { pending ->
   when (pending) {
     is PendingAttachment.LocalFile -> true
     is PendingAttachment.Uploading -> true
+    is PendingAttachment.Failed -> true
     is PendingAttachment.Saved -> pending.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK
     else -> false
   }
 }
+
+/** Roll an [Uploading] item back to a [LocalFile] (used for cancel). */
+fun PendingAttachment.Uploading.toLocalFile() =
+  PendingAttachment.LocalFile(tempId, name, localUri, mimeType, sizeBytes)
+
+/** Roll a [Failed] item back to a [LocalFile] (used for retry). */
+fun PendingAttachment.Failed.toLocalFile() =
+  PendingAttachment.LocalFile(tempId, name, localUri, mimeType, sizeBytes)
 
 /** Visible items to show in the UI (excludes PendingDelete). */
 fun List<PendingAttachment>.visible(): List<PendingAttachment> =
