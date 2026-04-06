@@ -61,8 +61,8 @@ kotlin {
       implementation(project(":feature:maintenance:database"))
       implementation(project(":feature:inspection:update"))
       implementation(project(":feature:inspection:datamanager"))
-      implementation(project(":feature:fleet"))
-      implementation(project(":feature:fleet:database"))
+      implementation(project(":feature:fleet:viewing"))
+      implementation(project(":feature:fleet:datamanager"))
 
       implementation(project(":core:attachments:model"))
       implementation(project(":core:attachments:datamanager"))
