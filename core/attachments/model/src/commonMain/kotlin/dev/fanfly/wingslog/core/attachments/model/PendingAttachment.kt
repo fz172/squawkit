@@ -28,11 +28,13 @@ sealed class PendingAttachment {
   /**
    * A [LocalFile] that is currently being uploaded to Firebase Storage.
    * [progress] is 0–1; 0f means indeterminate.
+   * [mimeType] is preserved from [LocalFile] so the correct type icon is shown during upload.
    */
   data class Uploading(
     val tempId: String,
     override val name: String,
     val progress: Float = 0f,
+    val mimeType: String = "",
   ) : PendingAttachment() {
     override val id: String get() = tempId
   }

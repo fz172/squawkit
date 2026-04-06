@@ -255,7 +255,8 @@ class MaintenanceLogFormViewModel(
               pendingAttachments = s.pendingAttachments.map {
                 if (it.id == pending.tempId) PendingAttachment.Uploading(
                   pending.tempId,
-                  pending.name
+                  pending.name,
+                  mimeType = pending.mimeType,
                 )
                 else it
               }
@@ -292,7 +293,8 @@ class MaintenanceLogFormViewModel(
                           if (it.id == pending.tempId) PendingAttachment.Uploading(
                             pending.tempId,
                             pending.name,
-                            uploadState.progress
+                            uploadState.progress,
+                            pending.mimeType,
                           )
                           else it
                         }

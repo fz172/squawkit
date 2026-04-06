@@ -63,7 +63,7 @@ fun AttachmentRow(
     Icon(
       imageVector = Icons.AutoMirrored.Filled.OpenInNew,
       contentDescription = null,
-      tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+      tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
       modifier = Modifier.size(16.dp),
     )
   }

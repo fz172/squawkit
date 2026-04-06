@@ -145,7 +145,7 @@ class InspectionViewModel(
       for (pf in pending.filterIsInstance<PendingAttachment.LocalFile>()) {
         // Show this file as uploading in the UI
         _pendingAttachments.update { list ->
-          list.map { if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name) else it }
+          list.map { if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name, mimeType = pf.mimeType) else it }
         }
 
         val storagePath =
@@ -158,7 +158,7 @@ class InspectionViewModel(
               is UploadState.Uploading -> {
                 if (state.progress > 0f) {
                   _pendingAttachments.update { list ->
-                    list.map { if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name, state.progress) else it }
+                    list.map { if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name, state.progress, pf.mimeType) else it }
                   }
                 }
               }

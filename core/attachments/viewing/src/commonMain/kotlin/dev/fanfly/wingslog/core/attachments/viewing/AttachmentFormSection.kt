@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -234,7 +235,11 @@ private fun PendingAttachmentRow(
 
 private fun PendingAttachment.typeIcon() = when (this) {
   is PendingAttachment.LocalLink -> Icons.Outlined.Link
-  is PendingAttachment.Uploading -> Icons.AutoMirrored.Outlined.InsertDriveFile
+  is PendingAttachment.Uploading -> when {
+    mimeType.startsWith("image/") -> Icons.Outlined.Image
+    mimeType == "application/pdf" -> Icons.Outlined.PictureAsPdf
+    else -> Icons.AutoMirrored.Outlined.InsertDriveFile
+  }
   is PendingAttachment.Saved -> when (attachment.type) {
     AttachmentType.ATTACHMENT_TYPE_PDF -> Icons.Outlined.PictureAsPdf
     AttachmentType.ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
@@ -329,7 +334,7 @@ private fun AttachmentPickerSheet(
           TextButton(onClick = { showLinkField = false; linkUrl = ""; linkName = "" }) {
             Text(stringResource(CoreRes.string.cancel))
           }
-          TextButton(onClick = {
+          FilledTonalButton(onClick = {
             val trimmed = linkUrl.trim()
             if (!isValidUrl(trimmed)) {
               urlError = true
@@ -339,16 +344,24 @@ private fun AttachmentPickerSheet(
               } else {
                 "https://$trimmed"
               }
-              onAddLink(normalized, linkName.trim())
+              val finalName = linkName.trim().ifBlank { normalized.extractDomain() }
+              onAddLink(normalized, finalName)
             }
           }) {
-            Text(stringResource(CoreRes.string.ok))
+            Text(stringResource(AttachRes.string.add_link))
           }
         }
       }
       Spacer(Modifier.height(Spacing.huge))
     }
   }
+}
+
+private fun String.extractDomain(): String {
+  val withoutScheme = if (contains("://")) substringAfter("://") else this
+  val hostAndPort = withoutScheme.substringBefore("/").substringBefore("?").substringBefore("#")
+  val host = hostAndPort.substringBefore(":")
+  return if (host.startsWith("www.")) host.drop(4) else host
 }
 
 private fun isValidUrl(url: String): Boolean {
