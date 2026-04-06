@@ -31,6 +31,9 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -80,7 +83,6 @@ import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.component_engine
-import wingslog.core.ui.generated.resources.component_type
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.remove
@@ -407,12 +409,23 @@ private fun ComponentSection(
   modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-    // Component Type dropdown
-    ComponentTypeDropdown(
-      selected = selectedComponentType,
-      onSelected = onComponentTypeChange,
-      modifier = Modifier.fillMaxWidth()
+    // Component Type segmented button
+    val componentOptions = listOf(
+      MaintenanceLog.ComponentType.AIRFRAME,
+      MaintenanceLog.ComponentType.ENGINE,
+      MaintenanceLog.ComponentType.PROPELLER,
     )
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+      componentOptions.forEachIndexed { index, option ->
+        SegmentedButton(
+          selected = selectedComponentType == option,
+          onClick = { onComponentTypeChange(option) },
+          shape = SegmentedButtonDefaults.itemShape(index = index, count = componentOptions.size),
+          icon = {},
+          label = { Text(option.displayName()) },
+        )
+      }
+    }
 
     when (selectedComponentType) {
       MaintenanceLog.ComponentType.AIRFRAME -> {
@@ -559,49 +572,6 @@ private fun SubComponentDropdown(
           text = { Text(displayLabel) },
           onClick = {
             onSelected(serial)
-            expanded = false
-          }
-        )
-      }
-    }
-  }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ComponentTypeDropdown(
-  selected: MaintenanceLog.ComponentType,
-  onSelected: (MaintenanceLog.ComponentType) -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  val options = listOf(
-    MaintenanceLog.ComponentType.AIRFRAME,
-    MaintenanceLog.ComponentType.ENGINE,
-    MaintenanceLog.ComponentType.PROPELLER
-  )
-  var expanded by remember { mutableStateOf(false) }
-
-  ExposedDropdownMenuBox(
-    expanded = expanded,
-    onExpandedChange = { expanded = it },
-    modifier = modifier
-  ) {
-    OutlinedTextField(
-      value = selected.displayName(),
-      onValueChange = {},
-      readOnly = true,
-      label = { Text(cmpStringResource(CoreRes.string.component_type)) },
-      trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-      modifier = Modifier
-        .fillMaxWidth()
-        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-    )
-    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-      options.forEach { option ->
-        DropdownMenuItem(
-          text = { Text(option.displayName()) },
-          onClick = {
-            onSelected(option)
             expanded = false
           }
         )
