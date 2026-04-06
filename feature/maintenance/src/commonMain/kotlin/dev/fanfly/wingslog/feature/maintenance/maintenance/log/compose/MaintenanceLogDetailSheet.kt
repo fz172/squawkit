@@ -9,21 +9,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
@@ -32,11 +27,8 @@ import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.maintenance.maintenance.util.displayName
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.done
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.inspection_work
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
@@ -45,7 +37,6 @@ import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.generated.resources.airframe_time_label
 import wingslog.feature.maintenance.generated.resources.edit_log
 import wingslog.feature.maintenance.generated.resources.engine_time_label
-import wingslog.feature.maintenance.generated.resources.log_details
 import wingslog.feature.maintenance.generated.resources.maintenance_date
 import wingslog.feature.maintenance.generated.resources.prop_time_label
 
@@ -59,123 +50,109 @@ fun MaintenanceLogDetailSheet(
   onAttachmentTap: (Attachment) -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
-  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
   ModalBottomSheet(
     onDismissRequest = onDismiss,
-    sheetState = sheetState,
+    sheetState = rememberModalBottomSheetState(),
     modifier = modifier,
   ) {
     Column(
       modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = Spacing.extraLarge)
-        .verticalScroll(rememberScrollState())
+        .verticalScroll(rememberScrollState()),
+      verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
+      // Work description leads, Edit button top-right
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Top,
       ) {
         Text(
-          text = cmpStringResource(MaintenanceRes.string.log_details),
-          style = MaterialTheme.typography.headlineSmall,
-          fontWeight = FontWeight.Bold
+          text = log.work_description,
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.SemiBold,
+          modifier = Modifier
+            .weight(1f)
+            .padding(end = Spacing.small),
         )
-        Row {
-          IconButton(onClick = onEditClick) {
-            Icon(
-              Icons.Default.Edit,
-              contentDescription = cmpStringResource(MaintenanceRes.string.edit_log)
-            )
-          }
-          IconButton(onClick = onDismiss) {
-            Icon(
-              Icons.Default.Close,
-              contentDescription = cmpStringResource(CoreRes.string.done)
-            )
-          }
+        TextButton(onClick = onEditClick) {
+          Text(cmpStringResource(MaintenanceRes.string.edit_log))
         }
       }
 
-      Spacer(Modifier.height(Spacing.medium))
-
-      // Date and Times
+      // Date
       val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
         ?: cmpStringResource(SharedInspectionRes.string.unknown_date)
-
-      Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-        DetailRow(
-          label = cmpStringResource(MaintenanceRes.string.maintenance_date),
-          value = dateStr
-        )
-
-        Row(
-          horizontalArrangement = Arrangement.spacedBy(Spacing.large)
-        ) {
-          if (log.engine_hour > 0.0) {
-            DetailItem(
-              label = cmpStringResource(MaintenanceRes.string.engine_time_label),
-              value = log.engine_hour.formatToOneDecimalPlace()
-            )
-          }
-          if (log.airframe_time > 0.0) {
-            DetailItem(
-              label = cmpStringResource(MaintenanceRes.string.airframe_time_label),
-              value = log.airframe_time.formatToOneDecimalPlace()
-            )
-          }
-          if (log.prop_time > 0.0) {
-            DetailItem(
-              label = cmpStringResource(MaintenanceRes.string.prop_time_label),
-              value = log.prop_time.formatToOneDecimalPlace()
-            )
-          }
-        }
-
-        if (log.component_type != MaintenanceLog.ComponentType.UNKNOWN) {
-          DetailRow(
-            label = log.component_type.displayName(),
-            value = log.component_serial
-          )
-        }
-      }
-
-      Spacer(Modifier.height(Spacing.large))
-
-      // Work Description
-      Text(
-        text = log.work_description,
-        style = MaterialTheme.typography.bodyLarge
+      DetailRow(
+        label = cmpStringResource(MaintenanceRes.string.maintenance_date),
+        value = dateStr,
       )
 
-      // Inspection Work
+      // Hours — each as its own inline row
+      if (log.engine_hour > 0.0) {
+        DetailRow(
+          label = cmpStringResource(MaintenanceRes.string.engine_time_label),
+          value = log.engine_hour.formatToOneDecimalPlace(),
+        )
+      }
+      if (log.airframe_time > 0.0) {
+        DetailRow(
+          label = cmpStringResource(MaintenanceRes.string.airframe_time_label),
+          value = log.airframe_time.formatToOneDecimalPlace(),
+        )
+      }
+      if (log.prop_time > 0.0) {
+        DetailRow(
+          label = cmpStringResource(MaintenanceRes.string.prop_time_label),
+          value = log.prop_time.formatToOneDecimalPlace(),
+        )
+      }
+
+      // Component / serial
+      if (log.component_type != MaintenanceLog.ComponentType.UNKNOWN) {
+        DetailRow(
+          label = log.component_type.displayName(),
+          value = log.component_serial,
+        )
+      }
+
+      // Inspection items
       if (log.inspection_ids.isNotEmpty()) {
-        Spacer(Modifier.height(Spacing.large))
+        Spacer(Modifier.height(Spacing.small))
         Text(
           text = cmpStringResource(SharedInspectionRes.string.inspection_work),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.SemiBold
+          style = MaterialTheme.typography.titleSmall,
+          fontWeight = FontWeight.SemiBold,
         )
-        Spacer(Modifier.height(Spacing.small))
-        log.inspection_ids.forEach { cardId ->
-          val card = availableCards.find { it.id == cardId }
-          val title =
-            card?.title ?: cmpStringResource(SharedInspectionRes.string.unknown_inspection, cardId)
-          Text(
-            text = "• $title",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(vertical = 2.dp)
-          )
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+          log.inspection_ids.forEach { cardId ->
+            val card = availableCards.find { it.id == cardId }
+            val title =
+              card?.title ?: cmpStringResource(SharedInspectionRes.string.unknown_inspection, cardId)
+            Row(
+              horizontalArrangement = Arrangement.spacedBy(Spacing.tiny),
+            ) {
+              Text(
+                text = "·",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+              Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+              )
+            }
+          }
         }
       }
 
-      Spacer(Modifier.height(Spacing.large))
+      Spacer(Modifier.height(Spacing.small))
 
       // Attachments
       AttachmentSection(
         attachments = log.attachments,
-        onAttachmentTap = onAttachmentTap
+        onAttachmentTap = onAttachmentTap,
       )
 
       Spacer(Modifier.height(Spacing.huge))
@@ -188,33 +165,17 @@ private fun DetailRow(label: String, value: String) {
   Row(
     modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-    verticalAlignment = Alignment.CenterVertically
+    verticalAlignment = Alignment.CenterVertically,
   ) {
     Text(
       text = "$label:",
       style = MaterialTheme.typography.labelLarge,
-      color = MaterialTheme.colorScheme.onSurfaceVariant
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Text(
       text = value,
       style = MaterialTheme.typography.bodyMedium,
-      fontWeight = FontWeight.Medium
-    )
-  }
-}
-
-@Composable
-private fun DetailItem(label: String, value: String) {
-  Column {
-    Text(
-      text = label,
-      style = WingslogTypography.dataSmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-    Text(
-      text = value,
-      style = MaterialTheme.typography.bodyMedium,
-      fontWeight = FontWeight.Medium
+      fontWeight = FontWeight.Medium,
     )
   }
 }
