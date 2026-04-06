@@ -165,9 +165,30 @@ class MaintenanceLogFormViewModel(
   fun onPropTimeChange(value: String) = _uiState.update { it.copy(propTime = value) }
   fun onComponentTypeChange(value: MaintenanceLog.ComponentType) {
     _uiState.update { state ->
-      val autoSerial = if (value == MaintenanceLog.ComponentType.AIRFRAME) {
-        state.aircraft?.serial?.takeIf { it.isNotEmpty() }
-      } else null
+      val aircraft = state.aircraft
+      val autoSerial = when (value) {
+        MaintenanceLog.ComponentType.AIRFRAME ->
+          aircraft?.serial?.takeIf { it.isNotEmpty() }
+
+        MaintenanceLog.ComponentType.ENGINE -> {
+          val engines = aircraft?.engine ?: emptyList()
+          engines.singleOrNull()?.serial?.takeIf { it.isNotEmpty() }
+        }
+
+        MaintenanceLog.ComponentType.PROPELLER -> {
+          val propSerials = aircraft?.engine?.flatMap { engine ->
+            buildList {
+              engine.propeller?.hub?.serial?.takeIf { it.isNotEmpty() }?.let { add(it) }
+              engine.propeller?.blades?.forEach { blade ->
+                blade.serial.takeIf { it.isNotEmpty() }?.let { add(it) }
+              }
+            }
+          } ?: emptyList()
+          propSerials.singleOrNull()
+        }
+
+        else -> null
+      }
       state.copy(selectedComponentType = value, selectedSubComponent = autoSerial)
     }
   }
