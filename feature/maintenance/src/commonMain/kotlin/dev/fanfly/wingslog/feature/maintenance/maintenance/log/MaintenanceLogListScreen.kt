@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.maintenance.maintenance.log
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -20,13 +18,15 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -163,26 +163,26 @@ fun MaintenanceLogListScreen(
                 singleLine = true,
               )
 
-              // Component filter chips
+              // Component filter — segmented control (mutually exclusive selection)
               val components = listOf(
                 null,
                 MaintenanceLog.ComponentType.AIRFRAME,
                 MaintenanceLog.ComponentType.ENGINE,
                 MaintenanceLog.ComponentType.PROPELLER,
               )
-              Row(
+              SingleChoiceSegmentedButtonRow(
                 modifier = Modifier
                   .fillMaxWidth()
-                  .horizontalScroll(rememberScrollState())
                   .padding(horizontal = Spacing.screenPadding),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
               ) {
-                components.forEach { component ->
+                components.forEachIndexed { index, component ->
                   val label = component?.displayName() ?: cmpStringResource(CoreRes.string.all)
-                  FilterChip(
+                  SegmentedButton(
                     selected = state.filter.component == component,
                     onClick = { viewModel.onComponentFilterChange(component) },
-                    label = { Text(label) }
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = components.size),
+                    icon = {},
+                    label = { Text(label) },
                   )
                 }
               }

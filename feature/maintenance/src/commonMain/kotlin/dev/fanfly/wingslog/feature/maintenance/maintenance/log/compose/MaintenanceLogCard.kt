@@ -3,8 +3,10 @@ package dev.fanfly.wingslog.feature.maintenance.maintenance.log.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowRight
 import androidx.compose.material3.Card
@@ -28,11 +30,11 @@ import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.inspection.sharedassets.generated.resources.affects_n_inspection_items
-import wingslog.feature.inspection.sharedassets.generated.resources.engine_format
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
 import wingslog.feature.maintenance.generated.resources.Res as MaintenanceRes
-import wingslog.feature.maintenance.generated.resources.airframe_time_format
-import wingslog.feature.maintenance.generated.resources.prop_time_format
+import wingslog.feature.maintenance.generated.resources.airframe_time_abbr
+import wingslog.feature.maintenance.generated.resources.engine_time_abbr
+import wingslog.feature.maintenance.generated.resources.prop_time_abbr
 
 
 @Composable
@@ -45,7 +47,6 @@ fun MaintenanceLogCard(
     ?: cmpStringResource(SharedRes.string.unknown_date)
 
   Card(
-
     onClick = onClick,
     modifier = modifier.fillMaxWidth(),
     colors = CardDefaults.cardColors(
@@ -58,74 +59,75 @@ fun MaintenanceLogCard(
         .fillMaxWidth()
         .padding(16.dp),
       horizontalArrangement = Arrangement.spacedBy(12.dp),
-      verticalAlignment = Alignment.Top
+      verticalAlignment = Alignment.Top,
     ) {
       Column(
         modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
-        Text(
-          text = dateStr,
-          style = WingslogTypography.dataSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
 
-        if (log.inspection_ids.isNotEmpty()) {
+        // Headline: work description (dominant) + component badge right-aligned
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+          verticalAlignment = Alignment.Top,
+        ) {
           Text(
-            text = cmpStringResource(
-              SharedRes.string.affects_n_inspection_items,
-              log.inspection_ids.size
-            ),
+            text = log.work_description,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary
+            modifier = Modifier.weight(1f),
           )
-        }
-
-        Text(
-          text = log.work_description,
-          style = MaterialTheme.typography.bodyMedium
-        )
-
-        Row(
-          horizontalArrangement = Arrangement.spacedBy(Spacing.large)
-        ) {
-          if (log.engine_hour > 0.0) {
-            Text(
-              text = cmpStringResource(
-                SharedRes.string.engine_format,
-                log.engine_hour.formatToOneDecimalPlace()
-              ),
-              style = WingslogTypography.dataSmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-          if (log.airframe_time > 0.0) {
-            Text(
-              text = cmpStringResource(
-                MaintenanceRes.string.airframe_time_format,
-                log.airframe_time.formatToOneDecimalPlace()
-              ),
-              style = WingslogTypography.dataSmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-          if (log.prop_time > 0.0) {
-            Text(
-              text = cmpStringResource(
-                MaintenanceRes.string.prop_time_format,
-                log.prop_time.formatToOneDecimalPlace()
-              ),
-              style = WingslogTypography.dataSmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
           if (log.component_type != MaintenanceLog.ComponentType.UNKNOWN) {
             Text(
               text = log.component_type.displayName(),
               style = MaterialTheme.typography.labelSmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+          }
+        }
+
+        // Date — secondary context beneath the headline
+        Text(
+          text = dateStr,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        // Inspection badge — demoted to bodySmall, no longer dominant
+        if (log.inspection_ids.isNotEmpty()) {
+          Text(
+            text = cmpStringResource(
+              SharedRes.string.affects_n_inspection_items,
+              log.inspection_ids.size,
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+          )
+        }
+
+        // Hours — stacked label/value pairs for fast scanning
+        val hasHours = log.engine_hour > 0.0 || log.airframe_time > 0.0 || log.prop_time > 0.0
+        if (hasHours) {
+          Row(horizontalArrangement = Arrangement.spacedBy(Spacing.large)) {
+            if (log.engine_hour > 0.0) {
+              HourItem(
+                label = cmpStringResource(MaintenanceRes.string.engine_time_abbr),
+                value = log.engine_hour.formatToOneDecimalPlace(),
+              )
+            }
+            if (log.airframe_time > 0.0) {
+              HourItem(
+                label = cmpStringResource(MaintenanceRes.string.airframe_time_abbr),
+                value = log.airframe_time.formatToOneDecimalPlace(),
+              )
+            }
+            if (log.prop_time > 0.0) {
+              HourItem(
+                label = cmpStringResource(MaintenanceRes.string.prop_time_abbr),
+                value = log.prop_time.formatToOneDecimalPlace(),
+              )
+            }
           }
         }
       }
@@ -134,9 +136,24 @@ fun MaintenanceLogCard(
         imageVector = Icons.AutoMirrored.Filled.ArrowRight,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-        modifier = Modifier.padding(top = Spacing.tiny)
+        modifier = Modifier.padding(top = Spacing.tiny),
       )
     }
+  }
+}
+
+@Composable
+private fun HourItem(label: String, value: String) {
+  Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+    Text(
+      text = label,
+      style = MaterialTheme.typography.labelSmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Text(
+      text = value,
+      style = WingslogTypography.dataSmall,
+    )
   }
 }
 
@@ -147,6 +164,7 @@ private fun MaintenanceLogCardPreview() {
     id = "preview-id",
     work_description = "Performed annual inspection and oil change.",
     engine_hour = 1234.5,
+    airframe_time = 987.0,
     component_type = MaintenanceLog.ComponentType.ENGINE,
     inspection_ids = listOf("annual-card-id", "oil-change-card-id")
   )

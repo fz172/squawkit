@@ -48,6 +48,9 @@
   <string name="prop_time_format">Prop: %1$s</string>
   <string name="airframe_time_label">Airframe Time</string>
   <string name="prop_time_label">Prop Time</string>
+  <string name="engine_time_abbr">Eng</string>
+  <string name="airframe_time_abbr">AFTT</string>
+  <string name="prop_time_abbr">Prop</string>
 
   <string name="remove_engine">Remove Engine</string>
   <string name="remove_blade">Remove Blade</string>
