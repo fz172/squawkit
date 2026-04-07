@@ -9,12 +9,11 @@ import platform.Foundation.NSData
 import platform.Foundation.create
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
-internal actual fun ByteArray.toFirebaseData(): Data {
-    val nsData = usePinned { pinned ->
-        NSData.create(
-            bytes = pinned.addressOf(0),
-            length = this.size.toULong()
-        )
-    }
-    return nsData as Data
-}
+internal actual fun ByteArray.toFirebaseData(): Data =
+  Data(usePinned { pinned ->
+    NSData.create(
+      bytes = pinned.addressOf(0),
+      length = this.size.toULong()
+    )
+  })
+
