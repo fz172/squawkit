@@ -69,23 +69,24 @@ import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.required
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as MaintenanceRes
-import wingslog.feature.maintenance.sharedassets.generated.resources.add_aircraft
-import wingslog.feature.maintenance.sharedassets.generated.resources.add_blade
-import wingslog.feature.maintenance.sharedassets.generated.resources.add_engine
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.blade_serial_numbers
 import wingslog.feature.maintenance.sharedassets.generated.resources.blade_with_index
 import wingslog.feature.maintenance.sharedassets.generated.resources.delete_aircraft
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_with_index
-import wingslog.feature.maintenance.sharedassets.generated.resources.make
-import wingslog.feature.maintenance.sharedassets.generated.resources.model
 import wingslog.feature.maintenance.sharedassets.generated.resources.propeller_hub
-import wingslog.feature.maintenance.sharedassets.generated.resources.remove_blade
-import wingslog.feature.maintenance.sharedassets.generated.resources.remove_engine
-import wingslog.feature.maintenance.sharedassets.generated.resources.serial
-import wingslog.feature.maintenance.sharedassets.generated.resources.tail_number
 import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.maintenance.sharedassets.generated.resources.update_aircraft
+import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.update.generated.resources.add_aircraft
+import wingslog.feature.maintenance.update.generated.resources.add_blade
+import wingslog.feature.maintenance.update.generated.resources.add_engine
+import wingslog.feature.maintenance.update.generated.resources.make
+import wingslog.feature.maintenance.update.generated.resources.model
+import wingslog.feature.maintenance.update.generated.resources.remove_blade
+import wingslog.feature.maintenance.update.generated.resources.remove_engine
+import wingslog.feature.maintenance.update.generated.resources.serial
+import wingslog.feature.maintenance.update.generated.resources.tail_number
+import wingslog.feature.maintenance.update.generated.resources.update_aircraft
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,8 +114,8 @@ fun EditAircraftScreen(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(cmpStringResource(MaintenanceRes.string.delete_aircraft)) },
-      text = { Text(cmpStringResource(MaintenanceRes.string.this_action_cannot_be_undone)) },
+      title = { Text(cmpStringResource(SharedRes.string.delete_aircraft)) },
+      text = { Text(cmpStringResource(SharedRes.string.this_action_cannot_be_undone)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -265,7 +266,7 @@ fun EngineSection(
     Column(modifier = Modifier.padding(12.dp)) {
       Box(modifier = Modifier.fillMaxWidth()) {
         Text(
-          cmpStringResource(MaintenanceRes.string.engine_with_index, engineIndex + 1),
+          cmpStringResource(SharedRes.string.engine_with_index, engineIndex + 1),
           color = MaterialTheme.colorScheme.onPrimaryContainer,
           modifier = Modifier.align(Alignment.CenterStart)
         )
@@ -313,7 +314,7 @@ fun EngineSection(
 
       // Propeller Section
       Text(
-        cmpStringResource(MaintenanceRes.string.propeller_hub),
+        cmpStringResource(SharedRes.string.propeller_hub),
         style = MaterialTheme.typography.labelSmall
       )
       val hub = engine.propeller?.hub ?: PropellerHub()
@@ -345,7 +346,7 @@ fun EngineSection(
 
 
       // Blade Serial Numbers - Dynamic List
-      Text(cmpStringResource(MaintenanceRes.string.blade_serial_numbers))
+      Text(cmpStringResource(SharedRes.string.blade_serial_numbers))
       val blades = engine.propeller?.blades ?: emptyList()
       // Chunked(2) allows us to create rows of 2 for that 50/50 look
       blades.withIndex().chunked(2).forEach { pair ->
@@ -353,8 +354,7 @@ fun EngineSection(
           pair.forEach { (bladeIndex, blade) ->
             InputField(
               label = cmpStringResource(
-                MaintenanceRes.string
-                  .blade_with_index,
+                SharedRes.string.blade_with_index,
                 bladeIndex + 1
               ),
               value = blade.serial,

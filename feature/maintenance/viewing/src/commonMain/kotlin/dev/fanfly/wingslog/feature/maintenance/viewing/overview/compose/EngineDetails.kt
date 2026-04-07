@@ -11,9 +11,10 @@ import dev.fanfly.wingslog.aircraft.Engine
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_propeller
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_with_index
-import wingslog.feature.maintenance.sharedassets.generated.resources.model_and_sn
+import wingslog.feature.maintenance.viewing.generated.resources.model_and_sn
 
 @Composable
 fun EngineDetails(index: Int, engine: Engine) {
@@ -21,7 +22,7 @@ fun EngineDetails(index: Int, engine: Engine) {
     // Engine Header
     Column {
       Text(
-        text = cmpStringResource(MaintenanceRes.string.engine_with_index, index + 1),
+        text = cmpStringResource(SharedRes.string.engine_with_index, index + 1),
         style = MaterialTheme.typography.bodyLarge,
         fontWeight = FontWeight.Companion.Bold,
         color = MaterialTheme.colorScheme.onSurface

@@ -64,12 +64,13 @@ import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.error_occurred
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_first_maintenance_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
-import wingslog.feature.maintenance.sharedassets.generated.resources.delete_aircraft
-import wingslog.feature.maintenance.sharedassets.generated.resources.log_details
 import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.delete_aircraft
+import wingslog.feature.maintenance.viewing.generated.resources.log_details
 import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
 
 
@@ -181,8 +182,8 @@ fun AircraftOverviewContent(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(cmpStringResource(MaintenanceRes.string.delete_aircraft)) },
-      text = { Text(cmpStringResource(MaintenanceRes.string.this_action_cannot_be_undone)) },
+      title = { Text(cmpStringResource(SharedRes.string.delete_aircraft)) },
+      text = { Text(cmpStringResource(SharedRes.string.this_action_cannot_be_undone)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -211,7 +212,7 @@ fun AircraftOverviewContent(
             Column {
               Text(
                 text = cmpStringResource(
-                  MaintenanceRes.string.make_model_template, aircraft.make, aircraft.model
+                  SharedRes.string.make_model_template, aircraft.make, aircraft.model
                 )
               )
               Text(
@@ -341,8 +342,8 @@ fun LogDetailsBottomBar(
     BottomButtons(
       modifier = modifier,
       onPrimaryClick = { onAddLogClick(aircraft.id) },
-      primaryLabel = if (hasLogs) cmpStringResource(MaintenanceRes.string.add_log)
-      else cmpStringResource(MaintenanceRes.string.add_first_maintenance_log),
+      primaryLabel = if (hasLogs) cmpStringResource(SharedRes.string.add_log)
+      else cmpStringResource(SharedRes.string.add_first_maintenance_log),
       onSecondaryClick = if (hasLogs) ({ onLogDetailsClick(aircraft.id) }) else null,
       secondaryLabel = cmpStringResource(MaintenanceRes.string.log_details),
     )

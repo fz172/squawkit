@@ -91,28 +91,28 @@ import wingslog.core.ui.generated.resources.update
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.inspection_work
 import wingslog.feature.inspection.sharedassets.generated.resources.no_inspection_work_recorded
-import wingslog.feature.inspection.sharedassets.generated.resources.unknown_inspection
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
-import wingslog.feature.maintenance.sharedassets.generated.resources.airframe_serial
-import wingslog.feature.maintenance.sharedassets.generated.resources.airframe_time_hours
+import wingslog.feature.maintenance.update.generated.resources.airframe_serial
+import wingslog.feature.maintenance.update.generated.resources.airframe_time_hours
 import wingslog.feature.maintenance.sharedassets.generated.resources.blade
-import wingslog.feature.maintenance.sharedassets.generated.resources.delete_log
+import wingslog.feature.maintenance.update.generated.resources.delete_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.edit_log
-import wingslog.feature.maintenance.sharedassets.generated.resources.engine_time_hours
-import wingslog.feature.maintenance.sharedassets.generated.resources.loading_aircraft
-import wingslog.feature.maintenance.sharedassets.generated.resources.log_deleted
-import wingslog.feature.maintenance.sharedassets.generated.resources.log_saved
-import wingslog.feature.maintenance.sharedassets.generated.resources.log_updated
+import wingslog.feature.maintenance.update.generated.resources.engine_time_hours
+import wingslog.feature.maintenance.update.generated.resources.loading_aircraft
+import wingslog.feature.maintenance.update.generated.resources.log_deleted
+import wingslog.feature.maintenance.update.generated.resources.log_saved
+import wingslog.feature.maintenance.update.generated.resources.log_updated
 import wingslog.feature.maintenance.sharedassets.generated.resources.maintenance_date
-import wingslog.feature.maintenance.sharedassets.generated.resources.no_engines_found
-import wingslog.feature.maintenance.sharedassets.generated.resources.no_propeller_components_found
-import wingslog.feature.maintenance.sharedassets.generated.resources.prop_time_hours
-import wingslog.feature.maintenance.sharedassets.generated.resources.propeller_component
+import wingslog.feature.maintenance.update.generated.resources.no_engines_found
+import wingslog.feature.maintenance.update.generated.resources.no_propeller_components_found
+import wingslog.feature.maintenance.update.generated.resources.prop_time_hours
+import wingslog.feature.maintenance.update.generated.resources.propeller_component
 import wingslog.feature.maintenance.sharedassets.generated.resources.propeller_hub
-import wingslog.feature.maintenance.sharedassets.generated.resources.tap_to_change_date
+import wingslog.feature.maintenance.update.generated.resources.tap_to_change_date
 import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.maintenance.sharedassets.generated.resources.work_description_required
+import wingslog.feature.maintenance.update.generated.resources.work_description_required
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -160,7 +160,7 @@ fun MaintenanceLogFormScreen(
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
       title = { Text(cmpStringResource(MaintenanceRes.string.delete_log)) },
-      text = { Text(cmpStringResource(MaintenanceRes.string.this_action_cannot_be_undone)) },
+      text = { Text(cmpStringResource(SharedRes.string.this_action_cannot_be_undone)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -188,8 +188,8 @@ fun MaintenanceLogFormScreen(
       TopAppBar(
         title = {
           Text(
-            if (viewModel.isEditMode) cmpStringResource(MaintenanceRes.string.edit_log) else cmpStringResource(
-              MaintenanceRes.string.add_log
+            if (viewModel.isEditMode) cmpStringResource(SharedRes.string.edit_log) else cmpStringResource(
+              SharedRes.string.add_log
             )
           )
         },
@@ -226,11 +226,11 @@ fun MaintenanceLogFormScreen(
             value = dateDisplayText,
             onValueChange = {},
             readOnly = true,
-            label = { Text(cmpStringResource(MaintenanceRes.string.maintenance_date)) },
+            label = { Text(cmpStringResource(SharedRes.string.maintenance_date)) },
             leadingIcon = {
               Icon(
                 Icons.Default.CalendarToday,
-                contentDescription = cmpStringResource(MaintenanceRes.string.maintenance_date)
+                contentDescription = cmpStringResource(SharedRes.string.maintenance_date)
               )
             },
             modifier = Modifier
@@ -494,7 +494,7 @@ private fun ComponentSection(
             val hub = prop?.hub
             if (hub?.serial?.isNotEmpty() == true) {
               val label = buildString {
-                append(cmpStringResource(MaintenanceRes.string.propeller_hub))
+                append(cmpStringResource(SharedRes.string.propeller_hub))
                 if (hub.make.isNotEmpty()) append(" - ${hub.make}")
                 if (hub.model.isNotEmpty()) append(" ${hub.model}")
                 append(" (${hub.serial})")
@@ -504,7 +504,7 @@ private fun ComponentSection(
             prop?.blades?.forEach { blade ->
               if (blade.serial.isNotEmpty()) {
                 val label = buildString {
-                  append(cmpStringResource(MaintenanceRes.string.blade))
+                  append(cmpStringResource(SharedRes.string.blade))
                   if (blade.make.isNotEmpty()) append(" - ${blade.make}")
                   if (blade.model.isNotEmpty()) append(" ${blade.model}")
                   append(" (${blade.serial})")

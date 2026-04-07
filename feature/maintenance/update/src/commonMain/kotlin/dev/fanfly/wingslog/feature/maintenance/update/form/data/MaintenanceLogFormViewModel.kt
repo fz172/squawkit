@@ -43,9 +43,9 @@ import wingslog.core.attachments.sharedassets.generated.resources.upload_permiss
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.delete_failed
 import wingslog.core.ui.generated.resources.save_failed
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as MaintenanceRes
-import wingslog.feature.maintenance.sharedassets.generated.resources.log_not_found
-import wingslog.feature.maintenance.sharedassets.generated.resources.work_description_required
+import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.update.generated.resources.log_not_found
+import wingslog.feature.maintenance.update.generated.resources.work_description_required
 
 class MaintenanceLogFormViewModel(
   private val logManager: MaintenanceLogManager,

@@ -27,10 +27,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_first_maintenance_log
-import wingslog.feature.maintenance.sharedassets.generated.resources.log_onboarding_description
 import wingslog.feature.maintenance.sharedassets.generated.resources.no_maintenance_logs_title
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.viewing.generated.resources.log_onboarding_description
 
 @Composable
 fun LogOnboardingCard(
@@ -59,7 +60,7 @@ fun LogOnboardingCard(
           modifier = Modifier.size(32.dp)
         )
         Text(
-          text = stringResource(MaintenanceRes.string.no_maintenance_logs_title),
+          text = stringResource(SharedRes.string.no_maintenance_logs_title),
           style = MaterialTheme.typography.titleLarge,
           fontWeight = FontWeight.Bold
         )
@@ -82,7 +83,7 @@ fun LogOnboardingCard(
         Icon(Icons.Default.Add, contentDescription = null)
         Spacer(Modifier.width(Spacing.small))
         Text(
-          text = stringResource(MaintenanceRes.string.add_first_maintenance_log).uppercase(),
+          text = stringResource(SharedRes.string.add_first_maintenance_log).uppercase(),
           fontWeight = FontWeight.Bold
         )
       }

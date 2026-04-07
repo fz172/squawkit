@@ -57,17 +57,18 @@ import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.all
 import wingslog.core.ui.generated.resources.retry
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_first_maintenance_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
-import wingslog.feature.maintenance.sharedassets.generated.resources.clear_filter
-import wingslog.feature.maintenance.sharedassets.generated.resources.failed_to_load_logs
-import wingslog.feature.maintenance.sharedassets.generated.resources.maintenance_logs
-import wingslog.feature.maintenance.sharedassets.generated.resources.no_logs_match_filter
 import wingslog.feature.maintenance.sharedassets.generated.resources.no_maintenance_logs_description
 import wingslog.feature.maintenance.sharedassets.generated.resources.no_maintenance_logs_title
-import wingslog.feature.maintenance.sharedassets.generated.resources.search_logs
-import wingslog.feature.maintenance.sharedassets.generated.resources.showing_x_of_y
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.viewing.generated.resources.clear_filter
+import wingslog.feature.maintenance.viewing.generated.resources.failed_to_load_logs
+import wingslog.feature.maintenance.viewing.generated.resources.maintenance_logs
+import wingslog.feature.maintenance.viewing.generated.resources.no_logs_match_filter
+import wingslog.feature.maintenance.viewing.generated.resources.search_logs
+import wingslog.feature.maintenance.viewing.generated.resources.showing_x_of_y
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,7 +106,7 @@ fun MaintenanceLogListScreen(
       FloatingActionButton(onClick = { viewModel.onAddLog() }) {
         Icon(
           Icons.Default.Add,
-          contentDescription = cmpStringResource(MaintenanceRes.string.add_log)
+          contentDescription = cmpStringResource(SharedRes.string.add_log)
         )
       }
     }
@@ -136,10 +137,10 @@ fun MaintenanceLogListScreen(
         is MaintenanceLogListUiState.Success -> {
           if (state.totalCount == 0) {
             EmptyState(
-              title = cmpStringResource(MaintenanceRes.string.no_maintenance_logs_title),
-              description = cmpStringResource(MaintenanceRes.string.no_maintenance_logs_description),
+              title = cmpStringResource(SharedRes.string.no_maintenance_logs_title),
+              description = cmpStringResource(SharedRes.string.no_maintenance_logs_description),
               icon = Icons.Default.History,
-              actionText = cmpStringResource(MaintenanceRes.string.add_first_maintenance_log),
+              actionText = cmpStringResource(SharedRes.string.add_first_maintenance_log),
               onActionClick = { viewModel.onAddLog() }
             )
           } else {
