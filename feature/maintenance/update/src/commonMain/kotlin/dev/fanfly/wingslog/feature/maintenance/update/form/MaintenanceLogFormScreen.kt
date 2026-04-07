@@ -72,6 +72,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.attachments.sharedassets.generated.resources.file_added
 import wingslog.core.attachments.sharedassets.generated.resources.file_read_error
@@ -108,7 +109,6 @@ import wingslog.feature.maintenance.update.generated.resources.prop_time_hours
 import wingslog.feature.maintenance.update.generated.resources.propeller_component
 import wingslog.feature.maintenance.update.generated.resources.tap_to_change_date
 import wingslog.feature.maintenance.update.generated.resources.work_description_required
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
@@ -126,12 +126,12 @@ fun MaintenanceLogFormScreen(
   var showDatePicker by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
 
-  val logUpdatedMessage = cmpStringResource(MaintenanceRes.string.log_updated)
-  val logSavedMessage = cmpStringResource(MaintenanceRes.string.log_saved)
-  val logDeletedMessage = cmpStringResource(MaintenanceRes.string.log_deleted)
-  val fileAddedMessage = cmpStringResource(AttachRes.string.file_added)
-  val linkAddedMessage = cmpStringResource(AttachRes.string.link_added)
-  val fileReadErrorMessage = cmpStringResource(AttachRes.string.file_read_error)
+  val logUpdatedMessage = stringResource(MaintenanceRes.string.log_updated)
+  val logSavedMessage = stringResource(MaintenanceRes.string.log_saved)
+  val logDeletedMessage = stringResource(MaintenanceRes.string.log_deleted)
+  val fileAddedMessage = stringResource(AttachRes.string.file_added)
+  val linkAddedMessage = stringResource(AttachRes.string.link_added)
+  val fileReadErrorMessage = stringResource(AttachRes.string.file_read_error)
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
@@ -160,8 +160,8 @@ fun MaintenanceLogFormScreen(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(cmpStringResource(MaintenanceRes.string.delete_log)) },
-      text = { Text(cmpStringResource(SharedRes.string.this_action_cannot_be_undone)) },
+      title = { Text(stringResource(MaintenanceRes.string.delete_log)) },
+      text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -170,26 +170,26 @@ fun MaintenanceLogFormScreen(
           },
           colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
         ) {
-          Text(cmpStringResource(CoreRes.string.delete))
+          Text(stringResource(CoreRes.string.delete))
         }
       },
       dismissButton = {
         TextButton(onClick = { showDeleteDialog = false }) {
-          Text(cmpStringResource(CoreRes.string.cancel))
+          Text(stringResource(CoreRes.string.cancel))
         }
       }
     )
   }
 
   val saveLabel =
-    cmpStringResource(if (viewModel.isEditMode) CoreRes.string.update else CoreRes.string.save)
+    stringResource(if (viewModel.isEditMode) CoreRes.string.update else CoreRes.string.save)
 
   Scaffold(
     topBar = {
       TopAppBar(
         title = {
           Text(
-            if (viewModel.isEditMode) cmpStringResource(SharedRes.string.edit_log) else cmpStringResource(
+            if (viewModel.isEditMode) stringResource(SharedRes.string.edit_log) else stringResource(
               SharedRes.string.add_log
             )
           )
@@ -198,7 +198,7 @@ fun MaintenanceLogFormScreen(
           IconButton(onClick = { navController.popBackStack() }) {
             Icon(
               Icons.AutoMirrored.Filled.ArrowBack,
-              contentDescription = cmpStringResource(CoreRes.string.back)
+              contentDescription = stringResource(CoreRes.string.back)
             )
           }
         }
@@ -222,16 +222,16 @@ fun MaintenanceLogFormScreen(
         ) {
           // Maintenance Date
           val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat()
-            ?: cmpStringResource(MaintenanceRes.string.tap_to_change_date)
+            ?: stringResource(MaintenanceRes.string.tap_to_change_date)
           OutlinedTextField(
             value = dateDisplayText,
             onValueChange = {},
             readOnly = true,
-            label = { Text(cmpStringResource(SharedRes.string.maintenance_date)) },
+            label = { Text(stringResource(SharedRes.string.maintenance_date)) },
             leadingIcon = {
               Icon(
                 Icons.Default.CalendarToday,
-                contentDescription = cmpStringResource(SharedRes.string.maintenance_date)
+                contentDescription = stringResource(SharedRes.string.maintenance_date)
               )
             },
             modifier = Modifier
@@ -271,12 +271,12 @@ fun MaintenanceLogFormScreen(
                   }
                   showDatePicker = false
                 }) {
-                  Text(cmpStringResource(CoreRes.string.ok))
+                  Text(stringResource(CoreRes.string.ok))
                 }
               },
               dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                  Text(cmpStringResource(CoreRes.string.cancel))
+                  Text(stringResource(CoreRes.string.cancel))
                 }
               }
             ) {
@@ -288,7 +288,7 @@ fun MaintenanceLogFormScreen(
           OutlinedTextField(
             value = uiState.workDescription,
             onValueChange = viewModel::onWorkDescriptionChange,
-            label = { Text(cmpStringResource(MaintenanceRes.string.work_description_required)) },
+            label = { Text(stringResource(MaintenanceRes.string.work_description_required)) },
             modifier = Modifier.fillMaxWidth(),
             minLines = 3,
             maxLines = 6,
@@ -318,7 +318,7 @@ fun MaintenanceLogFormScreen(
           OutlinedTextField(
             value = uiState.engineTime,
             onValueChange = viewModel::onEngineTimeChange,
-            label = { Text(cmpStringResource(MaintenanceRes.string.engine_time_hours)) },
+            label = { Text(stringResource(MaintenanceRes.string.engine_time_hours)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -328,7 +328,7 @@ fun MaintenanceLogFormScreen(
           OutlinedTextField(
             value = uiState.airframeTime,
             onValueChange = viewModel::onAirframeTimeChange,
-            label = { Text(cmpStringResource(MaintenanceRes.string.airframe_time_hours)) },
+            label = { Text(stringResource(MaintenanceRes.string.airframe_time_hours)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -338,7 +338,7 @@ fun MaintenanceLogFormScreen(
           OutlinedTextField(
             value = uiState.propTime,
             onValueChange = viewModel::onPropTimeChange,
-            label = { Text(cmpStringResource(MaintenanceRes.string.prop_time_hours)) },
+            label = { Text(stringResource(MaintenanceRes.string.prop_time_hours)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -389,7 +389,7 @@ fun MaintenanceLogFormScreen(
           onDangerClick = if (viewModel.isEditMode) {
             { showDeleteDialog = true }
           } else null,
-          dangerLabel = cmpStringResource(CoreRes.string.delete),
+          dangerLabel = stringResource(CoreRes.string.delete),
           primaryEnabled = !uiState.isSaving,
           isPrimaryFunctionInProgress = uiState.isSaving,
           primaryLabel = saveLabel,
@@ -436,7 +436,7 @@ private fun ComponentSection(
           value = serial,
           onValueChange = {},
           readOnly = true,
-          label = { Text(cmpStringResource(MaintenanceRes.string.airframe_serial)) },
+          label = { Text(stringResource(MaintenanceRes.string.airframe_serial)) },
           modifier = Modifier.fillMaxWidth(),
           singleLine = true
         )
@@ -445,7 +445,7 @@ private fun ComponentSection(
       MaintenanceLog.ComponentType.ENGINE -> {
         if (aircraft == null) {
           Text(
-            text = cmpStringResource(MaintenanceRes.string.loading_aircraft),
+            text = stringResource(MaintenanceRes.string.loading_aircraft),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
@@ -453,7 +453,7 @@ private fun ComponentSection(
           val engines = aircraft.engine
           if (engines.isEmpty()) {
             Text(
-              text = cmpStringResource(MaintenanceRes.string.no_engines_found),
+              text = stringResource(MaintenanceRes.string.no_engines_found),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -470,7 +470,7 @@ private fun ComponentSection(
               label to engine.serial
             }
             SubComponentDropdown(
-              label = cmpStringResource(CoreRes.string.component_engine),
+              label = stringResource(CoreRes.string.component_engine),
               options = options,
               selectedSerial = selectedSubComponent,
               onSelected = onSubComponentChange,
@@ -483,7 +483,7 @@ private fun ComponentSection(
       MaintenanceLog.ComponentType.PROPELLER -> {
         if (aircraft == null) {
           Text(
-            text = cmpStringResource(MaintenanceRes.string.loading_aircraft),
+            text = stringResource(MaintenanceRes.string.loading_aircraft),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
@@ -495,7 +495,7 @@ private fun ComponentSection(
             val hub = prop?.hub
             if (hub?.serial?.isNotEmpty() == true) {
               val label = buildString {
-                append(cmpStringResource(SharedRes.string.propeller_hub))
+                append(stringResource(SharedRes.string.propeller_hub))
                 if (hub.make.isNotEmpty()) append(" - ${hub.make}")
                 if (hub.model.isNotEmpty()) append(" ${hub.model}")
                 append(" (${hub.serial})")
@@ -505,7 +505,7 @@ private fun ComponentSection(
             prop?.blades?.forEach { blade ->
               if (blade.serial.isNotEmpty()) {
                 val label = buildString {
-                  append(cmpStringResource(SharedRes.string.blade))
+                  append(stringResource(SharedRes.string.blade))
                   if (blade.make.isNotEmpty()) append(" - ${blade.make}")
                   if (blade.model.isNotEmpty()) append(" ${blade.model}")
                   append(" (${blade.serial})")
@@ -517,13 +517,13 @@ private fun ComponentSection(
 
           if (options.isEmpty()) {
             Text(
-              text = cmpStringResource(MaintenanceRes.string.no_propeller_components_found),
+              text = stringResource(MaintenanceRes.string.no_propeller_components_found),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
           } else {
             SubComponentDropdown(
-              label = cmpStringResource(MaintenanceRes.string.propeller_component),
+              label = stringResource(MaintenanceRes.string.propeller_component),
               options = options,
               selectedSerial = selectedSubComponent,
               onSelected = onSubComponentChange,
@@ -596,7 +596,7 @@ private fun InspectionWorkSection(
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
       Text(
-        text = cmpStringResource(SharedInspectionRes.string.inspection_work),
+        text = stringResource(SharedInspectionRes.string.inspection_work),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
       )
@@ -609,7 +609,7 @@ private fun InspectionWorkSection(
         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.width(16.dp))
         Spacer(Modifier.width(4.dp))
         Text(
-          cmpStringResource(CoreRes.string.add),
+          stringResource(CoreRes.string.add),
           style = MaterialTheme.typography.labelMedium
         )
       }
@@ -617,7 +617,7 @@ private fun InspectionWorkSection(
 
     if (selectedIds.isEmpty()) {
       Text(
-        text = cmpStringResource(SharedInspectionRes.string.no_inspection_work_recorded),
+        text = stringResource(SharedInspectionRes.string.no_inspection_work_recorded),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -625,7 +625,7 @@ private fun InspectionWorkSection(
       selectedIds.forEach { cardId ->
         val card = availableCards.firstOrNull { it.id == cardId }
         val title =
-          card?.title ?: cmpStringResource(SharedInspectionRes.string.unknown_inspection, cardId)
+          card?.title ?: stringResource(SharedInspectionRes.string.unknown_inspection, cardId)
         Row(
           modifier = Modifier.fillMaxWidth(),
           verticalAlignment = Alignment.CenterVertically,
@@ -639,7 +639,7 @@ private fun InspectionWorkSection(
           IconButton(onClick = { onRemove(cardId) }) {
             Icon(
               Icons.Default.Close,
-              contentDescription = cmpStringResource(CoreRes.string.remove),
+              contentDescription = stringResource(CoreRes.string.remove),
               tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }

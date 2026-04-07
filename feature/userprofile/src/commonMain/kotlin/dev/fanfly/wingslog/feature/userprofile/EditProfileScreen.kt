@@ -56,7 +56,7 @@ import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfi
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
 import kotlinx.datetime.Instant
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.core.ui.generated.resources.cancel
@@ -90,7 +90,7 @@ fun EditProfileScreen(
 
   Scaffold(topBar = {
     WingsLogTopAppBar(
-      title = cmpStringResource(CoreUiRes.string.edit_profile),
+      title = stringResource(CoreUiRes.string.edit_profile),
       onBackClick = { navController.popBackStack() })
   }) { innerPadding ->
     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -112,10 +112,10 @@ fun EditProfileScreen(
         ExposedDropdownMenuBox(
           expanded = expanded, onExpandedChange = { expanded = !expanded }) {
           OutlinedTextField(
-            value = cmpStringResource(uiState.licenceInfo.license_type.displayResId()),
+            value = stringResource(uiState.licenceInfo.license_type.displayResId()),
             onValueChange = {},
             readOnly = true,
-            label = { Text(text = cmpStringResource(UserProfileRes.string.license_type)) },
+            label = { Text(text = stringResource(UserProfileRes.string.license_type)) },
             trailingIcon = {
               ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
@@ -127,7 +127,7 @@ fun EditProfileScreen(
           ExposedDropdownMenu(
             expanded = expanded, onDismissRequest = { expanded = false }) {
             LicenseType.entries.forEach { type ->
-              DropdownMenuItem(text = { Text(cmpStringResource(type.displayResId())) }, onClick = {
+              DropdownMenuItem(text = { Text(stringResource(type.displayResId())) }, onClick = {
                 viewModel.onLicenseTypeChanged(type) // Update ViewModel
                 expanded = false
               })
@@ -139,7 +139,7 @@ fun EditProfileScreen(
         OutlinedTextField(
           value = uiState.licenceInfo.license_number, // Read from ViewModel
           onValueChange = { viewModel.onLicenseNumberChanged(it) }, // Update ViewModel
-          label = { Text(cmpStringResource(UserProfileRes.string.license_number)) },
+          label = { Text(stringResource(UserProfileRes.string.license_number)) },
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
           shape = RoundedCornerShape(Spacing.buttonCornerRadius),
@@ -161,11 +161,11 @@ fun EditProfileScreen(
               uiState.licenceInfo.expiration_date?.toLocalDate()?.toDisplayFormat() ?: "" else "",
             onValueChange = { }, // Update ViewModel
             readOnly = true,
-            label = { Text(cmpStringResource(UserProfileRes.string.license_expiration_date)) },
+            label = { Text(stringResource(UserProfileRes.string.license_expiration_date)) },
             leadingIcon = {
               Icon(
                 imageVector = Icons.Default.CalendarToday,
-                contentDescription = cmpStringResource(CoreUiRes.string.select_date)
+                contentDescription = stringResource(CoreUiRes.string.select_date)
               )
             },
             enabled = false,
@@ -201,7 +201,7 @@ fun EditProfileScreen(
             }
           )
           Spacer(modifier = Modifier.width(Spacing.large))
-          Text(text = cmpStringResource(UserProfileRes.string.never))
+          Text(text = stringResource(UserProfileRes.string.never))
           Checkbox(
             checked = uiState.licenceInfo.expireLimit == LicenseExpireLimit.NEVER_EXPIRES,
             onCheckedChange = { viewModel.onExpirationNeverFlagChanged(it) },
@@ -221,13 +221,13 @@ fun EditProfileScreen(
                   viewModel.onExpirationDateChanged(selectedDate)
                   showDatePicker = false
                 }) {
-                Text(text = cmpStringResource(CoreUiRes.string.ok))
+                Text(text = stringResource(CoreUiRes.string.ok))
               }
             },
             dismissButton = {
               TextButton(
                 onClick = { showDatePicker = false }) {
-                Text(text = cmpStringResource(CoreUiRes.string.cancel))
+                Text(text = stringResource(CoreUiRes.string.cancel))
               }
             }) {
             DatePicker(state = datePickerState)

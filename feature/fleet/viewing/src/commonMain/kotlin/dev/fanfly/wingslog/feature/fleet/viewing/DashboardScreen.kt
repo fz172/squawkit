@@ -38,7 +38,7 @@ import wingslog.feature.fleet.sharedassets.generated.resources.add_aircraft
 import wingslog.feature.fleet.sharedassets.generated.resources.add_first_aircraft
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_description
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_title
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.feature.fleet.sharedassets.generated.resources.Res as FleetRes
 
@@ -65,11 +65,11 @@ fun DashboardScreen(
   Scaffold(
     modifier = Modifier.fillMaxSize(),
     topBar = {
-      TopAppBar(title = { Text(text = cmpStringResource(CoreUiRes.string.app_name)) }, actions = {
+      TopAppBar(title = { Text(text = stringResource(CoreUiRes.string.app_name)) }, actions = {
         IconButton(onClick = onOpenSettings) {
           Icon(
             Icons.Default.Settings,
-            contentDescription = cmpStringResource(CoreUiRes.string.settings)
+            contentDescription = stringResource(CoreUiRes.string.settings)
           )
         }
       })
@@ -83,7 +83,7 @@ fun DashboardScreen(
         ) {
           Icon(
             Icons.Default.Add,
-            contentDescription = cmpStringResource(FleetRes.string.add_aircraft)
+            contentDescription = stringResource(FleetRes.string.add_aircraft)
           )
         }
       }
@@ -96,10 +96,10 @@ fun DashboardScreen(
         CircularProgressIndicator()
       } else if (uiState.fleet.isEmpty()) {
         EmptyState(
-          title = cmpStringResource(FleetRes.string.no_fleet_title),
-          description = cmpStringResource(FleetRes.string.no_fleet_description),
+          title = stringResource(FleetRes.string.no_fleet_title),
+          description = stringResource(FleetRes.string.no_fleet_description),
           icon = Icons.Default.AirplanemodeActive,
-          actionText = cmpStringResource(FleetRes.string.add_first_aircraft),
+          actionText = stringResource(FleetRes.string.add_first_aircraft),
           onActionClick = onAddAircraft
         )
       } else {

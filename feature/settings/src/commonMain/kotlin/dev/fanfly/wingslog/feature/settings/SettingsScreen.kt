@@ -25,7 +25,7 @@ import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.settings
@@ -60,7 +60,7 @@ fun SettingsScreen(
   Scaffold(
     topBar = {
       WingsLogTopAppBar(
-        title = cmpStringResource(Res.string.settings),
+        title = stringResource(Res.string.settings),
         onBackClick = { navController.popBackStack() })
     }) { innerPadding ->
     Column(
@@ -80,7 +80,7 @@ fun SettingsScreen(
       )
       SettingsRow(
         icon = Icons.AutoMirrored.Filled.Logout,
-        title = cmpStringResource(SettingsRes.string.sign_out),
+        title = stringResource(SettingsRes.string.sign_out),
         onClick = { settingsViewModel.logOut() },
         settingsLevel = SettingsLevel.DANGER
       )
@@ -88,7 +88,7 @@ fun SettingsScreen(
       Spacer(modifier = Modifier.weight(1f))
 
       Text(
-        text = cmpStringResource(SettingsRes.string.app_version, getAppVersion()),
+        text = stringResource(SettingsRes.string.app_version, getAppVersion()),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.align(Alignment.CenterHorizontally)

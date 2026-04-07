@@ -51,7 +51,7 @@ import dev.fanfly.wingslog.feature.maintenance.viewing.log.data.MaintenanceLogLi
 import dev.fanfly.wingslog.feature.maintenance.viewing.log.data.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -97,7 +97,7 @@ fun MaintenanceLogListScreen(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
       WingsLogTopAppBar(
-        title = cmpStringResource(MaintenanceRes.string.maintenance_logs),
+        title = stringResource(MaintenanceRes.string.maintenance_logs),
         onBackClick = { navController.popBackStack() },
         scrollBehavior = scrollBehavior
       )
@@ -106,7 +106,7 @@ fun MaintenanceLogListScreen(
       FloatingActionButton(onClick = { viewModel.onAddLog() }) {
         Icon(
           Icons.Default.Add,
-          contentDescription = cmpStringResource(SharedRes.string.add_log)
+          contentDescription = stringResource(SharedRes.string.add_log)
         )
       }
     }
@@ -125,22 +125,22 @@ fun MaintenanceLogListScreen(
           verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
           Text(
-            cmpStringResource(MaintenanceRes.string.failed_to_load_logs),
+            stringResource(MaintenanceRes.string.failed_to_load_logs),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
           Button(onClick = { viewModel.retryLoading() }) {
-            Text(cmpStringResource(CoreRes.string.retry))
+            Text(stringResource(CoreRes.string.retry))
           }
         }
 
         is MaintenanceLogListUiState.Success -> {
           if (state.totalCount == 0) {
             EmptyState(
-              title = cmpStringResource(SharedRes.string.no_maintenance_logs_title),
-              description = cmpStringResource(SharedRes.string.no_maintenance_logs_description),
+              title = stringResource(SharedRes.string.no_maintenance_logs_title),
+              description = stringResource(SharedRes.string.no_maintenance_logs_description),
               icon = Icons.Default.History,
-              actionText = cmpStringResource(SharedRes.string.add_first_maintenance_log),
+              actionText = stringResource(SharedRes.string.add_first_maintenance_log),
               onActionClick = { viewModel.onAddLog() }
             )
           } else {
@@ -152,7 +152,7 @@ fun MaintenanceLogListScreen(
                 modifier = Modifier
                   .fillMaxWidth()
                   .padding(horizontal = Spacing.screenPadding, vertical = Spacing.small),
-                placeholder = { Text(cmpStringResource(MaintenanceRes.string.search_logs)) },
+                placeholder = { Text(stringResource(MaintenanceRes.string.search_logs)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
                   if (state.filter.query.isNotBlank()) {
@@ -177,7 +177,7 @@ fun MaintenanceLogListScreen(
                   .padding(horizontal = Spacing.screenPadding),
               ) {
                 components.forEachIndexed { index, component ->
-                  val label = component?.displayName() ?: cmpStringResource(CoreRes.string.all)
+                  val label = component?.displayName() ?: stringResource(CoreRes.string.all)
                   SegmentedButton(
                     selected = state.filter.component == component,
                     onClick = { viewModel.onComponentFilterChange(component) },
@@ -191,7 +191,7 @@ fun MaintenanceLogListScreen(
               // Result count when filtering
               if (state.filter.isActive) {
                 Text(
-                  text = cmpStringResource(
+                  text = stringResource(
                     MaintenanceRes.string
                       .showing_x_of_y,
                     state.logs.size,
@@ -219,12 +219,12 @@ fun MaintenanceLogListScreen(
                     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
                   ) {
                     Text(
-                      text = cmpStringResource(MaintenanceRes.string.no_logs_match_filter),
+                      text = stringResource(MaintenanceRes.string.no_logs_match_filter),
                       style = MaterialTheme.typography.bodyLarge,
                       color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Button(onClick = { viewModel.clearFilter() }) {
-                      Text(cmpStringResource(MaintenanceRes.string.clear_filter))
+                      Text(stringResource(MaintenanceRes.string.clear_filter))
                     }
                   }
                 }

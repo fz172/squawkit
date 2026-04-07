@@ -33,7 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.airframe_s_n
 import wingslog.feature.maintenance.viewing.generated.resources.collapse_details
@@ -65,7 +65,7 @@ fun ConfigurationCard(
       ) {
         Column(modifier = Modifier.weight(1f)) {
           Text(
-            text = cmpStringResource(MaintenanceRes.string.airframe_s_n, aircraft.serial),
+            text = stringResource(MaintenanceRes.string.airframe_s_n, aircraft.serial),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -79,7 +79,7 @@ fun ConfigurationCard(
           IconButton(onClick = { expanded = !expanded }) {
             Icon(
               imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-              contentDescription = if (expanded) cmpStringResource(MaintenanceRes.string.collapse_details) else cmpStringResource(
+              contentDescription = if (expanded) stringResource(MaintenanceRes.string.collapse_details) else stringResource(
                 MaintenanceRes.string.expand_details
               ),
               tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -96,7 +96,7 @@ fun ConfigurationCard(
             )
             Spacer(Modifier.width(Spacing.small))
             Text(
-              text = cmpStringResource(MaintenanceRes.string.edit_aircraft),
+              text = stringResource(MaintenanceRes.string.edit_aircraft),
               style = MaterialTheme.typography.labelMedium
             )
           }

@@ -23,7 +23,7 @@ import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.edit_profile
 import wingslog.feature.userprofile.sharedassets.generated.resources.Res as SharedAssetsRes
@@ -56,7 +56,7 @@ fun UserProfileCard(
       // --- Profile Image ---
       CircularImage(
         photoUri = data.photoUri,
-        contentDescription = cmpStringResource(CardRes.string.profile_picture),
+        contentDescription = stringResource(CardRes.string.profile_picture),
         fallbackRes = SharedAssetsRes.drawable.ic_anonymous_user
       )
 
@@ -66,7 +66,7 @@ fun UserProfileCard(
       Text(
         text = if (data.displayName?.isEmpty()
             ?: true
-        ) cmpStringResource(SharedAssetsRes.string.anonymous_user) else data.displayName,
+        ) stringResource(SharedAssetsRes.string.anonymous_user) else data.displayName,
         fontSize = 22.sp,
         fontWeight = FontWeight.Bold,
       )
@@ -74,7 +74,7 @@ fun UserProfileCard(
         if (data.licenceInfo.license_type != LicenseType.NONE) {
           Spacer(modifier = Modifier.height(Spacing.extraSmall))
           Text(
-            text = cmpStringResource(data.licenceInfo.license_type.displayResId()),
+            text = stringResource(data.licenceInfo.license_type.displayResId()),
             fontSize = 16.sp,
           )
           if (!data.licenceInfo.license_number.isNullOrEmpty()) {
@@ -102,7 +102,7 @@ fun UserProfileCard(
           shape = RoundedCornerShape(12.dp),
         ) {
           Text(
-            text = cmpStringResource(CoreRes.string.edit_profile),
+            text = stringResource(CoreRes.string.edit_profile),
             modifier = Modifier.padding(vertical = Spacing.small)
           )
         }

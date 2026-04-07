@@ -13,7 +13,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.dash
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
@@ -42,25 +42,25 @@ fun InspectionCardItem(
     }
   }
   val statusText = when {
-    status == DueStatus.COMPLIED -> cmpStringResource(ViewingRes.string.complied)
-    cardWithStatus.dueStatus.isOnCondition -> cmpStringResource(ViewingRes.string.on_condition)
+    status == DueStatus.COMPLIED -> stringResource(ViewingRes.string.complied)
+    cardWithStatus.dueStatus.isOnCondition -> stringResource(ViewingRes.string.on_condition)
     status == DueStatus.OVERDUE -> {
       val dateStr = cardWithStatus.dueStatus.nextDueDate?.toDisplayFormat()
-      if (dateStr != null) cmpStringResource(ViewingRes.string.overdue_was, dateStr)
-      else cmpStringResource(SharedRes.string.overdue)
+      if (dateStr != null) stringResource(ViewingRes.string.overdue_was, dateStr)
+      else stringResource(SharedRes.string.overdue)
     }
 
-    cardWithStatus.dueStatus.nextDueDate != null -> cmpStringResource(
+    cardWithStatus.dueStatus.nextDueDate != null -> stringResource(
       ViewingRes.string.due_date,
       cardWithStatus.dueStatus.nextDueDate!!.toDisplayFormat()
     )
 
-    cardWithStatus.dueStatus.nextDueEngine != null -> cmpStringResource(
+    cardWithStatus.dueStatus.nextDueEngine != null -> stringResource(
       ViewingRes.string.due_engine,
       cardWithStatus.dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
     )
 
-    else -> cmpStringResource(CoreRes.string.dash)
+    else -> stringResource(CoreRes.string.dash)
   }
   val icon = when (status) {
     DueStatus.OVERDUE -> Icons.Filled.Error

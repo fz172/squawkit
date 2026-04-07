@@ -56,7 +56,7 @@ import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOve
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewViewModel
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.LogStats
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -85,7 +85,7 @@ fun AircraftOverviewScreen(
   val coroutineScope = rememberCoroutineScope()
 
 
-  val errorOccurredMessage = cmpStringResource(CoreRes.string.error_occurred)
+  val errorOccurredMessage = stringResource(CoreRes.string.error_occurred)
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
@@ -182,8 +182,8 @@ fun AircraftOverviewContent(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(cmpStringResource(SharedRes.string.delete_aircraft)) },
-      text = { Text(cmpStringResource(SharedRes.string.this_action_cannot_be_undone)) },
+      title = { Text(stringResource(SharedRes.string.delete_aircraft)) },
+      text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -192,12 +192,12 @@ fun AircraftOverviewContent(
           },
           colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
         ) {
-          Text(cmpStringResource(CoreRes.string.delete))
+          Text(stringResource(CoreRes.string.delete))
         }
       },
       dismissButton = {
         TextButton(onClick = { showDeleteDialog = false }) {
-          Text(cmpStringResource(CoreRes.string.cancel))
+          Text(stringResource(CoreRes.string.cancel))
         }
       })
   }
@@ -211,7 +211,7 @@ fun AircraftOverviewContent(
           if (aircraft != null) {
             Column {
               Text(
-                text = cmpStringResource(
+                text = stringResource(
                   SharedRes.string.make_model_template, aircraft.make, aircraft.model
                 )
               )
@@ -226,7 +226,7 @@ fun AircraftOverviewContent(
           IconButton(onClick = onBackClick) {
             Icon(
               Icons.AutoMirrored.Filled.ArrowBack,
-              contentDescription = cmpStringResource(CoreRes.string.back)
+              contentDescription = stringResource(CoreRes.string.back)
             )
           }
         }, actions = {
@@ -342,10 +342,10 @@ fun LogDetailsBottomBar(
     BottomButtons(
       modifier = modifier,
       onPrimaryClick = { onAddLogClick(aircraft.id) },
-      primaryLabel = if (hasLogs) cmpStringResource(SharedRes.string.add_log)
-      else cmpStringResource(SharedRes.string.add_first_maintenance_log),
+      primaryLabel = if (hasLogs) stringResource(SharedRes.string.add_log)
+      else stringResource(SharedRes.string.add_first_maintenance_log),
       onSecondaryClick = if (hasLogs) ({ onLogDetailsClick(aircraft.id) }) else null,
-      secondaryLabel = cmpStringResource(MaintenanceRes.string.log_details),
+      secondaryLabel = stringResource(MaintenanceRes.string.log_details),
     )
   }
 }

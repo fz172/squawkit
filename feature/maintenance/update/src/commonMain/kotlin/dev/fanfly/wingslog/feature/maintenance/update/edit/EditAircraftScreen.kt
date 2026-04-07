@@ -61,7 +61,7 @@ import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.feature.maintenance.update.edit.data.EditAircraftViewModel
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
@@ -114,8 +114,8 @@ fun EditAircraftScreen(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(cmpStringResource(SharedRes.string.delete_aircraft)) },
-      text = { Text(cmpStringResource(SharedRes.string.this_action_cannot_be_undone)) },
+      title = { Text(stringResource(SharedRes.string.delete_aircraft)) },
+      text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -124,12 +124,12 @@ fun EditAircraftScreen(
           },
           colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
         ) {
-          Text(cmpStringResource(CoreRes.string.delete))
+          Text(stringResource(CoreRes.string.delete))
         }
       },
       dismissButton = {
         TextButton(onClick = { showDeleteDialog = false }) {
-          Text(cmpStringResource(CoreRes.string.cancel))
+          Text(stringResource(CoreRes.string.cancel))
         }
       })
   }
@@ -138,8 +138,8 @@ fun EditAircraftScreen(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
       WingsLogTopAppBar(
-        title = if (uiState.aircraft.id == "") cmpStringResource(MaintenanceRes.string.add_aircraft)
-        else cmpStringResource(MaintenanceRes.string.update_aircraft),
+        title = if (uiState.aircraft.id == "") stringResource(MaintenanceRes.string.add_aircraft)
+        else stringResource(MaintenanceRes.string.update_aircraft),
         onBackClick = { navController.popBackStack() },
         scrollBehavior = scrollBehavior,
       )
@@ -156,13 +156,13 @@ fun EditAircraftScreen(
       ) {
         // AIRFRAME
         Text(
-          text = cmpStringResource(CoreRes.string.component_airframe).uppercase()
+          text = stringResource(CoreRes.string.component_airframe).uppercase()
         )
         AirframeSection(uiState.aircraft, viewModel, uiState.showValidationErrors)
 
         // ENGINE
         Text(
-          text = cmpStringResource(CoreRes.string.component_engine).uppercase()
+          text = stringResource(CoreRes.string.component_engine).uppercase()
         )
         uiState.aircraft.engine.forEachIndexed { index, engine ->
           EngineSection(
@@ -174,7 +174,7 @@ fun EditAircraftScreen(
         }
 
         DashedButton(
-          label = cmpStringResource(
+          label = stringResource(
             MaintenanceRes.string
               .add_engine
           ), modifier = Modifier.fillMaxWidth(), onClick = { viewModel.onAddEngine() })
@@ -189,7 +189,7 @@ fun EditAircraftScreen(
         onDangerClick = if (uiState.aircraft.id != "") {
           { showDeleteDialog = true }
         } else null,
-        primaryLabel = if (uiState.aircraft.id == "") cmpStringResource(MaintenanceRes.string.add_aircraft) else cmpStringResource(
+        primaryLabel = if (uiState.aircraft.id == "") stringResource(MaintenanceRes.string.add_aircraft) else stringResource(
           MaintenanceRes.string.update_aircraft
         )
       )
@@ -211,7 +211,7 @@ fun AirframeSection(
       InputField(
         value = aircraft.make, // Read from ViewModel
         onValueChange = { viewModel.onMakeChanged(it) }, // Update ViewModel
-        label = cmpStringResource(MaintenanceRes.string.make),
+        label = stringResource(MaintenanceRes.string.make),
         enabled = aircraft.id == "",
         isError = showValidationErrors && aircraft.make.isBlank()
       )
@@ -219,7 +219,7 @@ fun AirframeSection(
       InputField(
         value = aircraft.model, // Read from ViewModel
         onValueChange = { viewModel.onModelChanged(it) }, // Update ViewModel
-        label = cmpStringResource(MaintenanceRes.string.model),
+        label = stringResource(MaintenanceRes.string.model),
         enabled = aircraft.id == "",
         isError = showValidationErrors && aircraft.model.isBlank()
       )
@@ -231,7 +231,7 @@ fun AirframeSection(
         InputField(
           value = aircraft.serial, // Read from ViewModel
           onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel
-          label = cmpStringResource(MaintenanceRes.string.serial),
+          label = stringResource(MaintenanceRes.string.serial),
           modifier = Modifier.weight(1f), // Takes up 50%
           enabled = aircraft.id == "",
           isError = showValidationErrors && aircraft.serial.isBlank(),
@@ -241,7 +241,7 @@ fun AirframeSection(
         InputField(
           value = aircraft.tail_number, // Read from ViewModel
           onValueChange = { viewModel.onTailNumberChanged(it) }, // Update ViewModel
-          label = cmpStringResource(MaintenanceRes.string.tail_number),
+          label = stringResource(MaintenanceRes.string.tail_number),
           modifier = Modifier.weight(1f), // Takes up 50%
           enabled = aircraft.id == "",
           keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
@@ -266,7 +266,7 @@ fun EngineSection(
     Column(modifier = Modifier.padding(12.dp)) {
       Box(modifier = Modifier.fillMaxWidth()) {
         Text(
-          cmpStringResource(SharedRes.string.engine_with_index, engineIndex + 1),
+          stringResource(SharedRes.string.engine_with_index, engineIndex + 1),
           color = MaterialTheme.colorScheme.onPrimaryContainer,
           modifier = Modifier.align(Alignment.CenterStart)
         )
@@ -278,14 +278,14 @@ fun EngineSection(
         ) {
           Icon(
             Icons.Default.Close,
-            contentDescription = cmpStringResource(MaintenanceRes.string.remove_engine),
+            contentDescription = stringResource(MaintenanceRes.string.remove_engine),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
       }
 
       InputField(
-        label = cmpStringResource(MaintenanceRes.string.make),
+        label = stringResource(MaintenanceRes.string.make),
         value = engine.make,
         isError = showValidationErrors && engine.make.isBlank()
       ) {
@@ -294,7 +294,7 @@ fun EngineSection(
 
       Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         InputField(
-          label = cmpStringResource(MaintenanceRes.string.model),
+          label = stringResource(MaintenanceRes.string.model),
           value = engine.model,
           modifier = Modifier.weight(1f),
           isError = showValidationErrors && engine.model.isBlank()
@@ -302,7 +302,7 @@ fun EngineSection(
           viewModel.onEngineModelChanged(engineIndex, it)
         }
         InputField(
-          label = cmpStringResource(MaintenanceRes.string.serial),
+          label = stringResource(MaintenanceRes.string.serial),
           value = engine.serial,
           modifier = Modifier.weight(1f),
           isError = showValidationErrors && engine.serial.isBlank(),
@@ -314,12 +314,12 @@ fun EngineSection(
 
       // Propeller Section
       Text(
-        cmpStringResource(SharedRes.string.propeller_hub),
+        stringResource(SharedRes.string.propeller_hub),
         style = MaterialTheme.typography.labelSmall
       )
       val hub = engine.propeller?.hub ?: PropellerHub()
       InputField(
-        label = cmpStringResource(MaintenanceRes.string.make), value = hub.make,
+        label = stringResource(MaintenanceRes.string.make), value = hub.make,
 
         isError = showValidationErrors && hub.make.isBlank()
       ) {
@@ -327,7 +327,7 @@ fun EngineSection(
       }
       Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         InputField(
-          label = cmpStringResource(MaintenanceRes.string.model),
+          label = stringResource(MaintenanceRes.string.model),
           value = hub.model,
           modifier = Modifier.weight(1f),
           isError = showValidationErrors && hub.model.isBlank()
@@ -335,7 +335,7 @@ fun EngineSection(
           viewModel.onPropellerHubModelChanged(engineIndex, it)
         }
         InputField(
-          label = cmpStringResource(MaintenanceRes.string.serial, ""),
+          label = stringResource(MaintenanceRes.string.serial, ""),
           value = hub.serial,
           modifier = Modifier.weight(1f),
           isError = showValidationErrors && hub.serial.isBlank()
@@ -346,14 +346,14 @@ fun EngineSection(
 
 
       // Blade Serial Numbers - Dynamic List
-      Text(cmpStringResource(SharedRes.string.blade_serial_numbers))
+      Text(stringResource(SharedRes.string.blade_serial_numbers))
       val blades = engine.propeller?.blades ?: emptyList()
       // Chunked(2) allows us to create rows of 2 for that 50/50 look
       blades.withIndex().chunked(2).forEach { pair ->
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
           pair.forEach { (bladeIndex, blade) ->
             InputField(
-              label = cmpStringResource(
+              label = stringResource(
                 SharedRes.string.blade_with_index,
                 bladeIndex + 1
               ),
@@ -368,7 +368,7 @@ fun EngineSection(
                 }) {
                   Icon(
                     Icons.Default.Close,
-                    contentDescription = cmpStringResource(MaintenanceRes.string.remove_blade)
+                    contentDescription = stringResource(MaintenanceRes.string.remove_blade)
                   )
                 }
               },
@@ -383,7 +383,7 @@ fun EngineSection(
       }
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         DashedButton(
-          label = cmpStringResource(MaintenanceRes.string.add_blade),
+          label = stringResource(MaintenanceRes.string.add_blade),
           modifier = Modifier
             .weight(1f)
             .padding(vertical = 8.dp),
@@ -415,7 +415,7 @@ fun InputField(
   enabled = enabled,
   trailingIcon = trailingIcon,
   isError = isError,
-  supportingText = { if (isError) Text(cmpStringResource(CoreRes.string.required)) },
+  supportingText = { if (isError) Text(stringResource(CoreRes.string.required)) },
   keyboardOptions = keyboardOptions
 )
 

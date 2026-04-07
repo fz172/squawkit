@@ -8,20 +8,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,6 +24,7 @@ import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.attachments.viewing.AttachmentSection
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
@@ -58,7 +54,7 @@ import wingslog.feature.inspection.viewing.generated.resources.maintenance_histo
 import wingslog.feature.inspection.viewing.generated.resources.no_maintenance_logs_for_inspection
 import wingslog.feature.inspection.viewing.generated.resources.on_condition
 import wingslog.feature.inspection.viewing.generated.resources.overdue_was
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
@@ -78,13 +74,13 @@ fun InspectionDetailSheet(
     modifier = modifier,
     actionSlot = {
       TextButton(onClick = onEditClick) {
-        Text(cmpStringResource(SharedRes.string.edit_inspection))
+        Text(stringResource(SharedRes.string.edit_inspection))
       }
     },
     headerSlot = {
       val typeLabel = when (cardWithStatus.card.type) {
-        ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> cmpStringResource(SharedRes.string.compliance_type_sb_short)
-        ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> cmpStringResource(
+        ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> stringResource(SharedRes.string.compliance_type_sb_short)
+        ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> stringResource(
           SharedRes.string.compliance_type_ad_short
         )
 
@@ -131,7 +127,7 @@ fun InspectionDetailSheet(
     if (cardWithStatus.card.compliance_authority.isNotBlank()) {
       Spacer(Modifier.height(Spacing.medium))
       Text(
-        text = cmpStringResource(SharedRes.string.compliance_authority),
+        text = stringResource(SharedRes.string.compliance_authority),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant
       )
@@ -146,7 +142,7 @@ fun InspectionDetailSheet(
     if (cardWithStatus.card.compliance_details.isNotBlank()) {
       Spacer(Modifier.height(Spacing.large))
       Text(
-        text = cmpStringResource(ViewingRes.string.compliance_details),
+        text = stringResource(ViewingRes.string.compliance_details),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -177,7 +173,7 @@ fun InspectionDetailSheet(
     }
 
     Text(
-      text = cmpStringResource(ViewingRes.string.maintenance_history),
+      text = stringResource(ViewingRes.string.maintenance_history),
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.SemiBold
     )
@@ -186,7 +182,7 @@ fun InspectionDetailSheet(
 
     if (logs.isEmpty()) {
       Text(
-        text = cmpStringResource(ViewingRes.string.no_maintenance_logs_for_inspection),
+        text = stringResource(ViewingRes.string.no_maintenance_logs_for_inspection),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
       )
@@ -202,41 +198,41 @@ fun InspectionDetailSheet(
 @Composable
 private fun DueStatusChip(dueStatus: DueMetadata) {
   val (label, color) = when {
-    dueStatus.status == DueStatus.COMPLIED -> cmpStringResource(ViewingRes.string.complied) to StatusOk
-    dueStatus.isOnCondition -> cmpStringResource(ViewingRes.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
+    dueStatus.status == DueStatus.COMPLIED -> stringResource(ViewingRes.string.complied) to StatusOk
+    dueStatus.isOnCondition -> stringResource(ViewingRes.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
     dueStatus.status == DueStatus.OVERDUE -> {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat() ?: ""
-      (if (dateStr.isNotBlank()) cmpStringResource(
+      (if (dateStr.isNotBlank()) stringResource(
         ViewingRes.string.overdue_was, dateStr
-      ) else cmpStringResource(SharedRes.string.overdue)) to MaterialTheme.colorScheme.error
+      ) else stringResource(SharedRes.string.overdue)) to MaterialTheme.colorScheme.error
     }
 
     dueStatus.status == DueStatus.DUE_SOON -> {
       val dateStr = dueStatus.nextDueDate?.toDisplayFormat()
       val engineStr = dueStatus.nextDueEngine?.toDouble()?.formatToOneDecimalPlace()
       when {
-        dateStr != null && engineStr != null -> cmpStringResource(
+        dateStr != null && engineStr != null -> stringResource(
           ViewingRes.string.due_soon_date_engine,
           dateStr,
           engineStr
         )
 
-        dateStr != null -> cmpStringResource(ViewingRes.string.due_soon_date, dateStr)
-        engineStr != null -> cmpStringResource(ViewingRes.string.due_soon_engine, engineStr)
-        else -> cmpStringResource(SharedRes.string.due_soon)
+        dateStr != null -> stringResource(ViewingRes.string.due_soon_date, dateStr)
+        engineStr != null -> stringResource(ViewingRes.string.due_soon_engine, engineStr)
+        else -> stringResource(SharedRes.string.due_soon)
       } to StatusWarning
     }
 
-    dueStatus.nextDueDate != null -> cmpStringResource(
+    dueStatus.nextDueDate != null -> stringResource(
       ViewingRes.string.due_date, dueStatus.nextDueDate!!.toDisplayFormat()
     ) to StatusOk
 
-    dueStatus.nextDueEngine != null -> cmpStringResource(
+    dueStatus.nextDueEngine != null -> stringResource(
       ViewingRes.string.due_engine,
       dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
     ) to StatusOk
 
-    else -> cmpStringResource(CoreRes.string.dash) to MaterialTheme.colorScheme.onSurfaceVariant
+    else -> stringResource(CoreRes.string.dash) to MaterialTheme.colorScheme.onSurfaceVariant
   }
   AssistChip(
     onClick = {},
@@ -250,7 +246,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
   val dateStr = if ((log.timestamp?.getEpochSecond() ?: 0L) > 0L) {
     log.timestamp!!.toLocalDate().toDisplayFormat()
   } else {
-    cmpStringResource(SharedRes.string.unknown_date)
+    stringResource(SharedRes.string.unknown_date)
   }
 
   Column(
@@ -264,7 +260,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
         text = dateStr, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium
       )
       Text(
-        text = cmpStringResource(
+        text = stringResource(
           SharedRes.string.engine_format, log.engine_hour.formatToOneDecimalPlace()
         ),
 

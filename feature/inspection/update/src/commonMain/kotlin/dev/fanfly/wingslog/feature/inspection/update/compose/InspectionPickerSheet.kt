@@ -28,19 +28,19 @@ import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_avionics
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.core.ui.generated.resources.done
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.update.generated.resources.compliance_type_ad
 import wingslog.feature.inspection.update.generated.resources.compliance_type_routine
 import wingslog.feature.inspection.update.generated.resources.compliance_type_sb
 import wingslog.feature.inspection.update.generated.resources.no_inspection_cards_configured
 import wingslog.feature.inspection.update.generated.resources.select_inspection_work
+import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,13 +51,13 @@ fun InspectionPickerSheet(
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
   singleSelect: Boolean = false,
-) {
+) =
   PickerSheet(
     onDismiss = onDismiss,
     modifier = modifier,
     headerSlot = {
       Text(
-        text = cmpStringResource(InspectionRes.string.select_inspection_work),
+        text = stringResource(InspectionRes.string.select_inspection_work),
         style = MaterialTheme.typography.titleLarge
       )
     }
@@ -70,7 +70,7 @@ fun InspectionPickerSheet(
     ) {
       if (availableCards.isEmpty()) {
         Text(
-          text = cmpStringResource(InspectionRes.string.no_inspection_cards_configured),
+          text = stringResource(InspectionRes.string.no_inspection_cards_configured),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(vertical = Spacing.large),
@@ -79,9 +79,9 @@ fun InspectionPickerSheet(
         val grouped = availableCards.groupBy { it.type }
 
         listOf(
-          ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to cmpStringResource(InspectionRes.string.compliance_type_ad),
-          ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN to cmpStringResource(InspectionRes.string.compliance_type_sb),
-          ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to cmpStringResource(InspectionRes.string.compliance_type_routine),
+          ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to stringResource(InspectionRes.string.compliance_type_ad),
+          ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN to stringResource(InspectionRes.string.compliance_type_sb),
+          ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to stringResource(InspectionRes.string.compliance_type_routine),
         ).forEach { (type, header) ->
           val cards = grouped[type] ?: emptyList()
           if (cards.isNotEmpty()) {
@@ -118,19 +118,19 @@ fun InspectionPickerSheet(
                     style = MaterialTheme.typography.bodyLarge,
                   )
                   val componentLabel = when (card.component) {
-                    InspectionComponentType.INSPECTION_COMPONENT_ENGINE -> cmpStringResource(
+                    InspectionComponentType.INSPECTION_COMPONENT_ENGINE -> stringResource(
                       CoreRes.string.component_engine
                     )
 
-                    InspectionComponentType.INSPECTION_COMPONENT_PROPELLER -> cmpStringResource(
+                    InspectionComponentType.INSPECTION_COMPONENT_PROPELLER -> stringResource(
                       CoreRes.string.component_propeller
                     )
 
-                    InspectionComponentType.INSPECTION_COMPONENT_AVIONICS -> cmpStringResource(
+                    InspectionComponentType.INSPECTION_COMPONENT_AVIONICS -> stringResource(
                       CoreRes.string.component_avionics
                     )
 
-                    else -> cmpStringResource(CoreRes.string.component_airframe)
+                    else -> stringResource(CoreRes.string.component_airframe)
                   }
                   Text(
                     text = if (card.reference_number.isNotBlank()) "${card.reference_number} • $componentLabel" else componentLabel,
@@ -151,8 +151,7 @@ fun InspectionPickerSheet(
           .fillMaxWidth()
           .padding(top = Spacing.large),
       ) {
-        Text(cmpStringResource(CoreRes.string.done))
+        Text(stringResource(CoreRes.string.done))
       }
     }
   }
-}

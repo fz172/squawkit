@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.inspection.viewing.generated.resources.critical_airworthiness
 
@@ -53,7 +53,7 @@ fun CriticalAlertsSection(
           tint = MaterialTheme.colorScheme.error
         )
         Text(
-          text = cmpStringResource(ViewingRes.string.critical_airworthiness),
+          text = stringResource(ViewingRes.string.critical_airworthiness),
           style = MaterialTheme.typography.labelLarge,
           color = MaterialTheme.colorScheme.error,
           fontWeight = FontWeight.Black

@@ -27,7 +27,7 @@ import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.inspection_work
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
@@ -54,7 +54,7 @@ fun MaintenanceLogDetailSheet(
     modifier = modifier,
     actionSlot = {
       TextButton(onClick = onEditClick) {
-        Text(cmpStringResource(MaintenanceRes.string.edit_log))
+        Text(stringResource(MaintenanceRes.string.edit_log))
       }
     },
     headerSlot = {
@@ -67,28 +67,28 @@ fun MaintenanceLogDetailSheet(
   ) {
     // Date
     val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
-      ?: cmpStringResource(SharedInspectionRes.string.unknown_date)
+      ?: stringResource(SharedInspectionRes.string.unknown_date)
     DetailRow(
-      label = cmpStringResource(MaintenanceRes.string.maintenance_date),
+      label = stringResource(MaintenanceRes.string.maintenance_date),
       value = dateStr,
     )
 
     // Hours — each as its own inline row
     if (log.engine_hour > 0.0) {
       DetailRow(
-        label = cmpStringResource(MaintenanceRes.string.engine_time_label),
+        label = stringResource(MaintenanceRes.string.engine_time_label),
         value = log.engine_hour.formatToOneDecimalPlace(),
       )
     }
     if (log.airframe_time > 0.0) {
       DetailRow(
-        label = cmpStringResource(MaintenanceRes.string.airframe_time_label),
+        label = stringResource(MaintenanceRes.string.airframe_time_label),
         value = log.airframe_time.formatToOneDecimalPlace(),
       )
     }
     if (log.prop_time > 0.0) {
       DetailRow(
-        label = cmpStringResource(MaintenanceRes.string.prop_time_label),
+        label = stringResource(MaintenanceRes.string.prop_time_label),
         value = log.prop_time.formatToOneDecimalPlace(),
       )
     }
@@ -105,7 +105,7 @@ fun MaintenanceLogDetailSheet(
     if (log.inspection_ids.isNotEmpty()) {
       Spacer(Modifier.height(Spacing.small))
       Text(
-        text = cmpStringResource(SharedInspectionRes.string.inspection_work),
+        text = stringResource(SharedInspectionRes.string.inspection_work),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
       )
@@ -113,7 +113,7 @@ fun MaintenanceLogDetailSheet(
         log.inspection_ids.forEach { cardId ->
           val card = availableCards.find { it.id == cardId }
           val title =
-            card?.title ?: cmpStringResource(SharedInspectionRes.string.unknown_inspection, cardId)
+            card?.title ?: stringResource(SharedInspectionRes.string.unknown_inspection, cardId)
           Row(
             horizontalArrangement = Arrangement.spacedBy(Spacing.tiny),
           ) {

@@ -28,7 +28,7 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.inspection.sharedassets.generated.resources.affects_n_inspection_items
@@ -46,7 +46,7 @@ fun MaintenanceLogCard(
   modifier: Modifier = Modifier,
 ) {
   val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
-    ?: cmpStringResource(SharedRes.string.unknown_date)
+    ?: stringResource(SharedRes.string.unknown_date)
 
   Card(
     onClick = onClick,
@@ -98,7 +98,7 @@ fun MaintenanceLogCard(
       // Inspection badge
       if (log.inspection_ids.isNotEmpty()) {
         Text(
-          text = cmpStringResource(
+          text = stringResource(
             SharedRes.string.affects_n_inspection_items,
             log.inspection_ids.size,
           ),
@@ -113,19 +113,19 @@ fun MaintenanceLogCard(
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.large)) {
           if (log.engine_hour > 0.0) {
             HourItem(
-              label = cmpStringResource(MaintenanceRes.string.engine_time_abbr),
+              label = stringResource(MaintenanceRes.string.engine_time_abbr),
               value = log.engine_hour.formatToOneDecimalPlace(),
             )
           }
           if (log.airframe_time > 0.0) {
             HourItem(
-              label = cmpStringResource(MaintenanceRes.string.airframe_time_abbr),
+              label = stringResource(MaintenanceRes.string.airframe_time_abbr),
               value = log.airframe_time.formatToOneDecimalPlace(),
             )
           }
           if (log.prop_time > 0.0) {
             HourItem(
-              label = cmpStringResource(MaintenanceRes.string.prop_time_abbr),
+              label = stringResource(MaintenanceRes.string.prop_time_abbr),
               value = log.prop_time.formatToOneDecimalPlace(),
             )
           }

@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.blade_abbreviation_with_index
 
@@ -37,7 +37,7 @@ fun BladeChipsOverview(blades: List<PropellerBlade>) {
           verticalAlignment = Alignment.CenterVertically
         ) {
           Text(
-            text = cmpStringResource(
+            text = stringResource(
               MaintenanceRes.string.blade_abbreviation_with_index, index + 1, blade.serial
             ),
             style = MaterialTheme.typography.labelMedium,

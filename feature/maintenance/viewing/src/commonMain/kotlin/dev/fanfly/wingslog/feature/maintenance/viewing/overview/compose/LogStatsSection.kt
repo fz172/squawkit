@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.LogStats
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.airframe_time_label
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_time_label
@@ -32,7 +32,7 @@ import wingslog.feature.maintenance.viewing.generated.resources.total_logs
 fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
     Text(
-      text = cmpStringResource(MaintenanceRes.string.maintenance_summary),
+      text = stringResource(MaintenanceRes.string.maintenance_summary),
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold
     )
@@ -50,27 +50,27 @@ fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
       ) {
         stats.currentAirframeTime?.let {
           StatCell(
-            label = cmpStringResource(SharedRes.string.airframe_time_label),
+            label = stringResource(SharedRes.string.airframe_time_label),
             value = it.formatToOneDecimalPlace(),
             modifier = Modifier.weight(1f)
           )
         }
         stats.currentEngineTime?.let {
           StatCell(
-            label = cmpStringResource(SharedRes.string.engine_time_label),
+            label = stringResource(SharedRes.string.engine_time_label),
             value = it.formatToOneDecimalPlace(),
             modifier = Modifier.weight(1f)
           )
         }
         stats.currentPropTime?.let {
           StatCell(
-            label = cmpStringResource(SharedRes.string.prop_time_label),
+            label = stringResource(SharedRes.string.prop_time_label),
             value = it.formatToOneDecimalPlace(),
             modifier = Modifier.weight(1f)
           )
         }
         StatCell(
-          label = cmpStringResource(MaintenanceRes.string.total_logs),
+          label = stringResource(MaintenanceRes.string.total_logs),
           value = stats.total.toString(),
           modifier = Modifier.weight(1f)
         )
