@@ -18,14 +18,13 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.LogStats
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.airframe_time_label
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_time_label
-import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template
 import wingslog.feature.maintenance.sharedassets.generated.resources.prop_time_label
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.maintenance_summary
 import wingslog.feature.maintenance.viewing.generated.resources.total_logs
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable

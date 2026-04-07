@@ -10,8 +10,8 @@ import dev.fanfly.wingslog.feature.inspection.update.viewmodel.InspectionUiState
 import dev.fanfly.wingslog.feature.inspection.update.viewmodel.InspectionViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.update.generated.resources.inspection_added
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun AddInspectionRoute(

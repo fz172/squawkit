@@ -30,13 +30,13 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.inspection.sharedassets.generated.resources.affects_n_inspection_items
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.airframe_time_abbr
 import wingslog.feature.maintenance.viewing.generated.resources.engine_time_abbr
 import wingslog.feature.maintenance.viewing.generated.resources.prop_time_abbr
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable

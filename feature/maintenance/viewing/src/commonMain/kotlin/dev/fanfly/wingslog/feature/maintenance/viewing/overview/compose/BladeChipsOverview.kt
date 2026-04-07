@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.blade_abbreviation_with_index
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

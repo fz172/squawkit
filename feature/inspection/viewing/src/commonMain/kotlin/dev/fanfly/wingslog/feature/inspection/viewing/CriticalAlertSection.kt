@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.inspection.viewing.generated.resources.critical_airworthiness
+import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 
 
 @Composable

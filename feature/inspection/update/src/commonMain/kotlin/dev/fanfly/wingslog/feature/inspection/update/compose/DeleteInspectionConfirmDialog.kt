@@ -7,12 +7,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.update.generated.resources.delete_inspection
 import wingslog.feature.inspection.update.generated.resources.delete_inspection_confirmation
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun DeleteInspectionConfirmDialog(

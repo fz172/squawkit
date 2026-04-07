@@ -34,11 +34,11 @@ import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.airframe_s_n
 import wingslog.feature.maintenance.viewing.generated.resources.collapse_details
 import wingslog.feature.maintenance.viewing.generated.resources.edit_aircraft
 import wingslog.feature.maintenance.viewing.generated.resources.expand_details
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
 @Composable
 fun ConfigurationCard(

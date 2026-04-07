@@ -63,20 +63,17 @@ import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.feature.maintenance.update.edit.data.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.required
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.blade_serial_numbers
 import wingslog.feature.maintenance.sharedassets.generated.resources.blade_with_index
 import wingslog.feature.maintenance.sharedassets.generated.resources.delete_aircraft
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_with_index
 import wingslog.feature.maintenance.sharedassets.generated.resources.propeller_hub
 import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.update.generated.resources.add_aircraft
 import wingslog.feature.maintenance.update.generated.resources.add_blade
 import wingslog.feature.maintenance.update.generated.resources.add_engine
@@ -87,6 +84,9 @@ import wingslog.feature.maintenance.update.generated.resources.remove_engine
 import wingslog.feature.maintenance.update.generated.resources.serial
 import wingslog.feature.maintenance.update.generated.resources.tail_number
 import wingslog.feature.maintenance.update.generated.resources.update_aircraft
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

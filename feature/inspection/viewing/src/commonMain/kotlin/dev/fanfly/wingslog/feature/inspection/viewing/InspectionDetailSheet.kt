@@ -34,6 +34,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
+import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.dash
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_authority
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_ad_short
@@ -54,7 +55,6 @@ import wingslog.feature.inspection.viewing.generated.resources.maintenance_histo
 import wingslog.feature.inspection.viewing.generated.resources.no_maintenance_logs_for_inspection
 import wingslog.feature.inspection.viewing.generated.resources.on_condition
 import wingslog.feature.inspection.viewing.generated.resources.overdue_was
-import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes

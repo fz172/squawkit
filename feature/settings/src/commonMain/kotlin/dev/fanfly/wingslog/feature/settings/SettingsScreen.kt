@@ -29,9 +29,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.settings
-import wingslog.feature.settings.generated.resources.Res as SettingsRes
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.sign_out
+import wingslog.feature.settings.generated.resources.Res as SettingsRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

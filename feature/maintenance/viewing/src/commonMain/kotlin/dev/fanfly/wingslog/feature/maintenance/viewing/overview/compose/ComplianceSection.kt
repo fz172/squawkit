@@ -30,13 +30,13 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.inspection.viewing.InspectionCardItem
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.add_inspection
 import wingslog.feature.inspection.sharedassets.generated.resources.due_with_count
 import wingslog.feature.inspection.sharedassets.generated.resources.history_with_count
 import wingslog.feature.inspection.sharedassets.generated.resources.inspections
 import wingslog.feature.inspection.sharedassets.generated.resources.no_complied_yet
 import wingslog.feature.inspection.sharedassets.generated.resources.no_inspections_yet
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 
 @Composable
 fun ComplianceSection(

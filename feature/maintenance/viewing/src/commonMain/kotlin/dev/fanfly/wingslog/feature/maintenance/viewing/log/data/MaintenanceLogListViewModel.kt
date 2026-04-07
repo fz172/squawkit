@@ -54,10 +54,10 @@ class MaintenanceLogListViewModel(
             val sorted = logsState.logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
             val filtered = sorted.filter { log ->
               (filter.component == null || log.component_type == filter.component) &&
-                (filter.query.isBlank() || log.work_description.contains(
-                  filter.query,
-                  ignoreCase = true
-                ))
+                  (filter.query.isBlank() || log.work_description.contains(
+                    filter.query,
+                    ignoreCase = true
+                  ))
             }
             MaintenanceLogListUiState.Success(
               logs = filtered,

@@ -9,12 +9,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Engine
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_propeller
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_with_index
 import wingslog.feature.maintenance.viewing.generated.resources.model_and_sn
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
 @Composable
 fun EngineDetails(index: Int, engine: Engine) {

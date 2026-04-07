@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -44,31 +43,31 @@ import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.maintenance.viewing.log.compose.MaintenanceLogCard
 import dev.fanfly.wingslog.feature.maintenance.viewing.log.compose.MaintenanceLogDetailSheet
 import dev.fanfly.wingslog.feature.maintenance.viewing.log.data.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.maintenance.viewing.log.data.MaintenanceLogListUiState
 import dev.fanfly.wingslog.feature.maintenance.viewing.log.data.MaintenanceLogListViewModel
-import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.all
 import wingslog.core.ui.generated.resources.retry
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_first_maintenance_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.no_maintenance_logs_description
 import wingslog.feature.maintenance.sharedassets.generated.resources.no_maintenance_logs_title
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.clear_filter
 import wingslog.feature.maintenance.viewing.generated.resources.failed_to_load_logs
 import wingslog.feature.maintenance.viewing.generated.resources.maintenance_logs
 import wingslog.feature.maintenance.viewing.generated.resources.no_logs_match_filter
 import wingslog.feature.maintenance.viewing.generated.resources.search_logs
 import wingslog.feature.maintenance.viewing.generated.resources.showing_x_of_y
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,7 +180,10 @@ fun MaintenanceLogListScreen(
                   SegmentedButton(
                     selected = state.filter.component == component,
                     onClick = { viewModel.onComponentFilterChange(component) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = components.size),
+                    shape = SegmentedButtonDefaults.itemShape(
+                      index = index,
+                      count = components.size
+                    ),
                     icon = {},
                     label = { Text(label) },
                   )

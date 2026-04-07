@@ -22,13 +22,13 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.SharingStarted
 
 sealed interface InspectionUiState {
   data object Loading : InspectionUiState
@@ -164,7 +164,13 @@ class InspectionViewModel(
         // Show this file as uploading in the UI
         _pendingAttachments.update { list ->
           list.map {
-            if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name, mimeType = pf.mimeType, localUri = pf.localUri, sizeBytes = pf.sizeBytes)
+            if (it.id == pf.tempId) PendingAttachment.Uploading(
+              pf.tempId,
+              pf.name,
+              mimeType = pf.mimeType,
+              localUri = pf.localUri,
+              sizeBytes = pf.sizeBytes
+            )
             else it
           }
         }
@@ -180,12 +186,20 @@ class InspectionViewModel(
                 if (state.progress > 0f) {
                   _pendingAttachments.update { list ->
                     list.map {
-                      if (it.id == pf.tempId) PendingAttachment.Uploading(pf.tempId, pf.name, state.progress, pf.mimeType, pf.localUri, pf.sizeBytes)
+                      if (it.id == pf.tempId) PendingAttachment.Uploading(
+                        pf.tempId,
+                        pf.name,
+                        state.progress,
+                        pf.mimeType,
+                        pf.localUri,
+                        pf.sizeBytes
+                      )
                       else it
                     }
                   }
                 }
               }
+
               is UploadState.Done -> uploadedAttachments.add(state.attachment)
               is UploadState.Failed -> error = state.error
             }

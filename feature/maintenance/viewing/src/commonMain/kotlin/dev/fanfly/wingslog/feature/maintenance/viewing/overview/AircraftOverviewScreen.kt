@@ -59,19 +59,19 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.error_occurred
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_first_maintenance_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
-import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.delete_aircraft
-import wingslog.feature.maintenance.viewing.generated.resources.log_details
+import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template
 import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
+import wingslog.feature.maintenance.viewing.generated.resources.log_details
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable

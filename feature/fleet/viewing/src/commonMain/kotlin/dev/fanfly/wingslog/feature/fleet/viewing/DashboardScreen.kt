@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.FleetDashboardViewModel
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.app_name
 import wingslog.core.ui.generated.resources.settings
@@ -38,7 +39,6 @@ import wingslog.feature.fleet.sharedassets.generated.resources.add_aircraft
 import wingslog.feature.fleet.sharedassets.generated.resources.add_first_aircraft
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_description
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_title
-import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.feature.fleet.sharedassets.generated.resources.Res as FleetRes
 

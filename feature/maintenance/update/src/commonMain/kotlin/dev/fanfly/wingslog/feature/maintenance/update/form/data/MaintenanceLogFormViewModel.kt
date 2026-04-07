@@ -17,8 +17,6 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -35,17 +33,19 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachmentRes
 import wingslog.core.attachments.sharedassets.generated.resources.file_too_large
 import wingslog.core.attachments.sharedassets.generated.resources.upload_failed
 import wingslog.core.attachments.sharedassets.generated.resources.upload_network_error
 import wingslog.core.attachments.sharedassets.generated.resources.upload_permission_error
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.delete_failed
 import wingslog.core.ui.generated.resources.save_failed
-import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.update.generated.resources.log_not_found
 import wingslog.feature.maintenance.update.generated.resources.work_description_required
+import kotlin.time.Clock
+import kotlin.time.Instant
+import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachmentRes
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 
 class MaintenanceLogFormViewModel(
   private val logManager: MaintenanceLogManager,
@@ -366,7 +366,13 @@ class MaintenanceLogFormViewModel(
                 error = uploadError!!.toUploadErrorText(),
                 pendingAttachments = s.pendingAttachments.map {
                   if (it is PendingAttachment.Uploading && it.id == pending.tempId)
-                    PendingAttachment.Failed(pending.tempId, pending.name, pending.mimeType, pending.localUri, pending.sizeBytes)
+                    PendingAttachment.Failed(
+                      pending.tempId,
+                      pending.name,
+                      pending.mimeType,
+                      pending.localUri,
+                      pending.sizeBytes
+                    )
                   else it
                 },
               )
