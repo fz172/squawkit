@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.AircraftOverviewContent
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewEvent
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
@@ -46,19 +47,15 @@ fun AircraftOverviewScreen(
         }
 
         is AircraftOverviewEvent.NavigateToAddInspection ->
-          navController.navigate("maintenance_inspection_create/${event.aircraftId}")
-
+          navController.navigate(Screen.AddInspection.createRoute(event.aircraftId))
         is AircraftOverviewEvent.NavigateToAddLog ->
-          navController.navigate("maintenance_log_create/${event.aircraftId}")
-
+          navController.navigate(Screen.AddMaintenanceLog.createRoute(event.aircraftId))
         is AircraftOverviewEvent.NavigateToEditAircraft ->
-          navController.navigate("edit_aircraft/${event.aircraftId}")
-
+          navController.navigate(Screen.EditAircraft.createRoute(event.aircraftId))
         is AircraftOverviewEvent.NavigateToEditInspection ->
-          navController.navigate("maintenance_inspection_edit/${event.aircraftId}/${event.cardId}")
-
+          navController.navigate(Screen.EditInspection.createRoute(event.aircraftId, event.cardId))
         is AircraftOverviewEvent.NavigateToLogDetails ->
-          navController.navigate("maintenance_logs/${event.aircraftId}")
+          navController.navigate(Screen.MaintenanceLogs.createRoute(event.aircraftId))
       }
     }
   }

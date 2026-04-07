@@ -10,11 +10,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
 import dev.fanfly.wingslog.feature.inspection.update.ui.AddInspectionRoute
 import dev.fanfly.wingslog.feature.inspection.update.ui.EditInspectionRoute
-import dev.fanfly.wingslog.feature.maintenance.update.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
 import dev.fanfly.wingslog.feature.maintenance.update.edit.EditAircraftScreen
 import dev.fanfly.wingslog.feature.maintenance.update.form.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.maintenance.viewing.log.MaintenanceLogListScreen
@@ -32,40 +32,40 @@ fun AppEntry() {
     ) {
       val navController = rememberNavController()
 
-      NavHost(navController, startDestination = "login") {
-        composable("login") {
+      NavHost(navController, startDestination = Screen.Login.route) {
+        composable(Screen.Login.route) {
           LoginScreen(
             onLoginSuccess = {
-              navController.navigate("main") {
-                popUpTo("login") { inclusive = true }
+              navController.navigate(Screen.Dashboard.route) {
+                popUpTo(Screen.Login.route) { inclusive = true }
               }
             })
         }
-        composable("main") {
+        composable(Screen.Dashboard.route) {
           DashboardScreen(
-            onOpenSettings = { navController.navigate("settings") },
-            onAddAircraft = { navController.navigate("add_aircraft") },
-            onAircraftClick = { aircraftId -> navController.navigate("maintenance_overview/$aircraftId") })
+            onOpenSettings = { navController.navigate(Screen.Settings.route) },
+            onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+            onAircraftClick = { aircraftId -> navController.navigate(Screen.MaintenanceOverview.createRoute(aircraftId)) })
         }
-        composable("settings") {
+        composable(Screen.Settings.route) {
           SettingsScreen(
             navController = navController,
-            onAddAircraft = { navController.navigate("add_aircraft") })
+            onAddAircraft = { navController.navigate(Screen.AddAircraft.route) })
         }
 
-        composable("edit_profile") {
+        composable(Screen.EditProfile.route) {
           EditProfileScreen(navController = navController)
         }
 
         composable(
-          route = "add_aircraft",
+          route = Screen.AddAircraft.route,
         ) {
           EditAircraftScreen(navController = navController)
         }
 
         composable(
-          route = "edit_aircraft/{${ARGUMENT_AIRCRAFT_ID}}",
-          arguments = listOf(navArgument(ARGUMENT_AIRCRAFT_ID) {
+          route = Screen.EditAircraft.route,
+          arguments = listOf(navArgument("aircraft_id") {
             type = NavType.StringType
             nullable = true
           })
@@ -74,7 +74,7 @@ fun AppEntry() {
         }
 
         composable(
-          route = "maintenance_overview/{aircraftId}",
+          route = Screen.MaintenanceOverview.route,
           arguments = listOf(navArgument("aircraftId") {
             type = NavType.StringType
           })
@@ -83,14 +83,14 @@ fun AppEntry() {
         }
 
         composable(
-          route = "maintenance_inspection_create/{aircraftId}",
+          route = Screen.AddInspection.route,
           arguments = listOf(navArgument("aircraftId") { type = NavType.StringType })
         ) {
           AddInspectionRoute(navController = navController)
         }
 
         composable(
-          route = "maintenance_inspection_edit/{aircraftId}/{cardId}",
+          route = Screen.EditInspection.route,
           arguments = listOf(
             navArgument("aircraftId") { type = NavType.StringType },
             navArgument("cardId") { type = NavType.StringType }
@@ -101,21 +101,21 @@ fun AppEntry() {
 
         // Maintenance Log routes
         composable(
-          route = "maintenance_logs/{aircraftId}",
+          route = Screen.MaintenanceLogs.route,
           arguments = listOf(navArgument("aircraftId") { type = NavType.StringType })
         ) {
           MaintenanceLogListScreen(navController = navController)
         }
 
         composable(
-          route = "maintenance_log_create/{aircraftId}",
+          route = Screen.AddMaintenanceLog.route,
           arguments = listOf(navArgument("aircraftId") { type = NavType.StringType })
         ) {
           MaintenanceLogFormScreen(navController = navController)
         }
 
         composable(
-          route = "maintenance_log_edit/{aircraftId}/{logId}",
+          route = Screen.EditMaintenanceLog.route,
           arguments = listOf(
             navArgument("aircraftId") { type = NavType.StringType },
             navArgument("logId") { type = NavType.StringType }

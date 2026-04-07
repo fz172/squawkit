@@ -40,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -85,10 +86,10 @@ fun MaintenanceLogListScreen(
     viewModel.events.collect { event ->
       when (event) {
         is MaintenanceLogListEvent.NavigateToCreateLog ->
-          navController.navigate("maintenance_log_create/${event.aircraftId}")
+          navController.navigate(Screen.AddMaintenanceLog.createRoute(event.aircraftId))
 
         is MaintenanceLogListEvent.NavigateToEditLog ->
-          navController.navigate("maintenance_log_edit/${event.aircraftId}/${event.logId}")
+          navController.navigate(Screen.EditMaintenanceLog.createRoute(event.aircraftId, event.logId))
       }
     }
   }

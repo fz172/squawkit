@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
@@ -104,7 +105,7 @@ fun EditAircraftScreen(
     if (uiState.isSaved || uiState.isDeleted) {
       // Navigate back when save or delete is successful
       if (uiState.isDeleted) {
-        navController.popBackStack("main", inclusive = false)
+        navController.popBackStack(Screen.Dashboard.route, inclusive = false)
       } else {
         navController.popBackStack()
       }

@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.getAppVersion
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -47,8 +48,8 @@ fun SettingsScreen(
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {
       // If the user becomes logged out, go to log in and clear everything up to main
-      navController.navigate("login") {
-        popUpTo("main") {
+      navController.navigate(Screen.Login.route) {
+        popUpTo(Screen.Dashboard.route) {
           inclusive = true
         }
         // Ensure only one copy of the login screen
@@ -76,7 +77,7 @@ fun SettingsScreen(
           photoUri = user.photoUri,
           licenceInfo = user.licenseInfo,
         ),
-        onOpenEditProfile = { navController.navigate("edit_profile") }
+        onOpenEditProfile = { navController.navigate(Screen.EditProfile.route) }
       )
       SettingsRow(
         icon = Icons.AutoMirrored.Filled.Logout,
