@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.update.form.data
+package dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel
 
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.InspectionCard

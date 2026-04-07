@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.update.form.data
+package dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.toLocalFile
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
@@ -421,7 +422,7 @@ class MaintenanceLogFormViewModel(
         state.maintenanceDate?.let { it.atStartOfDayIn(TimeZone.currentSystemDefault()) } ?: now
       val log = MaintenanceLog(
         id = resolvedLogId,
-        timestamp = dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant(
+        timestamp = createWireInstant(
           timestampInstant.epochSeconds,
           timestampInstant.nanosecondsOfSecond
         ),

@@ -1,46 +1,33 @@
-package dev.fanfly.wingslog.feature.maintenance.update.form
+package dev.fanfly.wingslog.feature.maintenance.update.logs
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -59,16 +46,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionPickerSheet
-import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
-import dev.fanfly.wingslog.feature.maintenance.update.form.data.MaintenanceLogFormEvent
-import dev.fanfly.wingslog.feature.maintenance.update.form.data.MaintenanceLogFormViewModel
-import kotlinx.datetime.Instant
+import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.ComponentSection
+import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.InspectionWorkSection
+import dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel.MaintenanceLogFormEvent
+import dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel.MaintenanceLogFormViewModel
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -77,41 +62,28 @@ import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.attachments.sharedassets.generated.resources.file_added
 import wingslog.core.attachments.sharedassets.generated.resources.file_read_error
 import wingslog.core.attachments.sharedassets.generated.resources.link_added
-import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.ok
-import wingslog.core.ui.generated.resources.remove
 import wingslog.core.ui.generated.resources.save
 import wingslog.core.ui.generated.resources.update
-import wingslog.feature.inspection.sharedassets.generated.resources.inspection_work
-import wingslog.feature.inspection.sharedassets.generated.resources.no_inspection_work_recorded
-import wingslog.feature.inspection.sharedassets.generated.resources.unknown_inspection
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
-import wingslog.feature.maintenance.sharedassets.generated.resources.blade
 import wingslog.feature.maintenance.sharedassets.generated.resources.edit_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.maintenance_date
-import wingslog.feature.maintenance.sharedassets.generated.resources.propeller_hub
 import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.maintenance.update.generated.resources.airframe_serial
 import wingslog.feature.maintenance.update.generated.resources.airframe_time_hours
 import wingslog.feature.maintenance.update.generated.resources.delete_log
 import wingslog.feature.maintenance.update.generated.resources.engine_time_hours
-import wingslog.feature.maintenance.update.generated.resources.loading_aircraft
 import wingslog.feature.maintenance.update.generated.resources.log_deleted
 import wingslog.feature.maintenance.update.generated.resources.log_saved
 import wingslog.feature.maintenance.update.generated.resources.log_updated
-import wingslog.feature.maintenance.update.generated.resources.no_engines_found
-import wingslog.feature.maintenance.update.generated.resources.no_propeller_components_found
 import wingslog.feature.maintenance.update.generated.resources.prop_time_hours
-import wingslog.feature.maintenance.update.generated.resources.propeller_component
 import wingslog.feature.maintenance.update.generated.resources.tap_to_change_date
 import wingslog.feature.maintenance.update.generated.resources.work_description_required
+import kotlin.time.Instant
 import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 
@@ -399,253 +371,3 @@ fun MaintenanceLogFormScreen(
   }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ComponentSection(
-  aircraft: Aircraft?,
-  selectedComponentType: MaintenanceLog.ComponentType,
-  selectedSubComponent: String?,
-  onComponentTypeChange: (MaintenanceLog.ComponentType) -> Unit,
-  onSubComponentChange: (String?) -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-    // Component Type segmented button
-    val componentOptions = listOf(
-      MaintenanceLog.ComponentType.AIRFRAME,
-      MaintenanceLog.ComponentType.ENGINE,
-      MaintenanceLog.ComponentType.PROPELLER,
-    )
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-      componentOptions.forEachIndexed { index, option ->
-        SegmentedButton(
-          selected = selectedComponentType == option,
-          onClick = { onComponentTypeChange(option) },
-          shape = SegmentedButtonDefaults.itemShape(index = index, count = componentOptions.size),
-          icon = {},
-          label = { Text(option.displayName()) },
-        )
-      }
-    }
-
-    when (selectedComponentType) {
-      MaintenanceLog.ComponentType.AIRFRAME -> {
-        // Display aircraft serial (read-only)
-        val serial = aircraft?.serial ?: ""
-        OutlinedTextField(
-          value = serial,
-          onValueChange = {},
-          readOnly = true,
-          label = { Text(stringResource(MaintenanceRes.string.airframe_serial)) },
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true
-        )
-      }
-
-      MaintenanceLog.ComponentType.ENGINE -> {
-        if (aircraft == null) {
-          Text(
-            text = stringResource(MaintenanceRes.string.loading_aircraft),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-        } else {
-          val engines = aircraft.engine
-          if (engines.isEmpty()) {
-            Text(
-              text = stringResource(MaintenanceRes.string.no_engines_found),
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          } else {
-            val options = engines.map { engine ->
-              val label = buildString {
-                if (engine.make.isNotEmpty()) append(engine.make)
-                if (engine.model.isNotEmpty()) {
-                  if (isNotEmpty()) append(" ")
-                  append(engine.model)
-                }
-                if (engine.serial.isNotEmpty()) append(" (${engine.serial})")
-              }
-              label to engine.serial
-            }
-            SubComponentDropdown(
-              label = stringResource(CoreRes.string.component_engine),
-              options = options,
-              selectedSerial = selectedSubComponent,
-              onSelected = onSubComponentChange,
-              modifier = Modifier.fillMaxWidth()
-            )
-          }
-        }
-      }
-
-      MaintenanceLog.ComponentType.PROPELLER -> {
-        if (aircraft == null) {
-          Text(
-            text = stringResource(MaintenanceRes.string.loading_aircraft),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-        } else {
-          // Collect all propeller components from all engines
-          val options = mutableListOf<Pair<String, String>>()
-          aircraft.engine.forEach { engine ->
-            val prop = engine.propeller
-            val hub = prop?.hub
-            if (hub?.serial?.isNotEmpty() == true) {
-              val label = buildString {
-                append(stringResource(SharedRes.string.propeller_hub))
-                if (hub.make.isNotEmpty()) append(" - ${hub.make}")
-                if (hub.model.isNotEmpty()) append(" ${hub.model}")
-                append(" (${hub.serial})")
-              }
-              options.add(label to hub.serial)
-            }
-            prop?.blades?.forEach { blade ->
-              if (blade.serial.isNotEmpty()) {
-                val label = buildString {
-                  append(stringResource(SharedRes.string.blade))
-                  if (blade.make.isNotEmpty()) append(" - ${blade.make}")
-                  if (blade.model.isNotEmpty()) append(" ${blade.model}")
-                  append(" (${blade.serial})")
-                }
-                options.add(label to blade.serial)
-              }
-            }
-          }
-
-          if (options.isEmpty()) {
-            Text(
-              text = stringResource(MaintenanceRes.string.no_propeller_components_found),
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          } else {
-            SubComponentDropdown(
-              label = stringResource(MaintenanceRes.string.propeller_component),
-              options = options,
-              selectedSerial = selectedSubComponent,
-              onSelected = onSubComponentChange,
-              modifier = Modifier.fillMaxWidth()
-            )
-          }
-        }
-      }
-
-      else -> {
-        // UNKNOWN — no sub-component
-      }
-    }
-  }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SubComponentDropdown(
-  label: String,
-  options: List<Pair<String, String>>, // display label to serial
-  selectedSerial: String?,
-  onSelected: (String?) -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  var expanded by remember { mutableStateOf(false) }
-  val selectedLabel = options.firstOrNull { it.second == selectedSerial }?.first ?: ""
-
-  ExposedDropdownMenuBox(
-    expanded = expanded,
-    onExpandedChange = { expanded = it },
-    modifier = modifier
-  ) {
-    OutlinedTextField(
-      value = selectedLabel,
-      onValueChange = {},
-      readOnly = true,
-      label = { Text(label) },
-      trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-      modifier = Modifier
-        .fillMaxWidth()
-        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-    )
-    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-      options.forEach { (displayLabel, serial) ->
-        DropdownMenuItem(
-          text = { Text(displayLabel) },
-          onClick = {
-            onSelected(serial)
-            expanded = false
-          }
-        )
-      }
-    }
-  }
-}
-
-@Composable
-private fun InspectionWorkSection(
-  selectedIds: List<String>,
-  availableCards: List<dev.fanfly.wingslog.aircraft.InspectionCard>,
-  onAddClick: () -> Unit,
-  onRemove: (cardId: String) -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-      Text(
-        text = stringResource(SharedInspectionRes.string.inspection_work),
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-      )
-      OutlinedButton(
-        onClick = onAddClick,
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(
-          horizontal = 12.dp, vertical = 4.dp
-        ),
-      ) {
-        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.width(16.dp))
-        Spacer(Modifier.width(4.dp))
-        Text(
-          stringResource(CoreRes.string.add),
-          style = MaterialTheme.typography.labelMedium
-        )
-      }
-    }
-
-    if (selectedIds.isEmpty()) {
-      Text(
-        text = stringResource(SharedInspectionRes.string.no_inspection_work_recorded),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    } else {
-      selectedIds.forEach { cardId ->
-        val card = availableCards.firstOrNull { it.id == cardId }
-        val title =
-          card?.title ?: stringResource(SharedInspectionRes.string.unknown_inspection, cardId)
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-          Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-          )
-          IconButton(onClick = { onRemove(cardId) }) {
-            Icon(
-              Icons.Default.Close,
-              contentDescription = stringResource(CoreRes.string.remove),
-              tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-          }
-        }
-        HorizontalDivider()
-      }
-    }
-  }
-}

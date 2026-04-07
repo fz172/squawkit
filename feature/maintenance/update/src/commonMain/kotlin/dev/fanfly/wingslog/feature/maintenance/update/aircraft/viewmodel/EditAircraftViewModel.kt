@@ -1,10 +1,14 @@
-package dev.fanfly.wingslog.feature.maintenance.update.edit.data
+package dev.fanfly.wingslog.feature.maintenance.update.aircraft.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.Engine
+import dev.fanfly.wingslog.aircraft.Propeller
+import dev.fanfly.wingslog.aircraft.PropellerBlade
+import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import kotlinx.coroutines.CancellationException
@@ -145,9 +149,9 @@ class EditAircraftViewModel(
       val newEngines = it.aircraft.engine.toMutableList()
       val engine = newEngines[engineIndex]
       val newHub = (engine.propeller?.hub
-        ?: dev.fanfly.wingslog.aircraft.PropellerHub()).copy(make = newValue.replaceFirstChar { char -> char.uppercase() })
+        ?: PropellerHub()).copy(make = newValue.replaceFirstChar { char -> char.uppercase() })
       val newPropeller =
-        (engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()).copy(hub = newHub)
+        (engine.propeller ?: Propeller()).copy(hub = newHub)
       newEngines[engineIndex] = engine.copy(propeller = newPropeller)
       it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
@@ -158,9 +162,9 @@ class EditAircraftViewModel(
       val newEngines = it.aircraft.engine.toMutableList()
       val engine = newEngines[engineIndex]
       val newHub = (engine.propeller?.hub
-        ?: dev.fanfly.wingslog.aircraft.PropellerHub()).copy(model = newValue.replaceFirstChar { char -> char.uppercase() })
+        ?: PropellerHub()).copy(model = newValue.replaceFirstChar { char -> char.uppercase() })
       val newPropeller =
-        (engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()).copy(hub = newHub)
+        (engine.propeller ?: Propeller()).copy(hub = newHub)
       newEngines[engineIndex] = engine.copy(propeller = newPropeller)
       it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
@@ -170,11 +174,11 @@ class EditAircraftViewModel(
     _uiState.update {
       val newEngines = it.aircraft.engine.toMutableList()
       val engine = newEngines[engineIndex]
-      val newHub = (engine.propeller?.hub ?: dev.fanfly.wingslog.aircraft.PropellerHub()).copy(
+      val newHub = (engine.propeller?.hub ?: PropellerHub()).copy(
         serial = newValue.uppercase()
       )
       val newPropeller =
-        (engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()).copy(hub = newHub)
+        (engine.propeller ?: Propeller()).copy(hub = newHub)
       newEngines[engineIndex] = engine.copy(propeller = newPropeller)
       it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
@@ -184,7 +188,7 @@ class EditAircraftViewModel(
     _uiState.update {
       val newEngines = it.aircraft.engine.toMutableList()
       val engine = newEngines[engineIndex]
-      val propeller = engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()
+      val propeller = engine.propeller ?: Propeller()
       val newBlades = propeller.blades.toMutableList()
       if (bladeIndex < newBlades.size) {
         newBlades[bladeIndex] = newBlades[bladeIndex].copy(serial = newValue.uppercase())
@@ -199,9 +203,9 @@ class EditAircraftViewModel(
     _uiState.update {
       val newEngines = it.aircraft.engine.toMutableList()
       val engine = newEngines[engineIndex]
-      val propeller = engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()
+      val propeller = engine.propeller ?: Propeller()
       val newBlades = propeller.blades.toMutableList()
-      newBlades.add(dev.fanfly.wingslog.aircraft.PropellerBlade())
+      newBlades.add(PropellerBlade())
       val newPropeller = propeller.copy(blades = newBlades)
       newEngines[engineIndex] = engine.copy(propeller = newPropeller)
       it.copy(aircraft = it.aircraft.copy(engine = newEngines))
@@ -212,9 +216,9 @@ class EditAircraftViewModel(
     _uiState.update {
       val newEngines = it.aircraft.engine.toMutableList()
       newEngines.add(
-        dev.fanfly.wingslog.aircraft.Engine(
-          propeller = dev.fanfly.wingslog.aircraft.Propeller(
-            blades = listOf(dev.fanfly.wingslog.aircraft.PropellerBlade())
+        Engine(
+          propeller = Propeller(
+            blades = listOf(PropellerBlade())
           )
         )
       )
@@ -236,7 +240,7 @@ class EditAircraftViewModel(
     _uiState.update {
       val newEngines = it.aircraft.engine.toMutableList()
       val engine = newEngines[engineIndex]
-      val propeller = engine.propeller ?: dev.fanfly.wingslog.aircraft.Propeller()
+      val propeller = engine.propeller ?: Propeller()
       val newBlades = propeller.blades.toMutableList()
       if (bladeIndex in newBlades.indices) {
         newBlades.removeAt(bladeIndex)

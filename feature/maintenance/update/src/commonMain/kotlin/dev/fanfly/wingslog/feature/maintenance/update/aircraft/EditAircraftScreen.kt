@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.update.edit
+package dev.fanfly.wingslog.feature.maintenance.update.aircraft
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -56,12 +56,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.feature.maintenance.update.edit.data.EditAircraftViewModel
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.feature.maintenance.update.aircraft.viewmodel.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.cancel
