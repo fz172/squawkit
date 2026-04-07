@@ -83,6 +83,7 @@ fun AircraftOverviewScreen(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
   val coroutineScope = rememberCoroutineScope()
+  val downloadingIds by attachmentOpener.downloadingIds.collectAsStateWithLifecycle()
 
 
   val errorOccurredMessage = stringResource(CoreRes.string.error_occurred)
@@ -144,6 +145,7 @@ fun AircraftOverviewScreen(
         attachmentOpener.open(attachment).collect {}
       }
     },
+    downloadingIds = downloadingIds,
   )
 }
 
@@ -171,6 +173,7 @@ fun AircraftOverviewContent(
   onCancelDeleteInspection: () -> Unit = {},
   onConfirmDeleteInspection: () -> Unit = {},
   onAttachmentTap: (Attachment) -> Unit = {},
+  downloadingIds: Set<String> = emptySet(),
   modifier: Modifier = Modifier,
 ) {
   val scrollState = rememberScrollState()
@@ -250,6 +253,7 @@ fun AircraftOverviewContent(
           }
         },
         onAttachmentTap = onAttachmentTap,
+        downloadingIds = downloadingIds,
       )
     }
 

@@ -79,6 +79,7 @@ fun MaintenanceLogListScreen(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
   val coroutineScope = rememberCoroutineScope()
+  val downloadingIds by attachmentOpener.downloadingIds.collectAsStateWithLifecycle()
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
@@ -266,7 +267,8 @@ fun MaintenanceLogListScreen(
                     coroutineScope.launch {
                       attachmentOpener.open(attachment).collect {}
                     }
-                  }
+                  },
+                  downloadingIds = downloadingIds,
                 )
               }
             }

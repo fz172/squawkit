@@ -44,6 +44,7 @@ fun MaintenanceLogDetailSheet(
   onDismiss: () -> Unit,
   onEditClick: () -> Unit,
   onAttachmentTap: (Attachment) -> Unit = {},
+  downloadingIds: Set<String> = emptySet(),
   modifier: Modifier = Modifier,
 ) {
   DetailSheet(
@@ -134,6 +135,7 @@ fun MaintenanceLogDetailSheet(
     AttachmentSection(
       attachments = log.attachments,
       onAttachmentTap = onAttachmentTap,
+      downloadingIds = downloadingIds,
     )
   }
 }

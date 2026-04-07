@@ -24,6 +24,7 @@ fun AttachmentSection(
   attachments: List<Attachment>,
   onAttachmentTap: (Attachment) -> Unit,
   modifier: Modifier = Modifier,
+  downloadingIds: Set<String> = emptySet(),
 ) {
   if (attachments.isEmpty()) return
 
@@ -35,7 +36,11 @@ fun AttachmentSection(
     )
     Spacer(Modifier.height(Spacing.small))
     attachments.forEach { attachment ->
-      AttachmentRow(attachment = attachment, onTap = onAttachmentTap)
+      AttachmentRow(
+        attachment = attachment,
+        onTap = onAttachmentTap,
+        isDownloading = downloadingIds.contains(attachment.id)
+      )
       HorizontalDivider()
     }
   }

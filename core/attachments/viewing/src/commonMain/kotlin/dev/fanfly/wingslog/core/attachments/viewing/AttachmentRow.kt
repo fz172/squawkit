@@ -27,17 +27,22 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import java.net.URI
 
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.draw.alpha
+
 @Composable
 fun AttachmentRow(
   attachment: Attachment,
+  isDownloading: Boolean = false,
   onTap: (Attachment) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Row(
     modifier = modifier
       .fillMaxWidth()
-      .clickable { onTap(attachment) }
-      .padding(vertical = Spacing.small),
+      .clickable(enabled = !isDownloading) { onTap(attachment) }
+      .padding(vertical = Spacing.small)
+      .alpha(if (isDownloading) 0.5f else 1.0f),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
@@ -60,12 +65,20 @@ fun AttachmentRow(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
-    Icon(
-      imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-      modifier = Modifier.size(16.dp),
-    )
+    if (isDownloading) {
+      CircularProgressIndicator(
+        modifier = Modifier.size(16.dp),
+        strokeWidth = 2.dp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+      )
+    } else {
+      Icon(
+        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+        modifier = Modifier.size(16.dp),
+      )
+    }
   }
 }
 
