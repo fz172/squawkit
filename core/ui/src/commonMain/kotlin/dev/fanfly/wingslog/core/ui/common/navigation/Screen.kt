@@ -1,11 +1,15 @@
 package dev.fanfly.wingslog.core.ui.common.navigation
 
 sealed class Screen(val route: String) {
+
+  // Canonical navigation parameters
   companion object {
     const val AIRCRAFT_ID = "aircraftId"
     const val CARD_ID = "cardId"
     const val LOG_ID = "logId"
   }
+
+  // Navigation route templates
 
   data object Login : Screen("login")
   data object Dashboard : Screen("main")
