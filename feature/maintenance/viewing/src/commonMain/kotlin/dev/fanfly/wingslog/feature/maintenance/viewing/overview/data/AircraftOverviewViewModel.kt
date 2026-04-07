@@ -9,10 +9,10 @@ import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
-import dev.fanfly.wingslog.feature.maintenance.datamanager.AircraftManager
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AircraftOverviewViewModel(
-  private val aircraftManager: AircraftManager,
+  private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
   private val inspectionManager: InspectionManager,
   savedStateHandle: SavedStateHandle,
@@ -49,7 +49,7 @@ class AircraftOverviewViewModel(
     viewModelScope.launch {
       _uiState.update { AircraftOverviewUiState.Loading }
       combine(
-        aircraftManager.loadAircraft(aircraftId),
+        fleetManager.loadAircraft(aircraftId),
         logManager.observeLogs(aircraftId),
         inspectionManager.observeInspections(aircraftId),
         logManager.observeMaintenanceOverview(aircraftId)
@@ -250,7 +250,7 @@ class AircraftOverviewViewModel(
 
   fun deleteAircraft() {
     viewModelScope.launch {
-      aircraftManager.deleteAircraft(aircraftId)
+      fleetManager.deleteAircraft(aircraftId)
         .onSuccess {
           _events.send(AircraftOverviewEvent.NavigateBack)
         }

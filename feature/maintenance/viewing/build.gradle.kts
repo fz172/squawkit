@@ -49,6 +49,7 @@ kotlin {
 
       implementation(project(":feature:maintenance:datamanager"))
       implementation(project(":feature:maintenance:sharedassets"))
+      implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:inspection:model"))
       implementation(project(":feature:inspection:datamanager"))
       implementation(project(":feature:inspection:sharedassets"))

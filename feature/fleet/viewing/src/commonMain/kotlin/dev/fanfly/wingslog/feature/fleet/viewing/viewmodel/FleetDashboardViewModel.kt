@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.feature.fleet.datamanager.FleetDashboardManager
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class FleetDashboardViewModel(
-  private val fleetDashboardManager: FleetDashboardManager,
+  private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
   private val inspectionManager: InspectionManager,
 ) : ViewModel() {
@@ -38,7 +38,7 @@ class FleetDashboardViewModel(
     fleetInfoJob?.cancel()
     fleetInfoJob = viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true) }
-      fleetDashboardManager.observeFleetDashboard()
+      fleetManager.observeFleetDashboard()
         .flatMapLatest { fleet ->
           if (fleet.isEmpty()) {
             flowOf(fleet to emptyMap())

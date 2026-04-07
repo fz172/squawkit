@@ -13,8 +13,8 @@ import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.toLocalFile
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
-import dev.fanfly.wingslog.feature.maintenance.datamanager.AircraftManager
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlin.time.Clock
@@ -49,7 +49,7 @@ import wingslog.feature.maintenance.update.generated.resources.work_description_
 
 class MaintenanceLogFormViewModel(
   private val logManager: MaintenanceLogManager,
-  private val aircraftManager: AircraftManager,
+  private val fleetManager: FleetManager,
   private val inspectionManager: InspectionManager,
   private val attachmentManager: AttachmentManager,
   private val auth: FirebaseAuth,
@@ -89,7 +89,7 @@ class MaintenanceLogFormViewModel(
 
   private fun loadAircraft() {
     viewModelScope.launch {
-      aircraftManager.loadAircraft(aircraftId).collect { aircraft ->
+      fleetManager.loadAircraft(aircraftId).collect { aircraft ->
         _uiState.update { it.copy(aircraft = aircraft) }
       }
     }

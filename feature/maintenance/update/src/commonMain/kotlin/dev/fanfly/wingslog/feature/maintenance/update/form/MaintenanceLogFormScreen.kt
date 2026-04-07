@@ -65,20 +65,17 @@ import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionPickerSheet
+import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.maintenance.update.form.data.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.maintenance.update.form.data.MaintenanceLogFormViewModel
-import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
 import wingslog.core.attachments.sharedassets.generated.resources.file_added
 import wingslog.core.attachments.sharedassets.generated.resources.file_read_error
 import wingslog.core.attachments.sharedassets.generated.resources.link_added
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
@@ -88,31 +85,35 @@ import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.remove
 import wingslog.core.ui.generated.resources.save
 import wingslog.core.ui.generated.resources.update
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.inspection_work
 import wingslog.feature.inspection.sharedassets.generated.resources.no_inspection_work_recorded
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
+import wingslog.feature.inspection.sharedassets.generated.resources.unknown_inspection
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
+import wingslog.feature.maintenance.sharedassets.generated.resources.blade
+import wingslog.feature.maintenance.sharedassets.generated.resources.edit_log
+import wingslog.feature.maintenance.sharedassets.generated.resources.maintenance_date
+import wingslog.feature.maintenance.sharedassets.generated.resources.propeller_hub
+import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.maintenance.update.generated.resources.airframe_serial
 import wingslog.feature.maintenance.update.generated.resources.airframe_time_hours
-import wingslog.feature.maintenance.sharedassets.generated.resources.blade
 import wingslog.feature.maintenance.update.generated.resources.delete_log
-import wingslog.feature.maintenance.sharedassets.generated.resources.edit_log
 import wingslog.feature.maintenance.update.generated.resources.engine_time_hours
 import wingslog.feature.maintenance.update.generated.resources.loading_aircraft
 import wingslog.feature.maintenance.update.generated.resources.log_deleted
 import wingslog.feature.maintenance.update.generated.resources.log_saved
 import wingslog.feature.maintenance.update.generated.resources.log_updated
-import wingslog.feature.maintenance.sharedassets.generated.resources.maintenance_date
 import wingslog.feature.maintenance.update.generated.resources.no_engines_found
 import wingslog.feature.maintenance.update.generated.resources.no_propeller_components_found
 import wingslog.feature.maintenance.update.generated.resources.prop_time_hours
 import wingslog.feature.maintenance.update.generated.resources.propeller_component
-import wingslog.feature.maintenance.sharedassets.generated.resources.propeller_hub
 import wingslog.feature.maintenance.update.generated.resources.tap_to_change_date
-import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.maintenance.update.generated.resources.work_description_required
+import org.jetbrains.compose.resources.stringResource as cmpStringResource
+import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

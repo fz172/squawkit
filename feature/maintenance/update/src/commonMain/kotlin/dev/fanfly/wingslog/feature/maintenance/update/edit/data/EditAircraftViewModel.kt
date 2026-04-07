@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.feature.maintenance.datamanager.AircraftManager
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.maintenance.update.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class EditAircraftViewModel(
-  private val aircraftManager: AircraftManager, savedStateHandle: SavedStateHandle,
+  private val fleetManager: FleetManager, savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
   private val _uiState: MutableStateFlow<EditAircraftUiState> =
@@ -35,10 +35,10 @@ class EditAircraftViewModel(
   fun loadAircraftById(id: String) {
     _uiState.update { it.copy(isLoading = true) }
     viewModelScope.launch {
-      // We need a way to get one aircraft. AircraftManager.loadAircraft returns a Flow.
+      // We need a way to get one aircraft. FleetManager.loadAircraft returns a Flow.
       // We can take the first emission.
       try {
-        aircraftManager.loadAircraft(id).collect { aircraft ->
+        fleetManager.loadAircraft(id).collect { aircraft ->
           if (aircraft != null) {
             _uiState.update { it.copy(aircraft = aircraft, isLoading = false) }
           } else {
@@ -67,7 +67,7 @@ class EditAircraftViewModel(
       }
 
       _uiState.update { it.copy(isLoading = true) }
-      val result = aircraftManager.updateAircraft(uiState.value.aircraft)
+      val result = fleetManager.updateAircraft(uiState.value.aircraft)
       if (result.isSuccess) {
         _uiState.update { it.copy(isSaved = true) }
       }
@@ -78,7 +78,7 @@ class EditAircraftViewModel(
   fun deleteAircraft() {
     viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true) }
-      val result = aircraftManager.deleteAircraft(uiState.value.aircraft.id)
+      val result = fleetManager.deleteAircraft(uiState.value.aircraft.id)
       if (result.isSuccess) {
         _uiState.update { it.copy(isDeleted = true) }
       }

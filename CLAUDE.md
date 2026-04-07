@@ -29,8 +29,9 @@ core/
   database/             # Firestore helpers — getFleetCollectionRef, DocumentReferences
 feature/
   fleet/                # Fleet dashboard ViewModel + UI
-  fleet/database/       # FleetDashboardManager: observes aircraft via Firestore Flow
-  maintenance/          # Maintenance log UI (list/create/edit) + database submodule
+  fleet/datamanager/    # FleetManager: observes aircraft via Firestore Flow, CRUD for aircraft
+  maintenance/          # Maintenance log UI (list/create/edit)
+  maintenance/datamanager/ # MaintenanceLogManager: CRUD for logs and maintenance overview
   inspection/           # (see canonical pattern below)
   userprofile/          # Profile edit UI + database
   settings/             # App settings screen
@@ -87,7 +88,7 @@ Each submodule that provides injectable objects declares its own `*Module.kt` (e
 
 ### Data flow example
 ```
-Firestore snapshot → Flow<List<Aircraft>> (FleetDashboardManagerImpl)
+Firestore snapshot → Flow<List<Aircraft>> (FleetManagerImpl)
   → flatMapLatest → combine(inspections, logs per aircraft)
   → FleetDashboardViewModel._uiState (StateFlow)
   → DashboardScreen (collectAsStateWithLifecycle)

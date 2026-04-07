@@ -1,23 +1,63 @@
-package dev.fanfly.wingslog.feature.maintenance.datamanager.impl
+package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.core.database.AIRCRAFT_INFO_BLOB
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
 import dev.fanfly.wingslog.core.database.getFleetCollectionRef
 import dev.fanfly.wingslog.core.database.setEncoded
-import dev.fanfly.wingslog.feature.maintenance.datamanager.AircraftManager
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 
-class AircraftManagerImpl(
+class FleetManagerImpl(
   private val firebaseAuth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
-) : AircraftManager {
+) : FleetManager {
+
+  private val logger = Logger.withTag("FleetManagerImpl")
+
+  override fun observeFleetDashboard(): Flow<List<Aircraft>> {
+    val fleetCollectionRef =
+      firestore.getFleetCollectionRef(firebaseAuth) ?: return emptyFlow()
+
+    return fleetCollectionRef.snapshots.map { snapshot ->
+      if (snapshot.documents.isEmpty()) {
+        logger.w { "No fleet data, returning empty" }
+        return@map emptyList()
+      }
+      logger.w { "Fleet data size {${snapshot.documents.size}}" }
+
+      val result = mutableListOf<Aircraft>()
+      for (document in snapshot.documents) {
+        // Wire 5.x uses camelCase for properties
+        val blobBytes = document.getBlobAsBytes(AIRCRAFT_INFO_BLOB)
+        if (blobBytes == null || blobBytes.isEmpty()) {
+          logger.w { "Missing or empty aircraft info blob, skipping ${document.id}" }
+          continue
+        }
+
+        try {
+          val aircraft = Aircraft.ADAPTER.decode(blobBytes)
+          result += aircraft
+          logger.i { "Recovered Aircraft: ${aircraft.tail_number} - ${aircraft.model}" }
+        } catch (e: Exception) {
+          logger.e(e) { "Failed to decode aircraft" }
+        }
+      }
+      result
+    }.catch { e ->
+      logger.w(e) { "Listen failed." }
+      emit(emptyList())
+    }
+  }
 
   override suspend fun updateAircraft(aircraft: Aircraft): Result<Boolean> = try {
     val fleetRef = firestore.getFleetCollectionRef(firebaseAuth) ?: return Result.failure(
@@ -78,10 +118,5 @@ class AircraftManagerImpl(
     fleetRef.document(generateRandomId())
   } else {
     fleetRef.document(aircraft.id)
-  }
-
-  companion object {
-    private val logger = Logger.withTag("AircraftManagerImpl")
-    private const val AIRCRAFT_INFO_BLOB = "aircraft_info_blob"
   }
 }
