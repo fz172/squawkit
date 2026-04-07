@@ -25,7 +25,6 @@ import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
-import java.net.URI
 
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.draw.alpha
@@ -100,12 +99,9 @@ private fun Attachment.subtitle(): String = when (type) {
   }
 }
 
-private fun String.displayDomain(): String = try {
-  val withScheme = if (startsWith("http")) this else "https://$this"
-  val host = URI(withScheme).host ?: this
-  if (host.length > 40) host.take(37) + "…" else host
-} catch (e: Exception) {
-  take(40)
+private fun String.displayDomain(): String {
+  val host = this.substringAfter("://").substringBefore("/")
+  return if (host.length > 40) host.take(37) + "…" else host
 }
 
 private fun String.mimeLabel(): String = when {
@@ -116,7 +112,11 @@ private fun String.mimeLabel(): String = when {
 }
 
 private fun Long.formatFileSize(): String = when {
-  this >= 1_048_576L -> "${"%.1f".format(this / 1_048_576.0)} MB"
-  this >= 1_024L -> "${"%.0f".format(this / 1_024.0)} KB"
+  this >= 1_048_576L -> {
+    val mb = this / 1_048_576.0
+    val rounded = (mb * 10).toInt() / 10.0
+    "$rounded MB"
+  }
+  this >= 1_024L -> "${this / 1024} KB"
   else -> "$this B"
 }
