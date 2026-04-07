@@ -2,6 +2,15 @@ package dev.fanfly.wingslog.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// --- Apple Platform Colors (iOS Native look) ---
+val AppleBlue = Color(0xFF007AFF)
+val AppleSystemBackgroundLight = Color(0xFFFFFFFF)
+val AppleSystemBackgroundDark = Color(0xFF000000)
+val AppleSecondarySystemBackgroundLight = Color(0xFFF2F2F7)
+val AppleSecondarySystemBackgroundDark = Color(0xFF1C1C1E)
+val AppleSeparatorLight = Color(0xFFC6C6C8)
+val AppleSeparatorDark = Color(0xFF38383A)
+
 // --- Aviation Blue (primary) ---
 // References glass cockpit displays: Garmin G1000, ForeFlight, Jeppesen charts.
 // A deep, confident instrument blue — nothing else in the productivity space uses this exact tone.

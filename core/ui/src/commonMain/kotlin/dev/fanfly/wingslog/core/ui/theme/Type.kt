@@ -16,12 +16,7 @@ import wingslog.core.ui.generated.resources.space_grotesk_medium
 import wingslog.core.ui.generated.resources.space_grotesk_semibold
 
 @Composable
-private fun rememberSpaceGroteskFamily(): FontFamily {
-  val medium = Font(Res.font.space_grotesk_medium, weight = FontWeight.Medium)
-  val semiBold = Font(Res.font.space_grotesk_semibold, weight = FontWeight.SemiBold)
-  val bold = Font(Res.font.space_grotesk_bold, weight = FontWeight.Bold)
-  return remember(medium, semiBold, bold) { FontFamily(medium, semiBold, bold) }
-}
+expect fun rememberBrandHeadlineFamily(): FontFamily
 
 @Composable
 private fun rememberJetBrainsMonoFamily(): FontFamily {
@@ -43,45 +38,45 @@ private fun rememberJetBrainsMonoFamily(): FontFamily {
  */
 @Composable
 fun rememberWingslogTypography(): Typography {
-  val spaceGrotesk = rememberSpaceGroteskFamily()
+  val headlineFamily = rememberBrandHeadlineFamily()
   return Typography(
     headlineLarge = TextStyle(
-      fontFamily = spaceGrotesk,
+      fontFamily = headlineFamily,
       fontWeight = FontWeight.Bold,
       fontSize = 32.sp,
       lineHeight = 40.sp,
       letterSpacing = (-0.5).sp  // Tight tracking at large display sizes
     ),
     headlineMedium = TextStyle(
-      fontFamily = spaceGrotesk,
+      fontFamily = headlineFamily,
       fontWeight = FontWeight.Bold,
       fontSize = 28.sp,
       lineHeight = 36.sp,
       letterSpacing = (-0.25).sp
     ),
     headlineSmall = TextStyle(
-      fontFamily = spaceGrotesk,
+      fontFamily = headlineFamily,
       fontWeight = FontWeight.Bold,
       fontSize = 24.sp,
       lineHeight = 32.sp,
       letterSpacing = 0.sp
     ),
     titleLarge = TextStyle(
-      fontFamily = spaceGrotesk,
+      fontFamily = headlineFamily,
       fontWeight = FontWeight.SemiBold,
       fontSize = 22.sp,
       lineHeight = 28.sp,
       letterSpacing = 0.sp
     ),
     titleMedium = TextStyle(
-      fontFamily = spaceGrotesk,
+      fontFamily = headlineFamily,
       fontWeight = FontWeight.SemiBold,
       fontSize = 16.sp,
       lineHeight = 24.sp,
       letterSpacing = 0.15.sp
     ),
     titleSmall = TextStyle(
-      fontFamily = spaceGrotesk,
+      fontFamily = headlineFamily,
       fontWeight = FontWeight.Medium,
       fontSize = 14.sp,
       lineHeight = 20.sp,
@@ -125,6 +120,7 @@ fun rememberWingslogTypography(): Typography {
     )
   )
 }
+
 
 /**
  * Custom typography for technical aviation data: tail numbers, serial numbers, engine times.
