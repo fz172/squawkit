@@ -18,9 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
+import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource as cmpStringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -53,35 +52,22 @@ fun InspectionPickerSheet(
   modifier: Modifier = Modifier,
   singleSelect: Boolean = false,
 ) {
-  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-  ModalBottomSheet(
-    onDismissRequest = onDismiss,
-    sheetState = sheetState,
+  PickerSheet(
+    onDismiss = onDismiss,
     modifier = modifier,
+    headerSlot = {
+      Text(
+        text = cmpStringResource(InspectionRes.string.select_inspection_work),
+        style = MaterialTheme.typography.titleLarge
+      )
+    }
   ) {
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .verticalScroll(rememberScrollState())
-        .padding(horizontal = Spacing.extraLarge)
-        .padding(bottom = Spacing.huge),
+        .verticalScroll(rememberScrollState()),
       verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
-      // Header
-      Row(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(bottom = Spacing.small),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-      ) {
-        Text(
-          text = cmpStringResource(InspectionRes.string.select_inspection_work),
-          style = MaterialTheme.typography.titleLarge
-        )
-      }
-
       if (availableCards.isEmpty()) {
         Text(
           text = cmpStringResource(InspectionRes.string.no_inspection_cards_configured),

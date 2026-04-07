@@ -73,145 +73,128 @@ fun InspectionDetailSheet(
   onAttachmentTap: (Attachment) -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
-  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-  ModalBottomSheet(
-    onDismissRequest = onDismiss,
-    sheetState = sheetState,
+  DetailSheet(
+    onDismiss = onDismiss,
     modifier = modifier,
-  ) {
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.extraLarge)
-        .verticalScroll(rememberScrollState())
-    ) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          val typeLabel = when (cardWithStatus.card.type) {
-            ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> cmpStringResource(SharedRes.string.compliance_type_sb_short)
-            ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> cmpStringResource(
-              SharedRes.string.compliance_type_ad_short
-            )
+    actionSlot = {
+      TextButton(onClick = onEditClick) {
+        Text(cmpStringResource(SharedRes.string.edit_inspection))
+      }
+    },
+    headerSlot = {
+      val typeLabel = when (cardWithStatus.card.type) {
+        ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> cmpStringResource(SharedRes.string.compliance_type_sb_short)
+        ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> cmpStringResource(
+          SharedRes.string.compliance_type_ad_short
+        )
 
-            else -> null
-          }
-          if (typeLabel != null) {
-            Text(
-              text = typeLabel,
-              style = MaterialTheme.typography.labelSmall,
-              color = if (cardWithStatus.card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
-                MaterialTheme.colorScheme.onErrorContainer
+        else -> null
+      }
+      if (typeLabel != null) {
+        Text(
+          text = typeLabel,
+          style = MaterialTheme.typography.labelSmall,
+          color = if (cardWithStatus.card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
+            MaterialTheme.colorScheme.onErrorContainer
+          } else {
+            MaterialTheme.colorScheme.onPrimaryContainer
+          },
+          modifier = Modifier
+            .background(
+              if (cardWithStatus.card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
+                MaterialTheme.colorScheme.errorContainer
               } else {
-                MaterialTheme.colorScheme.onPrimaryContainer
+                MaterialTheme.colorScheme.primaryContainer
               },
-              modifier = Modifier
-                .background(
-                  if (cardWithStatus.card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
-                    MaterialTheme.colorScheme.errorContainer
-                  } else {
-                    MaterialTheme.colorScheme.primaryContainer
-                  },
-                  RoundedCornerShape(4.dp)
-                )
-                .padding(horizontal = 6.dp, vertical = 2.dp)
+              RoundedCornerShape(4.dp)
             )
-            Spacer(Modifier.height(Spacing.tiny))
-          }
-          Text(
-            text = cardWithStatus.card.title,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-          )
-          if (cardWithStatus.card.reference_number.isNotBlank()) {
-            Text(
-              text = cardWithStatus.card.reference_number,
-              style = MaterialTheme.typography.labelMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-        }
-        TextButton(onClick = onEditClick) {
-          Text(cmpStringResource(SharedRes.string.edit_inspection))
-        }
-      }
-
-      Spacer(Modifier.height(Spacing.small))
-
-      DueStatusChip(cardWithStatus.dueStatus)
-
-      if (cardWithStatus.card.compliance_authority.isNotBlank()) {
-        Spacer(Modifier.height(Spacing.medium))
-        Text(
-          text = cmpStringResource(SharedRes.string.compliance_authority),
-          style = MaterialTheme.typography.labelLarge,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
+            .padding(horizontal = 6.dp, vertical = 2.dp)
         )
-        Text(
-          text = cardWithStatus.card.compliance_authority,
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          maxLines = 1
-        )
+        Spacer(Modifier.height(Spacing.tiny))
       }
-
-      if (cardWithStatus.card.compliance_details.isNotBlank()) {
-        Spacer(Modifier.height(Spacing.large))
-        Text(
-          text = cmpStringResource(ViewingRes.string.compliance_details),
-          style = MaterialTheme.typography.labelLarge,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-          text = cardWithStatus.card.compliance_details,
-          style = MaterialTheme.typography.bodyMedium,
-        )
-      }
-
-      if (cardWithStatus.card.notes.isNotBlank()) {
-        Spacer(Modifier.height(Spacing.medium))
-        Text(
-          text = cardWithStatus.card.notes,
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-
-      Spacer(modifier = Modifier.height(Spacing.large))
-
-      AttachmentSection(
-        attachments = cardWithStatus.card.attachments,
-        onAttachmentTap = onAttachmentTap,
-      )
-
-      if (cardWithStatus.card.attachments.isNotEmpty()) {
-        Spacer(modifier = Modifier.height(Spacing.large))
-      }
-
       Text(
-        text = cmpStringResource(ViewingRes.string.maintenance_history),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold
+        text = cardWithStatus.card.title,
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold
       )
-
-      Spacer(modifier = Modifier.height(Spacing.small))
-
-      if (logs.isEmpty()) {
+      if (cardWithStatus.card.reference_number.isNotBlank()) {
         Text(
-          text = cmpStringResource(ViewingRes.string.no_maintenance_logs_for_inspection),
-          style = MaterialTheme.typography.bodyMedium,
+          text = cardWithStatus.card.reference_number,
+          style = MaterialTheme.typography.labelMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-      } else {
-        logs.forEach { log ->
-          LogHistoryItem(log)
-          HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.extraSmall))
-        }
       }
+    }
+  ) {
+    DueStatusChip(cardWithStatus.dueStatus)
 
-      Spacer(modifier = Modifier.height(Spacing.huge))
+    if (cardWithStatus.card.compliance_authority.isNotBlank()) {
+      Spacer(Modifier.height(Spacing.medium))
+      Text(
+        text = cmpStringResource(SharedRes.string.compliance_authority),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+      )
+      Text(
+        text = cardWithStatus.card.compliance_authority,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1
+      )
+    }
+
+    if (cardWithStatus.card.compliance_details.isNotBlank()) {
+      Spacer(Modifier.height(Spacing.large))
+      Text(
+        text = cmpStringResource(ViewingRes.string.compliance_details),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      Text(
+        text = cardWithStatus.card.compliance_details,
+        style = MaterialTheme.typography.bodyMedium,
+      )
+    }
+
+    if (cardWithStatus.card.notes.isNotBlank()) {
+      Spacer(Modifier.height(Spacing.medium))
+      Text(
+        text = cardWithStatus.card.notes,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+
+    Spacer(modifier = Modifier.height(Spacing.large))
+
+    AttachmentSection(
+      attachments = cardWithStatus.card.attachments,
+      onAttachmentTap = onAttachmentTap,
+    )
+
+    if (cardWithStatus.card.attachments.isNotEmpty()) {
+      Spacer(modifier = Modifier.height(Spacing.large))
+    }
+
+    Text(
+      text = cmpStringResource(ViewingRes.string.maintenance_history),
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.SemiBold
+    )
+
+    Spacer(modifier = Modifier.height(Spacing.small))
+
+    if (logs.isEmpty()) {
+      Text(
+        text = cmpStringResource(ViewingRes.string.no_maintenance_logs_for_inspection),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+      )
+    } else {
+      logs.forEach { log ->
+        LogHistoryItem(log)
+        HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.extraSmall))
+      }
     }
   }
 }
