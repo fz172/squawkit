@@ -1,8 +1,12 @@
 package dev.fanfly.wingslog.feature.maintenance.update.logs.compose
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -15,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog.ComponentType
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.component_engine
@@ -61,14 +66,32 @@ fun ComponentSection(
       ComponentType.AIRFRAME -> {
         // Display aircraft serial (read-only)
         val serial = aircraft?.serial ?: ""
-        OutlinedTextField(
-          value = serial,
-          onValueChange = {},
-          readOnly = true,
-          label = { Text(stringResource(Res.string.airframe_serial)) },
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true
-        )
+        Column(
+          modifier = Modifier
+            .fillMaxWidth()
+            .border(
+              width = 1.dp,
+              color = MaterialTheme.colorScheme.outlineVariant,
+              shape = RoundedCornerShape(12.dp)
+            )
+            .background(
+              color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+              shape = RoundedCornerShape(12.dp)
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+          verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+          Text(
+            text = stringResource(Res.string.airframe_serial),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+          Text(
+            text = serial,
+            style = WingslogTypography.dataMedium,
+            color = MaterialTheme.colorScheme.onSurface
+          )
+        }
       }
 
       ComponentType.ENGINE -> {
