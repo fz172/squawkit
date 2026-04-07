@@ -16,6 +16,8 @@ data class LogStats(
 
 sealed interface AircraftOverviewUiState {
   data object Loading : AircraftOverviewUiState
+  data object Error : AircraftOverviewUiState
+
   data class Success(
     val aircraft: Aircraft,
     val logStats: LogStats? = null,
@@ -26,7 +28,6 @@ sealed interface AircraftOverviewUiState {
     val logsForSelectedInspection: List<MaintenanceLog> = emptyList(),
     // Delete confirm dialog — non-null when user taps delete
     val deletingInspectionId: String? = null,
+    val downloadingIds: Set<String> = emptySet(),
   ) : AircraftOverviewUiState
-
-  data object Error : AircraftOverviewUiState
 }

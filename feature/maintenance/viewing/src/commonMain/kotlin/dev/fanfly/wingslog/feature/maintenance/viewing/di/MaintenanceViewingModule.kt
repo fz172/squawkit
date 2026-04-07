@@ -6,6 +6,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val maintenanceViewingModule = module {
-  viewModel { AircraftOverviewViewModel(get(), get(), get(), get()) }
+  viewModel { AircraftOverviewViewModel(get(), get(), get(), get(), get()) }
   viewModel { MaintenanceLogListViewModel(get(), get(), get()) }
 }

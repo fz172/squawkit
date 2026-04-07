@@ -3,12 +3,8 @@ package dev.fanfly.wingslog.feature.maintenance.viewing.overview.data
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.squareup.wire.Instant
-import dev.fanfly.wingslog.aircraft.ComplianceType
-import dev.fanfly.wingslog.aircraft.InspectionCard
-import dev.fanfly.wingslog.aircraft.InspectionComponentType
-import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
@@ -27,6 +23,7 @@ class AircraftOverviewViewModel(
   private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
   private val inspectionManager: InspectionManager,
+  private val attachmentOpener: AttachmentOpener,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -52,8 +49,9 @@ class AircraftOverviewViewModel(
         fleetManager.loadAircraft(aircraftId),
         logManager.observeLogs(aircraftId),
         inspectionManager.observeInspections(aircraftId),
-        logManager.observeMaintenanceOverview(aircraftId)
-      ) { aircraft, logs, inspectionCards, overview ->
+        logManager.observeMaintenanceOverview(aircraftId),
+        attachmentOpener.downloadingIds
+      ) { aircraft, logs, inspectionCards, overview, downloadingIds ->
         cachedLogs = logs
         if (aircraft != null) {
           val stats = if (overview != null) {
@@ -67,7 +65,7 @@ class AircraftOverviewViewModel(
               currentPropTime = overview.current_propeller_time
             )
           } else {
-            // Fallback to manual compute if overview doesn't exist yet
+            // Fallback to manually compute if overview doesn't exist yet
             val currentEngineTime =
               logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }
             val currentAirframeTime =
@@ -83,8 +81,7 @@ class AircraftOverviewViewModel(
                 .toLong(),
               currentEngineTime = currentEngineTime,
               currentAirframeTime = currentAirframeTime,
-              currentPropTime = currentPropTime
-            )
+              currentPropTime = currentPropTime)
           }
 
           // Compute due status for each inspection card
@@ -115,6 +112,7 @@ class AircraftOverviewViewModel(
             selectedInspection = refreshedSelected,
             logsForSelectedInspection = refreshedDetailLogs,
             deletingInspectionId = current?.deletingInspectionId,
+            downloadingIds = downloadingIds,
           )
         } else {
           AircraftOverviewUiState.Error
@@ -125,9 +123,68 @@ class AircraftOverviewViewModel(
     }
   }
 
-  fun showInspectionDetail(cardWithStatus: InspectionCardWithStatus) {
-    val relevantLogs = cachedLogs
-      .filter { cardWithStatus.card.id in it.inspection_ids }
+  fun onAction(action: AircraftOverviewAction) {
+    when (action) {
+      AircraftOverviewAction.BackClick -> {
+        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateBack) }
+      }
+
+      is AircraftOverviewAction.EditClick -> {
+        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToEditAircraft(action.aircraftId)) }
+      }
+
+      AircraftOverviewAction.DeleteConfirm -> {
+        deleteAircraft()
+      }
+
+      is AircraftOverviewAction.LogDetailsClick -> {
+        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToLogDetails(action.aircraftId)) }
+      }
+
+      is AircraftOverviewAction.AddLogClick -> {
+        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddLog(action.aircraftId)) }
+      }
+
+      is AircraftOverviewAction.AddInspectionClick -> {
+        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddInspection(action.aircraftId)) }
+      }
+
+      is AircraftOverviewAction.InspectionCardClick -> {
+        showInspectionDetail(action.card)
+      }
+
+      AircraftOverviewAction.DismissInspectionDetail -> {
+        hideInspectionDetail()
+      }
+
+      is AircraftOverviewAction.EditInspectionClick -> {
+        viewModelScope.launch {
+          _events.send(
+            AircraftOverviewEvent.NavigateToEditInspection(
+              action.aircraftId, action.cardId
+            )
+          )
+        }
+      }
+
+      AircraftOverviewAction.CancelDeleteInspection -> {
+        cancelDeleteInspection()
+      }
+
+      AircraftOverviewAction.ConfirmDeleteInspection -> {
+        confirmDeleteInspection()
+      }
+
+      is AircraftOverviewAction.AttachmentTap -> {
+        viewModelScope.launch {
+          attachmentOpener.open(action.attachment).collect {}
+        }
+      }
+    }
+  }
+
+  private fun showInspectionDetail(cardWithStatus: InspectionCardWithStatus) {
+    val relevantLogs = cachedLogs.filter { cardWithStatus.card.id in it.inspection_ids }
       .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
     _uiState.update { state ->
       if (state is AircraftOverviewUiState.Success) {
@@ -143,49 +200,6 @@ class AircraftOverviewViewModel(
     _uiState.update { state ->
       if (state is AircraftOverviewUiState.Success) {
         state.copy(selectedInspection = null, logsForSelectedInspection = emptyList())
-      } else state
-    }
-  }
-
-  fun saveEditedInspection(
-    cardId: String,
-    title: String,
-    type: ComplianceType,
-    component: InspectionComponentType,
-    rules: List<InspectionRule>,
-    referenceNumber: String,
-    complianceAuthority: String,
-    complianceDetails: String,
-    isOneTime: Boolean,
-    forceDueDate: Instant?,
-    forceDueEngine: Float,
-    notes: String,
-  ) {
-    val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
-    viewModelScope.launch {
-      val updatedCard = InspectionCard(
-        id = cardId,
-        title = title,
-        type = type,
-        component = component,
-        rules = rules,
-        reference_number = referenceNumber,
-        compliance_authority = complianceAuthority,
-        compliance_details = complianceDetails,
-        is_one_time = isOneTime,
-        force_due_date = forceDueDate,
-        force_due_engine_hour = forceDueEngine,
-        notes = notes,
-      )
-      inspectionManager.updateInspection(state.aircraft.id, updatedCard)
-    }
-  }
-
-
-  fun requestDeleteInspection(cardId: String) {
-    _uiState.update { state ->
-      if (state is AircraftOverviewUiState.Success) {
-        state.copy(deletingInspectionId = cardId)
       } else state
     }
   }
@@ -216,56 +230,18 @@ class AircraftOverviewViewModel(
     }
   }
 
-  fun saveNewInspection(
-    title: String,
-    type: ComplianceType,
-    component: InspectionComponentType,
-    rules: List<InspectionRule>,
-    referenceNumber: String,
-    complianceAuthority: String,
-    complianceDetails: String,
-    isOneTime: Boolean,
-    forceDueDate: Instant?,
-    forceDueEngine: Float,
-    notes: String = "",
-  ) {
-    val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
-    viewModelScope.launch {
-      val card = InspectionCard(
-        title = title,
-        type = type,
-        component = component,
-        rules = rules,
-        reference_number = referenceNumber,
-        compliance_authority = complianceAuthority,
-        compliance_details = complianceDetails,
-        is_one_time = isOneTime,
-        force_due_date = forceDueDate,
-        force_due_engine_hour = forceDueEngine,
-        notes = notes,
-      )
-      inspectionManager.addInspection(state.aircraft.id, card)
-    }
-  }
-
   fun deleteAircraft() {
     viewModelScope.launch {
-      fleetManager.deleteAircraft(aircraftId)
-        .onSuccess {
-          _events.send(AircraftOverviewEvent.NavigateBack)
-        }
-        .onFailure { error ->
-          _events.send(
-            AircraftOverviewEvent.ShowError(
-              error.message
-            )
+      fleetManager.deleteAircraft(aircraftId).onSuccess {
+        _events.send(AircraftOverviewEvent.NavigateBack)
+      }.onFailure { error ->
+        _events.send(
+          AircraftOverviewEvent.ShowError(
+            error.message
           )
-        }
+        )
+      }
     }
   }
 }
 
-sealed interface AircraftOverviewEvent {
-  data object NavigateBack : AircraftOverviewEvent
-  data class ShowError(val message: String?) : AircraftOverviewEvent
-}

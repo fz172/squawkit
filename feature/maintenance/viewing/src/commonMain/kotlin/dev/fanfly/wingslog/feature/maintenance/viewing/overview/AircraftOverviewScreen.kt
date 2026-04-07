@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,25 +40,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
-import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.inspection.update.compose.DeleteInspectionConfirmDialog
 import dev.fanfly.wingslog.feature.inspection.viewing.CriticalAlertsSection
 import dev.fanfly.wingslog.feature.inspection.viewing.InspectionDetailSheet
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.ComplianceSection
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.ConfigurationCard
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.LogStatsSection
+import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewEvent
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewViewModel
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.LogStats
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
@@ -78,13 +76,10 @@ import wingslog.feature.maintenance.viewing.generated.resources.Res as Maintenan
 fun AircraftOverviewScreen(
   navController: NavController,
   viewModel: AircraftOverviewViewModel = koinViewModel(),
-  attachmentOpener: AttachmentOpener = koinInject(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
   val coroutineScope = rememberCoroutineScope()
-  val downloadingIds by attachmentOpener.downloadingIds.collectAsStateWithLifecycle()
-
 
   val errorOccurredMessage = stringResource(CoreRes.string.error_occurred)
 
@@ -96,6 +91,21 @@ fun AircraftOverviewScreen(
           val message = event.message ?: errorOccurredMessage
           snackbarHostState.showSnackbar(message)
         }
+
+        is AircraftOverviewEvent.NavigateToAddInspection ->
+          navController.navigate("maintenance_inspection_create/${event.aircraftId}")
+
+        is AircraftOverviewEvent.NavigateToAddLog ->
+          navController.navigate("maintenance_log_create/${event.aircraftId}")
+
+        is AircraftOverviewEvent.NavigateToEditAircraft ->
+          navController.navigate("edit_aircraft/${event.aircraftId}")
+
+        is AircraftOverviewEvent.NavigateToEditInspection ->
+          navController.navigate("maintenance_inspection_edit/${event.aircraftId}/${event.cardId}")
+
+        is AircraftOverviewEvent.NavigateToLogDetails ->
+          navController.navigate("maintenance_logs/${event.aircraftId}")
       }
     }
   }
@@ -113,67 +123,33 @@ fun AircraftOverviewScreen(
     }
   }
 
-  val successState = uiState as? AircraftOverviewUiState.Success
-
-  AircraftOverviewContent(
-    aircraft = successState?.aircraft,
-    logStats = successState?.logStats,
-    activeInspections = successState?.activeInspections ?: emptyList(),
-    compliedInspections = successState?.compliedInspections ?: emptyList(),
-    selectedInspection = successState?.selectedInspection,
-    logsForSelectedInspection = successState?.logsForSelectedInspection ?: emptyList(),
-    deletingInspectionId = successState?.deletingInspectionId,
-    inspectionCardTitleForDelete = (successState?.activeInspections ?: emptyList())
-      .find { it.card.id == successState?.deletingInspectionId }?.card?.title
-      ?: (successState?.compliedInspections ?: emptyList())
-        .find { it.card.id == successState?.deletingInspectionId }?.card?.title
-      ?: "",
-    snackbarHostState = snackbarHostState,
-    onBackClick = { navController.popBackStack() },
-    onEditClick = { aircraftId -> navController.navigate("edit_aircraft/$aircraftId") },
-    onDeleteConfirm = { viewModel.deleteAircraft() },
-    onLogDetailsClick = { aircraftId -> navController.navigate("maintenance_logs/$aircraftId") },
-    onAddLogClick = { aircraftId -> navController.navigate("maintenance_log_create/$aircraftId") },
-    onAddInspectionClick = { aircraftId -> navController.navigate("maintenance_inspection_create/$aircraftId") },
-    onInspectionCardClick = { card -> viewModel.showInspectionDetail(card) },
-    onDismissInspectionDetail = { viewModel.hideInspectionDetail() },
-    onEditInspectionClick = { aircraftId, cardId -> navController.navigate("maintenance_inspection_edit/$aircraftId/$cardId") },
-    onCancelDeleteInspection = { viewModel.cancelDeleteInspection() },
-    onConfirmDeleteInspection = { viewModel.confirmDeleteInspection() },
-    onAttachmentTap = { attachment ->
-      coroutineScope.launch {
-        attachmentOpener.open(attachment).collect {}
+  when (val state = uiState) {
+    AircraftOverviewUiState.Loading -> {
+      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
       }
-    },
-    downloadingIds = downloadingIds,
-  )
+    }
+
+    AircraftOverviewUiState.Error -> {
+      // Handle error state
+    }
+
+    is AircraftOverviewUiState.Success -> {
+      AircraftOverviewContent(
+        state = state,
+        snackbarHostState = snackbarHostState,
+        onAction = viewModel::onAction
+      )
+    }
+  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AircraftOverviewContent(
-  aircraft: Aircraft?,
-  logStats: LogStats?,
-  activeInspections: List<InspectionCardWithStatus>,
-  compliedInspections: List<InspectionCardWithStatus>,
-  selectedInspection: InspectionCardWithStatus? = null,
-  logsForSelectedInspection: List<dev.fanfly.wingslog.aircraft.MaintenanceLog> = emptyList(),
-  deletingInspectionId: String? = null,
-  inspectionCardTitleForDelete: String = "",
+  state: AircraftOverviewUiState.Success,
   snackbarHostState: SnackbarHostState,
-  onBackClick: () -> Unit,
-  onEditClick: (String) -> Unit,
-  onDeleteConfirm: () -> Unit,
-  onLogDetailsClick: (String) -> Unit,
-  onAddLogClick: (String) -> Unit = {},
-  onAddInspectionClick: (String) -> Unit = {},
-  onInspectionCardClick: (InspectionCardWithStatus) -> Unit = {},
-  onDismissInspectionDetail: () -> Unit = {},
-  onEditInspectionClick: (String, String) -> Unit = { _, _ -> },
-  onCancelDeleteInspection: () -> Unit = {},
-  onConfirmDeleteInspection: () -> Unit = {},
-  onAttachmentTap: (Attachment) -> Unit = {},
-  downloadingIds: Set<String> = emptySet(),
+  onAction: (AircraftOverviewAction) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val scrollState = rememberScrollState()
@@ -190,7 +166,7 @@ fun AircraftOverviewContent(
       confirmButton = {
         TextButton(
           onClick = {
-            onDeleteConfirm()
+            onAction(AircraftOverviewAction.DeleteConfirm)
             showDeleteDialog = false
           },
           colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -211,22 +187,20 @@ fun AircraftOverviewContent(
     topBar = {
       TopAppBar(
         scrollBehavior = scrollBehavior, title = {
-          if (aircraft != null) {
-            Column {
-              Text(
-                text = stringResource(
-                  SharedRes.string.make_model_template, aircraft.make, aircraft.model
-                )
+          Column {
+            Text(
+              text = stringResource(
+                SharedRes.string.make_model_template, state.aircraft.make, state.aircraft.model
               )
-              Text(
-                text = aircraft.tail_number,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-              )
-            }
+            )
+            Text(
+              text = state.aircraft.tail_number,
+              style = MaterialTheme.typography.labelMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
           }
         }, navigationIcon = {
-          IconButton(onClick = onBackClick) {
+          IconButton(onClick = { onAction(AircraftOverviewAction.BackClick) }) {
             Icon(
               Icons.AutoMirrored.Filled.ArrowBack,
               contentDescription = stringResource(CoreRes.string.back)
@@ -242,93 +216,98 @@ fun AircraftOverviewContent(
     }) { paddingValues ->
 
     // Inspection detail bottom sheet
-    if (selectedInspection != null) {
+    state.selectedInspection?.let { selectedInspection ->
       InspectionDetailSheet(
         cardWithStatus = selectedInspection,
-        logs = logsForSelectedInspection,
-        onDismiss = onDismissInspectionDetail,
+        logs = state.logsForSelectedInspection,
+        onDismiss = { onAction(AircraftOverviewAction.DismissInspectionDetail) },
         onEditClick = {
-          if (aircraft != null) {
-            onEditInspectionClick(aircraft.id, selectedInspection.card.id)
-          }
+          onAction(
+            AircraftOverviewAction.EditInspectionClick(
+              state.aircraft.id,
+              selectedInspection.card.id
+            )
+          )
         },
-        onAttachmentTap = onAttachmentTap,
-        downloadingIds = downloadingIds,
+        onAttachmentTap = { onAction(AircraftOverviewAction.AttachmentTap(it)) },
+        downloadingIds = state.downloadingIds,
       )
     }
 
     // Delete inspection confirm dialog
-    if (deletingInspectionId != null) {
+    state.deletingInspectionId?.let { deletingInspectionId ->
+      val title = (state.activeInspections + state.compliedInspections)
+        .find { it.card.id == deletingInspectionId }?.card?.title ?: ""
       DeleteInspectionConfirmDialog(
-        inspectionTitle = inspectionCardTitleForDelete,
-        onConfirm = onConfirmDeleteInspection,
-        onDismiss = onCancelDeleteInspection,
+        inspectionTitle = title,
+        onConfirm = { onAction(AircraftOverviewAction.ConfirmDeleteInspection) },
+        onDismiss = { onAction(AircraftOverviewAction.CancelDeleteInspection) },
       )
     }
 
-    if (aircraft != null) {
-      Box(
-        modifier = Modifier.fillMaxSize().padding(paddingValues)
+    Box(
+      modifier = Modifier.fillMaxSize().padding(paddingValues)
+    ) {
+      Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
       ) {
-        Column(
-          modifier = Modifier.fillMaxSize().verticalScroll(scrollState),
-          verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
-        ) {
 
-          // --- Configuration Section ---
-          Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
-            ConfigurationCard(aircraft, onEditClick = onEditClick)
-          }
+        // --- Configuration Section ---
+        Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
+          ConfigurationCard(
+            state.aircraft,
+            onEditClick = { onAction(AircraftOverviewAction.EditClick(it)) })
+        }
 
-          // --- Critical Alerts Section ---
-          val overdueInspections =
-            activeInspections.filter { it.dueStatus.status == DueStatus.OVERDUE }
-          if (overdueInspections.isNotEmpty()) {
-            CriticalAlertsSection(
-              overdueInspections = overdueInspections,
-              onCardClick = onInspectionCardClick,
+        // --- Critical Alerts Section ---
+        val overdueInspections =
+          state.activeInspections.filter { it.dueStatus.status == DueStatus.OVERDUE }
+        if (overdueInspections.isNotEmpty()) {
+          CriticalAlertsSection(
+            overdueInspections = overdueInspections,
+            onCardClick = { onAction(AircraftOverviewAction.InspectionCardClick(it)) },
+            modifier = Modifier.padding(horizontal = Spacing.screenPadding)
+          )
+        }
+
+        // --- Log Stats Section ---
+        state.logStats?.let { stats ->
+          if (stats.total == 0L) {
+            dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.LogOnboardingCard(
+              onAddLogClick = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
+              modifier = Modifier.padding(horizontal = Spacing.screenPadding)
+            )
+          } else {
+            LogStatsSection(
+              stats = stats,
               modifier = Modifier.padding(horizontal = Spacing.screenPadding)
             )
           }
-
-          // --- Log Stats Section ---
-          logStats?.let { stats ->
-            if (stats.total == 0L) {
-              dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.LogOnboardingCard(
-                onAddLogClick = { onAddLogClick(aircraft.id) },
-                modifier = Modifier.padding(horizontal = Spacing.screenPadding)
-              )
-            } else {
-              LogStatsSection(
-                stats = stats,
-                modifier = Modifier.padding(horizontal = Spacing.screenPadding)
-              )
-            }
-          }
-
-          // --- Compliance & Inspections Section ---
-          ComplianceSection(
-            activeInspections = activeInspections,
-            compliedInspections = compliedInspections,
-            showComplied = showComplied,
-            onToggleComplied = { showComplied = it },
-            onAddClick = { onAddInspectionClick(aircraft.id) },
-            onCardClick = onInspectionCardClick,
-            modifier = Modifier.padding(horizontal = Spacing.screenPadding),
-          )
-
-          Spacer(Modifier.height(Spacing.massive)) // Clearance for the floating bottom bar
         }
 
-        // Floating Bottom Bar
-        LogDetailsBottomBar(
-          aircraft = aircraft,
-          logStats = logStats,
-          modifier = Modifier.align(Alignment.BottomCenter),
-          onLogDetailsClick = onLogDetailsClick,
-          onAddLogClick = onAddLogClick
+        // --- Compliance & Inspections Section ---
+        ComplianceSection(
+          activeInspections = state.activeInspections,
+          compliedInspections = state.compliedInspections,
+          showComplied = showComplied,
+          onToggleComplied = { showComplied = it },
+          onAddClick = { onAction(AircraftOverviewAction.AddInspectionClick(state.aircraft.id)) },
+          onCardClick = { onAction(AircraftOverviewAction.InspectionCardClick(it)) },
+          modifier = Modifier.padding(horizontal = Spacing.screenPadding),
         )
+
+        Spacer(Modifier.height(Spacing.massive)) // Clearance for the floating bottom bar
       }
+
+      // Floating Bottom Bar
+      LogDetailsBottomBar(
+        aircraft = state.aircraft,
+        logStats = state.logStats,
+        modifier = Modifier.align(Alignment.BottomCenter),
+        onLogDetailsClick = { onAction(AircraftOverviewAction.LogDetailsClick(it)) },
+        onAddLogClick = { onAction(AircraftOverviewAction.AddLogClick(it)) }
+      )
     }
   }
 }

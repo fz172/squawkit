@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 /**
  * Opens an attachment using platform-native capabilities.
  *
- * - [Attachment.ATTACHMENT_TYPE_LINK] — opens [Attachment.url] in the default browser.
+ * - [Attachment#ATTACHMENT_TYPE_LINK] — opens [Attachment.url] in the default browser.
  * - All file types — downloads [Attachment.download_url] to local storage, then opens with
  *   the platform's native viewer (DownloadManager on Android, URLSession on iOS).
  */
