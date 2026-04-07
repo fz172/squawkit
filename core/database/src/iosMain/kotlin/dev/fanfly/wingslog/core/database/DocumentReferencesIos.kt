@@ -7,8 +7,12 @@ import kotlin.io.encoding.Base64
 
 @OptIn(ExperimentalForeignApi::class)
 actual fun DocumentSnapshot.getBlobAsBytes(field: String): ByteArray? {
-  val value = this.get<String>(field)
-  return Base64.decode(value)
+  val value = this.get<String?>(field) ?: return null
+  return try {
+    Base64.decode(value)
+  } catch (e: Exception) {
+    null
+  }
 }
 
 actual suspend fun DocumentReference.setEncoded(data: Map<String, Any>, merge: Boolean) {

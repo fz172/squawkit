@@ -45,7 +45,7 @@ kotlin {
       api(project(":core:model"))
       api(compose.ui)
       api(compose.components.uiToolingPreview)
-      api(compose.material3)
+      api(libs.material3)
       api(compose.materialIconsExtended)
       api(compose.components.resources)
       api(libs.kotlinx.datetime)

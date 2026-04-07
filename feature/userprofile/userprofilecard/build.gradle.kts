@@ -48,7 +48,7 @@ kotlin {
 
       // Compose
       implementation(compose.ui)
-      implementation(compose.material3)
+      implementation(libs.material3)
       implementation(compose.components.resources)
     }
   }

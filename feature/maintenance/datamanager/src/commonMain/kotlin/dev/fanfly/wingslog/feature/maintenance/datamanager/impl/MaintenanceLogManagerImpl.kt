@@ -32,6 +32,7 @@ class MaintenanceLogManagerImpl(
     return logsRef.snapshots.map { snapshot ->
       val logs = mutableListOf<MaintenanceLog>()
       for (doc in snapshot.documents) {
+        if (doc.id == OVERVIEW_DOCUMENT) continue
         val blobBytes = doc.getBlobAsBytes(LOG_INFO_BLOB)
         if (blobBytes != null) {
           try {
