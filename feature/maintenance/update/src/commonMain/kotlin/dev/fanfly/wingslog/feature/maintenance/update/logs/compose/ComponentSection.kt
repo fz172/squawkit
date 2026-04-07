@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -69,6 +70,7 @@ fun ComponentSection(
         Column(
           modifier = Modifier
             .fillMaxWidth()
+            .height(64.dp)
             .border(
               width = 1.dp,
               color = MaterialTheme.colorScheme.outlineVariant,
@@ -78,12 +80,12 @@ fun ComponentSection(
               color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
               shape = RoundedCornerShape(12.dp)
             )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-          verticalArrangement = Arrangement.spacedBy(4.dp)
+            .padding(horizontal = 16.dp),
+          verticalArrangement = Arrangement.Center
         ) {
           Text(
             text = stringResource(Res.string.airframe_serial),
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
           Text(
