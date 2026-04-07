@@ -14,11 +14,11 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
 import dev.fanfly.wingslog.feature.inspection.update.ui.AddInspectionRoute
 import dev.fanfly.wingslog.feature.inspection.update.ui.EditInspectionRoute
-import dev.fanfly.wingslog.feature.maintenance.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
-import dev.fanfly.wingslog.feature.maintenance.edit.EditAircraftScreen
-import dev.fanfly.wingslog.feature.maintenance.maintenance.form.MaintenanceLogFormScreen
-import dev.fanfly.wingslog.feature.maintenance.maintenance.log.MaintenanceLogListScreen
-import dev.fanfly.wingslog.feature.maintenance.overview.AircraftOverviewScreen
+import dev.fanfly.wingslog.feature.maintenance.update.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
+import dev.fanfly.wingslog.feature.maintenance.update.edit.EditAircraftScreen
+import dev.fanfly.wingslog.feature.maintenance.update.form.MaintenanceLogFormScreen
+import dev.fanfly.wingslog.feature.maintenance.viewing.log.MaintenanceLogListScreen
+import dev.fanfly.wingslog.feature.maintenance.viewing.overview.AircraftOverviewScreen
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
 import dev.fanfly.wingslog.feature.userprofile.EditProfileScreen
 import dev.fanfly.wingslog.login.LoginScreen

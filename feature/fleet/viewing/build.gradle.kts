@@ -43,7 +43,7 @@ kotlin {
       implementation(project(":feature:inspection:model"))
       implementation(project(":feature:inspection:datamanager"))
       implementation(project(":feature:inspection:sharedassets"))
-      implementation(project(":feature:maintenance:database"))
+      implementation(project(":feature:maintenance:datamanager"))
 
       // Compose
       implementation(compose.ui)

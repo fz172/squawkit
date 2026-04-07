@@ -1,12 +1,12 @@
 plugins {
   alias(libs.plugins.android.library)
-  alias(libs.plugins.compose.multiplatform)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
+  alias(libs.plugins.compose.multiplatform)
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.inspection.update"
+  namespace = "dev.fanfly.wingslog.feature.maintenance.viewing"
   compileSdk = 36
 
   defaultConfig {
@@ -42,40 +42,48 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:ui"))
+      implementation(project(":core:model"))
+      implementation(project(":core:database"))
+      implementation(project(":core:auth"))
+
+      implementation(project(":feature:maintenance:datamanager"))
+      implementation(project(":feature:maintenance:sharedassets"))
       implementation(project(":feature:inspection:model"))
       implementation(project(":feature:inspection:datamanager"))
       implementation(project(":feature:inspection:sharedassets"))
       implementation(project(":feature:inspection:viewing"))
+      implementation(project(":feature:inspection:update"))
 
-      implementation(project(":core:ui"))
-      implementation(project(":core:database"))
-      implementation(project(":core:auth"))
-      implementation(project(":core:model"))
-      implementation(project(":feature:maintenance:datamanager"))
       implementation(project(":core:attachments:model"))
+      implementation(project(":core:attachments:sharedassets"))
       implementation(project(":core:attachments:datamanager"))
       implementation(project(":core:attachments:viewing"))
 
       implementation(libs.kotlinx.datetime)
-      implementation(libs.koin.core)
-      implementation(libs.koin.compose)
-      implementation(libs.koin.compose.viewmodel)
-      implementation(libs.kermit)
-      implementation(libs.gitlive.firebase.firestore)
-      implementation(libs.androidx.navigation.compose)
-      implementation(libs.jetbrains.lifecycle.runtime.compose)
-      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
 
-      implementation(compose.runtime)
+      // Compose
       implementation(compose.ui)
-      implementation(compose.foundation)
       implementation(compose.material3)
       implementation(compose.materialIconsExtended)
       implementation(compose.components.resources)
+
+      // Navigation
+      implementation(libs.androidx.navigation.compose)
+
+      // Lifecycle & DI
+      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+      implementation(libs.jetbrains.lifecycle.runtime.compose)
+      implementation(libs.koin.compose)
+      implementation(libs.koin.compose.viewmodel)
+
+      // Logging
+      implementation(libs.kermit)
     }
   }
 }
 
 dependencies {
   implementation(platform(libs.firebase.bom))
+  implementation(platform(libs.androidx.compose.bom))
 }

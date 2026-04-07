@@ -52,7 +52,4 @@ class FleetDashboardManagerImpl(
       emit(emptyList())
     }
   }
-
-  companion object {
-  }
 }
