@@ -11,14 +11,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -82,9 +80,6 @@ fun InspectionPickerSheet(
           text = cmpStringResource(InspectionRes.string.select_inspection_work),
           style = MaterialTheme.typography.titleLarge
         )
-        IconButton(onClick = onDismiss) {
-          Icon(Icons.Default.Close, contentDescription = null)
-        }
       }
 
       if (availableCards.isEmpty()) {
