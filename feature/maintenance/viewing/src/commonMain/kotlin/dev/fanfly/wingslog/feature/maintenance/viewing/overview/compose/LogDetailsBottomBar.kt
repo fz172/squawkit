@@ -16,7 +16,7 @@ import wingslog.feature.maintenance.viewing.generated.resources.Res as ViewingRe
 fun LogDetailsBottomBar(
   aircraft: Aircraft?,
   logStats: LogStats?,
-  modifier: Modifier = Modifier.Companion,
+  modifier: Modifier = Modifier,
   onLogDetailsClick: (String) -> Unit,
   onAddLogClick: (String) -> Unit = {},
 ) {

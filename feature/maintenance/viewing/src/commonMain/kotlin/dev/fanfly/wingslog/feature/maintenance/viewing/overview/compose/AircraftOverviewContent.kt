@@ -48,7 +48,7 @@ fun AircraftOverviewContent(
   state: AircraftOverviewUiState.Success,
   snackbarHostState: SnackbarHostState,
   onAction: (AircraftOverviewAction) -> Unit,
-  modifier: Modifier = Modifier.Companion,
+  modifier: Modifier = Modifier,
 ) {
   val scrollState = rememberScrollState()
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -154,7 +154,7 @@ fun AircraftOverviewContent(
           } else {
             LogStatsSection(
               stats = stats,
-              modifier = Modifier.Companion.padding(horizontal = Spacing.screenPadding)
+              modifier = Modifier.padding(horizontal = Spacing.screenPadding)
             )
           }
         }
