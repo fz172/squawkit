@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
@@ -23,7 +24,7 @@ class MaintenanceLogListViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val aircraftId: String = checkNotNull(savedStateHandle["aircraftId"])
+  val aircraftId: String = checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
 
   private val _uiState =
     MutableStateFlow<MaintenanceLogListUiState>(MaintenanceLogListUiState.Loading)

@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.maintenance.update.edit.EditAircraftConstants.ARGUMENT_AIRCRAFT_ID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +22,7 @@ class EditAircraftViewModel(
   val uiState = _uiState.asStateFlow()
 
   init {
-    val aircraftId: String? = savedStateHandle[ARGUMENT_AIRCRAFT_ID]
+    val aircraftId: String? = savedStateHandle[Screen.AIRCRAFT_ID]
     if (aircraftId.isNullOrEmpty()) {
       logger.i { "Initializing the view model with empty aircraft" }
       loadAircraft(Aircraft())

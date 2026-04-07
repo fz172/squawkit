@@ -65,7 +65,7 @@ fun AppEntry() {
 
         composable(
           route = Screen.EditAircraft.route,
-          arguments = listOf(navArgument("aircraft_id") {
+          arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
             type = NavType.StringType
             nullable = true
           })
@@ -75,7 +75,7 @@ fun AppEntry() {
 
         composable(
           route = Screen.MaintenanceOverview.route,
-          arguments = listOf(navArgument("aircraftId") {
+          arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
             type = NavType.StringType
           })
         ) {
@@ -84,7 +84,7 @@ fun AppEntry() {
 
         composable(
           route = Screen.AddInspection.route,
-          arguments = listOf(navArgument("aircraftId") { type = NavType.StringType })
+          arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType })
         ) {
           AddInspectionRoute(navController = navController)
         }
@@ -92,8 +92,8 @@ fun AppEntry() {
         composable(
           route = Screen.EditInspection.route,
           arguments = listOf(
-            navArgument("aircraftId") { type = NavType.StringType },
-            navArgument("cardId") { type = NavType.StringType }
+            navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+            navArgument(Screen.CARD_ID) { type = NavType.StringType }
           )
         ) {
           EditInspectionRoute(navController = navController)
@@ -102,14 +102,14 @@ fun AppEntry() {
         // Maintenance Log routes
         composable(
           route = Screen.MaintenanceLogs.route,
-          arguments = listOf(navArgument("aircraftId") { type = NavType.StringType })
+          arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType })
         ) {
           MaintenanceLogListScreen(navController = navController)
         }
 
         composable(
           route = Screen.AddMaintenanceLog.route,
-          arguments = listOf(navArgument("aircraftId") { type = NavType.StringType })
+          arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType })
         ) {
           MaintenanceLogFormScreen(navController = navController)
         }
@@ -117,8 +117,8 @@ fun AppEntry() {
         composable(
           route = Screen.EditMaintenanceLog.route,
           arguments = listOf(
-            navArgument("aircraftId") { type = NavType.StringType },
-            navArgument("logId") { type = NavType.StringType }
+            navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+            navArgument(Screen.LOG_ID) { type = NavType.StringType }
           )
         ) {
           MaintenanceLogFormScreen(navController = navController)

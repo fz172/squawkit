@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.toLocalFile
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
@@ -56,8 +57,8 @@ class MaintenanceLogFormViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val aircraftId: String = checkNotNull(savedStateHandle["aircraftId"])
-  private val logId: String? = savedStateHandle["logId"]
+  val aircraftId: String = checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
+  private val logId: String? = savedStateHandle[Screen.LOG_ID]
   val isEditMode: Boolean get() = logId != null
 
   private var saveJob: Job? = null

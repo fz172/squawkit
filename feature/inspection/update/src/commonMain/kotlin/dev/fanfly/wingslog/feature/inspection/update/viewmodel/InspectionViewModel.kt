@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.fileCount
 import dev.fanfly.wingslog.core.attachments.model.toLocalFile
 import dev.fanfly.wingslog.core.database.generateRandomId
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
@@ -45,8 +46,8 @@ class InspectionViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  private val aircraftId: String = checkNotNull(savedStateHandle["aircraftId"])
-  val cardId: String? = savedStateHandle["cardId"]
+  private val aircraftId: String = checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
+  val cardId: String? = savedStateHandle[Screen.CARD_ID]
 
   private val _uiState = MutableStateFlow<InspectionUiState>(InspectionUiState.Loading)
   val uiState: StateFlow<InspectionUiState> = _uiState.asStateFlow()
