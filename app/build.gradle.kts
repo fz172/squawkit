@@ -46,7 +46,6 @@ dependencies {
   implementation(platform(libs.androidx.compose.bom))
   implementation(platform(libs.firebase.bom))
   implementation(libs.androidx.activity.compose)
-  implementation(libs.androidx.compose.ui)
   implementation(libs.androidx.compose.ui.graphics)
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.core.ktx)
@@ -62,8 +61,8 @@ dependencies {
   implementation(project(":composeApp"))
 
   testImplementation(libs.junit)
-  testImplementation("io.mockk:mockk:1.13.10")
-  testImplementation("com.google.truth:truth:1.4.2")
+  testImplementation(libs.mockk)
+  testImplementation(libs.truth)
   testImplementation(libs.kotlinx.coroutines.test)
 
   androidTestImplementation(platform(libs.androidx.compose.bom))

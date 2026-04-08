@@ -66,7 +66,7 @@ kotlin {
       // Compose
       implementation(libs.ui)
       implementation(libs.material3)
-      implementation(compose.materialIconsExtended)
+      implementation(libs.material.icons.extended)
       implementation(libs.components.resources)
 
       // Navigation

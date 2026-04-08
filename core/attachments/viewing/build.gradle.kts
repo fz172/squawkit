@@ -39,7 +39,7 @@ kotlin {
       implementation(libs.ui)
       implementation(compose.foundation)
       implementation(libs.material3)
-      implementation(compose.materialIconsExtended)
+      implementation(libs.material.icons.extended)
       implementation(libs.components.resources)
     }
     androidMain.dependencies {

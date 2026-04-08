@@ -60,7 +60,7 @@ kotlin {
       implementation(compose.foundation)
       implementation(libs.material3)
       implementation(libs.compose.ui.tooling.preview)
-      implementation(compose.materialIconsExtended)
+      implementation(libs.material.icons.extended)
       implementation(libs.components.resources)
     }
   }

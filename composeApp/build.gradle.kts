@@ -73,7 +73,7 @@ kotlin {
       implementation(libs.material3)
       implementation(libs.components.resources)
       implementation(compose.foundation)
-      implementation(compose.materialIconsExtended)
+      implementation(libs.material.icons.extended)
 
       implementation(libs.androidx.navigation.compose)
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)

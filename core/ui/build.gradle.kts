@@ -46,7 +46,7 @@ kotlin {
       api(libs.ui)
       api(compose.components.uiToolingPreview)
       api(libs.material3)
-      api(compose.materialIconsExtended)
+      api(libs.material.icons.extended)
       api(libs.components.resources)
       api(libs.kotlinx.datetime)
       implementation(libs.coil.compose)
