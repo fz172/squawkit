@@ -10,10 +10,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.settings.data.SettingItem
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Displays a group of settings items in a card.

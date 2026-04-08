@@ -49,10 +49,12 @@ kotlin {
       implementation(project(":feature:userprofile:userprofilecard"))
       implementation(project(":feature:userprofile:database"))
 
+
       // Compose
       implementation(libs.ui)
       implementation(libs.material3)
       implementation(libs.components.resources)
+      implementation(libs.compose.ui.tooling.preview)
 
       // Navigation
       implementation(libs.androidx.navigation.compose)

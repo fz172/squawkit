@@ -50,6 +50,7 @@ kotlin {
       implementation(libs.material3)
       implementation(compose.materialIconsExtended)
       implementation(libs.components.resources)
+      implementation(libs.compose.ui.tooling.preview)
 
       // Navigation & Lifecycle
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)

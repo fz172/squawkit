@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
@@ -29,7 +30,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import wingslog.feature.inspection.sharedassets.generated.resources.affects_n_inspection_items
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
 import wingslog.feature.maintenance.viewing.generated.resources.airframe_time_abbr
