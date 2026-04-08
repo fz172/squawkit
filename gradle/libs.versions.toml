@@ -25,7 +25,7 @@ mockk = "1.14.9"
 navigationCompose = "2.9.2"
 playServicesAuth = "21.5.1"
 truth = "1.4.5"
-wire = "6.0.0"
+wire = "6.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,9 +36,13 @@ coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.r
 
 components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
 compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
+foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
+runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
+ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+
 gitlive-firebase-firestore = { group = "dev.gitlive", name = "firebase-firestore", version.ref = "gitlive" }
 gitlive-firebase-auth = { group = "dev.gitlive", name = "firebase-auth", version.ref = "gitlive" }
 gitlive-firebase-storage = { group = "dev.gitlive", name = "firebase-storage", version.ref = "gitlive" }
@@ -69,7 +73,6 @@ material3 = { module = "org.jetbrains.compose.material3:material3", version.ref 
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 truth = { module = "com.google.truth:truth", version.ref = "truth" }
-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
 wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wire" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }

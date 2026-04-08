@@ -35,9 +35,9 @@ kotlin {
       implementation(project(":core:attachments:sharedassets"))
       implementation(project(":core:attachments:datamanager"))
 
-      implementation(compose.runtime)
+      implementation(libs.runtime)
       implementation(libs.ui)
-      implementation(compose.foundation)
+      implementation(libs.foundation)
       implementation(libs.material3)
       implementation(libs.material.icons.extended)
       implementation(libs.components.resources)

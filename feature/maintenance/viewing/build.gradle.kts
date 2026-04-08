@@ -80,7 +80,7 @@ kotlin {
 
       // Logging
       implementation(libs.kermit)
-      implementation(libs.compose.ui.tooling.preview)
+      api(libs.compose.ui.tooling.preview)
     }
   }
 }

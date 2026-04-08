@@ -66,9 +66,9 @@ kotlin {
       implementation(libs.jetbrains.lifecycle.runtime.compose)
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
 
-      implementation(compose.runtime)
+      implementation(libs.runtime)
       implementation(libs.ui)
-      implementation(compose.foundation)
+      implementation(libs.foundation)
       implementation(libs.material3)
       implementation(libs.material.icons.extended)
       implementation(libs.components.resources)

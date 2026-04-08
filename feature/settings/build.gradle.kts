@@ -54,7 +54,7 @@ kotlin {
       implementation(libs.ui)
       implementation(libs.material3)
       implementation(libs.components.resources)
-      implementation(libs.compose.ui.tooling.preview)
+      api(libs.compose.ui.tooling.preview)
 
       // Navigation
       implementation(libs.androidx.navigation.compose)

@@ -44,11 +44,11 @@ kotlin {
     commonMain.dependencies {
       api(project(":core:model"))
       api(libs.ui)
-      api(compose.components.uiToolingPreview)
       api(libs.material3)
       api(libs.material.icons.extended)
       api(libs.components.resources)
       api(libs.kotlinx.datetime)
+      api(libs.compose.ui.tooling.preview)
       implementation(libs.coil.compose)
       implementation(libs.coil.network.ktor3)
       implementation(libs.ktor.client.core)

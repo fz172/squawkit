@@ -72,7 +72,7 @@ kotlin {
       implementation(libs.ui)
       implementation(libs.material3)
       implementation(libs.components.resources)
-      implementation(compose.foundation)
+      implementation(libs.foundation)
       implementation(libs.material.icons.extended)
 
       implementation(libs.androidx.navigation.compose)
