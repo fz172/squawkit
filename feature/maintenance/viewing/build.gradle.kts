@@ -64,10 +64,10 @@ kotlin {
       implementation(libs.kotlinx.datetime)
 
       // Compose
-      implementation(compose.ui)
+      implementation(libs.ui)
       implementation(libs.material3)
       implementation(compose.materialIconsExtended)
-      implementation(compose.components.resources)
+      implementation(libs.components.resources)
 
       // Navigation
       implementation(libs.androidx.navigation.compose)

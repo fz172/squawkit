@@ -12,12 +12,9 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
-import dev.gitlive.firebase.firestore.where
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 class MaintenanceLogManagerImpl(
@@ -109,18 +106,6 @@ class MaintenanceLogManagerImpl(
     Result.success(true)
   } catch (e: Exception) {
     logger.w(e) { "Error deleting log $logId" }
-    Result.failure(e)
-  }
-
-  override suspend fun getRecentLogCount(aircraftId: String, days: Int): Result<Long> = try {
-    val logsRef =
-      getLogsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
-
-    val cutoff = Clock.System.now().minus(days.days)
-    val snapshot = logsRef.where(TIMESTAMP_FIELD, greaterThan = cutoff).get()
-    Result.success(snapshot.documents.size.toLong())
-  } catch (e: Exception) {
-    logger.w(e) { "Error counting recent logs" }
     Result.failure(e)
   }
 

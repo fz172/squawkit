@@ -43,11 +43,11 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":core:model"))
-      api(compose.ui)
+      api(libs.ui)
       api(compose.components.uiToolingPreview)
       api(libs.material3)
       api(compose.materialIconsExtended)
-      api(compose.components.resources)
+      api(libs.components.resources)
       api(libs.kotlinx.datetime)
       implementation(libs.coil.compose)
       implementation(libs.coil.network.ktor3)

@@ -36,11 +36,11 @@ kotlin {
       implementation(project(":core:attachments:datamanager"))
 
       implementation(compose.runtime)
-      implementation(compose.ui)
+      implementation(libs.ui)
       implementation(compose.foundation)
       implementation(libs.material3)
       implementation(compose.materialIconsExtended)
-      implementation(compose.components.resources)
+      implementation(libs.components.resources)
     }
     androidMain.dependencies {
       implementation(libs.androidx.activity.compose)

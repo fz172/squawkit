@@ -46,10 +46,10 @@ kotlin {
       implementation(project(":feature:maintenance:datamanager"))
 
       // Compose
-      implementation(compose.ui)
+      implementation(libs.ui)
       implementation(libs.material3)
       implementation(compose.materialIconsExtended)
-      implementation(compose.components.resources)
+      implementation(libs.components.resources)
 
       // Navigation & Lifecycle
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)

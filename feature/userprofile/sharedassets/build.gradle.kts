@@ -44,7 +44,7 @@ kotlin {
     commonMain.dependencies {
       // Compose
       implementation(compose.runtime)
-      implementation(compose.components.resources)
+      implementation(libs.components.resources)
     }
   }
 }

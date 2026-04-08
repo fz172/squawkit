@@ -40,7 +40,7 @@ kotlin {
       implementation(compose.runtime)
       implementation(compose.foundation)
       implementation(libs.material3)
-      implementation(compose.components.resources)
+      implementation(libs.components.resources)
     }
   }
 }

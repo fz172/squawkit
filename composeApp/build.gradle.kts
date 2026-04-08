@@ -69,9 +69,9 @@ kotlin {
       implementation(project(":core:attachments:sharedassets"))
       implementation(project(":core:attachments:viewing"))
 
-      implementation(compose.ui)
+      implementation(libs.ui)
       implementation(libs.material3)
-      implementation(compose.components.resources)
+      implementation(libs.components.resources)
       implementation(compose.foundation)
       implementation(compose.materialIconsExtended)
 

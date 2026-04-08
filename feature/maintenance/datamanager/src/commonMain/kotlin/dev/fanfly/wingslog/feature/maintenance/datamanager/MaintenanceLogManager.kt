@@ -29,10 +29,4 @@ interface MaintenanceLogManager {
    * Deletes a maintenance log.
    */
   suspend fun deleteLog(aircraftId: String, logId: String): Result<Boolean>
-
-  /**
-   * Returns the number of maintenance logs created in the last [days].
-   * This uses Firestore Aggregation to minimize read costs.
-   */
-  suspend fun getRecentLogCount(aircraftId: String, days: Int): Result<Long>
 }

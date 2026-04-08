@@ -51,9 +51,9 @@ kotlin {
       implementation(project(":feature:userprofile:sharedassets"))
 
       // Compose
-      implementation(compose.ui)
+      implementation(libs.ui)
       implementation(libs.material3)
-      implementation(compose.components.resources)
+      implementation(libs.components.resources)
 
       // Navigation
       implementation(libs.androidx.navigation.compose)
