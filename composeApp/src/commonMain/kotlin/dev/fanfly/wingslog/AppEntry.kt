@@ -20,8 +20,14 @@ import dev.fanfly.wingslog.feature.maintenance.update.logs.MaintenanceLogFormScr
 import dev.fanfly.wingslog.feature.maintenance.viewing.log.MaintenanceLogListScreen
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.AircraftOverviewScreen
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
+import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
+import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
+import dev.fanfly.wingslog.feature.technician.manage.viewmodel.EditTechnicianViewModel
+import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
 import dev.fanfly.wingslog.feature.userprofile.EditProfileScreen
 import dev.fanfly.wingslog.login.LoginScreen
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun AppEntry() {
@@ -122,6 +128,31 @@ fun AppEntry() {
           )
         ) {
           MaintenanceLogFormScreen(navController = navController)
+        }
+
+        composable(Screen.ManageTechnicians.route) {
+          val viewModel = koinViewModel<TechnicianListViewModel>()
+          TechnicianListScreen(
+            viewModel = viewModel,
+            onNavigateBack = { navController.popBackStack() },
+            onNavigateToEdit = { id -> navController.navigate(Screen.EditTechnician.createRoute(id)) }
+          )
+        }
+
+        composable(
+          route = Screen.EditTechnician.route,
+          arguments = listOf(navArgument(Screen.TECHNICIAN_ID) { 
+            type = NavType.StringType 
+            nullable = true
+          })
+        ) { backStackEntry ->
+          val technicianId = backStackEntry.arguments?.getString(Screen.TECHNICIAN_ID)
+          val parsedId = if (technicianId == "new") null else technicianId
+          val viewModel = koinViewModel<EditTechnicianViewModel>(parameters = { parametersOf(parsedId) })
+          EditTechnicianScreen(
+            viewModel = viewModel,
+            onNavigateBack = { navController.popBackStack() }
+          )
         }
       }
     }

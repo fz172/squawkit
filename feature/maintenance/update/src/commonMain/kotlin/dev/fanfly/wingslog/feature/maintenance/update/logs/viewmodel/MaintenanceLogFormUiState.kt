@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.fileCount
 import dev.fanfly.wingslog.core.attachments.model.visible
 import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.aircraft.Technician
 import kotlinx.datetime.LocalDate
 
 data class MaintenanceLogFormUiState(
@@ -24,6 +25,9 @@ data class MaintenanceLogFormUiState(
   /** All inspection cards for this aircraft — used by InspectionPickerSheet */
   val availableInspectionCards: List<InspectionCard> = emptyList(),
   val showInspectionPicker: Boolean = false,
+  val selectedTechnician: Technician? = null,
+  val availableTechnicians: List<Technician> = emptyList(),
+  val showTechnicianPicker: Boolean = false,
   /** The maintenance date for this log entry (date only, no time). Null means "use current time". */
   val maintenanceDate: LocalDate? = null,
   /** Attachments pending in this editing session. Excludes PendingDelete items from the visible list. */

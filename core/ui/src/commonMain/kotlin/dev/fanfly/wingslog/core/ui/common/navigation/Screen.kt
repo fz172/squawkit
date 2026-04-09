@@ -7,6 +7,7 @@ sealed class Screen(val route: String) {
     const val AIRCRAFT_ID = "aircraftId"
     const val CARD_ID = "cardId"
     const val LOG_ID = "logId"
+    const val TECHNICIAN_ID = "technicianId"
   }
 
   // Navigation route templates
@@ -16,6 +17,12 @@ sealed class Screen(val route: String) {
   data object Settings : Screen("settings")
   data object EditProfile : Screen("edit_profile")
   data object AddAircraft : Screen("add_aircraft")
+
+  data object ManageTechnicians : Screen("manage_technicians")
+
+  data object EditTechnician : Screen("edit_technician/{$TECHNICIAN_ID}") {
+    fun createRoute(technicianId: String?) = "edit_technician/${technicianId ?: "new"}"
+  }
 
   data object EditAircraft : Screen("edit_aircraft/{$AIRCRAFT_ID}") {
     fun createRoute(aircraftId: String) = "edit_aircraft/$aircraftId"

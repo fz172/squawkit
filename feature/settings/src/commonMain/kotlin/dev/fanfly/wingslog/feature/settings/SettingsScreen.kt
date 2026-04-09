@@ -34,6 +34,8 @@ import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.sign_out
 import wingslog.feature.settings.generated.resources.Res as SettingsRes
 
+import androidx.compose.material.icons.filled.Engineering
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -79,6 +81,13 @@ fun SettingsScreen(
         ),
         onOpenEditProfile = { navController.navigate(Screen.EditProfile.route) }
       )
+      SettingsRow(
+        icon = Icons.Default.Engineering,
+        title = "Manage Technicians",
+        onClick = { navController.navigate(Screen.ManageTechnicians.route) },
+        settingsLevel = SettingsLevel.DEFAULT
+      )
+
       SettingsRow(
         icon = Icons.AutoMirrored.Filled.Logout,
         title = stringResource(SettingsRes.string.sign_out),

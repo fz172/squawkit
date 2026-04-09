@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.maintenance.update"
+  namespace = "dev.fanfly.wingslog.feature.technician.manage"
   compileSdk = 36
 
   defaultConfig {
@@ -44,43 +44,22 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:ui"))
       implementation(project(":core:model"))
-      implementation(project(":core:database"))
-      implementation(project(":core:auth"))
-
-      implementation(project(":feature:maintenance:datamanager"))
-      implementation(project(":feature:maintenance:sharedassets"))
-      implementation(project(":feature:fleet:datamanager"))
-      implementation(project(":feature:inspection:model"))
-      implementation(project(":feature:inspection:datamanager"))
-      implementation(project(":feature:inspection:sharedassets"))
-      implementation(project(":feature:inspection:viewing"))
-      implementation(project(":feature:inspection:update"))
       implementation(project(":feature:technician:datamanager"))
-      implementation(project(":feature:technician:manage"))
       implementation(project(":feature:technician:sharedassets"))
-      implementation(project(":feature:userprofile:database"))
-
-      implementation(project(":core:attachments:model"))
-      implementation(project(":core:attachments:sharedassets"))
-      implementation(project(":core:attachments:datamanager"))
-      implementation(project(":core:attachments:viewing"))
-
-      implementation(libs.kotlinx.datetime)
 
       // Compose
       implementation(libs.ui)
       implementation(libs.material3)
-      implementation(libs.material.icons.extended)
       implementation(libs.components.resources)
-
-      // Navigation
-      implementation(libs.androidx.navigation.compose)
+      api(libs.compose.ui.tooling.preview)
 
       // Lifecycle & DI
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
-      implementation(libs.koin.compose)
       implementation(libs.koin.compose.viewmodel)
+      
+      // Coroutines
+      implementation(libs.kotlinx.coroutines.core)
 
       // Logging
       implementation(libs.kermit)
@@ -89,6 +68,5 @@ kotlin {
 }
 
 dependencies {
-  implementation(platform(libs.firebase.bom))
   implementation(platform(libs.androidx.compose.bom))
 }

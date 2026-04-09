@@ -49,11 +49,18 @@ import wingslog.core.attachments.sharedassets.generated.resources.Res as Attachm
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
+import dev.fanfly.wingslog.aircraft.Technician
+import kotlinx.coroutines.flow.combine
+
 class MaintenanceLogFormViewModel(
   private val logManager: MaintenanceLogManager,
   private val fleetManager: FleetManager,
   private val inspectionManager: InspectionManager,
   private val attachmentManager: AttachmentManager,
+  private val technicianManager: TechnicianManager,
+  private val userProfileManager: UserProfileManager,
   private val auth: FirebaseAuth,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -72,8 +79,39 @@ class MaintenanceLogFormViewModel(
   init {
     loadAircraft()
     observeInspections()
+    observeTechnicians()
     checkAuth()
     if (isEditMode) loadLog()
+  }
+
+  private fun observeTechnicians() {
+    combine(
+      technicianManager.observeTechnicians(),
+      userProfileManager.observeLicenseInfo()
+    ) { technicians, licenseInfo ->
+      val userName = auth.currentUser?.displayName.takeIf { !it.isNullOrBlank() } ?: "Me"
+      val myTechnician = Technician(
+        id = auth.currentUser?.uid ?: "myself",
+        name = userName,
+        cert_type = licenseInfo?.license_type?.name?.takeIf { it != "NONE" } ?: "",
+        cert_number = licenseInfo?.license_number ?: "",
+        cert_expiration = licenseInfo?.expiration_date,
+      )
+
+      val available = listOf(myTechnician) + technicians.filter { it.id != myTechnician.id }
+
+      Pair(myTechnician, available)
+    }
+    .onEach { (myTechnician, available) ->
+      _uiState.update { state ->
+        val newSelected = state.selectedTechnician ?: myTechnician
+        state.copy(
+          availableTechnicians = available,
+          selectedTechnician = newSelected
+        )
+      }
+    }
+    .launchIn(viewModelScope)
   }
 
   private fun checkAuth() {
@@ -117,6 +155,7 @@ class MaintenanceLogFormViewModel(
             isLoading = false,
             workDescription = log.work_description,
             selectedInspectionIds = log.inspection_ids,
+            selectedTechnician = log.technician ?: it.selectedTechnician,
             engineTime = if (log.engine_hour > 0.0) log.engine_hour.toString() else "",
             airframeTime = if (log.airframe_time > 0.0) log.airframe_time.toString() else "",
             propTime = if (log.prop_time > 0.0) log.prop_time.toString() else "",
@@ -143,6 +182,13 @@ class MaintenanceLogFormViewModel(
     _uiState.update { it.copy(maintenanceDate = date) }
 
   fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
+
+  fun onTechnicianSelect(technician: Technician?) =
+    _uiState.update { it.copy(selectedTechnician = technician, showTechnicianPicker = false) }
+
+  fun showTechnicianPicker() = _uiState.update { it.copy(showTechnicianPicker = true) }
+  fun hideTechnicianPicker() = _uiState.update { it.copy(showTechnicianPicker = false) }
+
   fun onInspectionIdsChange(value: List<String>) =
     _uiState.update { it.copy(selectedInspectionIds = value) }
 
@@ -434,6 +480,7 @@ class MaintenanceLogFormViewModel(
         component_type = state.selectedComponentType,
         component_serial = componentSerial,
         attachments = finalAttachments,
+        technician = state.selectedTechnician,
       )
 
       val result = if (isEditMode) logManager.updateLog(aircraftId, log) else logManager.addLog(

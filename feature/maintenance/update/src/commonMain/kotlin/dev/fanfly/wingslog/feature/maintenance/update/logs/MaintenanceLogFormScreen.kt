@@ -87,6 +87,13 @@ import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 
+import androidx.compose.material.icons.filled.Person
+import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import wingslog.feature.technician.sharedassets.generated.resources.select_technician
+import wingslog.feature.technician.sharedassets.generated.resources.performed_by
+import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MaintenanceLogFormScreen(
@@ -266,6 +273,43 @@ fun MaintenanceLogFormScreen(
             maxLines = 6,
             isError = uiState.error != null
           )
+
+          // Technician (Performed By)
+          val technicianDisplayText = uiState.selectedTechnician?.name ?: stringResource(TechnicianRes.string.select_technician)
+          OutlinedTextField(
+            value = technicianDisplayText,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(TechnicianRes.string.performed_by)) },
+            leadingIcon = {
+              Icon(Icons.Default.Person, contentDescription = null)
+            },
+            modifier = Modifier
+              .fillMaxWidth()
+              .clickable { viewModel.showTechnicianPicker() },
+            singleLine = true,
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+              disabledTextColor = MaterialTheme.colorScheme.onSurface,
+              disabledBorderColor = MaterialTheme.colorScheme.outline,
+              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          )
+
+          if (uiState.showTechnicianPicker) {
+            TechnicianPickerSheet(
+              availableTechnicians = uiState.availableTechnicians,
+              selectedId = uiState.selectedTechnician?.id,
+              onSelect = { viewModel.onTechnicianSelect(it) },
+              onAddClick = {
+                viewModel.hideTechnicianPicker()
+                // Navigate to edit technician screen
+                navController.navigate(Screen.EditTechnician.createRoute(null))
+              },
+              onDismiss = { viewModel.hideTechnicianPicker() }
+            )
+          }
 
           // Inspection Work section
           InspectionWorkSection(

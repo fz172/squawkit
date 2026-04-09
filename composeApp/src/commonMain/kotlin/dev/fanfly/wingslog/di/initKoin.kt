@@ -12,6 +12,8 @@ import dev.fanfly.wingslog.feature.maintenance.datamanager.impl.maintenanceDataM
 import dev.fanfly.wingslog.feature.maintenance.viewing.di.maintenanceViewingModule
 import dev.fanfly.wingslog.feature.maintenance.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
+import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
+import dev.fanfly.wingslog.feature.technician.manage.di.technicianManageModule
 import dev.fanfly.wingslog.feature.userprofile.database.impl.userProfileDatabaseModule
 import dev.fanfly.wingslog.feature.userprofile.di.userProfileModule
 import org.koin.core.context.startKoin
@@ -26,6 +28,8 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) =
       attachmentModule,
       platformAttachmentModule,
       userProfileDatabaseModule,
+      technicianDataManagerModule,
+      technicianManageModule,
       maintenanceDataManagerModule,
       maintenanceViewingModule,
       maintenanceUpdateModule,

@@ -23,6 +23,11 @@ fun FirebaseFirestore.getUserDocumentRef(firebaseAuth: FirebaseAuth): DocumentRe
 fun FirebaseFirestore.getFleetCollectionRef(firebaseAuth: FirebaseAuth): CollectionReference? =
   getUserDocumentRef(firebaseAuth)?.collection(FLEET_COLLECTION)
 
+fun FirebaseFirestore.getTechniciansCollectionRef(firebaseAuth: FirebaseAuth): CollectionReference? =
+  getUserDocumentRef(firebaseAuth)?.collection(TECHNICIANS_COLLECTION)
+
 private const val USERS_COLLECTION = "users"
 private const val FLEET_COLLECTION = "fleet"
+private const val TECHNICIANS_COLLECTION = "technicians"
 const val AIRCRAFT_INFO_BLOB = "aircraft_info_blob"
+const val TECHNICIAN_INFO_BLOB = "technician_info_blob"

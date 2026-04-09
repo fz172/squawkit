@@ -113,14 +113,15 @@ Documents store binary blobs (e.g., field `AIRCRAFT_INFO_BLOB`). Decode: `Aircra
 | Compose Multiplatform | 1.10.3 |
 | Firebase KMP (GitLive) | 2.4.0 |
 | Koin | 4.2.0 |
-| Wire (protobuf) | 6.0.0 |
+| Wire (protobuf) | 6.2.0 |
 | Kotlinx Coroutines | 1.10.2 |
 | Kotlinx Datetime | 0.7.1 |
 | Ktor | 3.4.1 |
 | Coil | 3.4.0 |
-| MockK | 1.13.10 |
-| Google Truth | 1.4.2 |
+| MockK | 1.14.9 |
+| Google Truth | 1.4.5 |
 
 ## Design System
 
 Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, intentional typography hierarchy, consistent spacing tokens. Prioritize clarity and readability over information density. The `.impeccable.md` file in the repo root has brand/aesthetic detail.
+etail.

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 import "aircraft/attachment.proto";
+import "aircraft/technician.proto";
 
 option java_package = "dev.fanfly.wingslog.aircraft";
 option java_multiple_files = true;
@@ -34,4 +35,7 @@ message MaintenanceLog {
 
   // Inspection cards associated with this log entry
   repeated string inspection_ids = 12;
+
+  // Technician who performed the work
+  Technician technician = 13;
 }
