@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
+import dev.fanfly.wingslog.core.model.userprofile.LicenseType
+import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,8 +18,9 @@ import kotlinx.datetime.Instant
 data class EditTechnicianUiState(
   val id: String = "",
   val name: String = "",
-  val certType: String = "",
+  val certType: LicenseType = LicenseType.NONE,
   val certNumber: String = "",
+  val certExpireLimit: LicenseExpireLimit = LicenseExpireLimit.EXPIRES,
   val certExpiration: Instant? = null,
   val isLoading: Boolean = false,
   val isSaving: Boolean = false,
@@ -44,11 +47,19 @@ class EditTechnicianViewModel(
       val technician = technicianManager.loadTechnician(id).firstOrNull()
       if (technician != null) {
         _uiState.update {
+          val type = try {
+            if (technician.cert_type.isBlank() || technician.cert_type == "NONE") LicenseType.NONE else LicenseType.valueOf(technician.cert_type)
+          } catch (e: Exception) {
+            LicenseType.NONE
+          }
+          val expireLimit = if (technician.cert_expiration == null) LicenseExpireLimit.NEVER_EXPIRES else LicenseExpireLimit.EXPIRES
+
           it.copy(
             id = technician.id,
             name = technician.name,
-            certType = technician.cert_type,
+            certType = type,
             certNumber = technician.cert_number,
+            certExpireLimit = expireLimit,
             certExpiration = technician.cert_expiration?.let { ts ->
               Instant.fromEpochSeconds(ts.getEpochSecond(), ts.getNano())
             },
@@ -70,12 +81,16 @@ class EditTechnicianViewModel(
     _uiState.update { it.copy(name = name) }
   }
 
-  fun updateCertType(certType: String) {
+  fun updateCertType(certType: LicenseType) {
     _uiState.update { it.copy(certType = certType) }
   }
 
   fun updateCertNumber(certNumber: String) {
     _uiState.update { it.copy(certNumber = certNumber) }
+  }
+  
+  fun updateCertExpireLimit(expireLimit: LicenseExpireLimit) {
+    _uiState.update { it.copy(certExpireLimit = expireLimit) }
   }
 
   fun updateCertExpiration(certExpiration: Instant?) {
@@ -95,9 +110,9 @@ class EditTechnicianViewModel(
       val technician = Technician(
         id = currentState.id,
         name = currentState.name,
-        cert_type = currentState.certType,
+        cert_type = if (currentState.certType == LicenseType.NONE) "" else currentState.certType.name,
         cert_number = currentState.certNumber,
-        cert_expiration = currentState.certExpiration?.let {
+        cert_expiration = if (currentState.certExpireLimit == LicenseExpireLimit.NEVER_EXPIRES) null else currentState.certExpiration?.let {
           createWireInstant(it.epochSeconds, it.nanosecondsOfSecond)
         }
       )

@@ -49,6 +49,7 @@ kotlin {
       implementation(project(":feature:userprofile:userprofilecard"))
       implementation(project(":feature:userprofile:database"))
       implementation(project(":feature:userprofile:sharedassets"))
+      implementation(project(":feature:technician:sharedassets"))
 
       // Compose
       implementation(libs.ui)

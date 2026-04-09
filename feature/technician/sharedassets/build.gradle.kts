@@ -43,6 +43,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
+      implementation(project(":core:ui"))
+      implementation(libs.kotlinx.datetime)
       
       // Compose
       implementation(libs.ui)
