@@ -44,10 +44,8 @@ import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.inspection.update.compose.DocumentationFields
-import dev.fanfly.wingslog.feature.inspection.update.compose.IntervalFields
-import dev.fanfly.wingslog.feature.inspection.update.compose.LinkedInspectionFields
-import dev.fanfly.wingslog.feature.inspection.update.compose.OneTimeComplianceFields
+import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionDetailTab
+import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionScheduleTab
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.back
@@ -121,12 +119,12 @@ fun AddInspectionScreen(
           Tab(
             selected = pagerState.currentPage == 1,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
-            text = { Text(stringResource(InspectionRes.string.schedule)) }
+            text = { Text(stringResource(InspectionRes.string.details)) }
           )
           Tab(
             selected = pagerState.currentPage == 2,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(2) } },
-            text = { Text(stringResource(InspectionRes.string.details)) }
+            text = { Text(stringResource(InspectionRes.string.schedule)) }
           )
         }
       }
@@ -247,46 +245,31 @@ fun AddInspectionScreen(
             }
 
             1 -> {
-              // --- Page 1: Scheduling ---
-              OneTimeComplianceFields(
-                isOneTime = isOneTime,
-                onOneTimeChange = { isOneTime = it }
-              )
-
-              Spacer(modifier = Modifier.height(Spacing.large))
-
-              if (linkedToId == null) {
-                IntervalFields(
-                  intervalMonths = intervalMonths,
-                  onMonthsChange = { intervalMonths = it },
-                  intervalHours = intervalHours,
-                  onHoursChange = { intervalHours = it }
-                )
-              }
-
-              Spacer(modifier = Modifier.height(Spacing.large))
-
-              LinkedInspectionFields(
-                linkedToId = linkedToId,
-                onLinkChange = { linkedToId = it },
-                availableInspections = availableInspections
-              )
-            }
-
-            2 -> {
               // --- Page 2: Documentation & Notes ---
-              DocumentationFields(
+              InspectionDetailTab(
                 refNumber = refNumber,
                 onRefNumberChange = { refNumber = it },
                 complianceAuthority = complianceAuthority,
                 onComplianceAuthorityChange = { complianceAuthority = it },
                 complianceNotes = complianceNotes,
-                onComplianceNotesChange = { complianceNotes = it }
+                onComplianceNotesChange = { complianceNotes = it },
+                attachmentSection = attachmentSection
               )
+            }
 
-              Spacer(modifier = Modifier.height(Spacing.large))
-
-              attachmentSection()
+            2 -> {
+              // --- Page 1: Scheduling ---
+              InspectionScheduleTab(
+                isOneTime = isOneTime,
+                onOneTimeChange = { isOneTime = it },
+                intervalMonths = intervalMonths,
+                onMonthsChange = { intervalMonths = it },
+                intervalHours = intervalHours,
+                onHoursChange = { intervalHours = it },
+                linkedToId = linkedToId,
+                onLinkChange = { linkedToId = it },
+                availableInspections = availableInspections
+              )
             }
           }
         }

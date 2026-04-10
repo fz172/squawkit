@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,19 +23,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.select_date
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.update.generated.resources.force_due_engine_hours
 import wingslog.feature.inspection.update.generated.resources.force_overrides_safety
 import wingslog.feature.inspection.update.generated.resources.override_next_due_date
 import wingslog.feature.inspection.update.generated.resources.override_next_due_engine
+import kotlin.time.Instant
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun ForcedOverrideFields(
@@ -59,6 +59,7 @@ fun ForcedOverrideFields(
     Row(
       modifier = Modifier
         .fillMaxWidth()
+        .heightIn(min = Spacing.massive)
         .clickable(role = Role.Checkbox) { onForceOverrideEngineChange(!forceOverrideEngine) },
       verticalAlignment = Alignment.CenterVertically
     ) {
@@ -66,7 +67,10 @@ fun ForcedOverrideFields(
         checked = forceOverrideEngine,
         onCheckedChange = null // Click handled by Row
       )
-      Text(stringResource(InspectionRes.string.override_next_due_engine))
+      Text(
+        text = stringResource(InspectionRes.string.override_next_due_engine),
+        style = MaterialTheme.typography.bodyLarge
+      )
     }
     if (forceOverrideEngine) {
       OutlinedTextField(
@@ -83,6 +87,7 @@ fun ForcedOverrideFields(
     Row(
       modifier = Modifier
         .fillMaxWidth()
+        .heightIn(min = Spacing.massive)
         .clickable(role = Role.Checkbox) { onForceOverrideDateChange(!forceOverrideDate) },
       verticalAlignment = Alignment.CenterVertically
     ) {
@@ -90,12 +95,15 @@ fun ForcedOverrideFields(
         checked = forceOverrideDate,
         onCheckedChange = null // Click handled by Row
       )
-      Text(stringResource(InspectionRes.string.override_next_due_date))
+      Text(
+        text = stringResource(InspectionRes.string.override_next_due_date),
+        style = MaterialTheme.typography.bodyLarge
+      )
     }
     if (forceOverrideDate) {
       OutlinedCard(
         onClick = onDateClick,
-        modifier = Modifier.fillMaxWidth().padding(start = 32.dp)
+        modifier = Modifier.fillMaxWidth().padding(start = Spacing.huge)
       ) {
         Row(
           modifier = Modifier.padding(Spacing.medium),
