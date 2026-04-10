@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
@@ -31,7 +33,6 @@ import wingslog.feature.inspection.sharedassets.generated.resources.unknown_insp
 import wingslog.feature.maintenance.sharedassets.generated.resources.airframe_time_label
 import wingslog.feature.maintenance.sharedassets.generated.resources.edit_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_time_label
-import wingslog.feature.maintenance.sharedassets.generated.resources.maintenance_date
 import wingslog.feature.maintenance.sharedassets.generated.resources.prop_time_label
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res as MaintenanceRes
@@ -56,20 +57,24 @@ fun MaintenanceLogDetailSheet(
       }
     },
     headerSlot = {
+      val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
+        ?: stringResource(SharedInspectionRes.string.unknown_date)
       Text(
-        text = log.work_description,
-        style = MaterialTheme.typography.titleMedium,
+        text = dateStr,
+        style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.height(40.dp).wrapContentHeight(Alignment.CenterVertically)
       )
     }
   ) {
-    // Date
-    val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
-      ?: stringResource(SharedInspectionRes.string.unknown_date)
-    DetailRow(
-      label = stringResource(MaintenanceRes.string.maintenance_date),
-      value = dateStr,
-    )
+    // Work Description
+    if (log.work_description.isNotBlank()) {
+      Text(
+        text = log.work_description,
+        style = MaterialTheme.typography.bodyLarge,
+      )
+      Spacer(Modifier.height(Spacing.medium))
+    }
 
     // Hours — each as its own inline row
     if (log.engine_hour > 0.0) {
