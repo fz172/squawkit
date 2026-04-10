@@ -333,6 +333,14 @@ fun EditInspectionScreen(
             }
           }
 
+          val updatedForceDueEngine = if (forceOverrideEngine) forcedEngineHours.toFloatOrNull() ?: 0f else 0f
+          val updatedForceDueDate = if (forceOverrideDate) forcedDateMillis?.let { createWireInstant(it / 1000, 0) } else null
+
+          val isScheduleChanged = ruleList != card.rules || 
+                                  isOneTime != card.is_one_time || 
+                                  updatedForceDueEngine != card.force_due_engine_hour || 
+                                  updatedForceDueDate != card.force_due_date
+
           val updated = card.copy(
             title = title,
             component = component,
@@ -342,14 +350,10 @@ fun EditInspectionScreen(
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
             compliance_authority = complianceAuthority.takeIf { it.isNotBlank() } ?: "",
             compliance_details = complianceNotes.takeIf { it.isNotBlank() } ?: "",
-            force_due_engine_hour = if (forceOverrideEngine) forcedEngineHours.toFloatOrNull()
-              ?: 0f else 0f,
-            force_due_date = if (forceOverrideDate) forcedDateMillis?.let {
-              createWireInstant(
-                it / 1000, 0
-              )
-            } else null,
-            force_complied_status = forceCompliedStatus)
+            force_due_engine_hour = updatedForceDueEngine,
+            force_due_date = updatedForceDueDate,
+            force_complied_status = if (isScheduleChanged) null else forceCompliedStatus
+          )
           onSave(updated)
         },
         onSecondaryClick = onCancel,
