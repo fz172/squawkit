@@ -43,7 +43,6 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.composeapp.generated.resources.Res
-import wingslog.composeapp.generated.resources.app_name
 import wingslog.composeapp.generated.resources.continue_without_account
 import wingslog.composeapp.generated.resources.google_logo
 import wingslog.composeapp.generated.resources.ic_google_rd_na
@@ -52,6 +51,8 @@ import wingslog.composeapp.generated.resources.login_prompt
 import wingslog.composeapp.generated.resources.sign_in_anonymous_error
 import wingslog.composeapp.generated.resources.sign_in_error
 import wingslog.composeapp.generated.resources.sign_in_with_google
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.ui.generated.resources.app_name
 
 // Deep navy derived from the AviationBlue10 palette token
 private val LoginBackground = AviationBlue10          // #001849
@@ -106,7 +107,7 @@ fun LoginScreen(
       // --- App identity ---
       Icon(
         painter = painterResource(Res.drawable.ic_launcher_foreground),
-        contentDescription = stringResource(Res.string.app_name),
+        contentDescription = stringResource(CoreRes.string.app_name),
         modifier = Modifier.size(72.dp),
         tint = LoginAccent,
       )
@@ -114,7 +115,7 @@ fun LoginScreen(
       Spacer(Modifier.height(20.dp))
 
       Text(
-        text = stringResource(Res.string.app_name),
+        text = stringResource(CoreRes.string.app_name),
         color = LoginOnBackground,
         fontWeight = FontWeight.Bold,
         fontSize = 40.sp,
