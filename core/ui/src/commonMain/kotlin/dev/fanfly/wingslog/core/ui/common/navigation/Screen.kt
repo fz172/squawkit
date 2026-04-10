@@ -8,6 +8,8 @@ sealed class Screen(val route: String) {
     const val CARD_ID = "cardId"
     const val LOG_ID = "logId"
     const val TECHNICIAN_ID = "technicianId"
+
+    const val CROSS_SCREEN_SUCCESS_MESSAGE = "success_message"
   }
 
   // Navigation route templates

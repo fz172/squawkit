@@ -37,10 +37,10 @@ import dev.fanfly.wingslog.feature.inspection.viewing.InspectionDetailSheet
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res
 import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template
-import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -57,7 +57,7 @@ kotlin {
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
       implementation(libs.koin.compose.viewmodel)
-      
+
       // Coroutines
       implementation(libs.kotlinx.coroutines.core)
 

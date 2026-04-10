@@ -7,7 +7,7 @@ import org.koin.dsl.module
 
 val technicianManageModule = module {
   viewModelOf(::TechnicianListViewModel)
-  
+
   factory { (id: String?) ->
     EditTechnicianViewModel(get(), id)
   }

@@ -51,6 +51,7 @@ import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.ComponentSection
 import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.InspectionWorkSection
@@ -116,13 +117,16 @@ fun MaintenanceLogFormScreen(
       when (event) {
         MaintenanceLogFormEvent.SaveSuccess -> {
           val message = if (viewModel.isEditMode) logUpdatedMessage else logSavedMessage
-          navController.previousBackStackEntry?.savedStateHandle?.set("success_message", message)
+          navController.previousBackStackEntry?.savedStateHandle?.set(
+            CROSS_SCREEN_SUCCESS_MESSAGE,
+            message
+          )
           navController.popBackStack()
         }
 
         MaintenanceLogFormEvent.DeleteSuccess -> {
           navController.previousBackStackEntry?.savedStateHandle?.set(
-            "success_message",
+            CROSS_SCREEN_SUCCESS_MESSAGE,
             logDeletedMessage
           )
           navController.popBackStack()

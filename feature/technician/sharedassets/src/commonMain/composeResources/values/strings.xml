@@ -1,26 +1,27 @@
 <resources>
-    <string name="technician">Technician</string>
-    <string name="technicians">Technicians</string>
-    <string name="add_technician">Add Technician</string>
-    <string name="edit_technician">Edit Technician</string>
-    <string name="manage_technicians">Manage Technicians</string>
-    <string name="select_technician">Select Technician</string>
-    <string name="performed_by">Performed By</string>
-    
-    <string name="name">Name</string>
-    <string name="name_required">Name (Required)</string>
-    <string name="certificate_type">Certificate Type</string>
-    <string name="certificate_number">Certificate Number</string>
-    <string name="expiration_date">Expiration Date</string>
-    <string name="never">Never</string>
-    
-    <string name="certificate_type_none">None</string>
-    <string name="certificate_type_repairman">Repairman</string>
-    <string name="certificate_type_amt">A&amp;P Mechanic</string>
-    
-    <string name="no_technicians">No technicians added yet.</string>
-    <string name="empty_technicians_title">No Technicians</string>
-    <string name="empty_technicians_desc">You haven't added any technicians yet. Add one to keep track of who performs your maintenance.</string>
-    <string name="delete_technician">Delete Technician</string>
-    <string name="delete_technician_confirmation">Are you sure you want to delete this technician? This will prevent them from being added to future logs, but it will not remove them from past logs.</string>
+  <string name="technician">Technician</string>
+  <string name="technicians">Technicians</string>
+  <string name="add_technician">Add Technician</string>
+  <string name="edit_technician">Edit Technician</string>
+  <string name="manage_technicians">Manage Technicians</string>
+  <string name="select_technician">Select Technician</string>
+  <string name="performed_by">Performed By</string>
+
+  <string name="name">Name</string>
+  <string name="name_required">Name (Required)</string>
+  <string name="certificate_type">Certificate Type</string>
+  <string name="certificate_number">Certificate Number</string>
+  <string name="expiration_date">Expiration Date</string>
+  <string name="never">Never</string>
+
+  <string name="certificate_type_none">None</string>
+  <string name="certificate_type_repairman">Repairman</string>
+  <string name="certificate_type_amt">A&amp;P Mechanic</string>
+
+  <string name="no_certificate">No certificate provided</string>
+  <string name="no_technicians">No technicians added yet.</string>
+  <string name="empty_technicians_title">No Technicians</string>
+  <string name="empty_technicians_desc">You haven't added any technicians yet. Add one to keep track of who performs your maintenance.</string>
+  <string name="delete_technician">Delete Technician</string>
+  <string name="delete_technician_confirmation">Are you sure you want to delete this technician? This will prevent them from being added to future logs, but it will not remove them from past logs.</string>
 </resources>

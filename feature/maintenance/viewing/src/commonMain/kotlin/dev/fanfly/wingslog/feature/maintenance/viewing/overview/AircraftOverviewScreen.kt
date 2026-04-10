@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.AircraftOverviewContent
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewEvent
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
@@ -22,8 +23,8 @@ import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOve
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.error_occurred
 import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.ui.generated.resources.error_occurred
 
 
 @Composable
@@ -48,12 +49,16 @@ fun AircraftOverviewScreen(
 
         is AircraftOverviewEvent.NavigateToAddInspection ->
           navController.navigate(Screen.AddInspection.createRoute(event.aircraftId))
+
         is AircraftOverviewEvent.NavigateToAddLog ->
           navController.navigate(Screen.AddMaintenanceLog.createRoute(event.aircraftId))
+
         is AircraftOverviewEvent.NavigateToEditAircraft ->
           navController.navigate(Screen.EditAircraft.createRoute(event.aircraftId))
+
         is AircraftOverviewEvent.NavigateToEditInspection ->
           navController.navigate(Screen.EditInspection.createRoute(event.aircraftId, event.cardId))
+
         is AircraftOverviewEvent.NavigateToLogDetails ->
           navController.navigate(Screen.MaintenanceLogs.createRoute(event.aircraftId))
       }
@@ -64,12 +69,12 @@ fun AircraftOverviewScreen(
   val navBackStackEntry by navController.currentBackStackEntryAsState()
   LaunchedEffect(navBackStackEntry) {
     val handle = navBackStackEntry?.savedStateHandle ?: return@LaunchedEffect
-    val message = handle.get<String>("success_message").orEmpty()
+    val message = handle.get<String>(CROSS_SCREEN_SUCCESS_MESSAGE).orEmpty()
     if (message.isNotEmpty()) {
       coroutineScope.launch {
         snackbarHostState.showSnackbar(message)
       }
-      handle.set("success_message", "")
+      handle[CROSS_SCREEN_SUCCESS_MESSAGE] = ""
     }
   }
 

@@ -24,6 +24,7 @@ data class EditTechnicianUiState(
   val isLoading: Boolean = false,
   val isSaving: Boolean = false,
   val saveSuccess: Boolean = false,
+  val deleteSuccess: Boolean = false,
   val error: String? = null,
 )
 
@@ -97,6 +98,23 @@ class EditTechnicianViewModel(
 
   fun updateCertExpiration(certExpiration: Instant?) {
     _uiState.update { it.copy(certExpiration = certExpiration) }
+  }
+
+  fun delete() {
+    val id = _uiState.value.id
+    if (id.isBlank()) return
+    viewModelScope.launch {
+      val result = technicianManager.deleteTechnician(id)
+      if (result.isSuccess) {
+        _uiState.update { it.copy(deleteSuccess = true) }
+      } else {
+        _uiState.update {
+          it.copy(
+            error = result.exceptionOrNull()?.message ?: "Failed to delete technician"
+          )
+        }
+      }
+    }
   }
 
   fun save() {

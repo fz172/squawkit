@@ -9,22 +9,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Engine
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.component_propeller
-import wingslog.feature.maintenance.sharedassets.generated.resources.engine_with_index
-import wingslog.feature.maintenance.viewing.generated.resources.model_and_sn
 import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.ui.generated.resources.component_engine
+import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.engine_with_index
 import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.viewing.generated.resources.model_and_sn
 
 @Composable
-fun EngineDetails(index: Int, engine: Engine) {
+fun EngineDetails(index: Int, engine: Engine, showEngineIndex: Boolean = true) {
   Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
     // Engine Header
     Column {
       Text(
-        text = stringResource(SharedRes.string.engine_with_index, index + 1),
+        text = if (showEngineIndex) stringResource(
+          SharedRes.string.engine_with_index,
+          index + 1
+        ) else stringResource(CoreRes.string.component_engine),
         style = MaterialTheme.typography.bodyLarge,
-        fontWeight = FontWeight.Companion.Bold,
+        fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurface
       )
       Text(
@@ -44,7 +48,7 @@ fun EngineDetails(index: Int, engine: Engine) {
       Text(
         text = stringResource(CoreRes.string.component_propeller),
         style = MaterialTheme.typography.bodyLarge,
-        fontWeight = FontWeight.Companion.Bold,
+        fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurface
       )
       Text(

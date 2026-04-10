@@ -45,7 +45,7 @@ kotlin {
       implementation(project(":core:model"))
       implementation(project(":core:ui"))
       implementation(libs.kotlinx.datetime)
-      
+
       // Compose
       implementation(libs.ui)
       implementation(libs.material3)

@@ -6,6 +6,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.attachments.model.visible
 import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.inspection.update.viewmodel.InspectionUiState
 import dev.fanfly.wingslog.feature.inspection.update.viewmodel.InspectionViewModel
 import org.jetbrains.compose.resources.stringResource
@@ -53,7 +54,7 @@ fun EditInspectionRoute(
           notes = updatedCard.notes,
           onSuccess = {
             navController.previousBackStackEntry?.savedStateHandle?.set(
-              "success_message",
+              CROSS_SCREEN_SUCCESS_MESSAGE,
               updatedMessage
             )
             navController.popBackStack()
@@ -65,7 +66,7 @@ fun EditInspectionRoute(
           cardId = id,
           onSuccess = {
             navController.previousBackStackEntry?.savedStateHandle?.set(
-              "success_message",
+              CROSS_SCREEN_SUCCESS_MESSAGE,
               deletedMessage
             )
             navController.popBackStack()

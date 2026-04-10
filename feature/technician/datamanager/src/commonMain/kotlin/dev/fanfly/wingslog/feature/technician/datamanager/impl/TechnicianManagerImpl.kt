@@ -78,9 +78,10 @@ class TechnicianManagerImpl(
   override suspend fun updateTechnician(technician: Technician): Result<Boolean> = try {
     val collectionRef = firestore.getTechniciansCollectionRef(firebaseAuth)
       ?: return Result.failure(Exception("Technicians reference is null"))
-    
+
     val docRef = getRefOrCreateNew(collectionRef, technician)
-    val updatedTechnician = if (technician.id.isEmpty()) technician.copy(id = docRef.id) else technician
+    val updatedTechnician =
+      if (technician.id.isEmpty()) technician.copy(id = docRef.id) else technician
     val data = mapOf(TECHNICIAN_INFO_BLOB to Technician.ADAPTER.encode(updatedTechnician))
 
     docRef.setEncoded(data, merge = true)
@@ -94,7 +95,7 @@ class TechnicianManagerImpl(
   override suspend fun deleteTechnician(id: String): Result<Boolean> = try {
     val collectionRef = firestore.getTechniciansCollectionRef(firebaseAuth)
       ?: return Result.failure(Exception("Technicians reference is null"))
-      
+
     collectionRef.document(id).delete()
     logger.d { "Technician $id deleted successfully." }
     Result.success(true)

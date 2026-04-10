@@ -26,11 +26,11 @@ import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.technician.sharedassets.generated.resources.add_technician
-import wingslog.feature.technician.sharedassets.generated.resources.select_technician
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.done
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.technician.sharedassets.generated.resources.add_technician
+import wingslog.feature.technician.sharedassets.generated.resources.select_technician
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,7 +101,10 @@ fun TechnicianPickerSheet(
           .padding(vertical = Spacing.small),
       ) {
         Icon(imageVector = Icons.Default.Add, contentDescription = null)
-        Text(stringResource(TechnicianRes.string.add_technician), modifier = Modifier.padding(start = Spacing.small))
+        Text(
+          stringResource(TechnicianRes.string.add_technician),
+          modifier = Modifier.padding(start = Spacing.small)
+        )
       }
 
       Button(
