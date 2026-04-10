@@ -1,5 +1,6 @@
 <resources>
-    <string name="login_prompt">Log in or continue anonymously to manage your aircraft maintenance records</string>
+    <string name="mission_statement">Know what's due before it's overdue.</string>
+    <string name="login_prompt">Log in or continue anonymously to manage your aircraft maintenance records.</string>
     <string name="google_logo">Google Logo</string>
     <string name="sign_in_with_google">Log in with Google</string>
     <string name="continue_without_account">Continue Anonymously</string>

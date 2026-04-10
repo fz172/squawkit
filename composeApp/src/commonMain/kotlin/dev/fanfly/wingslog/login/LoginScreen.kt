@@ -48,6 +48,7 @@ import wingslog.composeapp.generated.resources.google_logo
 import wingslog.composeapp.generated.resources.ic_google_rd_na
 import wingslog.composeapp.generated.resources.ic_launcher_foreground
 import wingslog.composeapp.generated.resources.login_prompt
+import wingslog.composeapp.generated.resources.mission_statement
 import wingslog.composeapp.generated.resources.sign_in_anonymous_error
 import wingslog.composeapp.generated.resources.sign_in_error
 import wingslog.composeapp.generated.resources.sign_in_with_google
@@ -123,16 +124,25 @@ fun LoginScreen(
         lineHeight = 44.sp,
       )
 
-      Spacer(Modifier.height(8.dp))
+      Spacer(Modifier.height(6.dp))
+
+      Text(
+        text = stringResource(Res.string.mission_statement),
+        color = LoginOnBackground,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
+      )
+
+      Spacer(Modifier.height(32.dp))
 
       Text(
         text = stringResource(Res.string.login_prompt),
         color = LoginOnBackgroundMuted,
-        fontSize = 16.sp,
-        lineHeight = 22.sp,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
       )
 
-      Spacer(Modifier.height(48.dp))
+      Spacer(Modifier.height(24.dp))
 
       // --- Primary CTA: Google sign-in ---
       Button(
