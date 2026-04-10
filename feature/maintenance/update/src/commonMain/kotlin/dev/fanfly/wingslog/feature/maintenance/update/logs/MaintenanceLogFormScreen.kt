@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -49,29 +50,36 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.ComponentSection
 import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.InspectionWorkSection
 import dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel.MaintenanceLogFormViewModel
+import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
 import wingslog.core.attachments.sharedassets.generated.resources.file_added
 import wingslog.core.attachments.sharedassets.generated.resources.file_read_error
 import wingslog.core.attachments.sharedassets.generated.resources.link_added
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.save
 import wingslog.core.ui.generated.resources.update
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.edit_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.maintenance_date
 import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
+import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.update.generated.resources.airframe_time_hours
 import wingslog.feature.maintenance.update.generated.resources.delete_log
 import wingslog.feature.maintenance.update.generated.resources.engine_time_hours
@@ -81,18 +89,9 @@ import wingslog.feature.maintenance.update.generated.resources.log_updated
 import wingslog.feature.maintenance.update.generated.resources.prop_time_hours
 import wingslog.feature.maintenance.update.generated.resources.tap_to_change_date
 import wingslog.feature.maintenance.update.generated.resources.work_description_required
-import kotlin.time.Instant
-import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
-
-import androidx.compose.material.icons.filled.Person
-import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
-import wingslog.feature.technician.sharedassets.generated.resources.select_technician
-import wingslog.feature.technician.sharedassets.generated.resources.performed_by
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
+import wingslog.feature.technician.sharedassets.generated.resources.performed_by
+import wingslog.feature.technician.sharedassets.generated.resources.select_technician
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -275,7 +274,9 @@ fun MaintenanceLogFormScreen(
           )
 
           // Technician (Performed By)
-          val technicianDisplayText = uiState.selectedTechnician?.name ?: stringResource(TechnicianRes.string.select_technician)
+          val technicianDisplayText = uiState.selectedTechnician?.name ?: stringResource(
+            TechnicianRes.string.select_technician
+          )
           OutlinedTextField(
             value = technicianDisplayText,
             onValueChange = {},

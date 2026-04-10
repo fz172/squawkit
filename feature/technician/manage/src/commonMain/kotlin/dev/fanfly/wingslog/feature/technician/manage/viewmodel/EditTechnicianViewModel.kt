@@ -3,17 +3,16 @@ package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.Technician
-import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
-import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
+import dev.fanfly.wingslog.core.model.userprofile.LicenseType
+import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
 
 data class EditTechnicianUiState(
   val id: String = "",
@@ -25,12 +24,12 @@ data class EditTechnicianUiState(
   val isLoading: Boolean = false,
   val isSaving: Boolean = false,
   val saveSuccess: Boolean = false,
-  val error: String? = null
+  val error: String? = null,
 )
 
 class EditTechnicianViewModel(
   private val technicianManager: TechnicianManager,
-  private val technicianId: String? = null
+  technicianId: String? = null,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(EditTechnicianUiState(isLoading = technicianId != null))
@@ -48,11 +47,14 @@ class EditTechnicianViewModel(
       if (technician != null) {
         _uiState.update {
           val type = try {
-            if (technician.cert_type.isBlank() || technician.cert_type == "NONE") LicenseType.NONE else LicenseType.valueOf(technician.cert_type)
-          } catch (e: Exception) {
+            if (technician.cert_type.isBlank() || technician.cert_type == "NONE") LicenseType.NONE else LicenseType.valueOf(
+              technician.cert_type
+            )
+          } catch (_: Exception) {
             LicenseType.NONE
           }
-          val expireLimit = if (technician.cert_expiration == null) LicenseExpireLimit.NEVER_EXPIRES else LicenseExpireLimit.EXPIRES
+          val expireLimit =
+            if (technician.cert_expiration == null) LicenseExpireLimit.NEVER_EXPIRES else LicenseExpireLimit.EXPIRES
 
           it.copy(
             id = technician.id,
@@ -88,7 +90,7 @@ class EditTechnicianViewModel(
   fun updateCertNumber(certNumber: String) {
     _uiState.update { it.copy(certNumber = certNumber) }
   }
-  
+
   fun updateCertExpireLimit(expireLimit: LicenseExpireLimit) {
     _uiState.update { it.copy(certExpireLimit = expireLimit) }
   }

@@ -15,6 +15,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
@@ -35,10 +36,12 @@ import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.select_date
@@ -50,15 +53,12 @@ import wingslog.feature.technician.sharedassets.generated.resources.certificate_
 import wingslog.feature.technician.sharedassets.generated.resources.certificate_type_repairman
 import wingslog.feature.technician.sharedassets.generated.resources.expiration_date
 import wingslog.feature.technician.sharedassets.generated.resources.never
-import kotlin.time.Instant
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
 
 fun LicenseType.displayResId(): StringResource {
   return when (this) {
     LicenseType.NONE -> Res.string.certificate_type_none
     LicenseType.REPAIRMAN -> Res.string.certificate_type_repairman
     LicenseType.AMT -> Res.string.certificate_type_amt
-    else -> Res.string.certificate_type_none
   }
 }
 
@@ -73,7 +73,7 @@ fun CertificateInputFields(
   onExpireLimitChanged: (LicenseExpireLimit) -> Unit,
   expirationDate: Instant?,
   onExpirationDateChanged: (Instant) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
 ) {
   Column(
     modifier = modifier,
@@ -93,7 +93,7 @@ fun CertificateInputFields(
         },
         modifier = Modifier
           .fillMaxWidth()
-          .menuAnchor(),
+          .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
         shape = RoundedCornerShape(Spacing.buttonCornerRadius)
       )
       ExposedDropdownMenu(

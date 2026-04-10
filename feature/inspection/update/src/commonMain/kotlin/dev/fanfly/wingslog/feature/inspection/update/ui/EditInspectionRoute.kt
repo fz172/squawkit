@@ -10,9 +10,9 @@ import dev.fanfly.wingslog.feature.inspection.update.viewmodel.InspectionUiState
 import dev.fanfly.wingslog.feature.inspection.update.viewmodel.InspectionViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.update.generated.resources.inspection_deleted
 import wingslog.feature.inspection.update.generated.resources.inspection_updated
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @Composable
 fun EditInspectionRoute(
@@ -31,7 +31,7 @@ fun EditInspectionRoute(
   // Find the card in the list
   val card = successState?.allInspections?.find { it.id == viewModel.cardId }
 
-  if (card != null && successState != null) {
+  if (card != null) {
     EditInspectionScreen(
       card = card,
       availableInspections = successState.allInspections,

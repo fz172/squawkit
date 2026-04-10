@@ -9,25 +9,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
 import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material.icons.outlined.InsertDriveFile
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
-
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.ui.draw.alpha
 
 @Composable
 fun AttachmentRow(
@@ -85,7 +84,7 @@ private fun Attachment.typeIcon() = when (type) {
   AttachmentType.ATTACHMENT_TYPE_PDF -> Icons.Outlined.PictureAsPdf
   AttachmentType.ATTACHMENT_TYPE_LINK -> Icons.Outlined.Link
   AttachmentType.ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
-  else -> Icons.Outlined.InsertDriveFile
+  else -> Icons.AutoMirrored.Outlined.InsertDriveFile
 }
 
 private fun Attachment.subtitle(): String = when (type) {
@@ -117,6 +116,7 @@ private fun Long.formatFileSize(): String = when {
     val rounded = (mb * 10).toInt() / 10.0
     "$rounded MB"
   }
+
   this >= 1_024L -> "${this / 1024} KB"
   else -> "$this B"
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentManager
 import dev.fanfly.wingslog.core.attachments.datamanager.PickedFile
 import dev.fanfly.wingslog.core.attachments.datamanager.UploadState
@@ -18,13 +19,18 @@ import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -35,24 +41,17 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachmentRes
 import wingslog.core.attachments.sharedassets.generated.resources.file_too_large
 import wingslog.core.attachments.sharedassets.generated.resources.upload_failed
 import wingslog.core.attachments.sharedassets.generated.resources.upload_network_error
 import wingslog.core.attachments.sharedassets.generated.resources.upload_permission_error
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.delete_failed
 import wingslog.core.ui.generated.resources.save_failed
+import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.update.generated.resources.log_not_found
 import wingslog.feature.maintenance.update.generated.resources.work_description_required
-import kotlin.time.Clock
-import kotlin.time.Instant
-import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachmentRes
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
-
-import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
-import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
-import dev.fanfly.wingslog.aircraft.Technician
-import kotlinx.coroutines.flow.combine
 
 class MaintenanceLogFormViewModel(
   private val logManager: MaintenanceLogManager,
@@ -102,16 +101,16 @@ class MaintenanceLogFormViewModel(
 
       Pair(myTechnician, available)
     }
-    .onEach { (myTechnician, available) ->
-      _uiState.update { state ->
-        val newSelected = state.selectedTechnician ?: myTechnician
-        state.copy(
-          availableTechnicians = available,
-          selectedTechnician = newSelected
-        )
+      .onEach { (myTechnician, available) ->
+        _uiState.update { state ->
+          val newSelected = state.selectedTechnician ?: myTechnician
+          state.copy(
+            availableTechnicians = available,
+            selectedTechnician = newSelected
+          )
+        }
       }
-    }
-    .launchIn(viewModelScope)
+      .launchIn(viewModelScope)
   }
 
   private fun checkAuth() {
@@ -188,9 +187,6 @@ class MaintenanceLogFormViewModel(
 
   fun showTechnicianPicker() = _uiState.update { it.copy(showTechnicianPicker = true) }
   fun hideTechnicianPicker() = _uiState.update { it.copy(showTechnicianPicker = false) }
-
-  fun onInspectionIdsChange(value: List<String>) =
-    _uiState.update { it.copy(selectedInspectionIds = value) }
 
   fun showInspectionPicker() = _uiState.update { it.copy(showInspectionPicker = true) }
   fun hideInspectionPicker() = _uiState.update { it.copy(showInspectionPicker = false) }
@@ -411,7 +407,7 @@ class MaintenanceLogFormViewModel(
             _uiState.update { s ->
               s.copy(
                 isSaving = false,
-                error = uploadError!!.toUploadErrorText(),
+                error = uploadError.toUploadErrorText(),
                 pendingAttachments = s.pendingAttachments.map {
                   if (it is PendingAttachment.Uploading && it.id == pending.tempId)
                     PendingAttachment.Failed(
@@ -465,7 +461,7 @@ class MaintenanceLogFormViewModel(
       }
       val now = Clock.System.now()
       val timestampInstant =
-        state.maintenanceDate?.let { it.atStartOfDayIn(TimeZone.currentSystemDefault()) } ?: now
+        state.maintenanceDate?.atStartOfDayIn(TimeZone.currentSystemDefault()) ?: now
       val log = MaintenanceLog(
         id = resolvedLogId,
         timestamp = createWireInstant(
@@ -537,14 +533,6 @@ class MaintenanceLogFormViewModel(
         }
     }
   }
-}
-
-sealed interface MaintenanceLogFormEvent {
-  data object SaveSuccess : MaintenanceLogFormEvent
-  data object DeleteSuccess : MaintenanceLogFormEvent
-  data object FileAdded : MaintenanceLogFormEvent
-  data object LinkAdded : MaintenanceLogFormEvent
-  data object PickError : MaintenanceLogFormEvent
 }
 
 private fun Throwable.toUploadErrorText(): UiText {

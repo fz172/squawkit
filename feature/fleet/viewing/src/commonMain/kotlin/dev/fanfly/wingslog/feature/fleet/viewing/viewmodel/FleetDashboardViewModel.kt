@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +34,7 @@ class FleetDashboardViewModel(
     loadFleetData()
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   private fun loadFleetData() {
     fleetInfoJob?.cancel()
     fleetInfoJob = viewModelScope.launch {

@@ -20,13 +20,13 @@ import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -67,7 +67,6 @@ import wingslog.core.attachments.sharedassets.generated.resources.sign_in_to_add
 import wingslog.core.attachments.sharedassets.generated.resources.upload_failed
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.remove
 
 /**
@@ -213,7 +212,7 @@ private fun PendingAttachmentRow(
           text = pending.name,
           style = MaterialTheme.typography.bodyMedium,
           color = if (isUploading) MaterialTheme.colorScheme.onSurfaceVariant
-                  else MaterialTheme.colorScheme.onSurface,
+          else MaterialTheme.colorScheme.onSurface,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
         )
@@ -263,15 +262,17 @@ private fun PendingAttachmentRow(
       }
     }
     if (isUploading) {
-      val progress = (pending as PendingAttachment.Uploading).progress
+      val progress = pending.progress
       if (progress > 0f) {
         LinearProgressIndicator(
           progress = { progress },
-          modifier = Modifier.fillMaxWidth().padding(start = 28.dp, end = Spacing.medium, top = 2.dp),
+          modifier = Modifier.fillMaxWidth()
+            .padding(start = 28.dp, end = Spacing.medium, top = 2.dp),
         )
       } else {
         LinearProgressIndicator(
-          modifier = Modifier.fillMaxWidth().padding(start = 28.dp, end = Spacing.medium, top = 2.dp),
+          modifier = Modifier.fillMaxWidth()
+            .padding(start = 28.dp, end = Spacing.medium, top = 2.dp),
         )
       }
     } else {
@@ -288,6 +289,7 @@ private fun PendingAttachment.typeIcon() = when (this) {
     mimeType == "application/pdf" -> Icons.Outlined.PictureAsPdf
     else -> Icons.AutoMirrored.Outlined.InsertDriveFile
   }
+
   is PendingAttachment.Saved -> when (attachment.type) {
     AttachmentType.ATTACHMENT_TYPE_PDF -> Icons.Outlined.PictureAsPdf
     AttachmentType.ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
@@ -393,11 +395,12 @@ private fun AttachmentPickerSheet(
             if (!isValidUrl(trimmed)) {
               urlError = true
             } else {
-              val normalized = if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-                trimmed
-              } else {
-                "https://$trimmed"
-              }
+              val normalized =
+                if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+                  trimmed
+                } else {
+                  "https://$trimmed"
+                }
               val finalName = linkName.trim().ifBlank { normalized.extractDomain() }
               onAddLink(normalized, finalName)
             }
