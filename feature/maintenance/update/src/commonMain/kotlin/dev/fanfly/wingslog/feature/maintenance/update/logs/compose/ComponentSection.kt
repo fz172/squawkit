@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -20,9 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog.ComponentType
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.feature.maintenance.sharedassets.generated.resources.blade
 import wingslog.feature.maintenance.sharedassets.generated.resources.propeller_hub
@@ -32,7 +33,6 @@ import wingslog.feature.maintenance.update.generated.resources.loading_aircraft
 import wingslog.feature.maintenance.update.generated.resources.no_engines_found
 import wingslog.feature.maintenance.update.generated.resources.no_propeller_components_found
 import wingslog.feature.maintenance.update.generated.resources.propeller_component
-import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +44,7 @@ fun ComponentSection(
   onSubComponentChange: (String?) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
     // Component Type segmented button
     val componentOptions = listOf(
       ComponentType.AIRFRAME,
@@ -74,13 +74,13 @@ fun ComponentSection(
             .border(
               width = 1.dp,
               color = MaterialTheme.colorScheme.outlineVariant,
-              shape = RoundedCornerShape(12.dp)
+              shape = RoundedCornerShape(Spacing.chipCornerRadius)
             )
             .background(
               color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-              shape = RoundedCornerShape(12.dp)
+              shape = RoundedCornerShape(Spacing.chipCornerRadius)
             )
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = Spacing.large),
           verticalArrangement = Arrangement.Center
         ) {
           Text(

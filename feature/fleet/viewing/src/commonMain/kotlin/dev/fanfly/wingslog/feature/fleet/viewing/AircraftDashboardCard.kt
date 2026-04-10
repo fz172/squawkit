@@ -28,14 +28,15 @@ import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.Propeller
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.aircraft.PropellerHub
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.core.ui.theme.StatusWarningContainer
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.due_soon
 import wingslog.feature.inspection.sharedassets.generated.resources.overdue
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 
 @Composable
 fun AircraftDashboardCard(
@@ -47,7 +48,7 @@ fun AircraftDashboardCard(
   Card(
     onClick = { onClick(aircraft.id) },
     modifier = modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(24.dp),
+    shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors =
       CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -57,7 +58,7 @@ fun AircraftDashboardCard(
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(24.dp),
+        .padding(Spacing.extraLarge),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -111,7 +112,7 @@ private fun HealthStatusBadge(
   contentColor: Color,
 ) {
   Surface(
-    shape = RoundedCornerShape(4.dp),
+    shape = RoundedCornerShape(Spacing.badgeCornerRadius),
     color = containerColor,
   ) {
     Text(

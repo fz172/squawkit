@@ -30,13 +30,13 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.inspection.sharedassets.generated.resources.affects_n_inspection_items
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.airframe_time_abbr
 import wingslog.feature.maintenance.viewing.generated.resources.engine_time_abbr
 import wingslog.feature.maintenance.viewing.generated.resources.prop_time_abbr
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable
@@ -59,7 +59,7 @@ fun MaintenanceLogCard(
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(16.dp),
+        .padding(Spacing.large),
       verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
 
@@ -141,7 +141,7 @@ private fun ComponentChip(label: String) {
     modifier = Modifier
       .background(
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
-        shape = RoundedCornerShape(4.dp),
+        shape = RoundedCornerShape(Spacing.badgeCornerRadius),
       )
       .padding(horizontal = 6.dp, vertical = 2.dp),
   ) {

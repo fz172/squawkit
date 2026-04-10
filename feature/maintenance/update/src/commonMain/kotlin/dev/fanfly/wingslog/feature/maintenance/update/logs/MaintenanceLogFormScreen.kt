@@ -52,6 +52,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionPickerSheet
 import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.ComponentSection
 import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.InspectionWorkSection
@@ -199,8 +200,8 @@ fun MaintenanceLogFormScreen(
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-          verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(Spacing.screenPadding),
+          verticalArrangement = Arrangement.spacedBy(Spacing.large)
         ) {
           // Maintenance Date
           val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat()

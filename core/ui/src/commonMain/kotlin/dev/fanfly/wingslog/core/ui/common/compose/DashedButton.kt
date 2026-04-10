@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 @Composable
 fun DashedButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -43,10 +44,10 @@ fun DashedButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifi
         drawRoundRect(
           color = containerColor,
           style = stroke,
-          cornerRadius = CornerRadius(12.dp.toPx()) // Match card radius
+          cornerRadius = CornerRadius(Spacing.chipCornerRadius.toPx())
         )
       }
-      .clip(RoundedCornerShape(12.dp))
+      .clip(RoundedCornerShape(Spacing.chipCornerRadius))
       .clickable { onClick() }, contentAlignment = Alignment.Center
   ) {
     Row(verticalAlignment = Alignment.CenterVertically) {

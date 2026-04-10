@@ -11,9 +11,6 @@ import org.jetbrains.compose.resources.Font
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.jetbrains_mono_bold
 import wingslog.core.ui.generated.resources.jetbrains_mono_medium
-import wingslog.core.ui.generated.resources.space_grotesk_bold
-import wingslog.core.ui.generated.resources.space_grotesk_medium
-import wingslog.core.ui.generated.resources.space_grotesk_semibold
 
 @Composable
 expect fun rememberBrandHeadlineFamily(): FontFamily
@@ -45,14 +42,14 @@ fun rememberWingslogTypography(): Typography {
       fontWeight = FontWeight.Bold,
       fontSize = 32.sp,
       lineHeight = 40.sp,
-      letterSpacing = (-0.5).sp  // Tight tracking at large display sizes
+      letterSpacing = 0.sp
     ),
     headlineMedium = TextStyle(
       fontFamily = headlineFamily,
       fontWeight = FontWeight.Bold,
       fontSize = 28.sp,
       lineHeight = 36.sp,
-      letterSpacing = (-0.25).sp
+      letterSpacing = 0.sp
     ),
     headlineSmall = TextStyle(
       fontFamily = headlineFamily,

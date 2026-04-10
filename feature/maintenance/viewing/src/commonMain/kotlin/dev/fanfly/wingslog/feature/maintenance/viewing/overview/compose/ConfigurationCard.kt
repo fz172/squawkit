@@ -30,9 +30,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.airframe_s_n
@@ -66,8 +66,7 @@ fun ConfigurationCard(
         Column(modifier = Modifier.weight(1f)) {
           Text(
             text = stringResource(MaintenanceRes.string.airframe_s_n, aircraft.serial),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
+            style = WingslogTypography.dataLarge,
             color = MaterialTheme.colorScheme.onSurface
           )
         }

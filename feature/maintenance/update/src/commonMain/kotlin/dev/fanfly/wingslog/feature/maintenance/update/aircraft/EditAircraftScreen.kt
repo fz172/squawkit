@@ -35,23 +35,24 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.update.aircraft.compose.AirframeSection
 import dev.fanfly.wingslog.feature.maintenance.update.aircraft.compose.EngineSection
 import dev.fanfly.wingslog.feature.maintenance.update.aircraft.viewmodel.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.delete
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.delete_aircraft
 import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
+import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.update.generated.resources.add_aircraft
 import wingslog.feature.maintenance.update.generated.resources.add_engine
 import wingslog.feature.maintenance.update.generated.resources.update_aircraft
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,8 +117,8 @@ fun EditAircraftScreen(
           .fillMaxSize()
           .imePadding()
           .verticalScroll(scrollState)
-          .padding(horizontal = 16.dp, vertical = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+          .padding(horizontal = Spacing.screenPadding, vertical = Spacing.extraLarge),
+        verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
       ) {
         // AIRFRAME
         Text(

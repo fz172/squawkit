@@ -7,8 +7,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.required
@@ -26,10 +25,10 @@ fun InputField(
 ) = OutlinedTextField(
   value = value,
   onValueChange = onValueChange,
-  label = { Text(label, fontSize = 10.sp) },
-  modifier = modifier.padding(vertical = 4.dp),
+  label = { Text(label) },
+  modifier = modifier.padding(vertical = Spacing.extraSmall),
   singleLine = true,
-  shape = RoundedCornerShape(12.dp),
+  shape = RoundedCornerShape(Spacing.chipCornerRadius),
   enabled = enabled,
   trailingIcon = trailingIcon,
   isError = isError,

@@ -31,12 +31,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue30
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.login.data.LoginViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -61,6 +63,29 @@ private val LoginSurface = AviationBlue30             // #004785 — subtle card
 private val LoginOnBackground = Color(0xFFF0F4FF)     // near-white with a blue tint
 private val LoginOnBackgroundMuted = Color(0xFF8AAAD4) // muted sky — secondary text
 private val LoginAccent = AviationBlue80              // #A7C8FF — bright on dark
+private val LoginErrorText = Color(0xFFFF8A80)        // light red readable on dark navy
+
+// Typography for the branded dark login canvas.
+// These display-level sizes are intentionally larger than the in-app type scale.
+private val LoginHeroStyle = TextStyle(
+  fontWeight = FontWeight.Bold,
+  fontSize = 40.sp,
+  lineHeight = 44.sp,
+)
+private val LoginSubtitleStyle = TextStyle(
+  fontSize = 18.sp,
+  lineHeight = 24.sp,
+)
+private val LoginPromptStyle = TextStyle(
+  fontSize = 14.sp,
+  lineHeight = 20.sp,
+)
+private val LoginButtonLabelStyle = TextStyle(
+  fontWeight = FontWeight.SemiBold,
+  fontSize = 15.sp,
+)
+private val LoginSecondaryLabelStyle = TextStyle(fontSize = 15.sp)
+private val LoginErrorStyle = TextStyle(fontSize = 13.sp)
 
 @Composable
 fun LoginScreen(
@@ -95,33 +120,23 @@ fun LoginScreen(
       modifier = Modifier
         .size(380.dp)
         .align(Alignment.TopEnd)
-        .padding(top = 32.dp),
+        .padding(top = Spacing.massive),
       tint = LoginSurface,
     )
 
     Column(
       modifier = Modifier
         .fillMaxSize()
-        .padding(horizontal = 32.dp),
+        .padding(horizontal = Spacing.huge),
       verticalArrangement = Arrangement.Bottom,
     ) {
-      // --- App identity ---
-      Icon(
-        painter = painterResource(Res.drawable.ic_launcher_foreground),
-        contentDescription = stringResource(CoreRes.string.app_name),
-        modifier = Modifier.size(72.dp),
-        tint = LoginAccent,
-      )
 
-      Spacer(Modifier.height(20.dp))
+      Spacer(Modifier.height(80.dp))
 
       Text(
         text = stringResource(CoreRes.string.app_name),
         color = LoginOnBackground,
-        fontWeight = FontWeight.Bold,
-        fontSize = 40.sp,
-        letterSpacing = (-1).sp,
-        lineHeight = 44.sp,
+        style = LoginHeroStyle,
       )
 
       Spacer(Modifier.height(6.dp))
@@ -129,20 +144,18 @@ fun LoginScreen(
       Text(
         text = stringResource(Res.string.mission_statement),
         color = LoginOnBackground,
-        fontSize = 18.sp,
-        lineHeight = 24.sp,
+        style = LoginSubtitleStyle,
       )
 
-      Spacer(Modifier.height(32.dp))
+      Spacer(Modifier.height(Spacing.huge))
 
       Text(
         text = stringResource(Res.string.login_prompt),
         color = LoginOnBackgroundMuted,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
+        style = LoginPromptStyle,
       )
 
-      Spacer(Modifier.height(24.dp))
+      Spacer(Modifier.height(Spacing.extraLarge))
 
       // --- Primary CTA: Google sign-in ---
       Button(
@@ -150,7 +163,7 @@ fun LoginScreen(
           .fillMaxWidth()
           .height(52.dp),
         enabled = !isSigningIn,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.buttonColors(
           containerColor = LoginOnBackground,
           contentColor = LoginBackground,
@@ -192,14 +205,13 @@ fun LoginScreen(
             )
             Text(
               text = stringResource(Res.string.sign_in_with_google),
-              fontWeight = FontWeight.SemiBold,
-              fontSize = 15.sp,
+              style = LoginButtonLabelStyle,
             )
           }
         }
       }
 
-      Spacer(Modifier.height(12.dp))
+      Spacer(Modifier.height(Spacing.medium))
 
       // --- Secondary: anonymous / guest ---
       OutlinedButton(
@@ -207,7 +219,7 @@ fun LoginScreen(
           .fillMaxWidth()
           .height(52.dp),
         enabled = !isSigningIn,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.outlinedButtonColors(
           contentColor = LoginOnBackgroundMuted,
         ),
@@ -239,19 +251,19 @@ fun LoginScreen(
           )
           Text(
             text = stringResource(Res.string.continue_without_account),
-            fontSize = 15.sp,
+            style = LoginSecondaryLabelStyle,
           )
         }
       }
 
-      Spacer(Modifier.height(48.dp))
+      Spacer(Modifier.height(Spacing.massive))
 
       error?.let {
         Text(
           text = it,
-          color = Color(0xFFFF8A80), // light red readable on dark navy
-          fontSize = 13.sp,
-          modifier = Modifier.padding(bottom = 16.dp)
+          color = LoginErrorText,
+          style = LoginErrorStyle,
+          modifier = Modifier.padding(bottom = Spacing.large)
         )
       }
     }

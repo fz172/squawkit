@@ -12,8 +12,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.update.aircraft.viewmodel.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.maintenance.update.generated.resources.Res
@@ -27,10 +27,10 @@ fun AirframeSection(
   aircraft: Aircraft, viewModel: EditAircraftViewModel, showValidationErrors: Boolean,
 ) {
   Card(
-    modifier = Modifier.padding(vertical = 8.dp),
+    modifier = Modifier.padding(vertical = Spacing.small),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
   ) {
-    Column(modifier = Modifier.padding(12.dp)) {
+    Column(modifier = Modifier.padding(Spacing.medium)) {
 
       // --- Make Number ---
       InputField(
@@ -49,7 +49,8 @@ fun AirframeSection(
         isError = showValidationErrors && aircraft.model.isBlank()
       )
       Row(
-        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.large)
       ) {
         // --- Serial Number ---
         InputField(

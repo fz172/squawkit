@@ -11,7 +11,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.settings.data.SettingItem
 
@@ -21,7 +21,7 @@ import dev.fanfly.wingslog.feature.settings.data.SettingItem
 @Composable
 private fun SettingsGroup(items: List<SettingItem>) {
   Card(
-    shape = RoundedCornerShape(16.dp),
+    shape = RoundedCornerShape(Spacing.cardCornerRadius),
     modifier = Modifier.fillMaxWidth()
   ) {
     Column {
@@ -33,7 +33,7 @@ private fun SettingsGroup(items: List<SettingItem>) {
           settingsLevel = item.settingsLevel
         )
         if (index < items.lastIndex) {
-          HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+          HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.large))
         }
       }
     }

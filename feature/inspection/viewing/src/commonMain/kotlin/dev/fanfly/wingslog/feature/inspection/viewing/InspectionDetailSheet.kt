@@ -35,7 +35,9 @@ import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.dash
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_authority
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_ad_short
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_sb_short
@@ -44,6 +46,7 @@ import wingslog.feature.inspection.sharedassets.generated.resources.edit_inspect
 import wingslog.feature.inspection.sharedassets.generated.resources.engine_format
 import wingslog.feature.inspection.sharedassets.generated.resources.overdue
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
+import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.inspection.viewing.generated.resources.compliance_details
 import wingslog.feature.inspection.viewing.generated.resources.complied
 import wingslog.feature.inspection.viewing.generated.resources.due_date
@@ -55,9 +58,6 @@ import wingslog.feature.inspection.viewing.generated.resources.maintenance_histo
 import wingslog.feature.inspection.viewing.generated.resources.no_maintenance_logs_for_inspection
 import wingslog.feature.inspection.viewing.generated.resources.on_condition
 import wingslog.feature.inspection.viewing.generated.resources.overdue_was
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +103,7 @@ fun InspectionDetailSheet(
               } else {
                 MaterialTheme.colorScheme.primaryContainer
               },
-              RoundedCornerShape(4.dp)
+              RoundedCornerShape(Spacing.badgeCornerRadius)
             )
             .padding(horizontal = 6.dp, vertical = 2.dp)
         )
@@ -252,7 +252,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
   }
 
   Column(
-    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+    modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.extraSmall),
     verticalArrangement = Arrangement.spacedBy(2.dp),
   ) {
     Row(

@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +42,7 @@ fun SubComponentDropdown(
       readOnly = true,
       label = { Text(label) },
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-      shape = RoundedCornerShape(12.dp),
+      shape = RoundedCornerShape(Spacing.chipCornerRadius),
       modifier = Modifier
         .fillMaxWidth()
         .height(64.dp)

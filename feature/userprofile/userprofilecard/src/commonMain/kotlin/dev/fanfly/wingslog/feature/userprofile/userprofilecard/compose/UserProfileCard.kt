@@ -8,13 +8,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
@@ -24,13 +23,13 @@ import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.edit_profile
+import wingslog.feature.userprofile.sharedassets.generated.resources.Res as SharedAssetsRes
 import wingslog.feature.userprofile.sharedassets.generated.resources.anonymous_user
 import wingslog.feature.userprofile.sharedassets.generated.resources.ic_anonymous_user
-import wingslog.feature.userprofile.userprofilecard.generated.resources.profile_picture
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.userprofile.sharedassets.generated.resources.Res as SharedAssetsRes
 import wingslog.feature.userprofile.userprofilecard.generated.resources.Res as CardRes
+import wingslog.feature.userprofile.userprofilecard.generated.resources.profile_picture
 
 data class UserProfileCardData(
   val photoUri: String? = null,
@@ -44,13 +43,13 @@ fun UserProfileCard(
   onOpenEditProfile: (() -> Unit)? = null,
 ) {
   Card(
-    shape = RoundedCornerShape(16.dp),
+    shape = RoundedCornerShape(Spacing.cardCornerRadius),
     modifier = Modifier.fillMaxWidth(),
   ) {
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(24.dp),
+        .padding(Spacing.extraLarge),
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
       // --- Profile Image ---
@@ -67,7 +66,7 @@ fun UserProfileCard(
         text = if (data.displayName?.isEmpty()
             ?: true
         ) stringResource(SharedAssetsRes.string.anonymous_user) else data.displayName,
-        fontSize = 22.sp,
+        style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
       )
       if (data.licenceInfo != null) {
@@ -75,20 +74,20 @@ fun UserProfileCard(
           Spacer(modifier = Modifier.height(Spacing.extraSmall))
           Text(
             text = stringResource(data.licenceInfo.license_type.displayResId()),
-            fontSize = 16.sp,
+            style = MaterialTheme.typography.bodyLarge,
           )
-          if (!data.licenceInfo.license_number.isNullOrEmpty()) {
+          if (data.licenceInfo.license_number.isNotEmpty()) {
             Spacer(modifier = Modifier.height(Spacing.extraSmall))
             Text(
               text = data.licenceInfo.license_number,
-              fontSize = 14.sp,
+              style = MaterialTheme.typography.bodyMedium,
             )
           }
           if (data.licenceInfo.expireLimit != LicenseExpireLimit.NEVER_EXPIRES) {
             Spacer(modifier = Modifier.height(Spacing.extraSmall))
             Text(
               text = data.licenceInfo.expiration_date?.toLocalDate()?.toDisplayFormat() ?: "",
-              fontSize = 14.sp,
+              style = MaterialTheme.typography.bodyMedium,
             )
           }
         }
@@ -99,7 +98,7 @@ fun UserProfileCard(
         Button(
           onClick = onOpenEditProfile,
           modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(12.dp),
+          shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         ) {
           Text(
             text = stringResource(CoreRes.string.edit_profile),

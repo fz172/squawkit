@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 
 @Composable
 fun InspectionCard(
@@ -99,6 +100,6 @@ fun PreviewInspectionCard() = InspectionCard(
   title = "100 Hr",
   status = "Overdue (was Dec 12, 2024)",
   icon = Icons.Default.Schedule,
-  statusColor = Color(0xFF8B5E00),
+  statusColor = StatusWarning,
   modifier = Modifier.fillMaxWidth()
 )

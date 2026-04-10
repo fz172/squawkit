@@ -26,8 +26,10 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.update.aircraft.viewmodel.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.blade_serial_numbers
 import wingslog.feature.maintenance.sharedassets.generated.resources.blade_with_index
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_with_index
@@ -39,7 +41,6 @@ import wingslog.feature.maintenance.update.generated.resources.model
 import wingslog.feature.maintenance.update.generated.resources.remove_blade
 import wingslog.feature.maintenance.update.generated.resources.remove_engine
 import wingslog.feature.maintenance.update.generated.resources.serial
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 
 @Composable
 fun EngineSection(
@@ -49,11 +50,11 @@ fun EngineSection(
   showValidationErrors: Boolean,
 ) {
   Card(
-    modifier = Modifier.padding(vertical = 8.dp),
+    modifier = Modifier.padding(vertical = Spacing.small),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
   ) {
 
-    Column(modifier = Modifier.padding(12.dp)) {
+    Column(modifier = Modifier.padding(Spacing.medium)) {
       Box(modifier = Modifier.fillMaxWidth()) {
         Text(
           stringResource(SharedRes.string.engine_with_index, engineIndex + 1),
@@ -82,7 +83,7 @@ fun EngineSection(
         viewModel.onEngineMakeChanged(engineIndex, it)
       }
 
-      Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.large)) {
         InputField(
           label = stringResource(Res.string.model),
           value = engine.model,
@@ -116,7 +117,7 @@ fun EngineSection(
       ) {
         viewModel.onPropellerHubMakeChanged(engineIndex, it)
       }
-      Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.large)) {
         InputField(
           label = stringResource(Res.string.model),
           value = hub.model,
@@ -144,7 +145,7 @@ fun EngineSection(
       val blades = engine.propeller?.blades ?: emptyList()
       // Chunked(2) allows us to create rows of 2 for that 50/50 look
       blades.withIndex().chunked(2).forEach { pair ->
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
           pair.forEach { (bladeIndex, blade) ->
             InputField(
               label = stringResource(
@@ -175,12 +176,12 @@ fun EngineSection(
           if (pair.size == 1) Spacer(Modifier.weight(1f))
         }
       }
-      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
         DashedButton(
           label = stringResource(Res.string.add_blade),
           modifier = Modifier
             .weight(1f)
-            .padding(vertical = 8.dp),
+            .padding(vertical = Spacing.small),
 
           onClick = { viewModel.onAddBlade(engineIndex) })
         Spacer(Modifier.weight(1f))
