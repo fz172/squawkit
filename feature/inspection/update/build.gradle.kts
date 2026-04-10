@@ -68,6 +68,7 @@ kotlin {
 
       implementation(libs.runtime)
       implementation(libs.ui)
+      implementation(libs.kotlinx.datetime)
       implementation(libs.foundation)
       implementation(libs.material3)
       implementation(libs.material.icons.extended)

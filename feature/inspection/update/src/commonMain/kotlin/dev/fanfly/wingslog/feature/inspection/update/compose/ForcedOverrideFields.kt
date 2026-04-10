@@ -30,6 +30,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.select_date
 import wingslog.feature.inspection.update.generated.resources.force_due_engine_hours
 import wingslog.feature.inspection.update.generated.resources.force_overrides_safety
+import wingslog.feature.inspection.update.generated.resources.mark_complied
 import wingslog.feature.inspection.update.generated.resources.override_next_due_date
 import wingslog.feature.inspection.update.generated.resources.override_next_due_engine
 import kotlin.time.Instant
@@ -46,6 +47,8 @@ fun ForcedOverrideFields(
   onForceOverrideDateChange: (Boolean) -> Unit,
   forcedDateMillis: Long?,
   onDateClick: () -> Unit,
+  isForceComplied: Boolean,
+  onToggleCompliedClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier) {
@@ -60,16 +63,22 @@ fun ForcedOverrideFields(
       modifier = Modifier
         .fillMaxWidth()
         .heightIn(min = Spacing.massive)
-        .clickable(role = Role.Checkbox) { onForceOverrideEngineChange(!forceOverrideEngine) },
+        .clickable(
+          enabled = !isForceComplied,
+          role = Role.Checkbox
+        ) { onForceOverrideEngineChange(!forceOverrideEngine) },
       verticalAlignment = Alignment.CenterVertically
     ) {
       Checkbox(
         checked = forceOverrideEngine,
-        onCheckedChange = null // Click handled by Row
+        onCheckedChange = null, // Click handled by Row
+        enabled = !isForceComplied
       )
+      Spacer(modifier = Modifier.width(Spacing.medium))
       Text(
         text = stringResource(InspectionRes.string.override_next_due_engine),
-        style = MaterialTheme.typography.bodyLarge
+        style = MaterialTheme.typography.bodyLarge,
+        color = if (isForceComplied) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onSurface
       )
     }
     if (forceOverrideEngine) {
@@ -88,22 +97,29 @@ fun ForcedOverrideFields(
       modifier = Modifier
         .fillMaxWidth()
         .heightIn(min = Spacing.massive)
-        .clickable(role = Role.Checkbox) { onForceOverrideDateChange(!forceOverrideDate) },
+        .clickable(
+          enabled = !isForceComplied,
+          role = Role.Checkbox
+        ) { onForceOverrideDateChange(!forceOverrideDate) },
       verticalAlignment = Alignment.CenterVertically
     ) {
       Checkbox(
         checked = forceOverrideDate,
-        onCheckedChange = null // Click handled by Row
+        onCheckedChange = null, // Click handled by Row
+        enabled = !isForceComplied
       )
+      Spacer(modifier = Modifier.width(Spacing.medium))
       Text(
         text = stringResource(InspectionRes.string.override_next_due_date),
-        style = MaterialTheme.typography.bodyLarge
+        style = MaterialTheme.typography.bodyLarge,
+        color = if (isForceComplied) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onSurface
       )
     }
     if (forceOverrideDate) {
       OutlinedCard(
         onClick = onDateClick,
-        modifier = Modifier.fillMaxWidth().padding(start = Spacing.huge)
+        modifier = Modifier.fillMaxWidth().padding(start = Spacing.huge),
+        enabled = !isForceComplied
       ) {
         Row(
           modifier = Modifier.padding(Spacing.medium),
@@ -118,6 +134,24 @@ fun ForcedOverrideFields(
           Text(dateText)
         }
       }
+    }
+
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .heightIn(min = Spacing.massive)
+        .clickable(role = Role.Checkbox) { onToggleCompliedClick() },
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      Checkbox(
+        checked = isForceComplied,
+        onCheckedChange = null // Click handled by Row
+      )
+      Spacer(modifier = Modifier.width(Spacing.medium))
+      Text(
+        text = stringResource(InspectionRes.string.mark_complied),
+        style = MaterialTheme.typography.bodyLarge
+      )
     }
   }
 }

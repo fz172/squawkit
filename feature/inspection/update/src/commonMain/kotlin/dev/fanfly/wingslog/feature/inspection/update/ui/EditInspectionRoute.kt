@@ -36,6 +36,7 @@ fun EditInspectionRoute(
     EditInspectionScreen(
       card = card,
       availableInspections = successState.allInspections,
+      currentEngineHours = successState.currentEngineHours,
       isUploading = isUploading,
       onCancel = { navController.popBackStack() },
       onSave = { updatedCard ->
@@ -51,6 +52,7 @@ fun EditInspectionRoute(
           isOneTime = updatedCard.is_one_time,
           forceDueDate = updatedCard.force_due_date,
           forceDueEngine = updatedCard.force_due_engine_hour,
+          forceCompliedStatus = updatedCard.force_complied_status,
           notes = updatedCard.notes,
           onSuccess = {
             navController.previousBackStackEntry?.savedStateHandle?.set(

@@ -7,6 +7,7 @@ import com.squareup.wire.Instant
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.ComplianceType
+import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
@@ -19,6 +20,7 @@ import dev.fanfly.wingslog.core.attachments.model.toLocalFile
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
+import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -26,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -36,6 +39,7 @@ sealed interface InspectionUiState {
   data class Success(
     val aircraftId: String,
     val allInspections: List<InspectionCard> = emptyList(),
+    val currentEngineHours: Float,
   ) : InspectionUiState
 }
 
@@ -43,6 +47,7 @@ class InspectionViewModel(
   private val inspectionManager: InspectionManager,
   private val attachmentManager: AttachmentManager,
   private val auth: FirebaseAuth,
+  private val maintenanceLogManager: MaintenanceLogManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -73,8 +78,14 @@ class InspectionViewModel(
 
   private fun loadData() {
     viewModelScope.launch {
-      inspectionManager.observeInspections(aircraftId).collect { cards ->
-        _uiState.update { InspectionUiState.Success(aircraftId, cards) }
+      combine(
+        inspectionManager.observeInspections(aircraftId),
+        maintenanceLogManager.observeMaintenanceOverview(aircraftId)
+      ) { cards, overview ->
+        cards to overview
+      }.collect { (cards, overview) ->
+        val engineHours = overview?.current_engine_time?.toFloat() ?: 0f
+        _uiState.update { InspectionUiState.Success(aircraftId, cards, engineHours) }
         // Pre-load attachments when editing
         if (cardId != null && _pendingAttachments.value.isEmpty()) {
           cards.firstOrNull { it.id == cardId }?.let { card ->
@@ -258,10 +269,21 @@ class InspectionViewModel(
   }
 
   fun saveEditedInspection(
-    cardId: String, title: String, type: ComplianceType, component: InspectionComponentType,
-    rules: List<InspectionRule>, referenceNumber: String, complianceAuthority: String,
-    complianceDetails: String, isOneTime: Boolean, forceDueDate: Instant?,
-    forceDueEngine: Float, notes: String, onSuccess: () -> Unit, onError: () -> Unit = {},
+    cardId: String,
+    title: String,
+    type: ComplianceType,
+    component: InspectionComponentType,
+    rules: List<InspectionRule>,
+    referenceNumber: String,
+    complianceAuthority: String,
+    complianceDetails: String,
+    isOneTime: Boolean,
+    forceDueDate: Instant?,
+    forceDueEngine: Float,
+    forceCompliedStatus: ForceCompliedStatus?,
+    notes: String,
+    onSuccess: () -> Unit,
+    onError: () -> Unit = {},
   ) {
     saveJob = viewModelScope.launch {
       val attachments = resolveAttachments(cardId) ?: run { onError(); return@launch }
@@ -270,6 +292,7 @@ class InspectionViewModel(
         reference_number = referenceNumber, compliance_authority = complianceAuthority,
         compliance_details = complianceDetails, is_one_time = isOneTime,
         force_due_date = forceDueDate, force_due_engine_hour = forceDueEngine,
+        force_complied_status = forceCompliedStatus,
         notes = notes, attachments = attachments,
       )
       inspectionManager.updateInspection(aircraftId, updatedCard).onSuccess { onSuccess() }

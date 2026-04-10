@@ -53,6 +53,12 @@ message InspectionRule {
   }
 }
 
+// Status to track when an inspection was forcefully marked as complied with
+message ForceCompliedStatus {
+  google.protobuf.Timestamp complied_date = 1;
+  float complied_engine_hours = 2;
+}
+
 // A configured inspection card for an aircraft
 message InspectionCard {
   string id = 1;
@@ -74,4 +80,6 @@ message InspectionCard {
   string compliance_details = 11;
   bool is_one_time = 12; // If true, moves to history after first log
   repeated Attachment attachments = 13;
+
+  ForceCompliedStatus force_complied_status = 14;
 }

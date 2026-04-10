@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
+import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -271,7 +272,7 @@ class InspectionManagerImpl(
   }
 
   private suspend fun saveCard(
-    docRef: dev.gitlive.firebase.firestore.DocumentReference,
+    docRef: DocumentReference,
     card: InspectionCard,
   ) {
     val data = mutableMapOf(

@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.EngineHourRule
+import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
@@ -71,6 +72,7 @@ import wingslog.feature.inspection.update.generated.resources.identity
 import wingslog.feature.inspection.update.generated.resources.inspection_title
 import wingslog.feature.inspection.update.generated.resources.overrides
 import wingslog.feature.inspection.update.generated.resources.schedule
+import kotlin.time.Clock
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
@@ -80,6 +82,7 @@ import wingslog.feature.inspection.update.generated.resources.Res as InspectionR
 fun EditInspectionScreen(
   card: InspectionCard,
   availableInspections: List<InspectionCard>,
+  currentEngineHours: Float,
   onSave: (InspectionCard) -> Unit,
   onCancel: () -> Unit,
   onDeleteRequest: (String) -> Unit,
@@ -103,6 +106,7 @@ fun EditInspectionScreen(
   var complianceAuthority by remember { mutableStateOf(card.compliance_authority) }
   var complianceNotes by remember { mutableStateOf(card.compliance_details) }
   var linkedToId by remember { mutableStateOf(initialLinkedId) }
+  var forceCompliedStatus by remember { mutableStateOf(card.force_complied_status) }
 
   // Force Override States
   var forceOverrideEngine by remember { mutableStateOf(card.force_due_engine_hour > 0f) }
@@ -299,7 +303,16 @@ fun EditInspectionScreen(
                 forceOverrideDate = forceOverrideDate,
                 onForceOverrideDateChange = { forceOverrideDate = it },
                 forcedDateMillis = forcedDateMillis,
-                onDateClick = { showDatePicker = true }
+                onDateClick = { showDatePicker = true },
+                isForceComplied = forceCompliedStatus != null,
+                onToggleCompliedClick = {
+                  forceCompliedStatus = if (forceCompliedStatus != null) null else {
+                    ForceCompliedStatus(
+                      complied_date = createWireInstant(Clock.System.now().epochSeconds),
+                      complied_engine_hours = currentEngineHours
+                    )
+                  }
+                }
               )
             }
           }
@@ -335,7 +348,8 @@ fun EditInspectionScreen(
               createWireInstant(
                 it / 1000, 0
               )
-            } else null)
+            } else null,
+            force_complied_status = forceCompliedStatus)
           onSave(updated)
         },
         onSecondaryClick = onCancel,

@@ -27,6 +27,7 @@
   <string name="link_to_inspection">Link to inspection</string>
   <string name="remove_link">Remove link</string>
   <string name="force_overrides_safety">Force Override</string>
+  <string name="mark_complied">Mark as Complied</string>
   <string name="interval_months_placeholder">e.g. 12</string>
   <string name="interval_hours_placeholder">e.g. 100</string>
   <string name="inspection_due_warning">Note: This inspection will be due on whichever comes first.</string>
