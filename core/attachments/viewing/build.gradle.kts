@@ -29,18 +29,11 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":core:model"))
       implementation(project(":core:ui"))
       implementation(project(":core:attachments:model"))
       implementation(project(":core:attachments:sharedassets"))
       implementation(project(":core:attachments:datamanager"))
 
-      implementation(libs.runtime)
-      implementation(libs.ui)
-      implementation(libs.foundation)
-      implementation(libs.material3)
-      implementation(libs.material.icons.extended)
-      implementation(libs.components.resources)
     }
     androidMain.dependencies {
       implementation(libs.androidx.activity.compose)

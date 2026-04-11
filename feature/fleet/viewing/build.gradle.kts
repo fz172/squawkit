@@ -35,7 +35,6 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":core:model"))
       implementation(project(":core:ui"))
       implementation(project(":feature:fleet:model"))
       implementation(project(":feature:fleet:datamanager"))
@@ -46,11 +45,6 @@ kotlin {
       implementation(project(":feature:maintenance:datamanager"))
 
       // Compose
-      implementation(libs.ui)
-      implementation(libs.material3)
-      implementation(libs.material.icons.extended)
-      implementation(libs.components.resources)
-      api(libs.compose.ui.tooling.preview)
 
       // Navigation & Lifecycle
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)

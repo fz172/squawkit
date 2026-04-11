@@ -37,30 +37,12 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":core:model"))
       implementation(project(":core:ui"))
       implementation(project(":core:attachments:viewing"))
       implementation(project(":feature:inspection:model"))
       implementation(project(":feature:inspection:sharedassets"))
       implementation(libs.kotlinx.datetime)
-
-
-      implementation(libs.kotlinx.datetime)
-      implementation(libs.koin.core)
-      implementation(libs.koin.compose)
-      implementation(libs.koin.compose.viewmodel)
       implementation(libs.kermit)
-      implementation(libs.gitlive.firebase.firestore)
-      implementation(libs.androidx.navigation.compose)
-      implementation(libs.jetbrains.lifecycle.runtime.compose)
-      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
-
-      implementation(libs.runtime)
-      implementation(libs.ui)
-      implementation(libs.foundation)
-      implementation(libs.material3)
-      api(libs.compose.ui.tooling.preview)
-      implementation(libs.material.icons.extended)
       implementation(libs.components.resources)
     }
   }

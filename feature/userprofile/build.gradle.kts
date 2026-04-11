@@ -43,8 +43,6 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
-      implementation(project(":core:model"))
-      implementation(project(":core:database"))
       implementation(project(":core:auth"))
       implementation(project(":feature:userprofile:userprofilecard"))
       implementation(project(":feature:userprofile:database"))
@@ -52,17 +50,12 @@ kotlin {
       implementation(project(":feature:technician:sharedassets"))
 
       // Compose
-      implementation(libs.ui)
-      implementation(libs.material3)
-      implementation(libs.components.resources)
 
       // Navigation
       implementation(libs.androidx.navigation.compose)
 
       // Lifecycle & DI
-      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
-      implementation(libs.koin.compose)
       implementation(libs.koin.compose.viewmodel)
 
       // Logging

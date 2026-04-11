@@ -24,11 +24,8 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:database"))
-      implementation(libs.gitlive.firebase.auth)
       implementation(libs.gitlive.firebase.storage)
-      implementation(libs.koin.core)
       implementation(libs.kermit)
-      implementation(libs.kotlinx.coroutines.core)
     }
     androidMain.dependencies {
       implementation(libs.koin.android)

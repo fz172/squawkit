@@ -43,12 +43,9 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
-      implementation(project(":core:model"))
       implementation(project(":feature:userprofile:sharedassets"))
 
       // Compose
-      implementation(libs.ui)
-      implementation(libs.material3)
       implementation(libs.components.resources)
     }
   }

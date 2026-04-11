@@ -43,15 +43,10 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
-      implementation(project(":core:model"))
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:technician:sharedassets"))
 
       // Compose
-      implementation(libs.ui)
-      implementation(libs.material3)
-      implementation(libs.components.resources)
-      api(libs.compose.ui.tooling.preview)
 
       // Lifecycle & DI
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
@@ -59,7 +54,6 @@ kotlin {
       implementation(libs.koin.compose.viewmodel)
 
       // Coroutines
-      implementation(libs.kotlinx.coroutines.core)
 
       // Logging
       implementation(libs.kermit)

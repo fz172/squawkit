@@ -30,7 +30,6 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
-      implementation(libs.kotlinx.coroutines.core)
     }
   }
 }

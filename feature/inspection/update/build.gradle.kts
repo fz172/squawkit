@@ -49,29 +49,17 @@ kotlin {
 
       implementation(project(":core:ui"))
       implementation(project(":core:database"))
-      implementation(project(":core:auth"))
-      implementation(project(":core:model"))
       implementation(project(":feature:maintenance:datamanager"))
       implementation(project(":core:attachments:model"))
       implementation(project(":core:attachments:datamanager"))
       implementation(project(":core:attachments:viewing"))
 
-      implementation(libs.kotlinx.datetime)
-      implementation(libs.koin.core)
-      implementation(libs.koin.compose)
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.kermit)
-      implementation(libs.gitlive.firebase.firestore)
       implementation(libs.androidx.navigation.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
-      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
 
-      implementation(libs.runtime)
-      implementation(libs.ui)
       implementation(libs.kotlinx.datetime)
-      implementation(libs.foundation)
-      implementation(libs.material3)
-      implementation(libs.material.icons.extended)
       implementation(libs.components.resources)
     }
   }
