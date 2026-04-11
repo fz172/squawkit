@@ -15,15 +15,16 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
-import kotlin.time.Instant
 
 class InspectionManagerImpl(
   private val firebaseAuth: FirebaseAuth,
@@ -32,7 +33,7 @@ class InspectionManagerImpl(
 
   override fun observeInspections(aircraftId: String): Flow<List<InspectionCard>> {
     val cardsRef = getCardsCollectionRef(aircraftId)
-      ?: return kotlinx.coroutines.flow.flowOf(emptyList())
+      ?: return flowOf(emptyList())
 
     return cardsRef.snapshots.map { snapshot ->
       val cards = mutableListOf<InspectionCard>()
@@ -145,10 +146,10 @@ class InspectionManagerImpl(
 
       val status = when {
         (nextDueDate != null && nextDueDate < currentDate) ||
-            (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
+          (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
 
         (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
-            (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
+          (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
 
         else -> DueStatus.NORMAL
       }
@@ -254,10 +255,10 @@ class InspectionManagerImpl(
     val status = when {
       isImmediate -> DueStatus.OVERDUE
       (nextDueDate != null && nextDueDate < currentDate) ||
-          (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
+        (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
 
       (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
-          (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
+        (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
 
       else -> DueStatus.NORMAL
     }

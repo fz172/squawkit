@@ -15,6 +15,7 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 class FleetManagerImpl(
@@ -77,7 +78,7 @@ class FleetManagerImpl(
 
   override fun loadAircraft(id: String): Flow<Aircraft?> {
     val fleetRef = firestore.getFleetCollectionRef(firebaseAuth)
-      ?: return kotlinx.coroutines.flow.flowOf(null)
+      ?: return flowOf(null)
 
     val docRef = fleetRef.document(id)
     return docRef.snapshots.map { snapshot ->

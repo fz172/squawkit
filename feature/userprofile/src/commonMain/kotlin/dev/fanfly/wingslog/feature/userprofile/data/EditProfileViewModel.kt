@@ -5,19 +5,19 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
+import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import dev.gitlive.firebase.auth.FirebaseUser
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Instant
 
 class EditProfileViewModel(
   private val userProfileManager: UserProfileManager,
   authManager: AuthManager,
 ) : ViewModel() {
-
 
   private val _uiState: MutableStateFlow<EditProfileUiState> =
     MutableStateFlow(authManager.getCurrentUser()?.toEditProfileUiState() ?: EditProfileUiState())
@@ -60,7 +60,7 @@ class EditProfileViewModel(
     _uiState.update {
       it.copy(
         licenceInfo = it.licenceInfo.copy(
-          expiration_date = dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant(
+          expiration_date = createWireInstant(
             newDate.epochSeconds,
             newDate.nanosecondsOfSecond
           )

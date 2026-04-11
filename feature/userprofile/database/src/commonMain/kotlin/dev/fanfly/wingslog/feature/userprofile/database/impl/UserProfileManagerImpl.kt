@@ -12,6 +12,7 @@ import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 class UserProfileManagerImpl(
@@ -21,7 +22,7 @@ class UserProfileManagerImpl(
 
   override fun observeLicenseInfo(): Flow<LicenseInfo?> {
     val docRef = getProfileDocumentRef()
-      ?: return kotlinx.coroutines.flow.flowOf(null)
+      ?: return flowOf(null)
 
     return docRef.snapshots
       .map { snapshot ->

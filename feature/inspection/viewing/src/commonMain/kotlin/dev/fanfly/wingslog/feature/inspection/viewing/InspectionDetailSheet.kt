@@ -275,4 +275,3 @@ private fun LogHistoryItem(log: MaintenanceLog) {
     )
   }
 }
-

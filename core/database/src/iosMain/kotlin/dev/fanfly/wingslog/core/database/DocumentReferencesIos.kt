@@ -2,8 +2,8 @@ package dev.fanfly.wingslog.core.database
 
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.DocumentSnapshot
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlin.io.encoding.Base64
+import kotlinx.cinterop.ExperimentalForeignApi
 
 @OptIn(ExperimentalForeignApi::class)
 actual fun DocumentSnapshot.getBlobAsBytes(field: String): ByteArray? {
@@ -21,4 +21,3 @@ actual suspend fun DocumentReference.setEncoded(data: Map<String, Any>, merge: B
   }
   this.set(processedData, merge = merge)
 }
-

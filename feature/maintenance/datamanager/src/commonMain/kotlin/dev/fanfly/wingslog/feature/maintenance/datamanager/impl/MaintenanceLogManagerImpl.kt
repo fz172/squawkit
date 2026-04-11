@@ -12,10 +12,10 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlin.time.Instant
 
 class MaintenanceLogManagerImpl(
   private val firebaseAuth: FirebaseAuth,
@@ -24,7 +24,7 @@ class MaintenanceLogManagerImpl(
 
   override fun observeLogs(aircraftId: String): Flow<List<MaintenanceLog>> {
     val logsRef = getLogsCollectionRef(aircraftId)
-      ?: return kotlinx.coroutines.flow.flowOf(emptyList())
+      ?: return flowOf(emptyList())
 
     return logsRef.snapshots.map { snapshot ->
       val logs = mutableListOf<MaintenanceLog>()

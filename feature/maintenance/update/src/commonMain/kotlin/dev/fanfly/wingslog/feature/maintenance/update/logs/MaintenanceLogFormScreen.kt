@@ -420,4 +420,3 @@ fun MaintenanceLogFormScreen(
     }
   }
 }
-

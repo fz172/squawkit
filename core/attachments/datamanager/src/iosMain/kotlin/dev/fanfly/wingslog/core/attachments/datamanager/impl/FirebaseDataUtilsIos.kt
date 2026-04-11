@@ -16,4 +16,3 @@ internal actual fun ByteArray.toFirebaseData(): Data =
       length = this.size.toULong()
     )
   })
-

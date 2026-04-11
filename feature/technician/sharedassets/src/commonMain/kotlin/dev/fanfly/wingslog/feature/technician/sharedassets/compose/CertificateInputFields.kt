@@ -36,6 +36,7 @@ import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -182,7 +183,7 @@ fun CertificateInputFields(
             onClick = {
               val selectedDate = datePickerState.selectedDateMillis?.let {
                 Instant.fromEpochMilliseconds(it)
-              } ?: kotlin.time.Clock.System.now()
+              } ?: Clock.System.now()
               onExpirationDateChanged(selectedDate)
               showDatePicker = false
             }) {

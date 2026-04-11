@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.inspection.viewing
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,9 +22,8 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.viewing.generated.resources.critical_airworthiness
 import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
-
+import wingslog.feature.inspection.viewing.generated.resources.critical_airworthiness
 
 @Composable
 fun CriticalAlertsSection(
@@ -36,7 +36,7 @@ fun CriticalAlertsSection(
     colors = CardDefaults.cardColors(
       containerColor = MaterialTheme.colorScheme.errorContainer
     ),
-    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
     shape = RoundedCornerShape(Spacing.small)
   ) {
     Column(
