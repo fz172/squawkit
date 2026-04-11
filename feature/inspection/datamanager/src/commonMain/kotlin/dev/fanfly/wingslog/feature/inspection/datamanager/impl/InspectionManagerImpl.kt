@@ -115,7 +115,7 @@ class InspectionManagerImpl(
       .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
     val latestLog = relevantLogs.firstOrNull()
 
-    if (card.is_one_time && latestLog != null) {
+    if (card.is_one_time && (latestLog != null || card.force_complied_status != null)) {
       return DueMetadata(status = DueStatus.COMPLIED)
     }
 
@@ -247,6 +247,25 @@ class InspectionManagerImpl(
             }
             if (parentMetadata.isOnCondition) isOnCondition = true
             if (parentMetadata.isImmediate) isImmediate = true
+          }
+        }
+      }
+    }
+
+    // 3. Force complied — skip to next cycle
+    val forceComplied = card.force_complied_status
+    if (forceComplied != null) {
+      val compliedEpoch = forceComplied.complied_date?.getEpochSecond() ?: 0L
+      val latestLogEpoch = latestLog?.timestamp?.getEpochSecond() ?: 0L
+
+      // Apply only when no real log has superseded the force-comply action
+      if (compliedEpoch > latestLogEpoch) {
+        for (rule in card.rules) {
+          rule.time_rule?.let { timeRule ->
+            nextDueDate = nextDueDate?.plus(timeRule.interval_months, DateTimeUnit.MONTH)
+          }
+          rule.engine_hour_rule?.let { engineRule ->
+            nextDueEngine = nextDueEngine?.let { it + engineRule.interval_hours }
           }
         }
       }

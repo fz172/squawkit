@@ -487,12 +487,15 @@ class MaintenanceLogFormViewModel(
         .onSuccess {
           state.selectedInspectionIds.forEach { cardId ->
             state.availableInspectionCards.find { it.id == cardId }?.let { card ->
-              if (card.force_due_date != null || card.force_due_engine_hour > 0f) {
+              if (card.force_due_date != null || card.force_due_engine_hour > 0f ||
+                card.force_complied_status != null
+              ) {
                 inspectionManager.updateInspection(
                   aircraftId,
                   card.copy(
                     force_due_date = null,
-                    force_due_engine_hour = 0f
+                    force_due_engine_hour = 0f,
+                    force_complied_status = null,
                   )
                 )
               }
