@@ -53,6 +53,7 @@ kotlin {
 
       // Navigation
       implementation(libs.androidx.navigation.compose)
+      implementation(libs.compose.foundation)
 
       // Lifecycle & DI
       implementation(libs.jetbrains.lifecycle.runtime.compose)

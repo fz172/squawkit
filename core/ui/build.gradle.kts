@@ -43,7 +43,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":core:model"))
-      api(libs.ui)
+      api(libs.compose.ui)
       api(libs.material3)
       api(libs.material.icons.extended)
       api(libs.components.resources)

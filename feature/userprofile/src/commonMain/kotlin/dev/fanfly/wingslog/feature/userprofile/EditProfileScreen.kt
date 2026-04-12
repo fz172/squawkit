@@ -2,6 +2,7 @@
 
 package dev.fanfly.wingslog.feature.userprofile
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,12 +34,11 @@ import dev.fanfly.wingslog.feature.technician.sharedassets.compose.CertificateIn
 import dev.fanfly.wingslog.feature.userprofile.data.EditProfileViewModel
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.edit_profile
-import kotlin.time.Instant
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
-
+import wingslog.core.ui.generated.resources.edit_profile
 
 @Composable
 fun EditProfileScreen(
@@ -52,6 +52,9 @@ fun EditProfileScreen(
   val tryNavigateBack = {
     if (uiState.hasChanges) showUnsavedChangesDialog = true
     else navController.popBackStack()
+  }
+  BackHandler(enabled = uiState.hasChanges) {
+    showUnsavedChangesDialog = true
   }
 
   if (showUnsavedChangesDialog) {

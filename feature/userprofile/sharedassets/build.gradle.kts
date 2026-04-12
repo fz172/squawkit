@@ -43,7 +43,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       // Compose
-      implementation(libs.runtime)
+      implementation(libs.compose.runtime)
       implementation(libs.components.resources)
     }
   }

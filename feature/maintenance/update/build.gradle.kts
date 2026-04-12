@@ -68,7 +68,7 @@ kotlin {
       implementation(libs.kotlinx.datetime)
 
       // Compose
-      implementation(libs.ui)
+      implementation(libs.compose.ui)
       implementation(libs.material3)
       implementation(libs.material.icons.extended)
       implementation(libs.components.resources)

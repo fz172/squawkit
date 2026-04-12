@@ -28,7 +28,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(libs.runtime)
+      implementation(libs.compose.runtime)
       implementation(libs.components.resources)
     }
   }
