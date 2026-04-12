@@ -23,7 +23,7 @@ fun EditInspectionRoute(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
-  val isUploading by viewModel.isUploading.collectAsStateWithLifecycle()
+  val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
   val successState = uiState as? InspectionUiState.Success
 
   val updatedMessage = stringResource(InspectionRes.string.inspection_updated)
@@ -37,7 +37,7 @@ fun EditInspectionRoute(
       card = card,
       availableInspections = successState.allInspections,
       currentEngineHours = successState.currentEngineHours,
-      isUploading = isUploading,
+      isSaving = isSaving,
       onCancel = { navController.popBackStack() },
       onSave = { updatedCard ->
         viewModel.saveEditedInspection(

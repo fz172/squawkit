@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -65,9 +64,10 @@ class InspectionViewModel(
   private val _showAttachmentPicker = MutableStateFlow(false)
   val showAttachmentPicker: StateFlow<Boolean> = _showAttachmentPicker.asStateFlow()
 
-  val isUploading: StateFlow<Boolean> = _pendingAttachments
-    .map { list -> list.any { it is PendingAttachment.Uploading } }
-    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+  private val _isSaving = MutableStateFlow(false)
+  val isSaving: StateFlow<Boolean> = combine(_isSaving, _pendingAttachments) { saving, list ->
+    saving || list.any { it is PendingAttachment.Uploading }
+  }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
   val isAnonymous: Boolean get() = auth.currentUser?.isAnonymous ?: true
   val filesAtLimit: Boolean get() = _pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS
@@ -255,16 +255,21 @@ class InspectionViewModel(
     forceDueEngine: Float, notes: String = "", onSuccess: () -> Unit, onError: () -> Unit = {},
   ) {
     saveJob = viewModelScope.launch {
-      val newCardId = generateRandomId()
-      val attachments = resolveAttachments(newCardId) ?: run { onError(); return@launch }
-      val card = InspectionCard(
-        id = newCardId, title = title, type = type, component = component, rules = rules,
-        reference_number = referenceNumber, compliance_authority = complianceAuthority,
-        compliance_details = complianceDetails, is_one_time = isOneTime,
-        force_due_date = forceDueDate, force_due_engine_hour = forceDueEngine,
-        notes = notes, attachments = attachments,
-      )
-      inspectionManager.addInspection(aircraftId, card).onSuccess { onSuccess() }
+      _isSaving.value = true
+      try {
+        val newCardId = generateRandomId()
+        val attachments = resolveAttachments(newCardId) ?: run { onError(); return@launch }
+        val card = InspectionCard(
+          id = newCardId, title = title, type = type, component = component, rules = rules,
+          reference_number = referenceNumber, compliance_authority = complianceAuthority,
+          compliance_details = complianceDetails, is_one_time = isOneTime,
+          force_due_date = forceDueDate, force_due_engine_hour = forceDueEngine,
+          notes = notes, attachments = attachments,
+        )
+        inspectionManager.addInspection(aircraftId, card).onSuccess { onSuccess() }
+      } finally {
+        _isSaving.value = false
+      }
     }
   }
 
@@ -286,16 +291,21 @@ class InspectionViewModel(
     onError: () -> Unit = {},
   ) {
     saveJob = viewModelScope.launch {
-      val attachments = resolveAttachments(cardId) ?: run { onError(); return@launch }
-      val updatedCard = InspectionCard(
-        id = cardId, title = title, type = type, component = component, rules = rules,
-        reference_number = referenceNumber, compliance_authority = complianceAuthority,
-        compliance_details = complianceDetails, is_one_time = isOneTime,
-        force_due_date = forceDueDate, force_due_engine_hour = forceDueEngine,
-        force_complied_status = forceCompliedStatus,
-        notes = notes, attachments = attachments,
-      )
-      inspectionManager.updateInspection(aircraftId, updatedCard).onSuccess { onSuccess() }
+      _isSaving.value = true
+      try {
+        val attachments = resolveAttachments(cardId) ?: run { onError(); return@launch }
+        val updatedCard = InspectionCard(
+          id = cardId, title = title, type = type, component = component, rules = rules,
+          reference_number = referenceNumber, compliance_authority = complianceAuthority,
+          compliance_details = complianceDetails, is_one_time = isOneTime,
+          force_due_date = forceDueDate, force_due_engine_hour = forceDueEngine,
+          force_complied_status = forceCompliedStatus,
+          notes = notes, attachments = attachments,
+        )
+        inspectionManager.updateInspection(aircraftId, updatedCard).onSuccess { onSuccess() }
+      } finally {
+        _isSaving.value = false
+      }
     }
   }
 

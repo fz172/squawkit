@@ -75,7 +75,7 @@ fun AddInspectionScreen(
   availableInspections: List<InspectionCard>,
   onSave: (InspectionCard) -> Unit,
   onCancel: () -> Unit,
-  isUploading: Boolean = false,
+  isSaving: Boolean = false,
   attachmentSection: @Composable () -> Unit = {},
 ) {
   var title by remember { mutableStateOf("") }
@@ -340,7 +340,7 @@ fun AddInspectionScreen(
         },
         onSecondaryClick = { tryCancel() },
         primaryEnabled = title.isNotBlank(),
-        isPrimaryFunctionInProgress = isUploading
+        isPrimaryFunctionInProgress = isSaving
       )
     }
   }

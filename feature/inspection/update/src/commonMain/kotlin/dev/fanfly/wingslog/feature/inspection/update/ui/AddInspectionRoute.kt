@@ -22,7 +22,7 @@ fun AddInspectionRoute(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
-  val isUploading by viewModel.isUploading.collectAsStateWithLifecycle()
+  val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
   val successState = uiState as? InspectionUiState.Success
 
   val successMessage = stringResource(InspectionRes.string.inspection_added)
@@ -30,7 +30,7 @@ fun AddInspectionRoute(
   if (successState != null) {
     AddInspectionScreen(
       availableInspections = successState.allInspections,
-      isUploading = isUploading,
+      isSaving = isSaving,
       onCancel = { navController.popBackStack() },
       onSave = { card ->
         viewModel.saveNewInspection(

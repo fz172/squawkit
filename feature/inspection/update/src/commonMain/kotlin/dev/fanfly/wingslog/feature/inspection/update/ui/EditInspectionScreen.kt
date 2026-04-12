@@ -88,7 +88,7 @@ fun EditInspectionScreen(
   onSave: (InspectionCard) -> Unit,
   onCancel: () -> Unit,
   onDeleteRequest: (String) -> Unit,
-  isUploading: Boolean = false,
+  isSaving: Boolean = false,
   attachmentSection: @Composable () -> Unit = {},
 ) {
   var title by remember { mutableStateOf(card.title) }
@@ -403,7 +403,7 @@ fun EditInspectionScreen(
         onSecondaryClick = { tryCancel() },
         onDangerClick = { showDeleteConfirm = true },
         primaryEnabled = title.isNotBlank(),
-        isPrimaryFunctionInProgress = isUploading
+        isPrimaryFunctionInProgress = isSaving
       )
     }
   }
