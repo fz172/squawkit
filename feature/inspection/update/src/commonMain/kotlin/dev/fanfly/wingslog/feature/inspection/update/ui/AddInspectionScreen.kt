@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.inspection.update.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -103,6 +104,11 @@ fun AddInspectionScreen(
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()
   }
+
+  BackHandler(enabled = hasChanges) {
+    showUnsavedChangesDialog = true
+  }
+
 
   if (showUnsavedChangesDialog) {
     UnsavedChangesDialog(

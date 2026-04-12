@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.maintenance.update.logs
 
+import androidx.activity.compose.BackHandler
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -111,6 +113,9 @@ fun MaintenanceLogFormScreen(
     if (uiState.hasChanges) showUnsavedChangesDialog = true
     else navController.popBackStack()
   }
+  BackHandler(enabled = uiState.hasChanges) {
+    showUnsavedChangesDialog = true
+  }
 
   if (showUnsavedChangesDialog) {
     UnsavedChangesDialog(
@@ -135,16 +140,14 @@ fun MaintenanceLogFormScreen(
         MaintenanceLogFormEvent.SaveSuccess -> {
           val message = if (viewModel.isEditMode) logUpdatedMessage else logSavedMessage
           navController.previousBackStackEntry?.savedStateHandle?.set(
-            CROSS_SCREEN_SUCCESS_MESSAGE,
-            message
+            CROSS_SCREEN_SUCCESS_MESSAGE, message
           )
           navController.popBackStack()
         }
 
         MaintenanceLogFormEvent.DeleteSuccess -> {
           navController.previousBackStackEntry?.savedStateHandle?.set(
-            CROSS_SCREEN_SUCCESS_MESSAGE,
-            logDeletedMessage
+            CROSS_SCREEN_SUCCESS_MESSAGE, logDeletedMessage
           )
           navController.popBackStack()
         }
@@ -159,49 +162,44 @@ fun MaintenanceLogFormScreen(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(stringResource(MaintenanceRes.string.delete_log)) },
-      text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            viewModel.deleteLog()
-            showDeleteDialog = false
-          },
-          colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-        ) {
-          Text(stringResource(CoreRes.string.delete))
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { showDeleteDialog = false }) {
-          Text(stringResource(CoreRes.string.cancel))
-        }
-      }
-    )
+                title = { Text(stringResource(MaintenanceRes.string.delete_log)) },
+                text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
+                confirmButton = {
+                  TextButton(
+                    onClick = {
+                      viewModel.deleteLog()
+                      showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                  ) {
+                    Text(stringResource(CoreRes.string.delete))
+                  }
+                },
+                dismissButton = {
+                  TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(CoreRes.string.cancel))
+                  }
+                })
   }
 
-  val saveLabel =
-    stringResource(CoreRes.string.save)
+  val saveLabel = stringResource(CoreRes.string.save)
 
   Scaffold(
     topBar = {
-      TopAppBar(
-        title = {
-          Text(
-            if (viewModel.isEditMode) stringResource(SharedRes.string.edit_log) else stringResource(
-              SharedRes.string.add_log
-            )
+      TopAppBar(title = {
+        Text(
+          if (viewModel.isEditMode) stringResource(SharedRes.string.edit_log) else stringResource(
+            SharedRes.string.add_log
           )
-        },
-        navigationIcon = {
-          IconButton(onClick = { tryNavigateBack() }) {
-            Icon(
-              Icons.AutoMirrored.Filled.ArrowBack,
-              contentDescription = stringResource(CoreRes.string.back)
-            )
-          }
+        )
+      }, navigationIcon = {
+        IconButton(onClick = { tryNavigateBack() }) {
+          Icon(
+            Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = stringResource(CoreRes.string.back)
+          )
         }
-      )
+      })
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
   ) { innerPadding ->
@@ -212,45 +210,40 @@ fun MaintenanceLogFormScreen(
     } else {
       Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
         Column(
-          modifier = Modifier
-            .fillMaxSize()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
+          modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())
             .padding(Spacing.screenPadding),
           verticalArrangement = Arrangement.spacedBy(Spacing.large)
         ) {
           // Maintenance Date
-          val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat()
-            ?: stringResource(MaintenanceRes.string.tap_to_change_date)
+          val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat() ?: stringResource(
+            MaintenanceRes.string.tap_to_change_date
+          )
           OutlinedTextField(
             value = dateDisplayText,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(stringResource(SharedRes.string.maintenance_date)) },
-            leadingIcon = {
-              Icon(
-                Icons.Default.CalendarToday,
-                contentDescription = stringResource(SharedRes.string.maintenance_date)
-              )
-            },
-            modifier = Modifier
-              .fillMaxWidth()
-              .clickable { showDatePicker = true },
-            singleLine = true,
-            enabled = false,
-            colors = OutlinedTextFieldDefaults.colors(
-              disabledTextColor = MaterialTheme.colorScheme.onSurface,
-              disabledBorderColor = MaterialTheme.colorScheme.outline,
-              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(SharedRes.string.maintenance_date)) },
+                            leadingIcon = {
+                              Icon(
+                                Icons.Default.CalendarToday,
+                                contentDescription = stringResource(SharedRes.string.maintenance_date)
+                              )
+                            },
+                            modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+                            singleLine = true,
+                            enabled = false,
+                            colors = OutlinedTextFieldDefaults.colors(
+                              disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                              disabledBorderColor = MaterialTheme.colorScheme.outline,
+                              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
           )
 
           if (showDatePicker) {
             val initialMs = uiState.maintenanceDate?.let { date ->
               date.let {
-                LocalDateTime(it.year, it.month, it.day, 12, 0, 0)
-                  .let { ldt ->
+                LocalDateTime(it.year, it.month, it.day, 12, 0, 0).let { ldt ->
                     Instant.fromEpochSeconds(
                       ldt.date.toEpochDays() * 86400L
                     ).toEpochMilliseconds()
@@ -258,27 +251,23 @@ fun MaintenanceLogFormScreen(
               }
             }
             val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMs)
-            DatePickerDialog(
-              onDismissRequest = { showDatePicker = false },
-              confirmButton = {
-                TextButton(onClick = {
-                  val selectedMs = datePickerState.selectedDateMillis
-                  if (selectedMs != null) {
-                    val selectedDate = Instant.fromEpochMilliseconds(selectedMs)
-                      .toLocalDateTime(TimeZone.UTC).date
-                    viewModel.onMaintenanceDateChange(selectedDate)
-                  }
-                  showDatePicker = false
-                }) {
-                  Text(stringResource(CoreRes.string.ok))
+            DatePickerDialog(onDismissRequest = { showDatePicker = false }, confirmButton = {
+              TextButton(onClick = {
+                val selectedMs = datePickerState.selectedDateMillis
+                if (selectedMs != null) {
+                  val selectedDate =
+                    Instant.fromEpochMilliseconds(selectedMs).toLocalDateTime(TimeZone.UTC).date
+                  viewModel.onMaintenanceDateChange(selectedDate)
                 }
-              },
-              dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                  Text(stringResource(CoreRes.string.cancel))
-                }
+                showDatePicker = false
+              }) {
+                Text(stringResource(CoreRes.string.ok))
               }
-            ) {
+            }, dismissButton = {
+              TextButton(onClick = { showDatePicker = false }) {
+                Text(stringResource(CoreRes.string.cancel))
+              }
+            }) {
               DatePicker(state = datePickerState)
             }
           }
@@ -300,23 +289,22 @@ fun MaintenanceLogFormScreen(
           )
           OutlinedTextField(
             value = technicianDisplayText,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(stringResource(TechnicianRes.string.performed_by)) },
-            leadingIcon = {
-              Icon(Icons.Default.Person, contentDescription = null)
-            },
-            modifier = Modifier
-              .fillMaxWidth()
-              .clickable { viewModel.showTechnicianPicker() },
-            singleLine = true,
-            enabled = false,
-            colors = OutlinedTextFieldDefaults.colors(
-              disabledTextColor = MaterialTheme.colorScheme.onSurface,
-              disabledBorderColor = MaterialTheme.colorScheme.outline,
-              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(TechnicianRes.string.performed_by)) },
+                            leadingIcon = {
+                              Icon(Icons.Default.Person, contentDescription = null)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                              .clickable { viewModel.showTechnicianPicker() },
+                            singleLine = true,
+                            enabled = false,
+                            colors = OutlinedTextFieldDefaults.colors(
+                              disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                              disabledBorderColor = MaterialTheme.colorScheme.outline,
+                              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
           )
 
           if (uiState.showTechnicianPicker) {
@@ -329,8 +317,7 @@ fun MaintenanceLogFormScreen(
                 // Navigate to edit technician screen
                 navController.navigate(Screen.EditTechnician.createRoute(null))
               },
-              onDismiss = { viewModel.hideTechnicianPicker() }
-            )
+              onDismiss = { viewModel.hideTechnicianPicker() })
           }
 
           // Inspection Work section

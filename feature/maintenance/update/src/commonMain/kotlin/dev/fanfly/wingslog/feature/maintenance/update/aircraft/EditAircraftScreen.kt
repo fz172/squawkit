@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.maintenance.update.aircraft
 
+import androidx.activity.compose.BackHandler
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -70,6 +72,10 @@ fun EditAircraftScreen(
   val tryNavigateBack = {
     if (uiState.hasChanges) showUnsavedChangesDialog = true
     else navController.popBackStack()
+  }
+  
+  BackHandler(enabled = uiState.hasChanges) {
+    showUnsavedChangesDialog = true
   }
 
   if (showUnsavedChangesDialog) {

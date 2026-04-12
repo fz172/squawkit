@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.inspection.update.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -137,13 +138,18 @@ fun EditInspectionScreen(
     forceOverrideEngine != (card.force_due_engine_hour > 0f) ||
     (forceOverrideEngine && forcedEngineHours != (
       if (card.force_due_engine_hour > 0f) card.force_due_engine_hour.toString() else ""
-    )) ||
+      )) ||
     forceOverrideDate != (card.force_due_date != null) ||
     (forceOverrideDate && forcedDateMillis != card.force_due_date?.let { it.getEpochSecond() * 1000 })
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()
   }
+
+  BackHandler(enabled = hasChanges) {
+    showUnsavedChangesDialog = true
+  }
+
 
   if (showUnsavedChangesDialog) {
     UnsavedChangesDialog(
