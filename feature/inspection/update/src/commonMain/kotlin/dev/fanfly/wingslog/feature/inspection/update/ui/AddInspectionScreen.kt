@@ -43,6 +43,7 @@ import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionDetailTab
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionScheduleTab
@@ -86,6 +87,32 @@ fun AddInspectionScreen(
   var complianceAuthority by remember { mutableStateOf("") }
   var complianceNotes by remember { mutableStateOf("") }
   var linkedToId by remember { mutableStateOf<String?>(null) }
+  var showUnsavedChangesDialog by remember { mutableStateOf(false) }
+
+  val hasChanges = title.isNotEmpty() ||
+    component != InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME ||
+    type != ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION ||
+    intervalMonths.isNotEmpty() ||
+    intervalHours.isNotEmpty() ||
+    isOneTime ||
+    refNumber.isNotEmpty() ||
+    complianceAuthority.isNotEmpty() ||
+    complianceNotes.isNotEmpty() ||
+    linkedToId != null
+
+  val tryCancel = {
+    if (hasChanges) showUnsavedChangesDialog = true else onCancel()
+  }
+
+  if (showUnsavedChangesDialog) {
+    UnsavedChangesDialog(
+      onConfirm = {
+        showUnsavedChangesDialog = false
+        onCancel()
+      },
+      onDismiss = { showUnsavedChangesDialog = false },
+    )
+  }
 
   val pagerState = rememberPagerState(pageCount = { 3 })
   val coroutineScope = rememberCoroutineScope()
@@ -100,7 +127,7 @@ fun AddInspectionScreen(
             fontWeight = FontWeight.Bold
           )
         }, navigationIcon = {
-          IconButton(onClick = onCancel) {
+          IconButton(onClick = { tryCancel() }) {
             Icon(
               Icons.AutoMirrored.Default.ArrowBack,
               contentDescription = stringResource(CoreRes.string.back)
@@ -305,7 +332,7 @@ fun AddInspectionScreen(
           )
           onSave(card)
         },
-        onSecondaryClick = onCancel,
+        onSecondaryClick = { tryCancel() },
         primaryEnabled = title.isNotBlank(),
         isPrimaryFunctionInProgress = isUploading
       )

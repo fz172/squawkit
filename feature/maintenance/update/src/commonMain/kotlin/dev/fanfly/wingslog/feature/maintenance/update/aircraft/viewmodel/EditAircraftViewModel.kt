@@ -44,7 +44,13 @@ class EditAircraftViewModel(
       try {
         fleetManager.loadAircraft(id).collect { aircraft ->
           if (aircraft != null) {
-            _uiState.update { it.copy(aircraft = aircraft, isLoading = false) }
+            _uiState.update {
+              it.copy(
+                aircraft = aircraft,
+                initialAircraft = it.initialAircraft ?: aircraft,
+                isLoading = false,
+              )
+            }
           } else {
             // Handle error or not found
             _uiState.update { it.copy(isLoading = false) }
@@ -60,7 +66,13 @@ class EditAircraftViewModel(
   }
 
   fun loadAircraft(aircraft: Aircraft) {
-    _uiState.update { it.copy(aircraft = aircraft, isLoading = false) }
+    _uiState.update {
+      it.copy(
+        aircraft = aircraft,
+        initialAircraft = it.initialAircraft ?: aircraft,
+        isLoading = false,
+      )
+    }
   }
 
   fun saveAircraft() {

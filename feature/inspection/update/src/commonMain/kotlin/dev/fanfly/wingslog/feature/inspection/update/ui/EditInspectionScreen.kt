@@ -47,6 +47,7 @@ import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.update.compose.DeleteInspectionConfirmDialog
@@ -122,6 +123,37 @@ fun EditInspectionScreen(
 
   var showDatePicker by remember { mutableStateOf(false) }
   var showDeleteConfirm by remember { mutableStateOf(false) }
+  var showUnsavedChangesDialog by remember { mutableStateOf(false) }
+
+  val hasChanges = title != card.title ||
+    isOneTime != card.is_one_time ||
+    intervalMonths != initialIntervalMonths ||
+    intervalHours != initialIntervalHours ||
+    refNumber != card.reference_number ||
+    complianceAuthority != card.compliance_authority ||
+    complianceNotes != card.compliance_details ||
+    linkedToId != initialLinkedId ||
+    forceCompliedStatus != card.force_complied_status ||
+    forceOverrideEngine != (card.force_due_engine_hour > 0f) ||
+    (forceOverrideEngine && forcedEngineHours != (
+      if (card.force_due_engine_hour > 0f) card.force_due_engine_hour.toString() else ""
+    )) ||
+    forceOverrideDate != (card.force_due_date != null) ||
+    (forceOverrideDate && forcedDateMillis != card.force_due_date?.let { it.getEpochSecond() * 1000 })
+
+  val tryCancel = {
+    if (hasChanges) showUnsavedChangesDialog = true else onCancel()
+  }
+
+  if (showUnsavedChangesDialog) {
+    UnsavedChangesDialog(
+      onConfirm = {
+        showUnsavedChangesDialog = false
+        onCancel()
+      },
+      onDismiss = { showUnsavedChangesDialog = false },
+    )
+  }
 
   val pagerState = rememberPagerState(pageCount = { 4 })
   val coroutineScope = rememberCoroutineScope()
@@ -136,7 +168,7 @@ fun EditInspectionScreen(
             fontWeight = FontWeight.Bold
           )
         }, navigationIcon = {
-          IconButton(onClick = onCancel) {
+          IconButton(onClick = { tryCancel() }) {
             Icon(
               Icons.AutoMirrored.Default.ArrowBack,
               contentDescription = stringResource(CoreRes.string.back)
@@ -362,7 +394,7 @@ fun EditInspectionScreen(
           )
           onSave(updated)
         },
-        onSecondaryClick = onCancel,
+        onSecondaryClick = { tryCancel() },
         onDangerClick = { showDeleteConfirm = true },
         primaryEnabled = title.isNotBlank(),
         isPrimaryFunctionInProgress = isUploading

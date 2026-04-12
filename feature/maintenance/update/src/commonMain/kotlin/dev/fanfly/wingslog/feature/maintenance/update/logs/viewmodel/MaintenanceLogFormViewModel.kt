@@ -109,8 +109,16 @@ class MaintenanceLogFormViewModel(
             selectedTechnician = newSelected
           )
         }
+        if (!isEditMode) captureInitialSnapshot()
       }
       .launchIn(viewModelScope)
+  }
+
+  private fun captureInitialSnapshot() {
+    _uiState.update { state ->
+      if (state.initialSnapshot != null) state
+      else state.copy(initialSnapshot = state.currentSnapshot())
+    }
   }
 
   private fun checkAuth() {
@@ -164,6 +172,7 @@ class MaintenanceLogFormViewModel(
             pendingAttachments = existingAttachments,
           )
         }
+        captureInitialSnapshot()
       } else {
         _uiState.update {
           it.copy(

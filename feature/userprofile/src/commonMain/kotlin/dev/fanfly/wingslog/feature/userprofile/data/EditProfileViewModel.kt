@@ -36,11 +36,17 @@ class EditProfileViewModel(
           _uiState.update {
             it.copy(
               licenceInfo = result,
+              initialLicenceInfo = it.initialLicenceInfo ?: result,
               isLoading = false,
             )
           }
         } else {
-          _uiState.update { it.copy(isLoading = false) }
+          _uiState.update {
+            it.copy(
+              initialLicenceInfo = it.initialLicenceInfo ?: it.licenceInfo,
+              isLoading = false,
+            )
+          }
         }
       }
     }

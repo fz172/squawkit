@@ -3,11 +3,11 @@ package dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.fileCount
 import dev.fanfly.wingslog.core.attachments.model.visible
 import dev.fanfly.wingslog.core.ui.common.UiText
-import dev.fanfly.wingslog.aircraft.Technician
 import kotlinx.datetime.LocalDate
 
 data class MaintenanceLogFormUiState(
@@ -35,10 +35,41 @@ data class MaintenanceLogFormUiState(
   val showAttachmentPicker: Boolean = false,
   /** Whether the current user is anonymous (attachments disabled for anonymous users). */
   val isAnonymous: Boolean = false,
+  /** Snapshot of the form taken once after initial load — used to detect unsaved changes. */
+  val initialSnapshot: FormSnapshot? = null,
 ) {
   val visibleAttachments: List<PendingAttachment> get() = pendingAttachments.visible()
   val fileAttachmentCount: Int get() = pendingAttachments.fileCount()
   val filesAtLimit: Boolean get() = fileAttachmentCount >= MAX_FILE_ATTACHMENTS
+
+  fun currentSnapshot(): FormSnapshot = FormSnapshot(
+    workDescription = workDescription,
+    selectedInspectionIds = selectedInspectionIds,
+    engineTime = engineTime,
+    airframeTime = airframeTime,
+    propTime = propTime,
+    selectedComponentType = selectedComponentType,
+    selectedSubComponent = selectedSubComponent,
+    selectedTechnicianId = selectedTechnician?.id,
+    maintenanceDate = maintenanceDate,
+    visibleAttachments = pendingAttachments.visible(),
+  )
+
+  val hasChanges: Boolean
+    get() = initialSnapshot != null && currentSnapshot() != initialSnapshot
+
+  data class FormSnapshot(
+    val workDescription: String,
+    val selectedInspectionIds: List<String>,
+    val engineTime: String,
+    val airframeTime: String,
+    val propTime: String,
+    val selectedComponentType: MaintenanceLog.ComponentType,
+    val selectedSubComponent: String?,
+    val selectedTechnicianId: String?,
+    val maintenanceDate: LocalDate?,
+    val visibleAttachments: List<PendingAttachment>,
+  )
 
   companion object {
     const val MAX_FILE_ATTACHMENTS = 3

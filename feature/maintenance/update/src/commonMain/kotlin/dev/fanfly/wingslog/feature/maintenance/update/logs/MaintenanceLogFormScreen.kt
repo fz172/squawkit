@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
@@ -75,7 +76,6 @@ import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.save
-import wingslog.core.ui.generated.resources.update
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.edit_log
@@ -104,7 +104,23 @@ fun MaintenanceLogFormScreen(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   var showDeleteDialog by remember { mutableStateOf(false) }
   var showDatePicker by remember { mutableStateOf(false) }
+  var showUnsavedChangesDialog by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
+
+  val tryNavigateBack = {
+    if (uiState.hasChanges) showUnsavedChangesDialog = true
+    else navController.popBackStack()
+  }
+
+  if (showUnsavedChangesDialog) {
+    UnsavedChangesDialog(
+      onConfirm = {
+        showUnsavedChangesDialog = false
+        navController.popBackStack()
+      },
+      onDismiss = { showUnsavedChangesDialog = false },
+    )
+  }
 
   val logUpdatedMessage = stringResource(MaintenanceRes.string.log_updated)
   val logSavedMessage = stringResource(MaintenanceRes.string.log_saved)
@@ -165,7 +181,7 @@ fun MaintenanceLogFormScreen(
   }
 
   val saveLabel =
-    stringResource(if (viewModel.isEditMode) CoreRes.string.update else CoreRes.string.save)
+    stringResource(CoreRes.string.save)
 
   Scaffold(
     topBar = {
@@ -178,7 +194,7 @@ fun MaintenanceLogFormScreen(
           )
         },
         navigationIcon = {
-          IconButton(onClick = { navController.popBackStack() }) {
+          IconButton(onClick = { tryNavigateBack() }) {
             Icon(
               Icons.AutoMirrored.Filled.ArrowBack,
               contentDescription = stringResource(CoreRes.string.back)
@@ -407,7 +423,7 @@ fun MaintenanceLogFormScreen(
         BottomButtons(
           modifier = Modifier.align(Alignment.BottomCenter),
           onPrimaryClick = viewModel::save,
-          onSecondaryClick = { navController.popBackStack() },
+          onSecondaryClick = { tryNavigateBack() },
           onDangerClick = if (viewModel.isEditMode) {
             { showDeleteDialog = true }
           } else null,

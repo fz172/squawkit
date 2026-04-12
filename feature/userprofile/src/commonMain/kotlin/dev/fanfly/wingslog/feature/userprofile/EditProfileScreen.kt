@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.CertificateInputFields
@@ -46,8 +47,22 @@ fun EditProfileScreen(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-  // State for the dropdown menu
-  var expanded by remember { mutableStateOf(false) }
+  var showUnsavedChangesDialog by remember { mutableStateOf(false) }
+
+  val tryNavigateBack = {
+    if (uiState.hasChanges) showUnsavedChangesDialog = true
+    else navController.popBackStack()
+  }
+
+  if (showUnsavedChangesDialog) {
+    UnsavedChangesDialog(
+      onConfirm = {
+        showUnsavedChangesDialog = false
+        navController.popBackStack()
+      },
+      onDismiss = { showUnsavedChangesDialog = false },
+    )
+  }
 
   // This effect will run when isSaved becomes true
   LaunchedEffect(uiState.isSaved) {
@@ -60,7 +75,7 @@ fun EditProfileScreen(
   Scaffold(topBar = {
     WingsLogTopAppBar(
       title = stringResource(CoreUiRes.string.edit_profile),
-      onBackClick = { navController.popBackStack() })
+      onBackClick = { tryNavigateBack() })
   }) { innerPadding ->
     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
       Column(
@@ -93,7 +108,7 @@ fun EditProfileScreen(
         modifier = Modifier.align(Alignment.BottomCenter),
         primaryEnabled = !uiState.isLoading,
         onPrimaryClick = { viewModel.saveChanges() },
-        onSecondaryClick = { navController.popBackStack() })
+        onSecondaryClick = { tryNavigateBack() })
     }
   }
 }

@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
+import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -64,6 +65,22 @@ fun EditAircraftScreen(
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
   var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+  var showUnsavedChangesDialog by rememberSaveable { mutableStateOf(false) }
+
+  val tryNavigateBack = {
+    if (uiState.hasChanges) showUnsavedChangesDialog = true
+    else navController.popBackStack()
+  }
+
+  if (showUnsavedChangesDialog) {
+    UnsavedChangesDialog(
+      onConfirm = {
+        showUnsavedChangesDialog = false
+        navController.popBackStack()
+      },
+      onDismiss = { showUnsavedChangesDialog = false },
+    )
+  }
 
   // This effect will run when isSaved becomes true
   LaunchedEffect(uiState.isSaved, uiState.isDeleted) {
@@ -106,7 +123,7 @@ fun EditAircraftScreen(
       WingsLogTopAppBar(
         title = if (uiState.aircraft.id == "") stringResource(MaintenanceRes.string.add_aircraft)
         else stringResource(MaintenanceRes.string.update_aircraft),
-        onBackClick = { navController.popBackStack() },
+        onBackClick = { tryNavigateBack() },
         scrollBehavior = scrollBehavior,
       )
     }
@@ -153,7 +170,7 @@ fun EditAircraftScreen(
         modifier = Modifier.align(Alignment.BottomCenter),
         primaryEnabled = !uiState.isLoading,
         onPrimaryClick = { viewModel.saveAircraft() },
-        onSecondaryClick = { navController.popBackStack() },
+        onSecondaryClick = { tryNavigateBack() },
         onDangerClick = if (uiState.aircraft.id != "") {
           { showDeleteDialog = true }
         } else null,

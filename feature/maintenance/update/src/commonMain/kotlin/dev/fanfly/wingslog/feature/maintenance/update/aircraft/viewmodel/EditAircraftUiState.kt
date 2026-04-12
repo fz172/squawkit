@@ -5,11 +5,15 @@ import dev.fanfly.wingslog.aircraft.PropellerHub
 
 data class EditAircraftUiState(
   val aircraft: Aircraft = Aircraft(),
+  val initialAircraft: Aircraft? = null,
   val isLoading: Boolean = true,
   val isSaved: Boolean = false,
   val isDeleted: Boolean = false,
   val showValidationErrors: Boolean = false,
 ) {
+  val hasChanges: Boolean
+    get() = initialAircraft != null && aircraft != initialAircraft
+
   val isValid: Boolean
     get() {
       if (aircraft.make.isBlank() || aircraft.model.isBlank() || aircraft.serial.isBlank()) return false

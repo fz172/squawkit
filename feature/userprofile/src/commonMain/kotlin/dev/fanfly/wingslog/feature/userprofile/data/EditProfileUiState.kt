@@ -8,6 +8,10 @@ data class EditProfileUiState(
   val photoUri: String? = null,
   val displayName: String? = null,
   val licenceInfo: LicenseInfo = newUserLicenseProfile(),
+  val initialLicenceInfo: LicenseInfo? = null,
   val isLoading: Boolean = false,
   val isSaved: Boolean = false,
-)
+) {
+  val hasChanges: Boolean
+    get() = initialLicenceInfo != null && licenceInfo != initialLicenceInfo
+}
