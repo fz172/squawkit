@@ -78,7 +78,7 @@ For a feature named `<name>` (lowercase, single word — e.g. `export`, `notific
 - Do not write domain logic, Firestore queries, or Compose UI beyond empty scaffolds.
 - Do not invent data model fields — if the feature needs proto fields, tell the user they must add them to `core/model/src/commonMain/proto/` themselves.
 - Do not modify `libs.versions.toml` or add new library aliases.
-- Do not run `./gradlew assembleDebug` (takes too long in a subagent context). Instead, tell the user to build after you finish.
+- Do not run the full app build (`./gradlew assembleDebug` at the root). You only compile the modules you scaffolded — see the verification step below.
 - Do not create tests — that belongs to `kmm-test-writer`.
 
 ## Workflow
@@ -86,4 +86,17 @@ For a feature named `<name>` (lowercase, single word — e.g. `export`, `notific
 1. Read the inspection reference files listed above in parallel.
 2. If anything about the user's feature is ambiguous (name, which submodules to include, what the Manager should do at a high level), ask before scaffolding.
 3. Create files in parallel where possible.
-4. Report back: list every file you created, every file you modified, and tell the user to run `./gradlew :feature:<name>:datamanager:assembleDebug` to verify the scaffold compiles.
+4. **Verify every scaffolded submodule compiles.** For each submodule you created, run its narrow Android compile task, one at a time:
+   ```
+   ./gradlew :feature:<name>:<submodule>:assembleDebug
+   ```
+   Single-module Android library compilation is fast — it builds only that module's `commonMain` + `androidMain` sources. Do not run the full `assembleDebug` at the root and do not run iOS targets.
+5. **Handle failures honestly.** If any submodule fails to compile:
+   - Do NOT try to "fix" design problems, type mismatches from `core:*` API changes, or anything outside the files you just wrote.
+   - You MAY fix obvious self-inflicted errors: a missing import in a file you generated, a typo in a package name, a dependency block that doesn't match the dependency-rules table above. Re-run the compile after the fix.
+   - If the failure is anything else, stop. Report the verbatim compile error, the exact gradle command you ran, and the submodule it came from. Let the user decide.
+6. **Report back** with:
+   - Every file you created (grouped by submodule)
+   - Every file you modified (`settings.gradle.kts`, `composeApp/.../initKoin.kt`)
+   - A compile-status line per submodule: `✓ :feature:<name>:<submodule>:assembleDebug passed` or `✗ failed — see error above`
+   - Only claim success when every scaffolded submodule compiles green.
