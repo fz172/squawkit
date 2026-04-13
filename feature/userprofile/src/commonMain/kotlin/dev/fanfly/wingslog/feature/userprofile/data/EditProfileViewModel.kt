@@ -3,9 +3,9 @@ package dev.fanfly.wingslog.feature.userprofile.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
-import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlin.time.Instant
@@ -66,7 +66,7 @@ class EditProfileViewModel(
     _uiState.update {
       it.copy(
         licenceInfo = it.licenceInfo.copy(
-          expiration_date = createWireInstant(
+          expiration_date = toWireInstant(
             newDate.epochSeconds,
             newDate.nanosecondsOfSecond
           )

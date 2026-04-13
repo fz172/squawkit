@@ -14,7 +14,7 @@ import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.toLocalFile
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.ui.common.UiText
-import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
+import dev.fanfly.wingslog.core.ui.common.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
@@ -473,7 +473,7 @@ class MaintenanceLogFormViewModel(
         state.maintenanceDate?.atStartOfDayIn(TimeZone.currentSystemDefault()) ?: now
       val log = MaintenanceLog(
         id = resolvedLogId,
-        timestamp = createWireInstant(
+        timestamp = toWireInstant(
           timestampInstant.epochSeconds,
           timestampInstant.nanosecondsOfSecond
         ),

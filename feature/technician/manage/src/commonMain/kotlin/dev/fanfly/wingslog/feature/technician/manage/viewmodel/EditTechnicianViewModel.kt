@@ -3,9 +3,9 @@ package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
-import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -133,7 +133,7 @@ class EditTechnicianViewModel(
         cert_type = if (currentState.certType == LicenseType.NONE) "" else currentState.certType.name,
         cert_number = currentState.certNumber,
         cert_expiration = if (currentState.certExpireLimit == LicenseExpireLimit.NEVER_EXPIRES) null else currentState.certExpiration?.let {
-          createWireInstant(it.epochSeconds, it.nanosecondsOfSecond)
+          toWireInstant(it.epochSeconds, it.nanosecondsOfSecond)
         }
       )
 

@@ -49,7 +49,7 @@ import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
-import dev.fanfly.wingslog.core.ui.common.datetime.createWireInstant
+import dev.fanfly.wingslog.core.ui.common.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.update.compose.DeleteInspectionConfirmDialog
 import dev.fanfly.wingslog.feature.inspection.update.compose.ForcedOverrideFields
@@ -346,7 +346,7 @@ fun EditInspectionScreen(
                 onToggleCompliedClick = {
                   forceCompliedStatus = if (forceCompliedStatus != null) null else {
                     ForceCompliedStatus(
-                      complied_date = createWireInstant(Clock.System.now().epochSeconds),
+                      complied_date = toWireInstant(Clock.System.now().epochSeconds),
                       complied_engine_hours = currentEngineHours
                     )
                   }
@@ -374,7 +374,7 @@ fun EditInspectionScreen(
           val updatedForceDueEngine =
             if (forceOverrideEngine) forcedEngineHours.toFloatOrNull() ?: 0f else 0f
           val updatedForceDueDate = if (forceOverrideDate) forcedDateMillis?.let {
-            createWireInstant(
+            toWireInstant(
               it / 1000,
               0
             )

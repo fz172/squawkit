@@ -17,6 +17,9 @@ fun WireInstant.toLocalDate(timeZone: TimeZone = TimeZone.UTC): LocalDate {
 fun WireInstant.toInstant(): Instant =
   Instant.fromEpochSeconds(this.getEpochSecond(), this.getNano().toLong())
 
+
+expect fun toWireInstant(epochSeconds: Long, nanos: Int =0): WireInstant
+
 private val DisplayDateFormat = LocalDate.Format {
   monthNumber()
   char('/')
