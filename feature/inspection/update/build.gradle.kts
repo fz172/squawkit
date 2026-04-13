@@ -49,6 +49,7 @@ kotlin {
 
       implementation(project(":core:ui"))
       implementation(project(":core:database"))
+      implementation(project(":core:datetime"))
       implementation(project(":feature:maintenance:datamanager"))
       implementation(project(":core:attachments:model"))
       implementation(project(":core:attachments:datamanager"))

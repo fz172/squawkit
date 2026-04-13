@@ -1,101 +1,29 @@
 package dev.fanfly.wingslog.feature.inspection.datamanager.impl
 
-import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.core.database.generateRandomId
-import dev.fanfly.wingslog.core.database.getBlobAsBytes
-import dev.fanfly.wingslog.core.database.getFleetCollectionRef
-import dev.fanfly.wingslog.core.database.setEncoded
 import dev.fanfly.wingslog.core.datetime.toLocalDate
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDueManager
 import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
-import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.firestore.CollectionReference
-import dev.gitlive.firebase.firestore.DocumentReference
-import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlin.time.Clock
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 
-class InspectionManagerImpl(
-  private val firebaseAuth: FirebaseAuth,
-  private val firestore: FirebaseFirestore,
-) : InspectionManager {
+class InspectionDueManagerImpl(
+  private val clock: Clock = Clock.System,
+  private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
+) : InspectionDueManager {
 
-  override fun observeInspections(aircraftId: String): Flow<List<InspectionCard>> {
-    val cardsRef = getCardsCollectionRef(aircraftId)
-      ?: return flowOf(emptyList())
-
-    return cardsRef.snapshots.map { snapshot ->
-      val cards = mutableListOf<InspectionCard>()
-      for (doc in snapshot.documents) {
-        val blobBytes = doc.getBlobAsBytes(INSPECTION_CARD_BLOB)
-        if (blobBytes != null) {
-          try {
-            cards.add(InspectionCard.ADAPTER.decode(blobBytes))
-          } catch (e: Exception) {
-            logger.w(e) { "Failed to parse card ${doc.id}" }
-          }
-        }
-      }
-      cards
-    }
-  }
-
-  override suspend fun addInspection(aircraftId: String, card: InspectionCard): Result<Boolean> =
-    try {
-      val cardsRef =
-        getCardsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
-      val newDocRef =
-        if (card.id.isEmpty()) cardsRef.document(generateRandomId()) else cardsRef.document(card.id)
-      val finalCard = if (card.id.isEmpty()) card.copy(id = newDocRef.id) else card
-
-      saveCard(newDocRef, finalCard)
-      Result.success(true)
-    } catch (e: Exception) {
-      logger.w(e) { "Error adding card" }
-      Result.failure(e)
-    }
-
-  override suspend fun updateInspection(aircraftId: String, card: InspectionCard): Result<Boolean> =
-    try {
-      val cardsRef =
-        getCardsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
-      val docRef = cardsRef.document(card.id)
-      saveCard(docRef, card)
-      Result.success(true)
-    } catch (e: Exception) {
-      logger.w(e) { "Error updating card ${card.id}" }
-      Result.failure(e)
-    }
-
-  override suspend fun deleteInspection(aircraftId: String, cardId: String): Result<Boolean> = try {
-    val cardsRef =
-      getCardsCollectionRef(aircraftId) ?: return Result.failure(Exception("User not logged in"))
-    cardsRef.document(cardId).delete()
-    logger.d { "Card $cardId deleted successfully." }
-    Result.success(true)
-  } catch (e: Exception) {
-    logger.w(e) { "Error deleting card $cardId" }
-    Result.failure(e)
-  }
-
-  override suspend fun computeNextDue(
+  override fun computeNextDue(
     card: InspectionCard,
     logs: List<MaintenanceLog>,
     allCards: List<InspectionCard>,
-  ): DueMetadata {
-    return computeNextDueRecursive(card, logs, logs, allCards, mutableSetOf())
-  }
+  ): DueMetadata = computeNextDueRecursive(card, logs, logs, allCards, mutableSetOf())
 
   private fun computeNextDueRecursive(
     card: InspectionCard,
@@ -133,11 +61,11 @@ class InspectionManagerImpl(
         allLogs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }?.toFloat() ?: 0f
       }
 
-    val currentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    val currentDate = clock.now().toLocalDateTime(timeZone).date
 
     if (hasForcedDate || hasForcedEngine) {
       val nextDueDate = if (hasForcedDate) {
-        forceDueDate.toLocalDate(TimeZone.currentSystemDefault())
+        forceDueDate.toLocalDate(timeZone)
       } else null
       val nextDueEngine = if (hasForcedEngine) card.force_due_engine_hour else null
 
@@ -174,13 +102,12 @@ class InspectionManagerImpl(
       when {
         timeRule != null -> {
           val baseDate = if (latestLog?.timestamp != null) {
-            latestLog.timestamp!!.toLocalDate(TimeZone.currentSystemDefault())
+            latestLog.timestamp!!.toLocalDate(timeZone)
           } else {
             // If never done, we assume it's due from the beginning of the aircraft logs or now.
             // Using aircraft creation date would be better, but we don't have it here easily.
             // Using the earliest log date as a proxy.
-            allLogs.lastOrNull()?.timestamp?.toLocalDate(TimeZone.currentSystemDefault())
-              ?: currentDate
+            allLogs.lastOrNull()?.timestamp?.toLocalDate(timeZone) ?: currentDate
           }
           val calculated = baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH)
           if (nextDueDate == null || calculated < nextDueDate) {
@@ -216,7 +143,7 @@ class InspectionManagerImpl(
             val latestLogEpoch = latestLog?.timestamp?.getEpochSecond() ?: 0L
 
             // Compute parent's due status as of the last time THIS card was completed.
-            // This ensures that if the parent is done but THIS card is skipped, 
+            // This ensures that if the parent is done but THIS card is skipped,
             // THIS card remains due/overdue based on the OLD parent cycle.
             val parentLogs = if (latestLog == null) {
               emptyList()
@@ -280,30 +207,5 @@ class InspectionManagerImpl(
       isImmediate = isImmediate,
       status = status
     )
-  }
-
-  private suspend fun saveCard(
-    docRef: DocumentReference,
-    card: InspectionCard,
-  ) {
-    val data = mutableMapOf(
-      INSPECTION_CARD_BLOB to InspectionCard.ADAPTER.encode(card),
-      TITLE_FIELD to card.title,
-      COMPONENT_FIELD to card.component.name
-    )
-    docRef.setEncoded(data, merge = true)
-  }
-
-  private fun getCardsCollectionRef(aircraftId: String): CollectionReference? {
-    return firestore.getFleetCollectionRef(firebaseAuth)?.document(aircraftId)
-      ?.collection(INSPECTION_CARDS_COLLECTION)
-  }
-
-  companion object {
-    private val logger = Logger.withTag("InspectionManagerImpl")
-    private const val INSPECTION_CARDS_COLLECTION = "inspection_cards"
-    private const val INSPECTION_CARD_BLOB = "inspection_card_blob"
-    private const val TITLE_FIELD = "title"
-    private const val COMPONENT_FIELD = "component"
   }
 }

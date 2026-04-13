@@ -19,7 +19,7 @@ import dev.fanfly.wingslog.core.attachments.model.fileCount
 import dev.fanfly.wingslog.core.attachments.model.toLocalFile
 import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDataManager
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
@@ -43,7 +43,7 @@ sealed interface InspectionUiState {
 }
 
 class InspectionViewModel(
-  private val inspectionManager: InspectionManager,
+  private val inspectionDataManager: InspectionDataManager,
   private val attachmentManager: AttachmentManager,
   private val auth: FirebaseAuth,
   private val maintenanceLogManager: MaintenanceLogManager,
@@ -79,7 +79,7 @@ class InspectionViewModel(
   private fun loadData() {
     viewModelScope.launch {
       combine(
-        inspectionManager.observeInspections(aircraftId),
+        inspectionDataManager.observeInspections(aircraftId),
         maintenanceLogManager.observeMaintenanceOverview(aircraftId)
       ) { cards, overview ->
         cards to overview
@@ -266,7 +266,7 @@ class InspectionViewModel(
           force_due_date = forceDueDate, force_due_engine_hour = forceDueEngine,
           notes = notes, attachments = attachments,
         )
-        inspectionManager.addInspection(aircraftId, card).onSuccess { onSuccess() }
+        inspectionDataManager.addInspection(aircraftId, card).onSuccess { onSuccess() }
       } finally {
         _isSaving.value = false
       }
@@ -302,7 +302,7 @@ class InspectionViewModel(
           force_complied_status = forceCompliedStatus,
           notes = notes, attachments = attachments,
         )
-        inspectionManager.updateInspection(aircraftId, updatedCard).onSuccess { onSuccess() }
+        inspectionDataManager.updateInspection(aircraftId, updatedCard).onSuccess { onSuccess() }
       } finally {
         _isSaving.value = false
       }
@@ -318,7 +318,7 @@ class InspectionViewModel(
           .filter { it.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK }
         coroutineScope { fileAttachments.forEach { launch { attachmentManager.deleteFile(it.attachment) } } }
       }
-      inspectionManager.deleteInspection(aircraftId, cardId).onSuccess { onSuccess() }
+      inspectionDataManager.deleteInspection(aircraftId, cardId).onSuccess { onSuccess() }
     }
   }
 

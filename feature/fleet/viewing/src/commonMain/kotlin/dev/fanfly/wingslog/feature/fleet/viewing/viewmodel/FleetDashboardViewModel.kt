@@ -5,7 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDueManager
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDataManager
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,7 +22,8 @@ import kotlinx.coroutines.launch
 class FleetDashboardViewModel(
   private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
-  private val inspectionManager: InspectionManager,
+  private val inspectionDataManager: InspectionDataManager,
+  private val inspectionDueManager: InspectionDueManager,
 ) : ViewModel() {
 
   private var fleetInfoJob: Job? = null
@@ -46,7 +48,7 @@ class FleetDashboardViewModel(
           } else {
             val perAircraftFlows = fleet.map { aircraft ->
               combine(
-                inspectionManager.observeInspections(aircraft.id),
+                inspectionDataManager.observeInspections(aircraft.id),
                 logManager.observeLogs(aircraft.id)
               ) { inspections, logs ->
                 aircraft.id to worstStatus(inspections, logs)
@@ -65,13 +67,13 @@ class FleetDashboardViewModel(
     }
   }
 
-  private suspend fun worstStatus(
+  private fun worstStatus(
     inspections: List<InspectionCard>,
     logs: List<MaintenanceLog>,
   ): DueStatus {
     if (inspections.isEmpty()) return DueStatus.NORMAL
     return inspections
-      .map { card -> inspectionManager.computeNextDue(card, logs, inspections).status }
+      .map { card -> inspectionDueManager.computeNextDue(card, logs, inspections).status }
       .maxByOrNull { it.severity() }
       ?: DueStatus.NORMAL
   }

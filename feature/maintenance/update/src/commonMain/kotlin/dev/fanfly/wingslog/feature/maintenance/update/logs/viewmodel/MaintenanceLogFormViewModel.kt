@@ -13,11 +13,11 @@ import dev.fanfly.wingslog.core.attachments.datamanager.UploadState
 import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.toLocalFile
 import dev.fanfly.wingslog.core.database.generateRandomId
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.UiText
-import dev.fanfly.wingslog.core.ui.common.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDataManager
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
@@ -56,7 +56,7 @@ import wingslog.feature.maintenance.update.generated.resources.work_description_
 class MaintenanceLogFormViewModel(
   private val logManager: MaintenanceLogManager,
   private val fleetManager: FleetManager,
-  private val inspectionManager: InspectionManager,
+  private val inspectionDataManager: InspectionDataManager,
   private val attachmentManager: AttachmentManager,
   private val technicianManager: TechnicianManager,
   private val userProfileManager: UserProfileManager,
@@ -127,7 +127,7 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun observeInspections() {
-    inspectionManager.observeInspections(aircraftId)
+    inspectionDataManager.observeInspections(aircraftId)
       .onEach { cards ->
         _uiState.update { it.copy(availableInspectionCards = cards) }
       }
@@ -499,7 +499,7 @@ class MaintenanceLogFormViewModel(
               if (card.force_due_date != null || card.force_due_engine_hour > 0f ||
                 card.force_complied_status != null
               ) {
-                inspectionManager.updateInspection(
+                inspectionDataManager.updateInspection(
                   aircraftId,
                   card.copy(
                     force_due_date = null,

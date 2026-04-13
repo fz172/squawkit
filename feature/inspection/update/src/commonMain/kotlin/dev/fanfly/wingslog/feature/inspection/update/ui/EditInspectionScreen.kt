@@ -47,9 +47,9 @@ import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.TimeRule
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
-import dev.fanfly.wingslog.core.ui.common.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.update.compose.DeleteInspectionConfirmDialog
 import dev.fanfly.wingslog.feature.inspection.update.compose.ForcedOverrideFields

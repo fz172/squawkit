@@ -7,7 +7,8 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDueManager
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDataManager
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
@@ -23,7 +24,8 @@ import kotlinx.coroutines.launch
 class AircraftOverviewViewModel(
   private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
-  private val inspectionManager: InspectionManager,
+  private val inspectionDataManager: InspectionDataManager,
+  private val inspectionDueManager: InspectionDueManager,
   private val attachmentOpener: AttachmentOpener,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -49,7 +51,7 @@ class AircraftOverviewViewModel(
       combine(
         fleetManager.loadAircraft(aircraftId),
         logManager.observeLogs(aircraftId),
-        inspectionManager.observeInspections(aircraftId),
+        inspectionDataManager.observeInspections(aircraftId),
         logManager.observeMaintenanceOverview(aircraftId),
         attachmentOpener.downloadingIds
       ) { aircraft, logs, inspectionCards, overview, downloadingIds ->
@@ -89,7 +91,7 @@ class AircraftOverviewViewModel(
           val cardsWithStatus = inspectionCards.map { card ->
             InspectionCardWithStatus(
               card = card,
-              dueStatus = inspectionManager.computeNextDue(card, logs, inspectionCards),
+              dueStatus = inspectionDueManager.computeNextDue(card, logs, inspectionCards),
             )
           }
           val active = cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
@@ -222,7 +224,7 @@ class AircraftOverviewViewModel(
   fun deleteInspection(cardId: String) {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     viewModelScope.launch {
-      inspectionManager.deleteInspection(state.aircraft.id, cardId)
+      inspectionDataManager.deleteInspection(state.aircraft.id, cardId)
       _uiState.update { s ->
         if (s is AircraftOverviewUiState.Success) {
           s.copy(deletingInspectionId = null, selectedInspection = null)

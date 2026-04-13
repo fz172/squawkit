@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDataManager
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 
 class MaintenanceLogListViewModel(
   private val logManager: MaintenanceLogManager,
-  private val inspectionManager: InspectionManager,
+  private val inspectionDataManager: InspectionDataManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -84,7 +84,7 @@ class MaintenanceLogListViewModel(
 
   private fun observeInspections() {
     viewModelScope.launch {
-      inspectionManager.observeInspections(aircraftId)
+      inspectionDataManager.observeInspections(aircraftId)
         .catch { _availableCards.value = emptyList() }
         .collect { _availableCards.value = it }
     }
