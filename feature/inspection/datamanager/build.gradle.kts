@@ -6,6 +6,7 @@ plugins {
 android {
   namespace = "dev.fanfly.wingslog.feature.inspection.datamanager"
   compileSdk = 36
+
   defaultConfig {
     minSdk = 33
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -41,4 +42,8 @@ kotlin {
 
 dependencies {
   implementation(platform(libs.firebase.bom))
+  testImplementation(libs.junit)
+  testImplementation(libs.mockk)
+  testImplementation(libs.truth)
+  testImplementation(libs.kotlinx.coroutines.test)
 }
