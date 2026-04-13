@@ -7,7 +7,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning

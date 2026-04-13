@@ -25,6 +25,7 @@ rootProject.name = "wingslog"
 include(":app")
 include(":composeApp")
 include(":core:model")
+include(":core:datetime")
 include(":core:ui")
 include(":core:auth")
 include(":core:database")

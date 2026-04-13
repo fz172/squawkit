@@ -23,8 +23,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography

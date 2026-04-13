@@ -21,8 +21,8 @@ import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.attachments.viewing.AttachmentSection
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
-import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName

@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
-import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.displayResId
 import org.jetbrains.compose.resources.stringResource

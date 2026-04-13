@@ -18,8 +18,8 @@ import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
-import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
 import org.jetbrains.compose.resources.stringResource

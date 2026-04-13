@@ -34,7 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
-import dev.fanfly.wingslog.core.ui.common.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import kotlin.time.Clock
 import kotlin.time.Instant

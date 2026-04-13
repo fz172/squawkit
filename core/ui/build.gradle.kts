@@ -43,6 +43,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":core:model"))
+      api(project(":core:datetime"))
       api(libs.compose.ui)
       api(libs.material3)
       api(libs.material.icons.extended)

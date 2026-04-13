@@ -8,7 +8,7 @@ import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
 import dev.fanfly.wingslog.core.database.getFleetCollectionRef
 import dev.fanfly.wingslog.core.database.setEncoded
-import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
+import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus

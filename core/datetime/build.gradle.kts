@@ -4,13 +4,12 @@ plugins {
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.inspection.datamanager"
+  namespace = "dev.fanfly.wingslog.core.datetime"
   compileSdk = 36
+
   defaultConfig {
     minSdk = 33
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
-
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
@@ -30,15 +29,11 @@ kotlin {
   iosSimulatorArm64()
 
   sourceSets {
-    commonMain.dependencies {
-      implementation(project(":core:datetime"))
-      implementation(project(":core:database"))
-      implementation(project(":feature:inspection:model"))
-      implementation(libs.kermit)
+    commonMain {
+      dependencies {
+        api(libs.kotlinx.datetime)
+        implementation(libs.wire.runtime)
+      }
     }
   }
-}
-
-dependencies {
-  implementation(platform(libs.firebase.bom))
 }
