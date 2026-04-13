@@ -6,6 +6,7 @@ plugins {
   alias(libs.plugins.kotlin.compose) apply false
   alias(libs.plugins.kotlin.multiplatform) apply false
   alias(libs.plugins.compose.multiplatform) apply false
+  alias(libs.plugins.kover) apply false
   // Firebase
   id("com.google.gms.google-services") version "4.4.4" apply false
   id("com.google.protobuf") version "0.9.5" apply false
