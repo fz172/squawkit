@@ -1,17 +1,21 @@
 package dev.fanfly.wingslog.core.ui.common.datetime
 
+import com.squareup.wire.Instant as WireInstant
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
-import com.squareup.wire.Instant as WireInstant
 
-fun WireInstant.toLocalDate(): LocalDate {
-  // Convert WireInstant (epoch seconds and nanos) to LocalDate
-  val instant = Instant.fromEpochSeconds(this.getEpochSecond(), this.getNano().toLong())
-  return instant.toLocalDateTime(TimeZone.UTC).date
+/**
+ *  Convert WireInstant (epoch seconds and nanos) to LocalDate
+ */
+fun WireInstant.toLocalDate(timeZone: TimeZone = TimeZone.UTC): LocalDate {
+  return toInstant().toLocalDateTime(timeZone).date
 }
+
+fun WireInstant.toInstant(): Instant =
+  Instant.fromEpochSeconds(this.getEpochSecond(), this.getNano().toLong())
 
 private val DisplayDateFormat = LocalDate.Format {
   monthNumber()

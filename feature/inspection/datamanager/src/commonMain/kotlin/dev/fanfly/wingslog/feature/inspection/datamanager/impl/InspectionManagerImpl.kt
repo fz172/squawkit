@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.database.generateRandomId
 import dev.fanfly.wingslog.core.database.getBlobAsBytes
 import dev.fanfly.wingslog.core.database.getFleetCollectionRef
 import dev.fanfly.wingslog.core.database.setEncoded
+import dev.fanfly.wingslog.core.ui.common.datetime.toLocalDate
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionManager
 import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
@@ -16,7 +17,6 @@ import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -120,7 +120,8 @@ class InspectionManagerImpl(
     }
 
     // 1. Force overrides
-    val hasForcedDate = card.force_due_date != null && (card.force_due_date!!.getEpochSecond() > 0L)
+    val forceDueDate = card.force_due_date
+    val hasForcedDate = forceDueDate != null && (forceDueDate.getEpochSecond() > 0L)
     val hasForcedEngine = card.force_due_engine_hour > 0f
 
     // Determine which metric to track against based on component type
@@ -136,11 +137,7 @@ class InspectionManagerImpl(
 
     if (hasForcedDate || hasForcedEngine) {
       val nextDueDate = if (hasForcedDate) {
-        Instant.fromEpochSeconds(
-          card.force_due_date!!.getEpochSecond(),
-          card.force_due_date!!.getNano()
-        )
-          .toLocalDateTime(TimeZone.currentSystemDefault()).date
+        forceDueDate.toLocalDate(TimeZone.currentSystemDefault())
       } else null
       val nextDueEngine = if (hasForcedEngine) card.force_due_engine_hour else null
 
@@ -177,19 +174,13 @@ class InspectionManagerImpl(
       when {
         timeRule != null -> {
           val baseDate = if (latestLog?.timestamp != null) {
-            Instant.fromEpochSeconds(
-              latestLog.timestamp!!.getEpochSecond(),
-              latestLog.timestamp!!.getNano()
-            )
-              .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            latestLog.timestamp!!.toLocalDate(TimeZone.currentSystemDefault())
           } else {
             // If never done, we assume it's due from the beginning of the aircraft logs or now.
             // Using aircraft creation date would be better, but we don't have it here easily.
             // Using the earliest log date as a proxy.
-            allLogs.lastOrNull()?.timestamp?.let {
-              Instant.fromEpochSeconds(it.getEpochSecond(), it.getNano())
-                .toLocalDateTime(TimeZone.currentSystemDefault()).date
-            } ?: currentDate
+            allLogs.lastOrNull()?.timestamp?.toLocalDate(TimeZone.currentSystemDefault())
+              ?: currentDate
           }
           val calculated = baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH)
           if (nextDueDate == null || calculated < nextDueDate) {

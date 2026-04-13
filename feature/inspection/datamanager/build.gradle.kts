@@ -31,6 +31,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:ui"))
       implementation(project(":core:database"))
       implementation(project(":feature:inspection:model"))
       implementation(libs.kermit)
