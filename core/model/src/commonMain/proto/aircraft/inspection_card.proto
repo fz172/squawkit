@@ -24,6 +24,7 @@ enum ComplianceType {
 // A time-interval-based rule (e.g. every 12 months)
 message TimeRule {
   int32 interval_months = 1;
+  google.protobuf.Timestamp creation_date = 2;
 }
 
 // A engine-hour-based rule (e.g. every 100 hours)

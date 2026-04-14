@@ -43,11 +43,13 @@ import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.TimeRule
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionDetailTab
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionScheduleTab
+import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -147,17 +149,15 @@ fun AddInspectionScreen(
           Tab(
             selected = pagerState.currentPage == 0,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
-            text = { Text(stringResource(InspectionRes.string.basics)) }
-          )
+            text = { Text(stringResource(InspectionRes.string.basics)) })
           Tab(
             selected = pagerState.currentPage == 1,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
-            text = { Text(stringResource(InspectionRes.string.details)) }
-          )
+            text = { Text(stringResource(InspectionRes.string.details)) })
           Tab(
             selected = pagerState.currentPage == 2,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(2) } },
-            text = { Text(stringResource(InspectionRes.string.schedule)) }
+            text = { Text(stringResource(InspectionRes.string.schedule)) },
           )
         }
       }
@@ -172,9 +172,7 @@ fun AddInspectionScreen(
         verticalAlignment = Alignment.Top
       ) { page ->
         Column(
-          modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+          modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
             .padding(Spacing.screenPadding)
         ) {
           when (page) {
@@ -204,8 +202,7 @@ fun AddInspectionScreen(
                     selected = component == entry,
                     onClick = { component = entry },
                     shape = SegmentedButtonDefaults.itemShape(
-                      index = index,
-                      count = components.size
+                      index = index, count = components.size
                     ),
                     icon = {},
                     label = {
@@ -311,11 +308,19 @@ fun AddInspectionScreen(
       BottomButtons(
         onPrimaryClick = {
           val ruleList = mutableListOf<InspectionRule>()
+          val now = Clock.System.now()
           if (linkedToId != null) {
             ruleList.add(InspectionRule(linked_rule = LinkedRule(parent_inspection_id = linkedToId!!)))
           } else {
             intervalMonths.toIntOrNull()?.let {
-              ruleList.add(InspectionRule(time_rule = TimeRule(interval_months = it)))
+              ruleList.add(
+                InspectionRule(
+                  time_rule = TimeRule(
+                    interval_months = it,
+                    creation_date = toWireInstant(now.epochSeconds, now.nanosecondsOfSecond),
+                  )
+                )
+              )
             }
             intervalHours.toDoubleOrNull()?.let {
               ruleList.add(InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = it.toFloat())))
@@ -329,13 +334,14 @@ fun AddInspectionScreen(
             type = type,
             rules = ruleList,
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
-            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() } ?: "",
-            compliance_details = complianceNotes.takeIf { it.isNotBlank() } ?: "",
+            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() }
+              ?: "",
+            compliance_details = complianceNotes.takeIf { it.isNotBlank() }
+              ?: "",
             is_one_time = isOneTime,
             force_due_engine_hour = 0f,
             force_due_date = null,
-            notes = ""
-          )
+            notes = "")
           onSave(card)
         },
         onSecondaryClick = { tryCancel() },

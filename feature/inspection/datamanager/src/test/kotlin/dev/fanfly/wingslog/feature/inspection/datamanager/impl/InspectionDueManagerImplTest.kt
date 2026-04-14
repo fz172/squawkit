@@ -278,6 +278,50 @@ class InspectionDueManagerImplTest {
   }
 
   @Test
+  fun timeRule_noLogs_withCreationDate_usesCreationDateAsBase() {
+    // No matching logs; creation_date set to 2024-01-01 with a 12-month interval.
+    // Expected next due: 2025-01-01, which is before CURRENT_INSTANT (2026-04-13) → OVERDUE.
+    val card = card(id = "c1", rules = listOf(timeRule(12, creationDate = iso("2024-01-01"))))
+
+    val result = manager.computeNextDue(card, emptyList(), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 1, 1))
+    assertThat(result.status).isEqualTo(DueStatus.OVERDUE)
+  }
+
+  @Test
+  fun timeRule_unrelatedLogAdded_doesNotMoveDueDate() {
+    // Regression: an unrelated maintenance log (no matching inspection ID) must not
+    // shift the due date of an unrelated time-rule inspection.
+    // Before the fix the implementation used allLogs' earliest date as the base,
+    // so adding any log would silently move the due date.
+    val card = card(id = "c1", rules = listOf(timeRule(12, creationDate = iso("2024-01-01"))))
+    val unrelatedLog =
+      log(id = "log-unrelated", timestamp = iso("2024-06-01"), inspectionIds = emptyList())
+
+    val result = manager.computeNextDue(card, listOf(unrelatedLog), listOf(card))
+
+    // Due date must be anchored to creation_date (2024-01-01) + 12 months = 2025-01-01,
+    // NOT to the unrelated log date (2024-06-01) + 12 months = 2025-06-01.
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 1, 1))
+  }
+
+  @Test
+  fun timeRule_matchingLog_overridesCreationDate() {
+    // When a matching log exists the implementation must use that log's date as the
+    // base, regardless of what creation_date says.
+    val card = card(id = "c1", rules = listOf(timeRule(12, creationDate = iso("2024-01-01"))))
+    val matchingLog =
+      log(id = "log-match", inspectionIds = listOf("c1"), timestamp = iso("2026-01-01"))
+
+    val result = manager.computeNextDue(card, listOf(matchingLog), listOf(card))
+
+    // Base = log date 2026-01-01 + 12 months = 2027-01-01, not creation_date + 12 months.
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2027, 1, 1))
+    assertThat(result.status).isEqualTo(DueStatus.NORMAL)
+  }
+
+  @Test
   fun forceComplied_newerThanLatestLog_advancesToNextCycle() {
     val card = card(
       id = "c1",
@@ -337,8 +381,8 @@ class InspectionDueManagerImplTest {
     inspection_ids = inspectionIds,
   )
 
-  private fun timeRule(months: Int): InspectionRule =
-    InspectionRule(time_rule = TimeRule(interval_months = months))
+  private fun timeRule(months: Int, creationDate: WireInstant? = null): InspectionRule =
+    InspectionRule(time_rule = TimeRule(interval_months = months, creation_date = creationDate))
 
   private fun engineRule(hours: Float): InspectionRule =
     InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = hours))

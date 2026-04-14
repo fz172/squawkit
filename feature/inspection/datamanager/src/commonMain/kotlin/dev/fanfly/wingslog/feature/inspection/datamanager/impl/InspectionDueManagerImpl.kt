@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.inspection.datamanager.impl
 
+import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
@@ -103,11 +104,16 @@ class InspectionDueManagerImpl(
         timeRule != null -> {
           val baseDate = if (latestLog?.timestamp != null) {
             latestLog.timestamp!!.toLocalDate(timeZone)
+              .also { logger.d { "TimeRule base date:  Latest log date: $it" } }
           } else {
-            // If never done, we assume it's due from the beginning of the aircraft logs or now.
-            // Using aircraft creation date would be better, but we don't have it here easily.
-            // Using the earliest log date as a proxy.
-            allLogs.lastOrNull()?.timestamp?.toLocalDate(timeZone) ?: currentDate
+            val creationDate = timeRule.creation_date
+            if (creationDate != null && creationDate.getEpochSecond() > 0L) {
+              creationDate.toLocalDate(timeZone)
+                .also { logger.d { "TimeRule base date: Using rule creation date: $it" } }
+            } else {
+              logger.w { "TimeRule has no creation_date set; falling back to current date $currentDate" }
+              currentDate
+            }
           }
           val calculated = baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH)
           if (nextDueDate == null || calculated < nextDueDate) {
@@ -207,5 +213,9 @@ class InspectionDueManagerImpl(
       isImmediate = isImmediate,
       status = status
     )
+  }
+
+  companion object {
+    private val logger = Logger.withTag("InspectionDueManager")
   }
 }

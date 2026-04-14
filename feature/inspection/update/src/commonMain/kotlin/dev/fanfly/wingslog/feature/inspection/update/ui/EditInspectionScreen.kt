@@ -360,11 +360,22 @@ fun EditInspectionScreen(
       BottomButtons(
         onPrimaryClick = {
           val ruleList = mutableListOf<InspectionRule>()
+          val existingTimeRuleCreationDate =
+            card.rules.firstNotNullOfOrNull { it.time_rule?.creation_date }
+          val now = Clock.System.now()
           if (linkedToId != null) {
             ruleList.add(InspectionRule(linked_rule = LinkedRule(parent_inspection_id = linkedToId!!)))
           } else {
             intervalMonths.toIntOrNull()?.let {
-              ruleList.add(InspectionRule(time_rule = TimeRule(interval_months = it)))
+              ruleList.add(
+                InspectionRule(
+                  time_rule = TimeRule(
+                    interval_months = it,
+                    creation_date = existingTimeRuleCreationDate
+                      ?: toWireInstant(now.epochSeconds, now.nanosecondsOfSecond),
+                  )
+                )
+              )
             }
             intervalHours.toFloatOrNull()?.let {
               ruleList.add(InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = it)))
