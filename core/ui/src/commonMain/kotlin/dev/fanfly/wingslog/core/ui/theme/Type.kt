@@ -114,6 +114,13 @@ fun rememberWingslogTypography(): Typography {
       fontSize = 11.sp,
       lineHeight = 16.sp,
       letterSpacing = 0.5.sp
+    ),
+    displaySmall = TextStyle(
+      fontFamily = headlineFamily,
+      fontWeight = FontWeight.Black,
+      fontSize = 36.sp,
+      lineHeight = 40.sp,
+      letterSpacing = 0.sp
     )
   )
 }
@@ -131,6 +138,23 @@ fun rememberWingslogTypography(): Typography {
  * used as TextStyle arguments inside Text() composables).
  */
 object WingslogTypography {
+  /**
+   * Hero display style used for primary dashboard data (next due dates, tail numbers).
+   */
+  val heroDisplay: TextStyle
+    @Composable get() {
+      val family = rememberBrandHeadlineFamily()
+      return remember(family) {
+        TextStyle(
+          fontFamily = family,
+          fontWeight = FontWeight.Black,
+          fontSize = 36.sp,
+          lineHeight = 40.sp,
+          letterSpacing = 0.sp
+        )
+      }
+    }
+
   val dataLarge: TextStyle
     @Composable get() {
       val family = rememberJetBrainsMonoFamily()

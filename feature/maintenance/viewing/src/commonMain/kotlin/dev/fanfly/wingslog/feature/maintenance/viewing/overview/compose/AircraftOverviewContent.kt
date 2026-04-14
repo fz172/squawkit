@@ -3,10 +3,13 @@ package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -29,8 +32,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.update.compose.DeleteInspectionConfirmDialog
 import dev.fanfly.wingslog.feature.inspection.viewing.CriticalAlertsSection
@@ -45,7 +52,7 @@ import wingslog.feature.maintenance.viewing.generated.resources.edit_aircraft
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AircraftOverviewContent(
   state: AircraftOverviewUiState.Success,
@@ -60,38 +67,33 @@ fun AircraftOverviewContent(
   Scaffold(
     modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     snackbarHost = { SnackbarHost(snackbarHostState) },
+    containerColor = MaterialTheme.colorScheme.surface, // Clean, dark background
     topBar = {
       TopAppBar(
-        scrollBehavior = scrollBehavior, title = {
-          Column {
-            Text(
-              text = stringResource(
-                Res.string.make_model_template, state.aircraft.make, state.aircraft.model
-              )
-            )
-            Text(
-              text = state.aircraft.tail_number,
-              style = MaterialTheme.typography.labelMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
-        }, navigationIcon = {
+        scrollBehavior = scrollBehavior,
+        title = {
+          // Empty title for a clean, instrument-like look when not scrolled.
+          // The data-rich header below provides context.
+        },
+        navigationIcon = {
           IconButton(onClick = { onAction(AircraftOverviewAction.BackClick) }) {
             Icon(
               Icons.AutoMirrored.Filled.ArrowBack,
               contentDescription = stringResource(CoreRes.string.back)
             )
           }
-        }, actions = {
+        },
+        actions = {
           IconButton(onClick = { onAction(AircraftOverviewAction.EditClick(state.aircraft.id)) }) {
             Icon(
               Icons.Default.Settings,
               contentDescription = stringResource(MaintenanceRes.string.edit_aircraft)
             )
           }
-        }, colors = TopAppBarDefaults.topAppBarColors(
-          containerColor = MaterialTheme.colorScheme.background,
-          scrolledContainerColor = MaterialTheme.colorScheme.background
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+          containerColor = Color.Transparent,
+          scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
         )
       )
     }) { paddingValues ->
@@ -133,6 +135,27 @@ fun AircraftOverviewContent(
         modifier = Modifier.fillMaxSize().verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
       ) {
+
+        // --- Header Section ---
+        FlowRow(
+          modifier = Modifier
+            .padding(horizontal = Spacing.screenPadding)
+            .padding(top = Spacing.medium),
+          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+        ) {
+          Text(
+            text = stringResource(
+              Res.string.make_model_template, state.aircraft.make, state.aircraft.model
+            ),
+            style = WingslogTypography.heroDisplay,
+            color = MaterialTheme.colorScheme.onSurface
+          )
+          Text(
+            text = state.aircraft.tail_number,
+            style = WingslogTypography.heroDisplay,
+            color = MaterialTheme.colorScheme.primary // Instrument-blue accent
+          )
+        }
 
         // --- Configuration Section ---
         Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {

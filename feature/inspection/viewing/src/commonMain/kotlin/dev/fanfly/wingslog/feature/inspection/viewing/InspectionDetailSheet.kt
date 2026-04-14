@@ -33,6 +33,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusOkDark
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
@@ -104,10 +105,7 @@ fun InspectionDetailSheet(
       } else {
         Text(
           text = card.title,
-          style = MaterialTheme.typography.headlineLarge.copy(
-            fontWeight = FontWeight.Black,
-            lineHeight = 35.sp,
-          ),
+          style = MaterialTheme.typography.displaySmall,
           color = AviationBlue90,
         )
       }
@@ -119,10 +117,7 @@ fun InspectionDetailSheet(
     if (badgeVisible) {
       Text(
         text = card.title,
-        style = MaterialTheme.typography.headlineLarge.copy(
-          fontWeight = FontWeight.Black,
-          lineHeight = 35.sp,
-        ),
+        style = MaterialTheme.typography.displaySmall,
         color = AviationBlue90,
       )
     }
@@ -318,11 +313,7 @@ private fun DueDateHero(dueStatus: DueMetadata) {
         )
         Text(
           text = HeroDueDateFormat.format(nextDueDate).uppercase(),
-          style = MaterialTheme.typography.headlineLarge.copy(
-            fontSize = 36.sp,
-            fontWeight = FontWeight.Black,
-            lineHeight = 40.sp,
-          ),
+          style = WingslogTypography.heroDisplay,
           color = accentColor,
         )
         Text(
@@ -344,11 +335,7 @@ private fun DueDateHero(dueStatus: DueMetadata) {
         )
         Text(
           text = dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace(),
-          style = MaterialTheme.typography.headlineLarge.copy(
-            fontSize = 36.sp,
-            fontWeight = FontWeight.Black,
-            lineHeight = 40.sp,
-          ),
+          style = WingslogTypography.heroDisplay,
           color = accentColor,
         )
       }

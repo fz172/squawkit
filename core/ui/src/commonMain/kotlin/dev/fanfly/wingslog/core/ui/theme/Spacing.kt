@@ -14,7 +14,7 @@ object Spacing {
   val massive = 48.dp
 
   // Common Layout Constants
-  val screenPadding = large
+  val screenPadding = extraLarge
   val columnGap = large
   val rowGap = medium
   val cardCornerRadius = 24.dp
