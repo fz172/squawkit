@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -18,46 +16,61 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.attachments.viewing.AttachmentSection
-import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
+import dev.fanfly.wingslog.core.ui.theme.AviationBlue90
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
+import dev.fanfly.wingslog.core.ui.theme.StatusOkDark
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
+import kotlin.time.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.char
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.dash
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.inspection.sharedassets.generated.resources.compliance_authority
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_ad_short
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_sb_short
-import wingslog.feature.inspection.sharedassets.generated.resources.due_soon
 import wingslog.feature.inspection.sharedassets.generated.resources.edit_inspection
 import wingslog.feature.inspection.sharedassets.generated.resources.engine_format
-import wingslog.feature.inspection.sharedassets.generated.resources.overdue
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
 import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
-import wingslog.feature.inspection.viewing.generated.resources.compliance_details
+import wingslog.feature.inspection.viewing.generated.resources.badge_maintenance_due
+import wingslog.feature.inspection.viewing.generated.resources.badge_overdue
 import wingslog.feature.inspection.viewing.generated.resources.complied
-import wingslog.feature.inspection.viewing.generated.resources.due_date
-import wingslog.feature.inspection.viewing.generated.resources.due_engine
-import wingslog.feature.inspection.viewing.generated.resources.due_soon_date
-import wingslog.feature.inspection.viewing.generated.resources.due_soon_date_engine
-import wingslog.feature.inspection.viewing.generated.resources.due_soon_engine
+import wingslog.feature.inspection.viewing.generated.resources.days_overdue_count
+import wingslog.feature.inspection.viewing.generated.resources.days_remaining
+import wingslog.feature.inspection.viewing.generated.resources.due_today
 import wingslog.feature.inspection.viewing.generated.resources.maintenance_history
+import wingslog.feature.inspection.viewing.generated.resources.next_due_date
+import wingslog.feature.inspection.viewing.generated.resources.next_due_engine_hrs
 import wingslog.feature.inspection.viewing.generated.resources.no_maintenance_logs_for_inspection
 import wingslog.feature.inspection.viewing.generated.resources.on_condition
-import wingslog.feature.inspection.viewing.generated.resources.overdue_was
+
+private val HeroDueDateFormat = LocalDate.Format {
+  monthName(MonthNames.ENGLISH_ABBREVIATED)
+  char(' ')
+  day()
+  char(',')
+  char(' ')
+  year()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,6 +83,9 @@ fun InspectionDetailSheet(
   downloadingIds: Set<String> = emptySet(),
   modifier: Modifier = Modifier,
 ) {
+  val card = cardWithStatus.card
+  val dueStatus = cardWithStatus.dueStatus
+
   DetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
@@ -79,105 +95,124 @@ fun InspectionDetailSheet(
       }
     },
     headerSlot = {
-      val typeLabel = when (cardWithStatus.card.type) {
-        ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> stringResource(SharedRes.string.compliance_type_sb_short)
-        ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> stringResource(
-          SharedRes.string.compliance_type_ad_short
-        )
-
-        else -> null
-      }
-      if (typeLabel != null) {
+      // When a badge is visible it occupies this slot and centers with the Edit button.
+      // When there is no badge the title takes this slot so it aligns with the button instead.
+      val badgeVisible =
+        dueStatus.status == DueStatus.OVERDUE || dueStatus.status == DueStatus.DUE_SOON
+      if (badgeVisible) {
+        StatusBadge(dueStatus)
+      } else {
         Text(
-          text = typeLabel,
-          style = MaterialTheme.typography.labelSmall,
-          color = if (cardWithStatus.card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
-            MaterialTheme.colorScheme.onErrorContainer
-          } else {
-            MaterialTheme.colorScheme.onPrimaryContainer
-          },
-          modifier = Modifier
-            .background(
-              if (cardWithStatus.card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) {
-                MaterialTheme.colorScheme.errorContainer
-              } else {
-                MaterialTheme.colorScheme.primaryContainer
-              },
-              RoundedCornerShape(Spacing.badgeCornerRadius)
-            )
-            .padding(horizontal = 6.dp, vertical = 2.dp)
-        )
-        Spacer(Modifier.height(Spacing.tiny))
-      }
-      Text(
-        text = cardWithStatus.card.title,
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold
-      )
-      if (cardWithStatus.card.reference_number.isNotBlank()) {
-        Text(
-          text = cardWithStatus.card.reference_number,
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
+          text = card.title,
+          style = MaterialTheme.typography.headlineLarge.copy(
+            fontWeight = FontWeight.Black,
+            lineHeight = 35.sp,
+          ),
+          color = AviationBlue90,
         )
       }
-    }
+    },
   ) {
-    DueStatusChip(cardWithStatus.dueStatus)
-
-    if (cardWithStatus.card.compliance_authority.isNotBlank()) {
-      Spacer(Modifier.height(Spacing.medium))
+    // Title shown in content only when a badge occupied the header slot
+    val badgeVisible =
+      dueStatus.status == DueStatus.OVERDUE || dueStatus.status == DueStatus.DUE_SOON
+    if (badgeVisible) {
       Text(
-        text = stringResource(SharedRes.string.compliance_authority),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-      )
-      Text(
-        text = cardWithStatus.card.compliance_authority,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1
+        text = card.title,
+        style = MaterialTheme.typography.headlineLarge.copy(
+          fontWeight = FontWeight.Black,
+          lineHeight = 35.sp,
+        ),
+        color = AviationBlue90,
       )
     }
 
-    if (cardWithStatus.card.compliance_details.isNotBlank()) {
-      Spacer(Modifier.height(Spacing.large))
+    // Line 1: compliance type badge (SB / AD), if present
+    val typeLabel = when (card.type) {
+      ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN ->
+        stringResource(SharedRes.string.compliance_type_sb_short)
+
+      ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE ->
+        stringResource(SharedRes.string.compliance_type_ad_short)
+
+      else -> null
+    }
+    if (typeLabel != null) {
       Text(
-        text = stringResource(ViewingRes.string.compliance_details),
-        style = MaterialTheme.typography.labelLarge,
+        text = typeLabel,
+        style = MaterialTheme.typography.labelSmall,
+        color = if (card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE)
+          MaterialTheme.colorScheme.onErrorContainer
+        else
+          MaterialTheme.colorScheme.onPrimaryContainer,
+        modifier = Modifier
+          .background(
+            if (card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE)
+              MaterialTheme.colorScheme.errorContainer
+            else
+              MaterialTheme.colorScheme.primaryContainer,
+            RoundedCornerShape(Spacing.badgeCornerRadius),
+          )
+          .padding(horizontal = 6.dp, vertical = 2.dp),
+      )
+    }
+
+    // Line 2: compliance authority · reference number (dot omitted if only one is present)
+    val authority = card.compliance_authority.takeIf { it.isNotBlank() }
+    val refNumber = card.reference_number.takeIf { it.isNotBlank() }
+    val metaLine = when {
+      authority != null && refNumber != null -> "$authority · $refNumber"
+      authority != null -> authority
+      refNumber != null -> refNumber
+      else -> null
+    }
+    if (metaLine != null) {
+      Text(
+        text = metaLine,
+        style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
+    }
+
+    // Description text (notes and compliance details shown as plain body text)
+    if (card.notes.isNotBlank()) {
       Text(
-        text = cardWithStatus.card.compliance_details,
+        text = card.notes,
         style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.fillMaxWidth(0.85f),
       )
     }
-
-    if (cardWithStatus.card.notes.isNotBlank()) {
-      Spacer(Modifier.height(Spacing.medium))
+    if (card.compliance_details.isNotBlank()) {
       Text(
-        text = cardWithStatus.card.notes,
+        text = card.compliance_details,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.fillMaxWidth(0.85f),
       )
     }
 
-    Spacer(modifier = Modifier.height(Spacing.large))
+    Spacer(Modifier.height(Spacing.medium))
+
+    // Due date hero
+    DueDateHero(dueStatus)
+
+    Spacer(Modifier.height(Spacing.large))
 
     AttachmentSection(
-      attachments = cardWithStatus.card.attachments,
+      attachments = card.attachments,
       onAttachmentTap = onAttachmentTap,
       downloadingIds = downloadingIds,
     )
 
-    if (cardWithStatus.card.attachments.isNotEmpty()) {
+    if (card.attachments.isNotEmpty()) {
       Spacer(modifier = Modifier.height(Spacing.large))
     }
 
     Text(
       text = stringResource(ViewingRes.string.maintenance_history),
       style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.SemiBold
+      fontWeight = FontWeight.SemiBold,
     )
 
     Spacer(modifier = Modifier.height(Spacing.small))
@@ -186,7 +221,7 @@ fun InspectionDetailSheet(
       Text(
         text = stringResource(ViewingRes.string.no_maintenance_logs_for_inspection),
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     } else {
       logs.forEach { log ->
@@ -198,49 +233,127 @@ fun InspectionDetailSheet(
 }
 
 @Composable
-private fun DueStatusChip(dueStatus: DueMetadata) {
-  val (label, color) = when {
-    dueStatus.status == DueStatus.COMPLIED -> stringResource(ViewingRes.string.complied) to StatusOk
-    dueStatus.isOnCondition -> stringResource(ViewingRes.string.on_condition) to MaterialTheme.colorScheme.onSurfaceVariant
-    dueStatus.status == DueStatus.OVERDUE -> {
-      val dateStr = dueStatus.nextDueDate?.toDisplayFormat() ?: ""
-      (if (dateStr.isNotBlank()) stringResource(
-        ViewingRes.string.overdue_was, dateStr
-      ) else stringResource(SharedRes.string.overdue)) to MaterialTheme.colorScheme.error
-    }
+private fun dueStatusColor(status: DueStatus): Color = when (status) {
+  DueStatus.OVERDUE -> MaterialTheme.colorScheme.error
+  DueStatus.DUE_SOON -> StatusWarning
+  DueStatus.COMPLIED -> StatusOk
+  DueStatus.NORMAL -> StatusOk
+}
 
-    dueStatus.status == DueStatus.DUE_SOON -> {
-      val dateStr = dueStatus.nextDueDate?.toDisplayFormat()
-      val engineStr = dueStatus.nextDueEngine?.toDouble()?.formatToOneDecimalPlace()
-      when {
-        dateStr != null && engineStr != null -> stringResource(
-          ViewingRes.string.due_soon_date_engine,
-          dateStr,
-          engineStr
-        )
+@Composable
+private fun StatusBadge(dueStatus: DueMetadata) {
+  val (label, bgColor, fgColor) = when {
+    dueStatus.status == DueStatus.OVERDUE -> Triple(
+      stringResource(ViewingRes.string.badge_overdue),
+      MaterialTheme.colorScheme.error,
+      MaterialTheme.colorScheme.onError,
+    )
 
-        dateStr != null -> stringResource(ViewingRes.string.due_soon_date, dateStr)
-        engineStr != null -> stringResource(ViewingRes.string.due_soon_engine, engineStr)
-        else -> stringResource(SharedRes.string.due_soon)
-      } to StatusWarning
-    }
+    dueStatus.status == DueStatus.DUE_SOON -> Triple(
+      stringResource(ViewingRes.string.badge_maintenance_due),
+      StatusWarning,
+      Color.Black,
+    )
 
-    dueStatus.nextDueDate != null -> stringResource(
-      ViewingRes.string.due_date, dueStatus.nextDueDate!!.toDisplayFormat()
-    ) to StatusOk
-
-    dueStatus.nextDueEngine != null -> stringResource(
-      ViewingRes.string.due_engine,
-      dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
-    ) to StatusOk
-
-    else -> stringResource(CoreRes.string.dash) to MaterialTheme.colorScheme.onSurfaceVariant
+    else -> return
   }
-  AssistChip(
-    onClick = {},
-    label = { Text(label, style = MaterialTheme.typography.labelMedium) },
-    colors = AssistChipDefaults.assistChipColors(labelColor = color),
+  Text(
+    text = label,
+    style = MaterialTheme.typography.labelSmall.copy(
+      fontWeight = FontWeight.ExtraBold,
+      letterSpacing = 0.5.sp,
+    ),
+    color = fgColor,
+    modifier = Modifier
+      .background(bgColor, RoundedCornerShape(20.dp))
+      .padding(horizontal = 12.dp, vertical = 4.dp),
   )
+}
+
+@Composable
+private fun DueDateHero(dueStatus: DueMetadata) {
+  val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+  val accentColor = dueStatusColor(dueStatus.status)
+
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+    when {
+      dueStatus.status == DueStatus.COMPLIED -> {
+        Text(
+          text = stringResource(ViewingRes.string.complied),
+          style = MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 0.5.sp,
+          ),
+          color = Color.Black,
+          modifier = Modifier
+            .background(StatusOkDark, RoundedCornerShape(20.dp))
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        )
+      }
+
+      dueStatus.isOnCondition -> {
+        Text(
+          text = stringResource(ViewingRes.string.on_condition),
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.SemiBold,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+
+      dueStatus.nextDueDate != null -> {
+        val nextDueDate = dueStatus.nextDueDate!!
+        val daysUntil = today.daysUntil(nextDueDate)
+        val countdownText = when {
+          daysUntil > 0 -> stringResource(ViewingRes.string.days_remaining, daysUntil)
+          daysUntil < 0 -> stringResource(ViewingRes.string.days_overdue_count, -daysUntil)
+          else -> stringResource(ViewingRes.string.due_today)
+        }
+
+        Text(
+          text = stringResource(ViewingRes.string.next_due_date),
+          style = MaterialTheme.typography.labelMedium.copy(
+            fontWeight = FontWeight.SemiBold,
+          ),
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+          text = HeroDueDateFormat.format(nextDueDate).uppercase(),
+          style = MaterialTheme.typography.headlineLarge.copy(
+            fontSize = 36.sp,
+            fontWeight = FontWeight.Black,
+            lineHeight = 40.sp,
+          ),
+          color = accentColor,
+        )
+        Text(
+          text = countdownText,
+          style = MaterialTheme.typography.bodyMedium.copy(
+            fontWeight = FontWeight.SemiBold,
+          ),
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+
+      dueStatus.nextDueEngine != null -> {
+        Text(
+          text = stringResource(ViewingRes.string.next_due_engine_hrs),
+          style = MaterialTheme.typography.labelMedium.copy(
+            fontWeight = FontWeight.SemiBold,
+          ),
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+          text = dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace(),
+          style = MaterialTheme.typography.headlineLarge.copy(
+            fontSize = 36.sp,
+            fontWeight = FontWeight.Black,
+            lineHeight = 40.sp,
+          ),
+          color = accentColor,
+        )
+      }
+    }
+  }
 }
 
 @Composable
@@ -265,9 +378,8 @@ private fun LogHistoryItem(log: MaintenanceLog) {
         text = stringResource(
           SharedRes.string.engine_format, log.engine_hour.formatToOneDecimalPlace()
         ),
-
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
     Text(

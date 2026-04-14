@@ -54,7 +54,7 @@ fun DetailSheet(
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
       ) {
         Column(
           modifier = Modifier
