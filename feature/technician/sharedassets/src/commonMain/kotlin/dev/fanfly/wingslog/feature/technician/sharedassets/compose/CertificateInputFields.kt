@@ -13,15 +13,14 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -32,9 +31,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
-import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -80,30 +79,23 @@ fun CertificateInputFields(
     modifier = modifier,
     verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
   ) {
-    // --- License Type (Dropdown) ---
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(
-      expanded = expanded, onExpandedChange = { expanded = !expanded }) {
-      OutlinedTextField(
-        value = stringResource(licenseType.displayResId()),
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(text = stringResource(Res.string.certificate_type)) },
-        trailingIcon = {
-          ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-        },
-        modifier = Modifier
-          .fillMaxWidth()
-          .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-        shape = RoundedCornerShape(Spacing.buttonCornerRadius)
+    // --- License Type ---
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+      Text(
+        text = stringResource(Res.string.certificate_type),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
-      ExposedDropdownMenu(
-        expanded = expanded, onDismissRequest = { expanded = false }) {
-        LicenseType.entries.forEach { type ->
-          DropdownMenuItem(text = { Text(stringResource(type.displayResId())) }, onClick = {
-            onLicenseTypeChanged(type)
-            expanded = false
-          })
+      val types = LicenseType.entries
+      SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        types.forEachIndexed { index, type ->
+          SegmentedButton(
+            selected = licenseType == type,
+            onClick = { onLicenseTypeChanged(type) },
+            shape = SegmentedButtonDefaults.itemShape(index = index, count = types.size),
+            icon = {},
+            label = { Text(stringResource(type.displayResId())) },
+          )
         }
       }
     }
