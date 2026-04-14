@@ -27,7 +27,6 @@ import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListVie
 import dev.fanfly.wingslog.feature.userprofile.EditProfileScreen
 import dev.fanfly.wingslog.login.LoginScreen
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
 
 @Composable
 fun AppEntry() {
@@ -145,12 +144,9 @@ fun AppEntry() {
             type = NavType.StringType 
             nullable = true
           })
-        ) { backStackEntry ->
-          val technicianId = backStackEntry.arguments?.getString(Screen.TECHNICIAN_ID)
-          val parsedId = if (technicianId == "new") null else technicianId
-          val viewModel = koinViewModel<EditTechnicianViewModel>(parameters = { parametersOf(parsedId) })
+        ) {
           EditTechnicianScreen(
-            viewModel = viewModel,
+            viewModel = koinViewModel(),
             onNavigateBack = { navController.popBackStack() }
           )
         }

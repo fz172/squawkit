@@ -1,11 +1,13 @@
 package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,8 +32,10 @@ data class EditTechnicianUiState(
 
 class EditTechnicianViewModel(
   private val technicianManager: TechnicianManager,
-  technicianId: String? = null,
+  savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+  private val technicianId: String? = savedStateHandle.get<String>(Screen.TECHNICIAN_ID)?.takeIf { it != "new" }
 
   private val _uiState = MutableStateFlow(EditTechnicianUiState(isLoading = technicianId != null))
   val uiState = _uiState.asStateFlow()
