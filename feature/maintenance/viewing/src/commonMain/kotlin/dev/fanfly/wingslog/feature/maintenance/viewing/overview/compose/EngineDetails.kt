@@ -1,72 +1,80 @@
 package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Engine
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.component_propeller
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.maintenance.sharedassets.generated.resources.engine_with_index
+import wingslog.feature.maintenance.viewing.generated.resources.s_n_placeholder
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
-import wingslog.feature.maintenance.viewing.generated.resources.model_and_sn
+
 
 @Composable
-fun EngineDetails(index: Int, engine: Engine, showEngineIndex: Boolean = true) {
-  Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-    // Engine Header
-    Column {
-      Text(
-        text = if (showEngineIndex) stringResource(
-          SharedRes.string.engine_with_index,
-          index + 1
-        ) else stringResource(CoreRes.string.component_engine),
-        style = MaterialTheme.typography.bodyLarge,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface
-      )
-      Text(
-        text = stringResource(
-          MaintenanceRes.string.model_and_sn,
-          engine.make,
-          engine.model,
-          engine.serial
-        ),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-      )
-    }
+fun EngineDetails(label: String, engine: Engine) {
+  ComponentCard(
+    category = label,
+    name = "${engine.make} ${engine.model}",
+    serial = engine.serial,
+    content = {
+      // Propeller Section
+      val propeller = engine.propeller
+      if (propeller != null) {
+        Column {
+          Text(
+            text = stringResource(CoreRes.string.component_propeller).uppercase(),
+            style = TextStyle(
+              fontFamily = FontFamily.SansSerif,
+              fontWeight = FontWeight.Bold,
+              fontSize = 10.sp,
+              letterSpacing = 0.1.sp
+            ),
+            color = MaterialTheme.colorScheme.primary
+          )
 
-    // Propeller Details
-    Column {
-      Text(
-        text = stringResource(CoreRes.string.component_propeller),
-        style = MaterialTheme.typography.bodyLarge,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface
-      )
-      Text(
-        text = stringResource(
-          MaintenanceRes.string.model_and_sn,
-          engine.propeller?.hub?.make ?: "",
-          engine.propeller?.hub?.model ?: "",
-          engine.propeller?.hub?.serial ?: ""
-        ),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-      )
-    }
+          Text(
+            text = "${propeller.hub?.make} ${propeller.hub?.model}",
+            modifier = Modifier.padding(top = 4.dp),
+            style = TextStyle(
+              fontFamily = FontFamily.SansSerif,
+              fontWeight = FontWeight.SemiBold,
+              fontSize = 16.sp
+            ),
+            color = MaterialTheme.colorScheme.onSurface
+          )
 
-    // Blades
-    val blades = engine.propeller?.blades ?: emptyList()
-    if (blades.isNotEmpty()) {
-      BladeChipsOverview(blades)
+          Text(
+            text = stringResource(
+              MaintenanceRes.string.s_n_placeholder,
+              propeller.hub?.serial ?: ""
+            ),
+            modifier = Modifier.padding(top = 2.dp),
+            style = TextStyle(
+              fontFamily = FontFamily.SansSerif,
+              fontWeight = FontWeight.Normal,
+              fontSize = 13.sp
+            ),
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+
+          // Blades Grid
+          if (propeller.blades.isNotEmpty()) {
+            Column(modifier = Modifier.padding(top = Spacing.large)) {
+              BladeChipsOverview(propeller.blades)
+            }
+          }
+        }
+      }
     }
-  }
+  )
 }

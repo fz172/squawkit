@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <string name="aircraft_data">Aircraft Data</string>
   <string name="blade_abbreviation_with_index">B%1$d: %2$s</string>
   <string name="model_and_sn">Model: %1$s %2$s\nS/N: %3$s\n</string>
-  <string name="airframe_s_n">Airframe S/N: %1$s</string>
+  <string name="s_n_placeholder">S/N: %1$s</string>
+  <string name="s_n_empty">No S/N</string>
   <string name="edit_aircraft">Edit aircraft</string>
   <string name="maintenance_logs">Maintenance Logs</string>
   <string name="search_logs">Search logs…</string>
