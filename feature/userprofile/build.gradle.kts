@@ -54,6 +54,7 @@ kotlin {
       // Navigation
       implementation(libs.androidx.navigation.compose)
       implementation(libs.compose.foundation)
+      implementation(libs.compose.ui.backhandler)
 
       // Lifecycle & DI
       implementation(libs.jetbrains.lifecycle.runtime.compose)

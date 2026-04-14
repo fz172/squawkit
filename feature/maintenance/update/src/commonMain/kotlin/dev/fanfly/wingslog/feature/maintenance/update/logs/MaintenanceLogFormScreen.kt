@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.maintenance.update.logs
 
-import androidx.activity.compose.BackHandler
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,15 +42,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
-import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -62,28 +62,23 @@ import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.InspectionWor
 import dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
 import wingslog.core.attachments.sharedassets.generated.resources.file_added
 import wingslog.core.attachments.sharedassets.generated.resources.file_read_error
 import wingslog.core.attachments.sharedassets.generated.resources.link_added
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.save
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.edit_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.maintenance_date
 import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.update.generated.resources.airframe_time_hours
 import wingslog.feature.maintenance.update.generated.resources.delete_log
 import wingslog.feature.maintenance.update.generated.resources.engine_time_hours
@@ -93,11 +88,16 @@ import wingslog.feature.maintenance.update.generated.resources.log_updated
 import wingslog.feature.maintenance.update.generated.resources.prop_time_hours
 import wingslog.feature.maintenance.update.generated.resources.tap_to_change_date
 import wingslog.feature.maintenance.update.generated.resources.work_description_required
-import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 import wingslog.feature.technician.sharedassets.generated.resources.performed_by
 import wingslog.feature.technician.sharedassets.generated.resources.select_technician
+import kotlin.time.Instant
+import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
+import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun MaintenanceLogFormScreen(
   navController: NavController,
@@ -162,24 +162,24 @@ fun MaintenanceLogFormScreen(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-                title = { Text(stringResource(MaintenanceRes.string.delete_log)) },
-                text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
-                confirmButton = {
-                  TextButton(
-                    onClick = {
-                      viewModel.deleteLog()
-                      showDeleteDialog = false
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                  ) {
-                    Text(stringResource(CoreRes.string.delete))
-                  }
-                },
-                dismissButton = {
-                  TextButton(onClick = { showDeleteDialog = false }) {
-                    Text(stringResource(CoreRes.string.cancel))
-                  }
-                })
+      title = { Text(stringResource(MaintenanceRes.string.delete_log)) },
+      text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            viewModel.deleteLog()
+            showDeleteDialog = false
+          },
+          colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+        ) {
+          Text(stringResource(CoreRes.string.delete))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showDeleteDialog = false }) {
+          Text(stringResource(CoreRes.string.cancel))
+        }
+      })
   }
 
   val saveLabel = stringResource(CoreRes.string.save)
@@ -220,34 +220,34 @@ fun MaintenanceLogFormScreen(
           )
           OutlinedTextField(
             value = dateDisplayText,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text(stringResource(SharedRes.string.maintenance_date)) },
-                            leadingIcon = {
-                              Icon(
-                                Icons.Default.CalendarToday,
-                                contentDescription = stringResource(SharedRes.string.maintenance_date)
-                              )
-                            },
-                            modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
-                            singleLine = true,
-                            enabled = false,
-                            colors = OutlinedTextFieldDefaults.colors(
-                              disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                              disabledBorderColor = MaterialTheme.colorScheme.outline,
-                              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(SharedRes.string.maintenance_date)) },
+            leadingIcon = {
+              Icon(
+                Icons.Default.CalendarToday,
+                contentDescription = stringResource(SharedRes.string.maintenance_date)
+              )
+            },
+            modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+            singleLine = true,
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+              disabledTextColor = MaterialTheme.colorScheme.onSurface,
+              disabledBorderColor = MaterialTheme.colorScheme.outline,
+              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
           )
 
           if (showDatePicker) {
             val initialMs = uiState.maintenanceDate?.let { date ->
               date.let {
                 LocalDateTime(it.year, it.month, it.day, 12, 0, 0).let { ldt ->
-                    Instant.fromEpochSeconds(
-                      ldt.date.toEpochDays() * 86400L
-                    ).toEpochMilliseconds()
-                  }
+                  Instant.fromEpochSeconds(
+                    ldt.date.toEpochDays() * 86400L
+                  ).toEpochMilliseconds()
+                }
               }
             }
             val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMs)
@@ -289,22 +289,22 @@ fun MaintenanceLogFormScreen(
           )
           OutlinedTextField(
             value = technicianDisplayText,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text(stringResource(TechnicianRes.string.performed_by)) },
-                            leadingIcon = {
-                              Icon(Icons.Default.Person, contentDescription = null)
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                              .clickable { viewModel.showTechnicianPicker() },
-                            singleLine = true,
-                            enabled = false,
-                            colors = OutlinedTextFieldDefaults.colors(
-                              disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                              disabledBorderColor = MaterialTheme.colorScheme.outline,
-                              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(TechnicianRes.string.performed_by)) },
+            leadingIcon = {
+              Icon(Icons.Default.Person, contentDescription = null)
+            },
+            modifier = Modifier.fillMaxWidth()
+              .clickable { viewModel.showTechnicianPicker() },
+            singleLine = true,
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+              disabledTextColor = MaterialTheme.colorScheme.onSurface,
+              disabledBorderColor = MaterialTheme.colorScheme.outline,
+              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
           )
 
           if (uiState.showTechnicianPicker) {

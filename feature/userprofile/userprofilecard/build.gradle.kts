@@ -47,6 +47,7 @@ kotlin {
 
       // Compose
       implementation(libs.components.resources)
+      implementation(libs.compose.ui.backhandler)
     }
   }
 }

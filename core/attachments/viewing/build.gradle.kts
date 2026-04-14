@@ -33,13 +33,11 @@ kotlin {
       implementation(project(":core:attachments:model"))
       implementation(project(":core:attachments:sharedassets"))
       implementation(project(":core:attachments:datamanager"))
-
+      implementation(libs.compose.ui.backhandler)
     }
     androidMain.dependencies {
-      implementation(libs.androidx.activity.compose)
     }
-  }
-}
+  }}
 
 dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)

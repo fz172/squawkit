@@ -2,7 +2,6 @@
 
 package dev.fanfly.wingslog.feature.userprofile
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +20,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -34,12 +35,13 @@ import dev.fanfly.wingslog.feature.technician.sharedassets.compose.CertificateIn
 import dev.fanfly.wingslog.feature.userprofile.data.EditProfileViewModel
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
-import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.core.ui.generated.resources.edit_profile
+import kotlin.time.Instant
+import wingslog.core.ui.generated.resources.Res as CoreUiRes
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun EditProfileScreen(
   viewModel: EditProfileViewModel = koinViewModel(),
@@ -53,6 +55,7 @@ fun EditProfileScreen(
     if (uiState.hasChanges) showUnsavedChangesDialog = true
     else navController.popBackStack()
   }
+
   BackHandler(enabled = uiState.hasChanges) {
     showUnsavedChangesDialog = true
   }

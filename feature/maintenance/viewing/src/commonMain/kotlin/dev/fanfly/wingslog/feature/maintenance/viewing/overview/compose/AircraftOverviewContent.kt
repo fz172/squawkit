@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,10 +38,12 @@ import dev.fanfly.wingslog.feature.inspection.viewing.InspectionDetailSheet
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res
 import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template
+import wingslog.feature.maintenance.viewing.generated.resources.edit_aircraft
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,7 +83,12 @@ fun AircraftOverviewContent(
             )
           }
         }, actions = {
-          // Actions moved to ConfigurationCard
+          IconButton(onClick = { onAction(AircraftOverviewAction.EditClick(state.aircraft.id)) }) {
+            Icon(
+              Icons.Default.Settings,
+              contentDescription = stringResource(MaintenanceRes.string.edit_aircraft)
+            )
+          }
         }, colors = TopAppBarDefaults.topAppBarColors(
           containerColor = MaterialTheme.colorScheme.background,
           scrolledContainerColor = MaterialTheme.colorScheme.background
@@ -128,9 +136,7 @@ fun AircraftOverviewContent(
 
         // --- Configuration Section ---
         Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
-          ConfigurationCard(
-            state.aircraft,
-            onEditClick = { onAction(AircraftOverviewAction.EditClick(it)) })
+          ConfigurationCard(state.aircraft)
         }
 
         // --- Critical Alerts Section ---

@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.maintenance.update.aircraft
 
-import androidx.activity.compose.BackHandler
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +26,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,20 +44,20 @@ import dev.fanfly.wingslog.feature.maintenance.update.aircraft.compose.EngineSec
 import dev.fanfly.wingslog.feature.maintenance.update.aircraft.viewmodel.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.delete
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.delete_aircraft
 import wingslog.feature.maintenance.sharedassets.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.update.generated.resources.add_aircraft
 import wingslog.feature.maintenance.update.generated.resources.add_engine
 import wingslog.feature.maintenance.update.generated.resources.update_aircraft
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.update.generated.resources.Res as MaintenanceRes
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun EditAircraftScreen(
   viewModel: EditAircraftViewModel = koinViewModel(), navController: NavController,
@@ -73,7 +73,7 @@ fun EditAircraftScreen(
     if (uiState.hasChanges) showUnsavedChangesDialog = true
     else navController.popBackStack()
   }
-  
+
   BackHandler(enabled = uiState.hasChanges) {
     showUnsavedChangesDialog = true
   }
