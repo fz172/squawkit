@@ -3,7 +3,7 @@
   <string name="compliance_type_ad">Airworthiness Directives (AD)</string>
   <string name="compliance_type_sb">Service Bulletins (SB)</string>
   <string name="compliance_type_routine">Routine Tasks</string>
-  <string name="inspection_title">Inspection Title</string>
+  <string name="inspection_title">Maintenance Task Title</string>
   <string name="interval_months">Interval (months)</string>
   <string name="interval_hours">Interval (hours)</string>
   <string name="schedule_with_another_work">Schedule With Another Work (Optional)</string>

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -34,8 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
@@ -45,12 +42,12 @@ import dev.fanfly.wingslog.feature.inspection.viewing.InspectionDetailSheet
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res
 import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template
-import wingslog.feature.maintenance.viewing.generated.resources.edit_aircraft
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.viewing.generated.resources.edit_aircraft
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -199,7 +196,7 @@ fun AircraftOverviewContent(
           modifier = Modifier.padding(horizontal = Spacing.screenPadding),
         )
 
-        Spacer(Modifier.height(Spacing.massive)) // Clearance for the floating bottom bar
+        Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding + Spacing.screenPadding)) // Clearance for the floating bottom bar
       }
 
       // Floating Bottom Bar
