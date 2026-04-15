@@ -68,7 +68,6 @@ fun AirframeSection(
           onValueChange = { viewModel.onTailNumberChanged(it) }, // Update ViewModel
           label = stringResource(Res.string.tail_number),
           modifier = Modifier.weight(1f), // Takes up 50%
-          enabled = aircraft.id == "",
           keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
         )
       }

@@ -27,14 +27,28 @@ core/
   ui/                   # Material 3 theme, color tokens, shared Compose components
   auth/                 # Firebase Auth with platform-specific implementations
   database/             # Firestore helpers — getFleetCollectionRef, DocumentReferences
+  datetime/             # Date/time utilities — WireInstantFactory, platform-specific formatters
+  attachments/          # Attachment handling (follows canonical submodule layout)
+    model/datamanager/sharedassets/viewing/
 feature/
-  fleet/                # Fleet dashboard ViewModel + UI
-  fleet/datamanager/    # FleetManager: observes aircraft via Firestore Flow, CRUD for aircraft
-  maintenance/          # Maintenance log UI (list/create/edit)
-  maintenance/datamanager/ # MaintenanceLogManager: CRUD for logs and maintenance overview
-  inspection/           # (see canonical pattern below)
-  userprofile/          # Profile edit UI + database
-  settings/             # App settings screen
+  fleet/                # Fleet dashboard (canonical layout, no update — dashboard is read-only)
+    model/              #   Aircraft-related domain types
+    datamanager/        #   FleetManager: observes aircraft via Firestore Flow, CRUD
+    sharedassets/       #   Strings, drawables shared across fleet UI
+    viewing/            #   DashboardScreen + AircraftDashboardCard + FleetDashboardViewModel
+  inspection/           # (reference implementation — see canonical pattern below)
+  maintenance/          # Maintenance log UI
+    datamanager/        #   MaintenanceLogManager: CRUD for logs and maintenance overview
+    sharedassets/update/viewing/
+  technician/           # Technician management
+    datamanager/        #   TechnicianManager
+    manage/             #   Combined list + edit screens + ViewModels (TechnicianListScreen, EditTechnicianScreen)
+    sharedassets/
+  settings/             # App settings screen (flat module, no submodule structure)
+  userprofile/          # Profile edit UI + database (non-canonical legacy structure)
+    database/           #   UserProfileManager (Firestore)
+    sharedassets/
+    userprofilecard/    #   Profile card composable
 ```
 
 ## Canonical Feature Module Pattern
@@ -124,4 +138,9 @@ Documents store binary blobs (e.g., field `AIRCRAFT_INFO_BLOB`). Decode: `Aircra
 ## Design System
 
 Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, intentional typography hierarchy, consistent spacing tokens. Prioritize clarity and readability over information density. The `.impeccable.md` file in the repo root has brand/aesthetic detail.
-etail.
+
+## Coding Conventions
+
+- **Instants**: Always use `kotlin.time.Instant`, never `kotlinx.datetime.Instant`.
+- **ViewModels in `fleet/`**: The ViewModel lives inside the `viewing/` submodule (no separate layer), since fleet has no editable screen at the feature level.
+- **`technician/manage`**: This feature uses `manage/` instead of the canonical `viewing/` + `update/` split — both read and write screens coexist in one submodule. New features should prefer the canonical pattern unless the feature is inherently CRUD-only with no standalone viewing screen.
