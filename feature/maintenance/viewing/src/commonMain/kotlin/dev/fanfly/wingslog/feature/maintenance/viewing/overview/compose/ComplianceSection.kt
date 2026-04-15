@@ -2,11 +2,9 @@ package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -132,21 +130,13 @@ fun ComplianceSection(
         )
       }
     } else {
-      displayList.chunked(2).forEach { rowItems ->
-        Row(
-          modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-          horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-        ) {
-          rowItems.forEach { item ->
-            InspectionCardItem(
-              cardWithStatus = item,
-              onClick = { onCardClick(item) },
-              modifier = Modifier.weight(1f),
-            )
-          }
-          if (rowItems.size == 1) {
-            Spacer(modifier = Modifier.weight(1f))
-          }
+      Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+        displayList.forEach { item ->
+          InspectionCardItem(
+            cardWithStatus = item,
+            onClick = { onCardClick(item) },
+            modifier = Modifier.fillMaxWidth(),
+          )
         }
       }
     }

@@ -9,7 +9,10 @@
   <string name="due_soon_date_engine">Due Soon: %1$s / %2$s hrs</string>
   <string name="on_condition">On Condition</string>
 
-  <string name="critical_airworthiness">CRITICAL: AIRWORTHINESS</string>
+  <string name="critical_airworthiness">URGENT ATTENTION REQUIRED</string>
+  <string name="status_label">STATUS</string>
+  <string name="maintenance_due_title">Maintenance Due</string>
+  <string name="maintenance_due_subtitle">Maintenance tasks pending</string>
   <string name="compliance_details">Compliance Details</string>
   <string name="next_due_date">NEXT DUE DATE</string>
   <string name="next_due_engine_hrs">NEXT DUE ENGINE HRS</string>
@@ -17,7 +20,11 @@
   <string name="days_overdue_count">%1$d Days Overdue</string>
   <string name="due_today">Due Today</string>
   <string name="badge_overdue">OVERDUE</string>
+  <string name="badge_due">DUE</string>
   <string name="badge_maintenance_due">MAINTENANCE DUE</string>
+  <string name="label_deadline">DEADLINE</string>
+  <string name="label_due_engine">DUE @</string>
+  <string name="label_expired">EXPIRED %1$s</string>
   <string name="maintenance_history">Maintenance History</string>
   <string name="no_maintenance_logs_for_inspection">No logs yet. Add a maintenance entry and tag this inspection to see history here.</string>
 </resources>

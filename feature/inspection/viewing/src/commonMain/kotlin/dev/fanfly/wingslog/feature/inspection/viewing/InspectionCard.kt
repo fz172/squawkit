@@ -1,23 +1,21 @@
 package dev.fanfly.wingslog.feature.inspection.viewing
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,77 +27,141 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 
 @Composable
 fun InspectionCard(
   title: String,
-  status: String,
+  subtitle: String,
+  statusLabel: String,
+  statusValue: String,
+  badgeText: String,
   icon: ImageVector,
   statusColor: Color,
-  isOverdue: Boolean = false,
+  dueStatus: DueStatus = DueStatus.NORMAL,
   onClick: () -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
-  val containerColor = if (isOverdue) {
-    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
-  } else {
-    MaterialTheme.colorScheme.surfaceContainer
-  }
+  val isOverdue = dueStatus == DueStatus.OVERDUE
+  val isDueSoon = dueStatus == DueStatus.DUE_SOON
+  val isAlert = isOverdue || isDueSoon
 
-  val borderColor = if (isOverdue) {
-    MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
-  } else {
-    Color.Transparent
+  val borderColor = when {
+    isOverdue -> MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+    isDueSoon -> statusColor.copy(alpha = 0.5f)
+    else -> MaterialTheme.colorScheme.surfaceVariant
   }
 
   Card(
     onClick = onClick,
-    modifier = modifier.fillMaxHeight().heightIn(min = 88.dp),
-    colors = CardDefaults.cardColors(
-      containerColor = containerColor
-    ),
-    border = BorderStroke(2.dp, borderColor),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius)
+    modifier = modifier.fillMaxWidth(),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    border = BorderStroke(1.dp, borderColor),
+    shape = RoundedCornerShape(Spacing.chipCornerRadius),
   ) {
     Column(
-      modifier = Modifier.fillMaxSize().padding(Spacing.large),
-      verticalArrangement = Arrangement.SpaceBetween,
-      horizontalAlignment = Alignment.Start
+      modifier = Modifier.padding(Spacing.large),
+      verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
-      Row(verticalAlignment = Alignment.CenterVertically) {
+      // Row 1: icon + status badge
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
         Icon(
           imageVector = icon,
           contentDescription = null,
           modifier = Modifier.size(18.dp),
-          tint = if (isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+          tint = if (isAlert) statusColor else MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.width(Spacing.small))
+        if (badgeText.isNotBlank()) {
+          StatusBadge(text = badgeText, color = if (isOverdue) MaterialTheme.colorScheme.error else statusColor)
+        }
+      }
+
+      // Row 2: title + subtitle (notes)
+      Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
         Text(
           text = title,
-          style = MaterialTheme.typography.titleSmall,
+          style = MaterialTheme.typography.titleMedium,
           fontWeight = FontWeight.Bold,
-          color = if (isOverdue) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface
+          color = MaterialTheme.colorScheme.onSurface,
         )
+        if (subtitle.isNotBlank()) {
+          Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
       }
-      Spacer(Modifier.fillMaxWidth().height(Spacing.small))
-      Text(
-        text = status,
-        style = MaterialTheme.typography.labelMedium,
-        color = if (isOverdue) MaterialTheme.colorScheme.error else statusColor,
-        fontWeight = FontWeight.ExtraBold
-      )
+
+      // Row 3: divider + label / value + chevron
+      if (statusValue.isNotBlank()) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+            if (statusLabel.isNotBlank()) {
+              Text(
+                text = statusLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                letterSpacing = 0.8.sp,
+              )
+            }
+            Text(
+              text = statusValue,
+              style = MaterialTheme.typography.titleMedium,
+              fontWeight = FontWeight.Bold,
+              color = statusColor,
+            )
+          }
+          Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      }
     }
+  }
+}
+
+@Composable
+private fun StatusBadge(text: String, color: Color) {
+  Box(
+    modifier = Modifier
+      .background(color.copy(alpha = 0.12f), RoundedCornerShape(Spacing.extraSmall))
+      .padding(horizontal = Spacing.small, vertical = Spacing.tiny)
+  ) {
+    Text(
+      text = text,
+      style = MaterialTheme.typography.labelSmall,
+      color = color,
+      fontWeight = FontWeight.Bold,
+      letterSpacing = 0.5.sp,
+    )
   }
 }
 
 @Preview
 @Composable
 fun PreviewInspectionCard() = InspectionCard(
-  title = "100 Hr",
-  status = "Overdue (was Dec 12, 2024)",
+  title = "100 Hr Inspection",
+  subtitle = "Routine engine and airframe check",
+  statusLabel = "DEADLINE",
+  statusValue = "05/13/2026",
+  badgeText = "OVERDUE",
   icon = Icons.Default.Schedule,
-  statusColor = StatusWarning,
+  statusColor = MaterialTheme.colorScheme.error,
+  dueStatus = DueStatus.OVERDUE,
   modifier = Modifier.fillMaxWidth()
 )

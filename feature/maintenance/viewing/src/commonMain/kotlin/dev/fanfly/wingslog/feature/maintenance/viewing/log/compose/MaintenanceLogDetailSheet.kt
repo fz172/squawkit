@@ -27,7 +27,7 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.sharedassets.generated.resources.inspection_work
+import wingslog.feature.inspection.sharedassets.generated.resources.inspections
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_inspection
 import wingslog.feature.maintenance.sharedassets.generated.resources.airframe_time_label
@@ -108,7 +108,7 @@ fun MaintenanceLogDetailSheet(
     if (log.inspection_ids.isNotEmpty()) {
       Spacer(Modifier.height(Spacing.small))
       Text(
-        text = stringResource(SharedInspectionRes.string.inspection_work),
+        text = stringResource(SharedInspectionRes.string.inspections),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
       )

@@ -1,9 +1,10 @@
 package dev.fanfly.wingslog.feature.inspection.viewing
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,14 +16,13 @@ import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.dash
-import wingslog.feature.inspection.sharedassets.generated.resources.overdue
+import wingslog.feature.inspection.viewing.generated.resources.badge_due
+import wingslog.feature.inspection.viewing.generated.resources.badge_overdue
 import wingslog.feature.inspection.viewing.generated.resources.complied
-import wingslog.feature.inspection.viewing.generated.resources.due_date
-import wingslog.feature.inspection.viewing.generated.resources.due_engine
+import wingslog.feature.inspection.viewing.generated.resources.label_deadline
+import wingslog.feature.inspection.viewing.generated.resources.label_due_engine
 import wingslog.feature.inspection.viewing.generated.resources.on_condition
-import wingslog.feature.inspection.viewing.generated.resources.overdue_was
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
 
 @Composable
@@ -32,47 +32,55 @@ fun InspectionCardItem(
   modifier: Modifier = Modifier,
 ) {
   val status = cardWithStatus.dueStatus.status
+  val dueDate = cardWithStatus.dueStatus.nextDueDate
+  val dueEngine = cardWithStatus.dueStatus.nextDueEngine
+  val isOnCondition = cardWithStatus.dueStatus.isOnCondition
+
   val statusColor = when (status) {
     DueStatus.OVERDUE -> MaterialTheme.colorScheme.error
     DueStatus.DUE_SOON -> StatusWarning
     DueStatus.COMPLIED -> StatusOk
-    DueStatus.NORMAL -> {
-      if (cardWithStatus.dueStatus.isOnCondition) MaterialTheme.colorScheme.onSurfaceVariant
-      else StatusOk
-    }
+    DueStatus.NORMAL -> if (isOnCondition) MaterialTheme.colorScheme.onSurfaceVariant
+    else MaterialTheme.colorScheme.primary
   }
-  val statusText = when {
-    status == DueStatus.COMPLIED -> stringResource(ViewingRes.string.complied)
-    cardWithStatus.dueStatus.isOnCondition -> stringResource(ViewingRes.string.on_condition)
-    status == DueStatus.OVERDUE -> {
-      val dateStr = cardWithStatus.dueStatus.nextDueDate?.toDisplayFormat()
-      if (dateStr != null) stringResource(ViewingRes.string.overdue_was, dateStr)
-      else stringResource(SharedRes.string.overdue)
-    }
 
-    cardWithStatus.dueStatus.nextDueDate != null -> stringResource(
-      ViewingRes.string.due_date,
-      cardWithStatus.dueStatus.nextDueDate!!.toDisplayFormat()
-    )
-
-    cardWithStatus.dueStatus.nextDueEngine != null -> stringResource(
-      ViewingRes.string.due_engine,
-      cardWithStatus.dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace()
-    )
-
-    else -> stringResource(CoreRes.string.dash)
+  val badgeText = when (status) {
+    DueStatus.OVERDUE -> stringResource(ViewingRes.string.badge_overdue)
+    DueStatus.DUE_SOON -> stringResource(ViewingRes.string.badge_due)
+    else -> ""
   }
-  val icon = when (status) {
-    DueStatus.OVERDUE -> Icons.Filled.Error
-    DueStatus.COMPLIED -> Icons.Default.CheckCircle
+
+  val icon = when {
+    status == DueStatus.OVERDUE || status == DueStatus.DUE_SOON -> Icons.Filled.Warning
+    dueEngine != null -> Icons.Filled.Build
+    status == DueStatus.COMPLIED -> Icons.Default.CheckCircle
     else -> Icons.Default.CalendarToday
   }
+
+  val statusLabel = when {
+    status == DueStatus.COMPLIED || isOnCondition -> ""
+    dueDate != null -> stringResource(ViewingRes.string.label_deadline)
+    dueEngine != null -> stringResource(ViewingRes.string.label_due_engine)
+    else -> ""
+  }
+
+  val statusValue = when {
+    status == DueStatus.COMPLIED -> stringResource(ViewingRes.string.complied)
+    isOnCondition -> stringResource(ViewingRes.string.on_condition)
+    dueDate != null -> dueDate.toDisplayFormat()
+    dueEngine != null -> "${dueEngine.toDouble().formatToOneDecimalPlace()} HRS"
+    else -> stringResource(CoreRes.string.dash)
+  }
+
   InspectionCard(
     title = cardWithStatus.card.title,
-    status = statusText,
+    subtitle = cardWithStatus.card.notes,
+    statusLabel = statusLabel,
+    statusValue = statusValue,
+    badgeText = badgeText,
     icon = icon,
     statusColor = statusColor,
-    isOverdue = status == DueStatus.OVERDUE,
+    dueStatus = status,
     onClick = onClick,
     modifier = modifier,
   )

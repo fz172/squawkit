@@ -26,7 +26,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.remove
 import wingslog.feature.inspection.sharedassets.generated.resources.Res
-import wingslog.feature.inspection.sharedassets.generated.resources.inspection_work
+import wingslog.feature.inspection.sharedassets.generated.resources.inspections
 import wingslog.feature.inspection.sharedassets.generated.resources.no_inspection_work_recorded
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_inspection
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -46,7 +46,7 @@ fun InspectionWorkSection(
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
       Text(
-        text = stringResource(Res.string.inspection_work),
+        text = stringResource(Res.string.inspections),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
       )
