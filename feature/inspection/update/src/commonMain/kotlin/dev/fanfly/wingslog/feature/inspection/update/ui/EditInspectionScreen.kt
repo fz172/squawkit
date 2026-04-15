@@ -1,17 +1,11 @@
 package dev.fanfly.wingslog.feature.inspection.update.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -21,7 +15,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -40,11 +33,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.EngineHourRule
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.InspectionCard
-import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.TimeRule
@@ -55,30 +46,21 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.update.compose.DeleteInspectionConfirmDialog
 import dev.fanfly.wingslog.feature.inspection.update.compose.ForcedOverrideFields
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionDetailTab
+import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionIdentityTab
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionScheduleTab
+import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
-import wingslog.core.ui.generated.resources.component_airframe
-import wingslog.core.ui.generated.resources.component_avionics
-import wingslog.core.ui.generated.resources.component_engine
-import wingslog.core.ui.generated.resources.component_propeller
-import wingslog.core.ui.generated.resources.component_type
 import wingslog.core.ui.generated.resources.ok
-import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_ad_short
-import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_sb_short
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.edit_inspection
-import wingslog.feature.inspection.update.generated.resources.compliance_type
-import wingslog.feature.inspection.update.generated.resources.compliance_type_routine_short
+import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.update.generated.resources.details
 import wingslog.feature.inspection.update.generated.resources.identity
-import wingslog.feature.inspection.update.generated.resources.inspection_title
 import wingslog.feature.inspection.update.generated.resources.overrides
 import wingslog.feature.inspection.update.generated.resources.schedule
-import kotlin.time.Clock
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
-import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -220,88 +202,15 @@ fun EditInspectionScreen(
         ) {
           when (page) {
             0 -> {
-              // --- Page 0: Identity ---
-              OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text(stringResource(InspectionRes.string.inspection_title)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+              // --- Page 0: Identity (component & compliance type are read-only in edit) ---
+              InspectionIdentityTab(
+                title = title,
+                onTitleChange = { title = it },
+                component = component,
+                onComponentChange = null,
+                complianceType = type,
+                onComplianceTypeChange = null,
               )
-
-              Spacer(modifier = Modifier.height(Spacing.medium))
-
-              // Component Type (Static in Edit)
-              Text(
-                stringResource(CoreRes.string.component_type),
-                style = MaterialTheme.typography.labelLarge
-              )
-              Spacer(modifier = Modifier.height(Spacing.small))
-              Box(
-                modifier = Modifier.background(
-                  MaterialTheme.colorScheme.surfaceVariant,
-                  RoundedCornerShape(Spacing.cardCornerRadius)
-                ).padding(horizontal = Spacing.medium, vertical = Spacing.small)
-              ) {
-                Text(
-                  text = when (component) {
-                    InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME -> stringResource(
-                      CoreRes.string.component_airframe
-                    )
-
-                    InspectionComponentType.INSPECTION_COMPONENT_ENGINE -> stringResource(
-                      CoreRes.string.component_engine
-                    )
-
-                    InspectionComponentType.INSPECTION_COMPONENT_PROPELLER -> stringResource(
-                      CoreRes.string.component_propeller
-                    )
-
-                    InspectionComponentType.INSPECTION_COMPONENT_AVIONICS -> stringResource(
-                      CoreRes.string.component_avionics
-                    )
-
-                    else -> component.name.removePrefix("INSPECTION_COMPONENT_")
-                  },
-                  style = MaterialTheme.typography.bodyMedium,
-                  fontWeight = FontWeight.Bold,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              }
-
-              Spacer(modifier = Modifier.height(Spacing.medium))
-
-              // Compliance Type (Static in Edit)
-              Text(
-                stringResource(InspectionRes.string.compliance_type),
-                style = MaterialTheme.typography.labelLarge
-              )
-              Spacer(modifier = Modifier.height(Spacing.small))
-              Box(
-                modifier = Modifier.background(
-                  MaterialTheme.colorScheme.surfaceVariant,
-                  RoundedCornerShape(Spacing.cardCornerRadius)
-                ).padding(horizontal = Spacing.medium, vertical = Spacing.small)
-              ) {
-                Text(
-                  text = when (type) {
-                    ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> stringResource(
-                      SharedInspectionRes.string.compliance_type_ad_short
-                    )
-
-                    ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> stringResource(
-                      SharedInspectionRes.string.compliance_type_sb_short
-                    )
-
-                    ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION -> stringResource(
-                      InspectionRes.string.compliance_type_routine_short
-                    )
-                  },
-                  style = MaterialTheme.typography.bodyMedium,
-                  fontWeight = FontWeight.Bold,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-              }
             }
 
             1 -> {

@@ -16,12 +16,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -36,7 +32,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.EngineHourRule
 import dev.fanfly.wingslog.aircraft.InspectionCard
@@ -49,23 +44,14 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionDetailTab
+import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionIdentityTab
 import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionScheduleTab
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.back
-import wingslog.core.ui.generated.resources.component_airframe
-import wingslog.core.ui.generated.resources.component_avionics
-import wingslog.core.ui.generated.resources.component_engine
-import wingslog.core.ui.generated.resources.component_propeller
-import wingslog.core.ui.generated.resources.component_type
 import wingslog.feature.inspection.sharedassets.generated.resources.add_inspection
-import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_ad_short
-import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_sb_short
 import wingslog.feature.inspection.update.generated.resources.basics
-import wingslog.feature.inspection.update.generated.resources.compliance_type
-import wingslog.feature.inspection.update.generated.resources.compliance_type_routine_short
 import wingslog.feature.inspection.update.generated.resources.details
-import wingslog.feature.inspection.update.generated.resources.inspection_title
 import wingslog.feature.inspection.update.generated.resources.schedule
 import kotlin.time.Clock
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -179,100 +165,14 @@ fun AddInspectionScreen(
           when (page) {
             0 -> {
               // --- Page 0: Identity ---
-              OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text(stringResource(InspectionRes.string.inspection_title)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+              InspectionIdentityTab(
+                title = title,
+                onTitleChange = { title = it },
+                component = component,
+                onComponentChange = { component = it },
+                complianceType = type,
+                onComplianceTypeChange = { type = it },
               )
-
-              Spacer(modifier = Modifier.height(Spacing.medium))
-
-              // Component Type
-              Text(
-                stringResource(CoreRes.string.component_type),
-                style = MaterialTheme.typography.labelLarge
-              )
-              Spacer(modifier = Modifier.height(Spacing.small))
-              val components =
-                InspectionComponentType.entries.filter { it != InspectionComponentType.INSPECTION_COMPONENT_UNKNOWN }
-              SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                components.forEachIndexed { index, entry ->
-                  SegmentedButton(
-                    selected = component == entry,
-                    onClick = { component = entry },
-                    shape = SegmentedButtonDefaults.itemShape(
-                      index = index, count = components.size
-                    ),
-                    icon = {},
-                    label = {
-                      val componentLabel = when (entry) {
-                        InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME -> stringResource(
-                          CoreRes.string.component_airframe
-                        )
-
-                        InspectionComponentType.INSPECTION_COMPONENT_ENGINE -> stringResource(
-                          CoreRes.string.component_engine
-                        )
-
-                        InspectionComponentType.INSPECTION_COMPONENT_PROPELLER -> stringResource(
-                          CoreRes.string.component_propeller
-                        )
-
-                        InspectionComponentType.INSPECTION_COMPONENT_AVIONICS -> stringResource(
-                          CoreRes.string.component_avionics
-                        )
-
-                        else -> entry.name.removePrefix("INSPECTION_COMPONENT_")
-                      }
-                      Text(
-                        text = componentLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center
-                      )
-                    })
-                }
-              }
-
-              Spacer(modifier = Modifier.height(Spacing.medium))
-
-              // Compliance Type
-              Text(
-                stringResource(InspectionRes.string.compliance_type),
-                style = MaterialTheme.typography.labelLarge
-              )
-              Spacer(modifier = Modifier.height(Spacing.small))
-              val types = ComplianceType.entries
-              SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                types.forEachIndexed { index, entry ->
-                  SegmentedButton(
-                    selected = type == entry,
-                    onClick = { type = entry },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = types.size),
-                    icon = {},
-                    label = {
-                      val labelText = when (entry) {
-                        ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> stringResource(
-                          SharedInspectionRes.string.compliance_type_ad_short
-                        )
-
-                        ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> stringResource(
-                          SharedInspectionRes.string.compliance_type_sb_short
-                        )
-
-                        ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION -> stringResource(
-                          InspectionRes.string.compliance_type_routine_short
-                        )
-                      }
-                      Text(
-                        text = labelText,
-                        style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center
-                      )
-                    })
-                }
-              }
             }
 
             1 -> {

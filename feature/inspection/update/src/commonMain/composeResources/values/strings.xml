@@ -4,6 +4,16 @@
   <string name="compliance_type_sb">Service Bulletins (SB)</string>
   <string name="compliance_type_routine">Routine Tasks</string>
   <string name="inspection_title">Maintenance Task Title</string>
+  <string name="task_description_label">Task Description</string>
+  <string name="task_description_placeholder">e.g. 100-Hour Inspection</string>
+  <string name="task_title_helper">Provide a concise, technical name for this maintenance action as it appears in the service manual.</string>
+  <string name="component_type_description">Select the primary system or component this task pertains to for accurate telemetry tracking.</string>
+  <string name="compliance_type_description">Determine the regulatory nature of this task. Mandatory items will trigger critical system alerts.</string>
+  <string name="compliance_type_sb_full">SB (Service Bulletin)</string>
+  <string name="compliance_type_ad_full">AD (Airworthiness Directive)</string>
+  <string name="compliance_routine_sub">Scheduled maintenance intervals</string>
+  <string name="compliance_sb_sub">Manufacturer recommended</string>
+  <string name="compliance_ad_sub">Regulatory requirement</string>
   <string name="interval_months">Interval (months)</string>
   <string name="interval_hours">Interval (hours)</string>
   <string name="schedule_with_another_work">Schedule With Another Work (Optional)</string>
@@ -39,6 +49,7 @@
   <string name="schedule">Schedule</string>
   <string name="details">Details</string>
   <string name="identity">Identity</string>
+  <string name="task_identity_description">Define the core name and component category for this maintenance requirement.</string>
   <string name="overrides">Overrides</string>
   <string name="inspection_updated">Inspection updated</string>
   <string name="inspection_deleted">Inspection deleted</string>
