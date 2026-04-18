@@ -7,8 +7,8 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDueManager
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDataManager
+import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDueManager
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
@@ -140,12 +140,14 @@ class AircraftOverviewViewModel(
         deleteAircraft()
       }
 
-      is AircraftOverviewAction.LogDetailsClick -> {
-        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToLogDetails(action.aircraftId)) }
-      }
-
       is AircraftOverviewAction.AddLogClick -> {
         viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddLog(action.aircraftId)) }
+      }
+
+      is AircraftOverviewAction.EditLogClick -> {
+        viewModelScope.launch {
+          _events.send(AircraftOverviewEvent.NavigateToEditLog(action.aircraftId, action.logId))
+        }
       }
 
       is AircraftOverviewAction.AddInspectionClick -> {

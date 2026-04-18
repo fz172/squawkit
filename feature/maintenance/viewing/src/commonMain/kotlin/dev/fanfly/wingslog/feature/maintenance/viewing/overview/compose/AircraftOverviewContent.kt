@@ -1,16 +1,10 @@
 package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
@@ -21,35 +15,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
-import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.update.compose.DeleteInspectionConfirmDialog
-import dev.fanfly.wingslog.feature.inspection.viewing.CriticalAlertsSection
 import dev.fanfly.wingslog.feature.inspection.viewing.InspectionDetailSheet
+import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs.AircraftOverviewTabRow
+import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs.LogsTab
+import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs.MaintenanceTasksTab
+import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs.OverviewTab
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res
-import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template
 import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.edit_aircraft
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AircraftOverviewContent(
   state: AircraftOverviewUiState.Success,
@@ -57,21 +44,16 @@ fun AircraftOverviewContent(
   onAction: (AircraftOverviewAction) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val scrollState = rememberScrollState()
-  val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-  var showComplied by rememberSaveable { mutableStateOf(false) }
+  val pagerState = rememberPagerState { 3 }
+  val coroutineScope = rememberCoroutineScope()
 
   Scaffold(
-    modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+    modifier = modifier,
     snackbarHost = { SnackbarHost(snackbarHostState) },
-    containerColor = MaterialTheme.colorScheme.surface, // Clean, dark background
+    containerColor = MaterialTheme.colorScheme.surface,
     topBar = {
       TopAppBar(
-        scrollBehavior = scrollBehavior,
-        title = {
-          // Empty title for a clean, instrument-like look when not scrolled.
-          // The data-rich header below provides context.
-        },
+        title = {},
         navigationIcon = {
           IconButton(onClick = { onAction(AircraftOverviewAction.BackClick) }) {
             Icon(
@@ -93,9 +75,9 @@ fun AircraftOverviewContent(
           scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
         )
       )
-    }) { paddingValues ->
+    }
+  ) { paddingValues ->
 
-    // Inspection detail bottom sheet
     state.selectedInspection?.let { selectedInspection ->
       InspectionDetailSheet(
         cardWithStatus = selectedInspection,
@@ -114,7 +96,6 @@ fun AircraftOverviewContent(
       )
     }
 
-    // Delete inspection confirm dialog
     state.deletingInspectionId?.let { deletingInspectionId ->
       val title = (state.activeInspections + state.compliedInspections)
         .find { it.card.id == deletingInspectionId }?.card?.title ?: ""
@@ -125,88 +106,32 @@ fun AircraftOverviewContent(
       )
     }
 
-    Box(
-      modifier = Modifier.fillMaxSize().padding(paddingValues)
+    Column(
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(paddingValues)
     ) {
-      Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
-      ) {
-
-        // --- Header Section ---
-        FlowRow(
-          modifier = Modifier
-            .padding(horizontal = Spacing.screenPadding)
-            .padding(top = Spacing.medium),
-          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-        ) {
-          Text(
-            text = stringResource(
-              Res.string.make_model_template, state.aircraft.make, state.aircraft.model
-            ),
-            style = WingslogTypography.heroDisplay,
-            color = MaterialTheme.colorScheme.onSurface
-          )
-          Text(
-            text = state.aircraft.tail_number,
-            style = WingslogTypography.heroDisplay,
-            color = MaterialTheme.colorScheme.primary // Instrument-blue accent
-          )
-        }
-
-        // --- Configuration Section ---
-        Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
-          ConfigurationCard(state.aircraft)
-        }
-
-        // --- Critical Alerts Section ---
-        val overdueInspections =
-          state.activeInspections.filter { it.dueStatus.status == DueStatus.OVERDUE }
-        if (overdueInspections.isNotEmpty()) {
-          CriticalAlertsSection(
-            overdueInspections = overdueInspections,
-            onCardClick = { onAction(AircraftOverviewAction.InspectionCardClick(it)) },
-            modifier = Modifier.padding(horizontal = Spacing.screenPadding)
-          )
-        }
-
-        // --- Log Stats Section ---
-        state.logStats?.let { stats ->
-          if (stats.total == 0L) {
-            LogOnboardingCard(
-              onAddLogClick = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
-              modifier = Modifier.padding(horizontal = Spacing.screenPadding)
-            )
-          } else {
-            LogStatsSection(
-              stats = stats,
-              modifier = Modifier.padding(horizontal = Spacing.screenPadding)
-            )
-          }
-        }
-
-        // --- Compliance & Inspections Section ---
-        ComplianceSection(
-          activeInspections = state.activeInspections,
-          compliedInspections = state.compliedInspections,
-          showComplied = showComplied,
-          onToggleComplied = { showComplied = it },
-          onAddClick = { onAction(AircraftOverviewAction.AddInspectionClick(state.aircraft.id)) },
-          onCardClick = { onAction(AircraftOverviewAction.InspectionCardClick(it)) },
-          modifier = Modifier.padding(horizontal = Spacing.screenPadding),
-        )
-
-        Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding + Spacing.screenPadding)) // Clearance for the floating bottom bar
-      }
-
-      // Floating Bottom Bar
-      LogDetailsBottomBar(
-        aircraft = state.aircraft,
-        logStats = state.logStats,
-        modifier = Modifier.align(Alignment.BottomCenter),
-        onLogDetailsClick = { onAction(AircraftOverviewAction.LogDetailsClick(it)) },
-        onAddLogClick = { onAction(AircraftOverviewAction.AddLogClick(it)) }
+      AircraftOverviewTabRow(
+        selectedTabIndex = pagerState.currentPage,
+        onTabSelected = { coroutineScope.launch { pagerState.animateScrollToPage(it) } }
       )
+
+      HorizontalPager(
+        state = pagerState,
+        modifier = Modifier.weight(1f)
+      ) { page ->
+        when (page) {
+          0 -> OverviewTab(state = state, onAction = onAction)
+          1 -> MaintenanceTasksTab(state = state, onAction = onAction)
+          2 -> LogsTab(
+            aircraftId = state.aircraft.id,
+            onNavigateToAddLog = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
+            onNavigateToEditLog = { logId ->
+              onAction(AircraftOverviewAction.EditLogClick(state.aircraft.id, logId))
+            }
+          )
+        }
+      }
     }
   }
 }

@@ -1,24 +1,22 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.log
+package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
-import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.viewing.log.compose.MaintenanceLogListContent
 import dev.fanfly.wingslog.feature.maintenance.viewing.log.data.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.maintenance.viewing.log.data.MaintenanceLogListViewModel
@@ -27,59 +25,33 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
-import wingslog.feature.maintenance.viewing.generated.resources.maintenance_logs
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MaintenanceLogListScreen(
-  navController: NavController,
+fun LogsTab(
   aircraftId: String,
-  viewModel: MaintenanceLogListViewModel = koinViewModel(parameters = { parametersOf(aircraftId) }),
-  attachmentOpener: AttachmentOpener = koinInject(),
+  onNavigateToAddLog: () -> Unit,
+  onNavigateToEditLog: (logId: String) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
+  val viewModel: MaintenanceLogListViewModel =
+    koinViewModel(parameters = { parametersOf(aircraftId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-  val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
   val coroutineScope = rememberCoroutineScope()
+  val attachmentOpener: AttachmentOpener = koinInject()
   val downloadingIds by attachmentOpener.downloadingIds.collectAsStateWithLifecycle()
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {
-        is MaintenanceLogListEvent.NavigateToCreateLog ->
-          navController.navigate(Screen.AddMaintenanceLog.createRoute(event.aircraftId))
-
-        is MaintenanceLogListEvent.NavigateToEditLog ->
-          navController.navigate(
-            Screen.EditMaintenanceLog.createRoute(
-              event.aircraftId,
-              event.logId
-            )
-          )
+        is MaintenanceLogListEvent.NavigateToCreateLog -> onNavigateToAddLog()
+        is MaintenanceLogListEvent.NavigateToEditLog -> onNavigateToEditLog(event.logId)
       }
     }
   }
 
-  Scaffold(
-    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-    topBar = {
-      WingsLogTopAppBar(
-        title = stringResource(MaintenanceRes.string.maintenance_logs),
-        onBackClick = { navController.popBackStack() },
-        scrollBehavior = scrollBehavior
-      )
-    },
-    floatingActionButton = {
-      FloatingActionButton(onClick = { viewModel.onAddLog() }) {
-        Icon(
-          Icons.Default.Add,
-          contentDescription = stringResource(SharedRes.string.add_log)
-        )
-      }
-    }
-  ) { innerPadding ->
+  Box(modifier = modifier.fillMaxSize()) {
     MaintenanceLogListContent(
       uiState = uiState,
       downloadingIds = downloadingIds,
@@ -94,7 +66,15 @@ fun MaintenanceLogListScreen(
       onAttachmentTap = { attachment ->
         coroutineScope.launch { attachmentOpener.open(attachment).collect {} }
       },
-      modifier = Modifier.padding(innerPadding),
+    )
+
+    ExtendedFloatingActionButton(
+      onClick = viewModel::onAddLog,
+      icon = { Icon(Icons.Default.Add, contentDescription = null) },
+      text = { Text(stringResource(SharedRes.string.add_log)) },
+      modifier = Modifier
+        .align(Alignment.BottomEnd)
+        .padding(Spacing.screenPadding)
     )
   }
 }

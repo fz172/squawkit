@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,22 +18,20 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.inspection.viewing.InspectionCardItem
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.inspection.sharedassets.generated.resources.add_inspection
 import wingslog.feature.inspection.sharedassets.generated.resources.due_with_count
 import wingslog.feature.inspection.sharedassets.generated.resources.history_with_count
 import wingslog.feature.inspection.sharedassets.generated.resources.inspections
 import wingslog.feature.inspection.sharedassets.generated.resources.no_complied_yet
 import wingslog.feature.inspection.sharedassets.generated.resources.no_inspections_yet
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
 
 @Composable
 fun ComplianceSection(
@@ -47,20 +44,11 @@ fun ComplianceSection(
   modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-      Text(
-        text = stringResource(SharedInspectionRes.string.inspections),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-      )
-      TextButton(onClick = onAddClick) {
-        Text(stringResource(SharedInspectionRes.string.add_inspection))
-      }
-    }
+    Text(
+      text = stringResource(SharedInspectionRes.string.inspections),
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold,
+    )
 
     // View Toggle (Due vs History)
     SingleChoiceSegmentedButtonRow(

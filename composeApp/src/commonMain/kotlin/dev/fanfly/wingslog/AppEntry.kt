@@ -22,7 +22,6 @@ import dev.fanfly.wingslog.feature.maintenance.viewing.overview.AircraftOverview
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
-import dev.fanfly.wingslog.feature.technician.manage.viewmodel.EditTechnicianViewModel
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
 import dev.fanfly.wingslog.feature.userprofile.EditProfileScreen
 import dev.fanfly.wingslog.login.LoginScreen
@@ -50,7 +49,13 @@ fun AppEntry() {
           DashboardScreen(
             onOpenSettings = { navController.navigate(Screen.Settings.route) },
             onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
-            onAircraftClick = { aircraftId -> navController.navigate(Screen.MaintenanceOverview.createRoute(aircraftId)) })
+            onAircraftClick = { aircraftId ->
+              navController.navigate(
+                Screen.MaintenanceOverview.createRoute(
+                  aircraftId
+                )
+              )
+            })
         }
         composable(Screen.Settings.route) {
           SettingsScreen(
@@ -108,8 +113,10 @@ fun AppEntry() {
         composable(
           route = Screen.MaintenanceLogs.route,
           arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType })
-        ) {
-          MaintenanceLogListScreen(navController = navController)
+        ) { backStackEntry ->
+          val aircraftId =
+            backStackEntry.arguments?.getString(Screen.AIRCRAFT_ID) ?: return@composable
+          MaintenanceLogListScreen(navController = navController, aircraftId = aircraftId)
         }
 
         composable(
@@ -140,8 +147,8 @@ fun AppEntry() {
 
         composable(
           route = Screen.EditTechnician.route,
-          arguments = listOf(navArgument(Screen.TECHNICIAN_ID) { 
-            type = NavType.StringType 
+          arguments = listOf(navArgument(Screen.TECHNICIAN_ID) {
+            type = NavType.StringType
             nullable = true
           })
         ) {

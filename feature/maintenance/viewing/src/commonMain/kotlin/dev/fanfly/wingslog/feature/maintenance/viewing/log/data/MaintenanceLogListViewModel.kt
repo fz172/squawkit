@@ -1,11 +1,9 @@
 package dev.fanfly.wingslog.feature.maintenance.viewing.log.data
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDataManager
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
@@ -21,10 +19,8 @@ import kotlinx.coroutines.launch
 class MaintenanceLogListViewModel(
   private val logManager: MaintenanceLogManager,
   private val inspectionDataManager: InspectionDataManager,
-  savedStateHandle: SavedStateHandle,
+  val aircraftId: String,
 ) : ViewModel() {
-
-  val aircraftId: String = checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
 
   private val _uiState =
     MutableStateFlow<MaintenanceLogListUiState>(MaintenanceLogListUiState.Loading)
@@ -55,10 +51,10 @@ class MaintenanceLogListViewModel(
             val sorted = logsState.logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
             val filtered = sorted.filter { log ->
               (filter.component == null || log.component_type == filter.component) &&
-                  (filter.query.isBlank() || log.work_description.contains(
-                    filter.query,
-                    ignoreCase = true
-                  ))
+                (filter.query.isBlank() || log.work_description.contains(
+                  filter.query,
+                  ignoreCase = true
+                ))
             }
             MaintenanceLogListUiState.Success(
               logs = filtered,

@@ -34,23 +34,23 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_with_index
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.aircraft_data
 import wingslog.feature.maintenance.viewing.generated.resources.collapse_details
 import wingslog.feature.maintenance.viewing.generated.resources.expand_details
 import wingslog.feature.maintenance.viewing.generated.resources.s_n_placeholder
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable
 fun ConfigurationCard(
   aircraft: Aircraft,
 ) {
-  var expanded by rememberSaveable { mutableStateOf(false) }
+  var expanded by rememberSaveable { mutableStateOf(true) }
   val rotationState by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
 
   Surface(
@@ -63,7 +63,7 @@ fun ConfigurationCard(
       // Accordion Header
       Row(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }
         .padding(horizontal = Spacing.large, vertical = Spacing.large),
-        verticalAlignment = Alignment.CenterVertically) {
+          verticalAlignment = Alignment.CenterVertically) {
         Icon(
           imageVector = Icons.Default.Dataset,
           contentDescription = null,
@@ -128,7 +128,7 @@ fun ConfigurationCard(
 
 @Composable
 fun ComponentCard(
-  category: String, name: String, serial: String, content: @Composable (() -> Unit)? = null
+  category: String, name: String, serial: String, content: @Composable (() -> Unit)? = null,
 ) {
   Surface(
     modifier = Modifier.fillMaxWidth(),

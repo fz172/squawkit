@@ -59,8 +59,13 @@ fun AircraftOverviewScreen(
         is AircraftOverviewEvent.NavigateToEditInspection ->
           navController.navigate(Screen.EditInspection.createRoute(event.aircraftId, event.cardId))
 
-        is AircraftOverviewEvent.NavigateToLogDetails ->
-          navController.navigate(Screen.MaintenanceLogs.createRoute(event.aircraftId))
+        is AircraftOverviewEvent.NavigateToEditLog ->
+          navController.navigate(
+            Screen.EditMaintenanceLog.createRoute(
+              event.aircraftId,
+              event.logId
+            )
+          )
       }
     }
   }
