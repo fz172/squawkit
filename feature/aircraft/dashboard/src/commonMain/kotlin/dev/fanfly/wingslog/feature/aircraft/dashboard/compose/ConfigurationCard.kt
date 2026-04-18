@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose
+package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -47,9 +47,7 @@ import wingslog.feature.maintenance.viewing.generated.resources.s_n_placeholder
 
 
 @Composable
-fun ConfigurationCard(
-  aircraft: Aircraft,
-) {
+fun AircraftDataCard(aircraft: Aircraft) {
   var expanded by rememberSaveable { mutableStateOf(true) }
   val rotationState by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
 
@@ -60,7 +58,6 @@ fun ConfigurationCard(
     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
   ) {
     Column {
-      // Accordion Header
       Row(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }
         .padding(horizontal = Spacing.large, vertical = Spacing.large),
           verticalAlignment = Alignment.CenterVertically) {
@@ -74,7 +71,6 @@ fun ConfigurationCard(
         Text(
           text = stringResource(MaintenanceRes.string.aircraft_data),
           modifier = Modifier
-
             .padding(start = Spacing.medium)
             .weight(1f),
 
@@ -97,21 +93,18 @@ fun ConfigurationCard(
         )
       }
 
-      // Collapsible Content
       AnimatedVisibility(visible = expanded) {
         Column(
           modifier = Modifier.padding(
             bottom = Spacing.large, start = Spacing.large, end = Spacing.large
           ), verticalArrangement = Arrangement.spacedBy(Spacing.large)
         ) {
-          // Airframe Component Card
           ComponentCard(
             category = stringResource(CoreRes.string.component_airframe).uppercase(),
             name = "${aircraft.make} ${aircraft.model}",
             serial = aircraft.serial
           )
 
-          // Engine(s)
           aircraft.engine.forEachIndexed { index, engine ->
             val label = if (aircraft.engine.size > 1) {
               stringResource(SharedRes.string.engine_with_index, index + 1)
@@ -133,7 +126,7 @@ fun ComponentCard(
   Surface(
     modifier = Modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.small),
-    color = MaterialTheme.colorScheme.surfaceContainerLow // Theme-aware inset BG
+    color = MaterialTheme.colorScheme.surfaceContainerLow
   ) {
     Column(modifier = Modifier.padding(Spacing.large)) {
       Row(

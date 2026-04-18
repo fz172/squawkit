@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs
+package dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,16 +16,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.AircraftDataCard
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.LogOnboardingCard
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.LogStatsSection
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.viewing.CriticalAlertsSection
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.ConfigurationCard
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.LogOnboardingCard
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.LogStatsSection
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewAction
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res
+import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -48,7 +48,11 @@ fun OverviewTab(
       horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
       Text(
-        text = stringResource(Res.string.make_model_template, state.aircraft.make, state.aircraft.model),
+        text = stringResource(
+          Res.string.make_model_template,
+          state.aircraft.make,
+          state.aircraft.model
+        ),
         style = WingslogTypography.heroDisplay,
         color = MaterialTheme.colorScheme.onSurface
       )
@@ -60,10 +64,11 @@ fun OverviewTab(
     }
 
     Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
-      ConfigurationCard(state.aircraft)
+      AircraftDataCard(state.aircraft)
     }
 
-    val overdueInspections = state.activeInspections.filter { it.dueStatus.status == DueStatus.OVERDUE }
+    val overdueInspections =
+      state.activeInspections.filter { it.dueStatus.status == DueStatus.OVERDUE }
     if (overdueInspections.isNotEmpty()) {
       CriticalAlertsSection(
         overdueInspections = overdueInspections,

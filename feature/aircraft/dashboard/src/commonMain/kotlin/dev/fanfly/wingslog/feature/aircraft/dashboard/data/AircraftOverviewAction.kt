@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview.data
+package dev.fanfly.wingslog.feature.aircraft.dashboard.data
 
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus

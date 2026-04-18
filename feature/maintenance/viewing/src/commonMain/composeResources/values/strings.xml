@@ -21,7 +21,4 @@
   <string name="log_onboarding_description">Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.</string>
   <string name="collapse_details">Collapse details</string>
   <string name="expand_details">Expand details</string>
-  <string name="tab_overview">Overview</string>
-  <string name="tab_tasks">Tasks</string>
-  <string name="tab_logs">Logs</string>
 </resources>

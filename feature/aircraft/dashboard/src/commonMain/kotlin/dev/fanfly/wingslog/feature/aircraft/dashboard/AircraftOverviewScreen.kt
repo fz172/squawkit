@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview
+package dev.fanfly.wingslog.feature.aircraft.dashboard
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,10 +16,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.AircraftOverviewContent
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewEvent
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewViewModel
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.AircraftOverviewContent
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewEvent
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -70,7 +70,6 @@ fun AircraftOverviewScreen(
     }
   }
 
-// Show success messages from child screens (maintenance log, inspection forms)
   val navBackStackEntry by navController.currentBackStackEntryAsState()
   LaunchedEffect(navBackStackEntry) {
     val handle = navBackStackEntry?.savedStateHandle ?: return@LaunchedEffect
@@ -91,7 +90,6 @@ fun AircraftOverviewScreen(
     }
 
     AircraftOverviewUiState.Error -> {
-      // Handle error state
     }
 
     is AircraftOverviewUiState.Success -> {

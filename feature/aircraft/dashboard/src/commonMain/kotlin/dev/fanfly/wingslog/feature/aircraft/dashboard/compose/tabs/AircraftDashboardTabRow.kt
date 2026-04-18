@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs
+package dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.PrimaryTabRow
@@ -7,14 +7,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.maintenance.viewing.generated.resources.tab_tasks
-import wingslog.feature.maintenance.viewing.generated.resources.tab_logs
-import wingslog.feature.maintenance.viewing.generated.resources.tab_overview
-import wingslog.feature.maintenance.viewing.generated.resources.Res
+import wingslog.feature.aircraft.dashboard.generated.resources.Res
+import wingslog.feature.aircraft.dashboard.generated.resources.tab_logs
+import wingslog.feature.aircraft.dashboard.generated.resources.tab_overview
+import wingslog.feature.aircraft.dashboard.generated.resources.tab_tasks
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AircraftOverviewTabRow(
+fun AircraftDashboardTabRow(
   selectedTabIndex: Int,
   onTabSelected: (Int) -> Unit,
   modifier: Modifier = Modifier,

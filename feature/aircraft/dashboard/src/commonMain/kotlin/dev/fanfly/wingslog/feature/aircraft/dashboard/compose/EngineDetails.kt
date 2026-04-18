@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose
+package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -14,10 +14,10 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.component_propeller
-import wingslog.feature.maintenance.viewing.generated.resources.s_n_placeholder
 import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.viewing.generated.resources.s_n_placeholder
 
 
 @Composable
@@ -27,7 +27,6 @@ fun EngineDetails(label: String, engine: Engine) {
     name = "${engine.make} ${engine.model}",
     serial = engine.serial,
     content = {
-      // Propeller Section
       val propeller = engine.propeller
       if (propeller != null) {
         Column {
@@ -67,7 +66,6 @@ fun EngineDetails(label: String, engine: Engine) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
 
-          // Blades Grid
           if (propeller.blades.isNotEmpty()) {
             Column(modifier = Modifier.padding(top = Spacing.large)) {
               BladeChipsOverview(propeller.blades)

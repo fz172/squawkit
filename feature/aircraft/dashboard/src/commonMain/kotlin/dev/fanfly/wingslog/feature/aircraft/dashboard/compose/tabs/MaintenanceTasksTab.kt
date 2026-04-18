@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs
+package dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,12 +22,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.ComplianceSection
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewAction
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.ComplianceSection
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.sharedassets.generated.resources.add_task
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as InspectionRes
+import wingslog.feature.inspection.sharedassets.generated.resources.add_task
 
 @Composable
 fun MaintenanceTasksTab(

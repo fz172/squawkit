@@ -63,6 +63,7 @@ kotlin {
       implementation(project(":feature:inspection:datamanager"))
       implementation(project(":feature:fleet:viewing"))
       implementation(project(":feature:fleet:datamanager"))
+      implementation(project(":feature:aircraft:dashboard"))
       implementation(project(":feature:technician:manage"))
       implementation(project(":feature:technician:datamanager"))
 

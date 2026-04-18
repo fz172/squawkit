@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose
+package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,10 +20,10 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.maintenance.sharedassets.generated.resources.blade_with_index
-import wingslog.feature.maintenance.viewing.generated.resources.s_n_empty
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.maintenance.sharedassets.generated.resources.blade_with_index
 import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.maintenance.viewing.generated.resources.s_n_empty
 
 
 @OptIn(ExperimentalLayoutApi::class)

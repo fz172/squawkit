@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose
+package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,14 +21,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.AircraftDashboardTabRow
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.LogsTab
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.MaintenanceTasksTab
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.OverviewTab
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.inspection.update.compose.DeleteInspectionConfirmDialog
 import dev.fanfly.wingslog.feature.inspection.viewing.InspectionDetailSheet
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs.AircraftOverviewTabRow
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs.LogsTab
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs.MaintenanceTasksTab
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.tabs.OverviewTab
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewAction
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -111,7 +111,7 @@ fun AircraftOverviewContent(
         .fillMaxSize()
         .padding(paddingValues)
     ) {
-      AircraftOverviewTabRow(
+      AircraftDashboardTabRow(
         selectedTabIndex = pagerState.currentPage,
         onTabSelected = { coroutineScope.launch { pagerState.animateScrollToPage(it) } }
       )

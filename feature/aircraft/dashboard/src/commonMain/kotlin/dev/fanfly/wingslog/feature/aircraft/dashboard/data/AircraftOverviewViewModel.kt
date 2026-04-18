@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview.data
+package dev.fanfly.wingslog.feature.aircraft.dashboard.data
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -38,7 +38,6 @@ class AircraftOverviewViewModel(
   private val _events = Channel<AircraftOverviewEvent>()
   val events = _events.receiveAsFlow()
 
-  /** Cached logs — kept in sync by the combine flow, used for detail sheet filtering. */
   private var cachedLogs: List<MaintenanceLog> = emptyList()
 
   init {
@@ -68,7 +67,6 @@ class AircraftOverviewViewModel(
               currentPropTime = overview.current_propeller_time
             )
           } else {
-            // Fallback to manually compute if overview doesn't exist yet
             val currentEngineTime =
               logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }
             val currentAirframeTime =
@@ -87,7 +85,6 @@ class AircraftOverviewViewModel(
               currentPropTime = currentPropTime)
           }
 
-          // Compute due status for each inspection card
           val cardsWithStatus = inspectionCards.map { card ->
             InspectionCardWithStatus(
               card = card,
@@ -98,7 +95,6 @@ class AircraftOverviewViewModel(
           val complied = cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
 
           val current = _uiState.value as? AircraftOverviewUiState.Success
-          // Refresh selected inspection due status if detail sheet is open
           val refreshedSelected = current?.selectedInspection?.let { sel ->
             cardsWithStatus.find { it.card.id == sel.card.id }
           }

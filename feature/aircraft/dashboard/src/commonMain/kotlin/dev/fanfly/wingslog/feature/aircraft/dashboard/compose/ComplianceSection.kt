@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose
+package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -50,7 +50,6 @@ fun ComplianceSection(
       fontWeight = FontWeight.Bold,
     )
 
-    // View Toggle (Due vs History)
     SingleChoiceSegmentedButtonRow(
       modifier = Modifier.fillMaxWidth()
     ) {

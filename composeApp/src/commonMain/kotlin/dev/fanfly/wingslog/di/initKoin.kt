@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
 import dev.fanfly.wingslog.feature.inspection.datamanager.inspectionModule
 import dev.fanfly.wingslog.feature.inspection.update.viewmodel.inspectionUiModule
 import dev.fanfly.wingslog.feature.maintenance.datamanager.impl.maintenanceDataManagerModule
+import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
 import dev.fanfly.wingslog.feature.maintenance.viewing.di.maintenanceViewingModule
 import dev.fanfly.wingslog.feature.maintenance.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
@@ -33,6 +34,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) =
       maintenanceDataManagerModule,
       maintenanceViewingModule,
       maintenanceUpdateModule,
+      aircraftDashboardModule,
       inspectionModule,
       inspectionUiModule,
       fleetDataManagerModule,

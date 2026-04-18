@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose
+package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,15 +16,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.LogStats
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.LogStats
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.airframe_time_label
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_time_label
 import wingslog.feature.maintenance.sharedassets.generated.resources.prop_time_label
+import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.maintenance.viewing.generated.resources.maintenance_summary
 import wingslog.feature.maintenance.viewing.generated.resources.total_logs
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable
