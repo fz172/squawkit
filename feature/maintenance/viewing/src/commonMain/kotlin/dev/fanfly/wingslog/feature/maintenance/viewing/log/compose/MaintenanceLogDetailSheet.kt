@@ -27,9 +27,9 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.sharedassets.generated.resources.inspections
+import wingslog.feature.inspection.sharedassets.generated.resources.maintenance_tasks
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
-import wingslog.feature.inspection.sharedassets.generated.resources.unknown_inspection
+import wingslog.feature.inspection.sharedassets.generated.resources.unknown_task
 import wingslog.feature.maintenance.sharedassets.generated.resources.airframe_time_label
 import wingslog.feature.maintenance.sharedassets.generated.resources.edit_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_time_label
@@ -108,7 +108,7 @@ fun MaintenanceLogDetailSheet(
     if (log.inspection_ids.isNotEmpty()) {
       Spacer(Modifier.height(Spacing.small))
       Text(
-        text = stringResource(SharedInspectionRes.string.inspections),
+        text = stringResource(SharedInspectionRes.string.maintenance_tasks),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
       )
@@ -116,7 +116,7 @@ fun MaintenanceLogDetailSheet(
         log.inspection_ids.forEach { cardId ->
           val card = availableCards.find { it.id == cardId }
           val title =
-            card?.title ?: stringResource(SharedInspectionRes.string.unknown_inspection, cardId)
+            card?.title ?: stringResource(SharedInspectionRes.string.unknown_task, cardId)
           Row(
             horizontalArrangement = Arrangement.spacedBy(Spacing.tiny),
           ) {

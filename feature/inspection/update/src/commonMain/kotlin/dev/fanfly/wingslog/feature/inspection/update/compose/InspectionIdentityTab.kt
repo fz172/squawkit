@@ -38,7 +38,7 @@ import wingslog.feature.inspection.update.generated.resources.compliance_type_de
 import wingslog.feature.inspection.update.generated.resources.compliance_type_routine_short
 import wingslog.feature.inspection.update.generated.resources.compliance_type_sb_full
 import wingslog.feature.inspection.update.generated.resources.component_type_description
-import wingslog.feature.inspection.update.generated.resources.inspection_title
+import wingslog.feature.inspection.update.generated.resources.task_title
 import wingslog.feature.inspection.update.generated.resources.task_description_placeholder
 import wingslog.feature.inspection.update.generated.resources.task_title_helper
 
@@ -62,7 +62,7 @@ fun InspectionIdentityTab(
   ) {
     // ── Section 1: Task Title ─────────────────────────────────────────────
     IdentitySection(
-      header = stringResource(InspectionRes.string.inspection_title),
+      header = stringResource(InspectionRes.string.task_title),
       description = stringResource(InspectionRes.string.task_title_helper),
     ) {
       OutlinedTextField(

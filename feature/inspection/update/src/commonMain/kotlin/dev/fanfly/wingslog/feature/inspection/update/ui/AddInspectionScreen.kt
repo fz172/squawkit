@@ -49,7 +49,7 @@ import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionScheduleT
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.back
-import wingslog.feature.inspection.sharedassets.generated.resources.add_inspection
+import wingslog.feature.inspection.sharedassets.generated.resources.add_task
 import wingslog.feature.inspection.update.generated.resources.basics
 import wingslog.feature.inspection.update.generated.resources.details
 import wingslog.feature.inspection.update.generated.resources.schedule
@@ -117,7 +117,7 @@ fun AddInspectionScreen(
       Column {
         TopAppBar(title = {
           Text(
-            stringResource(SharedInspectionRes.string.add_inspection).uppercase(),
+            stringResource(SharedInspectionRes.string.add_task).uppercase(),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
           )

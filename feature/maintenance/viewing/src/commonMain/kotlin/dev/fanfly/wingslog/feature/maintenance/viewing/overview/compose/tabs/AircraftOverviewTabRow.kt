@@ -7,7 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.maintenance.viewing.generated.resources.tab_inspections
+import wingslog.feature.maintenance.viewing.generated.resources.tab_tasks
 import wingslog.feature.maintenance.viewing.generated.resources.tab_logs
 import wingslog.feature.maintenance.viewing.generated.resources.tab_overview
 import wingslog.feature.maintenance.viewing.generated.resources.Res
@@ -28,7 +28,7 @@ fun AircraftOverviewTabRow(
     Tab(
       selected = selectedTabIndex == 1,
       onClick = { onTabSelected(1) },
-      text = { Text(stringResource(Res.string.tab_inspections)) }
+      text = { Text(stringResource(Res.string.tab_tasks)) }
     )
     Tab(
       selected = selectedTabIndex == 2,

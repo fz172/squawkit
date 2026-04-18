@@ -12,8 +12,8 @@ import dev.fanfly.wingslog.feature.inspection.update.viewmodel.InspectionViewMod
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
-import wingslog.feature.inspection.update.generated.resources.inspection_deleted
-import wingslog.feature.inspection.update.generated.resources.inspection_updated
+import wingslog.feature.inspection.update.generated.resources.task_deleted
+import wingslog.feature.inspection.update.generated.resources.task_updated
 
 @Composable
 fun EditInspectionRoute(
@@ -26,8 +26,8 @@ fun EditInspectionRoute(
   val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
   val successState = uiState as? InspectionUiState.Success
 
-  val updatedMessage = stringResource(InspectionRes.string.inspection_updated)
-  val deletedMessage = stringResource(InspectionRes.string.inspection_deleted)
+  val updatedMessage = stringResource(InspectionRes.string.task_updated)
+  val deletedMessage = stringResource(InspectionRes.string.task_deleted)
 
   // Find the card in the list
   val card = successState?.allInspections?.find { it.id == viewModel.cardId }

@@ -9,8 +9,8 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
-import wingslog.feature.inspection.update.generated.resources.delete_inspection
-import wingslog.feature.inspection.update.generated.resources.delete_inspection_confirmation
+import wingslog.feature.inspection.update.generated.resources.delete_task
+import wingslog.feature.inspection.update.generated.resources.delete_task_confirmation
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
@@ -22,10 +22,10 @@ fun DeleteInspectionConfirmDialog(
 ) {
   AlertDialog(
     onDismissRequest = onDismiss,
-    title = { Text(stringResource(InspectionRes.string.delete_inspection)) },
+    title = { Text(stringResource(InspectionRes.string.delete_task)) },
     text = {
       Text(
-        stringResource(InspectionRes.string.delete_inspection_confirmation, inspectionTitle)
+        stringResource(InspectionRes.string.delete_task_confirmation, inspectionTitle)
       )
     },
     confirmButton = {

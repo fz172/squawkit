@@ -55,7 +55,7 @@ import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.ok
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
-import wingslog.feature.inspection.sharedassets.generated.resources.edit_inspection
+import wingslog.feature.inspection.sharedassets.generated.resources.edit_task
 import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 import wingslog.feature.inspection.update.generated.resources.details
 import wingslog.feature.inspection.update.generated.resources.identity
@@ -152,7 +152,7 @@ fun EditInspectionScreen(
       Column {
         TopAppBar(title = {
           Text(
-            stringResource(SharedInspectionRes.string.edit_inspection).uppercase(),
+            stringResource(SharedInspectionRes.string.edit_task).uppercase(),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
           )

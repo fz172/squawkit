@@ -26,7 +26,7 @@ import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.unknown
-import wingslog.feature.inspection.update.generated.resources.link_to_inspection
+import wingslog.feature.inspection.update.generated.resources.link_to_task
 import wingslog.feature.inspection.update.generated.resources.remove_link
 import wingslog.feature.inspection.update.generated.resources.schedule_with_another_work
 import wingslog.feature.inspection.update.generated.resources.schedule_with_another_work_description
@@ -61,7 +61,7 @@ fun LinkedInspectionFields(
       ) {
         Icon(Icons.Default.Add, contentDescription = null)
         Spacer(modifier = Modifier.width(Spacing.small))
-        Text(stringResource(InspectionRes.string.link_to_inspection))
+        Text(stringResource(InspectionRes.string.link_to_task))
       }
     } else {
       val linkedInsp = availableInspections.find { it.id == linkedToId }

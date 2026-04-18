@@ -26,12 +26,12 @@ import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
 import dev.fanfly.wingslog.feature.inspection.viewing.InspectionCardItem
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
-import wingslog.feature.inspection.sharedassets.generated.resources.add_inspection
+import wingslog.feature.inspection.sharedassets.generated.resources.add_task
 import wingslog.feature.inspection.sharedassets.generated.resources.due_with_count
 import wingslog.feature.inspection.sharedassets.generated.resources.history_with_count
-import wingslog.feature.inspection.sharedassets.generated.resources.inspections
+import wingslog.feature.inspection.sharedassets.generated.resources.maintenance_tasks
 import wingslog.feature.inspection.sharedassets.generated.resources.no_complied_yet
-import wingslog.feature.inspection.sharedassets.generated.resources.no_inspections_yet
+import wingslog.feature.inspection.sharedassets.generated.resources.no_tasks_yet
 
 @Composable
 fun ComplianceSection(
@@ -45,7 +45,7 @@ fun ComplianceSection(
 ) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
     Text(
-      text = stringResource(SharedInspectionRes.string.inspections),
+      text = stringResource(SharedInspectionRes.string.maintenance_tasks),
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold,
     )
@@ -95,7 +95,7 @@ fun ComplianceSection(
             verticalArrangement = Arrangement.spacedBy(Spacing.medium),
           ) {
             Text(
-              text = stringResource(SharedInspectionRes.string.no_inspections_yet),
+              text = stringResource(SharedInspectionRes.string.no_tasks_yet),
               style = MaterialTheme.typography.bodyMedium,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -105,7 +105,7 @@ fun ComplianceSection(
             ) {
               Icon(Icons.Default.Add, contentDescription = null)
               Spacer(Modifier.width(Spacing.small))
-              Text(stringResource(SharedInspectionRes.string.add_inspection).uppercase())
+              Text(stringResource(SharedInspectionRes.string.add_task).uppercase())
             }
           }
         }

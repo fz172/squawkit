@@ -37,8 +37,8 @@ import wingslog.core.ui.generated.resources.done
 import wingslog.feature.inspection.update.generated.resources.compliance_type_ad
 import wingslog.feature.inspection.update.generated.resources.compliance_type_routine
 import wingslog.feature.inspection.update.generated.resources.compliance_type_sb
-import wingslog.feature.inspection.update.generated.resources.no_inspection_cards_configured
-import wingslog.feature.inspection.update.generated.resources.select_inspection_work
+import wingslog.feature.inspection.update.generated.resources.no_tasks_configured
+import wingslog.feature.inspection.update.generated.resources.select_task_work
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
 
@@ -57,7 +57,7 @@ fun InspectionPickerSheet(
     modifier = modifier,
     headerSlot = {
       Text(
-        text = stringResource(InspectionRes.string.select_inspection_work),
+        text = stringResource(InspectionRes.string.select_task_work),
         style = MaterialTheme.typography.titleLarge
       )
     }
@@ -70,7 +70,7 @@ fun InspectionPickerSheet(
     ) {
       if (availableCards.isEmpty()) {
         Text(
-          text = stringResource(InspectionRes.string.no_inspection_cards_configured),
+          text = stringResource(InspectionRes.string.no_tasks_configured),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(vertical = Spacing.large),

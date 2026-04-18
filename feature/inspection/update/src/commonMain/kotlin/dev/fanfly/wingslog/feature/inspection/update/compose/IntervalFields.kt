@@ -20,8 +20,8 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.every
 import wingslog.core.ui.generated.resources.or
-import wingslog.feature.inspection.update.generated.resources.inspection_due_warning
-import wingslog.feature.inspection.update.generated.resources.inspection_interval_description
+import wingslog.feature.inspection.update.generated.resources.task_due_warning
+import wingslog.feature.inspection.update.generated.resources.task_interval_description
 import wingslog.feature.inspection.update.generated.resources.interval_hours
 import wingslog.feature.inspection.update.generated.resources.interval_hours_placeholder
 import wingslog.feature.inspection.update.generated.resources.interval_months
@@ -91,7 +91,7 @@ fun IntervalFields(
     if (intervalMonths.isNotBlank() || intervalHours.isNotBlank()) {
       Spacer(modifier = Modifier.height(Spacing.small))
       Text(
-        stringResource(InspectionRes.string.inspection_due_warning),
+        stringResource(InspectionRes.string.task_due_warning),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.primary,
         fontWeight = FontWeight.Medium,
@@ -101,7 +101,7 @@ fun IntervalFields(
     } else {
       Spacer(modifier = Modifier.height(Spacing.small))
       Text(
-        stringResource(InspectionRes.string.inspection_interval_description),
+        stringResource(InspectionRes.string.task_interval_description),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.fillMaxWidth(),

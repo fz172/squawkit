@@ -6,7 +6,7 @@
   <string name="due_with_count">DUE (%1$d)</string>
   <string name="history_with_count">HISTORY (%1$d)</string>
 
-  <string name="edit_inspection">Update task</string>
+  <string name="edit_task">Update task</string>
 
   <string name="overdue">Overdue</string>
   <string name="due_soon">Due Soon</string>
@@ -15,11 +15,11 @@
   <string name="compliance_type_ad_short">AD</string>
   <string name="compliance_type_sb_short">SB</string>
 
-  <string name="inspections">Maintenance Tasks</string>
-  <string name="add_inspection">Add task</string>
-  <string name="no_inspections_yet">No maintenance task cards. Add annual, 100-hr, pitot-static, transponder, and other recurring checks to track due dates automatically.</string>
-  <string name="no_complied_yet">Log work against an task to see its history here.</string>
-  <string name="no_inspection_work_recorded">No work recorded for this task.</string>
-  <string name="unknown_inspection">Unknown inspection (%1$s)</string>
-  <string name="affects_n_inspection_items">Affects %1$d maintenance task(s)</string>
+  <string name="maintenance_tasks">Maintenance Tasks</string>
+  <string name="add_task">Add task</string>
+  <string name="no_tasks_yet">No maintenance task cards. Add annual, 100-hr, pitot-static, transponder, and other recurring checks to track due dates automatically.</string>
+  <string name="no_complied_yet">Log work against a task to see its history here.</string>
+  <string name="no_task_work_recorded">No work recorded for this task.</string>
+  <string name="unknown_task">Unknown task (%1$s)</string>
+  <string name="affects_n_tasks">Affects %1$d maintenance task(s)</string>
 </resources>

@@ -48,7 +48,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_ad_short
 import wingslog.feature.inspection.sharedassets.generated.resources.compliance_type_sb_short
-import wingslog.feature.inspection.sharedassets.generated.resources.edit_inspection
+import wingslog.feature.inspection.sharedassets.generated.resources.edit_task
 import wingslog.feature.inspection.sharedassets.generated.resources.engine_format
 import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
 import wingslog.feature.inspection.viewing.generated.resources.Res as ViewingRes
@@ -61,7 +61,7 @@ import wingslog.feature.inspection.viewing.generated.resources.due_today
 import wingslog.feature.inspection.viewing.generated.resources.maintenance_history
 import wingslog.feature.inspection.viewing.generated.resources.next_due_date
 import wingslog.feature.inspection.viewing.generated.resources.next_due_engine_hrs
-import wingslog.feature.inspection.viewing.generated.resources.no_maintenance_logs_for_inspection
+import wingslog.feature.inspection.viewing.generated.resources.no_maintenance_logs_for_task
 import wingslog.feature.inspection.viewing.generated.resources.on_condition
 
 private val HeroDueDateFormat = LocalDate.Format {
@@ -92,7 +92,7 @@ fun InspectionDetailSheet(
     modifier = modifier,
     actionSlot = {
       TextButton(onClick = onEditClick) {
-        Text(stringResource(SharedRes.string.edit_inspection))
+        Text(stringResource(SharedRes.string.edit_task))
       }
     },
     headerSlot = {
@@ -214,7 +214,7 @@ fun InspectionDetailSheet(
 
     if (logs.isEmpty()) {
       Text(
-        text = stringResource(ViewingRes.string.no_maintenance_logs_for_inspection),
+        text = stringResource(ViewingRes.string.no_maintenance_logs_for_task),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

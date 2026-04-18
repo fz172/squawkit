@@ -26,7 +26,7 @@ import dev.fanfly.wingslog.feature.maintenance.viewing.overview.compose.Complian
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.data.AircraftOverviewUiState
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.sharedassets.generated.resources.add_inspection
+import wingslog.feature.inspection.sharedassets.generated.resources.add_task
 import wingslog.feature.inspection.sharedassets.generated.resources.Res as InspectionRes
 
 @Composable
@@ -63,7 +63,7 @@ fun MaintenanceTasksTab(
     ExtendedFloatingActionButton(
       onClick = { onAction(AircraftOverviewAction.AddInspectionClick(state.aircraft.id)) },
       icon = { Icon(Icons.Default.Add, contentDescription = null) },
-      text = { Text(stringResource(InspectionRes.string.add_inspection)) },
+      text = { Text(stringResource(InspectionRes.string.add_task)) },
       modifier = Modifier
         .align(Alignment.BottomEnd)
         .padding(Spacing.screenPadding)

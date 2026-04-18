@@ -22,6 +22,6 @@
   <string name="collapse_details">Collapse details</string>
   <string name="expand_details">Expand details</string>
   <string name="tab_overview">Overview</string>
-  <string name="tab_inspections">Tasks</string>
+  <string name="tab_tasks">Tasks</string>
   <string name="tab_logs">Logs</string>
 </resources>

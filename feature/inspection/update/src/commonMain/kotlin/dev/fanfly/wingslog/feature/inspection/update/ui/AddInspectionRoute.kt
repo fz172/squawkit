@@ -12,7 +12,7 @@ import dev.fanfly.wingslog.feature.inspection.update.viewmodel.InspectionViewMod
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.inspection.update.generated.resources.Res as InspectionRes
-import wingslog.feature.inspection.update.generated.resources.inspection_added
+import wingslog.feature.inspection.update.generated.resources.task_added
 
 @Composable
 fun AddInspectionRoute(
@@ -25,7 +25,7 @@ fun AddInspectionRoute(
   val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
   val successState = uiState as? InspectionUiState.Success
 
-  val successMessage = stringResource(InspectionRes.string.inspection_added)
+  val successMessage = stringResource(InspectionRes.string.task_added)
 
   if (successState != null) {
     AddInspectionScreen(

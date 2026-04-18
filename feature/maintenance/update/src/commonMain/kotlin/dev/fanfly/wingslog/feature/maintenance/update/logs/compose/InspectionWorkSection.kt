@@ -26,9 +26,9 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.remove
 import wingslog.feature.inspection.sharedassets.generated.resources.Res
-import wingslog.feature.inspection.sharedassets.generated.resources.inspections
-import wingslog.feature.inspection.sharedassets.generated.resources.no_inspection_work_recorded
-import wingslog.feature.inspection.sharedassets.generated.resources.unknown_inspection
+import wingslog.feature.inspection.sharedassets.generated.resources.maintenance_tasks
+import wingslog.feature.inspection.sharedassets.generated.resources.no_task_work_recorded
+import wingslog.feature.inspection.sharedassets.generated.resources.unknown_task
 import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @Composable
@@ -46,7 +46,7 @@ fun InspectionWorkSection(
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
       Text(
-        text = stringResource(Res.string.inspections),
+        text = stringResource(Res.string.maintenance_tasks),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
       )
@@ -68,14 +68,14 @@ fun InspectionWorkSection(
 
     if (selectedIds.isEmpty()) {
       Text(
-        text = stringResource(Res.string.no_inspection_work_recorded),
+        text = stringResource(Res.string.no_task_work_recorded),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     } else {
       selectedIds.forEach { cardId ->
         val card = availableCards.firstOrNull { it.id == cardId }
-        val title = card?.title ?: stringResource(Res.string.unknown_inspection, cardId)
+        val title = card?.title ?: stringResource(Res.string.unknown_task, cardId)
         Row(
           modifier = Modifier.fillMaxWidth(),
           verticalAlignment = Alignment.CenterVertically,
