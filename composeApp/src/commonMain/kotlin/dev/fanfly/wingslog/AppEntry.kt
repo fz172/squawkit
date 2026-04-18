@@ -17,7 +17,6 @@ import dev.fanfly.wingslog.feature.inspection.update.ui.AddInspectionRoute
 import dev.fanfly.wingslog.feature.inspection.update.ui.EditInspectionRoute
 import dev.fanfly.wingslog.feature.maintenance.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.maintenance.update.logs.MaintenanceLogFormScreen
-import dev.fanfly.wingslog.feature.maintenance.viewing.log.MaintenanceLogListScreen
 import dev.fanfly.wingslog.feature.maintenance.viewing.overview.AircraftOverviewScreen
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
@@ -107,16 +106,6 @@ fun AppEntry() {
           )
         ) {
           EditInspectionRoute(navController = navController)
-        }
-
-        // Maintenance Log routes
-        composable(
-          route = Screen.MaintenanceLogs.route,
-          arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType })
-        ) { backStackEntry ->
-          val aircraftId =
-            backStackEntry.arguments?.getString(Screen.AIRCRAFT_ID) ?: return@composable
-          MaintenanceLogListScreen(navController = navController, aircraftId = aircraftId)
         }
 
         composable(

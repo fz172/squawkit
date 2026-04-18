@@ -163,6 +163,7 @@ class AircraftOverviewViewModel(
       }
 
       is AircraftOverviewAction.EditInspectionClick -> {
+        hideInspectionDetail()
         viewModelScope.launch {
           _events.send(
             AircraftOverviewEvent.NavigateToEditInspection(
