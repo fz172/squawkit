@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -48,10 +49,8 @@ fun AircraftDashboardCard(
     onClick = { onClick(aircraft.id) },
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    colors =
-      CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-      ),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
   ) {
     Row(

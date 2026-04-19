@@ -51,7 +51,7 @@ fun TaskCard(
   val borderColor = when {
     isOverdue -> MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
     isDueSoon -> statusColor.copy(alpha = 0.5f)
-    else -> MaterialTheme.colorScheme.surfaceVariant
+    else -> MaterialTheme.colorScheme.outlineVariant
   }
 
   Card(
@@ -59,7 +59,8 @@ fun TaskCard(
     modifier = modifier.fillMaxWidth(),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     border = BorderStroke(1.dp, borderColor),
-    shape = RoundedCornerShape(Spacing.chipCornerRadius),
+    shape = RoundedCornerShape(Spacing.cardCornerRadius),
+    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
   ) {
     Column(
       modifier = Modifier.padding(Spacing.large),

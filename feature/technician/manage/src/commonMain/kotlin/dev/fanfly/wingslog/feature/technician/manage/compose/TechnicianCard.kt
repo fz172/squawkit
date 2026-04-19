@@ -1,16 +1,19 @@
 package dev.fanfly.wingslog.feature.technician.manage.compose
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
@@ -38,8 +41,11 @@ fun TechnicianCard(
 
   Card(
     onClick = onClick,
-    shape = RoundedCornerShape(Spacing.large),
+    shape = RoundedCornerShape(Spacing.cardCornerRadius),
     modifier = modifier.fillMaxWidth(),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
   ) {
     Column(
       modifier = Modifier

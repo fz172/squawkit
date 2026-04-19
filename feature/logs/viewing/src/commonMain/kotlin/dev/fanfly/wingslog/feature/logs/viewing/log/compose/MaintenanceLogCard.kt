@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -52,9 +53,9 @@ fun MaintenanceLogCard(
   Card(
     onClick = onClick,
     modifier = modifier.fillMaxWidth(),
-    colors = CardDefaults.cardColors(
-      containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-    ),
+    shape = RoundedCornerShape(Spacing.cardCornerRadius),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
   ) {
     Column(

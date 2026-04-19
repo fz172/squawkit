@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -21,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
@@ -86,8 +88,10 @@ fun ComplianceSection(
       if (!showComplied) {
         Card(
           modifier = Modifier.fillMaxWidth(),
+          shape = RoundedCornerShape(Spacing.cardCornerRadius),
           colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-          shape = RoundedCornerShape(Spacing.cardCornerRadius)
+          border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+          elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         ) {
           Column(
             modifier = Modifier.padding(Spacing.large),

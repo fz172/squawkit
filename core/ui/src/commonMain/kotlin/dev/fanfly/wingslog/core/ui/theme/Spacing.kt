@@ -17,7 +17,7 @@ object Spacing {
   val screenPadding = extraLarge
   val columnGap = large
   val rowGap = medium
-  val cardCornerRadius = 24.dp
+  val cardCornerRadius = 12.dp   // All card surfaces
   val buttonHeight = 56.dp
   val buttonCornerRadius = 16.dp
   // Smaller surface radii

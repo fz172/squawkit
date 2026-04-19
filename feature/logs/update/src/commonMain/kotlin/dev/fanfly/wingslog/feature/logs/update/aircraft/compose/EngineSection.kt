@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.logs.update.aircraft.compose
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,7 +53,10 @@ fun EngineSection(
 ) {
   Card(
     modifier = Modifier.padding(vertical = Spacing.small),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    shape = RoundedCornerShape(Spacing.cardCornerRadius),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
   ) {
 
     Column(modifier = Modifier.padding(Spacing.medium)) {

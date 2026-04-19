@@ -53,9 +53,9 @@ fun AircraftDataCard(aircraft: Aircraft, initiallyExpanded: Boolean = true) {
 
   Surface(
     modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(Spacing.chipCornerRadius),
+    shape = RoundedCornerShape(Spacing.cardCornerRadius),
     color = MaterialTheme.colorScheme.surfaceContainer,
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
   ) {
     Column {
       Row(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }
@@ -125,7 +125,7 @@ fun ComponentCard(
 ) {
   Surface(
     modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(Spacing.small),
+    shape = RoundedCornerShape(Spacing.cardCornerRadius),
     color = MaterialTheme.colorScheme.surfaceContainerLow
   ) {
     Column(modifier = Modifier.padding(Spacing.large)) {
