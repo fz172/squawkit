@@ -2,10 +2,11 @@ package dev.fanfly.wingslog.feature.logs.viewing.log.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -90,7 +91,7 @@ class MaintenanceLogListViewModel(
     _filter.value = _filter.value.copy(query = query)
   }
 
-  fun onComponentFilterChange(component: MaintenanceLog.ComponentType?) {
+  fun onComponentFilterChange(component: ComponentType?) {
     _filter.value = _filter.value.copy(component = component)
   }
 

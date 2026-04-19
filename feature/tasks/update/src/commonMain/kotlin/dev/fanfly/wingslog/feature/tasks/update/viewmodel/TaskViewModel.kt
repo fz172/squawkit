@@ -7,8 +7,8 @@ import com.squareup.wire.Instant
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.ComplianceType
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
-import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentManager
@@ -249,7 +249,7 @@ class TaskViewModel(
   // ── Public save/delete ───────────────────────────────────────────────────
 
   fun saveNewTask(
-    title: String, type: ComplianceType, component: InspectionComponentType,
+    title: String, type: ComplianceType, component: ComponentType,
     rules: List<InspectionRule>, referenceNumber: String, complianceAuthority: String,
     complianceDetails: String, isOneTime: Boolean, forceDueDate: Instant?,
     forceDueEngine: Float, notes: String = "", onSuccess: () -> Unit, onError: () -> Unit = {},
@@ -277,7 +277,7 @@ class TaskViewModel(
     cardId: String,
     title: String,
     type: ComplianceType,
-    component: InspectionComponentType,
+    component: ComponentType,
     rules: List<InspectionRule>,
     referenceNumber: String,
     complianceAuthority: String,

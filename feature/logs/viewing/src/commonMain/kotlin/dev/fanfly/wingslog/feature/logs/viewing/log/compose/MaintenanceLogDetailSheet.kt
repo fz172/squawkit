@@ -17,25 +17,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.attachments.viewing.AttachmentSection
-import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_tasks
-import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
-import wingslog.feature.tasks.sharedassets.generated.resources.unknown_task
+import wingslog.feature.logs.sharedassets.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.sharedassets.generated.resources.airframe_time_label
 import wingslog.feature.logs.sharedassets.generated.resources.edit_log
 import wingslog.feature.logs.sharedassets.generated.resources.engine_time_label
 import wingslog.feature.logs.sharedassets.generated.resources.prop_time_label
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
-import wingslog.feature.logs.sharedassets.generated.resources.Res as MaintenanceRes
+import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_tasks
+import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
+import wingslog.feature.tasks.sharedassets.generated.resources.unknown_task
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,7 +98,7 @@ fun MaintenanceLogDetailSheet(
     }
 
     // Component / serial
-    if (log.component_type != MaintenanceLog.ComponentType.UNKNOWN) {
+    if (log.component_type != ComponentType.COMPONENT_UNKNOWN) {
       DetailRow(
         label = log.component_type.displayName(),
         value = log.component_serial,

@@ -1,18 +1,20 @@
 package dev.fanfly.wingslog.feature.logs.sharedassets.util
 
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.ComponentType
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_airframe
+import wingslog.core.ui.generated.resources.component_avionics
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.core.ui.generated.resources.unknown
-import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @Composable
-fun MaintenanceLog.ComponentType.displayName(): String = when (this) {
-  MaintenanceLog.ComponentType.AIRFRAME -> stringResource(CoreRes.string.component_airframe)
-  MaintenanceLog.ComponentType.ENGINE -> stringResource(CoreRes.string.component_engine)
-  MaintenanceLog.ComponentType.PROPELLER -> stringResource(CoreRes.string.component_propeller)
+fun ComponentType.displayName(): String = when (this) {
+  ComponentType.COMPONENT_AIRFRAME -> stringResource(CoreRes.string.component_airframe)
+  ComponentType.COMPONENT_ENGINE -> stringResource(CoreRes.string.component_engine)
+  ComponentType.COMPONENT_PROPELLER -> stringResource(CoreRes.string.component_propeller)
+  ComponentType.COMPONENT_AVIONICS -> stringResource(CoreRes.string.component_avionics)
   else -> stringResource(CoreRes.string.unknown)
 }

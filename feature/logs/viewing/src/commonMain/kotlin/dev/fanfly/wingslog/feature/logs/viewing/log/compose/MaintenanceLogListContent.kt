@@ -29,25 +29,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.all
 import wingslog.core.ui.generated.resources.retry
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintenance_log
 import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_description
 import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_title
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.clear_filter
 import wingslog.feature.logs.viewing.generated.resources.failed_to_load_logs
 import wingslog.feature.logs.viewing.generated.resources.no_logs_match_filter
 import wingslog.feature.logs.viewing.generated.resources.search_logs
 import wingslog.feature.logs.viewing.generated.resources.showing_x_of_y
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +56,7 @@ fun MaintenanceLogListContent(
   uiState: MaintenanceLogListUiState,
   downloadingIds: Set<String>,
   onSearchQueryChange: (String) -> Unit,
-  onComponentFilterChange: (MaintenanceLog.ComponentType?) -> Unit,
+  onComponentFilterChange: (ComponentType?) -> Unit,
   onClearFilter: () -> Unit,
   onRetry: () -> Unit,
   onLogClick: (MaintenanceLog) -> Unit,
@@ -117,9 +118,10 @@ fun MaintenanceLogListContent(
 
             val components = listOf(
               null,
-              MaintenanceLog.ComponentType.AIRFRAME,
-              MaintenanceLog.ComponentType.ENGINE,
-              MaintenanceLog.ComponentType.PROPELLER,
+              ComponentType.COMPONENT_AIRFRAME,
+              ComponentType.COMPONENT_ENGINE,
+              ComponentType.COMPONENT_PROPELLER,
+              ComponentType.COMPONENT_AVIONICS,
             )
             SingleChoiceSegmentedButtonRow(
               modifier = Modifier

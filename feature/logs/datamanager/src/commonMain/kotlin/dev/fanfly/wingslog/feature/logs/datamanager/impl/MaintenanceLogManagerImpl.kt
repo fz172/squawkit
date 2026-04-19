@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.datamanager.impl
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceOverview
 import dev.fanfly.wingslog.core.database.generateRandomId
@@ -171,9 +172,10 @@ class MaintenanceLogManagerImpl(
       val overview = MaintenanceOverview(
         aircraft_id = aircraftId,
         total_log_count = logs.size,
-        airframe_log_count = logs.count { it.component_type == MaintenanceLog.ComponentType.AIRFRAME },
-        engine_log_count = logs.count { it.component_type == MaintenanceLog.ComponentType.ENGINE },
-        propeller_log_count = logs.count { it.component_type == MaintenanceLog.ComponentType.PROPELLER },
+        airframe_log_count = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME },
+        engine_log_count = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE },
+        propeller_log_count = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER },
+        avionics_log_count = logs.count { it.component_type == ComponentType.COMPONENT_AVIONICS },
         current_airframe_time = logs.filter { it.airframe_time > 0.0 }
           .maxOfOrNull { it.airframe_time } ?: 0.0,
         current_engine_time = logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }

@@ -18,7 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.aircraft.MaintenanceLog.ComponentType
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
@@ -47,9 +47,10 @@ fun ComponentSection(
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
     // Component Type segmented button
     val componentOptions = listOf(
-      ComponentType.AIRFRAME,
-      ComponentType.ENGINE,
-      ComponentType.PROPELLER,
+      ComponentType.COMPONENT_AIRFRAME,
+      ComponentType.COMPONENT_ENGINE,
+      ComponentType.COMPONENT_PROPELLER,
+      ComponentType.COMPONENT_AVIONICS,
     )
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
       componentOptions.forEachIndexed { index, option ->
@@ -64,7 +65,7 @@ fun ComponentSection(
     }
 
     when (selectedComponentType) {
-      ComponentType.AIRFRAME -> {
+      ComponentType.COMPONENT_AIRFRAME -> {
         // Display aircraft serial (read-only)
         val serial = aircraft?.serial ?: ""
         Column(
@@ -96,7 +97,7 @@ fun ComponentSection(
         }
       }
 
-      ComponentType.ENGINE -> {
+      ComponentType.COMPONENT_ENGINE -> {
         if (aircraft == null) {
           Text(
             text = stringResource(Res.string.loading_aircraft),
@@ -134,7 +135,7 @@ fun ComponentSection(
         }
       }
 
-      ComponentType.PROPELLER -> {
+      ComponentType.COMPONENT_PROPELLER -> {
         if (aircraft == null) {
           Text(
             text = stringResource(Res.string.loading_aircraft),

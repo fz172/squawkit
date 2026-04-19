@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentManager
@@ -17,8 +18,8 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -216,19 +217,19 @@ class MaintenanceLogFormViewModel(
   fun onEngineTimeChange(value: String) = _uiState.update { it.copy(engineTime = value) }
   fun onAirframeTimeChange(value: String) = _uiState.update { it.copy(airframeTime = value) }
   fun onPropTimeChange(value: String) = _uiState.update { it.copy(propTime = value) }
-  fun onComponentTypeChange(value: MaintenanceLog.ComponentType) {
+  fun onComponentTypeChange(value: ComponentType) {
     _uiState.update { state ->
       val aircraft = state.aircraft
       val autoSerial = when (value) {
-        MaintenanceLog.ComponentType.AIRFRAME ->
+        ComponentType.COMPONENT_AIRFRAME ->
           aircraft?.serial?.takeIf { it.isNotEmpty() }
 
-        MaintenanceLog.ComponentType.ENGINE -> {
+        ComponentType.COMPONENT_ENGINE -> {
           val engines = aircraft?.engine ?: emptyList()
           engines.singleOrNull()?.serial?.takeIf { it.isNotEmpty() }
         }
 
-        MaintenanceLog.ComponentType.PROPELLER -> {
+        ComponentType.COMPONENT_PROPELLER -> {
           val propSerials = aircraft?.engine?.flatMap { engine ->
             buildList {
               engine.propeller?.hub?.serial?.takeIf { it.isNotEmpty() }?.let { add(it) }
@@ -465,7 +466,7 @@ class MaintenanceLogFormViewModel(
 
       // 4. Save log
       val componentSerial = when (state.selectedComponentType) {
-        MaintenanceLog.ComponentType.AIRFRAME -> state.aircraft?.serial ?: ""
+        ComponentType.COMPONENT_AIRFRAME -> state.aircraft?.serial ?: ""
         else -> state.selectedSubComponent ?: ""
       }
       val now = Clock.System.now()

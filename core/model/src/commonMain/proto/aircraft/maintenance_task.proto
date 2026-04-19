@@ -2,18 +2,10 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 import "aircraft/attachment.proto";
+import "aircraft/component_type.proto";
 
 option java_package = "dev.fanfly.wingslog.aircraft";
 option java_multiple_files = true;
-
-// Mirrors ComponentType from MaintenanceLog — kept here for MaintenanceTask independence
-enum InspectionComponentType {
-  INSPECTION_COMPONENT_UNKNOWN = 0;
-  INSPECTION_COMPONENT_AIRFRAME = 1;
-  INSPECTION_COMPONENT_ENGINE = 2;
-  INSPECTION_COMPONENT_PROPELLER = 3;
-  INSPECTION_COMPONENT_AVIONICS = 4;
-}
 
 enum ComplianceType {
   COMPLIANCE_TYPE_ROUTINE_INSPECTION = 0;
@@ -64,7 +56,7 @@ message ForceCompliedStatus {
 message MaintenanceTask {
   string id = 1;
   string title = 2;
-  InspectionComponentType component = 3;
+  ComponentType component = 3;
   repeated InspectionRule rules = 4;
 
   // Optional force overrides — when set, skip computed due calculation

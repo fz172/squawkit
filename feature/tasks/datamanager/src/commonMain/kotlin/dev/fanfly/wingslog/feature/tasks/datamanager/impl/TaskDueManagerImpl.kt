@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.InspectionComponentType
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toLocalDate
@@ -56,7 +56,7 @@ class TaskDueManagerImpl(
     // Determine which metric to track against based on component type
     // Airframe tracks airframe_time, others track engine_hour
     val currentMetricTime =
-      if (card.component == InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME) {
+      if (card.component == ComponentType.COMPONENT_AIRFRAME) {
         allLogs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }?.toFloat() ?: 0f
       } else {
         allLogs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }?.toFloat() ?: 0f
@@ -123,7 +123,7 @@ class TaskDueManagerImpl(
 
         engineRule != null -> {
           val baseEngine =
-            if (card.component == InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME) {
+            if (card.component == ComponentType.COMPONENT_AIRFRAME) {
               latestLog?.airframe_time?.toFloat() ?: 0f
             } else {
               latestLog?.engine_hour?.toFloat() ?: 0f

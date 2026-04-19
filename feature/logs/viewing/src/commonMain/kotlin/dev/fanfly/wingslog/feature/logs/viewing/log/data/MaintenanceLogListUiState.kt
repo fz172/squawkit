@@ -1,11 +1,12 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.data
 
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.MaintenanceTask
 
 data class LogFilter(
   val query: String = "",
-  val component: MaintenanceLog.ComponentType? = null,
+  val component: ComponentType? = null,
 ) {
   val isActive: Boolean get() = query.isNotBlank() || component != null
 }

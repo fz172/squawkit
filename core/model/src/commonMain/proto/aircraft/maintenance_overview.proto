@@ -15,6 +15,7 @@ message MaintenanceOverview {
   uint32 airframe_log_count = 3;
   uint32 engine_log_count = 4;
   uint32 propeller_log_count = 5;
+  uint32 avionics_log_count = 9;
 
   // Current accumulated times
   double current_airframe_time = 6;

@@ -3,6 +3,7 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "aircraft/attachment.proto";
 import "aircraft/technician.proto";
+import "aircraft/component_type.proto";
 
 option java_package = "dev.fanfly.wingslog.aircraft";
 option java_multiple_files = true;
@@ -13,12 +14,6 @@ message MaintenanceLog {
   string technician_id = 3;
   string work_description = 4;
 
-  enum ComponentType {
-    UNKNOWN = 0;
-    AIRFRAME = 1;
-    ENGINE = 2;
-    PROPELLER = 3;
-  }
   ComponentType component_type = 5;
 
   string component_serial = 6; // References Engine/Prop/Blade Serial

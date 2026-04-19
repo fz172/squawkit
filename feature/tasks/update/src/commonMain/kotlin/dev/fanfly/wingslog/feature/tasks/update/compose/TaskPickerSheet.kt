@@ -24,16 +24,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.ComplianceType
-import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.component_airframe
-import wingslog.core.ui.generated.resources.component_avionics
-import wingslog.core.ui.generated.resources.component_engine
-import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.core.ui.generated.resources.done
 import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
 import wingslog.feature.tasks.update.generated.resources.compliance_type_ad
@@ -117,21 +113,7 @@ fun TaskPickerSheet(
                     text = card.title,
                     style = MaterialTheme.typography.bodyLarge,
                   )
-                  val componentLabel = when (card.component) {
-                    InspectionComponentType.INSPECTION_COMPONENT_ENGINE -> stringResource(
-                      CoreRes.string.component_engine
-                    )
-
-                    InspectionComponentType.INSPECTION_COMPONENT_PROPELLER -> stringResource(
-                      CoreRes.string.component_propeller
-                    )
-
-                    InspectionComponentType.INSPECTION_COMPONENT_AVIONICS -> stringResource(
-                      CoreRes.string.component_avionics
-                    )
-
-                    else -> stringResource(CoreRes.string.component_airframe)
-                  }
+                  val componentLabel = card.component.displayName()
                   Text(
                     text = if (card.reference_number.isNotBlank()) "${card.reference_number} • $componentLabel" else componentLabel,
                     style = MaterialTheme.typography.bodySmall,

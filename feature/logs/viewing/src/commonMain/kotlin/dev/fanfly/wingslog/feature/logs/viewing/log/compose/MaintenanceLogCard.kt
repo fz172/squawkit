@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
@@ -30,13 +31,13 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.tasks.sharedassets.generated.resources.affects_n_tasks
-import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.airframe_time_abbr
 import wingslog.feature.logs.viewing.generated.resources.engine_time_abbr
 import wingslog.feature.logs.viewing.generated.resources.prop_time_abbr
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.tasks.sharedassets.generated.resources.affects_n_tasks
+import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 
 
 @Composable
@@ -78,7 +79,7 @@ fun MaintenanceLogCard(
           overflow = TextOverflow.Ellipsis,
           modifier = Modifier.weight(1f),
         )
-        if (log.component_type != MaintenanceLog.ComponentType.UNKNOWN) {
+        if (log.component_type != ComponentType.COMPONENT_UNKNOWN) {
           ComponentChip(log.component_type.displayName())
         }
         Icon(
@@ -176,7 +177,7 @@ private fun MaintenanceLogCardPreview() {
     work_description = "Performed annual inspection and oil change on the Lycoming IO-360.",
     engine_hour = 1234.5,
     airframe_time = 987.0,
-    component_type = MaintenanceLog.ComponentType.ENGINE,
+    component_type = ComponentType.COMPONENT_ENGINE,
     inspection_ids = listOf("annual-card-id", "oil-change-card-id")
   )
   MaterialTheme {

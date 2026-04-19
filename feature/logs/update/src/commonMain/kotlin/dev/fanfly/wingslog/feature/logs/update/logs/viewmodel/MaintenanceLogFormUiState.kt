@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.fileCount
@@ -19,7 +19,7 @@ data class MaintenanceLogFormUiState(
   val airframeTime: String = "",
   val propTime: String = "",
   val aircraft: Aircraft? = null,
-  val selectedComponentType: MaintenanceLog.ComponentType = MaintenanceLog.ComponentType.AIRFRAME,
+  val selectedComponentType: ComponentType = ComponentType.COMPONENT_AIRFRAME,
   val selectedSubComponent: String? = null,
   val error: UiText? = null,
   /** All inspection cards for this aircraft — used by TaskPickerSheet */
@@ -64,7 +64,7 @@ data class MaintenanceLogFormUiState(
     val engineTime: String,
     val airframeTime: String,
     val propTime: String,
-    val selectedComponentType: MaintenanceLog.ComponentType,
+    val selectedComponentType: ComponentType,
     val selectedSubComponent: String?,
     val selectedTechnicianId: String?,
     val maintenanceDate: LocalDate?,

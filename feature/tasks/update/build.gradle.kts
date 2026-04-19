@@ -51,6 +51,7 @@ kotlin {
       implementation(project(":core:database"))
       implementation(project(":core:datetime"))
       implementation(project(":feature:logs:datamanager"))
+      implementation(project(":feature:logs:sharedassets"))
       implementation(project(":core:attachments:model"))
       implementation(project(":core:attachments:datamanager"))
       implementation(project(":core:attachments:viewing"))

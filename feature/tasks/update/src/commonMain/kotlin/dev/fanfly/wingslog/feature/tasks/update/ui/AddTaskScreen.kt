@@ -30,8 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.ComplianceType
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.EngineHourRule
-import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
@@ -65,7 +65,7 @@ fun AddTaskScreen(
   attachmentSection: @Composable () -> Unit = {},
 ) {
   var title by remember { mutableStateOf("") }
-  var component by remember { mutableStateOf(InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME) }
+  var component by remember { mutableStateOf(ComponentType.COMPONENT_AIRFRAME) }
   var type by remember { mutableStateOf(ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION) }
   var intervalMonths by remember { mutableStateOf("") }
   var intervalHours by remember { mutableStateOf("") }
@@ -77,7 +77,7 @@ fun AddTaskScreen(
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
 
   val hasChanges = title.isNotEmpty() ||
-    component != InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME ||
+    component != ComponentType.COMPONENT_AIRFRAME ||
     type != ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION ||
     intervalMonths.isNotEmpty() ||
     intervalHours.isNotEmpty() ||

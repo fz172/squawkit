@@ -19,14 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.ComplianceType
-import dev.fanfly.wingslog.aircraft.InspectionComponentType
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.component_airframe
-import wingslog.core.ui.generated.resources.component_avionics
-import wingslog.core.ui.generated.resources.component_engine
-import wingslog.core.ui.generated.resources.component_propeller
 import wingslog.core.ui.generated.resources.component_type
 import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
 import wingslog.feature.tasks.update.generated.resources.compliance_ad_sub
@@ -50,8 +47,8 @@ import wingslog.feature.tasks.update.generated.resources.task_title_helper
 fun TaskIdentityTab(
   title: String,
   onTitleChange: (String) -> Unit,
-  component: InspectionComponentType,
-  onComponentChange: ((InspectionComponentType) -> Unit)?,
+  component: ComponentType,
+  onComponentChange: ((ComponentType) -> Unit)?,
   complianceType: ComplianceType,
   onComplianceTypeChange: ((ComplianceType) -> Unit)?,
   modifier: Modifier = Modifier,
@@ -89,8 +86,8 @@ fun TaskIdentityTab(
     }
 
     // ── Section 2: Component Type ─────────────────────────────────────────
-    val components = InspectionComponentType.entries
-      .filter { it != InspectionComponentType.INSPECTION_COMPONENT_UNKNOWN }
+    val components = ComponentType.entries
+      .filter { it != ComponentType.COMPONENT_UNKNOWN }
 
     IdentitySection(
       header = stringResource(CoreRes.string.component_type),
@@ -100,21 +97,7 @@ fun TaskIdentityTab(
         val componentEntries =
           if (onComponentChange != null) components else components.filter { it == component }
         componentEntries.forEach { entry ->
-          val label = when (entry) {
-            InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME ->
-              stringResource(CoreRes.string.component_airframe)
-
-            InspectionComponentType.INSPECTION_COMPONENT_ENGINE ->
-              stringResource(CoreRes.string.component_engine)
-
-            InspectionComponentType.INSPECTION_COMPONENT_PROPELLER ->
-              stringResource(CoreRes.string.component_propeller)
-
-            InspectionComponentType.INSPECTION_COMPONENT_AVIONICS ->
-              stringResource(CoreRes.string.component_avionics)
-
-            else -> entry.name.removePrefix("INSPECTION_COMPONENT_")
-          }
+          val label = entry.displayName()
           IdentityRadioItem(
             label = label,
             selected = component == entry,

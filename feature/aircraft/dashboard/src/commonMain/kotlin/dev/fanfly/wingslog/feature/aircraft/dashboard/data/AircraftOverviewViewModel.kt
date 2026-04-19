@@ -3,15 +3,16 @@ package dev.fanfly.wingslog.feature.aircraft.dashboard.data
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -62,6 +63,7 @@ class AircraftOverviewViewModel(
               airframe = overview.airframe_log_count.toLong(),
               engine = overview.engine_log_count.toLong(),
               propeller = overview.propeller_log_count.toLong(),
+              avionics = overview.avionics_log_count.toLong(),
               currentAirframeTime = overview.current_airframe_time,
               currentEngineTime = overview.current_engine_time,
               currentPropTime = overview.current_propeller_time
@@ -74,11 +76,13 @@ class AircraftOverviewViewModel(
             val currentPropTime = logs.filter { it.prop_time > 0.0 }.maxOfOrNull { it.prop_time }
             LogStats(
               total = logs.size.toLong(),
-              airframe = logs.count { it.component_type == MaintenanceLog.ComponentType.AIRFRAME }
+              airframe = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME }
                 .toLong(),
-              engine = logs.count { it.component_type == MaintenanceLog.ComponentType.ENGINE }
+              engine = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE }
                 .toLong(),
-              propeller = logs.count { it.component_type == MaintenanceLog.ComponentType.PROPELLER }
+              propeller = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER }
+                .toLong(),
+              avionics = logs.count { it.component_type == ComponentType.COMPONENT_AVIONICS }
                 .toLong(),
               currentEngineTime = currentEngineTime,
               currentAirframeTime = currentAirframeTime,
