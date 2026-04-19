@@ -8,12 +8,16 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import dev.fanfly.wingslog.aircraft.InspectionCard
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.feature.inspection.model.DueMetadata
 import dev.fanfly.wingslog.feature.inspection.model.DueStatus
 import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.dash
 import wingslog.feature.inspection.viewing.generated.resources.badge_due
@@ -85,3 +89,48 @@ fun InspectionCardItem(
     modifier = modifier,
   )
 }
+
+private fun previewCard(title: String, notes: String = "") =
+  InspectionCard(title = title, notes = notes)
+
+@Preview
+@Composable
+fun PreviewInspectionCardItemOverdue() = InspectionCardItem(
+  cardWithStatus = InspectionCardWithStatus(
+    card = previewCard("100 Hr Inspection", "Routine engine and airframe check"),
+    dueStatus = DueMetadata(
+      nextDueDate = LocalDate(2025, 12, 1),
+      status = DueStatus.OVERDUE,
+    ),
+  ),
+)
+
+@Preview
+@Composable
+fun PreviewInspectionCardItemDueSoon() = InspectionCardItem(
+  cardWithStatus = InspectionCardWithStatus(
+    card = previewCard("Annual Inspection"),
+    dueStatus = DueMetadata(
+      nextDueEngine = 1250f,
+      status = DueStatus.DUE_SOON,
+    ),
+  ),
+)
+
+@Preview
+@Composable
+fun PreviewInspectionCardItemComplied() = InspectionCardItem(
+  cardWithStatus = InspectionCardWithStatus(
+    card = previewCard("Oil Change", "Every 50 hours"),
+    dueStatus = DueMetadata(status = DueStatus.COMPLIED),
+  ),
+)
+
+@Preview
+@Composable
+fun PreviewInspectionCardItemOnCondition() = InspectionCardItem(
+  cardWithStatus = InspectionCardWithStatus(
+    card = previewCard("Prop Strike Inspection"),
+    dueStatus = DueMetadata(isOnCondition = true, status = DueStatus.NORMAL),
+  ),
+)
