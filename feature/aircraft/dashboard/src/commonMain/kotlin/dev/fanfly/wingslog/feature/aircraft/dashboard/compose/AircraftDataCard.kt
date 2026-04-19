@@ -47,8 +47,8 @@ import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
 
 
 @Composable
-fun AircraftDataCard(aircraft: Aircraft) {
-  var expanded by rememberSaveable { mutableStateOf(true) }
+fun AircraftDataCard(aircraft: Aircraft, initiallyExpanded: Boolean = true) {
+  var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
   val rotationState by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
 
   Surface(

@@ -11,12 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,14 +28,15 @@ import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
 import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.viewing.generated.resources.critical_airworthiness
 import wingslog.feature.tasks.viewing.generated.resources.due_date
 import wingslog.feature.tasks.viewing.generated.resources.label_due_engine
 import wingslog.feature.tasks.viewing.generated.resources.label_expired
 import wingslog.feature.tasks.viewing.generated.resources.maintenance_due_subtitle
-import wingslog.feature.tasks.viewing.generated.resources.maintenance_due_title
-import wingslog.feature.tasks.viewing.generated.resources.status_label
+
 
 @Composable
 fun CriticalAlertsSection(
@@ -46,6 +44,9 @@ fun CriticalAlertsSection(
   onCardClick: (MaintenanceTaskWithStatus) -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val hasOverdue = overdueInspections.any { it.dueStatus.status == DueStatus.OVERDUE }
+  val titleColor = if (hasOverdue) MaterialTheme.colorScheme.error else StatusWarning
+
   Card(
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
@@ -53,7 +54,7 @@ fun CriticalAlertsSection(
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
   ) {
     Column {
-      // --- Card header: icon + status label + title + subtitle ---
+      // --- Card header: title + subtitle ---
       Column(
         modifier = Modifier
           .fillMaxWidth()
@@ -61,23 +62,11 @@ fun CriticalAlertsSection(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
       ) {
-        Icon(
-          imageVector = Icons.Filled.Build,
-          contentDescription = null,
-          modifier = Modifier.size(28.dp),
-          tint = MaterialTheme.colorScheme.tertiary,
-        )
         Text(
-          text = stringResource(ViewingRes.string.status_label),
-          style = MaterialTheme.typography.labelSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          letterSpacing = 1.sp,
-        )
-        Text(
-          text = stringResource(ViewingRes.string.maintenance_due_title),
+          text = stringResource(SharedInspectionRes.string.maintenance_due_title),
           style = MaterialTheme.typography.headlineSmall,
           fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.tertiary,
+          color = titleColor,
         )
         Text(
           text = stringResource(ViewingRes.string.maintenance_due_subtitle),

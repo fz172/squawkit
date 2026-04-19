@@ -50,9 +50,9 @@ import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_a
 import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_sb_short
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
 import wingslog.feature.tasks.sharedassets.generated.resources.engine_format
+import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
-import wingslog.feature.tasks.viewing.generated.resources.badge_maintenance_due
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
 import wingslog.feature.tasks.viewing.generated.resources.completed
 import wingslog.feature.tasks.viewing.generated.resources.days_overdue_count
@@ -245,7 +245,7 @@ private fun StatusBadge(dueStatus: DueMetadata) {
     )
 
     dueStatus.status == DueStatus.DUE_SOON -> Triple(
-      stringResource(ViewingRes.string.badge_maintenance_due),
+      stringResource(SharedRes.string.maintenance_due_title),
       StatusWarning,
       Color.Black,
     )
