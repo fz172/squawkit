@@ -27,8 +27,8 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.MaintenanceTa
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.OverviewTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
-import dev.fanfly.wingslog.feature.inspection.update.compose.DeleteInspectionConfirmDialog
-import dev.fanfly.wingslog.feature.inspection.viewing.InspectionDetailSheet
+import dev.fanfly.wingslog.feature.tasks.update.compose.DeleteTaskConfirmDialog
+import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -79,7 +79,7 @@ fun AircraftOverviewContent(
   ) { paddingValues ->
 
     state.selectedInspection?.let { selectedInspection ->
-      InspectionDetailSheet(
+      TaskDetailSheet(
         cardWithStatus = selectedInspection,
         logs = state.logsForSelectedInspection,
         onDismiss = { onAction(AircraftOverviewAction.DismissInspectionDetail) },
@@ -99,7 +99,7 @@ fun AircraftOverviewContent(
     state.deletingInspectionId?.let { deletingInspectionId ->
       val title = (state.activeInspections + state.compliedInspections)
         .find { it.card.id == deletingInspectionId }?.card?.title ?: ""
-      DeleteInspectionConfirmDialog(
+      DeleteTaskConfirmDialog(
         inspectionTitle = title,
         onConfirm = { onAction(AircraftOverviewAction.ConfirmDeleteInspection) },
         onDismiss = { onAction(AircraftOverviewAction.CancelDeleteInspection) },

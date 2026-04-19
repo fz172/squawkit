@@ -2,9 +2,9 @@ package dev.fanfly.wingslog.feature.maintenance.viewing.log.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.aircraft.InspectionCard
+import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDataManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 class MaintenanceLogListViewModel(
   private val logManager: MaintenanceLogManager,
-  private val inspectionDataManager: InspectionDataManager,
+  private val inspectionDataManager: TaskDataManager,
   val aircraftId: String,
 ) : ViewModel() {
 
@@ -32,11 +32,11 @@ class MaintenanceLogListViewModel(
   private val _logsLoadState = MutableStateFlow<LogsLoadState>(LogsLoadState.Loading)
   private val _filter = MutableStateFlow(LogFilter())
   private val _selectedLog = MutableStateFlow<MaintenanceLog?>(null)
-  private val _availableCards = MutableStateFlow<List<InspectionCard>>(emptyList())
+  private val _availableCards = MutableStateFlow<List<MaintenanceTask>>(emptyList())
 
   init {
     observeLogs()
-    observeInspections()
+    observeTasks()
     viewModelScope.launch {
       combine(
         _logsLoadState,
@@ -78,9 +78,9 @@ class MaintenanceLogListViewModel(
     }
   }
 
-  private fun observeInspections() {
+  private fun observeTasks() {
     viewModelScope.launch {
-      inspectionDataManager.observeInspections(aircraftId)
+      inspectionDataManager.observeTasks(aircraftId)
         .catch { _availableCards.value = emptyList() }
         .collect { _availableCards.value = it }
     }
@@ -100,7 +100,7 @@ class MaintenanceLogListViewModel(
 
   fun retryLoading() {
     observeLogs()
-    observeInspections()
+    observeTasks()
   }
 
   fun onLogClick(log: MaintenanceLog) {

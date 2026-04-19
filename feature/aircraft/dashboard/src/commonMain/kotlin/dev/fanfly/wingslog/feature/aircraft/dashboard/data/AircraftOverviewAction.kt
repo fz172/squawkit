@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.data
 
 import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
+import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 
 sealed interface AircraftOverviewAction {
   data object BackClick : AircraftOverviewAction
@@ -10,7 +10,7 @@ sealed interface AircraftOverviewAction {
   data class AddLogClick(val aircraftId: String) : AircraftOverviewAction
   data class EditLogClick(val aircraftId: String, val logId: String) : AircraftOverviewAction
   data class AddInspectionClick(val aircraftId: String) : AircraftOverviewAction
-  data class InspectionCardClick(val card: InspectionCardWithStatus) : AircraftOverviewAction
+  data class InspectionCardClick(val card: MaintenanceTaskWithStatus) : AircraftOverviewAction
   data object DismissInspectionDetail : AircraftOverviewAction
   data class EditInspectionClick(val aircraftId: String, val cardId: String) :
     AircraftOverviewAction

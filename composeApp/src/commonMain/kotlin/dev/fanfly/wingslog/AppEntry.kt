@@ -13,8 +13,8 @@ import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
-import dev.fanfly.wingslog.feature.inspection.update.ui.AddInspectionRoute
-import dev.fanfly.wingslog.feature.inspection.update.ui.EditInspectionRoute
+import dev.fanfly.wingslog.feature.tasks.update.ui.AddTaskRoute
+import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
 import dev.fanfly.wingslog.feature.maintenance.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.maintenance.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.aircraft.dashboard.AircraftOverviewScreen
@@ -95,7 +95,7 @@ fun AppEntry() {
           route = Screen.AddInspection.route,
           arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType })
         ) {
-          AddInspectionRoute(navController = navController)
+          AddTaskRoute(navController = navController)
         }
 
         composable(
@@ -105,7 +105,7 @@ fun AppEntry() {
             navArgument(Screen.CARD_ID) { type = NavType.StringType }
           )
         ) {
-          EditInspectionRoute(navController = navController)
+          EditTaskRoute(navController = navController)
         }
 
         composable(

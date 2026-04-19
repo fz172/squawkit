@@ -56,9 +56,9 @@ import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.inspection.update.compose.InspectionPickerSheet
+import dev.fanfly.wingslog.feature.tasks.update.compose.TaskPickerSheet
 import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.ComponentSection
-import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.InspectionWorkSection
+import dev.fanfly.wingslog.feature.maintenance.update.logs.compose.TaskWorkSection
 import dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
@@ -321,7 +321,7 @@ fun MaintenanceLogFormScreen(
           }
 
           // Inspection Work section
-          InspectionWorkSection(
+          TaskWorkSection(
             selectedIds = uiState.selectedInspectionIds,
             availableCards = uiState.availableInspectionCards,
             onAddClick = viewModel::showInspectionPicker,
@@ -331,7 +331,7 @@ fun MaintenanceLogFormScreen(
 
           // Inspection picker bottom sheet
           if (uiState.showInspectionPicker) {
-            InspectionPickerSheet(
+            TaskPickerSheet(
               availableCards = uiState.availableInspectionCards,
               selectedIds = uiState.selectedInspectionIds,
               onToggle = viewModel::toggleInspectionSelection,

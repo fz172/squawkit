@@ -21,8 +21,8 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.LogOnboardingCard
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.LogStatsSection
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
-import dev.fanfly.wingslog.feature.inspection.model.DueStatus
-import dev.fanfly.wingslog.feature.inspection.viewing.CriticalAlertsSection
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import dev.fanfly.wingslog.feature.tasks.viewing.CriticalAlertsSection
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res
 import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template

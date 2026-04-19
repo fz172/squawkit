@@ -32,11 +32,11 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.core.ui.theme.StatusWarningContainer
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
-import dev.fanfly.wingslog.feature.inspection.model.DueStatus
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
-import wingslog.feature.inspection.sharedassets.generated.resources.due_soon
-import wingslog.feature.inspection.sharedassets.generated.resources.overdue
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.due_soon
+import wingslog.feature.tasks.sharedassets.generated.resources.overdue
 
 @Composable
 fun AircraftDashboardCard(

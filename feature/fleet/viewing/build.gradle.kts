@@ -39,9 +39,9 @@ kotlin {
       implementation(project(":feature:fleet:model"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:fleet:sharedassets"))
-      implementation(project(":feature:inspection:model"))
-      implementation(project(":feature:inspection:datamanager"))
-      implementation(project(":feature:inspection:sharedassets"))
+      implementation(project(":feature:tasks:model"))
+      implementation(project(":feature:tasks:datamanager"))
+      implementation(project(":feature:tasks:sharedassets"))
       implementation(project(":feature:maintenance:datamanager"))
 
       // Compose

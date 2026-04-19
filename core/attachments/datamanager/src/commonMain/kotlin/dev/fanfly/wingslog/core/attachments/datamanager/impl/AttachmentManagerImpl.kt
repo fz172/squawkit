@@ -28,14 +28,14 @@ class AttachmentManagerImpl(
     return AttachmentStoragePath.forMaintenanceLog(uid, aircraftId, logId, attachmentId, filename)
   }
 
-  override fun buildInspectionCardPath(
+  override fun buildMaintenanceTaskPath(
     aircraftId: String,
     cardId: String,
     attachmentId: String,
     filename: String,
   ): String? {
     val uid = authedUid() ?: return null
-    return AttachmentStoragePath.forInspectionCard(uid, aircraftId, cardId, attachmentId, filename)
+    return AttachmentStoragePath.forMaintenanceTask(uid, aircraftId, cardId, attachmentId, filename)
   }
 
   override fun uploadFile(

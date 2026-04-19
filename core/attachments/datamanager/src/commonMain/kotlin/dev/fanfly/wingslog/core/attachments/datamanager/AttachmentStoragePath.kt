@@ -10,7 +10,7 @@ internal object AttachmentStoragePath {
     filename: String,
   ): String = "users/$uid/fleet/$aircraftId/maintenance_logs/$logId/${attachmentId}_${filename.sanitise()}"
 
-  fun forInspectionCard(
+  fun forMaintenanceTask(
     uid: String,
     aircraftId: String,
     cardId: String,

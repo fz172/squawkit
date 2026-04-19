@@ -22,25 +22,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
-import dev.fanfly.wingslog.feature.inspection.viewing.InspectionCardItem
+import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
-import wingslog.feature.inspection.sharedassets.generated.resources.add_task
-import wingslog.feature.inspection.sharedassets.generated.resources.due_with_count
-import wingslog.feature.inspection.sharedassets.generated.resources.history_with_count
-import wingslog.feature.inspection.sharedassets.generated.resources.maintenance_tasks
-import wingslog.feature.inspection.sharedassets.generated.resources.no_complied_yet
-import wingslog.feature.inspection.sharedassets.generated.resources.no_tasks_yet
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.add_task
+import wingslog.feature.tasks.sharedassets.generated.resources.due_with_count
+import wingslog.feature.tasks.sharedassets.generated.resources.history_with_count
+import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_tasks
+import wingslog.feature.tasks.sharedassets.generated.resources.no_complied_yet
+import wingslog.feature.tasks.sharedassets.generated.resources.no_tasks_yet
 
 @Composable
 fun ComplianceSection(
-  activeInspections: List<InspectionCardWithStatus>,
-  compliedInspections: List<InspectionCardWithStatus>,
+  activeInspections: List<MaintenanceTaskWithStatus>,
+  compliedInspections: List<MaintenanceTaskWithStatus>,
   showComplied: Boolean,
   onToggleComplied: (Boolean) -> Unit,
   onAddClick: () -> Unit,
-  onCardClick: (InspectionCardWithStatus) -> Unit = {},
+  onCardClick: (MaintenanceTaskWithStatus) -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
@@ -119,7 +119,7 @@ fun ComplianceSection(
     } else {
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
         displayList.forEach { item ->
-          InspectionCardItem(
+          TaskCardItem(
             cardWithStatus = item,
             onClick = { onCardClick(item) },
             modifier = Modifier.fillMaxWidth(),

@@ -2,12 +2,12 @@ package dev.fanfly.wingslog.feature.fleet.viewing.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.aircraft.InspectionCard
+import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDueManager
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDataManager
-import dev.fanfly.wingslog.feature.inspection.model.DueStatus
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -22,8 +22,8 @@ import kotlinx.coroutines.launch
 class FleetDashboardViewModel(
   private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
-  private val inspectionDataManager: InspectionDataManager,
-  private val inspectionDueManager: InspectionDueManager,
+  private val inspectionDataManager: TaskDataManager,
+  private val inspectionDueManager: TaskDueManager,
 ) : ViewModel() {
 
   private var fleetInfoJob: Job? = null
@@ -48,7 +48,7 @@ class FleetDashboardViewModel(
           } else {
             val perAircraftFlows = fleet.map { aircraft ->
               combine(
-                inspectionDataManager.observeInspections(aircraft.id),
+                inspectionDataManager.observeTasks(aircraft.id),
                 logManager.observeLogs(aircraft.id)
               ) { inspections, logs ->
                 aircraft.id to worstStatus(inspections, logs)
@@ -68,7 +68,7 @@ class FleetDashboardViewModel(
   }
 
   private fun worstStatus(
-    inspections: List<InspectionCard>,
+    inspections: List<MaintenanceTask>,
     logs: List<MaintenanceLog>,
   ): DueStatus {
     if (inspections.isEmpty()) return DueStatus.NORMAL

@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.InspectionCard
+import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.attachments.viewing.AttachmentSection
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
@@ -27,21 +27,21 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.maintenance.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.sharedassets.generated.resources.maintenance_tasks
-import wingslog.feature.inspection.sharedassets.generated.resources.unknown_date
-import wingslog.feature.inspection.sharedassets.generated.resources.unknown_task
+import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_tasks
+import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
+import wingslog.feature.tasks.sharedassets.generated.resources.unknown_task
 import wingslog.feature.maintenance.sharedassets.generated.resources.airframe_time_label
 import wingslog.feature.maintenance.sharedassets.generated.resources.edit_log
 import wingslog.feature.maintenance.sharedassets.generated.resources.engine_time_label
 import wingslog.feature.maintenance.sharedassets.generated.resources.prop_time_label
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
 import wingslog.feature.maintenance.sharedassets.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MaintenanceLogDetailSheet(
   log: MaintenanceLog,
-  availableCards: List<InspectionCard>,
+  availableCards: List<MaintenanceTask>,
   onDismiss: () -> Unit,
   onEditClick: () -> Unit,
   onAttachmentTap: (Attachment) -> Unit = {},

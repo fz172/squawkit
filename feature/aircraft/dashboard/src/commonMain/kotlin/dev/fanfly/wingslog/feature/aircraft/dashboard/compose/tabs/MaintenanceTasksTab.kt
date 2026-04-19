@@ -26,8 +26,8 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.ComplianceSection
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.inspection.sharedassets.generated.resources.Res as InspectionRes
-import wingslog.feature.inspection.sharedassets.generated.resources.add_task
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.add_task
 
 @Composable
 fun MaintenanceTasksTab(

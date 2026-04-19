@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.maintenance.viewing.log.data
 
-import dev.fanfly.wingslog.aircraft.InspectionCard
+import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 
 data class LogFilter(
@@ -17,7 +17,7 @@ sealed interface MaintenanceLogListUiState {
     val totalCount: Int,
     val filter: LogFilter = LogFilter(),
     val selectedLog: MaintenanceLog? = null,
-    val availableCards: List<InspectionCard> = emptyList(),
+    val availableCards: List<MaintenanceTask> = emptyList(),
   ) : MaintenanceLogListUiState
 
   data object Error : MaintenanceLogListUiState

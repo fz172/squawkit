@@ -6,8 +6,8 @@ import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.database.di.commonFirebaseModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
 import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
-import dev.fanfly.wingslog.feature.inspection.datamanager.inspectionModule
-import dev.fanfly.wingslog.feature.inspection.update.viewmodel.inspectionUiModule
+import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
+import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
 import dev.fanfly.wingslog.feature.maintenance.datamanager.impl.maintenanceDataManagerModule
 import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
 import dev.fanfly.wingslog.feature.maintenance.viewing.di.maintenanceViewingModule
@@ -35,8 +35,8 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) =
       maintenanceViewingModule,
       maintenanceUpdateModule,
       aircraftDashboardModule,
-      inspectionModule,
-      inspectionUiModule,
+      tasksModule,
+      tasksUiModule,
       fleetDataManagerModule,
       appModule,
       userProfileModule,

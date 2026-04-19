@@ -18,10 +18,10 @@ interface AttachmentManager {
   ): String?
 
   /**
-   * Builds the Firebase Storage path for an inspection card attachment.
+   * Builds the Firebase Storage path for a maintenance task attachment.
    * Returns null if no authenticated non-anonymous user is signed in.
    */
-  fun buildInspectionCardPath(
+  fun buildMaintenanceTaskPath(
     aircraftId: String,
     cardId: String,
     attachmentId: String,

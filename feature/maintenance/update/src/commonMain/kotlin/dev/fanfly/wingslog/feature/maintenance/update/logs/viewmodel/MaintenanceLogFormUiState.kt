@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.maintenance.update.logs.viewmodel
 
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.aircraft.InspectionCard
+import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
@@ -22,8 +22,8 @@ data class MaintenanceLogFormUiState(
   val selectedComponentType: MaintenanceLog.ComponentType = MaintenanceLog.ComponentType.AIRFRAME,
   val selectedSubComponent: String? = null,
   val error: UiText? = null,
-  /** All inspection cards for this aircraft — used by InspectionPickerSheet */
-  val availableInspectionCards: List<InspectionCard> = emptyList(),
+  /** All inspection cards for this aircraft — used by TaskPickerSheet */
+  val availableInspectionCards: List<MaintenanceTask> = emptyList(),
   val showInspectionPicker: Boolean = false,
   val selectedTechnician: Technician? = null,
   val availableTechnicians: List<Technician> = emptyList(),

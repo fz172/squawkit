@@ -7,10 +7,10 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDataManager
-import dev.fanfly.wingslog.feature.inspection.datamanager.InspectionDueManager
-import dev.fanfly.wingslog.feature.inspection.model.DueStatus
-import dev.fanfly.wingslog.feature.inspection.model.InspectionCardWithStatus
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.maintenance.datamanager.MaintenanceLogManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,8 +24,8 @@ import kotlinx.coroutines.launch
 class AircraftOverviewViewModel(
   private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
-  private val inspectionDataManager: InspectionDataManager,
-  private val inspectionDueManager: InspectionDueManager,
+  private val inspectionDataManager: TaskDataManager,
+  private val inspectionDueManager: TaskDueManager,
   private val attachmentOpener: AttachmentOpener,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -50,7 +50,7 @@ class AircraftOverviewViewModel(
       combine(
         fleetManager.loadAircraft(aircraftId),
         logManager.observeLogs(aircraftId),
-        inspectionDataManager.observeInspections(aircraftId),
+        inspectionDataManager.observeTasks(aircraftId),
         logManager.observeMaintenanceOverview(aircraftId),
         attachmentOpener.downloadingIds
       ) { aircraft, logs, inspectionCards, overview, downloadingIds ->
@@ -86,7 +86,7 @@ class AircraftOverviewViewModel(
           }
 
           val cardsWithStatus = inspectionCards.map { card ->
-            InspectionCardWithStatus(
+            MaintenanceTaskWithStatus(
               card = card,
               dueStatus = inspectionDueManager.computeNextDue(card, logs, inspectionCards),
             )
@@ -185,7 +185,7 @@ class AircraftOverviewViewModel(
     }
   }
 
-  private fun showInspectionDetail(cardWithStatus: InspectionCardWithStatus) {
+  private fun showInspectionDetail(cardWithStatus: MaintenanceTaskWithStatus) {
     val relevantLogs = cachedLogs.filter { cardWithStatus.card.id in it.inspection_ids }
       .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
     _uiState.update { state ->
@@ -217,13 +217,13 @@ class AircraftOverviewViewModel(
   fun confirmDeleteInspection() {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     val cardId = state.deletingInspectionId ?: return
-    deleteInspection(cardId)
+    deleteTask(cardId)
   }
 
-  fun deleteInspection(cardId: String) {
+  fun deleteTask(cardId: String) {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     viewModelScope.launch {
-      inspectionDataManager.deleteInspection(state.aircraft.id, cardId)
+      inspectionDataManager.deleteTask(state.aircraft.id, cardId)
       _uiState.update { s ->
         if (s is AircraftOverviewUiState.Success) {
           s.copy(deletingInspectionId = null, selectedInspection = null)
