@@ -2,10 +2,10 @@ package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
 import com.squareup.wire.Instant as WireInstant
+import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.EngineHourRule
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.ImmediateRule
-import dev.fanfly.wingslog.aircraft.InspectionComponentType
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
@@ -99,7 +99,7 @@ class TaskDueManagerImplTest {
   @Test
   fun forcedDueEngine_belowCurrentMetric_overdue() {
     val card = card(
-      component = InspectionComponentType.INSPECTION_COMPONENT_ENGINE,
+      component = ComponentType.COMPONENT_ENGINE,
       forceDueEngine = 80f,
     )
     val log = log(engineHour = 100.0)
@@ -113,7 +113,7 @@ class TaskDueManagerImplTest {
   @Test
   fun forcedDueEngine_withinTenOfCurrentMetric_dueSoon() {
     val card = card(
-      component = InspectionComponentType.INSPECTION_COMPONENT_ENGINE,
+      component = ComponentType.COMPONENT_ENGINE,
       forceDueEngine = 105f,
     )
     val log = log(engineHour = 100.0)
@@ -126,7 +126,7 @@ class TaskDueManagerImplTest {
   @Test
   fun forcedDueEngine_farAboveCurrentMetric_normal() {
     val card = card(
-      component = InspectionComponentType.INSPECTION_COMPONENT_ENGINE,
+      component = ComponentType.COMPONENT_ENGINE,
       forceDueEngine = 200f,
     )
     val log = log(engineHour = 100.0)
@@ -182,7 +182,7 @@ class TaskDueManagerImplTest {
   fun engineRule_airframeComponent_tracksAirframeTime() {
     val card = card(
       id = "c1",
-      component = InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME,
+      component = ComponentType.COMPONENT_AIRFRAME,
       rules = listOf(engineRule(5f)),
     )
     val log = log(
@@ -201,7 +201,7 @@ class TaskDueManagerImplTest {
   fun engineRule_engineComponent_tracksEngineHour() {
     val card = card(
       id = "c1",
-      component = InspectionComponentType.INSPECTION_COMPONENT_ENGINE,
+      component = ComponentType.COMPONENT_ENGINE,
       rules = listOf(engineRule(10f)),
     )
     val log = log(
@@ -353,7 +353,7 @@ class TaskDueManagerImplTest {
     id: String = "card",
     isOneTime: Boolean = false,
     rules: List<InspectionRule> = emptyList(),
-    component: InspectionComponentType = InspectionComponentType.INSPECTION_COMPONENT_AIRFRAME,
+    component: ComponentType = ComponentType.COMPONENT_AIRFRAME,
     forceDueDate: WireInstant? = null,
     forceDueEngine: Float = 0f,
     forceComplied: ForceCompliedStatus? = null,

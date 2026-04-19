@@ -15,7 +15,6 @@ import org.junit.Test
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_AIRCRAFT_ID = "aircraft-456"
-private const val TEST_LOG_ID = "log-789"
 
 class MaintenanceLogManagerImplTest {
 
@@ -52,17 +51,6 @@ class MaintenanceLogManagerImplTest {
     every { aircraftDocument.collection("maintenance_logs") } returns logsCollection
 
     manager = MaintenanceLogManagerImpl(firebaseAuth, firestore)
-  }
-
-  private fun buildTestLog(id: String = TEST_LOG_ID): MaintenanceLog {
-    return MaintenanceLog(
-      id = id,
-      work_description = "Oil change performed",
-      component_type = MaintenanceLog.ComponentType.ENGINE,
-      component_serial = "ENG-001",
-      engine_hour = 1234.5,
-      timestamp = com.squareup.wire.Instant.ofEpochSecond(1700000000L)
-    )
   }
 
   // ---- observeLogs ----
