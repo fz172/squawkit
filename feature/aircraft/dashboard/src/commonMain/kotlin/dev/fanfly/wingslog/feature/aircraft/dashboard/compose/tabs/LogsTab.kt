@@ -17,16 +17,16 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.maintenance.viewing.log.compose.MaintenanceLogListContent
-import dev.fanfly.wingslog.feature.maintenance.viewing.log.data.MaintenanceLogListEvent
-import dev.fanfly.wingslog.feature.maintenance.viewing.log.data.MaintenanceLogListViewModel
+import dev.fanfly.wingslog.feature.logs.viewing.log.compose.MaintenanceLogListContent
+import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListEvent
+import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.maintenance.sharedassets.generated.resources.add_log
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.logs.sharedassets.generated.resources.add_log
 
 @Composable
 fun LogsTab(

@@ -37,13 +37,13 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.maintenance.sharedassets.generated.resources.engine_with_index
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
-import wingslog.feature.maintenance.viewing.generated.resources.aircraft_data
-import wingslog.feature.maintenance.viewing.generated.resources.collapse_details
-import wingslog.feature.maintenance.viewing.generated.resources.expand_details
-import wingslog.feature.maintenance.viewing.generated.resources.s_n_placeholder
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.logs.viewing.generated.resources.aircraft_data
+import wingslog.feature.logs.viewing.generated.resources.collapse_details
+import wingslog.feature.logs.viewing.generated.resources.expand_details
+import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
 
 
 @Composable

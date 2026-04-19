@@ -8,10 +8,10 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
 import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
 import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
-import dev.fanfly.wingslog.feature.maintenance.datamanager.impl.maintenanceDataManagerModule
+import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
 import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
-import dev.fanfly.wingslog.feature.maintenance.viewing.di.maintenanceViewingModule
-import dev.fanfly.wingslog.feature.maintenance.update.di.maintenanceUpdateModule
+import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
+import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
 import dev.fanfly.wingslog.feature.technician.manage.di.technicianManageModule

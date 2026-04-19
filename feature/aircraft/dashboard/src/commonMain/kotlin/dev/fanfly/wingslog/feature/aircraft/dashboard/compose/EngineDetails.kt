@@ -16,8 +16,8 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_propeller
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
-import wingslog.feature.maintenance.viewing.generated.resources.s_n_placeholder
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
 
 
 @Composable

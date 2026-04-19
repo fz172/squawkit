@@ -47,9 +47,9 @@ kotlin {
       implementation(project(":feature:tasks:viewing"))
       implementation(project(":feature:tasks:update"))
       implementation(project(":feature:tasks:sharedassets"))
-      implementation(project(":feature:maintenance:datamanager"))
-      implementation(project(":feature:maintenance:sharedassets"))
-      implementation(project(":feature:maintenance:viewing"))
+      implementation(project(":feature:logs:datamanager"))
+      implementation(project(":feature:logs:sharedassets"))
+      implementation(project(":feature:logs:viewing"))
 
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)

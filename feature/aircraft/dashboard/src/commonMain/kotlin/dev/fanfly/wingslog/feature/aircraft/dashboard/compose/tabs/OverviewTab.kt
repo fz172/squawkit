@@ -24,8 +24,8 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiSta
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.CriticalAlertsSection
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.maintenance.sharedassets.generated.resources.Res
-import wingslog.feature.maintenance.sharedassets.generated.resources.make_model_template
+import wingslog.feature.logs.sharedassets.generated.resources.Res
+import wingslog.feature.logs.sharedassets.generated.resources.make_model_template
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

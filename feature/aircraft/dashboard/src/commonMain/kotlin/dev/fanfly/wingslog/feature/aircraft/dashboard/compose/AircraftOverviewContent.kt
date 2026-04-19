@@ -33,8 +33,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
-import wingslog.feature.maintenance.viewing.generated.resources.Res as MaintenanceRes
-import wingslog.feature.maintenance.viewing.generated.resources.edit_aircraft
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.logs.viewing.generated.resources.edit_aircraft
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

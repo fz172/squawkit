@@ -42,7 +42,7 @@ kotlin {
       implementation(project(":feature:tasks:model"))
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:sharedassets"))
-      implementation(project(":feature:maintenance:datamanager"))
+      implementation(project(":feature:logs:datamanager"))
 
       // Compose
 
