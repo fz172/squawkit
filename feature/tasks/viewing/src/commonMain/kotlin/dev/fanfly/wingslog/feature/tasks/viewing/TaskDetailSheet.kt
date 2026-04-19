@@ -54,7 +54,7 @@ import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.viewing.generated.resources.badge_maintenance_due
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
-import wingslog.feature.tasks.viewing.generated.resources.complied
+import wingslog.feature.tasks.viewing.generated.resources.completed
 import wingslog.feature.tasks.viewing.generated.resources.days_overdue_count
 import wingslog.feature.tasks.viewing.generated.resources.days_remaining
 import wingslog.feature.tasks.viewing.generated.resources.due_today
@@ -274,7 +274,7 @@ private fun DueDateHero(dueStatus: DueMetadata) {
     when {
       dueStatus.status == DueStatus.COMPLIED -> {
         Text(
-          text = stringResource(ViewingRes.string.complied),
+          text = stringResource(ViewingRes.string.completed),
           style = MaterialTheme.typography.labelSmall.copy(
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = 0.5.sp,

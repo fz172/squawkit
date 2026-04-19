@@ -24,7 +24,7 @@ import wingslog.core.ui.generated.resources.dash
 import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.viewing.generated.resources.badge_due
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
-import wingslog.feature.tasks.viewing.generated.resources.complied
+import wingslog.feature.tasks.viewing.generated.resources.completed
 import wingslog.feature.tasks.viewing.generated.resources.label_deadline
 import wingslog.feature.tasks.viewing.generated.resources.label_due_engine
 import wingslog.feature.tasks.viewing.generated.resources.on_condition
@@ -69,7 +69,7 @@ fun TaskCardItem(
   }
 
   val statusValue = when {
-    status == DueStatus.COMPLIED -> stringResource(ViewingRes.string.complied)
+    status == DueStatus.COMPLIED -> stringResource(ViewingRes.string.completed)
     isOnCondition -> stringResource(ViewingRes.string.on_condition)
     dueDate != null -> dueDate.toDisplayFormat()
     dueEngine != null -> "${dueEngine.toDouble().formatToOneDecimalPlace()} HRS"

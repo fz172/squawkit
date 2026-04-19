@@ -71,18 +71,24 @@ fun TaskCard(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        Icon(
-          imageVector = icon,
-          contentDescription = null,
-          modifier = Modifier.size(18.dp),
-          tint = if (isAlert) statusColor else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
         if (badgeText.isNotBlank()) {
           StatusBadge(
             text = badgeText,
             color = if (isOverdue) MaterialTheme.colorScheme.error else statusColor
           )
+        } else {
+          Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = if (isAlert) statusColor else MaterialTheme.colorScheme.onSurfaceVariant,
+          )
         }
+        Icon(
+          imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
       }
 
       // Row 2: title + subtitle (notes)
@@ -105,32 +111,22 @@ fun TaskCard(
       // Row 3: divider + label / value + chevron
       if (statusValue.isNotBlank()) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
-            if (statusLabel.isNotBlank()) {
-              Text(
-                text = statusLabel,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                letterSpacing = 0.8.sp,
-              )
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+          if (statusLabel.isNotBlank()) {
             Text(
-              text = statusValue,
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.Bold,
-              color = statusColor,
+              text = statusLabel,
+              style = MaterialTheme.typography.labelSmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              letterSpacing = 0.8.sp,
             )
           }
-          Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+          Text(
+            text = statusValue,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = statusColor,
           )
+
         }
       }
     }
