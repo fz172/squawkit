@@ -56,7 +56,7 @@ fun LogsTab(
       uiState = uiState,
       downloadingIds = downloadingIds,
       onSearchQueryChange = viewModel::onSearchQueryChange,
-      onComponentFilterChange = viewModel::onComponentFilterChange,
+      onComponentFilterToggle = viewModel::onComponentFilterToggle,
       onClearFilter = viewModel::clearFilter,
       onRetry = viewModel::retryLoading,
       onLogClick = viewModel::onLogClick,

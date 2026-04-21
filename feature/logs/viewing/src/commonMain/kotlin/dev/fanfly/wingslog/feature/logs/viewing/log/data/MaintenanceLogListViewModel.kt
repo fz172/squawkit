@@ -51,7 +51,7 @@ class MaintenanceLogListViewModel(
           is LogsLoadState.Loaded -> {
             val sorted = logsState.logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
             val filtered = sorted.filter { log ->
-              (filter.component == null || log.component_type == filter.component) &&
+              (filter.components.isEmpty() || log.component_type in filter.components) &&
                 (filter.query.isBlank() || log.work_description.contains(
                   filter.query,
                   ignoreCase = true
@@ -91,8 +91,11 @@ class MaintenanceLogListViewModel(
     _filter.value = _filter.value.copy(query = query)
   }
 
-  fun onComponentFilterChange(component: ComponentType?) {
-    _filter.value = _filter.value.copy(component = component)
+  fun onComponentFilterToggle(component: ComponentType) {
+    val current = _filter.value.components
+    _filter.value = _filter.value.copy(
+      components = if (component in current) current - component else current + component
+    )
   }
 
   fun clearFilter() {

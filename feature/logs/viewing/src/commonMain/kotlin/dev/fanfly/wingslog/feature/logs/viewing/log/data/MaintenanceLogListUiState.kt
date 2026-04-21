@@ -6,9 +6,9 @@ import dev.fanfly.wingslog.aircraft.MaintenanceTask
 
 data class LogFilter(
   val query: String = "",
-  val component: ComponentType? = null,
+  val components: Set<ComponentType> = emptySet(),
 ) {
-  val isActive: Boolean get() = query.isNotBlank() || component != null
+  val isActive: Boolean get() = query.isNotBlank() || components.isNotEmpty()
 }
 
 sealed interface MaintenanceLogListUiState {
