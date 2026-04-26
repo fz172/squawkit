@@ -17,6 +17,7 @@ fun WireInstant.toLocalDate(timeZone: TimeZone = TimeZone.UTC): LocalDate {
 fun WireInstant.toInstant(): Instant =
   Instant.fromEpochSeconds(this.getEpochSecond(), this.getNano().toLong())
 
+fun Instant.toWireInstant(): WireInstant = toWireInstant(epochSeconds, nanosecondsOfSecond)
 
 expect fun toWireInstant(epochSeconds: Long, nanos: Int =0): WireInstant
 
