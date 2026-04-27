@@ -27,7 +27,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.unknown
-import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.link_to_task
 import wingslog.feature.tasks.update.generated.resources.remove_link
 import wingslog.feature.tasks.update.generated.resources.schedule_with_another_work
@@ -44,11 +44,11 @@ fun LinkedInspectionFields(
 
   Column(modifier = modifier) {
     Text(
-      stringResource(InspectionRes.string.schedule_with_another_work),
+      stringResource(Res.string.schedule_with_another_work),
       style = MaterialTheme.typography.labelLarge
     )
     Text(
-      stringResource(InspectionRes.string.schedule_with_another_work_description),
+      stringResource(Res.string.schedule_with_another_work_description),
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -59,9 +59,12 @@ fun LinkedInspectionFields(
         onClick = { showLinkedPicker = true },
         modifier = Modifier.fillMaxWidth()
       ) {
-        Icon(Icons.Default.Add, contentDescription = null)
+        Icon(
+          Icons.Default.Add,
+          contentDescription = null
+        )
         Spacer(modifier = Modifier.width(Spacing.small))
-        Text(stringResource(InspectionRes.string.link_to_task))
+        Text(stringResource(Res.string.link_to_task))
       }
     } else {
       val linkedInsp = availableInspections.find { it.id == linkedToId }
@@ -80,7 +83,7 @@ fun LinkedInspectionFields(
           ) {
             Icon(
               Icons.Default.Close,
-              contentDescription = stringResource(InspectionRes.string.remove_link),
+              contentDescription = stringResource(Res.string.remove_link),
               modifier = Modifier.size(InputChipDefaults.IconSize)
             )
           }

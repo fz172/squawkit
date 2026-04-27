@@ -30,7 +30,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.select_date
-import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.force_due_engine_hours
 import wingslog.feature.tasks.update.generated.resources.force_overrides_safety
 import wingslog.feature.tasks.update.generated.resources.mark_complied
@@ -53,7 +53,7 @@ fun ForcedOverrideFields(
 ) {
   Column(modifier = modifier) {
     Text(
-      stringResource(InspectionRes.string.force_overrides_safety),
+      stringResource(Res.string.force_overrides_safety),
       style = MaterialTheme.typography.labelLarge,
       color = MaterialTheme.colorScheme.error
     )
@@ -76,7 +76,7 @@ fun ForcedOverrideFields(
       )
       Spacer(modifier = Modifier.width(Spacing.medium))
       Text(
-        text = stringResource(InspectionRes.string.override_next_due_engine),
+        text = stringResource(Res.string.override_next_due_engine),
         style = MaterialTheme.typography.bodyLarge,
         color = if (isForceComplied) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onSurface
       )
@@ -85,7 +85,7 @@ fun ForcedOverrideFields(
       OutlinedTextField(
         value = forcedEngineHours,
         onValueChange = { onForcedEngineHoursChange(it.filter { c -> c.isDigit() || c == '.' }) },
-        label = { Text(stringResource(InspectionRes.string.force_due_engine_hours)) },
+        label = { Text(stringResource(Res.string.force_due_engine_hours)) },
         modifier = Modifier.fillMaxWidth().padding(start = Spacing.huge),
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -110,7 +110,7 @@ fun ForcedOverrideFields(
       )
       Spacer(modifier = Modifier.width(Spacing.medium))
       Text(
-        text = stringResource(InspectionRes.string.override_next_due_date),
+        text = stringResource(Res.string.override_next_due_date),
         style = MaterialTheme.typography.bodyLarge,
         color = if (isForceComplied) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onSurface
       )
@@ -125,7 +125,10 @@ fun ForcedOverrideFields(
           modifier = Modifier.padding(Spacing.medium),
           verticalAlignment = Alignment.CenterVertically
         ) {
-          Icon(Icons.Default.DateRange, contentDescription = null)
+          Icon(
+            Icons.Default.DateRange,
+            contentDescription = null
+          )
           Spacer(modifier = Modifier.width(Spacing.small))
           val dateText = forcedDateMillis?.let {
             Instant.fromEpochMilliseconds(it)
@@ -149,7 +152,7 @@ fun ForcedOverrideFields(
       )
       Spacer(modifier = Modifier.width(Spacing.medium))
       Text(
-        text = stringResource(InspectionRes.string.mark_complied),
+        text = stringResource(Res.string.mark_complied),
         style = MaterialTheme.typography.bodyLarge
       )
     }

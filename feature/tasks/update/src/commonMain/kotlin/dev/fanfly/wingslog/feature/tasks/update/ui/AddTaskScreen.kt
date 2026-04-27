@@ -48,14 +48,17 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
-import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.basics
 import wingslog.feature.tasks.update.generated.resources.details
 import wingslog.feature.tasks.update.generated.resources.schedule
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(
+  ExperimentalMaterial3Api::class,
+  ExperimentalComposeUiApi::class
+)
 @Composable
 fun AddTaskScreen(
   availableInspections: List<MaintenanceTask>,
@@ -112,20 +115,22 @@ fun AddTaskScreen(
   Scaffold(
     topBar = {
       Column {
-        TopAppBar(title = {
-          Text(
-            stringResource(SharedInspectionRes.string.add_task).uppercase(),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-          )
-        }, navigationIcon = {
-          IconButton(onClick = { tryCancel() }) {
-            Icon(
-              Icons.AutoMirrored.Default.ArrowBack,
-              contentDescription = stringResource(CoreRes.string.back)
+        TopAppBar(
+          title = {
+            Text(
+              stringResource(SharedTaskRes.string.add_task).uppercase(),
+              style = MaterialTheme.typography.titleLarge,
+              fontWeight = FontWeight.Bold
             )
-          }
-        })
+          },
+          navigationIcon = {
+            IconButton(onClick = { tryCancel() }) {
+              Icon(
+                Icons.AutoMirrored.Default.ArrowBack,
+                contentDescription = stringResource(CoreRes.string.back)
+              )
+            }
+          })
         PrimaryTabRow(
           selectedTabIndex = pagerState.currentPage,
           containerColor = MaterialTheme.colorScheme.background,
@@ -133,15 +138,15 @@ fun AddTaskScreen(
           Tab(
             selected = pagerState.currentPage == 0,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
-            text = { Text(stringResource(InspectionRes.string.basics)) })
+            text = { Text(stringResource(Res.string.basics)) })
           Tab(
             selected = pagerState.currentPage == 1,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
-            text = { Text(stringResource(InspectionRes.string.details)) })
+            text = { Text(stringResource(Res.string.details)) })
           Tab(
             selected = pagerState.currentPage == 2,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(2) } },
-            text = { Text(stringResource(InspectionRes.string.schedule)) },
+            text = { Text(stringResource(Res.string.schedule)) },
           )
         }
       }
@@ -215,7 +220,10 @@ fun AddTaskScreen(
                 InspectionRule(
                   time_rule = TimeRule(
                     interval_months = it,
-                    creation_date = toWireInstant(now.epochSeconds, now.nanosecondsOfSecond),
+                    creation_date = toWireInstant(
+                      now.epochSeconds,
+                      now.nanosecondsOfSecond
+                    ),
                   )
                 )
               )

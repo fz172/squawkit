@@ -54,15 +54,18 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.ok
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
-import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.details
 import wingslog.feature.tasks.update.generated.resources.identity
 import wingslog.feature.tasks.update.generated.resources.overrides
 import wingslog.feature.tasks.update.generated.resources.schedule
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(
+  ExperimentalMaterial3Api::class,
+  ExperimentalComposeUiApi::class
+)
 @Composable
 fun EditTaskScreen(
   card: MaintenanceTask,
@@ -150,20 +153,22 @@ fun EditTaskScreen(
   Scaffold(
     topBar = {
       Column {
-        TopAppBar(title = {
-          Text(
-            stringResource(SharedInspectionRes.string.edit_task).uppercase(),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-          )
-        }, navigationIcon = {
-          IconButton(onClick = { tryCancel() }) {
-            Icon(
-              Icons.AutoMirrored.Default.ArrowBack,
-              contentDescription = stringResource(CoreRes.string.back)
+        TopAppBar(
+          title = {
+            Text(
+              stringResource(SharedTaskRes.string.edit_task).uppercase(),
+              style = MaterialTheme.typography.titleLarge,
+              fontWeight = FontWeight.Bold
             )
-          }
-        })
+          },
+          navigationIcon = {
+            IconButton(onClick = { tryCancel() }) {
+              Icon(
+                Icons.AutoMirrored.Default.ArrowBack,
+                contentDescription = stringResource(CoreRes.string.back)
+              )
+            }
+          })
         PrimaryTabRow(
           selectedTabIndex = pagerState.currentPage,
           containerColor = MaterialTheme.colorScheme.background,
@@ -171,19 +176,19 @@ fun EditTaskScreen(
           Tab(
             selected = pagerState.currentPage == 0,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
-            text = { Text(stringResource(InspectionRes.string.identity)) })
+            text = { Text(stringResource(Res.string.identity)) })
           Tab(
             selected = pagerState.currentPage == 1,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
-            text = { Text(stringResource(InspectionRes.string.details)) })
+            text = { Text(stringResource(Res.string.details)) })
           Tab(
             selected = pagerState.currentPage == 2,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(2) } },
-            text = { Text(stringResource(InspectionRes.string.schedule)) })
+            text = { Text(stringResource(Res.string.schedule)) })
           Tab(
             selected = pagerState.currentPage == 3,
             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(3) } },
-            text = { Text(stringResource(InspectionRes.string.overrides)) })
+            text = { Text(stringResource(Res.string.overrides)) })
         }
       }
     }) { padding ->
@@ -282,7 +287,10 @@ fun EditTaskScreen(
                   time_rule = TimeRule(
                     interval_months = it,
                     creation_date = existingTimeRuleCreationDate
-                      ?: toWireInstant(now.epochSeconds, now.nanosecondsOfSecond),
+                      ?: toWireInstant(
+                        now.epochSeconds,
+                        now.nanosecondsOfSecond
+                      ),
                   )
                 )
               )
@@ -330,20 +338,25 @@ fun EditTaskScreen(
   }
 
   if (showDeleteConfirm) {
-    DeleteTaskConfirmDialog(title = title, onConfirm = {
-      showDeleteConfirm = false
-      onDeleteRequest(card.id)
-    }, onDismiss = { showDeleteConfirm = false })
+    DeleteTaskConfirmDialog(
+      title = title,
+      onConfirm = {
+        showDeleteConfirm = false
+        onDeleteRequest(card.id)
+      },
+      onDismiss = { showDeleteConfirm = false })
   }
 
   if (showDatePicker) {
     val datePickerState = rememberDatePickerState()
-    DatePickerDialog(onDismissRequest = { showDatePicker = false }, confirmButton = {
-      TextButton(onClick = {
-        forcedDateMillis = datePickerState.selectedDateMillis
-        showDatePicker = false
-      }) { Text(stringResource(CoreRes.string.ok)) }
-    }) {
+    DatePickerDialog(
+      onDismissRequest = { showDatePicker = false },
+      confirmButton = {
+        TextButton(onClick = {
+          forcedDateMillis = datePickerState.selectedDateMillis
+          showDatePicker = false
+        }) { Text(stringResource(CoreRes.string.ok)) }
+      }) {
       DatePicker(state = datePickerState)
     }
   }

@@ -11,7 +11,7 @@ import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskUiState
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.task_deleted
 import wingslog.feature.tasks.update.generated.resources.task_updated
 
@@ -26,8 +26,8 @@ fun EditTaskRoute(
   val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
   val successState = uiState as? TaskUiState.Success
 
-  val updatedMessage = stringResource(InspectionRes.string.task_updated)
-  val deletedMessage = stringResource(InspectionRes.string.task_deleted)
+  val updatedMessage = stringResource(Res.string.task_updated)
+  val deletedMessage = stringResource(Res.string.task_deleted)
 
   // Find the card in the list
   val card = successState?.allInspections?.find { it.id == viewModel.cardId }

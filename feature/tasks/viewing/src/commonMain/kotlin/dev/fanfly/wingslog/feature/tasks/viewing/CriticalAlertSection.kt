@@ -29,7 +29,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res
 import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
 import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.viewing.generated.resources.critical_airworthiness
@@ -71,7 +71,7 @@ fun CriticalAlertsSection(
         verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
       ) {
         Text(
-          text = stringResource(SharedInspectionRes.string.maintenance_due_title),
+          text = stringResource(Res.string.maintenance_due_title),
           style = MaterialTheme.typography.headlineSmall,
           fontWeight = FontWeight.Bold,
           color = titleColor,

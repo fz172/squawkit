@@ -21,7 +21,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
 import wingslog.core.ui.generated.resources.every
 import wingslog.core.ui.generated.resources.or
-import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.interval_hours
 import wingslog.feature.tasks.update.generated.resources.interval_hours_placeholder
 import wingslog.feature.tasks.update.generated.resources.interval_months
@@ -40,7 +40,7 @@ fun IntervalFields(
 ) {
   Column(modifier = modifier) {
     Text(
-      stringResource(InspectionRes.string.intervals),
+      stringResource(Res.string.intervals),
       style = MaterialTheme.typography.labelLarge
     )
     Spacer(modifier = Modifier.height(Spacing.small))
@@ -51,8 +51,8 @@ fun IntervalFields(
       OutlinedTextField(
         value = intervalMonths,
         onValueChange = { onMonthsChange(it.filter { c -> c.isDigit() }) },
-        label = { Text(stringResource(InspectionRes.string.interval_months)) },
-        placeholder = { Text(stringResource(InspectionRes.string.interval_months_placeholder)) },
+        label = { Text(stringResource(Res.string.interval_months)) },
+        placeholder = { Text(stringResource(Res.string.interval_months_placeholder)) },
         modifier = Modifier.weight(1f),
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -73,8 +73,8 @@ fun IntervalFields(
       OutlinedTextField(
         value = intervalHours,
         onValueChange = { onHoursChange(it.filter { c -> c.isDigit() || c == '.' }) },
-        label = { Text(stringResource(InspectionRes.string.interval_hours)) },
-        placeholder = { Text(stringResource(InspectionRes.string.interval_hours_placeholder)) },
+        label = { Text(stringResource(Res.string.interval_hours)) },
+        placeholder = { Text(stringResource(Res.string.interval_hours_placeholder)) },
         modifier = Modifier.weight(1f),
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -91,7 +91,7 @@ fun IntervalFields(
     if (intervalMonths.isNotBlank() || intervalHours.isNotBlank()) {
       Spacer(modifier = Modifier.height(Spacing.small))
       Text(
-        stringResource(InspectionRes.string.task_due_warning),
+        stringResource(Res.string.task_due_warning),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.primary,
         fontWeight = FontWeight.Medium,
@@ -101,7 +101,7 @@ fun IntervalFields(
     } else {
       Spacer(modifier = Modifier.height(Spacing.small))
       Text(
-        stringResource(InspectionRes.string.task_interval_description),
+        stringResource(Res.string.task_interval_description),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.fillMaxWidth(),

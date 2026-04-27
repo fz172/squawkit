@@ -2,13 +2,13 @@ package dev.fanfly.wingslog.feature.fleet.viewing.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,8 +22,8 @@ import kotlinx.coroutines.launch
 class FleetDashboardViewModel(
   private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
-  private val inspectionDataManager: TaskDataManager,
-  private val inspectionDueManager: TaskDueManager,
+  private val taskDataManager: TaskDataManager,
+  private val taskDueManager: TaskDueManager,
 ) : ViewModel() {
 
   private var fleetInfoJob: Job? = null
@@ -48,10 +48,13 @@ class FleetDashboardViewModel(
           } else {
             val perAircraftFlows = fleet.map { aircraft ->
               combine(
-                inspectionDataManager.observeTasks(aircraft.id),
+                taskDataManager.observeTasks(aircraft.id),
                 logManager.observeLogs(aircraft.id)
-              ) { inspections, logs ->
-                aircraft.id to worstStatus(inspections, logs)
+              ) { tasks, logs ->
+                aircraft.id to worstStatus(
+                  tasks,
+                  logs
+                )
               }
             }
             combine(*perAircraftFlows.toTypedArray()) { statusArray ->
@@ -61,19 +64,29 @@ class FleetDashboardViewModel(
         }
         .collect { (fleet, healthMap) ->
           _uiState.update {
-            it.copy(fleet = fleet, aircraftHealthStatus = healthMap, isLoading = false)
+            it.copy(
+              fleet = fleet,
+              aircraftHealthStatus = healthMap,
+              isLoading = false
+            )
           }
         }
     }
   }
 
   private fun worstStatus(
-    inspections: List<MaintenanceTask>,
+    tasks: List<MaintenanceTask>,
     logs: List<MaintenanceLog>,
   ): DueStatus {
-    if (inspections.isEmpty()) return DueStatus.NORMAL
-    return inspections
-      .map { card -> inspectionDueManager.computeNextDue(card, logs, inspections).status }
+    if (tasks.isEmpty()) return DueStatus.NORMAL
+    return tasks
+      .map { card ->
+        taskDueManager.computeNextDue(
+          card,
+          logs,
+          tasks
+        ).status
+      }
       .maxByOrNull { it.severity() }
       ?: DueStatus.NORMAL
   }

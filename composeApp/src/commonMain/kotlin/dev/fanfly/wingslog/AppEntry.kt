@@ -92,14 +92,14 @@ fun AppEntry() {
         }
 
         composable(
-          route = Screen.AddInspection.route,
+          route = Screen.AddMaintenanceTask.route,
           arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType })
         ) {
           AddTaskRoute(navController = navController)
         }
 
         composable(
-          route = Screen.EditInspection.route,
+          route = Screen.EditMaintenanceTask.route,
           arguments = listOf(
             navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
             navArgument(Screen.CARD_ID) { type = NavType.StringType }

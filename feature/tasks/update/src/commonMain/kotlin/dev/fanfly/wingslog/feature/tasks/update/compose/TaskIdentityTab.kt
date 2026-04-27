@@ -25,7 +25,7 @@ import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_type
-import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.compliance_ad_sub
 import wingslog.feature.tasks.update.generated.resources.compliance_routine_sub
 import wingslog.feature.tasks.update.generated.resources.compliance_sb_sub
@@ -40,7 +40,7 @@ import wingslog.feature.tasks.update.generated.resources.task_title
 import wingslog.feature.tasks.update.generated.resources.task_title_helper
 
 /**
- * Identity tab for Add/Edit Inspection screens.
+ * Identity tab for Add/Edit Maintenance Task screens.
  * Pass null for [onComponentChange] or [onComplianceTypeChange] to render those sections read-only.
  */
 @Composable
@@ -59,8 +59,8 @@ fun TaskIdentityTab(
   ) {
     // ── Section 1: Task Title ─────────────────────────────────────────────
     IdentitySection(
-      header = stringResource(InspectionRes.string.task_title),
-      description = stringResource(InspectionRes.string.task_title_helper),
+      header = stringResource(Res.string.task_title),
+      description = stringResource(Res.string.task_title_helper),
     ) {
       OutlinedTextField(
         value = title,
@@ -70,7 +70,7 @@ fun TaskIdentityTab(
 
         placeholder = {
           Text(
-            text = stringResource(InspectionRes.string.task_description_placeholder),
+            text = stringResource(Res.string.task_description_placeholder),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.outline,
           )
@@ -91,7 +91,7 @@ fun TaskIdentityTab(
 
     IdentitySection(
       header = stringResource(CoreRes.string.component_type),
-      description = stringResource(InspectionRes.string.component_type_description),
+      description = stringResource(Res.string.component_type_description),
     ) {
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
         val componentEntries =
@@ -109,8 +109,8 @@ fun TaskIdentityTab(
 
     // ── Section 3: Compliance Type ────────────────────────────────────────
     IdentitySection(
-      header = stringResource(InspectionRes.string.compliance_type),
-      description = stringResource(InspectionRes.string.compliance_type_description),
+      header = stringResource(Res.string.compliance_type),
+      description = stringResource(Res.string.compliance_type_description),
     ) {
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
         val complianceEntries =
@@ -118,23 +118,23 @@ fun TaskIdentityTab(
         complianceEntries.forEach { entry ->
           val label = when (entry) {
             ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION ->
-              stringResource(InspectionRes.string.compliance_type_routine_short)
+              stringResource(Res.string.compliance_type_routine_short)
 
             ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN ->
-              stringResource(InspectionRes.string.compliance_type_sb_full)
+              stringResource(Res.string.compliance_type_sb_full)
 
             ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE ->
-              stringResource(InspectionRes.string.compliance_type_ad_full)
+              stringResource(Res.string.compliance_type_ad_full)
           }
           val subtitle = when (entry) {
             ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION ->
-              stringResource(InspectionRes.string.compliance_routine_sub)
+              stringResource(Res.string.compliance_routine_sub)
 
             ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN ->
-              stringResource(InspectionRes.string.compliance_sb_sub)
+              stringResource(Res.string.compliance_sb_sub)
 
             ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE ->
-              stringResource(InspectionRes.string.compliance_ad_sub)
+              stringResource(Res.string.compliance_ad_sub)
           }
           IdentityRadioItem(
             label = label,

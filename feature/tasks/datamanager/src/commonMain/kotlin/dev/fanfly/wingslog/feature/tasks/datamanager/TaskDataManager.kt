@@ -6,23 +6,32 @@ import kotlinx.coroutines.flow.Flow
 interface TaskDataManager {
 
   /**
-   * Observe all inspection cards for an aircraft in real-time.
+   * Observe all task cards for an aircraft in real-time.
    */
   fun observeTasks(aircraftId: String): Flow<List<MaintenanceTask>>
 
   /**
-   * Add a new inspection card to an aircraft.
+   * Add a new task card to an aircraft.
    */
-  suspend fun addTask(aircraftId: String, card: MaintenanceTask): Result<Boolean>
+  suspend fun addTask(
+    aircraftId: String,
+    card: MaintenanceTask,
+  ): Result<Boolean>
 
   /**
-   * Update an existing inspection card.
+   * Update an existing task card.
    */
-  suspend fun updateTask(aircraftId: String, card: MaintenanceTask): Result<Boolean>
+  suspend fun updateTask(
+    aircraftId: String,
+    card: MaintenanceTask,
+  ): Result<Boolean>
 
   /**
-   * Delete an inspection card. Logs that reference the card's ID will have orphaned IDs,
+   * Delete a task card. Logs that reference the card's ID will have orphaned IDs,
    * which are silently ignored during display.
    */
-  suspend fun deleteTask(aircraftId: String, cardId: String): Result<Boolean>
+  suspend fun deleteTask(
+    aircraftId: String,
+    cardId: String,
+  ): Result<Boolean>
 }

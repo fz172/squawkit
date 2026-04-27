@@ -47,8 +47,8 @@ fun AircraftOverviewScreen(
           snackbarHostState.showSnackbar(message)
         }
 
-        is AircraftOverviewEvent.NavigateToAddInspection ->
-          navController.navigate(Screen.AddInspection.createRoute(event.aircraftId))
+        is AircraftOverviewEvent.NavigateToAddTask ->
+          navController.navigate(Screen.AddMaintenanceTask.createRoute(event.aircraftId))
 
         is AircraftOverviewEvent.NavigateToAddLog ->
           navController.navigate(Screen.AddMaintenanceLog.createRoute(event.aircraftId))
@@ -56,9 +56,9 @@ fun AircraftOverviewScreen(
         is AircraftOverviewEvent.NavigateToEditAircraft ->
           navController.navigate(Screen.EditAircraft.createRoute(event.aircraftId))
 
-        is AircraftOverviewEvent.NavigateToEditInspection ->
+        is AircraftOverviewEvent.NavigateToEditTask ->
           navController.navigate(
-            Screen.EditInspection.createRoute(
+            Screen.EditMaintenanceTask.createRoute(
               event.aircraftId,
               event.cardId
             )

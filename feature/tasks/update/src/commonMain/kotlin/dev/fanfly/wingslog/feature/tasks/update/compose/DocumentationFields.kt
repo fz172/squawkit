@@ -10,9 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res
 import wingslog.feature.tasks.sharedassets.generated.resources.compliance_authority
-import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.update.generated.resources.Res as TaskRes
 import wingslog.feature.tasks.update.generated.resources.compliance_authority_hint
 import wingslog.feature.tasks.update.generated.resources.compliance_notes
 import wingslog.feature.tasks.update.generated.resources.compliance_notes_hint
@@ -33,8 +33,8 @@ fun DocumentationFields(
     OutlinedTextField(
       value = refNumber,
       onValueChange = onRefNumberChange,
-      label = { Text(stringResource(InspectionRes.string.reference_number)) },
-      placeholder = { Text(stringResource(InspectionRes.string.reference_number_hint)) },
+      label = { Text(stringResource(TaskRes.string.reference_number)) },
+      placeholder = { Text(stringResource(TaskRes.string.reference_number_hint)) },
       modifier = Modifier.fillMaxWidth(),
       singleLine = true
     )
@@ -42,8 +42,8 @@ fun DocumentationFields(
     OutlinedTextField(
       value = complianceAuthority,
       onValueChange = onComplianceAuthorityChange,
-      label = { Text(stringResource(SharedInspectionRes.string.compliance_authority)) },
-      placeholder = { Text(stringResource(InspectionRes.string.compliance_authority_hint)) },
+      label = { Text(stringResource(Res.string.compliance_authority)) },
+      placeholder = { Text(stringResource(TaskRes.string.compliance_authority_hint)) },
       modifier = Modifier.fillMaxWidth(),
       singleLine = true
     )
@@ -52,8 +52,8 @@ fun DocumentationFields(
     OutlinedTextField(
       value = complianceNotes,
       onValueChange = onComplianceNotesChange,
-      label = { Text(stringResource(InspectionRes.string.compliance_notes)) },
-      placeholder = { Text(stringResource(InspectionRes.string.compliance_notes_hint)) },
+      label = { Text(stringResource(TaskRes.string.compliance_notes)) },
+      placeholder = { Text(stringResource(TaskRes.string.compliance_notes_hint)) },
       modifier = Modifier.fillMaxWidth(),
       minLines = 3
     )

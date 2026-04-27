@@ -31,7 +31,7 @@ import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.done
-import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.compliance_type_ad
 import wingslog.feature.tasks.update.generated.resources.compliance_type_routine
 import wingslog.feature.tasks.update.generated.resources.compliance_type_sb
@@ -53,7 +53,7 @@ fun TaskPickerSheet(
     modifier = modifier,
     headerSlot = {
       Text(
-        text = stringResource(InspectionRes.string.select_task_work),
+        text = stringResource(Res.string.select_task_work),
         style = MaterialTheme.typography.titleLarge
       )
     }
@@ -66,7 +66,7 @@ fun TaskPickerSheet(
     ) {
       if (availableCards.isEmpty()) {
         Text(
-          text = stringResource(InspectionRes.string.no_tasks_configured),
+          text = stringResource(Res.string.no_tasks_configured),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(vertical = Spacing.large),
@@ -75,9 +75,9 @@ fun TaskPickerSheet(
         val grouped = availableCards.groupBy { it.type }
 
         listOf(
-          ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to stringResource(InspectionRes.string.compliance_type_ad),
-          ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN to stringResource(InspectionRes.string.compliance_type_sb),
-          ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to stringResource(InspectionRes.string.compliance_type_routine),
+          ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to stringResource(Res.string.compliance_type_ad),
+          ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN to stringResource(Res.string.compliance_type_sb),
+          ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to stringResource(Res.string.compliance_type_routine),
         ).forEach { (type, header) ->
           val cards = grouped[type] ?: emptyList()
           if (cards.isNotEmpty()) {
@@ -85,7 +85,10 @@ fun TaskPickerSheet(
               text = header,
               style = MaterialTheme.typography.labelLarge,
               color = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.padding(top = Spacing.large, bottom = Spacing.small)
+              modifier = Modifier.padding(
+                top = Spacing.large,
+                bottom = Spacing.small
+              )
             )
             cards.forEach { card ->
               val isSelected = card.id in selectedIds

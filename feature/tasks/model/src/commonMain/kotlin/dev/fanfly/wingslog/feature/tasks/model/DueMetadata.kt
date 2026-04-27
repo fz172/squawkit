@@ -10,7 +10,7 @@ enum class DueStatus {
 }
 
 /**
- * Metadata computed for an inspection card, describing when it is next due and its current status.
+ * Metadata computed for a task card, describing when it is next due and its current status.
  */
 data class DueMetadata(
   val nextDueDate: LocalDate? = null,

@@ -51,7 +51,7 @@ import wingslog.feature.logs.sharedassets.generated.resources.prop_time_label
 import wingslog.feature.logs.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.logs.viewing.generated.resources.affected_maintenance_tasks
 import wingslog.feature.logs.viewing.generated.resources.no_tasks_linked
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_task
 
@@ -68,7 +68,7 @@ fun MaintenanceLogDetailSheet(
   modifier: Modifier = Modifier,
 ) {
   val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
-    ?: stringResource(SharedInspectionRes.string.unknown_date)
+    ?: stringResource(SharedTaskRes.string.unknown_date)
 
   DetailSheet(
     onDismiss = onDismiss,
@@ -219,7 +219,7 @@ private fun AffectedTasksSection(
       log.inspection_ids.forEach { cardId ->
         val card = availableCards.find { it.id == cardId }
         val title = card?.title ?: stringResource(
-          SharedInspectionRes.string.unknown_task,
+          SharedTaskRes.string.unknown_task,
           cardId
         )
         LinkedTaskRow(

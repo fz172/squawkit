@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.one_time_compliance
 import wingslog.feature.tasks.update.generated.resources.one_time_compliance_desc
 
@@ -32,11 +32,11 @@ fun OneTimeComplianceFields(
   ) {
     Column(modifier = Modifier.weight(1f)) {
       Text(
-        stringResource(InspectionRes.string.one_time_compliance),
+        stringResource(Res.string.one_time_compliance),
         style = MaterialTheme.typography.bodyLarge
       )
       Text(
-        stringResource(InspectionRes.string.one_time_compliance_desc),
+        stringResource(Res.string.one_time_compliance_desc),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
       )

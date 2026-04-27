@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.fleet.viewing
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -35,7 +35,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusWarningContainer
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res
 import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
 
 @Composable
@@ -50,7 +50,10 @@ fun AircraftDashboardCard(
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      1.dp,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
   ) {
     Row(
@@ -80,13 +83,13 @@ fun AircraftDashboardCard(
       ) {
         when (healthStatus) {
           DueStatus.OVERDUE -> HealthStatusBadge(
-            label = stringResource(SharedInspectionRes.string.maintenance_due_title),
+            label = stringResource(Res.string.maintenance_due_title),
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer,
           )
 
           DueStatus.DUE_SOON -> HealthStatusBadge(
-            label = stringResource(SharedInspectionRes.string.maintenance_due_title),
+            label = stringResource(Res.string.maintenance_due_title),
             containerColor = StatusWarningContainer,
             contentColor = StatusWarning,
           )
@@ -118,7 +121,10 @@ private fun HealthStatusBadge(
       style = MaterialTheme.typography.labelSmall,
       fontWeight = FontWeight.Medium,
       color = contentColor,
-      modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+      modifier = Modifier.padding(
+        horizontal = 6.dp,
+        vertical = 3.dp
+      )
     )
   }
 }

@@ -25,8 +25,8 @@ import kotlinx.coroutines.launch
 class AircraftOverviewViewModel(
   private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
-  private val inspectionDataManager: TaskDataManager,
-  private val inspectionDueManager: TaskDueManager,
+  private val taskDataManager: TaskDataManager,
+  private val taskDueManager: TaskDueManager,
   private val attachmentOpener: AttachmentOpener,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -51,10 +51,10 @@ class AircraftOverviewViewModel(
       combine(
         fleetManager.loadAircraft(aircraftId),
         logManager.observeLogs(aircraftId),
-        inspectionDataManager.observeTasks(aircraftId),
+        taskDataManager.observeTasks(aircraftId),
         logManager.observeMaintenanceOverview(aircraftId),
         attachmentOpener.downloadingIds
-      ) { aircraft, logs, inspectionCards, overview, downloadingIds ->
+      ) { aircraft, logs, taskCards, overview, downloadingIds ->
         cachedLogs = logs
         if (aircraft != null) {
           val stats = if (overview != null) {
@@ -89,13 +89,13 @@ class AircraftOverviewViewModel(
               currentPropTime = currentPropTime)
           }
 
-          val cardsWithStatus = inspectionCards.map { card ->
+          val cardsWithStatus = taskCards.map { card ->
             MaintenanceTaskWithStatus(
               card = card,
-              dueStatus = inspectionDueManager.computeNextDue(
+              dueStatus = taskDueManager.computeNextDue(
                 card,
                 logs,
-                inspectionCards
+                taskCards
               ),
             )
           }
@@ -160,7 +160,7 @@ class AircraftOverviewViewModel(
       }
 
       is AircraftOverviewAction.AddTaskClick -> {
-        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddInspection(action.aircraftId)) }
+        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddTask(action.aircraftId)) }
       }
 
       is AircraftOverviewAction.TaskCardClick -> {
@@ -168,14 +168,14 @@ class AircraftOverviewViewModel(
       }
 
       AircraftOverviewAction.DismissTaskDetail -> {
-        hideInspectionDetail()
+        hideTaskDetail()
       }
 
       is AircraftOverviewAction.EditTaskClick -> {
-        hideInspectionDetail()
+        hideTaskDetail()
         viewModelScope.launch {
           _events.send(
-            AircraftOverviewEvent.NavigateToEditInspection(
+            AircraftOverviewEvent.NavigateToEditTask(
               action.aircraftId,
               action.cardId
             )
@@ -184,11 +184,11 @@ class AircraftOverviewViewModel(
       }
 
       AircraftOverviewAction.CancelDeleteTask -> {
-        cancelDeleteInspection()
+        cancelDeleteTask()
       }
 
       AircraftOverviewAction.ConfirmDeleteTask -> {
-        confirmDeleteInspection()
+        confirmDeleteTask()
       }
 
       is AircraftOverviewAction.AttachmentTap -> {
@@ -219,7 +219,7 @@ class AircraftOverviewViewModel(
     }
   }
 
-  fun hideInspectionDetail() {
+  fun hideTaskDetail() {
     _uiState.update { state ->
       if (state is AircraftOverviewUiState.Success) {
         state.copy(
@@ -230,7 +230,7 @@ class AircraftOverviewViewModel(
     }
   }
 
-  fun cancelDeleteInspection() {
+  fun cancelDeleteTask() {
     _uiState.update { state ->
       if (state is AircraftOverviewUiState.Success) {
         state.copy(deletingTaskId = null)
@@ -238,7 +238,7 @@ class AircraftOverviewViewModel(
     }
   }
 
-  fun confirmDeleteInspection() {
+  fun confirmDeleteTask() {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     val cardId = state.deletingTaskId ?: return
     deleteTask(cardId)
@@ -247,7 +247,7 @@ class AircraftOverviewViewModel(
   fun deleteTask(cardId: String) {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     viewModelScope.launch {
-      inspectionDataManager.deleteTask(
+      taskDataManager.deleteTask(
         state.aircraft.id,
         cardId
       )
