@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.viewing
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,18 +41,21 @@ import wingslog.feature.tasks.viewing.generated.resources.maintenance_due_subtit
 
 @Composable
 fun CriticalAlertsSection(
-  overdueInspections: List<MaintenanceTaskWithStatus>,
+  overdueTasks: List<MaintenanceTaskWithStatus>,
   onCardClick: (MaintenanceTaskWithStatus) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val hasOverdue = overdueInspections.any { it.dueStatus.status == DueStatus.OVERDUE }
+  val hasOverdue = overdueTasks.any { it.dueStatus.status == DueStatus.OVERDUE }
   val titleColor = if (hasOverdue) MaterialTheme.colorScheme.error else StatusWarning
 
   Card(
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      1.dp,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
   ) {
     Column {
@@ -60,7 +63,10 @@ fun CriticalAlertsSection(
       Column(
         modifier = Modifier
           .fillMaxWidth()
-          .padding(horizontal = Spacing.large, vertical = Spacing.extraLarge),
+          .padding(
+            horizontal = Spacing.large,
+            vertical = Spacing.extraLarge
+          ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
       ) {
@@ -91,7 +97,7 @@ fun CriticalAlertsSection(
           letterSpacing = 1.sp,
         )
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-          overdueInspections.forEach { inspection ->
+          overdueTasks.forEach { inspection ->
             CriticalAlertItem(
               cardWithStatus = inspection,
               onClick = { onCardClick(inspection) },
@@ -115,13 +121,22 @@ private fun CriticalAlertItem(
   val dueEngine = cardWithStatus.dueStatus.nextDueEngine
   val statusText = when {
     isOverdue && dueDate != null ->
-      stringResource(ViewingRes.string.label_expired, dueDate.toDisplayFormat())
+      stringResource(
+        ViewingRes.string.label_expired,
+        dueDate.toDisplayFormat()
+      )
 
     isOverdue && dueEngine != null ->
-      stringResource(ViewingRes.string.label_expired, "${dueEngine} HRS")
+      stringResource(
+        ViewingRes.string.label_expired,
+        "${dueEngine} HRS"
+      )
 
     dueDate != null ->
-      stringResource(ViewingRes.string.due_date, dueDate.toDisplayFormat())
+      stringResource(
+        ViewingRes.string.due_date,
+        dueDate.toDisplayFormat()
+      )
 
     dueEngine != null ->
       stringResource(ViewingRes.string.label_due_engine) + " ${dueEngine} HRS"
@@ -141,7 +156,10 @@ private fun CriticalAlertItem(
       modifier = Modifier
         .padding(top = 5.dp)
         .size(6.dp)
-        .background(dotColor, CircleShape)
+        .background(
+          dotColor,
+          CircleShape
+        )
     )
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
       Text(

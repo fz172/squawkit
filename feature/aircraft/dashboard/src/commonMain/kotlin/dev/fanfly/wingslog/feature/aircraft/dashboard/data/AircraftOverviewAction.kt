@@ -9,13 +9,14 @@ sealed interface AircraftOverviewAction {
   data object DeleteConfirm : AircraftOverviewAction
   data class AddLogClick(val aircraftId: String) : AircraftOverviewAction
   data class EditLogClick(val aircraftId: String, val logId: String) : AircraftOverviewAction
-  data class AddInspectionClick(val aircraftId: String) : AircraftOverviewAction
-  data class InspectionCardClick(val card: MaintenanceTaskWithStatus) : AircraftOverviewAction
-  data object DismissInspectionDetail : AircraftOverviewAction
-  data class EditInspectionClick(val aircraftId: String, val cardId: String) :
+  data class AddTaskClick(val aircraftId: String) : AircraftOverviewAction
+  data class TaskCardClick(val card: MaintenanceTaskWithStatus) : AircraftOverviewAction
+  data object DismissTaskDetail : AircraftOverviewAction
+  data class EditTaskClick(val aircraftId: String, val cardId: String) :
     AircraftOverviewAction
 
-  data object CancelDeleteInspection : AircraftOverviewAction
-  data object ConfirmDeleteInspection : AircraftOverviewAction
+  data object CancelDeleteTask : AircraftOverviewAction
+  data object ConfirmDeleteTask : AircraftOverviewAction
   data class AttachmentTap(val attachment: Attachment) : AircraftOverviewAction
+  data class TaskFromLogClick(val taskId: String) : AircraftOverviewAction
 }

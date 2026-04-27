@@ -78,16 +78,16 @@ fun AircraftOverviewContent(
     }
   ) { paddingValues ->
 
-    state.selectedInspection?.let { selectedInspection ->
+    state.selectedTask?.let { selectedTask ->
       TaskDetailSheet(
-        cardWithStatus = selectedInspection,
-        logs = state.logsForSelectedInspection,
-        onDismiss = { onAction(AircraftOverviewAction.DismissInspectionDetail) },
+        cardWithStatus = selectedTask,
+        logs = state.logsForSelectedTask,
+        onDismiss = { onAction(AircraftOverviewAction.DismissTaskDetail) },
         onEditClick = {
           onAction(
-            AircraftOverviewAction.EditInspectionClick(
+            AircraftOverviewAction.EditTaskClick(
               state.aircraft.id,
-              selectedInspection.card.id
+              selectedTask.card.id
             )
           )
         },
@@ -96,13 +96,13 @@ fun AircraftOverviewContent(
       )
     }
 
-    state.deletingInspectionId?.let { deletingInspectionId ->
-      val title = (state.activeInspections + state.compliedInspections)
-        .find { it.card.id == deletingInspectionId }?.card?.title ?: ""
+    state.deletingTaskId?.let { deletingId ->
+      val title = (state.activeTasks + state.completedTasks)
+        .find { it.card.id == deletingId }?.card?.title ?: ""
       DeleteTaskConfirmDialog(
-        inspectionTitle = title,
-        onConfirm = { onAction(AircraftOverviewAction.ConfirmDeleteInspection) },
-        onDismiss = { onAction(AircraftOverviewAction.CancelDeleteInspection) },
+        title = title,
+        onConfirm = { onAction(AircraftOverviewAction.ConfirmDeleteTask) },
+        onDismiss = { onAction(AircraftOverviewAction.CancelDeleteTask) },
       )
     }
 
@@ -121,14 +121,31 @@ fun AircraftOverviewContent(
         modifier = Modifier.weight(1f)
       ) { page ->
         when (page) {
-          0 -> OverviewTab(state = state, onAction = onAction)
-          1 -> MaintenanceTasksTab(state = state, onAction = onAction)
+          0 -> OverviewTab(
+            state = state,
+            onAction = onAction
+          )
+
+          1 -> MaintenanceTasksTab(
+            state = state,
+            onAction = onAction
+          )
+
           2 -> LogsTab(
             aircraftId = state.aircraft.id,
             onNavigateToAddLog = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
             onNavigateToEditLog = { logId ->
-              onAction(AircraftOverviewAction.EditLogClick(state.aircraft.id, logId))
-            }
+              onAction(
+                AircraftOverviewAction.EditLogClick(
+                  state.aircraft.id,
+                  logId
+                )
+              )
+            },
+            onTaskClick = { taskId ->
+              onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
+              coroutineScope.launch { pagerState.animateScrollToPage(1) }
+            },
           )
         }
       }

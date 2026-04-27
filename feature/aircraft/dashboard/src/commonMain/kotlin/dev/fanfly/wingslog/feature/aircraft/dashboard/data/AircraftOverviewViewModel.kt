@@ -92,14 +92,18 @@ class AircraftOverviewViewModel(
           val cardsWithStatus = inspectionCards.map { card ->
             MaintenanceTaskWithStatus(
               card = card,
-              dueStatus = inspectionDueManager.computeNextDue(card, logs, inspectionCards),
+              dueStatus = inspectionDueManager.computeNextDue(
+                card,
+                logs,
+                inspectionCards
+              ),
             )
           }
           val active = cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
           val complied = cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
 
           val current = _uiState.value as? AircraftOverviewUiState.Success
-          val refreshedSelected = current?.selectedInspection?.let { sel ->
+          val refreshedSelected = current?.selectedTask?.let { sel ->
             cardsWithStatus.find { it.card.id == sel.card.id }
           }
           val refreshedDetailLogs = refreshedSelected?.let { sel ->
@@ -110,11 +114,11 @@ class AircraftOverviewViewModel(
           AircraftOverviewUiState.Success(
             aircraft = aircraft,
             logStats = stats,
-            activeInspections = active,
-            compliedInspections = complied,
-            selectedInspection = refreshedSelected,
-            logsForSelectedInspection = refreshedDetailLogs,
-            deletingInspectionId = current?.deletingInspectionId,
+            activeTasks = active,
+            completedTasks = complied,
+            selectedTask = refreshedSelected,
+            logsForSelectedTask = refreshedDetailLogs,
+            deletingTaskId = current?.deletingTaskId,
             downloadingIds = downloadingIds,
           )
         } else {
@@ -146,38 +150,44 @@ class AircraftOverviewViewModel(
 
       is AircraftOverviewAction.EditLogClick -> {
         viewModelScope.launch {
-          _events.send(AircraftOverviewEvent.NavigateToEditLog(action.aircraftId, action.logId))
-        }
-      }
-
-      is AircraftOverviewAction.AddInspectionClick -> {
-        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddInspection(action.aircraftId)) }
-      }
-
-      is AircraftOverviewAction.InspectionCardClick -> {
-        showInspectionDetail(action.card)
-      }
-
-      AircraftOverviewAction.DismissInspectionDetail -> {
-        hideInspectionDetail()
-      }
-
-      is AircraftOverviewAction.EditInspectionClick -> {
-        hideInspectionDetail()
-        viewModelScope.launch {
           _events.send(
-            AircraftOverviewEvent.NavigateToEditInspection(
-              action.aircraftId, action.cardId
+            AircraftOverviewEvent.NavigateToEditLog(
+              action.aircraftId,
+              action.logId
             )
           )
         }
       }
 
-      AircraftOverviewAction.CancelDeleteInspection -> {
+      is AircraftOverviewAction.AddTaskClick -> {
+        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddInspection(action.aircraftId)) }
+      }
+
+      is AircraftOverviewAction.TaskCardClick -> {
+        showTaskDetails(action.card)
+      }
+
+      AircraftOverviewAction.DismissTaskDetail -> {
+        hideInspectionDetail()
+      }
+
+      is AircraftOverviewAction.EditTaskClick -> {
+        hideInspectionDetail()
+        viewModelScope.launch {
+          _events.send(
+            AircraftOverviewEvent.NavigateToEditInspection(
+              action.aircraftId,
+              action.cardId
+            )
+          )
+        }
+      }
+
+      AircraftOverviewAction.CancelDeleteTask -> {
         cancelDeleteInspection()
       }
 
-      AircraftOverviewAction.ConfirmDeleteInspection -> {
+      AircraftOverviewAction.ConfirmDeleteTask -> {
         confirmDeleteInspection()
       }
 
@@ -186,17 +196,24 @@ class AircraftOverviewViewModel(
           attachmentOpener.open(action.attachment).collect {}
         }
       }
+
+      is AircraftOverviewAction.TaskFromLogClick -> {
+        val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
+        val card = (state.activeTasks + state.completedTasks)
+          .find { it.card.id == action.taskId } ?: return
+        showTaskDetails(card)
+      }
     }
   }
 
-  private fun showInspectionDetail(cardWithStatus: MaintenanceTaskWithStatus) {
+  private fun showTaskDetails(cardWithStatus: MaintenanceTaskWithStatus) {
     val relevantLogs = cachedLogs.filter { cardWithStatus.card.id in it.inspection_ids }
       .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
     _uiState.update { state ->
       if (state is AircraftOverviewUiState.Success) {
         state.copy(
-          selectedInspection = cardWithStatus,
-          logsForSelectedInspection = relevantLogs,
+          selectedTask = cardWithStatus,
+          logsForSelectedTask = relevantLogs,
         )
       } else state
     }
@@ -205,7 +222,10 @@ class AircraftOverviewViewModel(
   fun hideInspectionDetail() {
     _uiState.update { state ->
       if (state is AircraftOverviewUiState.Success) {
-        state.copy(selectedInspection = null, logsForSelectedInspection = emptyList())
+        state.copy(
+          selectedTask = null,
+          logsForSelectedTask = emptyList()
+        )
       } else state
     }
   }
@@ -213,24 +233,30 @@ class AircraftOverviewViewModel(
   fun cancelDeleteInspection() {
     _uiState.update { state ->
       if (state is AircraftOverviewUiState.Success) {
-        state.copy(deletingInspectionId = null)
+        state.copy(deletingTaskId = null)
       } else state
     }
   }
 
   fun confirmDeleteInspection() {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
-    val cardId = state.deletingInspectionId ?: return
+    val cardId = state.deletingTaskId ?: return
     deleteTask(cardId)
   }
 
   fun deleteTask(cardId: String) {
     val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
     viewModelScope.launch {
-      inspectionDataManager.deleteTask(state.aircraft.id, cardId)
+      inspectionDataManager.deleteTask(
+        state.aircraft.id,
+        cardId
+      )
       _uiState.update { s ->
         if (s is AircraftOverviewUiState.Success) {
-          s.copy(deletingInspectionId = null, selectedInspection = null)
+          s.copy(
+            deletingTaskId = null,
+            selectedTask = null
+          )
         } else s
       }
     }

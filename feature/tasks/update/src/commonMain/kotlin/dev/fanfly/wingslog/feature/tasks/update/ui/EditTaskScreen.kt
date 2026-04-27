@@ -330,7 +330,7 @@ fun EditTaskScreen(
   }
 
   if (showDeleteConfirm) {
-    DeleteTaskConfirmDialog(inspectionTitle = title, onConfirm = {
+    DeleteTaskConfirmDialog(title = title, onConfirm = {
       showDeleteConfirm = false
       onDeleteRequest(card.id)
     }, onDismiss = { showDeleteConfirm = false })

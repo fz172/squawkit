@@ -33,6 +33,7 @@ fun LogsTab(
   aircraftId: String,
   onNavigateToAddLog: () -> Unit,
   onNavigateToEditLog: (logId: String) -> Unit,
+  onTaskClick: (taskId: String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val viewModel: MaintenanceLogListViewModel =
@@ -66,6 +67,7 @@ fun LogsTab(
       onAttachmentTap = { attachment ->
         coroutineScope.launch { attachmentOpener.open(attachment).collect {} }
       },
+      onTaskClick = onTaskClick,
     )
 
     ExtendedFloatingActionButton(

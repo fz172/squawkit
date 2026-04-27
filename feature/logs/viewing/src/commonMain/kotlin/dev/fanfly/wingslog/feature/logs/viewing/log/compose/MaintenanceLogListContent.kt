@@ -85,6 +85,7 @@ fun MaintenanceLogListContent(
   onEditLog: (String) -> Unit,
   onAddLog: () -> Unit,
   onAttachmentTap: (Attachment) -> Unit,
+  onTaskClick: ((String) -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
   Box(
@@ -245,6 +246,12 @@ fun MaintenanceLogListContent(
                 },
                 onAttachmentTap = onAttachmentTap,
                 downloadingIds = downloadingIds,
+                onTaskClick = onTaskClick?.let { cb ->
+                  { taskId ->
+                    onDismissDetail()
+                    cb(taskId)
+                  }
+                },
               )
             }
           }

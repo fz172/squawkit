@@ -26,7 +26,7 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.ComplianceSection
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
 
 @Composable
@@ -49,21 +49,26 @@ fun MaintenanceTasksTab(
       Spacer(Modifier.height(Spacing.medium))
 
       ComplianceSection(
-        activeInspections = state.activeInspections,
-        compliedInspections = state.compliedInspections,
+        activeTasks = state.activeTasks,
+        completedTasks = state.completedTasks,
         showComplied = showComplied,
         onToggleComplied = { showComplied = it },
-        onAddClick = { onAction(AircraftOverviewAction.AddInspectionClick(state.aircraft.id)) },
-        onCardClick = { onAction(AircraftOverviewAction.InspectionCardClick(it)) },
+        onAddClick = { onAction(AircraftOverviewAction.AddTaskClick(state.aircraft.id)) },
+        onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
       )
 
       Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))
     }
 
     ExtendedFloatingActionButton(
-      onClick = { onAction(AircraftOverviewAction.AddInspectionClick(state.aircraft.id)) },
-      icon = { Icon(Icons.Default.Add, contentDescription = null) },
-      text = { Text(stringResource(InspectionRes.string.add_task)) },
+      onClick = { onAction(AircraftOverviewAction.AddTaskClick(state.aircraft.id)) },
+      icon = {
+        Icon(
+          Icons.Default.Add,
+          contentDescription = null
+        )
+      },
+      text = { Text(stringResource(Res.string.add_task)) },
       modifier = Modifier
         .align(Alignment.BottomEnd)
         .padding(Spacing.screenPadding)

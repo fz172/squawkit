@@ -63,17 +63,20 @@ fun OverviewTab(
       )
     }
 
-    val overdueInspections =
-      state.activeInspections.filter { it.dueStatus.status == DueStatus.OVERDUE || it.dueStatus.status == DueStatus.DUE_SOON }
+    val overdueTasks =
+      state.activeTasks.filter { it.dueStatus.status == DueStatus.OVERDUE || it.dueStatus.status == DueStatus.DUE_SOON }
 
     Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
-      AircraftDataCard(state.aircraft, initiallyExpanded = overdueInspections.isEmpty())
+      AircraftDataCard(
+        state.aircraft,
+        initiallyExpanded = overdueTasks.isEmpty()
+      )
     }
 
-    if (overdueInspections.isNotEmpty()) {
+    if (overdueTasks.isNotEmpty()) {
       CriticalAlertsSection(
-        overdueInspections = overdueInspections,
-        onCardClick = { onAction(AircraftOverviewAction.InspectionCardClick(it)) },
+        overdueTasks = overdueTasks,
+        onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
         modifier = Modifier.padding(horizontal = Spacing.screenPadding)
       )
     }

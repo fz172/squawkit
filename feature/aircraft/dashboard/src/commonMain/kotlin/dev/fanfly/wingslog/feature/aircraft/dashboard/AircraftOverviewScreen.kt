@@ -57,7 +57,12 @@ fun AircraftOverviewScreen(
           navController.navigate(Screen.EditAircraft.createRoute(event.aircraftId))
 
         is AircraftOverviewEvent.NavigateToEditInspection ->
-          navController.navigate(Screen.EditInspection.createRoute(event.aircraftId, event.cardId))
+          navController.navigate(
+            Screen.EditInspection.createRoute(
+              event.aircraftId,
+              event.cardId
+            )
+          )
 
         is AircraftOverviewEvent.NavigateToEditLog ->
           navController.navigate(
@@ -84,7 +89,10 @@ fun AircraftOverviewScreen(
 
   when (val state = uiState) {
     AircraftOverviewUiState.Loading -> {
-      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+      Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+      ) {
         CircularProgressIndicator()
       }
     }

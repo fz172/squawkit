@@ -10,22 +10,25 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
-import wingslog.feature.tasks.update.generated.resources.Res as InspectionRes
+import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.delete_task
 import wingslog.feature.tasks.update.generated.resources.delete_task_confirmation
 
 @Composable
 fun DeleteTaskConfirmDialog(
-  inspectionTitle: String,
+  title: String,
   onConfirm: () -> Unit,
   onDismiss: () -> Unit,
 ) {
   AlertDialog(
     onDismissRequest = onDismiss,
-    title = { Text(stringResource(InspectionRes.string.delete_task)) },
+    title = { Text(stringResource(Res.string.delete_task)) },
     text = {
       Text(
-        stringResource(InspectionRes.string.delete_task_confirmation, inspectionTitle)
+        stringResource(
+          Res.string.delete_task_confirmation,
+          title
+        )
       )
     },
     confirmButton = {

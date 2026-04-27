@@ -22,11 +22,11 @@ sealed interface AircraftOverviewUiState {
   data class Success(
     val aircraft: Aircraft,
     val logStats: LogStats? = null,
-    val activeInspections: List<MaintenanceTaskWithStatus> = emptyList(),
-    val compliedInspections: List<MaintenanceTaskWithStatus> = emptyList(),
-    val selectedInspection: MaintenanceTaskWithStatus? = null,
-    val logsForSelectedInspection: List<MaintenanceLog> = emptyList(),
-    val deletingInspectionId: String? = null,
+    val activeTasks: List<MaintenanceTaskWithStatus> = emptyList(),
+    val completedTasks: List<MaintenanceTaskWithStatus> = emptyList(),
+    val selectedTask: MaintenanceTaskWithStatus? = null,
+    val logsForSelectedTask: List<MaintenanceLog> = emptyList(),
+    val deletingTaskId: String? = null,
     val downloadingIds: Set<String> = emptySet(),
   ) : AircraftOverviewUiState
 }

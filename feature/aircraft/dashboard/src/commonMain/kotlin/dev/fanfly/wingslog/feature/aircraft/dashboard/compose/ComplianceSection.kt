@@ -1,12 +1,12 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -27,7 +27,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedInspectionRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
 import wingslog.feature.tasks.sharedassets.generated.resources.due_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.history_with_count
@@ -37,17 +37,20 @@ import wingslog.feature.tasks.sharedassets.generated.resources.no_tasks_yet
 
 @Composable
 fun ComplianceSection(
-  activeInspections: List<MaintenanceTaskWithStatus>,
-  compliedInspections: List<MaintenanceTaskWithStatus>,
+  activeTasks: List<MaintenanceTaskWithStatus>,
+  completedTasks: List<MaintenanceTaskWithStatus>,
   showComplied: Boolean,
   onToggleComplied: (Boolean) -> Unit,
   onAddClick: () -> Unit,
   onCardClick: (MaintenanceTaskWithStatus) -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+  Column(
+    modifier = modifier,
+    verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+  ) {
     Text(
-      text = stringResource(SharedInspectionRes.string.maintenance_tasks),
+      text = stringResource(SharedRes.string.maintenance_tasks),
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold,
     )
@@ -63,7 +66,12 @@ fun ComplianceSection(
           count = 2
         )
       ) {
-        Text(stringResource(SharedInspectionRes.string.due_with_count, activeInspections.size))
+        Text(
+          stringResource(
+            SharedRes.string.due_with_count,
+            activeTasks.size
+          )
+        )
       }
       SegmentedButton(
         selected = showComplied,
@@ -75,14 +83,14 @@ fun ComplianceSection(
       ) {
         Text(
           stringResource(
-            SharedInspectionRes.string.history_with_count,
-            compliedInspections.size
+            SharedRes.string.history_with_count,
+            completedTasks.size
           )
         )
       }
     }
 
-    val displayList = if (showComplied) compliedInspections else activeInspections
+    val displayList = if (showComplied) completedTasks else activeTasks
 
     if (displayList.isEmpty()) {
       if (!showComplied) {
@@ -90,7 +98,10 @@ fun ComplianceSection(
           modifier = Modifier.fillMaxWidth(),
           shape = RoundedCornerShape(Spacing.cardCornerRadius),
           colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-          border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+          border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant
+          ),
           elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         ) {
           Column(
@@ -98,7 +109,7 @@ fun ComplianceSection(
             verticalArrangement = Arrangement.spacedBy(Spacing.medium),
           ) {
             Text(
-              text = stringResource(SharedInspectionRes.string.no_tasks_yet),
+              text = stringResource(SharedRes.string.no_tasks_yet),
               style = MaterialTheme.typography.bodyMedium,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -106,15 +117,19 @@ fun ComplianceSection(
               onClick = onAddClick,
               shape = RoundedCornerShape(Spacing.buttonCornerRadius)
             ) {
-              Icon(Icons.Default.Add, contentDescription = null)
+              Icon(
+                Icons.Default.Add,
+                contentDescription = null
+              )
               Spacer(Modifier.width(Spacing.small))
-              Text(stringResource(SharedInspectionRes.string.add_task).uppercase())
+              Text(stringResource(SharedRes.string.add_task).uppercase())
+              Text(stringResource(SharedRes.string.add_task).uppercase())
             }
           }
         }
       } else {
         Text(
-          text = stringResource(SharedInspectionRes.string.no_complied_yet),
+          text = stringResource(SharedRes.string.no_complied_yet),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(vertical = Spacing.large)
