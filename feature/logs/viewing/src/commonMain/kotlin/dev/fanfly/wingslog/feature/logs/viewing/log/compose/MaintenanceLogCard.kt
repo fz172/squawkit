@@ -69,7 +69,7 @@ fun MaintenanceLogCard(
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(Spacing.large),
+        .padding(horizontal = 18.dp, vertical = Spacing.large),
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
       // Top row: component badge | tach hours + chevron

@@ -148,7 +148,10 @@ fun TaskDetailSheet(
               MaterialTheme.colorScheme.primaryContainer,
             RoundedCornerShape(Spacing.badgeCornerRadius),
           )
-          .padding(horizontal = 6.dp, vertical = 2.dp),
+          .padding(
+            horizontal = 6.dp,
+            vertical = 2.dp
+          ),
       )
     }
 
@@ -260,8 +263,14 @@ private fun StatusBadge(dueStatus: DueMetadata) {
     ),
     color = fgColor,
     modifier = Modifier
-      .background(bgColor, RoundedCornerShape(20.dp))
-      .padding(horizontal = 12.dp, vertical = 4.dp),
+      .background(
+        bgColor,
+        RoundedCornerShape(20.dp)
+      )
+      .padding(
+        horizontal = 12.dp,
+        vertical = 4.dp
+      ),
   )
 }
 
@@ -281,8 +290,14 @@ private fun DueDateHero(dueStatus: DueMetadata) {
           ),
           color = Color.Black,
           modifier = Modifier
-            .background(StatusOkDark, RoundedCornerShape(20.dp))
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .background(
+              StatusOkDark,
+              RoundedCornerShape(20.dp)
+            )
+            .padding(
+              horizontal = 12.dp,
+              vertical = 4.dp
+            ),
         )
       }
 
@@ -299,8 +314,16 @@ private fun DueDateHero(dueStatus: DueMetadata) {
         val nextDueDate = dueStatus.nextDueDate!!
         val daysUntil = today.daysUntil(nextDueDate)
         val countdownText = when {
-          daysUntil > 0 -> stringResource(ViewingRes.string.days_remaining, daysUntil)
-          daysUntil < 0 -> stringResource(ViewingRes.string.days_overdue_count, -daysUntil)
+          daysUntil > 0 -> stringResource(
+            ViewingRes.string.days_remaining,
+            daysUntil
+          )
+
+          daysUntil < 0 -> stringResource(
+            ViewingRes.string.days_overdue_count,
+            -daysUntil
+          )
+
           else -> stringResource(ViewingRes.string.due_today)
         }
 
@@ -356,21 +379,26 @@ private fun LogHistoryItem(log: MaintenanceLog) {
     verticalArrangement = Arrangement.spacedBy(2.dp),
   ) {
     Row(
-      modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.SpaceBetween
     ) {
       Text(
-        text = dateStr, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium
+        text = dateStr,
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = FontWeight.Medium
       )
       Text(
         text = stringResource(
-          SharedRes.string.engine_format, log.engine_hour.formatToOneDecimalPlace()
+          SharedRes.string.engine_format,
+          log.engine_hour.formatToOneDecimalPlace()
         ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
     Text(
-      text = log.work_description, style = MaterialTheme.typography.bodyMedium
+      text = log.work_description,
+      style = MaterialTheme.typography.bodyMedium
     )
   }
 }

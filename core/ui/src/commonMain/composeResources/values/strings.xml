@@ -36,5 +36,7 @@
     <string name="component_engine">Engine</string>
     <string name="component_propeller">Propeller</string>
     <string name="component_avionics">Avionics</string>
+    <!-- Units -->
+    <string name="unit_hours">hrs</string>
 
 </resources>
