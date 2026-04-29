@@ -198,7 +198,16 @@ CREATE TABLE sync_cursor (
   scope_path       TEXT NOT NULL,
   hydrated         INTEGER AS Boolean NOT NULL DEFAULT 0,
   last_seen_remote INTEGER AS Long,                       -- max remote_updated_at observed
+  failed_attempts  INTEGER NOT NULL DEFAULT 0,            -- consecutive hydration failures
+  last_attempt_at  INTEGER AS Long,                       -- epoch ms of last hydration attempt
   PRIMARY KEY (uid, collection, scope_path)
+);
+
+-- Server-clock offset for LWW comparator (one row, see §5.5).
+CREATE TABLE clock_offset (
+  uid          TEXT NOT NULL PRIMARY KEY,
+  offset_ms    INTEGER NOT NULL,                          -- serverTs - localTs at last successful push
+  measured_at  INTEGER NOT NULL                           -- local epoch ms
 );
 
 -- Generated queries (selected):
@@ -267,12 +276,19 @@ When all conditions are met:
 
 ### 5.2 PushWorker
 
+Drains `dirty=1` rows in chunks using Firestore's `WriteBatch` (verified to be exposed by GitLive 2.4.0 in `commonMain` via `firestore.batch()`; `actual` impls present on both Android and iOS). Batching is a **throughput optimization** — it does *not* provide cross-document atomicity that affects correctness, since local already holds the complete picture and per-doc LWW resolves any ordering on the cloud side. The wins are: fewer round trips, lower drain time after a reconnect, lower Firestore write-op cost.
+
 ```kotlin
 class PushWorker(
   private val db: WingsLogDatabase,
   private val firestore: FirebaseFirestore,
   private val codecs: EntityCodecRegistry,
+  private val clockOffset: ClockOffsetStore,
 ) {
+  companion object {
+    const val BATCH_SIZE = 50           // < Firestore's 500-op cap; tunable
+  }
+
   suspend fun run(scope: CoroutineScope) {
     db.entityQueries.observeDirtyCount().asFlow().mapToOne(scope.coroutineContext)
       .filter { it > 0L }
@@ -281,25 +297,27 @@ class PushWorker(
 
   private suspend fun drain() {
     while (true) {
-      val batch = db.entityQueries.selectDirty(limit = 50).executeAsList()
-      if (batch.isEmpty()) return
-      for (row in batch) pushOne(row)
+      val rows = db.entityQueries.selectDirty(limit = BATCH_SIZE).executeAsList()
+      if (rows.isEmpty()) return
+      pushBatch(rows)
     }
   }
 
-  private suspend fun pushOne(row: DirtyRow) {
-    val docRef = firestoreDocRef(row.collection, row.scope_path, row.id)
-    val data = mapOf(
-      "payload"    to FirestoreBlob(row.payload),
-      "deleted"    to row.deleted,
-      "updated_at" to FieldValue.serverTimestamp(),
-      "schema"     to row.collection.schemaName,
-    )
-    runCatching { docRef.set(data, merge = false) }
-      .onSuccess {
-        val ackTs = docRef.get()["updated_at"] as Long  // server ts after ack
-        db.entityQueries.clearDirty(row.collection, row.scope_path, row.id, remoteTs = ackTs)
-      }
+  private suspend fun pushBatch(rows: List<DirtyRow>) {
+    val batch = firestore.batch()
+    rows.forEach { row ->
+      batch.set(
+        documentRef = firestoreDocRef(row.collection, row.scope_path, row.id),
+        data = mapOf(
+          "payload"    to FirestoreBlob(row.payload),
+          "deleted"    to row.deleted,
+          "updated_at" to FieldValue.serverTimestamp(),
+          "schema"     to row.collection.schemaName,
+        ),
+      )
+    }
+    runCatching { batch.commit() }
+      .onSuccess { onBatchAcked(rows) }
       .onFailure { e ->
         when (e) {
           is FirebaseNetworkException -> backoff(currentBackoff())
@@ -308,8 +326,26 @@ class PushWorker(
         }
       }
   }
+
+  // After commit, fetch one doc's server timestamp to (a) clear dirty for the batch, (b) refresh clock_offset.
+  private suspend fun onBatchAcked(rows: List<DirtyRow>) {
+    val sample = firestoreDocRef(rows.first()).get()
+    val serverTs = sample["updated_at"] as Long
+    val localTs = Clock.System.now().toEpochMilliseconds()
+    clockOffset.update(serverTs - localTs)
+
+    db.transaction {
+      rows.forEach { row ->
+        // Approximate per-row remote ts with the batch's sample ts. Acceptable: batches commit
+        // within a few ms server-side; the absolute value matters less than monotonicity.
+        db.entityQueries.clearDirty(row.collection, row.scope_path, row.id, remoteTs = serverTs)
+      }
+    }
+  }
 }
 ```
+
+A failed batch leaves all its rows `dirty=1`; the next `drain()` re-picks them. Permanent errors (auth, rules) surface to the user via `SyncEngine.failureState`.
 
 ### 5.3 PullListener
 
@@ -340,9 +376,10 @@ class PullListener(
     val deleted  = doc.get<Boolean>("deleted") ?: false
 
     val local = db.entityQueries.observeOne(kind, scope.toPath(), doc.id).executeAsOneOrNull()
+    val localAdjustedTs = local?.updated_at?.plus(clockOffset.current())   // §5.5
     when {
       local == null -> upsertFromRemote(payload, deleted, remoteTs)
-      local.dirty && local.updated_at > remoteTs -> { /* skip — our pending push wins */ }
+      local.dirty && (localAdjustedTs ?: 0L) > remoteTs -> { /* skip — our pending push wins; localAdjustedTs is wall-clock + clockOffset */ }
       remoteTs > (local.remote_updated_at ?: 0L) -> upsertFromRemote(payload, deleted, remoteTs)
       else -> { /* up to date */ }
     }
@@ -354,7 +391,7 @@ class PullListener(
 ### 5.4 HydrationRunner
 
 ```kotlin
-suspend fun runFor(kind: CollectionKind, scope: EntityScope) {
+suspend fun runFor(kind: CollectionKind, scope: EntityScope): Result<Unit> = runCatching {
   val ref = firestoreCollectionRef(kind, scope)
   val docs = ref.get()                       // one-shot
   db.transaction {
@@ -369,14 +406,53 @@ suspend fun runFor(kind: CollectionKind, scope: EntityScope) {
       )
     }
     val maxTs = docs.documents.maxOfOrNull { it.get<Long>("updated_at") } ?: 0L
-    db.syncCursorQueries.upsertCursor(uid, kind, scope.toPath(), hydrated = true, last_seen_remote = maxTs)
+    db.syncCursorQueries.markHydrated(uid, kind, scope.toPath(), last_seen_remote = maxTs)
+    db.syncCursorQueries.resetFailures(uid, kind, scope.toPath())
   }
+}.onFailure { e ->
+  db.syncCursorQueries.recordFailure(
+    uid = uid, collection = kind, scope_path = scope.toPath(),
+    last_attempt_at = Clock.System.now().toEpochMilliseconds(),
+  )
+  // Backoff handled by SyncEngine: 30s × 2^min(failed_attempts, 6), capped at 30min.
 }
 ```
 
 For nested collections (logs/tasks/overview under an aircraft), hydration walks the parent first, then recurses. Practically: hydrate Aircraft, then for each aircraft id hydrate its three subcollections.
 
+`failed_attempts` is incremented on any failure and reset on success. The engine consults it to compute backoff before the next retry of *that specific (kind, scope) pair* — so a flaky Firestore for one aircraft's logs doesn't block hydration of another aircraft. Hydration is idempotent (the `INSERT OR REPLACE` is keyed on `(collection, scope_path, id)`), so retry-from-scratch on a partially-completed pull is safe; we don't need resumable chunking in R1.
+
 Hydration progress is reported via a `StateFlow<HydrationState>` so the UI can show "Restoring 3 of 6 collections…" on first launch.
+
+### 5.5 Clock offset for the LWW comparator
+
+The push-skip rule in §5.3 compares `local.updated_at` (device wall clock) with `remoteTs` (Firestore server timestamp). On a phone with a 5-minute clock skew, that comparison is meaningless and a stale local row could "win" against a fresh remote write. Resolution: maintain a per-uid `clockOffset = serverTs - localTs` and apply it when comparing.
+
+```kotlin
+class ClockOffsetStore(private val db: WingsLogDatabase) {
+  private val cached = MutableStateFlow(0L)
+
+  fun current(): Long = cached.value
+
+  fun update(offsetMs: Long) {
+    // Smooth large jumps: clamp per-update delta to 60s so a single bad sample doesn't
+    // poison the comparator. Steady drift converges within a few pushes.
+    val prev = cached.value
+    val clamped = (offsetMs - prev).coerceIn(-60_000, 60_000)
+    val next = prev + clamped
+    cached.value = next
+    db.clockOffsetQueries.upsert(uid, next, Clock.System.now().toEpochMilliseconds())
+  }
+}
+```
+
+When is it measured?
+
+- **On every successful push batch** (see §5.2 `onBatchAcked` — fetches one doc's server timestamp post-commit). Free signal, no extra round trip.
+- **On hydration completion** — same trick, sample one doc's `update_time`.
+- **Bootstrap on first sign-in:** if no rows exist to push, write a single sentinel doc `clock_probe/{uid}` with `serverTimestamp()`, read it back, delete it. One-time cost.
+
+The comparator in §5.3 uses `local.updated_at + clockOffset` (named `localAdjustedTs` in the code) so a device with a 5-minute slow clock still produces comparable timestamps. The comparator never trusts raw `local.updated_at` alone.
 
 ---
 
@@ -488,6 +564,20 @@ User taps "Sign in with Google" while currently anonymous. The implementation ca
 
 There's a subtle ordering invariant: **for a brand-new permanent uid, push must run before pull**. Otherwise a hydration that finds no docs would write nothing into local (fine), then push would publish, then a snapshot listener would echo back our own writes (also fine — they're already in local). So actually order doesn't matter; it's just less wasted bandwidth to push first. Implementation: gate `PullListener.attach()` until `PushWorker.drainOnce()` completes.
 
+#### 7.3.1 Link collisions fall through to sign-into-existing
+
+A common worry is "what if the user has local anonymous data and links into a Google account that already has cloud data — do we wipe one or the other under LWW?"
+
+**This case is impossible by Firebase's design.** `linkWithCredential` only succeeds when the supplied credential is not already attached to another Firebase user. If the Google account already has a permanent uid, `linkWithCredential` throws `FirebaseAuthUserCollisionException` (`credential-already-in-use`). The link fails — no merge happens, no data is touched.
+
+The UX must catch the exception and route the user into the **sign-into-existing-account** flow (the second row in §7.2's transitions table):
+
+1. The anonymous uid stays on the device with all its rows under its scope (hidden after sign-in to a different uid, but recoverable).
+2. The new uid scope receives normal initial hydration from the cloud.
+3. We may surface an opt-in "Bring your offline work into this account" action that re-scopes anonymous rows to the new uid and marks them `dirty=1`. Off by default.
+
+So the LWW comparator never has to decide between "anonymous local" and "permanent cloud" data with the same id — they live in different scope_paths and thus different rows.
+
 ---
 
 ## 8. Settings UI (R1 portion of M6)
@@ -567,14 +657,19 @@ Cases:
 - Two scopes are isolated — putting under scope A is invisible to scope B.
 - Concurrent `put`s of the same id collapse to last-write.
 - `dirty` is set on every write, cleared by direct `clearDirty` call.
+- **Sealed subclass coverage:** assert `CollectionKind::class.sealedSubclasses.size == codecRegistry.registeredKinds.size` and `== CollectionKind.byWire.size`. Catches the "added a new domain but forgot the codec / forgot the lookup map" mistake at build time.
 
 ### 11.2 Sync engine tests (`kmm-test-writer`)
 
-- **PushWorker:** writes row → mocked Firestore receives `set(doc, merge=false)` once → row's `dirty` flag clears.
+- **PushWorker batching:** N dirty rows → mocked Firestore receives one `WriteBatch.commit()` containing all N → all rows clear `dirty`.
+- **PushWorker partial failure:** batch commit throws → all rows in the batch remain `dirty=1` and re-pick on next drain.
 - **PullListener:** mocked Firestore emits a doc with `updated_at = 1000` → local row has `remote_updated_at = 1000, dirty = 0`.
-- **LWW conflict:** local has `dirty=1, updated_at=2000`; remote arrives with `updated_at=1500` → local row untouched.
+- **LWW conflict (clock-aware):** local `dirty=1, updated_at=2000, clockOffset=+10000`; remote arrives with `updated_at=11500`. Adjusted local = 12000 > 11500 → local row untouched.
 - **LWW conflict (other direction):** local `dirty=0, remote_updated_at=1000`; remote arrives with `updated_at=2000` → local overwritten.
-- **HydrationRunner:** seeds Firestore with N docs → after run, local has N rows with `dirty=0`, `sync_cursor.hydrated=true`.
+- **HydrationRunner success:** seeds Firestore with N docs → after run, local has N rows with `dirty=0`, `sync_cursor.hydrated=true`, `failed_attempts=0`.
+- **HydrationRunner failure:** simulated Firestore error → `failed_attempts++`, `last_attempt_at` set, `hydrated` stays false; subsequent retry succeeds → counter resets.
+- **Tombstone GC respects `dirty=0`:** insert tombstone with `dirty=1, updated_at = 40d ago` → run GC → row remains. Flip to `dirty=0` → run GC → row deleted.
+- **ClockOffsetStore clamp:** feed it a +5min skew sample → cached offset advances by at most 60s.
 
 ### 11.3 Manager unit tests
 
@@ -602,13 +697,22 @@ After 100% holds for a week, the old Firestore-direct manager impls are deleted 
 
 ## 13. Open questions
 
-1. **Resilience to clock skew on `updated_at` for the LWW skip rule.** The push-skip rule uses `local.updated_at > remoteUpdatedAt` where local is wall-clock and remote is server time. Possible clock skew on the user's device could mis-skip a remote write that should win. Mitigation: store the device's last known server-clock offset on each successful push, apply it to local timestamps in the comparator. Decide before M3 ships.
+1. **Clock skew on the LWW comparator. — RESOLVED.** Per-uid `clock_offset` table (§4 schema, §5.5 ClockOffsetStore). Captured on every successful push and on hydration completion; bootstrapped via a one-shot `clock_probe/{uid}` doc if no other signal is available. Comparator uses `local.updated_at + clockOffset` against `remoteTs`. Single-update delta clamped to ±60s.
 
-2. **Should `sync_cursor.last_seen_remote` be per-doc or per-collection?** Per-collection is simpler and matches Firestore's `where("updated_at", ">", cursor)` query. Per-doc is more accurate but pays N round trips on resume. Default to per-collection; revisit if real users hit listener replay storms.
+2. **`sync_cursor.last_seen_remote` per-doc or per-collection?** Per-collection is simpler and matches Firestore's `where("updated_at", ">", cursor)` query. Per-doc is more accurate but pays N round trips on resume. Default: per-collection. Revisit if real users hit listener replay storms.
 
-3. **Tombstone GC schedule.** PRD says "30 days." Need to decide whether GC runs on app start, on a Worker, or on every push completion. Default: app start, with a SQL `DELETE … WHERE deleted=1 AND updated_at < now() - 30d`. Cheap and predictable.
+3. **Tombstone GC schedule. — RESOLVED.** Runs on app start. SQL: `DELETE FROM entity WHERE deleted=1 AND dirty=0 AND updated_at < now() - 30d`. The `AND dirty=0` predicate is critical — without it, a long-offline device would GC its own un-pushed deletes and resurrect the docs on reconnect.
 
-4. **Firestore offline persistence.** GitLive's KMP Firestore wrapper enables Firestore's own offline cache by default. With us managing our own queue, this is duplicate state. Decision: **disable** Firestore's offline persistence at init. Reduces confusion during debugging and saves disk.
+4. **Firestore offline persistence. — RESOLVED.** GitLive's KMP Firestore wrapper enables Firestore's own offline cache by default. With us managing our own queue, this is duplicate state. **Disable** Firestore's offline persistence at init. Reduces confusion during debugging and saves disk.
+
+5. **Hydration N+1 for power users (deferred to post-R1).** Per-aircraft hydration costs `1 + 3N` round trips for N aircraft. For typical fleets (1–5 aircraft) this is sub-second. For 20+ it becomes noticeable. Optimization: switch to **collection group queries** (`firestore.collectionGroup("maintenance_log").where("ownerUid", "==", uid)`). Costs:
+   - Denormalize `ownerUid` onto every nested doc (write-side change + one-time backfill).
+   - Add explicit collection-group security rules.
+   - Add manually-created composite indexes in Firestore.
+
+   Not worth the scope creep for R1; tracked as a follow-up if telemetry shows hydration time as a real pain point. The per-aircraft path already supports parallel pulls (`async { … }.awaitAll()`) which gets us most of the way there cheaply.
+
+6. **Runtime proto schema-version enforcement. — REJECTED.** Considered adding a "if `payload_schema` doesn't match current proto definition, trigger re-hydration" check. Rejected because protobuf wire format is intentionally rename/add/remove tolerant — `Wire.ADAPTER.decode` doesn't fail on unknown tags or missing optional fields. A schema check would either fire on every legitimate proto refactor (defeating the design) or need a way to detect *breaking* changes (no automatic signal exists). The `payload_schema` column stays as a forensic / one-shot-rewriter input only.
 
 ---
 
