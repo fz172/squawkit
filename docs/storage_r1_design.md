@@ -203,12 +203,10 @@ CREATE TABLE sync_cursor (
   PRIMARY KEY (uid, collection, scope_path)
 );
 
--- Server-clock offset for LWW comparator (one row, see §5.5).
-CREATE TABLE clock_offset (
-  uid          TEXT NOT NULL PRIMARY KEY,
-  offset_ms    INTEGER NOT NULL,                          -- serverTs - localTs at last successful push
-  measured_at  INTEGER NOT NULL                           -- local epoch ms
-);
+-- Note on `entity.updated_at`: device wall-clock at write time. Used **only** for UI
+-- display ("Modified 2h ago") and as a tie-breaker for push order (oldest dirty first).
+-- It is NOT used for sync ordering. All sync ordering uses Firestore server timestamps,
+-- stored in `remote_updated_at`. See §5.3 for the conflict-resolution rules.
 
 -- Generated queries (selected):
 
@@ -283,7 +281,6 @@ class PushWorker(
   private val db: WingsLogDatabase,
   private val firestore: FirebaseFirestore,
   private val codecs: EntityCodecRegistry,
-  private val clockOffset: ClockOffsetStore,
 ) {
   companion object {
     const val BATCH_SIZE = 50           // < Firestore's 500-op cap; tunable
@@ -327,23 +324,22 @@ class PushWorker(
       }
   }
 
-  // After commit, fetch one doc's server timestamp to (a) clear dirty for the batch, (b) refresh clock_offset.
+  // After commit, mark all rows in the batch as synced. We optimistically defer the per-row
+  // server timestamp until the next snapshot-listener pass delivers it: the PullListener will
+  // see our own write and update `remote_updated_at` then. Until that pass arrives, the row is
+  // dirty=0 with remote_updated_at=null, which the comparator treats as "synced but server-time
+  // unknown" — any later remote write wins, which is the conservative behavior we want.
   private suspend fun onBatchAcked(rows: List<DirtyRow>) {
-    val sample = firestoreDocRef(rows.first()).get()
-    val serverTs = sample["updated_at"] as Long
-    val localTs = Clock.System.now().toEpochMilliseconds()
-    clockOffset.update(serverTs - localTs)
-
     db.transaction {
       rows.forEach { row ->
-        // Approximate per-row remote ts with the batch's sample ts. Acceptable: batches commit
-        // within a few ms server-side; the absolute value matters less than monotonicity.
-        db.entityQueries.clearDirty(row.collection, row.scope_path, row.id, remoteTs = serverTs)
+        db.entityQueries.clearDirty(row.collection, row.scope_path, row.id)
       }
     }
   }
 }
 ```
+
+`clearDirty` no longer takes a `remoteTs` argument; the row simply transitions to `dirty=0`. The next snapshot listener tick (which arrives within milliseconds of the batch commit, since Firestore's listener echoes back our own writes) populates `remote_updated_at` from the server-stamped doc.
 
 A failed batch leaves all its rows `dirty=1`; the next `drain()` re-picks them. Permanent errors (auth, rules) surface to the user via `SyncEngine.failureState`.
 
@@ -371,22 +367,25 @@ class PullListener(
   }
 
   private fun applyRemote(doc: DocumentSnapshot) {
-    val remoteTs = doc.get<Long>("updated_at")
+    val remoteTs = doc.get<Long>("updated_at")               // server-time, set by FieldValue.serverTimestamp() on write
     val payload  = doc.get<FirestoreBlob>("payload").toByteArray()
     val deleted  = doc.get<Boolean>("deleted") ?: false
 
     val local = db.entityQueries.observeOne(kind, scope.toPath(), doc.id).executeAsOneOrNull()
-    val localAdjustedTs = local?.updated_at?.plus(clockOffset.current())   // §5.5
     when {
-      local == null -> upsertFromRemote(payload, deleted, remoteTs)
-      local.dirty && (localAdjustedTs ?: 0L) > remoteTs -> { /* skip — our pending push wins; localAdjustedTs is wall-clock + clockOffset */ }
+      local == null               -> upsertFromRemote(payload, deleted, remoteTs)
+      local.dirty                 -> { /* row is dirty — PushWorker will publish; remote will arrive later as our echo. Do nothing. */ }
       remoteTs > (local.remote_updated_at ?: 0L) -> upsertFromRemote(payload, deleted, remoteTs)
-      else -> { /* up to date */ }
+      else                        -> { /* same or older server time — already up to date */ }
     }
     db.syncCursorQueries.upsertCursor(uid, kind, scope.toPath(), hydrated = true, last_seen_remote = remoteTs)
   }
 }
 ```
+
+**No local clock anywhere in the ordering logic.** The comparator uses only Firestore-assigned `update_time` values on both sides (`remoteTs` from the incoming doc; `local.remote_updated_at` from the last echo). Conflicts on `dirty` rows are resolved server-side: PushWorker pushes the local write, Firestore stamps it later than the previously-arrived remote write, server-side LWW gives our write the win, and the next snapshot tick echoes it back to all devices.
+
+This is the rule that makes the system **immune to device clock errors of any magnitude** — wrong timezone, manual clock changes, dead CMOS battery, NTP drift, anything. None of it influences sync ordering.
 
 ### 5.4 HydrationRunner
 
@@ -424,35 +423,11 @@ For nested collections (logs/tasks/overview under an aircraft), hydration walks 
 
 Hydration progress is reported via a `StateFlow<HydrationState>` so the UI can show "Restoring 3 of 6 collections…" on first launch.
 
-### 5.5 Clock offset for the LWW comparator
+### 5.5 Note on local clocks (intentionally not used)
 
-The push-skip rule in §5.3 compares `local.updated_at` (device wall clock) with `remoteTs` (Firestore server timestamp). On a phone with a 5-minute clock skew, that comparison is meaningless and a stale local row could "win" against a fresh remote write. Resolution: maintain a per-uid `clockOffset = serverTs - localTs` and apply it when comparing.
+Earlier drafts of this design maintained a `clockOffset` to translate local wall-clock timestamps into server-time for the LWW comparator. **That design was removed.** Frozen-at-write-time offsets are wrong if the clock was wrong before the offset was first measured (the very first writes after install). Re-stamping dirty rows on offset jumps adds machinery to a fragile foundation.
 
-```kotlin
-class ClockOffsetStore(private val db: WingsLogDatabase) {
-  private val cached = MutableStateFlow(0L)
-
-  fun current(): Long = cached.value
-
-  fun update(offsetMs: Long) {
-    // Smooth large jumps: clamp per-update delta to 60s so a single bad sample doesn't
-    // poison the comparator. Steady drift converges within a few pushes.
-    val prev = cached.value
-    val clamped = (offsetMs - prev).coerceIn(-60_000, 60_000)
-    val next = prev + clamped
-    cached.value = next
-    db.clockOffsetQueries.upsert(uid, next, Clock.System.now().toEpochMilliseconds())
-  }
-}
-```
-
-When is it measured?
-
-- **On every successful push batch** (see §5.2 `onBatchAcked` — fetches one doc's server timestamp post-commit). Free signal, no extra round trip.
-- **On hydration completion** — same trick, sample one doc's `update_time`.
-- **Bootstrap on first sign-in:** if no rows exist to push, write a single sentinel doc `clock_probe/{uid}` with `serverTimestamp()`, read it back, delete it. One-time cost.
-
-The comparator in §5.3 uses `local.updated_at + clockOffset` (named `localAdjustedTs` in the code) so a device with a 5-minute slow clock still produces comparable timestamps. The comparator never trusts raw `local.updated_at` alone.
+The simpler invariant — **dirty rows are immune from remote overwrite; they always push, server-side LWW resolves** — needs no local clock at all. `entity.updated_at` exists purely for UI display and as an oldest-first push-order tiebreaker; if the user's clock is wrong, the "Modified 2h ago" label is wrong, but no data is at risk.
 
 ---
 
@@ -663,13 +638,14 @@ Cases:
 
 - **PushWorker batching:** N dirty rows → mocked Firestore receives one `WriteBatch.commit()` containing all N → all rows clear `dirty`.
 - **PushWorker partial failure:** batch commit throws → all rows in the batch remain `dirty=1` and re-pick on next drain.
-- **PullListener:** mocked Firestore emits a doc with `updated_at = 1000` → local row has `remote_updated_at = 1000, dirty = 0`.
-- **LWW conflict (clock-aware):** local `dirty=1, updated_at=2000, clockOffset=+10000`; remote arrives with `updated_at=11500`. Adjusted local = 12000 > 11500 → local row untouched.
-- **LWW conflict (other direction):** local `dirty=0, remote_updated_at=1000`; remote arrives with `updated_at=2000` → local overwritten.
+- **PullListener inserts new remote:** local has no row for id → remote arrives → local now has the row with `dirty=0` and `remote_updated_at=remoteTs`.
+- **PullListener leaves dirty rows alone:** local has `dirty=1` row → remote arrives with any `update_time` → local payload unchanged, `dirty` still 1.
+- **PullListener overwrites synced rows when newer:** local `dirty=0, remote_updated_at=1000`; remote arrives with `update_time=2000` → local overwritten with new payload, `remote_updated_at=2000`.
+- **PullListener ignores stale remote:** local `dirty=0, remote_updated_at=2000`; remote arrives with `update_time=1500` → local untouched.
+- **End-to-end LWW under bad clock:** simulate device wall-clock 1 hour fast. Write row locally → push → snapshot listener echoes back → `remote_updated_at` populated. Verify the cycle works regardless of local clock value (the system never reads the local clock for ordering).
 - **HydrationRunner success:** seeds Firestore with N docs → after run, local has N rows with `dirty=0`, `sync_cursor.hydrated=true`, `failed_attempts=0`.
 - **HydrationRunner failure:** simulated Firestore error → `failed_attempts++`, `last_attempt_at` set, `hydrated` stays false; subsequent retry succeeds → counter resets.
 - **Tombstone GC respects `dirty=0`:** insert tombstone with `dirty=1, updated_at = 40d ago` → run GC → row remains. Flip to `dirty=0` → run GC → row deleted.
-- **ClockOffsetStore clamp:** feed it a +5min skew sample → cached offset advances by at most 60s.
 
 ### 11.3 Manager unit tests
 
@@ -697,13 +673,13 @@ After 100% holds for a week, the old Firestore-direct manager impls are deleted 
 
 ## 13. Open questions
 
-1. **Clock skew on the LWW comparator. — RESOLVED.** Per-uid `clock_offset` table (§4 schema, §5.5 ClockOffsetStore). Captured on every successful push and on hydration completion; bootstrapped via a one-shot `clock_probe/{uid}` doc if no other signal is available. Comparator uses `local.updated_at + clockOffset` against `remoteTs`. Single-update delta clamped to ±60s.
+1. **Clock skew on the LWW comparator. — RESOLVED by design simplification.** The comparator no longer reads the local clock at all. Sync ordering uses only Firestore-assigned server timestamps. Dirty rows are immune from remote overwrite; they push and let server-side LWW decide. The earlier `clock_offset` design was removed (see §5.5 note). The system is now immune to device clock errors of any magnitude.
 
-2. **`sync_cursor.last_seen_remote` per-doc or per-collection?** Per-collection is simpler and matches Firestore's `where("updated_at", ">", cursor)` query. Per-doc is more accurate but pays N round trips on resume. Default: per-collection. Revisit if real users hit listener replay storms.
+2. **Tombstone GC schedule. — RESOLVED.** Runs on app start. SQL: `DELETE FROM entity WHERE deleted=1 AND dirty=0 AND updated_at < now() - 30d`. The `AND dirty=0` predicate is critical — without it, a long-offline device would GC its own un-pushed deletes and resurrect the docs on reconnect.
 
-3. **Tombstone GC schedule. — RESOLVED.** Runs on app start. SQL: `DELETE FROM entity WHERE deleted=1 AND dirty=0 AND updated_at < now() - 30d`. The `AND dirty=0` predicate is critical — without it, a long-offline device would GC its own un-pushed deletes and resurrect the docs on reconnect.
+3. **Firestore offline persistence. — RESOLVED.** GitLive's KMP Firestore wrapper enables Firestore's own offline cache by default. With us managing our own queue, this is duplicate state. **Disable** Firestore's offline persistence at init. Reduces confusion during debugging and saves disk.
 
-4. **Firestore offline persistence. — RESOLVED.** GitLive's KMP Firestore wrapper enables Firestore's own offline cache by default. With us managing our own queue, this is duplicate state. **Disable** Firestore's offline persistence at init. Reduces confusion during debugging and saves disk.
+4. **`sync_cursor.last_seen_remote` per-doc or per-collection?** Per-collection is simpler and matches Firestore's `where("updated_at", ">", cursor)` query. Per-doc is more accurate but pays N round trips on resume. Default: per-collection. Revisit if real users hit listener replay storms.
 
 5. **Hydration N+1 for power users (deferred to post-R1).** Per-aircraft hydration costs `1 + 3N` round trips for N aircraft. For typical fleets (1–5 aircraft) this is sub-second. For 20+ it becomes noticeable. Optimization: switch to **collection group queries** (`firestore.collectionGroup("maintenance_log").where("ownerUid", "==", uid)`). Costs:
    - Denormalize `ownerUid` onto every nested doc (write-side change + one-time backfill).
