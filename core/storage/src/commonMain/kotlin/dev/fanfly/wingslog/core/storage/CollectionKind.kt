@@ -41,9 +41,9 @@ sealed interface CollectionKind {
     override val schemaName = "aircraft.Technician"
   }
 
-  data object UserProfile : CollectionKind {
-    override val wireName = "user_profile"
-    override val schemaName = "userprofile.UserProfile"
+  data object LicenseInfo : CollectionKind {
+    override val wireName = "license_info"
+    override val schemaName = "userprofile.LicenseInfo"
   }
 
   companion object {
@@ -58,7 +58,7 @@ sealed interface CollectionKind {
       MaintenanceLog,
       MaintenanceOverview,
       Technician,
-      UserProfile,
+      LicenseInfo,
     )
 
     private val byWire: Map<String, CollectionKind> = ALL.associateBy { it.wireName }

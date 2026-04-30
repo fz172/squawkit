@@ -4,6 +4,8 @@ import dev.fanfly.wingslog.core.attachments.datamanager.impl.attachmentModule
 import dev.fanfly.wingslog.core.attachments.datamanager.impl.platformAttachmentModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.database.di.commonFirebaseModule
+import dev.fanfly.wingslog.core.storage.di.platformStorageModule
+import dev.fanfly.wingslog.core.storage.di.storageModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
 import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
 import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
@@ -25,6 +27,8 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) =
     appDeclaration()
     modules(
       commonFirebaseModule,
+      storageModule,
+      platformStorageModule,
       authModule,
       attachmentModule,
       platformAttachmentModule,

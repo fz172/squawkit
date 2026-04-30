@@ -53,6 +53,7 @@ kotlin {
       implementation(project(":core:auth"))
       implementation(project(":core:ui"))
       implementation(project(":core:database"))
+      implementation(project(":core:storage"))
       implementation(project(":feature:userprofile:userprofilecard"))
       implementation(project(":feature:userprofile"))
       implementation(project(":feature:userprofile:database"))

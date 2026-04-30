@@ -33,6 +33,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      api(project(":core:model"))
       api(libs.sqldelight.runtime)
       api(libs.sqldelight.coroutines.extensions)
       api(libs.kotlinx.coroutines.core)
@@ -43,6 +44,7 @@ kotlin {
     }
     androidMain.dependencies {
       api(libs.sqldelight.android.driver)
+      implementation(libs.koin.android)
     }
     iosMain.dependencies {
       api(libs.sqldelight.native.driver)
