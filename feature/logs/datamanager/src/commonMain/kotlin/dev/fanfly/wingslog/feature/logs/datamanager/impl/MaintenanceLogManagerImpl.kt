@@ -14,7 +14,10 @@ import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlin.time.Instant
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
@@ -23,45 +26,67 @@ class MaintenanceLogManagerImpl(
   private val firestore: FirebaseFirestore,
 ) : MaintenanceLogManager {
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeLogs(aircraftId: String): Flow<List<MaintenanceLog>> {
-    val logsRef = getLogsCollectionRef(aircraftId)
-      ?: return flowOf(emptyList())
+    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+      if (user == null) {
+        logger.d { "User logged out, stopping logs observation for aircraft $aircraftId" }
+        flowOf(emptyList())
+      } else {
+        val logsRef = getLogsCollectionRef(aircraftId)
+          ?: return@flatMapLatest flowOf(emptyList())
 
-    return logsRef.snapshots.map { snapshot ->
-      val logs = mutableListOf<MaintenanceLog>()
-      for (doc in snapshot.documents) {
-        if (doc.id == OVERVIEW_DOCUMENT) continue
-        val blobBytes = doc.getBlobAsBytes(LOG_INFO_BLOB)
-        if (blobBytes != null) {
-          try {
-            logs.add(MaintenanceLog.ADAPTER.decode(blobBytes))
-          } catch (e: Exception) {
-            logger.w(e) { "Failed to parse log ${doc.id}" }
+        logsRef.snapshots.map { snapshot ->
+          val logs = mutableListOf<MaintenanceLog>()
+          for (doc in snapshot.documents) {
+            if (doc.id == OVERVIEW_DOCUMENT) continue
+            val blobBytes = doc.getBlobAsBytes(LOG_INFO_BLOB)
+            if (blobBytes != null) {
+              try {
+                logs.add(MaintenanceLog.ADAPTER.decode(blobBytes))
+              } catch (e: Exception) {
+                logger.w(e) { "Failed to parse log ${doc.id}" }
+              }
+            }
           }
+          // Use epochSecond from Wire Instant for sorting
+          logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
+        }.catch { e ->
+          logger.w(e) { "Error observing logs for aircraft $aircraftId" }
+          emit(emptyList())
         }
       }
-      // Use epochSecond from Wire Instant for sorting
-      logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
     }
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeMaintenanceOverview(aircraftId: String): Flow<MaintenanceOverview?> {
-    val overviewRef = getOverviewDocumentRef(aircraftId) ?: return flowOf(null)
-    return overviewRef.snapshots.map { snapshot ->
-      if (!snapshot.exists) {
-        // We don't refresh here to avoid side effects in a flow,
-        // the ViewModel or first load should handle the initial refresh.
-        null
+    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+      if (user == null) {
+        logger.d { "User logged out, stopping maintenance overview observation for aircraft $aircraftId" }
+        flowOf(null)
       } else {
-        val blobBytes = snapshot.getBlobAsBytes(OVERVIEW_INFO_BLOB)
-        if (blobBytes != null) {
-          try {
-            MaintenanceOverview.ADAPTER.decode(blobBytes)
-          } catch (e: Exception) {
-            logger.w(e) { "Failed to parse maintenance overview for $aircraftId" }
+        val overviewRef = getOverviewDocumentRef(aircraftId) ?: return@flatMapLatest flowOf(null)
+        overviewRef.snapshots.map { snapshot ->
+          if (!snapshot.exists) {
+            // We don't refresh here to avoid side effects in a flow,
+            // the ViewModel or first load should handle the initial refresh.
             null
+          } else {
+            val blobBytes = snapshot.getBlobAsBytes(OVERVIEW_INFO_BLOB)
+            if (blobBytes != null) {
+              try {
+                MaintenanceOverview.ADAPTER.decode(blobBytes)
+              } catch (e: Exception) {
+                logger.w(e) { "Failed to parse maintenance overview for $aircraftId" }
+                null
+              }
+            } else null
           }
-        } else null
+        }.catch { e ->
+          logger.w(e) { "Error observing maintenance overview for aircraft $aircraftId" }
+          emit(null)
+        }
       }
     }
   }

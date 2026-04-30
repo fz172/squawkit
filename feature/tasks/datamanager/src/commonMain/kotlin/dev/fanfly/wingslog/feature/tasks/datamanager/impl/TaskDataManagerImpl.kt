@@ -11,7 +11,10 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
@@ -20,23 +23,34 @@ class TaskDataManagerImpl(
   private val firestore: FirebaseFirestore,
 ) : TaskDataManager {
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeTasks(aircraftId: String): Flow<List<MaintenanceTask>> {
-    val cardsRef = getCardsCollectionRef(aircraftId)
-      ?: return flowOf(emptyList())
+    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+      if (user == null) {
+        logger.d { "User logged out, stopping tasks observation for aircraft $aircraftId" }
+        flowOf(emptyList())
+      } else {
+        val cardsRef = getCardsCollectionRef(aircraftId)
+          ?: return@flatMapLatest flowOf(emptyList())
 
-    return cardsRef.snapshots.map { snapshot ->
-      val cards = mutableListOf<MaintenanceTask>()
-      for (doc in snapshot.documents) {
-        val blobBytes = doc.getBlobAsBytes(INSPECTION_CARD_BLOB)
-        if (blobBytes != null) {
-          try {
-            cards.add(MaintenanceTask.ADAPTER.decode(blobBytes))
-          } catch (e: Exception) {
-            logger.w(e) { "Failed to parse card ${doc.id}" }
+        cardsRef.snapshots.map { snapshot ->
+          val cards = mutableListOf<MaintenanceTask>()
+          for (doc in snapshot.documents) {
+            val blobBytes = doc.getBlobAsBytes(INSPECTION_CARD_BLOB)
+            if (blobBytes != null) {
+              try {
+                cards.add(MaintenanceTask.ADAPTER.decode(blobBytes))
+              } catch (e: Exception) {
+                logger.w(e) { "Failed to parse card ${doc.id}" }
+              }
+            }
           }
+          cards.toList()
+        }.catch { e ->
+          logger.w(e) { "Error observing tasks for aircraft $aircraftId" }
+          emit(emptyList())
         }
       }
-      cards
     }
   }
 
