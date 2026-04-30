@@ -35,6 +35,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:datetime"))
       implementation(project(":core:database"))
+      implementation(project(":core:storage"))
       implementation(project(":feature:tasks:model"))
       implementation(libs.kermit)
     }
