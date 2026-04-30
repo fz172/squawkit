@@ -9,6 +9,7 @@ import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -37,6 +38,7 @@ class MaintenanceLogManagerImplTest {
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.uid } returns TEST_USER_ID
     every { firebaseAuth.currentUser } returns mockUser
+    every { firebaseAuth.authStateChanged } returns flowOf(mockUser)
 
     usersCollection = mockk(relaxed = true)
     userDocument = mockk(relaxed = true)
@@ -58,6 +60,7 @@ class MaintenanceLogManagerImplTest {
   @Test
   fun observeLogs_withoutLoggedInUser_emitsEmptyList() = runTest {
     every { firebaseAuth.currentUser } returns null
+    every { firebaseAuth.authStateChanged } returns flowOf(null)
 
     var emittedList: List<MaintenanceLog>? = null
     manager.observeLogs(TEST_AIRCRAFT_ID).collect {
