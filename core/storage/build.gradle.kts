@@ -52,6 +52,13 @@ kotlin {
   }
 }
 
+dependencies {
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
+  testImplementation(libs.kotlinx.coroutines.test)
+  testImplementation(libs.sqldelight.sqlite.driver)
+}
+
 sqldelight {
   databases {
     create("WingsLogDatabase") {

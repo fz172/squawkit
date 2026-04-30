@@ -30,6 +30,8 @@ class EntityCodecRegistry {
    */
   fun verifyCoverage() {
     val missing = CollectionKind.ALL - codecs.keys
-    check(missing.isEmpty()) { "No EntityCodec registered for: $missing" }
+    check(missing.isEmpty()) {
+      "No EntityCodec registered for: ${missing.joinToString { it.wireName }}"
+    }
   }
 }
