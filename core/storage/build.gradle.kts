@@ -38,6 +38,7 @@ kotlin {
       api(libs.kotlinx.coroutines.core)
       api(libs.kotlinx.datetime)
       api(libs.koin.core)
+      api(libs.wire.runtime)
       implementation(libs.kermit)
     }
     androidMain.dependencies {
