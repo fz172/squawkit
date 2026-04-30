@@ -12,9 +12,11 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 class TechnicianManagerImpl(
@@ -24,53 +26,76 @@ class TechnicianManagerImpl(
 
   private val logger = Logger.withTag("TechnicianManagerImpl")
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeTechnicians(): Flow<List<Technician>> {
-    val collectionRef = firestore.getTechniciansCollectionRef(firebaseAuth) ?: return emptyFlow()
+    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+      if (user == null) {
+        logger.d { "User logged out, stopping technicians observation" }
+        flowOf(emptyList())
+      } else {
+        val collectionRef =
+          firestore.getTechniciansCollectionRef(firebaseAuth) ?: return@flatMapLatest flowOf(
+            emptyList()
+          )
 
-    return collectionRef.snapshots.map { snapshot ->
-      if (snapshot.documents.isEmpty()) {
-        logger.w { "No technicians found, returning empty list" }
-        return@map emptyList()
-      }
+        collectionRef.snapshots.map { snapshot ->
+          if (snapshot.documents.isEmpty()) {
+            logger.w { "No technicians found, returning empty list" }
+            return@map emptyList()
+          }
 
-      val result = mutableListOf<Technician>()
-      for (document in snapshot.documents) {
-        val blobBytes = document.getBlobAsBytes(TECHNICIAN_INFO_BLOB)
-        if (blobBytes == null || blobBytes.isEmpty()) {
-          logger.w { "Missing or empty technician info blob, skipping ${document.id}" }
-          continue
+          val result = mutableListOf<Technician>()
+          for (document in snapshot.documents) {
+            val blobBytes = document.getBlobAsBytes(TECHNICIAN_INFO_BLOB)
+            if (blobBytes == null || blobBytes.isEmpty()) {
+              logger.w { "Missing or empty technician info blob, skipping ${document.id}" }
+              continue
+            }
+
+            try {
+              val technician = Technician.ADAPTER.decode(blobBytes)
+              result += technician
+            } catch (e: Exception) {
+              logger.e(e) { "Failed to decode technician" }
+            }
+          }
+          result.toList()
+        }.catch { e ->
+          logger.w(e) { "Listen failed." }
+          emit(emptyList())
         }
-
-        try {
-          val technician = Technician.ADAPTER.decode(blobBytes)
-          result += technician
-        } catch (e: Exception) {
-          logger.e(e) { "Failed to decode technician" }
-        }
       }
-      result
-    }.catch { e ->
-      logger.w(e) { "Listen failed." }
-      emit(emptyList())
     }
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun loadTechnician(id: String): Flow<Technician?> {
-    val collectionRef = firestore.getTechniciansCollectionRef(firebaseAuth) ?: return emptyFlow()
+    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+      if (user == null) {
+        logger.d { "User logged out, stopping technician observation for $id" }
+        flowOf(null)
+      } else {
+        val collectionRef = firestore.getTechniciansCollectionRef(firebaseAuth)
+          ?: return@flatMapLatest flowOf(null)
 
-    return collectionRef.document(id).snapshots.map { snapshot ->
-      if (snapshot.exists) {
-        val blobBytes = snapshot.getBlobAsBytes(TECHNICIAN_INFO_BLOB)
-        if (blobBytes != null) {
-          try {
-            Technician.ADAPTER.decode(blobBytes)
-          } catch (e: Exception) {
-            logger.w(e) { "Failed to parse technician $id" }
+        collectionRef.document(id).snapshots.map { snapshot ->
+          if (snapshot.exists) {
+            val blobBytes = snapshot.getBlobAsBytes(TECHNICIAN_INFO_BLOB)
+            if (blobBytes != null) {
+              try {
+                Technician.ADAPTER.decode(blobBytes)
+              } catch (e: Exception) {
+                logger.w(e) { "Failed to parse technician $id" }
+                null
+              }
+            } else null
+          } else {
             null
           }
-        } else null
-      } else {
-        null
+        }.catch { e ->
+          logger.w(e) { "Error observing technician $id" }
+          emit(null)
+        }
       }
     }
   }
@@ -100,7 +125,7 @@ class TechnicianManagerImpl(
     logger.d { "Technician $id deleted successfully." }
     Result.success(true)
   } catch (e: Exception) {
-    logger.w(e) { "Error deleting technician $id" }
+    logger.w(e) { "Error observing technician $id" }
     Result.failure(e)
   }
 

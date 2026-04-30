@@ -10,8 +10,10 @@ import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
@@ -20,35 +22,43 @@ class UserProfileManagerImpl(
   private val firestore: FirebaseFirestore,
 ) : UserProfileManager {
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeLicenseInfo(): Flow<LicenseInfo?> {
-    val docRef = getProfileDocumentRef()
-      ?: return flowOf(null)
+    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+      if (user == null) {
+        logger.d { "User logged out, stopping license info observation" }
+        flowOf(null)
+      } else {
+        val docRef = getProfileDocumentRef()
+          ?: return@flatMapLatest flowOf(null)
 
-    return docRef.snapshots
-      .map { snapshot ->
-        val licenseInfo: LicenseInfo? = if (snapshot.exists) {
-          val blobBytes = snapshot.getBlobAsBytes(LICENSE_INFO_BLOB)
-          if (blobBytes != null) {
-            try {
-              LicenseInfo.ADAPTER.decode(blobBytes)
-            } catch (e: Exception) {
-              logger.w(e) { "Failed to parse LicenseInfo proto" }
+        docRef.snapshots
+          .map { snapshot ->
+            val licenseInfo: LicenseInfo? = if (snapshot.exists) {
+              val blobBytes = snapshot.getBlobAsBytes(LICENSE_INFO_BLOB)
+              if (blobBytes != null) {
+                try {
+                  LicenseInfo.ADAPTER.decode(blobBytes)
+                } catch (e: Exception) {
+                  logger.w(e) { "Failed to parse LicenseInfo proto" }
+                  newUserLicenseProfile()
+                }
+              } else {
+                logger.d { "No licenseInfoBlob found, returning default instance." }
+                newUserLicenseProfile()
+              }
+            } else {
+              logger.d { "Profile document does not exist, returning default." }
               newUserLicenseProfile()
             }
-          } else {
-            logger.d { "No licenseInfoBlob found, returning default instance." }
-            newUserLicenseProfile()
+            licenseInfo
           }
-        } else {
-          logger.d { "Profile document does not exist, returning default." }
-          newUserLicenseProfile()
-        }
-        licenseInfo
+          .catch { e ->
+            logger.w(e) { "Error observing license info. Stopping observation." }
+            emit(null)
+          }
       }
-      .catch { e ->
-        logger.w(e) { "Error observing license info. Stopping observation." }
-        emit(null)
-      }
+    }
   }
 
   override suspend fun updateLicenseInfo(licenseInfo: LicenseInfo): Result<Boolean> {

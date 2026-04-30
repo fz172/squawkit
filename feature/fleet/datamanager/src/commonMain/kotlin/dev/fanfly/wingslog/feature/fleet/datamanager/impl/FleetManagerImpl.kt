@@ -12,9 +12,10 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.CollectionReference
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
@@ -25,38 +26,46 @@ class FleetManagerImpl(
 
   private val logger = Logger.withTag("FleetManagerImpl")
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeFleetDashboard(): Flow<List<Aircraft>> {
-    val fleetCollectionRef =
-      firestore.getFleetCollectionRef(firebaseAuth) ?: return emptyFlow()
+    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+      if (user == null) {
+        logger.d { "User logged out, stopping fleet dashboard observation" }
+        flowOf(emptyList())
+      } else {
+        val fleetCollectionRef =
+          firestore.getFleetCollectionRef(firebaseAuth) ?: return@flatMapLatest flowOf(emptyList())
 
-    return fleetCollectionRef.snapshots.map { snapshot ->
-      if (snapshot.documents.isEmpty()) {
-        logger.w { "No fleet data, returning empty" }
-        return@map emptyList()
-      }
-      logger.w { "Fleet data size {${snapshot.documents.size}}" }
+        fleetCollectionRef.snapshots.map { snapshot ->
+          if (snapshot.documents.isEmpty()) {
+            logger.w { "No fleet data, returning empty" }
+            return@map emptyList()
+          }
+          logger.w { "Fleet data size {${snapshot.documents.size}}" }
 
-      val result = mutableListOf<Aircraft>()
-      for (document in snapshot.documents) {
-        // Wire 5.x uses camelCase for properties
-        val blobBytes = document.getBlobAsBytes(AIRCRAFT_INFO_BLOB)
-        if (blobBytes == null || blobBytes.isEmpty()) {
-          logger.w { "Missing or empty aircraft info blob, skipping ${document.id}" }
-          continue
+          val result = mutableListOf<Aircraft>()
+          for (document in snapshot.documents) {
+            // Wire 5.x uses camelCase for properties
+            val blobBytes = document.getBlobAsBytes(AIRCRAFT_INFO_BLOB)
+            if (blobBytes == null || blobBytes.isEmpty()) {
+              logger.w { "Missing or empty aircraft info blob, skipping ${document.id}" }
+              continue
+            }
+
+            try {
+              val aircraft = Aircraft.ADAPTER.decode(blobBytes)
+              result += aircraft
+              logger.i { "Recovered Aircraft: ${aircraft.tail_number} - ${aircraft.model}" }
+            } catch (e: Exception) {
+              logger.e(e) { "Failed to decode aircraft" }
+            }
+          }
+          result.toList()
+        }.catch { e ->
+          logger.w(e) { "Listen failed." }
+          emit(emptyList())
         }
-
-        try {
-          val aircraft = Aircraft.ADAPTER.decode(blobBytes)
-          result += aircraft
-          logger.i { "Recovered Aircraft: ${aircraft.tail_number} - ${aircraft.model}" }
-        } catch (e: Exception) {
-          logger.e(e) { "Failed to decode aircraft" }
-        }
       }
-      result
-    }.catch { e ->
-      logger.w(e) { "Listen failed." }
-      emit(emptyList())
     }
   }
 
@@ -76,26 +85,37 @@ class FleetManagerImpl(
     Result.failure(e)
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun loadAircraft(id: String): Flow<Aircraft?> {
-    val fleetRef = firestore.getFleetCollectionRef(firebaseAuth)
-      ?: return flowOf(null)
+    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+      if (user == null) {
+        logger.d { "User logged out, stopping aircraft observation for $id" }
+        flowOf(null)
+      } else {
+        val fleetRef = firestore.getFleetCollectionRef(firebaseAuth)
+          ?: return@flatMapLatest flowOf(null)
 
-    val docRef = fleetRef.document(id)
-    return docRef.snapshots.map { snapshot ->
-      if (snapshot.exists) {
-        val blobBytes = snapshot.getBlobAsBytes(AIRCRAFT_INFO_BLOB)
-        if (blobBytes != null) {
-          try {
-            Aircraft.ADAPTER.decode(blobBytes)
-          } catch (e: Exception) {
-            logger.w(e) { "Failed to parse aircraft $id" }
+        val docRef = fleetRef.document(id)
+        docRef.snapshots.map { snapshot ->
+          if (snapshot.exists) {
+            val blobBytes = snapshot.getBlobAsBytes(AIRCRAFT_INFO_BLOB)
+            if (blobBytes != null) {
+              try {
+                Aircraft.ADAPTER.decode(blobBytes)
+              } catch (e: Exception) {
+                logger.w(e) { "Failed to parse aircraft $id" }
+                null
+              }
+            } else {
+              null
+            }
+          } else {
             null
           }
-        } else {
-          null
+        }.catch { e ->
+          logger.w(e) { "Error observing aircraft $id" }
+          emit(null)
         }
-      } else {
-        null
       }
     }
   }
