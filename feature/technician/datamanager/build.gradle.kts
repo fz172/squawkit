@@ -31,6 +31,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:database"))
+      implementation(project(":core:storage"))
 
       implementation(libs.kermit)
     }

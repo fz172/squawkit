@@ -2,16 +2,13 @@ package dev.fanfly.wingslog.feature.technician.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Technician
-import dev.fanfly.wingslog.core.database.TECHNICIAN_INFO_BLOB
 import dev.fanfly.wingslog.core.database.generateRandomId
-import dev.fanfly.wingslog.core.database.getBlobAsBytes
-import dev.fanfly.wingslog.core.database.getTechniciansCollectionRef
-import dev.fanfly.wingslog.core.database.setEncoded
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.EntityStore
+import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.firestore.CollectionReference
-import dev.gitlive.firebase.firestore.DocumentReference
-import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -21,120 +18,59 @@ import kotlinx.coroutines.flow.map
 
 class TechnicianManagerImpl(
   private val firebaseAuth: FirebaseAuth,
-  private val firestore: FirebaseFirestore,
+  storeFactory: EntityStoreFactory,
 ) : TechnicianManager {
 
   private val logger = Logger.withTag("TechnicianManagerImpl")
+  private val store: EntityStore<Technician> = storeFactory.create(CollectionKind.Technician)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeTechnicians(): Flow<List<Technician>> {
-    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+  override fun observeTechnicians(): Flow<List<Technician>> =
+    firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) {
         logger.d { "User logged out, stopping technicians observation" }
         flowOf(emptyList())
       } else {
-        val collectionRef =
-          firestore.getTechniciansCollectionRef(firebaseAuth) ?: return@flatMapLatest flowOf(
-            emptyList()
-          )
-
-        collectionRef.snapshots.map { snapshot ->
-          if (snapshot.documents.isEmpty()) {
-            logger.w { "No technicians found, returning empty list" }
-            return@map emptyList()
+        store.observeAll(EntityScope.userRoot(user.uid))
+          .map { rows -> rows.map { it.value } }
+          .catch { e ->
+            logger.w(e) { "Technician observe failed" }
+            emit(emptyList())
           }
-
-          val result = mutableListOf<Technician>()
-          for (document in snapshot.documents) {
-            val blobBytes = document.getBlobAsBytes(TECHNICIAN_INFO_BLOB)
-            if (blobBytes == null || blobBytes.isEmpty()) {
-              logger.w { "Missing or empty technician info blob, skipping ${document.id}" }
-              continue
-            }
-
-            try {
-              val technician = Technician.ADAPTER.decode(blobBytes)
-              result += technician
-            } catch (e: Exception) {
-              logger.e(e) { "Failed to decode technician" }
-            }
-          }
-          result.toList()
-        }.catch { e ->
-          logger.w(e) { "Listen failed." }
-          emit(emptyList())
-        }
       }
     }
-  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun loadTechnician(id: String): Flow<Technician?> {
-    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+  override fun loadTechnician(id: String): Flow<Technician?> =
+    firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) {
         logger.d { "User logged out, stopping technician observation for $id" }
         flowOf(null)
       } else {
-        val collectionRef = firestore.getTechniciansCollectionRef(firebaseAuth)
-          ?: return@flatMapLatest flowOf(null)
-
-        collectionRef.document(id).snapshots.map { snapshot ->
-          if (snapshot.exists) {
-            val blobBytes = snapshot.getBlobAsBytes(TECHNICIAN_INFO_BLOB)
-            if (blobBytes != null) {
-              try {
-                Technician.ADAPTER.decode(blobBytes)
-              } catch (e: Exception) {
-                logger.w(e) { "Failed to parse technician $id" }
-                null
-              }
-            } else null
-          } else {
-            null
+        store.observe(id, EntityScope.userRoot(user.uid))
+          .map { it?.value }
+          .catch { e ->
+            logger.w(e) { "Error observing technician $id" }
+            emit(null)
           }
-        }.catch { e ->
-          logger.w(e) { "Error observing technician $id" }
-          emit(null)
-        }
       }
     }
-  }
 
-  override suspend fun updateTechnician(technician: Technician): Result<Boolean> = try {
-    val collectionRef = firestore.getTechniciansCollectionRef(firebaseAuth)
-      ?: return Result.failure(Exception("Technicians reference is null"))
+  override suspend fun updateTechnician(technician: Technician): Result<Boolean> = runCatching {
+    val uid = firebaseAuth.currentUser?.uid
+      ?: error("Cannot update technician when no user is signed in")
+    val withId =
+      if (technician.id.isEmpty()) technician.copy(id = generateRandomId()) else technician
+    store.put(withId.id, withId, EntityScope.userRoot(uid))
+    logger.d { "Technician ${withId.id} written to local store" }
+    true
+  }.onFailure { logger.w(it) { "Error updating technician" } }
 
-    val docRef = getRefOrCreateNew(collectionRef, technician)
-    val updatedTechnician =
-      if (technician.id.isEmpty()) technician.copy(id = docRef.id) else technician
-    val data = mapOf(TECHNICIAN_INFO_BLOB to Technician.ADAPTER.encode(updatedTechnician))
-
-    docRef.setEncoded(data, merge = true)
-    logger.d { "Technician updated successfully, new id is ${updatedTechnician.id}" }
-    Result.success(true)
-  } catch (e: Exception) {
-    logger.w(e) { "Error updating technician" }
-    Result.failure(e)
-  }
-
-  override suspend fun deleteTechnician(id: String): Result<Boolean> = try {
-    val collectionRef = firestore.getTechniciansCollectionRef(firebaseAuth)
-      ?: return Result.failure(Exception("Technicians reference is null"))
-
-    collectionRef.document(id).delete()
-    logger.d { "Technician $id deleted successfully." }
-    Result.success(true)
-  } catch (e: Exception) {
-    logger.w(e) { "Error observing technician $id" }
-    Result.failure(e)
-  }
-
-  private fun getRefOrCreateNew(
-    collectionRef: CollectionReference,
-    technician: Technician,
-  ): DocumentReference = if (technician.id.isEmpty()) {
-    collectionRef.document(generateRandomId())
-  } else {
-    collectionRef.document(technician.id)
-  }
+  override suspend fun deleteTechnician(id: String): Result<Boolean> = runCatching {
+    val uid = firebaseAuth.currentUser?.uid
+      ?: error("Cannot delete technician when no user is signed in")
+    store.delete(id, EntityScope.userRoot(uid))
+    logger.d { "Technician $id tombstoned in local store" }
+    true
+  }.onFailure { logger.w(it) { "Error deleting technician $id" } }
 }
