@@ -1,14 +1,17 @@
 -- Generic key-value-by-id store for proto-encoded entities.
 -- See docs/storage_r1_design.md §4.
 --
--- `collection` is currently TEXT but will be widened to a CollectionKind sealed
--- type via SQLDelight ColumnAdapter in C2.
+import dev.fanfly.wingslog.core.storage.CollectionKind;
+
+-- `collection` is widened to the CollectionKind sealed type via a SQLDelight
+-- ColumnAdapter (see CollectionKind.kt) so neither application code nor SQL
+-- ever sees a raw collection-name string in normal use.
 -- `updated_at` is device wall-clock at write time, used for UI display and
 -- as a tiebreaker for push order — NEVER for sync ordering. Sync ordering uses
 -- `remote_updated_at`, which is the Firestore server timestamp (§5.3).
 
 CREATE TABLE entity (
-  collection         TEXT    NOT NULL,
+  collection         TEXT    AS CollectionKind NOT NULL,
   scope_path         TEXT    NOT NULL,
   id                 TEXT    NOT NULL,
   payload            BLOB    NOT NULL,
@@ -25,7 +28,7 @@ CREATE INDEX entity_dirty_idx ON entity(collection, scope_path, updated_at);
 
 CREATE TABLE sync_cursor (
   uid               TEXT    NOT NULL,
-  collection        TEXT    NOT NULL,
+  collection        TEXT    AS CollectionKind NOT NULL,
   scope_path        TEXT    NOT NULL,
   hydrated          INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
   last_seen_remote  INTEGER,
