@@ -2,16 +2,13 @@ package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.core.database.AIRCRAFT_INFO_BLOB
 import dev.fanfly.wingslog.core.database.generateRandomId
-import dev.fanfly.wingslog.core.database.getBlobAsBytes
-import dev.fanfly.wingslog.core.database.getFleetCollectionRef
-import dev.fanfly.wingslog.core.database.setEncoded
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.EntityStore
+import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.firestore.CollectionReference
-import dev.gitlive.firebase.firestore.DocumentReference
-import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -19,125 +16,67 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
+/**
+ * Local-first [FleetManager] backed by [EntityStore]. The sync engine (M3) reads the underlying
+ * `dirty=1` rows out of band and pushes them to Firestore — this class never touches Firestore.
+ *
+ * Auth state still gates observation: when the user signs out we emit `emptyList()` / `null` so
+ * stale data does not leak between accounts.
+ */
 class FleetManagerImpl(
   private val firebaseAuth: FirebaseAuth,
-  private val firestore: FirebaseFirestore,
+  storeFactory: EntityStoreFactory,
 ) : FleetManager {
 
   private val logger = Logger.withTag("FleetManagerImpl")
+  private val store: EntityStore<Aircraft> = storeFactory.create(CollectionKind.Aircraft)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeFleetDashboard(): Flow<List<Aircraft>> {
-    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+  override fun observeFleetDashboard(): Flow<List<Aircraft>> =
+    firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) {
         logger.d { "User logged out, stopping fleet dashboard observation" }
         flowOf(emptyList())
       } else {
-        val fleetCollectionRef =
-          firestore.getFleetCollectionRef(firebaseAuth) ?: return@flatMapLatest flowOf(emptyList())
-
-        fleetCollectionRef.snapshots.map { snapshot ->
-          if (snapshot.documents.isEmpty()) {
-            logger.w { "No fleet data, returning empty" }
-            return@map emptyList()
+        store.observeAll(EntityScope.userRoot(user.uid))
+          .map { rows -> rows.map { it.value } }
+          .catch { e ->
+            logger.w(e) { "Fleet observe failed" }
+            emit(emptyList())
           }
-          logger.w { "Fleet data size {${snapshot.documents.size}}" }
-
-          val result = mutableListOf<Aircraft>()
-          for (document in snapshot.documents) {
-            // Wire 5.x uses camelCase for properties
-            val blobBytes = document.getBlobAsBytes(AIRCRAFT_INFO_BLOB)
-            if (blobBytes == null || blobBytes.isEmpty()) {
-              logger.w { "Missing or empty aircraft info blob, skipping ${document.id}" }
-              continue
-            }
-
-            try {
-              val aircraft = Aircraft.ADAPTER.decode(blobBytes)
-              result += aircraft
-              logger.i { "Recovered Aircraft: ${aircraft.tail_number} - ${aircraft.model}" }
-            } catch (e: Exception) {
-              logger.e(e) { "Failed to decode aircraft" }
-            }
-          }
-          result.toList()
-        }.catch { e ->
-          logger.w(e) { "Listen failed." }
-          emit(emptyList())
-        }
       }
     }
-  }
-
-  override suspend fun updateAircraft(aircraft: Aircraft): Result<Boolean> = try {
-    val fleetRef = firestore.getFleetCollectionRef(firebaseAuth) ?: return Result.failure(
-      Exception("Fleet reference is null")
-    )
-    val aircraftRef = getAircraftRefOrCreateNew(fleetRef, aircraft)
-    val aircraftWithId = if (aircraft.id.isEmpty()) aircraft.copy(id = aircraftRef.id) else aircraft
-    val data = mapOf(AIRCRAFT_INFO_BLOB to Aircraft.ADAPTER.encode(aircraftWithId))
-
-    aircraftRef.setEncoded(data, merge = true)
-    logger.d { "Aircraft updated successfully, new id is ${aircraftWithId.id}, data is $data" }
-    Result.success(true)
-  } catch (e: Exception) {
-    logger.w(e) { "Error updating aircraft" }
-    Result.failure(e)
-  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun loadAircraft(id: String): Flow<Aircraft?> {
-    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+  override fun loadAircraft(id: String): Flow<Aircraft?> =
+    firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) {
         logger.d { "User logged out, stopping aircraft observation for $id" }
         flowOf(null)
       } else {
-        val fleetRef = firestore.getFleetCollectionRef(firebaseAuth)
-          ?: return@flatMapLatest flowOf(null)
-
-        val docRef = fleetRef.document(id)
-        docRef.snapshots.map { snapshot ->
-          if (snapshot.exists) {
-            val blobBytes = snapshot.getBlobAsBytes(AIRCRAFT_INFO_BLOB)
-            if (blobBytes != null) {
-              try {
-                Aircraft.ADAPTER.decode(blobBytes)
-              } catch (e: Exception) {
-                logger.w(e) { "Failed to parse aircraft $id" }
-                null
-              }
-            } else {
-              null
-            }
-          } else {
-            null
+        store.observe(id, EntityScope.userRoot(user.uid))
+          .map { it?.value }
+          .catch { e ->
+            logger.w(e) { "Error observing aircraft $id" }
+            emit(null)
           }
-        }.catch { e ->
-          logger.w(e) { "Error observing aircraft $id" }
-          emit(null)
-        }
       }
     }
-  }
 
-  override suspend fun deleteAircraft(id: String): Result<Boolean> = try {
-    val fleetRef = firestore.getFleetCollectionRef(firebaseAuth) ?: return Result.failure(
-      Exception("Fleet reference is null")
-    )
-    fleetRef.document(id).delete()
-    logger.d { "Aircraft $id deleted successfully." }
-    Result.success(true)
-  } catch (e: Exception) {
-    logger.w(e) { "Error deleting aircraft $id" }
-    Result.failure(e)
-  }
+  override suspend fun updateAircraft(aircraft: Aircraft): Result<Boolean> = runCatching {
+    val uid = firebaseAuth.currentUser?.uid
+      ?: error("Cannot update aircraft when no user is signed in")
+    val withId = if (aircraft.id.isEmpty()) aircraft.copy(id = generateRandomId()) else aircraft
+    store.put(withId.id, withId, EntityScope.userRoot(uid))
+    logger.d { "Aircraft ${withId.id} written to local store" }
+    true
+  }.onFailure { logger.w(it) { "Error updating aircraft" } }
 
-  private fun getAircraftRefOrCreateNew(
-    fleetRef: CollectionReference,
-    aircraft: Aircraft,
-  ): DocumentReference = if (aircraft.id.isEmpty()) {
-    fleetRef.document(generateRandomId())
-  } else {
-    fleetRef.document(aircraft.id)
-  }
+  override suspend fun deleteAircraft(id: String): Result<Boolean> = runCatching {
+    val uid = firebaseAuth.currentUser?.uid
+      ?: error("Cannot delete aircraft when no user is signed in")
+    store.delete(id, EntityScope.userRoot(uid))
+    logger.d { "Aircraft $id tombstoned in local store" }
+    true
+  }.onFailure { logger.w(it) { "Error deleting aircraft $id" } }
 }
