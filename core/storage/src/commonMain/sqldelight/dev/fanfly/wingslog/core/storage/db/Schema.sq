@@ -57,6 +57,15 @@ INSERT OR REPLACE INTO entity(
 )
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+-- Read the full sync state of one row. Used by the pull listener's comparator,
+-- which needs `dirty` and `remote_updated_at` to decide whether to apply a
+-- remote write. Tombstoned rows (deleted = 1) are intentionally returned —
+-- the comparator may need to revive a row remotely re-created at the same id.
+selectOneForSync:
+SELECT collection, scope_path, id, payload, updated_at, remote_updated_at, dirty, deleted
+FROM entity
+WHERE collection = :collection AND scope_path = :scope AND id = :id;
+
 selectDirty:
 SELECT collection, scope_path, id, payload, updated_at, deleted
 FROM entity
