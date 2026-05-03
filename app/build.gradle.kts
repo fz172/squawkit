@@ -59,6 +59,7 @@ dependencies {
   implementation(libs.kermit)
 
   implementation(project(":composeApp"))
+  implementation(project(":core:sync"))
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
