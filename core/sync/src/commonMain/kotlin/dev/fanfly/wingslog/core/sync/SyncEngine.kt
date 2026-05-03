@@ -14,11 +14,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -56,6 +61,20 @@ class SyncEngine(
 
   /** Scope spun up per signed-in user; cancelled when the user changes or signs out. */
   private var userScope: CoroutineScope? = null
+
+  /**
+   * Per-(kind, scope) failure entries. Cleared as each scope eventually hydrates. The public
+   * [failureState] surfaces the most recent entry for a banner; the map keeps multiple in-flight
+   * failures distinguishable for observability.
+   */
+  private val failures =
+    MutableStateFlow<Map<Pair<CollectionKind, EntityScope>, SyncFailure>>(emptyMap())
+
+  /** `null` when sync is healthy. The most recent unresolved failure otherwise. */
+  val failureState: StateFlow<SyncFailure?> =
+    MutableStateFlow<SyncFailure?>(null).also { state ->
+      rootScope.launch { failures.collect { state.value = it.values.lastOrNull() } }
+    }.asStateFlow()
 
   /**
    * Idempotent. Safe to call from app startup. The returned [Job] cancels the engine and tears
@@ -116,14 +135,33 @@ class SyncEngine(
   /** Per-cycle supervisor for the aircraft-child listeners; recreated each time the id-set changes. */
   private var aircraftSubScopeSupervisor: Job = Job().apply { complete() }
 
-  private suspend fun hydrateAndListen(uid: String, kind: CollectionKind, scope: EntityScope) {
-    val cursor = cursors.get(uid, kind, scope)
-    if (cursor?.hydrated != true) {
-      val ok = hydrationRunner.runFor(uid, kind, scope)
-      if (!ok) {
-        log.w { "hydration failed for ${kind.wireName} ${scope.toPath()}; skipping listener this cycle" }
+  /**
+   * Retries hydration with exponential backoff sourced from [SyncCursorStore.recordFailure]'s
+   * accumulated `failed_attempts`. Each scope's loop runs in its own coroutine, so a failing
+   * collection doesn't block hydration of any other.
+   */
+  private suspend fun hydrateWithBackoff(uid: String, kind: CollectionKind, scope: EntityScope) {
+    while (true) {
+      val attempts = cursors.get(uid, kind, scope)?.failedAttempts ?: 0
+      val wait = backoffMs(attempts)
+      if (wait > 0) {
+        log.i { "hydration backoff ${kind.wireName} ${scope.toPath()}: ${wait}ms after $attempts attempts" }
+        delay(wait)
+      }
+      if (hydrationRunner.runFor(uid, kind, scope)) {
+        failures.update { it - (kind to scope) }
         return
       }
+      val attemptsAfter = cursors.get(uid, kind, scope)?.failedAttempts ?: (attempts + 1)
+      failures.update {
+        it + ((kind to scope) to SyncFailure.Hydration(kind, scope, attemptsAfter, cause = null))
+      }
+    }
+  }
+
+  private suspend fun hydrateAndListen(uid: String, kind: CollectionKind, scope: EntityScope) {
+    if (cursors.get(uid, kind, scope)?.hydrated != true) {
+      hydrateWithBackoff(uid, kind, scope)
     }
     val watermark = cursors.get(uid, kind, scope)?.lastSeenRemote
     val listener = pullListenerFactory(kind, scope)
