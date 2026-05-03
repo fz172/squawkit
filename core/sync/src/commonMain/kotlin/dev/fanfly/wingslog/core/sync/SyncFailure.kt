@@ -20,6 +20,19 @@ sealed interface SyncFailure {
     override val message: String =
       "Sync failed for ${kind.wireName} (${failedAttempts}× retries): ${cause ?: "unknown"}"
   }
+
+  /**
+   * Auth-class push failure: token expired, permission denied, or unauthenticated. The user must
+   * re-sign-in for sync to recover; transparent retries won't help.
+   */
+  data class AuthExpired(override val message: String = "Authentication expired") : SyncFailure
+
+  /**
+   * Non-auth, non-transient push failure (validation, malformed doc, server error, etc.).
+   * Transient errors (network, deadline, internal) intentionally don't surface here — they're
+   * picked up automatically when conditions improve.
+   */
+  data class Push(override val message: String) : SyncFailure
 }
 
 /**

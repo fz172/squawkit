@@ -34,6 +34,13 @@ class PushWorker(
   private val log = Logger.withTag(TAG)
 
   /**
+   * Emits a [SyncFailure] when a push fails with a non-transient error, or `null` after a
+   * successful push (so the sink can clear a previously-shown banner). Defaults to no-op; set by
+   * [SyncEngine] during wiring.
+   */
+  var failureSink: (SyncFailure?) -> Unit = {}
+
+  /**
    * Suspends forever, draining `dirty=1` rows as they appear. Cancel the surrounding scope to
    * stop. Suitable to launch from [SyncEngine].
    */
@@ -74,9 +81,16 @@ class PushWorker(
       ),
     )
     db.schemaQueries.clearDirty(row.collection, row.scope_path, row.id)
+    failureSink(null) // success — clear any previously-surfaced push failure.
     true
   }.getOrElse { e ->
-    log.w(e) { "push failed for ${row.collection.wireName}/${row.id}; will retry" }
+    val classified = classifyPushFailure(e)
+    if (classified != null) {
+      log.w(e) { "push failed for ${row.collection.wireName}/${row.id}: ${classified.message}" }
+    } else {
+      log.i { "push transient failure for ${row.collection.wireName}/${row.id}; will retry on next notification" }
+    }
+    failureSink(classified)
     false
   }
 

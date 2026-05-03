@@ -63,12 +63,12 @@ class SyncEngine(
   private var userScope: CoroutineScope? = null
 
   /**
-   * Per-(kind, scope) failure entries. Cleared as each scope eventually hydrates. The public
-   * [failureState] surfaces the most recent entry for a banner; the map keeps multiple in-flight
-   * failures distinguishable for observability.
+   * Active failure entries keyed by source: each `(kind, scope)` pair has its own entry for
+   * hydration, and a single [PUSH_FAILURE_KEY] entry covers all push failures (push isn't
+   * per-scope). Cleared as each source recovers. The public [failureState] surfaces the most
+   * recent entry for a banner.
    */
-  private val failures =
-    MutableStateFlow<Map<Pair<CollectionKind, EntityScope>, SyncFailure>>(emptyMap())
+  private val failures = MutableStateFlow<Map<Any, SyncFailure>>(emptyMap())
 
   /** `null` when sync is healthy. The most recent unresolved failure otherwise. */
   val failureState: StateFlow<SyncFailure?> =
@@ -106,6 +106,11 @@ class SyncEngine(
     val uid = user.uid
     val userRoot = EntityScope.userRoot(uid)
 
+    pushWorker.failureSink = { failure ->
+      failures.update {
+        if (failure == null) it - PUSH_FAILURE_KEY else it + (PUSH_FAILURE_KEY to failure)
+      }
+    }
     scope.launch { pushWorker.run() }
 
     for (kind in TOP_LEVEL_KINDS) {
@@ -148,13 +153,14 @@ class SyncEngine(
         log.i { "hydration backoff ${kind.wireName} ${scope.toPath()}: ${wait}ms after $attempts attempts" }
         delay(wait)
       }
+      val key: Any = kind to scope
       if (hydrationRunner.runFor(uid, kind, scope)) {
-        failures.update { it - (kind to scope) }
+        failures.update { it - key }
         return
       }
       val attemptsAfter = cursors.get(uid, kind, scope)?.failedAttempts ?: (attempts + 1)
       failures.update {
-        it + ((kind to scope) to SyncFailure.Hydration(kind, scope, attemptsAfter, cause = null))
+        it + (key to SyncFailure.Hydration(kind, scope, attemptsAfter, cause = null))
       }
     }
   }
@@ -180,6 +186,9 @@ class SyncEngine(
 
   companion object {
     private const val TAG = "SyncEngine"
+
+    /** Sentinel key for push-class entries in the [failures] map (push isn't per-scope). */
+    private val PUSH_FAILURE_KEY = Any()
 
     /** Collections that live at `users/{uid}/<wire>/...`. Hydrated on sign-in. */
     private val TOP_LEVEL_KINDS: List<CollectionKind> = listOf(
