@@ -77,6 +77,28 @@ class SyncEngine(
     }.asStateFlow()
 
   /**
+   * Counters for the hydration UI. `total` is the number of `(kind, scope)` pairs that have
+   * needed hydration in this signed-in session; `completed` is how many finished. Reset on
+   * sign-out / user change. Translated to [HydrationState] in [hydrationState].
+   */
+  private data class HydrationCounters(val completed: Int, val total: Int)
+
+  private val hydrationCounters = MutableStateFlow(HydrationCounters(0, 0))
+
+  val hydrationState: StateFlow<HydrationState> =
+    MutableStateFlow<HydrationState>(HydrationState.Idle).also { state ->
+      rootScope.launch {
+        hydrationCounters.collect { c ->
+          state.value = when {
+            c.total == 0 -> HydrationState.Idle
+            c.completed < c.total -> HydrationState.InProgress(c.completed, c.total)
+            else -> HydrationState.Done
+          }
+        }
+      }
+    }.asStateFlow()
+
+  /**
    * Idempotent. Safe to call from app startup. The returned [Job] cancels the engine and tears
    * down all per-user work.
    */
@@ -85,6 +107,7 @@ class SyncEngine(
       auth.authStateChanged.collectLatest { user ->
         userScope?.cancel()
         userScope = null
+        hydrationCounters.value = HydrationCounters(0, 0)
         if (user == null || user.isAnonymous) {
           log.i { "auth state: signed out (or anonymous); sync idle" }
           return@collectLatest
@@ -167,7 +190,9 @@ class SyncEngine(
 
   private suspend fun hydrateAndListen(uid: String, kind: CollectionKind, scope: EntityScope) {
     if (cursors.get(uid, kind, scope)?.hydrated != true) {
+      hydrationCounters.update { it.copy(total = it.total + 1) }
       hydrateWithBackoff(uid, kind, scope)
+      hydrationCounters.update { it.copy(completed = it.completed + 1) }
     }
     val watermark = cursors.get(uid, kind, scope)?.lastSeenRemote
     val listener = pullListenerFactory(kind, scope)
