@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityCodecRegistry
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.core.storage.WireCodec
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
@@ -64,4 +65,6 @@ import org.koin.dsl.module
       ioContext = Dispatchers.Default,
     )
   }
+
+  single<TombstoneGc> { TombstoneGc(db = get()) }
 }

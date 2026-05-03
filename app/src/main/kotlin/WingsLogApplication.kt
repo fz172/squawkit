@@ -3,6 +3,7 @@ package dev.fanfly.wingslog
 import android.app.Application
 import co.touchlab.kermit.Logger
 
+import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.core.sync.SyncEngine
 import dev.fanfly.wingslog.di.initKoin
 import org.koin.android.ext.android.get
@@ -18,6 +19,7 @@ class WingsLogApplication : Application() {
     initKoin {
       androidContext(this@WingsLogApplication)
     }
+    get<TombstoneGc>().runOnce()
     get<SyncEngine>().start()
   }
 
