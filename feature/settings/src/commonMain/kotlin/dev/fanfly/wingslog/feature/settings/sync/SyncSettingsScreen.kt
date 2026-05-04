@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -84,18 +83,6 @@ fun SyncSettingsScreen(
             checked = state.cloudSyncEnabled,
             enabled = state.signedIn,
             onCheckedChange = viewModel::onCloudSyncToggled,
-          )
-          HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-          SyncToggleRow(
-            title = "Show sync activity",
-            subtitle = if (state.secondaryToggleEnabled) {
-              "Surface progress and warnings on the dashboard while sync is running."
-            } else {
-              "Turn on cloud sync to see live activity."
-            },
-            checked = state.showSyncActivity,
-            enabled = state.secondaryToggleEnabled,
-            onCheckedChange = viewModel::onShowSyncActivityToggled,
           )
         }
 
