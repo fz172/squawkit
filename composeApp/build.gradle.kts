@@ -52,7 +52,6 @@ kotlin {
       implementation(project(":feature:settings"))
       implementation(project(":core:auth"))
       implementation(project(":core:ui"))
-      implementation(project(":core:database"))
       implementation(project(":core:storage"))
       implementation(project(":core:sync"))
       implementation(project(":feature:userprofile:userprofilecard"))

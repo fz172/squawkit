@@ -33,8 +33,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
-      implementation(project(":core:database"))
       implementation(project(":core:storage"))
+      implementation(libs.gitlive.firebase.auth)
 
       // DI
 
@@ -49,7 +49,6 @@ kotlin {
 }
 
 dependencies {
-  // Firebase BOM for transitive dependency version resolution (required by core:database)
   implementation(platform(libs.firebase.bom))
   testImplementation(libs.junit)
   testImplementation(libs.mockk)

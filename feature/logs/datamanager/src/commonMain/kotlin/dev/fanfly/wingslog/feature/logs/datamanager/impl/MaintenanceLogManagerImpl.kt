@@ -4,7 +4,7 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceOverview
-import dev.fanfly.wingslog.core.database.generateRandomId
+import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore

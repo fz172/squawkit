@@ -43,12 +43,12 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":feature:tasks:model"))
+      implementation(libs.gitlive.firebase.auth)
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:sharedassets"))
       implementation(project(":feature:tasks:viewing"))
 
       implementation(project(":core:ui"))
-      implementation(project(":core:database"))
       implementation(project(":core:datetime"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:sharedassets"))

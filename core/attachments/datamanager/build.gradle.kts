@@ -23,7 +23,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
-      implementation(project(":core:database"))
+      implementation(libs.gitlive.firebase.auth)
       implementation(libs.gitlive.firebase.storage)
       implementation(libs.kermit)
     }

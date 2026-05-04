@@ -1,4 +1,5 @@
-package dev.fanfly.wingslog.core.database
+package dev.fanfly.wingslog.core.model.id
+
 
 fun generateRandomId(): String {
   val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"

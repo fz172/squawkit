@@ -37,7 +37,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":core:storage"))
-      api(project(":core:database"))
+      api(libs.gitlive.firebase.auth)
+      api(libs.gitlive.firebase.firestore)
       api(libs.kotlinx.coroutines.core)
       api(libs.kotlinx.datetime)
       api(libs.koin.core)

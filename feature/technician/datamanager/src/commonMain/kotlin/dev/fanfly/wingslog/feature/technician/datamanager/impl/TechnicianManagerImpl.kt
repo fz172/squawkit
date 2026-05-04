@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.technician.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Technician
-import dev.fanfly.wingslog.core.database.generateRandomId
+import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore

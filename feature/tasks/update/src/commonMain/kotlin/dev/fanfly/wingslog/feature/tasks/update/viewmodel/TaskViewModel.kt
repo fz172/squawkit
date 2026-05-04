@@ -17,7 +17,7 @@ import dev.fanfly.wingslog.core.attachments.datamanager.UploadState
 import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.fileCount
 import dev.fanfly.wingslog.core.attachments.model.toLocalFile
-import dev.fanfly.wingslog.core.database.generateRandomId
+import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
