@@ -51,7 +51,7 @@ class PushWorkerTest {
     }
     coEvery { writer.push(any()) } returns Unit
 
-    val job = launch { worker.run() }
+    val job = launch { worker.run(TEST_USER_ID) }
     // Let UnconfinedTestDispatcher run all pending coroutines synchronously.
     testScheduler.advanceUntilIdle()
     job.cancel()
@@ -65,7 +65,7 @@ class PushWorkerTest {
   fun run_noDirtyRows_writerNeverCalled() = runTest(ioContext) {
     coEvery { writer.push(any()) } returns Unit
 
-    val job = launch { worker.run() }
+    val job = launch { worker.run(TEST_USER_ID) }
     testScheduler.advanceUntilIdle()
     job.cancel()
 
@@ -79,7 +79,7 @@ class PushWorkerTest {
     insertDirtyRow("log-fail")
     coEvery { writer.push(any()) } throws RuntimeException("write rejected")
 
-    val job = launch { worker.run() }
+    val job = launch { worker.run(TEST_USER_ID) }
     testScheduler.advanceUntilIdle()
     job.cancel()
 
@@ -95,7 +95,7 @@ class PushWorkerTest {
     insertDirtyRow("log-b", updatedAt = 2000L)
     coEvery { writer.push(any()) } throws RuntimeException("first push fails")
 
-    val job = launch { worker.run() }
+    val job = launch { worker.run(TEST_USER_ID) }
     testScheduler.advanceUntilIdle()
     job.cancel()
 
@@ -113,7 +113,7 @@ class PushWorkerTest {
       coEvery { writer.push(any()) }
         .returnsMany(Unit) andThenThrows RuntimeException("second push fails")
 
-      val job = launch { worker.run() }
+      val job = launch { worker.run(TEST_USER_ID) }
       testScheduler.advanceUntilIdle()
       job.cancel()
 

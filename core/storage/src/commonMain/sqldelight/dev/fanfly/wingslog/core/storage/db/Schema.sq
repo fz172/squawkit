@@ -73,6 +73,19 @@ WHERE dirty = 1
 ORDER BY updated_at ASC
 LIMIT :limit;
 
+-- Scoped variants — used by [PushWorker] so that one user's dirty rows aren't pushed under
+-- another user's auth (which would PERMISSION_DENIED). The prefix is the user's scope-path
+-- prefix, e.g. "/users/{uid}/%".
+selectDirtyInScope:
+SELECT collection, scope_path, id, payload, updated_at, deleted
+FROM entity
+WHERE dirty = 1 AND scope_path LIKE :scopePrefix
+ORDER BY updated_at ASC
+LIMIT :limit;
+
+countDirtyInScope:
+SELECT COUNT(*) FROM entity WHERE dirty = 1 AND scope_path LIKE :scopePrefix;
+
 clearDirty:
 UPDATE entity SET dirty = 0
 WHERE collection = ? AND scope_path = ? AND id = ?;

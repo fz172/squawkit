@@ -41,22 +41,31 @@ class PushWorker(
   var failureSink: (SyncFailure?) -> Unit = {}
 
   /**
-   * Suspends forever, draining `dirty=1` rows as they appear. Cancel the surrounding scope to
-   * stop. Suitable to launch from [SyncEngine].
+   * Suspends forever, draining `dirty=1` rows belonging to [uid] as they appear. Cancel the
+   * surrounding scope to stop. Suitable to launch from [SyncEngine].
+   *
+   * **Why scoped to [uid]:** when account A's writes haven't drained before A signs out, those
+   * rows stay `dirty=1` in the local table. If account B then signs in on the same device,
+   * pushing A's rows under B's auth would `PERMISSION_DENIED` against `/users/A/...`. Filtering
+   * the dirty queue by the current user's `users/{uid}/` prefix keeps each account's pending
+   * writes durable and isolated until that account signs back in.
    */
-  suspend fun run() {
-    db.schemaQueries.countDirty()
+  suspend fun run(uid: String) {
+    val prefix = scopePrefixFor(uid)
+    db.schemaQueries.countDirtyInScope(prefix)
       .asFlow()
       .mapToOne(ioContext)
       .map { it > 0L }
       .distinctUntilChanged()
       .filter { it }
-      .collect { drain() }
+      .collect { drain(prefix) }
   }
 
-  private suspend fun drain() {
+  private suspend fun drain(scopePrefix: String) {
     while (true) {
-      val rows = db.schemaQueries.selectDirty(limit = DRAIN_PAGE).executeAsList()
+      val rows = db.schemaQueries
+        .selectDirtyInScope(scopePrefix = scopePrefix, limit = DRAIN_PAGE)
+        .executeAsList()
       if (rows.isEmpty()) return
       for (row in rows) {
         val ok = pushOne(row)
@@ -110,4 +119,7 @@ class PushWorker(
 private fun parseScopePath(path: String): List<String> =
   path.trim('/').split('/').filter { it.isNotEmpty() }
 
-private typealias DirtyRow = dev.fanfly.wingslog.core.storage.db.SelectDirty
+private typealias DirtyRow = dev.fanfly.wingslog.core.storage.db.SelectDirtyInScope
+
+/** Builds the SQL `LIKE` prefix that matches every scope under `users/{uid}/`. */
+private fun scopePrefixFor(uid: String): String = "/users/$uid/%"

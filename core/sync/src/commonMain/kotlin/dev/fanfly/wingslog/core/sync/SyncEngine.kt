@@ -145,7 +145,7 @@ class SyncEngine(
         if (failure == null) it - PUSH_FAILURE_KEY else it + (PUSH_FAILURE_KEY to failure)
       }
     }
-    scope.launch { pushWorker.run() }
+    scope.launch { pushWorker.run(uid) }
 
     for (kind in TOP_LEVEL_KINDS) {
       scope.launch { hydrateAndListen(uid, kind, userRoot) }
