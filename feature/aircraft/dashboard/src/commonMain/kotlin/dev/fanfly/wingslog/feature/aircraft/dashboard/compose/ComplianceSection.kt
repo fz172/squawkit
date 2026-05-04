@@ -123,7 +123,6 @@ fun ComplianceSection(
               )
               Spacer(Modifier.width(Spacing.small))
               Text(stringResource(SharedRes.string.add_task).uppercase())
-              Text(stringResource(SharedRes.string.add_task).uppercase())
             }
           }
         }

@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.core.storage.impl.SqlDelightEntityStore
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * Creates [EntityStore] instances on demand. Avoids per-domain Koin singletons; each manager
@@ -11,6 +12,7 @@ import kotlin.time.Clock
  *
  * Example: `factory.create<Aircraft>(CollectionKind.Aircraft)`.
  */
+@OptIn(ExperimentalTime::class)
 class EntityStoreFactory(
   private val db: WingsLogDatabase,
   private val codecs: EntityCodecRegistry,
