@@ -12,6 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.one_time_compliance
@@ -33,17 +37,35 @@ fun OneTimeComplianceFields(
     Column(modifier = Modifier.weight(1f)) {
       Text(
         stringResource(Res.string.one_time_compliance),
-        style = MaterialTheme.typography.bodyLarge
+        style = MaterialTheme.typography.labelLarge,
+        letterSpacing = 1.2.sp,
       )
       Text(
         stringResource(Res.string.one_time_compliance_desc),
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = MaterialTheme.colorScheme.outline,
       )
     }
     Switch(
       checked = isOneTime,
       onCheckedChange = null // Click handled by Row
     )
+  }
+}
+
+@Preview
+@Composable
+fun OneTimeComplianceFieldsPreview() {
+  WingslogTheme {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
+      OneTimeComplianceFields(
+        isOneTime = false,
+        onOneTimeChange = {},
+      )
+      OneTimeComplianceFields(
+        isOneTime = true,
+        onOneTimeChange = {},
+      )
+    }
   }
 }

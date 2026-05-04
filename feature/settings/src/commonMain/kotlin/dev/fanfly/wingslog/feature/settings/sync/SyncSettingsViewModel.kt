@@ -22,9 +22,9 @@ import kotlinx.coroutines.launch
  * The combined [SyncSettingsUiState] is a pure render input.
  */
 class SyncSettingsViewModel(
-  private val auth: FirebaseAuth,
+  auth: FirebaseAuth,
+  syncEngine: SyncEngine,
   private val syncPreferences: SyncPreferences,
-  private val syncEngine: SyncEngine,
 ) : ViewModel() {
 
   val uiState: StateFlow<SyncSettingsUiState> =

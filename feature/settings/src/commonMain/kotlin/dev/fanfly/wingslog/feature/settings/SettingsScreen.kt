@@ -42,7 +42,6 @@ import androidx.compose.material.icons.filled.Engineering
 fun SettingsScreen(
   navController: NavController,
   settingsViewModel: SettingsViewModel = koinViewModel(),
-  onAddAircraft: () -> Unit,
 ) {
 
   val user by settingsViewModel.user.collectAsStateWithLifecycle()

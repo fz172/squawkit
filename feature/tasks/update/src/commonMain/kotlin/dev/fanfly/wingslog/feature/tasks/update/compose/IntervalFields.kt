@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreUiRes
@@ -41,7 +43,8 @@ fun IntervalFields(
   Column(modifier = modifier) {
     Text(
       stringResource(Res.string.intervals),
-      style = MaterialTheme.typography.labelLarge
+      style = MaterialTheme.typography.labelLarge,
+      letterSpacing = 1.2.sp,
     )
     Spacer(modifier = Modifier.height(Spacing.small))
     Row(
@@ -68,7 +71,8 @@ fun IntervalFields(
         stringResource(CoreUiRes.string.or),
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.outline
+        color = MaterialTheme.colorScheme.outline,
+        modifier = Modifier.padding(top = Spacing.small)
       )
       OutlinedTextField(
         value = intervalHours,

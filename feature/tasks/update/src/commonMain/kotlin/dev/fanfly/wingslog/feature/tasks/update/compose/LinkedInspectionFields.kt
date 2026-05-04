@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -45,12 +46,12 @@ fun LinkedInspectionFields(
   Column(modifier = modifier) {
     Text(
       stringResource(Res.string.schedule_with_another_work),
-      style = MaterialTheme.typography.labelLarge
-    )
+      style = MaterialTheme.typography.labelLarge,
+      letterSpacing = 1.2.sp,    )
     Text(
       stringResource(Res.string.schedule_with_another_work_description),
       style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant
+      color = MaterialTheme.colorScheme.outline
     )
     Spacer(modifier = Modifier.height(Spacing.small))
 

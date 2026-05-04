@@ -20,7 +20,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 
 /**
  * One subject, Material icon, gentle halo. When sync is active the halo breathes; when paused or
@@ -28,7 +30,10 @@ import androidx.compose.ui.unit.dp
  * glance.
  */
 @Composable
-fun SyncHeroIllustration(active: Boolean, modifier: Modifier = Modifier) {
+fun SyncHeroIllustration(
+  active: Boolean,
+  modifier: Modifier = Modifier,
+) {
   val cs = MaterialTheme.colorScheme
   val tint = if (active) cs.primary else cs.onSurfaceVariant.copy(alpha = 0.55f)
   val haloColor = if (active) cs.primary else cs.onSurfaceVariant
@@ -38,7 +43,10 @@ fun SyncHeroIllustration(active: Boolean, modifier: Modifier = Modifier) {
     initialValue = if (active) 0f else 0.5f,
     targetValue = if (active) 1f else 0.5f,
     animationSpec = infiniteRepeatable(
-      animation = tween(durationMillis = 2_400, easing = EaseInOutSine),
+      animation = tween(
+        durationMillis = 2_400,
+        easing = EaseInOutSine
+      ),
       repeatMode = RepeatMode.Reverse,
     ),
     label = "sync-hero-pulse",
@@ -49,7 +57,10 @@ fun SyncHeroIllustration(active: Boolean, modifier: Modifier = Modifier) {
     contentAlignment = Alignment.Center,
   ) {
     Canvas(modifier = Modifier.fillMaxWidth().height(180.dp)) {
-      val center = Offset(size.width / 2f, size.height / 2f)
+      val center = Offset(
+        size.width / 2f,
+        size.height / 2f
+      )
       val baseRadius = size.height * 0.36f
       // Outer halo — broader, softer.
       drawCircle(
@@ -70,5 +81,21 @@ fun SyncHeroIllustration(active: Boolean, modifier: Modifier = Modifier) {
       tint = tint,
       modifier = Modifier.height(96.dp).fillMaxWidth(0.30f),
     )
+  }
+}
+
+@Preview
+@Composable
+private fun SyncHeroIllustrationPreview() {
+  WingslogTheme {
+    SyncHeroIllustration(active = true)
+  }
+}
+
+@Preview
+@Composable
+private fun SyncHeroIllustrationInactivePreview() {
+  WingslogTheme {
+    SyncHeroIllustration(active = false)
   }
 }
