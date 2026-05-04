@@ -6,7 +6,6 @@ import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
 import dev.fanfly.wingslog.core.storage.di.storageModule
-import dev.fanfly.wingslog.core.sync.di.syncModule
 import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
 import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
@@ -14,6 +13,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerM
 import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
+import dev.fanfly.wingslog.feature.sync.data.di.syncModule
 import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule

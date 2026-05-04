@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.settings"
+  namespace = "dev.fanfly.wingslog.core.sync.settings"
   compileSdk = 36
 
   defaultConfig {
@@ -46,8 +46,6 @@ kotlin {
       implementation(project(":core:auth"))
       implementation(project(":feature:sync:data"))
       implementation(libs.gitlive.firebase.auth)
-      implementation(project(":feature:userprofile:userprofilecard"))
-      implementation(project(":feature:userprofile:database"))
 
       // Compose
       implementation(libs.components.resources)
