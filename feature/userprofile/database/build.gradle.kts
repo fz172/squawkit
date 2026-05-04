@@ -51,4 +51,8 @@ kotlin {
 dependencies {
   // Firebase BOM for transitive dependency version resolution (required by core:database)
   implementation(platform(libs.firebase.bom))
+  testImplementation(libs.junit)
+  testImplementation(libs.mockk)
+  testImplementation(libs.truth)
+  testImplementation(libs.kotlinx.coroutines.test)
 }
