@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
  * (their per-platform extensions diverge for byte arrays). 33% size overhead is irrelevant for
  * proto blobs at the scales we ship.
  *
- * `updated_at` is typed [BaseTimestamp] so writes can pass [Timestamp.ServerTimestamp] (the
+ * `lastUpdateTimestamp` is typed [BaseTimestamp] so writes can pass [Timestamp.ServerTimestamp] (the
  * sentinel that asks Firestore to stamp the doc) and reads see a real [Timestamp].
  */
 @Serializable
@@ -21,7 +21,7 @@ internal data class SyncDocWire(
   val payload: String,
   val deleted: Boolean,
   val schema: String,
-  val updated_at: BaseTimestamp,
+  val lastUpdateTimestamp: BaseTimestamp,
 )
 
 internal fun BaseTimestamp.epochMsOrNull(): Long? = (this as? Timestamp)?.toMilliseconds()?.toLong()

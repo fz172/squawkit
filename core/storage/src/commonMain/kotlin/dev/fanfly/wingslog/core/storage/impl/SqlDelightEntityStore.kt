@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.core.storage.StorageEntity
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.map
  *   tests provide `UnconfinedTestDispatcher` so emissions are immediate.
  * @param clock injected so tests can advance virtual time deterministically.
  */
+@OptIn(ExperimentalTime::class)
 class SqlDelightEntityStore<T : Any>(
   override val kind: CollectionKind,
   private val codec: EntityCodec<T>,
@@ -32,18 +34,32 @@ class SqlDelightEntityStore<T : Any>(
 ) : EntityStore<T> {
 
   override fun observeAll(scope: EntityScope): Flow<List<StorageEntity<T>>> =
-    db.schemaQueries.selectAll(kind, scope.toPath())
+    db.schemaQueries.selectAll(
+      kind,
+      scope.toPath()
+    )
       .asFlow()
       .mapToList(ioContext)
       .map { rows -> rows.map { it.toEntity() } }
 
-  override fun observe(id: String, scope: EntityScope): Flow<StorageEntity<T>?> =
-    db.schemaQueries.selectOne(kind, scope.toPath(), id)
+  override fun observe(
+    id: String,
+    scope: EntityScope,
+  ): Flow<StorageEntity<T>?> =
+    db.schemaQueries.selectOne(
+      kind,
+      scope.toPath(),
+      id
+    )
       .asFlow()
       .mapToOneOrNull(ioContext)
       .map { it?.toEntity() }
 
-  override suspend fun put(id: String, value: T, scope: EntityScope) {
+  override suspend fun put(
+    id: String,
+    value: T,
+    scope: EntityScope,
+  ) {
     val now = clock.now().toEpochMilliseconds()
     db.schemaQueries.upsert(
       collection = kind,
@@ -58,8 +74,15 @@ class SqlDelightEntityStore<T : Any>(
     )
   }
 
-  override suspend fun delete(id: String, scope: EntityScope) {
-    val existing = db.schemaQueries.selectOne(kind, scope.toPath(), id).executeAsOneOrNull()
+  override suspend fun delete(
+    id: String,
+    scope: EntityScope,
+  ) {
+    val existing = db.schemaQueries.selectOne(
+      kind,
+      scope.toPath(),
+      id
+    ).executeAsOneOrNull()
     val payloadBytes = existing?.payload ?: ByteArray(0)
     val now = clock.now().toEpochMilliseconds()
     db.schemaQueries.upsert(

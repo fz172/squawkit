@@ -40,7 +40,7 @@ class FirestoreRemoteFetcher(private val firestore: FirebaseFirestore) : RemoteF
 @OptIn(ExperimentalEncodingApi::class)
 internal fun decodeRemoteEntity(doc: DocumentSnapshot): RemoteEntity? {
   val wire = doc.data<SyncDocWire>()
-  val tsMs = wire.updated_at.epochMsOrNull() ?: return null
+  val tsMs = wire.lastUpdateTimestamp.epochMsOrNull() ?: return null
   return RemoteEntity(
     id = doc.id,
     payload = Base64.decode(wire.payload),

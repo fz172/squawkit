@@ -20,7 +20,7 @@ class FirestoreSyncWriter(private val firestore: FirebaseFirestore) : SyncWriter
         payload = Base64.encode(write.payload),
         deleted = write.deleted,
         schema = write.schema,
-        updated_at = Timestamp.ServerTimestamp,
+        lastUpdateTimestamp = Timestamp.ServerTimestamp,
       ),
     )
   }

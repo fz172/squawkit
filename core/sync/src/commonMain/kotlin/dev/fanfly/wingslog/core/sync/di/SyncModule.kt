@@ -65,8 +65,6 @@ val syncModule: Module = module {
     SyncEngine(
       auth = get<FirebaseAuth>(),
       cursors = get<SyncCursorStore>(),
-      writer = get<SyncWriter>(),
-      fetcher = get<RemoteFetcher>(),
       pullSubscription = get<FirestorePullSubscription>(),
       hydrationRunner = get<HydrationRunner>(),
       pullListenerFactory = { kind: CollectionKind, scope: EntityScope ->

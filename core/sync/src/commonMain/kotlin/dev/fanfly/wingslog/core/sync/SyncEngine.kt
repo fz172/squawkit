@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.sync.SyncEngine.Companion.PUSH_FAILURE_KEY
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlin.coroutines.CoroutineContext
@@ -20,8 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,8 +43,6 @@ import kotlinx.coroutines.launch
 class SyncEngine(
   private val auth: FirebaseAuth,
   private val cursors: SyncCursorStore,
-  private val writer: SyncWriter,
-  private val fetcher: RemoteFetcher,
   private val pullSubscription: FirestorePullSubscription,
   private val hydrationRunner: HydrationRunner,
   private val pullListenerFactory: (CollectionKind, EntityScope) -> PullListener,
@@ -82,9 +79,17 @@ class SyncEngine(
    * needed hydration in this signed-in session; `completed` is how many finished. Reset on
    * sign-out / user change. Translated to [HydrationState] in [hydrationState].
    */
-  private data class HydrationCounters(val completed: Int, val total: Int)
+  private data class HydrationCounters(
+    val completed: Int,
+    val total: Int,
+  )
 
-  private val hydrationCounters = MutableStateFlow(HydrationCounters(0, 0))
+  private val hydrationCounters = MutableStateFlow(
+    HydrationCounters(
+      0,
+      0
+    )
+  )
 
   val hydrationState: StateFlow<HydrationState> =
     MutableStateFlow<HydrationState>(HydrationState.Idle).also { state ->
@@ -92,7 +97,11 @@ class SyncEngine(
         hydrationCounters.collect { c ->
           state.value = when {
             c.total == 0 -> HydrationState.Idle
-            c.completed < c.total -> HydrationState.InProgress(c.completed, c.total)
+            c.completed < c.total -> HydrationState.InProgress(
+              c.completed,
+              c.total
+            )
+
             else -> HydrationState.Done
           }
         }
@@ -112,19 +121,27 @@ class SyncEngine(
         .collectLatest { (user, cloudSyncEnabled) ->
           userScope?.cancel()
           userScope = null
-          hydrationCounters.value = HydrationCounters(0, 0)
+          hydrationCounters.value = HydrationCounters(
+            0,
+            0
+          )
           when {
             user == null || user.isAnonymous -> {
               log.i { "auth state: signed out (or anonymous); sync idle" }
             }
+
             !cloudSyncEnabled -> {
               log.i { "auth state: signed in as ${user.uid} but sync disabled by preference; idle" }
             }
+
             else -> {
               log.i { "auth state: signed in as ${user.uid}; starting sync" }
               val scope = CoroutineScope(SupervisorJob(supervisor) + ioContext)
               userScope = scope
-              runForUser(user, scope)
+              runForUser(
+                user,
+                scope
+              )
             }
           }
         }
@@ -136,7 +153,10 @@ class SyncEngine(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private fun runForUser(user: FirebaseUser, scope: CoroutineScope) {
+  private fun runForUser(
+    user: FirebaseUser,
+    scope: CoroutineScope,
+  ) {
     val uid = user.uid
     val userRoot = EntityScope.userRoot(uid)
 
@@ -148,7 +168,13 @@ class SyncEngine(
     scope.launch { pushWorker.run(uid) }
 
     for (kind in TOP_LEVEL_KINDS) {
-      scope.launch { hydrateAndListen(uid, kind, userRoot) }
+      scope.launch {
+        hydrateAndListen(
+          uid,
+          kind,
+          userRoot
+        )
+      }
     }
 
     val aircraftStore: EntityStore<Aircraft> = storeFactory.create(CollectionKind.Aircraft)
@@ -162,9 +188,18 @@ class SyncEngine(
           aircraftSubScopeSupervisor = subSupervisor
           val subScope = CoroutineScope(subSupervisor + ioContext)
           for (aircraftId in aircraftIds) {
-            val acScope = EntityScope.aircraftChild(uid, aircraftId)
+            val acScope = EntityScope.aircraftChild(
+              uid,
+              aircraftId
+            )
             for (kind in PER_AIRCRAFT_KINDS) {
-              subScope.launch { hydrateAndListen(uid, kind, acScope) }
+              subScope.launch {
+                hydrateAndListen(
+                  uid,
+                  kind,
+                  acScope
+                )
+              }
             }
           }
         }
@@ -179,35 +214,81 @@ class SyncEngine(
    * accumulated `failed_attempts`. Each scope's loop runs in its own coroutine, so a failing
    * collection doesn't block hydration of any other.
    */
-  private suspend fun hydrateWithBackoff(uid: String, kind: CollectionKind, scope: EntityScope) {
+  private suspend fun hydrateWithBackoff(
+    uid: String,
+    kind: CollectionKind,
+    scope: EntityScope,
+  ) {
     while (true) {
-      val attempts = cursors.get(uid, kind, scope)?.failedAttempts ?: 0
+      val attempts = cursors.get(
+        uid,
+        kind,
+        scope
+      )?.failedAttempts ?: 0
       val wait = backoffMs(attempts)
       if (wait > 0) {
         log.i { "hydration backoff ${kind.wireName} ${scope.toPath()}: ${wait}ms after $attempts attempts" }
         delay(wait)
       }
       val key: Any = kind to scope
-      if (hydrationRunner.runFor(uid, kind, scope)) {
+      if (hydrationRunner.runFor(
+          uid,
+          kind,
+          scope
+        )
+      ) {
         failures.update { it - key }
         return
       }
-      val attemptsAfter = cursors.get(uid, kind, scope)?.failedAttempts ?: (attempts + 1)
+      val attemptsAfter = cursors.get(
+        uid,
+        kind,
+        scope
+      )?.failedAttempts ?: (attempts + 1)
       failures.update {
-        it + (key to SyncFailure.Hydration(kind, scope, attemptsAfter, cause = null))
+        it + (key to SyncFailure.Hydration(
+          kind,
+          scope,
+          attemptsAfter,
+          cause = null
+        ))
       }
     }
   }
 
-  private suspend fun hydrateAndListen(uid: String, kind: CollectionKind, scope: EntityScope) {
-    if (cursors.get(uid, kind, scope)?.hydrated != true) {
+  private suspend fun hydrateAndListen(
+    uid: String,
+    kind: CollectionKind,
+    scope: EntityScope,
+  ) {
+    if (cursors.get(
+        uid,
+        kind,
+        scope
+      )?.hydrated != true
+    ) {
       hydrationCounters.update { it.copy(total = it.total + 1) }
-      hydrateWithBackoff(uid, kind, scope)
+      hydrateWithBackoff(
+        uid,
+        kind,
+        scope
+      )
       hydrationCounters.update { it.copy(completed = it.completed + 1) }
     }
-    val watermark = cursors.get(uid, kind, scope)?.lastSeenRemote
-    val listener = pullListenerFactory(kind, scope)
-    pullSubscription.observe(kind, scope, watermark).collect { remotes ->
+    val watermark = cursors.get(
+      uid,
+      kind,
+      scope
+    )?.lastSeenRemote
+    val listener = pullListenerFactory(
+      kind,
+      scope
+    )
+    pullSubscription.observe(
+      kind,
+      scope,
+      watermark
+    ).collect { remotes ->
       if (remotes.isEmpty()) return@collect
       var maxTs = Long.MIN_VALUE
       for (remote in remotes) {
@@ -215,7 +296,12 @@ class SyncEngine(
         if (applied > maxTs) maxTs = applied
       }
       if (maxTs != Long.MIN_VALUE) {
-        cursors.advanceLastSeen(uid, kind, scope, maxTs)
+        cursors.advanceLastSeen(
+          uid,
+          kind,
+          scope,
+          maxTs
+        )
       }
     }
   }
