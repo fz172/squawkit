@@ -51,6 +51,7 @@ class SyncEngine(
   private val pullListenerFactory: (CollectionKind, EntityScope) -> PullListener,
   private val pushWorker: PushWorker,
   private val storeFactory: EntityStoreFactory,
+  private val syncPreferences: SyncPreferences,
   private val ioContext: CoroutineContext,
 ) {
 
@@ -104,19 +105,29 @@ class SyncEngine(
    */
   fun start(): Job {
     return rootScope.launch {
-      auth.authStateChanged.collectLatest { user ->
-        userScope?.cancel()
-        userScope = null
-        hydrationCounters.value = HydrationCounters(0, 0)
-        if (user == null || user.isAnonymous) {
-          log.i { "auth state: signed out (or anonymous); sync idle" }
-          return@collectLatest
+      kotlinx.coroutines.flow.combine(
+        auth.authStateChanged,
+        syncPreferences.state,
+      ) { user, prefs -> user to prefs.cloudSyncEnabled }
+        .collectLatest { (user, cloudSyncEnabled) ->
+          userScope?.cancel()
+          userScope = null
+          hydrationCounters.value = HydrationCounters(0, 0)
+          when {
+            user == null || user.isAnonymous -> {
+              log.i { "auth state: signed out (or anonymous); sync idle" }
+            }
+            !cloudSyncEnabled -> {
+              log.i { "auth state: signed in as ${user.uid} but sync disabled by preference; idle" }
+            }
+            else -> {
+              log.i { "auth state: signed in as ${user.uid}; starting sync" }
+              val scope = CoroutineScope(SupervisorJob(supervisor) + ioContext)
+              userScope = scope
+              runForUser(user, scope)
+            }
+          }
         }
-        log.i { "auth state: signed in as ${user.uid}; starting sync" }
-        val scope = CoroutineScope(SupervisorJob(supervisor) + ioContext)
-        userScope = scope
-        runForUser(user, scope)
-      }
     }
   }
 

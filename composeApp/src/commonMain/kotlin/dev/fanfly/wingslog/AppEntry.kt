@@ -19,6 +19,7 @@ import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.aircraft.dashboard.AircraftOverviewScreen
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
+import dev.fanfly.wingslog.feature.settings.sync.SyncSettingsScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
@@ -64,6 +65,10 @@ fun AppEntry() {
 
         composable(Screen.EditProfile.route) {
           EditProfileScreen(navController = navController)
+        }
+
+        composable(Screen.SyncSettings.route) {
+          SyncSettingsScreen(navController = navController)
         }
 
         composable(

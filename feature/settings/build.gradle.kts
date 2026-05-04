@@ -44,6 +44,8 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:ui"))
       implementation(project(":core:auth"))
+      implementation(project(":core:sync"))
+      implementation(libs.gitlive.firebase.auth)
       implementation(project(":feature:userprofile:userprofilecard"))
       implementation(project(":feature:userprofile:database"))
 

@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.core.sync.PushWorker
 import dev.fanfly.wingslog.core.sync.RemoteFetcher
 import dev.fanfly.wingslog.core.sync.SyncCursorStore
 import dev.fanfly.wingslog.core.sync.SyncEngine
+import dev.fanfly.wingslog.core.sync.SyncPreferences
 import dev.fanfly.wingslog.core.sync.SyncWriter
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -40,6 +41,7 @@ val syncModule: Module = module {
       settings = firestoreSettings { cacheSettings = memoryCacheSettings {} }
     }
   }
+  single<SyncPreferences> { SyncPreferences() }
   single<SyncCursorStore> { SyncCursorStore(get<WingsLogDatabase>()) }
   single<SyncWriter> { FirestoreSyncWriter(get<FirebaseFirestore>()) }
   single<RemoteFetcher> { FirestoreRemoteFetcher(get<FirebaseFirestore>()) }
@@ -76,6 +78,7 @@ val syncModule: Module = module {
       },
       pushWorker = get<PushWorker>(),
       storeFactory = get<EntityStoreFactory>(),
+      syncPreferences = get<SyncPreferences>(),
       ioContext = Dispatchers.Default,
     )
   }

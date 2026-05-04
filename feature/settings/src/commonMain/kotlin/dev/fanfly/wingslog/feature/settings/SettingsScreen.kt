@@ -34,6 +34,7 @@ import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.sign_out
 import wingslog.feature.settings.generated.resources.Res as SettingsRes
 
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Engineering
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,6 +86,13 @@ fun SettingsScreen(
         icon = Icons.Default.Engineering,
         title = "Manage Technicians",
         onClick = { navController.navigate(Screen.ManageTechnicians.route) },
+        settingsLevel = SettingsLevel.DEFAULT
+      )
+
+      SettingsRow(
+        icon = Icons.Default.CloudSync,
+        title = "Sync & backup",
+        onClick = { navController.navigate(Screen.SyncSettings.route) },
         settingsLevel = SettingsLevel.DEFAULT
       )
 
