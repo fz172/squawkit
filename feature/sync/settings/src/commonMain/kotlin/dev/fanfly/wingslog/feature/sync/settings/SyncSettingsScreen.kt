@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.sync
+package dev.fanfly.wingslog.feature.sync.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -30,14 +30,38 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.feature.sync.data.HydrationState
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.settings.sync.compose.SyncHeroIllustration
+import dev.fanfly.wingslog.feature.sync.data.HydrationState
+import dev.fanfly.wingslog.feature.sync.settings.compose.SyncHeroIllustration
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.sync.settings.generated.resources.Res
+import wingslog.feature.sync.settings.generated.resources.setting_item_sync
+import wingslog.feature.sync.settings.generated.resources.sync_attachments_disclaimer
+import wingslog.feature.sync.settings.generated.resources.sync_hero_body_active
+import wingslog.feature.sync.settings.generated.resources.sync_hero_body_paused
+import wingslog.feature.sync.settings.generated.resources.sync_hero_body_signin
+import wingslog.feature.sync.settings.generated.resources.sync_hero_title_active
+import wingslog.feature.sync.settings.generated.resources.sync_hero_title_paused
+import wingslog.feature.sync.settings.generated.resources.sync_hero_title_signin
+import wingslog.feature.sync.settings.generated.resources.sync_status_anonymous_body
+import wingslog.feature.sync.settings.generated.resources.sync_status_anonymous_title
+import wingslog.feature.sync.settings.generated.resources.sync_status_error_title
+import wingslog.feature.sync.settings.generated.resources.sync_status_off_body
+import wingslog.feature.sync.settings.generated.resources.sync_status_off_title
+import wingslog.feature.sync.settings.generated.resources.sync_status_restoring
+import wingslog.feature.sync.settings.generated.resources.sync_status_synced_body
+import wingslog.feature.sync.settings.generated.resources.sync_status_synced_title
+import wingslog.feature.sync.settings.generated.resources.sync_subtitle_active
+import wingslog.feature.sync.settings.generated.resources.sync_subtitle_off
+import wingslog.feature.sync.settings.generated.resources.sync_subtitle_signin
+import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
+import wingslog.feature.sync.sharedassets.generated.resources.feature_name_backup_and_sync
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +74,7 @@ fun SyncSettingsScreen(
   Scaffold(
     topBar = {
       WingsLogTopAppBar(
-        title = "Sync & backup",
+        title = stringResource(SyncRes.string.feature_name_backup_and_sync),
         onBackClick = { navController.popBackStack() },
       )
     },
@@ -76,8 +100,12 @@ fun SyncSettingsScreen(
 
         ToggleCard {
           SyncToggleRow(
-            title = "Cloud sync",
-            subtitle = cloudSyncSubtitle(state),
+            title = stringResource(Res.string.setting_item_sync),
+            subtitle = when {
+              !state.signedIn -> stringResource(Res.string.sync_subtitle_signin)
+              state.cloudSyncEnabled -> stringResource(Res.string.sync_subtitle_active)
+              else -> stringResource(Res.string.sync_subtitle_off)
+            },
             checked = state.cloudSyncEnabled,
             enabled = state.signedIn,
             onCheckedChange = viewModel::onCloudSyncToggled,
@@ -87,8 +115,7 @@ fun SyncSettingsScreen(
         StatusSection(state = state)
 
         Text(
-          text = "Attachments require an internet connection and a permanent (non-anonymous) account. " +
-            "Your aircraft, logs, tasks, technicians and license info sync automatically.",
+          text = stringResource(Res.string.sync_attachments_disclaimer),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -103,16 +130,16 @@ fun SyncSettingsScreen(
 private fun HeroCaption(state: SyncSettingsUiState) {
   val (title, body) = when {
     !state.signedIn ->
-      "Sign in to enable sync" to
-        "You're using the app anonymously. All data stays on this device. Sign in with a permanent account on the previous screen to back things up."
+      stringResource(Res.string.sync_hero_title_signin) to
+        stringResource(Res.string.sync_hero_body_signin)
 
     !state.cloudSyncEnabled ->
-      "Sync is paused" to
-        "Your work stays on this device. Reinstalling the app or moving to a new phone will not bring this data with you."
+      stringResource(Res.string.sync_hero_title_paused) to
+        stringResource(Res.string.sync_hero_body_paused)
 
     else ->
-      "Backed up across your devices" to
-        "Changes you make here sync to the cloud and any other device signed into the same account."
+      stringResource(Res.string.sync_hero_title_active) to
+        stringResource(Res.string.sync_hero_body_active)
   }
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     Text(
@@ -193,7 +220,7 @@ private fun StatusSection(state: SyncSettingsUiState) {
   when {
     state.failureMessage != null -> StatusRow(
       icon = Icons.Default.Warning,
-      title = "Sync error",
+      title = stringResource(Res.string.sync_status_error_title),
       body = state.failureMessage,
       tint = MaterialTheme.colorScheme.error,
       container = MaterialTheme.colorScheme.errorContainer,
@@ -210,7 +237,11 @@ private fun StatusSection(state: SyncSettingsUiState) {
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
         Text(
-          text = "Restoring ${h.completed} of ${h.total} collections",
+          text = stringResource(
+            Res.string.sync_status_restoring,
+            h.completed,
+            h.total
+          ),
           style = MaterialTheme.typography.titleSmall,
           color = MaterialTheme.colorScheme.onPrimaryContainer,
         )
@@ -228,26 +259,28 @@ private fun StatusSection(state: SyncSettingsUiState) {
       }
     }
 
-    !state.signedIn -> StatusRow(
-      icon = Icons.Default.Info,
-      title = "Anonymous account",
-      body = "Sync requires signing in.",
-      tint = MaterialTheme.colorScheme.secondary,
-      container = MaterialTheme.colorScheme.secondaryContainer,
-    )
+    !state.signedIn -> {
+      StatusRow(
+        icon = Icons.Default.Info,
+        title = stringResource(Res.string.sync_status_anonymous_title),
+        body = stringResource(Res.string.sync_status_anonymous_body),
+        tint = MaterialTheme.colorScheme.secondary,
+        container = MaterialTheme.colorScheme.secondaryContainer,
+      )
+    }
 
     !state.cloudSyncEnabled -> StatusRow(
       icon = Icons.Default.CloudOff,
-      title = "Cloud sync is off",
-      body = "Local edits won't reach the cloud. Re-enable above to resume backups.",
+      title = stringResource(Res.string.sync_status_off_title),
+      body = stringResource(Res.string.sync_status_off_body),
       tint = MaterialTheme.colorScheme.tertiary,
       container = MaterialTheme.colorScheme.tertiaryContainer,
     )
 
     else -> StatusRow(
       icon = Icons.Default.Info,
-      title = "All caught up",
-      body = "Recent changes have been pushed and any remote updates are applied.",
+      title = stringResource(Res.string.sync_status_synced_title),
+      body = stringResource(Res.string.sync_status_synced_body),
       tint = MaterialTheme.colorScheme.primary,
       container = MaterialTheme.colorScheme.surfaceContainerHighest,
     )
@@ -259,8 +292,8 @@ private fun StatusRow(
   icon: ImageVector,
   title: String,
   body: String,
-  tint: androidx.compose.ui.graphics.Color,
-  container: androidx.compose.ui.graphics.Color,
+  tint: Color,
+  container: Color,
 ) {
   Row(
     modifier = Modifier
@@ -291,8 +324,3 @@ private fun StatusRow(
   }
 }
 
-private fun cloudSyncSubtitle(state: SyncSettingsUiState): String = when {
-  !state.signedIn -> "Sign in to enable cloud sync."
-  state.cloudSyncEnabled -> "Backed up to your account across devices."
-  else -> "Your data stays on this device only."
-}

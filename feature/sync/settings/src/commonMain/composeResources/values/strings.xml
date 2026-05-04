@@ -1,0 +1,21 @@
+<resources>
+  <string name="setting_item_sync">Cloud Sync</string>
+  <string name="sync_attachments_disclaimer">Attachments require an internet connection and a permanent (non-anonymous) account. Your aircraft, logs, tasks, technicians and license info sync automatically.</string>
+  <string name="sync_hero_title_signin">Sign in to enable sync</string>
+  <string name="sync_hero_body_signin">You\'re using the app anonymously. All data stays on this device. Sign in with a permanent account on the previous screen to back things up.</string>
+  <string name="sync_hero_title_paused">Sync is paused</string>
+  <string name="sync_hero_body_paused">Your work stays on this device. Reinstalling the app or moving to a new phone will not bring this data with you.</string>
+  <string name="sync_hero_title_active">Backed up across your devices</string>
+  <string name="sync_hero_body_active">Changes you make here sync to the cloud and any other device signed into the same account.</string>
+  <string name="sync_status_error_title">Sync error</string>
+  <string name="sync_status_restoring">Restoring %1$d of %2$d collections</string>
+  <string name="sync_status_anonymous_title">Anonymous account</string>
+  <string name="sync_status_anonymous_body">Sync requires signing in.</string>
+  <string name="sync_status_off_title">Cloud sync is off</string>
+  <string name="sync_status_off_body">Local edits won\'t reach the cloud. Re-enable above to resume backups.</string>
+  <string name="sync_status_synced_title">All caught up</string>
+  <string name="sync_status_synced_body">Recent changes have been pushed and any remote updates are applied.</string>
+  <string name="sync_subtitle_signin">Sign in to enable cloud sync.</string>
+  <string name="sync_subtitle_active">Backed up to your account across devices.</string>
+  <string name="sync_subtitle_off">Your data stays on this device only.</string>
+</resources>

@@ -45,9 +45,11 @@ kotlin {
       implementation(project(":core:ui"))
       implementation(project(":core:auth"))
       implementation(project(":feature:sync:data"))
+      implementation(project(":feature:sync:sharedassets"))
       implementation(libs.gitlive.firebase.auth)
 
       // Compose
+      implementation(libs.compose.runtime)
       implementation(libs.components.resources)
 
       // Navigation

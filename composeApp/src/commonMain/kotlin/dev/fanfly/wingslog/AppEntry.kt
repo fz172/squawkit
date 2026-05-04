@@ -17,7 +17,7 @@ import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
-import dev.fanfly.wingslog.feature.settings.sync.SyncSettingsScreen
+import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
 import dev.fanfly.wingslog.feature.tasks.update.ui.AddTaskRoute
 import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen

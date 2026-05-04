@@ -1,4 +1,5 @@
 <resources>
+  <string name="setting_item_manage_technicians">Manage Technicians</string>
   <string name="technician">Technician</string>
   <string name="technicians">Technicians</string>
   <string name="add_technician">Add Technician</string>

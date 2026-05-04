@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.sync
+package dev.fanfly.wingslog.feature.sync.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.sync.compose
+package dev.fanfly.wingslog.feature.sync.settings.compose
 
 import androidx.compose.animation.core.EaseInOutSine
 import androidx.compose.animation.core.RepeatMode

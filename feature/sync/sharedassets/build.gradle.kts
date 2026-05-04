@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.settings"
+  namespace = "dev.fanfly.wingslog.feature.sync.sharedassets"
   compileSdk = 36
 
   defaultConfig {
@@ -42,32 +42,13 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(libs.gitlive.firebase.auth)
-      implementation(project(":core:ui"))
-      implementation(project(":core:auth"))
-      implementation(project(":feature:sync:data"))
-      implementation(project(":feature:sync:sharedassets"))
-      implementation(project(":feature:technician:sharedassets"))
-      implementation(project(":feature:userprofile:userprofilecard"))
-      implementation(project(":feature:userprofile:database"))
-
       // Compose
+      implementation(libs.compose.runtime)
       implementation(libs.components.resources)
-
-      // Navigation
-      implementation(libs.androidx.navigation.compose)
-
-      // Lifecycle & DI
-      implementation(libs.jetbrains.lifecycle.runtime.compose)
-      implementation(libs.koin.compose.viewmodel)
-
-      // Logging
-      implementation(libs.kermit)
     }
   }
 }
 
 dependencies {
-  implementation(platform(libs.firebase.bom))
   implementation(platform(libs.androidx.compose.bom))
 }
