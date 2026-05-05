@@ -1,0 +1,55 @@
+plugins {
+  alias(libs.plugins.android.library)
+  alias(libs.plugins.kotlin.multiplatform)
+}
+
+android {
+  namespace = "dev.fanfly.wingslog.feature.attachment.datamanager"
+  compileSdk = 36
+
+  defaultConfig {
+    minSdk = 33
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  }
+
+  compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+  }
+
+  testOptions {
+    unitTests.isReturnDefaultValues = true
+  }
+}
+
+kotlin {
+  jvmToolchain(21)
+
+  androidTarget {
+    compilerOptions {
+    }
+  }
+
+  iosX64()
+  iosArm64()
+  iosSimulatorArm64()
+
+  sourceSets {
+    commonMain.dependencies {
+      api(project(":core:storage"))
+      api(libs.kotlinx.coroutines.core)
+      api(libs.koin.core)
+      implementation(libs.kermit)
+    }
+    commonTest.dependencies {
+      implementation(kotlin("test"))
+    }
+  }
+}
+
+dependencies {
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
+  testImplementation(libs.kotlinx.coroutines.test)
+  testImplementation(libs.sqldelight.sqlite.driver)
+}

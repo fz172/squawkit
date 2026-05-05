@@ -2,6 +2,7 @@
 -- See docs/storage_r1_design.md §4.
 --
 import dev.fanfly.wingslog.core.storage.CollectionKind;
+import dev.fanfly.wingslog.core.storage.blob.RemoteState;
 
 -- `collection` is widened to the CollectionKind sealed type via a SQLDelight
 -- ColumnAdapter (see CollectionKind.kt) so neither application code nor SQL
@@ -128,3 +129,68 @@ SELECT value FROM sync_config WHERE uid = ? AND key = ?;
 
 upsertConfig:
 INSERT OR REPLACE INTO sync_config(uid, key, value) VALUES (?, ?, ?);
+
+-- Attachment binary index. See docs/storage_r2_design.md §4.
+-- This table is device-local — never synced to Firestore. Each row mirrors an Attachment
+-- proto reference held in some entity payload. The proto itself is the cross-device source
+-- of truth (id, sha256, size, mime); blob_object adds the device-local fields needed to
+-- track upload/download state and locate the bytes on disk.
+CREATE TABLE blob_object (
+  id               TEXT    NOT NULL PRIMARY KEY,
+  scope_path       TEXT    NOT NULL,
+  relative_path    TEXT    NOT NULL,
+  content_type     TEXT,
+  size_bytes       INTEGER NOT NULL,
+  sha256           TEXT    NOT NULL,
+  remote_state     TEXT    AS RemoteState NOT NULL,
+  remote_path      TEXT,
+  upload_attempts  INTEGER NOT NULL DEFAULT 0,
+  last_attempt_at  INTEGER,
+  updated_at       INTEGER NOT NULL,
+  deleted          INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0
+);
+
+CREATE INDEX blob_state_idx ON blob_object(scope_path, remote_state);
+CREATE INDEX blob_pending_idx ON blob_object(remote_state, last_attempt_at);
+
+-- Blob queries.
+
+upsertBlob:
+INSERT OR REPLACE INTO blob_object(
+  id, scope_path, relative_path, content_type, size_bytes, sha256,
+  remote_state, remote_path, upload_attempts, last_attempt_at, updated_at, deleted
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectBlobById:
+SELECT * FROM blob_object WHERE id = ?;
+
+selectAllBlobsInScope:
+SELECT * FROM blob_object WHERE scope_path = ? ORDER BY updated_at DESC;
+
+selectPendingUploads:
+SELECT * FROM blob_object
+WHERE deleted = 0
+  AND remote_state IN ('LOCAL_ONLY', 'UPLOADING')
+  AND scope_path LIKE :scopePrefix
+ORDER BY updated_at ASC
+LIMIT :limit;
+
+selectBlobTombstones:
+SELECT * FROM blob_object WHERE deleted = 1 ORDER BY updated_at ASC LIMIT :limit;
+
+setBlobRemoteState:
+UPDATE blob_object
+SET remote_state = ?, remote_path = ?, last_attempt_at = ?, upload_attempts = ?
+WHERE id = ?;
+
+markBlobDeleted:
+UPDATE blob_object SET deleted = 1, updated_at = ? WHERE id = ?;
+
+hardDeleteBlob:
+DELETE FROM blob_object WHERE id = ?;
+
+-- Sum of size_bytes for all non-deleted blobs in the user's scope. Used by QuotaChecker
+-- (PR 3) and the Settings → Storage usage display. Returns 0 when there are no rows.
+sumBlobSizeInScope:
+SELECT COALESCE(SUM(size_bytes), 0) AS used FROM blob_object
+WHERE scope_path = :scope AND deleted = 0;
