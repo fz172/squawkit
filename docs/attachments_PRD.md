@@ -61,16 +61,19 @@ Users need to attach supporting documents and media to maintenance log entries a
 | F9 | Attachments persist across devices (cloud-backed). |
 | F10 | Deleting a maintenance log or inspection card also deletes its uploaded files from storage. |
 | F11 | Each attachment has a user-visible display name that can be customised (defaults to filename or domain for links). |
+| F12 | Per-parent size cap: the sum of file attachment sizes on any one log or inspection card must not exceed **25 MB**. The picker enforces this before adding a file. |
+| F13 | Per-user storage cap: the sum of all of a user's file attachments across every log and inspection card must not exceed **1 GB**. The picker enforces this before adding a file. |
 
 ### Non-Functional
 
 | ID | Requirement |
 |----|-------------|
-| N1 | Upload happens at save time; the form does not block on upload until the user taps Save. |
-| N2 | Each save shows a progress indicator while uploads are in flight. |
+| N1 | (R1) Upload happens at save time; the form does not block on upload until the user taps Save. **(R2 supersedes — saves write bytes locally, uploads run in the background; the form returns immediately.)** |
+| N2 | (R1) Each save shows a progress indicator while uploads are in flight. **(R2 supersedes — per-attachment status badge on the row instead of a save-level spinner.)** |
 | N3 | If an upload fails mid-save, already-uploaded files for that save attempt are cleaned up (best-effort). |
 | N4 | Attachment metadata is included in the same Firestore write as the parent document (atomic with respect to metadata). |
 | N5 | No change to existing log or inspection data that has no attachments. |
+| N6 | (R2) Quotas are enforced client-side in the picker. Server-side enforcement is best-effort — Firebase Storage rules should reject obviously-oversized objects (>25 MB single put), but per-user 1 GB is a client-side soft cap. |
 
 ---
 

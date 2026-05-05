@@ -15,12 +15,14 @@
 - Anonymous users can attach files. The R1 anonymous-blocked path is removed.
 - New devices for an existing account see attachment placeholders (`REMOTE_ONLY`) and download bytes lazily on first open.
 - A binary integrity check (`sha256`) on every download.
+- Per-parent size cap (25 MB) and per-user storage cap (1 GB), enforced in the picker before a file is accepted.
 
 **Out:**
 - Per-device attachment encryption (existing Firebase Storage rules suffice).
 - CRDT-style merging — attachments are immutable; conflict reduces to *exists / doesn't exist*.
 - Block-level dedupe across attachments (sha256 dedupe is a future optimisation).
 - Video files (deferred per attachments PRD §Non-Goals).
+- **Backward compatibility with R1-era attachments.** R2 is a clean break: existing attachments written by R1 builds are not migrated and will not open in R2. This is a one-time, deliberate break — see §10. The cost is bounded (only existing users with attachments are affected; the user base is small) and the simplification across the proto, opener, and migration code is significant.
 
 ---
 
@@ -100,26 +102,27 @@ This split is the core lemma of M4+M5: the attachments PRD's existing flows alre
 
 ### Proto changes (`attachment.proto`)
 
-Add `sha256` and `blob_size` (already covered by `size_bytes`, kept) so a remote device can construct a placeholder row without an extra round-trip:
+Add `sha256` so a remote device can construct a placeholder row and verify bytes on download. Drop `download_url` — R2 doesn't pre-fetch download URLs, and there is no R1 fall-through to support.
 
 ```proto
 message Attachment {
   string id            = 1;
   string name          = 2;
   AttachmentType type  = 3;
-  string storage_path  = 4;  // gs://users/{uid}/blobs/{id} after R2
-  string download_url  = 5;  // legacy; populated only by R1 writers (kept for read compat)
-  string url           = 6;
+  string storage_path  = 4;  // 'users/{uid}/blobs/{id}' for non-LINK; empty for LINK
+  reserved             5;    // was download_url; removed in R2 (clean break)
+  reserved "download_url";
+  string url           = 6;  // populated for LINK only
   string mime_type     = 7;
   int64  size_bytes    = 8;
   google.protobuf.Timestamp created_at = 9;
-  string sha256        = 10; // NEW — hex; required for non-LINK after R2
+  string sha256        = 10; // NEW — hex; required for non-LINK
 }
 ```
 
-`download_url` is never written by R2 clients (file URI is local; remote URI is fetched on demand). It is still read for back-compat with attachments that were written by R1 builds — see §10 (migration).
+Field 5 is reserved (Wire/protoc enforces no future reuse). R1 builds that try to decode an R2-written `Attachment` will see `download_url = ""` and a populated `sha256`; they have no path to open such a file (R1 opener requires `download_url`). This is the intentional break called out in §1.
 
-`storage_path` is normalised to `users/{uid}/blobs/{id}` (no per-aircraft subpath). This decouples attachment location from the owning entity, so an attachment's bytes don't move when the user later edits which log it's attached to. Old per-aircraft paths continue to resolve via the legacy `download_url` field; we never rewrite them.
+`storage_path` is normalised to `users/{uid}/blobs/{id}` (no per-aircraft subpath). This decouples attachment location from the owning entity, so an attachment's bytes don't move when the user later edits which log it's attached to.
 
 ### Why `sha256` in the proto and not just the `blob_object` row?
 
@@ -374,26 +377,25 @@ The "uploading" indicator the R1 form showed during save becomes a per-attachmen
 
 ## 7. `AttachmentOpener` changes
 
-Today (R1) the opener takes the `download_url` from the proto and hands it to `DownloadManager` / `URLSession`. R2 routes through `LocalBlobStore`:
+R2 routes opens through `LocalBlobStore`:
 
 ```
 opener.open(attachment) →
-  if attachment.type == LINK: open attachment.url in system browser  (unchanged)
+  if attachment.type == LINK: open attachment.url in system browser
   else:
     blob = blobStore.get(attachment.id)
-    when blob.remoteState:
+    when blob?.remoteState:
       LOCAL_ONLY, SYNCED, UPLOADING → open file:// at filesDir/blobs/{id}
       REMOTE_ONLY                   → emit Downloading; download via Firebase Storage SDK;
                                        blobStore.installDownloaded(); on success emit Done; open file://
-      null (no row)                 → if proto has legacy download_url (R1 attachment), use it directly;
-                                       BlobIndexReconciler will create the row on next entity sync
+      null (no row)                 → emit Failed(MissingBlobIndex); the user should not see this in
+                                       practice — BlobIndexReconciler runs on every proto pull and
+                                       inserts the placeholder row before the UI renders the attachment.
+                                       If sha256 is empty (R1-era attachment), surface
+                                       Failed(LegacyAttachment) — see §10.
 ```
 
-The "legacy download_url" branch is the migration ramp — it lets R2 builds open R1-era attachments without needing a one-shot rewriter. As soon as the owning entity is re-saved on R2, the proto picks up `sha256` + the new `storage_path` shape and the row is created on the next pull elsewhere.
-
-### Stale download URL on legacy attachments
-
-Same as R1: if the legacy `download_url` 403s, fall back to `FirebaseStorage.getDownloadUrl(storage_path)`. We do **not** rewrite `download_url` in the proto on R2 — the proto's authoritative reference for new clients is `id` + `sha256`, fetched through the SDK.
+There is no fall-through to a stored download URL. Every R2 fetch goes through `FirebaseStorage.getDownloadUrl(storage_path)` at open time (or whatever signed-URL mechanism the SDK uses) — URL freshness is no longer something the proto carries.
 
 ---
 
@@ -434,8 +436,9 @@ class BlobUploadDriver(
 
 Hooked into `PullListener`'s post-write step. After a proto with `repeated Attachment` lands, the reconciler:
 
-1. For each attachment with `type != LINK` and `id` not present in `blob_object`:
+1. For each attachment with `type != LINK`, `sha256` non-blank, and `id` not present in `blob_object`:
    - `blobStore.upsertRemoteOnly(id, sha256, size_bytes, mime_type, scope)`
+   Attachments with blank `sha256` are R1-era — skipped, so no row is created and the opener surfaces `Failed(LegacyAttachment)` (§10).
 2. For each blob_object row whose proto reference no longer exists across **any** entity in the user's scope:
    - Mark `deleted=1` (orphan GC). Done in batches at app start, not per-pull (cheap).
 
@@ -468,20 +471,97 @@ Two changes from R1:
 
 ---
 
-## 10. Existing-attachment migration
+## 9b. Quota enforcement
 
-Every attachment written by R1 has:
-- A populated `download_url` and `storage_path` (per-aircraft path).
-- No `sha256`.
+Two caps, both enforced **client-side in the picker**, before a `PendingAttachment.Local` is added to the form's pending list.
 
-On first R2 launch, we do **not** run a rewriter. Instead:
+| Cap | Value | Source of truth |
+|---|---|---|
+| Per-parent (one log/card) | 25 MB summed across `Local` + `Saved` non-LINK attachments on that parent | the form's own pending list — no DB query needed |
+| Per-user (across all data) | 1 GB summed across the user's scope | `SELECT SUM(size_bytes) FROM blob_object WHERE scope_path LIKE :scopePrefix AND deleted = 0` |
 
-1. **Reads continue to work.** `AttachmentOpener` still honours `download_url` for any attachment it sees with no `blob_object` row.
-2. **`BlobIndexReconciler` skips legacy attachments.** It only inserts `REMOTE_ONLY` rows for attachments where `sha256.isNotBlank()`. Legacy ones don't get a row; they remain "URL-only" forever or until their owning entity is re-saved.
-3. **Re-save upgrades.** If a user edits a maintenance log on an R2 build, the form picks up its existing attachments as `Saved`, **does not** alter them, and the entity push leaves the proto bytes unchanged for those (no upgrade). New attachments added in the same edit go through the R2 path. Old + new co-exist in one entity.
-4. **Optional cleanup migration (R3).** A future build could run a one-shot worker that re-reads each legacy attachment's bytes via its `download_url`, computes sha256, and rewrites the proto with the R2 shape. Out of scope for R2 — the dual-read path is enough.
+### `QuotaChecker` (commonMain, `core/attachments/datamanager`)
 
-The dual-read path means R2 has zero migration risk. If `BlobIndexReconciler` is buggy, only freshly-added attachments are affected.
+```kotlin
+class QuotaChecker(
+  private val blobs: LocalBlobStore,
+  private val authState: StateFlow<AuthState>,
+) {
+  data class State(
+    val perUserUsedBytes: Long,
+    val perUserCapBytes: Long = USER_CAP_BYTES,  // 1 GB
+  ) {
+    val perUserRemaining: Long get() = (perUserCapBytes - perUserUsedBytes).coerceAtLeast(0)
+  }
+
+  fun observeState(): Flow<State>           // recomputes when blob_object changes
+
+  /**
+   * Returns Allowed if the candidate file fits both caps; otherwise a typed rejection.
+   * pendingBytesOnParent: sum of size_bytes already in the parent's pending+saved list (caller computes).
+   */
+  suspend fun check(candidateBytes: Long, pendingBytesOnParent: Long): QuotaResult
+}
+
+sealed class QuotaResult {
+  data object Allowed : QuotaResult()
+  data class PerParentExceeded(val capBytes: Long, val wouldBeBytes: Long) : QuotaResult()
+  data class PerUserExceeded(val capBytes: Long, val usedBytes: Long, val candidateBytes: Long) : QuotaResult()
+}
+```
+
+The form ViewModel (`MaintenanceLogFormViewModel`, etc.) calls `quotaChecker.check(...)` synchronously before adding a picked file to its pending list. On rejection it surfaces an inline error string from `core/attachments/sharedassets`.
+
+### Why count `REMOTE_ONLY` against the per-user cap
+
+`blob_object` rows of state `REMOTE_ONLY` have `size_bytes` populated (from the proto's `size_bytes` field). Including them in the per-user sum means the cap is **device-independent**: a user near 1 GB on their phone sees the same rejection on a fresh-install second device once it has pulled their entity rows. If we excluded `REMOTE_ONLY`, a user could keep adding past 1 GB by picking up a fresh device.
+
+### Defining the per-user sum precisely
+
+```sql
+SELECT COALESCE(SUM(size_bytes), 0) AS used FROM blob_object
+WHERE scope_path = :userScope AND deleted = 0;
+```
+
+`deleted = 0` excludes tombstoned rows (the gs delete worker hasn't run yet but the row is on its way out). This means the "used" number drops as soon as the user removes an attachment, even before the gs:// object is freed — matches user intuition.
+
+### Reactive UI
+
+`QuotaChecker.observeState()` is a Flow backed by a SQLDelight `selectUsedBytes` query. The Settings → Storage screen uses it to render a progress bar ("832 MB of 1 GB used"). The picker bottom sheet renders the same headline so the user sees their headroom at the moment of choice.
+
+### Server-side defense
+
+Per the PRD (N6), Firebase Storage rules can reject a single PUT > 25 MB:
+
+```
+match /users/{uid}/blobs/{blobId} {
+  allow write: if request.auth.uid == uid
+            && request.resource.size < 25 * 1024 * 1024;
+}
+```
+
+The 1 GB per-user cap cannot be expressed in Storage rules without an aggregate read. We accept that the user-cap is a soft cap — a malicious or modded client could exceed it. For a personal logbook app this is a reasonable trade-off; if it ever matters, a Cloud Function can audit per-user totals on a schedule and revoke writes for offenders.
+
+---
+
+## 10. Existing-attachment handling — clean break
+
+R1-era attachments (proto has `download_url` populated, `sha256` empty) are **not migrated** and **not openable** in R2. This is the deliberate one-time break called out in §1.
+
+What R2 does on encountering a legacy attachment:
+
+1. **`BlobIndexReconciler` skips them.** It only creates `REMOTE_ONLY` rows for attachments with `sha256.isNotBlank()`.
+2. **`AttachmentOpener` shows an inline error** for legacy rows: "This attachment was added in an older version and is no longer accessible. Re-attach the file to restore access." `OpenState.Failed(LegacyAttachment)`.
+3. **The viewing list still renders the legacy row** (name + size + a greyed-out icon) so the user sees what was there. Tapping shows the error above instead of opening.
+4. **The picker accepts a re-attach** — pick the same file again and a new R2-shaped `Attachment` is created with a new `id`. The legacy row can be removed by the user normally; on remove, the legacy gs:// object is **not** deleted (R2's delete worker keys on `blob_object`, which has no row for it). Orphaned legacy bytes sit in Firebase Storage until manually cleaned via the console, or via a one-shot Cloud Function in a follow-up.
+
+### Why no migration shim
+
+A migration shim would have to: re-fetch every legacy file via its `download_url`, compute sha256, copy bytes to the new path scheme, and rewrite the proto. That's network-heavy, can fail per-file, and requires tracking state across attempts. Given the user base is small and the R1 attachment feature has been live a short time, the cost of breakage is low and the simplification is high. The decision is captured here so a future engineer doesn't try to add the shim and re-introduce the back-compat surface area.
+
+### Release-notes communication
+
+The R2 release ships with an in-app announcement on first run for users with at least one legacy attachment: "Attachments are getting an upgrade. Attachments added before this version are no longer accessible — please re-attach any files you still need." Implementation: a one-time Snackbar on the maintenance/inspection screens when any visible entity has a legacy attachment, dismissible.
 
 ---
 
@@ -525,13 +605,17 @@ A small property test that takes a sequence of `(operation, simulated network ou
 
 R2 is a single user-facing release; M4 and M5 must ship together (PRD §11.1). M7 polish (iOS background URLSession) ships a follow-up version.
 
-1. **PR 1 — schema + LocalBlobStore.** New `blob_object` table, `RemoteState` sealed type + adapter, `LocalBlobStore` interface + `SqlDelightLocalBlobStore` impl, `BlobFilesystem` expect/actual, contract tests. Untouched: AttachmentManager, openers, sync. Mergeable behind no flag.
-2. **PR 2 — proto changes.** Add `sha256 = 10` to `Attachment`. Wire-generate. R1 readers ignore the new field; R1 writers don't populate it. Mergeable behind no flag.
-3. **PR 3 — AttachmentManager rewrite.** New `LocalFirstAttachmentManagerImpl`. Koin binding behind a `localFirstAttachments` build-time flag (default off in main, on in dogfood). Old impl kept compiling for the off case. ViewModels switch to the new save flow shape (synchronous `addPickedFile`). Hidden behind the same flag.
-4. **PR 4 — opener routing.** `AttachmentOpener` consults `LocalBlobStore` first; falls through to legacy URL on no-row.
-5. **PR 5 — upload scheduler + drivers + reconciler.** Android WorkManager scheduler; iOS foreground scheduler; `BlobIndexReconciler` hooked into `PullListener`. Behind the same flag.
-6. **PR 6 — flip the flag.** Internal dogfood for 1–2 weeks → staged rollout 10% → 50% → 100%.
+No feature flag — R2 is a clean break (§10) and there is no R1 path to keep alive in parallel. Each PR below leaves `main` shippable on its own.
+
+1. **PR 1 — schema + LocalBlobStore.** New `blob_object` table, `RemoteState` sealed type + adapter, `LocalBlobStore` interface + `SqlDelightLocalBlobStore` impl, `BlobFilesystem` expect/actual, contract tests. AttachmentManager and openers untouched. Mergeable as inert infra.
+2. **PR 2 — proto changes.** Add `sha256 = 10` to `Attachment`; mark field 5 (`download_url`) reserved. Wire-generate. Old proto still decodes (the deleted field is ignored on the wire) but R1 builds reading R2-written attachments will see no `download_url` — this is the break. Document in the release notes.
+3. **PR 3 — `QuotaChecker` + AttachmentManager rewrite.** New `LocalFirstAttachmentManagerImpl` replaces `AttachmentManagerImpl` outright. ViewModels move to the synchronous `addPickedFile` flow. Picker calls `QuotaChecker.check` before adding to pending list.
+4. **PR 4 — opener.** `AttachmentOpener` rewritten to consult `LocalBlobStore`. Legacy attachments surface `Failed(LegacyAttachment)`.
+5. **PR 5 — upload scheduler + drivers + reconciler.** Android WorkManager scheduler; iOS foreground scheduler; `BlobIndexReconciler` hooked into `PullListener`. PR is the first one where new attachments actually round-trip end-to-end.
+6. **PR 6 — Settings / status surfaces.** Per-attachment status badge in viewing UI; Settings → Storage screen showing per-user usage progress; legacy-attachment one-time Snackbar (§10).
 7. **PR 7 (M7) — iOS URLSession background + integrity-check recovery.** Replaces `ForegroundUploadScheduler` with `UrlSessionUploadScheduler` on iOS; adds `PRAGMA integrity_check` recovery flow per PRD §10.
+
+Internal dogfood after PR 6 for 1–2 weeks → staged rollout 10% → 50% → 100%.
 
 Per-PR regression watch:
 - Firestore reads/writes — should be unchanged (attachments don't add proto traffic).
@@ -543,7 +627,7 @@ Per-PR regression watch:
 ## 13. Open questions
 
 1. **Cellular-upload default.** PRD says WiFi-only by default. Confirm; this is a UX choice — pilots in remote airfields often have cellular only. Recommend default WiFi-only with a prominent "Upload on cellular" toggle, so the user controls cost.
-2. **Per-blob retention cap.** Should we cap `filesDir/blobs` (e.g. 2 GB) and evict `SYNCED` blobs LRU? For R2 v1, no — typical logbook is well under 1 GB. Revisit if telemetry shows footprint creep.
+2. **Per-blob retention cap.** Now bounded by the per-user 1 GB cap (§9b), so `filesDir/blobs` cannot exceed 1 GB by construction. No LRU eviction needed for R2.
 3. **Image compression.** PRD §Decisions in `attachments_design.md` says no compression. Reconfirm for R2 — it's a one-line decision but easy to forget when pictures land.
 4. **Re-key on uid change.** If a user runs "remove account from this device" with R2 attachments present, do we delete the local files immediately or just tombstone? Recommend: immediate (the action is a wipe, and the cloud copy is intact).
 
@@ -557,7 +641,8 @@ R2 turns attachments into first-class local-first data:
 - Saves no longer block on uploads; the scheduler does the work in the background.
 - Anonymous users can attach files; on link, their blobs upload under their now-permanent uid (zero migration).
 - New devices see lazy `REMOTE_ONLY` placeholders and download on demand, with sha256 integrity verification.
-- The proto gains one field (`sha256`) and the URL fields are kept for back-compat. No SQL migration touches existing tables; only adds `blob_object`.
+- The proto gains `sha256` and reserves the old `download_url` field — clean break with R1; no migration shim, no fall-through.
+- Two caps enforced client-side: 25 MB per parent, 1 GB per user. The user cap is computed off `blob_object` so it's device-independent.
 - iOS ships foreground-only initially; URLSession background lands in M7.
 
-Estimated work: ~2 weeks single-engineer for M4+M5, plus 1 week for M7 polish, plus a 1-week staged rollout. Each PR in §12 is independently testable; the flag in PRs 3–5 lets internal builds exercise the local-first path before public rollout.
+Estimated work: ~2 weeks single-engineer for M4+M5, plus 1 week for M7 polish, plus a 1-week staged rollout. Each PR in §12 is independently mergeable.
