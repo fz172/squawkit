@@ -63,6 +63,7 @@ Users need to attach supporting documents and media to maintenance log entries a
 | F11 | Each attachment has a user-visible display name that can be customised (defaults to filename or domain for links). |
 | F12 | Per-parent size cap: the sum of file attachment sizes on any one log or inspection card must not exceed **25 MB**. The picker enforces this before adding a file. |
 | F13 | Per-user storage cap: the sum of all of a user's file attachments across every log and inspection card must not exceed **1 GB**. The picker enforces this before adding a file. |
+| F14 | Per-parent duplicate prevention: the picker rejects a file whose content matches another file already attached (or pending) on the same log/card. Identity is by sha256 of the bytes; filename and display name don't count. |
 
 ### Non-Functional
 

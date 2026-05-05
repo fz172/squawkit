@@ -15,7 +15,7 @@
 - Anonymous users can attach files. The R1 anonymous-blocked path is removed.
 - New devices for an existing account see attachment placeholders (`REMOTE_ONLY`) and download bytes lazily on first open.
 - A binary integrity check (`sha256`) on every download.
-- Per-parent size cap (25 MB) and per-user storage cap (1 GB), enforced in the picker before a file is accepted.
+- Per-parent size cap (25 MB), per-user storage cap (1 GB), and per-parent duplicate-file rejection — all enforced in the picker before a file is accepted.
 
 **Out:**
 - Per-device attachment encryption (existing Firebase Storage rules suffice).
@@ -471,14 +471,17 @@ Two changes from R1:
 
 ---
 
-## 9b. Quota enforcement
+## 9b. Quota & duplicate enforcement
 
-Two caps, both enforced **client-side in the picker**, before a `PendingAttachment.Local` is added to the form's pending list.
+Three checks, all enforced **client-side in the picker**, before a `PendingAttachment.Local` is added to the form's pending list. They run in this order so the cheapest rejection happens first:
 
-| Cap | Value | Source of truth |
+| Check | Value / rule | Source of truth |
 |---|---|---|
-| Per-parent (one log/card) | 25 MB summed across `Local` + `Saved` non-LINK attachments on that parent | the form's own pending list — no DB query needed |
-| Per-user (across all data) | 1 GB summed across the user's scope | `SELECT SUM(size_bytes) FROM blob_object WHERE scope_path LIKE :scopePrefix AND deleted = 0` |
+| 1. Per-parent duplicate | Reject if `sha256(candidateBytes)` matches another non-LINK attachment on this parent (`Local` or `Saved`, excluding `PendingDelete`) | the form's own pending list — sha256s for `Local` items are already computed; for `Saved` items they're in the proto |
+| 2. Per-parent size | 25 MB summed across `Local` + `Saved` non-LINK attachments on that parent | the form's own pending list — no DB query needed |
+| 3. Per-user size | 1 GB summed across the user's scope | `SELECT SUM(size_bytes) FROM blob_object WHERE scope_path LIKE :scopePrefix AND deleted = 0` |
+
+The dedupe check requires sha256, so the picker reads the candidate bytes and computes the hash *before* deciding whether to accept. That work is not wasted: if accepted, those same bytes (and that same hash) are handed straight to `LocalBlobStore.put` — see §6.3.
 
 ### `QuotaChecker` (commonMain, `core/attachments/datamanager`)
 
@@ -497,20 +500,32 @@ class QuotaChecker(
   fun observeState(): Flow<State>           // recomputes when blob_object changes
 
   /**
-   * Returns Allowed if the candidate file fits both caps; otherwise a typed rejection.
-   * pendingBytesOnParent: sum of size_bytes already in the parent's pending+saved list (caller computes).
+   * Returns Allowed if the candidate file fits both caps and is not already on the parent;
+   * otherwise a typed rejection.
+   *
+   * @param candidateSha256        hex sha256 of the candidate bytes (caller computes once and re-uses)
+   * @param candidateBytes         length of the candidate file
+   * @param parentNonLinkSha256s   sha256 hashes of every non-LINK attachment already on this parent
+   *                               (Local + Saved, excluding PendingDelete) — caller derives from form state
+   * @param pendingBytesOnParent   sum of size_bytes for those same non-LINK attachments
    */
-  suspend fun check(candidateBytes: Long, pendingBytesOnParent: Long): QuotaResult
+  suspend fun check(
+    candidateSha256: String,
+    candidateBytes: Long,
+    parentNonLinkSha256s: Set<String>,
+    pendingBytesOnParent: Long,
+  ): QuotaResult
 }
 
 sealed class QuotaResult {
   data object Allowed : QuotaResult()
+  data class DuplicateOnParent(val sha256: String) : QuotaResult()
   data class PerParentExceeded(val capBytes: Long, val wouldBeBytes: Long) : QuotaResult()
   data class PerUserExceeded(val capBytes: Long, val usedBytes: Long, val candidateBytes: Long) : QuotaResult()
 }
 ```
 
-The form ViewModel (`MaintenanceLogFormViewModel`, etc.) calls `quotaChecker.check(...)` synchronously before adding a picked file to its pending list. On rejection it surfaces an inline error string from `core/attachments/sharedassets`.
+The form ViewModel (`MaintenanceLogFormViewModel`, etc.) reads the picked bytes via `FileByteReader`, computes sha256 once, then calls `quotaChecker.check(...)` synchronously before adding to its pending list. On rejection it surfaces an inline error string from `core/attachments/sharedassets`. On acceptance, the same bytes + sha256 are passed to `LocalBlobStore.put` so the hash is not recomputed.
 
 ### Why count `REMOTE_ONLY` against the per-user cap
 

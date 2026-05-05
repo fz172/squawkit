@@ -224,6 +224,7 @@ sealed class PendingAttachment {
 - **Links**: unlimited.
 - **Per-parent total size**: 25 MB summed across all file attachments on a single log/card (links don't count). Computed from `PickedFile.sizeBytes` (pending) + `Attachment.size_bytes` (saved) before adding. If a new file would push the parent over 25 MB, show an inline error: "Adding this file would exceed the 25 MB limit for this entry."
 - **Per-user total storage**: 1 GB summed across all of the user's attachments (every log + every inspection card combined). Computed from `blob_object.size_bytes` summed across the user's scope (counts both `LOCAL_ONLY` and `REMOTE_ONLY` rows so the cap is consistent regardless of which device the user is on). If exceeded, show an inline error: "You've reached the 1 GB attachment limit. Remove an attachment before adding more." See `storage_r2_design.md` §9b for enforcement details.
+- **Per-parent duplicate**: a file whose sha256 matches another non-LINK attachment already on the parent (`Local` or `Saved`, excluding `PendingDelete`) is rejected before it joins the pending list. Show an inline error: "This file is already attached to this entry." Sha256 is computed from the picked bytes — the same hash used for the integrity check on download. Renaming the file on disk does not bypass the check; matching the byte content does. Links are never deduplicated (two different display names pointing at the same URL are allowed).
 
 ### Add-link UX
 
