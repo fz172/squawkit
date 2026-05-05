@@ -222,7 +222,9 @@ sealed class PendingAttachment {
 
 - **Files**: maximum 3 per log/card (across `Local` + `Saved` items, excluding `PendingDelete`). The "Choose file" button is disabled and shows "Maximum 3 files reached" when the count is at 3.
 - **Links**: unlimited.
-- **File size**: 25 MB per file. Size is checked from `PickedFile.sizeBytes` before the file is added to the pending list. If exceeded, show an inline error: "File exceeds 25 MB limit."
+- **Per-parent total size**: 25 MB summed across all file attachments on a single log/card (links don't count). Computed from `PickedFile.sizeBytes` (pending) + `Attachment.size_bytes` (saved) before adding. If a new file would push the parent over 25 MB, show an inline error: "Adding this file would exceed the 25 MB limit for this entry."
+- **Per-user total storage**: 1 GB summed across all of the user's attachments (every log + every inspection card combined). Computed from `blob_object.size_bytes` summed across the user's scope (counts both `LOCAL_ONLY` and `REMOTE_ONLY` rows so the cap is consistent regardless of which device the user is on). If exceeded, show an inline error: "You've reached the 1 GB attachment limit. Remove an attachment before adding more." See `storage_r2_design.md` §9b for enforcement details.
+- **Per-parent duplicate**: a file whose sha256 matches another non-LINK attachment already on the parent (`Local` or `Saved`, excluding `PendingDelete`) is rejected before it joins the pending list. Show an inline error: "This file is already attached to this entry." Sha256 is computed from the picked bytes — the same hash used for the integrity check on download. Renaming the file on disk does not bypass the check; matching the byte content does. Links are never deduplicated (two different display names pointing at the same URL are allowed).
 
 ### Add-link UX
 
@@ -544,10 +546,12 @@ feature/inspection/update     ← picker sheet lives here; adds dep on core/atta
 
 1. **Max attachment count per item.** Maximum **3 uploaded files** per log/card. Hyperlinks are unlimited. The picker disables the "Choose file" option and shows an inline message ("Maximum 3 files reached") once the file count hits 3; the "Add link" option remains available.
 
-2. **Max file size.** **25 MB** hard limit enforced in the picker before upload begins. If the selected file exceeds 25 MB, show an error and do not add it to the pending list.
+2. **Per-parent size cap.** **25 MB total** across all file attachments on a single log/card. Enforced in the picker before adding a file to the pending list (sum pending + saved sizes; reject if the new file would exceed 25 MB).
 
-3. **Image compression.** None. Files are uploaded as-is.
+3. **Per-user storage quota.** **1 GB** total across all of a user's attachments. Enforced client-side from the local `blob_object` table (summed across the user's scope). On the server side, document the cap; defense-in-depth via Firebase Storage rules is a future hardening — the PRD states this is a soft cap until storage rules can express it.
 
-4. **Anonymous users.** Anonymous users cannot use the attachment feature. If an anonymous user taps "Add attachment", show a prompt: "Sign in to add attachments." The attachment section is hidden entirely on the view side for anonymous users. Firebase Storage security rules must enforce this at the backend: only authenticated (non-anonymous) users may read or write under `users/{uid}/`.
+4. **Image compression.** None. Files are uploaded as-is.
 
-5. **Firebase Storage pricing.** Free tier: 5 GB storage, 1 GB/day download. For a personal logbook this is more than sufficient. Document in the release notes that attachments count against project storage quota.
+5. **Anonymous users.** R2 lifts the R1 restriction — anonymous users may add attachments. Bytes are stored locally; uploads to Firebase Storage happen only after the account is linked to a permanent provider. See `storage_r2_design.md` §9.
+
+6. **Firebase Storage pricing.** Free tier: 5 GB storage, 1 GB/day download. The 1 GB-per-user app cap keeps each individual user under the project's free-tier headroom even with a small population. Document in the release notes that attachments count against project storage quota.
