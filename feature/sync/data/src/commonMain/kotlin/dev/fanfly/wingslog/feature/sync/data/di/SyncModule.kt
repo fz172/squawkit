@@ -21,9 +21,8 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.firestore.firestoreSettings
 import dev.gitlive.firebase.firestore.memoryCacheSettings
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.IO
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -47,7 +46,7 @@ val syncModule: Module = module {
     SyncPreferences(
       db = get<WingsLogDatabase>(),
       auth = get<FirebaseAuth>(),
-      ioContext = Dispatchers.Default,
+      ioContext = Dispatchers.IO,
     )
   }
   single<SyncCursorStore> { SyncCursorStore(get<WingsLogDatabase>()) }
@@ -65,7 +64,7 @@ val syncModule: Module = module {
     PushWorker(
       db = get<WingsLogDatabase>(),
       writer = get<SyncWriter>(),
-      ioContext = Dispatchers.Default,
+      ioContext = Dispatchers.IO,
     )
   }
   single<SyncEngine> {
@@ -85,7 +84,7 @@ val syncModule: Module = module {
       pushWorker = get<PushWorker>(),
       storeFactory = get<EntityStoreFactory>(),
       syncPreferences = get<SyncPreferences>(),
-      ioContext = Dispatchers.Default,
+      ioContext = Dispatchers.IO,
     )
   }
 }
