@@ -1,0 +1,69 @@
+package dev.fanfly.wingslog.feature.sync.data
+
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToOneOrNull
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+
+/**
+ * R1 sync user preferences. One flag, surfaced via the dedicated sync settings page:
+ *
+ * - [cloudSyncEnabled] — master toggle. When false, [SyncEngine.start] stays idle even if a
+ *   non-anonymous user is signed in.
+ *
+ * Persisted in SQLDelight via the `sync_config` table, scoped by user ID.
+ */
+data class SyncPrefs(val cloudSyncEnabled: Boolean = true)
+
+class SyncPreferences(
+  private val db: WingsLogDatabase,
+  private val auth: FirebaseAuth,
+  private val ioContext: CoroutineContext = Dispatchers.IO,
+  scope: CoroutineScope = CoroutineScope(SupervisorJob() + ioContext),
+) {
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  val state: StateFlow<SyncPrefs> = auth.authStateChanged
+    .flatMapLatest { user ->
+      val uid = user?.uid ?: return@flatMapLatest flowOf(SyncPrefs())
+      db.schemaQueries.selectConfig(
+        uid,
+        KEY_CLOUD_SYNC_ENABLED
+      )
+        .asFlow()
+        .mapToOneOrNull(ioContext)
+        .map { value ->
+          SyncPrefs(cloudSyncEnabled = value?.toBoolean() ?: true)
+        }
+    }
+    .stateIn(
+      scope = scope,
+      started = SharingStarted.Eagerly,
+      initialValue = SyncPrefs()
+    )
+
+  fun setCloudSyncEnabled(enabled: Boolean) {
+    val uid = auth.currentUser?.uid ?: return
+    db.schemaQueries.upsertConfig(
+      uid,
+      KEY_CLOUD_SYNC_ENABLED,
+      enabled.toString()
+    )
+  }
+
+  companion object {
+    private const val KEY_CLOUD_SYNC_ENABLED = "cloud_sync_enabled"
+  }
+}

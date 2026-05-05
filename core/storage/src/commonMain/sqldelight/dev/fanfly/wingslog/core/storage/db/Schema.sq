@@ -1,0 +1,130 @@
+-- Generic key-value-by-id store for proto-encoded entities.
+-- See docs/storage_r1_design.md §4.
+--
+import dev.fanfly.wingslog.core.storage.CollectionKind;
+
+-- `collection` is widened to the CollectionKind sealed type via a SQLDelight
+-- ColumnAdapter (see CollectionKind.kt) so neither application code nor SQL
+-- ever sees a raw collection-name string in normal use.
+-- `updated_at` is device wall-clock at write time, used for UI display and
+-- as a tiebreaker for push order — NEVER for sync ordering. Sync ordering uses
+-- `remote_updated_at`, which is the Firestore server timestamp (§5.3).
+
+CREATE TABLE entity (
+  collection         TEXT    AS CollectionKind NOT NULL,
+  scope_path         TEXT    NOT NULL,
+  id                 TEXT    NOT NULL,
+  payload            BLOB    NOT NULL,
+  payload_schema     TEXT    NOT NULL,
+  updated_at         INTEGER NOT NULL,
+  remote_updated_at  INTEGER,
+  dirty              INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
+  deleted            INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
+  PRIMARY KEY (collection, scope_path, id)
+);
+
+CREATE INDEX entity_scope_idx ON entity(collection, scope_path);
+CREATE INDEX entity_dirty_idx ON entity(collection, scope_path, updated_at);
+
+CREATE TABLE sync_cursor (
+  uid               TEXT    NOT NULL,
+  collection        TEXT    AS CollectionKind NOT NULL,
+  scope_path        TEXT    NOT NULL,
+  hydrated          INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
+  last_seen_remote  INTEGER,
+  failed_attempts   INTEGER NOT NULL DEFAULT 0,
+  last_attempt_at   INTEGER,
+  PRIMARY KEY (uid, collection, scope_path)
+);
+
+CREATE TABLE sync_config (
+  uid   TEXT NOT NULL,
+  key   TEXT NOT NULL,
+  value TEXT NOT NULL,
+  PRIMARY KEY (uid, key)
+);
+
+-- Entity queries.
+
+selectAll:
+SELECT id, payload, updated_at
+FROM entity
+WHERE collection = :collection AND scope_path = :scope AND deleted = 0
+ORDER BY updated_at DESC;
+
+selectOne:
+SELECT id, payload, updated_at
+FROM entity
+WHERE collection = :collection AND scope_path = :scope AND id = :id AND deleted = 0;
+
+upsert:
+INSERT OR REPLACE INTO entity(
+  collection, scope_path, id, payload, payload_schema,
+  updated_at, remote_updated_at, dirty, deleted
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Read the full sync state of one row. Used by the pull listener's comparator,
+-- which needs `dirty` and `remote_updated_at` to decide whether to apply a
+-- remote write. Tombstoned rows (deleted = 1) are intentionally returned —
+-- the comparator may need to revive a row remotely re-created at the same id.
+selectOneForSync:
+SELECT collection, scope_path, id, payload, updated_at, remote_updated_at, dirty, deleted
+FROM entity
+WHERE collection = :collection AND scope_path = :scope AND id = :id;
+
+selectDirty:
+SELECT collection, scope_path, id, payload, updated_at, deleted
+FROM entity
+WHERE dirty = 1
+ORDER BY updated_at ASC
+LIMIT :limit;
+
+-- Scoped variants — used by [PushWorker] so that one user's dirty rows aren't pushed under
+-- another user's auth (which would PERMISSION_DENIED). The prefix is the user's scope-path
+-- prefix, e.g. "/users/{uid}/%".
+selectDirtyInScope:
+SELECT collection, scope_path, id, payload, updated_at, deleted
+FROM entity
+WHERE dirty = 1 AND scope_path LIKE :scopePrefix
+ORDER BY updated_at ASC
+LIMIT :limit;
+
+countDirtyInScope:
+SELECT COUNT(*) FROM entity WHERE dirty = 1 AND scope_path LIKE :scopePrefix;
+
+clearDirty:
+UPDATE entity SET dirty = 0
+WHERE collection = ? AND scope_path = ? AND id = ?;
+
+setRemoteUpdatedAt:
+UPDATE entity SET remote_updated_at = ?
+WHERE collection = ? AND scope_path = ? AND id = ?;
+
+countDirty:
+SELECT COUNT(*) FROM entity WHERE dirty = 1;
+
+gcTombstones:
+DELETE FROM entity
+WHERE deleted = 1 AND dirty = 0 AND updated_at < :cutoffMs;
+
+-- Sync cursor queries.
+
+selectCursor:
+SELECT * FROM sync_cursor
+WHERE uid = ? AND collection = ? AND scope_path = ?;
+
+upsertCursor:
+INSERT OR REPLACE INTO sync_cursor(
+  uid, collection, scope_path, hydrated, last_seen_remote,
+  failed_attempts, last_attempt_at
+)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+-- Sync config queries.
+
+selectConfig:
+SELECT value FROM sync_config WHERE uid = ? AND key = ?;
+
+upsertConfig:
+INSERT OR REPLACE INTO sync_config(uid, key, value) VALUES (?, ?, ?);

@@ -13,7 +13,7 @@ import dev.fanfly.wingslog.core.attachments.datamanager.PickedFile
 import dev.fanfly.wingslog.core.attachments.datamanager.UploadState
 import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.attachments.model.toLocalFile
-import dev.fanfly.wingslog.core.database.generateRandomId
+import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen

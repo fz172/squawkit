@@ -42,8 +42,12 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(libs.gitlive.firebase.auth)
       implementation(project(":core:ui"))
       implementation(project(":core:auth"))
+      implementation(project(":feature:sync:data"))
+      implementation(project(":feature:sync:sharedassets"))
+      implementation(project(":feature:technician:sharedassets"))
       implementation(project(":feature:userprofile:userprofilecard"))
       implementation(project(":feature:userprofile:database"))
 

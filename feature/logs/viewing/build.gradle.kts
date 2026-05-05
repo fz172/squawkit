@@ -46,7 +46,6 @@ kotlin {
       implementation(project(":core:datetime"))
 
       implementation(project(":core:model"))
-      implementation(project(":core:database"))
       implementation(project(":core:auth"))
 
       implementation(project(":feature:logs:datamanager"))

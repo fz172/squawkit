@@ -1,15 +1,14 @@
 package dev.fanfly.wingslog.feature.userprofile.database.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.core.database.getBlobAsBytes
-import dev.fanfly.wingslog.core.database.getUserDocumentRef
-import dev.fanfly.wingslog.core.database.setEncoded
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.newUserLicenseProfile
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.EntityStore
+import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.firestore.DocumentReference
-import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -19,75 +18,37 @@ import kotlinx.coroutines.flow.map
 
 class UserProfileManagerImpl(
   private val firebaseAuth: FirebaseAuth,
-  private val firestore: FirebaseFirestore,
+  storeFactory: EntityStoreFactory,
 ) : UserProfileManager {
 
+  private val store: EntityStore<LicenseInfo> = storeFactory.create(CollectionKind.LicenseInfo)
+
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeLicenseInfo(): Flow<LicenseInfo?> {
-    return firebaseAuth.authStateChanged.flatMapLatest { user ->
+  override fun observeLicenseInfo(): Flow<LicenseInfo?> =
+    firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) {
         logger.d { "User logged out, stopping license info observation" }
         flowOf(null)
       } else {
-        val docRef = getProfileDocumentRef()
-          ?: return@flatMapLatest flowOf(null)
-
-        docRef.snapshots
-          .map { snapshot ->
-            val licenseInfo: LicenseInfo? = if (snapshot.exists) {
-              val blobBytes = snapshot.getBlobAsBytes(LICENSE_INFO_BLOB)
-              if (blobBytes != null) {
-                try {
-                  LicenseInfo.ADAPTER.decode(blobBytes)
-                } catch (e: Exception) {
-                  logger.w(e) { "Failed to parse LicenseInfo proto" }
-                  newUserLicenseProfile()
-                }
-              } else {
-                logger.d { "No licenseInfoBlob found, returning default instance." }
-                newUserLicenseProfile()
-              }
-            } else {
-              logger.d { "Profile document does not exist, returning default." }
-              newUserLicenseProfile()
-            }
-            licenseInfo
-          }
+        store.observe(LICENSE_INFO_ID, EntityScope.userRoot(user.uid))
+          .map<_, LicenseInfo?> { it?.value ?: newUserLicenseProfile() }
           .catch { e ->
-            logger.w(e) { "Error observing license info. Stopping observation." }
+            logger.w(e) { "Error observing license info" }
             emit(null)
           }
       }
     }
-  }
 
-  override suspend fun updateLicenseInfo(licenseInfo: LicenseInfo): Result<Boolean> {
-    return try {
-      val docRef = getProfileDocumentRef()
-        ?: return Result.failure(Exception("User not logged in."))
-
-      val data = mapOf(LICENSE_INFO_BLOB to LicenseInfo.ADAPTER.encode(licenseInfo))
-
-      docRef.setEncoded(data, merge = true)
-
-      logger.d { "Profile updated successfully." }
-      Result.success(true)
-
-    } catch (e: Exception) {
-      logger.w(e) { "Error updating profile" }
-      Result.failure(e)
-    }
-  }
-
-  private fun getProfileDocumentRef(): DocumentReference? =
-    firestore.getUserDocumentRef(firebaseAuth)?.collection(PROFILE_COLLECTION)
-      ?.document(LICENSE_INFO_DOCUMENT)
+  override suspend fun updateLicenseInfo(licenseInfo: LicenseInfo): Result<Boolean> = runCatching {
+    val uid = firebaseAuth.currentUser?.uid
+      ?: error("Cannot update license info when no user is signed in")
+    store.put(LICENSE_INFO_ID, licenseInfo, EntityScope.userRoot(uid))
+    true
+  }.onFailure { logger.w(it) { "Error updating license info" } }
 
   companion object {
     private val logger = Logger.withTag("UserProfileManagerImpl")
-
-    private const val PROFILE_COLLECTION = "profile"
-    private const val LICENSE_INFO_DOCUMENT = "license_info"
-    private const val LICENSE_INFO_BLOB = "license_info_blob"
+    // The license-info doc is the only LicenseInfo per user; a fixed id keeps the row well-defined.
+    private const val LICENSE_INFO_ID = "main"
   }
 }

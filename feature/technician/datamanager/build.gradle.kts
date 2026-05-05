@@ -30,7 +30,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
-      implementation(project(":core:database"))
+      implementation(project(":core:storage"))
+      implementation(libs.gitlive.firebase.auth)
 
       implementation(libs.kermit)
     }
@@ -39,4 +40,8 @@ kotlin {
 
 dependencies {
   implementation(platform(libs.firebase.bom))
+  testImplementation(libs.junit)
+  testImplementation(libs.mockk)
+  testImplementation(libs.truth)
+  testImplementation(libs.kotlinx.coroutines.test)
 }

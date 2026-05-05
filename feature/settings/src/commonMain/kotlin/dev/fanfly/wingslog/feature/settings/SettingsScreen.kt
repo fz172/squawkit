@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.settings
 
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -7,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -18,9 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.getAppVersion
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
@@ -30,18 +33,20 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.settings
+import wingslog.feature.settings.generated.resources.Res as SettingsRes
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.sign_out
-import wingslog.feature.settings.generated.resources.Res as SettingsRes
+import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
+import wingslog.feature.sync.sharedassets.generated.resources.feature_name_backup_and_sync
+import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
+import wingslog.feature.technician.sharedassets.generated.resources.setting_item_manage_technicians
 
-import androidx.compose.material.icons.filled.Engineering
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
   navController: NavController,
   settingsViewModel: SettingsViewModel = koinViewModel(),
-  onAddAircraft: () -> Unit,
 ) {
 
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
@@ -83,8 +88,15 @@ fun SettingsScreen(
       )
       SettingsRow(
         icon = Icons.Default.Engineering,
-        title = "Manage Technicians",
+        title = stringResource(TechnicianRes.string.setting_item_manage_technicians),
         onClick = { navController.navigate(Screen.ManageTechnicians.route) },
+        settingsLevel = SettingsLevel.DEFAULT
+      )
+
+      SettingsRow(
+        icon = Icons.Default.CloudSync,
+        title = stringResource(SyncRes.string.feature_name_backup_and_sync),
+        onClick = { navController.navigate(Screen.SyncSettings.route) },
         settingsLevel = SettingsLevel.DEFAULT
       )
 
@@ -98,7 +110,10 @@ fun SettingsScreen(
       Spacer(modifier = Modifier.weight(1f))
 
       Text(
-        text = stringResource(SettingsRes.string.app_version, getAppVersion()),
+        text = stringResource(
+          SettingsRes.string.app_version,
+          getAppVersion()
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.align(Alignment.CenterHorizontally)
