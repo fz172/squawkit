@@ -54,7 +54,7 @@ kotlin {
       implementation(project(":feature:logs:sharedassets"))
       implementation(project(":core:attachments:model"))
       implementation(project(":core:attachments:datamanager"))
-      implementation(project(":core:attachments:viewing"))
+      implementation(project(":feature:attachment:viewing"))
 
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.kermit)

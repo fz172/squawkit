@@ -49,7 +49,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
+import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
@@ -67,9 +67,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.attachments.sharedassets.generated.resources.file_added
-import wingslog.core.attachments.sharedassets.generated.resources.file_read_error
-import wingslog.core.attachments.sharedassets.generated.resources.link_added
+import wingslog.feature.attachment.sharedassets.generated.resources.file_added
+import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
+import wingslog.feature.attachment.sharedassets.generated.resources.link_added
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
@@ -91,7 +91,7 @@ import wingslog.feature.logs.update.generated.resources.work_description_require
 import wingslog.feature.technician.sharedassets.generated.resources.performed_by
 import wingslog.feature.technician.sharedassets.generated.resources.select_technician
 import kotlin.time.Instant
-import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachRes
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes

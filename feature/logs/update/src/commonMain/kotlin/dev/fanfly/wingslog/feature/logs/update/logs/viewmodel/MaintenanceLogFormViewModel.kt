@@ -42,11 +42,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachmentRes
-import wingslog.core.attachments.sharedassets.generated.resources.file_too_large
-import wingslog.core.attachments.sharedassets.generated.resources.upload_failed
-import wingslog.core.attachments.sharedassets.generated.resources.upload_network_error
-import wingslog.core.attachments.sharedassets.generated.resources.upload_permission_error
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachmentRes
+import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
+import wingslog.feature.attachment.sharedassets.generated.resources.upload_failed
+import wingslog.feature.attachment.sharedassets.generated.resources.upload_network_error
+import wingslog.feature.attachment.sharedassets.generated.resources.upload_permission_error
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.delete_failed
 import wingslog.core.ui.generated.resources.save_failed

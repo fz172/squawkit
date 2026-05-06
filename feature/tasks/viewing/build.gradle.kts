@@ -38,7 +38,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
-      implementation(project(":core:attachments:viewing"))
+      implementation(project(":feature:attachment:viewing"))
       implementation(project(":feature:tasks:model"))
       implementation(project(":feature:tasks:sharedassets"))
       implementation(libs.kotlinx.datetime)

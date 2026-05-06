@@ -71,8 +71,8 @@ kotlin {
 
       implementation(project(":core:attachments:model"))
       implementation(project(":core:attachments:datamanager"))
-      implementation(project(":core:attachments:sharedassets"))
-      implementation(project(":core:attachments:viewing"))
+      implementation(project(":feature:attachment:sharedassets"))
+      implementation(project(":feature:attachment:viewing"))
 
       implementation(libs.compose.ui)
       implementation(libs.material3)

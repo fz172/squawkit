@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.attachments.model.visible
-import dev.fanfly.wingslog.core.attachments.viewing.AttachmentFormSection
+import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskUiState
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskViewModel
