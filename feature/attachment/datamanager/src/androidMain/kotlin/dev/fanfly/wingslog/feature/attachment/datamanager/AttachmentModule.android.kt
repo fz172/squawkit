@@ -7,5 +7,11 @@ import org.koin.dsl.module
 actual val platformAttachmentModule: Module = module {
   single<FileByteReader> { FileByteReaderImpl(androidContext()) }
   single<BlobFilesystem> { FileBlobFilesystem(androidContext().filesDir) }
-  single<AttachmentOpener> { AttachmentOpenerAndroid(androidContext()) }
+  single<AttachmentOpener> {
+    AttachmentOpenerAndroid(
+      context = androidContext(),
+      blobs = get(),
+      attachmentManager = get(),
+    )
+  }
 }
