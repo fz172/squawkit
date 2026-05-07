@@ -390,8 +390,6 @@ fun MaintenanceLogFormScreen(
             onPickFiles = viewModel::addLocalFiles,
             onAddLink = viewModel::addLink,
             onDismissSheet = viewModel::hideAttachmentPicker,
-            onCancelUpload = viewModel::cancelUpload,
-            onRetryUpload = viewModel::retryUpload,
             onPickError = viewModel::onFilePickError,
             modifier = Modifier.fillMaxWidth(),
           )

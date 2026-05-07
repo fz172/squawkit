@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Local-first attachment coordinator. See docs/storage_r2_design.md §6.2.
  *
- * Distinct from R1's [dev.fanfly.wingslog.core.attachments.datamanager.AttachmentManager]: the
- * R2 surface is a thin wrapper around [LocalBlobStore] (and, in PR 5, an upload scheduler) — it
- * does not block the form save flow on a network upload. Adding a file is an ms-scale local
- * write; uploads happen out-of-band and surface through [observeStatus].
+ * Replaces the R1 async-upload surface: in R2 the manager is a thin wrapper around
+ * [LocalBlobStore] (and, in PR 5, an upload scheduler) — it does not block the form save flow
+ * on a network upload. Adding a file is an ms-scale local write; uploads happen out-of-band and
+ * surface through [observeStatus].
  */
 interface AttachmentManager {
 

@@ -11,25 +11,20 @@ import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentManager
-import dev.fanfly.wingslog.core.attachments.datamanager.PickedFile
-import dev.fanfly.wingslog.core.attachments.datamanager.UploadState
-import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
-import dev.fanfly.wingslog.core.attachments.model.fileCount
-import dev.fanfly.wingslog.core.attachments.model.toLocalFile
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -65,9 +60,7 @@ class TaskViewModel(
   val showAttachmentPicker: StateFlow<Boolean> = _showAttachmentPicker.asStateFlow()
 
   private val _isSaving = MutableStateFlow(false)
-  val isSaving: StateFlow<Boolean> = combine(_isSaving, _pendingAttachments) { saving, list ->
-    saving || list.any { it is PendingAttachment.Uploading }
-  }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+  val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
   val isAnonymous: Boolean get() = auth.currentUser?.isAnonymous ?: true
   val filesAtLimit: Boolean get() = _pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS
@@ -107,31 +100,24 @@ class TaskViewModel(
   }
 
   fun addLocalFiles(files: List<PickedFile>) {
-    val remaining = MAX_FILE_ATTACHMENTS - _pendingAttachments.value.fileCount()
-    val toAdd = files
-      .filter { it.sizeBytes <= MAX_FILE_SIZE_BYTES }
-      .take(remaining)
-      .map {
-        PendingAttachment.LocalFile(
-          generateRandomId(),
-          it.name,
-          it.uri,
-          it.mimeType,
-          it.sizeBytes
-        )
+    viewModelScope.launch {
+      for (file in files) {
+        if (_pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS) break
+        if (file.sizeBytes > MAX_FILE_SIZE_BYTES) continue
+        try {
+          val attachment = attachmentManager.addPickedFile(file, file.name)
+          _pendingAttachments.update { it + PendingAttachment.Local(attachment) }
+        } catch (_: Exception) {
+          // Individual file errors are surfaced via per-attachment status; skip
+        }
       }
-    _pendingAttachments.update { it + toAdd }
+    }
   }
 
   fun addLink(url: String, name: String) {
     val displayName = name.ifBlank { url.take(40) }
-    _pendingAttachments.update {
-      it + PendingAttachment.LocalLink(
-        generateRandomId(),
-        displayName,
-        url
-      )
-    }
+    val attachment = attachmentManager.makeLink(url, displayName)
+    _pendingAttachments.update { it + PendingAttachment.LocalLink(attachment) }
   }
 
   fun removeAttachment(id: String) {
@@ -139,9 +125,8 @@ class TaskViewModel(
       list.mapNotNull { pending ->
         when {
           pending.id != id -> pending
-          pending is PendingAttachment.LocalFile -> null
+          pending is PendingAttachment.Local -> null
           pending is PendingAttachment.LocalLink -> null
-          pending is PendingAttachment.Failed -> null
           pending is PendingAttachment.Saved && pending.attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK -> null
           pending is PendingAttachment.Saved -> PendingAttachment.PendingDelete(pending.attachment)
           else -> pending
@@ -150,100 +135,18 @@ class TaskViewModel(
     }
   }
 
-  fun cancelUpload(id: String) {
-    saveJob?.cancel()
-    saveJob = null
-    _pendingAttachments.update { list ->
-      list.map { if (it is PendingAttachment.Uploading && it.id == id) it.toLocalFile() else it }
-    }
-  }
-
-  fun retryUpload(id: String) {
-    _pendingAttachments.update { list ->
-      list.map { if (it is PendingAttachment.Failed && it.id == id) it.toLocalFile() else it }
-    }
-  }
-
   // ── Save helpers ─────────────────────────────────────────────────────────
 
-  /** Uploads local files and builds the final attachment list. Returns null on failure. */
-  private suspend fun resolveAttachments(cardId: String): List<Attachment>? {
+  /** Tombstones deleted attachments and builds the final attachment list. */
+  private suspend fun resolveAttachments(cardId: String): List<Attachment> {
     val pending = _pendingAttachments.value
-    val uploadedAttachments = mutableListOf<Attachment>()
-
-    if (!isAnonymous) {
-      for (pf in pending.filterIsInstance<PendingAttachment.LocalFile>()) {
-        // Show this file as uploading in the UI
-        _pendingAttachments.update { list ->
-          list.map {
-            if (it.id == pf.tempId) PendingAttachment.Uploading(
-              pf.tempId,
-              pf.name,
-              mimeType = pf.mimeType,
-              localUri = pf.localUri,
-              sizeBytes = pf.sizeBytes
-            )
-            else it
-          }
-        }
-
-        val storagePath =
-          attachmentManager.buildMaintenanceTaskPath(aircraftId, cardId, pf.tempId, pf.name)
-            ?: return null
-        var error: Throwable? = null
-        attachmentManager.uploadFile(storagePath, pf.localUri, pf.mimeType, pf.name, pf.tempId)
-          .collect { state ->
-            when (state) {
-              is UploadState.Uploading -> {
-                if (state.progress > 0f) {
-                  _pendingAttachments.update { list ->
-                    list.map {
-                      if (it.id == pf.tempId) PendingAttachment.Uploading(
-                        pf.tempId,
-                        pf.name,
-                        state.progress,
-                        pf.mimeType,
-                        pf.localUri,
-                        pf.sizeBytes
-                      )
-                      else it
-                    }
-                  }
-                }
-              }
-
-              is UploadState.Done -> uploadedAttachments.add(state.attachment)
-              is UploadState.Failed -> error = state.error
-            }
-          }
-        if (error != null) {
-          _pendingAttachments.update { list ->
-            list.map {
-              if (it is PendingAttachment.Uploading && it.id == pf.tempId)
-                PendingAttachment.Failed(pf.tempId, pf.name, pf.mimeType, pf.localUri, pf.sizeBytes)
-              else it
-            }
-          }
-          coroutineScope { uploadedAttachments.forEach { launch { attachmentManager.deleteFile(it) } } }
-          return null
-        }
-      }
-      // Delete pending-delete files
-      val toDelete = pending.filterIsInstance<PendingAttachment.PendingDelete>()
-      if (toDelete.isNotEmpty()) {
-        coroutineScope { toDelete.forEach { launch { attachmentManager.deleteFile(it.attachment) } } }
-      }
+    pending.filterIsInstance<PendingAttachment.PendingDelete>()
+      .forEach { attachmentManager.delete(it.attachment) }
+    return buildList {
+      addAll(pending.filterIsInstance<PendingAttachment.Saved>().map { it.attachment })
+      addAll(pending.filterIsInstance<PendingAttachment.Local>().map { it.attachment })
+      addAll(pending.filterIsInstance<PendingAttachment.LocalLink>().map { it.attachment })
     }
-
-    val savedLinks = pending.filterIsInstance<PendingAttachment.LocalLink>().map { link ->
-      Attachment(
-        id = link.tempId, name = link.name,
-        type = AttachmentType.ATTACHMENT_TYPE_LINK,
-        url = link.url, storage_path = "", download_url = "", mime_type = "", size_bytes = 0L,
-      )
-    }
-    val savedFiles = pending.filterIsInstance<PendingAttachment.Saved>().map { it.attachment }
-    return savedFiles + uploadedAttachments + savedLinks
   }
 
   // ── Public save/delete ───────────────────────────────────────────────────
@@ -258,7 +161,7 @@ class TaskViewModel(
       _isSaving.value = true
       try {
         val newCardId = generateRandomId()
-        val attachments = resolveAttachments(newCardId) ?: run { onError(); return@launch }
+        val attachments = resolveAttachments(newCardId)
         val card = MaintenanceTask(
           id = newCardId, title = title, type = type, component = component, rules = rules,
           reference_number = referenceNumber, compliance_authority = complianceAuthority,
@@ -293,7 +196,7 @@ class TaskViewModel(
     saveJob = viewModelScope.launch {
       _isSaving.value = true
       try {
-        val attachments = resolveAttachments(cardId) ?: run { onError(); return@launch }
+        val attachments = resolveAttachments(cardId)
         val updatedCard = MaintenanceTask(
           id = cardId, title = title, type = type, component = component, rules = rules,
           reference_number = referenceNumber, compliance_authority = complianceAuthority,
@@ -311,13 +214,10 @@ class TaskViewModel(
 
   fun deleteTask(cardId: String, onSuccess: () -> Unit) {
     viewModelScope.launch {
-      // Best-effort: delete Storage files before removing the card
-      if (!isAnonymous) {
-        val fileAttachments = _pendingAttachments.value
-          .filterIsInstance<PendingAttachment.Saved>()
-          .filter { it.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK }
-        coroutineScope { fileAttachments.forEach { launch { attachmentManager.deleteFile(it.attachment) } } }
-      }
+      _pendingAttachments.value
+        .filterIsInstance<PendingAttachment.Saved>()
+        .filter { it.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK }
+        .forEach { attachmentManager.delete(it.attachment) }
       inspectionDataManager.deleteTask(aircraftId, cardId).onSuccess { onSuccess() }
     }
   }

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.attachments.datamanager
+package dev.fanfly.wingslog.feature.attachment.datamanager
 
 internal object AttachmentStoragePath {
 

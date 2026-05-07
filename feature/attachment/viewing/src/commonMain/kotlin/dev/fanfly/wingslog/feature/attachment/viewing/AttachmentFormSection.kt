@@ -17,14 +17,12 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PictureAsPdf
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -44,10 +42,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.AttachmentType
-import dev.fanfly.wingslog.core.attachments.datamanager.PickedFile
-import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.ui.generated.resources.cancel
+import wingslog.core.ui.generated.resources.remove
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.add_attachment
 import wingslog.feature.attachment.sharedassets.generated.resources.add_link
@@ -62,16 +63,13 @@ import wingslog.feature.attachment.sharedassets.generated.resources.link_url
 import wingslog.feature.attachment.sharedassets.generated.resources.max_files_reached
 import wingslog.feature.attachment.sharedassets.generated.resources.no_attachments
 import wingslog.feature.attachment.sharedassets.generated.resources.remove_attachment
-import wingslog.feature.attachment.sharedassets.generated.resources.retry_upload
 import wingslog.feature.attachment.sharedassets.generated.resources.sign_in_to_add_attachments
-import wingslog.feature.attachment.sharedassets.generated.resources.upload_failed
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.remove
 
 /**
- * Attachment section for forms (add/edit).
- * Shows pending attachments and a button to open the picker sheet.
+ * Attachment section for forms. R2 simplification: every locally-added attachment is already on
+ * disk by the time it lands in the list, so there are no Uploading / Failed UI variants — only
+ * Local (a sha256-populated proto), Saved, LocalLink, and PendingDelete. Per-attachment upload
+ * status is rendered separately if needed via `AttachmentManager.observeStatus`.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,8 +84,6 @@ fun AttachmentFormSection(
   onAddLink: (url: String, name: String) -> Unit,
   onDismissSheet: () -> Unit,
   modifier: Modifier = Modifier,
-  onCancelUpload: (String) -> Unit = {},
-  onRetryUpload: (String) -> Unit = {},
   onPickError: () -> Unit = {},
 ) {
   val pickFiles = rememberFilePicker(
@@ -109,16 +105,13 @@ fun AttachmentFormSection(
       if (!isAnonymous) {
         OutlinedButton(
           onClick = onAddClick,
-          contentPadding = PaddingValues(
-            horizontal = 12.dp,
-            vertical = 4.dp
-          ),
+          contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
         ) {
           Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
           Spacer(Modifier.width(4.dp))
           Text(
             stringResource(AttachRes.string.add_attachment),
-            style = MaterialTheme.typography.labelMedium
+            style = MaterialTheme.typography.labelMedium,
           )
         }
       } else {
@@ -138,12 +131,7 @@ fun AttachmentFormSection(
       )
     } else {
       visibleAttachments.forEach { pending ->
-        PendingAttachmentRow(
-          pending = pending,
-          onRemove = { onRemove(pending.id) },
-          onCancelUpload = { onCancelUpload(pending.id) },
-          onRetryUpload = { onRetryUpload(pending.id) },
-        )
+        PendingAttachmentRow(pending = pending, onRemove = { onRemove(pending.id) })
         HorizontalDivider()
       }
     }
@@ -163,14 +151,10 @@ fun AttachmentFormSection(
 private fun PendingAttachmentRow(
   pending: PendingAttachment,
   onRemove: () -> Unit,
-  onCancelUpload: () -> Unit,
-  onRetryUpload: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val isSavedFile = pending is PendingAttachment.Saved &&
     pending.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK
-  val isUploading = pending is PendingAttachment.Uploading
-  val isFailed = pending is PendingAttachment.Failed
   var showConfirmDialog by remember { mutableStateOf(false) }
 
   if (showConfirmDialog) {
@@ -200,115 +184,41 @@ private fun PendingAttachmentRow(
       Icon(
         imageVector = pending.typeIcon(),
         contentDescription = null,
-        tint = when {
-          isUploading -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-          isFailed -> MaterialTheme.colorScheme.error
-          else -> MaterialTheme.colorScheme.onSurfaceVariant
-        },
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.size(20.dp),
       )
-      Column(modifier = Modifier.weight(1f)) {
-        Text(
-          text = pending.name,
-          style = MaterialTheme.typography.bodyMedium,
-          color = if (isUploading) MaterialTheme.colorScheme.onSurfaceVariant
-          else MaterialTheme.colorScheme.onSurface,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
+      Text(
+        text = pending.name,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.weight(1f),
+      )
+      IconButton(onClick = { if (isSavedFile) showConfirmDialog = true else onRemove() }) {
+        Icon(
+          Icons.Default.Close,
+          contentDescription = stringResource(AttachRes.string.remove_attachment),
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.size(18.dp),
         )
-        if (isFailed) {
-          Text(
-            text = stringResource(AttachRes.string.upload_failed),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.error,
-          )
-        }
-      }
-      if (isUploading) {
-        IconButton(onClick = onCancelUpload) {
-          Icon(
-            Icons.Default.Close,
-            contentDescription = stringResource(AttachRes.string.remove_attachment),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp),
-          )
-        }
-      } else if (isFailed) {
-        IconButton(onClick = onRetryUpload) {
-          Icon(
-            Icons.Outlined.Refresh,
-            contentDescription = stringResource(AttachRes.string.retry_upload),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp),
-          )
-        }
-        IconButton(onClick = onRemove) {
-          Icon(
-            Icons.Default.Close,
-            contentDescription = stringResource(AttachRes.string.remove_attachment),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp),
-          )
-        }
-      } else {
-        IconButton(onClick = { if (isSavedFile) showConfirmDialog = true else onRemove() }) {
-          Icon(
-            Icons.Default.Close,
-            contentDescription = stringResource(AttachRes.string.remove_attachment),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp),
-          )
-        }
       }
     }
-    if (isUploading) {
-      val progress = pending.progress
-      if (progress > 0f) {
-        LinearProgressIndicator(
-          progress = { progress },
-          modifier = Modifier.fillMaxWidth()
-            .padding(start = 28.dp, end = Spacing.medium, top = 2.dp),
-        )
-      } else {
-        LinearProgressIndicator(
-          modifier = Modifier.fillMaxWidth()
-            .padding(start = 28.dp, end = Spacing.medium, top = 2.dp),
-        )
-      }
-    } else {
-      // Reserve the same vertical space as the progress bar so the divider below doesn't shift.
-      Spacer(Modifier.fillMaxWidth().height(6.dp))
-    }
+    Spacer(Modifier.fillMaxWidth().height(6.dp))
   }
 }
 
 private fun PendingAttachment.typeIcon() = when (this) {
   is PendingAttachment.LocalLink -> Icons.Outlined.Link
-  is PendingAttachment.Uploading -> when {
-    mimeType.startsWith("image/") -> Icons.Outlined.Image
-    mimeType == "application/pdf" -> Icons.Outlined.PictureAsPdf
-    else -> Icons.AutoMirrored.Outlined.InsertDriveFile
-  }
+  is PendingAttachment.Saved -> attachment.type.toIcon()
+  is PendingAttachment.Local -> attachment.type.toIcon()
+  is PendingAttachment.PendingDelete -> attachment.type.toIcon()
+}
 
-  is PendingAttachment.Saved -> when (attachment.type) {
-    AttachmentType.ATTACHMENT_TYPE_PDF -> Icons.Outlined.PictureAsPdf
-    AttachmentType.ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
-    AttachmentType.ATTACHMENT_TYPE_LINK -> Icons.Outlined.Link
-    else -> Icons.AutoMirrored.Outlined.InsertDriveFile
-  }
-
-  is PendingAttachment.LocalFile -> when {
-    mimeType.startsWith("image/") -> Icons.Outlined.Image
-    mimeType == "application/pdf" -> Icons.Outlined.PictureAsPdf
-    else -> Icons.AutoMirrored.Outlined.InsertDriveFile
-  }
-
-  is PendingAttachment.Failed -> when {
-    mimeType.startsWith("image/") -> Icons.Outlined.Image
-    mimeType == "application/pdf" -> Icons.Outlined.PictureAsPdf
-    else -> Icons.AutoMirrored.Outlined.InsertDriveFile
-  }
-
+private fun AttachmentType.toIcon() = when (this) {
+  AttachmentType.ATTACHMENT_TYPE_PDF -> Icons.Outlined.PictureAsPdf
+  AttachmentType.ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
+  AttachmentType.ATTACHMENT_TYPE_LINK -> Icons.Outlined.Link
   else -> Icons.AutoMirrored.Outlined.InsertDriveFile
 }
 
@@ -424,12 +334,10 @@ private fun String.extractDomain(): String {
 private fun isValidUrl(url: String): Boolean {
   if (url.isBlank()) return false
   val lower = url.lowercase().trim()
-  // Reject non-web protocols
   if (lower.startsWith("ftp://") || lower.startsWith("file://") || lower.startsWith("mailto:")) return false
   val normalized =
     if (lower.startsWith("http://") || lower.startsWith("https://")) lower else "https://$lower"
   val withoutProtocol = normalized.substringAfter("://")
   val dotIndex = withoutProtocol.indexOf('.')
-  // Must have content before and after the first dot, and no spaces
   return dotIndex > 0 && dotIndex < withoutProtocol.lastIndex && !withoutProtocol.contains(' ')
 }

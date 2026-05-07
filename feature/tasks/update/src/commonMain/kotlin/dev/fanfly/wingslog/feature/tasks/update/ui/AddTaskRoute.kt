@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.attachments.model.visible
+import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskUiState
@@ -65,8 +65,6 @@ fun AddTaskRoute(
           onPickFiles = viewModel::addLocalFiles,
           onAddLink = viewModel::addLink,
           onDismissSheet = viewModel::hideAttachmentPicker,
-          onCancelUpload = viewModel::cancelUpload,
-          onRetryUpload = viewModel::retryUpload,
         )
       },
     )

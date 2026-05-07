@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.attachment.viewing
 
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.core.attachments.datamanager.PickedFile
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 
 /**
  * Returns a lambda that, when invoked, opens the platform file picker.

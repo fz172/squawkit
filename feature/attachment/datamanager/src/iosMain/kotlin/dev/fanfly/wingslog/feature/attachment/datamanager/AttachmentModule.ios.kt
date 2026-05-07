@@ -6,4 +6,5 @@ import org.koin.dsl.module
 actual val platformAttachmentModule: Module = module {
   single<FileByteReader> { FileByteReaderImpl() }
   single<BlobFilesystem> { NsBlobFilesystem() }
+  single<AttachmentOpener> { AttachmentOpenerIos() }
 }

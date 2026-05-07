@@ -40,7 +40,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
-      implementation(project(":core:attachments:datamanager"))
+      implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:model"))

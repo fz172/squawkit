@@ -60,9 +60,9 @@ kotlin {
       implementation(project(":feature:technician:sharedassets"))
       implementation(project(":feature:userprofile:database"))
 
-      implementation(project(":core:attachments:model"))
+      implementation(project(":feature:attachment:model"))
       implementation(project(":feature:attachment:sharedassets"))
-      implementation(project(":core:attachments:datamanager"))
+      implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:attachment:viewing"))
 
       implementation(libs.kotlinx.datetime)

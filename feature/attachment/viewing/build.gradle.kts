@@ -31,8 +31,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:ui"))
       implementation(project(":core:model"))
-      implementation(project(":core:attachments:model"))
-      implementation(project(":core:attachments:datamanager"))
+      implementation(project(":feature:attachment:model"))
       implementation(project(":feature:attachment:sharedassets"))
       implementation(libs.compose.ui.backhandler)
     }

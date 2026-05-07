@@ -57,9 +57,9 @@ kotlin {
       implementation(project(":feature:tasks:viewing"))
       implementation(project(":feature:tasks:update"))
 
-      implementation(project(":core:attachments:model"))
+      implementation(project(":feature:attachment:model"))
       implementation(project(":feature:attachment:sharedassets"))
-      implementation(project(":core:attachments:datamanager"))
+      implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:attachment:viewing"))
 
       implementation(libs.kotlinx.datetime)

@@ -42,10 +42,12 @@ kotlin {
       api(libs.koin.core)
       implementation(project(":core:auth"))
       implementation(project(":core:datetime"))
+      implementation(project(":core:model"))
       implementation(libs.kermit)
     }
     androidMain.dependencies {
       implementation(libs.koin.android)
+      implementation(libs.androidx.core.ktx)
     }
     commonTest.dependencies {
       implementation(kotlin("test"))
