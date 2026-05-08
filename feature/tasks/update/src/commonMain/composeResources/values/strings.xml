@@ -98,9 +98,35 @@
   <string name="basics">Basics</string>
   <string name="schedule">Schedule</string>
   <string name="details">Details</string>
-  <string name="identity">Identity</string>
   <string name="task_identity_description">Define the core name and component category for this maintenance requirement.</string>
-  <string name="overrides">Overrides</string>
+  <string name="adjustments">Adjustments</string>
+
+  <!-- Adjustments tab — preview banner -->
+  <string name="adj_preview_neutral_primary">No adjustments</string>
+  <string name="adj_preview_neutral_secondary_linked">Linked to another task — schedule is automatic</string>
+  <string name="adj_preview_neutral_secondary_unset">No schedule set yet</string>
+  <string name="adj_preview_reschedule_date_primary">Next due %1$s</string>
+  <string name="adj_preview_reschedule_hours_primary">Next due at %1$s tach hrs</string>
+  <string name="adj_preview_reschedule_was_date">Was set by schedule</string>
+  <string name="adj_preview_reschedule_was_hours">Was set by schedule</string>
+  <string name="adj_preview_skip_primary">Skipping this cycle</string>
+  <string name="adj_preview_skip_secondary">Will be marked complete without a log entry</string>
+
+  <!-- Adjustments tab — reschedule section -->
+  <string name="adj_reschedule_section_label">Reschedule next due</string>
+  <string name="adj_reschedule_title">Set when this is next due</string>
+  <string name="adj_reschedule_subtitle">Manually set the next-due target. The schedule resumes from there.</string>
+  <string name="adj_reschedule_disabled_linked">Disabled — this task is linked to another</string>
+  <string name="adj_reschedule_disabled_unset">Set a schedule first to enable rescheduling</string>
+  <string name="adj_reschedule_was_date">Original date set by schedule</string>
+  <string name="adj_reschedule_was_hours">Original hours set by schedule</string>
+
+  <!-- Adjustments tab — skip section -->
+  <string name="adj_skip_section_label">Skip this cycle</string>
+  <string name="adj_skip_title_active">Will skip on save</string>
+  <string name="adj_skip_title_inactive">Mark complete without logging</string>
+  <string name="adj_skip_subtitle_active">Tap again to undo. The task will appear at the next interval.</string>
+  <string name="adj_skip_subtitle_inactive">Snoozes one cycle. Useful when work was already done off-app.</string>
   <string name="task_updated">Task updated</string>
   <string name="task_deleted">Task deleted</string>
   <string name="task_added">Task added</string>

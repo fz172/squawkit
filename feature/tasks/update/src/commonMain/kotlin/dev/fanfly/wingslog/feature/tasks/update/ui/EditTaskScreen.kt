@@ -15,9 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -39,12 +37,17 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.tasks.update.compose.ADJUSTMENT_TAB
+import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
+import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.DeleteTaskConfirmDialog
-import dev.fanfly.wingslog.feature.tasks.update.compose.ForcedOverrideFields
+import dev.fanfly.wingslog.feature.tasks.update.compose.SCHEDULE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
+import dev.fanfly.wingslog.feature.tasks.update.compose.TaskAdjustmentsTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskDetailTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
+import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
 import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -53,11 +56,6 @@ import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.ok
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
-import wingslog.feature.tasks.update.generated.resources.Res
-import wingslog.feature.tasks.update.generated.resources.details
-import wingslog.feature.tasks.update.generated.resources.identity
-import wingslog.feature.tasks.update.generated.resources.overrides
-import wingslog.feature.tasks.update.generated.resources.schedule
 
 @OptIn(
   ExperimentalMaterial3Api::class,
@@ -155,27 +153,16 @@ fun EditTaskScreen(
               )
             }
           })
-        PrimaryTabRow(
-          selectedTabIndex = pagerState.currentPage,
-          containerColor = MaterialTheme.colorScheme.background,
-        ) {
-          Tab(
-            selected = pagerState.currentPage == 0,
-            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
-            text = { Text(stringResource(Res.string.identity)) })
-          Tab(
-            selected = pagerState.currentPage == 1,
-            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
-            text = { Text(stringResource(Res.string.details)) })
-          Tab(
-            selected = pagerState.currentPage == 2,
-            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(2) } },
-            text = { Text(stringResource(Res.string.schedule)) })
-          Tab(
-            selected = pagerState.currentPage == 3,
-            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(3) } },
-            text = { Text(stringResource(Res.string.overrides)) })
-        }
+        TaskTabRow(
+          tabs = listOf(
+            BASIC_TAB,
+            DETAILS_TAB,
+            SCHEDULE_TAB,
+            ADJUSTMENT_TAB
+          ),
+          selectedIndex = pagerState.currentPage,
+          onSelect = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
+        )
       }
     }) { padding ->
     Column(
@@ -217,7 +204,8 @@ fun EditTaskScreen(
               availableInspections = availableInspections.filter { it.id != card.id },
             )
 
-            3 -> ForcedOverrideFields(
+            3 -> TaskAdjustmentsTab(
+              schedule = schedule,
               forceOverrideEngine = forceOverrideEngine,
               onForceOverrideEngineChange = { forceOverrideEngine = it },
               forcedEngineHours = forcedEngineHours,
@@ -226,8 +214,8 @@ fun EditTaskScreen(
               onForceOverrideDateChange = { forceOverrideDate = it },
               forcedDateMillis = forcedDateMillis,
               onDateClick = { showDatePicker = true },
-              isForceComplied = forceCompliedStatus != null,
-              onToggleCompliedClick = {
+              isSkipping = forceCompliedStatus != null,
+              onSkipToggle = {
                 forceCompliedStatus = if (forceCompliedStatus != null) null else {
                   ForceCompliedStatus(
                     complied_date = toWireInstant(Clock.System.now().epochSeconds),
@@ -249,7 +237,10 @@ fun EditTaskScreen(
           val updatedForceDueEngine =
             if (forceOverrideEngine) forcedEngineHours.toFloatOrNull() ?: 0f else 0f
           val updatedForceDueDate = if (forceOverrideDate) forcedDateMillis?.let {
-            toWireInstant(it / 1000, 0)
+            toWireInstant(
+              it / 1000,
+              0
+            )
           } else null
 
           val isScheduleChanged = ruleList != card.rules ||

@@ -9,13 +9,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -35,10 +36,15 @@ import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
+import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
+import dev.fanfly.wingslog.feature.tasks.update.compose.SCHEDULE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskDetailTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
+import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
+import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabSpec
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -120,24 +126,15 @@ fun AddTaskScreen(
               )
             }
           })
-        PrimaryTabRow(
-          selectedTabIndex = pagerState.currentPage,
-          containerColor = MaterialTheme.colorScheme.background,
-        ) {
-          Tab(
-            selected = pagerState.currentPage == 0,
-            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
-            text = { Text(stringResource(Res.string.basics)) })
-          Tab(
-            selected = pagerState.currentPage == 1,
-            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
-            text = { Text(stringResource(Res.string.details)) })
-          Tab(
-            selected = pagerState.currentPage == 2,
-            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(2) } },
-            text = { Text(stringResource(Res.string.schedule)) },
-          )
-        }
+        TaskTabRow(
+          tabs = listOf(
+            BASIC_TAB,
+            DETAILS_TAB,
+            SCHEDULE_TAB,
+          ),
+          selectedIndex = pagerState.currentPage,
+          onSelect = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
+        )
       }
     }) { padding ->
     Column(
