@@ -63,7 +63,7 @@ sqldelight {
   databases {
     create("WingsLogDatabase") {
       packageName.set("dev.fanfly.wingslog.core.storage.db")
-      version = 2
+      version = 3
     }
   }
 }

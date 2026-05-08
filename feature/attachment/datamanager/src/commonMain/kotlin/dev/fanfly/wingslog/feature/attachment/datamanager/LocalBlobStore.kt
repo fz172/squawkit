@@ -94,6 +94,15 @@ interface LocalBlobStore {
    * is the caller's responsibility (driven separately by `BlobDeleteDriver`).
    */
   suspend fun delete(id: BlobId)
+
+  /** Observe all non-deleted blobs in the given scope path. */
+  fun observeForScope(scopePath: String): Flow<List<BlobRef>>
+
+  /** Reset `upload_attempts` to 0 so the uploader will retry on its next pass. */
+  suspend fun resetUploadAttempts(id: BlobId)
+
+  /** Delete all local blob files and rows for a given user uid. Called on wipe/sign-out. */
+  suspend fun wipeForUser(uid: String)
 }
 
 /** Returned by [LocalBlobStore.installDownloaded] when the downloaded bytes' sha256 mismatches. */

@@ -11,12 +11,12 @@ import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
-import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -78,7 +78,13 @@ class TaskViewModel(
         cards to overview
       }.collect { (cards, overview) ->
         val engineHours = overview?.current_engine_time?.toFloat() ?: 0f
-        _uiState.update { TaskUiState.Success(aircraftId, cards, engineHours) }
+        _uiState.update {
+          TaskUiState.Success(
+            aircraftId,
+            cards,
+            engineHours
+          )
+        }
         // Pre-load attachments when editing
         if (cardId != null && _pendingAttachments.value.isEmpty()) {
           cards.firstOrNull { it.id == cardId }?.let { card ->
@@ -105,7 +111,11 @@ class TaskViewModel(
         if (_pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS) break
         if (file.sizeBytes > MAX_FILE_SIZE_BYTES) continue
         try {
-          val attachment = attachmentManager.addPickedFile(file, file.name)
+          val attachment = attachmentManager.addPickedFile(
+            aircraftId,
+            file,
+            file.name
+          )
           _pendingAttachments.update { it + PendingAttachment.Local(attachment) }
         } catch (_: Exception) {
           // Individual file errors are surfaced via per-attachment status; skip
@@ -114,9 +124,15 @@ class TaskViewModel(
     }
   }
 
-  fun addLink(url: String, name: String) {
+  fun addLink(
+    url: String,
+    name: String,
+  ) {
     val displayName = name.ifBlank { url.take(40) }
-    val attachment = attachmentManager.makeLink(url, displayName)
+    val attachment = attachmentManager.makeLink(
+      url,
+      displayName
+    )
     _pendingAttachments.update { it + PendingAttachment.LocalLink(attachment) }
   }
 
@@ -152,10 +168,19 @@ class TaskViewModel(
   // ── Public save/delete ───────────────────────────────────────────────────
 
   fun saveNewTask(
-    title: String, type: ComplianceType, component: ComponentType,
-    rules: List<InspectionRule>, referenceNumber: String, complianceAuthority: String,
-    complianceDetails: String, isOneTime: Boolean, forceDueDate: Instant?,
-    forceDueEngine: Float, notes: String = "", onSuccess: () -> Unit, onError: () -> Unit = {},
+    title: String,
+    type: ComplianceType,
+    component: ComponentType,
+    rules: List<InspectionRule>,
+    referenceNumber: String,
+    complianceAuthority: String,
+    complianceDetails: String,
+    isOneTime: Boolean,
+    forceDueDate: Instant?,
+    forceDueEngine: Float,
+    notes: String = "",
+    onSuccess: () -> Unit,
+    onError: () -> Unit = {},
   ) {
     saveJob = viewModelScope.launch {
       _isSaving.value = true
@@ -163,13 +188,24 @@ class TaskViewModel(
         val newCardId = generateRandomId()
         val attachments = resolveAttachments(newCardId)
         val card = MaintenanceTask(
-          id = newCardId, title = title, type = type, component = component, rules = rules,
-          reference_number = referenceNumber, compliance_authority = complianceAuthority,
-          compliance_details = complianceDetails, is_one_time = isOneTime,
-          force_due_date = forceDueDate, force_due_engine_hour = forceDueEngine,
-          notes = notes, attachments = attachments,
+          id = newCardId,
+          title = title,
+          type = type,
+          component = component,
+          rules = rules,
+          reference_number = referenceNumber,
+          compliance_authority = complianceAuthority,
+          compliance_details = complianceDetails,
+          is_one_time = isOneTime,
+          force_due_date = forceDueDate,
+          force_due_engine_hour = forceDueEngine,
+          notes = notes,
+          attachments = attachments,
         )
-        inspectionDataManager.addTask(aircraftId, card).onSuccess { onSuccess() }
+        inspectionDataManager.addTask(
+          aircraftId,
+          card
+        ).onSuccess { onSuccess() }
       } finally {
         _isSaving.value = false
       }
@@ -198,27 +234,44 @@ class TaskViewModel(
       try {
         val attachments = resolveAttachments(cardId)
         val updatedCard = MaintenanceTask(
-          id = cardId, title = title, type = type, component = component, rules = rules,
-          reference_number = referenceNumber, compliance_authority = complianceAuthority,
-          compliance_details = complianceDetails, is_one_time = isOneTime,
-          force_due_date = forceDueDate, force_due_engine_hour = forceDueEngine,
+          id = cardId,
+          title = title,
+          type = type,
+          component = component,
+          rules = rules,
+          reference_number = referenceNumber,
+          compliance_authority = complianceAuthority,
+          compliance_details = complianceDetails,
+          is_one_time = isOneTime,
+          force_due_date = forceDueDate,
+          force_due_engine_hour = forceDueEngine,
           force_complied_status = forceCompliedStatus,
-          notes = notes, attachments = attachments,
+          notes = notes,
+          attachments = attachments,
         )
-        inspectionDataManager.updateTask(aircraftId, updatedCard).onSuccess { onSuccess() }
+        inspectionDataManager.updateTask(
+          aircraftId,
+          updatedCard
+        ).onSuccess { onSuccess() }
       } finally {
         _isSaving.value = false
       }
     }
   }
 
-  fun deleteTask(cardId: String, onSuccess: () -> Unit) {
+  fun deleteTask(
+    cardId: String,
+    onSuccess: () -> Unit,
+  ) {
     viewModelScope.launch {
       _pendingAttachments.value
         .filterIsInstance<PendingAttachment.Saved>()
         .filter { it.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK }
         .forEach { attachmentManager.delete(it.attachment) }
-      inspectionDataManager.deleteTask(aircraftId, cardId).onSuccess { onSuccess() }
+      inspectionDataManager.deleteTask(
+        aircraftId,
+        cardId
+      ).onSuccess { onSuccess() }
     }
   }
 

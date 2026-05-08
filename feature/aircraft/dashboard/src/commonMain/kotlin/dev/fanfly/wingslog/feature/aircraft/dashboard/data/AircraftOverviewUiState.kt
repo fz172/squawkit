@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.aircraft.dashboard.data
 
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 
 data class LogStats(
@@ -27,6 +28,7 @@ sealed interface AircraftOverviewUiState {
     val selectedTask: MaintenanceTaskWithStatus? = null,
     val logsForSelectedTask: List<MaintenanceLog> = emptyList(),
     val deletingTaskId: String? = null,
-    val downloadingIds: Set<String> = emptySet(),
+    val syncStates: Map<String, BlobSyncState> = emptyMap(),
+    val showLegacyAttachmentBanner: Boolean = false,
   ) : AircraftOverviewUiState
 }

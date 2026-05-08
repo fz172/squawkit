@@ -33,6 +33,7 @@ import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
@@ -63,7 +64,7 @@ fun MaintenanceLogDetailSheet(
   onDismiss: () -> Unit,
   onEditClick: () -> Unit,
   onAttachmentTap: (Attachment) -> Unit = {},
-  downloadingIds: Set<String> = emptySet(),
+  syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
   modifier: Modifier = Modifier,
@@ -134,7 +135,7 @@ fun MaintenanceLogDetailSheet(
     AttachmentSection(
       attachments = log.attachments,
       onAttachmentTap = onAttachmentTap,
-      downloadingIds = downloadingIds,
+      syncStates = syncStates,
       openError = openError,
     )
   }

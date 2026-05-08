@@ -37,14 +37,14 @@ class FirestorePullSubscription(private val firestore: FirebaseFirestore) {
         scope
       )
         .orderBy(
-          UPDATED_AT,
+          LAST_UPDATE_TIMESTAMP,
           Direction.ASCENDING
         )
 
     val query =
       if (sinceRemoteTsMs != null) {
         val watermark = Timestamp.fromMilliseconds(sinceRemoteTsMs.toDouble())
-        baseQuery.where { UPDATED_AT greaterThan watermark }
+        baseQuery.where { LAST_UPDATE_TIMESTAMP greaterThan watermark }
       } else {
         baseQuery
       }
@@ -61,6 +61,7 @@ class FirestorePullSubscription(private val firestore: FirebaseFirestore) {
 
   companion object {
     private const val TAG = "FirestorePullSubscription"
-    private const val UPDATED_AT = "updated_at"
+    // Must match the field name kotlinx.serialization produces from SyncDocWire.lastUpdateTimestamp.
+    private const val LAST_UPDATE_TIMESTAMP = "lastUpdateTimestamp"
   }
 }

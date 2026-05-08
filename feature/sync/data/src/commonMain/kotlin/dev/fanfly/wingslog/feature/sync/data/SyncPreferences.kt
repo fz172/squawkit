@@ -12,6 +12,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -25,7 +26,10 @@ import kotlinx.coroutines.flow.stateIn
  *
  * Persisted in SQLDelight via the `sync_config` table, scoped by user ID.
  */
-data class SyncPrefs(val cloudSyncEnabled: Boolean = true)
+data class SyncPrefs(
+  val cloudSyncEnabled: Boolean = true,
+  val allowUploadOnCellular: Boolean = false,
+)
 
 class SyncPreferences(
   private val db: WingsLogDatabase,
@@ -38,14 +42,15 @@ class SyncPreferences(
   val state: StateFlow<SyncPrefs> = auth.authStateChanged
     .flatMapLatest { user ->
       val uid = user?.uid ?: return@flatMapLatest flowOf(SyncPrefs())
-      db.schemaQueries.selectConfig(
-        uid,
-        KEY_CLOUD_SYNC_ENABLED
-      )
-        .asFlow()
+      db.schemaQueries.selectConfig(uid, KEY_CLOUD_SYNC_ENABLED).asFlow()
         .mapToOneOrNull(ioContext)
-        .map { value ->
-          SyncPrefs(cloudSyncEnabled = value?.toBoolean() ?: true)
+        .map { value -> value?.toBoolean() ?: true }
+        .combine(
+          db.schemaQueries.selectConfig(uid, KEY_ALLOW_UPLOAD_ON_CELLULAR).asFlow()
+            .mapToOneOrNull(ioContext)
+            .map { value -> value?.toBoolean() ?: false }
+        ) { cloudSync, cellular ->
+          SyncPrefs(cloudSyncEnabled = cloudSync, allowUploadOnCellular = cellular)
         }
     }
     .stateIn(
@@ -56,14 +61,16 @@ class SyncPreferences(
 
   fun setCloudSyncEnabled(enabled: Boolean) {
     val uid = auth.currentUser?.uid ?: return
-    db.schemaQueries.upsertConfig(
-      uid,
-      KEY_CLOUD_SYNC_ENABLED,
-      enabled.toString()
-    )
+    db.schemaQueries.upsertConfig(uid, KEY_CLOUD_SYNC_ENABLED, enabled.toString())
+  }
+
+  fun setAllowUploadOnCellular(allowed: Boolean) {
+    val uid = auth.currentUser?.uid ?: return
+    db.schemaQueries.upsertConfig(uid, KEY_ALLOW_UPLOAD_ON_CELLULAR, allowed.toString())
   }
 
   companion object {
     private const val KEY_CLOUD_SYNC_ENABLED = "cloud_sync_enabled"
+    private const val KEY_ALLOW_UPLOAD_ON_CELLULAR = "allow_upload_on_cellular"
   }
 }

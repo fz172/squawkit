@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
@@ -81,7 +82,7 @@ fun TaskDetailSheet(
   onDismiss: () -> Unit,
   onEditClick: () -> Unit,
   onAttachmentTap: (Attachment) -> Unit = {},
-  downloadingIds: Set<String> = emptySet(),
+  syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
   modifier: Modifier = Modifier,
 ) {
@@ -201,7 +202,7 @@ fun TaskDetailSheet(
     AttachmentSection(
       attachments = card.attachments,
       onAttachmentTap = onAttachmentTap,
-      downloadingIds = downloadingIds,
+      syncStates = syncStates,
       openError = openError,
     )
 

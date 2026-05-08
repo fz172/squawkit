@@ -6,7 +6,10 @@ import dev.fanfly.wingslog.aircraft.MaintenanceOverview
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
+import app.cash.sqldelight.db.SqlDriver
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseHealth
+import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.storage.DriverFactory
 import dev.fanfly.wingslog.core.storage.EntityCodecRegistry
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
@@ -28,7 +31,9 @@ import org.koin.dsl.module
  * [platformStorageModule] in androidMain / iosMain.
  */
 @OptIn(ExperimentalTime::class) val storageModule: Module = module {
-  single<WingsLogDatabase> { createWingsLogDatabase(get<DriverFactory>().createDriver()) }
+  single<SqlDriver> { get<DriverFactory>().createDriver() }
+
+  single<WingsLogDatabase> { createWingsLogDatabase(get<SqlDriver>()) }
 
   single<EntityCodecRegistry> {
     EntityCodecRegistry().apply {
@@ -69,4 +74,10 @@ import org.koin.dsl.module
   }
 
   single<TombstoneGc> { TombstoneGc(db = get()) }
+
+  single<DatabaseIntegrityChecker> {
+    DatabaseIntegrityChecker(db = get<WingsLogDatabase>(), driver = get<SqlDriver>())
+  }
+
+  single<DatabaseHealth> { DatabaseHealth(isCorrupted = !get<DatabaseIntegrityChecker>().checkIntegrity()) }
 }

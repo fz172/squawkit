@@ -79,6 +79,7 @@ sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sq
 sqldelight-sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
 truth = { module = "com.google.truth:truth", version.ref = "truth" }
 wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wire" }
+work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version = "2.10.1" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 

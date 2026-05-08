@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerM
 import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
+import dev.fanfly.wingslog.feature.sync.data.blob.di.blobSchedulerModule
 import dev.fanfly.wingslog.feature.sync.data.di.syncModule
 import dev.fanfly.wingslog.feature.sync.settings.di.syncSettingsModule
 import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
@@ -31,6 +32,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) = startKoin {
     storageModule,
     platformStorageModule,
     syncModule,
+    blobSchedulerModule,
     authModule,
     attachmentModule,
     platformAttachmentModule,

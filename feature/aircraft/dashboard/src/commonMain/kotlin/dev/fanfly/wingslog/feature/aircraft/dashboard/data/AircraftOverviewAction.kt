@@ -17,4 +17,5 @@ sealed interface AircraftOverviewAction {
   data object CancelDeleteTask : AircraftOverviewAction
   data object ConfirmDeleteTask : AircraftOverviewAction
   data class TaskFromLogClick(val taskId: String) : AircraftOverviewAction
+  data object DismissLegacyBanner : AircraftOverviewAction
 }

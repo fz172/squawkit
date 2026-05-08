@@ -1,0 +1,65 @@
+package dev.fanfly.wingslog.feature.sync.data.blob
+
+import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.storage.blob.BlobId
+import dev.fanfly.wingslog.core.storage.blob.RemoteState
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.attachment.datamanager.LocalBlobStore
+import dev.gitlive.firebase.storage.FirebaseStorage
+
+/**
+ * Cleans up a tombstoned (`deleted=1`) blob: removes the remote Firebase Storage object if one
+ * exists, then hard-deletes the local row. Called by the scheduler during startup scan and after
+ * [LocalBlobStore.delete] is invoked.
+ *
+ * Safe to call multiple times — if the remote object is already gone, Firebase Storage returns a
+ * 404 which we treat as success (the object is gone either way).
+ */
+class BlobDeleteDriver(
+  private val blobs: LocalBlobStore,
+  private val storage: FirebaseStorage,
+  private val db: WingsLogDatabase,
+) {
+
+  private val log = Logger.withTag(TAG)
+
+  suspend fun runOnce(id: BlobId): Boolean {
+    val ref = blobs.get(id)
+    if (ref == null) {
+      log.v { "delete skipped: no row for ${id.value}" }
+      return true
+    }
+    if (!ref.deleted) {
+      log.w { "delete skipped: ${id.value} is not tombstoned" }
+      return true
+    }
+
+    if (ref.remoteState == RemoteState.Synced || ref.remoteState == RemoteState.Uploading) {
+      val remotePath = ref.remotePath
+      if (remotePath != null) {
+        try {
+          storage.reference(remotePath).delete()
+          log.i { "deleted remote object $remotePath" }
+        } catch (e: Exception) {
+          if (isNotFound(e)) {
+            log.i { "remote object $remotePath already gone" }
+          } else {
+            log.w(e) { "transient failure deleting remote object $remotePath; will retry" }
+            return false
+          }
+        }
+      }
+    }
+
+    db.schemaQueries.hardDeleteBlob(id.value)
+    log.i { "hard-deleted blob row ${id.value}" }
+    return true
+  }
+
+  private fun isNotFound(e: Exception): Boolean =
+    e.message?.contains("404") == true || e.message?.contains("not found", ignoreCase = true) == true
+
+  companion object {
+    private const val TAG = "BlobDeleteDriver"
+  }
+}

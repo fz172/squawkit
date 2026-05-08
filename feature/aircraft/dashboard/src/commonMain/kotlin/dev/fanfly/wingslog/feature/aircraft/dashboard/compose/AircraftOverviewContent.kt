@@ -18,6 +18,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,6 +56,13 @@ fun AircraftOverviewContent(
   val coroutineScope = rememberCoroutineScope()
   val attachmentOpener: AttachmentOpener = koinInject()
   var taskSheetOpenError by remember { mutableStateOf<String?>(null) }
+
+  LaunchedEffect(state.showLegacyAttachmentBanner) {
+    if (state.showLegacyAttachmentBanner) {
+      snackbarHostState.showSnackbar("Some attachments were created before this version and may need to be re-downloaded.")
+      onAction(AircraftOverviewAction.DismissLegacyBanner)
+    }
+  }
 
   Scaffold(
     modifier = modifier,
@@ -111,7 +119,7 @@ fun AircraftOverviewContent(
             }
           }
         },
-        downloadingIds = state.downloadingIds,
+        syncStates = state.syncStates,
         openError = taskSheetOpenError,
       )
     }
@@ -153,7 +161,7 @@ fun AircraftOverviewContent(
 
           2 -> LogsTab(
             aircraftId = state.aircraft.id,
-            downloadingIds = state.downloadingIds,
+            syncStates = state.syncStates,
             onNavigateToAddLog = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
             onNavigateToEditLog = { logId ->
               onAction(

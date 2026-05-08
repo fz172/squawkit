@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.attachment.datamanager
 
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import kotlinx.coroutines.flow.Flow
@@ -23,7 +24,7 @@ interface AttachmentManager {
    *
    * @throws IllegalStateException if no Firebase user (anonymous or permanent) is signed in.
    */
-  suspend fun addPickedFile(picked: PickedFile, displayName: String): Attachment
+  suspend fun addPickedFile(aircraftId: String, picked: PickedFile, displayName: String): Attachment
 
   /** Build a LINK [Attachment] with no blob. */
   fun makeLink(url: String, displayName: String): Attachment
@@ -44,4 +45,16 @@ interface AttachmentManager {
 
   /** Reactive view of the upload pipeline's status for one attachment id. */
   fun observeStatus(attachmentId: String): Flow<AttachmentStatus>
+
+  /**
+   * Observe [BlobSyncState] for all blobs in the given scope path. Returns a map from
+   * attachment id to [BlobSyncState]. Used by the aircraft overview to drive status badges.
+   */
+  fun observeBlobStates(scopePath: String): Flow<Map<String, BlobSyncState>>
+
+  /** Reset upload_attempts for [id] so the scheduler picks it up again on its next pass. */
+  suspend fun retryUpload(id: String)
+
+  /** Delete all local blob files and rows for the given user. Called on wipe action. */
+  suspend fun wipeLocalData(uid: String)
 }

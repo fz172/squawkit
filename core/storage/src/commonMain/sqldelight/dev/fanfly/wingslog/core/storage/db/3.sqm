@@ -1,0 +1,5 @@
+-- Migration from schema version 2 to 3.
+-- Adds resume_url column to blob_object for persisting Firebase Storage resumable upload
+-- session URIs across process deaths (M7 iOS background URLSession scheduler).
+
+ALTER TABLE blob_object ADD COLUMN resume_url TEXT;

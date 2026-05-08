@@ -45,6 +45,7 @@ kotlin {
       implementation(libs.gitlive.firebase.auth)
       implementation(project(":core:ui"))
       implementation(project(":core:auth"))
+      implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:sync:sharedassets"))
       implementation(project(":feature:technician:sharedassets"))

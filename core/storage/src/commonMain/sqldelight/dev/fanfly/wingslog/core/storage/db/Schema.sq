@@ -147,7 +147,8 @@ CREATE TABLE blob_object (
   upload_attempts  INTEGER NOT NULL DEFAULT 0,
   last_attempt_at  INTEGER,
   updated_at       INTEGER NOT NULL,
-  deleted          INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0
+  deleted          INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
+  resume_url       TEXT
 );
 
 CREATE INDEX blob_state_idx ON blob_object(scope_path, remote_state);
@@ -175,6 +176,14 @@ WHERE deleted = 0
 ORDER BY updated_at ASC
 LIMIT :limit;
 
+selectPendingDownloads:
+SELECT * FROM blob_object
+WHERE deleted = 0
+  AND remote_state = 'REMOTE_ONLY'
+  AND scope_path LIKE :scopePrefix
+ORDER BY updated_at ASC
+LIMIT :limit;
+
 selectBlobTombstones:
 SELECT * FROM blob_object WHERE deleted = 1 ORDER BY updated_at ASC LIMIT :limit;
 
@@ -194,3 +203,38 @@ DELETE FROM blob_object WHERE id = ?;
 sumBlobSizeInScope:
 SELECT COALESCE(SUM(size_bytes), 0) AS used FROM blob_object
 WHERE scope_path = :scope AND deleted = 0;
+
+selectBlobsForScope:
+SELECT * FROM blob_object
+WHERE scope_path = :scopePath AND deleted = 0;
+
+selectBlobsForScopePrefix:
+SELECT * FROM blob_object
+WHERE scope_path LIKE :scopePrefix AND deleted = 0;
+
+resetUploadAttempts:
+UPDATE blob_object
+SET upload_attempts = 0
+WHERE id = :id;
+
+deleteBlobsForUser:
+DELETE FROM blob_object
+WHERE scope_path LIKE :scopePrefix;
+
+setResumeUrl:
+UPDATE blob_object SET resume_url = :resumeUrl WHERE id = :id;
+
+clearResumeUrl:
+UPDATE blob_object SET resume_url = NULL WHERE id = :id;
+
+-- Wipe queries used by the integrity-check recovery flow (PRD §10).
+-- sync_config is intentionally excluded so user preferences survive the wipe.
+
+wipeAllEntities:
+DELETE FROM entity;
+
+wipeAllSyncCursors:
+DELETE FROM sync_cursor;
+
+wipeAllBlobObjects:
+DELETE FROM blob_object;

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -42,6 +43,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.sync.settings.generated.resources.Res
 import wingslog.feature.sync.settings.generated.resources.setting_item_sync
+import wingslog.feature.sync.settings.generated.resources.setting_item_sync_on_cellular
+import wingslog.feature.sync.settings.generated.resources.sync_subtitle_cellular_disabled
+import wingslog.feature.sync.settings.generated.resources.sync_subtitle_cellular_enabled
 import wingslog.feature.sync.settings.generated.resources.sync_attachments_disclaimer
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_active
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_paused
@@ -109,6 +113,17 @@ fun SyncSettingsScreen(
             checked = state.cloudSyncEnabled,
             enabled = state.signedIn,
             onCheckedChange = viewModel::onCloudSyncToggled,
+          )
+          HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+          SyncToggleRow(
+            title = stringResource(Res.string.setting_item_sync_on_cellular),
+            subtitle = if (state.allowUploadOnCellular)
+              stringResource(Res.string.sync_subtitle_cellular_enabled)
+            else
+              stringResource(Res.string.sync_subtitle_cellular_disabled),
+            checked = state.allowUploadOnCellular,
+            enabled = state.signedIn && state.cloudSyncEnabled,
+            onCheckedChange = viewModel::onAllowUploadOnCellularToggled,
           )
         }
 

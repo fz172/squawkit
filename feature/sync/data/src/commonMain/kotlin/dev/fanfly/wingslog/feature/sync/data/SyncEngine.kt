@@ -6,6 +6,9 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.blob.BlobId
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.attachment.datamanager.UploadScheduler
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine.Companion.PUSH_FAILURE_KEY
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -51,6 +54,8 @@ class SyncEngine(
   private val storeFactory: EntityStoreFactory,
   private val syncPreferences: SyncPreferences,
   private val ioContext: CoroutineContext,
+  private val db: WingsLogDatabase? = null,
+  private val uploadScheduler: UploadScheduler? = null,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -129,10 +134,12 @@ class SyncEngine(
           when {
             user == null || user.isAnonymous -> {
               log.i { "auth state: signed out (or anonymous); sync idle" }
+              uploadScheduler?.cancelAll()
             }
 
             !cloudSyncEnabled -> {
               log.i { "auth state: signed in as ${user.uid} but sync disabled by preference; idle" }
+              uploadScheduler?.cancelAll()
             }
 
             else -> {
@@ -167,6 +174,10 @@ class SyncEngine(
       }
     }
     scope.launch { pushWorker.run(uid) }
+
+    if (uploadScheduler != null && db != null) {
+      scope.launch { schedulePendingBlobs(uid, uploadScheduler, db) }
+    }
 
     for (kind in TOP_LEVEL_KINDS) {
       scope.launch {
@@ -305,6 +316,23 @@ class SyncEngine(
         )
       }
     }
+  }
+
+  private fun schedulePendingBlobs(
+    uid: String,
+    scheduler: UploadScheduler,
+    database: WingsLogDatabase,
+  ) {
+    val prefix = "/users/$uid/%"
+    database.schemaQueries.selectPendingUploads(scopePrefix = prefix, limit = 500)
+      .executeAsList()
+      .forEach { row -> scheduler.scheduleUpload(BlobId(row.id)) }
+    database.schemaQueries.selectPendingDownloads(scopePrefix = prefix, limit = 500)
+      .executeAsList()
+      .forEach { row -> scheduler.scheduleDownload(BlobId(row.id)) }
+    database.schemaQueries.selectBlobTombstones(limit = 500)
+      .executeAsList()
+      .forEach { row -> scheduler.scheduleDelete(BlobId(row.id)) }
   }
 
   companion object {

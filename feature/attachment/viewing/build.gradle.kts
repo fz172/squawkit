@@ -36,6 +36,7 @@ kotlin {
       implementation(libs.compose.ui.backhandler)
     }
     androidMain.dependencies {
+      implementation("androidx.documentfile:documentfile:1.1.0")
     }
   }
 }

@@ -50,11 +50,10 @@ class AttachmentOpenerAndroid(
     try {
       val ref = blobs.get(BlobId(attachment.id))
       when {
-        ref == null -> emit(OpenState.Failed(
-          if (attachment.sha256.isBlank()) LegacyAttachment() else MissingBlobIndex(attachment.id)
-        ))
+        ref == null && attachment.sha256.isBlank() -> emit(OpenState.Failed(LegacyAttachment()))
 
-        ref.remoteState == RemoteState.RemoteOnly -> {
+        ref == null || ref.remoteState == RemoteState.RemoteOnly -> {
+          // Row missing (reconciler not yet run) or row present but not downloaded yet — same path.
           var downloadError: Throwable? = null
           attachmentManager.ensureLocal(attachment).collect { state ->
             if (state is DownloadState.Failed) downloadError = state.error

@@ -18,4 +18,7 @@
   <string name="sync_subtitle_signin">Sign in to enable cloud sync.</string>
   <string name="sync_subtitle_active">Backed up to your account across devices.</string>
   <string name="sync_subtitle_off">Your data stays on this device only.</string>
+  <string name="setting_item_sync_on_cellular">Upload on Cellular</string>
+  <string name="sync_subtitle_cellular_enabled">Attachments upload over Wi-Fi and cellular.</string>
+  <string name="sync_subtitle_cellular_disabled">Attachments upload over Wi-Fi only.</string>
 </resources>
