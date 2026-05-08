@@ -31,19 +31,14 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.ComponentType
-import dev.fanfly.wingslog.aircraft.EngineHourRule
-import dev.fanfly.wingslog.aircraft.InspectionRule
-import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.TimeRule
-import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskDetailTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
-import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -70,25 +65,19 @@ fun AddTaskScreen(
   var title by remember { mutableStateOf("") }
   var component by remember { mutableStateOf(ComponentType.COMPONENT_AIRFRAME) }
   var type by remember { mutableStateOf(ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION) }
-  var intervalMonths by remember { mutableStateOf("") }
-  var intervalHours by remember { mutableStateOf("") }
-  var isOneTime by remember { mutableStateOf(false) }
+  var schedule by remember { mutableStateOf(ScheduleState()) }
   var refNumber by remember { mutableStateOf("") }
   var complianceAuthority by remember { mutableStateOf("") }
   var complianceNotes by remember { mutableStateOf("") }
-  var linkedToId by remember { mutableStateOf<String?>(null) }
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
 
   val hasChanges = title.isNotEmpty() ||
     component != ComponentType.COMPONENT_AIRFRAME ||
     type != ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION ||
-    intervalMonths.isNotEmpty() ||
-    intervalHours.isNotEmpty() ||
-    isOneTime ||
+    schedule != ScheduleState() ||
     refNumber.isNotEmpty() ||
     complianceAuthority.isNotEmpty() ||
-    complianceNotes.isNotEmpty() ||
-    linkedToId != null
+    complianceNotes.isNotEmpty()
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()
@@ -165,89 +154,50 @@ fun AddTaskScreen(
             .padding(Spacing.screenPadding)
         ) {
           when (page) {
-            0 -> {
-              // --- Page 0: Identity ---
-              TaskIdentityTab(
-                title = title,
-                onTitleChange = { title = it },
-                component = component,
-                onComponentChange = { component = it },
-                complianceType = type,
-                onComplianceTypeChange = { type = it },
-              )
-            }
+            0 -> TaskIdentityTab(
+              title = title,
+              onTitleChange = { title = it },
+              component = component,
+              onComponentChange = { component = it },
+              complianceType = type,
+              onComplianceTypeChange = { type = it },
+            )
 
-            1 -> {
-              // --- Page 2: Documentation & Notes ---
-              TaskDetailTab(
-                refNumber = refNumber,
-                onRefNumberChange = { refNumber = it },
-                complianceAuthority = complianceAuthority,
-                onComplianceAuthorityChange = { complianceAuthority = it },
-                complianceNotes = complianceNotes,
-                onComplianceNotesChange = { complianceNotes = it },
-                attachmentSection = attachmentSection
-              )
-            }
+            1 -> TaskDetailTab(
+              refNumber = refNumber,
+              onRefNumberChange = { refNumber = it },
+              complianceAuthority = complianceAuthority,
+              onComplianceAuthorityChange = { complianceAuthority = it },
+              complianceNotes = complianceNotes,
+              onComplianceNotesChange = { complianceNotes = it },
+              attachmentSection = attachmentSection
+            )
 
-            2 -> {
-              // --- Page 1: Scheduling ---
-              TaskScheduleTab(
-                isOneTime = isOneTime,
-                onOneTimeChange = { isOneTime = it },
-                intervalMonths = intervalMonths,
-                onMonthsChange = { intervalMonths = it },
-                intervalHours = intervalHours,
-                onHoursChange = { intervalHours = it },
-                linkedToId = linkedToId,
-                onLinkChange = { linkedToId = it },
-                availableInspections = availableInspections
-              )
-            }
+            2 -> TaskScheduleTab(
+              state = schedule,
+              onChange = { schedule = it },
+              availableInspections = availableInspections,
+            )
           }
         }
       }
 
       BottomButtons(
         onPrimaryClick = {
-          val ruleList = mutableListOf<InspectionRule>()
-          val now = Clock.System.now()
-          if (linkedToId != null) {
-            ruleList.add(InspectionRule(linked_rule = LinkedRule(parent_inspection_id = linkedToId!!)))
-          } else {
-            intervalMonths.toIntOrNull()?.let {
-              ruleList.add(
-                InspectionRule(
-                  time_rule = TimeRule(
-                    interval_months = it,
-                    creation_date = toWireInstant(
-                      now.epochSeconds,
-                      now.nanosecondsOfSecond
-                    ),
-                  )
-                )
-              )
-            }
-            intervalHours.toDoubleOrNull()?.let {
-              ruleList.add(InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = it.toFloat())))
-            }
-          }
-
           val card = MaintenanceTask(
             id = "",
             title = title,
             component = component,
             type = type,
-            rules = ruleList,
+            rules = schedule.toRules(),
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
-            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() }
-              ?: "",
-            compliance_details = complianceNotes.takeIf { it.isNotBlank() }
-              ?: "",
-            is_one_time = isOneTime,
+            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() } ?: "",
+            compliance_details = complianceNotes.takeIf { it.isNotBlank() } ?: "",
+            is_one_time = schedule.isOneTime,
             force_due_engine_hour = 0f,
             force_due_date = null,
-            notes = "")
+            notes = "",
+          )
           onSave(card)
         },
         onSecondaryClick = { tryCancel() },

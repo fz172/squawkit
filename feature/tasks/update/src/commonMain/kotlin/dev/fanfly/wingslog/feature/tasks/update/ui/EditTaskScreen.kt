@@ -33,18 +33,15 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.aircraft.EngineHourRule
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
-import dev.fanfly.wingslog.aircraft.InspectionRule
-import dev.fanfly.wingslog.aircraft.LinkedRule
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.update.compose.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.update.compose.ForcedOverrideFields
+import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskDetailTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
@@ -80,20 +77,12 @@ fun EditTaskScreen(
   var title by remember { mutableStateOf(card.title) }
   val component = card.component
   val type = card.type
-  var isOneTime by remember { mutableStateOf(card.is_one_time) }
 
-  val initialIntervalMonths =
-    card.rules.firstNotNullOfOrNull { it.time_rule?.interval_months }?.toString() ?: ""
-  val initialIntervalHours =
-    card.rules.firstNotNullOfOrNull { it.engine_hour_rule?.interval_hours }?.toString() ?: ""
-  val initialLinkedId = card.rules.firstNotNullOfOrNull { it.linked_rule?.parent_inspection_id }
-
-  var intervalMonths by remember { mutableStateOf(initialIntervalMonths) }
-  var intervalHours by remember { mutableStateOf(initialIntervalHours) }
+  val initialSchedule = remember(card) { ScheduleState.fromTask(card) }
+  var schedule by remember { mutableStateOf(initialSchedule) }
   var refNumber by remember { mutableStateOf(card.reference_number) }
   var complianceAuthority by remember { mutableStateOf(card.compliance_authority) }
   var complianceNotes by remember { mutableStateOf(card.compliance_details) }
-  var linkedToId by remember { mutableStateOf(initialLinkedId) }
   var forceCompliedStatus by remember { mutableStateOf(card.force_complied_status) }
 
   // Force Override States
@@ -113,13 +102,10 @@ fun EditTaskScreen(
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
 
   val hasChanges = title != card.title ||
-    isOneTime != card.is_one_time ||
-    intervalMonths != initialIntervalMonths ||
-    intervalHours != initialIntervalHours ||
+    schedule != initialSchedule ||
     refNumber != card.reference_number ||
     complianceAuthority != card.compliance_authority ||
     complianceNotes != card.compliance_details ||
-    linkedToId != initialLinkedId ||
     forceCompliedStatus != card.force_complied_status ||
     forceOverrideEngine != (card.force_due_engine_hour > 0f) ||
     (forceOverrideEngine && forcedEngineHours != (
@@ -206,111 +192,68 @@ fun EditTaskScreen(
             .padding(Spacing.screenPadding)
         ) {
           when (page) {
-            0 -> {
-              // --- Page 0: Identity (component & compliance type are read-only in edit) ---
-              TaskIdentityTab(
-                title = title,
-                onTitleChange = { title = it },
-                component = component,
-                onComponentChange = null,
-                complianceType = type,
-                onComplianceTypeChange = null,
-              )
-            }
+            0 -> TaskIdentityTab(
+              title = title,
+              onTitleChange = { title = it },
+              component = component,
+              onComponentChange = null,
+              complianceType = type,
+              onComplianceTypeChange = null,
+            )
 
-            1 -> {
-              // --- Page 2: Details ---
-              TaskDetailTab(
-                refNumber = refNumber,
-                onRefNumberChange = { refNumber = it },
-                complianceAuthority = complianceAuthority,
-                onComplianceAuthorityChange = { complianceAuthority = it },
-                complianceNotes = complianceNotes,
-                onComplianceNotesChange = { complianceNotes = it },
-                attachmentSection = attachmentSection
-              )
-            }
+            1 -> TaskDetailTab(
+              refNumber = refNumber,
+              onRefNumberChange = { refNumber = it },
+              complianceAuthority = complianceAuthority,
+              onComplianceAuthorityChange = { complianceAuthority = it },
+              complianceNotes = complianceNotes,
+              onComplianceNotesChange = { complianceNotes = it },
+              attachmentSection = attachmentSection
+            )
 
-            2 -> {
-              // --- Page 1: Schedule ---
-              TaskScheduleTab(
-                isOneTime = isOneTime,
-                onOneTimeChange = { isOneTime = it },
-                intervalMonths = intervalMonths,
-                onMonthsChange = { intervalMonths = it },
-                intervalHours = intervalHours,
-                onHoursChange = { intervalHours = it },
-                linkedToId = linkedToId,
-                onLinkChange = { linkedToId = it },
-                availableInspections = availableInspections.filter { it.id != card.id }
-              )
-            }
+            2 -> TaskScheduleTab(
+              state = schedule,
+              onChange = { schedule = it },
+              availableInspections = availableInspections.filter { it.id != card.id },
+            )
 
-            3 -> {
-              // --- Page 3: Overrides ---
-              ForcedOverrideFields(
-                forceOverrideEngine = forceOverrideEngine,
-                onForceOverrideEngineChange = { forceOverrideEngine = it },
-                forcedEngineHours = forcedEngineHours,
-                onForcedEngineHoursChange = { forcedEngineHours = it },
-                forceOverrideDate = forceOverrideDate,
-                onForceOverrideDateChange = { forceOverrideDate = it },
-                forcedDateMillis = forcedDateMillis,
-                onDateClick = { showDatePicker = true },
-                isForceComplied = forceCompliedStatus != null,
-                onToggleCompliedClick = {
-                  forceCompliedStatus = if (forceCompliedStatus != null) null else {
-                    ForceCompliedStatus(
-                      complied_date = toWireInstant(Clock.System.now().epochSeconds),
-                      complied_engine_hours = currentEngineHours
-                    )
-                  }
+            3 -> ForcedOverrideFields(
+              forceOverrideEngine = forceOverrideEngine,
+              onForceOverrideEngineChange = { forceOverrideEngine = it },
+              forcedEngineHours = forcedEngineHours,
+              onForcedEngineHoursChange = { forcedEngineHours = it },
+              forceOverrideDate = forceOverrideDate,
+              onForceOverrideDateChange = { forceOverrideDate = it },
+              forcedDateMillis = forcedDateMillis,
+              onDateClick = { showDatePicker = true },
+              isForceComplied = forceCompliedStatus != null,
+              onToggleCompliedClick = {
+                forceCompliedStatus = if (forceCompliedStatus != null) null else {
+                  ForceCompliedStatus(
+                    complied_date = toWireInstant(Clock.System.now().epochSeconds),
+                    complied_engine_hours = currentEngineHours
+                  )
                 }
-              )
-            }
+              }
+            )
           }
         }
       }
 
       BottomButtons(
         onPrimaryClick = {
-          val ruleList = mutableListOf<InspectionRule>()
           val existingTimeRuleCreationDate =
             card.rules.firstNotNullOfOrNull { it.time_rule?.creation_date }
-          val now = Clock.System.now()
-          if (linkedToId != null) {
-            ruleList.add(InspectionRule(linked_rule = LinkedRule(parent_inspection_id = linkedToId!!)))
-          } else {
-            intervalMonths.toIntOrNull()?.let {
-              ruleList.add(
-                InspectionRule(
-                  time_rule = TimeRule(
-                    interval_months = it,
-                    creation_date = existingTimeRuleCreationDate
-                      ?: toWireInstant(
-                        now.epochSeconds,
-                        now.nanosecondsOfSecond
-                      ),
-                  )
-                )
-              )
-            }
-            intervalHours.toFloatOrNull()?.let {
-              ruleList.add(InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = it)))
-            }
-          }
+          val ruleList = schedule.toRules(existingTimeRuleCreationDate)
 
           val updatedForceDueEngine =
             if (forceOverrideEngine) forcedEngineHours.toFloatOrNull() ?: 0f else 0f
           val updatedForceDueDate = if (forceOverrideDate) forcedDateMillis?.let {
-            toWireInstant(
-              it / 1000,
-              0
-            )
+            toWireInstant(it / 1000, 0)
           } else null
 
           val isScheduleChanged = ruleList != card.rules ||
-            isOneTime != card.is_one_time ||
+            schedule.isOneTime != card.is_one_time ||
             updatedForceDueEngine != card.force_due_engine_hour ||
             updatedForceDueDate != card.force_due_date
 
@@ -319,7 +262,7 @@ fun EditTaskScreen(
             component = component,
             type = type,
             rules = ruleList,
-            is_one_time = isOneTime,
+            is_one_time = schedule.isOneTime,
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
             compliance_authority = complianceAuthority.takeIf { it.isNotBlank() } ?: "",
             compliance_details = complianceNotes.takeIf { it.isNotBlank() } ?: "",

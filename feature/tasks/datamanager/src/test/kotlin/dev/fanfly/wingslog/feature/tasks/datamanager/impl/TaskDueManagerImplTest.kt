@@ -144,7 +144,7 @@ class TaskDueManagerImplTest {
     val result = manager.computeNextDue(card, listOf(log), listOf(card))
 
     assertThat(result.status).isEqualTo(DueStatus.OVERDUE)
-    assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 1, 1))
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 1, 31))
   }
 
   @Test
@@ -155,7 +155,7 @@ class TaskDueManagerImplTest {
     val result = manager.computeNextDue(card, listOf(log), listOf(card))
 
     assertThat(result.status).isEqualTo(DueStatus.NORMAL)
-    assertThat(result.nextDueDate).isEqualTo(LocalDate(2027, 1, 1))
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2027, 1, 31))
   }
 
   @Test
@@ -164,7 +164,7 @@ class TaskDueManagerImplTest {
 
     val result = manager.computeNextDue(card, emptyList(), listOf(card))
 
-    assertThat(result.nextDueDate).isEqualTo(LocalDate(2027, 4, 13))
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2027, 4, 30))
     assertThat(result.status).isEqualTo(DueStatus.NORMAL)
   }
 
@@ -175,7 +175,7 @@ class TaskDueManagerImplTest {
 
     val result = manager.computeNextDue(card, listOf(log), listOf(card))
 
-    assertThat(result.nextDueDate).isEqualTo(LocalDate(2024, 7, 1))
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2024, 7, 31))
   }
 
   @Test
@@ -251,7 +251,7 @@ class TaskDueManagerImplTest {
 
     val result = manager.computeNextDue(child, emptyList(), listOf(parent, child))
 
-    assertThat(result.nextDueDate).isEqualTo(LocalDate(2027, 4, 13))
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2027, 4, 30))
     assertThat(result.status).isEqualTo(DueStatus.NORMAL)
   }
 
@@ -280,12 +280,12 @@ class TaskDueManagerImplTest {
   @Test
   fun timeRule_noLogs_withCreationDate_usesCreationDateAsBase() {
     // No matching logs; creation_date set to 2024-01-01 with a 12-month interval.
-    // Expected next due: 2025-01-01, which is before CURRENT_INSTANT (2026-04-13) → OVERDUE.
+    // Expected next due: 2025-01-31 (EOM), which is before CURRENT_INSTANT (2026-04-13) → OVERDUE.
     val card = card(id = "c1", rules = listOf(timeRule(12, creationDate = iso("2024-01-01"))))
 
     val result = manager.computeNextDue(card, emptyList(), listOf(card))
 
-    assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 1, 1))
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 1, 31))
     assertThat(result.status).isEqualTo(DueStatus.OVERDUE)
   }
 
@@ -301,9 +301,9 @@ class TaskDueManagerImplTest {
 
     val result = manager.computeNextDue(card, listOf(unrelatedLog), listOf(card))
 
-    // Due date must be anchored to creation_date (2024-01-01) + 12 months = 2025-01-01,
-    // NOT to the unrelated log date (2024-06-01) + 12 months = 2025-06-01.
-    assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 1, 1))
+    // Due date must be anchored to creation_date (2024-01-01) + 12 months = 2025-01-31 (EOM),
+    // NOT to the unrelated log date (2024-06-01) + 12 months = 2025-06-30.
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 1, 31))
   }
 
   @Test
@@ -316,8 +316,8 @@ class TaskDueManagerImplTest {
 
     val result = manager.computeNextDue(card, listOf(matchingLog), listOf(card))
 
-    // Base = log date 2026-01-01 + 12 months = 2027-01-01, not creation_date + 12 months.
-    assertThat(result.nextDueDate).isEqualTo(LocalDate(2027, 1, 1))
+    // Base = log date 2026-01-01 + 12 months = 2027-01-31 (EOM), not creation_date + 12 months.
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2027, 1, 31))
     assertThat(result.status).isEqualTo(DueStatus.NORMAL)
   }
 
@@ -332,7 +332,7 @@ class TaskDueManagerImplTest {
 
     val result = manager.computeNextDue(card, listOf(log), listOf(card))
 
-    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 5, 1))
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 5, 31))
   }
 
   @Test
@@ -346,7 +346,7 @@ class TaskDueManagerImplTest {
 
     val result = manager.computeNextDue(card, listOf(log), listOf(card))
 
-    assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 5, 1))
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 5, 31))
   }
 
   private fun card(

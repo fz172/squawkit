@@ -12,6 +12,7 @@ import kotlin.time.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 
@@ -115,7 +116,14 @@ class TaskDueManagerImpl(
               currentDate
             }
           }
-          val calculated = baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH)
+          val calculated = when {
+            timeRule.interval_days > 0 -> baseDate.plus(timeRule.interval_days, DateTimeUnit.DAY)
+            timeRule.interval_years > 0 -> baseDate.plus(timeRule.interval_years, DateTimeUnit.YEAR)
+            // Month-based intervals snap to end-of-month so a task done mid-month
+            // is due at the close of the calendar month it lands in
+            // (e.g. logged 12/14/2025 + 12mo → due 12/31/2026).
+            else -> baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH).endOfMonth()
+          }
           if (nextDueDate == null || calculated < nextDueDate) {
             nextDueDate = calculated
           }
@@ -186,7 +194,13 @@ class TaskDueManagerImpl(
       if (compliedEpoch > latestLogEpoch) {
         for (rule in card.rules) {
           rule.time_rule?.let { timeRule ->
-            nextDueDate = nextDueDate?.plus(timeRule.interval_months, DateTimeUnit.MONTH)
+            nextDueDate = nextDueDate?.let { d ->
+              when {
+                timeRule.interval_days > 0 -> d.plus(timeRule.interval_days, DateTimeUnit.DAY)
+                timeRule.interval_years > 0 -> d.plus(timeRule.interval_years, DateTimeUnit.YEAR)
+                else -> d.plus(timeRule.interval_months, DateTimeUnit.MONTH).endOfMonth()
+              }
+            }
           }
           rule.engine_hour_rule?.let { engineRule ->
             nextDueEngine = nextDueEngine?.let { it + engineRule.interval_hours }
@@ -219,3 +233,9 @@ class TaskDueManagerImpl(
     private val logger = Logger.withTag("TaskDueManager")
   }
 }
+
+private fun LocalDate.endOfMonth(): LocalDate {
+  val firstOfNextMonth = LocalDate(year, month, 1).plus(1, DateTimeUnit.MONTH)
+  return firstOfNextMonth.minus(1, DateTimeUnit.DAY)
+}
+
