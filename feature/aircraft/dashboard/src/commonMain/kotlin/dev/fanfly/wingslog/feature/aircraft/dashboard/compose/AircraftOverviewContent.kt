@@ -133,6 +133,7 @@ fun AircraftOverviewContent(
 
           2 -> LogsTab(
             aircraftId = state.aircraft.id,
+            downloadingIds = state.downloadingIds,
             onNavigateToAddLog = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
             onNavigateToEditLog = { logId ->
               onAction(
@@ -146,6 +147,7 @@ fun AircraftOverviewContent(
               onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
               coroutineScope.launch { pagerState.animateScrollToPage(1) }
             },
+            onAttachmentTap = { onAction(AircraftOverviewAction.AttachmentTap(it)) },
           )
         }
       }
