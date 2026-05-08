@@ -66,12 +66,7 @@ class BlobUploadDriver(
     blobs.markUploading(id)
 
     val remotePath = ref.remotePath
-    if (remotePath == null) {
-      val e = IllegalStateException("blob ${id.value} has null remote_path")
-      log.e(e) { "upload failed permanently" }
-      blobs.markFailedPermanent(id, e)
-      return true
-    }
+      ?: "${ref.scope.toPath().trim('/')}/blobs/${id.value}"
 
     return try {
       storage.reference(remotePath).putData(Data(bytes))
