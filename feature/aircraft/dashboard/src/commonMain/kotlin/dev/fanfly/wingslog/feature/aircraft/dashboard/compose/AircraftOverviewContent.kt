@@ -18,7 +18,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.AircraftDashboardTabRow
@@ -27,10 +31,13 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.MaintenanceTa
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.OverviewTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
+import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.tasks.update.compose.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
@@ -46,6 +53,8 @@ fun AircraftOverviewContent(
 ) {
   val pagerState = rememberPagerState { 3 }
   val coroutineScope = rememberCoroutineScope()
+  val attachmentOpener: AttachmentOpener = koinInject()
+  var taskSheetOpenError by remember { mutableStateOf<String?>(null) }
 
   Scaffold(
     modifier = modifier,
@@ -82,7 +91,10 @@ fun AircraftOverviewContent(
       TaskDetailSheet(
         cardWithStatus = selectedTask,
         logs = state.logsForSelectedTask,
-        onDismiss = { onAction(AircraftOverviewAction.DismissTaskDetail) },
+        onDismiss = {
+          taskSheetOpenError = null
+          onAction(AircraftOverviewAction.DismissTaskDetail)
+        },
         onEditClick = {
           onAction(
             AircraftOverviewAction.EditTaskClick(
@@ -91,8 +103,16 @@ fun AircraftOverviewContent(
             )
           )
         },
-        onAttachmentTap = { onAction(AircraftOverviewAction.AttachmentTap(it)) },
+        onAttachmentTap = { attachment ->
+          taskSheetOpenError = null
+          coroutineScope.launch {
+            attachmentOpener.open(attachment).collect { openState ->
+              if (openState is OpenState.Failed) taskSheetOpenError = openState.error.message
+            }
+          }
+        },
         downloadingIds = state.downloadingIds,
+        openError = taskSheetOpenError,
       )
     }
 
@@ -147,7 +167,6 @@ fun AircraftOverviewContent(
               onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
               coroutineScope.launch { pagerState.animateScrollToPage(1) }
             },
-            onAttachmentTap = { onAction(AircraftOverviewAction.AttachmentTap(it)) },
           )
         }
       }

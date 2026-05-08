@@ -82,6 +82,7 @@ fun TaskDetailSheet(
   onEditClick: () -> Unit,
   onAttachmentTap: (Attachment) -> Unit = {},
   downloadingIds: Set<String> = emptySet(),
+  openError: String? = null,
   modifier: Modifier = Modifier,
 ) {
   val card = cardWithStatus.card
@@ -201,6 +202,7 @@ fun TaskDetailSheet(
       attachments = card.attachments,
       onAttachmentTap = onAttachmentTap,
       downloadingIds = downloadingIds,
+      openError = openError,
     )
 
     if (card.attachments.isNotEmpty()) {

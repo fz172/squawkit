@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.data
 
-import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 
 sealed interface AircraftOverviewAction {
@@ -17,6 +16,5 @@ sealed interface AircraftOverviewAction {
 
   data object CancelDeleteTask : AircraftOverviewAction
   data object ConfirmDeleteTask : AircraftOverviewAction
-  data class AttachmentTap(val attachment: Attachment) : AircraftOverviewAction
   data class TaskFromLogClick(val taskId: String) : AircraftOverviewAction
 }

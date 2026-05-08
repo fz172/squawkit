@@ -85,6 +85,7 @@ fun MaintenanceLogListContent(
   onEditLog: (String) -> Unit,
   onAddLog: () -> Unit,
   onAttachmentTap: (Attachment) -> Unit,
+  openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
@@ -246,6 +247,7 @@ fun MaintenanceLogListContent(
                 },
                 onAttachmentTap = onAttachmentTap,
                 downloadingIds = downloadingIds,
+                openError = openError,
                 onTaskClick = onTaskClick?.let { cb ->
                   { taskId ->
                     onDismissDetail()

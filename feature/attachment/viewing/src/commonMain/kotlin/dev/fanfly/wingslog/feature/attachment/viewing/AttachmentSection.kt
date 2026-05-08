@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.attachment.sharedassets.generated.resources.Res
 import wingslog.feature.attachment.sharedassets.generated.resources.attachments
+import wingslog.feature.attachment.sharedassets.generated.resources.open_failed
 
 /**
  * Read-only list of attachments shown on detail views.
@@ -25,6 +26,7 @@ fun AttachmentSection(
   onAttachmentTap: (Attachment) -> Unit,
   modifier: Modifier = Modifier,
   downloadingIds: Set<String> = emptySet(),
+  openError: String? = null,
 ) {
   if (attachments.isEmpty()) return
 
@@ -42,6 +44,14 @@ fun AttachmentSection(
         isDownloading = downloadingIds.contains(attachment.id)
       )
       HorizontalDivider()
+    }
+    if (openError != null) {
+      Spacer(Modifier.height(Spacing.small))
+      Text(
+        text = openError.ifBlank { stringResource(Res.string.open_failed) },
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.error,
+      )
     }
   }
 }

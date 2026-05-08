@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
-import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
@@ -190,16 +189,6 @@ class AircraftOverviewViewModel(
 
       AircraftOverviewAction.ConfirmDeleteTask -> {
         confirmDeleteTask()
-      }
-
-      is AircraftOverviewAction.AttachmentTap -> {
-        viewModelScope.launch {
-          attachmentOpener.open(action.attachment).collect { state ->
-            if (state is OpenState.Failed) {
-              _events.send(AircraftOverviewEvent.ShowError(state.error.message))
-            }
-          }
-        }
       }
 
       is AircraftOverviewAction.TaskFromLogClick -> {
