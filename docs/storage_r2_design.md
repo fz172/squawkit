@@ -28,34 +28,44 @@
 
 ## 2. Module layout
 
-One new module, plus targeted edits inside `core/attachments/datamanager` and `core/storage`.
+R2 introduces a new `feature/attachment` module (canonical layout) and **deletes `core/attachments`** — its content is rewritten anyway (clean break, §10) so we relocate into the canonical pattern instead of perpetuating the pre-canonical `core/` placement. Generic blob persistence (table + sealed type + adapter) stays in `core/storage`, mirroring how `sync_cursor` is a table in `core/storage/Schema.sq` but its API (`SyncCursorStore`) lives in `feature/sync/data`.
 
 ```
 core/
-  storage/                                 # M1 — extended in R2
+  storage/                                 # M1 — schema only is extended in R2
     src/commonMain/sqldelight/.../db/
       Schema.sq                            #   adds blob_object table + queries (§4)
     src/commonMain/kotlin/.../core/storage/blob/
-      BlobId.kt                            #   value class
-      BlobRef.kt                           #   row projection used by callers
       RemoteState.kt                       #   sealed interface + ColumnAdapter
-      LocalBlobStore.kt                    #   interface
-      impl/
-        SqlDelightLocalBlobStore.kt        #   filesystem + DB row
-        BlobFilesystem.kt                  #   expect class — filesDir, mkdir, write/read/delete
-    src/androidMain/kotlin/.../blob/impl/
-      BlobFilesystem.android.kt            #   Context.filesDir
-    src/iosMain/kotlin/.../blob/impl/
-      BlobFilesystem.ios.kt                #   NSDocumentDirectory + NSURLIsExcludedFromBackupKey
+      BlobId.kt                            #   value class
 
-  attachments/                             # rewritten in R2
-    datamanager/
-      AttachmentManager.kt                 #   interface — see §6
-      impl/
-        LocalFirstAttachmentManagerImpl.kt #   replaces AttachmentManagerImpl
-      AttachmentOpener.kt                  #   now resolves via LocalBlobStore (§7)
+  attachments/                             # REMOVED — relocated into feature/attachment/*
 
 feature/
+  attachment/                              # NEW — replaces core/attachments
+    model/                                 #   PendingAttachment, BlobRef, AttachmentStatus,
+                                           #   QuotaResult, DownloadState, OpenState, UploadState
+    datamanager/
+      src/commonMain/kotlin/.../feature/attachment/datamanager/
+        LocalBlobStore.kt                  #   interface (§6.1)
+        BlobFilesystem.kt                  #   expect — filesDir, read/write/delete
+        AttachmentManager.kt               #   interface (§6.2)
+        AttachmentOpener.kt                #   expect (§7)
+        QuotaChecker.kt                    #   §9b
+        impl/
+          SqlDelightLocalBlobStore.kt      #   wraps WingsLogDatabase blob_object queries
+          LocalFirstAttachmentManagerImpl.kt
+        di/AttachmentModule.kt             #   Koin
+      src/androidMain/.../impl/
+        BlobFilesystem.android.kt          #   Context.filesDir
+        AttachmentOpenerAndroid.kt
+      src/iosMain/.../impl/
+        BlobFilesystem.ios.kt              #   NSDocumentDirectory + NSURLIsExcludedFromBackupKey
+        AttachmentOpenerIos.kt
+    sharedassets/                          #   strings (incl. quota/dedupe/legacy error copy), icons
+    viewing/                               #   AttachmentRow, AttachmentSection, status badge
+    update/                                #   picker bottom sheet, link entry, viewmodel glue
+
   sync/
     data/                                  # M3 — extended in R2
       src/commonMain/kotlin/.../sync/data/blob/
@@ -70,7 +80,11 @@ feature/
         UrlSessionUploadScheduler.kt       #   actual: URLSession bg + BGProcessingTask (M7)
 ```
 
-`composeApp/di/initKoin.kt` swaps the Koin binding for `AttachmentManager` from R1's Firebase-direct impl to the local-first impl, and adds `blobUploadModule` to the aggregate.
+**Why blob_object stays in `core/storage`.** It's a SQLDelight table inside the same `WingsLogDatabase` as `entity` and `sync_cursor`. SQLDelight generates one set of typed queries per database; splitting tables across modules would mean splitting databases and losing cross-table transactions. The `RemoteState` sealed type + adapter live in `core/storage` for the same reason `CollectionKind` does — SQLDelight-generated code references them directly.
+
+**Why upload/download drivers stay in `feature/sync/data`.** They're sync-engine code (one driver per blob, scheduled by the sync layer); they aren't attachment-specific UI/business logic. Symmetric with how `PullListener` lives there in R1.
+
+`composeApp/di/initKoin.kt`: swap the Koin binding for `AttachmentManager` from R1's Firebase-direct impl (in the now-deleted `core/attachments`) to the new local-first impl in `feature/attachment/datamanager`, and add `blobUploadModule` to the aggregate.
 
 ---
 
@@ -457,7 +471,7 @@ The orphan check is "no entity row references this blob id." With R2's `attachme
 - **R2 v1**: `ForegroundUploadScheduler` — runs uploads while app is foregrounded; matches the R1 attachment behaviour on iOS (where uploads paused on backgrounding anyway). Acceptable initial parity.
 - **R2 v2 (M7)**: `UrlSessionUploadScheduler` — `URLSession` background configuration (signed-URL REST upload to Firebase Storage), `BGProcessingTask` registered in `Info.plist` for OS-driven scan-and-schedule ticks. The driver is the same; only the wakeup mechanism changes.
 
-The split lets R2 ship with full Android background support and iOS-foreground; neither blocks the other. The "Upload on cellular" toggle from §6.3 of the PRD is a single `Boolean` pref read by both schedulers.
+The split lets R2 ship with full Android background support and iOS-foreground; neither blocks the other. The **"Allow upload on cellular"** toggle (Settings → Backup & Sync, defaults OFF — see §13.1) is a single `Boolean` pref read live by both schedulers via the `networkConstraint` `StateFlow`. Flipping it ON re-evaluates pending uploads on the next driver tick.
 
 ---
 
@@ -483,7 +497,7 @@ Three checks, all enforced **client-side in the picker**, before a `PendingAttac
 
 The dedupe check requires sha256, so the picker reads the candidate bytes and computes the hash *before* deciding whether to accept. That work is not wasted: if accepted, those same bytes (and that same hash) are handed straight to `LocalBlobStore.put` — see §6.3.
 
-### `QuotaChecker` (commonMain, `core/attachments/datamanager`)
+### `QuotaChecker` (commonMain, `feature/attachment/datamanager`)
 
 ```kotlin
 class QuotaChecker(
@@ -525,7 +539,7 @@ sealed class QuotaResult {
 }
 ```
 
-The form ViewModel (`MaintenanceLogFormViewModel`, etc.) reads the picked bytes via `FileByteReader`, computes sha256 once, then calls `quotaChecker.check(...)` synchronously before adding to its pending list. On rejection it surfaces an inline error string from `core/attachments/sharedassets`. On acceptance, the same bytes + sha256 are passed to `LocalBlobStore.put` so the hash is not recomputed.
+The form ViewModel (`MaintenanceLogFormViewModel`, etc.) reads the picked bytes via `FileByteReader`, computes sha256 once, then calls `quotaChecker.check(...)` synchronously before adding to its pending list. On rejection it surfaces an inline error string from `feature/attachment/sharedassets`. On acceptance, the same bytes + sha256 are passed to `LocalBlobStore.put` so the hash is not recomputed.
 
 ### Why count `REMOTE_ONLY` against the per-user cap
 
@@ -622,12 +636,12 @@ R2 is a single user-facing release; M4 and M5 must ship together (PRD §11.1). M
 
 No feature flag — R2 is a clean break (§10) and there is no R1 path to keep alive in parallel. Each PR below leaves `main` shippable on its own.
 
-1. **PR 1 — schema + LocalBlobStore.** New `blob_object` table, `RemoteState` sealed type + adapter, `LocalBlobStore` interface + `SqlDelightLocalBlobStore` impl, `BlobFilesystem` expect/actual, contract tests. AttachmentManager and openers untouched. Mergeable as inert infra.
+1. **PR 1 — schema + `feature/attachment` scaffold + LocalBlobStore.** Add `blob_object` table + queries to `core/storage/Schema.sq`; add `RemoteState` sealed type + `ColumnAdapter` to `core/storage`. Scaffold the new `feature/attachment` module with the canonical layout (model/datamanager/sharedassets/viewing/update) and Gradle wiring. Implement `LocalBlobStore` interface + `SqlDelightLocalBlobStore` impl + `BlobFilesystem` expect/actual + contract tests in `feature/attachment/datamanager`. The old `core/attachments` module is **untouched** in this PR — its Koin binding still serves `AttachmentManager`. Mergeable as inert infra.
 2. **PR 2 — proto changes.** Add `sha256 = 10` to `Attachment`; mark field 5 (`download_url`) reserved. Wire-generate. Old proto still decodes (the deleted field is ignored on the wire) but R1 builds reading R2-written attachments will see no `download_url` — this is the break. Document in the release notes.
-3. **PR 3 — `QuotaChecker` + AttachmentManager rewrite.** New `LocalFirstAttachmentManagerImpl` replaces `AttachmentManagerImpl` outright. ViewModels move to the synchronous `addPickedFile` flow. Picker calls `QuotaChecker.check` before adding to pending list.
-4. **PR 4 — opener.** `AttachmentOpener` rewritten to consult `LocalBlobStore`. Legacy attachments surface `Failed(LegacyAttachment)`.
-5. **PR 5 — upload scheduler + drivers + reconciler.** Android WorkManager scheduler; iOS foreground scheduler; `BlobIndexReconciler` hooked into `PullListener`. PR is the first one where new attachments actually round-trip end-to-end.
-6. **PR 6 — Settings / status surfaces.** Per-attachment status badge in viewing UI; Settings → Storage screen showing per-user usage progress; legacy-attachment one-time Snackbar (§10).
+3. **PR 3 — `QuotaChecker` + AttachmentManager rewrite + `core/attachments` deletion.** Implement `LocalFirstAttachmentManagerImpl`, `QuotaChecker`, and the new `AttachmentManager` interface in `feature/attachment/datamanager`. Move `AttachmentRow`/`AttachmentSection` from `core/attachments/viewing` into `feature/attachment/viewing`; move strings/icons into `feature/attachment/sharedassets`. Move `PendingAttachment` from `core/attachments/model` into `feature/attachment/model`. Move the picker bottom sheet into `feature/attachment/update`. **Delete the `core/attachments` module entirely** and update `settings.gradle.kts` + `composeApp/di/initKoin.kt`. ViewModels move to the synchronous `addPickedFile` flow. Picker calls `QuotaChecker.check` before adding to pending list.
+4. **PR 4 — opener.** `AttachmentOpener` rewritten in `feature/attachment/datamanager` to consult `LocalBlobStore`. Legacy attachments surface `Failed(LegacyAttachment)`.
+5. **PR 5 — upload scheduler + drivers + reconciler.** In `feature/sync/data/blob/`: Android `WorkManagerUploadScheduler`; iOS `ForegroundUploadScheduler`; `BlobUploadDriver`/`BlobDownloadDriver`/`BlobDeleteDriver`; `BlobIndexReconciler` hooked into `PullListener`. Settings → Backup & Sync gains the **"Allow upload on cellular"** toggle (default OFF, §13.1). PR 5 is the first one where new attachments actually round-trip end-to-end.
+6. **PR 6 — Settings / status surfaces.** Per-attachment status badge in viewing UI; Settings → Storage screen showing per-user usage progress; "Remove this account from this device" wipe action (§13.4); legacy-attachment one-time Snackbar (§10).
 7. **PR 7 (M7) — iOS URLSession background + integrity-check recovery.** Replaces `ForegroundUploadScheduler` with `UrlSessionUploadScheduler` on iOS; adds `PRAGMA integrity_check` recovery flow per PRD §10.
 
 Internal dogfood after PR 6 for 1–2 weeks → staged rollout 10% → 50% → 100%.
@@ -639,12 +653,15 @@ Per-PR regression watch:
 
 ---
 
-## 13. Open questions
+## 13. Resolved decisions
 
-1. **Cellular-upload default.** PRD says WiFi-only by default. Confirm; this is a UX choice — pilots in remote airfields often have cellular only. Recommend default WiFi-only with a prominent "Upload on cellular" toggle, so the user controls cost.
-2. **Per-blob retention cap.** Now bounded by the per-user 1 GB cap (§9b), so `filesDir/blobs` cannot exceed 1 GB by construction. No LRU eviction needed for R2.
-3. **Image compression.** PRD §Decisions in `attachments_design.md` says no compression. Reconfirm for R2 — it's a one-line decision but easy to forget when pictures land.
-4. **Re-key on uid change.** If a user runs "remove account from this device" with R2 attachments present, do we delete the local files immediately or just tombstone? Recommend: immediate (the action is a wipe, and the cloud copy is intact).
+1. **Cellular-upload default — WiFi-only.** A new toggle in **Settings → Backup & Sync → "Allow upload on cellular"** defaults **OFF**. When OFF, `WorkManagerUploadScheduler` enforces `NetworkType.UNMETERED`; the iOS scheduler short-circuits if the OS reports a cellular network. Toggling ON is read live by both schedulers (no app restart required). Surface in the same Settings section as the existing "Enable Sync" toggle (R1/M6) so all sync-cost controls live together.
+
+2. **Per-blob retention cap — none.** Bounded by the per-user 1 GB cap (§9b) by construction; no LRU eviction needed.
+
+3. **Image compression — defer to R3.** The user's condition was "lossless AND interoperable across both platforms." No image format meets all three: JPEG/HEIC are lossy by nature; PNG re-encoding gains little for already-compressed photos; WebP-lossless is interoperable on Android but non-native on iOS Photos. Compressing only some formats would surprise users (their JPEG stays full-size, their PNG shrinks), so we ship R2 with **no compression**, matching the existing decision. Re-evaluate in R3 when format usage telemetry is available — if PNG dominates we can re-encode losslessly; if JPEG/HEIC dominate, the answer stays "no."
+
+4. **Wipe on "remove account from this device" — immediate.** When the user invokes the wipe action: hard-delete every `blob_object` row whose `scope_path` matches the removed uid AND delete every file at `filesDir/blobs/{id}` for those rows. No tombstone, no soft-delete. The cloud copy is intact, so a subsequent sign-in re-runs hydration as if the device were fresh. Implementation lives in `feature/attachment/datamanager` alongside the existing entity-wipe (`UploadScheduler.cancelForUid(uid)` runs first to abort any in-flight uploads). Document the action's irreversibility in the confirmation dialog: "All locally-stored attachments will be removed from this device. Files in the cloud are unaffected."
 
 ---
 
@@ -652,12 +669,15 @@ Per-PR regression watch:
 
 R2 turns attachments into first-class local-first data:
 
-- A `blob_object` table + `LocalBlobStore` mirrors the proto-level `entity` machinery from R1.
+- A `blob_object` table (in `core/storage`) + `LocalBlobStore` (in `feature/attachment/datamanager`) mirrors the proto-level `entity` machinery from R1.
+- The pre-canonical `core/attachments` module is deleted; all attachment code moves into `feature/attachment` with the canonical model/datamanager/sharedassets/viewing/update layout.
 - Saves no longer block on uploads; the scheduler does the work in the background.
 - Anonymous users can attach files; on link, their blobs upload under their now-permanent uid (zero migration).
 - New devices see lazy `REMOTE_ONLY` placeholders and download on demand, with sha256 integrity verification.
 - The proto gains `sha256` and reserves the old `download_url` field — clean break with R1; no migration shim, no fall-through.
-- Two caps enforced client-side: 25 MB per parent, 1 GB per user. The user cap is computed off `blob_object` so it's device-independent.
+- Two caps + dedupe enforced client-side: 25 MB per parent, 1 GB per user, no duplicate sha256 on the same parent.
+- WiFi-only uploads by default; "Allow upload on cellular" toggle in Settings → Backup & Sync.
+- "Remove this account from this device" wipes local blobs immediately; cloud copy intact.
 - iOS ships foreground-only initially; URLSession background lands in M7.
 
 Estimated work: ~2 weeks single-engineer for M4+M5, plus 1 week for M7 polish, plus a 1-week staged rollout. Each PR in §12 is independently mergeable.

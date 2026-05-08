@@ -59,4 +59,5 @@ include(":core:attachments:model")
 include(":core:attachments:datamanager")
 include(":core:attachments:sharedassets")
 include(":core:attachments:viewing")
+include(":feature:attachment:datamanager")
 
