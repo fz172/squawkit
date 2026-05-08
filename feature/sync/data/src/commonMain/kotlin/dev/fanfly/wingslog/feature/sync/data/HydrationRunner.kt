@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.sync.data
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 
 /**
@@ -22,6 +23,7 @@ class HydrationRunner(
   private val db: WingsLogDatabase,
   private val fetcher: RemoteFetcher,
   private val cursors: SyncCursorStore,
+  private val postWriteHook: PostWriteHook? = null,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -85,6 +87,13 @@ class HydrationRunner(
           deleted = doc.deleted,
         )
         if (doc.remoteTsMs > maxTs) maxTs = doc.remoteTsMs
+      }
+    }
+    // Mirror what PullListener does: notify the hook for each written (non-deleted) doc so blob
+    // index rows are created for attachments that arrived during the initial hydration bulk-pull.
+    if (postWriteHook != null) {
+      for (doc in docs) {
+        if (!doc.deleted) postWriteHook.onEntityWritten(kind, scope, doc.payload)
       }
     }
     return maxTs

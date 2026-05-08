@@ -64,6 +64,7 @@ val syncModule: Module = module {
       db = get<WingsLogDatabase>(),
       fetcher = get<RemoteFetcher>(),
       cursors = get<SyncCursorStore>(),
+      postWriteHook = getOrNull(),
     )
   }
   single<PushWorker> {
