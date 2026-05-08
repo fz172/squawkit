@@ -37,9 +37,17 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":core:storage"))
+      api(project(":feature:attachment:model"))
       api(libs.kotlinx.coroutines.core)
       api(libs.koin.core)
+      implementation(project(":core:auth"))
+      implementation(project(":core:datetime"))
+      implementation(project(":core:model"))
       implementation(libs.kermit)
+    }
+    androidMain.dependencies {
+      implementation(libs.koin.android)
+      implementation(libs.androidx.core.ktx)
     }
     commonTest.dependencies {
       implementation(kotlin("test"))
@@ -48,7 +56,9 @@ kotlin {
 }
 
 dependencies {
+  implementation(platform(libs.firebase.bom))
   testImplementation(libs.junit)
+  testImplementation(libs.mockk)
   testImplementation(libs.truth)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.sqldelight.sqlite.driver)

@@ -69,10 +69,10 @@ kotlin {
       implementation(project(":feature:technician:manage"))
       implementation(project(":feature:technician:datamanager"))
 
-      implementation(project(":core:attachments:model"))
-      implementation(project(":core:attachments:datamanager"))
-      implementation(project(":core:attachments:sharedassets"))
-      implementation(project(":core:attachments:viewing"))
+      implementation(project(":feature:attachment:model"))
+      implementation(project(":feature:attachment:datamanager"))
+      implementation(project(":feature:attachment:sharedassets"))
+      implementation(project(":feature:attachment:viewing"))
 
       implementation(libs.compose.ui)
       implementation(libs.material3)

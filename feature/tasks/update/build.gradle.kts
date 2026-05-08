@@ -52,9 +52,9 @@ kotlin {
       implementation(project(":core:datetime"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:sharedassets"))
-      implementation(project(":core:attachments:model"))
-      implementation(project(":core:attachments:datamanager"))
-      implementation(project(":core:attachments:viewing"))
+      implementation(project(":feature:attachment:model"))
+      implementation(project(":feature:attachment:datamanager"))
+      implementation(project(":feature:attachment:viewing"))
 
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.kermit)

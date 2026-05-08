@@ -8,11 +8,9 @@ import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Technician
-import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentManager
-import dev.fanfly.wingslog.core.attachments.datamanager.PickedFile
-import dev.fanfly.wingslog.core.attachments.datamanager.UploadState
-import dev.fanfly.wingslog.core.attachments.model.PendingAttachment
-import dev.fanfly.wingslog.core.attachments.model.toLocalFile
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.UiText
@@ -27,7 +25,6 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,11 +39,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import wingslog.core.attachments.sharedassets.generated.resources.Res as AttachmentRes
-import wingslog.core.attachments.sharedassets.generated.resources.file_too_large
-import wingslog.core.attachments.sharedassets.generated.resources.upload_failed
-import wingslog.core.attachments.sharedassets.generated.resources.upload_network_error
-import wingslog.core.attachments.sharedassets.generated.resources.upload_permission_error
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachmentRes
+import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.delete_failed
 import wingslog.core.ui.generated.resources.save_failed
@@ -260,35 +254,34 @@ class MaintenanceLogFormViewModel(
   }
 
   fun addLocalFiles(files: List<PickedFile>) {
-    var anyAdded = false
-    _uiState.update { state ->
-      val remaining = MaintenanceLogFormUiState.MAX_FILE_ATTACHMENTS - state.fileAttachmentCount
-      val toAdd = files.filter { it.sizeBytes <= MaintenanceLogFormUiState.MAX_FILE_SIZE_BYTES }
-        .take(remaining)
-        .map {
-          PendingAttachment.LocalFile(
-            generateRandomId(),
-            it.name,
-            it.uri,
-            it.mimeType,
-            it.sizeBytes
-          )
+    viewModelScope.launch {
+      var anyAdded = false
+      for (file in files) {
+        val state = _uiState.value
+        if (state.fileAttachmentCount >= MaintenanceLogFormUiState.MAX_FILE_ATTACHMENTS) break
+        if (file.sizeBytes > MaintenanceLogFormUiState.MAX_FILE_SIZE_BYTES) {
+          _uiState.update { it.copy(error = UiText.StringRes(AttachmentRes.string.file_too_large)) }
+          continue
         }
-      val oversized = files.any { it.sizeBytes > MaintenanceLogFormUiState.MAX_FILE_SIZE_BYTES }
-      anyAdded = toAdd.isNotEmpty()
-      state.copy(
-        pendingAttachments = state.pendingAttachments + toAdd,
-        error = if (oversized) UiText.StringRes(AttachmentRes.string.file_too_large) else state.error,
-      )
+        try {
+          val attachment = attachmentManager.addPickedFile(file, file.name)
+          _uiState.update { s ->
+            s.copy(pendingAttachments = s.pendingAttachments + PendingAttachment.Local(attachment))
+          }
+          anyAdded = true
+        } catch (e: Exception) {
+          _uiState.update { it.copy(error = UiText.DynamicString(e.message ?: "Failed to add file")) }
+        }
+      }
+      if (anyAdded) _events.send(MaintenanceLogFormEvent.FileAdded)
     }
-    if (anyAdded) viewModelScope.launch { _events.send(MaintenanceLogFormEvent.FileAdded) }
   }
 
   fun addLink(url: String, name: String) {
     val displayName = name.ifBlank { url.take(40) }
+    val attachment = attachmentManager.makeLink(url, displayName)
     _uiState.update { state ->
-      val link = PendingAttachment.LocalLink(generateRandomId(), displayName, url)
-      state.copy(pendingAttachments = state.pendingAttachments + link)
+      state.copy(pendingAttachments = state.pendingAttachments + PendingAttachment.LocalLink(attachment))
     }
     viewModelScope.launch { _events.send(MaintenanceLogFormEvent.LinkAdded) }
   }
@@ -298,38 +291,14 @@ class MaintenanceLogFormViewModel(
       val updated = state.pendingAttachments.mapNotNull { pending ->
         when {
           pending.id != id -> pending
-          pending is PendingAttachment.LocalFile -> null
+          pending is PendingAttachment.Local -> null
           pending is PendingAttachment.LocalLink -> null
-          pending is PendingAttachment.Failed -> null
           pending is PendingAttachment.Saved && pending.attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK -> null
           pending is PendingAttachment.Saved -> PendingAttachment.PendingDelete(pending.attachment)
           else -> pending
         }
       }
       state.copy(pendingAttachments = updated)
-    }
-  }
-
-  fun cancelUpload(id: String) {
-    saveJob?.cancel()
-    saveJob = null
-    _uiState.update { state ->
-      state.copy(
-        isSaving = false,
-        pendingAttachments = state.pendingAttachments.map {
-          if (it is PendingAttachment.Uploading && it.id == id) it.toLocalFile() else it
-        },
-      )
-    }
-  }
-
-  fun retryUpload(id: String) {
-    _uiState.update { state ->
-      state.copy(
-        pendingAttachments = state.pendingAttachments.map {
-          if (it is PendingAttachment.Failed && it.id == id) it.toLocalFile() else it
-        },
-      )
     }
   }
 
@@ -346,123 +315,17 @@ class MaintenanceLogFormViewModel(
 
       val resolvedLogId = logId ?: generateRandomId()
 
-      // 1. Upload local file attachments (skip for anonymous users)
-      val uploadedAttachments = mutableListOf<Attachment>()
-      if (!state.isAnonymous) {
-        val localFiles = state.pendingAttachments.filterIsInstance<PendingAttachment.LocalFile>()
-        for (pending in localFiles) {
-          // Show this file as uploading in the UI
-          _uiState.update { s ->
-            s.copy(
-              pendingAttachments = s.pendingAttachments.map {
-                if (it.id == pending.tempId) PendingAttachment.Uploading(
-                  pending.tempId,
-                  pending.name,
-                  mimeType = pending.mimeType,
-                  localUri = pending.localUri,
-                  sizeBytes = pending.sizeBytes,
-                )
-                else it
-              }
-            )
-          }
+      // 1. Tombstone any deleted attachments (best-effort; BlobDeleteDriver finishes cleanup)
+      val toDelete = state.pendingAttachments.filterIsInstance<PendingAttachment.PendingDelete>()
+      toDelete.forEach { attachmentManager.delete(it.attachment) }
 
-          val storagePath = attachmentManager.buildMaintenanceLogPath(
-            aircraftId, resolvedLogId, pending.tempId, pending.name
-          )
-          if (storagePath == null) {
-            _uiState.update {
-              it.copy(
-                isSaving = false,
-                error = UiText.StringRes(CoreRes.string.save_failed)
-              )
-            }
-            return@launch
-          }
-          var uploadError: Throwable? = null
-          attachmentManager.uploadFile(
-            storagePath,
-            pending.localUri,
-            pending.mimeType,
-            pending.name,
-            pending.tempId
-          )
-            .collect { uploadState ->
-              when (uploadState) {
-                is UploadState.Uploading -> {
-                  if (uploadState.progress > 0f) {
-                    _uiState.update { s ->
-                      s.copy(
-                        pendingAttachments = s.pendingAttachments.map {
-                          if (it.id == pending.tempId) PendingAttachment.Uploading(
-                            pending.tempId,
-                            pending.name,
-                            uploadState.progress,
-                            pending.mimeType,
-                            pending.localUri,
-                            pending.sizeBytes,
-                          )
-                          else it
-                        }
-                      )
-                    }
-                  }
-                }
-
-                is UploadState.Done -> uploadedAttachments.add(uploadState.attachment)
-                is UploadState.Failed -> uploadError = uploadState.error
-              }
-            }
-          if (uploadError != null) {
-            _uiState.update { s ->
-              s.copy(
-                isSaving = false,
-                error = uploadError.toUploadErrorText(),
-                pendingAttachments = s.pendingAttachments.map {
-                  if (it is PendingAttachment.Uploading && it.id == pending.tempId)
-                    PendingAttachment.Failed(
-                      pending.tempId,
-                      pending.name,
-                      pending.mimeType,
-                      pending.localUri,
-                      pending.sizeBytes
-                    )
-                  else it
-                },
-              )
-            }
-            // Rollback any files uploaded so far in this batch
-            coroutineScope { uploadedAttachments.forEach { launch { attachmentManager.deleteFile(it) } } }
-            return@launch
-          }
-        }
-
-        // 2. Delete pending-delete attachments (best-effort, parallel)
-        val toDelete = state.pendingAttachments.filterIsInstance<PendingAttachment.PendingDelete>()
-        if (toDelete.isNotEmpty()) {
-          coroutineScope { toDelete.forEach { launch { attachmentManager.deleteFile(it.attachment) } } }
-        }
+      // 2. Build final attachment list — Local items already have fully-populated protos
+      //    (addPickedFile was called at pick time; no network wait here)
+      val finalAttachments = buildList {
+        addAll(state.pendingAttachments.filterIsInstance<PendingAttachment.Saved>().map { it.attachment })
+        addAll(state.pendingAttachments.filterIsInstance<PendingAttachment.Local>().map { it.attachment })
+        addAll(state.pendingAttachments.filterIsInstance<PendingAttachment.LocalLink>().map { it.attachment })
       }
-
-      // 3. Build final attachment list
-      val savedLinks = state.pendingAttachments
-        .filterIsInstance<PendingAttachment.LocalLink>()
-        .map { link ->
-          Attachment(
-            id = link.tempId,
-            name = link.name,
-            type = AttachmentType.ATTACHMENT_TYPE_LINK,
-            url = link.url,
-            storage_path = "",
-            download_url = "",
-            mime_type = "",
-            size_bytes = 0L,
-          )
-        }
-      val savedFiles = state.pendingAttachments
-        .filterIsInstance<PendingAttachment.Saved>()
-        .map { it.attachment }
-      val finalAttachments = savedFiles + uploadedAttachments + savedLinks
 
       // 4. Save log
       val componentSerial = when (state.selectedComponentType) {
@@ -529,13 +392,11 @@ class MaintenanceLogFormViewModel(
   fun deleteLog() {
     val id = logId ?: return
     viewModelScope.launch {
-      // Best-effort: delete Storage files before removing the Firestore document
-      if (!_uiState.value.isAnonymous) {
-        val fileAttachments = _uiState.value.pendingAttachments
-          .filterIsInstance<PendingAttachment.Saved>()
-          .filter { it.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK }
-        coroutineScope { fileAttachments.forEach { launch { attachmentManager.deleteFile(it.attachment) } } }
-      }
+      // Tombstone file attachments before removing the Firestore document
+      val fileAttachments = _uiState.value.pendingAttachments
+        .filterIsInstance<PendingAttachment.Saved>()
+        .filter { it.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK }
+      fileAttachments.forEach { attachmentManager.delete(it.attachment) }
       logManager.deleteLog(aircraftId, id)
         .onSuccess { _events.send(MaintenanceLogFormEvent.DeleteSuccess) }
         .onFailure { e ->
@@ -545,18 +406,5 @@ class MaintenanceLogFormViewModel(
           }
         }
     }
-  }
-}
-
-private fun Throwable.toUploadErrorText(): UiText {
-  val msg = message?.lowercase() ?: ""
-  return when {
-    msg.contains("network") || msg.contains("timeout") || msg.contains("unable to resolve") ->
-      UiText.StringRes(AttachmentRes.string.upload_network_error)
-
-    msg.contains("permission") || msg.contains("unauthorized") || msg.contains("403") ->
-      UiText.StringRes(AttachmentRes.string.upload_permission_error)
-
-    else -> UiText.StringRes(AttachmentRes.string.upload_failed)
   }
 }

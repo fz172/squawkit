@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.di
 
-import dev.fanfly.wingslog.core.attachments.datamanager.impl.attachmentModule
-import dev.fanfly.wingslog.core.attachments.datamanager.impl.platformAttachmentModule
+import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
+import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule

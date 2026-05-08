@@ -15,7 +15,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.fanfly.wingslog.core.attachments.datamanager.AttachmentOpener
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.viewing.log.compose.MaintenanceLogListContent
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListEvent
