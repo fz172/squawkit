@@ -22,7 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
@@ -62,7 +61,7 @@ fun TaskPickerSheet(
       modifier = Modifier
         .fillMaxWidth()
         .verticalScroll(rememberScrollState()),
-      verticalArrangement = Arrangement.spacedBy(0.dp),
+      verticalArrangement = Arrangement.spacedBy(Spacing.none),
     ) {
       if (availableCards.isEmpty()) {
         Text(

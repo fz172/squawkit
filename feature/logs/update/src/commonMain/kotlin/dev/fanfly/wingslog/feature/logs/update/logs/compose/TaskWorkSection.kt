@@ -20,16 +20,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.remove
 import wingslog.feature.tasks.sharedassets.generated.resources.Res
 import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_tasks
 import wingslog.feature.tasks.sharedassets.generated.resources.no_task_work_recorded
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_task
-import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @Composable
 fun TaskWorkSection(
@@ -39,7 +39,10 @@ fun TaskWorkSection(
   onRemove: (cardId: String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+  Column(
+    modifier = modifier,
+    verticalArrangement = Arrangement.spacedBy(Spacing.small)
+  ) {
     Row(
       modifier = Modifier.fillMaxWidth(),
       verticalAlignment = Alignment.CenterVertically,
@@ -53,15 +56,19 @@ fun TaskWorkSection(
       OutlinedButton(
         onClick = onAddClick,
         contentPadding = PaddingValues(
-          horizontal = 12.dp, vertical = 4.dp
+          horizontal = Spacing.medium,
+          vertical = Spacing.extraSmall
         ),
       ) {
         Icon(
-          Icons.Default.Add, contentDescription = null, modifier = Modifier.width(16.dp)
+          Icons.Default.Add,
+          contentDescription = null,
+          modifier = Modifier.width(Spacing.large)
         )
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.width(Spacing.extraSmall))
         Text(
-          stringResource(CoreRes.string.add), style = MaterialTheme.typography.labelMedium
+          stringResource(CoreRes.string.add),
+          style = MaterialTheme.typography.labelMedium
         )
       }
     }
@@ -75,7 +82,10 @@ fun TaskWorkSection(
     } else {
       selectedIds.forEach { cardId ->
         val card = availableCards.firstOrNull { it.id == cardId }
-        val title = card?.title ?: stringResource(Res.string.unknown_task, cardId)
+        val title = card?.title ?: stringResource(
+          Res.string.unknown_task,
+          cardId
+        )
         Row(
           modifier = Modifier.fillMaxWidth(),
           verticalAlignment = Alignment.CenterVertically,

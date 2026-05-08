@@ -13,8 +13,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.update.aircraft.viewmodel.EditAircraftViewModel
@@ -27,14 +27,19 @@ import wingslog.feature.logs.update.generated.resources.tail_number
 
 @Composable
 fun AirframeSection(
-  aircraft: Aircraft, viewModel: EditAircraftViewModel, showValidationErrors: Boolean,
+  aircraft: Aircraft,
+  viewModel: EditAircraftViewModel,
+  showValidationErrors: Boolean,
 ) {
   Card(
     modifier = Modifier.padding(vertical = Spacing.small),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    border = BorderStroke(
+      1.dp,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
+    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column(modifier = Modifier.padding(Spacing.medium)) {
 

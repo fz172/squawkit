@@ -64,12 +64,15 @@ fun MaintenanceLogCard(
       1.dp,
       MaterialTheme.colorScheme.outlineVariant
     ),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = 18.dp, vertical = Spacing.large),
+        .padding(
+          horizontal = 18.dp,
+          vertical = Spacing.large
+        ),
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
       // Top row: component badge | tach hours + chevron
@@ -187,7 +190,7 @@ internal fun ComponentTypeBadge(
         shape = RoundedCornerShape(Spacing.badgeCornerRadius)
       )
       .padding(
-        horizontal = 8.dp,
+        horizontal = Spacing.small,
         vertical = 3.dp
       ),
   ) {

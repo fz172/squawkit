@@ -13,7 +13,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 
@@ -43,7 +42,7 @@ fun PickerSheet(
         .fillMaxWidth()
         .padding(horizontal = Spacing.extraLarge)
         .padding(bottom = Spacing.huge),
-      verticalArrangement = Arrangement.spacedBy(0.dp),
+      verticalArrangement = Arrangement.spacedBy(Spacing.none),
     ) {
       // Header Row
       Row(

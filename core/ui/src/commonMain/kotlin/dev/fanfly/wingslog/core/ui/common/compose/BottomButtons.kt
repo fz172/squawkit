@@ -49,7 +49,8 @@ fun BottomButtons(
 ) {
   Box(
     modifier = modifier.fillMaxWidth().background(Color.Transparent)
-      .padding(Spacing.screenPadding), contentAlignment = Alignment.Center
+      .padding(Spacing.screenPadding),
+    contentAlignment = Alignment.Center
   ) {
     Row(
       modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
@@ -129,9 +130,9 @@ fun BottomButtons(
             CircularProgressIndicator(
               modifier = Modifier.size(18.dp),
               color = MaterialTheme.colorScheme.onPrimary,
-              strokeWidth = 2.dp
+              strokeWidth = Spacing.tiny
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(Spacing.small))
           }
           Text(
             text = primaryLabel.uppercase(),
@@ -148,5 +149,8 @@ fun BottomButtons(
 @Preview
 @Composable
 fun BottomButtonsPreview() {
-  BottomButtons(onPrimaryClick = {}, onSecondaryClick = {}, onDangerClick = {})
+  BottomButtons(
+    onPrimaryClick = {},
+    onSecondaryClick = {},
+    onDangerClick = {})
 }

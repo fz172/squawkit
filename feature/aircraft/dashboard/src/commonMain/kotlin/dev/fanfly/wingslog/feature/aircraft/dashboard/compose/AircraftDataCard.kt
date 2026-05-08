@@ -47,7 +47,10 @@ import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
 
 
 @Composable
-fun AircraftDataCard(aircraft: Aircraft, initiallyExpanded: Boolean = true) {
+fun AircraftDataCard(
+  aircraft: Aircraft,
+  initiallyExpanded: Boolean = true,
+) {
   var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
   val rotationState by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
 
@@ -55,11 +58,17 @@ fun AircraftDataCard(aircraft: Aircraft, initiallyExpanded: Boolean = true) {
     modifier = Modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     color = MaterialTheme.colorScheme.surfaceContainer,
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    border = BorderStroke(
+      1.dp,
+      MaterialTheme.colorScheme.outlineVariant
+    )
   ) {
     Column {
       Row(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }
-        .padding(horizontal = Spacing.large, vertical = Spacing.large),
+        .padding(
+          horizontal = Spacing.large,
+          vertical = Spacing.large
+        ),
           verticalAlignment = Alignment.CenterVertically) {
         Icon(
           imageVector = Icons.Default.Dataset,
@@ -96,8 +105,11 @@ fun AircraftDataCard(aircraft: Aircraft, initiallyExpanded: Boolean = true) {
       AnimatedVisibility(visible = expanded) {
         Column(
           modifier = Modifier.padding(
-            bottom = Spacing.large, start = Spacing.large, end = Spacing.large
-          ), verticalArrangement = Arrangement.spacedBy(Spacing.large)
+            bottom = Spacing.large,
+            start = Spacing.large,
+            end = Spacing.large
+          ),
+          verticalArrangement = Arrangement.spacedBy(Spacing.large)
         ) {
           ComponentCard(
             category = stringResource(CoreRes.string.component_airframe).uppercase(),
@@ -107,11 +119,17 @@ fun AircraftDataCard(aircraft: Aircraft, initiallyExpanded: Boolean = true) {
 
           aircraft.engine.forEachIndexed { index, engine ->
             val label = if (aircraft.engine.size > 1) {
-              stringResource(SharedRes.string.engine_with_index, index + 1)
+              stringResource(
+                SharedRes.string.engine_with_index,
+                index + 1
+              )
             } else {
               stringResource(CoreRes.string.component_engine)
             }.uppercase()
-            EngineDetails(label = label, engine = engine)
+            EngineDetails(
+              label = label,
+              engine = engine
+            )
           }
         }
       }
@@ -121,7 +139,10 @@ fun AircraftDataCard(aircraft: Aircraft, initiallyExpanded: Boolean = true) {
 
 @Composable
 fun ComponentCard(
-  category: String, name: String, serial: String, content: @Composable (() -> Unit)? = null,
+  category: String,
+  name: String,
+  serial: String,
+  content: @Composable (() -> Unit)? = null,
 ) {
   Surface(
     modifier = Modifier.fillMaxWidth(),
@@ -136,23 +157,35 @@ fun ComponentCard(
       ) {
         Column(modifier = Modifier.weight(1f)) {
           Text(
-            text = category, style = TextStyle(
+            text = category,
+            style = TextStyle(
               fontFamily = FontFamily.SansSerif,
               fontWeight = FontWeight.Bold,
               fontSize = 10.sp,
               letterSpacing = 0.1.sp
-            ), color = MaterialTheme.colorScheme.primary
+            ),
+            color = MaterialTheme.colorScheme.primary
           )
           Text(
-            text = name, modifier = Modifier.padding(top = 4.dp), style = TextStyle(
-              fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.SemiBold, fontSize = 16.sp
-            ), color = MaterialTheme.colorScheme.onSurface
-          )
-          Text(
-            text = stringResource(MaintenanceRes.string.s_n_placeholder, serial),
-            modifier = Modifier.padding(top = 2.dp),
+            text = name,
+            modifier = Modifier.padding(top = Spacing.extraSmall),
             style = TextStyle(
-              fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Normal, fontSize = 13.sp
+              fontFamily = FontFamily.SansSerif,
+              fontWeight = FontWeight.SemiBold,
+              fontSize = 16.sp
+            ),
+            color = MaterialTheme.colorScheme.onSurface
+          )
+          Text(
+            text = stringResource(
+              MaintenanceRes.string.s_n_placeholder,
+              serial
+            ),
+            modifier = Modifier.padding(top = Spacing.tiny),
+            style = TextStyle(
+              fontFamily = FontFamily.SansSerif,
+              fontWeight = FontWeight.Normal,
+              fontSize = 13.sp
             ),
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )

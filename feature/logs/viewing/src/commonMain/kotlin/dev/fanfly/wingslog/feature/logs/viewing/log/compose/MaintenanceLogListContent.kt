@@ -51,8 +51,8 @@ import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
-import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
 import org.jetbrains.compose.resources.stringResource
@@ -91,14 +91,15 @@ fun MaintenanceLogListContent(
   modifier: Modifier = Modifier,
 ) {
   Box(
-    modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center
+    modifier = modifier.fillMaxSize(),
+    contentAlignment = Alignment.Center
   ) {
     when (uiState) {
       MaintenanceLogListUiState.Loading -> CircularProgressIndicator()
 
       MaintenanceLogListUiState.Error -> Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(Spacing.large)
       ) {
         Text(
           stringResource(MaintenanceRes.string.failed_to_load_logs),
@@ -127,7 +128,12 @@ fun MaintenanceLogListContent(
             Row(
               modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = Spacing.screenPadding, end = Spacing.small, top = Spacing.small, bottom = Spacing.small),
+                .padding(
+                  start = Spacing.screenPadding,
+                  end = Spacing.small,
+                  top = Spacing.small,
+                  bottom = Spacing.small
+                ),
               verticalAlignment = Alignment.CenterVertically,
               horizontalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
@@ -137,11 +143,19 @@ fun MaintenanceLogListContent(
                 onValueChange = onSearchQueryChange,
                 modifier = Modifier.weight(1f),
                 placeholder = { Text(stringResource(MaintenanceRes.string.search_logs)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                leadingIcon = {
+                  Icon(
+                    Icons.Default.Search,
+                    contentDescription = null
+                  )
+                },
                 trailingIcon = {
                   if (uiState.filter.query.isNotBlank()) {
                     IconButton(onClick = { onSearchQueryChange("") }) {
-                      Icon(Icons.Default.Close, contentDescription = null)
+                      Icon(
+                        Icons.Default.Close,
+                        contentDescription = null
+                      )
                     }
                   }
                 },
@@ -164,7 +178,7 @@ fun MaintenanceLogListContent(
                   if (filterActive) MaterialTheme.colorScheme.primary
                   else MaterialTheme.colorScheme.outlineVariant
                 ),
-                modifier = Modifier.size(56.dp),
+                modifier = Modifier.size(Spacing.buttonHeight),
               ) {
                 Box(contentAlignment = Alignment.Center) {
                   Icon(
@@ -195,18 +209,26 @@ fun MaintenanceLogListContent(
 
             // Entry count label
             val count = uiState.logs.size
-            val countLabel = if (count == 1) stringResource(MaintenanceRes.string.log_count_one_entry)
-            else stringResource(MaintenanceRes.string.log_count_n_entries, count)
+            val countLabel =
+              if (count == 1) stringResource(MaintenanceRes.string.log_count_one_entry)
+              else stringResource(
+                MaintenanceRes.string.log_count_n_entries,
+                count
+              )
             Text(
               text = countLabel.uppercase(),
               style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.6.sp),
               color = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.padding(horizontal = Spacing.screenPadding, vertical = Spacing.tiny),
+              modifier = Modifier.padding(
+                horizontal = Spacing.screenPadding,
+                vertical = Spacing.tiny
+              ),
             )
 
             if (uiState.logs.isEmpty()) {
               Box(
-                modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentAlignment = Alignment.Center
               ) {
                 Column(
                   horizontalAlignment = Alignment.CenterHorizontally,
@@ -224,15 +246,21 @@ fun MaintenanceLogListContent(
               }
             } else {
               LazyColumn(
-                modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentPadding = PaddingValues(
                   start = Spacing.screenPadding,
                   end = Spacing.screenPadding,
                   top = Spacing.small,
                   bottom = 80.dp
-                ), verticalArrangement = Arrangement.spacedBy(12.dp)
+                ),
+                verticalArrangement = Arrangement.spacedBy(Spacing.medium)
               ) {
-                items(uiState.logs, key = { it.id }) { log ->
-                  MaintenanceLogCard(log = log, onClick = { onLogClick(log) })
+                items(
+                  uiState.logs,
+                  key = { it.id }) { log ->
+                  MaintenanceLogCard(
+                    log = log,
+                    onClick = { onLogClick(log) })
                 }
               }
             }
@@ -278,16 +306,27 @@ fun MaintenanceLogListContent(
 }
 
 @Composable
-private fun ActiveFilterChip(label: String, onDismiss: () -> Unit) {
+private fun ActiveFilterChip(
+  label: String,
+  onDismiss: () -> Unit,
+) {
   Surface(
     shape = RoundedCornerShape(Spacing.chipCornerRadius),
     color = MaterialTheme.colorScheme.primaryContainer,
-    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+    border = androidx.compose.foundation.BorderStroke(
+      1.dp,
+      MaterialTheme.colorScheme.primary
+    ),
   ) {
     Row(
-      modifier = Modifier.padding(start = 10.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+      modifier = Modifier.padding(
+        start = 10.dp,
+        end = 6.dp,
+        top = Spacing.extraSmall,
+        bottom = Spacing.extraSmall
+      ),
       verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(4.dp),
+      horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
       Text(
         text = label,
@@ -319,7 +358,11 @@ private fun FilterSheetContent(
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(start = 20.dp, end = 12.dp, bottom = Spacing.medium),
+        .padding(
+          start = 20.dp,
+          end = Spacing.medium,
+          bottom = Spacing.medium
+        ),
       verticalAlignment = Alignment.CenterVertically,
     ) {
       Text(
@@ -353,7 +396,7 @@ private fun FilterSheetContent(
       }
     }
 
-    Spacer(Modifier.height(32.dp))
+    Spacer(Modifier.height(Spacing.huge))
   }
 }
 
@@ -367,7 +410,10 @@ private fun FilterTypeRow(
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
-      .padding(horizontal = 20.dp, vertical = 14.dp),
+      .padding(
+        horizontal = 20.dp,
+        vertical = 14.dp
+      ),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     ComponentTypeBadge(type)

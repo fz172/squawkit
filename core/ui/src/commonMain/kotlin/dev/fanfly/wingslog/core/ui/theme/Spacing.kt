@@ -20,6 +20,7 @@ object Spacing {
   val cardCornerRadius = 12.dp   // All card surfaces
   val buttonHeight = 56.dp
   val buttonCornerRadius = 16.dp
+
   // Smaller surface radii
   val chipCornerRadius = 12.dp   // Form controls, dropdowns, outlined fields
   val badgeCornerRadius = 4.dp   // Inline status/type badges

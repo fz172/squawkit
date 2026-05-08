@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue30
-import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.login.data.LoginViewModel
 import kotlinx.coroutines.launch
@@ -62,7 +61,6 @@ private val LoginBackground = AviationBlue10          // #001849
 private val LoginSurface = AviationBlue30             // #004785 — subtle card lift
 private val LoginOnBackground = Color(0xFFF0F4FF)     // near-white with a blue tint
 private val LoginOnBackgroundMuted = Color(0xFF8AAAD4) // muted sky — secondary text
-private val LoginAccent = AviationBlue80              // #A7C8FF — bright on dark
 private val LoginErrorText = Color(0xFFFF8A80)        // light red readable on dark navy
 
 // Typography for the branded dark login canvas.
@@ -189,7 +187,7 @@ fun LoginScreen(
         if (isSigningIn) {
           CircularProgressIndicator(
             modifier = Modifier.size(20.dp),
-            strokeWidth = 2.dp,
+            strokeWidth = Spacing.tiny,
             color = LoginBackground,
           )
         } else {
@@ -223,7 +221,10 @@ fun LoginScreen(
         colors = ButtonDefaults.outlinedButtonColors(
           contentColor = LoginOnBackgroundMuted,
         ),
-        border = BorderStroke(1.dp, LoginOnBackgroundMuted.copy(alpha = 0.4f)),
+        border = BorderStroke(
+          1.dp,
+          LoginOnBackgroundMuted.copy(alpha = 0.4f)
+        ),
         onClick = {
           scope.launch {
             isSigningIn = true

@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -36,14 +35,20 @@ fun BladeChipsOverview(blades: List<PropellerBlade>) {
   ) {
     blades.forEachIndexed { index, blade ->
       Surface(
-        shape = RoundedCornerShape(4.dp),
+        shape = RoundedCornerShape(Spacing.badgeCornerRadius),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
       ) {
         Column(
-          modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+          modifier = Modifier.padding(
+            horizontal = Spacing.medium,
+            vertical = Spacing.small
+          ),
         ) {
           Text(
-            text = stringResource(SharedRes.string.blade_with_index, index + 1),
+            text = stringResource(
+              SharedRes.string.blade_with_index,
+              index + 1
+            ),
             style = TextStyle(
               fontFamily = FontFamily.SansSerif,
               fontWeight = FontWeight.Bold,
@@ -54,7 +59,7 @@ fun BladeChipsOverview(blades: List<PropellerBlade>) {
           )
           Text(
             text = blade.serial.ifBlank { stringResource(MaintenanceRes.string.s_n_empty) },
-            modifier = Modifier.padding(top = 2.dp),
+            modifier = Modifier.padding(top = Spacing.tiny),
             style = TextStyle(
               fontFamily = FontFamily.SansSerif,
               fontWeight = FontWeight.SemiBold,

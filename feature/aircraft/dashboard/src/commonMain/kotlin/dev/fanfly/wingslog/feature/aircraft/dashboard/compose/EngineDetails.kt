@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -21,7 +20,10 @@ import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
 
 
 @Composable
-fun EngineDetails(label: String, engine: Engine) {
+fun EngineDetails(
+  label: String,
+  engine: Engine,
+) {
   ComponentCard(
     category = label,
     name = "${engine.make} ${engine.model}",
@@ -43,7 +45,7 @@ fun EngineDetails(label: String, engine: Engine) {
 
           Text(
             text = "${propeller.hub?.make} ${propeller.hub?.model}",
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = Spacing.extraSmall),
             style = TextStyle(
               fontFamily = FontFamily.SansSerif,
               fontWeight = FontWeight.SemiBold,
@@ -57,7 +59,7 @@ fun EngineDetails(label: String, engine: Engine) {
               MaintenanceRes.string.s_n_placeholder,
               propeller.hub?.serial ?: ""
             ),
-            modifier = Modifier.padding(top = 2.dp),
+            modifier = Modifier.padding(top = Spacing.tiny),
             style = TextStyle(
               fontFamily = FontFamily.SansSerif,
               fontWeight = FontWeight.Normal,

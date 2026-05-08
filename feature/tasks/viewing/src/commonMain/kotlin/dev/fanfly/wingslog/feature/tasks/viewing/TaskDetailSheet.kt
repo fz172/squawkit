@@ -23,8 +23,6 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
-import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
@@ -35,6 +33,8 @@ import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusOkDark
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
@@ -152,7 +152,7 @@ fun TaskDetailSheet(
           )
           .padding(
             horizontal = 6.dp,
-            vertical = 2.dp
+            vertical = Spacing.tiny
           ),
       )
     }
@@ -379,7 +379,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
 
   Column(
     modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.extraSmall),
-    verticalArrangement = Arrangement.spacedBy(2.dp),
+    verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
   ) {
     Row(
       modifier = Modifier.fillMaxWidth(),

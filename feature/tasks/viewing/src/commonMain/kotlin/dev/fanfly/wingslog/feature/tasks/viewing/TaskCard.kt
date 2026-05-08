@@ -58,9 +58,12 @@ fun TaskCard(
     onClick = onClick,
     modifier = modifier.fillMaxWidth(),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(1.dp, borderColor),
+    border = BorderStroke(
+      1.dp,
+      borderColor
+    ),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column(
       modifier = Modifier.padding(Spacing.large),
@@ -135,11 +138,20 @@ fun TaskCard(
 }
 
 @Composable
-private fun StatusBadge(text: String, color: Color) {
+private fun StatusBadge(
+  text: String,
+  color: Color,
+) {
   Box(
     modifier = Modifier
-      .background(color.copy(alpha = 0.12f), RoundedCornerShape(Spacing.extraSmall))
-      .padding(horizontal = Spacing.small, vertical = Spacing.tiny)
+      .background(
+        color.copy(alpha = 0.12f),
+        RoundedCornerShape(Spacing.extraSmall)
+      )
+      .padding(
+        horizontal = Spacing.small,
+        vertical = Spacing.tiny
+      )
   ) {
     Text(
       text = text,

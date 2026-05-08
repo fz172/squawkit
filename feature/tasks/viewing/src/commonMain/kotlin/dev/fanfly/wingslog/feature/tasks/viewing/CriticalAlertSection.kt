@@ -56,7 +56,7 @@ fun CriticalAlertsSection(
       1.dp,
       MaterialTheme.colorScheme.outlineVariant
     ),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column {
       // --- Card header: title + subtitle ---

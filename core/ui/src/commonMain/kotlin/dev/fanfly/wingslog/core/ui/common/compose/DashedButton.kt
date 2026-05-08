@@ -21,13 +21,23 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 @Composable
-fun DashedButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun DashedButton(
+  label: String,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
   val stroke = Stroke(
-    width = 4f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+    width = 4f,
+    pathEffect = PathEffect.dashPathEffect(
+      floatArrayOf(
+        10f,
+        10f
+      ),
+      0f
+    )
   )
   // 1. Get the standard colors for a card
   val colors = OutlinedTextFieldDefaults.colors()
@@ -38,7 +48,7 @@ fun DashedButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifi
 
   Box(
     modifier = modifier
-      .height(56.dp)
+      .height(Spacing.buttonHeight)
       .drawWithContent {
         drawContent()
         drawRoundRect(
@@ -48,15 +58,20 @@ fun DashedButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifi
         )
       }
       .clip(RoundedCornerShape(Spacing.chipCornerRadius))
-      .clickable { onClick() }, contentAlignment = Alignment.Center
+      .clickable { onClick() },
+    contentAlignment = Alignment.Center
   ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
       Icon(
-        Icons.Default.Add, contentDescription = null, tint = contentColor
+        Icons.Default.Add,
+        contentDescription = null,
+        tint = contentColor
       )
-      Spacer(Modifier.width(8.dp))
+      Spacer(Modifier.width(Spacing.small))
       Text(
-        label, color = contentColor, fontWeight = FontWeight.Bold
+        label,
+        color = contentColor,
+        fontWeight = FontWeight.Bold
       )
     }
   }

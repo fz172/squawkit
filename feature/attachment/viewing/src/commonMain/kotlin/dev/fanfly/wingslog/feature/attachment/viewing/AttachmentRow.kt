@@ -44,6 +44,7 @@ fun AttachmentRow(
     BlobSyncState.RemoteOnly,
     BlobSyncState.UploadFailed,
       -> true
+
     BlobSyncState.PendingUpload,
     BlobSyncState.Uploading,
     BlobSyncState.Downloading,
@@ -81,10 +82,10 @@ fun AttachmentRow(
       BlobSyncState.Uploading,
       BlobSyncState.Downloading,
         -> CircularProgressIndicator(
-          modifier = Modifier.size(16.dp),
-          strokeWidth = 2.dp,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        modifier = Modifier.size(16.dp),
+        strokeWidth = Spacing.tiny,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
 
       BlobSyncState.PendingUpload -> Icon(
         imageVector = Icons.Filled.CloudUpload,
@@ -110,11 +111,11 @@ fun AttachmentRow(
       null,
       BlobSyncState.Synced,
         -> Icon(
-          imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-          contentDescription = null,
-          tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-          modifier = Modifier.size(16.dp),
-        )
+        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+        modifier = Modifier.size(16.dp),
+      )
     }
   }
 }

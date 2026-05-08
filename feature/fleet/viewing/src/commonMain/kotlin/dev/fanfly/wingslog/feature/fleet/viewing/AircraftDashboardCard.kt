@@ -54,7 +54,7 @@ fun AircraftDashboardCard(
       1.dp,
       MaterialTheme.colorScheme.outlineVariant
     ),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none)
   ) {
     Row(
       modifier = Modifier
@@ -69,7 +69,7 @@ fun AircraftDashboardCard(
           style = MaterialTheme.typography.titleLarge,
           color = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(Spacing.extraSmall))
         Text(
           text = aircraft.tail_number,
           style = WingslogTypography.dataMedium,
@@ -79,7 +79,7 @@ fun AircraftDashboardCard(
 
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
       ) {
         when (healthStatus) {
           DueStatus.OVERDUE -> HealthStatusBadge(

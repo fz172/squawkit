@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.logs.update.aircraft.compose
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -55,14 +55,20 @@ fun EngineSection(
     modifier = Modifier.padding(vertical = Spacing.small),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    border = BorderStroke(
+      1.dp,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
+    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
 
     Column(modifier = Modifier.padding(Spacing.medium)) {
       Box(modifier = Modifier.fillMaxWidth()) {
         Text(
-          stringResource(SharedRes.string.engine_with_index, engineIndex + 1),
+          stringResource(
+            SharedRes.string.engine_with_index,
+            engineIndex + 1
+          ),
           color = MaterialTheme.colorScheme.onPrimaryContainer,
           modifier = Modifier.align(Alignment.CenterStart)
         )
@@ -70,7 +76,11 @@ fun EngineSection(
           onClick = { viewModel.onRemoveEngine(engineIndex) },
           modifier = Modifier
             .align(Alignment.CenterEnd)
-            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+            .border(
+              1.dp,
+              MaterialTheme.colorScheme.outline,
+              CircleShape
+            )
         ) {
           Icon(
             Icons.Default.Close,
@@ -85,7 +95,10 @@ fun EngineSection(
         value = engine.make,
         isError = showValidationErrors && engine.make.isBlank()
       ) {
-        viewModel.onEngineMakeChanged(engineIndex, it)
+        viewModel.onEngineMakeChanged(
+          engineIndex,
+          it
+        )
       }
 
       Row(horizontalArrangement = Arrangement.spacedBy(Spacing.large)) {
@@ -95,7 +108,10 @@ fun EngineSection(
           modifier = Modifier.weight(1f),
           isError = showValidationErrors && engine.model.isBlank()
         ) {
-          viewModel.onEngineModelChanged(engineIndex, it)
+          viewModel.onEngineModelChanged(
+            engineIndex,
+            it
+          )
         }
         InputField(
           label = stringResource(Res.string.serial),
@@ -104,7 +120,10 @@ fun EngineSection(
           isError = showValidationErrors && engine.serial.isBlank(),
           keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
         ) {
-          viewModel.onEngineSerialChanged(engineIndex, it)
+          viewModel.onEngineSerialChanged(
+            engineIndex,
+            it
+          )
         }
       }
 
@@ -120,7 +139,10 @@ fun EngineSection(
 
         isError = showValidationErrors && hub.make.isBlank()
       ) {
-        viewModel.onPropellerHubMakeChanged(engineIndex, it)
+        viewModel.onPropellerHubMakeChanged(
+          engineIndex,
+          it
+        )
       }
       Row(horizontalArrangement = Arrangement.spacedBy(Spacing.large)) {
         InputField(
@@ -129,7 +151,10 @@ fun EngineSection(
           modifier = Modifier.weight(1f),
           isError = showValidationErrors && hub.model.isBlank()
         ) {
-          viewModel.onPropellerHubModelChanged(engineIndex, it)
+          viewModel.onPropellerHubModelChanged(
+            engineIndex,
+            it
+          )
         }
         InputField(
           label = stringResource(
@@ -140,7 +165,10 @@ fun EngineSection(
           modifier = Modifier.weight(1f),
           isError = showValidationErrors && hub.serial.isBlank()
         ) {
-          viewModel.onPropellerHubSerialChanged(engineIndex, it)
+          viewModel.onPropellerHubSerialChanged(
+            engineIndex,
+            it
+          )
         }
       }
 
@@ -175,7 +203,11 @@ fun EngineSection(
               isError = showValidationErrors && blade.serial.isBlank(),
               keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
             ) {
-              viewModel.onPropellerBladeSerialChanged(engineIndex, bladeIndex, it)
+              viewModel.onPropellerBladeSerialChanged(
+                engineIndex,
+                bladeIndex,
+                it
+              )
             }
           }
           if (pair.size == 1) Spacer(Modifier.weight(1f))

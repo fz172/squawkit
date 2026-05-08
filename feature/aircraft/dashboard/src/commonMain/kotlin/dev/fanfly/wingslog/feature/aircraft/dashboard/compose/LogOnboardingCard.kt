@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
@@ -57,7 +56,7 @@ fun LogOnboardingCard(
         Icon(
           Icons.Default.History,
           contentDescription = null,
-          modifier = Modifier.size(32.dp)
+          modifier = Modifier.size(Spacing.huge)
         )
         Text(
           text = stringResource(SharedRes.string.no_maintenance_logs_title),
@@ -80,7 +79,10 @@ fun LogOnboardingCard(
           contentColor = MaterialTheme.colorScheme.primaryContainer
         )
       ) {
-        Icon(Icons.Default.Add, contentDescription = null)
+        Icon(
+          Icons.Default.Add,
+          contentDescription = null
+        )
         Spacer(Modifier.width(Spacing.small))
         Text(
           text = stringResource(SharedRes.string.add_first_maintenance_log).uppercase(),
