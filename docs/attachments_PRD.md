@@ -95,6 +95,23 @@ Located at the bottom of the relevant form (below existing fields):
 ### Viewing
 
 - Attachments section appears on the log detail view and the inspection detail sheet below existing content.
-- Each attachment is a tappable row: type icon | name | size or domain.
+- Each attachment is a tappable row: type icon | name | size or domain | **sync-state icon**.
 - Tap behaviour is type-driven (see F6–F8).
 - If there are no attachments, the section is hidden.
+
+#### Sync-state status icon (R2 / M5)
+
+Every file attachment row (not links) shows a trailing status icon. The icon reflects the blob's current `RemoteState` plus in-flight activity from the opener/uploader:
+
+| State | Icon | Tint | Row tappable? |
+|---|---|---|---|
+| `PendingUpload` — local, never attempted | `CloudUpload` (outlined) | `onSurfaceVariant` | No — not yet openable |
+| `Uploading` — upload in flight | `CircularProgressIndicator` 16 dp / 2 dp stroke | `primary` | No — dimmed |
+| `Synced` — local + remote copy exist | `CloudDone` (outlined) | `onSurfaceVariant` | Yes |
+| `RemoteOnly` — remote copy only, no local file | `CloudDownload` (outlined) | `onSurfaceVariant` | Yes — download on tap |
+| `Downloading` — download in flight | `CircularProgressIndicator` 16 dp / 2 dp stroke | `onSurfaceVariant` | No — dimmed |
+| `UploadFailed` — `LOCAL_ONLY` after ≥ 1 failed attempt | `SyncProblem` (outlined) | `error` | Tap → retry prompt |
+
+`UploadFailed` vs `PendingUpload` is determined by `blob_object.upload_attempts > 0`; no new `RemoteState` value is needed.
+
+Tapping an `UploadFailed` row shows a prompt: **"Upload failed — This file is still saved on this device. [Retry] [Dismiss]"**. Retry resets `upload_attempts = 0` so the uploader picks the row up on its next pass.
