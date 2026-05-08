@@ -2,4 +2,5 @@
 <resources>
   <string name="sign_out">Log out</string>
   <string name="app_version">App Version: %1$s</string>
+  <string name="remove_local_data">Remove this account from this device</string>
 </resources>

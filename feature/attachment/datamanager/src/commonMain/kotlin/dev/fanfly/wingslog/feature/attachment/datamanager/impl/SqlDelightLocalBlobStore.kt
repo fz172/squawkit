@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager.impl
 
 import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -207,6 +208,25 @@ class SqlDelightLocalBlobStore(
   private fun loadRef(id: BlobId): BlobRef? =
     db.schemaQueries.selectBlobById(id.value).executeAsOneOrNull()?.toRef()
 
+  override fun observeForScope(scopePath: String): Flow<List<BlobRef>> =
+    db.schemaQueries.selectBlobsForScope(scopePath)
+      .asFlow()
+      .mapToList(ioContext)
+      .map { rows -> rows.map { it.toRef() } }
+
+  override suspend fun resetUploadAttempts(id: BlobId) {
+    db.schemaQueries.resetUploadAttempts(id.value)
+  }
+
+  override suspend fun wipeForUser(uid: String) {
+    val prefix = "/users/$uid/%"
+    val rows = db.schemaQueries.selectBlobsForScopePrefix(prefix).executeAsList()
+    for (row in rows) {
+      try { fs.delete(row.relative_path) } catch (_: Exception) {}
+    }
+    db.schemaQueries.deleteBlobsForUser(prefix)
+  }
+
   private fun Blob_object.toRef(): BlobRef = BlobRef(
     id = BlobId(id),
     scope = EntityScope(scope_path.trim('/').split('/')),
@@ -216,6 +236,7 @@ class SqlDelightLocalBlobStore(
     contentType = content_type,
     remoteState = remote_state,
     remotePath = remote_path,
+    uploadAttempts = upload_attempts,
     deleted = deleted,
     updatedAt = Instant.fromEpochMilliseconds(updated_at),
   )

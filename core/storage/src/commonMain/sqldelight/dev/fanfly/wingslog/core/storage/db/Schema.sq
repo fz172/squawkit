@@ -202,3 +202,20 @@ DELETE FROM blob_object WHERE id = ?;
 sumBlobSizeInScope:
 SELECT COALESCE(SUM(size_bytes), 0) AS used FROM blob_object
 WHERE scope_path = :scope AND deleted = 0;
+
+selectBlobsForScope:
+SELECT * FROM blob_object
+WHERE scope_path = :scopePath AND deleted = 0;
+
+selectBlobsForScopePrefix:
+SELECT * FROM blob_object
+WHERE scope_path LIKE :scopePrefix AND deleted = 0;
+
+resetUploadAttempts:
+UPDATE blob_object
+SET upload_attempts = 0
+WHERE id = :id;
+
+deleteBlobsForUser:
+DELETE FROM blob_object
+WHERE scope_path LIKE :scopePrefix;

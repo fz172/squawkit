@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PictureAsPdf
@@ -20,27 +23,38 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 
 @Composable
 fun AttachmentRow(
   attachment: Attachment,
-  isDownloading: Boolean = false,
+  syncState: BlobSyncState? = null,
   onTap: (Attachment) -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val enabled = when (syncState) {
+    null,
+    BlobSyncState.Synced,
+    BlobSyncState.RemoteOnly,
+    BlobSyncState.UploadFailed,
+      -> true
+    BlobSyncState.PendingUpload,
+    BlobSyncState.Uploading,
+    BlobSyncState.Downloading,
+      -> false
+  }
+
   Row(
     modifier = modifier
       .fillMaxWidth()
-      .clickable(enabled = !isDownloading) { onTap(attachment) }
-      .padding(vertical = Spacing.small)
-      .alpha(if (isDownloading) 0.5f else 1.0f),
+      .clickable(enabled = enabled) { onTap(attachment) }
+      .padding(vertical = Spacing.small),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
@@ -63,19 +77,44 @@ fun AttachmentRow(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
-    if (isDownloading) {
-      CircularProgressIndicator(
-        modifier = Modifier.size(16.dp),
-        strokeWidth = 2.dp,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-      )
-    } else {
-      Icon(
-        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+    when (syncState) {
+      BlobSyncState.Uploading,
+      BlobSyncState.Downloading,
+        -> CircularProgressIndicator(
+          modifier = Modifier.size(16.dp),
+          strokeWidth = 2.dp,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+      BlobSyncState.PendingUpload -> Icon(
+        imageVector = Icons.Filled.CloudUpload,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
         modifier = Modifier.size(16.dp),
       )
+
+      BlobSyncState.UploadFailed -> Icon(
+        imageVector = Icons.Filled.CloudOff,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.error,
+        modifier = Modifier.size(16.dp),
+      )
+
+      BlobSyncState.RemoteOnly -> Icon(
+        imageVector = Icons.Filled.CloudDownload,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+        modifier = Modifier.size(16.dp),
+      )
+
+      null,
+      BlobSyncState.Synced,
+        -> Icon(
+          imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+          modifier = Modifier.size(16.dp),
+        )
     }
   }
 }

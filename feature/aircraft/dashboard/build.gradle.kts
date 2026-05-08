@@ -27,6 +27,10 @@ compose.resources {
   publicResClass = true
 }
 
+dependencies {
+  implementation(platform(libs.firebase.bom))
+}
+
 kotlin {
   jvmToolchain(21)
 
@@ -40,7 +44,9 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
+      implementation(libs.gitlive.firebase.auth)
       implementation(project(":feature:attachment:datamanager"))
+      implementation(project(":feature:attachment:model"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:model"))

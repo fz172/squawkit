@@ -8,10 +8,6 @@ import kotlin.time.Instant
 
 /**
  * Caller-facing projection of one `blob_object` row. See docs/storage_r2_design.md §6.1.
- *
- * Notably absent: `upload_attempts` and `last_attempt_at` — those are upload-driver bookkeeping;
- * UI and feature code only need the high-level state. The driver reads the raw row when it needs
- * the retry counters.
  */
 @OptIn(ExperimentalTime::class)
 data class BlobRef(
@@ -23,6 +19,7 @@ data class BlobRef(
   val contentType: String?,
   val remoteState: RemoteState,
   val remotePath: String?,
+  val uploadAttempts: Long,
   val deleted: Boolean,
   val updatedAt: Instant,
 )

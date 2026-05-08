@@ -9,10 +9,12 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.datamanager.BlobRef
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
 import dev.fanfly.wingslog.feature.attachment.datamanager.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.datamanager.UploadScheduler
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import kotlin.time.Clock
@@ -140,6 +142,28 @@ class LocalFirstAttachmentManagerImpl(
         RemoteState.RemoteOnly -> AttachmentStatus.RemoteOnly
       }
     }
+
+  override fun observeBlobStates(scopePath: String): Flow<Map<String, BlobSyncState>> =
+    blobs.observeForScope(scopePath).map { refs ->
+      refs.associate { ref -> ref.id.value to ref.toBlobSyncState() }
+    }
+
+  override suspend fun retryUpload(id: String) {
+    blobs.resetUploadAttempts(BlobId(id))
+    uploadScheduler?.scheduleUpload(BlobId(id))
+  }
+
+  override suspend fun wipeLocalData(uid: String) {
+    uploadScheduler?.cancelAll()
+    blobs.wipeForUser(uid)
+  }
+
+  private fun BlobRef.toBlobSyncState(): BlobSyncState = when (remoteState) {
+    RemoteState.LocalOnly -> if (uploadAttempts > 0) BlobSyncState.UploadFailed else BlobSyncState.PendingUpload
+    RemoteState.Uploading -> BlobSyncState.Uploading
+    RemoteState.Synced -> BlobSyncState.Synced
+    RemoteState.RemoteOnly -> BlobSyncState.RemoteOnly
+  }
 
   private fun String.toAttachmentType(): AttachmentType = when {
     startsWith("image/") -> AttachmentType.ATTACHMENT_TYPE_IMAGE

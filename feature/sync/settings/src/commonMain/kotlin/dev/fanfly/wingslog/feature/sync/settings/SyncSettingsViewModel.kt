@@ -38,6 +38,7 @@ class SyncSettingsViewModel(
       SyncSettingsUiState(
         signedIn = signedIn,
         cloudSyncEnabled = prefs.cloudSyncEnabled,
+        allowUploadOnCellular = prefs.allowUploadOnCellular,
         failureMessage = failure?.message,
         hydration = hydration,
       )
@@ -50,12 +51,17 @@ class SyncSettingsViewModel(
   fun onCloudSyncToggled(enabled: Boolean) {
     viewModelScope.launch { syncPreferences.setCloudSyncEnabled(enabled) }
   }
+
+  fun onAllowUploadOnCellularToggled(allowed: Boolean) {
+    viewModelScope.launch { syncPreferences.setAllowUploadOnCellular(allowed) }
+  }
 }
 
 /** Pure render input for [SyncSettingsScreen]. */
 data class SyncSettingsUiState(
   val signedIn: Boolean,
   val cloudSyncEnabled: Boolean,
+  val allowUploadOnCellular: Boolean,
   val failureMessage: String?,
   val hydration: HydrationState,
 ) {
@@ -63,6 +69,7 @@ data class SyncSettingsUiState(
     val Initial = SyncSettingsUiState(
       signedIn = false,
       cloudSyncEnabled = true,
+      allowUploadOnCellular = false,
       failureMessage = null,
       hydration = HydrationState.Idle,
     )

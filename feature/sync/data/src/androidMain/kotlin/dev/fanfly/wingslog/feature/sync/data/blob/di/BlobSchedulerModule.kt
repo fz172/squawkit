@@ -39,6 +39,6 @@ actual val blobSchedulerModule = module {
   }
 
   single<UploadScheduler> {
-    WorkManagerUploadScheduler(context = androidContext())
+    WorkManagerUploadScheduler(context = androidContext(), syncPreferences = get())
   }
 }

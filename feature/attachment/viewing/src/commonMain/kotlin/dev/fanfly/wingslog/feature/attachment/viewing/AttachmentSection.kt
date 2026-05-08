@@ -10,7 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.attachment.sharedassets.generated.resources.Res
 import wingslog.feature.attachment.sharedassets.generated.resources.attachments
@@ -25,7 +27,7 @@ fun AttachmentSection(
   attachments: List<Attachment>,
   onAttachmentTap: (Attachment) -> Unit,
   modifier: Modifier = Modifier,
-  downloadingIds: Set<String> = emptySet(),
+  syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
 ) {
   if (attachments.isEmpty()) return
@@ -40,8 +42,9 @@ fun AttachmentSection(
     attachments.forEach { attachment ->
       AttachmentRow(
         attachment = attachment,
+        syncState = if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) null
+                    else syncStates[attachment.id],
         onTap = onAttachmentTap,
-        isDownloading = downloadingIds.contains(attachment.id)
       )
       HorizontalDivider()
     }

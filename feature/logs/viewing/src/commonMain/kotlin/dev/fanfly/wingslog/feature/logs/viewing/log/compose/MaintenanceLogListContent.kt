@@ -51,6 +51,7 @@ import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
@@ -75,7 +76,7 @@ import wingslog.feature.logs.viewing.generated.resources.search_logs
 @Composable
 fun MaintenanceLogListContent(
   uiState: MaintenanceLogListUiState,
-  downloadingIds: Set<String>,
+  syncStates: Map<String, BlobSyncState> = emptyMap(),
   onSearchQueryChange: (String) -> Unit,
   onComponentFilterToggle: (ComponentType) -> Unit,
   onClearFilter: () -> Unit,
@@ -246,7 +247,7 @@ fun MaintenanceLogListContent(
                   onEditLog(log.id)
                 },
                 onAttachmentTap = onAttachmentTap,
-                downloadingIds = downloadingIds,
+                syncStates = syncStates,
                 openError = openError,
                 onTaskClick = onTaskClick?.let { cb ->
                   { taskId ->

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,7 @@ import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.settings
 import wingslog.feature.settings.generated.resources.Res as SettingsRes
 import wingslog.feature.settings.generated.resources.app_version
+import wingslog.feature.settings.generated.resources.remove_local_data
 import wingslog.feature.settings.generated.resources.sign_out
 import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
 import wingslog.feature.sync.sharedassets.generated.resources.feature_name_backup_and_sync
@@ -98,6 +100,13 @@ fun SettingsScreen(
         title = stringResource(SyncRes.string.feature_name_backup_and_sync),
         onClick = { navController.navigate(Screen.SyncSettings.route) },
         settingsLevel = SettingsLevel.DEFAULT
+      )
+
+      SettingsRow(
+        icon = Icons.Default.DeleteSweep,
+        title = stringResource(SettingsRes.string.remove_local_data),
+        onClick = { settingsViewModel.wipeLocalAttachments() },
+        settingsLevel = SettingsLevel.DANGER
       )
 
       SettingsRow(

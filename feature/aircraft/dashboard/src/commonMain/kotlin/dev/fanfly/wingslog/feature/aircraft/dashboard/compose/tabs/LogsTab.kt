@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.logs.viewing.log.compose.MaintenanceLogListContent
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListEvent
@@ -35,7 +36,7 @@ import wingslog.feature.logs.sharedassets.generated.resources.add_log
 @Composable
 fun LogsTab(
   aircraftId: String,
-  downloadingIds: Set<String>,
+  syncStates: Map<String, BlobSyncState> = emptyMap(),
   onNavigateToAddLog: () -> Unit,
   onNavigateToEditLog: (logId: String) -> Unit,
   onTaskClick: (taskId: String) -> Unit,
@@ -60,7 +61,7 @@ fun LogsTab(
   Box(modifier = modifier.fillMaxSize()) {
     MaintenanceLogListContent(
       uiState = uiState,
-      downloadingIds = downloadingIds,
+      syncStates = syncStates,
       onSearchQueryChange = viewModel::onSearchQueryChange,
       onComponentFilterToggle = viewModel::onComponentFilterToggle,
       onClearFilter = viewModel::clearFilter,

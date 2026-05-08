@@ -5,19 +5,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -28,6 +32,8 @@ class AircraftOverviewViewModel(
   private val taskDataManager: TaskDataManager,
   private val taskDueManager: TaskDueManager,
   private val attachmentOpener: AttachmentOpener,
+  private val attachmentManager: AttachmentManager,
+  private val auth: FirebaseAuth,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -40,10 +46,16 @@ class AircraftOverviewViewModel(
   val events = _events.receiveAsFlow()
 
   private var cachedLogs: List<MaintenanceLog> = emptyList()
+  private var legacyBannerDismissed = false
 
   init {
     loadAircraftAndStats()
   }
+
+  private fun blobStatesFlow() =
+    auth.currentUser?.uid?.let { uid ->
+      attachmentManager.observeBlobStates("/users/$uid/aircraft/$aircraftId/")
+    } ?: flowOf(emptyMap())
 
   private fun loadAircraftAndStats() {
     viewModelScope.launch {
@@ -53,8 +65,14 @@ class AircraftOverviewViewModel(
         logManager.observeLogs(aircraftId),
         taskDataManager.observeTasks(aircraftId),
         logManager.observeMaintenanceOverview(aircraftId),
-        attachmentOpener.downloadingIds
-      ) { aircraft, logs, taskCards, overview, downloadingIds ->
+        combine(blobStatesFlow(), attachmentOpener.downloadingIds) { blobStates, downloadingIds ->
+          val merged: Map<String, BlobSyncState> = buildMap {
+            putAll(blobStates)
+            downloadingIds.forEach { put(it, BlobSyncState.Downloading) }
+          }
+          merged
+        }
+      ) { aircraft, logs, taskCards, overview, syncStates ->
         cachedLogs = logs
         if (aircraft != null) {
           val stats = if (overview != null) {
@@ -111,6 +129,10 @@ class AircraftOverviewViewModel(
               .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
           } ?: emptyList()
 
+          val hasLegacy = logs.any { log ->
+            log.attachments.any { att -> att.sha256.isBlank() && att.storage_path.isNotBlank() }
+          }
+
           AircraftOverviewUiState.Success(
             aircraft = aircraft,
             logStats = stats,
@@ -119,7 +141,8 @@ class AircraftOverviewViewModel(
             selectedTask = refreshedSelected,
             logsForSelectedTask = refreshedDetailLogs,
             deletingTaskId = current?.deletingTaskId,
-            downloadingIds = downloadingIds,
+            syncStates = syncStates,
+            showLegacyAttachmentBanner = hasLegacy && !legacyBannerDismissed,
           )
         } else {
           AircraftOverviewUiState.Error
@@ -196,6 +219,15 @@ class AircraftOverviewViewModel(
         val card = (state.activeTasks + state.completedTasks)
           .find { it.card.id == action.taskId } ?: return
         showTaskDetails(card)
+      }
+
+      AircraftOverviewAction.DismissLegacyBanner -> {
+        legacyBannerDismissed = true
+        _uiState.update { state ->
+          if (state is AircraftOverviewUiState.Success) {
+            state.copy(showLegacyAttachmentBanner = false)
+          } else state
+        }
       }
     }
   }

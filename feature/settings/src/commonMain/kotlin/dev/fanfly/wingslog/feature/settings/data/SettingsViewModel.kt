@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.settings.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,7 +12,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-  private val authManager: AuthManager, private val userProfileManager: UserProfileManager,
+  private val authManager: AuthManager,
+  private val userProfileManager: UserProfileManager,
+  private val attachmentManager: AttachmentManager,
 ) : ViewModel() {
 
   private val _user = MutableStateFlow(SettingsUiState())
@@ -38,6 +41,11 @@ class SettingsViewModel(
         }
       }
     }
+  }
+
+  fun wipeLocalAttachments() {
+    val uid = authManager.getCurrentUser()?.uid ?: return
+    viewModelScope.launch { attachmentManager.wipeLocalData(uid) }
   }
 
   /**
