@@ -61,6 +61,7 @@ class FirestorePullSubscription(private val firestore: FirebaseFirestore) {
 
   companion object {
     private const val TAG = "FirestorePullSubscription"
-    private const val UPDATED_AT = "updated_at"
+    // Must match the field name kotlinx.serialization produces from SyncDocWire.lastUpdateTimestamp.
+    private const val UPDATED_AT = "lastUpdateTimestamp"
   }
 }
