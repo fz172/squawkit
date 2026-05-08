@@ -96,7 +96,10 @@ class LocalFirstAttachmentManagerImpl(
           RemoteState.LocalOnly,
           RemoteState.Uploading -> DownloadState.Done
           RemoteState.RemoteOnly -> DownloadState.Downloading(0f)
-          null -> DownloadState.Done  // row vanished — treat as done
+          // null: row not indexed yet (reconciler still running). If sha256 is known the file
+          // exists on the server — stay in Downloading so the flow keeps observing until the
+          // REMOTE_ONLY row appears and transitions to Synced.
+          null -> if (attachment.sha256.isBlank()) DownloadState.Done else DownloadState.Downloading(0f)
         }
       }
       .transformWhile { state ->

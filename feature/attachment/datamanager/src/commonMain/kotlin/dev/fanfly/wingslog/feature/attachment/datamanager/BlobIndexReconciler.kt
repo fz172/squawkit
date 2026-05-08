@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 class BlobIndexReconciler(
   private val blobs: LocalBlobStore,
   private val coroutineScope: CoroutineScope,
+  private val uploadScheduler: UploadScheduler? = null,
 ) : PostWriteHook {
 
   private val log = Logger.withTag(TAG)
@@ -40,14 +41,16 @@ class BlobIndexReconciler(
 
     for (att in attachments) {
       if (att.id.isBlank() || att.sha256.isBlank()) continue
+      val blobId = BlobId(att.id)
       coroutineScope.launch {
         blobs.upsertRemoteOnly(
-          id = BlobId(att.id),
+          id = blobId,
           sha256 = att.sha256,
           sizeBytes = att.size_bytes,
           contentType = att.mime_type.ifBlank { null },
           scope = scope,
         )
+        uploadScheduler?.scheduleDownload(blobId)
       }
     }
   }

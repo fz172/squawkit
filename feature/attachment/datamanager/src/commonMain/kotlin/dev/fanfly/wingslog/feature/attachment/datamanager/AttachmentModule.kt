@@ -39,6 +39,7 @@ val attachmentModule = module {
     BlobIndexReconciler(
       blobs = get(),
       coroutineScope = CoroutineScope(SupervisorJob()),
+      uploadScheduler = getOrNull(),
     )
   }
 }
