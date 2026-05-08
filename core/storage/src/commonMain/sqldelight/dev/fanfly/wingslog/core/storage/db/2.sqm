@@ -1,0 +1,22 @@
+-- Migration from schema version 1 to 2.
+-- Adds the blob_object table introduced in R2 (local-first attachments).
+-- Note: type annotations (AS RemoteState, AS kotlin.Boolean) are not valid in
+-- .sqm files — SQLite column types only.
+
+CREATE TABLE blob_object (
+  id               TEXT    NOT NULL PRIMARY KEY,
+  scope_path       TEXT    NOT NULL,
+  relative_path    TEXT    NOT NULL,
+  content_type     TEXT,
+  size_bytes       INTEGER NOT NULL,
+  sha256           TEXT    NOT NULL,
+  remote_state     TEXT    NOT NULL,
+  remote_path      TEXT,
+  upload_attempts  INTEGER NOT NULL DEFAULT 0,
+  last_attempt_at  INTEGER,
+  updated_at       INTEGER NOT NULL,
+  deleted          INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX blob_state_idx ON blob_object(scope_path, remote_state);
+CREATE INDEX blob_pending_idx ON blob_object(remote_state, last_attempt_at);

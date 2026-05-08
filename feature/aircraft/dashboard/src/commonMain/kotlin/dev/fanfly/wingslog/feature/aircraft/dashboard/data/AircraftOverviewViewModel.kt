@@ -191,12 +191,6 @@ class AircraftOverviewViewModel(
         confirmDeleteTask()
       }
 
-      is AircraftOverviewAction.AttachmentTap -> {
-        viewModelScope.launch {
-          attachmentOpener.open(action.attachment).collect {}
-        }
-      }
-
       is AircraftOverviewAction.TaskFromLogClick -> {
         val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
         val card = (state.activeTasks + state.completedTasks)

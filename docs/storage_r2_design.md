@@ -385,7 +385,53 @@ User taps Save
   → UploadScheduler kicks in asynchronously; upload status surfaces through observeStatus
 ```
 
-The "uploading" indicator the R1 form showed during save becomes a per-attachment badge in the viewing UI (a small cloud-with-up-arrow icon while `Uploading`, plain icon when `Synced`).
+The R1 save-level progress spinner is replaced by a per-attachment status icon in the viewing row (see §6.4).
+
+### 6.4 Sync-state display (`BlobSyncState`)
+
+#### Domain type
+
+`feature/attachment/model/` exposes a sealed type the viewing layer uses directly, hiding `RemoteState` + upload-counter details from composables:
+
+```kotlin
+sealed interface BlobSyncState {
+  data object PendingUpload : BlobSyncState  // LOCAL_ONLY, upload_attempts == 0
+  data object Uploading     : BlobSyncState  // UPLOADING (in-flight)
+  data object Synced        : BlobSyncState  // SYNCED
+  data object RemoteOnly    : BlobSyncState  // REMOTE_ONLY (no local file yet)
+  data object Downloading   : BlobSyncState  // download in-flight (AttachmentOpener)
+  data object UploadFailed  : BlobSyncState  // LOCAL_ONLY, upload_attempts > 0
+}
+```
+
+`BlobSyncState` is derived from `blob_object.remote_state` + `upload_attempts > 0`. No new `RemoteState` enum value is needed.
+
+#### Data pairing
+
+```kotlin
+data class AttachmentWithState(
+  val attachment: Attachment,
+  val syncState: BlobSyncState?,  // null = link type (no blob lifecycle)
+)
+```
+
+#### Data flow
+
+`LocalFirstAttachmentManagerImpl` (or a thin `AttachmentStateProvider`) exposes:
+
+```kotlin
+fun observeBlobStates(scopePath: String): Flow<Map<String, BlobSyncState>>
+```
+
+The ViewModel combines this with `attachmentOpener.downloadingIds`, applying `Downloading` for any id present in that set, and passes `List<AttachmentWithState>` to the composable layer.
+
+#### Composable changes
+
+`AttachmentSection` and `AttachmentRow` change their primary list parameter from `List<Attachment>` + `Set<String> downloadingIds` to `List<AttachmentWithState>`. The `downloadingIds` set is folded in by the ViewModel before the call; composables no longer need it as a separate argument.
+
+The trailing icon slot in `AttachmentRow` renders the status icon per the table in `attachments_PRD.md §Viewing`. The `OpenInNew` arrow is shown alongside the status icon only when the row is tappable (`Synced`, `RemoteOnly`, link). For `PendingUpload` and `UploadFailed` the `OpenInNew` arrow is hidden.
+
+Tapping an `UploadFailed` row triggers a prompt; the handler calls `AttachmentManager.retryUpload(id)` which resets `upload_attempts = 0` so the uploader picks the row up on its next pass.
 
 ---
 

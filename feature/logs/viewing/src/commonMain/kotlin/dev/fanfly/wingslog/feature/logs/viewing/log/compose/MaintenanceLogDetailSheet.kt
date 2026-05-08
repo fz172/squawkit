@@ -64,6 +64,7 @@ fun MaintenanceLogDetailSheet(
   onEditClick: () -> Unit,
   onAttachmentTap: (Attachment) -> Unit = {},
   downloadingIds: Set<String> = emptySet(),
+  openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
@@ -134,6 +135,7 @@ fun MaintenanceLogDetailSheet(
       attachments = log.attachments,
       onAttachmentTap = onAttachmentTap,
       downloadingIds = downloadingIds,
+      openError = openError,
     )
   }
 }

@@ -9,3 +9,9 @@ sealed class OpenState {
 
   data class Failed(val error: Throwable) : OpenState()
 }
+
+/** Attachment was written by an R1 build (sha256 empty, no blob_object row). Re-attach to restore access. */
+class LegacyAttachment : Exception("Attachment added in an older version; re-attach the file to restore access.")
+
+/** No blob_object row found for this attachment id (should not normally occur after reconciliation). */
+class MissingBlobIndex(id: String) : Exception("No local index found for attachment: $id")
