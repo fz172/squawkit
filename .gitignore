@@ -21,3 +21,7 @@ kotlin-js-store/
 # Xcode
 **/xcuserdata/
 *.xcuserdata
+
+# Claude Code
+.agents/
+.claude/skills/

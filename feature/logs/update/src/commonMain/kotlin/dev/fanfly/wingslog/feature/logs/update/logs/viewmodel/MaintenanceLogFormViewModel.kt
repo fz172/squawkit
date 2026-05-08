@@ -3,18 +3,17 @@ package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.datetime.toWireInstant
-import dev.fanfly.wingslog.core.ui.common.UiText
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -39,11 +38,11 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachmentRes
-import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.delete_failed
 import wingslog.core.ui.generated.resources.save_failed
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachmentRes
+import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.update.generated.resources.log_not_found
 import wingslog.feature.logs.update.generated.resources.work_description_required
@@ -94,7 +93,10 @@ class MaintenanceLogFormViewModel(
 
       val available = listOf(myTechnician) + technicians.filter { it.id != myTechnician.id }
 
-      Pair(myTechnician, available)
+      Pair(
+        myTechnician,
+        available
+      )
     }
       .onEach { (myTechnician, available) ->
         _uiState.update { state ->
@@ -147,7 +149,10 @@ class MaintenanceLogFormViewModel(
         val logDate = log.timestamp?.let { ts ->
           val epochSec = ts.getEpochSecond()
           if (epochSec > 0L) {
-            Instant.fromEpochSeconds(epochSec, ts.getNano())
+            Instant.fromEpochSeconds(
+              epochSec,
+              ts.getNano()
+            )
               .toLocalDateTime(TimeZone.currentSystemDefault()).date
           } else null
         }
@@ -187,7 +192,12 @@ class MaintenanceLogFormViewModel(
   fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
 
   fun onTechnicianSelect(technician: Technician?) =
-    _uiState.update { it.copy(selectedTechnician = technician, showTechnicianPicker = false) }
+    _uiState.update {
+      it.copy(
+        selectedTechnician = technician,
+        showTechnicianPicker = false
+      )
+    }
 
   fun showTechnicianPicker() = _uiState.update { it.copy(showTechnicianPicker = true) }
   fun hideTechnicianPicker() = _uiState.update { it.copy(showTechnicianPicker = false) }
@@ -237,7 +247,10 @@ class MaintenanceLogFormViewModel(
 
         else -> null
       }
-      state.copy(selectedComponentType = value, selectedSubComponent = autoSerial)
+      state.copy(
+        selectedComponentType = value,
+        selectedSubComponent = autoSerial
+      )
     }
   }
 
@@ -264,22 +277,38 @@ class MaintenanceLogFormViewModel(
           continue
         }
         try {
-          val attachment = attachmentManager.addPickedFile(file, file.name)
+          val attachment = attachmentManager.addPickedFile(
+            aircraftId,
+            file,
+            file.name
+          )
           _uiState.update { s ->
             s.copy(pendingAttachments = s.pendingAttachments + PendingAttachment.Local(attachment))
           }
           anyAdded = true
         } catch (e: Exception) {
-          _uiState.update { it.copy(error = UiText.DynamicString(e.message ?: "Failed to add file")) }
+          _uiState.update {
+            it.copy(
+              error = UiText.DynamicString(
+                e.message ?: "Failed to add file"
+              )
+            )
+          }
         }
       }
       if (anyAdded) _events.send(MaintenanceLogFormEvent.FileAdded)
     }
   }
 
-  fun addLink(url: String, name: String) {
+  fun addLink(
+    url: String,
+    name: String,
+  ) {
     val displayName = name.ifBlank { url.take(40) }
-    val attachment = attachmentManager.makeLink(url, displayName)
+    val attachment = attachmentManager.makeLink(
+      url,
+      displayName
+    )
     _uiState.update { state ->
       state.copy(pendingAttachments = state.pendingAttachments + PendingAttachment.LocalLink(attachment))
     }
@@ -311,7 +340,12 @@ class MaintenanceLogFormViewModel(
       return
     }
     saveJob = viewModelScope.launch {
-      _uiState.update { it.copy(isSaving = true, error = null) }
+      _uiState.update {
+        it.copy(
+          isSaving = true,
+          error = null
+        )
+      }
 
       val resolvedLogId = logId ?: generateRandomId()
 
@@ -322,9 +356,15 @@ class MaintenanceLogFormViewModel(
       // 2. Build final attachment list — Local items already have fully-populated protos
       //    (addPickedFile was called at pick time; no network wait here)
       val finalAttachments = buildList {
-        addAll(state.pendingAttachments.filterIsInstance<PendingAttachment.Saved>().map { it.attachment })
-        addAll(state.pendingAttachments.filterIsInstance<PendingAttachment.Local>().map { it.attachment })
-        addAll(state.pendingAttachments.filterIsInstance<PendingAttachment.LocalLink>().map { it.attachment })
+        addAll(
+          state.pendingAttachments.filterIsInstance<PendingAttachment.Saved>()
+            .map { it.attachment })
+        addAll(
+          state.pendingAttachments.filterIsInstance<PendingAttachment.Local>()
+            .map { it.attachment })
+        addAll(
+          state.pendingAttachments.filterIsInstance<PendingAttachment.LocalLink>()
+            .map { it.attachment })
       }
 
       // 4. Save log
@@ -352,7 +392,10 @@ class MaintenanceLogFormViewModel(
         technician = state.selectedTechnician,
       )
 
-      val result = if (isEditMode) logManager.updateLog(aircraftId, log) else logManager.addLog(
+      val result = if (isEditMode) logManager.updateLog(
+        aircraftId,
+        log
+      ) else logManager.addLog(
         aircraftId,
         log
       )
@@ -397,7 +440,10 @@ class MaintenanceLogFormViewModel(
         .filterIsInstance<PendingAttachment.Saved>()
         .filter { it.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK }
       fileAttachments.forEach { attachmentManager.delete(it.attachment) }
-      logManager.deleteLog(aircraftId, id)
+      logManager.deleteLog(
+        aircraftId,
+        id
+      )
         .onSuccess { _events.send(MaintenanceLogFormEvent.DeleteSuccess) }
         .onFailure { e ->
           _uiState.update {

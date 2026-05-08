@@ -11,8 +11,8 @@ import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
 import dev.fanfly.wingslog.feature.attachment.datamanager.LocalBlobStore
-import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.datamanager.UploadScheduler
+import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import kotlin.time.Clock
@@ -20,6 +20,7 @@ import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.transformWhile
 
 /**
@@ -37,15 +38,27 @@ class LocalFirstAttachmentManagerImpl(
   private val clock: Clock = Clock.System,
 ) : AttachmentManager {
 
-  override suspend fun addPickedFile(picked: PickedFile, displayName: String): Attachment {
+  override suspend fun addPickedFile(
+    aircraftId: String,
+    picked: PickedFile,
+    displayName: String,
+  ): Attachment {
     val uid = auth.getCurrentUser()?.uid
       ?: error("addPickedFile requires a signed-in user (anonymous or permanent)")
     val bytes = fileByteReader.readBytes(picked.uri)
       ?: error("could not read picked file at ${picked.uri}")
     val id = generateRandomId()
-    val scope = EntityScope.userRoot(uid)
-    val storagePath = "users/$uid/blobs/$id"
-    val ref = blobs.put(BlobId(id), bytes, contentType = picked.mimeType, scope = scope)
+    val scope = EntityScope.aircraftChild(
+      uid,
+      aircraftId
+    )
+    val storagePath = "users/$uid/aircraft/${aircraftId}/blobs/$id"
+    val ref = blobs.put(
+      BlobId(id),
+      bytes,
+      contentType = picked.mimeType,
+      scope = scope
+    )
     uploadScheduler?.scheduleUpload(BlobId(id))
     val now = clock.now()
     return Attachment(
@@ -63,7 +76,10 @@ class LocalFirstAttachmentManagerImpl(
     )
   }
 
-  override fun makeLink(url: String, displayName: String): Attachment {
+  override fun makeLink(
+    url: String,
+    displayName: String,
+  ): Attachment {
     val id = generateRandomId()
     val now = clock.now()
     return Attachment(
@@ -87,14 +103,21 @@ class LocalFirstAttachmentManagerImpl(
 
   override fun ensureLocal(attachment: Attachment): Flow<DownloadState> {
     val id = BlobId(attachment.id)
-    uploadScheduler?.scheduleDownload(id)
     return blobs.observe(id)
       .distinctUntilChanged { a, b -> a?.remoteState == b?.remoteState }
+      .onEach { ref ->
+        // Schedule download only once the REMOTE_ONLY row actually exists in the DB.
+        // Scheduling when the row is null races WorkManager against the reconciler and
+        // the worker finds no row, treating it as terminal success and never retrying.
+        if (ref?.remoteState == RemoteState.RemoteOnly) uploadScheduler?.scheduleDownload(id)
+      }
       .map { ref ->
         when (ref?.remoteState) {
           RemoteState.Synced,
           RemoteState.LocalOnly,
-          RemoteState.Uploading -> DownloadState.Done
+          RemoteState.Uploading,
+            -> DownloadState.Done
+
           RemoteState.RemoteOnly -> DownloadState.Downloading(0f)
           // null: row not indexed yet (reconciler still running). If sha256 is known the file
           // exists on the server — stay in Downloading so the flow keeps observing until the

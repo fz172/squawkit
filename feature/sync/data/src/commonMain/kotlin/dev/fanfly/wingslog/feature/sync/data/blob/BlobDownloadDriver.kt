@@ -35,6 +35,7 @@ class BlobDownloadDriver(
       return true
     }
     val remotePath = ref.remotePath
+    log.d { "Remote path is $remotePath" }
     if (remotePath == null) {
       log.w { "download skipped: ${id.value} has null remote_path" }
       return true
@@ -42,6 +43,8 @@ class BlobDownloadDriver(
 
     val bytes = try {
       val url = storage.reference(remotePath).getDownloadUrl()
+      log.d { "Download url is $url" }
+
       httpClient.get(url).readRawBytes()
     } catch (e: Exception) {
       log.w(e) { "download transient failure for ${id.value}; will retry" }

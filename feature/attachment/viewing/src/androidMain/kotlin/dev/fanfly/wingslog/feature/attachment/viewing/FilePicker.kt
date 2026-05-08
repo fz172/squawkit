@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.documentfile.provider.DocumentFile
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 
 @Composable
@@ -19,11 +20,24 @@ actual fun rememberFilePicker(
     val files = uris.mapNotNull { uri ->
       try {
         val mimeType = context.contentResolver.getType(uri) ?: "*/*"
-        val name = uri.lastPathSegment?.substringAfterLast("/") ?: "file"
-        val sizeBytes = context.contentResolver.openFileDescriptor(uri, "r")
+        val documentFile = DocumentFile.fromSingleUri(
+          context,
+          uri
+        )
+        val name = documentFile?.name ?: "file"
+        val sizeBytes = context.contentResolver.openFileDescriptor(
+          uri,
+          "r"
+        )
           ?.use { it.statSize } ?: 0L
-        PickedFile(uri = uri.toString(), name = name, mimeType = mimeType, sizeBytes = sizeBytes)
+        PickedFile(
+          uri = uri.toString(),
+          name = name,
+          mimeType = mimeType,
+          sizeBytes = sizeBytes
+        )
       } catch (e: Exception) {
+        // TODO: Log the error.
         null
       }
     }
