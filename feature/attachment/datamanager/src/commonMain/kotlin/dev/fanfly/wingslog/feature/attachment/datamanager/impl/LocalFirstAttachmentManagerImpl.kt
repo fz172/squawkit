@@ -12,26 +12,28 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
 import dev.fanfly.wingslog.feature.attachment.datamanager.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
+import dev.fanfly.wingslog.feature.attachment.datamanager.UploadScheduler
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.transformWhile
 
 /**
  * Local-first [AttachmentManager]. See docs/storage_r2_design.md §6.2 + §6.3.
  *
- * `addPickedFile` is intentionally synchronous from the form's perspective: it reads bytes,
- * writes to disk, inserts a `LOCAL_ONLY` blob_object row, and returns the populated proto. No
- * network I/O. The `UploadScheduler` (PR 5) will pick the row up out-of-band.
+ * `addPickedFile` writes bytes to disk, inserts a `LOCAL_ONLY` blob_object row, and schedules
+ * the upload via [uploadScheduler]. No network I/O on the calling coroutine.
  */
 @OptIn(ExperimentalTime::class)
 class LocalFirstAttachmentManagerImpl(
   private val blobs: LocalBlobStore,
   private val auth: AuthManager,
   private val fileByteReader: FileByteReader,
+  private val uploadScheduler: UploadScheduler? = null,
   private val clock: Clock = Clock.System,
 ) : AttachmentManager {
 
@@ -44,6 +46,7 @@ class LocalFirstAttachmentManagerImpl(
     val scope = EntityScope.userRoot(uid)
     val storagePath = "users/$uid/blobs/$id"
     val ref = blobs.put(BlobId(id), bytes, contentType = picked.mimeType, scope = scope)
+    uploadScheduler?.scheduleUpload(BlobId(id))
     val now = clock.now()
     return Attachment(
       id = id,
@@ -83,10 +86,23 @@ class LocalFirstAttachmentManagerImpl(
   }
 
   override fun ensureLocal(attachment: Attachment): Flow<DownloadState> {
-    // Real download wiring lands in PR 5 (BlobDownloadDriver + UploadScheduler). For now we
-    // only handle the trivial "already local" case so callers can integrate against the
-    // contract today.
-    return flowOf(DownloadState.Done)
+    val id = BlobId(attachment.id)
+    uploadScheduler?.scheduleDownload(id)
+    return blobs.observe(id)
+      .distinctUntilChanged { a, b -> a?.remoteState == b?.remoteState }
+      .map { ref ->
+        when (ref?.remoteState) {
+          RemoteState.Synced,
+          RemoteState.LocalOnly,
+          RemoteState.Uploading -> DownloadState.Done
+          RemoteState.RemoteOnly -> DownloadState.Downloading(0f)
+          null -> DownloadState.Done  // row vanished — treat as done
+        }
+      }
+      .transformWhile { state ->
+        emit(state)
+        state is DownloadState.Downloading
+      }
   }
 
   override fun observeStatus(attachmentId: String): Flow<AttachmentStatus> =

@@ -38,12 +38,23 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":core:storage"))
+      api(project(":feature:attachment:datamanager"))
       api(libs.gitlive.firebase.auth)
       api(libs.gitlive.firebase.firestore)
+      api(libs.gitlive.firebase.storage)
       api(libs.kotlinx.coroutines.core)
       api(libs.kotlinx.datetime)
       api(libs.koin.core)
+      implementation(libs.ktor.client.core)
       implementation(libs.kermit)
+    }
+    androidMain.dependencies {
+      implementation(libs.koin.android)
+      implementation(libs.ktor.client.okhttp)
+      implementation(libs.work.runtime.ktx)
+    }
+    iosMain.dependencies {
+      implementation(libs.ktor.client.darwin)
     }
   }
 }

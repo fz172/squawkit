@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.attachment.datamanager.UploadScheduler
 import dev.fanfly.wingslog.feature.sync.data.FirestorePullSubscription
 import dev.fanfly.wingslog.feature.sync.data.FirestoreRemoteFetcher
 import dev.fanfly.wingslog.feature.sync.data.FirestoreSyncWriter
@@ -22,6 +23,8 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.firestore.firestoreSettings
 import dev.gitlive.firebase.firestore.memoryCacheSettings
+import dev.gitlive.firebase.storage.FirebaseStorage
+import dev.gitlive.firebase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import org.koin.core.module.Module
@@ -33,6 +36,8 @@ import org.koin.dsl.module
  * for [FirebaseAuth].
  */
 val syncModule: Module = module {
+
+  single<FirebaseStorage> { Firebase.storage }
 
   single<FirebaseFirestore> {
     // R1 local-first: the SQLDelight `entity` table is the source of truth, and `core/sync`
@@ -71,6 +76,7 @@ val syncModule: Module = module {
   single<SyncEngine> {
     val db = get<WingsLogDatabase>()
     val postWriteHook = getOrNull<PostWriteHook>()
+    val uploadScheduler = getOrNull<UploadScheduler>()
     SyncEngine(
       auth = get<FirebaseAuth>(),
       cursors = get<SyncCursorStore>(),
@@ -88,6 +94,8 @@ val syncModule: Module = module {
       storeFactory = get<EntityStoreFactory>(),
       syncPreferences = get<SyncPreferences>(),
       ioContext = Dispatchers.IO,
+      db = db,
+      uploadScheduler = uploadScheduler,
     )
   }
 }

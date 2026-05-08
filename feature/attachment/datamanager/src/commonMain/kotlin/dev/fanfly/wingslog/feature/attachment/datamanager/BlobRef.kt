@@ -17,6 +17,7 @@ import kotlin.time.Instant
 data class BlobRef(
   val id: BlobId,
   val scope: EntityScope,
+  val relativePath: String,
   val sizeBytes: Long,
   val sha256: String,
   val contentType: String?,

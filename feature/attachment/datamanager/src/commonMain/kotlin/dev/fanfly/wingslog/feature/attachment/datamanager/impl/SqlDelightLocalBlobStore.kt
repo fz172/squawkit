@@ -210,6 +210,7 @@ class SqlDelightLocalBlobStore(
   private fun Blob_object.toRef(): BlobRef = BlobRef(
     id = BlobId(id),
     scope = EntityScope(scope_path.trim('/').split('/')),
+    relativePath = relative_path,
     sizeBytes = size_bytes,
     sha256 = sha256,
     contentType = content_type,

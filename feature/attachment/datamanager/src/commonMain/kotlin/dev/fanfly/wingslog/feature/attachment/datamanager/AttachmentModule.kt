@@ -26,6 +26,7 @@ val attachmentModule = module {
       blobs = get(),
       auth = get(),
       fileByteReader = get(),
+      uploadScheduler = getOrNull(),
     )
   }
   single {

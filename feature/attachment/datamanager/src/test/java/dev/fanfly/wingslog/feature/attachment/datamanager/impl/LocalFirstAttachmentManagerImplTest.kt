@@ -52,7 +52,7 @@ class LocalFirstAttachmentManagerImplTest {
     every { mockUser.uid } returns TEST_USER_ID
     every { auth.getCurrentUser() } returns mockUser
 
-    manager = LocalFirstAttachmentManagerImpl(blobs, auth, fileByteReader, clock)
+    manager = LocalFirstAttachmentManagerImpl(blobs, auth, fileByteReader, clock = clock)
   }
 
   // ---- helpers ----
@@ -70,6 +70,7 @@ class LocalFirstAttachmentManagerImplTest {
   ) = BlobRef(
     id = BlobId("some-id"),
     scope = EntityScope.userRoot(TEST_USER_ID),
+    relativePath = "blobs/some-id.bin",
     sizeBytes = 1024L,
     sha256 = sha256,
     contentType = "image/jpeg",

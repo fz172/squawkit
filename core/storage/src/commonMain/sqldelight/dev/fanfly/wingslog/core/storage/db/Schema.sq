@@ -175,6 +175,14 @@ WHERE deleted = 0
 ORDER BY updated_at ASC
 LIMIT :limit;
 
+selectPendingDownloads:
+SELECT * FROM blob_object
+WHERE deleted = 0
+  AND remote_state = 'REMOTE_ONLY'
+  AND scope_path LIKE :scopePrefix
+ORDER BY updated_at ASC
+LIMIT :limit;
+
 selectBlobTombstones:
 SELECT * FROM blob_object WHERE deleted = 1 ORDER BY updated_at ASC LIMIT :limit;
 
