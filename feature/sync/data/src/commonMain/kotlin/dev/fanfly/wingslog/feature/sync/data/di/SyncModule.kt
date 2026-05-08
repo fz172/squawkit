@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.sync.data.di
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sync.data.FirestorePullSubscription
 import dev.fanfly.wingslog.feature.sync.data.FirestoreRemoteFetcher
@@ -69,6 +70,7 @@ val syncModule: Module = module {
   }
   single<SyncEngine> {
     val db = get<WingsLogDatabase>()
+    val postWriteHook = getOrNull<PostWriteHook>()
     SyncEngine(
       auth = get<FirebaseAuth>(),
       cursors = get<SyncCursorStore>(),
@@ -78,7 +80,8 @@ val syncModule: Module = module {
         PullListener(
           kind = kind,
           scope = scope,
-          db = db
+          db = db,
+          postWriteHook = postWriteHook,
         )
       },
       pushWorker = get<PushWorker>(),

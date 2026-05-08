@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.sync.data
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 
 /**
@@ -33,6 +34,7 @@ class PullListener(
   private val kind: CollectionKind,
   private val scope: EntityScope,
   private val db: WingsLogDatabase,
+  private val postWriteHook: PostWriteHook? = null,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -44,6 +46,7 @@ class PullListener(
    * a row into a state the comparator didn't see.
    */
   fun apply(remote: RemoteEntity): Long {
+    var written = false
     db.transaction {
       val local =
         db.schemaQueries.selectOneForSync(
@@ -52,16 +55,19 @@ class PullListener(
           remote.id
         ).executeAsOneOrNull()
       when {
-        local == null -> upsertFromRemote(remote)
+        local == null -> { upsertFromRemote(remote); written = true }
         local.dirty -> {
           log.v { "skipping remote ${kind.wireName}/${remote.id}: local dirty, will reconcile via push echo" }
         }
 
-        remote.remoteTsMs > (local.remote_updated_at ?: 0L) -> upsertFromRemote(remote)
+        remote.remoteTsMs > (local.remote_updated_at ?: 0L) -> { upsertFromRemote(remote); written = true }
         else -> {
           // Already up to date — happens on our own push echo or a duplicate snapshot tick.
         }
       }
+    }
+    if (written && !remote.deleted) {
+      postWriteHook?.onEntityWritten(kind, scope, remote.payload)
     }
     return remote.remoteTsMs
   }
