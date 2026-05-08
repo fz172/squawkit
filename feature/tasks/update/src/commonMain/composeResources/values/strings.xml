@@ -16,8 +16,58 @@
   <string name="compliance_ad_sub">Regulatory requirement</string>
   <string name="interval_months">Interval (months)</string>
   <string name="interval_hours">Interval (hours)</string>
-  <string name="schedule_with_another_work">Schedule With Another Work (Optional)</string>
-  <string name="schedule_with_another_work_description">This work will be due whenever the selected work is next due.</string>
+  <string name="schedule_with_another_work">Advanced · Link to another task</string>
+  <string name="schedule_with_another_work_description">This task becomes due whenever the linked task is next due. Choosing a linked task replaces interval-based scheduling above.</string>
+
+  <!-- New Schedule Tab (redesigned) -->
+  <string name="schedule_step_track_label">Step 1 · How is this tracked?</string>
+  <string name="schedule_step_recurrence_label">Step 2 · When is it due?</string>
+  <string name="schedule_step_interval_how_often">Step 3 · How often?</string>
+  <string name="schedule_step_interval_in_how_long">Step 3 · In how long?</string>
+  <string name="schedule_step_recurrence_linked_label">Step 2 · Recurrence</string>
+
+  <string name="schedule_track_calendar_time">Calendar Time</string>
+  <string name="schedule_track_tach_hours">Tach Hours</string>
+
+  <string name="schedule_recurrence_repeating">Repeating</string>
+  <string name="schedule_recurrence_repeating_sub">Every interval</string>
+  <string name="schedule_recurrence_one_time">One-time</string>
+  <string name="schedule_recurrence_one_time_sub">In one interval</string>
+  <string name="schedule_recurrence_asap">ASAP</string>
+  <string name="schedule_recurrence_asap_sub">Due now</string>
+
+  <string name="schedule_recurrence_linked_repeating_sub">With linked task</string>
+  <string name="schedule_recurrence_linked_one_time_sub">Then moves to history</string>
+
+  <string name="schedule_unit_days">days</string>
+  <string name="schedule_unit_months">months</string>
+  <string name="schedule_unit_years">years</string>
+  <string name="schedule_unit_tach_hours">tach hrs</string>
+
+  <string name="schedule_prefix_every">Every</string>
+  <string name="schedule_prefix_in">In</string>
+
+  <!-- Preview banner copy -->
+  <string name="schedule_preview_empty_primary">No schedule yet</string>
+  <string name="schedule_preview_empty_secondary">Pick how this task is tracked below</string>
+  <string name="schedule_preview_linked_unset_primary">Linked task not chosen</string>
+  <string name="schedule_preview_linked_unset_secondary">Pick a task to link to below</string>
+  <string name="schedule_preview_linked_primary">Due whenever \"%1$s\" is due</string>
+  <string name="schedule_preview_linked_one_time_secondary">Will move to history after first log</string>
+  <string name="schedule_preview_linked_repeating_secondary">Repeats with the linked task</string>
+  <string name="schedule_preview_asap_primary">Due now — ASAP</string>
+  <string name="schedule_preview_asap_secondary">Will appear immediately on the dashboard</string>
+  <string name="schedule_preview_set_calendar_primary">Set how often (%1$s)</string>
+  <string name="schedule_preview_set_hours_primary">Set how many tach hours</string>
+  <string name="schedule_preview_set_secondary">Enter an interval below</string>
+  <string name="schedule_preview_due_every">Due every %1$d %2$s</string>
+  <string name="schedule_preview_due_in">Due in %1$d %2$s</string>
+  <string name="schedule_preview_due_every_hours">Due every %1$s tach hrs</string>
+  <string name="schedule_preview_due_in_hours">Due in %1$s tach hrs</string>
+  <string name="schedule_preview_recurring_secondary">Recurring schedule</string>
+  <string name="schedule_preview_one_time_secondary">One-time · moves to history after first log</string>
+
+  <string name="schedule_pick_linked_task">Pick a task to link</string>
   <string name="override_next_due_engine">Override next due engine hour</string>
   <string name="override_next_due_date">Override next due date</string>
   <string name="force_due_engine_hours">Force Due Engine (hours)</string>

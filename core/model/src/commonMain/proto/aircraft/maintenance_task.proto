@@ -13,10 +13,15 @@ enum ComplianceType {
   COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE = 2;
 }
 
-// A time-interval-based rule (e.g. every 12 months)
+// A time-interval-based rule (e.g. every 12 months).
+// Exactly one of interval_days / interval_months / interval_years is set.
+// Older payloads only set interval_months — readers that see all three zero
+// should treat months as the unit.
 message TimeRule {
   int32 interval_months = 1;
   google.protobuf.Timestamp creation_date = 2;
+  int32 interval_days = 3;
+  int32 interval_years = 4;
 }
 
 // A engine-hour-based rule (e.g. every 100 hours)
