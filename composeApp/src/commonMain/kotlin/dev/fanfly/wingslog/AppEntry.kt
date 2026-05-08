@@ -10,8 +10,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.storage.DatabaseHealth
+import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
+import org.koin.compose.koinInject
 import dev.fanfly.wingslog.feature.aircraft.dashboard.AircraftOverviewScreen
 import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
@@ -29,6 +33,22 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AppEntry() {
+  val health: DatabaseHealth = koinInject()
+  val checker: DatabaseIntegrityChecker = koinInject()
+  val authManager: AuthManager = koinInject()
+
+  if (health.isCorrupted) {
+    WingslogTheme {
+      IntegrityRecoveryDialog(
+        onWipe = {
+          checker.wipeAllData()
+          authManager.logOut()
+        },
+      )
+    }
+    return
+  }
+
   WingslogTheme {
     Surface(
       modifier = Modifier.fillMaxSize(),

@@ -8,5 +8,9 @@
 	<false/>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>dev.fanfly.wingslog.blob-scan</string>
+    </array>
 </dict>
 </plist>

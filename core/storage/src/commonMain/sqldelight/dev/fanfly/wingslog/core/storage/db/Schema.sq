@@ -147,7 +147,8 @@ CREATE TABLE blob_object (
   upload_attempts  INTEGER NOT NULL DEFAULT 0,
   last_attempt_at  INTEGER,
   updated_at       INTEGER NOT NULL,
-  deleted          INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0
+  deleted          INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
+  resume_url       TEXT
 );
 
 CREATE INDEX blob_state_idx ON blob_object(scope_path, remote_state);
@@ -219,3 +220,21 @@ WHERE id = :id;
 deleteBlobsForUser:
 DELETE FROM blob_object
 WHERE scope_path LIKE :scopePrefix;
+
+setResumeUrl:
+UPDATE blob_object SET resume_url = :resumeUrl WHERE id = :id;
+
+clearResumeUrl:
+UPDATE blob_object SET resume_url = NULL WHERE id = :id;
+
+-- Wipe queries used by the integrity-check recovery flow (PRD §10).
+-- sync_config is intentionally excluded so user preferences survive the wipe.
+
+wipeAllEntities:
+DELETE FROM entity;
+
+wipeAllSyncCursors:
+DELETE FROM sync_cursor;
+
+wipeAllBlobObjects:
+DELETE FROM blob_object;
