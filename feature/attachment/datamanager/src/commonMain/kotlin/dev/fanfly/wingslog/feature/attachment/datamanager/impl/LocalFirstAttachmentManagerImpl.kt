@@ -52,7 +52,6 @@ class LocalFirstAttachmentManagerImpl(
       uid,
       aircraftId
     )
-    val storagePath = "users/$uid/aircraft/${aircraftId}/blobs/$id"
     val ref = blobs.put(
       BlobId(id),
       bytes,
@@ -65,7 +64,7 @@ class LocalFirstAttachmentManagerImpl(
       id = id,
       name = displayName,
       type = picked.mimeType.toAttachmentType(),
-      storage_path = storagePath,
+      storage_path = "${scope.toPath().trim('/')}/blobs/$id",
       // Field 5 (download_url) stays empty in R2 — the opener consults LocalBlobStore /
       // re-fetches via Firebase Storage at open time. Reserved in PR 3b.
       download_url = "",
