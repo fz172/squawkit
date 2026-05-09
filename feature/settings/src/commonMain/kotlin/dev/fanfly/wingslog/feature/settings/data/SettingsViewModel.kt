@@ -43,23 +43,12 @@ class SettingsViewModel(
     }
   }
 
-  fun wipeLocalAttachments() {
-    val uid = authManager.getCurrentUser()?.uid ?: return
-    viewModelScope.launch { attachmentManager.wipeLocalData(uid) }
-  }
-
-  /**
-   * Logs the user out of Firebase and clears any saved credentials
-   * from Credential Manager.
-   */
   fun logOut() {
-    // Clear credentials from Credential Manager
+    val uid = authManager.getCurrentUser()?.uid
     viewModelScope.launch {
-      // Cancel observation first to avoid permission errors
       observeLicenseJob?.cancel()
-      // Sign out of Firebase
+      if (uid != null) attachmentManager.wipeLocalData(uid)
       authManager.logOut()
-      // Update the UI state to reflect no user is logged in
       _user.value =
         SettingsUiState(displayName = null, photoUri = null, userStatus = UserStatus.LOGGED_OUT)
     }
