@@ -66,7 +66,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.feature.attachment.sharedassets.generated.resources.file_added
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
 import wingslog.feature.attachment.sharedassets.generated.resources.link_added
 import wingslog.core.ui.generated.resources.back
@@ -129,7 +128,6 @@ fun MaintenanceLogFormScreen(
   val logUpdatedMessage = stringResource(MaintenanceRes.string.log_updated)
   val logSavedMessage = stringResource(MaintenanceRes.string.log_saved)
   val logDeletedMessage = stringResource(MaintenanceRes.string.log_deleted)
-  val fileAddedMessage = stringResource(AttachRes.string.file_added)
   val linkAddedMessage = stringResource(AttachRes.string.link_added)
   val fileReadErrorMessage = stringResource(AttachRes.string.file_read_error)
 
@@ -151,7 +149,7 @@ fun MaintenanceLogFormScreen(
           navController.popBackStack()
         }
 
-        MaintenanceLogFormEvent.FileAdded -> snackbarHostState.showSnackbar(fileAddedMessage)
+        MaintenanceLogFormEvent.FileAdded -> Unit
         MaintenanceLogFormEvent.LinkAdded -> snackbarHostState.showSnackbar(linkAddedMessage)
         MaintenanceLogFormEvent.PickError -> snackbarHostState.showSnackbar(fileReadErrorMessage)
       }
