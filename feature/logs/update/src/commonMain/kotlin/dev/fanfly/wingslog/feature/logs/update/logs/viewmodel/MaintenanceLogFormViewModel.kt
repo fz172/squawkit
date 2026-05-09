@@ -207,8 +207,6 @@ class MaintenanceLogFormViewModel(
 
   fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
 
-  fun onPerformedByTextChange(value: String) = _uiState.update { it.copy(performedByText = value) }
-
   fun onTechnicianSelect(technician: Technician?) =
     _uiState.update {
       it.copy(
@@ -407,11 +405,7 @@ class MaintenanceLogFormViewModel(
         component_type = state.selectedComponentType,
         component_serial = componentSerial,
         attachments = finalAttachments,
-        technician = if (state.technicianEnabled) {
-          state.selectedTechnician
-        } else {
-          Technician(name = state.performedByText)
-        },
+        technician = state.selectedTechnician,
       )
 
       val result = if (isEditMode) logManager.updateLog(

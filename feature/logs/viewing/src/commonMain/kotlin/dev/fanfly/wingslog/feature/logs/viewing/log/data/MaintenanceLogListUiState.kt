@@ -19,6 +19,7 @@ sealed interface MaintenanceLogListUiState {
     val filter: LogFilter = LogFilter(),
     val selectedLog: MaintenanceLog? = null,
     val availableCards: List<MaintenanceTask> = emptyList(),
+    val technicianEnabled: Boolean = true,
   ) : MaintenanceLogListUiState
 
   data object Error : MaintenanceLogListUiState

@@ -5,5 +5,5 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val maintenanceViewingModule = module {
-  viewModel { params -> MaintenanceLogListViewModel(get(), get(), params.get()) }
+  viewModel { params -> MaintenanceLogListViewModel(get(), get(), get(), params.get()) }
 }

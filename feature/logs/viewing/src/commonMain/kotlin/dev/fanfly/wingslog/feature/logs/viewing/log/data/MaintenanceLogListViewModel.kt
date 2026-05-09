@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import kotlinx.coroutines.channels.Channel
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 class MaintenanceLogListViewModel(
   private val logManager: MaintenanceLogManager,
   private val inspectionDataManager: TaskDataManager,
+  private val featureLabManager: FeatureLabManager,
   val aircraftId: String,
 ) : ViewModel() {
 
@@ -34,17 +36,22 @@ class MaintenanceLogListViewModel(
   private val _filter = MutableStateFlow(LogFilter())
   private val _selectedLog = MutableStateFlow<MaintenanceLog?>(null)
   private val _availableCards = MutableStateFlow<List<MaintenanceTask>>(emptyList())
+  private val _technicianEnabled = MutableStateFlow(true)
 
   init {
     observeLogs()
     observeTasks()
     viewModelScope.launch {
+      featureLabManager.observe().collect { _technicianEnabled.value = it.technicianEnabled }
+    }
+    viewModelScope.launch {
       combine(
         _logsLoadState,
         _filter,
         _selectedLog,
-        _availableCards
-      ) { logsState, filter, selectedLog, availableCards ->
+        _availableCards,
+        _technicianEnabled,
+      ) { logsState, filter, selectedLog, availableCards, technicianEnabled ->
         when (logsState) {
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
           LogsLoadState.Error -> MaintenanceLogListUiState.Error
@@ -62,7 +69,8 @@ class MaintenanceLogListViewModel(
               totalCount = logsState.logs.size,
               filter = filter,
               selectedLog = selectedLog,
-              availableCards = availableCards
+              availableCards = availableCards,
+              technicianEnabled = technicianEnabled,
             )
           }
         }

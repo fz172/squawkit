@@ -67,6 +67,7 @@ fun MaintenanceLogDetailSheet(
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
+  technicianEnabled: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
@@ -106,7 +107,7 @@ fun MaintenanceLogDetailSheet(
       onTaskClick = onTaskClick,
     )
 
-    // Footer: technician | date
+    // Footer: technician (if enabled) | date
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     Row(
       modifier = Modifier
@@ -115,13 +116,17 @@ fun MaintenanceLogDetailSheet(
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.CenterVertically,
     ) {
-      val techName = log.technician?.name?.takeIf { it.isNotBlank() }
-      if (techName != null) {
-        Text(
-          text = techName,
-          style = MaterialTheme.typography.bodyMedium,
-          fontWeight = FontWeight.Medium,
-        )
+      if (technicianEnabled) {
+        val techName = log.technician?.name?.takeIf { it.isNotBlank() }
+        if (techName != null) {
+          Text(
+            text = techName,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+          )
+        } else {
+          Spacer(Modifier.size(1.dp))
+        }
       } else {
         Spacer(Modifier.size(1.dp))
       }

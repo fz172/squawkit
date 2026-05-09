@@ -315,22 +315,10 @@ fun MaintenanceLogFormScreen(
                 onSelect = { viewModel.onTechnicianSelect(it) },
                 onAddClick = {
                   viewModel.hideTechnicianPicker()
-                  // Navigate to edit technician screen
                   navController.navigate(Screen.EditTechnician.createRoute(null))
                 },
                 onDismiss = { viewModel.hideTechnicianPicker() })
             }
-          } else {
-            OutlinedTextField(
-              value = uiState.performedByText,
-              onValueChange = viewModel::onPerformedByTextChange,
-              label = { Text(stringResource(TechnicianRes.string.performed_by)) },
-              leadingIcon = {
-                Icon(Icons.Default.Person, contentDescription = null)
-              },
-              modifier = Modifier.fillMaxWidth(),
-              singleLine = true,
-            )
           }
 
           // Inspection Work section

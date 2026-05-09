@@ -48,6 +48,7 @@ kotlin {
       implementation(project(":core:model"))
       implementation(project(":core:auth"))
 
+      implementation(project(":feature:featurelab:datamanager"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:sharedassets"))
       implementation(project(":feature:fleet:datamanager"))
