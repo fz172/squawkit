@@ -4,10 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -48,35 +46,39 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.tasks.update.compose.TaskPickerSheet
+import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.ComponentSection
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.TaskWorkSection
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormViewModel
+import dev.fanfly.wingslog.feature.tasks.update.compose.TaskPickerSheet
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
-import wingslog.feature.attachment.sharedassets.generated.resources.link_added
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.save
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
+import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.logs.sharedassets.generated.resources.edit_log
 import wingslog.feature.logs.sharedassets.generated.resources.maintenance_date
 import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
+import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.update.generated.resources.airframe_time_hours
 import wingslog.feature.logs.update.generated.resources.delete_log
 import wingslog.feature.logs.update.generated.resources.engine_time_hours
@@ -86,16 +88,14 @@ import wingslog.feature.logs.update.generated.resources.log_updated
 import wingslog.feature.logs.update.generated.resources.prop_time_hours
 import wingslog.feature.logs.update.generated.resources.tap_to_change_date
 import wingslog.feature.logs.update.generated.resources.work_description_required
+import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 import wingslog.feature.technician.sharedassets.generated.resources.performed_by
 import wingslog.feature.technician.sharedassets.generated.resources.select_technician
-import kotlin.time.Instant
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
-import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(
+  ExperimentalMaterial3Api::class,
+  ExperimentalComposeUiApi::class
+)
 @Composable
 fun MaintenanceLogFormScreen(
   navController: NavController,
@@ -128,7 +128,6 @@ fun MaintenanceLogFormScreen(
   val logUpdatedMessage = stringResource(MaintenanceRes.string.log_updated)
   val logSavedMessage = stringResource(MaintenanceRes.string.log_saved)
   val logDeletedMessage = stringResource(MaintenanceRes.string.log_deleted)
-  val linkAddedMessage = stringResource(AttachRes.string.link_added)
   val fileReadErrorMessage = stringResource(AttachRes.string.file_read_error)
 
   LaunchedEffect(viewModel) {
@@ -137,21 +136,22 @@ fun MaintenanceLogFormScreen(
         MaintenanceLogFormEvent.SaveSuccess -> {
           val message = if (viewModel.isEditMode) logUpdatedMessage else logSavedMessage
           navController.previousBackStackEntry?.savedStateHandle?.set(
-            CROSS_SCREEN_SUCCESS_MESSAGE, message
+            CROSS_SCREEN_SUCCESS_MESSAGE,
+            message
           )
           navController.popBackStack()
         }
 
         MaintenanceLogFormEvent.DeleteSuccess -> {
           navController.previousBackStackEntry?.savedStateHandle?.set(
-            CROSS_SCREEN_SUCCESS_MESSAGE, logDeletedMessage
+            CROSS_SCREEN_SUCCESS_MESSAGE,
+            logDeletedMessage
           )
           navController.popBackStack()
         }
 
-        MaintenanceLogFormEvent.FileAdded -> Unit
-        MaintenanceLogFormEvent.LinkAdded -> snackbarHostState.showSnackbar(linkAddedMessage)
         MaintenanceLogFormEvent.PickError -> snackbarHostState.showSnackbar(fileReadErrorMessage)
+        else -> Unit
       }
     }
   }
@@ -183,20 +183,22 @@ fun MaintenanceLogFormScreen(
 
   Scaffold(
     topBar = {
-      TopAppBar(title = {
-        Text(
-          if (viewModel.isEditMode) stringResource(SharedRes.string.edit_log) else stringResource(
-            SharedRes.string.add_log
+      TopAppBar(
+        title = {
+          Text(
+            if (viewModel.isEditMode) stringResource(SharedRes.string.edit_log) else stringResource(
+              SharedRes.string.add_log
+            )
           )
-        )
-      }, navigationIcon = {
-        IconButton(onClick = { tryNavigateBack() }) {
-          Icon(
-            Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = stringResource(CoreRes.string.back)
-          )
-        }
-      })
+        },
+        navigationIcon = {
+          IconButton(onClick = { tryNavigateBack() }) {
+            Icon(
+              Icons.AutoMirrored.Filled.ArrowBack,
+              contentDescription = stringResource(CoreRes.string.back)
+            )
+          }
+        })
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
     bottomBar = {
@@ -216,7 +218,10 @@ fun MaintenanceLogFormScreen(
     },
   ) { innerPadding ->
     if (uiState.isLoading) {
-      Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+      Box(
+        Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+      ) {
         CircularProgressIndicator()
       }
     } else {
@@ -225,44 +230,53 @@ fun MaintenanceLogFormScreen(
           .padding(innerPadding).padding(Spacing.screenPadding),
         verticalArrangement = Arrangement.spacedBy(Spacing.large)
       ) {
-          // Maintenance Date
-          val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat() ?: stringResource(
-            MaintenanceRes.string.tap_to_change_date
-          )
-          OutlinedTextField(
-            value = dateDisplayText,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(stringResource(SharedRes.string.maintenance_date)) },
-            leadingIcon = {
-              Icon(
-                Icons.Default.CalendarToday,
-                contentDescription = stringResource(SharedRes.string.maintenance_date)
-              )
-            },
-            modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
-            singleLine = true,
-            enabled = false,
-            colors = OutlinedTextFieldDefaults.colors(
-              disabledTextColor = MaterialTheme.colorScheme.onSurface,
-              disabledBorderColor = MaterialTheme.colorScheme.outline,
-              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        // Maintenance Date
+        val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat() ?: stringResource(
+          MaintenanceRes.string.tap_to_change_date
+        )
+        OutlinedTextField(
+          value = dateDisplayText,
+          onValueChange = {},
+          readOnly = true,
+          label = { Text(stringResource(SharedRes.string.maintenance_date)) },
+          leadingIcon = {
+            Icon(
+              Icons.Default.CalendarToday,
+              contentDescription = stringResource(SharedRes.string.maintenance_date)
             )
+          },
+          modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+          singleLine = true,
+          enabled = false,
+          colors = OutlinedTextFieldDefaults.colors(
+            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+            disabledBorderColor = MaterialTheme.colorScheme.outline,
+            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
           )
+        )
 
-          if (showDatePicker) {
-            val initialMs = uiState.maintenanceDate?.let { date ->
-              date.let {
-                LocalDateTime(it.year, it.month, it.day, 12, 0, 0).let { ldt ->
-                  Instant.fromEpochSeconds(
-                    ldt.date.toEpochDays() * 86400L
-                  ).toEpochMilliseconds()
-                }
+        if (showDatePicker) {
+          val initialMs = uiState.maintenanceDate?.let { date ->
+            date.let {
+              LocalDateTime(
+                it.year,
+                it.month,
+                it.day,
+                12,
+                0,
+                0
+              ).let { ldt ->
+                Instant.fromEpochSeconds(
+                  ldt.date.toEpochDays() * 86400L
+                ).toEpochMilliseconds()
               }
             }
-            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMs)
-            DatePickerDialog(onDismissRequest = { showDatePicker = false }, confirmButton = {
+          }
+          val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMs)
+          DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
               TextButton(onClick = {
                 val selectedMs = datePickerState.selectedDateMillis
                 if (selectedMs != null) {
@@ -274,148 +288,152 @@ fun MaintenanceLogFormScreen(
               }) {
                 Text(stringResource(CoreRes.string.ok))
               }
-            }, dismissButton = {
+            },
+            dismissButton = {
               TextButton(onClick = { showDatePicker = false }) {
                 Text(stringResource(CoreRes.string.cancel))
               }
             }) {
-              DatePicker(state = datePickerState)
-            }
+            DatePicker(state = datePickerState)
           }
+        }
 
-          // Work Description (required)
-          OutlinedTextField(
-            value = uiState.workDescription,
-            onValueChange = viewModel::onWorkDescriptionChange,
-            label = { Text(stringResource(MaintenanceRes.string.work_description_required)) },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 3,
-            maxLines = 6,
-            isError = uiState.error != null
+        // Work Description (required)
+        OutlinedTextField(
+          value = uiState.workDescription,
+          onValueChange = viewModel::onWorkDescriptionChange,
+          label = { Text(stringResource(MaintenanceRes.string.work_description_required)) },
+          modifier = Modifier.fillMaxWidth(),
+          minLines = 3,
+          maxLines = 6,
+          isError = uiState.error != null
+        )
+
+        // Technician (Performed By)
+        if (uiState.technicianEnabled) {
+          val technicianDisplayText = uiState.selectedTechnician?.name ?: stringResource(
+            TechnicianRes.string.select_technician
           )
-
-          // Technician (Performed By)
-          if (uiState.technicianEnabled) {
-            val technicianDisplayText = uiState.selectedTechnician?.name ?: stringResource(
-              TechnicianRes.string.select_technician
-            )
-            OutlinedTextField(
-              value = technicianDisplayText,
-              onValueChange = {},
-              readOnly = true,
-              label = { Text(stringResource(TechnicianRes.string.performed_by)) },
-              leadingIcon = {
-                Icon(Icons.Default.Person, contentDescription = null)
-              },
-              modifier = Modifier.fillMaxWidth()
-                .clickable { viewModel.showTechnicianPicker() },
-              singleLine = true,
-              enabled = false,
-              colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledBorderColor = MaterialTheme.colorScheme.outline,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+          OutlinedTextField(
+            value = technicianDisplayText,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(TechnicianRes.string.performed_by)) },
+            leadingIcon = {
+              Icon(
+                Icons.Default.Person,
+                contentDescription = null
               )
-            )
-
-            if (uiState.showTechnicianPicker) {
-              TechnicianPickerSheet(
-                availableTechnicians = uiState.availableTechnicians,
-                selectedId = uiState.selectedTechnician?.id,
-                onSelect = { viewModel.onTechnicianSelect(it) },
-                onAddClick = {
-                  viewModel.hideTechnicianPicker()
-                  navController.navigate(Screen.EditTechnician.createRoute(null))
-                },
-                onDismiss = { viewModel.hideTechnicianPicker() })
-            }
-          }
-
-          // Inspection Work section
-          TaskWorkSection(
-            selectedIds = uiState.selectedInspectionIds,
-            availableCards = uiState.availableInspectionCards,
-            onAddClick = viewModel::showInspectionPicker,
-            onRemove = viewModel::removeInspectionId,
-            modifier = Modifier.fillMaxWidth(),
-          )
-
-          // Inspection picker bottom sheet
-          if (uiState.showInspectionPicker) {
-            TaskPickerSheet(
-              availableCards = uiState.availableInspectionCards,
-              selectedIds = uiState.selectedInspectionIds,
-              onToggle = viewModel::toggleInspectionSelection,
-              onDismiss = viewModel::hideInspectionPicker,
-            )
-          }
-
-          // Engine Time
-          OutlinedTextField(
-            value = uiState.engineTime,
-            onValueChange = viewModel::onEngineTimeChange,
-            label = { Text(stringResource(MaintenanceRes.string.engine_time_hours)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-          )
-
-          // Airframe Time
-          OutlinedTextField(
-            value = uiState.airframeTime,
-            onValueChange = viewModel::onAirframeTimeChange,
-            label = { Text(stringResource(MaintenanceRes.string.airframe_time_hours)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-          )
-
-          // Prop Time
-          OutlinedTextField(
-            value = uiState.propTime,
-            onValueChange = viewModel::onPropTimeChange,
-            label = { Text(stringResource(MaintenanceRes.string.prop_time_hours)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-          )
-
-          // Component section
-          ComponentSection(
-            aircraft = uiState.aircraft,
-            selectedComponentType = uiState.selectedComponentType,
-            selectedSubComponent = uiState.selectedSubComponent,
-            onComponentTypeChange = viewModel::onComponentTypeChange,
-            onSubComponentChange = viewModel::onSubComponentChange,
+            },
             modifier = Modifier.fillMaxWidth()
+              .clickable { viewModel.showTechnicianPicker() },
+            singleLine = true,
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+              disabledTextColor = MaterialTheme.colorScheme.onSurface,
+              disabledBorderColor = MaterialTheme.colorScheme.outline,
+              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
           )
 
-          // Attachments
-          if (uiState.attachmentUploadEnabled) {
-            AttachmentFormSection(
-              visibleAttachments = uiState.visibleAttachments,
-              isAnonymous = uiState.isAnonymous,
-              filesAtLimit = uiState.filesAtLimit,
-              showPickerSheet = uiState.showAttachmentPicker,
-              onAddClick = viewModel::showAttachmentPicker,
-              onRemove = viewModel::removeAttachment,
-              onPickFiles = viewModel::addLocalFiles,
-              onAddLink = viewModel::addLink,
-              onDismissSheet = viewModel::hideAttachmentPicker,
-              onPickError = viewModel::onFilePickError,
-              modifier = Modifier.fillMaxWidth(),
-            )
+          if (uiState.showTechnicianPicker) {
+            TechnicianPickerSheet(
+              availableTechnicians = uiState.availableTechnicians,
+              selectedId = uiState.selectedTechnician?.id,
+              onSelect = { viewModel.onTechnicianSelect(it) },
+              onAddClick = {
+                viewModel.hideTechnicianPicker()
+                navController.navigate(Screen.EditTechnician.createRoute(null))
+              },
+              onDismiss = { viewModel.hideTechnicianPicker() })
           }
+        }
 
-          // Error message
-          uiState.error?.let { error ->
-            Text(
-              text = error.asString(),
-              color = MaterialTheme.colorScheme.error,
-              style = MaterialTheme.typography.bodySmall
-            )
-          }
+        // Inspection Work section
+        TaskWorkSection(
+          selectedIds = uiState.selectedInspectionIds,
+          availableCards = uiState.availableInspectionCards,
+          onAddClick = viewModel::showInspectionPicker,
+          onRemove = viewModel::removeInspectionId,
+          modifier = Modifier.fillMaxWidth(),
+        )
+
+        // Inspection picker bottom sheet
+        if (uiState.showInspectionPicker) {
+          TaskPickerSheet(
+            availableCards = uiState.availableInspectionCards,
+            selectedIds = uiState.selectedInspectionIds,
+            onToggle = viewModel::toggleInspectionSelection,
+            onDismiss = viewModel::hideInspectionPicker,
+          )
+        }
+
+        // Engine Time
+        OutlinedTextField(
+          value = uiState.engineTime,
+          onValueChange = viewModel::onEngineTimeChange,
+          label = { Text(stringResource(MaintenanceRes.string.engine_time_hours)) },
+          modifier = Modifier.fillMaxWidth(),
+          singleLine = true,
+          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+
+        // Airframe Time
+        OutlinedTextField(
+          value = uiState.airframeTime,
+          onValueChange = viewModel::onAirframeTimeChange,
+          label = { Text(stringResource(MaintenanceRes.string.airframe_time_hours)) },
+          modifier = Modifier.fillMaxWidth(),
+          singleLine = true,
+          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+
+        // Prop Time
+        OutlinedTextField(
+          value = uiState.propTime,
+          onValueChange = viewModel::onPropTimeChange,
+          label = { Text(stringResource(MaintenanceRes.string.prop_time_hours)) },
+          modifier = Modifier.fillMaxWidth(),
+          singleLine = true,
+          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+
+        // Component section
+        ComponentSection(
+          aircraft = uiState.aircraft,
+          selectedComponentType = uiState.selectedComponentType,
+          selectedSubComponent = uiState.selectedSubComponent,
+          onComponentTypeChange = viewModel::onComponentTypeChange,
+          onSubComponentChange = viewModel::onSubComponentChange,
+          modifier = Modifier.fillMaxWidth()
+        )
+
+        // Attachments
+        if (uiState.attachmentUploadEnabled) {
+          AttachmentFormSection(
+            visibleAttachments = uiState.visibleAttachments,
+            isAnonymous = uiState.isAnonymous,
+            filesAtLimit = uiState.filesAtLimit,
+            showPickerSheet = uiState.showAttachmentPicker,
+            onAddClick = viewModel::showAttachmentPicker,
+            onRemove = viewModel::removeAttachment,
+            onPickFiles = viewModel::addLocalFiles,
+            onAddLink = viewModel::addLink,
+            onDismissSheet = viewModel::hideAttachmentPicker,
+            onPickError = viewModel::onFilePickError,
+            modifier = Modifier.fillMaxWidth(),
+          )
+        }
+
+        // Error message
+        uiState.error?.let { error ->
+          Text(
+            text = error.asString(),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall
+          )
+        }
 
       }
     }
