@@ -107,6 +107,14 @@ fun MaintenanceLogDetailSheet(
       onTaskClick = onTaskClick,
     )
 
+    // Attachments
+    AttachmentSection(
+      attachments = log.attachments,
+      onAttachmentTap = onAttachmentTap,
+      syncStates = syncStates,
+      openError = openError,
+    )
+
     // Footer: technician (if enabled) | date
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     Row(
@@ -135,14 +143,6 @@ fun MaintenanceLogDetailSheet(
         style = MaterialTheme.typography.bodyMedium,
       )
     }
-
-    // Attachments
-    AttachmentSection(
-      attachments = log.attachments,
-      onAttachmentTap = onAttachmentTap,
-      syncStates = syncStates,
-      openError = openError,
-    )
   }
 }
 
