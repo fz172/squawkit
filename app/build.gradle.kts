@@ -1,9 +1,32 @@
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.compose)
   id("com.google.gms.google-services")
 }
+
+val versionPropsFile = rootProject.file("version.properties")
+val versionProps = Properties().apply {
+  if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
+}
+
+val major = versionProps.getProperty("major", "1").toInt()
+val minor = versionProps.getProperty("minor", "0").toInt()
+val today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+val storedDate = versionProps.getProperty("buildDate", "")
+val patch = if (storedDate == today) versionProps.getProperty("patch", "0").toInt() + 1 else 1
+val nextVersionCode = versionProps.getProperty("versionCode", "0").toInt() + 1
+
+versionProps["buildDate"] = today
+versionProps["patch"] = patch.toString()
+versionProps["versionCode"] = nextVersionCode.toString()
+versionPropsFile.outputStream().use { versionProps.store(it, null) }
+
+val computedVersionName = "$major.$minor.$today.$patch"
 
 kotlin {
   jvmToolchain(21)
@@ -19,8 +42,8 @@ android {
     applicationId = "dev.fanfly.wingslog"
     minSdk = 33
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    versionCode = nextVersionCode
+    versionName = computedVersionName
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
