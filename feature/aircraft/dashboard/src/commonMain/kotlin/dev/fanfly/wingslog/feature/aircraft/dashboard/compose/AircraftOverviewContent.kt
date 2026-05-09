@@ -7,14 +7,17 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -41,6 +44,10 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
+import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsSharedRes
+import wingslog.feature.logs.sharedassets.generated.resources.add_log
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksSharedRes
+import wingslog.feature.tasks.sharedassets.generated.resources.add_task
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.edit_aircraft
 
@@ -67,6 +74,20 @@ fun AircraftOverviewContent(
   Scaffold(
     modifier = modifier,
     snackbarHost = { SnackbarHost(snackbarHostState) },
+    floatingActionButton = {
+      when (pagerState.currentPage) {
+        1 -> ExtendedFloatingActionButton(
+          onClick = { onAction(AircraftOverviewAction.AddTaskClick(state.aircraft.id)) },
+          icon = { Icon(Icons.Default.Add, contentDescription = null) },
+          text = { Text(stringResource(TasksSharedRes.string.add_task)) },
+        )
+        2 -> ExtendedFloatingActionButton(
+          onClick = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
+          icon = { Icon(Icons.Default.Add, contentDescription = null) },
+          text = { Text(stringResource(LogsSharedRes.string.add_log)) },
+        )
+      }
+    },
     containerColor = MaterialTheme.colorScheme.surface,
     topBar = {
       TopAppBar(
