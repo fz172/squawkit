@@ -91,7 +91,10 @@ fun AttachmentFormSection(
     onReadError = onPickError,
   )
 
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+  Column(
+    modifier = modifier,
+    verticalArrangement = Arrangement.spacedBy(Spacing.small)
+  ) {
     Row(
       modifier = Modifier.fillMaxWidth(),
       verticalAlignment = Alignment.CenterVertically,
@@ -105,10 +108,17 @@ fun AttachmentFormSection(
       if (!isAnonymous) {
         OutlinedButton(
           onClick = onAddClick,
-          contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+          contentPadding = PaddingValues(
+            horizontal = Spacing.medium,
+            vertical = Spacing.extraSmall
+          ),
         ) {
-          Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-          Spacer(Modifier.width(4.dp))
+          Icon(
+            Icons.Default.Add,
+            contentDescription = null,
+            modifier = Modifier.size(Spacing.large)
+          )
+          Spacer(Modifier.width(Spacing.extraSmall))
           Text(
             stringResource(AttachRes.string.add_attachment),
             style = MaterialTheme.typography.labelMedium,
@@ -131,7 +141,9 @@ fun AttachmentFormSection(
       )
     } else {
       visibleAttachments.forEach { pending ->
-        PendingAttachmentRow(pending = pending, onRemove = { onRemove(pending.id) })
+        PendingAttachmentRow(
+          pending = pending,
+          onRemove = { onRemove(pending.id) })
         HorizontalDivider()
       }
     }
@@ -141,7 +153,12 @@ fun AttachmentFormSection(
     AttachmentPickerSheet(
       filesAtLimit = filesAtLimit,
       onChooseFile = { onDismissSheet(); pickFiles() },
-      onAddLink = { url, name -> onAddLink(url, name); onDismissSheet() },
+      onAddLink = { url, name ->
+        onAddLink(
+          url,
+          name
+        ); onDismissSheet()
+      },
       onDismiss = onDismissSheet,
     )
   }
@@ -236,7 +253,10 @@ private fun AttachmentPickerSheet(
   var linkName by remember { mutableStateOf("") }
   var urlError by remember { mutableStateOf(false) }
 
-  ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+  ModalBottomSheet(
+    onDismissRequest = onDismiss,
+    sheetState = sheetState
+  ) {
     Column(
       modifier = Modifier
         .fillMaxWidth()
@@ -253,7 +273,11 @@ private fun AttachmentPickerSheet(
             enabled = !filesAtLimit,
             modifier = Modifier.weight(1f),
           ) {
-            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(
+              Icons.Default.Add,
+              contentDescription = null,
+              modifier = Modifier.size(18.dp)
+            )
             Spacer(Modifier.width(Spacing.small))
             Text(stringResource(AttachRes.string.choose_file))
           }
@@ -261,7 +285,11 @@ private fun AttachmentPickerSheet(
             onClick = { showLinkField = true },
             modifier = Modifier.weight(1f),
           ) {
-            Icon(Icons.Outlined.Link, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(
+              Icons.Outlined.Link,
+              contentDescription = null,
+              modifier = Modifier.size(18.dp)
+            )
             Spacer(Modifier.width(Spacing.small))
             Text(stringResource(AttachRes.string.add_link))
           }
@@ -296,7 +324,10 @@ private fun AttachmentPickerSheet(
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
         )
-        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+        Row(
+          horizontalArrangement = Arrangement.End,
+          modifier = Modifier.fillMaxWidth()
+        ) {
           TextButton(onClick = { showLinkField = false; linkUrl = ""; linkName = "" }) {
             Text(stringResource(CoreRes.string.cancel))
           }
@@ -312,7 +343,10 @@ private fun AttachmentPickerSheet(
                   "https://$trimmed"
                 }
               val finalName = linkName.trim().ifBlank { normalized.extractDomain() }
-              onAddLink(normalized, finalName)
+              onAddLink(
+                normalized,
+                finalName
+              )
             }
           }) {
             Text(stringResource(AttachRes.string.add_link))

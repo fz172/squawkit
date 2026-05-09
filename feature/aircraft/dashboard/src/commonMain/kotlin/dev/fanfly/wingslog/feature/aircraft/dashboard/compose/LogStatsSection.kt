@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,8 +29,14 @@ import wingslog.feature.logs.viewing.generated.resources.total_logs
 
 
 @Composable
-fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+fun LogStatsSection(
+  stats: LogStats,
+  modifier: Modifier = Modifier,
+) {
+  Column(
+    modifier = modifier,
+    verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+  ) {
     Text(
       text = stringResource(MaintenanceRes.string.maintenance_summary),
       style = MaterialTheme.typography.titleMedium,
@@ -41,12 +47,18 @@ fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
       modifier = Modifier.fillMaxWidth(),
       shape = RoundedCornerShape(Spacing.cardCornerRadius),
       colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-      border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-      elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+      border = BorderStroke(
+        1.dp,
+        MaterialTheme.colorScheme.outlineVariant
+      ),
+      elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none)
     ) {
       Row(
         modifier = Modifier.fillMaxWidth()
-          .padding(horizontal = Spacing.extraLarge, vertical = Spacing.large),
+          .padding(
+            horizontal = Spacing.extraLarge,
+            vertical = Spacing.large
+          ),
         horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
       ) {
         stats.currentAirframeTime?.let {
@@ -82,7 +94,11 @@ fun LogStatsSection(stats: LogStats, modifier: Modifier = Modifier) {
 
 
 @Composable
-private fun StatCell(label: String, value: String, modifier: Modifier = Modifier) {
+private fun StatCell(
+  label: String,
+  value: String,
+  modifier: Modifier = Modifier,
+) {
   Column(
     modifier = modifier,
     verticalArrangement = Arrangement.spacedBy(Spacing.tiny)

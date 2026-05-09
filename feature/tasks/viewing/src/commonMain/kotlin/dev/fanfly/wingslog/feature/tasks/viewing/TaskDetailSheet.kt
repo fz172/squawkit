@@ -271,8 +271,8 @@ private fun StatusBadge(dueStatus: DueMetadata) {
         RoundedCornerShape(20.dp)
       )
       .padding(
-        horizontal = 12.dp,
-        vertical = 4.dp
+        horizontal = Spacing.medium,
+        vertical = Spacing.extraSmall
       ),
   )
 }
@@ -298,8 +298,8 @@ private fun DueDateHero(dueStatus: DueMetadata) {
               RoundedCornerShape(20.dp)
             )
             .padding(
-              horizontal = 12.dp,
-              vertical = 4.dp
+              horizontal = Spacing.medium,
+              vertical = Spacing.extraSmall
             ),
         )
       }

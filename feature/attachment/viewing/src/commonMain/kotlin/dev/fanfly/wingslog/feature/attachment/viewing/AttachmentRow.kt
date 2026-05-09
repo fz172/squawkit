@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -63,7 +62,7 @@ fun AttachmentRow(
       imageVector = attachment.typeIcon(),
       contentDescription = null,
       tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.size(24.dp),
+      modifier = Modifier.size(Spacing.extraLarge),
     )
     Column(modifier = Modifier.weight(1f)) {
       Text(
@@ -82,7 +81,7 @@ fun AttachmentRow(
       BlobSyncState.Uploading,
       BlobSyncState.Downloading,
         -> CircularProgressIndicator(
-        modifier = Modifier.size(16.dp),
+        modifier = Modifier.size(Spacing.large),
         strokeWidth = Spacing.tiny,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -91,21 +90,21 @@ fun AttachmentRow(
         imageVector = Icons.Filled.CloudUpload,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-        modifier = Modifier.size(16.dp),
+        modifier = Modifier.size(Spacing.large),
       )
 
       BlobSyncState.UploadFailed -> Icon(
         imageVector = Icons.Filled.CloudOff,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.error,
-        modifier = Modifier.size(16.dp),
+        modifier = Modifier.size(Spacing.large),
       )
 
       BlobSyncState.RemoteOnly -> Icon(
         imageVector = Icons.Filled.CloudDownload,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-        modifier = Modifier.size(16.dp),
+        modifier = Modifier.size(Spacing.large),
       )
 
       null,
@@ -114,7 +113,7 @@ fun AttachmentRow(
         imageVector = Icons.AutoMirrored.Filled.OpenInNew,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
-        modifier = Modifier.size(16.dp),
+        modifier = Modifier.size(Spacing.large),
       )
     }
   }

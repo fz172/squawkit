@@ -12,9 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,8 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -39,10 +35,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
-import kotlin.time.Instant
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.ui.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_primary
 import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_secondary_linked
@@ -65,8 +63,6 @@ import wingslog.feature.tasks.update.generated.resources.adj_skip_subtitle_activ
 import wingslog.feature.tasks.update.generated.resources.adj_skip_subtitle_inactive
 import wingslog.feature.tasks.update.generated.resources.adj_skip_title_active
 import wingslog.feature.tasks.update.generated.resources.adj_skip_title_inactive
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.select_date
 
 @Composable
 fun TaskAdjustmentsTab(
@@ -96,10 +92,12 @@ fun TaskAdjustmentsTab(
         onForceOverrideDateChange(on)
         if (on) onForceOverrideEngineChange(false)
       }
+
       ScheduleMode.HOURS -> {
         onForceOverrideEngineChange(on)
         if (on) onForceOverrideDateChange(false)
       }
+
       else -> {}
     }
   }
@@ -170,12 +168,14 @@ private fun AdjustmentsPreviewBanner(
       tint = warning,
       icon = Icons.Default.FastForward,
     )
+
     rescheduleOn -> BannerTokens(
       bg = primary.copy(alpha = 0.10f),
       border = primary.copy(alpha = 0.35f),
       tint = primary,
       icon = Icons.Default.CalendarToday,
     )
+
     else -> BannerTokens(
       bg = MaterialTheme.colorScheme.surfaceContainer,
       border = MaterialTheme.colorScheme.outlineVariant,
@@ -191,14 +191,19 @@ private fun AdjustmentsPreviewBanner(
       primaryText = stringResource(Res.string.adj_preview_skip_primary)
       secondaryText = stringResource(Res.string.adj_preview_skip_secondary)
     }
+
     rescheduleOn && mode == ScheduleMode.TIME -> {
       val dateStr = forcedDateMillis?.let {
         Instant.fromEpochMilliseconds(it)
           .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
       } ?: "—"
-      primaryText = stringResource(Res.string.adj_preview_reschedule_date_primary, dateStr)
+      primaryText = stringResource(
+        Res.string.adj_preview_reschedule_date_primary,
+        dateStr
+      )
       secondaryText = stringResource(Res.string.adj_preview_reschedule_was_date)
     }
+
     rescheduleOn && mode == ScheduleMode.HOURS -> {
       primaryText = stringResource(
         Res.string.adj_preview_reschedule_hours_primary,
@@ -206,10 +211,12 @@ private fun AdjustmentsPreviewBanner(
       )
       secondaryText = stringResource(Res.string.adj_preview_reschedule_was_hours)
     }
+
     mode == ScheduleMode.LINKED -> {
       primaryText = stringResource(Res.string.adj_preview_neutral_primary)
       secondaryText = stringResource(Res.string.adj_preview_neutral_secondary_linked)
     }
+
     else -> {
       primaryText = stringResource(Res.string.adj_preview_neutral_primary)
       secondaryText = stringResource(Res.string.adj_preview_neutral_secondary_unset)
@@ -223,15 +230,23 @@ private fun AdjustmentsPreviewBanner(
       .fillMaxWidth()
       .clip(RoundedCornerShape(14.dp))
       .background(bg)
-      .border(1.dp, borderColor, RoundedCornerShape(14.dp))
-      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
+      .border(
+        1.dp,
+        borderColor,
+        RoundedCornerShape(14.dp)
+      )
+      .padding(
+        horizontal = Spacing.large,
+        vertical = Spacing.medium
+      ),
   ) {
     Box(
       modifier = Modifier
         .size(36.dp)
         .clip(RoundedCornerShape(10.dp))
-        .background(iconTint.copy(alpha = if (isNeutral) 0f else 0.18f)
-          .let { if (isNeutral) MaterialTheme.colorScheme.surfaceContainerHighest else it }),
+        .background(
+          iconTint.copy(alpha = if (isNeutral) 0f else 0.18f)
+            .let { if (isNeutral) MaterialTheme.colorScheme.surfaceContainerHighest else it }),
       contentAlignment = Alignment.Center,
     ) {
       Icon(
@@ -287,9 +302,13 @@ private fun RescheduleCard(
     modifier = Modifier
       .fillMaxWidth()
       .alpha(if (disabled) 0.55f else 1f)
-      .clip(RoundedCornerShape(12.dp))
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .background(MaterialTheme.colorScheme.surfaceContainer)
-      .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+      .border(
+        1.dp,
+        borderColor,
+        RoundedCornerShape(Spacing.cardCornerRadius)
+      ),
   ) {
     Row(
       modifier = Modifier
@@ -298,7 +317,10 @@ private fun RescheduleCard(
           enabled = !disabled,
           role = Role.Switch,
         ) { onToggle(!rescheduleOn) }
-        .padding(horizontal = Spacing.large, vertical = Spacing.medium),
+        .padding(
+          horizontal = Spacing.large,
+          vertical = Spacing.medium
+        ),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
@@ -338,9 +360,12 @@ private fun RescheduleCard(
           .border(
             width = 1.dp,
             color = MaterialTheme.colorScheme.outlineVariant,
-            shape = RoundedCornerShape(0.dp)
+            shape = RoundedCornerShape(Spacing.none)
           )
-          .padding(horizontal = Spacing.large, vertical = Spacing.medium),
+          .padding(
+            horizontal = Spacing.large,
+            vertical = Spacing.medium
+          ),
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
         when (mode) {
@@ -352,17 +377,20 @@ private fun RescheduleCard(
             Row(
               modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(Spacing.cardCornerRadius))
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                 .clickable(role = Role.Button) { onDateClick() }
-                .padding(horizontal = Spacing.medium, vertical = Spacing.medium),
+                .padding(
+                  horizontal = Spacing.medium,
+                  vertical = Spacing.medium
+                ),
               verticalAlignment = Alignment.CenterVertically,
               horizontalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
               Icon(
                 Icons.Default.CalendarToday,
                 contentDescription = null,
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(Spacing.large),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
               )
               Text(
@@ -409,19 +437,30 @@ private fun RescheduleCard(
 // ─── Skip section ────────────────────────────────────────────────────────────
 
 @Composable
-private fun SkipCard(isSkipping: Boolean, onToggle: () -> Unit) {
+private fun SkipCard(
+  isSkipping: Boolean,
+  onToggle: () -> Unit,
+) {
   val warning = MaterialTheme.colorScheme.error
   val borderColor = if (isSkipping) warning else MaterialTheme.colorScheme.outlineVariant
-  val bg = if (isSkipping) warning.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surfaceContainer
+  val bg =
+    if (isSkipping) warning.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surfaceContainer
 
   Row(
     modifier = Modifier
       .fillMaxWidth()
-      .clip(RoundedCornerShape(12.dp))
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .background(bg)
-      .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+      .border(
+        1.dp,
+        borderColor,
+        RoundedCornerShape(Spacing.cardCornerRadius)
+      )
       .clickable(role = Role.Button) { onToggle() }
-      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
+      .padding(
+        horizontal = Spacing.large,
+        vertical = Spacing.medium
+      ),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
@@ -463,7 +502,10 @@ private fun SkipCard(isSkipping: Boolean, onToggle: () -> Unit) {
 // ─── Section label ───────────────────────────────────────────────────────────
 
 @Composable
-private fun AdjSectionLabel(label: String, complete: Boolean) {
+private fun AdjSectionLabel(
+  label: String,
+  complete: Boolean,
+) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),

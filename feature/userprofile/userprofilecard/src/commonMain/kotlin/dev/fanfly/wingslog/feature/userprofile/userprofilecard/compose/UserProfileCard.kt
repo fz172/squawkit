@@ -15,14 +15,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
-import dev.fanfly.wingslog.core.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.utils.displayResId
 import org.jetbrains.compose.resources.stringResource
@@ -49,8 +49,11 @@ fun UserProfileCard(
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     modifier = Modifier.fillMaxWidth(),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    border = BorderStroke(
+      1.dp,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
+    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column(
       modifier = Modifier

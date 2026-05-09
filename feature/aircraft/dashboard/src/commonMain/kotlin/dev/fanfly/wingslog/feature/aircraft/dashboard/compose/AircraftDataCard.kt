@@ -97,7 +97,7 @@ fun AircraftDataCard(
           contentDescription = if (expanded) stringResource(MaintenanceRes.string.collapse_details) else stringResource(
             MaintenanceRes.string.expand_details
           ),
-          modifier = Modifier.size(24.dp).rotate(rotationState),
+          modifier = Modifier.size(Spacing.extraLarge).rotate(rotationState),
           tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
       }

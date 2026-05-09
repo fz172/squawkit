@@ -110,12 +110,12 @@ private fun TrackingModeButton(
     ),
     modifier = modifier
       .heightIn(min = 80.dp)
-      .clip(RoundedCornerShape(12.dp))
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .background(bg)
       .border(
         1.dp,
         border,
-        RoundedCornerShape(12.dp)
+        RoundedCornerShape(Spacing.cardCornerRadius)
       )
       .clickable { onClick() }
       .padding(
@@ -163,12 +163,12 @@ internal fun RecurrenceChoice(
         modifier = Modifier
           .weight(1f)
           .heightIn(min = 64.dp)
-          .clip(RoundedCornerShape(12.dp))
+          .clip(RoundedCornerShape(Spacing.cardCornerRadius))
           .background(bg)
           .border(
             1.dp,
             border,
-            RoundedCornerShape(12.dp)
+            RoundedCornerShape(Spacing.cardCornerRadius)
           )
           .clickable { onSelect(rec) }
           .padding(
@@ -210,7 +210,7 @@ internal fun UnitPillSelect(
         MaterialTheme.colorScheme.outlineVariant,
         RoundedCornerShape(10.dp)
       )
-      .padding(4.dp),
+      .padding(Spacing.extraSmall),
     horizontalArrangement = Arrangement.spacedBy(6.dp),
   ) {
     listOf(
@@ -258,13 +258,13 @@ internal fun IntervalNumberInput(
     verticalAlignment = Alignment.CenterVertically,
     modifier = Modifier
       .fillMaxWidth()
-      .height(56.dp)
-      .clip(RoundedCornerShape(12.dp))
+      .height(Spacing.buttonHeight)
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .background(MaterialTheme.colorScheme.surfaceContainer)
       .border(
         1.dp,
         borderColor,
-        RoundedCornerShape(12.dp)
+        RoundedCornerShape(Spacing.cardCornerRadius)
       )
       .padding(horizontal = 14.dp),
   ) {
@@ -337,12 +337,12 @@ internal fun AdvancedLinkedSection(
   Column(
     modifier = Modifier
       .fillMaxWidth()
-      .clip(RoundedCornerShape(12.dp))
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .background(MaterialTheme.colorScheme.surfaceContainer)
       .border(
         1.dp,
         borderColor,
-        RoundedCornerShape(12.dp)
+        RoundedCornerShape(Spacing.cardCornerRadius)
       ),
   ) {
     Row(
@@ -365,7 +365,7 @@ internal fun AdvancedLinkedSection(
           contentDescription = null,
           tint = if (isLinkedMode) MaterialTheme.colorScheme.primary
           else MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.size(16.dp),
+          modifier = Modifier.size(Spacing.large),
         )
         Text(
           stringResource(Res.string.schedule_with_another_work),
@@ -406,12 +406,12 @@ internal fun AdvancedLinkedSection(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
               .fillMaxWidth()
-              .clip(RoundedCornerShape(12.dp))
+              .clip(RoundedCornerShape(Spacing.cardCornerRadius))
               .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
               .border(
                 1.dp,
                 MaterialTheme.colorScheme.primary,
-                RoundedCornerShape(12.dp)
+                RoundedCornerShape(Spacing.cardCornerRadius)
               )
               .padding(
                 horizontal = Spacing.large,
@@ -465,7 +465,7 @@ internal fun AdvancedLinkedSection(
               Icons.Default.Add,
               contentDescription = null,
               tint = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.size(14.dp).padding(end = 0.dp),
+              modifier = Modifier.size(14.dp).padding(end = Spacing.none),
             )
             Spacer(Modifier.width(Spacing.small))
             Text(
