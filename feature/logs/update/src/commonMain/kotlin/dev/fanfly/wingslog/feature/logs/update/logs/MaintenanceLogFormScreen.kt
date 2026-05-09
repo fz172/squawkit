@@ -46,7 +46,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
@@ -202,18 +201,32 @@ fun MaintenanceLogFormScreen(
       })
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
+    bottomBar = {
+      if (!uiState.isLoading) {
+        BottomButtons(
+          onPrimaryClick = viewModel::save,
+          onSecondaryClick = { tryNavigateBack() },
+          onDangerClick = if (viewModel.isEditMode) {
+            { showDeleteDialog = true }
+          } else null,
+          dangerLabel = stringResource(CoreRes.string.delete),
+          primaryEnabled = !uiState.isSaving,
+          isPrimaryFunctionInProgress = uiState.isSaving,
+          primaryLabel = saveLabel,
+        )
+      }
+    },
   ) { innerPadding ->
     if (uiState.isLoading) {
       Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
       }
     } else {
-      Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-        Column(
-          modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())
-            .padding(Spacing.screenPadding),
-          verticalArrangement = Arrangement.spacedBy(Spacing.large)
-        ) {
+      Column(
+        modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())
+          .padding(innerPadding).padding(Spacing.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.large)
+      ) {
           // Maintenance Date
           val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat() ?: stringResource(
             MaintenanceRes.string.tap_to_change_date
@@ -406,20 +419,6 @@ fun MaintenanceLogFormScreen(
             )
           }
 
-          Spacer(Modifier.height(88.dp))
-        }
-        BottomButtons(
-          modifier = Modifier.align(Alignment.BottomCenter),
-          onPrimaryClick = viewModel::save,
-          onSecondaryClick = { tryNavigateBack() },
-          onDangerClick = if (viewModel.isEditMode) {
-            { showDeleteDialog = true }
-          } else null,
-          dangerLabel = stringResource(CoreRes.string.delete),
-          primaryEnabled = !uiState.isSaving,
-          isPrimaryFunctionInProgress = uiState.isSaving,
-          primaryLabel = saveLabel,
-        )
       }
     }
   }
