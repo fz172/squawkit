@@ -238,3 +238,12 @@ DELETE FROM sync_cursor;
 
 wipeAllBlobObjects:
 DELETE FROM blob_object;
+
+-- Per-user wipe queries used on sign-out so that on next sign-in the sync engine
+-- re-hydrates from Firestore and the BlobIndexReconciler rebuilds blob_object rows.
+
+deleteEntitiesForUser:
+DELETE FROM entity WHERE scope_path LIKE :scopePrefix;
+
+deleteSyncCursorsForUser:
+DELETE FROM sync_cursor WHERE uid = :uid;

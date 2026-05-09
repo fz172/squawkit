@@ -52,6 +52,22 @@ class DatabaseIntegrityChecker(
     }
   }
 
+  /**
+   * Deletes entity rows and sync cursors for [uid] so the sync engine re-hydrates from Firestore
+   * on next sign-in. blob_object rows and files are handled separately by
+   * [AttachmentManager.wipeLocalData]. Call this from the sign-out path before clearing auth state.
+   */
+  fun wipeDataForUser(uid: String) {
+    val scopePrefix = "/users/$uid/%"
+    try {
+      db.schemaQueries.deleteEntitiesForUser(scopePrefix)
+      db.schemaQueries.deleteSyncCursorsForUser(uid)
+      log.i { "wipeDataForUser: cleared entity and sync_cursor rows for uid=$uid" }
+    } catch (e: Exception) {
+      log.e(e) { "wipeDataForUser failed for uid=$uid" }
+    }
+  }
+
   companion object {
     private const val TAG = "DatabaseIntegrityChecker"
   }

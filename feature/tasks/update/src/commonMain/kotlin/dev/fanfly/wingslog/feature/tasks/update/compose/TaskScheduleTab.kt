@@ -10,9 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +25,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
+import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -42,6 +41,8 @@ import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_in
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_in_hours
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_empty_primary
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_empty_secondary
+import wingslog.feature.tasks.update.generated.resources.schedule_preview_hint
+import wingslog.feature.tasks.update.generated.resources.schedule_preview_label
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_one_time_secondary
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_primary
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_repeating_secondary
@@ -83,9 +84,16 @@ fun TaskScheduleTab(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
-    SchedulePreviewBanner(
+    val (previewPrimary, previewSecondary, previewIsEmpty) = previewText(
       state = state,
       linkedTaskName = availableInspections.firstOrNull { it.id == state.linkedToId }?.title,
+    )
+    PreviewBanner(
+      label = stringResource(Res.string.schedule_preview_label),
+      hint = stringResource(Res.string.schedule_preview_hint),
+      primary = previewPrimary,
+      secondary = previewSecondary,
+      tone = if (previewIsEmpty) PreviewBannerTone.Neutral else PreviewBannerTone.Active,
     )
 
     // Step 1 — How is this tracked?
@@ -260,74 +268,6 @@ private fun ScheduleSection(
       )
     }
     content()
-  }
-}
-
-// ─── Preview banner ─────────────────────────────────────────────────────────
-
-@Composable
-private fun SchedulePreviewBanner(
-  state: ScheduleState,
-  linkedTaskName: String?,
-) {
-  val (primary, secondary, isEmpty) = previewText(
-    state,
-    linkedTaskName
-  )
-  val accent = MaterialTheme.colorScheme.primary
-  val tint = if (isEmpty) MaterialTheme.colorScheme.surfaceContainer
-  else accent.copy(alpha = 0.10f)
-  val borderColor = if (isEmpty) MaterialTheme.colorScheme.outlineVariant
-  else accent.copy(alpha = 0.35f)
-
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(14.dp))
-      .background(tint)
-      .border(
-        1.dp,
-        borderColor,
-        RoundedCornerShape(14.dp)
-      )
-      .padding(
-        horizontal = Spacing.large,
-        vertical = Spacing.medium
-      ),
-  ) {
-    Box(
-      modifier = Modifier
-        .size(36.dp)
-        .clip(RoundedCornerShape(10.dp))
-        .background(
-          if (isEmpty) MaterialTheme.colorScheme.surfaceContainerHighest
-          else accent.copy(alpha = 0.18f)
-        ),
-      contentAlignment = Alignment.Center,
-    ) {
-      Icon(
-        Icons.Default.Schedule,
-        contentDescription = null,
-        modifier = Modifier.size(18.dp),
-        tint = if (isEmpty) MaterialTheme.colorScheme.onSurfaceVariant else accent,
-      )
-    }
-    Column(modifier = Modifier.fillMaxWidth()) {
-      Text(
-        primary,
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = if (isEmpty) MaterialTheme.colorScheme.onSurfaceVariant
-        else MaterialTheme.colorScheme.onSurface,
-      )
-      Text(
-        secondary,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
   }
 }
 

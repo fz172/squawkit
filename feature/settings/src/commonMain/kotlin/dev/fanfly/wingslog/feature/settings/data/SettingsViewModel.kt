@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.settings.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import kotlinx.coroutines.Job
@@ -15,6 +16,7 @@ class SettingsViewModel(
   private val authManager: AuthManager,
   private val userProfileManager: UserProfileManager,
   private val attachmentManager: AttachmentManager,
+  private val dbChecker: DatabaseIntegrityChecker,
 ) : ViewModel() {
 
   private val _user = MutableStateFlow(SettingsUiState())
@@ -47,7 +49,10 @@ class SettingsViewModel(
     val uid = authManager.getCurrentUser()?.uid
     viewModelScope.launch {
       observeLicenseJob?.cancel()
-      if (uid != null) attachmentManager.wipeLocalData(uid)
+      if (uid != null) {
+        attachmentManager.wipeLocalData(uid)
+        dbChecker.wipeDataForUser(uid)
+      }
       authManager.logOut()
       _user.value =
         SettingsUiState(displayName = null, photoUri = null, userStatus = UserStatus.LOGGED_OUT)

@@ -29,11 +29,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
+import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
@@ -42,6 +43,10 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
+import wingslog.feature.tasks.update.generated.resources.adj_preview_hint
+import wingslog.feature.tasks.update.generated.resources.adj_preview_label_active
+import wingslog.feature.tasks.update.generated.resources.adj_preview_label_neutral
+import wingslog.feature.tasks.update.generated.resources.adj_preview_label_warn
 import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_primary
 import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_secondary_linked
 import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_secondary_unset
@@ -106,12 +111,55 @@ fun TaskAdjustmentsTab(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
-    AdjustmentsPreviewBanner(
-      rescheduleOn = rescheduleOn,
-      isSkipping = isSkipping,
-      mode = mode,
-      forcedDateMillis = forcedDateMillis,
-      forcedEngineHours = forcedEngineHours,
+    val bannerTone = when {
+      isSkipping -> PreviewBannerTone.Warn
+      rescheduleOn -> PreviewBannerTone.Active
+      else -> PreviewBannerTone.Neutral
+    }
+    val bannerLabel = stringResource(
+      when {
+        isSkipping -> Res.string.adj_preview_label_warn
+        rescheduleOn -> Res.string.adj_preview_label_active
+        else -> Res.string.adj_preview_label_neutral
+      }
+    )
+    val bannerPrimary: String
+    val bannerSecondary: String
+    when {
+      isSkipping -> {
+        bannerPrimary = stringResource(Res.string.adj_preview_skip_primary)
+        bannerSecondary = stringResource(Res.string.adj_preview_skip_secondary)
+      }
+      rescheduleOn && mode == ScheduleMode.TIME -> {
+        val dateStr = forcedDateMillis?.let {
+          kotlin.time.Instant.fromEpochMilliseconds(it)
+            .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date.toString()
+        } ?: "—"
+        bannerPrimary = stringResource(Res.string.adj_preview_reschedule_date_primary, dateStr)
+        bannerSecondary = stringResource(Res.string.adj_preview_reschedule_was_date)
+      }
+      rescheduleOn && mode == ScheduleMode.HOURS -> {
+        bannerPrimary = stringResource(
+          Res.string.adj_preview_reschedule_hours_primary,
+          forcedEngineHours.ifBlank { "—" }
+        )
+        bannerSecondary = stringResource(Res.string.adj_preview_reschedule_was_hours)
+      }
+      mode == ScheduleMode.LINKED -> {
+        bannerPrimary = stringResource(Res.string.adj_preview_neutral_primary)
+        bannerSecondary = stringResource(Res.string.adj_preview_neutral_secondary_linked)
+      }
+      else -> {
+        bannerPrimary = stringResource(Res.string.adj_preview_neutral_primary)
+        bannerSecondary = stringResource(Res.string.adj_preview_neutral_secondary_unset)
+      }
+    }
+    PreviewBanner(
+      label = bannerLabel,
+      hint = stringResource(Res.string.adj_preview_hint),
+      primary = bannerPrimary,
+      secondary = bannerSecondary,
+      tone = bannerTone,
     )
 
     // Section 1 — Reschedule next due
@@ -146,139 +194,6 @@ fun TaskAdjustmentsTab(
     )
   }
 }
-
-// ─── Preview banner ──────────────────────────────────────────────────────────
-
-@Composable
-private fun AdjustmentsPreviewBanner(
-  rescheduleOn: Boolean,
-  isSkipping: Boolean,
-  mode: ScheduleMode?,
-  forcedDateMillis: Long?,
-  forcedEngineHours: String,
-) {
-  val warning = MaterialTheme.colorScheme.error
-  val primary = MaterialTheme.colorScheme.primary
-  val isNeutral = !rescheduleOn && !isSkipping
-
-  val (bg, borderColor, iconTint, icon) = when {
-    isSkipping -> BannerTokens(
-      bg = warning.copy(alpha = 0.10f),
-      border = warning.copy(alpha = 0.35f),
-      tint = warning,
-      icon = Icons.Default.FastForward,
-    )
-
-    rescheduleOn -> BannerTokens(
-      bg = primary.copy(alpha = 0.10f),
-      border = primary.copy(alpha = 0.35f),
-      tint = primary,
-      icon = Icons.Default.CalendarToday,
-    )
-
-    else -> BannerTokens(
-      bg = MaterialTheme.colorScheme.surfaceContainer,
-      border = MaterialTheme.colorScheme.outlineVariant,
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      icon = Icons.Default.CalendarToday,
-    )
-  }
-
-  val primaryText: String
-  val secondaryText: String
-  when {
-    isSkipping -> {
-      primaryText = stringResource(Res.string.adj_preview_skip_primary)
-      secondaryText = stringResource(Res.string.adj_preview_skip_secondary)
-    }
-
-    rescheduleOn && mode == ScheduleMode.TIME -> {
-      val dateStr = forcedDateMillis?.let {
-        Instant.fromEpochMilliseconds(it)
-          .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-      } ?: "—"
-      primaryText = stringResource(
-        Res.string.adj_preview_reschedule_date_primary,
-        dateStr
-      )
-      secondaryText = stringResource(Res.string.adj_preview_reschedule_was_date)
-    }
-
-    rescheduleOn && mode == ScheduleMode.HOURS -> {
-      primaryText = stringResource(
-        Res.string.adj_preview_reschedule_hours_primary,
-        forcedEngineHours.ifBlank { "—" }
-      )
-      secondaryText = stringResource(Res.string.adj_preview_reschedule_was_hours)
-    }
-
-    mode == ScheduleMode.LINKED -> {
-      primaryText = stringResource(Res.string.adj_preview_neutral_primary)
-      secondaryText = stringResource(Res.string.adj_preview_neutral_secondary_linked)
-    }
-
-    else -> {
-      primaryText = stringResource(Res.string.adj_preview_neutral_primary)
-      secondaryText = stringResource(Res.string.adj_preview_neutral_secondary_unset)
-    }
-  }
-
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(14.dp))
-      .background(bg)
-      .border(
-        1.dp,
-        borderColor,
-        RoundedCornerShape(14.dp)
-      )
-      .padding(
-        horizontal = Spacing.large,
-        vertical = Spacing.medium
-      ),
-  ) {
-    Box(
-      modifier = Modifier
-        .size(36.dp)
-        .clip(RoundedCornerShape(10.dp))
-        .background(
-          iconTint.copy(alpha = if (isNeutral) 0f else 0.18f)
-            .let { if (isNeutral) MaterialTheme.colorScheme.surfaceContainerHighest else it }),
-      contentAlignment = Alignment.Center,
-    ) {
-      Icon(
-        imageVector = icon,
-        contentDescription = null,
-        modifier = Modifier.size(18.dp),
-        tint = iconTint,
-      )
-    }
-    Column(modifier = Modifier.fillMaxWidth()) {
-      Text(
-        primaryText,
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = if (isNeutral) MaterialTheme.colorScheme.onSurfaceVariant
-        else MaterialTheme.colorScheme.onSurface,
-      )
-      Text(
-        secondaryText,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-  }
-}
-
-private data class BannerTokens(
-  val bg: androidx.compose.ui.graphics.Color,
-  val border: androidx.compose.ui.graphics.Color,
-  val tint: androidx.compose.ui.graphics.Color,
-  val icon: ImageVector,
-)
 
 // ─── Reschedule section ──────────────────────────────────────────────────────
 

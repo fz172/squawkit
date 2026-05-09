@@ -111,6 +111,13 @@
   <string name="adj_preview_reschedule_was_hours">Was set by schedule</string>
   <string name="adj_preview_skip_primary">Skipping this cycle</string>
   <string name="adj_preview_skip_secondary">Will be marked complete without a log entry</string>
+  <!-- Preview banner eyebrow labels and hints -->
+  <string name="schedule_preview_label">Preview</string>
+  <string name="schedule_preview_hint">How this task will appear</string>
+  <string name="adj_preview_label_neutral">Current</string>
+  <string name="adj_preview_label_active">Preview</string>
+  <string name="adj_preview_label_warn">On save</string>
+  <string name="adj_preview_hint">What will happen</string>
 
   <!-- Adjustments tab — reschedule section -->
   <string name="adj_reschedule_section_label">Reschedule next due</string>
