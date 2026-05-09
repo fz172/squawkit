@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.tasks.viewing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -50,7 +49,6 @@ import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_ad_short
 import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_sb_short
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
-import wingslog.feature.tasks.sharedassets.generated.resources.engine_format
 import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
@@ -381,24 +379,11 @@ private fun LogHistoryItem(log: MaintenanceLog) {
     modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.extraSmall),
     verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
   ) {
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-      Text(
-        text = dateStr,
-        style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.Medium
-      )
-      Text(
-        text = stringResource(
-          SharedRes.string.engine_format,
-          log.engine_hour.formatToOneDecimalPlace()
-        ),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
+    Text(
+      text = dateStr,
+      style = MaterialTheme.typography.bodyMedium,
+      fontWeight = FontWeight.Medium
+    )
     Text(
       text = log.work_description,
       style = MaterialTheme.typography.bodyMedium
