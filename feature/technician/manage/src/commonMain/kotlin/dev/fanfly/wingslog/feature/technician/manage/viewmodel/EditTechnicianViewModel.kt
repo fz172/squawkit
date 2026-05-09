@@ -105,7 +105,18 @@ class EditTechnicianViewModel(
   }
 
   fun updateCertType(certType: CertificateType) {
-    _uiState.update { it.copy(certType = certType) }
+    _uiState.update {
+      if (certType == CertificateType.CERTIFICATE_TYPE_NONE) {
+        it.copy(
+          certType = certType,
+          certNumber = "",
+          certExpireLimit = CertExpireLimit.CERT_EXPIRE_LIMIT_EXPIRES,
+          certExpiration = null,
+        )
+      } else {
+        it.copy(certType = certType)
+      }
+    }
   }
 
   fun updateCertNumber(certNumber: String) {

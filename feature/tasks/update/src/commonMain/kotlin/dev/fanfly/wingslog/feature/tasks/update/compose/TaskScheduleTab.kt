@@ -1,15 +1,14 @@
 package dev.fanfly.wingslog.feature.tasks.update.compose
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,11 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
@@ -243,25 +239,16 @@ private fun ScheduleSection(
       modifier = Modifier.padding(bottom = Spacing.small),
     ) {
       if (complete) {
-        Box(
-          modifier = Modifier
-            .size(14.dp)
-            .clip(RoundedCornerShape(7.dp))
-            .background(MaterialTheme.colorScheme.primary),
-          contentAlignment = Alignment.Center,
-        ) {
-          // Simple checkmark using a "✓" character keeps platform-agnostic
-          Text(
-            "✓",
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary,
-          )
-        }
+        Icon(
+          imageVector = Icons.Default.Check,
+          contentDescription = null,
+          modifier = Modifier.size(Spacing.large),
+          tint = MaterialTheme.colorScheme.primary,
+        )
       }
       Text(
         stringResource(labelRes),
-        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.9.sp),
+        style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Bold,
         color = if (complete) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurfaceVariant,
