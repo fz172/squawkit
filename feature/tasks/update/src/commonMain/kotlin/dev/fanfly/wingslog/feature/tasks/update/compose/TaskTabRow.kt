@@ -72,8 +72,13 @@ fun TaskTabRow(
 ) {
   BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
     val unselectedCount = tabs.size - 1
-    val iconTabWidth = (maxWidth - MaxSelectedTabWidth) / unselectedCount
-    val selectedWidth = MaxSelectedTabWidth
+    val calculatedIconWidth = (maxWidth - MaxSelectedTabWidth) / unselectedCount
+    // On super wide screens (e.g. tablets) the icon tabs would exceed the selected tab width,
+    // so fall back to dividing all tabs evenly instead.
+    val evenTabWidth = maxWidth / tabs.size
+    val useEvenDistribution = calculatedIconWidth > MaxSelectedTabWidth
+    val iconTabWidth = if (useEvenDistribution) evenTabWidth else calculatedIconWidth
+    val selectedWidth = if (useEvenDistribution) evenTabWidth else MaxSelectedTabWidth
 
     val animatedWidths = tabs.indices.map { index ->
       animateDpAsState(
