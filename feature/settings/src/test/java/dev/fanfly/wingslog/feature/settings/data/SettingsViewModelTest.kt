@@ -4,6 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coJustRun
@@ -35,6 +37,7 @@ class SettingsViewModelTest {
   private lateinit var userProfileManager: UserProfileManager
   private lateinit var attachmentManager: AttachmentManager
   private lateinit var dbChecker: DatabaseIntegrityChecker
+  private lateinit var featureLabManager: FeatureLabManager
   private lateinit var viewModel: SettingsViewModel
 
   @Before
@@ -45,6 +48,8 @@ class SettingsViewModelTest {
     userProfileManager = mockk(relaxed = true)
     attachmentManager = mockk(relaxed = true)
     dbChecker = mockk(relaxed = true)
+    featureLabManager = mockk(relaxed = true)
+    every { featureLabManager.observe() } returns flowOf(FeatureFlags())
 
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.uid } returns TEST_USER_ID
@@ -67,7 +72,7 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_wipesUserData_whenUserSignedIn() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker)
+    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker, featureLabManager)
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -77,7 +82,7 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_wipesAttachmentData_whenUserSignedIn() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker)
+    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker, featureLabManager)
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -87,7 +92,7 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_callsAuthManagerLogOut() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker)
+    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker, featureLabManager)
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -98,7 +103,7 @@ class SettingsViewModelTest {
   @Test
   fun logOut_skipsWipe_whenNoUserSignedIn() = runTest(testDispatcher) {
     every { authManager.getCurrentUser() } returns null
-    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker)
+    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker, featureLabManager)
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -109,7 +114,7 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_setsStateToLoggedOut() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker)
+    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker, featureLabManager)
 
     viewModel.logOut()
     advanceUntilIdle()

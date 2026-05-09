@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceOverview
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.core.model.settings.FeatureLabSettings
 import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
 import app.cash.sqldelight.db.SqlDriver
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -60,6 +61,10 @@ import org.koin.dsl.module
       register(
         CollectionKind.LicenseInfo,
         WireCodec(LicenseInfo.ADAPTER)
+      )
+      register(
+        CollectionKind.FeatureLab,
+        WireCodec(FeatureLabSettings.ADAPTER)
       )
       verifyCoverage()
     }

@@ -24,6 +24,7 @@ fun EditTaskRoute(
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
   val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
+  val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
   val successState = uiState as? TaskUiState.Success
 
   val updatedMessage = stringResource(Res.string.task_updated)
@@ -86,6 +87,7 @@ fun EditTaskRoute(
           onPickFiles = viewModel::addLocalFiles,
           onAddLink = viewModel::addLink,
           onDismissSheet = viewModel::hideAttachmentPicker,
+          uploadEnabled = attachmentUploadEnabled,
         )
       },
     )

@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -42,6 +43,7 @@ class TaskViewModel(
   private val attachmentManager: AttachmentManager,
   private val auth: FirebaseAuth,
   private val maintenanceLogManager: MaintenanceLogManager,
+  private val featureLabManager: FeatureLabManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -62,11 +64,19 @@ class TaskViewModel(
   private val _isSaving = MutableStateFlow(false)
   val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
+  private val _attachmentUploadEnabled = MutableStateFlow(true)
+  val attachmentUploadEnabled: StateFlow<Boolean> = _attachmentUploadEnabled.asStateFlow()
+
   val isAnonymous: Boolean get() = auth.currentUser?.isAnonymous ?: true
   val filesAtLimit: Boolean get() = _pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS
 
   init {
     loadData()
+    viewModelScope.launch {
+      featureLabManager.observe().collect { flags ->
+        _attachmentUploadEnabled.value = flags.attachmentUploadEnabled
+      }
+    }
   }
 
   private fun loadData() {

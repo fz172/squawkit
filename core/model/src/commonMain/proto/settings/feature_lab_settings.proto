@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+option java_package = "dev.fanfly.wingslog.core.model.settings";
+option java_multiple_files = true;
+
+message FeatureLabSettings {
+  bool technician_disabled = 1;
+  bool attachment_upload_disabled = 2;
+}

@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -55,6 +56,7 @@ class MaintenanceLogFormViewModel(
   private val technicianManager: TechnicianManager,
   private val userProfileManager: UserProfileManager,
   private val auth: FirebaseAuth,
+  private val featureLabManager: FeatureLabManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -74,7 +76,21 @@ class MaintenanceLogFormViewModel(
     observeTasks()
     observeTechnicians()
     checkAuth()
+    observeFeatureFlags()
     if (isEditMode) loadLog()
+  }
+
+  private fun observeFeatureFlags() {
+    featureLabManager.observe()
+      .onEach { flags ->
+        _uiState.update {
+          it.copy(
+            technicianEnabled = flags.technicianEnabled,
+            attachmentUploadEnabled = flags.attachmentUploadEnabled,
+          )
+        }
+      }
+      .launchIn(viewModelScope)
   }
 
   private fun observeTechnicians() {
@@ -190,6 +206,8 @@ class MaintenanceLogFormViewModel(
     _uiState.update { it.copy(maintenanceDate = date) }
 
   fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
+
+  fun onPerformedByTextChange(value: String) = _uiState.update { it.copy(performedByText = value) }
 
   fun onTechnicianSelect(technician: Technician?) =
     _uiState.update {
@@ -389,7 +407,11 @@ class MaintenanceLogFormViewModel(
         component_type = state.selectedComponentType,
         component_serial = componentSerial,
         attachments = finalAttachments,
-        technician = state.selectedTechnician,
+        technician = if (state.technicianEnabled) {
+          state.selectedTechnician
+        } else {
+          Technician(name = state.performedByText)
+        },
       )
 
       val result = if (isEditMode) logManager.updateLog(

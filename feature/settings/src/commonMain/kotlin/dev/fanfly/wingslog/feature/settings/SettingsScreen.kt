@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Engineering
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -35,6 +36,7 @@ import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.settings
 import wingslog.feature.settings.generated.resources.Res as SettingsRes
 import wingslog.feature.settings.generated.resources.app_version
+import wingslog.feature.settings.generated.resources.feature_lab
 import wingslog.feature.settings.generated.resources.sign_out
 import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
 import wingslog.feature.sync.sharedassets.generated.resources.feature_name_backup_and_sync
@@ -86,17 +88,26 @@ fun SettingsScreen(
         ),
         onOpenEditProfile = { navController.navigate(Screen.EditProfile.route) }
       )
-      SettingsRow(
-        icon = Icons.Default.Engineering,
-        title = stringResource(TechnicianRes.string.setting_item_manage_technicians),
-        onClick = { navController.navigate(Screen.ManageTechnicians.route) },
-        settingsLevel = SettingsLevel.DEFAULT
-      )
+      if (user.featureFlags.technicianEnabled) {
+        SettingsRow(
+          icon = Icons.Default.Engineering,
+          title = stringResource(TechnicianRes.string.setting_item_manage_technicians),
+          onClick = { navController.navigate(Screen.ManageTechnicians.route) },
+          settingsLevel = SettingsLevel.DEFAULT
+        )
+      }
 
       SettingsRow(
         icon = Icons.Default.CloudSync,
         title = stringResource(SyncRes.string.feature_name_backup_and_sync),
         onClick = { navController.navigate(Screen.SyncSettings.route) },
+        settingsLevel = SettingsLevel.DEFAULT
+      )
+
+      SettingsRow(
+        icon = Icons.Default.Tune,
+        title = stringResource(SettingsRes.string.feature_lab),
+        onClick = { navController.navigate(Screen.FeatureLab.route) },
         settingsLevel = SettingsLevel.DEFAULT
       )
 

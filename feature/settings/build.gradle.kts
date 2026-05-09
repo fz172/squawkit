@@ -50,6 +50,7 @@ kotlin {
       implementation(project(":feature:sync:sharedassets"))
       implementation(project(":feature:technician:sharedassets"))
       implementation(project(":feature:userprofile:userprofilecard"))
+      implementation(project(":feature:featurelab:datamanager"))
       implementation(project(":feature:userprofile:database"))
 
       // Compose

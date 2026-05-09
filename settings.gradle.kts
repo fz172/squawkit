@@ -59,4 +59,5 @@ include(":feature:attachment:model")
 include(":feature:attachment:datamanager")
 include(":feature:attachment:sharedassets")
 include(":feature:attachment:viewing")
+include(":feature:featurelab:datamanager")
 

@@ -46,6 +46,11 @@ sealed interface CollectionKind {
     override val schemaName = "userprofile.LicenseInfo"
   }
 
+  data object FeatureLab : CollectionKind {
+    override val wireName = "feature_lab_settings"
+    override val schemaName = "settings.FeatureLabSettings"
+  }
+
   companion object {
     /**
      * The complete, ordered list of [CollectionKind] subtypes. The CollectionKindCoverageTest in
@@ -59,6 +64,7 @@ sealed interface CollectionKind {
       MaintenanceOverview,
       Technician,
       LicenseInfo,
+      FeatureLab,
     )
 
     private val byWire: Map<String, CollectionKind> = ALL.associateBy { it.wireName }

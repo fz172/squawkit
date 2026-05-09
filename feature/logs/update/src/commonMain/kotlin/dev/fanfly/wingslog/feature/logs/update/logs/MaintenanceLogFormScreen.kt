@@ -284,40 +284,53 @@ fun MaintenanceLogFormScreen(
           )
 
           // Technician (Performed By)
-          val technicianDisplayText = uiState.selectedTechnician?.name ?: stringResource(
-            TechnicianRes.string.select_technician
-          )
-          OutlinedTextField(
-            value = technicianDisplayText,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(stringResource(TechnicianRes.string.performed_by)) },
-            leadingIcon = {
-              Icon(Icons.Default.Person, contentDescription = null)
-            },
-            modifier = Modifier.fillMaxWidth()
-              .clickable { viewModel.showTechnicianPicker() },
-            singleLine = true,
-            enabled = false,
-            colors = OutlinedTextFieldDefaults.colors(
-              disabledTextColor = MaterialTheme.colorScheme.onSurface,
-              disabledBorderColor = MaterialTheme.colorScheme.outline,
-              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+          if (uiState.technicianEnabled) {
+            val technicianDisplayText = uiState.selectedTechnician?.name ?: stringResource(
+              TechnicianRes.string.select_technician
             )
-          )
-
-          if (uiState.showTechnicianPicker) {
-            TechnicianPickerSheet(
-              availableTechnicians = uiState.availableTechnicians,
-              selectedId = uiState.selectedTechnician?.id,
-              onSelect = { viewModel.onTechnicianSelect(it) },
-              onAddClick = {
-                viewModel.hideTechnicianPicker()
-                // Navigate to edit technician screen
-                navController.navigate(Screen.EditTechnician.createRoute(null))
+            OutlinedTextField(
+              value = technicianDisplayText,
+              onValueChange = {},
+              readOnly = true,
+              label = { Text(stringResource(TechnicianRes.string.performed_by)) },
+              leadingIcon = {
+                Icon(Icons.Default.Person, contentDescription = null)
               },
-              onDismiss = { viewModel.hideTechnicianPicker() })
+              modifier = Modifier.fillMaxWidth()
+                .clickable { viewModel.showTechnicianPicker() },
+              singleLine = true,
+              enabled = false,
+              colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            )
+
+            if (uiState.showTechnicianPicker) {
+              TechnicianPickerSheet(
+                availableTechnicians = uiState.availableTechnicians,
+                selectedId = uiState.selectedTechnician?.id,
+                onSelect = { viewModel.onTechnicianSelect(it) },
+                onAddClick = {
+                  viewModel.hideTechnicianPicker()
+                  // Navigate to edit technician screen
+                  navController.navigate(Screen.EditTechnician.createRoute(null))
+                },
+                onDismiss = { viewModel.hideTechnicianPicker() })
+            }
+          } else {
+            OutlinedTextField(
+              value = uiState.performedByText,
+              onValueChange = viewModel::onPerformedByTextChange,
+              label = { Text(stringResource(TechnicianRes.string.performed_by)) },
+              leadingIcon = {
+                Icon(Icons.Default.Person, contentDescription = null)
+              },
+              modifier = Modifier.fillMaxWidth(),
+              singleLine = true,
+            )
           }
 
           // Inspection Work section
@@ -392,6 +405,7 @@ fun MaintenanceLogFormScreen(
             onDismissSheet = viewModel::hideAttachmentPicker,
             onPickError = viewModel::onFilePickError,
             modifier = Modifier.fillMaxWidth(),
+            uploadEnabled = uiState.attachmentUploadEnabled,
           )
 
           // Error message
