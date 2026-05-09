@@ -1,4 +1,4 @@
-package  dev.fanfly.wingslog.feature.sync.settings.di
+package dev.fanfly.wingslog.feature.sync.settings.di
 
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsViewModel
 import org.koin.core.module.dsl.viewModel
@@ -9,7 +9,8 @@ val syncSettingsModule = module {
     SyncSettingsViewModel(
       auth = get(),
       syncPreferences = get(),
-      syncEngine = get()
+      syncEngine = get(),
+      featureLabManager = get(),
     )
   }
 }

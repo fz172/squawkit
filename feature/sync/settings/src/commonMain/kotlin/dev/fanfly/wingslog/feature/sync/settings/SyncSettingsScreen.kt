@@ -114,17 +114,19 @@ fun SyncSettingsScreen(
             enabled = state.signedIn,
             onCheckedChange = viewModel::onCloudSyncToggled,
           )
-          HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-          SyncToggleRow(
-            title = stringResource(Res.string.setting_item_sync_on_cellular),
-            subtitle = if (state.allowUploadOnCellular)
-              stringResource(Res.string.sync_subtitle_cellular_enabled)
-            else
-              stringResource(Res.string.sync_subtitle_cellular_disabled),
-            checked = state.allowUploadOnCellular,
-            enabled = state.signedIn && state.cloudSyncEnabled,
-            onCheckedChange = viewModel::onAllowUploadOnCellularToggled,
-          )
+          if (state.attachmentEnabled) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+            SyncToggleRow(
+              title = stringResource(Res.string.setting_item_sync_on_cellular),
+              subtitle = if (state.allowUploadOnCellular)
+                stringResource(Res.string.sync_subtitle_cellular_enabled)
+              else
+                stringResource(Res.string.sync_subtitle_cellular_disabled),
+              checked = state.allowUploadOnCellular,
+              enabled = state.signedIn && state.cloudSyncEnabled,
+              onCheckedChange = viewModel::onAllowUploadOnCellularToggled,
+            )
+          }
         }
 
         StatusSection(state = state)

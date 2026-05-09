@@ -2,14 +2,17 @@ package dev.fanfly.wingslog.feature.sync.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.sync.data.HydrationState
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -25,7 +28,10 @@ class SyncSettingsViewModel(
   auth: FirebaseAuth,
   syncEngine: SyncEngine,
   private val syncPreferences: SyncPreferences,
+  featureLabManager: FeatureLabManager,
 ) : ViewModel() {
+
+  private val _attachmentEnabled = MutableStateFlow(true)
 
   val uiState: StateFlow<SyncSettingsUiState> =
     combine(
@@ -33,7 +39,8 @@ class SyncSettingsViewModel(
       syncPreferences.state,
       syncEngine.failureState,
       syncEngine.hydrationState,
-    ) { user, prefs, failure, hydration ->
+      _attachmentEnabled,
+    ) { user, prefs, failure, hydration, attachmentEnabled ->
       val signedIn = user != null && !user.isAnonymous
       SyncSettingsUiState(
         signedIn = signedIn,
@@ -41,12 +48,21 @@ class SyncSettingsViewModel(
         allowUploadOnCellular = prefs.allowUploadOnCellular,
         failureMessage = failure?.message,
         hydration = hydration,
+        attachmentEnabled = attachmentEnabled,
       )
     }.stateIn(
       scope = viewModelScope,
       started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
       initialValue = SyncSettingsUiState.Initial,
     )
+
+  init {
+    viewModelScope.launch {
+      featureLabManager.observe().collect { flags ->
+        _attachmentEnabled.update { flags.attachmentUploadEnabled }
+      }
+    }
+  }
 
   fun onCloudSyncToggled(enabled: Boolean) {
     viewModelScope.launch { syncPreferences.setCloudSyncEnabled(enabled) }
@@ -64,6 +80,7 @@ data class SyncSettingsUiState(
   val allowUploadOnCellular: Boolean,
   val failureMessage: String?,
   val hydration: HydrationState,
+  val attachmentEnabled: Boolean = true,
 ) {
   companion object {
     val Initial = SyncSettingsUiState(

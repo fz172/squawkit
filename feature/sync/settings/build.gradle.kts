@@ -46,6 +46,7 @@ kotlin {
       implementation(project(":core:auth"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:sync:sharedassets"))
+      implementation(project(":feature:featurelab:datamanager"))
       implementation(libs.gitlive.firebase.auth)
 
       // Compose
