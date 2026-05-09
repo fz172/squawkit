@@ -32,7 +32,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res
-import wingslog.feature.tasks.update.generated.resources.schedule_pick_linked_task
 import wingslog.feature.tasks.update.generated.resources.schedule_prefix_every
 import wingslog.feature.tasks.update.generated.resources.schedule_prefix_in
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_asap_primary
@@ -66,14 +65,10 @@ import wingslog.feature.tasks.update.generated.resources.schedule_step_interval_
 import wingslog.feature.tasks.update.generated.resources.schedule_step_recurrence_label
 import wingslog.feature.tasks.update.generated.resources.schedule_step_recurrence_linked_label
 import wingslog.feature.tasks.update.generated.resources.schedule_step_track_label
-import wingslog.feature.tasks.update.generated.resources.schedule_track_calendar_time
-import wingslog.feature.tasks.update.generated.resources.schedule_track_tach_hours
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_days
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_months
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_tach_hours
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_years
-import wingslog.feature.tasks.update.generated.resources.schedule_with_another_work
-import wingslog.feature.tasks.update.generated.resources.schedule_with_another_work_description
 
 @Composable
 fun TaskScheduleTab(
@@ -157,9 +152,11 @@ fun TaskScheduleTab(
       val complete = when (state.mode) {
         ScheduleMode.TIME -> state.calValue.isNotBlank()
         ScheduleMode.HOURS -> state.hourValue.isNotBlank()
-        else -> false
       }
-      ScheduleSection(labelRes = intervalLabel, complete = complete) {
+      ScheduleSection(
+        labelRes = intervalLabel,
+        complete = complete
+      ) {
         when (state.mode) {
           ScheduleMode.TIME -> Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
             UnitPillSelect(
@@ -188,8 +185,6 @@ fun TaskScheduleTab(
             ),
             keyboard = KeyboardType.Decimal,
           )
-
-          else -> Unit
         }
       }
     }
@@ -214,7 +209,12 @@ fun TaskScheduleTab(
         )
       },
       onClear = {
-        onChange(state.copy(mode = null, linkedToId = null))
+        onChange(
+          state.copy(
+            mode = null,
+            linkedToId = null
+          )
+        )
       },
     )
   }
@@ -270,7 +270,10 @@ private fun SchedulePreviewBanner(
   state: ScheduleState,
   linkedTaskName: String?,
 ) {
-  val (primary, secondary, isEmpty) = previewText(state, linkedTaskName)
+  val (primary, secondary, isEmpty) = previewText(
+    state,
+    linkedTaskName
+  )
   val accent = MaterialTheme.colorScheme.primary
   val tint = if (isEmpty) MaterialTheme.colorScheme.surfaceContainer
   else accent.copy(alpha = 0.10f)
@@ -284,8 +287,15 @@ private fun SchedulePreviewBanner(
       .fillMaxWidth()
       .clip(RoundedCornerShape(14.dp))
       .background(tint)
-      .border(1.dp, borderColor, RoundedCornerShape(14.dp))
-      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
+      .border(
+        1.dp,
+        borderColor,
+        RoundedCornerShape(14.dp)
+      )
+      .padding(
+        horizontal = Spacing.large,
+        vertical = Spacing.medium
+      ),
   ) {
     Box(
       modifier = Modifier
@@ -347,7 +357,10 @@ private fun previewText(
       stringResource(Res.string.schedule_preview_linked_repeating_secondary)
     }
     return Triple(
-      stringResource(Res.string.schedule_preview_linked_primary, linkedTaskName),
+      stringResource(
+        Res.string.schedule_preview_linked_primary,
+        linkedTaskName
+      ),
       secondary,
       false,
     )
@@ -363,7 +376,10 @@ private fun previewText(
     val n = state.calValue.toIntOrNull()
     if (n == null) {
       return Triple(
-        stringResource(Res.string.schedule_preview_set_calendar_primary, stringResource(state.calUnit.label())),
+        stringResource(
+          Res.string.schedule_preview_set_calendar_primary,
+          stringResource(state.calUnit.label())
+        ),
         stringResource(Res.string.schedule_preview_set_secondary),
         false,
       )
@@ -374,7 +390,15 @@ private fun previewText(
       Res.string.schedule_preview_due_in else Res.string.schedule_preview_due_every
     val secondaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
       Res.string.schedule_preview_one_time_secondary else Res.string.schedule_preview_recurring_secondary
-    return Triple(stringResource(primaryRes, n, unitStr), stringResource(secondaryRes), false)
+    return Triple(
+      stringResource(
+        primaryRes,
+        n,
+        unitStr
+      ),
+      stringResource(secondaryRes),
+      false
+    )
   }
   // HOURS
   if (state.hourValue.isBlank()) {
@@ -388,7 +412,14 @@ private fun previewText(
     Res.string.schedule_preview_due_in_hours else Res.string.schedule_preview_due_every_hours
   val secondaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
     Res.string.schedule_preview_one_time_secondary else Res.string.schedule_preview_recurring_secondary
-  return Triple(stringResource(primaryRes, state.hourValue), stringResource(secondaryRes), false)
+  return Triple(
+    stringResource(
+      primaryRes,
+      state.hourValue
+    ),
+    stringResource(secondaryRes),
+    false
+  )
 }
 
 private fun ScheduleTimeUnit.label(): StringResource = when (this) {
