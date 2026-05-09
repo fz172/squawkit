@@ -260,7 +260,9 @@ fun MaintenanceLogListContent(
                   key = { it.id }) { log ->
                   MaintenanceLogCard(
                     log = log,
-                    onClick = { onLogClick(log) })
+                    onClick = { onLogClick(log) },
+                    technicianEnabled = uiState.technicianEnabled,
+                  )
                 }
               }
             }

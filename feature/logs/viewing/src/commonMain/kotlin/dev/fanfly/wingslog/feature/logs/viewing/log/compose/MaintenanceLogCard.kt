@@ -49,6 +49,7 @@ import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 fun MaintenanceLogCard(
   log: MaintenanceLog,
   onClick: () -> Unit,
+  technicianEnabled: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
@@ -131,14 +132,16 @@ fun MaintenanceLogCard(
             color = MaterialTheme.colorScheme.primary,
           )
         }
-        val techName = log.technician?.name?.takeIf { it.isNotBlank() }
-        if (techName != null) {
-          if (taskCount > 0) Spacer(Modifier.width(Spacing.medium))
-          Text(
-            text = techName,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
+        if (technicianEnabled) {
+          val techName = log.technician?.name?.takeIf { it.isNotBlank() }
+          if (techName != null) {
+            if (taskCount > 0) Spacer(Modifier.width(Spacing.medium))
+            Text(
+              text = techName,
+              style = MaterialTheme.typography.labelMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
         }
       }
     }
