@@ -121,6 +121,7 @@ fun AircraftOverviewContent(
         },
         syncStates = state.syncStates,
         openError = taskSheetOpenError,
+        attachmentEnabled = state.attachmentEnabled,
       )
     }
 

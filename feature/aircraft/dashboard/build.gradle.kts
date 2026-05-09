@@ -44,6 +44,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
+      implementation(project(":feature:featurelab:datamanager"))
       implementation(libs.gitlive.firebase.auth)
       implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:attachment:model"))

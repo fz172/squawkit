@@ -56,18 +56,19 @@ fun AddTaskRoute(
         )
       },
       attachmentSection = {
-        AttachmentFormSection(
-          visibleAttachments = pendingAttachments.visible(),
-          isAnonymous = viewModel.isAnonymous,
-          filesAtLimit = viewModel.filesAtLimit,
-          showPickerSheet = showAttachmentPicker,
-          onAddClick = viewModel::showAttachmentPicker,
-          onRemove = viewModel::removeAttachment,
-          onPickFiles = viewModel::addLocalFiles,
-          onAddLink = viewModel::addLink,
-          onDismissSheet = viewModel::hideAttachmentPicker,
-          uploadEnabled = attachmentUploadEnabled,
-        )
+        if (attachmentUploadEnabled) {
+          AttachmentFormSection(
+            visibleAttachments = pendingAttachments.visible(),
+            isAnonymous = viewModel.isAnonymous,
+            filesAtLimit = viewModel.filesAtLimit,
+            showPickerSheet = showAttachmentPicker,
+            onAddClick = viewModel::showAttachmentPicker,
+            onRemove = viewModel::removeAttachment,
+            onPickFiles = viewModel::addLocalFiles,
+            onAddLink = viewModel::addLink,
+            onDismissSheet = viewModel::hideAttachmentPicker,
+          )
+        }
       },
     )
   }

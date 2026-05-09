@@ -85,7 +85,6 @@ fun AttachmentFormSection(
   onDismissSheet: () -> Unit,
   modifier: Modifier = Modifier,
   onPickError: () -> Unit = {},
-  uploadEnabled: Boolean = true,
 ) {
   val pickFiles = rememberFilePicker(
     onResult = { files -> onPickFiles(files) },
@@ -106,33 +105,31 @@ fun AttachmentFormSection(
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
       )
-      if (uploadEnabled) {
-        if (!isAnonymous) {
-          OutlinedButton(
-            onClick = onAddClick,
-            contentPadding = PaddingValues(
-              horizontal = Spacing.medium,
-              vertical = Spacing.extraSmall
-            ),
-          ) {
-            Icon(
-              Icons.Default.Add,
-              contentDescription = null,
-              modifier = Modifier.size(Spacing.large)
-            )
-            Spacer(Modifier.width(Spacing.extraSmall))
-            Text(
-              stringResource(AttachRes.string.add_attachment),
-              style = MaterialTheme.typography.labelMedium,
-            )
-          }
-        } else {
+      if (!isAnonymous) {
+        OutlinedButton(
+          onClick = onAddClick,
+          contentPadding = PaddingValues(
+            horizontal = Spacing.medium,
+            vertical = Spacing.extraSmall
+          ),
+        ) {
+          Icon(
+            Icons.Default.Add,
+            contentDescription = null,
+            modifier = Modifier.size(Spacing.large)
+          )
+          Spacer(Modifier.width(Spacing.extraSmall))
           Text(
-            text = stringResource(AttachRes.string.sign_in_to_add_attachments),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            stringResource(AttachRes.string.add_attachment),
+            style = MaterialTheme.typography.labelMedium,
           )
         }
+      } else {
+        Text(
+          text = stringResource(AttachRes.string.sign_in_to_add_attachments),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
       }
     }
 

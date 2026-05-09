@@ -381,20 +381,21 @@ fun MaintenanceLogFormScreen(
           )
 
           // Attachments
-          AttachmentFormSection(
-            visibleAttachments = uiState.visibleAttachments,
-            isAnonymous = uiState.isAnonymous,
-            filesAtLimit = uiState.filesAtLimit,
-            showPickerSheet = uiState.showAttachmentPicker,
-            onAddClick = viewModel::showAttachmentPicker,
-            onRemove = viewModel::removeAttachment,
-            onPickFiles = viewModel::addLocalFiles,
-            onAddLink = viewModel::addLink,
-            onDismissSheet = viewModel::hideAttachmentPicker,
-            onPickError = viewModel::onFilePickError,
-            modifier = Modifier.fillMaxWidth(),
-            uploadEnabled = uiState.attachmentUploadEnabled,
-          )
+          if (uiState.attachmentUploadEnabled) {
+            AttachmentFormSection(
+              visibleAttachments = uiState.visibleAttachments,
+              isAnonymous = uiState.isAnonymous,
+              filesAtLimit = uiState.filesAtLimit,
+              showPickerSheet = uiState.showAttachmentPicker,
+              onAddClick = viewModel::showAttachmentPicker,
+              onRemove = viewModel::removeAttachment,
+              onPickFiles = viewModel::addLocalFiles,
+              onAddLink = viewModel::addLink,
+              onDismissSheet = viewModel::hideAttachmentPicker,
+              onPickError = viewModel::onFilePickError,
+              modifier = Modifier.fillMaxWidth(),
+            )
+          }
 
           // Error message
           uiState.error?.let { error ->

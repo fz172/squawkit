@@ -280,6 +280,7 @@ fun MaintenanceLogListContent(
                 syncStates = syncStates,
                 openError = openError,
                 technicianEnabled = uiState.technicianEnabled,
+                attachmentEnabled = uiState.attachmentEnabled,
                 onTaskClick = onTaskClick?.let { cb ->
                   { taskId ->
                     onDismissDetail()

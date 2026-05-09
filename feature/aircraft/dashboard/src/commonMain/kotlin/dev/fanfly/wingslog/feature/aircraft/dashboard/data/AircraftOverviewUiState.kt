@@ -30,5 +30,6 @@ sealed interface AircraftOverviewUiState {
     val deletingTaskId: String? = null,
     val syncStates: Map<String, BlobSyncState> = emptyMap(),
     val showLegacyAttachmentBanner: Boolean = false,
+    val attachmentEnabled: Boolean = true,
   ) : AircraftOverviewUiState
 }
