@@ -7,8 +7,22 @@ option java_multiple_files = true;
 
 message Technician {
   string id = 1;
-  string name = 2; // Required
-  string cert_type = 3; // Optional
-  string cert_number = 4; // Optional
-  google.protobuf.Timestamp cert_expiration = 5; // Optional
+  string name = 2;
+  string cert_type = 3; // legacy string field — prefer certificate_type (field 7)
+  string cert_number = 4;
+  google.protobuf.Timestamp cert_expiration = 5;
+  CertExpireLimit cert_expire_limit = 6;
+  CertificateType certificate_type = 7;
+}
+
+enum CertificateType {
+  CERTIFICATE_TYPE_NONE = 0;
+  CERTIFICATE_TYPE_REPAIRMAN = 1;
+  CERTIFICATE_TYPE_AMT = 2;
+}
+
+enum CertExpireLimit {
+  CERT_EXPIRE_LIMIT_UNKNOWN = 0;
+  CERT_EXPIRE_LIMIT_EXPIRES = 1;
+  CERT_EXPIRE_LIMIT_NEVER_EXPIRES = 2;
 }

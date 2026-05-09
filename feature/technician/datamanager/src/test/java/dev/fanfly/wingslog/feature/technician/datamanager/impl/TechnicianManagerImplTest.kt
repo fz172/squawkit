@@ -2,17 +2,22 @@ package dev.fanfly.wingslog.feature.technician.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.core.model.userinfo.UserInfo
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
+import dev.fanfly.wingslog.feature.sync.data.SyncPrefs
+import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
+import dev.gitlive.firebase.firestore.FirebaseFirestore
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -25,25 +30,42 @@ private const val TEST_TECHNICIAN_ID = "tech-789"
 class TechnicianManagerImplTest {
 
   private lateinit var firebaseAuth: FirebaseAuth
+  private lateinit var firestore: FirebaseFirestore
+  private lateinit var syncPreferences: SyncPreferences
   private lateinit var storeFactory: EntityStoreFactory
-  private lateinit var store: EntityStore<Technician>
+  private lateinit var technicianStore: EntityStore<Technician>
+  private lateinit var userInfoStore: EntityStore<UserInfo>
   private lateinit var manager: TechnicianManagerImpl
 
   @Before
   fun setUp() {
     firebaseAuth = mockk(relaxed = true)
-    store = mockk(relaxed = true)
+    firestore = mockk(relaxed = true)
+    syncPreferences = mockk(relaxed = true)
+    technicianStore = mockk(relaxed = true)
+    userInfoStore = mockk(relaxed = true)
     storeFactory = mockk(relaxed = true)
 
     @Suppress("UNCHECKED_CAST")
-    every { storeFactory.create<Technician>(CollectionKind.Technician) } returns store
+    every { storeFactory.create<Technician>(CollectionKind.Technician) } returns technicianStore
+
+    @Suppress("UNCHECKED_CAST")
+    every { storeFactory.create<UserInfo>(CollectionKind.UserInfo) } returns userInfoStore
+
+    every { syncPreferences.state } returns MutableStateFlow(SyncPrefs(cloudSyncEnabled = false))
 
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.uid } returns TEST_USER_ID
+    every { mockUser.isAnonymous } returns false
+    every { mockUser.displayName } returns "Test User"
+    every { mockUser.email } returns "test@example.com"
     every { firebaseAuth.currentUser } returns mockUser
-    every { firebaseAuth.authStateChanged } returns flowOf(mockUser)
+    // Use an empty flow for authStateChanged so bootstrap doesn't run in tests
+    every { firebaseAuth.authStateChanged } returns flowOf()
 
-    manager = TechnicianManagerImpl(firebaseAuth, storeFactory)
+    every { userInfoStore.observe(any(), any()) } returns flowOf(null)
+
+    manager = TechnicianManagerImpl(firebaseAuth, firestore, syncPreferences, storeFactory)
   }
 
   @Test
@@ -60,13 +82,14 @@ class TechnicianManagerImplTest {
   fun observeTechnicians_loggedIn_delegatesToStoreWithUserRootAndUnwrapsValues() = runTest {
     val technician = buildTestTechnician(id = TEST_TECHNICIAN_ID)
     val entity = StorageEntity(id = TEST_TECHNICIAN_ID, value = technician, updatedAt = Instant.DISTANT_PAST)
-    every { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(listOf(entity))
+    every { firebaseAuth.authStateChanged } returns flowOf(firebaseAuth.currentUser)
+    every { technicianStore.observeAll(EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(listOf(entity))
 
     val result = manager.observeTechnicians().first()
 
     assertThat(result).hasSize(1)
     assertThat(result.first().id).isEqualTo(TEST_TECHNICIAN_ID)
-    io.mockk.verify { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) }
+    io.mockk.verify { technicianStore.observeAll(EntityScope.userRoot(TEST_USER_ID)) }
   }
 
   @Test
@@ -83,7 +106,8 @@ class TechnicianManagerImplTest {
   fun loadTechnician_loggedIn_delegatesToStoreAndUnwrapsValue() = runTest {
     val technician = buildTestTechnician(id = TEST_TECHNICIAN_ID)
     val entity = StorageEntity(id = TEST_TECHNICIAN_ID, value = technician, updatedAt = Instant.DISTANT_PAST)
-    every { store.observe(TEST_TECHNICIAN_ID, EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(entity)
+    every { firebaseAuth.authStateChanged } returns flowOf(firebaseAuth.currentUser)
+    every { technicianStore.observe(TEST_TECHNICIAN_ID, EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(entity)
 
     val result = manager.loadTechnician(TEST_TECHNICIAN_ID).first()
 
@@ -98,7 +122,7 @@ class TechnicianManagerImplTest {
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
-      store.put(
+      technicianStore.put(
         match { it.isNotEmpty() },
         match { it.id.isNotEmpty() },
         EntityScope.userRoot(TEST_USER_ID),
@@ -113,7 +137,7 @@ class TechnicianManagerImplTest {
     val result = manager.updateTechnician(technician)
 
     assertThat(result.isSuccess).isTrue()
-    coVerify { store.put(TEST_TECHNICIAN_ID, technician, EntityScope.userRoot(TEST_USER_ID)) }
+    coVerify { technicianStore.put(TEST_TECHNICIAN_ID, technician, EntityScope.userRoot(TEST_USER_ID)) }
   }
 
   @Test
@@ -130,7 +154,7 @@ class TechnicianManagerImplTest {
     val result = manager.deleteTechnician(TEST_TECHNICIAN_ID)
 
     assertThat(result.isSuccess).isTrue()
-    coVerify { store.delete(TEST_TECHNICIAN_ID, EntityScope.userRoot(TEST_USER_ID)) }
+    coVerify { technicianStore.delete(TEST_TECHNICIAN_ID, EntityScope.userRoot(TEST_USER_ID)) }
   }
 
   @Test

@@ -41,9 +41,9 @@ sealed interface CollectionKind {
     override val schemaName = "aircraft.Technician"
   }
 
-  data object LicenseInfo : CollectionKind {
-    override val wireName = "license_info"
-    override val schemaName = "userprofile.LicenseInfo"
+  data object UserInfo : CollectionKind {
+    override val wireName = "user_info"
+    override val schemaName = "userinfo.UserInfo"
   }
 
   data object FeatureLab : CollectionKind {
@@ -63,7 +63,7 @@ sealed interface CollectionKind {
       MaintenanceLog,
       MaintenanceOverview,
       Technician,
-      LicenseInfo,
+      UserInfo,
       FeatureLab,
     )
 

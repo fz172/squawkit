@@ -5,5 +5,5 @@ import dev.fanfly.wingslog.feature.technician.datamanager.impl.TechnicianManager
 import org.koin.dsl.module
 
 val technicianDataManagerModule = module {
-  single<TechnicianManager> { TechnicianManagerImpl(get(), get()) }
+  single<TechnicianManager> { TechnicianManagerImpl(get(), get(), get(), get()) }
 }

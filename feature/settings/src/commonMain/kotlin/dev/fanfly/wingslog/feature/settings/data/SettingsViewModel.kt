@@ -5,9 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
-import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +15,7 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
   private val authManager: AuthManager,
-  private val userProfileManager: UserProfileManager,
+  private val technicianManager: TechnicianManager,
   private val attachmentManager: AttachmentManager,
   private val dbChecker: DatabaseIntegrityChecker,
   private val featureLabManager: FeatureLabManager,
@@ -25,7 +24,7 @@ class SettingsViewModel(
   private val _user = MutableStateFlow(SettingsUiState())
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
 
-  private var observeLicenseJob: Job? = null
+  private var observeSelfJob: Job? = null
 
   init {
     loadUserProfile()
@@ -42,17 +41,14 @@ class SettingsViewModel(
 
   private fun loadUserProfile() {
     _user.value = SettingsUiState(userStatus = UserStatus.LOADING)
-    observeLicenseJob?.cancel()
-    observeLicenseJob = viewModelScope.launch {
-      userProfileManager.observeLicenseInfo().collect { result ->
-        if (result != null) {
-          _user.value = _user.value.copy(
-            photoUri = authManager.getCurrentUser()?.photoURL,
-            displayName = authManager.getCurrentUser()?.displayName,
-            licenseInfo = result,
-            userStatus = UserStatus.LOGGED_IN,
-          )
-        }
+    observeSelfJob?.cancel()
+    observeSelfJob = viewModelScope.launch {
+      technicianManager.observeSelf().collect { self ->
+        _user.value = _user.value.copy(
+          photoUri = authManager.getCurrentUser()?.photoURL,
+          selfTechnician = self,
+          userStatus = UserStatus.LOGGED_IN,
+        )
       }
     }
   }
@@ -60,14 +56,13 @@ class SettingsViewModel(
   fun logOut() {
     val uid = authManager.getCurrentUser()?.uid
     viewModelScope.launch {
-      observeLicenseJob?.cancel()
+      observeSelfJob?.cancel()
       if (uid != null) {
         attachmentManager.wipeLocalData(uid)
         dbChecker.wipeDataForUser(uid)
       }
       authManager.logOut()
-      _user.value =
-        SettingsUiState(displayName = null, photoUri = null, userStatus = UserStatus.LOGGED_OUT)
+      _user.value = SettingsUiState(photoUri = null, userStatus = UserStatus.LOGGED_OUT)
     }
   }
 }

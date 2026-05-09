@@ -40,6 +40,7 @@ import wingslog.feature.technician.sharedassets.generated.resources.add_technici
 import wingslog.feature.technician.sharedassets.generated.resources.delete_technician
 import wingslog.feature.technician.sharedassets.generated.resources.delete_technician_confirmation
 import wingslog.feature.technician.sharedassets.generated.resources.edit_technician
+import wingslog.feature.technician.sharedassets.generated.resources.my_profile
 import wingslog.feature.technician.sharedassets.generated.resources.name_required
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,8 +91,11 @@ fun EditTechnicianScreen(
       TopAppBar(
         title = {
           Text(
-            if (uiState.id.isEmpty()) stringResource(TechnicianRes.string.add_technician)
-            else stringResource(TechnicianRes.string.edit_technician)
+            when {
+              uiState.id.isEmpty() -> stringResource(TechnicianRes.string.add_technician)
+              uiState.isSelf -> stringResource(TechnicianRes.string.my_profile)
+              else -> stringResource(TechnicianRes.string.edit_technician)
+            }
           )
         },
         navigationIcon = {
@@ -132,10 +136,10 @@ fun EditTechnicianScreen(
         )
 
         CertificateInputFields(
-          licenseType = uiState.certType,
-          onLicenseTypeChanged = viewModel::updateCertType,
-          licenseNumber = uiState.certNumber,
-          onLicenseNumberChanged = viewModel::updateCertNumber,
+          certType = uiState.certType,
+          onCertTypeChanged = viewModel::updateCertType,
+          certNumber = uiState.certNumber,
+          onCertNumberChanged = viewModel::updateCertNumber,
           expireLimit = uiState.certExpireLimit,
           onExpireLimitChanged = viewModel::updateCertExpireLimit,
           expirationDate = uiState.certExpiration,
@@ -147,7 +151,7 @@ fun EditTechnicianScreen(
       BottomButtons(
         onPrimaryClick = viewModel::save,
         onSecondaryClick = onNavigateBack,
-        onDangerClick = if (uiState.id.isNotEmpty()) ({ showDeleteDialog = true }) else null,
+        onDangerClick = if (uiState.id.isNotEmpty() && !uiState.isSelf) ({ showDeleteDialog = true }) else null,
         dangerLabel = stringResource(TechnicianRes.string.delete_technician),
         primaryEnabled = !uiState.isSaving,
         isPrimaryFunctionInProgress = uiState.isSaving,

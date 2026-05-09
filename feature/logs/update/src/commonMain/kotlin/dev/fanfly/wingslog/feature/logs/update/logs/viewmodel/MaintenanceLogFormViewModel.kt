@@ -19,7 +19,6 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
-import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -54,7 +53,6 @@ class MaintenanceLogFormViewModel(
   private val inspectionDataManager: TaskDataManager,
   private val attachmentManager: AttachmentManager,
   private val technicianManager: TechnicianManager,
-  private val userProfileManager: UserProfileManager,
   private val auth: FirebaseAuth,
   private val featureLabManager: FeatureLabManager,
   savedStateHandle: SavedStateHandle,
@@ -96,30 +94,18 @@ class MaintenanceLogFormViewModel(
   private fun observeTechnicians() {
     combine(
       technicianManager.observeTechnicians(),
-      userProfileManager.observeLicenseInfo()
-    ) { technicians, licenseInfo ->
-      val userName = auth.currentUser?.displayName.takeIf { !it.isNullOrBlank() } ?: "Me"
-      val myTechnician = Technician(
-        id = auth.currentUser?.uid ?: "myself",
-        name = userName,
-        cert_type = licenseInfo?.license_type?.name?.takeIf { it != "NONE" } ?: "",
-        cert_number = licenseInfo?.license_number ?: "",
-        cert_expiration = licenseInfo?.expiration_date,
-      )
-
-      val available = listOf(myTechnician) + technicians.filter { it.id != myTechnician.id }
-
-      Pair(
-        myTechnician,
-        available
-      )
+      technicianManager.observeSelfId(),
+    ) { technicians, selfId ->
+      val self = technicians.find { it.id == selfId }
+      val others = technicians.filter { it.id != selfId }.sortedBy { it.name.lowercase() }
+      Pair(self, listOfNotNull(self) + others)
     }
-      .onEach { (myTechnician, available) ->
+      .onEach { (selfTech, available) ->
         _uiState.update { state ->
-          val newSelected = state.selectedTechnician ?: myTechnician
+          val newSelected = state.selectedTechnician ?: selfTech
           state.copy(
             availableTechnicians = available,
-            selectedTechnician = newSelected
+            selectedTechnician = newSelected,
           )
         }
         if (!isEditMode) captureInitialSnapshot()

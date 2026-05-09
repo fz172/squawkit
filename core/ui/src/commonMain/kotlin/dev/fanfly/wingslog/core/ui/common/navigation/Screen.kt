@@ -17,7 +17,6 @@ sealed class Screen(val route: String) {
   data object Login : Screen("login")
   data object Dashboard : Screen("main")
   data object Settings : Screen("settings")
-  data object EditProfile : Screen("edit_profile")
   data object SyncSettings : Screen("sync_settings")
   data object AddAircraft : Screen("add_aircraft")
 

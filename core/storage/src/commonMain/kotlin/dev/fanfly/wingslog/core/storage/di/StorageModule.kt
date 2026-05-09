@@ -6,7 +6,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceOverview
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.settings.FeatureLabSettings
-import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
+import dev.fanfly.wingslog.core.model.userinfo.UserInfo
 import app.cash.sqldelight.db.SqlDriver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
@@ -59,8 +59,8 @@ import org.koin.dsl.module
         WireCodec(Technician.ADAPTER)
       )
       register(
-        CollectionKind.LicenseInfo,
-        WireCodec(LicenseInfo.ADAPTER)
+        CollectionKind.UserInfo,
+        WireCodec(UserInfo.ADAPTER)
       )
       register(
         CollectionKind.FeatureLab,

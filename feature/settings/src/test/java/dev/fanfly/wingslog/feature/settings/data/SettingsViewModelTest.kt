@@ -6,7 +6,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
-import dev.fanfly.wingslog.feature.userprofile.database.UserProfileManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coJustRun
 import io.mockk.coVerify
@@ -34,7 +34,7 @@ class SettingsViewModelTest {
   private val testDispatcher = UnconfinedTestDispatcher()
 
   private lateinit var authManager: AuthManager
-  private lateinit var userProfileManager: UserProfileManager
+  private lateinit var technicianManager: TechnicianManager
   private lateinit var attachmentManager: AttachmentManager
   private lateinit var dbChecker: DatabaseIntegrityChecker
   private lateinit var featureLabManager: FeatureLabManager
@@ -45,7 +45,7 @@ class SettingsViewModelTest {
     Dispatchers.setMain(testDispatcher)
 
     authManager = mockk(relaxed = true)
-    userProfileManager = mockk(relaxed = true)
+    technicianManager = mockk(relaxed = true)
     attachmentManager = mockk(relaxed = true)
     dbChecker = mockk(relaxed = true)
     featureLabManager = mockk(relaxed = true)
@@ -57,8 +57,7 @@ class SettingsViewModelTest {
     every { mockUser.displayName } returns "Test User"
     every { authManager.getCurrentUser() } returns mockUser
 
-    // observeLicenseInfo() is called in init — return an empty flow to avoid blocking.
-    every { userProfileManager.observeLicenseInfo() } returns flowOf(null)
+    every { technicianManager.observeSelf() } returns flowOf(null)
 
     justRun { dbChecker.wipeDataForUser(any()) }
     coJustRun { attachmentManager.wipeLocalData(any()) }
@@ -72,7 +71,7 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_wipesUserData_whenUserSignedIn() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker, featureLabManager)
+    viewModel = SettingsViewModel(authManager, technicianManager, attachmentManager, dbChecker, featureLabManager)
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -82,7 +81,7 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_wipesAttachmentData_whenUserSignedIn() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker, featureLabManager)
+    viewModel = SettingsViewModel(authManager, technicianManager, attachmentManager, dbChecker, featureLabManager)
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -92,7 +91,7 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_callsAuthManagerLogOut() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker, featureLabManager)
+    viewModel = SettingsViewModel(authManager, technicianManager, attachmentManager, dbChecker, featureLabManager)
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -103,7 +102,7 @@ class SettingsViewModelTest {
   @Test
   fun logOut_skipsWipe_whenNoUserSignedIn() = runTest(testDispatcher) {
     every { authManager.getCurrentUser() } returns null
-    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker, featureLabManager)
+    viewModel = SettingsViewModel(authManager, technicianManager, attachmentManager, dbChecker, featureLabManager)
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -114,13 +113,12 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_setsStateToLoggedOut() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, userProfileManager, attachmentManager, dbChecker, featureLabManager)
+    viewModel = SettingsViewModel(authManager, technicianManager, attachmentManager, dbChecker, featureLabManager)
 
     viewModel.logOut()
     advanceUntilIdle()
 
     assertThat(viewModel.user.value.userStatus).isEqualTo(UserStatus.LOGGED_OUT)
-    assertThat(viewModel.user.value.displayName).isNull()
     assertThat(viewModel.user.value.photoUri).isNull()
   }
 }

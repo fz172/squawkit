@@ -19,6 +19,9 @@
   <string name="certificate_type_repairman">Repairman</string>
   <string name="certificate_type_amt">A&amp;P Mechanic</string>
 
+  <string name="you_badge">You</string>
+  <string name="my_profile">My Profile</string>
+
   <string name="no_certificate">No certificate provided</string>
   <string name="no_technicians">No technicians added yet.</string>
   <string name="empty_technicians_title">No Technicians</string>

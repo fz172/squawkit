@@ -31,7 +31,9 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:storage"))
+      implementation(project(":feature:sync:data"))
       implementation(libs.gitlive.firebase.auth)
+      implementation(libs.gitlive.firebase.firestore)
 
       implementation(libs.kermit)
     }

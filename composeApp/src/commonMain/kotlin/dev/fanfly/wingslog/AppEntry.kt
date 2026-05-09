@@ -28,7 +28,6 @@ import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
-import dev.fanfly.wingslog.feature.userprofile.EditProfileScreen
 import dev.fanfly.wingslog.login.LoginScreen
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -83,10 +82,6 @@ fun AppEntry() {
         }
         composable(Screen.Settings.route) {
           SettingsScreen(navController = navController)
-        }
-
-        composable(Screen.EditProfile.route) {
-          EditProfileScreen(navController = navController)
         }
 
         composable(Screen.SyncSettings.route) {

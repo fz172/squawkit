@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
  * Top-level orchestrator that wires Firestore sync to the local store for the signed-in user.
  *
  * Lifecycle is anchored to [FirebaseAuth.authStateChanged]:
- * - On sign-in (non-anonymous user): hydrate top-level scopes (Aircraft, Technician, LicenseInfo)
+ * - On sign-in (non-anonymous user): hydrate top-level scopes (Aircraft, Technician, UserInfo)
  *   under the user's root, attach pull listeners with the cursor watermark, launch [PushWorker],
  *   and observe the local aircraft list to spin up per-aircraft pull listeners for nested
  *   collections (MaintenanceLog/Task/Overview).
@@ -345,7 +345,7 @@ class SyncEngine(
     private val TOP_LEVEL_KINDS: List<CollectionKind> = listOf(
       CollectionKind.Aircraft,
       CollectionKind.Technician,
-      CollectionKind.LicenseInfo,
+      CollectionKind.UserInfo,
     )
 
     /** Collections nested under `users/{uid}/aircraft/{ac}/<wire>/...`. Hydrated per aircraft. */

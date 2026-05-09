@@ -1,13 +1,11 @@
 package dev.fanfly.wingslog.feature.settings.data
 
-import dev.fanfly.wingslog.core.model.userprofile.LicenseInfo
-import dev.fanfly.wingslog.core.model.userprofile.newUserLicenseProfile
+import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
 
 data class SettingsUiState(
   val photoUri: String? = null,
-  val displayName: String? = null,
-  val licenseInfo: LicenseInfo = newUserLicenseProfile(),
+  val selfTechnician: Technician? = null,
   val userStatus: UserStatus = UserStatus.UNKNOWN,
   val featureFlags: FeatureFlags = FeatureFlags(),
 )

@@ -31,9 +31,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.aircraft.CertExpireLimit
+import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
-import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -54,23 +54,23 @@ import wingslog.feature.technician.sharedassets.generated.resources.certificate_
 import wingslog.feature.technician.sharedassets.generated.resources.expiration_date
 import wingslog.feature.technician.sharedassets.generated.resources.never
 
-fun LicenseType.displayResId(): StringResource {
+fun CertificateType.displayResId(): StringResource {
   return when (this) {
-    LicenseType.NONE -> Res.string.certificate_type_none
-    LicenseType.REPAIRMAN -> Res.string.certificate_type_repairman
-    LicenseType.AMT -> Res.string.certificate_type_amt
+    CertificateType.CERTIFICATE_TYPE_NONE -> Res.string.certificate_type_none
+    CertificateType.CERTIFICATE_TYPE_REPAIRMAN -> Res.string.certificate_type_repairman
+    CertificateType.CERTIFICATE_TYPE_AMT -> Res.string.certificate_type_amt
   }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CertificateInputFields(
-  licenseType: LicenseType,
-  onLicenseTypeChanged: (LicenseType) -> Unit,
-  licenseNumber: String,
-  onLicenseNumberChanged: (String) -> Unit,
-  expireLimit: LicenseExpireLimit,
-  onExpireLimitChanged: (LicenseExpireLimit) -> Unit,
+  certType: CertificateType,
+  onCertTypeChanged: (CertificateType) -> Unit,
+  certNumber: String,
+  onCertNumberChanged: (String) -> Unit,
+  expireLimit: CertExpireLimit,
+  onExpireLimitChanged: (CertExpireLimit) -> Unit,
   expirationDate: Instant?,
   onExpirationDateChanged: (Instant) -> Unit,
   modifier: Modifier = Modifier,
@@ -79,19 +79,19 @@ fun CertificateInputFields(
     modifier = modifier,
     verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
   ) {
-    // --- License Type ---
+    // --- Certificate Type ---
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
       Text(
         text = stringResource(Res.string.certificate_type),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
-      val types = LicenseType.entries
+      val types = CertificateType.entries
       SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         types.forEachIndexed { index, type ->
           SegmentedButton(
-            selected = licenseType == type,
-            onClick = { onLicenseTypeChanged(type) },
+            selected = certType == type,
+            onClick = { onCertTypeChanged(type) },
             shape = SegmentedButtonDefaults.itemShape(index = index, count = types.size),
             icon = {},
             label = { Text(stringResource(type.displayResId())) },
@@ -100,15 +100,15 @@ fun CertificateInputFields(
       }
     }
 
-    // --- License Number ---
+    // --- Certificate Number ---
     OutlinedTextField(
-      value = licenseNumber,
-      onValueChange = onLicenseNumberChanged,
+      value = certNumber,
+      onValueChange = onCertNumberChanged,
       label = { Text(stringResource(Res.string.certificate_number)) },
       modifier = Modifier.fillMaxWidth(),
       singleLine = true,
       shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-      enabled = licenseType != LicenseType.NONE
+      enabled = certType != CertificateType.CERTIFICATE_TYPE_NONE,
     )
 
     var showDatePicker by remember { mutableStateOf(false) }
@@ -120,9 +120,9 @@ fun CertificateInputFields(
       verticalAlignment = Alignment.CenterVertically
     ) {
       val expirationDateEnabled =
-        expireLimit != LicenseExpireLimit.NEVER_EXPIRES && licenseType != LicenseType.NONE
+        expireLimit != CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES && certType != CertificateType.CERTIFICATE_TYPE_NONE
       OutlinedTextField(
-        value = if (expireLimit != LicenseExpireLimit.NEVER_EXPIRES)
+        value = if (expireLimit != CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES)
           expirationDate?.toLocalDateTime(TimeZone.UTC)?.date?.toDisplayFormat() ?: "" else "",
         onValueChange = { },
         readOnly = true,
@@ -138,11 +138,7 @@ fun CertificateInputFields(
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         modifier = Modifier
           .weight(1f)
-          .clickable {
-            if (expirationDateEnabled) {
-              showDatePicker = true
-            }
-          },
+          .clickable { if (expirationDateEnabled) showDatePicker = true },
         colors = if (expirationDateEnabled) {
           OutlinedTextFieldDefaults.colors(
             disabledTextColor = MaterialTheme.colorScheme.onSurface,
@@ -159,11 +155,14 @@ fun CertificateInputFields(
       Spacer(modifier = Modifier.width(Spacing.large))
       Text(text = stringResource(Res.string.never))
       Checkbox(
-        checked = expireLimit == LicenseExpireLimit.NEVER_EXPIRES,
+        checked = expireLimit == CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES,
         onCheckedChange = { never ->
-          onExpireLimitChanged(if (never) LicenseExpireLimit.NEVER_EXPIRES else LicenseExpireLimit.EXPIRES)
+          onExpireLimitChanged(
+            if (never) CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES
+            else CertExpireLimit.CERT_EXPIRE_LIMIT_EXPIRES
+          )
         },
-        enabled = licenseType != LicenseType.NONE
+        enabled = certType != CertificateType.CERTIFICATE_TYPE_NONE,
       )
     }
     if (showDatePicker) {
@@ -183,8 +182,7 @@ fun CertificateInputFields(
           }
         },
         dismissButton = {
-          TextButton(
-            onClick = { showDatePicker = false }) {
+          TextButton(onClick = { showDatePicker = false }) {
             Text(text = stringResource(CoreUiRes.string.cancel))
           }
         }) {

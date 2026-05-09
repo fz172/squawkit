@@ -11,7 +11,8 @@ class CollectionKindCoverageTest {
     CollectionKind.MaintenanceLog,
     CollectionKind.MaintenanceOverview,
     CollectionKind.Technician,
-    CollectionKind.LicenseInfo,
+    CollectionKind.UserInfo,
+    CollectionKind.FeatureLab,
   )
 
   @Test
@@ -59,8 +60,8 @@ class CollectionKindCoverageTest {
   @Test
   fun verifyCoverage_throws_when_one_kind_missing() {
     val registry = EntityCodecRegistry()
-    // Register all except LicenseInfo.
-    for (kind in CollectionKind.ALL.filter { it != CollectionKind.LicenseInfo }) {
+    // Register all except UserInfo.
+    for (kind in CollectionKind.ALL.filter { it != CollectionKind.UserInfo }) {
       registry.register(kind, noOpCodec())
     }
 
@@ -74,7 +75,7 @@ class CollectionKindCoverageTest {
     }
 
     assertThat(threw).isTrue()
-    assertThat(message).contains(CollectionKind.LicenseInfo.wireName)
+    assertThat(message).contains(CollectionKind.UserInfo.wireName)
   }
 
   /** A minimal no-op codec used only to satisfy the registry — no serialization happens. */

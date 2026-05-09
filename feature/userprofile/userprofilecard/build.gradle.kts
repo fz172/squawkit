@@ -43,7 +43,10 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
+      implementation(project(":core:model"))
+      implementation(project(":core:datetime"))
       implementation(project(":feature:userprofile:sharedassets"))
+      implementation(project(":feature:technician:sharedassets"))
 
       // Compose
       implementation(libs.components.resources)

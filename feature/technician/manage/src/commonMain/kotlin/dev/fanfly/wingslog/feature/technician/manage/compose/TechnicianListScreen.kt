@@ -39,7 +39,7 @@ fun TechnicianListScreen(
   onNavigateToEdit: (technicianId: String?) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val technicians by viewModel.technicians.collectAsState()
+  val state by viewModel.uiState.collectAsState()
 
   Scaffold(
     modifier = modifier,
@@ -62,7 +62,7 @@ fun TechnicianListScreen(
       }
     }
   ) { paddingValues ->
-    if (technicians.isEmpty()) {
+    if (state.technicians.isEmpty()) {
       EmptyState(
         title = stringResource(TechnicianRes.string.empty_technicians_title),
         description = stringResource(TechnicianRes.string.empty_technicians_desc),
@@ -79,10 +79,11 @@ fun TechnicianListScreen(
         contentPadding = PaddingValues(Spacing.large),
         verticalArrangement = Arrangement.spacedBy(Spacing.medium),
       ) {
-        items(technicians, key = { it.id }) { technician ->
+        items(state.technicians, key = { it.id }) { technician ->
           TechnicianCard(
             technician = technician,
             onClick = { onNavigateToEdit(technician.id) },
+            isSelf = technician.id == state.selfId,
           )
         }
       }

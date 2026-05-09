@@ -29,7 +29,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
-import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCardData
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res
@@ -81,12 +80,8 @@ fun SettingsScreen(
       verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
     ) {
       UserProfileCard(
-        data = UserProfileCardData(
-          displayName = user.displayName,
-          photoUri = user.photoUri,
-          licenceInfo = user.licenseInfo,
-        ),
-        onOpenEditProfile = { navController.navigate(Screen.EditProfile.route) }
+        self = user.selfTechnician,
+        photoUri = user.photoUri,
       )
       if (user.featureFlags.technicianEnabled) {
         SettingsRow(

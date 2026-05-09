@@ -59,7 +59,6 @@ kotlin {
       implementation(project(":feature:technician:manage"))
       implementation(project(":feature:technician:sharedassets"))
       implementation(project(":feature:featurelab:datamanager"))
-      implementation(project(":feature:userprofile:database"))
 
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:attachment:sharedassets"))

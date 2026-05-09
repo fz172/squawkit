@@ -3,10 +3,10 @@ package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.aircraft.CertExpireLimit
+import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.datetime.toWireInstant
-import dev.fanfly.wingslog.core.model.userprofile.LicenseExpireLimit
-import dev.fanfly.wingslog.core.model.userprofile.LicenseType
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlin.time.Instant
@@ -19,10 +19,11 @@ import kotlinx.coroutines.launch
 data class EditTechnicianUiState(
   val id: String = "",
   val name: String = "",
-  val certType: LicenseType = LicenseType.NONE,
+  val certType: CertificateType = CertificateType.CERTIFICATE_TYPE_NONE,
   val certNumber: String = "",
-  val certExpireLimit: LicenseExpireLimit = LicenseExpireLimit.EXPIRES,
+  val certExpireLimit: CertExpireLimit = CertExpireLimit.CERT_EXPIRE_LIMIT_EXPIRES,
   val certExpiration: Instant? = null,
+  val isSelf: Boolean = false,
   val isLoading: Boolean = false,
   val isSaving: Boolean = false,
   val saveSuccess: Boolean = false,
@@ -43,6 +44,15 @@ class EditTechnicianViewModel(
   init {
     if (technicianId != null) {
       loadTechnician(technicianId)
+      observeSelfId(technicianId)
+    }
+  }
+
+  private fun observeSelfId(id: String) {
+    viewModelScope.launch {
+      technicianManager.observeSelfId().collect { selfId ->
+        _uiState.update { it.copy(isSelf = selfId == id) }
+      }
     }
   }
 
@@ -51,35 +61,41 @@ class EditTechnicianViewModel(
       val technician = technicianManager.loadTechnician(id).firstOrNull()
       if (technician != null) {
         _uiState.update {
-          val type = try {
-            if (technician.cert_type.isBlank() || technician.cert_type == "NONE") LicenseType.NONE else LicenseType.valueOf(
-              technician.cert_type
-            )
-          } catch (_: Exception) {
-            LicenseType.NONE
+          val certType = when {
+            technician.certificate_type != CertificateType.CERTIFICATE_TYPE_NONE ->
+              technician.certificate_type
+            technician.cert_type.isBlank() || technician.cert_type == "NONE" ->
+              CertificateType.CERTIFICATE_TYPE_NONE
+            else -> try {
+              CertificateType.valueOf(technician.cert_type)
+            } catch (_: Exception) {
+              CertificateType.CERTIFICATE_TYPE_NONE
+            }
           }
-          val expireLimit =
-            if (technician.cert_expiration == null) LicenseExpireLimit.NEVER_EXPIRES else LicenseExpireLimit.EXPIRES
+
+          val expireLimit = when {
+            technician.cert_expire_limit != CertExpireLimit.CERT_EXPIRE_LIMIT_UNKNOWN ->
+              technician.cert_expire_limit
+            technician.cert_expiration == null ->
+              CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES
+            else ->
+              CertExpireLimit.CERT_EXPIRE_LIMIT_EXPIRES
+          }
 
           it.copy(
             id = technician.id,
             name = technician.name,
-            certType = type,
+            certType = certType,
             certNumber = technician.cert_number,
             certExpireLimit = expireLimit,
             certExpiration = technician.cert_expiration?.let { ts ->
               Instant.fromEpochSeconds(ts.getEpochSecond(), ts.getNano())
             },
-            isLoading = false
+            isLoading = false,
           )
         }
       } else {
-        _uiState.update {
-          it.copy(
-            isLoading = false,
-            error = "Failed to load technician"
-          )
-        }
+        _uiState.update { it.copy(isLoading = false, error = "Failed to load technician") }
       }
     }
   }
@@ -88,7 +104,7 @@ class EditTechnicianViewModel(
     _uiState.update { it.copy(name = name) }
   }
 
-  fun updateCertType(certType: LicenseType) {
+  fun updateCertType(certType: CertificateType) {
     _uiState.update { it.copy(certType = certType) }
   }
 
@@ -96,7 +112,7 @@ class EditTechnicianViewModel(
     _uiState.update { it.copy(certNumber = certNumber) }
   }
 
-  fun updateCertExpireLimit(expireLimit: LicenseExpireLimit) {
+  fun updateCertExpireLimit(expireLimit: CertExpireLimit) {
     _uiState.update { it.copy(certExpireLimit = expireLimit) }
   }
 
@@ -113,9 +129,7 @@ class EditTechnicianViewModel(
         _uiState.update { it.copy(deleteSuccess = true) }
       } else {
         _uiState.update {
-          it.copy(
-            error = result.exceptionOrNull()?.message ?: "Failed to delete technician"
-          )
+          it.copy(error = result.exceptionOrNull()?.message ?: "Failed to delete technician")
         }
       }
     }
@@ -134,11 +148,14 @@ class EditTechnicianViewModel(
       val technician = Technician(
         id = currentState.id,
         name = currentState.name,
-        cert_type = if (currentState.certType == LicenseType.NONE) "" else currentState.certType.name,
+        certificate_type = currentState.certType,
         cert_number = currentState.certNumber,
-        cert_expiration = if (currentState.certExpireLimit == LicenseExpireLimit.NEVER_EXPIRES) null else currentState.certExpiration?.let {
-          toWireInstant(it.epochSeconds, it.nanosecondsOfSecond)
-        }
+        cert_expire_limit = currentState.certExpireLimit,
+        cert_expiration = if (currentState.certExpireLimit == CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES) {
+          null
+        } else {
+          currentState.certExpiration?.let { toWireInstant(it.epochSeconds, it.nanosecondsOfSecond) }
+        },
       )
 
       val result = technicianManager.updateTechnician(technician)
@@ -146,10 +163,7 @@ class EditTechnicianViewModel(
         _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
       } else {
         _uiState.update {
-          it.copy(
-            isSaving = false,
-            error = result.exceptionOrNull()?.message ?: "Failed to save technician"
-          )
+          it.copy(isSaving = false, error = result.exceptionOrNull()?.message ?: "Failed to save technician")
         }
       }
     }
