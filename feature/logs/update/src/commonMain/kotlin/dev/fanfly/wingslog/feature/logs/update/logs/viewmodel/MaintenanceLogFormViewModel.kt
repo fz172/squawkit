@@ -63,7 +63,11 @@ class MaintenanceLogFormViewModel(
   val isEditMode: Boolean get() = logId != null
 
   private var saveJob: Job? = null
-  private val _uiState = MutableStateFlow(MaintenanceLogFormUiState())
+  private val _uiState = MutableStateFlow(
+    MaintenanceLogFormUiState(
+      maintenanceDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    )
+  )
   val uiState: StateFlow<MaintenanceLogFormUiState> = _uiState.asStateFlow()
 
   private val _events = Channel<MaintenanceLogFormEvent>()

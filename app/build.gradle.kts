@@ -14,17 +14,37 @@ val versionProps = Properties().apply {
   if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
 }
 
-val major = versionProps.getProperty("major", "1").toInt()
-val minor = versionProps.getProperty("minor", "0").toInt()
-val today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
-val storedDate = versionProps.getProperty("buildDate", "")
-val patch = if (storedDate == today) versionProps.getProperty("patch", "0").toInt() + 1 else 1
-val nextVersionCode = versionProps.getProperty("versionCode", "0").toInt() + 1
+val major = versionProps.getProperty(
+  "major",
+  "1"
+).toInt()
+val minor = versionProps.getProperty(
+  "minor",
+  "0"
+).toInt()
+val today: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+val storedDate: String = versionProps.getProperty(
+  "buildDate",
+  ""
+)
+val patch = if (storedDate == today) versionProps.getProperty(
+  "patch",
+  "0"
+).toInt() + 1 else 1
+val nextVersionCode = versionProps.getProperty(
+  "versionCode",
+  "0"
+).toInt() + 1
 
 versionProps["buildDate"] = today
 versionProps["patch"] = patch.toString()
 versionProps["versionCode"] = nextVersionCode.toString()
-versionPropsFile.outputStream().use { versionProps.store(it, null) }
+versionPropsFile.outputStream().use {
+  versionProps.store(
+    it,
+    null
+  )
+}
 
 val computedVersionName = "$major.$minor.$today.$patch"
 
@@ -51,7 +71,10 @@ android {
   buildTypes {
     release {
       isMinifyEnabled = false
-      proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+      proguardFiles(
+        getDefaultProguardFile("proguard-android-optimize.txt"),
+        "proguard-rules.pro"
+      )
     }
   }
   compileOptions {
