@@ -57,7 +57,8 @@ import wingslog.feature.tasks.viewing.generated.resources.completed
 import wingslog.feature.tasks.viewing.generated.resources.days_overdue_count
 import wingslog.feature.tasks.viewing.generated.resources.days_remaining
 import wingslog.feature.tasks.viewing.generated.resources.due_today
-import wingslog.feature.tasks.viewing.generated.resources.maintenance_history
+import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
+import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.tasks.viewing.generated.resources.next_due_date
 import wingslog.feature.tasks.viewing.generated.resources.next_due_engine_hrs
 import wingslog.feature.tasks.viewing.generated.resources.no_maintenance_logs_for_task
@@ -212,7 +213,7 @@ fun TaskDetailSheet(
     }
 
     Text(
-      text = stringResource(ViewingRes.string.maintenance_history),
+      text = stringResource(LogsRes.string.maintenance_history),
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.SemiBold,
     )
