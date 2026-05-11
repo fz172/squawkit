@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.ComponentType
+import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
@@ -18,6 +19,7 @@ import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
+import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlin.time.Clock
@@ -43,17 +45,19 @@ data class SquawkFormState(
   val isAddressedReadOnly: Boolean = false,
   val reportedDateFormatted: String = "",
   val addressedByLogId: String = "",
+  val availableLogs: List<MaintenanceLog> = emptyList(),
+  val showLogPicker: Boolean = false,
 )
 
 sealed interface SquawkFormEvent {
   data object NavigateBack : SquawkFormEvent
   data class SaveSuccess(val message: String) : SquawkFormEvent
-  data class NavigateToLog(val aircraftId: String, val logId: String) : SquawkFormEvent
 }
 
 class SquawkFormViewModel(
   private val squawkManager: SquawkManager,
   private val attachmentManager: AttachmentManager,
+  private val logManager: MaintenanceLogManager,
   private val auth: FirebaseAuth,
   private val featureLabManager: FeatureLabManager,
   savedStateHandle: SavedStateHandle,
@@ -81,7 +85,10 @@ class SquawkFormViewModel(
   val filesAtLimit: Boolean get() = _pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS
 
   init {
-    if (squawkId != null) loadExisting(squawkId)
+    if (squawkId != null) {
+      loadExisting(squawkId)
+      loadLogs()
+    }
     viewModelScope.launch {
       featureLabManager.observe().collect { flags ->
         _attachmentUploadEnabled.value = flags.attachmentUploadEnabled
@@ -111,10 +118,23 @@ class SquawkFormViewModel(
     }
   }
 
+  private fun loadLogs() {
+    viewModelScope.launch {
+      logManager.observeLogs(aircraftId).collect { logs ->
+        _state.update { it.copy(availableLogs = logs) }
+      }
+    }
+  }
+
   fun onTitleChange(value: String) = _state.update { it.copy(title = value, titleError = false) }
   fun onDescriptionChange(value: String) = _state.update { it.copy(description = value) }
   fun onPriorityChange(value: SquawkPriority) = _state.update { it.copy(priority = value) }
   fun onComponentChange(value: ComponentType) = _state.update { it.copy(component = value) }
+
+  fun showLogPicker() = _state.update { it.copy(showLogPicker = true) }
+  fun hideLogPicker() = _state.update { it.copy(showLogPicker = false) }
+  fun selectLog(logId: String) = _state.update { it.copy(addressedByLogId = logId, showLogPicker = false) }
+  fun clearLog() = _state.update { it.copy(addressedByLogId = "") }
 
   fun showAttachmentPicker() { _showAttachmentPicker.value = true }
   fun hideAttachmentPicker() { _showAttachmentPicker.value = false }
@@ -153,12 +173,6 @@ class SquawkFormViewModel(
     }
   }
 
-  fun onViewLog() {
-    val current = _state.value
-    val logId = current.addressedByLogId.takeIf { it.isNotEmpty() } ?: return
-    viewModelScope.launch { _events.send(SquawkFormEvent.NavigateToLog(current.aircraftId, logId)) }
-  }
-
   fun save(onSuccessMessage: String) {
     val current = _state.value
     if (current.title.isBlank()) {
@@ -177,6 +191,7 @@ class SquawkFormViewModel(
         component_type = current.component,
         created_at = if (current.squawkId == null) Clock.System.now().toWireInstant() else null,
         attachments = attachments,
+        addressed_by_log_id = current.addressedByLogId,
       )
       val result = if (current.squawkId == null)
         squawkManager.addSquawk(aircraftId, squawk)

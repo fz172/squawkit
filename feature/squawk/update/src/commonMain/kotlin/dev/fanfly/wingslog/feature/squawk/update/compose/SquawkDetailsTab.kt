@@ -2,22 +2,37 @@ package dev.fanfly.wingslog.feature.squawk.update.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.ui.generated.resources.add
+import wingslog.core.ui.generated.resources.remove
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_description_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_not_yet_addressed
-import wingslog.feature.squawk.sharedassets.generated.resources.squawk_view_log
 
 @Composable
 fun SquawkDetailsTab(
@@ -25,7 +40,9 @@ fun SquawkDetailsTab(
   onDescriptionChange: (String) -> Unit,
   isEdit: Boolean,
   addressedByLogId: String,
-  onViewLog: (() -> Unit)?,
+  availableLogs: List<MaintenanceLog>,
+  onAddLog: () -> Unit,
+  onClearLog: () -> Unit,
   readOnly: Boolean,
   attachmentSection: @Composable () -> Unit,
   modifier: Modifier = Modifier,
@@ -44,27 +61,73 @@ fun SquawkDetailsTab(
       readOnly = readOnly,
     )
 
-    // Addressing log (edit mode only)
+    // Maintenance history (edit mode only)
     if (isEdit) {
+      val associatedLog = availableLogs.firstOrNull { it.id == addressedByLogId }
+
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-        Text(
-          text = stringResource(LogsRes.string.maintenance_history),
-          style = MaterialTheme.typography.titleSmall,
-          fontWeight = FontWeight.SemiBold,
-        )
-        if (addressedByLogId.isNotEmpty() && onViewLog != null) {
-          OutlinedButton(
-            onClick = onViewLog,
-            modifier = Modifier.fillMaxWidth(),
-          ) {
-            Text(stringResource(Res.string.squawk_view_log))
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+          Text(
+            text = stringResource(LogsRes.string.maintenance_history),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+          )
+          if (addressedByLogId.isEmpty()) {
+            OutlinedButton(
+              onClick = onAddLog,
+              contentPadding = PaddingValues(
+                horizontal = Spacing.medium,
+                vertical = Spacing.extraSmall,
+              ),
+            ) {
+              Icon(
+                Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.width(Spacing.large),
+              )
+              Spacer(Modifier.width(Spacing.extraSmall))
+              Text(
+                stringResource(CoreRes.string.add),
+                style = MaterialTheme.typography.labelMedium,
+              )
+            }
           }
-        } else {
+        }
+
+        if (addressedByLogId.isEmpty()) {
           Text(
             text = stringResource(Res.string.squawk_not_yet_addressed),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
+        } else {
+          val displayText = associatedLog?.work_description?.takeIf { it.isNotBlank() }
+            ?: addressedByLogId
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+          ) {
+            Text(
+              text = displayText,
+              style = MaterialTheme.typography.bodyMedium,
+              maxLines = 2,
+              overflow = TextOverflow.Ellipsis,
+              modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = onClearLog) {
+              Icon(
+                Icons.Default.Close,
+                contentDescription = stringResource(CoreRes.string.remove),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+          }
+          HorizontalDivider()
         }
       }
     }
