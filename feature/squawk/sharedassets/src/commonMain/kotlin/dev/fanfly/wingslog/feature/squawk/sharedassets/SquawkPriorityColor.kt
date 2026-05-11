@@ -8,12 +8,12 @@ fun SquawkPriority.chipColor(scheme: ColorScheme): Color = when (this) {
   SquawkPriority.SQUAWK_PRIORITY_AOG    -> scheme.error
   SquawkPriority.SQUAWK_PRIORITY_HIGH   -> scheme.errorContainer
   SquawkPriority.SQUAWK_PRIORITY_MEDIUM -> scheme.tertiary
-  else                                   -> scheme.surfaceVariant
+  else                                   -> scheme.primary
 }
 
 fun SquawkPriority.chipTextColor(scheme: ColorScheme): Color = when (this) {
   SquawkPriority.SQUAWK_PRIORITY_AOG    -> scheme.onError
   SquawkPriority.SQUAWK_PRIORITY_HIGH   -> scheme.onErrorContainer
   SquawkPriority.SQUAWK_PRIORITY_MEDIUM -> scheme.onTertiary
-  else                                   -> scheme.onSurfaceVariant
+  else                                   -> scheme.onPrimary
 }

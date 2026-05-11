@@ -13,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,14 +22,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.aircraft.SquawkPriority
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.sharedassets.chipColor
 import dev.fanfly.wingslog.feature.squawk.sharedassets.chipTextColor
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
-import wingslog.feature.squawk.sharedassets.generated.resources.addressed_by
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_aog
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_high
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_low
@@ -43,7 +43,7 @@ fun SquawkCard(
   modifier: Modifier = Modifier,
 ) {
   val squawk = item.squawk
-  val isAog = squawk.priority == dev.fanfly.wingslog.aircraft.SquawkPriority.SQUAWK_PRIORITY_AOG
+  val isAog = squawk.priority == SquawkPriority.SQUAWK_PRIORITY_AOG
   val borderColor = if (isAog)
     MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
   else
@@ -90,13 +90,11 @@ fun SquawkCard(
         }
       }
 
-      if (item.status == SquawkStatus.ADDRESSED) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
+      if ((squawk.created_at?.getEpochSecond() ?: 0L) > 0L) {
         Text(
-          text = stringResource(Res.string.addressed_by),
+          text = squawk.created_at!!.toLocalDate().toDisplayFormat(),
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
-          letterSpacing = 0.8.sp,
         )
       }
     }
@@ -110,14 +108,14 @@ internal fun PriorityBadge(item: SquawkWithStatus) {
   val bg = priority.chipColor(scheme)
   val fg = priority.chipTextColor(scheme)
   val label = when (priority) {
-    dev.fanfly.wingslog.aircraft.SquawkPriority.SQUAWK_PRIORITY_AOG    -> stringResource(Res.string.priority_aog)
-    dev.fanfly.wingslog.aircraft.SquawkPriority.SQUAWK_PRIORITY_HIGH   -> stringResource(Res.string.priority_high)
-    dev.fanfly.wingslog.aircraft.SquawkPriority.SQUAWK_PRIORITY_MEDIUM -> stringResource(Res.string.priority_medium)
-    else                                                                 -> stringResource(Res.string.priority_low)
+    SquawkPriority.SQUAWK_PRIORITY_AOG    -> stringResource(Res.string.priority_aog)
+    SquawkPriority.SQUAWK_PRIORITY_HIGH   -> stringResource(Res.string.priority_high)
+    SquawkPriority.SQUAWK_PRIORITY_MEDIUM -> stringResource(Res.string.priority_medium)
+    else                                   -> stringResource(Res.string.priority_low)
   }
   Box(
     modifier = Modifier
-      .background(bg.copy(alpha = 0.15f), RoundedCornerShape(Spacing.extraSmall))
+      .background(bg, RoundedCornerShape(Spacing.extraSmall))
       .padding(horizontal = Spacing.small, vertical = Spacing.tiny)
   ) {
     Text(
