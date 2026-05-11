@@ -9,9 +9,13 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
+import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
@@ -37,6 +41,7 @@ class AircraftOverviewViewModel(
   private val taskDueManager: TaskDueManager,
   private val attachmentOpener: AttachmentOpener,
   private val attachmentManager: AttachmentManager,
+  private val squawkManager: SquawkManager,
   private val auth: FirebaseAuth,
   private val featureLabManager: FeatureLabManager,
   savedStateHandle: SavedStateHandle,
@@ -79,14 +84,18 @@ class AircraftOverviewViewModel(
         logManager.observeLogs(aircraftId),
         taskDataManager.observeTasks(aircraftId),
         logManager.observeMaintenanceOverview(aircraftId),
-        combine(blobStatesFlow(), attachmentOpener.downloadingIds) { blobStates, downloadingIds ->
+        combine(
+          blobStatesFlow(),
+          attachmentOpener.downloadingIds,
+          squawkManager.observeSquawks(aircraftId),
+        ) { blobStates, downloadingIds, squawkList ->
           val merged: Map<String, BlobSyncState> = buildMap {
             putAll(blobStates)
             downloadingIds.forEach { put(it, BlobSyncState.Downloading) }
           }
-          merged
+          Triple(merged, squawkList, Unit)
         }
-      ) { aircraft, logs, taskCards, overview, syncStates ->
+      ) { aircraft, logs, taskCards, overview, (syncStates, squawkList, _) ->
         cachedLogs = logs
         if (aircraft != null) {
           val stats = if (overview != null) {
@@ -162,6 +171,12 @@ class AircraftOverviewViewModel(
             log.attachments.any { att -> att.sha256.isBlank() && att.storage_path.isNotBlank() }
           }
 
+          val squawksWithStatus = squawkList.map { it.toWithStatus() }
+          val aogSquawks = squawkList.filter {
+            it.priority == SquawkPriority.SQUAWK_PRIORITY_AOG &&
+              it.addressed_by_log_id.isEmpty()
+          }
+
           AircraftOverviewUiState.Success(
             aircraft = aircraft,
             logStats = stats,
@@ -172,6 +187,8 @@ class AircraftOverviewViewModel(
             deletingTaskId = current?.deletingTaskId,
             syncStates = syncStates,
             showLegacyAttachmentBanner = hasLegacy && !legacyBannerDismissed,
+            squawks = squawksWithStatus,
+            aogSquawks = aogSquawks,
           )
         } else {
           AircraftOverviewUiState.Error
@@ -257,6 +274,14 @@ class AircraftOverviewViewModel(
             state.copy(showLegacyAttachmentBanner = false)
           } else state
         }
+      }
+
+      is AircraftOverviewAction.AddSquawkClick -> {
+        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddSquawk(action.aircraftId)) }
+      }
+
+      is AircraftOverviewAction.EditSquawkClick -> {
+        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToEditSquawk(action.aircraftId, action.squawkId)) }
       }
     }
   }

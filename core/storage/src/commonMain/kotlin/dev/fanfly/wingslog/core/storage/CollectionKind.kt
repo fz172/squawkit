@@ -51,6 +51,11 @@ sealed interface CollectionKind {
     override val schemaName = "settings.FeatureLabSettings"
   }
 
+  data object Squawk : CollectionKind {
+    override val wireName = "squawk"
+    override val schemaName = "aircraft.Squawk"
+  }
+
   companion object {
     /**
      * The complete, ordered list of [CollectionKind] subtypes. The CollectionKindCoverageTest in
@@ -65,6 +70,7 @@ sealed interface CollectionKind {
       Technician,
       UserInfo,
       FeatureLab,
+      Squawk,
     )
 
     private val byWire: Map<String, CollectionKind> = ALL.associateBy { it.wireName }

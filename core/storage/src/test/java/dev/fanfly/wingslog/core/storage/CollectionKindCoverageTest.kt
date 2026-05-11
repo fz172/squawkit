@@ -13,6 +13,7 @@ class CollectionKindCoverageTest {
     CollectionKind.Technician,
     CollectionKind.UserInfo,
     CollectionKind.FeatureLab,
+    CollectionKind.Squawk,
   )
 
   @Test

@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.LogStatsSection
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import dev.fanfly.wingslog.feature.squawk.viewing.AogAlertSection
 import dev.fanfly.wingslog.feature.tasks.viewing.CriticalAlertsSection
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.sharedassets.generated.resources.Res
@@ -32,6 +33,7 @@ import wingslog.feature.logs.sharedassets.generated.resources.make_model_templat
 fun OverviewTab(
   state: AircraftOverviewUiState.Success,
   onAction: (AircraftOverviewAction) -> Unit,
+  onViewSquawksTab: () -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   val scrollState = rememberScrollState()
@@ -70,6 +72,14 @@ fun OverviewTab(
       AircraftDataCard(
         state.aircraft,
         initiallyExpanded = overdueTasks.isEmpty()
+      )
+    }
+
+    if (state.aogSquawks.isNotEmpty()) {
+      AogAlertSection(
+        aogSquawks = state.aogSquawks,
+        onViewSquawksClick = onViewSquawksTab,
+        modifier = Modifier.padding(horizontal = Spacing.screenPadding),
       )
     }
 

@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceOverview
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.settings.FeatureLabSettings
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
@@ -65,6 +66,10 @@ import org.koin.dsl.module
       register(
         CollectionKind.FeatureLab,
         WireCodec(FeatureLabSettings.ADAPTER)
+      )
+      register(
+        CollectionKind.Squawk,
+        WireCodec(Squawk.ADAPTER)
       )
       verifyCoverage()
     }

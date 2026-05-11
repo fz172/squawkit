@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="squawks">Squawks</string>
+  <string name="add_squawk">New squawk</string>
+  <string name="edit_squawk">Edit squawk</string>
+  <string name="open_with_count">OPEN (%1$d)</string>
+  <string name="addressed_with_count">ADDRESSED (%1$d)</string>
+  <string name="no_open_squawks">No open squawks. Tap + to report a defect or anomaly.</string>
+  <string name="no_addressed_squawks">Log work against a squawk to see its history here.</string>
+  <string name="priority_low">Low</string>
+  <string name="priority_medium">Medium</string>
+  <string name="priority_high">High</string>
+  <string name="priority_aog">AOG</string>
+  <string name="aog_alert_title">Aircraft on Ground</string>
+  <string name="aog_alert_subtitle">AOG squawks must be resolved before flight.</string>
+  <string name="view_squawks">View Squawks</string>
+  <string name="addressed_by">Addressed by log</string>
+  <string name="squawk_title_label">Title</string>
+  <string name="squawk_description_label">Description</string>
+  <string name="squawk_priority_label">Priority</string>
+  <string name="squawk_title_required">Title is required</string>
+  <string name="squawk_added">Squawk reported</string>
+  <string name="squawk_updated">Squawk updated</string>
+</resources>

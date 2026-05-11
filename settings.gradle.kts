@@ -61,3 +61,8 @@ include(":feature:attachment:sharedassets")
 include(":feature:attachment:viewing")
 include(":feature:featurelab:datamanager")
 
+include(":feature:squawk:model")
+include(":feature:squawk:datamanager")
+include(":feature:squawk:sharedassets")
+include(":feature:squawk:viewing")
+include(":feature:squawk:update")

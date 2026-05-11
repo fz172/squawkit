@@ -11,4 +11,6 @@ sealed interface AircraftOverviewEvent {
   data class NavigateToAddTask(val aircraftId: String) : AircraftOverviewEvent
   data class NavigateToEditTask(val aircraftId: String, val cardId: String) :
     AircraftOverviewEvent
+  data class NavigateToAddSquawk(val aircraftId: String) : AircraftOverviewEvent
+  data class NavigateToEditSquawk(val aircraftId: String, val squawkId: String) : AircraftOverviewEvent
 }

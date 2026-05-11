@@ -30,9 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.AircraftDashboardTabRow
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.AircraftTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.LogsTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.MaintenanceTasksTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.OverviewTab
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.SquawkTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
@@ -46,6 +48,8 @@ import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsSharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
+import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkSharedRes
+import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksSharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
@@ -59,7 +63,7 @@ fun AircraftOverviewContent(
   onAction: (AircraftOverviewAction) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val pagerState = rememberPagerState { 3 }
+  val pagerState = rememberPagerState { AircraftTab.entries.size }
   val coroutineScope = rememberCoroutineScope()
   val attachmentOpener: AttachmentOpener = koinInject()
   var taskSheetOpenError by remember { mutableStateOf<String?>(null) }
@@ -75,17 +79,23 @@ fun AircraftOverviewContent(
     modifier = modifier,
     snackbarHost = { SnackbarHost(snackbarHostState) },
     floatingActionButton = {
-      when (pagerState.currentPage) {
-        1 -> ExtendedFloatingActionButton(
+      when (AircraftTab.entries.getOrNull(pagerState.currentPage)) {
+        AircraftTab.SQUAWKS -> ExtendedFloatingActionButton(
+          onClick = { onAction(AircraftOverviewAction.AddSquawkClick(state.aircraft.id)) },
+          icon = { Icon(Icons.Default.Add, contentDescription = null) },
+          text = { Text(stringResource(SquawkSharedRes.string.add_squawk)) },
+        )
+        AircraftTab.TASKS -> ExtendedFloatingActionButton(
           onClick = { onAction(AircraftOverviewAction.AddTaskClick(state.aircraft.id)) },
           icon = { Icon(Icons.Default.Add, contentDescription = null) },
           text = { Text(stringResource(TasksSharedRes.string.add_task)) },
         )
-        2 -> ExtendedFloatingActionButton(
+        AircraftTab.LOGS -> ExtendedFloatingActionButton(
           onClick = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
           icon = { Icon(Icons.Default.Add, contentDescription = null) },
           text = { Text(stringResource(LogsSharedRes.string.add_log)) },
         )
+        else -> {}
       }
     },
     containerColor = MaterialTheme.colorScheme.surface,
@@ -170,32 +180,33 @@ fun AircraftOverviewContent(
         state = pagerState,
         modifier = Modifier.weight(1f)
       ) { page ->
-        when (page) {
-          0 -> OverviewTab(
+        when (AircraftTab.entries[page]) {
+          AircraftTab.OVERVIEW -> OverviewTab(
             state = state,
-            onAction = onAction
+            onAction = onAction,
+            onViewSquawksTab = { coroutineScope.launch { pagerState.animateScrollToPage(AircraftTab.SQUAWKS.ordinal) } },
           )
 
-          1 -> MaintenanceTasksTab(
+          AircraftTab.SQUAWKS -> SquawkTab(
             state = state,
-            onAction = onAction
+            onAction = onAction,
           )
 
-          2 -> LogsTab(
+          AircraftTab.TASKS -> MaintenanceTasksTab(
+            state = state,
+            onAction = onAction,
+          )
+
+          AircraftTab.LOGS -> LogsTab(
             aircraftId = state.aircraft.id,
             syncStates = state.syncStates,
             onNavigateToAddLog = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
             onNavigateToEditLog = { logId ->
-              onAction(
-                AircraftOverviewAction.EditLogClick(
-                  state.aircraft.id,
-                  logId
-                )
-              )
+              onAction(AircraftOverviewAction.EditLogClick(state.aircraft.id, logId))
             },
             onTaskClick = { taskId ->
               onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
-              coroutineScope.launch { pagerState.animateScrollToPage(1) }
+              coroutineScope.launch { pagerState.animateScrollToPage(AircraftTab.TASKS.ordinal) }
             },
           )
         }
