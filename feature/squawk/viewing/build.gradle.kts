@@ -34,6 +34,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
+      implementation(project(":core:model"))
+      implementation(project(":core:datetime"))
       implementation(project(":feature:squawk:model"))
       implementation(project(":feature:squawk:sharedassets"))
       implementation(libs.components.resources)

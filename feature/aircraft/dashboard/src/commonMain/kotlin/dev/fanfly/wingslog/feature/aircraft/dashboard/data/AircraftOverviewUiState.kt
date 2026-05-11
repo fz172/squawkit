@@ -35,5 +35,7 @@ sealed interface AircraftOverviewUiState {
     val attachmentEnabled: Boolean = true,
     val squawks: List<SquawkWithStatus> = emptyList(),
     val aogSquawks: List<Squawk> = emptyList(),
+    val selectedSquawk: SquawkWithStatus? = null,
+    val logForSelectedSquawk: MaintenanceLog? = null,
   ) : AircraftOverviewUiState
 }
