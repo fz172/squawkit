@@ -115,8 +115,10 @@ Deferred to design document.
 
 - **Visual Cues:** Color-code squawk priority chips — AOG: `error`, High: `errorContainer`, Medium: `tertiary`, Low: `surfaceVariant`.
 - **"Address Squawk(s)" placement:** In the log form, below the Technician section and above the attachment section.
-- **Squawk List:** Grouped by status (Open first, Addressed below); within each group, sorted by priority descending (AOG → High → Medium → Low), then by creation date.
+- **Squawk Tab:** A dedicated **Squawks** tab is the primary home for the squawk list and add/edit flows. It sits between the Overview tab and the Tasks tab, making the Aircraft Overview tab order: **Overview → Squawks → Tasks → Logs**.
+- **Squawk List:** Displayed within the Squawks tab. Grouped by status (Open first, Addressed below); within each group, sorted by priority descending (AOG → High → Medium → Low), then by creation date.
 - **Addressed row:** Shows the linked log date and a "→ View Log" chip.
+- **Add Squawk:** FAB on the Squawks tab navigates to `AddSquawkScreen` (full-screen). Edit navigates to `EditSquawkScreen`.
 
 ---
 
@@ -127,7 +129,7 @@ AOG (Aircraft on Ground) means the aircraft is grounded until the squawk is reso
 - **Aircraft Overview — Overview tab:**
     - An `AogAlertSection` appears above `CriticalAlertSection` (overdue tasks) when one or more AOG squawks exist.
     - Uses `error` tint and a distinct icon (`FlightLandOutlined` or similar) to distinguish from the overdue-tasks alert.
-    - Each AOG squawk is shown as a row with priority chip, title, and a "View" action.
+    - Each AOG squawk is shown as a row with priority chip, title, and a "View Squawks" action that switches to the Squawks tab.
     - Section collapses when no AOG squawks are open.
 
 - **Fleet Dashboard:**
