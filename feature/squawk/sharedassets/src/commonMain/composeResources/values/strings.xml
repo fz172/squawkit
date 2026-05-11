@@ -15,10 +15,10 @@
   <string name="aog_alert_subtitle">AOG squawks must be resolved before flight.</string>
   <string name="view_squawks">View Squawks</string>
   <string name="addressed_by">Addressed by log</string>
-  <string name="squawk_title_label">Title</string>
+  <string name="squawk_title_label">Issue Summary</string>
   <string name="squawk_description_label">Description</string>
   <string name="squawk_priority_label">Priority</string>
-  <string name="squawk_title_required">Title is required</string>
+  <string name="squawk_title_required">Issue summary is required</string>
   <string name="squawk_added">Squawk reported</string>
   <string name="squawk_updated">Squawk updated</string>
   <string name="no_squawk_work_recorded">No squawks addressed by this log.</string>

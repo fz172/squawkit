@@ -23,6 +23,5 @@
   <string name="label_deadline">DEADLINE</string>
   <string name="label_due_engine">DUE @</string>
   <string name="label_expired">EXPIRED %1$s</string>
-  <string name="maintenance_history">Maintenance History</string>
   <string name="no_maintenance_logs_for_task">No logs yet. Add a maintenance entry and tag this task to see history here.</string>
 </resources>
