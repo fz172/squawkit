@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.data
 
+import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 
 sealed interface AircraftOverviewAction {
@@ -19,5 +20,7 @@ sealed interface AircraftOverviewAction {
   data class TaskFromLogClick(val taskId: String) : AircraftOverviewAction
   data object DismissLegacyBanner : AircraftOverviewAction
   data class AddSquawkClick(val aircraftId: String) : AircraftOverviewAction
+  data class ShowSquawkDetail(val squawk: SquawkWithStatus) : AircraftOverviewAction
+  data object DismissSquawkDetail : AircraftOverviewAction
   data class EditSquawkClick(val aircraftId: String, val squawkId: String) : AircraftOverviewAction
 }

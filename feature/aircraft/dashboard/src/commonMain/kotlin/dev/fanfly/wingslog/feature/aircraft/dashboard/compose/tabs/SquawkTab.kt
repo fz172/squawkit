@@ -34,6 +34,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
+import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import org.jetbrains.compose.resources.stringResource
@@ -112,7 +113,7 @@ fun SquawkTab(
         displayList.forEach { item ->
           SquawkCard(
             item = item,
-            onClick = { onAction(AircraftOverviewAction.EditSquawkClick(state.aircraft.id, item.squawk.id)) },
+            onClick = { onAction(AircraftOverviewAction.ShowSquawkDetail(item)) },
             modifier = Modifier.fillMaxWidth(),
           )
         }
@@ -120,6 +121,18 @@ fun SquawkTab(
     }
 
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))
+  }
+
+  state.selectedSquawk?.let { selected ->
+    SquawkDetailSheet(
+      item = selected,
+      addressingLog = state.logForSelectedSquawk,
+      onDismiss = { onAction(AircraftOverviewAction.DismissSquawkDetail) },
+      onEditClick = {
+        onAction(AircraftOverviewAction.DismissSquawkDetail)
+        onAction(AircraftOverviewAction.EditSquawkClick(state.aircraft.id, selected.squawk.id))
+      },
+    )
   }
 }
 

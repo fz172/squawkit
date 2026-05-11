@@ -66,7 +66,7 @@ fun SquawkCard(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        PriorityChip(item)
+        PriorityBadge(item)
         Icon(
           imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
           contentDescription = null,
@@ -104,7 +104,7 @@ fun SquawkCard(
 }
 
 @Composable
-private fun PriorityChip(item: SquawkWithStatus) {
+internal fun PriorityBadge(item: SquawkWithStatus) {
   val priority = item.squawk.priority
   val scheme = MaterialTheme.colorScheme
   val bg = priority.chipColor(scheme)
