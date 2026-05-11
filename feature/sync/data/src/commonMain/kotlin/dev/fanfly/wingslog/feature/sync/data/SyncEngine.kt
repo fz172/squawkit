@@ -353,6 +353,7 @@ class SyncEngine(
       CollectionKind.MaintenanceLog,
       CollectionKind.MaintenanceTask,
       CollectionKind.MaintenanceOverview,
+      CollectionKind.Squawk,
     )
   }
 }
