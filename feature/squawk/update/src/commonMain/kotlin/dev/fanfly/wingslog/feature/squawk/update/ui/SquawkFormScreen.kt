@@ -19,13 +19,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
+import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.update.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkBasicTab
@@ -40,7 +47,7 @@ import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 import wingslog.feature.squawk.update.generated.resources.tab_basic
 import wingslog.feature.squawk.update.generated.resources.tab_details
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun SquawkFormScreen(
   state: SquawkFormState,
@@ -59,6 +66,30 @@ fun SquawkFormScreen(
   val isEdit = state.squawkId != null
   val screenTitle = if (isEdit) stringResource(Res.string.edit_squawk)
   else stringResource(Res.string.add_squawk)
+
+  val hasChanges = if (isEdit) {
+    state.title != state.initialTitle ||
+      state.description != state.initialDescription ||
+      state.priority != state.initialPriority ||
+      state.addressedByLogId != state.initialAddressedByLogId
+  } else {
+    state.title.isNotEmpty() || state.description.isNotEmpty()
+  }
+
+  var showUnsavedDialog by remember { mutableStateOf(false) }
+
+  val tryBack = {
+    if (hasChanges) showUnsavedDialog = true else onBack()
+  }
+
+  BackHandler(enabled = hasChanges) { showUnsavedDialog = true }
+
+  if (showUnsavedDialog) {
+    UnsavedChangesDialog(
+      onConfirm = { showUnsavedDialog = false; onBack() },
+      onDismiss = { showUnsavedDialog = false },
+    )
+  }
 
   val tabs = listOf(
     IconLabelTabSpec(Icons.Default.Edit, stringResource(UpdateRes.string.tab_basic)),
@@ -80,7 +111,7 @@ fun SquawkFormScreen(
             )
           },
           navigationIcon = {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = { tryBack() }) {
               Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
             }
           },
@@ -137,7 +168,7 @@ fun SquawkFormScreen(
 
       BottomButtons(
         onPrimaryClick = onSave,
-        onSecondaryClick = onBack,
+        onSecondaryClick = { tryBack() },
         primaryEnabled = !state.isSaving,
         isPrimaryFunctionInProgress = state.isSaving,
       )

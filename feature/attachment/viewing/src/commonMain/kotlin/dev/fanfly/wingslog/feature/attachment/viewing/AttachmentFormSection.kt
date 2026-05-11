@@ -47,10 +47,10 @@ import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.remove
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
-import wingslog.feature.attachment.sharedassets.generated.resources.add_attachment
 import wingslog.feature.attachment.sharedassets.generated.resources.add_link
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_limits_hint
 import wingslog.feature.attachment.sharedassets.generated.resources.attachments
@@ -120,7 +120,7 @@ fun AttachmentFormSection(
           )
           Spacer(Modifier.width(Spacing.extraSmall))
           Text(
-            stringResource(AttachRes.string.add_attachment),
+            stringResource(CoreRes.string.add),
             style = MaterialTheme.typography.labelMedium,
           )
         }

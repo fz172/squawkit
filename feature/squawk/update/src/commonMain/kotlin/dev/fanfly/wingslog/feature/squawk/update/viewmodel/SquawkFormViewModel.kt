@@ -47,6 +47,11 @@ data class SquawkFormState(
   val addressedByLogId: String = "",
   val availableLogs: List<MaintenanceLog> = emptyList(),
   val showLogPicker: Boolean = false,
+  // Baseline values captured on load — used to detect unsaved changes
+  val initialTitle: String = "",
+  val initialDescription: String = "",
+  val initialPriority: SquawkPriority = SquawkPriority.SQUAWK_PRIORITY_LOW,
+  val initialAddressedByLogId: String = "",
 )
 
 sealed interface SquawkFormEvent {
@@ -109,6 +114,10 @@ class SquawkFormViewModel(
             isAddressedReadOnly = squawk.addressed_by_log_id.isNotEmpty(),
             reportedDateFormatted = squawk.created_at?.toLocalDate()?.toDisplayFormat() ?: "",
             addressedByLogId = squawk.addressed_by_log_id,
+            initialTitle = squawk.title,
+            initialDescription = squawk.description,
+            initialPriority = squawk.priority,
+            initialAddressedByLogId = squawk.addressed_by_log_id,
           )
         }
         if (_pendingAttachments.value.isEmpty()) {

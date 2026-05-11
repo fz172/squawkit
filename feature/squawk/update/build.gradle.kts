@@ -53,6 +53,7 @@ kotlin {
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.kermit)
       implementation(libs.compose.foundation)
+      implementation(libs.compose.ui.backhandler)
       implementation(libs.androidx.navigation.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
       implementation(libs.components.resources)
