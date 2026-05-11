@@ -27,6 +27,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.squawk.update.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkBasicTab
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsTab
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
@@ -48,7 +49,10 @@ fun SquawkFormScreen(
   onPriorityChange: (dev.fanfly.wingslog.aircraft.SquawkPriority) -> Unit,
   onSave: () -> Unit,
   onBack: () -> Unit,
-  onViewLog: (() -> Unit)?,
+  onAddLog: () -> Unit,
+  onClearLog: () -> Unit,
+  onSelectLog: (String) -> Unit,
+  onHideLogPicker: () -> Unit,
   modifier: Modifier = Modifier,
   attachmentSection: @Composable () -> Unit = {},
 ) {
@@ -121,7 +125,9 @@ fun SquawkFormScreen(
               onDescriptionChange = onDescriptionChange,
               isEdit = isEdit,
               addressedByLogId = state.addressedByLogId,
-              onViewLog = onViewLog,
+              availableLogs = state.availableLogs,
+              onAddLog = onAddLog,
+              onClearLog = onClearLog,
               readOnly = state.isAddressedReadOnly,
               attachmentSection = attachmentSection,
             )
@@ -132,9 +138,17 @@ fun SquawkFormScreen(
       BottomButtons(
         onPrimaryClick = onSave,
         onSecondaryClick = onBack,
-        primaryEnabled = !state.isSaving && !state.isAddressedReadOnly,
+        primaryEnabled = !state.isSaving,
         isPrimaryFunctionInProgress = state.isSaving,
       )
     }
+  }
+
+  if (state.showLogPicker) {
+    LogPickerSheet(
+      logs = state.availableLogs,
+      onSelect = onSelectLog,
+      onDismiss = onHideLogPicker,
+    )
   }
 }
