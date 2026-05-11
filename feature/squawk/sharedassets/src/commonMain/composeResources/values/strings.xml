@@ -21,4 +21,5 @@
   <string name="squawk_title_required">Title is required</string>
   <string name="squawk_added">Squawk reported</string>
   <string name="squawk_updated">Squawk updated</string>
+  <string name="no_squawk_work_recorded">No squawks addressed by this log.</string>
 </resources>

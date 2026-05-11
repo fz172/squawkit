@@ -54,9 +54,11 @@ import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCRE
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.ComponentSection
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.SquawkWorkSection
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.TaskWorkSection
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormViewModel
+import dev.fanfly.wingslog.feature.squawk.viewing.SquawkPickerSheet
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskPickerSheet
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
 import kotlin.time.Instant
@@ -348,6 +350,25 @@ fun MaintenanceLogFormScreen(
               },
               onDismiss = { viewModel.hideTechnicianPicker() })
           }
+        }
+
+        // Squawk work section
+        SquawkWorkSection(
+          selectedIds = uiState.selectedSquawkIds,
+          availableSquawks = uiState.availableSquawks,
+          onAddClick = viewModel::showSquawkPicker,
+          onRemove = viewModel::removeSquawkId,
+          modifier = Modifier.fillMaxWidth(),
+        )
+
+        // Squawk picker bottom sheet
+        if (uiState.showSquawkPicker) {
+          SquawkPickerSheet(
+            openSquawks = uiState.availableSquawks,
+            selectedIds = uiState.selectedSquawkIds.toSet(),
+            onToggle = { id, _ -> viewModel.toggleSquawkSelection(id) },
+            onDismiss = viewModel::hideSquawkPicker,
+          )
         }
 
         // Inspection Work section

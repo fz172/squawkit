@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
@@ -22,6 +23,10 @@ data class MaintenanceLogFormUiState(
   val selectedComponentType: ComponentType = ComponentType.COMPONENT_AIRFRAME,
   val selectedSubComponent: String? = null,
   val error: UiText? = null,
+  /** Open squawks for this aircraft — used by SquawkPickerSheet */
+  val availableSquawks: List<Squawk> = emptyList(),
+  val selectedSquawkIds: List<String> = emptyList(),
+  val showSquawkPicker: Boolean = false,
   /** All inspection cards for this aircraft — used by TaskPickerSheet */
   val availableInspectionCards: List<MaintenanceTask> = emptyList(),
   val showInspectionPicker: Boolean = false,
@@ -47,6 +52,7 @@ data class MaintenanceLogFormUiState(
 
   fun currentSnapshot(): FormSnapshot = FormSnapshot(
     workDescription = workDescription,
+    selectedSquawkIds = selectedSquawkIds,
     selectedInspectionIds = selectedInspectionIds,
     engineTime = engineTime,
     airframeTime = airframeTime,
@@ -63,6 +69,7 @@ data class MaintenanceLogFormUiState(
 
   data class FormSnapshot(
     val workDescription: String,
+    val selectedSquawkIds: List<String>,
     val selectedInspectionIds: List<String>,
     val engineTime: String,
     val airframeTime: String,

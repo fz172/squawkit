@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -51,6 +52,7 @@ class MaintenanceLogFormViewModel(
   private val logManager: MaintenanceLogManager,
   private val fleetManager: FleetManager,
   private val inspectionDataManager: TaskDataManager,
+  private val squawkManager: SquawkManager,
   private val attachmentManager: AttachmentManager,
   private val technicianManager: TechnicianManager,
   private val auth: FirebaseAuth,
@@ -75,6 +77,7 @@ class MaintenanceLogFormViewModel(
 
   init {
     loadAircraft()
+    observeSquawks()
     observeTasks()
     observeTechnicians()
     checkAuth()
@@ -129,6 +132,14 @@ class MaintenanceLogFormViewModel(
     _uiState.update { it.copy(isAnonymous = user == null || user.isAnonymous) }
   }
 
+  private fun observeSquawks() {
+    squawkManager.observeSquawks(aircraftId)
+      .onEach { squawks ->
+        _uiState.update { it.copy(availableSquawks = squawks.filter { s -> s.addressed_by_log_id.isEmpty() }) }
+      }
+      .launchIn(viewModelScope)
+  }
+
   private fun observeTasks() {
     inspectionDataManager.observeTasks(aircraftId)
       .onEach { cards ->
@@ -167,6 +178,7 @@ class MaintenanceLogFormViewModel(
           it.copy(
             isLoading = false,
             workDescription = log.work_description,
+            selectedSquawkIds = log.squawk_ids,
             selectedInspectionIds = log.inspection_ids,
             selectedTechnician = log.technician ?: it.selectedTechnician,
             engineTime = if (log.engine_hour > 0.0) log.engine_hour.toString() else "",
@@ -221,6 +233,22 @@ class MaintenanceLogFormViewModel(
   fun removeInspectionId(cardId: String) {
     _uiState.update { state ->
       state.copy(selectedInspectionIds = state.selectedInspectionIds.filter { it != cardId })
+    }
+  }
+
+  fun showSquawkPicker() = _uiState.update { it.copy(showSquawkPicker = true) }
+  fun hideSquawkPicker() = _uiState.update { it.copy(showSquawkPicker = false) }
+  fun toggleSquawkSelection(squawkId: String) {
+    _uiState.update { state ->
+      val current = state.selectedSquawkIds.toMutableList()
+      if (squawkId in current) current.remove(squawkId) else current.add(squawkId)
+      state.copy(selectedSquawkIds = current)
+    }
+  }
+
+  fun removeSquawkId(squawkId: String) {
+    _uiState.update { state ->
+      state.copy(selectedSquawkIds = state.selectedSquawkIds.filter { it != squawkId })
     }
   }
 
@@ -388,6 +416,7 @@ class MaintenanceLogFormViewModel(
           timestampInstant.nanosecondsOfSecond
         ),
         work_description = state.workDescription,
+        squawk_ids = state.selectedSquawkIds,
         inspection_ids = state.selectedInspectionIds,
         engine_hour = state.engineTime.toDoubleOrNull() ?: 0.0,
         airframe_time = state.airframeTime.toDoubleOrNull() ?: 0.0,
@@ -407,6 +436,9 @@ class MaintenanceLogFormViewModel(
       )
       result
         .onSuccess {
+          if (state.selectedSquawkIds.isNotEmpty()) {
+            squawkManager.markAddressed(aircraftId, state.selectedSquawkIds, resolvedLogId)
+          }
           state.selectedInspectionIds.forEach { cardId ->
             state.availableInspectionCards.find { it.id == cardId }?.let { card ->
               if (card.force_due_date != null || card.force_due_engine_hour > 0f ||
