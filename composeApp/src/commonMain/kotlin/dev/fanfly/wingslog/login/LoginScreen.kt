@@ -50,6 +50,7 @@ import wingslog.composeapp.generated.resources.ic_google_rd_na
 import wingslog.composeapp.generated.resources.ic_launcher_foreground
 import wingslog.composeapp.generated.resources.login_prompt
 import wingslog.composeapp.generated.resources.mission_statement
+import wingslog.composeapp.generated.resources.legal_disclaimer
 import wingslog.composeapp.generated.resources.sign_in_anonymous_error
 import wingslog.composeapp.generated.resources.sign_in_error
 import wingslog.composeapp.generated.resources.sign_in_with_google
@@ -132,7 +133,7 @@ fun LoginScreen(
       Spacer(Modifier.height(80.dp))
 
       Text(
-        text = stringResource(CoreRes.string.app_name),
+        text = stringResource(CoreRes.string.app_name).uppercase(),
         color = LoginOnBackground,
         style = LoginHeroStyle,
       )
@@ -257,7 +258,16 @@ fun LoginScreen(
         }
       }
 
-      Spacer(Modifier.height(Spacing.massive))
+      Spacer(Modifier.height(Spacing.large))
+
+      Text(
+        text = stringResource(Res.string.legal_disclaimer),
+        color = LoginOnBackgroundMuted.copy(alpha = 0.6f),
+        style = LoginErrorStyle,
+        modifier = Modifier.padding(horizontal = Spacing.tiny),
+      )
+
+      Spacer(Modifier.height(Spacing.large))
 
       error?.let {
         Text(

@@ -1,9 +1,10 @@
 <resources>
-    <string name="mission_statement">Know what's due before it's overdue.</string>
-    <string name="login_prompt">Log in or continue anonymously to manage your aircraft maintenance records.</string>
-    <string name="google_logo">Google Logo</string>
-    <string name="sign_in_with_google">Log in with Google</string>
-    <string name="continue_without_account">Continue Anonymously</string>
-    <string name="sign_in_error">Sign-in failed. Check your connection and try again.</string>
-    <string name="sign_in_anonymous_error">Could not continue anonymously. Please try again.</string>
+  <string name="mission_statement">Track the important stuff for your airplane</string>
+  <string name="login_prompt">Log in or continue anonymously to manage your aircraft maintenance records.</string>
+  <string name="google_logo">Google Logo</string>
+  <string name="sign_in_with_google">Log in with Google</string>
+  <string name="continue_without_account">Continue Anonymously</string>
+  <string name="sign_in_error">Sign-in failed. Check your connection and try again.</string>
+  <string name="sign_in_anonymous_error">Could not continue anonymously. Please try again.</string>
+  <string name="legal_disclaimer">Hopply is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.</string>
 </resources>

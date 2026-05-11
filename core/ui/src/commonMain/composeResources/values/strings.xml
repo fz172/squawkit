@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hobbs</string>
+    <string name="app_name">Hopply</string>
     <string name="edit_profile">Edit Profile</string>
     <string name="settings">Settings</string>
     <!-- Generic action names -->
