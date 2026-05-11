@@ -71,8 +71,10 @@ The application focuses on General Aviation (GA) aircraft management, specifical
     - **Logs tab**: Embedded `MaintenanceLogListContent` with search bar, component filter, log cards, detail sheet, and "Add Log" FAB.
     - Tab selection resets to Overview on back-stack re-entry.
 - **Compliance Tracking** (`feature/tasks` — Implemented):
-    - Maintenance tasks define recurring inspection requirements (100-hr, Annual, ELT, Altimeter/Pitot-Static, Transponder, AD compliance, etc.).
-    - `TaskDueManager` computes `DueStatus` per task by comparing last-complied log entry against task schedule (tach-based or calendar-based).
+    - Each task carries a `ComplianceType`: `ROUTINE_INSPECTION`, `SERVICE_BULLETIN`, or `AIRWORTHINESS_DIRECTIVE`. Type is shown as a chip in the UI.
+    - ADs and SBs additionally store `reference_number` (e.g., "AD 2019-20-10"), `compliance_authority`, `compliance_details`, and an `is_one_time` flag (one-time ADs move to history after first log).
+    - Scheduling rules: time-based (`TimeRule`), engine-hour-based (`EngineHourRule`), on-condition (`OnConditionRule`), linked to another task (`LinkedRule`), or immediate (`ImmediateRule`).
+    - `TaskDueManager` computes `DueStatus` per task by comparing last-complied log entry against the task's schedule rules (tach-based or calendar-based).
     - Overdue and due-soon tasks surface in `CriticalAlertSection` on the Overview tab.
 - **Reminders** (Future):
     - **Push Notifications**: Alert when service approaching.
