@@ -12,8 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
+import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
-import wingslog.feature.squawk.sharedassets.generated.resources.squawk_addressing_log
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_description_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_not_yet_addressed
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_view_log
@@ -47,10 +48,9 @@ fun SquawkDetailsTab(
     if (isEdit) {
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
         Text(
-          text = stringResource(Res.string.squawk_addressing_log),
-          style = MaterialTheme.typography.labelMedium,
-          fontWeight = FontWeight.Medium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          text = stringResource(LogsRes.string.maintenance_history),
+          style = MaterialTheme.typography.titleSmall,
+          fontWeight = FontWeight.SemiBold,
         )
         if (addressedByLogId.isNotEmpty() && onViewLog != null) {
           OutlinedButton(

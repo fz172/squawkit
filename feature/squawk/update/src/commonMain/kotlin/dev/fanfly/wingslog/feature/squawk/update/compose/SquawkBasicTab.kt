@@ -41,10 +41,10 @@ fun SquawkBasicTab(
   titleError: Boolean,
   modifier: Modifier = Modifier,
 ) {
-  val displayDate = if (reportedDateFormatted.isNotEmpty()) {
-    reportedDateFormatted
-  } else {
-    remember { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat() }
+  val displayDate = reportedDateFormatted.ifEmpty {
+    remember {
+      Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat()
+    }
   }
 
   Column(
@@ -79,22 +79,24 @@ fun SquawkBasicTab(
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
       Text(
         text = stringResource(Res.string.squawk_priority_label),
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.Medium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.SemiBold,
       )
       val priorities = listOf(
-        SquawkPriority.SQUAWK_PRIORITY_LOW    to stringResource(Res.string.priority_low),
+        SquawkPriority.SQUAWK_PRIORITY_LOW to stringResource(Res.string.priority_low),
         SquawkPriority.SQUAWK_PRIORITY_MEDIUM to stringResource(Res.string.priority_medium),
-        SquawkPriority.SQUAWK_PRIORITY_HIGH   to stringResource(Res.string.priority_high),
-        SquawkPriority.SQUAWK_PRIORITY_AOG    to stringResource(Res.string.priority_aog),
+        SquawkPriority.SQUAWK_PRIORITY_HIGH to stringResource(Res.string.priority_high),
+        SquawkPriority.SQUAWK_PRIORITY_AOG to stringResource(Res.string.priority_aog),
       )
       SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         priorities.forEachIndexed { index, (p, label) ->
           SegmentedButton(
             selected = priority == p,
             onClick = { if (!readOnly) onPriorityChange(p) },
-            shape = SegmentedButtonDefaults.itemShape(index = index, count = priorities.size),
+            shape = SegmentedButtonDefaults.itemShape(
+              index = index,
+              count = priorities.size
+            ),
             enabled = !readOnly,
           ) { Text(label) }
         }
