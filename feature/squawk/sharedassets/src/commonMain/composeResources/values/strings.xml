@@ -25,4 +25,8 @@
   <string name="reported">Reported</string>
   <string name="work_history">Work History</string>
   <string name="no_work_recorded">No work recorded yet.</string>
+  <string name="squawk_reported_on">Reported on</string>
+  <string name="squawk_addressing_log">Addressing Log</string>
+  <string name="squawk_view_log">View Log</string>
+  <string name="squawk_not_yet_addressed">Not yet addressed by any log.</string>
 </resources>
