@@ -3,7 +3,7 @@
 **Status:** Draft
 **Owner:** @fanzhang172
 **Created:** 2026-04-28
-**Last updated:** 2026-04-29
+**Last updated:** 2026-05-10
 **Targets:** Android (minSdk 33), iOS — Compose Multiplatform
 
 ---
@@ -25,7 +25,7 @@ Today every WingsLog write goes directly to Firebase Firestore, and the UI's rea
 - Anonymous users get a fully functional app backed by local storage.
 - Signed-in users get cloud sync by default; they can turn it off without losing data or disrupting the UI.
 - Storage layout is **forward-compatible**: renaming a proto field, adding a proto type, or adding a brand-new domain (e.g. **digital signatures**) must not destroy existing rows and must not require schema migration.
-- All existing feature managers (`FleetManager`, `MaintenanceLogManager`, `TechnicianManager`, `AttachmentManager`, `UserProfileManager`, `InspectionManager`) keep their public Flow-based contracts. UI/ViewModels do not change.
+- All existing feature managers (`FleetManager`, `MaintenanceLogManager`, `TechnicianManager`, `AttachmentManager`, `UserProfileManager`, `TaskDataManager`, `TaskDueManager`) keep their public Flow-based contracts. UI/ViewModels do not change.
 
 #### Non-goals (this milestone)
 
@@ -482,7 +482,7 @@ This is the same code path as "fresh sign-in on a new device." No special migrat
 ### 11. Milestones
 
 1. **M1 — Foundations.** New `core/storage` module: SQLDelight schema, `CollectionKind` sealed type + `ColumnAdapter`, `EntityStore<T>` interface, `EntityCodec<T>` registry, contract tests. `EntityStore` requires a non-null `currentUid` from `AuthManager`; storage is dormant until LoginScreen completes. No sync, no UI changes.
-2. **M2 — Manager refactor.** Migrate `FleetManager`, `MaintenanceLogManager`, `TechnicianManager`, `UserProfileManager`, `InspectionManager` to `EntityStore`. Firestore code removed from managers.
+2. **M2 — Manager refactor.** Migrate `FleetManager`, `MaintenanceLogManager`, `TechnicianManager`, `UserProfileManager`, `TaskDataManager`, `TaskDueManager` to `EntityStore`. Firestore code removed from managers.
 3. **M3 — Proto sync engine.** `core/sync` module: push worker, snapshot listeners, LWW, tombstones, initial hydration, per-uid cursor. Sync gate keyed on `isAnonymous == false`. Defaults ON for permanent users.
 4. **M4 — Attachments local backend.** `LocalBlobStore`, `AttachmentManager` rewrite, `AttachmentOpener` updates for `file://` URIs.
 5. **M5 — Attachment sync.** `UploadScheduler` interface; Android WorkManager impl; iOS foreground-first impl. Lazy `REMOTE_ONLY` downloads with the attachments index.

@@ -80,7 +80,7 @@ We need a dedicated screen accessible from the app's Settings to manage technici
   - Provides a mechanism to **delete** a technician (e.g., via swipe-to-delete, or a delete button in the edit screen). Note: Deleting a technician will NOT remove them from existing logs, since logs hold a snapshot.
 
 ### 4.3. Maintenance Log Entry UI Integration
-In the `MaintenanceLogFormScreen` (located in `feature/maintenance/update`):
+In the `MaintenanceLogFormScreen` (located in `feature/logs/update`):
 - **Technician Section**: A new section (e.g., below the work description or date) labeled "Performed By".
 - **Empty State**: Shows "Unassigned" or "Select Technician" with a '+' or 'person' icon.
 - **Selected State**: Displays the selected Technician's Name and Certificate details (e.g., "John Doe - A&P 123456").

@@ -99,22 +99,22 @@ Embedding the `repeated Attachment` metadata in the parent protobuf keeps reads 
 
 ## Module Design
 
-Following the canonical feature module pattern, attachments are a cross-cutting concern shared by `feature/maintenance` and `feature/inspection`. They belong in `core/`, and follow the same layered structure used in feature modules:
+Following the canonical feature module pattern, attachments are a cross-cutting concern shared by `feature/logs` and `feature/tasks`. They belong in `feature/attachment/`, and follow the same layered structure used in feature modules:
 
 ```
-core/
-  attachments/
-    model/          ← AttachmentType enum, any domain wrappers around the proto
-    datamanager/    ← AttachmentManager interface + Firebase Storage impl + Koin module
+feature/
+  attachment/
+    model/          ← AttachmentStatus, AttachmentWithState, BlobSyncState, PendingAttachment
+    datamanager/    ← AttachmentManager interface + LocalBlobStore impl + Koin module
     sharedassets/   ← strings ("Attachments", "Add attachment", …), type icons
     viewing/        ← AttachmentRow, AttachmentThumbnail, AttachmentSection (read-only, stateless)
 ```
 
-The picker sheet (edit-time UI) lives in the consuming feature's `update` module, not in `core/attachments/viewing`, because it requires ViewModel interaction. Shared strings and icons used by both picker and viewer belong in `core/attachments/sharedassets/`.
+The picker sheet (edit-time UI) lives in the consuming feature's `update` module, not in `feature/attachment/viewing`, because it requires ViewModel interaction. Shared strings and icons used by both picker and viewer belong in `feature/attachment/sharedassets/`.
 
 The `Attachment` proto message itself lives in `core/model` alongside the other proto messages (same as today — all protos compile there).
 
-### `AttachmentManager` interface (`core/attachments/datamanager`)
+### `AttachmentManager` interface (`feature/attachment/datamanager`)
 
 ```kotlin
 interface AttachmentManager {
@@ -152,9 +152,9 @@ The original `suspend fun uploadFile(…): Result<Attachment>` signature is repl
 
 `AttachmentManagerImpl` uses `dev.gitlive.firebase.storage.FirebaseStorage` (already in the GitLive KMP SDK dependency).
 
-### `AttachmentStoragePath` helper (`core/attachments/datamanager`)
+### `AttachmentStoragePath` helper (`feature/attachment/datamanager`)
 
-Centralises path construction so both maintenance and inspection build identical, predictable paths:
+Centralises path construction so both maintenance log and task builds use identical, predictable paths:
 
 ```kotlin
 object AttachmentStoragePath {
@@ -255,7 +255,7 @@ User taps Save
          Same existing save path — the attachments field is just populated now
 ```
 
-Step 4 is the existing `MaintenanceLogManager.addLog/updateLog` or `InspectionManager.addInspection/updateInspection` — no change to those interfaces. The caller populates `log.attachments` before calling the manager.
+Step 4 is the existing `MaintenanceLogManager.addLog/updateLog` or `TaskDataManager.addTask/updateTask` — no change to those interfaces. The caller populates `log.attachments` before calling the manager.
 
 **Why upload before save (not after)?** The parent document stores `download_url` in the attachment metadata. The URL is only known post-upload, so the upload must precede the Firestore write. The parent document is never saved in a state where it has a `storage_path` but no `download_url`.
 
@@ -352,7 +352,7 @@ This is only needed on retry — the happy path trusts the stored `download_url`
 
 ## View Flow — Attachment List Composables
 
-These live in `core/attachments/viewing` and are stateless. No Coil dependency — the list uses type icons only; there is no in-app rendering of file contents.
+These live in `feature/attachment/viewing` and are stateless. No Coil dependency — the list uses type icons only; there is no in-app rendering of file contents.
 
 ### `AttachmentRow`
 
@@ -523,22 +523,21 @@ This is best-effort: if Storage deletion fails, the Firestore document is still 
 ## Dependency Graph (additions only)
 
 ```
-core/model                    ← Attachment proto message added here
-core/attachments/datamanager  ← AttachmentManager, UploadState, OpenState,
-                                  AttachmentOpener (expect), AttachmentStoragePath
-  depends on: core/model, Firebase Storage, Koin
-core/attachments/sharedassets ← strings (attachments label, add attachment, …), type icons
+core/model                          ← Attachment proto message added here
+feature/attachment/datamanager      ← AttachmentManager, LocalBlobStore, AttachmentOpener (expect)
+  depends on: core/model, core/storage, Firebase Storage, Koin
+feature/attachment/sharedassets     ← strings (attachments label, add attachment, …), type icons
   depends on: Compose resources only
-core/attachments/viewing      ← AttachmentRow, AttachmentSection (read-only, no Coil)
-  depends on: core/model, core/attachments/sharedassets, core/ui, Compose
+feature/attachment/viewing          ← AttachmentRow, AttachmentSection (read-only, no Coil)
+  depends on: core/model, feature/attachment/sharedassets, core/ui, Compose
 
-feature/maintenance            ← adds dep on core/attachments/viewing
-                                  picker sheet lives here (update submodule)
-feature/inspection/viewing    ← adds dep on core/attachments/viewing
-feature/inspection/update     ← picker sheet lives here; adds dep on core/attachments/datamanager
+feature/logs                   ← adds dep on feature/attachment/viewing
+                                  picker sheet lives in update submodule
+feature/tasks/viewing         ← adds dep on feature/attachment/viewing
+feature/tasks/update          ← picker sheet lives here; adds dep on feature/attachment/datamanager
 ```
 
-`feature/maintenance/database` and `feature/inspection/datamanager` gain the `AttachmentManager` as an injected dependency (for file deletion on parent delete).
+`feature/logs/datamanager` and `feature/tasks/datamanager` gain the `AttachmentManager` as an injected dependency (for file deletion on parent delete).
 
 ---
 

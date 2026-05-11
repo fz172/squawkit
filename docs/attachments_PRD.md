@@ -2,15 +2,15 @@
 
 ## Overview
 
-Users need to attach supporting documents and media to maintenance log entries and inspection cards — service letters, AD notices, photos of work performed, 8130 forms, part condition photos, manufacturer manuals, and external references. Today there is no way to link these to a specific log or inspection item, so records are incomplete and users have to manage files externally.
+Users need to attach supporting documents and media to maintenance log entries and maintenance tasks — service letters, AD notices, photos of work performed, 8130 forms, part condition photos, manufacturer manuals, and external references. Today there is no way to link these to a specific log or maintenance task, so records are incomplete and users have to manage files externally.
 
 ---
 
 ## Goals
 
 - Allow users to attach one or more files or links to any maintenance log entry.
-- Allow users to attach one or more files or links to any inspection card.
-- Attachments are accessible when viewing the log or inspection item.
+- Allow users to attach one or more files or links to any maintenance task.
+- Attachments are accessible when viewing the log or maintenance task.
 - Supported attachment types: images (JPG, HEIC, PNG), PDFs, plain text files, any other file the phone can open, and hyperlinks.
 - Files are stored in the cloud and accessible across devices.
 
@@ -33,14 +33,14 @@ Users need to attach supporting documents and media to maintenance log entries a
 - As a mechanic, I can remove an attachment I added before saving.
 
 **Inspection card — add/edit**
-- As an owner, when creating or editing an inspection card for an AD or SB, I can attach the relevant document so the card is self-contained.
+- As an owner, when creating or editing an maintenance task for an AD or SB, I can attach the relevant document so the card is self-contained.
 - As an owner, I can attach a hyperlink to the manufacturer's SB page.
 
 **Viewing**
 - As a user, when I tap an image attachment, it opens full-screen inside the app.
 - As a user, when I tap a PDF or other file attachment, it opens using the phone's default viewer (Files app, PDF reader, etc.).
 - As a user, when I tap a hyperlink attachment, it opens in the default browser.
-- As a user, attachments are listed on the log detail view and on the inspection detail sheet.
+- As a user, attachments are listed on the log detail view and on the task detail sheet.
 
 ---
 
@@ -51,18 +51,18 @@ Users need to attach supporting documents and media to maintenance log entries a
 | ID | Requirement |
 |----|-------------|
 | F1 | Add/remove attachments during maintenance log create and edit flows. |
-| F2 | Add/remove attachments during inspection card create and edit flows. |
+| F2 | Add/remove attachments during maintenance task create and edit flows. |
 | F3 | Display all attachments on the maintenance log detail view. |
-| F4 | Display all attachments on the inspection detail sheet. |
+| F4 | Display all attachments on the task detail sheet. |
 | F5 | Support image, PDF, plain text, generic file, and hyperlink attachment types. |
 | F6 | In-app full-screen viewer for image attachments. |
 | F7 | System-delegate opening for PDF, text, and generic file attachments. |
 | F8 | System browser opening for hyperlink attachments. |
 | F9 | Attachments persist across devices (cloud-backed). |
-| F10 | Deleting a maintenance log or inspection card also deletes its uploaded files from storage. |
+| F10 | Deleting a maintenance log or maintenance task also deletes its uploaded files from storage. |
 | F11 | Each attachment has a user-visible display name that can be customised (defaults to filename or domain for links). |
-| F12 | Per-parent size cap: the sum of file attachment sizes on any one log or inspection card must not exceed **25 MB**. The picker enforces this before adding a file. |
-| F13 | Per-user storage cap: the sum of all of a user's file attachments across every log and inspection card must not exceed **1 GB**. The picker enforces this before adding a file. |
+| F12 | Per-parent size cap: the sum of file attachment sizes on any one log or maintenance task must not exceed **25 MB**. The picker enforces this before adding a file. |
+| F13 | Per-user storage cap: the sum of all of a user's file attachments across every log and maintenance task must not exceed **1 GB**. The picker enforces this before adding a file. |
 | F14 | Per-parent duplicate prevention: the picker rejects a file whose content matches another file already attached (or pending) on the same log/card. Identity is by sha256 of the bytes; filename and display name don't count. |
 
 ### Non-Functional
@@ -73,7 +73,7 @@ Users need to attach supporting documents and media to maintenance log entries a
 | N2 | (R1) Each save shows a progress indicator while uploads are in flight. **(R2 supersedes — per-attachment status badge on the row instead of a save-level spinner.)** |
 | N3 | If an upload fails mid-save, already-uploaded files for that save attempt are cleaned up (best-effort). |
 | N4 | Attachment metadata is included in the same Firestore write as the parent document (atomic with respect to metadata). |
-| N5 | No change to existing log or inspection data that has no attachments. |
+| N5 | No change to existing log or task data that has no attachments. |
 | N6 | (R2) Quotas are enforced client-side in the picker. Server-side enforcement is best-effort — Firebase Storage rules should reject obviously-oversized objects (>25 MB single put), but per-user 1 GB is a client-side soft cap. |
 
 ---
@@ -94,7 +94,7 @@ Located at the bottom of the relevant form (below existing fields):
 
 ### Viewing
 
-- Attachments section appears on the log detail view and the inspection detail sheet below existing content.
+- Attachments section appears on the log detail view and the task detail sheet below existing content.
 - Each attachment is a tappable row: type icon | name | size or domain | **sync-state icon**.
 - Tap behaviour is type-driven (see F6–F8).
 - If there are no attachments, the section is hidden.

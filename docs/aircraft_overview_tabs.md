@@ -1,5 +1,7 @@
 # Aircraft Overview: 3-Tab Refactor Plan
 
+**Status: IMPLEMENTED** — All open questions resolved; code lives in `feature/aircraft/dashboard/`.
+
 ## Goal
 
 Split `AircraftOverviewContent` into three tabs — **Overview**, **Maintenance Tasks**, and **Logs** — to reduce vertical scroll depth and give each concern its own focused screen area.

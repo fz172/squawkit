@@ -25,7 +25,7 @@
 
 ## 2. Module layout
 
-Two new gradle modules. Both are KMM library modules under `core/`.
+Two new Gradle modules: `core/storage` (M1) and `feature/sync/data` (M3). Note: the sync engine landed in `feature/sync/` rather than `core/sync/` to keep core free of Firestore dependencies.
 
 ```
 core/
@@ -50,18 +50,25 @@ core/
     src/iosMain/kotlin/.../impl/
       DriverFactory.ios.kt                  #   NativeSqliteDriver(schema, "wingslog.db")
 
-  sync/                                     # M3
-    src/commonMain/kotlin/.../core/sync/
-      SyncEngine.kt
-      PushWorker.kt
-      PullListener.kt
-      HydrationRunner.kt
-      SyncCursorStore.kt
-      SyncPreferences.kt                    #   wraps Multiplatform Settings
-      di/SyncModule.kt
+feature/
+  sync/
+    data/                                   # M3 — sync engine (Gradle module: :feature:sync:data)
+      src/commonMain/kotlin/.../sync/data/
+        SyncEngine.kt
+        PushWorker.kt
+        PullListener.kt
+        HydrationRunner.kt
+        SyncCursorStore.kt
+        SyncPreferences.kt                  #   wraps Multiplatform Settings
+        FirestorePullSubscription.kt
+        FirestoreRemoteFetcher.kt
+        FirestoreSyncWriter.kt
+        di/SyncModule.kt
+    settings/                               #   SyncSettingsScreen, SyncSettingsViewModel
+    sharedassets/                           #   Sync-related strings/drawables
 ```
 
-`composeApp/di/initKoin.kt` adds `storageModule` and `syncModule` to the aggregate list.
+`composeApp/di/initKoin.kt` adds `storageModule`, `platformStorageModule`, `syncModule`, and `blobSchedulerModule` to the aggregate list.
 
 ---
 
@@ -490,9 +497,9 @@ Each manager gets a unit test (`kmm-test-writer`) verifying `Flow` emissions on 
 
 After M2, `core/database` is reduced to:
 - `generateRandomId()` (still useful for new entity ids)
-- Firestore document/collection refs **only used by `core/sync`** — the constants (`AIRCRAFT_INFO_BLOB`, paths) move to `core/sync` since that's their sole consumer.
+- Firestore document/collection refs **only used by `feature/sync/data`** — the constants (`AIRCRAFT_INFO_BLOB`, paths) move to `feature/sync/data` since that's their sole consumer.
 
-The `expect`/`actual` `setEncoded` and `getBlobAsBytes` extensions move to `core/sync` (or are inlined into the sync engine). `core/database` becomes a placeholder that may be deleted in R2.
+The `expect`/`actual` `setEncoded` and `getBlobAsBytes` extensions move to `feature/sync/data` (or are inlined into the sync engine). `core/database` becomes a placeholder that may be deleted in R2.
 
 ---
 
@@ -660,7 +667,7 @@ Spin up an emulator, sign in as a new user, write data, force-quit, restart, ver
 ## 12. Rollout
 
 - Build-time flag `ENABLE_LOCAL_FIRST_R1` defaults `false` in `app/build.gradle.kts`. Internal/dogfood builds flip to `true`.
-- When disabled, R1 modules are present but inert — `core/sync` doesn't start, managers fall back to the old Firestore code path. (Implementation: keep both `FleetManagerImpl` and a new `FleetManagerLocalImpl`; the Koin binding is conditional on the flag for one release.)
+- When disabled, R1 modules are present but inert — `feature/sync/data` doesn't start, managers fall back to the old Firestore code path. (Implementation: keep both `FleetManagerImpl` and a new `FleetManagerLocalImpl`; the Koin binding is conditional on the flag for one release.)
 - Staged rollout: 10% → 50% → 100% over ~2 weeks per stage. Watch:
   - Crash-free rate (target: ≥ pre-R1 baseline).
   - Firestore read count (expect: large drop — UI no longer subscribes per-screen).
@@ -694,6 +701,6 @@ After 100% holds for a week, the old Firestore-direct manager impls are deleted 
 
 ## 14. Summary
 
-R1 = three new modules (`core/storage`, `core/sync`, settings UI row), six manager refactors, one schema (`entity` + `sync_cursor`), one engine (push + pull + hydrate). Attachments stay on the existing path. Anonymous users get the app for everything except attachments. Permanent users get sync for free.
+R1 = three new modules (`core/storage`, `feature/sync/data`, settings UI row), six manager refactors, one schema (`entity` + `sync_cursor`), one engine (push + pull + hydrate). Attachments stay on the existing path. Anonymous users get the app for everything except attachments. Permanent users get sync for free.
 
 Estimated work: ~3 weeks of single-engineer effort, plus 1 week of staged rollout. Each milestone (M1, M2, M3, R1-M6) is independently testable but only ships behind the flag flipping in a single release.

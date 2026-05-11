@@ -61,20 +61,19 @@ The application focuses on General Aviation (GA) aircraft management, specifical
     - **File Types**: PDF (8130, STC paperwork), Images (photos, physical logbook pages).
     - **Input Methods**: Device file storage, Camera capture.
 
-### 3.3 Maintenance Summary & Compliance (In Progress)
+### 3.3 Maintenance Summary & Compliance (Implemented)
 
 **Goal**: Provide an "at-a-glance" view of airworthiness status based on log inputs.
 
-- **Aircraft Overview Screen** (Implemented):
-    - Inspection status displayed as a **2-column card grid** (not horizontal scroll).
-    - **Log count stat cards**: Total logs + breakdown by Airframe / Engine / Propeller (live counts
-      from Firestore).
-    - "Log details" FAB navigates to maintenance log list.
-    - Note: "Airworthy" status chip removed — airworthiness determination is deferred to Phase 4.
-- **Automated Tracking** (Future):
-    - **Next 100-Hour Inspection**: Based on last inspection Tach time + 100.
-    - **Next Annual Inspection**: Based on last Annual date + 12 calendar months.
-    - **ELT Check**: Due date tracking.
+- **Aircraft Overview Screen** (Implemented — 3-tab layout):
+    - **Overview tab**: Hero header (make/model, tail number), `ConfigurationCard` accordion, `CriticalAlertsSection` (overdue tasks), log stats / onboarding card.
+    - **Maintenance Tasks tab**: Active and complied tasks with a due/history toggle. `TaskCard` rows with due status. "Add Task" action.
+    - **Logs tab**: Embedded `MaintenanceLogListContent` with search bar, component filter, log cards, detail sheet, and "Add Log" FAB.
+    - Tab selection resets to Overview on back-stack re-entry.
+- **Compliance Tracking** (`feature/tasks` — Implemented):
+    - Maintenance tasks define recurring inspection requirements (100-hr, Annual, ELT, Altimeter/Pitot-Static, Transponder, AD compliance, etc.).
+    - `TaskDueManager` computes `DueStatus` per task by comparing last-complied log entry against task schedule (tach-based or calendar-based).
+    - Overdue and due-soon tasks surface in `CriticalAlertSection` on the Overview tab.
 - **Reminders** (Future):
     - **Push Notifications**: Alert when service approaching.
     - **In-App Alerts**: Dashboard banners for due items.
@@ -94,15 +93,16 @@ The application focuses on General Aviation (GA) aircraft management, specifical
 
 ## 4. Technical Requirements
 
-- **Database**: **Firebase** (Firestore/Realtime Database) for cloud sync and persistence.
-- **Media Storage**: **Firebase Storage** for documents and images.
-- **Authentication**: Firebase Auth (Google Sign-In, Email/Password).
+- **Local Storage**: **SQLDelight** (SQLite) — primary on-device store for all proto-backed domain data (local-first architecture, R1 in progress).
+- **Cloud Sync**: **Firebase Firestore** — push/pull sync engine (`feature/sync/data`) for permanent signed-in users. Anonymous users work fully offline with no sync.
+- **Media Storage**: **Firebase Storage** for attachment files and images (R2).
+- **Authentication**: Firebase Auth (Google Sign-In, Email/Password, Anonymous).
 - **UI/UX**:
     - **Material Design 3** base.
-    - **Aesthetic**: Clean, minimalistic, and modern color scheme.
+    - **Aesthetic**: Clean, minimalistic, and modern color scheme (Refined Minimalism — see `.impeccable.md`).
     - **Usability**: Intuitive operation causing minimal friction for data entry.
     - Clear distinction between Airframe/Engine/Prop logs.
-    - Easy navigation between Fleet -> Aircraft Details -> Logs/Tools.
+    - Easy navigation between Fleet → Aircraft Overview (3 tabs) → Logs/Tasks.
 
 ## 5. Roadmap / Next Steps
 
@@ -111,6 +111,11 @@ The application focuses on General Aviation (GA) aircraft management, specifical
    Firestore subcollection `maintenance_logs`.
 3. **Phase 3** ✅ Log Entry UI (List, Create/Edit Form, Delete confirmation) + smart component
    picker. Attachment handling still pending.
-4. **Phase 4** (Next): Compliance Logic — automated tracking of inspection due dates (100hr, Annual,
-   ELT, Altimeter/Pitot-Static, Transponder). Surface in Aircraft Overview.
-5. **Phase 5**: Weight & Balance Calculator.
+4. **Phase 4** ✅ Compliance Logic — `feature/tasks` with `TaskDataManager` + `TaskDueManager`.
+   `DueStatus` computed per task; surfaced in Aircraft Overview (Maintenance Tasks tab + CriticalAlertSection).
+5. **Phase 5** (In Progress) — Local-first storage (R1): SQLDelight entity store + Firestore sync engine.
+   See `docs/storage_r1_design.md`.
+6. **Phase 6** (Planned) — Attachments R2: local blob store, background upload, lazy download.
+   See `docs/storage_r2_design.md`.
+7. **Phase 7** (Future) — Weight & Balance Calculator.
+8. **Phase 8** (Future) — Intelligent Search (FTS5 + vector embeddings). See `docs/intelligentsearch.md`.
