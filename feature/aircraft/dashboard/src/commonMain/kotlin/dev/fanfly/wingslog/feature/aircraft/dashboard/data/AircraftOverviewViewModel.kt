@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlin.time.Clock
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 class AircraftOverviewViewModel(
   private val fleetManager: FleetManager,
@@ -128,7 +131,22 @@ class AircraftOverviewViewModel(
               ),
             )
           }
-          val active = cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
+          val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+          val currentEngineHours = stats.currentEngineTime ?: 0.0
+          val active = cardsWithStatus
+            .filter { it.dueStatus.status != DueStatus.COMPLIED }
+            .sortedBy { task ->
+              val due = task.dueStatus
+              if (due.isImmediate) return@sortedBy Long.MIN_VALUE
+              val candidates = mutableListOf<Long>()
+              due.nextDueDate?.let {
+                candidates.add(it.toEpochDays() - today.toEpochDays())
+              }
+              due.nextDueEngine?.let {
+                candidates.add((it.toDouble() - currentEngineHours).toLong())
+              }
+              candidates.minOrNull() ?: Long.MAX_VALUE
+            }
           val complied = cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
 
           val current = _uiState.value as? AircraftOverviewUiState.Success
