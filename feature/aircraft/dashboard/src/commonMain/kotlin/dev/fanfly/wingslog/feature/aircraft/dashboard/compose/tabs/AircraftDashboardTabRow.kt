@@ -10,6 +10,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.aircraft.dashboard.generated.resources.Res
 import wingslog.feature.aircraft.dashboard.generated.resources.tab_logs
 import wingslog.feature.aircraft.dashboard.generated.resources.tab_overview
+import wingslog.feature.aircraft.dashboard.generated.resources.tab_squawks
 import wingslog.feature.aircraft.dashboard.generated.resources.tab_tasks
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,20 +21,18 @@ fun AircraftDashboardTabRow(
   modifier: Modifier = Modifier,
 ) {
   PrimaryTabRow(selectedTabIndex = selectedTabIndex, modifier = modifier) {
-    Tab(
-      selected = selectedTabIndex == 0,
-      onClick = { onTabSelected(0) },
-      text = { Text(stringResource(Res.string.tab_overview)) }
-    )
-    Tab(
-      selected = selectedTabIndex == 1,
-      onClick = { onTabSelected(1) },
-      text = { Text(stringResource(Res.string.tab_tasks)) }
-    )
-    Tab(
-      selected = selectedTabIndex == 2,
-      onClick = { onTabSelected(2) },
-      text = { Text(stringResource(Res.string.tab_logs)) }
-    )
+    AircraftTab.entries.forEachIndexed { index, tab ->
+      val label = when (tab) {
+        AircraftTab.OVERVIEW -> stringResource(Res.string.tab_overview)
+        AircraftTab.SQUAWKS  -> stringResource(Res.string.tab_squawks)
+        AircraftTab.TASKS    -> stringResource(Res.string.tab_tasks)
+        AircraftTab.LOGS     -> stringResource(Res.string.tab_logs)
+      }
+      Tab(
+        selected = selectedTabIndex == index,
+        onClick = { onTabSelected(index) },
+        text = { Text(label) },
+      )
+    }
   }
 }

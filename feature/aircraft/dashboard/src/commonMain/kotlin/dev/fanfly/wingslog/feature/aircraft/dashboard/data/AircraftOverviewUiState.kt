@@ -2,7 +2,9 @@ package dev.fanfly.wingslog.feature.aircraft.dashboard.data
 
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 
 data class LogStats(
@@ -31,5 +33,7 @@ sealed interface AircraftOverviewUiState {
     val syncStates: Map<String, BlobSyncState> = emptyMap(),
     val showLegacyAttachmentBanner: Boolean = false,
     val attachmentEnabled: Boolean = true,
+    val squawks: List<SquawkWithStatus> = emptyList(),
+    val aogSquawks: List<Squawk> = emptyList(),
   ) : AircraftOverviewUiState
 }

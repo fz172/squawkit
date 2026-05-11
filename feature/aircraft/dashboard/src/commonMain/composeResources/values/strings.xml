@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="tab_overview">Overview</string>
+  <string name="tab_squawks">Squawks</string>
   <string name="tab_tasks">Tasks</string>
   <string name="tab_logs">Logs</string>
 </resources>

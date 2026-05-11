@@ -15,14 +15,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
@@ -55,40 +53,12 @@ fun ComplianceSection(
       fontWeight = FontWeight.Bold,
     )
 
-    SingleChoiceSegmentedButtonRow(
-      modifier = Modifier.fillMaxWidth()
-    ) {
-      SegmentedButton(
-        selected = !showComplied,
-        onClick = { onToggleComplied(false) },
-        shape = SegmentedButtonDefaults.itemShape(
-          index = 0,
-          count = 2
-        )
-      ) {
-        Text(
-          stringResource(
-            SharedRes.string.due_with_count,
-            activeTasks.size
-          )
-        )
-      }
-      SegmentedButton(
-        selected = showComplied,
-        onClick = { onToggleComplied(true) },
-        shape = SegmentedButtonDefaults.itemShape(
-          index = 1,
-          count = 2
-        )
-      ) {
-        Text(
-          stringResource(
-            SharedRes.string.history_with_count,
-            completedTasks.size
-          )
-        )
-      }
-    }
+    DualSegmentedFilter(
+      option1 = stringResource(SharedRes.string.due_with_count, activeTasks.size),
+      option2 = stringResource(SharedRes.string.history_with_count, completedTasks.size),
+      selectedIndex = if (showComplied) 1 else 0,
+      onSelect = { onToggleComplied(it == 1) },
+    )
 
     val displayList = if (showComplied) completedTasks else activeTasks
 

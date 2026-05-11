@@ -8,6 +8,7 @@ sealed class Screen(val route: String) {
     const val CARD_ID = "cardId"
     const val LOG_ID = "logId"
     const val TECHNICIAN_ID = "technicianId"
+    const val SQUAWK_ID = "squawkId"
 
     const val CROSS_SCREEN_SUCCESS_MESSAGE = "success_message"
   }
@@ -57,5 +58,13 @@ sealed class Screen(val route: String) {
       aircraftId: String,
       logId: String,
     ) = "maintenance_log_edit/$aircraftId/$logId"
+  }
+
+  data object AddSquawk : Screen("squawk_create/{$AIRCRAFT_ID}") {
+    fun createRoute(aircraftId: String) = "squawk_create/$aircraftId"
+  }
+
+  data object EditSquawk : Screen("squawk_edit/{$AIRCRAFT_ID}/{$SQUAWK_ID}") {
+    fun createRoute(aircraftId: String, squawkId: String) = "squawk_edit/$aircraftId/$squawkId"
   }
 }

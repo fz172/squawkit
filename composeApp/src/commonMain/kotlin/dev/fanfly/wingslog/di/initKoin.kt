@@ -16,6 +16,8 @@ import dev.fanfly.wingslog.feature.settings.di.settingsModule
 import dev.fanfly.wingslog.feature.sync.data.blob.di.blobSchedulerModule
 import dev.fanfly.wingslog.feature.sync.data.di.syncModule
 import dev.fanfly.wingslog.feature.sync.settings.di.syncSettingsModule
+import dev.fanfly.wingslog.feature.squawk.datamanager.squawkModule
+import dev.fanfly.wingslog.feature.squawk.update.viewmodel.squawkUiModule
 import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
@@ -44,6 +46,8 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) = startKoin {
     aircraftDashboardModule,
     tasksModule,
     tasksUiModule,
+    squawkModule,
+    squawkUiModule,
     fleetDataManagerModule,
     appModule,
     settingsModule,

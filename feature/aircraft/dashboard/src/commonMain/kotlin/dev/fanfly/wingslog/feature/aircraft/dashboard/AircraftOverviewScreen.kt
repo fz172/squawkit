@@ -66,11 +66,14 @@ fun AircraftOverviewScreen(
 
         is AircraftOverviewEvent.NavigateToEditLog ->
           navController.navigate(
-            Screen.EditMaintenanceLog.createRoute(
-              event.aircraftId,
-              event.logId
-            )
+            Screen.EditMaintenanceLog.createRoute(event.aircraftId, event.logId)
           )
+
+        is AircraftOverviewEvent.NavigateToAddSquawk ->
+          navController.navigate(Screen.AddSquawk.createRoute(event.aircraftId))
+
+        is AircraftOverviewEvent.NavigateToEditSquawk ->
+          navController.navigate(Screen.EditSquawk.createRoute(event.aircraftId, event.squawkId))
       }
     }
   }

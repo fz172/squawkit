@@ -64,6 +64,8 @@ kotlin {
       implementation(project(":feature:logs:update"))
       implementation(project(":feature:tasks:update"))
       implementation(project(":feature:tasks:datamanager"))
+      implementation(project(":feature:squawk:datamanager"))
+      implementation(project(":feature:squawk:update"))
       implementation(project(":feature:fleet:viewing"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:aircraft:dashboard"))

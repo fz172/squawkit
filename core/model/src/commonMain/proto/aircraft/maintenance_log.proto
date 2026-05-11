@@ -33,4 +33,7 @@ message MaintenanceLog {
 
   // Technician who performed the work
   Technician technician = 13;
+
+  // Squawks addressed by this log entry
+  repeated string squawk_ids = 14;
 }
