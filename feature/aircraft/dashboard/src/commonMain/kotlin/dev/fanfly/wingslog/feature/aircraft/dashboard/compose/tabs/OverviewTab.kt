@@ -21,8 +21,8 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.LogOnboardingCard
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.LogStatsSection
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
-import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.AogAlertSection
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.CriticalAlertsSection
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.sharedassets.generated.resources.Res
@@ -52,8 +52,8 @@ fun OverviewTab(
       Text(
         text = stringResource(
           Res.string.make_model_template,
-          state.aircraft.make,
-          state.aircraft.model
+          state.aircraft.make.trim(),
+          state.aircraft.model.trim()
         ),
         style = WingslogTypography.heroDisplay,
         color = MaterialTheme.colorScheme.onSurface

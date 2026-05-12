@@ -21,11 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,12 +47,12 @@ import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsSharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.logs.viewing.generated.resources.edit_aircraft
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkSharedRes
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksSharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
-import wingslog.feature.logs.viewing.generated.resources.edit_aircraft
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,13 +67,6 @@ fun AircraftOverviewContent(
   val attachmentOpener: AttachmentOpener = koinInject()
   var taskSheetOpenError by remember { mutableStateOf<String?>(null) }
 
-  LaunchedEffect(state.showLegacyAttachmentBanner) {
-    if (state.showLegacyAttachmentBanner) {
-      snackbarHostState.showSnackbar("Some attachments were created before this version and may need to be re-downloaded.")
-      onAction(AircraftOverviewAction.DismissLegacyBanner)
-    }
-  }
-
   Scaffold(
     modifier = modifier,
     snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -82,19 +74,37 @@ fun AircraftOverviewContent(
       when (AircraftTab.entries.getOrNull(pagerState.currentPage)) {
         AircraftTab.SQUAWKS -> ExtendedFloatingActionButton(
           onClick = { onAction(AircraftOverviewAction.AddSquawkClick(state.aircraft.id)) },
-          icon = { Icon(Icons.Default.Add, contentDescription = null) },
+          icon = {
+            Icon(
+              Icons.Default.Add,
+              contentDescription = null
+            )
+          },
           text = { Text(stringResource(SquawkSharedRes.string.add_squawk)) },
         )
+
         AircraftTab.TASKS -> ExtendedFloatingActionButton(
           onClick = { onAction(AircraftOverviewAction.AddTaskClick(state.aircraft.id)) },
-          icon = { Icon(Icons.Default.Add, contentDescription = null) },
+          icon = {
+            Icon(
+              Icons.Default.Add,
+              contentDescription = null
+            )
+          },
           text = { Text(stringResource(TasksSharedRes.string.add_task)) },
         )
+
         AircraftTab.LOGS -> ExtendedFloatingActionButton(
           onClick = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
-          icon = { Icon(Icons.Default.Add, contentDescription = null) },
+          icon = {
+            Icon(
+              Icons.Default.Add,
+              contentDescription = null
+            )
+          },
           text = { Text(stringResource(LogsSharedRes.string.add_log)) },
         )
+
         else -> {}
       }
     },
@@ -202,7 +212,12 @@ fun AircraftOverviewContent(
             syncStates = state.syncStates,
             onNavigateToAddLog = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
             onNavigateToEditLog = { logId ->
-              onAction(AircraftOverviewAction.EditLogClick(state.aircraft.id, logId))
+              onAction(
+                AircraftOverviewAction.EditLogClick(
+                  state.aircraft.id,
+                  logId
+                )
+              )
             },
             onTaskClick = { taskId ->
               onAction(AircraftOverviewAction.TaskFromLogClick(taskId))

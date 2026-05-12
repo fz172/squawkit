@@ -55,7 +55,6 @@ class AircraftOverviewViewModel(
   val events = _events.receiveAsFlow()
 
   private var cachedLogs: List<MaintenanceLog> = emptyList()
-  private var legacyBannerDismissed = false
 
   init {
     loadAircraftAndStats()
@@ -173,9 +172,6 @@ class AircraftOverviewViewModel(
               .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
           } ?: emptyList()
 
-          val hasLegacy = logs.any { log ->
-            log.attachments.any { att -> att.sha256.isBlank() && att.storage_path.isNotBlank() }
-          }
 
           val squawksWithStatus = squawkList.map { it.toWithStatus() }
           val aogSquawks = squawkList.filter {
@@ -192,7 +188,6 @@ class AircraftOverviewViewModel(
             logsForSelectedTask = refreshedDetailLogs,
             deletingTaskId = current?.deletingTaskId,
             syncStates = syncStates,
-            showLegacyAttachmentBanner = hasLegacy && !legacyBannerDismissed,
             squawks = squawksWithStatus,
             aogSquawks = aogSquawks,
           )
@@ -273,15 +268,6 @@ class AircraftOverviewViewModel(
         showTaskDetails(card)
       }
 
-      AircraftOverviewAction.DismissLegacyBanner -> {
-        legacyBannerDismissed = true
-        _uiState.update { state ->
-          if (state is AircraftOverviewUiState.Success) {
-            state.copy(showLegacyAttachmentBanner = false)
-          } else state
-        }
-      }
-
       is AircraftOverviewAction.AddSquawkClick -> {
         viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddSquawk(action.aircraftId)) }
       }
@@ -290,7 +276,10 @@ class AircraftOverviewViewModel(
         val log = cachedLogs.firstOrNull { it.id == action.squawk.squawk.addressed_by_log_id }
         _uiState.update { state ->
           if (state is AircraftOverviewUiState.Success)
-            state.copy(selectedSquawk = action.squawk, logForSelectedSquawk = log)
+            state.copy(
+              selectedSquawk = action.squawk,
+              logForSelectedSquawk = log
+            )
           else state
         }
       }
@@ -298,7 +287,10 @@ class AircraftOverviewViewModel(
       AircraftOverviewAction.DismissSquawkDetail -> {
         _uiState.update { state ->
           if (state is AircraftOverviewUiState.Success)
-            state.copy(selectedSquawk = null, logForSelectedSquawk = null)
+            state.copy(
+              selectedSquawk = null,
+              logForSelectedSquawk = null
+            )
           else state
         }
       }
