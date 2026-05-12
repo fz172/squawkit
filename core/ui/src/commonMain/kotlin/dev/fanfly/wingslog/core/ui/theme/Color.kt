@@ -54,11 +54,24 @@ val StatusOk: Color
   @Composable
   get() = if (isSystemInDarkTheme()) StatusOkDark else StatusOkLight
 
-val StatusWarningLight = Color(0xFF8B5E00)    // Dark amber — caution / due soon (Light mode)
-val StatusWarningDark = Color(0xFFFFCA28)     // Bright amber for contrast (Dark mode)
+// Light Mode Colors
+val StatusWarningLight = Color(0xFF8B5E00)          // Darker text/icon
+val StatusWarningContainerLight = Color(0xFFFFECB3) // Pale background
+
+// Dark Mode Colors
+val StatusWarningDark = Color(0xFFFFCA28)           // Bright amber text/icon
+val StatusWarningContainerDark = Color(0xFF514500)  // Deep, dark gold background
 
 val StatusWarning: Color
   @Composable
-  get() = if (isSystemInDarkTheme()) StatusWarningDark else StatusWarningLight
+  get() = if (isSystemInDarkTheme())
+    StatusWarningDark
+  else
+    StatusWarningLight
 
-val StatusWarningContainer = Color(0xFFFFECB3)
+val StatusWarningContainer: Color
+  @Composable
+  get() = if (isSystemInDarkTheme())
+    StatusWarningContainerDark
+  else
+    StatusWarningContainerLight

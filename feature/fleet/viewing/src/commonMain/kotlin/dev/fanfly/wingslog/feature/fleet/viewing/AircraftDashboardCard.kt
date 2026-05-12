@@ -32,6 +32,7 @@ import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.core.ui.theme.StatusWarningContainer
+import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import org.jetbrains.compose.resources.stringResource
@@ -132,33 +133,71 @@ private fun HealthStatusBadge(
 @Preview
 @Composable
 fun AircraftDetailCardPreview() =
-  AircraftDashboardCard(
-    aircraft = Aircraft(
-      id = "123",
-      make = "Sling",
-      model = "TSi",
-      serial = "SLING532",
-      tail_number = "N532SL",
-      engine = listOf(
-        Engine(
-          make = "Rotax",
-          model = "915 iSa - 3",
-          serial = "915-0001",
-          propeller = Propeller(
-            hub = PropellerHub(
-              make = "Airmaster",
-              model = "AP430",
-              serial = "AP430-001"
-            ),
-            blades = listOf(
-              PropellerBlade(serial = "B-001"),
-              PropellerBlade(serial = "B-002"),
-              PropellerBlade(serial = "B-003")
+  WingslogTheme {
+    AircraftDashboardCard(
+      aircraft = Aircraft(
+        id = "123",
+        make = "Sling",
+        model = "TSi",
+        serial = "SLING532",
+        tail_number = "N532SL",
+        engine = listOf(
+          Engine(
+            make = "Rotax",
+            model = "915 iSa - 3",
+            serial = "915-0001",
+            propeller = Propeller(
+              hub = PropellerHub(
+                make = "Airmaster",
+                model = "AP430",
+                serial = "AP430-001"
+              ),
+              blades = listOf(
+                PropellerBlade(serial = "B-001"),
+                PropellerBlade(serial = "B-002"),
+                PropellerBlade(serial = "B-003")
+              )
             )
           )
         )
-      )
-    ),
-    onClick = {},
-    healthStatus = DueStatus.OVERDUE
-  )
+      ),
+      onClick = {},
+      healthStatus = DueStatus.OVERDUE
+    )
+  }
+
+@Preview
+@Composable
+fun AircraftDetailCardDueSoonPreview() =
+  WingslogTheme {
+    AircraftDashboardCard(
+      aircraft = Aircraft(
+        id = "123",
+        make = "Sling",
+        model = "TSi",
+        serial = "SLING532",
+        tail_number = "N532SL",
+        engine = listOf(
+          Engine(
+            make = "Rotax",
+            model = "915 iSa - 3",
+            serial = "915-0001",
+            propeller = Propeller(
+              hub = PropellerHub(
+                make = "Airmaster",
+                model = "AP430",
+                serial = "AP430-001"
+              ),
+              blades = listOf(
+                PropellerBlade(serial = "B-001"),
+                PropellerBlade(serial = "B-002"),
+                PropellerBlade(serial = "B-003")
+              )
+            )
+          )
+        )
+      ),
+      onClick = {},
+      healthStatus = DueStatus.DUE_SOON
+    )
+  }
