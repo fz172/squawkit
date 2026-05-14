@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 WingsLog is a **Kotlin Multiplatform Mobile (KMM)** app for aviation logbook and fleet management — aircraft CRUD, maintenance logs, inspection compliance tracking, and due-status computation. Targets Android (minSdk 33) and iOS sharing Compose Multiplatform UI.
 
+The user-facing app is branded **Hopply**; codebase identifiers (`wingslog`, package `dev.fanfly.wingslog`, Gradle module names) still use the original WingsLog name.
+
 The app is moving to a **local-first architecture** (R1 in progress): a SQLDelight entity store with a Firestore sync engine handles offline reads and push/pull sync. See `docs/storage_r1_design.md`.
 
 ## Build & CI Commands
@@ -23,7 +25,7 @@ CI (`.github/workflows/ci.yml`) runs lint → assembleDebug → testDebugUnitTes
 
 ```
 app/                    # Android entry point (MainActivity, WingsLogApplication)
-composeApp/             # Shared Compose UI — navigation graph (AppEntry.kt) + central Koin init
+composeApp/             # Shared Compose UI — nested navigation sub-graphs rooted at AppEntry + central Koin init
 core/
   model/                # Wire-generated protobuf models (Aircraft, MaintenanceLog, InspectionCard…)
   ui/                   # Material 3 theme, color tokens, shared Compose components
@@ -50,6 +52,12 @@ feature/
     sharedassets/       #   Strings, drawables
     viewing/            #   TaskCard, TaskDetailSheet (read-only composables)
     update/             #   AddTaskScreen, EditTaskScreen, ViewModels, form sections
+  squawk/               # Aircraft squawk (defect/discrepancy) tracking (canonical layout)
+    model/              #   Squawk domain types
+    datamanager/        #   SquawkManager
+    sharedassets/       #   Strings, drawables
+    viewing/            #   Squawk list/detail composables
+    update/             #   Add/edit screens, ViewModels
   technician/           # Technician management
     datamanager/        #   TechnicianManager
     manage/             #   Combined list + edit screens + ViewModels (TechnicianListScreen, EditTechnicianScreen)
@@ -144,7 +152,7 @@ Firestore snapshot → Flow<List<Aircraft>> (FleetManagerImpl)
 Documents store binary blobs (e.g., field `AIRCRAFT_INFO_BLOB`). Decode: `Aircraft.ADAPTER.decode(doc.getBlobAsBytes(AIRCRAFT_INFO_BLOB))`. Proto definitions live in `core/model/src/commonMain/proto/`.
 
 ### Local-first storage (R1)
-`core/storage` provides `EntityStore` (SQLDelight-backed), `CollectionKind`, and Koin modules. `feature/sync/data` implements the sync engine: `SyncEngine` orchestrates `HydrationRunner` (initial pull), `PullListener` (real-time Firestore updates), and `PushWorker` (local → Firestore writes). Binary blob transfers use platform WorkManager (Android) and URLSession (iOS). See `docs/storage_r1_design.md`.
+`core/storage` provides `EntityStore` (SQLDelight-backed), `CollectionKind`, and Koin modules. `feature/sync/data` implements the sync engine: `SyncEngine` orchestrates `HydrationRunner` (initial pull), `PullListener` (real-time Firestore updates), and `PushWorker` (local → Firestore writes). Aircraft-scoped collections (tasks, logs, squawks) sync per-aircraft. Binary blob transfers use platform WorkManager (Android) and URLSession (iOS). See `docs/storage_r1_design.md`.
 
 ### Dependency Injection
 - Central aggregation: `composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/di/initKoin.kt`
