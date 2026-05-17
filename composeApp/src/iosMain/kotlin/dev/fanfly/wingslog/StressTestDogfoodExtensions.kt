@@ -8,9 +8,7 @@ import dev.fanfly.wingslog.feature.stresstest.config.registerStressTestRoutes
 import dev.fanfly.wingslog.feature.stresstest.config.stressTestKoinModules
 import org.koin.core.module.Module
 
-fun createDogfoodExtensions(): DogfoodFeatureExtensions = StressTestDogfoodExtensions()
-
-private class StressTestDogfoodExtensions : DogfoodFeatureExtensions {
+class StressTestDogfoodExtensions : DogfoodFeatureExtensions {
   override fun registerRoutes(builder: NavGraphBuilder, navController: NavController) =
     registerStressTestRoutes(builder, navController)
 

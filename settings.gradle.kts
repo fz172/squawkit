@@ -68,3 +68,4 @@ include(":feature:squawk:viewing")
 include(":feature:squawk:update")
 
 include(":feature:stresstest")
+include(":feature:stresstest:config")

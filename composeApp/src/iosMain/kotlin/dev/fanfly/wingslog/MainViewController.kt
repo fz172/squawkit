@@ -17,6 +17,11 @@ object MainEntry {
     KoinPlatform.getKoin().get<TombstoneGc>().runOnce()
   }
 
+  fun doInitKoinDogfood() {
+    initKoin(dogfoodExtensions = StressTestDogfoodExtensions()) {}
+    KoinPlatform.getKoin().get<TombstoneGc>().runOnce()
+  }
+
   /**
    * Registers the background blob-scan [BGProcessingTask] with the OS. Must be called before
    * `application:didFinishLaunchingWithOptions:` returns. The task identifier

@@ -34,7 +34,11 @@ struct iosApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
     init() {
+        #if DOGFOOD
+        MainEntry.shared.doInitKoinDogfood()
+        #else
         MainEntry.shared.doInitKoin()
+        #endif
     }
 
     var body: some Scene {

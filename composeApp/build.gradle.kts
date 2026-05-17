@@ -98,6 +98,7 @@ kotlin {
       dependsOn(commonMain.get())
       dependencies {
         implementation(libs.ktor.client.darwin)
+        implementation(project(":feature:stresstest:config"))
       }
     }
 

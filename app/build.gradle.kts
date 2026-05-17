@@ -126,7 +126,7 @@ dependencies {
 
   implementation(project(":composeApp"))
   implementation(project(":feature:sync:data"))
-  "dogfoodImplementation"(project(":feature:stresstest"))
+  "dogfoodImplementation"(project(":feature:stresstest:config"))
   "dogfoodImplementation"(project(":core:ui"))
   "dogfoodImplementation"(libs.compose.foundation)
   "dogfoodImplementation"(libs.material3)
