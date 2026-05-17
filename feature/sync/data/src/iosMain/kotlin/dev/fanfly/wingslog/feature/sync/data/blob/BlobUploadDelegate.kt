@@ -72,7 +72,6 @@ class BlobUploadDelegate(
     }
   }
 
-  companion object {
-    private const val TAG = "BlobUploadDelegate"
-  }
 }
+
+private const val TAG = "BlobUploadDelegate"
