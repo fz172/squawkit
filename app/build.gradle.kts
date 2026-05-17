@@ -96,11 +96,13 @@ android {
     compose = true
   }
 
-  applicationVariants.all {
-    val suffix = if (flavorName == "dogfood") "dogfood" else buildType.name
-    outputs.all {
-      (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
-        .versionNameOverride = "$computedVersionName.$suffix"
+}
+
+androidComponents {
+  onVariants { variant ->
+    val suffix = if (variant.flavorName == "dogfood") "dogfood" else (variant.buildType ?: "debug")
+    variant.outputs.forEach { output ->
+      output.versionName.set("$computedVersionName.$suffix")
     }
   }
 }
