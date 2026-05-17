@@ -23,12 +23,19 @@ import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
 import dev.fanfly.wingslog.feature.technician.manage.di.technicianManageModule
 import dev.fanfly.wingslog.feature.featurelab.datamanager.di.featureLabModule
+import dev.fanfly.wingslog.DogfoodFeatureExtensions
+import dev.fanfly.wingslog.NoOpDogfoodExtensions
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
+import org.koin.dsl.module
 
-fun initKoin(appDeclaration: KoinAppDeclaration = {}) = startKoin {
+fun initKoin(
+  dogfoodExtensions: DogfoodFeatureExtensions = NoOpDogfoodExtensions,
+  appDeclaration: KoinAppDeclaration = {},
+) = startKoin {
   appDeclaration()
-  modules(
+  val allModules = dogfoodExtensions.koinModules() + listOf(
+    module { single<DogfoodFeatureExtensions> { dogfoodExtensions } },
     commonAuthModule,
     storageModule,
     platformStorageModule,
@@ -54,4 +61,5 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) = startKoin {
     syncSettingsModule,
     fleetViewingModule,
   )
+  modules(allModules)
 }

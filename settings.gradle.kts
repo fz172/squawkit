@@ -66,3 +66,5 @@ include(":feature:squawk:datamanager")
 include(":feature:squawk:sharedassets")
 include(":feature:squawk:viewing")
 include(":feature:squawk:update")
+
+include(":feature:stresstest")

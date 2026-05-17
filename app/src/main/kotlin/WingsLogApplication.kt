@@ -15,7 +15,7 @@ class WingsLogApplication : Application() {
     // Firebase is initialized implicitly by the google-services plugin on Android.
     logger.d { "WingsLogApplication started" }
 
-    initKoin {
+    initKoin(dogfoodExtensions = createDogfoodExtensions()) {
       androidContext(this@WingsLogApplication)
     }
     get<TombstoneGc>().runOnce()

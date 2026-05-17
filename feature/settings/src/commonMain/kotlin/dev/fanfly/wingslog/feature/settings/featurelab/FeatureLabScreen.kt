@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.settings.featurelab
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -46,6 +42,7 @@ import wingslog.feature.settings.generated.resources.feature_lab_technician_titl
 fun FeatureLabScreen(
   navController: NavController,
   viewModel: FeatureLabViewModel = koinViewModel(),
+  dogfoodContent: @Composable () -> Unit = {},
 ) {
   val flags by viewModel.flags.collectAsStateWithLifecycle()
 
@@ -93,67 +90,8 @@ fun FeatureLabScreen(
 
       HorizontalDivider()
 
-      Spacer(Modifier.height(Spacing.extraLarge))
-
-      Text(
-        text = "DEBUG TOOLS",
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(bottom = Spacing.small),
-      )
-
-      HorizontalDivider()
-
-      DebugNavRow(
-        icon = Icons.Default.BugReport,
-        title = "Data Stress Test",
-        subtitle = "Populate fake aircraft, logs, squawks, and tasks for UI testing",
-        onClick = { navController.navigate(Screen.DebugStressTest.route) },
-      )
-
-      HorizontalDivider()
+      dogfoodContent()
     }
-  }
-}
-
-@Composable
-private fun DebugNavRow(
-  icon: ImageVector,
-  title: String,
-  subtitle: String,
-  onClick: () -> Unit,
-) {
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clickable(onClick = onClick)
-      .padding(vertical = Spacing.medium),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Icon(
-      imageVector = icon,
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.padding(end = Spacing.medium),
-    )
-    Column(modifier = Modifier.weight(1f)) {
-      Text(
-        text = title,
-        style = MaterialTheme.typography.bodyLarge,
-        fontWeight = FontWeight.Medium,
-      )
-      Text(
-        text = subtitle,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-    Icon(
-      imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
   }
 }
 

@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.debugstresstest
+package dev.fanfly.wingslog.feature.stresstest
 
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.CertExpireLimit
