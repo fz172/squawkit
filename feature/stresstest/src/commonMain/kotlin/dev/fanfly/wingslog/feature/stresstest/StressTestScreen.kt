@@ -55,7 +55,7 @@ fun StressTestScreen(
     Scaffold(
         topBar = {
             WingsLogTopAppBar(
-                title = "Data Stress Test",
+                title = "Fake Data Generator",
                 onBackClick = { navController.popBackStack() },
             )
         }
@@ -318,21 +318,6 @@ private fun SliderRow(
             steps = range.last - range.first - 1,
             modifier = Modifier.fillMaxWidth(),
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                text = range.first.toString(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = range.last.toString(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
     }
 }
 
