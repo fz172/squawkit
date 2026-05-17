@@ -72,7 +72,6 @@ android {
   productFlavors {
     create("dogfood") {
       dimension = "environment"
-      applicationIdSuffix = ".dogfood"
     }
     create("prod") {
       dimension = "environment"
@@ -96,6 +95,14 @@ android {
   buildFeatures {
     compose = true
   }
+
+  applicationVariants.all {
+    val suffix = if (flavorName == "dogfood") "dogfood" else buildType.name
+    outputs.all {
+      (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
+        .versionNameOverride = "$computedVersionName.$suffix"
+    }
+  }
 }
 
 
@@ -118,6 +125,11 @@ dependencies {
   implementation(project(":composeApp"))
   implementation(project(":feature:sync:data"))
   "dogfoodImplementation"(project(":feature:stresstest"))
+  "dogfoodImplementation"(project(":core:ui"))
+  "dogfoodImplementation"(libs.compose.foundation)
+  "dogfoodImplementation"(libs.material3)
+  "dogfoodImplementation"(libs.material.icons.extended)
+  "dogfoodImplementation"(libs.androidx.navigation.compose)
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
