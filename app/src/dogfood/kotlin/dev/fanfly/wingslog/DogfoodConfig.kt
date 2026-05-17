@@ -26,13 +26,17 @@ import dev.fanfly.wingslog.feature.stresstest.StressTestScreen
 import dev.fanfly.wingslog.feature.stresstest.di.stressTestModule
 import org.koin.core.module.Module
 
-fun createDogfoodExtensions(): DogfoodFeatureExtensions = StressTestDogfoodExtensions()
+fun createDogfoodExtensions(): DogfoodFeatureExtensions =
+  StressTestDogfoodExtensions()
 
 private const val STRESS_TEST_ROUTE = "debug_stress_test"
 
 private class StressTestDogfoodExtensions : DogfoodFeatureExtensions {
 
-  override fun registerRoutes(builder: NavGraphBuilder, navController: NavController) {
+  override fun registerRoutes(
+    builder: NavGraphBuilder,
+    navController: NavController
+  ) {
     builder.composable(STRESS_TEST_ROUTE) {
       StressTestScreen(navController = navController)
     }
@@ -53,9 +57,9 @@ private class StressTestDogfoodExtensions : DogfoodFeatureExtensions {
     HorizontalDivider()
     Row(
       modifier = Modifier
-        .fillMaxWidth()
-        .clickable { navController.navigate(STRESS_TEST_ROUTE) }
-        .padding(vertical = Spacing.medium),
+          .fillMaxWidth()
+          .clickable { navController.navigate(STRESS_TEST_ROUTE) }
+          .padding(vertical = Spacing.medium),
       verticalAlignment = Alignment.CenterVertically,
     ) {
       Icon(
@@ -66,7 +70,7 @@ private class StressTestDogfoodExtensions : DogfoodFeatureExtensions {
       )
       Column(modifier = Modifier.weight(1f)) {
         Text(
-          text = "Data Stress Test",
+          text = "Fake Data Generator",
           style = MaterialTheme.typography.bodyLarge,
           fontWeight = FontWeight.Medium,
         )
