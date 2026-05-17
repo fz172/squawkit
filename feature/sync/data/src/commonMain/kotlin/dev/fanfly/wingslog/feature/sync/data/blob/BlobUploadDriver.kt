@@ -6,7 +6,6 @@ import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.feature.attachment.datamanager.BlobFilesystem
 import dev.fanfly.wingslog.feature.attachment.datamanager.LocalBlobStore
 import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.storage.Data
 import dev.gitlive.firebase.storage.FirebaseStorage
 
 /**
@@ -69,7 +68,7 @@ class BlobUploadDriver(
       ?: "${ref.scope.toPath().trim('/')}/blobs/${id.value}"
 
     return try {
-      storage.reference(remotePath).putData(Data(bytes))
+      storage.reference(remotePath).putData(bytes.toFirebaseData())
       blobs.markUploaded(id, remotePath)
       log.i { "uploaded ${id.value} → $remotePath" }
       true
