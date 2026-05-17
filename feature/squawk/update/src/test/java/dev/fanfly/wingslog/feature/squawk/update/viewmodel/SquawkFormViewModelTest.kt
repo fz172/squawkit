@@ -58,7 +58,9 @@ class SquawkFormViewModelTest {
 
     // Prevent the init-block flows from suspending forever.
     every { featureLabManager.observe() } returns flowOf(FeatureFlags())
-    every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(emptyList())
+    every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+      emptyList()
+    )
     every { logManager.observeLogs(TEST_AIRCRAFT_ID) } returns flowOf(emptyList())
   }
 
@@ -70,25 +72,27 @@ class SquawkFormViewModelTest {
   // ---- showDismissDialog ----
 
   @Test
-  fun showDismissDialog_setsShowDismissDialogToTrue() = runTest(testDispatcher) {
-    val viewModel = buildViewModelForEdit()
+  fun showDismissDialog_setsShowDismissDialogToTrue() =
+    runTest(testDispatcher) {
+      val viewModel = buildViewModelForEdit()
 
-    viewModel.showDismissDialog()
+      viewModel.showDismissDialog()
 
-    assertThat(viewModel.state.value.showDismissDialog).isTrue()
-  }
+      assertThat(viewModel.state.value.showDismissDialog).isTrue()
+    }
 
   // ---- hideDismissDialog ----
 
   @Test
-  fun hideDismissDialog_setsShowDismissDialogToFalse() = runTest(testDispatcher) {
-    val viewModel = buildViewModelForEdit()
-    viewModel.showDismissDialog()
+  fun hideDismissDialog_setsShowDismissDialogToFalse() =
+    runTest(testDispatcher) {
+      val viewModel = buildViewModelForEdit()
+      viewModel.showDismissDialog()
 
-    viewModel.hideDismissDialog()
+      viewModel.hideDismissDialog()
 
-    assertThat(viewModel.state.value.showDismissDialog).isFalse()
-  }
+      assertThat(viewModel.state.value.showDismissDialog).isFalse()
+    }
 
   @Test
   fun hideDismissDialog_whenAlreadyHidden_stateRemainsShowDismissDialogFalse() =
@@ -103,61 +107,77 @@ class SquawkFormViewModelTest {
   // ---- confirmDismiss — success ----
 
   @Test
-  fun confirmDismiss_callsDismissSquawkWithCorrectArguments() = runTest(testDispatcher) {
-    coEvery {
-      squawkManager.dismissSquawk(any(), any(), any())
-    } returns Result.success(Unit)
-    val viewModel = buildViewModelForEdit()
+  fun confirmDismiss_callsDismissSquawkWithCorrectArguments() =
+    runTest(testDispatcher) {
+      coEvery {
+        squawkManager.dismissSquawk(any(), any(), any())
+      } returns Result.success(Unit)
+      val viewModel = buildViewModelForEdit()
 
-    viewModel.confirmDismiss(SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE, "Dismissed")
-    advanceUntilIdle()
-
-    coVerify {
-      squawkManager.dismissSquawk(
-        TEST_AIRCRAFT_ID,
-        TEST_SQUAWK_ID,
+      viewModel.confirmDismiss(
         SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
+        "Dismissed"
       )
+      advanceUntilIdle()
+
+      coVerify {
+        squawkManager.dismissSquawk(
+          TEST_AIRCRAFT_ID,
+          TEST_SQUAWK_ID,
+          SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
+        )
+      }
     }
-  }
 
   @Test
-  fun confirmDismiss_onSuccess_emitsSaveSuccessEvent() = runTest(testDispatcher) {
-    coEvery {
-      squawkManager.dismissSquawk(any(), any(), any())
-    } returns Result.success(Unit)
-    val viewModel = buildViewModelForEdit()
+  fun confirmDismiss_onSuccess_emitsSaveSuccessEvent() =
+    runTest(testDispatcher) {
+      coEvery {
+        squawkManager.dismissSquawk(any(), any(), any())
+      } returns Result.success(Unit)
+      val viewModel = buildViewModelForEdit()
 
-    viewModel.confirmDismiss(SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE, "All good")
-    advanceUntilIdle()
+      viewModel.confirmDismiss(
+        SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
+        "All good"
+      )
+      advanceUntilIdle()
 
-    val event = viewModel.events.first()
-    assertThat(event).isInstanceOf(SquawkFormEvent.SaveSuccess::class.java)
-    assertThat((event as SquawkFormEvent.SaveSuccess).message).isEqualTo("All good")
-  }
-
-  @Test
-  fun confirmDismiss_hidesDialogBeforeCallingManager() = runTest(testDispatcher) {
-    coEvery {
-      squawkManager.dismissSquawk(any(), any(), any())
-    } returns Result.success(Unit)
-    val viewModel = buildViewModelForEdit()
-    viewModel.showDismissDialog()
-
-    viewModel.confirmDismiss(SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE, "Done")
-    // Dialog must be hidden synchronously before the suspend call executes.
-    assertThat(viewModel.state.value.showDismissDialog).isFalse()
-  }
+      val event = viewModel.events.first()
+      assertThat(event).isInstanceOf(SquawkFormEvent.SaveSuccess::class.java)
+      assertThat((event as SquawkFormEvent.SaveSuccess).message).isEqualTo("All good")
+    }
 
   @Test
-  fun confirmDismiss_withNoSquawkId_doesNotCallManager() = runTest(testDispatcher) {
-    val viewModel = buildViewModelForNew()
+  fun confirmDismiss_hidesDialogBeforeCallingManager() =
+    runTest(testDispatcher) {
+      coEvery {
+        squawkManager.dismissSquawk(any(), any(), any())
+      } returns Result.success(Unit)
+      val viewModel = buildViewModelForEdit()
+      viewModel.showDismissDialog()
 
-    viewModel.confirmDismiss(SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE, "Done")
-    advanceUntilIdle()
+      viewModel.confirmDismiss(
+        SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE,
+        "Done"
+      )
+      // Dialog must be hidden synchronously before the suspend call executes.
+      assertThat(viewModel.state.value.showDismissDialog).isFalse()
+    }
 
-    coVerify(exactly = 0) { squawkManager.dismissSquawk(any(), any(), any()) }
-  }
+  @Test
+  fun confirmDismiss_withNoSquawkId_doesNotCallManager() =
+    runTest(testDispatcher) {
+      val viewModel = buildViewModelForNew()
+
+      viewModel.confirmDismiss(
+        SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
+        "Done"
+      )
+      advanceUntilIdle()
+
+      coVerify(exactly = 0) { squawkManager.dismissSquawk(any(), any(), any()) }
+    }
 
   // ---- reopen — success ----
 
@@ -216,7 +236,12 @@ class SquawkFormViewModelTest {
     // If an event were emitted it would be collectible; verifying no manager-side event
     // by asserting the collect produces nothing before a timeout is complex with channels,
     // so we assert the manager was called and trust no success path fired.
-    coVerify(exactly = 1) { squawkManager.reopenSquawk(TEST_AIRCRAFT_ID, TEST_SQUAWK_ID) }
+    coVerify(exactly = 1) {
+      squawkManager.reopenSquawk(
+        TEST_AIRCRAFT_ID,
+        TEST_SQUAWK_ID
+      )
+    }
   }
 
   // ---- helpers ----

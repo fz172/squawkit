@@ -21,17 +21,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
-import wingslog.feature.squawk.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.squawk.sharedassets.generated.resources.dismiss_reason_duplicate
-import wingslog.feature.squawk.sharedassets.generated.resources.dismiss_reason_not_reproducible
-import wingslog.feature.squawk.sharedassets.generated.resources.dismiss_reason_obsolete
 import wingslog.feature.squawk.update.generated.resources.Res
 import wingslog.feature.squawk.update.generated.resources.dismiss_confirm
 import wingslog.feature.squawk.update.generated.resources.dismiss_squawk_title
 import wingslog.feature.squawk.update.generated.resources.dismiss_squawk_warning
+import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @Composable
 fun DismissSquawkDialog(
@@ -41,9 +38,10 @@ fun DismissSquawkDialog(
   var selected by remember { mutableStateOf<SquawkDismissReason?>(null) }
 
   val reasons = listOf(
-    SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE to stringResource(SharedRes.string.dismiss_reason_obsolete),
-    SquawkDismissReason.SQUAWK_DISMISS_REASON_NOT_REPRODUCIBLE to stringResource(SharedRes.string.dismiss_reason_not_reproducible),
-    SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE to stringResource(SharedRes.string.dismiss_reason_duplicate),
+    SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
+    SquawkDismissReason.SQUAWK_DISMISS_REASON_NOT_REPRODUCIBLE,
+    SquawkDismissReason.SQUAWK_DISMISS_REASON_INTENDED_BEHAVIOR,
+    SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE,
   )
 
   AlertDialog(
@@ -57,11 +55,11 @@ fun DismissSquawkDialog(
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(Spacing.medium))
-        reasons.forEach { (reason, label) ->
+        reasons.forEach { reason ->
           Row(
             modifier = Modifier
-              .fillMaxWidth()
-              .padding(vertical = Spacing.extraSmall),
+                .fillMaxWidth()
+                .padding(vertical = Spacing.extraSmall),
             verticalAlignment = Alignment.CenterVertically,
           ) {
             RadioButton(
@@ -69,7 +67,7 @@ fun DismissSquawkDialog(
               onClick = { selected = reason },
             )
             Text(
-              text = label,
+              text = reason.toLabel(),
               style = MaterialTheme.typography.bodyMedium,
               modifier = Modifier.padding(start = Spacing.small),
             )

@@ -16,7 +16,6 @@ import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
@@ -29,6 +28,7 @@ import wingslog.feature.squawk.sharedassets.generated.resources.squawk_priority_
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_reported_on
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_title_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_title_required
+import kotlin.time.Clock
 
 @Composable
 fun SquawkBasicTab(
@@ -43,7 +43,8 @@ fun SquawkBasicTab(
 ) {
   val displayDate = reportedDateFormatted.ifEmpty {
     remember {
-      Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat()
+      Clock.System.now()
+          .toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat()
     }
   }
 

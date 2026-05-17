@@ -36,7 +36,7 @@ fun EditSquawkRoute(
         is SquawkFormEvent.NavigateBack -> navController.popBackStack()
         is SquawkFormEvent.SaveSuccess -> {
           navController.previousBackStackEntry?.savedStateHandle
-            ?.set(CROSS_SCREEN_SUCCESS_MESSAGE, event.message)
+              ?.set(CROSS_SCREEN_SUCCESS_MESSAGE, event.message)
           navController.popBackStack()
         }
       }
@@ -56,7 +56,12 @@ fun EditSquawkRoute(
     onHideLogPicker = viewModel::hideLogPicker,
     onDismissClick = viewModel::showDismissDialog,
     onDismissDialogDismiss = viewModel::hideDismissDialog,
-    onDismissConfirm = { reason -> viewModel.confirmDismiss(reason, dismissedMessage) },
+    onDismissConfirm = { reason ->
+      viewModel.confirmDismiss(
+        reason,
+        dismissedMessage
+      )
+    },
     onReopenClick = { viewModel.reopen(reopenedMessage) },
     attachmentSection = {
       if (attachmentUploadEnabled) {

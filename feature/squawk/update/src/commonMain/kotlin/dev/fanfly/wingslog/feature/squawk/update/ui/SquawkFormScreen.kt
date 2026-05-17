@@ -45,11 +45,11 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
-import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 import wingslog.feature.squawk.update.generated.resources.dismiss_issue
 import wingslog.feature.squawk.update.generated.resources.reopen_issue
 import wingslog.feature.squawk.update.generated.resources.tab_basic
 import wingslog.feature.squawk.update.generated.resources.tab_details
+import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -72,16 +72,17 @@ fun SquawkFormScreen(
   attachmentSection: @Composable () -> Unit = {},
 ) {
   val isEdit = state.squawkId != null
-  val isDismissed = state.dismissReason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN
+  val isDismissed =
+    state.dismissReason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN
   val showDismissButton = isEdit && !state.isAddressedReadOnly && !isDismissed
   val screenTitle = if (isEdit) stringResource(Res.string.edit_squawk)
   else stringResource(Res.string.add_squawk)
 
   val hasChanges = if (isEdit) {
     state.title != state.initialTitle ||
-      state.description != state.initialDescription ||
-      state.priority != state.initialPriority ||
-      state.addressedByLogId != state.initialAddressedByLogId
+        state.description != state.initialDescription ||
+        state.priority != state.initialPriority ||
+        state.addressedByLogId != state.initialAddressedByLogId
   } else {
     state.title.isNotEmpty() || state.description.isNotEmpty()
   }
@@ -102,8 +103,14 @@ fun SquawkFormScreen(
   }
 
   val tabs = listOf(
-    IconLabelTabSpec(Icons.Default.Edit, stringResource(UpdateRes.string.tab_basic)),
-    IconLabelTabSpec(Icons.Default.Info, stringResource(UpdateRes.string.tab_details)),
+    IconLabelTabSpec(
+      Icons.Default.Edit,
+      stringResource(UpdateRes.string.tab_basic)
+    ),
+    IconLabelTabSpec(
+      Icons.Default.Info,
+      stringResource(UpdateRes.string.tab_details)
+    ),
   )
   val pagerState = rememberPagerState(pageCount = { tabs.size })
   val coroutineScope = rememberCoroutineScope()
@@ -122,7 +129,10 @@ fun SquawkFormScreen(
           },
           navigationIcon = {
             IconButton(onClick = { tryBack() }) {
-              Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+              Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = null
+              )
             }
           },
         )
@@ -136,8 +146,8 @@ fun SquawkFormScreen(
   ) { padding ->
     Column(
       modifier = Modifier
-        .padding(padding)
-        .fillMaxSize(),
+          .padding(padding)
+          .fillMaxSize(),
     ) {
       HorizontalPager(
         state = pagerState,
@@ -147,9 +157,9 @@ fun SquawkFormScreen(
       ) { page ->
         Column(
           modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(Spacing.screenPadding),
+              .fillMaxSize()
+              .verticalScroll(rememberScrollState())
+              .padding(Spacing.screenPadding),
         ) {
           when (page) {
             0 -> SquawkBasicTab(
@@ -161,6 +171,7 @@ fun SquawkFormScreen(
               readOnly = state.isAddressedReadOnly,
               titleError = state.titleError,
             )
+
             1 -> SquawkDetailsTab(
               description = state.description,
               onDescriptionChange = onDescriptionChange,

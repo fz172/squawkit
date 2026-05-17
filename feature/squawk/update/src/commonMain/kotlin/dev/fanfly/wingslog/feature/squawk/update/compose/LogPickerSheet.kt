@@ -24,8 +24,8 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
+import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,19 +50,21 @@ fun LogPickerSheet(
         fontWeight = FontWeight.Bold,
       )
 
-      val sorted = logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
+      val sorted =
+        logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
 
       LazyColumn(verticalArrangement = Arrangement.spacedBy(Spacing.none)) {
         items(sorted, key = { it.id }) { log ->
           val dateStr = if ((log.timestamp?.getEpochSecond() ?: 0L) > 0L)
-            log.timestamp!!.toLocalDate().toDisplayFormat()
+            log.timestamp!!.toLocalDate()
+                .toDisplayFormat()
           else ""
 
           Column(
             modifier = Modifier
-              .fillMaxWidth()
-              .clickable { onSelect(log.id) }
-              .padding(vertical = Spacing.medium),
+                .fillMaxWidth()
+                .clickable { onSelect(log.id) }
+                .padding(vertical = Spacing.medium),
             verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
           ) {
             Text(

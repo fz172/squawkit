@@ -29,15 +29,15 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.remove
-import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.dismissed_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_description_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_not_yet_addressed
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
 @Composable
 fun SquawkDetailsTab(
@@ -54,7 +54,8 @@ fun SquawkDetailsTab(
   attachmentSection: @Composable () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val isDismissed = dismissReason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN
+  val isDismissed =
+    dismissReason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN
   Column(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.large),
@@ -71,7 +72,8 @@ fun SquawkDetailsTab(
 
     // Maintenance history (edit mode only)
     if (isEdit) {
-      val associatedLog = availableLogs.firstOrNull { it.id == addressedByLogId }
+      val associatedLog =
+        availableLogs.firstOrNull { it.id == addressedByLogId }
 
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
         Row(
@@ -110,7 +112,10 @@ fun SquawkDetailsTab(
           isDismissed -> {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
               Text(
-                text = stringResource(Res.string.dismissed_label, dismissReason.toLabel()),
+                text = stringResource(
+                  Res.string.dismissed_label,
+                  dismissReason.toLabel()
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
               )
@@ -123,18 +128,21 @@ fun SquawkDetailsTab(
               }
             }
           }
+
           addressedByLogId.isEmpty() -> Text(
             text = stringResource(Res.string.squawk_not_yet_addressed),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
+
           else -> {
-            val displayText = associatedLog?.work_description?.takeIf { it.isNotBlank() }
-              ?: addressedByLogId
+            val displayText =
+              associatedLog?.work_description?.takeIf { it.isNotBlank() }
+                ?: addressedByLogId
             val logDate = associatedLog?.timestamp
-              ?.takeIf { it.getEpochSecond() > 0L }
-              ?.toLocalDate()
-              ?.toDisplayFormat()
+                ?.takeIf { it.getEpochSecond() > 0L }
+                ?.toLocalDate()
+                ?.toDisplayFormat()
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
               Row(
                 modifier = Modifier.fillMaxWidth(),

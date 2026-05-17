@@ -32,6 +32,7 @@
   <string name="squawk_reopened">Squawk reopened</string>
   <string name="dismiss_reason_obsolete">Obsolete</string>
   <string name="dismiss_reason_not_reproducible">Not reproducible</string>
+  <string name="dismiss_reason_intended_behavior">Intended behavior</string>
   <string name="dismiss_reason_duplicate">Duplicate</string>
   <string name="squawk_status_addressed">Addressed</string>
   <string name="squawk_status_dismissed">Dismissed</string>
