@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -52,7 +54,10 @@ fun AircraftDataCard(
   initiallyExpanded: Boolean = true,
 ) {
   var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
-  val rotationState by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
+  val rotationState by animateFloatAsState(
+    targetValue = if (expanded) 180f else 0f,
+    animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+  )
 
   Surface(
     modifier = Modifier.fillMaxWidth(),

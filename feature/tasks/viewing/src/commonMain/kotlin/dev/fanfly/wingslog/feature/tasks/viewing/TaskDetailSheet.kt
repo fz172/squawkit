@@ -29,15 +29,15 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue90
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusOk
-import dev.fanfly.wingslog.core.ui.theme.StatusOkDark
+import dev.fanfly.wingslog.core.ui.theme.StatusOkContainer
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.core.ui.theme.StatusWarningContainer
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
@@ -45,24 +45,25 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
 import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_ad_short
 import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_sb_short
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
 import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
-import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
 import wingslog.feature.tasks.viewing.generated.resources.completed
 import wingslog.feature.tasks.viewing.generated.resources.days_overdue_count
 import wingslog.feature.tasks.viewing.generated.resources.days_remaining
 import wingslog.feature.tasks.viewing.generated.resources.due_today
-import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
-import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.tasks.viewing.generated.resources.next_due_date
 import wingslog.feature.tasks.viewing.generated.resources.next_due_engine_hrs
 import wingslog.feature.tasks.viewing.generated.resources.no_maintenance_logs_for_task
 import wingslog.feature.tasks.viewing.generated.resources.on_condition
+import kotlin.time.Clock
+import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 
 private val HeroDueDateFormat = LocalDate.Format {
   monthName(MonthNames.ENGLISH_ABBREVIATED)
@@ -126,11 +127,13 @@ fun TaskDetailSheet(
 
     // Line 1: compliance type badge (SB / AD), if present
     val typeLabel = when (card.type) {
-      ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN ->
-        stringResource(SharedRes.string.compliance_type_sb_short)
+      ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> stringResource(
+        SharedRes.string.compliance_type_sb_short
+      )
 
-      ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE ->
-        stringResource(SharedRes.string.compliance_type_ad_short)
+      ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> stringResource(
+        SharedRes.string.compliance_type_ad_short
+      )
 
       else -> null
     }
@@ -138,22 +141,16 @@ fun TaskDetailSheet(
       Text(
         text = typeLabel,
         style = MaterialTheme.typography.labelSmall,
-        color = if (card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE)
-          MaterialTheme.colorScheme.onErrorContainer
-        else
-          MaterialTheme.colorScheme.onPrimaryContainer,
-        modifier = Modifier
-          .background(
-            if (card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE)
-              MaterialTheme.colorScheme.errorContainer
-            else
-              MaterialTheme.colorScheme.primaryContainer,
-            RoundedCornerShape(Spacing.badgeCornerRadius),
-          )
-          .padding(
-            horizontal = 6.dp,
-            vertical = Spacing.tiny
-          ),
+        color = if (card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) MaterialTheme.colorScheme.onErrorContainer
+        else MaterialTheme.colorScheme.onPrimaryContainer,
+        modifier = Modifier.background(
+          if (card.type == ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE) MaterialTheme.colorScheme.errorContainer
+          else MaterialTheme.colorScheme.primaryContainer,
+          RoundedCornerShape(Spacing.badgeCornerRadius),
+        )
+            .padding(
+              horizontal = 6.dp, vertical = Spacing.tiny
+            ),
       )
     }
 
@@ -254,8 +251,8 @@ private fun StatusBadge(dueStatus: DueMetadata) {
 
     dueStatus.status == DueStatus.DUE_SOON -> Triple(
       stringResource(SharedRes.string.maintenance_due_title),
+      StatusWarningContainer,
       StatusWarning,
-      Color.Black,
     )
 
     else -> return
@@ -267,21 +264,19 @@ private fun StatusBadge(dueStatus: DueMetadata) {
       letterSpacing = 0.5.sp,
     ),
     color = fgColor,
-    modifier = Modifier
-      .background(
-        bgColor,
-        RoundedCornerShape(20.dp)
-      )
-      .padding(
-        horizontal = Spacing.medium,
-        vertical = Spacing.extraSmall
-      ),
+    modifier = Modifier.background(
+      bgColor, RoundedCornerShape(Spacing.badgeCornerRadius)
+    )
+        .padding(
+          horizontal = Spacing.medium, vertical = Spacing.extraSmall
+        ),
   )
 }
 
 @Composable
 private fun DueDateHero(dueStatus: DueMetadata) {
-  val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+  val today = Clock.System.now()
+      .toLocalDateTime(TimeZone.currentSystemDefault()).date
   val accentColor = dueStatusColor(dueStatus.status)
 
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
@@ -293,16 +288,13 @@ private fun DueDateHero(dueStatus: DueMetadata) {
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = 0.5.sp,
           ),
-          color = Color.Black,
-          modifier = Modifier
-            .background(
-              StatusOkDark,
-              RoundedCornerShape(20.dp)
-            )
-            .padding(
-              horizontal = Spacing.medium,
-              vertical = Spacing.extraSmall
-            ),
+          color = StatusOk,
+          modifier = Modifier.background(
+            StatusOkContainer, RoundedCornerShape(Spacing.badgeCornerRadius)
+          )
+              .padding(
+                horizontal = Spacing.medium, vertical = Spacing.extraSmall
+              ),
         )
       }
 
@@ -320,13 +312,11 @@ private fun DueDateHero(dueStatus: DueMetadata) {
         val daysUntil = today.daysUntil(nextDueDate)
         val countdownText = when {
           daysUntil > 0 -> stringResource(
-            ViewingRes.string.days_remaining,
-            daysUntil
+            ViewingRes.string.days_remaining, daysUntil
           )
 
           daysUntil < 0 -> stringResource(
-            ViewingRes.string.days_overdue_count,
-            -daysUntil
+            ViewingRes.string.days_overdue_count, -daysUntil
           )
 
           else -> stringResource(ViewingRes.string.due_today)
@@ -340,7 +330,8 @@ private fun DueDateHero(dueStatus: DueMetadata) {
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-          text = HeroDueDateFormat.format(nextDueDate).uppercase(),
+          text = HeroDueDateFormat.format(nextDueDate)
+              .uppercase(),
           style = WingslogTypography.heroDisplay,
           color = accentColor,
         )
@@ -362,7 +353,8 @@ private fun DueDateHero(dueStatus: DueMetadata) {
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-          text = dueStatus.nextDueEngine!!.toDouble().formatToOneDecimalPlace(),
+          text = dueStatus.nextDueEngine!!.toDouble()
+              .formatToOneDecimalPlace(),
           style = WingslogTypography.heroDisplay,
           color = accentColor,
         )
@@ -374,13 +366,15 @@ private fun DueDateHero(dueStatus: DueMetadata) {
 @Composable
 private fun LogHistoryItem(log: MaintenanceLog) {
   val dateStr = if ((log.timestamp?.getEpochSecond() ?: 0L) > 0L) {
-    log.timestamp!!.toLocalDate().toDisplayFormat()
+    log.timestamp!!.toLocalDate()
+        .toDisplayFormat()
   } else {
     stringResource(SharedRes.string.unknown_date)
   }
 
   Column(
-    modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.extraSmall),
+    modifier = Modifier.fillMaxWidth()
+        .padding(vertical = Spacing.extraSmall),
     verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
   ) {
     Text(
@@ -389,8 +383,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
       fontWeight = FontWeight.Medium
     )
     Text(
-      text = log.work_description,
-      style = MaterialTheme.typography.bodyMedium
+      text = log.work_description, style = MaterialTheme.typography.bodyMedium
     )
   }
 }

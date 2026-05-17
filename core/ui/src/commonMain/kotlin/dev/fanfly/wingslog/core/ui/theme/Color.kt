@@ -19,8 +19,10 @@ val AppleSeparatorDark = Color(0xFF38383A)
 val AviationBlue80 = Color(0xFFA7C8FF)   // Primary — dark mode
 val AviationBlue40 = Color(0xFF1A5FAE)   // Primary — light mode
 val AviationBlue30 = Color(0xFF004785)   // Primary container — dark mode
-val AviationBlue90 = Color(0xFFD5E3FF)   // Primary container — light mode (soft sky blue)
-val AviationBlue10 = Color(0xFF001849)   // On primary container — light mode (deep navy)
+val AviationBlue90 =
+  Color(0xFFD5E3FF)   // Primary container — light mode (soft sky blue)
+val AviationBlue10 =
+  Color(0xFF001849)   // On primary container — light mode (deep navy)
 
 // --- Blue-Gray (secondary) ---
 // Cool, grounded. Pairs naturally with the blue primary and reads as "instrument panel."
@@ -36,7 +38,8 @@ val BlueGray10 = Color(0xFF0E1C2B)       // On secondary container — light mod
 val Amber80 = Color(0xFFFFBA4E)          // Tertiary — dark mode
 val Amber40 = Color(0xFF7A5200)          // Tertiary — light mode
 val Amber30 = Color(0xFF5B3D00)          // Tertiary container — dark mode
-val Amber90 = Color(0xFFFFDFA6)          // Tertiary container — light mode (warm amber tint)
+val Amber90 =
+  Color(0xFFFFDFA6)          // Tertiary container — light mode (warm amber tint)
 val Amber10 = Color(0xFF271900)          // On tertiary container — light mode
 
 // --- Semantic Status ---
@@ -48,11 +51,19 @@ val Amber10 = Color(0xFF271900)          // On tertiary container — light mode
 //   StatusWarning → amber caution annunciator — action required but not immediate
 val StatusOkLight =
   Color(0xFF276B39)          // Dark forest green — airworthy / compliant (Light mode)
-val StatusOkDark = Color(0xFF81C784)          // Light green for contrast (Dark mode)
+val StatusOkDark =
+  Color(0xFF81C784)          // Light green for contrast (Dark mode)
 
 val StatusOk: Color
   @Composable
   get() = if (isSystemInDarkTheme()) StatusOkDark else StatusOkLight
+
+val StatusOkContainerLight = Color(0xFFE3F2E8)
+val StatusOkContainerDark = Color(0xFF1B4D2B)
+
+val StatusOkContainer: Color
+  @Composable
+  get() = if (isSystemInDarkTheme()) StatusOkContainerDark else StatusOkContainerLight
 
 // Light Mode Colors
 val StatusWarningLight = Color(0xFF8B5E00)          // Darker text/icon
@@ -60,7 +71,8 @@ val StatusWarningContainerLight = Color(0xFFFFECB3) // Pale background
 
 // Dark Mode Colors
 val StatusWarningDark = Color(0xFFFFCA28)           // Bright amber text/icon
-val StatusWarningContainerDark = Color(0xFF514500)  // Deep, dark gold background
+val StatusWarningContainerDark =
+  Color(0xFF514500)  // Deep, dark gold background
 
 val StatusWarning: Color
   @Composable

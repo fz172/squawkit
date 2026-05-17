@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.tasks.update.compose
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -332,7 +334,10 @@ internal fun AdvancedLinkedSection(
 
   val borderColor = if (isLinkedMode) MaterialTheme.colorScheme.primary
   else MaterialTheme.colorScheme.outlineVariant
-  val rotation by animateFloatAsState(if (open) 180f else 0f)
+  val rotation by animateFloatAsState(
+    targetValue = if (open) 180f else 0f,
+    animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+  )
 
   Column(
     modifier = Modifier

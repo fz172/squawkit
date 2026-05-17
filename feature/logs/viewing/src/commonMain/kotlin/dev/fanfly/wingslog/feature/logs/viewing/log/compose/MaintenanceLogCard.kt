@@ -35,6 +35,8 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.StatusOk
+import dev.fanfly.wingslog.core.ui.theme.StatusOkContainer
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import kotlin.time.Instant
@@ -153,30 +155,27 @@ private data class BadgeScheme(
   val contentColor: Color,
 )
 
+@Composable
 private fun badgeSchemeFor(type: ComponentType): BadgeScheme = when (type) {
   ComponentType.COMPONENT_ENGINE -> BadgeScheme(
-    Color(0xFFD5E3FF),
-    Color(0xFF001849)
+    MaterialTheme.colorScheme.primaryContainer,
+    MaterialTheme.colorScheme.onPrimaryContainer,
   )
-
   ComponentType.COMPONENT_AIRFRAME -> BadgeScheme(
-    Color(0xFFE3F2E8),
-    Color(0xFF1B4D2B)
+    StatusOkContainer,
+    StatusOk,
   )
-
   ComponentType.COMPONENT_AVIONICS -> BadgeScheme(
-    Color(0xFFFFDFA6),
-    Color(0xFF4A3000)
+    MaterialTheme.colorScheme.tertiaryContainer,
+    MaterialTheme.colorScheme.onTertiaryContainer,
   )
-
   ComponentType.COMPONENT_PROPELLER -> BadgeScheme(
-    Color(0xFFEDE7F6),
-    Color(0xFF311B6B)
+    MaterialTheme.colorScheme.secondaryContainer,
+    MaterialTheme.colorScheme.onSecondaryContainer,
   )
-
   else -> BadgeScheme(
-    Color(0xFFF2F2F7),
-    Color(0xFF636366)
+    MaterialTheme.colorScheme.surfaceContainerHigh,
+    MaterialTheme.colorScheme.onSurfaceVariant,
   )
 }
 
