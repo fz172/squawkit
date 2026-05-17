@@ -48,7 +48,7 @@ fun SquawkPickerSheet(
         modifier = Modifier.padding(bottom = Spacing.small),
       )
 
-      LazyColumn(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+      LazyColumn(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
         items(openSquawks, key = { it.id }) { squawk ->
           Row(
             modifier = Modifier.fillMaxWidth(),

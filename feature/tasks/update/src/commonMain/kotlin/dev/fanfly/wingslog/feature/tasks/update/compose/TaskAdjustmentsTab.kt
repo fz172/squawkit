@@ -220,7 +220,7 @@ private fun RescheduleCard(
       .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .background(MaterialTheme.colorScheme.surfaceContainer)
       .border(
-        1.dp,
+        Spacing.hairline,
         borderColor,
         RoundedCornerShape(Spacing.cardCornerRadius)
       ),
@@ -273,7 +273,7 @@ private fun RescheduleCard(
         modifier = Modifier
           .fillMaxWidth()
           .border(
-            width = 1.dp,
+            width = Spacing.hairline,
             color = MaterialTheme.colorScheme.outlineVariant,
             shape = RoundedCornerShape(Spacing.none)
           )
@@ -367,7 +367,7 @@ private fun SkipCard(
       .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .background(bg)
       .border(
-        1.dp,
+        Spacing.hairline,
         borderColor,
         RoundedCornerShape(Spacing.cardCornerRadius)
       )
@@ -381,8 +381,8 @@ private fun SkipCard(
   ) {
     Box(
       modifier = Modifier
-        .size(36.dp)
-        .clip(RoundedCornerShape(10.dp))
+        .size(Spacing.huge)
+        .clip(RoundedCornerShape(Spacing.smallCornerRadius))
         .background(
           if (isSkipping) warning.copy(alpha = 0.18f)
           else MaterialTheme.colorScheme.surfaceContainerHighest
@@ -392,7 +392,7 @@ private fun SkipCard(
       Icon(
         if (isSkipping) Icons.Default.Check else Icons.Default.FastForward,
         contentDescription = null,
-        modifier = Modifier.size(18.dp),
+        modifier = Modifier.size(Spacing.large),
         tint = if (isSkipping) warning else MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
@@ -428,8 +428,8 @@ private fun AdjSectionLabel(
     if (complete) {
       Box(
         modifier = Modifier
-          .size(14.dp)
-          .clip(RoundedCornerShape(7.dp))
+          .size(Spacing.medium)
+          .clip(RoundedCornerShape(Spacing.extraSmall))
           .background(MaterialTheme.colorScheme.primary),
         contentAlignment = Alignment.Center,
       ) {

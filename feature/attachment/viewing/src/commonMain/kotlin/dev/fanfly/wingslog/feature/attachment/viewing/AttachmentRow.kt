@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -82,7 +83,7 @@ fun AttachmentRow(
       BlobSyncState.Downloading,
         -> CircularProgressIndicator(
         modifier = Modifier.size(Spacing.large),
-        strokeWidth = Spacing.tiny,
+        strokeWidth = 2.dp,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
 

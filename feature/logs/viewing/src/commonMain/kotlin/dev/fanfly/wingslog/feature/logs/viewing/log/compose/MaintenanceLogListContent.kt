@@ -160,7 +160,7 @@ fun MaintenanceLogListContent(
                   }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(Spacing.smallCornerRadius),
                 colors = OutlinedTextFieldDefaults.colors(
                   unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                   focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -170,11 +170,11 @@ fun MaintenanceLogListContent(
 
               Surface(
                 onClick = { showFilterSheet = true },
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(Spacing.smallCornerRadius),
                 color = if (filterActive) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surfaceContainer,
                 border = androidx.compose.foundation.BorderStroke(
-                  1.dp,
+                  Spacing.hairline,
                   if (filterActive) MaterialTheme.colorScheme.primary
                   else MaterialTheme.colorScheme.outlineVariant
                 ),
@@ -221,7 +221,7 @@ fun MaintenanceLogListContent(
               color = MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.padding(
                 horizontal = Spacing.screenPadding,
-                vertical = Spacing.tiny
+                vertical = Spacing.extraSmall
               ),
             )
 
@@ -251,7 +251,7 @@ fun MaintenanceLogListContent(
                   start = Spacing.screenPadding,
                   end = Spacing.screenPadding,
                   top = Spacing.small,
-                  bottom = 80.dp
+                  bottom = Spacing.buttonHeight + Spacing.extraLarge
                 ),
                 verticalArrangement = Arrangement.spacedBy(Spacing.medium)
               ) {
@@ -318,14 +318,14 @@ private fun ActiveFilterChip(
     shape = RoundedCornerShape(Spacing.chipCornerRadius),
     color = MaterialTheme.colorScheme.primaryContainer,
     border = androidx.compose.foundation.BorderStroke(
-      1.dp,
+      Spacing.hairline,
       MaterialTheme.colorScheme.primary
     ),
   ) {
     Row(
       modifier = Modifier.padding(
-        start = 10.dp,
-        end = 6.dp,
+        start = Spacing.small,
+        end = Spacing.extraSmall,
         top = Spacing.extraSmall,
         bottom = Spacing.extraSmall
       ),
@@ -339,13 +339,13 @@ private fun ActiveFilterChip(
       )
       IconButton(
         onClick = onDismiss,
-        modifier = Modifier.size(18.dp),
+        modifier = Modifier.size(Spacing.large),
       ) {
         Icon(
           Icons.Default.Close,
           contentDescription = null,
           tint = MaterialTheme.colorScheme.onPrimaryContainer,
-          modifier = Modifier.size(10.dp),
+          modifier = Modifier.size(Spacing.small),
         )
       }
     }
@@ -363,7 +363,7 @@ private fun FilterSheetContent(
       modifier = Modifier
         .fillMaxWidth()
         .padding(
-          start = 20.dp,
+          start = Spacing.xLarge,
           end = Spacing.medium,
           bottom = Spacing.medium
         ),
@@ -395,7 +395,7 @@ private fun FilterSheetContent(
       if (index < filterTypes.lastIndex) {
         HorizontalDivider(
           color = MaterialTheme.colorScheme.outlineVariant,
-          modifier = Modifier.padding(horizontal = 20.dp),
+          modifier = Modifier.padding(horizontal = Spacing.xLarge),
         )
       }
     }
@@ -415,8 +415,8 @@ private fun FilterTypeRow(
       .fillMaxWidth()
       .clickable(onClick = onClick)
       .padding(
-        horizontal = 20.dp,
-        vertical = 14.dp
+        horizontal = Spacing.xLarge,
+        vertical = Spacing.medium
       ),
     verticalAlignment = Alignment.CenterVertically,
   ) {
@@ -424,35 +424,35 @@ private fun FilterTypeRow(
     Spacer(Modifier.weight(1f))
     Box(
       modifier = Modifier
-        .size(22.dp)
+        .size(Spacing.xLarge)
         .then(
           if (checked) Modifier else Modifier.border(
             width = 1.5.dp,
             color = MaterialTheme.colorScheme.outline,
-            shape = RoundedCornerShape(6.dp),
+            shape = RoundedCornerShape(Spacing.extraSmall),
           )
         )
         .then(
           if (checked) Modifier.border(
             width = 1.5.dp,
             color = MaterialTheme.colorScheme.primary,
-            shape = RoundedCornerShape(6.dp),
+            shape = RoundedCornerShape(Spacing.extraSmall),
           ) else Modifier
         ),
       contentAlignment = Alignment.Center,
     ) {
       if (checked) {
         Surface(
-          modifier = Modifier.size(22.dp),
+          modifier = Modifier.size(Spacing.xLarge),
           color = MaterialTheme.colorScheme.primary,
-          shape = RoundedCornerShape(6.dp),
+          shape = RoundedCornerShape(Spacing.extraSmall),
         ) {
           Box(contentAlignment = Alignment.Center) {
             Icon(
               Icons.Default.Check,
               contentDescription = null,
               tint = Color.White,
-              modifier = Modifier.size(13.dp),
+              modifier = Modifier.size(Spacing.medium),
             )
           }
         }

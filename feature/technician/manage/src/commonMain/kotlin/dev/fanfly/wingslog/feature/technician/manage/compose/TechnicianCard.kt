@@ -53,7 +53,7 @@ fun TechnicianCard(
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     modifier = modifier.fillMaxWidth(),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column(

@@ -58,10 +58,10 @@ fun PreviewBanner(
     else -> MaterialTheme.colorScheme.onSurface
   }
   val bannerShape = RoundedCornerShape(
-    topStart = 4.dp,
+    topStart = Spacing.badgeCornerRadius,
     topEnd = Spacing.cardCornerRadius,
     bottomEnd = Spacing.cardCornerRadius,
-    bottomStart = 4.dp,
+    bottomStart = Spacing.badgeCornerRadius,
   )
 
   Row(
@@ -81,7 +81,7 @@ fun PreviewBanner(
     Column(
       modifier = Modifier
         .weight(1f)
-        .padding(start = 13.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),
+        .padding(Spacing.medium),
       verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
       Row(
@@ -99,7 +99,7 @@ fun PreviewBanner(
         )
         Box(
           modifier = Modifier
-            .size(4.dp)
+            .size(Spacing.extraSmall)
             .clip(RoundedCornerShape(2.dp))
             .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
         )

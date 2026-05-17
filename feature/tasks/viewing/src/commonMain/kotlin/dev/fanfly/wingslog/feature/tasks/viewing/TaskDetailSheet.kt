@@ -149,7 +149,7 @@ fun TaskDetailSheet(
           RoundedCornerShape(Spacing.badgeCornerRadius),
         )
             .padding(
-              horizontal = 6.dp, vertical = Spacing.tiny
+              horizontal = Spacing.extraSmall, vertical = Spacing.extraSmall
             ),
       )
     }
@@ -279,7 +279,7 @@ private fun DueDateHero(dueStatus: DueMetadata) {
       .toLocalDateTime(TimeZone.currentSystemDefault()).date
   val accentColor = dueStatusColor(dueStatus.status)
 
-  Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
     when {
       dueStatus.status == DueStatus.COMPLIED -> {
         Text(
@@ -375,7 +375,7 @@ private fun LogHistoryItem(log: MaintenanceLog) {
   Column(
     modifier = Modifier.fillMaxWidth()
         .padding(vertical = Spacing.extraSmall),
-    verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
   ) {
     Text(
       text = dateStr,

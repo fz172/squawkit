@@ -108,7 +108,7 @@ fun SquawkDetailsTab(
 
         when {
           isDismissed -> {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
               Text(
                 text = stringResource(Res.string.dismissed_label, dismissReason.toLabel()),
                 style = MaterialTheme.typography.bodyMedium,
@@ -135,7 +135,7 @@ fun SquawkDetailsTab(
               ?.takeIf { it.getEpochSecond() > 0L }
               ?.toLocalDate()
               ?.toDisplayFormat()
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
               Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

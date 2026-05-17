@@ -136,10 +136,10 @@ fun MaintenanceLogDetailSheet(
             fontWeight = FontWeight.Medium,
           )
         } else {
-          Spacer(Modifier.size(1.dp))
+          Spacer(Modifier.height(Spacing.none))
         }
       } else {
-        Spacer(Modifier.size(1.dp))
+        Spacer(Modifier.height(Spacing.none))
       }
       Text(
         text = dateStr,
@@ -178,7 +178,7 @@ private fun SheetHeroMetric(log: MaintenanceLog) {
       ),
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Spacer(Modifier.height(6.dp))
+    Spacer(Modifier.height(Spacing.extraSmall))
     Row {
       Text(
         text = value.formatToOneDecimalPlace(),
@@ -190,7 +190,7 @@ private fun SheetHeroMetric(log: MaintenanceLog) {
         text = stringResource(CoreRes.string.unit_hours),
         style = MaterialTheme.typography.bodyLarge,
         fontWeight = FontWeight.Medium,
-        modifier = Modifier.alignByBaseline().padding(start = 6.dp),
+        modifier = Modifier.alignByBaseline().padding(start = Spacing.extraSmall),
       )
     }
   }
@@ -250,10 +250,10 @@ private fun LinkedTaskRow(
   Surface(
     onClick = onClick ?: {},
     enabled = onClick != null,
-    shape = RoundedCornerShape(10.dp),
+    shape = RoundedCornerShape(Spacing.smallCornerRadius),
     color = MaterialTheme.colorScheme.surfaceContainer,
     border = BorderStroke(
-      1.dp,
+      Spacing.hairline,
       MaterialTheme.colorScheme.outlineVariant
     ),
     modifier = Modifier.fillMaxWidth(),
@@ -262,8 +262,8 @@ private fun LinkedTaskRow(
       modifier = Modifier
         .fillMaxWidth()
         .padding(
-          horizontal = 14.dp,
-          vertical = 14.dp
+          horizontal = Spacing.medium,
+          vertical = Spacing.medium
         ),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(Spacing.small),

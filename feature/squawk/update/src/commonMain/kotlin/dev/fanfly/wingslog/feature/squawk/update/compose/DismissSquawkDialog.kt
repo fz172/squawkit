@@ -61,7 +61,7 @@ fun DismissSquawkDialog(
           Row(
             modifier = Modifier
               .fillMaxWidth()
-              .padding(vertical = Spacing.tiny),
+              .padding(vertical = Spacing.extraSmall),
             verticalAlignment = Alignment.CenterVertically,
           ) {
             RadioButton(

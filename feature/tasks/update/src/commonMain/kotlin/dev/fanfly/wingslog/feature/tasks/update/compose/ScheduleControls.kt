@@ -115,21 +115,21 @@ private fun TrackingModeButton(
       .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .background(bg)
       .border(
-        1.dp,
+        Spacing.hairline,
         border,
         RoundedCornerShape(Spacing.cardCornerRadius)
       )
       .clickable { onClick() }
       .padding(
         horizontal = Spacing.medium,
-        vertical = 14.dp
+        vertical = Spacing.medium
       ),
   ) {
     Icon(
       icon,
       contentDescription = null,
       tint = content,
-      modifier = Modifier.size(22.dp)
+      modifier = Modifier.size(Spacing.xLarge)
     )
     Text(
       label,
@@ -146,7 +146,7 @@ internal fun RecurrenceChoice(
   options: List<Pair<ScheduleRecurrence, Pair<StringResource, StringResource>>>,
   onSelect: (ScheduleRecurrence) -> Unit,
 ) {
-  Row(horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall + Spacing.tiny)) {
+  Row(horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
     options.forEach { (rec, labels) ->
       val isSelected = selected == rec
       val border = if (isSelected) MaterialTheme.colorScheme.primary
@@ -159,7 +159,7 @@ internal fun RecurrenceChoice(
       Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(
-          Spacing.tiny,
+          Spacing.extraSmall,
           Alignment.CenterVertically
         ),
         modifier = Modifier
@@ -168,7 +168,7 @@ internal fun RecurrenceChoice(
           .clip(RoundedCornerShape(Spacing.cardCornerRadius))
           .background(bg)
           .border(
-            1.dp,
+            Spacing.hairline,
             border,
             RoundedCornerShape(Spacing.cardCornerRadius)
           )
@@ -205,15 +205,15 @@ internal fun UnitPillSelect(
   Row(
     modifier = Modifier
       .fillMaxWidth()
-      .clip(RoundedCornerShape(10.dp))
+      .clip(RoundedCornerShape(Spacing.smallCornerRadius))
       .background(MaterialTheme.colorScheme.surfaceContainer)
       .border(
-        1.dp,
+        Spacing.hairline,
         MaterialTheme.colorScheme.outlineVariant,
-        RoundedCornerShape(10.dp)
+        RoundedCornerShape(Spacing.smallCornerRadius)
       )
       .padding(Spacing.extraSmall),
-    horizontalArrangement = Arrangement.spacedBy(6.dp),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
   ) {
     listOf(
       ScheduleTimeUnit.DAYS to Res.string.schedule_unit_days,
@@ -224,7 +224,7 @@ internal fun UnitPillSelect(
       Box(
         modifier = Modifier
           .weight(1f)
-          .clip(RoundedCornerShape(7.dp))
+          .clip(RoundedCornerShape(Spacing.smallCornerRadius))
           .background(
             if (active) MaterialTheme.colorScheme.primary
             else Color.Transparent
@@ -264,17 +264,17 @@ internal fun IntervalNumberInput(
       .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .background(MaterialTheme.colorScheme.surfaceContainer)
       .border(
-        1.dp,
+        Spacing.hairline,
         borderColor,
         RoundedCornerShape(Spacing.cardCornerRadius)
       )
-      .padding(horizontal = 14.dp),
+      .padding(horizontal = Spacing.medium),
   ) {
     Text(
       prefix,
       style = MaterialTheme.typography.bodyMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.padding(end = 10.dp),
+      modifier = Modifier.padding(end = Spacing.small),
     )
     BasicTextField(
       value = value,
@@ -315,7 +315,7 @@ internal fun IntervalNumberInput(
       suffix,
       style = MaterialTheme.typography.bodyMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.padding(start = 10.dp),
+      modifier = Modifier.padding(start = Spacing.small),
     )
   }
 }
@@ -345,7 +345,7 @@ internal fun AdvancedLinkedSection(
       .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .background(MaterialTheme.colorScheme.surfaceContainer)
       .border(
-        1.dp,
+        Spacing.hairline,
         borderColor,
         RoundedCornerShape(Spacing.cardCornerRadius)
       ),
@@ -358,7 +358,7 @@ internal fun AdvancedLinkedSection(
         .clickable { onToggle() }
         .padding(
           horizontal = Spacing.large,
-          vertical = 14.dp
+          vertical = Spacing.medium
         ),
     ) {
       Row(
@@ -384,7 +384,7 @@ internal fun AdvancedLinkedSection(
         Icons.Default.ExpandMore,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(18.dp).rotate(rotation),
+        modifier = Modifier.size(Spacing.large).rotate(rotation),
       )
     }
 
@@ -414,13 +414,13 @@ internal fun AdvancedLinkedSection(
               .clip(RoundedCornerShape(Spacing.cardCornerRadius))
               .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
               .border(
-                1.dp,
+                Spacing.hairline,
                 MaterialTheme.colorScheme.primary,
                 RoundedCornerShape(Spacing.cardCornerRadius)
               )
               .padding(
                 horizontal = Spacing.large,
-                vertical = 14.dp
+                vertical = Spacing.medium
               ),
           ) {
             Text(
@@ -442,10 +442,10 @@ internal fun AdvancedLinkedSection(
               contentDescription = null,
               tint = MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier
-                .size(20.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .size(Spacing.xLarge)
+                .clip(RoundedCornerShape(Spacing.smallCornerRadius))
                 .clickable { onClear() }
-                .padding(Spacing.tiny),
+                .padding(Spacing.extraSmall),
             )
           }
         } else {
@@ -454,15 +454,15 @@ internal fun AdvancedLinkedSection(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier
               .fillMaxWidth()
-              .clip(RoundedCornerShape(10.dp))
+              .clip(RoundedCornerShape(Spacing.smallCornerRadius))
               .border(
                 1.5.dp,
                 MaterialTheme.colorScheme.outline,
-                RoundedCornerShape(10.dp)
+                RoundedCornerShape(Spacing.smallCornerRadius)
               )
               .clickable { showPicker = true }
               .padding(
-                horizontal = 14.dp,
+                horizontal = Spacing.medium,
                 vertical = Spacing.medium
               ),
           ) {
@@ -470,7 +470,7 @@ internal fun AdvancedLinkedSection(
               Icons.Default.Add,
               contentDescription = null,
               tint = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.size(14.dp).padding(end = Spacing.none),
+              modifier = Modifier.size(Spacing.medium).padding(end = Spacing.none),
             )
             Spacer(Modifier.width(Spacing.small))
             Text(

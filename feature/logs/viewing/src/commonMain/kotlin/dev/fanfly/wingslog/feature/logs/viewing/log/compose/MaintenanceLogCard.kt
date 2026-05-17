@@ -64,7 +64,7 @@ fun MaintenanceLogCard(
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     border = BorderStroke(
-      1.dp,
+      Spacing.hairline,
       MaterialTheme.colorScheme.outlineVariant
     ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
@@ -73,7 +73,7 @@ fun MaintenanceLogCard(
       modifier = Modifier
         .fillMaxWidth()
         .padding(
-          horizontal = 18.dp,
+          horizontal = Spacing.large,
           vertical = Spacing.large
         ),
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
@@ -193,7 +193,7 @@ internal fun ComponentTypeBadge(
       )
       .padding(
         horizontal = Spacing.small,
-        vertical = 3.dp
+        vertical = Spacing.extraSmall
       ),
   ) {
     Text(

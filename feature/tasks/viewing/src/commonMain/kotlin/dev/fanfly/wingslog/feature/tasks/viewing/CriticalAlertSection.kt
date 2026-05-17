@@ -53,7 +53,7 @@ fun CriticalAlertsSection(
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     border = BorderStroke(
-      1.dp,
+      Spacing.hairline,
       MaterialTheme.colorScheme.outlineVariant
     ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
@@ -148,20 +148,20 @@ private fun CriticalAlertItem(
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
-      .padding(vertical = Spacing.tiny),
+      .padding(vertical = Spacing.extraSmall),
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
     verticalAlignment = Alignment.Top,
   ) {
     Box(
       modifier = Modifier
-        .padding(top = 5.dp)
-        .size(6.dp)
+        .padding(top = Spacing.extraSmall)
+        .size(Spacing.extraSmall)
         .background(
           dotColor,
           CircleShape
         )
     )
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
       Text(
         text = cardWithStatus.card.title,
         style = MaterialTheme.typography.bodyMedium,

@@ -48,7 +48,7 @@ fun LogStatsSection(
       shape = RoundedCornerShape(Spacing.cardCornerRadius),
       colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
       border = BorderStroke(
-        1.dp,
+        Spacing.hairline,
         MaterialTheme.colorScheme.outlineVariant
       ),
       elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none)
@@ -101,7 +101,7 @@ private fun StatCell(
 ) {
   Column(
     modifier = modifier,
-    verticalArrangement = Arrangement.spacedBy(Spacing.tiny)
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)
   ) {
     Text(
       text = value,

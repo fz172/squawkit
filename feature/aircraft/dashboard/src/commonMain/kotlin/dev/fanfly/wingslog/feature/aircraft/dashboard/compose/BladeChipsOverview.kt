@@ -59,7 +59,7 @@ fun BladeChipsOverview(blades: List<PropellerBlade>) {
           )
           Text(
             text = blade.serial.ifBlank { stringResource(MaintenanceRes.string.s_n_empty) },
-            modifier = Modifier.padding(top = Spacing.tiny),
+            modifier = Modifier.padding(top = Spacing.extraSmall),
             style = TextStyle(
               fontFamily = FontFamily.SansSerif,
               fontWeight = FontWeight.SemiBold,

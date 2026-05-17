@@ -56,7 +56,7 @@ fun EngineSection(
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     border = BorderStroke(
-      1.dp,
+      Spacing.hairline,
       MaterialTheme.colorScheme.outlineVariant
     ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
@@ -77,7 +77,7 @@ fun EngineSection(
           modifier = Modifier
             .align(Alignment.CenterEnd)
             .border(
-              1.dp,
+              Spacing.hairline,
               MaterialTheme.colorScheme.outline,
               CircleShape
             )

@@ -36,7 +36,7 @@ fun AirframeSection(
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     border = BorderStroke(
-      1.dp,
+      Spacing.hairline,
       MaterialTheme.colorScheme.outlineVariant
     ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),

@@ -170,7 +170,7 @@ fun EditAircraftScreen(
           onClick = { viewModel.onAddEngine() },
         )
 
-        Spacer(Modifier.height(88.dp))
+        Spacer(Modifier.height(Spacing.buttonHeight + Spacing.huge))
       }
       BottomButtons(
         modifier = Modifier.align(Alignment.BottomCenter),

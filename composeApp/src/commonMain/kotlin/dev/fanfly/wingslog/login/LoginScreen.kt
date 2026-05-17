@@ -130,7 +130,7 @@ fun LoginScreen(
       verticalArrangement = Arrangement.Bottom,
     ) {
 
-      Spacer(Modifier.height(80.dp))
+      Spacer(Modifier.height(Spacing.buttonHeight + Spacing.extraLarge))
 
       Text(
         text = stringResource(CoreRes.string.app_name).uppercase(),
@@ -138,7 +138,7 @@ fun LoginScreen(
         style = LoginHeroStyle,
       )
 
-      Spacer(Modifier.height(6.dp))
+      Spacer(Modifier.height(Spacing.extraSmall))
 
       Text(
         text = stringResource(Res.string.mission_statement),
@@ -187,19 +187,19 @@ fun LoginScreen(
       ) {
         if (isSigningIn) {
           CircularProgressIndicator(
-            modifier = Modifier.size(20.dp),
-            strokeWidth = Spacing.tiny,
+            modifier = Modifier.size(Spacing.xLarge),
+            strokeWidth = 2.dp,
             color = LoginBackground,
           )
         } else {
           Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(Spacing.small)
           ) {
             Icon(
               painter = painterResource(Res.drawable.ic_google_rd_na),
               contentDescription = stringResource(Res.string.google_logo),
-              modifier = Modifier.size(20.dp),
+              modifier = Modifier.size(Spacing.xLarge),
               tint = Color.Unspecified,
             )
             Text(
@@ -223,7 +223,7 @@ fun LoginScreen(
           contentColor = LoginOnBackgroundMuted,
         ),
         border = BorderStroke(
-          1.dp,
+          Spacing.hairline,
           LoginOnBackgroundMuted.copy(alpha = 0.4f)
         ),
         onClick = {
@@ -244,12 +244,12 @@ fun LoginScreen(
       ) {
         Row(
           verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(10.dp)
+          horizontalArrangement = Arrangement.spacedBy(Spacing.small)
         ) {
           Icon(
             imageVector = Icons.Filled.Person,
             contentDescription = null,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(Spacing.xLarge),
           )
           Text(
             text = stringResource(Res.string.continue_without_account),
@@ -264,7 +264,7 @@ fun LoginScreen(
         text = stringResource(Res.string.legal_disclaimer),
         color = LoginOnBackgroundMuted.copy(alpha = 0.6f),
         style = LoginErrorStyle,
-        modifier = Modifier.padding(horizontal = Spacing.tiny),
+        modifier = Modifier.padding(horizontal = Spacing.extraSmall),
       )
 
       Spacer(Modifier.height(Spacing.large))

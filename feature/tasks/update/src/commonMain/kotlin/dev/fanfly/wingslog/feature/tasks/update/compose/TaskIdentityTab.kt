@@ -209,7 +209,7 @@ private fun IdentityRadioItem(
         disabledUnselectedColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
       ),
     )
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
       Text(
         text = label.uppercase(),
         style = MaterialTheme.typography.bodyMedium,

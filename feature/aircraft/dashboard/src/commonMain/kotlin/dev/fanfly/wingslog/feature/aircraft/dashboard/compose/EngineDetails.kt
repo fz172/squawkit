@@ -59,7 +59,7 @@ fun EngineDetails(
               MaintenanceRes.string.s_n_placeholder,
               propeller.hub?.serial ?: ""
             ),
-            modifier = Modifier.padding(top = Spacing.tiny),
+            modifier = Modifier.padding(top = Spacing.extraSmall),
             style = TextStyle(
               fontFamily = FontFamily.SansSerif,
               fontWeight = FontWeight.Normal,

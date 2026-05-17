@@ -47,7 +47,7 @@ fun AogAlertSection(
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
+    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column {
@@ -62,7 +62,7 @@ fun AogAlertSection(
           imageVector = Icons.Default.FlightLand,
           contentDescription = null,
           tint = MaterialTheme.colorScheme.error,
-          modifier = Modifier.size(28.dp),
+          modifier = Modifier.size(Spacing.huge),
         )
         Text(
           text = stringResource(Res.string.aog_alert_title),
@@ -122,14 +122,14 @@ private fun AogSquawkRow(
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onViewClick)
-      .padding(vertical = Spacing.tiny),
+      .padding(vertical = Spacing.extraSmall),
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
     verticalAlignment = Alignment.Top,
   ) {
     Box(
       modifier = Modifier
-        .padding(top = 5.dp)
-        .size(6.dp)
+        .padding(top = Spacing.extraSmall)
+        .size(Spacing.extraSmall)
         .background(MaterialTheme.colorScheme.error, CircleShape)
     )
     Text(

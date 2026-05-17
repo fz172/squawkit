@@ -63,7 +63,7 @@ fun LogPickerSheet(
               .fillMaxWidth()
               .clickable { onSelect(log.id) }
               .padding(vertical = Spacing.medium),
-            verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
+            verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
           ) {
             Text(
               text = log.work_description.ifBlank { log.id },

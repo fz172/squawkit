@@ -208,7 +208,7 @@ private fun SyncToggleRow(
   ) {
     Column(
       modifier = Modifier.weight(1f),
-      verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
+      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
       Text(
         text = title,
@@ -326,7 +326,7 @@ private fun StatusRow(
       modifier = Modifier.size(Spacing.extraLarge)
     )
     Spacer(Modifier.width(Spacing.large))
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
       Text(
         text = title,
         style = MaterialTheme.typography.titleSmall,

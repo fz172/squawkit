@@ -52,7 +52,7 @@ fun AircraftDashboardCard(
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     border = BorderStroke(
-      1.dp,
+      Spacing.hairline,
       MaterialTheme.colorScheme.outlineVariant
     ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none)
@@ -123,8 +123,8 @@ private fun HealthStatusBadge(
       fontWeight = FontWeight.Medium,
       color = contentColor,
       modifier = Modifier.padding(
-        horizontal = 6.dp,
-        vertical = 3.dp
+        horizontal = Spacing.extraSmall,
+        vertical = Spacing.extraSmall
       )
     )
   }

@@ -54,7 +54,7 @@ fun SettingsRow(
     // --- Icon ---
     Box(
       modifier = Modifier
-        .size(40.dp)
+        .size(Spacing.huge)
         .clip(RoundedCornerShape(Spacing.small))
         .background(MaterialTheme.colorScheme.surfaceVariant),
       contentAlignment = Alignment.Center

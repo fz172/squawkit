@@ -56,7 +56,7 @@ fun SquawkCard(
     onClick = onClick,
     modifier = modifier.fillMaxWidth(),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(1.dp, borderColor),
+    border = BorderStroke(Spacing.hairline, borderColor),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
@@ -129,7 +129,7 @@ private fun StatusBadge(status: SquawkStatus) {
   Box(
     modifier = Modifier
       .background(bg, RoundedCornerShape(Spacing.extraSmall))
-      .padding(horizontal = Spacing.small, vertical = Spacing.tiny)
+      .padding(horizontal = Spacing.small, vertical = Spacing.extraSmall)
   ) {
     Text(
       text = label.uppercase(),
@@ -156,7 +156,7 @@ internal fun PriorityBadge(item: SquawkWithStatus) {
   Box(
     modifier = Modifier
       .background(bg, RoundedCornerShape(Spacing.extraSmall))
-      .padding(horizontal = Spacing.small, vertical = Spacing.tiny)
+      .padding(horizontal = Spacing.small, vertical = Spacing.extraSmall)
   ) {
     Text(
       text = label,

@@ -34,7 +34,7 @@ data class IconLabelTabSpec(
 )
 
 private val MaxSelectedTabWidth = 200.dp
-private val TabHeight = 56.dp
+private val TabHeight = Spacing.buttonHeight
 
 @Composable
 fun IconLabelTabRow(
@@ -101,7 +101,7 @@ fun IconLabelTabRow(
                   spec.icon,
                   contentDescription = null,
                   tint = contentColor,
-                  modifier = Modifier.size(20.dp),
+                  modifier = Modifier.size(Spacing.xLarge),
                 )
                 Text(
                   spec.label,
@@ -116,7 +116,7 @@ fun IconLabelTabRow(
                 spec.icon,
                 contentDescription = spec.label,
                 tint = contentColor,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(Spacing.xLarge),
               )
             }
           }
@@ -126,14 +126,14 @@ fun IconLabelTabRow(
       Box(
         modifier = Modifier
           .fillMaxWidth()
-          .height(Spacing.tiny)
+          .height(2.dp)
           .background(MaterialTheme.colorScheme.surfaceVariant),
       ) {
         Box(
           modifier = Modifier
             .offset(x = indicatorX)
             .width(indicatorWidth)
-            .height(Spacing.tiny)
+            .height(2.dp)
             .background(MaterialTheme.colorScheme.primary),
         )
       }

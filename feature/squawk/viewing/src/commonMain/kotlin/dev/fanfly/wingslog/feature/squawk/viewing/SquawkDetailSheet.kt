@@ -62,7 +62,7 @@ fun SquawkDetailSheet(
     // Reported date
     if ((squawk.created_at?.getEpochSecond() ?: 0L) > 0L) {
       val dateStr = squawk.created_at!!.toLocalDate().toDisplayFormat()
-      Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+      Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
         Text(
           text = stringResource(Res.string.reported),
           style = MaterialTheme.typography.labelSmall,
@@ -120,7 +120,7 @@ private fun DismissedHistoryRow(item: SquawkWithStatus) {
 
   Column(
     modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.extraSmall),
-    verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
   ) {
     Text(
       text = stringResource(Res.string.dismissed_label, reasonLabel),
@@ -147,7 +147,7 @@ private fun LogHistoryRow(log: MaintenanceLog) {
 
   Column(
     modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.extraSmall),
-    verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
   ) {
     if (dateStr.isNotEmpty()) {
       Text(

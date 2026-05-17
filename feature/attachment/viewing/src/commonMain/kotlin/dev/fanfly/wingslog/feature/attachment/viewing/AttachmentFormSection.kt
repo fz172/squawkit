@@ -202,7 +202,7 @@ private fun PendingAttachmentRow(
         imageVector = pending.typeIcon(),
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(20.dp),
+        modifier = Modifier.size(Spacing.xLarge),
       )
       Text(
         text = pending.name,
@@ -217,11 +217,11 @@ private fun PendingAttachmentRow(
           Icons.Default.Close,
           contentDescription = stringResource(AttachRes.string.remove_attachment),
           tint = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.size(18.dp),
+          modifier = Modifier.size(Spacing.large),
         )
       }
     }
-    Spacer(Modifier.fillMaxWidth().height(6.dp))
+    Spacer(Modifier.fillMaxWidth().height(Spacing.extraSmall))
   }
 }
 
@@ -276,7 +276,7 @@ private fun AttachmentPickerSheet(
             Icon(
               Icons.Default.Add,
               contentDescription = null,
-              modifier = Modifier.size(18.dp)
+              modifier = Modifier.size(Spacing.large)
             )
             Spacer(Modifier.width(Spacing.small))
             Text(stringResource(AttachRes.string.choose_file))
@@ -288,7 +288,7 @@ private fun AttachmentPickerSheet(
             Icon(
               Icons.Outlined.Link,
               contentDescription = null,
-              modifier = Modifier.size(18.dp)
+              modifier = Modifier.size(Spacing.large)
             )
             Spacer(Modifier.width(Spacing.small))
             Text(stringResource(AttachRes.string.add_link))

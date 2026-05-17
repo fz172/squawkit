@@ -73,7 +73,7 @@ fun ComponentSection(
             .fillMaxWidth()
             .height(64.dp)
             .border(
-              width = 1.dp,
+              width = Spacing.hairline,
               color = MaterialTheme.colorScheme.outlineVariant,
               shape = RoundedCornerShape(Spacing.chipCornerRadius)
             )

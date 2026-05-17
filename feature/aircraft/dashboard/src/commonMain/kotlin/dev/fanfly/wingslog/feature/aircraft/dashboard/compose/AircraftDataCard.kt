@@ -36,16 +36,16 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.aircraft_data
 import wingslog.feature.logs.viewing.generated.resources.collapse_details
 import wingslog.feature.logs.viewing.generated.resources.expand_details
 import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable
@@ -64,29 +64,31 @@ fun AircraftDataCard(
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     color = MaterialTheme.colorScheme.surfaceContainer,
     border = BorderStroke(
-      1.dp,
+      Spacing.hairline,
       MaterialTheme.colorScheme.outlineVariant
     )
   ) {
     Column {
-      Row(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }
-        .padding(
-          horizontal = Spacing.large,
-          vertical = Spacing.large
-        ),
-          verticalAlignment = Alignment.CenterVertically) {
+      Row(
+        modifier = Modifier.fillMaxWidth()
+            .clickable { expanded = !expanded }
+            .padding(
+              horizontal = Spacing.large,
+              vertical = Spacing.large
+            ),
+        verticalAlignment = Alignment.CenterVertically) {
         Icon(
           imageVector = Icons.Default.Dataset,
           contentDescription = null,
-          modifier = Modifier.size(20.dp),
+          modifier = Modifier.size(Spacing.xLarge),
           tint = MaterialTheme.colorScheme.primary
         )
 
         Text(
           text = stringResource(MaintenanceRes.string.aircraft_data),
           modifier = Modifier
-            .padding(start = Spacing.medium)
-            .weight(1f),
+              .padding(start = Spacing.medium)
+              .weight(1f),
 
           style = TextStyle(
             fontFamily = FontFamily.SansSerif,
@@ -102,7 +104,8 @@ fun AircraftDataCard(
           contentDescription = if (expanded) stringResource(MaintenanceRes.string.collapse_details) else stringResource(
             MaintenanceRes.string.expand_details
           ),
-          modifier = Modifier.size(Spacing.extraLarge).rotate(rotationState),
+          modifier = Modifier.size(Spacing.extraLarge)
+              .rotate(rotationState),
           tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
       }
@@ -186,7 +189,7 @@ fun ComponentCard(
               MaintenanceRes.string.s_n_placeholder,
               serial
             ),
-            modifier = Modifier.padding(top = Spacing.tiny),
+            modifier = Modifier.padding(top = Spacing.extraSmall),
             style = TextStyle(
               fontFamily = FontFamily.SansSerif,
               fontWeight = FontWeight.Normal,

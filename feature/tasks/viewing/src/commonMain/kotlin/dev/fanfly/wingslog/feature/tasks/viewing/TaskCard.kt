@@ -59,7 +59,7 @@ fun TaskCard(
     modifier = modifier.fillMaxWidth(),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     border = BorderStroke(
-      1.dp,
+      Spacing.hairline,
       borderColor
     ),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
@@ -84,7 +84,7 @@ fun TaskCard(
           Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(Spacing.large),
             tint = if (isAlert) statusColor else MaterialTheme.colorScheme.onSurfaceVariant,
           )
         }
@@ -115,7 +115,7 @@ fun TaskCard(
       // Row 3: divider + label / value + chevron
       if (statusValue.isNotBlank()) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
           if (statusLabel.isNotBlank()) {
             Text(
               text = statusLabel,
@@ -150,7 +150,7 @@ private fun StatusBadge(
       )
       .padding(
         horizontal = Spacing.small,
-        vertical = Spacing.tiny
+        vertical = Spacing.extraSmall
       )
   ) {
     Text(

@@ -94,7 +94,7 @@ fun BottomButtons(
             disabledContentColor = MaterialTheme.colorScheme.outline
           ),
           border = BorderStroke(
-            1.dp,
+            Spacing.hairline,
             if (!isPrimaryFunctionInProgress) MaterialTheme.colorScheme.error
             else MaterialTheme.colorScheme.outline
           )
@@ -128,9 +128,9 @@ fun BottomButtons(
         ) {
           if (isPrimaryFunctionInProgress) {
             CircularProgressIndicator(
-              modifier = Modifier.size(18.dp),
+              modifier = Modifier.size(Spacing.large),
               color = MaterialTheme.colorScheme.onPrimary,
-              strokeWidth = Spacing.tiny
+              strokeWidth = 2.dp
             )
             Spacer(Modifier.width(Spacing.small))
           }
