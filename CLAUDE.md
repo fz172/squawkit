@@ -13,13 +13,14 @@ The app is moving to a **local-first architecture** (R1 in progress): a SQLDelig
 ## Build & CI Commands
 
 ```bash
-./gradlew assembleDebug          # Build debug APK
-./gradlew lint                   # Lint checks
-./gradlew testDebugUnitTest      # Run all unit tests
-./gradlew :feature:fleet:testDebugUnitTest  # Run tests for a single module
+./gradlew assembleDebug                          # Build debug APK
+./gradlew lint                                   # Lint checks
+./gradlew testDebugUnitTest                      # Run all Android unit tests
+./gradlew :feature:fleet:viewing:testDebugUnitTest  # Run tests for a single module
+./gradlew :composeApp:iosSimulatorArm64Test      # Run iOS simulator unit tests (local only)
 ```
 
-CI (`.github/workflows/ci.yml`) runs lint → assembleDebug → testDebugUnitTest on every push. It requires `GOOGLE_SERVICES_JSON` secret to write `google-services.json` before building.
+CI (`.github/workflows/ci.yml`) runs lint → assembleDebug → testDebugUnitTest on every push. iOS is **not** built on CI. CI requires `GOOGLE_SERVICES_JSON` secret to write `google-services.json` before building.
 
 ## Module Structure
 
@@ -32,6 +33,7 @@ core/
   auth/                 # Firebase Auth with platform-specific implementations
   storage/              # R1 local-first foundation — SQLDelight schema, EntityStore, CollectionKind
   datetime/             # Date/time utilities — WireInstantFactory, platform-specific formatters
+  attachments/          # Scaffolding only — directory exists but is NOT yet wired into settings.gradle.kts
 feature/
   fleet/                # Fleet dashboard (canonical layout, no update — dashboard is read-only)
     model/              #   Aircraft-related domain types
@@ -182,7 +184,13 @@ Documents store binary blobs (e.g., field `AIRCRAFT_INFO_BLOB`). Decode: `Aircra
 
 ## Design System
 
-Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, intentional typography hierarchy, consistent spacing tokens. Prioritize clarity and readability over information density. The `.impeccable.md` file in the repo root has brand/aesthetic detail.
+Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, intentional typography hierarchy, consistent spacing tokens. Prioritize clarity and readability over information density.
+
+**Read `.impeccable.md` before any UI work.** It defines the required aviation palette (Aviation Blue primary, Instrument Amber accent ≤10% of color moments, semantic forest/amber status colors), required typography (Space Grotesk titles, JetBrains Mono for technical data, system sans for body), and brand principles (Dependability First, Clarity over Density, Progressive Disclosure). Dynamic color is disabled; the aviation palette is the brand.
+
+## Design Docs
+
+Feature PRDs and architecture design docs live in `docs/` — including `storage_r1_design.md`, `storage_r2_design.md`, `attachments_design.md`, `squawk_design.md`, `technician_design.md`, `userprofile_as_technician.md`, `aircraft_overview_tabs.md`, and `intelligentsearch.md`. Consult these before making non-trivial changes to a feature area.
 
 ## Coding Conventions
 
