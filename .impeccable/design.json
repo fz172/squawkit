@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-16T00:00:00Z",
+  "title": "Design System: Hopply",
+  "extensions": {
+    "colorMeta": {
+      "aviation-blue": {
+        "role": "primary",
+        "displayName": "Instrument Blue",
+        "canonical": "oklch(43% 0.16 251)",
+        "tonalRamp": ["#001849", "#004785", "#0A4A90", "#1A5FAE", "#3573C4", "#6096D8", "#A7C8FF", "#D5E3FF"]
+      },
+      "sky-container": {
+        "role": "primary-container",
+        "displayName": "Sky Container",
+        "canonical": "oklch(91% 0.05 251)",
+        "tonalRamp": ["#001849", "#004785", "#1A5FAE", "#4D86C8", "#7AAAD8", "#A7C8FF", "#C4D8FF", "#D5E3FF"]
+      },
+      "deep-navy": {
+        "role": "on-primary-container",
+        "displayName": "Deep Navy",
+        "canonical": "oklch(15% 0.08 251)",
+        "tonalRamp": ["#001849", "#002266", "#003380", "#00449A", "#1A5FAE", "#4D82C8", "#A7C8FF", "#D5E3FF"]
+      },
+      "panel-slate": {
+        "role": "secondary",
+        "displayName": "Panel Slate",
+        "canonical": "oklch(43% 0.05 243)",
+        "tonalRamp": ["#0E1C2B", "#1E2E42", "#2D3F57", "#3A4557", "#525E72", "#7A8799", "#BAC8E0", "#D6E4F5"]
+      },
+      "slate-container": {
+        "role": "secondary-container",
+        "displayName": "Slate Container",
+        "canonical": "oklch(90% 0.03 243)",
+        "tonalRamp": ["#0E1C2B", "#253041", "#3A4557", "#526070", "#7A8FA8", "#9AAEC5", "#BAC8E0", "#D6E4F5"]
+      },
+      "amber-glow": {
+        "role": "tertiary",
+        "displayName": "Advisory Amber",
+        "canonical": "oklch(79% 0.16 72)",
+        "tonalRamp": ["#271900", "#5B3D00", "#7A5200", "#9B6D00", "#C08800", "#E8A800", "#FFBA4E", "#FFDFA6"]
+      },
+      "amber-haze": {
+        "role": "tertiary-container",
+        "displayName": "Amber Haze",
+        "canonical": "oklch(92% 0.07 72)",
+        "tonalRamp": ["#271900", "#5B3D00", "#7A5200", "#A87000", "#D09500", "#FFBA4E", "#FFCF7D", "#FFDFA6"]
+      },
+      "airworthy-green": {
+        "role": "semantic-success",
+        "displayName": "Airworthy Green",
+        "canonical": "oklch(42% 0.12 145)",
+        "tonalRamp": ["#0A2D17", "#154825", "#1E6030", "#276B39", "#3A8A4E", "#5AAF6E", "#81C784", "#B8E4BB"]
+      },
+      "caution-amber": {
+        "role": "semantic-warning",
+        "displayName": "Caution Amber",
+        "canonical": "oklch(43% 0.12 68)",
+        "tonalRamp": ["#271900", "#4A3200", "#6B4800", "#8B5E00", "#AD7800", "#CC9A00", "#FFCA28", "#FFE082"]
+      },
+      "caution-bg": {
+        "role": "semantic-warning-container",
+        "displayName": "Caution Surface",
+        "canonical": "oklch(94% 0.05 80)",
+        "tonalRamp": ["#271900", "#5B3D00", "#8B5E00", "#B07C00", "#D4A200", "#FFCA28", "#FFE082", "#FFECB3"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Dashboard hero data — next due dates, aircraft identifiers. Once per screen maximum." },
+      "headline": { "displayName": "Headline", "purpose": "Screen-level and section headings. Three sizes (Large/Medium/Small) for hierarchy within complex screens." },
+      "title": { "displayName": "Title", "purpose": "Card headings, form section labels, tab labels, toolbar titles." },
+      "body": { "displayName": "Body", "purpose": "Primary paragraph content and form values. System sans for native rendering quality in data-dense contexts." },
+      "label": { "displayName": "Label", "purpose": "Button labels (UPPERCASE), form field labels, badge text, timestamps." },
+      "data": { "displayName": "Technical Data", "purpose": "JetBrains Mono reserved for tail numbers, serial numbers, engine hours, tach times — any value where character alignment is semantic." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "standard", "value": "150–250ms ease-out", "purpose": "Default for all state transitions: hover, focus, selection, sheet reveal. Ease out; no bounce, no elastic." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Full-width filled button for primary actions (Save Changes, Add Entry). UPPERCASE Bold label.",
+      "html": "<button class=\"ds-btn-primary\">SAVE CHANGES</button>",
+      "css": ".ds-btn-primary { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; background: #1A5FAE; color: #FFFFFF; font-family: system-ui, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border: none; border-radius: 16px; padding: 0 16px; cursor: pointer; transition: background 0.15s ease-out; } .ds-btn-primary:hover { background: #004785; } .ds-btn-primary:focus-visible { outline: 2px solid #1A5FAE; outline-offset: 2px; } .ds-btn-primary:active { background: #001849; } .ds-btn-primary:disabled { background: #E0E0E0; color: #9E9E9E; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined button for Cancel and non-destructive secondary actions.",
+      "html": "<button class=\"ds-btn-secondary\">CANCEL</button>",
+      "css": ".ds-btn-secondary { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; background: transparent; color: #1A5FAE; font-family: system-ui, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid #1A5FAE; border-radius: 16px; padding: 0 16px; cursor: pointer; transition: background 0.15s ease-out, border-color 0.15s ease-out; } .ds-btn-secondary:hover { background: #D5E3FF; } .ds-btn-secondary:focus-visible { outline: 2px solid #1A5FAE; outline-offset: 2px; } .ds-btn-secondary:disabled { color: #9E9E9E; border-color: #E0E0E0; cursor: not-allowed; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Outlined button in error-tone for destructive secondary actions: Delete, Dismiss, irreversible operations.",
+      "html": "<button class=\"ds-btn-danger\">DISMISS ISSUE</button>",
+      "css": ".ds-btn-danger { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; background: transparent; color: #B3261E; font-family: system-ui, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid #B3261E; border-radius: 16px; padding: 0 16px; cursor: pointer; transition: background 0.15s ease-out; } .ds-btn-danger:hover { background: #FDECEA; } .ds-btn-danger:focus-visible { outline: 2px solid #B3261E; outline-offset: 2px; } .ds-btn-danger:disabled { color: #9E9E9E; border-color: #E0E0E0; cursor: not-allowed; }"
+    },
+    {
+      "name": "Content Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Standard card surface — squawk cards, task cards, maintenance log entries. No shadow; tonal elevation only.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Oil leak on left engine</div><div class=\"ds-card-meta\">Added 3 days ago &bull; HIGH</div></div>",
+      "css": ".ds-card { background: #EEF1F6; border-radius: 12px; padding: 16px; font-family: system-ui, sans-serif; } .ds-card-title { font-size: 16px; font-weight: 600; color: #1C1B1F; margin-bottom: 4px; } .ds-card-meta { font-size: 12px; font-weight: 500; color: #525E72; letter-spacing: 0.04em; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "description": "Inline stamp-shaped badge for squawk status and task priority. 4dp radius reads as a label, not a pill.",
+      "html": "<span class=\"ds-badge ds-badge--open\">OPEN</span><span class=\"ds-badge ds-badge--addressed\">ADDRESSED</span><span class=\"ds-badge ds-badge--dismissed\">DISMISSED</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; } .ds-badge--open { background: transparent; color: #525E72; } .ds-badge--addressed { background: #D5E3FF; color: #001849; } .ds-badge--dismissed { background: #E7E0EC; color: #49454F; }"
+    },
+    {
+      "name": "Segmented Filter",
+      "kind": "custom",
+      "description": "Two-option tab filter used on list screens (Open / Closed squawks, Active / Completed tasks).",
+      "html": "<div class=\"ds-seg-row\"><button class=\"ds-seg-btn ds-seg-btn--selected\">OPEN (3)</button><button class=\"ds-seg-btn\">CLOSED (7)</button></div>",
+      "css": ".ds-seg-row { display: flex; width: 100%; border: 1px solid #BCC4D0; border-radius: 40px; overflow: hidden; } .ds-seg-btn { flex: 1; height: 40px; background: transparent; color: #525E72; font-family: system-ui, sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; border: none; cursor: pointer; transition: background 0.15s ease-out, color 0.15s ease-out; } .ds-seg-btn--selected { background: #1A5FAE; color: #FFFFFF; font-weight: 700; }"
+    },
+    {
+      "name": "Technical Data Field",
+      "kind": "custom",
+      "description": "Monospace display for tail numbers, serial numbers, engine hours — any value where character alignment is semantic.",
+      "html": "<div class=\"ds-data-field\"><div class=\"ds-data-label\">Airframe Time</div><div class=\"ds-data-value\">2847.4</div></div>",
+      "css": ".ds-data-field { display: flex; flex-direction: column; gap: 2px; } .ds-data-label { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 500; color: #525E72; letter-spacing: 0.05em; text-transform: uppercase; } .ds-data-value { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 16px; font-weight: 700; color: #1C1B1F; letter-spacing: 0; }"
+    },
+    {
+      "name": "Status Indicator Row",
+      "kind": "custom",
+      "description": "Compliance status row used in task and inspection lists. Green = airworthy/compliant, amber = caution/due soon.",
+      "html": "<div class=\"ds-status-ok\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z\" stroke=\"#276B39\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span>Airworthy</span></div><div class=\"ds-status-warn\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z\" stroke=\"#8B5E00\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span>Due in 14 days</span></div>",
+      "css": ".ds-status-ok, .ds-status-warn { display: flex; align-items: center; gap: 6px; font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500; } .ds-status-ok { color: #276B39; } .ds-status-warn { color: #8B5E00; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Logbook",
+    "overview": "Every screen is a page in a regulation-compliant maintenance record. Nothing decorates; everything documents. The aviation blue is ink on vellum. Space Grotesk is the hand that signs the form. The interface does not hurry the user — it makes each entry feel considered and permanent.\n\nThe light theme is not a safe default. It is the deliberate choice: a logbook is a paper artifact, and this screen extends that physical register. The palette is derived from glass cockpit references — the Garmin G1000 panel blue, advisory amber annunciators, the green-and-amber visual language of IFR compliance charts.\n\nThe system explicitly rejects the SaaS dashboard aesthetic. No hero-metric grids, no identical icon-cards, no at-a-glance information packing that sacrifices trust for density.",
+    "keyCharacteristics": [
+      "Authoritative, archival, unhurried",
+      "Aviation-specific color semantics carried consistently across every surface",
+      "Typographic hierarchy does the work; decoration does not",
+      "Confident, structured controls — every action feels committed",
+      "Safety-critical status (OVERDUE, DUE SOON) always surfaces first"
+    ],
+    "rules": [
+      { "name": "The Advisory Rule", "body": "Instrument Amber (tertiary) appears on ≤10% of any given screen. Its power comes from scarcity. A screen full of amber has no amber.", "section": "colors" },
+      { "name": "The Semantic Lock Rule", "body": "Airworthy Green and Caution Amber are semantic signals, not decorative colors. They may not appear for brand moments, empty state illustrations, or visual interest.", "section": "colors" },
+      { "name": "The Mono Rule", "body": "JetBrains Mono is reserved for technical aviation data: tail numbers, serial numbers, tach/Hobbs times, airframe hours. It never appears in UI chrome.", "section": "typography" },
+      { "name": "The Uppercase Commitment Rule", "body": "All button labels render UPPERCASE with Bold weight. Sentence case everywhere else. Uppercase signals commitment; a button is a decision, not an option.", "section": "typography" },
+      { "name": "The No-Shadow Rule", "body": "Do not introduce custom elevation parameters or manual shadow modifiers. Tonal elevation is the system. If separation feels insufficient, fix the surface color assignment.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use WingslogTypography.dataLarge / dataMedium / dataSmall (JetBrains Mono) for every tail number, serial number, engine hour, tach time, and airframe hour.",
+      "Do keep Instrument Amber (tertiary) to ≤10% of any screen's color moments.",
+      "Do surface OVERDUE and DUE SOON status at the top of every list.",
+      "Do use Spacing.screenPadding (24dp) as the horizontal inset for all screen-level content.",
+      "Do reserve Airworthy Green (#276B39) and Caution Amber (#8B5E00) for compliance and status semantics only.",
+      "Do render button labels UPPERCASE + Bold.",
+      "Do prefer tonal surface hierarchy over manual shadows.",
+      "Do use DetailSheet (bottom sheet, always fully expanded) for record details.",
+      "Do disable dynamic color. The aviation palette is the brand."
+    ],
+    "donts": [
+      "Don't expose multi-step complexity on a single form. Use tabs or wizard flows.",
+      "Don't use spreadsheet-style tables or dense grid layouts on primary screens.",
+      "Don't use gradient text, glassmorphism fills, hero-metric grids, or identical icon-card grids.",
+      "Don't use Instrument Amber for anything non-advisory.",
+      "Don't use border-left or border-right stripes greater than 1dp as decorative callout accents.",
+      "Don't introduce custom shadow or elevation modifier values.",
+      "Don't use Space Grotesk for body text, form field values, or dense data labels.",
+      "Don't use JetBrains Mono for anything that is not a technical measurement or identifier.",
+      "Don't add decorative motion: no orchestrated entrances, no elastic or bounce easing."
+    ]
+  }
+}
