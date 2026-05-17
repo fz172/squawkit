@@ -1,20 +1,16 @@
 package dev.fanfly.wingslog.feature.logs.update.logs
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,8 +20,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -38,12 +32,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.backhandler.BackHandler
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
@@ -53,15 +47,20 @@ import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
-import dev.fanfly.wingslog.feature.logs.update.logs.compose.ComponentSection
-import dev.fanfly.wingslog.feature.logs.update.logs.compose.SquawkWorkSection
-import dev.fanfly.wingslog.feature.logs.update.logs.compose.TaskWorkSection
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_HOURS_TAB
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_RECORDS_TAB
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_WORK_TAB
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogRecordsTab
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogTabRow
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogTimeTab
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogWorkTab
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkPickerSheet
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskPickerSheet
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
 import kotlin.time.Instant
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -78,25 +77,16 @@ import wingslog.feature.attachment.sharedassets.generated.resources.file_read_er
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.logs.sharedassets.generated.resources.edit_log
-import wingslog.feature.logs.sharedassets.generated.resources.maintenance_date
 import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
-import wingslog.feature.logs.update.generated.resources.airframe_time_hours
 import wingslog.feature.logs.update.generated.resources.delete_log
-import wingslog.feature.logs.update.generated.resources.engine_time_hours
 import wingslog.feature.logs.update.generated.resources.log_deleted
 import wingslog.feature.logs.update.generated.resources.log_saved
 import wingslog.feature.logs.update.generated.resources.log_updated
-import wingslog.feature.logs.update.generated.resources.prop_time_hours
-import wingslog.feature.logs.update.generated.resources.tap_to_change_date
-import wingslog.feature.logs.update.generated.resources.work_description_required
-import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
-import wingslog.feature.technician.sharedassets.generated.resources.performed_by
-import wingslog.feature.technician.sharedassets.generated.resources.select_technician
 
 @OptIn(
   ExperimentalMaterial3Api::class,
-  ExperimentalComposeUiApi::class
+  ExperimentalComposeUiApi::class,
 )
 @Composable
 fun MaintenanceLogFormScreen(
@@ -108,6 +98,8 @@ fun MaintenanceLogFormScreen(
   var showDatePicker by remember { mutableStateOf(false) }
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
+  val pagerState = rememberPagerState(pageCount = { 3 })
+  val coroutineScope = rememberCoroutineScope()
 
   val tryNavigateBack = {
     if (uiState.hasChanges) showUnsavedChangesDialog = true
@@ -115,16 +107,6 @@ fun MaintenanceLogFormScreen(
   }
   BackHandler(enabled = uiState.hasChanges) {
     showUnsavedChangesDialog = true
-  }
-
-  if (showUnsavedChangesDialog) {
-    UnsavedChangesDialog(
-      onConfirm = {
-        showUnsavedChangesDialog = false
-        navController.popBackStack()
-      },
-      onDismiss = { showUnsavedChangesDialog = false },
-    )
   }
 
   val logUpdatedMessage = stringResource(MaintenanceRes.string.log_updated)
@@ -139,68 +121,52 @@ fun MaintenanceLogFormScreen(
           val message = if (viewModel.isEditMode) logUpdatedMessage else logSavedMessage
           navController.previousBackStackEntry?.savedStateHandle?.set(
             CROSS_SCREEN_SUCCESS_MESSAGE,
-            message
+            message,
           )
           navController.popBackStack()
         }
-
         MaintenanceLogFormEvent.DeleteSuccess -> {
           navController.previousBackStackEntry?.savedStateHandle?.set(
             CROSS_SCREEN_SUCCESS_MESSAGE,
-            logDeletedMessage
+            logDeletedMessage,
           )
           navController.popBackStack()
         }
-
         MaintenanceLogFormEvent.PickError -> snackbarHostState.showSnackbar(fileReadErrorMessage)
         else -> Unit
       }
     }
   }
 
-  if (showDeleteDialog) {
-    AlertDialog(
-      onDismissRequest = { showDeleteDialog = false },
-      title = { Text(stringResource(MaintenanceRes.string.delete_log)) },
-      text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            viewModel.deleteLog()
-            showDeleteDialog = false
-          },
-          colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-        ) {
-          Text(stringResource(CoreRes.string.delete))
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { showDeleteDialog = false }) {
-          Text(stringResource(CoreRes.string.cancel))
-        }
-      })
-  }
-
-  val saveLabel = stringResource(CoreRes.string.save)
-
   Scaffold(
     topBar = {
-      TopAppBar(
-        title = {
-          Text(
-            if (viewModel.isEditMode) stringResource(SharedRes.string.edit_log) else stringResource(
-              SharedRes.string.add_log
+      Column {
+        TopAppBar(
+          title = {
+            Text(
+              text = if (viewModel.isEditMode)
+                stringResource(SharedRes.string.edit_log).uppercase()
+              else
+                stringResource(SharedRes.string.add_log).uppercase(),
+              style = MaterialTheme.typography.titleLarge,
+              fontWeight = FontWeight.Bold,
             )
-          )
-        },
-        navigationIcon = {
-          IconButton(onClick = { tryNavigateBack() }) {
-            Icon(
-              Icons.AutoMirrored.Filled.ArrowBack,
-              contentDescription = stringResource(CoreRes.string.back)
-            )
-          }
-        })
+          },
+          navigationIcon = {
+            IconButton(onClick = { tryNavigateBack() }) {
+              Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(CoreRes.string.back),
+              )
+            }
+          },
+        )
+        LogTabRow(
+          tabs = listOf(LOG_WORK_TAB, LOG_HOURS_TAB, LOG_RECORDS_TAB),
+          selectedIndex = pagerState.currentPage,
+          onSelect = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
+        )
+      }
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
     bottomBar = {
@@ -214,249 +180,185 @@ fun MaintenanceLogFormScreen(
           dangerLabel = stringResource(CoreRes.string.delete),
           primaryEnabled = !uiState.isSaving,
           isPrimaryFunctionInProgress = uiState.isSaving,
-          primaryLabel = saveLabel,
+          primaryLabel = stringResource(CoreRes.string.save),
         )
       }
     },
   ) { innerPadding ->
     if (uiState.isLoading) {
       Box(
-        Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize().padding(innerPadding),
+        contentAlignment = Alignment.Center,
       ) {
         CircularProgressIndicator()
       }
     } else {
-      Column(
-        modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState())
-          .padding(innerPadding).padding(Spacing.screenPadding),
-        verticalArrangement = Arrangement.spacedBy(Spacing.large)
-      ) {
-        // Maintenance Date
-        val dateDisplayText = uiState.maintenanceDate?.toDisplayFormat() ?: stringResource(
-          MaintenanceRes.string.tap_to_change_date
-        )
-        OutlinedTextField(
-          value = dateDisplayText,
-          onValueChange = {},
-          readOnly = true,
-          label = { Text(stringResource(SharedRes.string.maintenance_date)) },
-          leadingIcon = {
-            Icon(
-              Icons.Default.CalendarToday,
-              contentDescription = stringResource(SharedRes.string.maintenance_date)
-            )
-          },
-          modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
-          singleLine = true,
-          enabled = false,
-          colors = OutlinedTextFieldDefaults.colors(
-            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-            disabledBorderColor = MaterialTheme.colorScheme.outline,
-            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        )
-
-        if (showDatePicker) {
-          val initialMs = uiState.maintenanceDate?.let { date ->
-            date.let {
-              LocalDateTime(
-                it.year,
-                it.month,
-                it.day,
-                12,
-                0,
-                0
-              ).let { ldt ->
-                Instant.fromEpochSeconds(
-                  ldt.date.toEpochDays() * 86400L
-                ).toEpochMilliseconds()
-              }
+      Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+        HorizontalPager(
+          state = pagerState,
+          modifier = Modifier.weight(1f),
+          beyondViewportPageCount = 2,
+          verticalAlignment = Alignment.Top,
+        ) { page ->
+          Column(
+            modifier = Modifier
+              .fillMaxSize()
+              .verticalScroll(rememberScrollState())
+              .padding(Spacing.screenPadding),
+          ) {
+            when (page) {
+              0 -> LogWorkTab(
+                maintenanceDate = uiState.maintenanceDate,
+                onDateClick = { showDatePicker = true },
+                workDescription = uiState.workDescription,
+                onWorkDescriptionChange = viewModel::onWorkDescriptionChange,
+                aircraft = uiState.aircraft,
+                selectedComponentType = uiState.selectedComponentType,
+                onComponentTypeChange = viewModel::onComponentTypeChange,
+                selectedSubComponent = uiState.selectedSubComponent,
+                onSubComponentChange = viewModel::onSubComponentChange,
+                error = uiState.error,
+              )
+              1 -> LogTimeTab(
+                engineTime = uiState.engineTime,
+                onEngineTimeChange = viewModel::onEngineTimeChange,
+                airframeTime = uiState.airframeTime,
+                onAirframeTimeChange = viewModel::onAirframeTimeChange,
+                propTime = uiState.propTime,
+                onPropTimeChange = viewModel::onPropTimeChange,
+              )
+              2 -> LogRecordsTab(
+                technicianEnabled = uiState.technicianEnabled,
+                selectedTechnician = uiState.selectedTechnician,
+                onTechnicianClick = viewModel::showTechnicianPicker,
+                selectedSquawkIds = uiState.selectedSquawkIds,
+                availableSquawks = uiState.availableSquawks,
+                onAddSquawkClick = viewModel::showSquawkPicker,
+                onRemoveSquawk = viewModel::removeSquawkId,
+                selectedInspectionIds = uiState.selectedInspectionIds,
+                availableInspectionCards = uiState.availableInspectionCards,
+                onAddTaskClick = viewModel::showInspectionPicker,
+                onRemoveTask = viewModel::removeInspectionId,
+                attachmentUploadEnabled = uiState.attachmentUploadEnabled,
+                attachmentSection = {
+                  AttachmentFormSection(
+                    visibleAttachments = uiState.visibleAttachments,
+                    isAnonymous = uiState.isAnonymous,
+                    filesAtLimit = uiState.filesAtLimit,
+                    showPickerSheet = uiState.showAttachmentPicker,
+                    onAddClick = viewModel::showAttachmentPicker,
+                    onRemove = viewModel::removeAttachment,
+                    onPickFiles = viewModel::addLocalFiles,
+                    onAddLink = viewModel::addLink,
+                    onDismissSheet = viewModel::hideAttachmentPicker,
+                    onPickError = viewModel::onFilePickError,
+                    modifier = Modifier,
+                  )
+                },
+              )
             }
           }
-          val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMs)
-          DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-              TextButton(onClick = {
-                val selectedMs = datePickerState.selectedDateMillis
-                if (selectedMs != null) {
-                  val selectedDate =
-                    Instant.fromEpochMilliseconds(selectedMs).toLocalDateTime(TimeZone.UTC).date
-                  viewModel.onMaintenanceDateChange(selectedDate)
-                }
-                showDatePicker = false
-              }) {
-                Text(stringResource(CoreRes.string.ok))
-              }
-            },
-            dismissButton = {
-              TextButton(onClick = { showDatePicker = false }) {
-                Text(stringResource(CoreRes.string.cancel))
-              }
-            }) {
-            DatePicker(state = datePickerState)
-          }
         }
-
-        // Work Description (required)
-        OutlinedTextField(
-          value = uiState.workDescription,
-          onValueChange = viewModel::onWorkDescriptionChange,
-          label = { Text(stringResource(MaintenanceRes.string.work_description_required)) },
-          modifier = Modifier.fillMaxWidth(),
-          minLines = 3,
-          maxLines = 6,
-          isError = uiState.error != null
-        )
-
-        // Technician (Performed By)
-        if (uiState.technicianEnabled) {
-          val technicianDisplayText = uiState.selectedTechnician?.name ?: stringResource(
-            TechnicianRes.string.select_technician
-          )
-          OutlinedTextField(
-            value = technicianDisplayText,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(stringResource(TechnicianRes.string.performed_by)) },
-            leadingIcon = {
-              Icon(
-                Icons.Default.Person,
-                contentDescription = null
-              )
-            },
-            modifier = Modifier.fillMaxWidth()
-              .clickable { viewModel.showTechnicianPicker() },
-            singleLine = true,
-            enabled = false,
-            colors = OutlinedTextFieldDefaults.colors(
-              disabledTextColor = MaterialTheme.colorScheme.onSurface,
-              disabledBorderColor = MaterialTheme.colorScheme.outline,
-              disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-              disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-          )
-
-          if (uiState.showTechnicianPicker) {
-            TechnicianPickerSheet(
-              availableTechnicians = uiState.availableTechnicians,
-              selectedId = uiState.selectedTechnician?.id,
-              onSelect = { viewModel.onTechnicianSelect(it) },
-              onAddClick = {
-                viewModel.hideTechnicianPicker()
-                navController.navigate(Screen.EditTechnician.createRoute(null))
-              },
-              onDismiss = { viewModel.hideTechnicianPicker() })
-          }
-        }
-
-        // Squawk work section
-        SquawkWorkSection(
-          selectedIds = uiState.selectedSquawkIds,
-          availableSquawks = uiState.availableSquawks,
-          onAddClick = viewModel::showSquawkPicker,
-          onRemove = viewModel::removeSquawkId,
-          modifier = Modifier.fillMaxWidth(),
-        )
-
-        // Squawk picker bottom sheet
-        if (uiState.showSquawkPicker) {
-          SquawkPickerSheet(
-            openSquawks = uiState.availableSquawks,
-            selectedIds = uiState.selectedSquawkIds.toSet(),
-            onToggle = { id, _ -> viewModel.toggleSquawkSelection(id) },
-            onDismiss = viewModel::hideSquawkPicker,
-          )
-        }
-
-        // Inspection Work section
-        TaskWorkSection(
-          selectedIds = uiState.selectedInspectionIds,
-          availableCards = uiState.availableInspectionCards,
-          onAddClick = viewModel::showInspectionPicker,
-          onRemove = viewModel::removeInspectionId,
-          modifier = Modifier.fillMaxWidth(),
-        )
-
-        // Inspection picker bottom sheet
-        if (uiState.showInspectionPicker) {
-          TaskPickerSheet(
-            availableCards = uiState.availableInspectionCards,
-            selectedIds = uiState.selectedInspectionIds,
-            onToggle = viewModel::toggleInspectionSelection,
-            onDismiss = viewModel::hideInspectionPicker,
-          )
-        }
-
-        // Engine Time
-        OutlinedTextField(
-          value = uiState.engineTime,
-          onValueChange = viewModel::onEngineTimeChange,
-          label = { Text(stringResource(MaintenanceRes.string.engine_time_hours)) },
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true,
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-        )
-
-        // Airframe Time
-        OutlinedTextField(
-          value = uiState.airframeTime,
-          onValueChange = viewModel::onAirframeTimeChange,
-          label = { Text(stringResource(MaintenanceRes.string.airframe_time_hours)) },
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true,
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-        )
-
-        // Prop Time
-        OutlinedTextField(
-          value = uiState.propTime,
-          onValueChange = viewModel::onPropTimeChange,
-          label = { Text(stringResource(MaintenanceRes.string.prop_time_hours)) },
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true,
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-        )
-
-        // Component section
-        ComponentSection(
-          aircraft = uiState.aircraft,
-          selectedComponentType = uiState.selectedComponentType,
-          selectedSubComponent = uiState.selectedSubComponent,
-          onComponentTypeChange = viewModel::onComponentTypeChange,
-          onSubComponentChange = viewModel::onSubComponentChange,
-          modifier = Modifier.fillMaxWidth()
-        )
-
-        // Attachments
-        if (uiState.attachmentUploadEnabled) {
-          AttachmentFormSection(
-            visibleAttachments = uiState.visibleAttachments,
-            isAnonymous = uiState.isAnonymous,
-            filesAtLimit = uiState.filesAtLimit,
-            showPickerSheet = uiState.showAttachmentPicker,
-            onAddClick = viewModel::showAttachmentPicker,
-            onRemove = viewModel::removeAttachment,
-            onPickFiles = viewModel::addLocalFiles,
-            onAddLink = viewModel::addLink,
-            onDismissSheet = viewModel::hideAttachmentPicker,
-            onPickError = viewModel::onFilePickError,
-            modifier = Modifier.fillMaxWidth(),
-          )
-        }
-
-        // Error message
-        uiState.error?.let { error ->
-          Text(
-            text = error.asString(),
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall
-          )
-        }
-
       }
     }
+  }
+
+  // Overlays — rendered outside Scaffold so they float above all content
+
+  if (showUnsavedChangesDialog) {
+    UnsavedChangesDialog(
+      onConfirm = {
+        showUnsavedChangesDialog = false
+        navController.popBackStack()
+      },
+      onDismiss = { showUnsavedChangesDialog = false },
+    )
+  }
+
+  if (showDeleteDialog) {
+    AlertDialog(
+      onDismissRequest = { showDeleteDialog = false },
+      title = { Text(stringResource(MaintenanceRes.string.delete_log)) },
+      text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            viewModel.deleteLog()
+            showDeleteDialog = false
+          },
+          colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        ) {
+          Text(stringResource(CoreRes.string.delete))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showDeleteDialog = false }) {
+          Text(stringResource(CoreRes.string.cancel))
+        }
+      },
+    )
+  }
+
+  if (showDatePicker) {
+    val initialMs = uiState.maintenanceDate?.let { date ->
+      LocalDateTime(date.year, date.month, date.day, 12, 0, 0).let { ldt ->
+        Instant.fromEpochSeconds(ldt.date.toEpochDays() * 86400L).toEpochMilliseconds()
+      }
+    }
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMs)
+    DatePickerDialog(
+      onDismissRequest = { showDatePicker = false },
+      confirmButton = {
+        TextButton(onClick = {
+          val selectedMs = datePickerState.selectedDateMillis
+          if (selectedMs != null) {
+            val selectedDate =
+              Instant.fromEpochMilliseconds(selectedMs).toLocalDateTime(TimeZone.UTC).date
+            viewModel.onMaintenanceDateChange(selectedDate)
+          }
+          showDatePicker = false
+        }) {
+          Text(stringResource(CoreRes.string.ok))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showDatePicker = false }) {
+          Text(stringResource(CoreRes.string.cancel))
+        }
+      },
+    ) {
+      DatePicker(state = datePickerState)
+    }
+  }
+
+  if (uiState.showTechnicianPicker) {
+    TechnicianPickerSheet(
+      availableTechnicians = uiState.availableTechnicians,
+      selectedId = uiState.selectedTechnician?.id,
+      onSelect = { viewModel.onTechnicianSelect(it) },
+      onAddClick = {
+        viewModel.hideTechnicianPicker()
+        navController.navigate(Screen.EditTechnician.createRoute(null))
+      },
+      onDismiss = { viewModel.hideTechnicianPicker() },
+    )
+  }
+
+  if (uiState.showSquawkPicker) {
+    SquawkPickerSheet(
+      openSquawks = uiState.availableSquawks,
+      selectedIds = uiState.selectedSquawkIds.toSet(),
+      onToggle = { id, _ -> viewModel.toggleSquawkSelection(id) },
+      onDismiss = viewModel::hideSquawkPicker,
+    )
+  }
+
+  if (uiState.showInspectionPicker) {
+    TaskPickerSheet(
+      availableCards = uiState.availableInspectionCards,
+      selectedIds = uiState.selectedInspectionIds,
+      onToggle = viewModel::toggleInspectionSelection,
+      onDismiss = viewModel::hideInspectionPicker,
+    )
   }
 }
