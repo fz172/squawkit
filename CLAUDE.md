@@ -14,11 +14,14 @@ The app is moving to a **local-first architecture** (R1 in progress): a SQLDelig
 
 ```bash
 ./gradlew assembleDebug                          # Build debug APK
+./gradlew assembleDogfoodDebug                   # Build dogfood APK (includes fake data generator)
 ./gradlew lint                                   # Lint checks
 ./gradlew testDebugUnitTest                      # Run all Android unit tests
 ./gradlew :feature:fleet:viewing:testDebugUnitTest  # Run tests for a single module
 ./gradlew :composeApp:iosSimulatorArm64Test      # Run iOS simulator unit tests (local only)
 ```
+
+For the iOS dogfood build, select the **iosAppDogfood** scheme in Xcode and run. See [Dogfood Builds](#dogfood-builds) below.
 
 CI (`.github/workflows/ci.yml`) runs lint → assembleDebug → testDebugUnitTest on every push. iOS is **not** built on CI. CI requires `GOOGLE_SERVICES_JSON` secret to write `google-services.json` before building.
 
@@ -83,6 +86,10 @@ feature/
     database/           #   UserProfileManager (Firestore)
     sharedassets/       #   Strings, anonymous user icon
     userprofilecard/    #   Profile card composable
+  stresstest/           # Fake data generator for UI stress testing (dogfood only)
+                        #   FakeDataGenerator, StressTestScreen, StressTestViewModel, StressTestModule
+    config/             #   StressTestPlugin — shared composable UI + route registration used by
+                        #   both platforms' thin wiring layers (see Dogfood Builds below)
 ```
 
 ## Canonical Feature Module Pattern
@@ -191,6 +198,38 @@ Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, i
 ## Design Docs
 
 Feature PRDs and architecture design docs live in `docs/` — including `storage_r1_design.md`, `storage_r2_design.md`, `attachments_design.md`, `squawk_design.md`, `technician_design.md`, `userprofile_as_technician.md`, `aircraft_overview_tabs.md`, and `intelligentsearch.md`. Consult these before making non-trivial changes to a feature area.
+
+## Dogfood Builds
+
+The dogfood build includes the **Fake Data Generator** (`feature/stresstest`) — a screen that populates fake aircraft, logs, squawks, and tasks for UI stress testing. It is gated behind the `DogfoodFeatureExtensions` plugin interface defined in `composeApp/src/commonMain/`.
+
+### Architecture
+
+```
+feature/stresstest/config/StressTestPlugin.kt   ← shared composable UI + route registration (KMP commonMain)
+        │
+        ├── app/src/dogfood/DogfoodConfig.kt     ← Android thin wiring (dogfood flavor only)
+        └── composeApp/src/iosMain/
+              StressTestDogfoodExtensions.kt      ← iOS thin wiring (iosMain, all iOS builds)
+```
+
+Both wiring files are structurally identical — they implement `DogfoodFeatureExtensions` by delegating to the three functions in `StressTestPlugin.kt`. The split exists because Android uses product flavor source sets (`app/src/dogfood/`) while iOS has no equivalent; `composeApp/src/iosMain/` is the iOS entry-point layer.
+
+### Android
+
+- Product flavor `dogfood` in `app/build.gradle.kts` (dimension `environment`; the other is `prod`)
+- `app/src/dogfood/` source set compiled only for dogfood variants; `app/src/prod/` returns `NoOpDogfoodExtensions`
+- `feature:stresstest:config` is `dogfoodImplementation` — excluded from prod binaries entirely
+- Build: `./gradlew assembleDogfoodDebug`
+
+### iOS
+
+- `feature:stresstest:config` is in `composeApp`'s `iosMain` dependencies — compiled into all iOS builds but only activated via the dogfood entry point
+- `MainEntry.doInitKoinDogfood()` (`composeApp/src/iosMain/MainViewController.kt`) wires in `StressTestDogfoodExtensions`
+- `iosApp.swift` uses `#if DOGFOOD` to call `doInitKoinDogfood()` vs `doInitKoin()`
+- The **Dogfood** Xcode build configuration sets `SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG DOGFOOD"` and hardcodes `FRAMEWORK_SEARCH_PATHS` to the `Debug` KMP framework variant
+- The Compile Kotlin build phase remaps `CONFIGURATION=Dogfood → Debug` before invoking Gradle
+- Build: open `iosApp/iosApp.xcodeproj`, select the **iosAppDogfood** scheme, and run
 
 ## Coding Conventions
 
