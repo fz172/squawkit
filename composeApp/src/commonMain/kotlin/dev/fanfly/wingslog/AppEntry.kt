@@ -24,7 +24,6 @@ import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
-import dev.fanfly.wingslog.feature.settings.debugstresstest.StressTestScreen
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
@@ -38,6 +37,7 @@ import dev.fanfly.wingslog.login.LoginScreen
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import dev.fanfly.wingslog.DogfoodFeatureExtensions
 
 private const val GRAPH_AUTH = "graph_auth"
 private const val GRAPH_FLEET = "graph_fleet"
@@ -50,6 +50,7 @@ fun AppEntry() {
   val checker: DatabaseIntegrityChecker = koinInject()
   val authManager: AuthManager = koinInject()
   val firebaseAuth: FirebaseAuth = koinInject()
+  val dogfoodExts: DogfoodFeatureExtensions = koinInject()
 
   if (health.isCorrupted) {
     WingslogTheme {
@@ -87,7 +88,7 @@ fun AppEntry() {
         authGraph(navController)
         fleetGraph(navController)
         aircraftGraph(navController)
-        settingsGraph(navController)
+        settingsGraph(navController, dogfoodExts)
       }
     }
   }
@@ -198,7 +199,7 @@ private fun NavGraphBuilder.aircraftGraph(navController: NavController) {
   }
 }
 
-private fun NavGraphBuilder.settingsGraph(navController: NavController) {
+private fun NavGraphBuilder.settingsGraph(navController: NavController, dogfoodExts: DogfoodFeatureExtensions) {
   navigation(
     startDestination = Screen.Settings.route,
     route = GRAPH_SETTINGS
@@ -210,11 +211,12 @@ private fun NavGraphBuilder.settingsGraph(navController: NavController) {
       SyncSettingsScreen(navController = navController)
     }
     composable(Screen.FeatureLab.route) {
-      FeatureLabScreen(navController = navController)
+      FeatureLabScreen(
+        navController = navController,
+        dogfoodContent = { dogfoodExts.FeatureLabExtra(navController) },
+      )
     }
-    composable(Screen.DebugStressTest.route) {
-      StressTestScreen(navController = navController)
-    }
+    dogfoodExts.registerRoutes(this, navController)
     composable(Screen.ManageTechnicians.route) {
       val viewModel = koinViewModel<TechnicianListViewModel>()
       TechnicianListScreen(

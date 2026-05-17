@@ -68,6 +68,17 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
+  flavorDimensions += "environment"
+  productFlavors {
+    create("dogfood") {
+      dimension = "environment"
+      applicationIdSuffix = ".dogfood"
+    }
+    create("prod") {
+      dimension = "environment"
+    }
+  }
+
   buildTypes {
     release {
       isMinifyEnabled = false
@@ -106,6 +117,7 @@ dependencies {
 
   implementation(project(":composeApp"))
   implementation(project(":feature:sync:data"))
+  "dogfoodImplementation"(project(":feature:stresstest"))
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

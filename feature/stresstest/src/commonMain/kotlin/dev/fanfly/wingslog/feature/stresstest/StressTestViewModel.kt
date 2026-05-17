@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.debugstresstest
+package dev.fanfly.wingslog.feature.stresstest
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

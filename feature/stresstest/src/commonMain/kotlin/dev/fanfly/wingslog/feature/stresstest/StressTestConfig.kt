@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.debugstresstest
+package dev.fanfly.wingslog.feature.stresstest
 
 data class StressTestConfig(
     val engineCount: Int = 1,
