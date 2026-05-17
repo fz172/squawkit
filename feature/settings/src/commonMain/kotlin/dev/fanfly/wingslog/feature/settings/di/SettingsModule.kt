@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.settings.di
 
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
+import dev.fanfly.wingslog.feature.settings.debugstresstest.StressTestViewModel
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -17,4 +18,5 @@ val settingsModule = module {
     )
   }
   viewModel { FeatureLabViewModel(get()) }
+  viewModel { StressTestViewModel(get(), get(), get(), get(), get()) }
 }

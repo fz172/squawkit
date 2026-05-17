@@ -52,6 +52,12 @@ kotlin {
       implementation(project(":feature:userprofile:userprofilecard"))
       implementation(project(":feature:featurelab:datamanager"))
       implementation(project(":feature:technician:datamanager"))
+      implementation(project(":feature:fleet:datamanager"))
+      implementation(project(":feature:squawk:datamanager"))
+      implementation(project(":feature:logs:datamanager"))
+      implementation(project(":feature:tasks:datamanager"))
+      implementation(project(":core:datetime"))
+      implementation(project(":core:model"))
 
       // Compose
       implementation(libs.components.resources)
