@@ -44,6 +44,7 @@ kotlin {
     commonMain.dependencies {
       implementation(libs.gitlive.firebase.auth)
       implementation(project(":core:ui"))
+      implementation(project(":core:appinfo"))
       implementation(project(":core:auth"))
       implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:sync:data"))

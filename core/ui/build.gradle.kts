@@ -28,29 +28,6 @@ compose.resources {
   publicResClass = true
 }
 
-val versionPropsFile = rootProject.file("version.properties")
-
-val generateIosVersionKt by tasks.registering {
-  val outputDir = layout.buildDirectory.dir(
-    "generated/iosMain/kotlin/dev/fanfly/wingslog/core/ui"
-  )
-  outputs.dir(outputDir)
-  inputs.file(versionPropsFile)
-  doFirst {
-    val props = java.util.Properties().apply {
-      if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
-    }
-    val versionName = "${props["major"]}.${props["minor"]}" +
-      ".${props["buildDate"]}.${props["patch"]}"
-    outputDir.get().asFile.also { it.mkdirs() }
-      .resolve("GeneratedVersionInfo.kt")
-      .writeText(
-        "package dev.fanfly.wingslog.core.ui\n\n" +
-          "internal const val GENERATED_VERSION_NAME = \"$versionName\"\n"
-      )
-  }
-}
-
 kotlin {
   jvmToolchain(21)
 
@@ -64,10 +41,6 @@ kotlin {
   iosSimulatorArm64()
 
   sourceSets {
-    val iosMain by getting {
-      kotlin.srcDir(layout.buildDirectory.dir("generated/iosMain/kotlin"))
-    }
-
     commonMain.dependencies {
       api(project(":core:model"))
       api(project(":core:datetime"))
@@ -85,10 +58,6 @@ kotlin {
       implementation(libs.ktor.client.okhttp)
     }
   }
-}
-
-tasks.configureEach {
-  if (name.startsWith("compileKotlinIos")) dependsOn(generateIosVersionKt)
 }
 
 dependencies {

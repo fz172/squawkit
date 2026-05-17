@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.common.compose
+package dev.fanfly.wingslog.core.appinfo
 
 import androidx.compose.runtime.Composable
 
