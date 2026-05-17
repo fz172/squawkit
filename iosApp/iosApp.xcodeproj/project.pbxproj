@@ -100,7 +100,6 @@
 				3D25BBEF2F6FBB7500EFFADF /* Sources */,
 				3D25BBF02F6FBB7500EFFADF /* Frameworks */,
 				3D25BBF12F6FBB7500EFFADF /* Resources */,
-				3D25BC502F6FBB7600EFFADF /* Set Version from version.properties */,
 			);
 			buildRules = (
 			);
@@ -191,24 +190,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "cd \"$SRCROOT/..\"\nif [ \"$CONFIGURATION\" = \"Dogfood\" ]; then\n  CONFIGURATION=Debug ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode\nelse\n  ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode\nfi\n";
-		};
-		3D25BC502F6FBB7600EFFADF /* Set Version from version.properties */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Set Version from version.properties";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "PROPS=\"$SRCROOT/../version.properties\"\nMAJOR=$(awk -F= '/^major=/{print $2}' \"$PROPS\" | tr -d '[:space:]')\nMINOR=$(awk -F= '/^minor=/{print $2}' \"$PROPS\" | tr -d '[:space:]')\nBUILD_DATE=$(awk -F= '/^buildDate=/{print $2}' \"$PROPS\" | tr -d '[:space:]')\nPATCH=$(awk -F= '/^patch=/{print $2}' \"$PROPS\" | tr -d '[:space:]')\nVERSION_CODE=$(awk -F= '/^versionCode=/{print $2}' \"$PROPS\" | tr -d '[:space:]')\nMARKETING_VER=\"$MAJOR.$MINOR.$BUILD_DATE.$PATCH\"\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $MARKETING_VER\" \"$PLIST\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $VERSION_CODE\" \"$PLIST\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
