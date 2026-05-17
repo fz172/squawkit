@@ -9,11 +9,12 @@ import platform.Foundation.NSData
 
 @OptIn(ExperimentalForeignApi::class)
 actual fun ByteArray.toFirebaseData(): Data {
-  val nsData = if (isEmpty()) {
+  val nsData: NSData = if (isEmpty()) {
     NSData()
   } else {
     usePinned { pinned ->
-      NSData.create(bytes = pinned.addressOf(0), length = size.convert())
+      NSData.dataWithBytes(bytes = pinned.addressOf(0), length = size.convert())
+        ?: NSData()
     }
   }
   return Data(nsData)
