@@ -4,9 +4,9 @@
   <string name="add_squawk">New squawk</string>
   <string name="edit_squawk">Edit squawk</string>
   <string name="open_with_count">OPEN (%1$d)</string>
-  <string name="addressed_with_count">ADDRESSED (%1$d)</string>
+  <string name="closed_with_count">CLOSED (%1$d)</string>
   <string name="no_open_squawks">No open squawks. Tap + to report a defect or anomaly.</string>
-  <string name="no_addressed_squawks">Log work against a squawk to see its history here.</string>
+  <string name="no_closed_squawks">No closed squawks yet.</string>
   <string name="priority_low">Low</string>
   <string name="priority_medium">Medium</string>
   <string name="priority_high">High</string>
@@ -28,4 +28,12 @@
   <string name="squawk_reported_on">Reported on</string>
   <string name="squawk_view_log">View Log</string>
   <string name="squawk_not_yet_addressed">Not yet addressed by any log.</string>
+  <string name="squawk_dismissed">Squawk dismissed</string>
+  <string name="squawk_reopened">Squawk reopened</string>
+  <string name="dismiss_reason_obsolete">Obsolete</string>
+  <string name="dismiss_reason_not_reproducible">Not reproducible</string>
+  <string name="dismiss_reason_duplicate">Duplicate</string>
+  <string name="squawk_status_addressed">Addressed</string>
+  <string name="squawk_status_dismissed">Dismissed</string>
+  <string name="dismissed_label">Dismissed — %1$s</string>
 </resources>

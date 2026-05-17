@@ -26,6 +26,7 @@ import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.sharedassets.chipColor
 import dev.fanfly.wingslog.feature.squawk.sharedassets.chipTextColor
@@ -35,6 +36,8 @@ import wingslog.feature.squawk.sharedassets.generated.resources.priority_aog
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_high
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_low
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_medium
+import wingslog.feature.squawk.sharedassets.generated.resources.squawk_status_addressed
+import wingslog.feature.squawk.sharedassets.generated.resources.squawk_status_dismissed
 
 @Composable
 fun SquawkCard(
@@ -66,7 +69,13 @@ fun SquawkCard(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        PriorityBadge(item)
+        Row(
+          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          PriorityBadge(item)
+          StatusBadge(item.status)
+        }
         Icon(
           imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
           contentDescription = null,
@@ -98,6 +107,37 @@ fun SquawkCard(
         )
       }
     }
+  }
+}
+
+@Composable
+private fun StatusBadge(status: SquawkStatus) {
+  val scheme = MaterialTheme.colorScheme
+  val (bg, fg, label) = when (status) {
+    SquawkStatus.ADDRESSED -> Triple(
+      scheme.secondaryContainer,
+      scheme.onSecondaryContainer,
+      stringResource(Res.string.squawk_status_addressed),
+    )
+    SquawkStatus.DISMISSED -> Triple(
+      scheme.surfaceVariant,
+      scheme.onSurfaceVariant,
+      stringResource(Res.string.squawk_status_dismissed),
+    )
+    SquawkStatus.OPEN -> return
+  }
+  Box(
+    modifier = Modifier
+      .background(bg, RoundedCornerShape(Spacing.extraSmall))
+      .padding(horizontal = Spacing.small, vertical = Spacing.tiny)
+  ) {
+    Text(
+      text = label.uppercase(),
+      style = MaterialTheme.typography.labelSmall,
+      color = fg,
+      fontWeight = FontWeight.Bold,
+      letterSpacing = 0.5.sp,
+    )
   }
 }
 

@@ -50,6 +50,10 @@ fun AddSquawkRoute(
     onClearLog = viewModel::clearLog,
     onSelectLog = viewModel::selectLog,
     onHideLogPicker = viewModel::hideLogPicker,
+    onDismissClick = {},
+    onDismissDialogDismiss = {},
+    onDismissConfirm = {},
+    onReopenClick = {},
     attachmentSection = {
       if (attachmentUploadEnabled) {
         AttachmentFormSection(

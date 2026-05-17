@@ -27,6 +27,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:datetime"))
       implementation(project(":core:storage"))
       implementation(project(":feature:squawk:model"))
       implementation(libs.gitlive.firebase.auth)
@@ -37,4 +38,8 @@ kotlin {
 
 dependencies {
   implementation(platform(libs.firebase.bom))
+  testImplementation(libs.junit)
+  testImplementation(libs.mockk)
+  testImplementation(libs.truth)
+  testImplementation(libs.kotlinx.coroutines.test)
 }

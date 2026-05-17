@@ -2,13 +2,16 @@ package dev.fanfly.wingslog.feature.squawk.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Squawk
+import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlin.time.Clock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -74,6 +77,43 @@ class SquawkManagerImpl(
       store.put(squawkId, existing.copy(addressed_by_log_id = logId), scope)
     }
   }.onFailure { logger.w(it) { "Error marking squawks addressed: $squawkIds" } }
+
+  override suspend fun dismissSquawk(
+    aircraftId: String,
+    squawkId: String,
+    reason: SquawkDismissReason,
+  ): Result<Unit> = runCatching {
+    val uid = requireUid()
+    val scope = EntityScope.aircraftChild(uid, aircraftId)
+    val existing = store.observeAll(scope).firstOrNull()
+      ?.associateBy { it.id }?.get(squawkId)?.value
+      ?: error("Squawk $squawkId not found")
+    store.put(
+      squawkId,
+      existing.copy(
+        dismiss_reason = reason,
+        dismissed_at = Clock.System.now().toWireInstant(),
+      ),
+      scope,
+    )
+  }.onFailure { logger.w(it) { "Error dismissing squawk $squawkId" } }
+
+  override suspend fun reopenSquawk(aircraftId: String, squawkId: String): Result<Unit> =
+    runCatching {
+      val uid = requireUid()
+      val scope = EntityScope.aircraftChild(uid, aircraftId)
+      val existing = store.observeAll(scope).firstOrNull()
+        ?.associateBy { it.id }?.get(squawkId)?.value
+        ?: error("Squawk $squawkId not found")
+      store.put(
+        squawkId,
+        existing.copy(
+          dismiss_reason = SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN,
+          dismissed_at = null,
+        ),
+        scope,
+      )
+    }.onFailure { logger.w(it) { "Error reopening squawk $squawkId" } }
 
   private fun requireUid(): String =
     firebaseAuth.currentUser?.uid ?: error("Cannot mutate squawks when no user is signed in")

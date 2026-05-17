@@ -23,7 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.add
@@ -31,6 +35,7 @@ import wingslog.core.ui.generated.resources.remove
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
+import wingslog.feature.squawk.sharedassets.generated.resources.dismissed_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_description_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_not_yet_addressed
 
@@ -44,9 +49,12 @@ fun SquawkDetailsTab(
   onAddLog: () -> Unit,
   onClearLog: () -> Unit,
   readOnly: Boolean,
+  dismissReason: SquawkDismissReason,
+  dismissedAtFormatted: String,
   attachmentSection: @Composable () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val isDismissed = dismissReason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN
   Column(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.large),
@@ -76,7 +84,7 @@ fun SquawkDetailsTab(
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
           )
-          if (addressedByLogId.isEmpty()) {
+          if (addressedByLogId.isEmpty() && !isDismissed) {
             OutlinedButton(
               onClick = onAddLog,
               contentPadding = PaddingValues(
@@ -98,36 +106,66 @@ fun SquawkDetailsTab(
           }
         }
 
-        if (addressedByLogId.isEmpty()) {
-          Text(
+        when {
+          isDismissed -> {
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+              Text(
+                text = stringResource(Res.string.dismissed_label, dismissReason.toLabel()),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+              if (dismissedAtFormatted.isNotEmpty()) {
+                Text(
+                  text = dismissedAtFormatted,
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+              }
+            }
+          }
+          addressedByLogId.isEmpty() -> Text(
             text = stringResource(Res.string.squawk_not_yet_addressed),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
-        } else {
-          val displayText = associatedLog?.work_description?.takeIf { it.isNotBlank() }
-            ?: addressedByLogId
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-          ) {
-            Text(
-              text = displayText,
-              style = MaterialTheme.typography.bodyMedium,
-              maxLines = 2,
-              overflow = TextOverflow.Ellipsis,
-              modifier = Modifier.weight(1f),
-            )
-            IconButton(onClick = onClearLog) {
-              Icon(
-                Icons.Default.Close,
-                contentDescription = stringResource(CoreRes.string.remove),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
+          else -> {
+            val displayText = associatedLog?.work_description?.takeIf { it.isNotBlank() }
+              ?: addressedByLogId
+            val logDate = associatedLog?.timestamp
+              ?.takeIf { it.getEpochSecond() > 0L }
+              ?.toLocalDate()
+              ?.toDisplayFormat()
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+              ) {
+                Text(
+                  text = displayText,
+                  style = MaterialTheme.typography.bodyMedium,
+                  maxLines = 2,
+                  overflow = TextOverflow.Ellipsis,
+                  modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = onClearLog) {
+                  Icon(
+                    Icons.Default.Close,
+                    contentDescription = stringResource(CoreRes.string.remove),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                  )
+                }
+              }
+              if (logDate != null) {
+                Text(
+                  text = logDate,
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+              }
             }
+            HorizontalDivider()
           }
-          HorizontalDivider()
         }
       }
     }

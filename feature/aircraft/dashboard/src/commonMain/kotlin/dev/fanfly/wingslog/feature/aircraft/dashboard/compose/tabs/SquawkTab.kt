@@ -40,8 +40,8 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiSta
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
-import wingslog.feature.squawk.sharedassets.generated.resources.addressed_with_count
-import wingslog.feature.squawk.sharedassets.generated.resources.no_addressed_squawks
+import wingslog.feature.squawk.sharedassets.generated.resources.closed_with_count
+import wingslog.feature.squawk.sharedassets.generated.resources.no_closed_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
 import wingslog.feature.squawk.sharedassets.generated.resources.squawks
@@ -62,13 +62,13 @@ fun SquawkTab(
   onAction: (AircraftOverviewAction) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  var showAddressed by rememberSaveable { mutableStateOf(false) }
+  var showClosed by rememberSaveable { mutableStateOf(false) }
 
   val openSquawks = state.squawks
     .filter { it.status == SquawkStatus.OPEN }
     .sortedWith(priorityOrder)
-  val addressedSquawks = state.squawks
-    .filter { it.status == SquawkStatus.ADDRESSED }
+  val closedSquawks = state.squawks
+    .filter { it.status == SquawkStatus.ADDRESSED || it.status == SquawkStatus.DISMISSED }
     .sortedByDescending { it.squawk.created_at?.getEpochSecond() ?: 0L }
 
   Column(
@@ -88,21 +88,21 @@ fun SquawkTab(
 
     DualSegmentedFilter(
       option1 = stringResource(Res.string.open_with_count, openSquawks.size),
-      option2 = stringResource(Res.string.addressed_with_count, addressedSquawks.size),
-      selectedIndex = if (showAddressed) 1 else 0,
-      onSelect = { showAddressed = it == 1 },
+      option2 = stringResource(Res.string.closed_with_count, closedSquawks.size),
+      selectedIndex = if (showClosed) 1 else 0,
+      onSelect = { showClosed = it == 1 },
     )
 
-    val displayList = if (showAddressed) addressedSquawks else openSquawks
+    val displayList = if (showClosed) closedSquawks else openSquawks
 
     if (displayList.isEmpty()) {
-      if (!showAddressed) {
+      if (!showClosed) {
         OpenEmptyState(
           onAddClick = { onAction(AircraftOverviewAction.AddSquawkClick(state.aircraft.id)) }
         )
       } else {
         Text(
-          text = stringResource(Res.string.no_addressed_squawks),
+          text = stringResource(Res.string.no_closed_squawks),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(vertical = Spacing.large),

@@ -13,6 +13,8 @@ import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
+import wingslog.feature.squawk.sharedassets.generated.resources.squawk_dismissed
+import wingslog.feature.squawk.sharedassets.generated.resources.squawk_reopened
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_updated
 
 @Composable
@@ -25,6 +27,8 @@ fun EditSquawkRoute(
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
   val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
   val successMessage = stringResource(Res.string.squawk_updated)
+  val dismissedMessage = stringResource(Res.string.squawk_dismissed)
+  val reopenedMessage = stringResource(Res.string.squawk_reopened)
 
   LaunchedEffect(Unit) {
     viewModel.events.collect { event ->
@@ -50,6 +54,10 @@ fun EditSquawkRoute(
     onClearLog = viewModel::clearLog,
     onSelectLog = viewModel::selectLog,
     onHideLogPicker = viewModel::hideLogPicker,
+    onDismissClick = viewModel::showDismissDialog,
+    onDismissDialogDismiss = viewModel::hideDismissDialog,
+    onDismissConfirm = { reason -> viewModel.confirmDismiss(reason, dismissedMessage) },
+    onReopenClick = { viewModel.reopen(reopenedMessage) },
     attachmentSection = {
       if (attachmentUploadEnabled) {
         AttachmentFormSection(
