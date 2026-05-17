@@ -109,7 +109,7 @@ fun StressTestScreen(
                         StepperRow(
                             label = "Blades per engine",
                             value = config.bladesPerEngine,
-                            range = 2..3,
+                            range = 2..4,
                             onDecrement = { viewModel.setBladesPerEngine(config.bladesPerEngine - 1) },
                             onIncrement = { viewModel.setBladesPerEngine(config.bladesPerEngine + 1) },
                         )
