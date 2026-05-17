@@ -46,7 +46,7 @@ import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
 import wingslog.feature.squawk.sharedassets.generated.resources.squawks
 
-private val priorityOrder = compareByDescending<SquawkWithStatus> {
+private val squawkOrder = compareByDescending<SquawkWithStatus> {
   when (it.squawk.priority) {
     SquawkPriority.SQUAWK_PRIORITY_AOG    -> 4
     SquawkPriority.SQUAWK_PRIORITY_HIGH   -> 3
@@ -54,7 +54,7 @@ private val priorityOrder = compareByDescending<SquawkWithStatus> {
     SquawkPriority.SQUAWK_PRIORITY_LOW    -> 1
     else                                   -> 0
   }
-}
+}.thenBy { it.squawk.created_at?.getEpochSecond() ?: Long.MAX_VALUE }
 
 @Composable
 fun SquawkTab(
@@ -66,7 +66,7 @@ fun SquawkTab(
 
   val openSquawks = state.squawks
     .filter { it.status == SquawkStatus.OPEN }
-    .sortedWith(priorityOrder)
+    .sortedWith(squawkOrder)
   val closedSquawks = state.squawks
     .filter { it.status == SquawkStatus.ADDRESSED || it.status == SquawkStatus.DISMISSED }
     .sortedByDescending { it.squawk.created_at?.getEpochSecond() ?: 0L }
