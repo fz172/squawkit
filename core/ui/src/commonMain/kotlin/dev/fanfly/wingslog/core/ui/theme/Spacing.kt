@@ -16,7 +16,7 @@ object Spacing {
   val hairline = 1.dp             // Border strokes only
 
   // Common Layout Constants
-  val screenPadding = extraLarge
+  val screenPadding = large
   val columnGap = large
   val cardCornerRadius = 12.dp   // All card surfaces
   val smallCornerRadius = 8.dp   // Chips, badges, small surfaces

@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import kotlinx.coroutines.IO
 
 /**
  * Common Koin bindings for the local-first attachment stack. [BlobFilesystem] is provided per
