@@ -336,6 +336,44 @@ class TaskDueManagerImplTest {
   }
 
   @Test
+  fun forceComplied_multiCycleTimeOverdue_advancesPastToday() {
+    // 12-month rule, creation 2019-01-01, never logged → first due 2020-01-31 (EOM).
+    // Force-complied today (2026-04-13): must advance past currentDate, not just one cycle.
+    // 2020-01-31 + 12mo × 7 iterations = 2027-01-31 (first date > 2026-04-13).
+    val card = card(
+      id = "c1",
+      rules = listOf(timeRule(12, creationDate = iso("2019-01-01"))),
+      forceComplied = ForceCompliedStatus(complied_date = iso("2026-04-13")),
+    )
+
+    val result = manager.computeNextDue(card, emptyList(), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2027, 1, 31))
+    assertThat(result.status).isEqualTo(DueStatus.NORMAL)
+  }
+
+  @Test
+  fun forceComplied_multiCycleEngineOverdue_advancesPastCurrentMetric() {
+    // 50-hour rule; last compliance at 100h → nextDue = 150h.
+    // Current engine at 400h — 5 cycles overdue.
+    // After force-comply: must advance until nextDue > 400h.
+    // 150 → 200 → 250 → 300 → 350 → 400 → 450 (first value > 400).
+    val card = card(
+      id = "c1",
+      component = ComponentType.COMPONENT_ENGINE,
+      rules = listOf(engineRule(50f)),
+      forceComplied = ForceCompliedStatus(complied_date = iso("2026-04-13")),
+    )
+    val complianceLog = log(inspectionIds = listOf("c1"), engineHour = 100.0)
+    val currentHourLog = log(id = "log2", engineHour = 400.0)
+
+    val result = manager.computeNextDue(card, listOf(complianceLog, currentHourLog), listOf(card))
+
+    assertThat(result.nextDueEngine).isEqualTo(450f)
+    assertThat(result.status).isEqualTo(DueStatus.NORMAL)
+  }
+
+  @Test
   fun forceComplied_olderThanLatestLog_ignored() {
     val card = card(
       id = "c1",

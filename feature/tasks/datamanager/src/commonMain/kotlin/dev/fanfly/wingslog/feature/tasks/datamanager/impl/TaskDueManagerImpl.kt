@@ -184,7 +184,7 @@ class TaskDueManagerImpl(
       }
     }
 
-    // 3. Force complied — skip to next cycle
+    // 3. Force complied — advance past ALL overdue cycles, not just one
     val forceComplied = card.force_complied_status
     if (forceComplied != null) {
       val compliedEpoch = forceComplied.complied_date?.getEpochSecond() ?: 0L
@@ -194,16 +194,25 @@ class TaskDueManagerImpl(
       if (compliedEpoch > latestLogEpoch) {
         for (rule in card.rules) {
           rule.time_rule?.let { timeRule ->
+            fun LocalDate.advance(): LocalDate = when {
+              timeRule.interval_days > 0 -> plus(timeRule.interval_days, DateTimeUnit.DAY)
+              timeRule.interval_years > 0 -> plus(timeRule.interval_years, DateTimeUnit.YEAR)
+              else -> plus(timeRule.interval_months, DateTimeUnit.MONTH).endOfMonth()
+            }
             nextDueDate = nextDueDate?.let { d ->
-              when {
-                timeRule.interval_days > 0 -> d.plus(timeRule.interval_days, DateTimeUnit.DAY)
-                timeRule.interval_years > 0 -> d.plus(timeRule.interval_years, DateTimeUnit.YEAR)
-                else -> d.plus(timeRule.interval_months, DateTimeUnit.MONTH).endOfMonth()
-              }
+              var advanced = d.advance()
+              while (advanced <= currentDate) advanced = advanced.advance()
+              advanced
             }
           }
           rule.engine_hour_rule?.let { engineRule ->
-            nextDueEngine = nextDueEngine?.let { it + engineRule.interval_hours }
+            if (engineRule.interval_hours > 0f) {
+              nextDueEngine = nextDueEngine?.let { e ->
+                var advanced = e + engineRule.interval_hours
+                while (advanced <= currentMetricTime) advanced += engineRule.interval_hours
+                advanced
+              }
+            }
           }
         }
       }
