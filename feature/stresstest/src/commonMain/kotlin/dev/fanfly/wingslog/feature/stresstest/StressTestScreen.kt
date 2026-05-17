@@ -315,7 +315,6 @@ private fun SliderRow(
             value = value.toFloat(),
             onValueChange = { onValueChange(it.toInt()) },
             valueRange = range.first.toFloat()..range.last.toFloat(),
-            steps = range.last - range.first - 1,
             modifier = Modifier.fillMaxWidth(),
         )
     }
