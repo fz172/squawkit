@@ -57,9 +57,14 @@ kotlin {
   iosSimulatorArm64()
 
   sourceSets {
-    val iosMain by getting {
+    val iosMain = sourceSets.findByName("iosMain") ?: sourceSets.create("iosMain")
+    iosMain.apply {
+      dependsOn(commonMain.get())
       kotlin.srcDir(layout.buildDirectory.dir("generated/iosMain/kotlin"))
     }
+    sourceSets.findByName("iosX64Main")?.dependsOn(iosMain)
+    sourceSets.findByName("iosArm64Main")?.dependsOn(iosMain)
+    sourceSets.findByName("iosSimulatorArm64Main")?.dependsOn(iosMain)
 
     commonMain.dependencies {
       implementation(libs.compose.ui)
