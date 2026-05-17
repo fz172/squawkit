@@ -600,7 +600,7 @@ object FakeDataGenerator {
     private fun buildTasks(count: Int, now: Instant): List<MaintenanceTask> {
         val pool = TASK_TEMPLATES.shuffled().take(count.coerceAtMost(TASK_TEMPLATES.size))
         val creationInstant = now - (4 * 365).days
-        return pool.map { template ->
+        return pool.mapIndexed { index, template ->
             val taskId = generateRandomId()
             val timeRuleWithDate = when {
                 template.rule.time_rule != null -> InspectionRule(
@@ -608,6 +608,16 @@ object FakeDataGenerator {
                 )
                 else -> template.rule
             }
+
+            // Distribute across due statuses in thirds.
+            // On-condition and immediate tasks show their own status — leave them alone.
+            val isSpecialRule = template.rule.on_condition_rule != null || template.rule.immediate_rule != null
+            val forceDueDate = if (isSpecialRule) null else when (index % 3) {
+                0 -> (now + (60..240).random().days).toWireInstant()  // NORMAL: 2–8 months out
+                1 -> (now + (1..25).random().days).toWireInstant()    // DUE SOON: within 1-month window
+                else -> null                                            // OVERDUE: rule-based (creation 4yr ago)
+            }
+
             MaintenanceTask(
                 id = taskId,
                 title = template.title,
@@ -619,6 +629,7 @@ object FakeDataGenerator {
                 compliance_authority = template.complianceAuthority,
                 compliance_details = template.complianceDetails,
                 is_one_time = template.isOneTime,
+                force_due_date = forceDueDate,
             )
         }
     }
