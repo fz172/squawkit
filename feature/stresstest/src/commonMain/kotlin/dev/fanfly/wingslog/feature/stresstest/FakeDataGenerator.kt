@@ -650,9 +650,10 @@ object FakeDataGenerator {
                 }
             }
 
+            val timeRule = rule.time_rule
             val timeRuleWithDate = when {
-                rule.time_rule != null -> InspectionRule(
-                    time_rule = rule.time_rule.copy(creation_date = creationInstant.toWireInstant())
+                timeRule != null -> InspectionRule(
+                    time_rule = timeRule.copy(creation_date = creationInstant.toWireInstant())
                 )
                 else -> rule
             }
