@@ -599,23 +599,69 @@ object FakeDataGenerator {
 
     private fun buildTasks(count: Int, now: Instant): List<MaintenanceTask> {
         val pool = TASK_TEMPLATES.shuffled().take(count.coerceAtMost(TASK_TEMPLATES.size))
-        val creationInstant = now - (4 * 365).days
+        val overdueCreationInstant = now - (4 * 365).days
+
         return pool.mapIndexed { index, template ->
             val taskId = generateRandomId()
-            val timeRuleWithDate = when {
-                template.rule.time_rule != null -> InspectionRule(
-                    time_rule = template.rule.time_rule.copy(creation_date = creationInstant.toWireInstant())
-                )
-                else -> template.rule
+            val rule = template.rule
+            val isOnCondition = rule.on_condition_rule != null || rule.immediate_rule != null
+            val isEngineHour = rule.engine_hour_rule != null
+            val dueGroup = if (isOnCondition) -1 else index % 3
+
+            // Approximate the rule interval in days for creation_date arithmetic.
+            val intervalDays: Long = rule.time_rule?.let {
+                when {
+                    it.interval_days > 0 -> it.interval_days.toLong()
+                    it.interval_years > 0 -> it.interval_years.toLong() * 365L
+                    else -> it.interval_months.toLong() * 30L
+                }
+            } ?: 0L
+
+            // Time-based tasks: drive due status purely via creation_date so the
+            // TaskDueManager's rule-based path does all the work.
+            //
+            //   NORMAL   → creation_date = now − interval + 40..240 days
+            //              → next due = now + 40..240 days  (well outside 30-day window)
+            //   DUE SOON → creation_date = now − interval + 1..25 days
+            //              → next due = now + 1..25 days    (inside 30-day window)
+            //   OVERDUE  → creation_date = 4 years ago
+            //              → next due = long in the past
+            //
+            // Short-interval tasks (< 40 days, e.g. VOR/DB update) can never reach NORMAL
+            // status since the whole interval is less than the DUE_SOON threshold; they
+            // fall through to the DUE_SOON branch instead.
+            //
+            // Engine-hour tasks can't have their base controlled at task-creation time
+            // (the base comes from logged engine hours, which aren't known yet), so
+            // NORMAL/DUE_SOON use force_due_date and OVERDUE is natural (base=0,
+            // interval=100, current≈1200 → OVERDUE without any override).
+            val creationInstant: Instant = when {
+                isEngineHour || isOnCondition -> overdueCreationInstant
+                dueGroup == 2 -> overdueCreationInstant
+                dueGroup == 0 && intervalDays >= 40 -> {
+                    val offsetDays = (40..minOf(intervalDays, 240L).toInt()).random().toLong()
+                    now - intervalDays.days + offsetDays.days
+                }
+                else -> {
+                    // DUE SOON (also handles short-interval tasks demoted from NORMAL)
+                    val maxOffset = minOf(25L, intervalDays - 1).coerceAtLeast(1L)
+                    val offsetDays = (1..maxOffset.toInt()).random().toLong()
+                    now - intervalDays.days + offsetDays.days
+                }
             }
 
-            // Distribute across due statuses in thirds.
-            // On-condition and immediate tasks show their own status — leave them alone.
-            val isSpecialRule = template.rule.on_condition_rule != null || template.rule.immediate_rule != null
-            val forceDueDate = if (isSpecialRule) null else when (index % 3) {
-                0 -> (now + (60..240).random().days).toWireInstant()  // NORMAL: 2–8 months out
-                1 -> (now + (1..25).random().days).toWireInstant()    // DUE SOON: within 1-month window
-                else -> null                                            // OVERDUE: rule-based (creation 4yr ago)
+            val timeRuleWithDate = when {
+                rule.time_rule != null -> InspectionRule(
+                    time_rule = rule.time_rule.copy(creation_date = creationInstant.toWireInstant())
+                )
+                else -> rule
+            }
+
+            val forceDueDate = when {
+                isOnCondition || !isEngineHour -> null
+                dueGroup == 0 -> (now + (60..240).random().days).toWireInstant()
+                dueGroup == 1 -> (now + (1..25).random().days).toWireInstant()
+                else -> null
             }
 
             MaintenanceTask(
