@@ -29,11 +29,13 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.font.FontWeight
+import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.squawk.update.compose.DismissSquawkDialog
 import dev.fanfly.wingslog.feature.squawk.update.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkBasicTab
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsTab
@@ -44,6 +46,8 @@ import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
 import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
+import wingslog.feature.squawk.update.generated.resources.dismiss_issue
+import wingslog.feature.squawk.update.generated.resources.reopen_issue
 import wingslog.feature.squawk.update.generated.resources.tab_basic
 import wingslog.feature.squawk.update.generated.resources.tab_details
 
@@ -60,10 +64,16 @@ fun SquawkFormScreen(
   onClearLog: () -> Unit,
   onSelectLog: (String) -> Unit,
   onHideLogPicker: () -> Unit,
+  onDismissClick: () -> Unit,
+  onDismissDialogDismiss: () -> Unit,
+  onDismissConfirm: (SquawkDismissReason) -> Unit,
+  onReopenClick: () -> Unit,
   modifier: Modifier = Modifier,
   attachmentSection: @Composable () -> Unit = {},
 ) {
   val isEdit = state.squawkId != null
+  val isDismissed = state.dismissReason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN
+  val showDismissButton = isEdit && !state.isAddressedReadOnly && !isDismissed
   val screenTitle = if (isEdit) stringResource(Res.string.edit_squawk)
   else stringResource(Res.string.add_squawk)
 
@@ -160,6 +170,8 @@ fun SquawkFormScreen(
               onAddLog = onAddLog,
               onClearLog = onClearLog,
               readOnly = state.isAddressedReadOnly,
+              dismissReason = state.dismissReason,
+              dismissedAtFormatted = state.dismissedAtFormatted,
               attachmentSection = attachmentSection,
             )
           }
@@ -171,6 +183,15 @@ fun SquawkFormScreen(
         onSecondaryClick = { tryBack() },
         primaryEnabled = !state.isSaving,
         isPrimaryFunctionInProgress = state.isSaving,
+        onDangerClick = when {
+          showDismissButton -> onDismissClick
+          isDismissed -> onReopenClick
+          else -> null
+        },
+        dangerLabel = when {
+          isDismissed -> stringResource(UpdateRes.string.reopen_issue)
+          else -> stringResource(UpdateRes.string.dismiss_issue)
+        },
       )
     }
   }
@@ -180,6 +201,13 @@ fun SquawkFormScreen(
       logs = state.availableLogs,
       onSelect = onSelectLog,
       onDismiss = onHideLogPicker,
+    )
+  }
+
+  if (state.showDismissDialog) {
+    DismissSquawkDialog(
+      onConfirm = onDismissConfirm,
+      onDismiss = onDismissDialogDismiss,
     )
   }
 }

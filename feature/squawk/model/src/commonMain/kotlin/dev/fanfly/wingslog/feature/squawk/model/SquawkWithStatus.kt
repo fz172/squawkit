@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.squawk.model
 
 import dev.fanfly.wingslog.aircraft.Squawk
+import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 
 data class SquawkWithStatus(
   val squawk: Squawk,
@@ -9,5 +10,9 @@ data class SquawkWithStatus(
 
 fun Squawk.toWithStatus(): SquawkWithStatus = SquawkWithStatus(
   squawk = this,
-  status = if (addressed_by_log_id.isEmpty()) SquawkStatus.OPEN else SquawkStatus.ADDRESSED,
+  status = when {
+    addressed_by_log_id.isNotEmpty() -> SquawkStatus.ADDRESSED
+    dismiss_reason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN -> SquawkStatus.DISMISSED
+    else -> SquawkStatus.OPEN
+  },
 )

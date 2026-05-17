@@ -19,9 +19,12 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
+import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
+import wingslog.feature.squawk.sharedassets.generated.resources.dismissed_label
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.no_work_recorded
 import wingslog.feature.squawk.sharedassets.generated.resources.reported
@@ -94,16 +97,46 @@ fun SquawkDetailSheet(
 
     Spacer(Modifier.height(Spacing.small))
 
-    if (addressingLog == null) {
-      Text(
+    when {
+      addressingLog != null -> LogHistoryRow(addressingLog)
+      item.status == SquawkStatus.DISMISSED -> DismissedHistoryRow(item)
+      else -> Text(
         text = stringResource(Res.string.no_work_recorded),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
-    } else {
-      LogHistoryRow(addressingLog)
     }
   }
+}
+
+@Composable
+private fun DismissedHistoryRow(item: SquawkWithStatus) {
+  val squawk = item.squawk
+  val reasonLabel = squawk.dismiss_reason.toLabel()
+  val dateStr = squawk.dismissed_at
+    ?.takeIf { it.getEpochSecond() > 0L }
+    ?.toLocalDate()
+    ?.toDisplayFormat()
+
+  Column(
+    modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.extraSmall),
+    verticalArrangement = Arrangement.spacedBy(Spacing.tiny),
+  ) {
+    Text(
+      text = stringResource(Res.string.dismissed_label, reasonLabel),
+      style = MaterialTheme.typography.bodyMedium,
+      fontWeight = FontWeight.Medium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    if (dateStr != null) {
+      Text(
+        text = dateStr,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+  }
+  HorizontalDivider(modifier = Modifier.padding(top = Spacing.extraSmall))
 }
 
 @Composable
