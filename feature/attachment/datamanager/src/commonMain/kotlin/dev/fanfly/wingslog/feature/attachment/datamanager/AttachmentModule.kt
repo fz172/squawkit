@@ -18,7 +18,7 @@ val attachmentModule = module {
     SqlDelightLocalBlobStore(
       db = get(),
       fs = get(),
-      ioContext = Dispatchers.IO,
+      ioContext = Dispatchers.Default,
     )
   }
   single<AttachmentManager> {
@@ -32,7 +32,7 @@ val attachmentModule = module {
   single {
     QuotaChecker(
       db = get(),
-      ioContext = Dispatchers.IO,
+      ioContext = Dispatchers.Default,
     )
   }
   single<PostWriteHook> {
