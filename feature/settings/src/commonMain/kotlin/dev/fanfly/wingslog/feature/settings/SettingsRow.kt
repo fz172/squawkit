@@ -48,7 +48,7 @@ fun SettingsRow(
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
-      .padding(Spacing.large),
+      .padding(horizontal = Spacing.small, vertical = Spacing.large),
     verticalAlignment = Alignment.CenterVertically
   ) {
     // --- Icon ---
