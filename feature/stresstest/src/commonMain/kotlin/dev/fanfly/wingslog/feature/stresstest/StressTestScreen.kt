@@ -41,7 +41,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.stresstest.generated.resources.Res
+import wingslog.feature.stresstest.generated.resources.stress_test_complete
+import wingslog.feature.stresstest.generated.resources.stress_test_config_aircraft
+import wingslog.feature.stresstest.generated.resources.stress_test_config_blades_per_engine
+import wingslog.feature.stresstest.generated.resources.stress_test_config_engines
+import wingslog.feature.stresstest.generated.resources.stress_test_config_log_entries
+import wingslog.feature.stresstest.generated.resources.stress_test_config_records
+import wingslog.feature.stresstest.generated.resources.stress_test_config_squawks
+import wingslog.feature.stresstest.generated.resources.stress_test_config_tasks
+import wingslog.feature.stresstest.generated.resources.stress_test_config_technicians
+import wingslog.feature.stresstest.generated.resources.stress_test_description
+import wingslog.feature.stresstest.generated.resources.stress_test_generate
+import wingslog.feature.stresstest.generated.resources.stress_test_regenerate
+import wingslog.feature.stresstest.generated.resources.stress_test_title
+import wingslog.feature.stresstest.generated.resources.stress_test_working
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +71,7 @@ fun StressTestScreen(
   Scaffold(
     topBar = {
       WingsLogTopAppBar(
-        title = "Fake Data Generator",
+        title = stringResource(Res.string.stress_test_title),
         onBackClick = { navController.popBackStack() },
       )
     }
@@ -78,12 +94,12 @@ fun StressTestScreen(
         )
         Column {
           Text(
-            text = "Fake Data Generator",
+            text = stringResource(Res.string.stress_test_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
           )
           Text(
-            text = "Generates realistic aviation records for UI stress testing. Data is written to your account.",
+            text = stringResource(Res.string.stress_test_description),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
@@ -98,16 +114,16 @@ fun StressTestScreen(
       AnimatedVisibility(visible = isIdle || isError) {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
 
-          ConfigSection(title = "Aircraft") {
+          ConfigSection(title = stringResource(Res.string.stress_test_config_aircraft)) {
             StepperRow(
-              label = "Engines",
+              label = stringResource(Res.string.stress_test_config_engines),
               value = config.engineCount,
               range = 1..2,
               onDecrement = { viewModel.setEngineCount(config.engineCount - 1) },
               onIncrement = { viewModel.setEngineCount(config.engineCount + 1) },
             )
             StepperRow(
-              label = "Blades per engine",
+              label = stringResource(Res.string.stress_test_config_blades_per_engine),
               value = config.bladesPerEngine,
               range = 2..4,
               onDecrement = { viewModel.setBladesPerEngine(config.bladesPerEngine - 1) },
@@ -115,27 +131,27 @@ fun StressTestScreen(
             )
           }
 
-          ConfigSection(title = "Records") {
+          ConfigSection(title = stringResource(Res.string.stress_test_config_records)) {
             SliderRow(
-              label = "Squawks",
+              label = stringResource(Res.string.stress_test_config_squawks),
               value = config.squawkCount,
               range = 2..15,
               onValueChange = { viewModel.setSquawkCount(it) },
             )
             SliderRow(
-              label = "Tasks",
+              label = stringResource(Res.string.stress_test_config_tasks),
               value = config.taskCount,
               range = 5..20,
               onValueChange = { viewModel.setTaskCount(it) },
             )
             SliderRow(
-              label = "Log entries",
+              label = stringResource(Res.string.stress_test_config_log_entries),
               value = config.logCount,
               range = 10..100,
               onValueChange = { viewModel.setLogCount(it) },
             )
             SliderRow(
-              label = "Technicians",
+              label = stringResource(Res.string.stress_test_config_technicians),
               value = config.technicianCount,
               range = 1..5,
               onValueChange = { viewModel.setTechnicianCount(it) },
@@ -167,7 +183,7 @@ fun StressTestScreen(
               contentDescription = null,
               modifier = Modifier.padding(end = Spacing.small),
             )
-            Text("Generate Fake Data")
+            Text(stringResource(Res.string.stress_test_generate))
           }
         }
       }
@@ -182,7 +198,8 @@ fun StressTestScreen(
           Spacer(Modifier.height(Spacing.large))
           CircularProgressIndicator(modifier = Modifier.size(Spacing.massive))
           Text(
-            text = running?.step ?: "Working…",
+            text = running?.step
+              ?: stringResource(Res.string.stress_test_working),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
@@ -226,7 +243,7 @@ fun StressTestScreen(
               )
             }
             Text(
-              text = "Generation complete",
+              text = stringResource(Res.string.stress_test_complete),
               style = MaterialTheme.typography.titleMedium,
               fontWeight = FontWeight.SemiBold,
             )
@@ -252,7 +269,7 @@ fun StressTestScreen(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(Spacing.buttonCornerRadius),
           ) {
-            Text("Generate Another")
+            Text(stringResource(Res.string.stress_test_regenerate))
           }
         }
       }

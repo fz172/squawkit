@@ -7,4 +7,11 @@
   <string name="sign_in_error">Sign-in failed. Check your connection and try again.</string>
   <string name="sign_in_anonymous_error">Could not continue anonymously. Please try again.</string>
   <string name="legal_disclaimer">Hopply is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.</string>
+
+    <!-- Database integrity recovery -->
+    <string name="database_error">Database Error</string>
+    <string name="clearing_local_data">Clearing local data…</string>
+    <string name="database_problem_message">A problem was detected with the local database. Tap below to wipe your device's copy and re-sync from the cloud. Your cloud data is safe and will be restored.</string>
+    <string name="wiping">Wiping…</string>
+    <string name="wipe_and_resync">Wipe and Re-sync</string>
 </resources>

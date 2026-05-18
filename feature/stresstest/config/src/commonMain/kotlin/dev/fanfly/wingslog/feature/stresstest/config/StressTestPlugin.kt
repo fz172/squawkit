@@ -24,13 +24,21 @@ import androidx.navigation.compose.composable
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.stresstest.StressTestScreen
 import dev.fanfly.wingslog.feature.stresstest.di.stressTestModule
+import org.jetbrains.compose.resources.stringResource
 import org.koin.core.module.Module
+import wingslog.feature.stresstest.config.generated.resources.Res
+import wingslog.feature.stresstest.config.generated.resources.debug_tools_header
+import wingslog.feature.stresstest.config.generated.resources.fake_data_generator_description
+import wingslog.feature.stresstest.config.generated.resources.fake_data_generator_title
 
 const val STRESS_TEST_ROUTE = "debug_stress_test"
 
 fun stressTestKoinModules(): List<Module> = listOf(stressTestModule)
 
-fun registerStressTestRoutes(builder: NavGraphBuilder, navController: NavController) {
+fun registerStressTestRoutes(
+  builder: NavGraphBuilder,
+  navController: NavController
+) {
   builder.composable(STRESS_TEST_ROUTE) {
     StressTestScreen(navController = navController)
   }
@@ -40,7 +48,7 @@ fun registerStressTestRoutes(builder: NavGraphBuilder, navController: NavControl
 fun StressTestFeatureLabExtra(navController: NavController) {
   Spacer(Modifier.height(Spacing.extraLarge))
   Text(
-    text = "DEBUG TOOLS",
+    text = stringResource(Res.string.debug_tools_header),
     style = MaterialTheme.typography.labelSmall,
     color = MaterialTheme.colorScheme.primary,
     fontWeight = FontWeight.SemiBold,
@@ -49,9 +57,9 @@ fun StressTestFeatureLabExtra(navController: NavController) {
   HorizontalDivider()
   Row(
     modifier = Modifier
-      .fillMaxWidth()
-      .clickable { navController.navigate(STRESS_TEST_ROUTE) }
-      .padding(vertical = Spacing.medium),
+        .fillMaxWidth()
+        .clickable { navController.navigate(STRESS_TEST_ROUTE) }
+        .padding(vertical = Spacing.medium),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Icon(
@@ -62,12 +70,12 @@ fun StressTestFeatureLabExtra(navController: NavController) {
     )
     Column(modifier = Modifier.weight(1f)) {
       Text(
-        text = "Fake Data Generator",
+        text = stringResource(Res.string.fake_data_generator_title),
         style = MaterialTheme.typography.bodyLarge,
         fontWeight = FontWeight.Medium,
       )
       Text(
-        text = "Populate fake aircraft, logs, squawks, and tasks for UI testing",
+        text = stringResource(Res.string.fake_data_generator_description),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

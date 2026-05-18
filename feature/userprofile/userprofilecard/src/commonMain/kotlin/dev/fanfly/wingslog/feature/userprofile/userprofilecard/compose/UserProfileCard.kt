@@ -42,6 +42,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.userprofile.sharedassets.generated.resources.anonymous_user
 import wingslog.feature.userprofile.sharedassets.generated.resources.ic_anonymous_user
+import wingslog.feature.userprofile.userprofilecard.generated.resources.cert_number
 import wingslog.feature.userprofile.userprofilecard.generated.resources.profile_picture
 import kotlin.time.Clock
 import com.squareup.wire.Instant as WireInstant
@@ -145,7 +146,10 @@ private fun ProfileNameAndCreds(self: Technician?) {
   )
 
   if (self.cert_number.isNotBlank()) {
-    CredRow(label = "Cert #", value = self.cert_number)
+    CredRow(
+      label = stringResource(CardRes.string.cert_number),
+      value = self.cert_number
+    )
   }
 }
 

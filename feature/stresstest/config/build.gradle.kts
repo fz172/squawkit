@@ -23,6 +23,10 @@ android {
   }
 }
 
+compose.resources {
+  publicResClass = true
+}
+
 kotlin {
   jvmToolchain(21)
 
@@ -35,6 +39,7 @@ kotlin {
     commonMain.dependencies {
       api(project(":feature:stresstest"))
       implementation(project(":core:ui"))
+      implementation(libs.components.resources)
       implementation(libs.androidx.navigation.compose)
       implementation(libs.material.icons.extended)
       implementation(libs.koin.core)

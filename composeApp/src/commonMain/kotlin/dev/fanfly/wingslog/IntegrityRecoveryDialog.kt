@@ -14,6 +14,13 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
+import wingslog.composeapp.generated.resources.Res
+import wingslog.composeapp.generated.resources.clearing_local_data
+import wingslog.composeapp.generated.resources.database_error
+import wingslog.composeapp.generated.resources.database_problem_message
+import wingslog.composeapp.generated.resources.wipe_and_resync
+import wingslog.composeapp.generated.resources.wiping
 
 /**
  * Modal dialog shown when [DatabaseHealth.isCorrupted] is true. The user's only option is to
@@ -34,12 +41,11 @@ fun IntegrityRecoveryDialog(onWipe: suspend () -> Unit) {
 
   AlertDialog(
     onDismissRequest = { /* non-dismissable */ },
-    title = { Text("Database Error") },
+    title = { Text(stringResource(Res.string.database_error)) },
     text = {
       Text(
-        if (wiping) "Clearing local data…"
-        else "A problem was detected with the local database. Tap below to wipe your device's " +
-          "copy and re-sync from the cloud. Your cloud data is safe and will be restored."
+        if (wiping) stringResource(Res.string.clearing_local_data)
+        else stringResource(Res.string.database_problem_message)
       )
     },
     confirmButton = {
@@ -55,7 +61,11 @@ fun IntegrityRecoveryDialog(onWipe: suspend () -> Unit) {
           }
         },
       ) {
-        Text(if (wiping) "Wiping…" else "Wipe and Re-sync")
+        Text(
+          if (wiping) stringResource(Res.string.wiping) else stringResource(
+            Res.string.wipe_and_resync
+          )
+        )
       }
     },
   )

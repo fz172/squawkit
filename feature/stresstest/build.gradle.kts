@@ -23,6 +23,10 @@ android {
   }
 }
 
+compose.resources {
+  publicResClass = true
+}
+
 kotlin {
   jvmToolchain(21)
 
@@ -44,6 +48,7 @@ kotlin {
 
       implementation(libs.androidx.navigation.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
+      implementation(libs.components.resources)
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.kermit)
     }
