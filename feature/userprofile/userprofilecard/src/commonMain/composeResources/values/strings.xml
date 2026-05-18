@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="license_type_none">None</string>
-  <string name="license_type_repairman">Repairman</string>
-  <string name="license_type_amt">A&amp;P Mechanic</string>
   <string name="profile_picture">Profile Picture</string>
-    <string name="cert_number">Cert #</string>
 </resources>

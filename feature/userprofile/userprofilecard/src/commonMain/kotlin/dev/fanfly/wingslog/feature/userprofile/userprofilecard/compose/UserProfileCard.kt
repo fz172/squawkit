@@ -26,7 +26,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.CertExpireLimit
 import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
@@ -35,14 +34,12 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
-import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.displayResId
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.userprofile.sharedassets.generated.resources.anonymous_user
 import wingslog.feature.userprofile.sharedassets.generated.resources.ic_anonymous_user
-import wingslog.feature.userprofile.userprofilecard.generated.resources.cert_number
 import wingslog.feature.userprofile.userprofilecard.generated.resources.profile_picture
 import kotlin.time.Clock
 import com.squareup.wire.Instant as WireInstant
@@ -130,25 +127,26 @@ private fun ProfileNameAndCreds(self: Technician?) {
   val certType = self?.let { resolveCertType(it) } ?: return
   if (certType == CertificateType.CERTIFICATE_TYPE_NONE) return
 
+  val certNumber = self.cert_number.takeIf { it.isNotBlank() }
+  val certLine = listOfNotNull(
+    stringResource(certType.displayResId()),
+    certNumber,
+  ).joinToString(" · ")
+  Text(
+    text = certLine,
+    style = MaterialTheme.typography.bodyMedium,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+  )
+
   val showExpiration =
     self.cert_expire_limit != CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES
         && self.cert_expiration != null
-
-  CredRow(
-    label = stringResource(certType.displayResId()),
-    value = if (showExpiration) {
-      "exp ${
-        self.cert_expiration!!.toLocalDate()
-            .toDisplayFormat()
-      }"
-    } else null,
-    valueColor = if (showExpiration) certExpiryColor(self.cert_expiration!!) else null,
-  )
-
-  if (self.cert_number.isNotBlank()) {
-    CredRow(
-      label = stringResource(CardRes.string.cert_number),
-      value = self.cert_number
+  if (showExpiration) {
+    Text(
+      text = self.cert_expiration!!.toLocalDate()
+          .toDisplayFormat(),
+      style = MaterialTheme.typography.bodySmall,
+      color = certExpiryColor(self.cert_expiration!!),
     )
   }
 }
@@ -203,32 +201,6 @@ private fun ProfileAvatar(
           color = MaterialTheme.colorScheme.onPrimaryContainer,
         )
       }
-    }
-  }
-}
-
-@Composable
-private fun CredRow(
-  label: String,
-  value: String?,
-  valueColor: Color? = null,
-) {
-  Row(
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-  ) {
-    Text(
-      text = label,
-      style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.6.sp),
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      fontWeight = FontWeight.SemiBold,
-    )
-    if (value != null) {
-      Text(
-        text = value,
-        style = WingslogTypography.dataSmall,
-        color = valueColor ?: MaterialTheme.colorScheme.onSurfaceVariant,
-      )
     }
   }
 }
