@@ -36,6 +36,7 @@ core/
   auth/                 # Firebase Auth with platform-specific implementations
   storage/              # R1 local-first foundation — SQLDelight schema, EntityStore, CollectionKind
   datetime/             # Date/time utilities — WireInstantFactory, platform-specific formatters
+  appinfo/              # Cross-platform app version/build info (AppInfo expect/actual)
   attachments/          # Scaffolding only — directory exists but is NOT yet wired into settings.gradle.kts
 feature/
   fleet/                # Fleet dashboard (canonical layout, no update — dashboard is read-only)
@@ -193,7 +194,7 @@ Documents store binary blobs (e.g., field `AIRCRAFT_INFO_BLOB`). Decode: `Aircra
 
 Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, intentional typography hierarchy, consistent spacing tokens. Prioritize clarity and readability over information density.
 
-**Read `.impeccable.md` before any UI work.** It defines the required aviation palette (Aviation Blue primary, Instrument Amber accent ≤10% of color moments, semantic forest/amber status colors), required typography (Space Grotesk titles, JetBrains Mono for technical data, system sans for body), and brand principles (Dependability First, Clarity over Density, Progressive Disclosure). Dynamic color is disabled; the aviation palette is the brand.
+**Read `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` before any UI work.** Together they define the required aviation palette (Aviation Blue primary, Instrument Amber accent ≤10% of color moments, semantic forest/amber status colors), required typography (Space Grotesk titles, JetBrains Mono for technical data, system sans for body), and brand principles (Dependability First, Clarity over Density, Progressive Disclosure). Dynamic color is disabled; the aviation palette is the brand.
 
 ## Design Docs
 
