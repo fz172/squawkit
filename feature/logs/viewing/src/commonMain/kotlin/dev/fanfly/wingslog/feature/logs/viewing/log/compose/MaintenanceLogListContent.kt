@@ -383,7 +383,6 @@ private fun FilterSheetContent(
       ComponentType.COMPONENT_AIRFRAME,
       ComponentType.COMPONENT_ENGINE,
       ComponentType.COMPONENT_PROPELLER,
-      ComponentType.COMPONENT_AVIONICS,
       ComponentType.COMPONENT_UNKNOWN,
     )
     filterTypes.forEachIndexed { index, type ->

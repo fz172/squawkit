@@ -121,14 +121,14 @@ object FakeDataGenerator {
         ),
         TaskTemplate(
             "Transponder Certification",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
             ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
             InspectionRule(time_rule = TimeRule(interval_months = 24)),
             notes = "FAR 91.413. Modes A, C, and S. Must be performed by certificated repair station.",
         ),
         TaskTemplate(
             "VOR Operational Check",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
             ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
             InspectionRule(time_rule = TimeRule(interval_days = 30)),
             notes = "FAR 91.171. Required for IFR flight. Max ±4° from ground check or ±6° from airborne.",
@@ -163,7 +163,7 @@ object FakeDataGenerator {
         ),
         TaskTemplate(
             "Avionics Database Update",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
             ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
             InspectionRule(time_rule = TimeRule(interval_days = 28)),
             notes = "Garmin 28-day nav database cycle. Required for IFR approaches. Update terrain/obstacles annually.",
@@ -222,7 +222,7 @@ object FakeDataGenerator {
         ),
         TaskTemplate(
             "Stall Warning System Check",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
             ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
             InspectionRule(time_rule = TimeRule(interval_months = 12)),
             notes = "Verify stall warning activates 5–10 kts above stall. Clean vane and check wiring.",
@@ -255,7 +255,7 @@ object FakeDataGenerator {
         SquawkTemplate(
             "COM1 intermittent static above FL080",
             "COM1 radio develops intermittent static and occasional dropout above 8,000 ft MSL. COM2 unaffected. Issue began approximately 20 flight hours ago.",
-            SquawkPriority.SQUAWK_PRIORITY_MEDIUM, ComponentType.COMPONENT_AVIONICS,
+            SquawkPriority.SQUAWK_PRIORITY_MEDIUM, ComponentType.COMPONENT_AIRFRAME,
         ),
         SquawkTemplate(
             "Propeller blade nick – leading edge",
@@ -275,7 +275,7 @@ object FakeDataGenerator {
         SquawkTemplate(
             "ELT inadvertent activation",
             "ELT activated during hard landing. ATC notified and activation cancelled. Battery replaced. Unit requires inspection, testing, and recertification before return to service.",
-            SquawkPriority.SQUAWK_PRIORITY_HIGH, ComponentType.COMPONENT_AVIONICS,
+            SquawkPriority.SQUAWK_PRIORITY_HIGH, ComponentType.COMPONENT_AIRFRAME,
         ),
         SquawkTemplate(
             "Right rear door seal air leak",
@@ -285,7 +285,7 @@ object FakeDataGenerator {
         SquawkTemplate(
             "Transponder Mode C altitude error",
             "Transponder not squawking correct altitude in Mode C. Altimeter reading matches actual altitude. Altitude encoder is suspected to be out of calibration.",
-            SquawkPriority.SQUAWK_PRIORITY_MEDIUM, ComponentType.COMPONENT_AVIONICS,
+            SquawkPriority.SQUAWK_PRIORITY_MEDIUM, ComponentType.COMPONENT_AIRFRAME,
         ),
         SquawkTemplate(
             "Exhaust stack crack at cylinder #3",
@@ -305,7 +305,7 @@ object FakeDataGenerator {
         SquawkTemplate(
             "Avionics master CB intermittent trip",
             "Avionics master circuit breaker trips intermittently during engine start sequence. CB resets and holds after one attempt. Potential wiring short or overloaded circuit.",
-            SquawkPriority.SQUAWK_PRIORITY_MEDIUM, ComponentType.COMPONENT_AVIONICS,
+            SquawkPriority.SQUAWK_PRIORITY_MEDIUM, ComponentType.COMPONENT_AIRFRAME,
         ),
         SquawkTemplate(
             "Fuel cap O-ring pilot side",
@@ -475,48 +475,48 @@ object FakeDataGenerator {
             ComponentType.COMPONENT_PROPELLER,
             taskHints = listOf("Propeller Overhaul"),
         ),
-        // AVIONICS
+        // Avionics work (filed under airframe)
         LogTemplate(
             "ELT battery replacement. Replaced battery in ACK E-04 ELT with Panasonic CR123A. Activated briefly (<1 sec) to verify function. Squawk code [unique to aircraft] verified with Unicom. Registration card updated. Next replacement: 24 months.",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
             taskHints = listOf("ELT Battery"),
         ),
         LogTemplate(
             "Transponder certification per FAR 91.413. Modes A, C, and S tested and certified. Encoder tested – agrees with altimeter within 125 ft at all test altitudes. All within TSO-C74c limits. Certificate issued. Next check: 24 months.",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
             taskHints = listOf("Transponder"),
         ),
         LogTemplate(
             "Altimeter and pitot-static check per FAR 91.411. Encoder/altimeter agreement: <75 ft error at 10,000 ft. VSI checked. All within limits. IFR certification current for 24 months.",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
             taskHints = listOf("Pitot-Static"),
         ),
         LogTemplate(
             "VOR operational check per FAR 91.171. Checked on Gainesville VOR 116.2 MHz at 180° radial ground check point. Receiver indication: 179.5°. Error: 0.5°. Within ±4° tolerance. Check logged.",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
             taskHints = listOf("VOR"),
         ),
         LogTemplate(
             "Garmin G1000 nav/terrain database updated. Navigation database updated to current 28-day cycle. Terrain database updated to current version. GTN 750 approach plates verified current. Both units confirm valid data.",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
             taskHints = listOf("Database"),
         ),
         LogTemplate(
             "COM1 radio serviced. Internal PCB connector reseated. Antenna connection cleaned. Radio tested on ground and confirmed clear on 121.5, 122.8, and 123.45 MHz. No static above 10,000 ft during test flight.",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
         ),
         LogTemplate(
             "Avionics master circuit breaker replaced. Failed 5A CB replaced with OEM part (P/N: MS25244-5). Root cause: intermittent short in co-pilot avionics bus traced to chafed wire. Wire repaired and secured. Ground test – no trips.",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
         ),
         LogTemplate(
             "ELT serviced after inadvertent activation during hard landing. Activation sensor spring replaced. Unit inspected for damage – none. Unit re-certified and returned to service. Battery verified >50% life remaining.",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
             taskHints = listOf("ELT Battery"),
         ),
         LogTemplate(
             "Altitude encoder replaced. Encoder P/N ENC-A-1000 installed and calibrated. ATC verified mode C encoding correct on ground check. Pitot-static system integrity verified after encoder swap.",
-            ComponentType.COMPONENT_AVIONICS,
+            ComponentType.COMPONENT_AIRFRAME,
             taskHints = listOf("Transponder"),
         ),
     )
@@ -759,7 +759,6 @@ object FakeDataGenerator {
             val componentSerial = when (template.component) {
                 ComponentType.COMPONENT_ENGINE -> aircraft.engine.firstOrNull()?.serial ?: aircraft.serial
                 ComponentType.COMPONENT_PROPELLER -> aircraft.engine.firstOrNull()?.propeller?.hub?.serial ?: aircraft.serial
-                ComponentType.COMPONENT_AVIONICS -> aircraft.serial
                 else -> aircraft.serial
             }
 

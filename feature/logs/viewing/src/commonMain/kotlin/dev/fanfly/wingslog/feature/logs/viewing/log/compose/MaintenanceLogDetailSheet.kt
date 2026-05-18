@@ -157,10 +157,7 @@ private fun SheetHeroMetric(log: MaintenanceLog) {
 
   val (label, value) = when (log.component_type) {
     ComponentType.COMPONENT_ENGINE -> engineLabel to log.engine_hour
-    ComponentType.COMPONENT_AIRFRAME,
-    ComponentType.COMPONENT_AVIONICS,
-      -> airframeLabel to log.airframe_time
-
+    ComponentType.COMPONENT_AIRFRAME -> airframeLabel to log.airframe_time
     ComponentType.COMPONENT_PROPELLER -> propLabel to log.prop_time
     else -> when {
       log.engine_hour > 0.0 -> engineLabel to log.engine_hour

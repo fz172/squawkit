@@ -109,7 +109,6 @@ class AircraftOverviewViewModel(
               airframe = overview.airframe_log_count.toLong(),
               engine = overview.engine_log_count.toLong(),
               propeller = overview.propeller_log_count.toLong(),
-              avionics = overview.avionics_log_count.toLong(),
               currentAirframeTime = overview.current_airframe_time,
               currentEngineTime = overview.current_engine_time,
               currentPropTime = overview.current_propeller_time
@@ -127,8 +126,6 @@ class AircraftOverviewViewModel(
               engine = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE }
                 .toLong(),
               propeller = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER }
-                .toLong(),
-              avionics = logs.count { it.component_type == ComponentType.COMPONENT_AVIONICS }
                 .toLong(),
               currentEngineTime = currentEngineTime,
               currentAirframeTime = currentAirframeTime,

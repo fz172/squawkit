@@ -12,7 +12,6 @@ data class LogStats(
   val airframe: Long,
   val engine: Long,
   val propeller: Long,
-  val avionics: Long,
   val currentEngineTime: Double? = null,
   val currentAirframeTime: Double? = null,
   val currentPropTime: Double? = null,

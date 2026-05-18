@@ -97,7 +97,6 @@ class MaintenanceLogManagerImpl(
       airframe_log_count = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME },
       engine_log_count = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE },
       propeller_log_count = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER },
-      avionics_log_count = logs.count { it.component_type == ComponentType.COMPONENT_AVIONICS },
       current_airframe_time =
         logs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time } ?: 0.0,
       current_engine_time =

@@ -56,7 +56,6 @@ fun ComponentSection(
       ComponentType.COMPONENT_AIRFRAME,
       ComponentType.COMPONENT_ENGINE,
       ComponentType.COMPONENT_PROPELLER,
-      ComponentType.COMPONENT_AVIONICS,
     )
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
       componentOptions.forEachIndexed { index, option ->

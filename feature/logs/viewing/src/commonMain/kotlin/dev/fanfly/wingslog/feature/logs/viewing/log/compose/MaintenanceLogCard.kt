@@ -175,11 +175,6 @@ private fun badgeSchemeFor(type: ComponentType): BadgeScheme = when (type) {
     StatusOk,
   )
 
-  ComponentType.COMPONENT_AVIONICS -> BadgeScheme(
-    MaterialTheme.colorScheme.tertiaryContainer,
-    MaterialTheme.colorScheme.onTertiaryContainer,
-  )
-
   ComponentType.COMPONENT_PROPELLER -> BadgeScheme(
     MaterialTheme.colorScheme.secondaryContainer,
     MaterialTheme.colorScheme.onSecondaryContainer,
@@ -224,7 +219,6 @@ private fun MaintenanceLog.primaryHours(): Double = when (component_type) {
   ComponentType.COMPONENT_ENGINE -> engine_hour
   ComponentType.COMPONENT_AIRFRAME -> airframe_time
   ComponentType.COMPONENT_PROPELLER -> prop_time
-  ComponentType.COMPONENT_AVIONICS -> engine_hour
   else -> engine_hour.takeIf { it > 0.0 } ?: airframe_time.takeIf { it > 0.0 }
   ?: prop_time
 }
