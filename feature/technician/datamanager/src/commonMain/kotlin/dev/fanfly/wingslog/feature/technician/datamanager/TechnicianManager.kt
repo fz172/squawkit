@@ -17,4 +17,11 @@ interface TechnicianManager {
   suspend fun updateTechnician(technician: Technician): Result<Boolean>
 
   suspend fun deleteTechnician(id: String): Result<Boolean>
+
+  /**
+   * Creates or updates the current user's self-technician record with [name].
+   * Used during onboarding when the user enters their display name.
+   * Handles anonymous users who have no bootstrapped technician record yet.
+   */
+  suspend fun saveSelfName(name: String): Result<Unit>
 }

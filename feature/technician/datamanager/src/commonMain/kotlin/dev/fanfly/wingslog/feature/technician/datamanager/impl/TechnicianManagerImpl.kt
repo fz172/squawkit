@@ -12,8 +12,6 @@ import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,6 +24,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 class TechnicianManagerImpl(
   private val firebaseAuth: FirebaseAuth,
@@ -35,8 +35,10 @@ class TechnicianManagerImpl(
 ) : TechnicianManager {
 
   private val logger = Logger.withTag("TechnicianManagerImpl")
-  private val technicianStore: EntityStore<Technician> = storeFactory.create(CollectionKind.Technician)
-  private val userInfoStore: EntityStore<UserInfo> = storeFactory.create(CollectionKind.UserInfo)
+  private val technicianStore: EntityStore<Technician> =
+    storeFactory.create(CollectionKind.Technician)
+  private val userInfoStore: EntityStore<UserInfo> =
+    storeFactory.create(CollectionKind.UserInfo)
 
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -53,7 +55,8 @@ class TechnicianManagerImpl(
       val existingSelfId = if (syncPreferences.state.value.cloudSyncEnabled) {
         readSelfIdFromFirestore(uid)
       } else {
-        userInfoStore.observe("main", userScope).firstOrNull()
+        userInfoStore.observe("main", userScope)
+          .firstOrNull()
           ?.value?.self_technician_id?.takeIf { it.isNotBlank() }
       }
 
@@ -61,10 +64,15 @@ class TechnicianManagerImpl(
         val newId = generateRandomId()
         val selfTech = Technician(
           id = newId,
-          name = user.displayName.orEmpty().ifBlank { user.email.orEmpty() },
+          name = user.displayName.orEmpty()
+            .ifBlank { user.email.orEmpty() },
         )
         technicianStore.put(newId, selfTech, userScope)
-        userInfoStore.put("main", UserInfo(self_technician_id = newId), userScope)
+        userInfoStore.put(
+          "main",
+          UserInfo(self_technician_id = newId),
+          userScope
+        )
         logger.d { "Self-technician bootstrapped id=$newId" }
       }
     }
@@ -73,8 +81,10 @@ class TechnicianManagerImpl(
   @OptIn(ExperimentalEncodingApi::class)
   private suspend fun readSelfIdFromFirestore(uid: String): String? = try {
     val snap = firestore
-      .collection("users").document(uid)
-      .collection("user_info").document("main")
+      .collection("users")
+      .document(uid)
+      .collection("user_info")
+      .document("main")
       .get()
     if (snap.exists) {
       val payloadB64 = snap.get<String?>("payload")
@@ -102,8 +112,25 @@ class TechnicianManagerImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeSelf(): Flow<Technician?> =
-    observeSelfId().flatMapLatest { id ->
-      if (id.isNullOrBlank()) flowOf(null) else loadTechnician(id)
+    firebaseAuth.authStateChanged.flatMapLatest { user ->
+      if (user == null) flowOf(null)
+      else {
+        val userScope = EntityScope.userRoot(user.uid)
+        userInfoStore.observe("main", userScope)
+          .map { it?.value?.self_technician_id?.takeIf { id -> id.isNotBlank() } }
+          .flatMapLatest { id ->
+            if (id.isNullOrBlank()) flowOf(null)
+            else technicianStore.observe(id, userScope).map { it?.value }
+              .catch { e ->
+                logger.w(e) { "Error observing self technician $id" }
+                emit(null)
+              }
+          }
+          .catch { e ->
+            logger.w(e) { "Error observing UserInfo" }
+            emit(null)
+          }
+      }
     }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -138,21 +165,49 @@ class TechnicianManagerImpl(
       }
     }
 
-  override suspend fun updateTechnician(technician: Technician): Result<Boolean> = runCatching {
-    val uid = firebaseAuth.currentUser?.uid
-      ?: error("Cannot update technician when no user is signed in")
-    val withId =
-      if (technician.id.isEmpty()) technician.copy(id = generateRandomId()) else technician
-    technicianStore.put(withId.id, withId, EntityScope.userRoot(uid))
-    logger.d { "Technician ${withId.id} written to local store" }
-    true
-  }.onFailure { logger.w(it) { "Error updating technician" } }
+  override suspend fun updateTechnician(technician: Technician): Result<Boolean> =
+    runCatching {
+      val uid = firebaseAuth.currentUser?.uid
+        ?: error("Cannot update technician when no user is signed in")
+      val withId =
+        if (technician.id.isEmpty()) technician.copy(id = generateRandomId()) else technician
+      technicianStore.put(withId.id, withId, EntityScope.userRoot(uid))
+      logger.d { "Technician ${withId.id} written to local store" }
+      true
+    }.onFailure { logger.w(it) { "Error updating technician" } }
 
-  override suspend fun deleteTechnician(id: String): Result<Boolean> = runCatching {
+  override suspend fun deleteTechnician(id: String): Result<Boolean> =
+    runCatching {
+      val uid = firebaseAuth.currentUser?.uid
+        ?: error("Cannot delete technician when no user is signed in")
+      technicianStore.delete(id, EntityScope.userRoot(uid))
+      logger.d { "Technician $id tombstoned in local store" }
+      true
+    }.onFailure { logger.w(it) { "Error deleting technician $id" } }
+
+  override suspend fun saveSelfName(name: String): Result<Unit> = runCatching {
     val uid = firebaseAuth.currentUser?.uid
-      ?: error("Cannot delete technician when no user is signed in")
-    technicianStore.delete(id, EntityScope.userRoot(uid))
-    logger.d { "Technician $id tombstoned in local store" }
-    true
-  }.onFailure { logger.w(it) { "Error deleting technician $id" } }
+      ?: error("Cannot save name when no user is signed in")
+    val userScope = EntityScope.userRoot(uid)
+    val existingSelfId = userInfoStore
+      .observe("main", userScope)
+      .firstOrNull()
+      ?.value?.self_technician_id?.takeIf { it.isNotBlank() }
+    if (existingSelfId != null) {
+      val existing = technicianStore.observe(existingSelfId, userScope)
+        .firstOrNull()?.value
+      if (existing != null) {
+        technicianStore.put(
+          existingSelfId,
+          existing.copy(name = name),
+          userScope
+        )
+      }
+    } else {
+      val newId = generateRandomId()
+      technicianStore.put(newId, Technician(id = newId, name = name), userScope)
+      userInfoStore.put("main", UserInfo(self_technician_id = newId), userScope)
+    }
+    logger.d { "Self-technician name saved: $name" }
+  }.onFailure { logger.w(it) { "Error saving self name" } }
 }

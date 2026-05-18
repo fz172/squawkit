@@ -16,6 +16,8 @@ sealed class Screen(val route: String) {
   // Navigation route templates
 
   data object Login : Screen("login")
+  data object NameEntry : Screen("name_entry")
+  data object Welcome : Screen("welcome")
   data object Dashboard : Screen("main")
   data object Settings : Screen("settings")
   data object SyncSettings : Screen("sync_settings")
@@ -26,22 +28,26 @@ sealed class Screen(val route: String) {
   data object FeatureLab : Screen("feature_lab")
 
   data object EditTechnician : Screen("edit_technician/{$TECHNICIAN_ID}") {
-    fun createRoute(technicianId: String?) = "edit_technician/${technicianId ?: "new"}"
+    fun createRoute(technicianId: String?) =
+      "edit_technician/${technicianId ?: "new"}"
   }
 
   data object EditAircraft : Screen("edit_aircraft/{$AIRCRAFT_ID}") {
     fun createRoute(aircraftId: String) = "edit_aircraft/$aircraftId"
   }
 
-  data object MaintenanceOverview : Screen("maintenance_overview/{$AIRCRAFT_ID}") {
+  data object MaintenanceOverview :
+    Screen("maintenance_overview/{$AIRCRAFT_ID}") {
     fun createRoute(aircraftId: String) = "maintenance_overview/$aircraftId"
   }
 
-  data object AddMaintenanceTask : Screen("maintenance_task_create/{$AIRCRAFT_ID}") {
+  data object AddMaintenanceTask :
+    Screen("maintenance_task_create/{$AIRCRAFT_ID}") {
     fun createRoute(aircraftId: String) = "maintenance_task_create/$aircraftId"
   }
 
-  data object EditMaintenanceTask : Screen("maintenance_task_edit/{$AIRCRAFT_ID}/{$CARD_ID}") {
+  data object EditMaintenanceTask :
+    Screen("maintenance_task_edit/{$AIRCRAFT_ID}/{$CARD_ID}") {
     fun createRoute(
       aircraftId: String,
       cardId: String,
@@ -49,11 +55,13 @@ sealed class Screen(val route: String) {
       "maintenance_task_edit/$aircraftId/$cardId"
   }
 
-  data object AddMaintenanceLog : Screen("maintenance_log_create/{$AIRCRAFT_ID}") {
+  data object AddMaintenanceLog :
+    Screen("maintenance_log_create/{$AIRCRAFT_ID}") {
     fun createRoute(aircraftId: String) = "maintenance_log_create/$aircraftId"
   }
 
-  data object EditMaintenanceLog : Screen("maintenance_log_edit/{$AIRCRAFT_ID}/{$LOG_ID}") {
+  data object EditMaintenanceLog :
+    Screen("maintenance_log_edit/{$AIRCRAFT_ID}/{$LOG_ID}") {
     fun createRoute(
       aircraftId: String,
       logId: String,
@@ -65,6 +73,7 @@ sealed class Screen(val route: String) {
   }
 
   data object EditSquawk : Screen("squawk_edit/{$AIRCRAFT_ID}/{$SQUAWK_ID}") {
-    fun createRoute(aircraftId: String, squawkId: String) = "squawk_edit/$aircraftId/$squawkId"
+    fun createRoute(aircraftId: String, squawkId: String) =
+      "squawk_edit/$aircraftId/$squawkId"
   }
 }
