@@ -31,13 +31,13 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
+import wingslog.core.ui.generated.resources.make_model_template
 import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
 import wingslog.feature.logs.viewing.generated.resources.aircraft_data
 import wingslog.feature.logs.viewing.generated.resources.collapse_details
@@ -121,7 +121,11 @@ fun AircraftDataCard(
         ) {
           ComponentCard(
             category = stringResource(CoreRes.string.component_airframe).uppercase(),
-            name = "${aircraft.make} ${aircraft.model}",
+            name = stringResource(
+              CoreRes.string.make_model_template,
+              aircraft.make,
+              aircraft.model,
+            ),
             serial = aircraft.serial
           )
 

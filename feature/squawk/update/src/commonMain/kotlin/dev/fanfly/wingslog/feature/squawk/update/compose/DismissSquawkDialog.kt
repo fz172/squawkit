@@ -25,7 +25,7 @@ import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.feature.squawk.update.generated.resources.Res
-import wingslog.feature.squawk.update.generated.resources.dismiss_confirm
+import wingslog.feature.squawk.update.generated.resources.dismiss_issue
 import wingslog.feature.squawk.update.generated.resources.dismiss_squawk_title
 import wingslog.feature.squawk.update.generated.resources.dismiss_squawk_warning
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -58,8 +58,8 @@ fun DismissSquawkDialog(
         reasons.forEach { reason ->
           Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = Spacing.extraSmall),
+              .fillMaxWidth()
+              .padding(vertical = Spacing.extraSmall),
             verticalAlignment = Alignment.CenterVertically,
           ) {
             RadioButton(
@@ -81,7 +81,7 @@ fun DismissSquawkDialog(
         enabled = selected != null,
         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
       ) {
-        Text(stringResource(Res.string.dismiss_confirm))
+        Text(stringResource(Res.string.dismiss_issue))
       }
     },
     dismissButton = {

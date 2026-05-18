@@ -31,20 +31,16 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.adj_preview_hint
-import wingslog.feature.tasks.update.generated.resources.adj_preview_label_active
 import wingslog.feature.tasks.update.generated.resources.adj_preview_label_neutral
 import wingslog.feature.tasks.update.generated.resources.adj_preview_label_warn
 import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_primary
@@ -53,7 +49,6 @@ import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_sec
 import wingslog.feature.tasks.update.generated.resources.adj_preview_reschedule_date_primary
 import wingslog.feature.tasks.update.generated.resources.adj_preview_reschedule_hours_primary
 import wingslog.feature.tasks.update.generated.resources.adj_preview_reschedule_was_date
-import wingslog.feature.tasks.update.generated.resources.adj_preview_reschedule_was_hours
 import wingslog.feature.tasks.update.generated.resources.adj_preview_skip_primary
 import wingslog.feature.tasks.update.generated.resources.adj_preview_skip_secondary
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_disabled_linked
@@ -68,6 +63,9 @@ import wingslog.feature.tasks.update.generated.resources.adj_skip_subtitle_activ
 import wingslog.feature.tasks.update.generated.resources.adj_skip_subtitle_inactive
 import wingslog.feature.tasks.update.generated.resources.adj_skip_title_active
 import wingslog.feature.tasks.update.generated.resources.adj_skip_title_inactive
+import wingslog.feature.tasks.update.generated.resources.schedule_preview_label
+import kotlin.time.Instant
+import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @Composable
 fun TaskAdjustmentsTab(
@@ -119,7 +117,7 @@ fun TaskAdjustmentsTab(
     val bannerLabel = stringResource(
       when {
         isSkipping -> Res.string.adj_preview_label_warn
-        rescheduleOn -> Res.string.adj_preview_label_active
+        rescheduleOn -> Res.string.schedule_preview_label
         else -> Res.string.adj_preview_label_neutral
       }
     )
@@ -130,28 +128,39 @@ fun TaskAdjustmentsTab(
         bannerPrimary = stringResource(Res.string.adj_preview_skip_primary)
         bannerSecondary = stringResource(Res.string.adj_preview_skip_secondary)
       }
+
       rescheduleOn && mode == ScheduleMode.TIME -> {
         val dateStr = forcedDateMillis?.let {
-          kotlin.time.Instant.fromEpochMilliseconds(it)
-            .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date.toString()
+          Instant.fromEpochMilliseconds(it)
+            .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
         } ?: "—"
-        bannerPrimary = stringResource(Res.string.adj_preview_reschedule_date_primary, dateStr)
-        bannerSecondary = stringResource(Res.string.adj_preview_reschedule_was_date)
+        bannerPrimary = stringResource(
+          Res.string.adj_preview_reschedule_date_primary,
+          dateStr
+        )
+        bannerSecondary =
+          stringResource(Res.string.adj_preview_reschedule_was_date)
       }
+
       rescheduleOn && mode == ScheduleMode.HOURS -> {
         bannerPrimary = stringResource(
           Res.string.adj_preview_reschedule_hours_primary,
           forcedEngineHours.ifBlank { "—" }
         )
-        bannerSecondary = stringResource(Res.string.adj_preview_reschedule_was_hours)
+        bannerSecondary =
+          stringResource(Res.string.adj_preview_reschedule_was_date)
       }
+
       mode == ScheduleMode.LINKED -> {
         bannerPrimary = stringResource(Res.string.adj_preview_neutral_primary)
-        bannerSecondary = stringResource(Res.string.adj_preview_neutral_secondary_linked)
+        bannerSecondary =
+          stringResource(Res.string.adj_preview_neutral_secondary_linked)
       }
+
       else -> {
         bannerPrimary = stringResource(Res.string.adj_preview_neutral_primary)
-        bannerSecondary = stringResource(Res.string.adj_preview_neutral_secondary_unset)
+        bannerSecondary =
+          stringResource(Res.string.adj_preview_neutral_secondary_unset)
       }
     }
     PreviewBanner(
@@ -211,7 +220,8 @@ private fun RescheduleCard(
   val noMode = mode == null
   val disabled = isLinked || noMode
   val primary = MaterialTheme.colorScheme.primary
-  val borderColor = if (rescheduleOn) primary else MaterialTheme.colorScheme.outlineVariant
+  val borderColor =
+    if (rescheduleOn) primary else MaterialTheme.colorScheme.outlineVariant
 
   Column(
     modifier = Modifier
@@ -357,7 +367,8 @@ private fun SkipCard(
   onToggle: () -> Unit,
 ) {
   val warning = MaterialTheme.colorScheme.error
-  val borderColor = if (isSkipping) warning else MaterialTheme.colorScheme.outlineVariant
+  val borderColor =
+    if (isSkipping) warning else MaterialTheme.colorScheme.outlineVariant
   val bg =
     if (isSkipping) warning.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surfaceContainer
 

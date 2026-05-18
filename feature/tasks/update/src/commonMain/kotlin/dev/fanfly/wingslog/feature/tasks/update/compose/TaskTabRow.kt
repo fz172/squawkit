@@ -12,11 +12,12 @@ import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.details
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.adjustments
 import wingslog.feature.tasks.update.generated.resources.basics
-import wingslog.feature.tasks.update.generated.resources.details
 import wingslog.feature.tasks.update.generated.resources.schedule
+import wingslog.core.ui.generated.resources.Res as CoreRes
 
 data class TaskTabSpec(
   val icon: ImageVector,
@@ -24,7 +25,7 @@ data class TaskTabSpec(
 )
 
 var BASIC_TAB = TaskTabSpec(Icons.Default.Edit, Res.string.basics)
-var DETAILS_TAB = TaskTabSpec(Icons.Default.Info, Res.string.details)
+var DETAILS_TAB = TaskTabSpec(Icons.Default.Info, CoreRes.string.details)
 var SCHEDULE_TAB = TaskTabSpec(Icons.Default.DateRange, Res.string.schedule)
 var ADJUSTMENT_TAB = TaskTabSpec(Icons.Default.Tune, Res.string.adjustments)
 

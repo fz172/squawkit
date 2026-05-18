@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -31,12 +30,13 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.sharedassets.generated.resources.Res
 import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
-import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.viewing.generated.resources.critical_airworthiness
 import wingslog.feature.tasks.viewing.generated.resources.due_date
-import wingslog.feature.tasks.viewing.generated.resources.label_due_engine
+import wingslog.feature.tasks.viewing.generated.resources.engine_hours_upper
+import wingslog.feature.tasks.viewing.generated.resources.label_due_engine_value
 import wingslog.feature.tasks.viewing.generated.resources.label_expired
 import wingslog.feature.tasks.viewing.generated.resources.maintenance_due_subtitle
+import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 
 
 @Composable
@@ -129,7 +129,10 @@ private fun CriticalAlertItem(
     isOverdue && dueEngine != null ->
       stringResource(
         ViewingRes.string.label_expired,
-        "${dueEngine} HRS"
+        stringResource(
+          ViewingRes.string.engine_hours_upper,
+          dueEngine.toString()
+        )
       )
 
     dueDate != null ->
@@ -139,7 +142,13 @@ private fun CriticalAlertItem(
       )
 
     dueEngine != null ->
-      stringResource(ViewingRes.string.label_due_engine) + " ${dueEngine} HRS"
+      stringResource(
+        ViewingRes.string.label_due_engine_value,
+        stringResource(
+          ViewingRes.string.engine_hours_upper,
+          dueEngine.toString()
+        )
+      )
 
     else -> ""
   }

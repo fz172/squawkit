@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComplianceType
@@ -51,6 +50,7 @@ import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_s
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
 import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
+import wingslog.feature.tasks.viewing.generated.resources.authority_reference_number
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
 import wingslog.feature.tasks.viewing.generated.resources.completed
 import wingslog.feature.tasks.viewing.generated.resources.days_overdue_count
@@ -148,9 +148,9 @@ fun TaskDetailSheet(
           else MaterialTheme.colorScheme.primaryContainer,
           RoundedCornerShape(Spacing.badgeCornerRadius),
         )
-            .padding(
-              horizontal = Spacing.extraSmall, vertical = Spacing.extraSmall
-            ),
+          .padding(
+            horizontal = Spacing.extraSmall, vertical = Spacing.extraSmall
+          ),
       )
     }
 
@@ -158,7 +158,12 @@ fun TaskDetailSheet(
     val authority = card.compliance_authority.takeIf { it.isNotBlank() }
     val refNumber = card.reference_number.takeIf { it.isNotBlank() }
     val metaLine = when {
-      authority != null && refNumber != null -> "$authority · $refNumber"
+      authority != null && refNumber != null -> stringResource(
+        ViewingRes.string.authority_reference_number,
+        authority,
+        refNumber,
+      )
+
       authority != null -> authority
       refNumber != null -> refNumber
       else -> null
@@ -267,16 +272,16 @@ private fun StatusBadge(dueStatus: DueMetadata) {
     modifier = Modifier.background(
       bgColor, RoundedCornerShape(Spacing.badgeCornerRadius)
     )
-        .padding(
-          horizontal = Spacing.medium, vertical = Spacing.extraSmall
-        ),
+      .padding(
+        horizontal = Spacing.medium, vertical = Spacing.extraSmall
+      ),
   )
 }
 
 @Composable
 private fun DueDateHero(dueStatus: DueMetadata) {
   val today = Clock.System.now()
-      .toLocalDateTime(TimeZone.currentSystemDefault()).date
+    .toLocalDateTime(TimeZone.currentSystemDefault()).date
   val accentColor = dueStatusColor(dueStatus.status)
 
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
@@ -292,9 +297,9 @@ private fun DueDateHero(dueStatus: DueMetadata) {
           modifier = Modifier.background(
             StatusOkContainer, RoundedCornerShape(Spacing.badgeCornerRadius)
           )
-              .padding(
-                horizontal = Spacing.medium, vertical = Spacing.extraSmall
-              ),
+            .padding(
+              horizontal = Spacing.medium, vertical = Spacing.extraSmall
+            ),
         )
       }
 
@@ -331,7 +336,7 @@ private fun DueDateHero(dueStatus: DueMetadata) {
         )
         Text(
           text = HeroDueDateFormat.format(nextDueDate)
-              .uppercase(),
+            .uppercase(),
           style = WingslogTypography.heroDisplay,
           color = accentColor,
         )
@@ -354,7 +359,7 @@ private fun DueDateHero(dueStatus: DueMetadata) {
         )
         Text(
           text = dueStatus.nextDueEngine!!.toDouble()
-              .formatToOneDecimalPlace(),
+            .formatToOneDecimalPlace(),
           style = WingslogTypography.heroDisplay,
           color = accentColor,
         )
@@ -367,14 +372,14 @@ private fun DueDateHero(dueStatus: DueMetadata) {
 private fun LogHistoryItem(log: MaintenanceLog) {
   val dateStr = if ((log.timestamp?.getEpochSecond() ?: 0L) > 0L) {
     log.timestamp!!.toLocalDate()
-        .toDisplayFormat()
+      .toDisplayFormat()
   } else {
     stringResource(SharedRes.string.unknown_date)
   }
 
   Column(
     modifier = Modifier.fillMaxWidth()
-        .padding(vertical = Spacing.extraSmall),
+      .padding(vertical = Spacing.extraSmall),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
   ) {
     Text(

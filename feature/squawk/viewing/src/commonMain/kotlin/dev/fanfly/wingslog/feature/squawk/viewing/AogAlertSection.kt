@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -33,6 +32,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.aog_alert_subtitle
 import wingslog.feature.squawk.sharedassets.generated.resources.aog_alert_title
+import wingslog.feature.squawk.sharedassets.generated.resources.priority_aog
 import wingslog.feature.squawk.sharedassets.generated.resources.view_squawks
 
 @Composable
@@ -47,7 +47,10 @@ fun AogAlertSection(
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+    ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column {
@@ -84,7 +87,7 @@ fun AogAlertSection(
         verticalArrangement = Arrangement.spacedBy(Spacing.medium),
       ) {
         Text(
-          text = "AOG",
+          text = stringResource(Res.string.priority_aog),
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           letterSpacing = 1.sp,

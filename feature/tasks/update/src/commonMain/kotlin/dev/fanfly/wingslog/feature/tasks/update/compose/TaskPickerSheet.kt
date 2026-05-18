@@ -28,14 +28,15 @@ import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.done
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.compliance_type_ad
 import wingslog.feature.tasks.update.generated.resources.compliance_type_routine
 import wingslog.feature.tasks.update.generated.resources.compliance_type_sb
 import wingslog.feature.tasks.update.generated.resources.no_tasks_configured
+import wingslog.feature.tasks.update.generated.resources.reference_and_component
 import wingslog.feature.tasks.update.generated.resources.select_task_work
+import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,9 +75,13 @@ fun TaskPickerSheet(
         val grouped = availableCards.groupBy { it.type }
 
         listOf(
-          ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to stringResource(Res.string.compliance_type_ad),
+          ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to stringResource(
+            Res.string.compliance_type_ad
+          ),
           ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN to stringResource(Res.string.compliance_type_sb),
-          ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to stringResource(Res.string.compliance_type_routine),
+          ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to stringResource(
+            Res.string.compliance_type_routine
+          ),
         ).forEach { (type, header) ->
           val cards = grouped[type] ?: emptyList()
           if (cards.isNotEmpty()) {
@@ -117,7 +122,15 @@ fun TaskPickerSheet(
                   )
                   val componentLabel = card.component.displayName()
                   Text(
-                    text = if (card.reference_number.isNotBlank()) "${card.reference_number} • $componentLabel" else componentLabel,
+                    text = if (card.reference_number.isNotBlank()) {
+                      stringResource(
+                        Res.string.reference_and_component,
+                        card.reference_number,
+                        componentLabel,
+                      )
+                    } else {
+                      componentLabel
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                   )

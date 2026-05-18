@@ -29,7 +29,8 @@ import org.koin.core.module.Module
 import wingslog.feature.stresstest.config.generated.resources.Res
 import wingslog.feature.stresstest.config.generated.resources.debug_tools_header
 import wingslog.feature.stresstest.config.generated.resources.fake_data_generator_description
-import wingslog.feature.stresstest.config.generated.resources.fake_data_generator_title
+import wingslog.feature.stresstest.generated.resources.stress_test_title
+import wingslog.feature.stresstest.generated.resources.Res as StressTestRes
 
 const val STRESS_TEST_ROUTE = "debug_stress_test"
 
@@ -57,9 +58,9 @@ fun StressTestFeatureLabExtra(navController: NavController) {
   HorizontalDivider()
   Row(
     modifier = Modifier
-        .fillMaxWidth()
-        .clickable { navController.navigate(STRESS_TEST_ROUTE) }
-        .padding(vertical = Spacing.medium),
+      .fillMaxWidth()
+      .clickable { navController.navigate(STRESS_TEST_ROUTE) }
+      .padding(vertical = Spacing.medium),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Icon(
@@ -70,7 +71,7 @@ fun StressTestFeatureLabExtra(navController: NavController) {
     )
     Column(modifier = Modifier.weight(1f)) {
       Text(
-        text = stringResource(Res.string.fake_data_generator_title),
+        text = stringResource(StressTestRes.string.stress_test_title),
         style = MaterialTheme.typography.bodyLarge,
         fontWeight = FontWeight.Medium,
       )

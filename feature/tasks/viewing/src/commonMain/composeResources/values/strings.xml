@@ -18,10 +18,13 @@
   <string name="days_remaining">%1$d Days Remaining</string>
   <string name="days_overdue_count">%1$d Days Overdue</string>
   <string name="due_today">Due Today</string>
+  <string name="authority_reference_number">%1$s · %2$s</string>
   <string name="badge_overdue">OVERDUE</string>
   <string name="badge_due">DUE</string>
   <string name="label_deadline">DEADLINE</string>
   <string name="label_due_engine">DUE @</string>
+  <string name="label_due_engine_value">DUE @ %1$s</string>
+  <string name="engine_hours_upper">%1$s HRS</string>
   <string name="label_expired">EXPIRED %1$s</string>
   <string name="no_maintenance_logs_for_task">No logs yet. Add a maintenance entry and tag this task to see history here.</string>
 </resources>

@@ -13,10 +13,11 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_propeller
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.core.ui.generated.resources.make_model_template
 import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable
@@ -26,7 +27,11 @@ fun EngineDetails(
 ) {
   ComponentCard(
     category = label,
-    name = "${engine.make} ${engine.model}",
+    name = stringResource(
+      CoreRes.string.make_model_template,
+      engine.make,
+      engine.model,
+    ),
     serial = engine.serial,
     content = {
       val propeller = engine.propeller
@@ -44,7 +49,11 @@ fun EngineDetails(
           )
 
           Text(
-            text = "${propeller.hub?.make} ${propeller.hub?.model}",
+            text = stringResource(
+              CoreRes.string.make_model_template,
+              propeller.hub?.make.orEmpty(),
+              propeller.hub?.model.orEmpty(),
+            ),
             modifier = Modifier.padding(top = Spacing.extraSmall),
             style = TextStyle(
               fontFamily = FontFamily.SansSerif,

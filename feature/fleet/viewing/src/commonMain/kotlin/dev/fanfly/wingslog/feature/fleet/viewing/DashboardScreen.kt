@@ -31,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
@@ -39,9 +38,9 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.FleetDashboardViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.add_aircraft
 import wingslog.core.ui.generated.resources.app_name
 import wingslog.core.ui.generated.resources.settings
-import wingslog.feature.fleet.sharedassets.generated.resources.add_aircraft
 import wingslog.feature.fleet.sharedassets.generated.resources.add_first_aircraft
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_description
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_title
@@ -91,7 +90,7 @@ fun DashboardScreen(
         ) {
           Icon(
             Icons.Default.Add,
-            contentDescription = stringResource(FleetRes.string.add_aircraft)
+            contentDescription = stringResource(CoreUiRes.string.add_aircraft)
           )
         }
       }
@@ -99,7 +98,7 @@ fun DashboardScreen(
   ) { innerPadding ->
     Box(
       modifier = Modifier.fillMaxSize()
-          .padding(innerPadding), contentAlignment = Alignment.Center
+        .padding(innerPadding), contentAlignment = Alignment.Center
     ) {
       if (uiState.isLoading) {
         CircularProgressIndicator()
@@ -114,7 +113,7 @@ fun DashboardScreen(
       } else {
         LazyColumn(
           modifier = Modifier.fillMaxSize()
-              .padding(Spacing.screenPadding),
+            .padding(Spacing.screenPadding),
           verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
         ) {
           items(uiState.fleet, key = { it.id }) { aircraft ->
@@ -139,14 +138,14 @@ private fun TopBarAvatar(
     CircularImage(
       photoUri = photoUri,
       contentDescription = contentDescription,
-      size = 32.dp,
+      size = Spacing.huge,
     )
   } else {
     Box(
       modifier = Modifier
-          .size(32.dp)
-          .clip(CircleShape)
-          .background(MaterialTheme.colorScheme.primaryContainer),
+        .size(Spacing.huge)
+        .clip(CircleShape)
+        .background(MaterialTheme.colorScheme.primaryContainer),
       contentAlignment = Alignment.Center,
     ) {
       Icon(

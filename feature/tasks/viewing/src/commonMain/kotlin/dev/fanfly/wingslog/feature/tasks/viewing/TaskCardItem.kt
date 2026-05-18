@@ -19,15 +19,16 @@ import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.dash
-import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.viewing.generated.resources.badge_due
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
 import wingslog.feature.tasks.viewing.generated.resources.completed
+import wingslog.feature.tasks.viewing.generated.resources.engine_hours_upper
 import wingslog.feature.tasks.viewing.generated.resources.label_deadline
 import wingslog.feature.tasks.viewing.generated.resources.label_due_engine
 import wingslog.feature.tasks.viewing.generated.resources.on_condition
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 
 @Composable
 fun TaskCardItem(
@@ -72,7 +73,12 @@ fun TaskCardItem(
     status == DueStatus.COMPLIED -> stringResource(ViewingRes.string.completed)
     isOnCondition -> stringResource(ViewingRes.string.on_condition)
     dueDate != null -> dueDate.toDisplayFormat()
-    dueEngine != null -> "${dueEngine.toDouble().formatToOneDecimalPlace()} HRS"
+    dueEngine != null -> stringResource(
+      ViewingRes.string.engine_hours_upper,
+      dueEngine.toDouble()
+        .formatToOneDecimalPlace(),
+    )
+
     else -> stringResource(CoreRes.string.dash)
   }
 
@@ -97,7 +103,10 @@ private fun previewCard(title: String, notes: String = "") =
 @Composable
 fun PreviewTaskCardItemOverdue() = TaskCardItem(
   cardWithStatus = MaintenanceTaskWithStatus(
-    card = previewCard("100 Hr Inspection", "Routine engine and airframe check"),
+    card = previewCard(
+      "100 Hr Inspection",
+      "Routine engine and airframe check"
+    ),
     dueStatus = DueMetadata(
       nextDueDate = LocalDate(2025, 12, 1),
       status = DueStatus.OVERDUE,

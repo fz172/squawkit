@@ -23,16 +23,19 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.feature.logs.sharedassets.generated.resources.blade
 import wingslog.feature.logs.sharedassets.generated.resources.propeller_hub
 import wingslog.feature.logs.update.generated.resources.Res
 import wingslog.feature.logs.update.generated.resources.airframe_serial
 import wingslog.feature.logs.update.generated.resources.loading_aircraft
+import wingslog.feature.logs.update.generated.resources.make_model_serial
 import wingslog.feature.logs.update.generated.resources.no_engines_found
 import wingslog.feature.logs.update.generated.resources.no_propeller_components_found
 import wingslog.feature.logs.update.generated.resources.propeller_component
+import wingslog.feature.logs.update.generated.resources.type_make_model_serial
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.logs.sharedassets.generated.resources.Res as LogRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +47,10 @@ fun ComponentSection(
   onSubComponentChange: (String?) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+  Column(
+    modifier = modifier,
+    verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+  ) {
     // Component Type segmented button
     val componentOptions = listOf(
       ComponentType.COMPONENT_AIRFRAME,
@@ -57,7 +63,10 @@ fun ComponentSection(
         SegmentedButton(
           selected = selectedComponentType == option,
           onClick = { onComponentTypeChange(option) },
-          shape = SegmentedButtonDefaults.itemShape(index = index, count = componentOptions.size),
+          shape = SegmentedButtonDefaults.itemShape(
+            index = index,
+            count = componentOptions.size
+          ),
           icon = {},
           label = { Text(option.displayName()) },
         )
@@ -114,13 +123,17 @@ fun ComponentSection(
             )
           } else {
             val options = engines.map { engine ->
-              val label = buildString {
-                if (engine.make.isNotEmpty()) append(engine.make)
-                if (engine.model.isNotEmpty()) {
-                  if (isNotEmpty()) append(" ")
-                  append(engine.model)
-                }
-                if (engine.serial.isNotEmpty()) append(" (${engine.serial})")
+              val makeModel = listOf(engine.make, engine.model)
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+              val label = if (engine.serial.isNotEmpty()) {
+                stringResource(
+                  Res.string.make_model_serial,
+                  makeModel,
+                  engine.serial
+                )
+              } else {
+                makeModel
               }
               label to engine.serial
             }
@@ -149,22 +162,28 @@ fun ComponentSection(
             val prop = engine.propeller
             val hub = prop?.hub
             if (hub?.serial?.isNotEmpty() == true) {
-              val label = buildString {
-                append(stringResource(wingslog.feature.logs.sharedassets.generated.resources.Res.string.propeller_hub))
-                if (hub.make.isNotEmpty()) append(" - ${hub.make}")
-                if (hub.model.isNotEmpty()) append(" ${hub.model}")
-                append(" (${hub.serial})")
-              }
+              val makeModel = listOf(hub.make, hub.model)
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+              val label = stringResource(
+                Res.string.type_make_model_serial,
+                stringResource(LogRes.string.propeller_hub),
+                makeModel,
+                hub.serial,
+              )
               options.add(label to hub.serial)
             }
             prop?.blades?.forEach { blade ->
               if (blade.serial.isNotEmpty()) {
-                val label = buildString {
-                  append(stringResource(wingslog.feature.logs.sharedassets.generated.resources.Res.string.blade))
-                  if (blade.make.isNotEmpty()) append(" - ${blade.make}")
-                  if (blade.model.isNotEmpty()) append(" ${blade.model}")
-                  append(" (${blade.serial})")
-                }
+                val makeModel = listOf(blade.make, blade.model)
+                  .filter { it.isNotBlank() }
+                  .joinToString(" ")
+                val label = stringResource(
+                  Res.string.type_make_model_serial,
+                  stringResource(LogRes.string.blade),
+                  makeModel,
+                  blade.serial,
+                )
                 options.add(label to blade.serial)
               }
             }

@@ -73,6 +73,7 @@
   <string name="force_due_engine_hours">Force Due Engine (hours)</string>
 
   <string name="select_task_work">Select Maintenance Work</string>
+  <string name="reference_and_component">%1$s • %2$s</string>
 
   <string name="compliance_type">Compliance Type</string>
   <string name="compliance_type_routine_short">Routine</string>
@@ -97,7 +98,6 @@
   <string name="delete_task_confirmation">Delete "%1$s"? This cannot be undone. Maintenance logs that reference this task will not be deleted.</string>
   <string name="basics">Basics</string>
   <string name="schedule">Schedule</string>
-  <string name="details">Details</string>
   <string name="task_identity_description">Define the core name and component category for this maintenance requirement.</string>
   <string name="adjustments">Adjustments</string>
 
@@ -108,14 +108,12 @@
   <string name="adj_preview_reschedule_date_primary">Next due %1$s</string>
   <string name="adj_preview_reschedule_hours_primary">Next due at %1$s tach hrs</string>
   <string name="adj_preview_reschedule_was_date">Was set by schedule</string>
-  <string name="adj_preview_reschedule_was_hours">Was set by schedule</string>
   <string name="adj_preview_skip_primary">Skipping this cycle</string>
   <string name="adj_preview_skip_secondary">Will be marked complete without a log entry</string>
   <!-- Preview banner eyebrow labels and hints -->
   <string name="schedule_preview_label">Preview</string>
   <string name="schedule_preview_hint">How this task will appear</string>
   <string name="adj_preview_label_neutral">Current</string>
-  <string name="adj_preview_label_active">Preview</string>
   <string name="adj_preview_label_warn">On save</string>
   <string name="adj_preview_hint">What will happen</string>
 

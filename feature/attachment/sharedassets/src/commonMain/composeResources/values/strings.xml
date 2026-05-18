@@ -27,4 +27,9 @@
   <string name="attachment_type_image">Image</string>
   <string name="attachment_type_link">Link</string>
   <string name="attachment_type_file">File</string>
+  <string name="attachment_type_text">Text</string>
+  <string name="subtitle_separator"> · </string>
+  <string name="file_size_mb">%1$s MB</string>
+  <string name="file_size_kb">%1$s KB</string>
+  <string name="file_size_bytes">%1$s B</string>
 </resources>

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.sync.data.HydrationState
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
+import dev.fanfly.wingslog.feature.sync.data.SyncFailure
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,7 +47,7 @@ class SyncSettingsViewModel(
         signedIn = signedIn,
         cloudSyncEnabled = prefs.cloudSyncEnabled,
         allowUploadOnCellular = prefs.allowUploadOnCellular,
-        failureMessage = failure?.message,
+        failure = failure,
         hydration = hydration,
         attachmentEnabled = attachmentEnabled,
       )
@@ -58,9 +59,10 @@ class SyncSettingsViewModel(
 
   init {
     viewModelScope.launch {
-      featureLabManager.observe().collect { flags ->
-        _attachmentEnabled.update { flags.attachmentUploadEnabled }
-      }
+      featureLabManager.observe()
+        .collect { flags ->
+          _attachmentEnabled.update { flags.attachmentUploadEnabled }
+        }
     }
   }
 
@@ -78,7 +80,7 @@ data class SyncSettingsUiState(
   val signedIn: Boolean,
   val cloudSyncEnabled: Boolean,
   val allowUploadOnCellular: Boolean,
-  val failureMessage: String?,
+  val failure: SyncFailure?,
   val hydration: HydrationState,
   val attachmentEnabled: Boolean = true,
 ) {
@@ -87,7 +89,7 @@ data class SyncSettingsUiState(
       signedIn = false,
       cloudSyncEnabled = true,
       allowUploadOnCellular = false,
-      failureMessage = null,
+      failure = null,
       hydration = HydrationState.Idle,
     )
   }

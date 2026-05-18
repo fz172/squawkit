@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="add_aircraft">Add Aircraft</string>
     <string name="update_aircraft">Update Aircraft</string>
     <string name="make">Make</string>
     <string name="model">Model</string>
@@ -15,6 +14,8 @@
     <string name="no_engines_found">No engines found for this aircraft.</string>
     <string name="no_propeller_components_found">No propeller components found for this aircraft.</string>
     <string name="propeller_component">Propeller Component</string>
+  <string name="make_model_serial">%1$s (%2$s)</string>
+  <string name="type_make_model_serial">%1$s - %2$s (%3$s)</string>
     <string name="delete_log">Delete Log?</string>
     <string name="airframe_time_hours">Airframe Time (hours)</string>
     <string name="prop_time_hours">Prop Time (hours)</string>
@@ -34,5 +35,4 @@
     <string name="performed_by_description">The technician who performed this work</string>
     <string name="squawks_section_header">Squawks Addressed</string>
     <string name="tasks_section_header">Tasks Completed</string>
-    <string name="attachments_section_header">Attachments</string>
 </resources>

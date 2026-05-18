@@ -22,8 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.appinfo.getAppVersion
+import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
@@ -33,14 +33,14 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.settings
-import wingslog.feature.settings.generated.resources.Res as SettingsRes
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.feature_lab
 import wingslog.feature.settings.generated.resources.sign_out
-import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
 import wingslog.feature.sync.sharedassets.generated.resources.feature_name_backup_and_sync
+import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians
+import wingslog.feature.settings.generated.resources.Res as SettingsRes
+import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
-import wingslog.feature.technician.sharedassets.generated.resources.setting_item_manage_technicians
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,7 +86,7 @@ fun SettingsScreen(
       if (user.featureFlags.technicianEnabled) {
         SettingsRow(
           icon = Icons.Default.Engineering,
-          title = stringResource(TechnicianRes.string.setting_item_manage_technicians),
+          title = stringResource(TechnicianRes.string.manage_technicians),
           onClick = { navController.navigate(Screen.ManageTechnicians.route) },
           settingsLevel = SettingsLevel.DEFAULT
         )

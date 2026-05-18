@@ -42,13 +42,14 @@ import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsTab
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.details
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
 import wingslog.feature.squawk.update.generated.resources.dismiss_issue
 import wingslog.feature.squawk.update.generated.resources.reopen_issue
 import wingslog.feature.squawk.update.generated.resources.tab_basic
-import wingslog.feature.squawk.update.generated.resources.tab_details
+import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -80,9 +81,9 @@ fun SquawkFormScreen(
 
   val hasChanges = if (isEdit) {
     state.title != state.initialTitle ||
-        state.description != state.initialDescription ||
-        state.priority != state.initialPriority ||
-        state.addressedByLogId != state.initialAddressedByLogId
+      state.description != state.initialDescription ||
+      state.priority != state.initialPriority ||
+      state.addressedByLogId != state.initialAddressedByLogId
   } else {
     state.title.isNotEmpty() || state.description.isNotEmpty()
   }
@@ -109,7 +110,7 @@ fun SquawkFormScreen(
     ),
     IconLabelTabSpec(
       Icons.Default.Info,
-      stringResource(UpdateRes.string.tab_details)
+      stringResource(CoreRes.string.details)
     ),
   )
   val pagerState = rememberPagerState(pageCount = { tabs.size })
@@ -146,8 +147,8 @@ fun SquawkFormScreen(
   ) { padding ->
     Column(
       modifier = Modifier
-          .padding(padding)
-          .fillMaxSize(),
+        .padding(padding)
+        .fillMaxSize(),
     ) {
       HorizontalPager(
         state = pagerState,
@@ -157,9 +158,9 @@ fun SquawkFormScreen(
       ) { page ->
         Column(
           modifier = Modifier
-              .fillMaxSize()
-              .verticalScroll(rememberScrollState())
-              .padding(Spacing.screenPadding),
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(Spacing.screenPadding),
         ) {
           when (page) {
             0 -> SquawkBasicTab(

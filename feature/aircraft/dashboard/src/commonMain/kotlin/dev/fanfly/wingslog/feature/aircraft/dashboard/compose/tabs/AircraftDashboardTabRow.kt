@@ -13,8 +13,9 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.aircraft.dashboard.generated.resources.Res
 import wingslog.feature.aircraft.dashboard.generated.resources.tab_logs
 import wingslog.feature.aircraft.dashboard.generated.resources.tab_overview
-import wingslog.feature.aircraft.dashboard.generated.resources.tab_squawks
 import wingslog.feature.aircraft.dashboard.generated.resources.tab_tasks
+import wingslog.feature.squawk.sharedassets.generated.resources.squawks
+import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 
 @Composable
 fun AircraftDashboardTabRow(
@@ -23,10 +24,22 @@ fun AircraftDashboardTabRow(
   modifier: Modifier = Modifier,
 ) {
   val tabs = listOf(
-    IconLabelTabSpec(Icons.Default.FlightTakeoff, stringResource(Res.string.tab_overview)),
-    IconLabelTabSpec(Icons.Default.BugReport,     stringResource(Res.string.tab_squawks)),
-    IconLabelTabSpec(Icons.Default.TaskAlt,        stringResource(Res.string.tab_tasks)),
-    IconLabelTabSpec(Icons.Default.History,        stringResource(Res.string.tab_logs)),
+    IconLabelTabSpec(
+      Icons.Default.FlightTakeoff,
+      stringResource(Res.string.tab_overview)
+    ),
+    IconLabelTabSpec(
+      Icons.Default.BugReport,
+      stringResource(SquawkRes.string.squawks)
+    ),
+    IconLabelTabSpec(
+      Icons.Default.TaskAlt,
+      stringResource(Res.string.tab_tasks)
+    ),
+    IconLabelTabSpec(
+      Icons.Default.History,
+      stringResource(Res.string.tab_logs)
+    ),
   )
   IconLabelTabRow(
     tabs = tabs,

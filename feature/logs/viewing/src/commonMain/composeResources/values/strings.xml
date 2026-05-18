@@ -16,6 +16,7 @@
   <string name="log_count_n_entries">%1$d Entries</string>
   <string name="log_task_count_one">1 task</string>
   <string name="log_task_count_plural">%1$d tasks</string>
+  <string name="hours_abbr_value">%1$s hrs</string>
   <string name="failed_to_load_logs">Could not load maintenance logs</string>
   <string name="maintenance_summary">Maintenance Summary</string>
   <string name="total_logs">Total Logs</string>

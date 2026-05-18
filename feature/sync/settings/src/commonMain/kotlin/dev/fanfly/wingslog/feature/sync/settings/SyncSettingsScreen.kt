@@ -19,8 +19,8 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -38,14 +38,13 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.sync.data.HydrationState
+import dev.fanfly.wingslog.feature.sync.data.SyncFailure
 import dev.fanfly.wingslog.feature.sync.settings.compose.SyncHeroIllustration
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.sync.settings.generated.resources.Res
 import wingslog.feature.sync.settings.generated.resources.setting_item_sync
 import wingslog.feature.sync.settings.generated.resources.setting_item_sync_on_cellular
-import wingslog.feature.sync.settings.generated.resources.sync_subtitle_cellular_disabled
-import wingslog.feature.sync.settings.generated.resources.sync_subtitle_cellular_enabled
 import wingslog.feature.sync.settings.generated.resources.sync_attachments_disclaimer
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_active
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_paused
@@ -55,17 +54,22 @@ import wingslog.feature.sync.settings.generated.resources.sync_hero_title_paused
 import wingslog.feature.sync.settings.generated.resources.sync_hero_title_signin
 import wingslog.feature.sync.settings.generated.resources.sync_status_anonymous_body
 import wingslog.feature.sync.settings.generated.resources.sync_status_anonymous_title
+import wingslog.feature.sync.settings.generated.resources.sync_status_auth_expired_body
 import wingslog.feature.sync.settings.generated.resources.sync_status_error_title
+import wingslog.feature.sync.settings.generated.resources.sync_status_hydration_error_body
 import wingslog.feature.sync.settings.generated.resources.sync_status_off_body
 import wingslog.feature.sync.settings.generated.resources.sync_status_off_title
+import wingslog.feature.sync.settings.generated.resources.sync_status_push_error_body
 import wingslog.feature.sync.settings.generated.resources.sync_status_restoring
 import wingslog.feature.sync.settings.generated.resources.sync_status_synced_body
 import wingslog.feature.sync.settings.generated.resources.sync_status_synced_title
 import wingslog.feature.sync.settings.generated.resources.sync_subtitle_active
+import wingslog.feature.sync.settings.generated.resources.sync_subtitle_cellular_disabled
+import wingslog.feature.sync.settings.generated.resources.sync_subtitle_cellular_enabled
 import wingslog.feature.sync.settings.generated.resources.sync_subtitle_off
 import wingslog.feature.sync.settings.generated.resources.sync_subtitle_signin
-import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
 import wingslog.feature.sync.sharedassets.generated.resources.feature_name_backup_and_sync
+import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,7 +119,11 @@ fun SyncSettingsScreen(
             onCheckedChange = viewModel::onCloudSyncToggled,
           )
           if (state.attachmentEnabled) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+            HorizontalDivider(
+              color = MaterialTheme.colorScheme.outlineVariant.copy(
+                alpha = 0.4f
+              )
+            )
             SyncToggleRow(
               title = stringResource(Res.string.setting_item_sync_on_cellular),
               subtitle = if (state.allowUploadOnCellular)
@@ -235,10 +243,10 @@ private fun StatusSection(state: SyncSettingsUiState) {
   // Three mutually exclusive cases — only one ever renders. The point of having all three drawn
   // out explicitly is so future-me can spot when a state is missing UX coverage.
   when {
-    state.failureMessage != null -> StatusRow(
+    state.failure != null -> StatusRow(
       icon = Icons.Default.Warning,
       title = stringResource(Res.string.sync_status_error_title),
-      body = state.failureMessage,
+      body = state.failure.displayText(),
       tint = MaterialTheme.colorScheme.error,
       container = MaterialTheme.colorScheme.errorContainer,
     )
@@ -305,6 +313,18 @@ private fun StatusSection(state: SyncSettingsUiState) {
 }
 
 @Composable
+private fun SyncFailure.displayText(): String = when (this) {
+  is SyncFailure.AuthExpired -> stringResource(Res.string.sync_status_auth_expired_body)
+  is SyncFailure.Hydration -> stringResource(
+    Res.string.sync_status_hydration_error_body,
+    kind.wireName,
+    failedAttempts,
+  )
+
+  is SyncFailure.Push -> stringResource(Res.string.sync_status_push_error_body)
+}
+
+@Composable
 private fun StatusRow(
   icon: ImageVector,
   title: String,
@@ -340,4 +360,3 @@ private fun StatusRow(
     }
   }
 }
-

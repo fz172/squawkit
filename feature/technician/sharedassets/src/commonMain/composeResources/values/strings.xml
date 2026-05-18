@@ -1,7 +1,5 @@
 <resources>
-  <string name="setting_item_manage_technicians">Manage Technicians</string>
   <string name="technician">Technician</string>
-  <string name="technicians">Technicians</string>
   <string name="add_technician">Add Technician</string>
   <string name="edit_technician">Edit Technician</string>
   <string name="manage_technicians">Manage Technicians</string>
@@ -15,7 +13,6 @@
   <string name="expiration_date">Expiration Date</string>
   <string name="never">Never</string>
 
-  <string name="certificate_type_none">None</string>
   <string name="certificate_type_repairman">Repairman</string>
   <string name="certificate_type_amt">A&amp;P Mechanic</string>
 

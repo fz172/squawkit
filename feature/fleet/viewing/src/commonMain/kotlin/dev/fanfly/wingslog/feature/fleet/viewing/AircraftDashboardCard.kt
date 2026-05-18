@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.Propeller
@@ -36,8 +35,10 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.make_model_template
 import wingslog.feature.tasks.sharedassets.generated.resources.Res
 import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
+import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @Composable
 fun AircraftDashboardCard(
@@ -66,7 +67,11 @@ fun AircraftDashboardCard(
     ) {
       Column(modifier = Modifier.weight(1f)) {
         Text(
-          text = "${aircraft.make} ${aircraft.model}",
+          text = stringResource(
+            CoreRes.string.make_model_template,
+            aircraft.make,
+            aircraft.model,
+          ),
           style = MaterialTheme.typography.titleLarge,
           color = MaterialTheme.colorScheme.onSurface
         )

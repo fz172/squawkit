@@ -25,8 +25,8 @@ import dev.fanfly.wingslog.feature.squawk.viewing.AogAlertSection
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.CriticalAlertsSection
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.sharedassets.generated.resources.Res
-import wingslog.feature.logs.sharedassets.generated.resources.make_model_template
+import wingslog.core.ui.generated.resources.make_model_template
+import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -51,7 +51,7 @@ fun OverviewTab(
     ) {
       Text(
         text = stringResource(
-          Res.string.make_model_template,
+          CoreRes.string.make_model_template,
           state.aircraft.make.trim(),
           state.aircraft.model.trim()
         ),

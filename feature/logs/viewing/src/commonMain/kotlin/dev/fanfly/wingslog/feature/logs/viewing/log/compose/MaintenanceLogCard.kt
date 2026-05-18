@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
@@ -39,13 +38,14 @@ import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusOkContainer
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
-import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.logs.viewing.generated.resources.hours_abbr_value
 import wingslog.feature.logs.viewing.generated.resources.log_task_count_one
 import wingslog.feature.logs.viewing.generated.resources.log_task_count_plural
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
+import kotlin.time.Instant
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
 @Composable
 fun MaintenanceLogCard(
@@ -54,7 +54,8 @@ fun MaintenanceLogCard(
   technicianEnabled: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
-  val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
+  val dateStr = log.timestamp?.toLocalDate()
+    ?.toDisplayFormat()
     ?: stringResource(SharedRes.string.unknown_date)
   val tacHours = log.primaryHours()
 
@@ -87,7 +88,10 @@ fun MaintenanceLogCard(
         Spacer(Modifier.weight(1f))
         if (tacHours > 0.0) {
           Text(
-            text = "${tacHours.formatToOneDecimalPlace()} hrs",
+            text = stringResource(
+              MaintenanceRes.string.hours_abbr_value,
+              tacHours.formatToOneDecimalPlace(),
+            ),
             style = WingslogTypography.dataSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
@@ -107,7 +111,11 @@ fun MaintenanceLogCard(
         color = MaterialTheme.colorScheme.onSurface,
       )
 
-      HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+      HorizontalDivider(
+        color = MaterialTheme.colorScheme.outlineVariant.copy(
+          alpha = 0.3f
+        )
+      )
 
       // Footer: date | task count + technician
       Row(
@@ -161,18 +169,22 @@ private fun badgeSchemeFor(type: ComponentType): BadgeScheme = when (type) {
     MaterialTheme.colorScheme.primaryContainer,
     MaterialTheme.colorScheme.onPrimaryContainer,
   )
+
   ComponentType.COMPONENT_AIRFRAME -> BadgeScheme(
     StatusOkContainer,
     StatusOk,
   )
+
   ComponentType.COMPONENT_AVIONICS -> BadgeScheme(
     MaterialTheme.colorScheme.tertiaryContainer,
     MaterialTheme.colorScheme.onTertiaryContainer,
   )
+
   ComponentType.COMPONENT_PROPELLER -> BadgeScheme(
     MaterialTheme.colorScheme.secondaryContainer,
     MaterialTheme.colorScheme.onSecondaryContainer,
   )
+
   else -> BadgeScheme(
     MaterialTheme.colorScheme.surfaceContainerHigh,
     MaterialTheme.colorScheme.onSurfaceVariant,
@@ -197,7 +209,8 @@ internal fun ComponentTypeBadge(
       ),
   ) {
     Text(
-      text = type.displayName().uppercase(),
+      text = type.displayName()
+        .uppercase(),
       color = scheme.contentColor,
       fontSize = 10.sp,
       fontWeight = FontWeight.SemiBold,
@@ -212,7 +225,8 @@ private fun MaintenanceLog.primaryHours(): Double = when (component_type) {
   ComponentType.COMPONENT_AIRFRAME -> airframe_time
   ComponentType.COMPONENT_PROPELLER -> prop_time
   ComponentType.COMPONENT_AVIONICS -> engine_hour
-  else -> engine_hour.takeIf { it > 0.0 } ?: airframe_time.takeIf { it > 0.0 } ?: prop_time
+  else -> engine_hour.takeIf { it > 0.0 } ?: airframe_time.takeIf { it > 0.0 }
+  ?: prop_time
 }
 
 @Preview
@@ -221,7 +235,8 @@ private fun PreviewMaintenanceLogCard() {
   MaintenanceLogCard(
     log = MaintenanceLog(
       id = "preview-1",
-      timestamp = Instant.fromEpochSeconds(1_745_000_000).toWireInstant(),
+      timestamp = Instant.fromEpochSeconds(1_745_000_000)
+        .toWireInstant(),
       work_description = "Replaced left magneto per SB-1234. Performed mag drop check — within limits.",
       component_type = ComponentType.COMPONENT_ENGINE,
       engine_hour = 1432.5,

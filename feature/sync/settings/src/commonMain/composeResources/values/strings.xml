@@ -8,6 +8,9 @@
   <string name="sync_hero_title_active">Backed up across your devices</string>
   <string name="sync_hero_body_active">Changes you make here sync to the cloud and any other device signed in to the same account.</string>
   <string name="sync_status_error_title">Sync error</string>
+  <string name="sync_status_auth_expired_body">Authentication expired. Sign in again to resume sync.</string>
+  <string name="sync_status_hydration_error_body">Could not restore %1$s after %2$d retries.</string>
+  <string name="sync_status_push_error_body">Could not upload the latest local changes. Sync will retry when possible.</string>
   <string name="sync_status_restoring">Restoring %1$d of %2$d collections</string>
   <string name="sync_status_anonymous_title">Anonymous account</string>
   <string name="sync_status_anonymous_body">Sync requires signing in.</string>

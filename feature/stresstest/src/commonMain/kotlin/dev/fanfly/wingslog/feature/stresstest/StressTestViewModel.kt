@@ -13,109 +13,179 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 sealed interface StressTestState {
-    data object Idle : StressTestState
-    data class Running(val step: String, val progress: Int, val total: Int) : StressTestState
-    data class Done(val aircraftId: String, val summary: String) : StressTestState
-    data class Error(val message: String) : StressTestState
+  data object Idle : StressTestState
+  data class Running(
+    val step: StressTestProgressStep,
+    val subject: String? = null,
+    val progress: Int,
+    val total: Int,
+  ) : StressTestState
+
+  data class Done(val aircraftId: String, val summary: StressTestSummary) :
+    StressTestState
+
+  data class Error(val message: String?) : StressTestState
 }
 
+enum class StressTestProgressStep {
+  CreatingAircraft,
+  CreatingTechnician,
+  CreatingTask,
+  CreatingSquawk,
+  CreatingLog,
+  MarkingSquawkAddressed,
+  DismissingSquawk,
+}
+
+data class StressTestSummary(
+  val aircraftMake: String,
+  val aircraftModel: String,
+  val tailNumber: String,
+  val serialNumber: String,
+  val engineCount: Int,
+  val engineModel: String,
+  val technicianCount: Int,
+  val taskCount: Int,
+  val logCount: Int,
+  val squawkCount: Int,
+  val openSquawkCount: Int,
+  val addressedSquawkCount: Int,
+  val dismissedSquawkCount: Int,
+)
+
 class StressTestViewModel(
-    private val fleetManager: FleetManager,
-    private val technicianManager: TechnicianManager,
-    private val taskDataManager: TaskDataManager,
-    private val squawkManager: SquawkManager,
-    private val logManager: MaintenanceLogManager,
+  private val fleetManager: FleetManager,
+  private val technicianManager: TechnicianManager,
+  private val taskDataManager: TaskDataManager,
+  private val squawkManager: SquawkManager,
+  private val logManager: MaintenanceLogManager,
 ) : ViewModel() {
 
-    private val _config = MutableStateFlow(StressTestConfig())
-    val config: StateFlow<StressTestConfig> = _config.asStateFlow()
+  private val _config = MutableStateFlow(StressTestConfig())
+  val config: StateFlow<StressTestConfig> = _config.asStateFlow()
 
-    private val _state = MutableStateFlow<StressTestState>(StressTestState.Idle)
-    val state: StateFlow<StressTestState> = _state.asStateFlow()
+  private val _state = MutableStateFlow<StressTestState>(StressTestState.Idle)
+  val state: StateFlow<StressTestState> = _state.asStateFlow()
 
-    fun setEngineCount(count: Int) { _config.value = _config.value.copy(engineCount = count) }
-    fun setBladesPerEngine(count: Int) { _config.value = _config.value.copy(bladesPerEngine = count) }
-    fun setSquawkCount(count: Int) { _config.value = _config.value.copy(squawkCount = count) }
-    fun setTaskCount(count: Int) { _config.value = _config.value.copy(taskCount = count) }
-    fun setLogCount(count: Int) { _config.value = _config.value.copy(logCount = count) }
-    fun setTechnicianCount(count: Int) { _config.value = _config.value.copy(technicianCount = count) }
+  fun setEngineCount(count: Int) {
+    _config.value = _config.value.copy(engineCount = count)
+  }
 
-    fun reset() { _state.value = StressTestState.Idle }
+  fun setBladesPerEngine(count: Int) {
+    _config.value = _config.value.copy(bladesPerEngine = count)
+  }
 
-    fun generate() {
-        if (_state.value is StressTestState.Running) return
-        viewModelScope.launch {
-            runCatching {
-                val config = _config.value
-                val data = FakeDataGenerator.generate(config)
-                val aircraftId = data.aircraft.id
+  fun setSquawkCount(count: Int) {
+    _config.value = _config.value.copy(squawkCount = count)
+  }
 
-                val totalSteps = 1 +
-                    data.technicians.size +
-                    data.tasks.size +
-                    data.squawks.size +
-                    data.logs.size +
-                    data.addressedSquawks.size +
-                    data.dismissedSquawks.size
-                var step = 0
+  fun setTaskCount(count: Int) {
+    _config.value = _config.value.copy(taskCount = count)
+  }
 
-                fun progress(label: String) {
-                    step++
-                    _state.value = StressTestState.Running(label, step, totalSteps)
-                }
+  fun setLogCount(count: Int) {
+    _config.value = _config.value.copy(logCount = count)
+  }
 
-                progress("Creating aircraft ${data.aircraft.tail_number}…")
-                fleetManager.updateAircraft(data.aircraft).getOrThrow()
+  fun setTechnicianCount(count: Int) {
+    _config.value = _config.value.copy(technicianCount = count)
+  }
 
-                data.technicians.forEach { tech ->
-                    progress("Creating technician ${tech.name}…")
-                    technicianManager.updateTechnician(tech).getOrThrow()
-                }
+  fun reset() {
+    _state.value = StressTestState.Idle
+  }
 
-                data.tasks.forEach { task ->
-                    progress("Creating task: ${task.title}…")
-                    taskDataManager.addTask(aircraftId, task).getOrThrow()
-                }
+  fun generate() {
+    if (_state.value is StressTestState.Running) return
+    viewModelScope.launch {
+      runCatching {
+        val config = _config.value
+        val data = FakeDataGenerator.generate(config)
+        val aircraftId = data.aircraft.id
 
-                data.squawks.forEach { squawk ->
-                    progress("Creating squawk: ${squawk.title}…")
-                    squawkManager.addSquawk(aircraftId, squawk).getOrThrow()
-                }
+        val totalSteps = 1 +
+          data.technicians.size +
+          data.tasks.size +
+          data.squawks.size +
+          data.logs.size +
+          data.addressedSquawks.size +
+          data.dismissedSquawks.size
+        var step = 0
 
-                data.logs.forEach { log ->
-                    progress("Creating log entry…")
-                    logManager.addLog(aircraftId, log).getOrThrow()
-                }
-
-                data.addressedSquawks.forEach { (squawkId, logId) ->
-                    progress("Marking squawk addressed…")
-                    squawkManager.markAddressed(aircraftId, listOf(squawkId), logId).getOrThrow()
-                }
-
-                data.dismissedSquawks.forEach { (squawkId, reason) ->
-                    progress("Dismissing squawk…")
-                    squawkManager.dismissSquawk(aircraftId, squawkId, reason).getOrThrow()
-                }
-
-                val openCount = data.squawks.size - data.addressedSquawks.size - data.dismissedSquawks.size
-                val summary = buildString {
-                    appendLine("Aircraft: ${data.aircraft.make} ${data.aircraft.model} (${data.aircraft.tail_number})")
-                    appendLine("Tail: ${data.aircraft.tail_number} · S/N: ${data.aircraft.serial}")
-                    appendLine("Engines: ${data.aircraft.engine.size} × ${data.aircraft.engine.firstOrNull()?.model ?: "-"}")
-                    appendLine()
-                    appendLine("${data.technicians.size} technician(s) created")
-                    appendLine("${data.tasks.size} task(s) created")
-                    appendLine("${data.logs.size} log entr${if (data.logs.size == 1) "y" else "ies"} created (span: 4 years)")
-                    appendLine("${data.squawks.size} squawk(s) created:")
-                    appendLine("  • ${openCount.coerceAtLeast(0)} open")
-                    appendLine("  • ${data.addressedSquawks.size} addressed")
-                    append("  • ${data.dismissedSquawks.size} dismissed")
-                }
-
-                _state.value = StressTestState.Done(aircraftId, summary)
-            }.onFailure { e ->
-                _state.value = StressTestState.Error(e.message ?: "Unknown error")
-            }
+        fun progress(
+          stepInfo: StressTestProgressStep,
+          subject: String? = null
+        ) {
+          step++
+          _state.value =
+            StressTestState.Running(stepInfo, subject, step, totalSteps)
         }
+
+        progress(
+          StressTestProgressStep.CreatingAircraft,
+          data.aircraft.tail_number
+        )
+        fleetManager.updateAircraft(data.aircraft)
+          .getOrThrow()
+
+        data.technicians.forEach { tech ->
+          progress(StressTestProgressStep.CreatingTechnician, tech.name)
+          technicianManager.updateTechnician(tech)
+            .getOrThrow()
+        }
+
+        data.tasks.forEach { task ->
+          progress(StressTestProgressStep.CreatingTask, task.title)
+          taskDataManager.addTask(aircraftId, task)
+            .getOrThrow()
+        }
+
+        data.squawks.forEach { squawk ->
+          progress(StressTestProgressStep.CreatingSquawk, squawk.title)
+          squawkManager.addSquawk(aircraftId, squawk)
+            .getOrThrow()
+        }
+
+        data.logs.forEach { log ->
+          progress(StressTestProgressStep.CreatingLog)
+          logManager.addLog(aircraftId, log)
+            .getOrThrow()
+        }
+
+        data.addressedSquawks.forEach { (squawkId, logId) ->
+          progress(StressTestProgressStep.MarkingSquawkAddressed)
+          squawkManager.markAddressed(aircraftId, listOf(squawkId), logId)
+            .getOrThrow()
+        }
+
+        data.dismissedSquawks.forEach { (squawkId, reason) ->
+          progress(StressTestProgressStep.DismissingSquawk)
+          squawkManager.dismissSquawk(aircraftId, squawkId, reason)
+            .getOrThrow()
+        }
+
+        val openCount =
+          data.squawks.size - data.addressedSquawks.size - data.dismissedSquawks.size
+        val summary = StressTestSummary(
+          aircraftMake = data.aircraft.make,
+          aircraftModel = data.aircraft.model,
+          tailNumber = data.aircraft.tail_number,
+          serialNumber = data.aircraft.serial,
+          engineCount = data.aircraft.engine.size,
+          engineModel = data.aircraft.engine.firstOrNull()?.model.orEmpty(),
+          technicianCount = data.technicians.size,
+          taskCount = data.tasks.size,
+          logCount = data.logs.size,
+          squawkCount = data.squawks.size,
+          openSquawkCount = openCount.coerceAtLeast(0),
+          addressedSquawkCount = data.addressedSquawks.size,
+          dismissedSquawkCount = data.dismissedSquawks.size,
+        )
+
+        _state.value = StressTestState.Done(aircraftId, summary)
+      }.onFailure { e ->
+        _state.value = StressTestState.Error(e.message)
+      }
     }
+  }
 }

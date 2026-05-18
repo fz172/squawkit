@@ -53,10 +53,34 @@ import wingslog.feature.stresstest.generated.resources.stress_test_config_record
 import wingslog.feature.stresstest.generated.resources.stress_test_config_squawks
 import wingslog.feature.stresstest.generated.resources.stress_test_config_tasks
 import wingslog.feature.stresstest.generated.resources.stress_test_config_technicians
+import wingslog.feature.stresstest.generated.resources.stress_test_decrement
 import wingslog.feature.stresstest.generated.resources.stress_test_description
+import wingslog.feature.stresstest.generated.resources.stress_test_error_message
 import wingslog.feature.stresstest.generated.resources.stress_test_generate
+import wingslog.feature.stresstest.generated.resources.stress_test_increment
+import wingslog.feature.stresstest.generated.resources.stress_test_progress_count
+import wingslog.feature.stresstest.generated.resources.stress_test_progress_creating_aircraft
+import wingslog.feature.stresstest.generated.resources.stress_test_progress_creating_log
+import wingslog.feature.stresstest.generated.resources.stress_test_progress_creating_squawk
+import wingslog.feature.stresstest.generated.resources.stress_test_progress_creating_task
+import wingslog.feature.stresstest.generated.resources.stress_test_progress_creating_technician
+import wingslog.feature.stresstest.generated.resources.stress_test_progress_dismissing_squawk
+import wingslog.feature.stresstest.generated.resources.stress_test_progress_marking_squawk_addressed
 import wingslog.feature.stresstest.generated.resources.stress_test_regenerate
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_addressed_squawks
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_aircraft
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_dismissed_squawks
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_engines
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_log_entries
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_log_entry_one
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_open_squawks
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_squawks
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_tail
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_tasks
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_technicians
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_unknown_engine
 import wingslog.feature.stresstest.generated.resources.stress_test_title
+import wingslog.feature.stresstest.generated.resources.stress_test_unknown_error
 import wingslog.feature.stresstest.generated.resources.stress_test_working
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,10 +102,10 @@ fun StressTestScreen(
   ) { innerPadding ->
     Column(
       modifier = Modifier
-          .padding(innerPadding)
-          .fillMaxSize()
-          .verticalScroll(rememberScrollState())
-          .padding(Spacing.screenPadding),
+        .padding(innerPadding)
+        .fillMaxSize()
+        .verticalScroll(rememberScrollState())
+        .padding(Spacing.screenPadding),
       verticalArrangement = Arrangement.spacedBy(Spacing.large),
     ) {
 
@@ -159,12 +183,17 @@ fun StressTestScreen(
           }
 
           if (isError) {
+            val error = state as StressTestState.Error
             Surface(
               color = MaterialTheme.colorScheme.errorContainer,
               shape = RoundedCornerShape(Spacing.cardCornerRadius),
             ) {
               Text(
-                text = "Error: ${(state as StressTestState.Error).message}",
+                text = stringResource(
+                  Res.string.stress_test_error_message,
+                  error.message
+                    ?: stringResource(Res.string.stress_test_unknown_error),
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer,
                 modifier = Modifier.padding(Spacing.medium),
@@ -175,7 +204,7 @@ fun StressTestScreen(
           Button(
             onClick = viewModel::generate,
             modifier = Modifier.fillMaxWidth()
-                .height(Spacing.buttonHeight),
+              .height(Spacing.buttonHeight),
             shape = RoundedCornerShape(Spacing.buttonCornerRadius),
           ) {
             Icon(
@@ -198,7 +227,7 @@ fun StressTestScreen(
           Spacer(Modifier.height(Spacing.large))
           CircularProgressIndicator(modifier = Modifier.size(Spacing.massive))
           Text(
-            text = running?.step
+            text = running?.displayText()
               ?: stringResource(Res.string.stress_test_working),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -210,7 +239,11 @@ fun StressTestScreen(
               modifier = Modifier.fillMaxWidth(),
             )
             Text(
-              text = "${running.progress} / ${running.total}",
+              text = stringResource(
+                Res.string.stress_test_progress_count,
+                running.progress,
+                running.total,
+              ),
               style = MaterialTheme.typography.labelSmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -228,11 +261,11 @@ fun StressTestScreen(
           ) {
             Box(
               modifier = Modifier
-                  .size(Spacing.extraLarge)
-                  .background(
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = RoundedCornerShape(50),
-                  ),
+                .size(Spacing.extraLarge)
+                .background(
+                  color = MaterialTheme.colorScheme.primary,
+                  shape = RoundedCornerShape(50),
+                ),
               contentAlignment = Alignment.Center,
             ) {
               Icon(
@@ -255,7 +288,7 @@ fun StressTestScreen(
             modifier = Modifier.fillMaxWidth(),
           ) {
             Text(
-              text = done?.summary ?: "",
+              text = done?.summary?.displayText() ?: "",
               style = MaterialTheme.typography.bodySmall.copy(
                 fontFamily = FontFamily.Monospace
               ),
@@ -368,7 +401,10 @@ private fun StepperRow(
           vertical = Spacing.small
         ),
       ) {
-        Text("−", style = MaterialTheme.typography.titleMedium)
+        Text(
+          stringResource(Res.string.stress_test_decrement),
+          style = MaterialTheme.typography.titleMedium
+        )
       }
       Text(
         text = value.toString(),
@@ -386,8 +422,81 @@ private fun StepperRow(
           vertical = Spacing.small
         ),
       ) {
-        Text("+", style = MaterialTheme.typography.titleMedium)
+        Text(
+          stringResource(Res.string.stress_test_increment),
+          style = MaterialTheme.typography.titleMedium
+        )
       }
     }
   }
 }
+
+@Composable
+private fun StressTestState.Running.displayText(): String = when (step) {
+  StressTestProgressStep.CreatingAircraft -> stringResource(
+    Res.string.stress_test_progress_creating_aircraft,
+    subject.orEmpty(),
+  )
+
+  StressTestProgressStep.CreatingTechnician -> stringResource(
+    Res.string.stress_test_progress_creating_technician,
+    subject.orEmpty(),
+  )
+
+  StressTestProgressStep.CreatingTask -> stringResource(
+    Res.string.stress_test_progress_creating_task,
+    subject.orEmpty(),
+  )
+
+  StressTestProgressStep.CreatingSquawk -> stringResource(
+    Res.string.stress_test_progress_creating_squawk,
+    subject.orEmpty(),
+  )
+
+  StressTestProgressStep.CreatingLog -> stringResource(Res.string.stress_test_progress_creating_log)
+  StressTestProgressStep.MarkingSquawkAddressed -> stringResource(
+    Res.string.stress_test_progress_marking_squawk_addressed
+  )
+
+  StressTestProgressStep.DismissingSquawk -> stringResource(
+    Res.string.stress_test_progress_dismissing_squawk
+  )
+}
+
+@Composable
+private fun StressTestSummary.displayText(): String = listOf(
+  stringResource(
+    Res.string.stress_test_summary_aircraft,
+    aircraftMake,
+    aircraftModel,
+    tailNumber,
+  ),
+  stringResource(
+    Res.string.stress_test_summary_tail,
+    tailNumber,
+    serialNumber,
+  ),
+  stringResource(
+    Res.string.stress_test_summary_engines,
+    engineCount,
+    engineModel.ifBlank { stringResource(Res.string.stress_test_summary_unknown_engine) },
+  ),
+  "",
+  stringResource(Res.string.stress_test_summary_technicians, technicianCount),
+  stringResource(Res.string.stress_test_summary_tasks, taskCount),
+  stringResource(
+    if (logCount == 1) Res.string.stress_test_summary_log_entry_one
+    else Res.string.stress_test_summary_log_entries,
+    logCount,
+  ),
+  stringResource(Res.string.stress_test_summary_squawks, squawkCount),
+  stringResource(Res.string.stress_test_summary_open_squawks, openSquawkCount),
+  stringResource(
+    Res.string.stress_test_summary_addressed_squawks,
+    addressedSquawkCount
+  ),
+  stringResource(
+    Res.string.stress_test_summary_dismissed_squawks,
+    dismissedSquawkCount
+  ),
+).joinToString("\n")

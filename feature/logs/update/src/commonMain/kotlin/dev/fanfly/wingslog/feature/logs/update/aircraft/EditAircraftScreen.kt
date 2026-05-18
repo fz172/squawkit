@@ -30,7 +30,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
@@ -44,13 +43,13 @@ import dev.fanfly.wingslog.feature.logs.update.aircraft.compose.EngineSection
 import dev.fanfly.wingslog.feature.logs.update.aircraft.viewmodel.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.ui.generated.resources.add_aircraft
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.component_airframe
 import wingslog.core.ui.generated.resources.component_engine
 import wingslog.core.ui.generated.resources.delete
 import wingslog.feature.logs.sharedassets.generated.resources.delete_aircraft
 import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.logs.update.generated.resources.add_aircraft
 import wingslog.feature.logs.update.generated.resources.add_engine
 import wingslog.feature.logs.update.generated.resources.update_aircraft
 import wingslog.core.ui.generated.resources.Res as CoreRes
@@ -60,7 +59,8 @@ import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun EditAircraftScreen(
-  viewModel: EditAircraftViewModel = koinViewModel(), navController: NavController,
+  viewModel: EditAircraftViewModel = koinViewModel(),
+  navController: NavController,
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val scrollState = rememberScrollState()
@@ -127,27 +127,37 @@ fun EditAircraftScreen(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
       WingsLogTopAppBar(
-        title = if (uiState.aircraft.id == "") stringResource(MaintenanceRes.string.add_aircraft)
+        title = if (uiState.aircraft.id == "") stringResource(CoreRes.string.add_aircraft)
         else stringResource(MaintenanceRes.string.update_aircraft),
         onBackClick = { tryNavigateBack() },
         scrollBehavior = scrollBehavior,
       )
     }
   ) { innerPadding ->
-    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+    Box(
+      modifier = Modifier.fillMaxSize()
+        .padding(innerPadding)
+    ) {
       Column(
         modifier = Modifier
           .fillMaxSize()
           .imePadding()
           .verticalScroll(scrollState)
-          .padding(horizontal = Spacing.screenPadding, vertical = Spacing.extraLarge),
+          .padding(
+            horizontal = Spacing.screenPadding,
+            vertical = Spacing.extraLarge
+          ),
         verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
       ) {
         // AIRFRAME
         Text(
           text = stringResource(CoreRes.string.component_airframe).uppercase()
         )
-        AirframeSection(uiState.aircraft, viewModel, uiState.showValidationErrors)
+        AirframeSection(
+          uiState.aircraft,
+          viewModel,
+          uiState.showValidationErrors
+        )
 
         // ENGINE
         Text(
@@ -181,7 +191,7 @@ fun EditAircraftScreen(
           { showDeleteDialog = true }
         } else null,
         primaryLabel = if (uiState.aircraft.id == "")
-          stringResource(MaintenanceRes.string.add_aircraft)
+          stringResource(CoreRes.string.add_aircraft)
         else
           stringResource(MaintenanceRes.string.update_aircraft)
       )
