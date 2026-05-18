@@ -42,7 +42,6 @@ fun MaintenanceTasksTab(
       completedTasks = state.completedTasks,
       showComplied = showComplied,
       onToggleComplied = { showComplied = it },
-      onAddClick = { onAction(AircraftOverviewAction.AddTaskClick(state.aircraft.id)) },
       onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
     )
 

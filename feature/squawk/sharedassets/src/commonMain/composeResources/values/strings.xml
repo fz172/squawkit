@@ -5,7 +5,8 @@
   <string name="edit_squawk">Edit squawk</string>
   <string name="open_with_count">OPEN (%1$d)</string>
   <string name="closed_with_count">CLOSED (%1$d)</string>
-  <string name="no_open_squawks">No open squawks. Tap + to report a defect or anomaly.</string>
+  <string name="no_open_squawks">No open squawks</string>
+  <string name="no_open_squawks_description">Tap + to report a defect or anomaly.</string>
   <string name="no_closed_squawks">No closed squawks yet.</string>
   <string name="priority_low">Low</string>
   <string name="priority_medium">Medium</string>
