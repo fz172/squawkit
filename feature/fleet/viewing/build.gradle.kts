@@ -36,7 +36,10 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
+      implementation(project(":core:auth"))
+      implementation(libs.gitlive.firebase.auth)
       implementation(project(":feature:fleet:model"))
+      implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:fleet:sharedassets"))
       implementation(project(":feature:tasks:model"))
@@ -59,4 +62,9 @@ kotlin {
       implementation(libs.kermit)
     }
   }
+}
+
+dependencies {
+  implementation(platform(libs.firebase.bom))
+  implementation(platform(libs.androidx.compose.bom))
 }

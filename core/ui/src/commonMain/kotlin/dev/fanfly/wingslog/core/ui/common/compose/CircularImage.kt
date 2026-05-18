@@ -22,11 +22,12 @@ fun CircularImage(
   photoUri: String?,
   contentDescription: String?,
   modifier: Modifier = Modifier,
+  size: androidx.compose.ui.unit.Dp = 100.dp,
   fallbackRes: DrawableResource? = null
 ) {
   Box(
     modifier = modifier
-      .size(100.dp)
+      .size(size)
       .clip(CircleShape),
     contentAlignment = Alignment.Center
   ) {

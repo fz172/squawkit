@@ -1,15 +1,18 @@
 package dev.fanfly.wingslog.feature.fleet.viewing
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AirplanemodeActive
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -27,7 +30,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.FleetDashboardViewModel
@@ -65,14 +71,16 @@ fun DashboardScreen(
   Scaffold(
     modifier = Modifier.fillMaxSize(),
     topBar = {
-      TopAppBar(title = { Text(text = stringResource(CoreUiRes.string.app_name)) }, actions = {
-        IconButton(onClick = onOpenSettings) {
-          Icon(
-            Icons.Default.AccountCircle,
-            contentDescription = stringResource(CoreUiRes.string.settings)
-          )
-        }
-      })
+      TopAppBar(
+        title = { Text(text = stringResource(CoreUiRes.string.app_name)) },
+        actions = {
+          IconButton(onClick = onOpenSettings) {
+            TopBarAvatar(
+              photoUri = uiState.selfPhotoUri,
+              contentDescription = stringResource(CoreUiRes.string.settings),
+            )
+          }
+        })
     },
     floatingActionButton = {
       if (!uiState.isLoading && uiState.fleet.isNotEmpty()) {
@@ -90,7 +98,8 @@ fun DashboardScreen(
     }
   ) { innerPadding ->
     Box(
-      modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center
+      modifier = Modifier.fillMaxSize()
+          .padding(innerPadding), contentAlignment = Alignment.Center
     ) {
       if (uiState.isLoading) {
         CircularProgressIndicator()
@@ -104,7 +113,8 @@ fun DashboardScreen(
         )
       } else {
         LazyColumn(
-          modifier = Modifier.fillMaxSize().padding(Spacing.screenPadding),
+          modifier = Modifier.fillMaxSize()
+              .padding(Spacing.screenPadding),
           verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
         ) {
           items(uiState.fleet, key = { it.id }) { aircraft ->
@@ -116,6 +126,33 @@ fun DashboardScreen(
           }
         }
       }
+    }
+  }
+}
+
+@Composable
+private fun TopBarAvatar(
+  photoUri: String?,
+  contentDescription: String?,
+) {
+  if (!photoUri.isNullOrBlank()) {
+    CircularImage(
+      photoUri = photoUri,
+      contentDescription = contentDescription,
+      size = 32.dp,
+    )
+  } else {
+    Box(
+      modifier = Modifier
+          .size(32.dp)
+          .clip(CircleShape)
+          .background(MaterialTheme.colorScheme.primaryContainer),
+      contentAlignment = Alignment.Center,
+    ) {
+      Icon(
+        Icons.Default.AccountCircle,
+        contentDescription = stringResource(CoreUiRes.string.settings)
+      )
     }
   }
 }

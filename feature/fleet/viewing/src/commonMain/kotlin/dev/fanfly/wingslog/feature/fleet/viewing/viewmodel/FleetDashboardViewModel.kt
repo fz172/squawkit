@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -24,6 +25,7 @@ class FleetDashboardViewModel(
   private val logManager: MaintenanceLogManager,
   private val taskDataManager: TaskDataManager,
   private val taskDueManager: TaskDueManager,
+  private val authManager: AuthManager,
 ) : ViewModel() {
 
   private var fleetInfoJob: Job? = null
@@ -34,6 +36,17 @@ class FleetDashboardViewModel(
 
   init {
     loadFleetData()
+    observeSelf()
+  }
+
+  private fun observeSelf() {
+    viewModelScope.launch {
+      _uiState.update {
+        it.copy(
+          selfPhotoUri = authManager.getCurrentUser()?.photoURL
+        )
+      }
+    }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)

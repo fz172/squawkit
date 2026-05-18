@@ -5,5 +5,5 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val fleetViewingModule = module {
-  viewModel { FleetDashboardViewModel(get(), get(), get(), get()) }
+  viewModel { FleetDashboardViewModel(get(), get(), get(), get(), get()) }
 }
