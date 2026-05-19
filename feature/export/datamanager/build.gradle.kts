@@ -40,6 +40,7 @@ kotlin {
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:tasks:datamanager"))
+      implementation(project(":feature:tasks:model"))
       implementation(project(":feature:squawk:datamanager"))
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:attachment:datamanager"))
