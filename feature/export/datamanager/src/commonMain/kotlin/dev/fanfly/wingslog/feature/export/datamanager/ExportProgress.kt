@@ -4,7 +4,7 @@ package dev.fanfly.wingslog.feature.export.datamanager
  * Streamed export status emitted by [ExportManager].
  */
 sealed interface ExportProgress {
-  data class Running(val step: String, val percent: Int) : ExportProgress
+  data class Running(val step: ExportProgressStep, val percent: Int) : ExportProgress
 
   /**
    * Completed archive metadata. UI should prefer [displayLocationKind] for localized labels.

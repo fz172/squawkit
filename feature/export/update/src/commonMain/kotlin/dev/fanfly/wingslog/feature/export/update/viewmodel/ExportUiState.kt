@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.export.update.viewmodel
 
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
+import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import kotlinx.datetime.LocalDate
 
 /**
@@ -22,7 +23,7 @@ sealed interface ExportUiState {
     val isLoadingAircraft: Boolean = true,
   ) : ExportUiState
 
-  data class Running(val step: String, val percent: Int) : ExportUiState
+  data class Running(val step: ExportProgressStep, val percent: Int) : ExportUiState
 
   /**
    * Completed export details shown after the archive is saved.

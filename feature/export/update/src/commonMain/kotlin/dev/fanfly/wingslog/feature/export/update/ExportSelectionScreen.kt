@@ -47,6 +47,7 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
+import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import dev.fanfly.wingslog.feature.export.update.viewmodel.AircraftSelectionRow
 import dev.fanfly.wingslog.feature.export.update.viewmodel.DateRangeOption
 import dev.fanfly.wingslog.feature.export.update.viewmodel.ExportUiState
@@ -80,6 +81,10 @@ import wingslog.feature.export.sharedassets.generated.resources.export_no_aircra
 import wingslog.feature.export.sharedassets.generated.resources.export_options_section
 import wingslog.feature.export.sharedassets.generated.resources.export_open
 import wingslog.feature.export.sharedassets.generated.resources.export_primary_action
+import wingslog.feature.export.sharedassets.generated.resources.export_progress_building_archive
+import wingslog.feature.export.sharedassets.generated.resources.export_progress_collecting_data
+import wingslog.feature.export.sharedassets.generated.resources.export_progress_compressing_archive
+import wingslog.feature.export.sharedassets.generated.resources.export_progress_saving_file
 import wingslog.feature.export.sharedassets.generated.resources.export_running_title
 import wingslog.feature.export.sharedassets.generated.resources.export_size_kb
 import wingslog.feature.export.sharedassets.generated.resources.export_size_mb
@@ -87,7 +92,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_size_zero
 import wingslog.feature.export.sharedassets.generated.resources.export_select_aircraft_helper
 import wingslog.feature.export.sharedassets.generated.resources.export_select_all
 import wingslog.feature.export.sharedassets.generated.resources.export_selection_summary
-import wingslog.feature.export.sharedassets.generated.resources.export_stub_preparing
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_file_name
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_location
 import wingslog.feature.export.sharedassets.generated.resources.export_location_downloads_hopply
@@ -451,7 +455,7 @@ private fun RunningContent(
     modifier = modifier,
     icon = Icons.Default.FileDownload,
     title = stringResource(Res.string.export_running_title),
-    body = state.step.ifBlank { stringResource(Res.string.export_stub_preparing) },
+    body = state.step.label(),
   ) {
     LinearProgressIndicator(
       progress = { state.percent / 100f },
@@ -461,6 +465,18 @@ private fun RunningContent(
       Text(stringResource(CoreRes.string.cancel).uppercase())
     }
   }
+}
+
+@Composable
+private fun ExportProgressStep.label(): String = when (this) {
+  ExportProgressStep.COLLECTING_DATA ->
+    stringResource(Res.string.export_progress_collecting_data)
+  ExportProgressStep.BUILDING_ARCHIVE ->
+    stringResource(Res.string.export_progress_building_archive)
+  ExportProgressStep.COMPRESSING_ARCHIVE ->
+    stringResource(Res.string.export_progress_compressing_archive)
+  ExportProgressStep.SAVING_FILE ->
+    stringResource(Res.string.export_progress_saving_file)
 }
 
 @Composable

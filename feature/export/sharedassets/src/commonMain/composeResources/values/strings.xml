@@ -24,7 +24,10 @@
   <string name="export_size_mb">%1$s MB</string>
   <string name="export_select_aircraft_helper">Select at least one aircraft</string>
   <string name="export_running_title">Preparing export</string>
-  <string name="export_stub_preparing">Preparing export...</string>
+  <string name="export_progress_collecting_data">Collecting aircraft data...</string>
+  <string name="export_progress_building_archive">Building archive...</string>
+  <string name="export_progress_compressing_archive">Compressing files...</string>
+  <string name="export_progress_saving_file">Saving export...</string>
   <string name="export_success_title">Export ready</string>
   <string name="export_success_body">%1$s
 %2$s</string>
