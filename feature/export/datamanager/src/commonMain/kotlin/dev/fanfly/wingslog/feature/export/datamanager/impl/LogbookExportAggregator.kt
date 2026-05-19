@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.aircraft.Technician
@@ -14,7 +13,6 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -123,18 +121,3 @@ class LogbookExportAggregator(
     addressed_by_log_id.isNotBlank() ||
       dismiss_reason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN
 }
-
-/**
- * Aggregated records needed to write one aircraft folder in an export archive.
- */
-data class AircraftBundle(
-  val aircraft: Aircraft,
-  val logs: List<MaintenanceLog>,
-  val tasks: List<MaintenanceTask>,
-  val dueByTaskId: Map<String, DueMetadata>,
-  val lastCompliedByTaskId: Map<String, MaintenanceLog>,
-  val squawks: List<Squawk>,
-  val tasksById: Map<String, MaintenanceTask>,
-  val squawksById: Map<String, Squawk>,
-  val techniciansById: Map<String, Technician>,
-)

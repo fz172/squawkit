@@ -37,22 +37,3 @@ sealed interface ExportUiState {
 
   data class Error(val message: String) : ExportUiState
 }
-
-/**
- * Display-ready aircraft row used by the export picker.
- */
-data class AircraftSelectionRow(
-  val aircraftId: String,
-  val tailNumber: String,
-  val makeModel: String,
-  val logCount: Int,
-)
-
-/**
- * Date-range options exposed by the selection UI.
- */
-enum class DateRangeOption {
-  AllTime,
-  Last12Months,
-  Custom,
-}
