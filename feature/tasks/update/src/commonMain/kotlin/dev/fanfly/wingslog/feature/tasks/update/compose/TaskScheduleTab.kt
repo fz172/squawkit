@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
@@ -87,8 +88,8 @@ fun TaskScheduleTab(
     PreviewBanner(
       label = stringResource(Res.string.schedule_preview_label),
       hint = stringResource(Res.string.schedule_preview_hint),
-      primary = previewPrimary,
-      secondary = previewSecondary,
+      primary = AnnotatedString(previewPrimary),
+      secondary = AnnotatedString(previewSecondary),
       tone = if (previewIsEmpty) PreviewBannerTone.Neutral else PreviewBannerTone.Active,
     )
 

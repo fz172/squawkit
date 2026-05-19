@@ -110,6 +110,26 @@
   <string name="adj_preview_reschedule_was_date">Was set by schedule</string>
   <string name="adj_preview_skip_primary">Skipping this cycle</string>
   <string name="adj_preview_skip_secondary">Will be marked complete without a log entry</string>
+  <!-- Adjustments tab — preview banner with next-due + relative phrasing -->
+  <string name="adj_preview_primary_date">Next due %1$s · %2$s</string>
+  <string name="adj_preview_primary_hours">Next due at %1$s tach hrs · %2$s</string>
+  <string name="adj_preview_skip_secondary_with_original_date">Original: %1$s · %2$s</string>
+  <string name="adj_preview_skip_secondary_with_original_hours">Original: %1$s tach hrs · %2$s</string>
+  <string name="adj_preview_was_date">Was %1$s</string>
+  <string name="adj_preview_was_hours">Was %1$s tach hrs</string>
+  <!-- Relative phrases (days) -->
+  <string name="adj_preview_rel_due_today">due today</string>
+  <string name="adj_preview_rel_in_day">in 1 day</string>
+  <string name="adj_preview_rel_in_days">in %1$d days</string>
+  <string name="adj_preview_rel_overdue_day">overdue by 1 day</string>
+  <string name="adj_preview_rel_overdue_days">overdue by %1$d days</string>
+  <string name="adj_preview_rel_day_ago">1 day ago</string>
+  <string name="adj_preview_rel_days_ago">%1$d days ago</string>
+  <!-- Relative phrases (tach hours) -->
+  <string name="adj_preview_rel_in_hours">in %1$s tach hrs</string>
+  <string name="adj_preview_rel_over_hours">over by %1$s tach hrs</string>
+  <string name="adj_preview_rel_hours_ago">%1$s tach hrs ago</string>
+  <string name="adj_preview_rel_hours_at">at current hours</string>
   <!-- Preview banner eyebrow labels and hints -->
   <string name="schedule_preview_label">Preview</string>
   <string name="schedule_preview_hint">How this task will appear</string>

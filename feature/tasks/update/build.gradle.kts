@@ -72,4 +72,6 @@ kotlin {
 
 dependencies {
   implementation(platform(libs.firebase.bom))
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
 }

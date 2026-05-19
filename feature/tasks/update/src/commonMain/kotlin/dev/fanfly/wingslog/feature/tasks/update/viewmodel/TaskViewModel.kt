@@ -20,6 +20,8 @@ import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +37,7 @@ sealed interface TaskUiState {
     val aircraftId: String,
     val allInspections: List<MaintenanceTask> = emptyList(),
     val currentEngineHours: Float,
+    val naturalDueMetadata: DueMetadata? = null,
   ) : TaskUiState
 }
 
@@ -44,6 +47,7 @@ class TaskViewModel(
   private val auth: FirebaseAuth,
   private val maintenanceLogManager: MaintenanceLogManager,
   private val featureLabManager: FeatureLabManager,
+  private val taskDueManager: TaskDueManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -83,16 +87,31 @@ class TaskViewModel(
     viewModelScope.launch {
       combine(
         inspectionDataManager.observeTasks(aircraftId),
+        maintenanceLogManager.observeLogs(aircraftId),
         maintenanceLogManager.observeMaintenanceOverview(aircraftId)
-      ) { cards, overview ->
-        cards to overview
-      }.collect { (cards, overview) ->
+      ) { cards, logs, overview ->
+        Triple(cards, logs, overview)
+      }.collect { (cards, logs, overview) ->
         val engineHours = overview?.current_engine_time?.toFloat() ?: 0f
+        // Compute the rules-only "natural" next-due for the card being edited so the
+        // adjustments preview banner can show what the schedule would say absent any
+        // force-override or force-complied state.
+        val naturalDue = cardId?.let { id ->
+          cards.firstOrNull { it.id == id }?.let { card ->
+            val stripped = card.copy(
+              force_complied_status = null,
+              force_due_date = null,
+              force_due_engine_hour = 0f,
+            )
+            taskDueManager.computeNextDue(stripped, logs, cards)
+          }
+        }
         _uiState.update {
           TaskUiState.Success(
             aircraftId,
             cards,
-            engineHours
+            engineHours,
+            naturalDue,
           )
         }
         // Pre-load attachments when editing

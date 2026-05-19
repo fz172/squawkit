@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -43,8 +44,8 @@ enum class PreviewBannerTone { Neutral, Active, Warn }
 fun PreviewBanner(
   label: String,
   hint: String,
-  primary: String,
-  secondary: String,
+  primary: AnnotatedString,
+  secondary: AnnotatedString,
   tone: PreviewBannerTone = PreviewBannerTone.Neutral,
   modifier: Modifier = Modifier,
 ) {

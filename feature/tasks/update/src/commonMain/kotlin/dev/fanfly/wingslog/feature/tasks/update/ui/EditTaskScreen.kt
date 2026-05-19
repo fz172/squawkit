@@ -43,6 +43,7 @@ import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.update.compose.SCHEDULE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskAdjustmentsTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskDetailTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
@@ -66,6 +67,7 @@ fun EditTaskScreen(
   card: MaintenanceTask,
   availableInspections: List<MaintenanceTask>,
   currentEngineHours: Float,
+  naturalDueMetadata: DueMetadata?,
   onSave: (MaintenanceTask) -> Unit,
   onCancel: () -> Unit,
   onDeleteRequest: (String) -> Unit,
@@ -222,7 +224,10 @@ fun EditTaskScreen(
                     complied_engine_hours = currentEngineHours
                   )
                 }
-              }
+              },
+              naturalDueDate = naturalDueMetadata?.nextDueDate,
+              naturalDueEngine = naturalDueMetadata?.nextDueEngine,
+              currentEngineHours = currentEngineHours,
             )
           }
         }

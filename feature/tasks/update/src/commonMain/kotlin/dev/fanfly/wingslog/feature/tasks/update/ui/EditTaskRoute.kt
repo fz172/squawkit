@@ -38,6 +38,7 @@ fun EditTaskRoute(
       card = card,
       availableInspections = successState.allInspections,
       currentEngineHours = successState.currentEngineHours,
+      naturalDueMetadata = successState.naturalDueMetadata,
       isSaving = isSaving,
       onCancel = { navController.popBackStack() },
       onSave = { updatedCard ->
