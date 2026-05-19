@@ -1058,6 +1058,8 @@ UI strings (selection screen, progress messages, success/error states) **are** l
 
 This ships as a no-op feature behind feature flag (`FeatureFlags.exportLogsEnabled`) so the entry-point UI work can land independently.
 
+The flag is stored as positive `export_logs_enabled` state in `FeatureLabSettings`, unlike the older `*_disabled` flags. Default value is false so the Phase 1 Settings entry stays hidden until explicitly enabled in Feature Lab.
+
 ### Phase 2 — Selection screen + ViewModel
 
 - Real `ExportSelectionScreen` with all interactions.
@@ -1104,7 +1106,7 @@ Listed here so the design doc is self-contained:
 
 - No XLSX writing in MVP — CSV in ZIP only.
 - No OAuth-based direct Google Sheets push.
-- No attachment binary bundling — metadata only.
+- Attachment binaries are bundled for IMAGE / PDF / FILE attachments when local or downloadable; failures degrade to textual markers in the CSV and README notes.
 - No PDF rendering.
 - No server-side generation; pipeline is entirely on-device.
 - No re-import / round-trip.

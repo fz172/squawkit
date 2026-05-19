@@ -49,6 +49,7 @@ kotlin {
       implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:sync:sharedassets"))
+      implementation(project(":feature:export:sharedassets"))
       implementation(project(":feature:technician:sharedassets"))
       implementation(project(":feature:userprofile:userprofilecard"))
       implementation(project(":feature:featurelab:datamanager"))

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="feature_name_export_logs">Export logs</string>
+  <string name="export_logs_coming_soon_title">Export logs</string>
+  <string name="export_logs_coming_soon_body">CSV logbook export is being built. This screen will let you choose aircraft, date range, and attachments before saving a ZIP to Files or Downloads.</string>
+</resources>

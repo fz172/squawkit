@@ -6,4 +6,5 @@ option java_multiple_files = true;
 message FeatureLabSettings {
   bool technician_disabled = 1;
   bool attachment_upload_disabled = 2;
+  bool export_logs_enabled = 3;
 }
