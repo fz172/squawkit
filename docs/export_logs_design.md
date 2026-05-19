@@ -261,12 +261,18 @@ internal class LogbookExportAggregator(
     val dueByTaskId = allTasks.associate { task ->
       task.id to taskDueManager.computeNextDue(task, allLogs, allTasks)
     }
+    // Last-complied is sourced ONLY from log entries that reference the task via inspection_ids.
+    // MaintenanceTask.force_complied_status is intentionally NOT consulted here — see §18 Decision 4.
+    val lastCompliedByTaskId: Map<String, MaintenanceLog> = allTasks.associateBy({ it.id }) { task ->
+      allLogs.filter { task.id in it.inspection_ids }.maxByOrNull { it.timestamp }
+    }.filterValues { it != null }.mapValues { (_, log) -> log!! }
 
     AircraftBundle(
       aircraft = aircraft,
       logs = logsInRange.sortedBy { it.timestamp },             // oldest-first per paper logbook
       tasks = allTasks,                                         // not date-filtered (current state)
       dueByTaskId = dueByTaskId,
+      lastCompliedByTaskId = lastCompliedByTaskId,
       squawks = if (request.includeOpenSquawks) squawksInRange
                 else squawksInRange.filter { it.addressed_by_log_id.isNotEmpty() ||
                                              it.dismiss_reason != SquawkDismissReason.UNKNOWN },
@@ -294,6 +300,7 @@ internal data class AircraftBundle(
   val logs: List<MaintenanceLog>,
   val tasks: List<MaintenanceTask>,
   val dueByTaskId: Map<String, DueMetadata>,
+  val lastCompliedByTaskId: Map<String, MaintenanceLog>,
   val squawks: List<Squawk>,
   val tasksById: Map<String, MaintenanceTask>,
   val squawksById: Map<String, Squawk>,
@@ -312,6 +319,8 @@ Memory bound: one aircraft's logs + tasks + squawks in RAM at a time. With `~200
 ---
 
 ## 5. Tab Writers
+
+> **Reference sample:** `docs/export_logs_sample/N12345_Cessna_172/` contains a hand-written, byte-level-faithful example of every CSV described in this section. Use it as the expected fixture for the golden-file tests in §14.1 — the implementation's output should match it character-for-character (modulo CRLF vs LF, which both implementations should emit as CRLF per RFC 4180).
 
 ### 5.1 `LogbookExportWriter`
 
@@ -360,21 +369,35 @@ when (log.component_type) {
 
 The "unknown" bucket protects against orphaned data after a component was replaced; the README explains the bucket.
 
-### 5.3 Inspection / squawk cross-reference
+### 5.3 Inspection / squawk / attachment cross-reference
 
-For an airframe / engine / prop row's "Inspections" and "Reference Numbers" columns:
+For an airframe / engine / prop row's multi-value columns:
 
 ```kotlin
+private const val CELL_SEP = "\n"   // newline-joined inside an RFC-4180-quoted cell
+
 val inspectionTitles = log.inspection_ids
   .map { id -> bundle.tasksById[id]?.title ?: "[deleted: $id]" }
+  .joinToString(CELL_SEP)
+
 val referenceNumbers = log.inspection_ids
   .mapNotNull { id -> bundle.tasksById[id]?.reference_number?.takeIf { it.isNotBlank() } }
+  .joinToString(CELL_SEP)
 
 val squawkTitles = log.squawk_ids
   .map { id -> bundle.squawksById[id]?.title ?: "[deleted: $id]" }
+  .joinToString(CELL_SEP)
+
+val attachments = log.attachments.map { att -> AttachmentCell.format(att, bundle.attachmentPaths) }
+  .joinToString(CELL_SEP)
 ```
 
-Both are joined with `", "`.
+`CELL_SEP = "\n"` (single LF). The CsvWriter (§6) detects the embedded newline, wraps the cell in `"..."`, and emits a valid RFC 4180 record. Google Sheets renders the cell as multi-line, one entry per row, so each entry stays independently scannable and filterable. The cell's serialized bytes look like `"Annual\n100hr\nPitot-Static"`. **Never** join with `", "` — commas inside cells would parse correctly (the CsvWriter would quote them too) but flatten to a single string in the spreadsheet view.
+
+`AttachmentCell.format(att, paths)` renders one of:
+- `"<name> → attachments/<file>"` for IMAGE / PDF / FILE that downloaded successfully
+- `"<name> → <url>"` for LINK
+- `"<name> → [download failed]"` / `"[upload pending]"` / `"[download requires sign-in]"` / `"[legacy attachment]"` for the failure modes in §11 below.
 
 ### 5.4 Cell formatters
 
@@ -514,6 +537,138 @@ actual class ZipFileWriter actual constructor(destination: Path) : Closeable {
 ### 7.3 Atomic write
 
 Both actuals write to `<destination>.partial`. On `close()` (success), they `rename` to the final filename. On any throw, the partial file is deleted (`finally` block in `ExportManagerImpl`).
+
+---
+
+## 7A. Attachment Bundling
+
+The orchestrator delegates all attachment work to `AttachmentBundler`. The bundler is responsible for: (1) collecting every attachment referenced by the in-scope logs / tasks / squawks of a single aircraft, (2) ensuring each binary is locally available, (3) streaming the bytes into the zip under `attachments/`, and (4) returning a `Map<attachmentId, RenderedAttachment>` that the CSV writers use to format the multi-value Attachments cells.
+
+### 7A.1 Contract
+
+```kotlin
+internal class AttachmentBundler(
+  private val attachmentManager: AttachmentManager,
+) {
+
+  /**
+   * For the given aircraft bundle:
+   *   1. Walk every Attachment referenced by logs, tasks, and squawks (de-duped by id).
+   *   2. For non-LINK attachments: call attachmentManager.ensureLocal(att) and await Done.
+   *   3. Stream the local bytes into [zip] at "attachments/<short_id>_<sanitized_name>".
+   *   4. Emit Progress events on [progress] (current attachment N of M, bytes transferred).
+   * Returns the resolved RenderedAttachment per id so callers can format CSV cells.
+   *
+   * Cancellation propagates through the collected Flow; partial blob downloads are NOT
+   * retained — AttachmentManager handles atomicity for the local store.
+   */
+  suspend fun bundle(
+    bundle: AircraftBundle,
+    aircraftFolder: String,
+    zip: ZipFileWriter,
+    progress: suspend (BundlerProgress) -> Unit,
+  ): Map<String, RenderedAttachment>
+}
+
+internal sealed interface RenderedAttachment {
+  data class Local(val name: String, val zipPath: String) : RenderedAttachment   // → attachments/8f3a_…
+  data class Link(val name: String, val url: String) : RenderedAttachment        // → <url>
+  data class Skipped(val name: String, val reason: SkipReason) : RenderedAttachment
+}
+
+internal enum class SkipReason {
+  DOWNLOAD_FAILED,
+  UPLOAD_PENDING,
+  REQUIRES_SIGN_IN,
+  LEGACY,                  // R1-era attachment with no storage_path / sha256
+}
+
+internal data class BundlerProgress(
+  val currentIndex: Int,
+  val totalCount: Int,
+  val currentName: String,
+  val bytesTransferred: Long,
+  val bytesTotal: Long,    // sum of attachment.size_bytes across in-scope attachments
+)
+```
+
+### 7A.2 Walking the attachment graph
+
+```kotlin
+internal fun AircraftBundle.collectAttachments(): List<Attachment> = buildList {
+  logs.flatMapTo(this) { it.attachments }
+  tasks.flatMapTo(this) { it.attachments }
+  squawks.flatMapTo(this) { it.attachments }
+}.distinctBy { it.id }
+```
+
+`distinctBy { it.id }` dedupes when one attachment is referenced from multiple logs (or from both a squawk and the addressing log). The bundler writes each attachment to the zip **at most once per aircraft folder**.
+
+### 7A.3 Ensure-local + stream
+
+```kotlin
+suspend fun bundleOne(att: Attachment, zip: ZipFileWriter, aircraftFolder: String): RenderedAttachment {
+  if (att.type == AttachmentType.ATTACHMENT_TYPE_LINK) {
+    return RenderedAttachment.Link(att.name, att.url)
+  }
+  if (att.storage_path.isBlank() && att.url.isBlank()) {
+    return RenderedAttachment.Skipped(att.name, SkipReason.LEGACY)
+  }
+
+  // Drive the AttachmentManager download to terminal state.
+  val terminal = attachmentManager.ensureLocal(att)
+    .onEach { state -> if (state is DownloadState.Downloading) reportProgress(state.progress) }
+    .first { it is DownloadState.Done || it is DownloadState.Failed }
+
+  if (terminal is DownloadState.Failed) {
+    return RenderedAttachment.Skipped(att.name, skipReasonFor(terminal.error))
+  }
+
+  // Stream local bytes into the zip entry. Both platforms expose this via okio's Source.
+  val zipPath = "$aircraftFolder/attachments/${shortId(att.id)}_${sanitize(att.name, att.mime_type)}"
+  val entrySink = zip.openEntry(zipPath)
+  attachmentManager.openLocalSource(att).use { src ->
+    entrySink.writeAll(src)
+  }
+  zip.closeEntry()
+  return RenderedAttachment.Local(att.name, "attachments/${zipPath.substringAfterLast('/')}")
+}
+```
+
+`AttachmentManager` does not currently expose `openLocalSource(att): Source`; this is a small addition that wraps `LocalBlobStore.localUri(att.blobId)`-resolved file IO behind a platform-agnostic `okio.Source`. Adding the method is part of this feature's scope; the existing R2 `AttachmentOpener` already opens local files for the in-app viewer and can be refactored to expose the same Source.
+
+`skipReasonFor(error)` maps `AuthException → REQUIRES_SIGN_IN`, `NotUploadedException → UPLOAD_PENDING`, anything else → `DOWNLOAD_FAILED`. Concrete error types come from `AttachmentManager` — see `feature/attachment/datamanager`.
+
+### 7A.4 Filename rendering
+
+```kotlin
+private fun shortId(id: String): String = id.take(4)                            // 4 hex chars
+
+private fun sanitize(name: String, mime: String): String {
+  val ext = name.substringAfterLast('.', missingDelimiterValue = "")
+    .ifBlank { extensionForMime(mime) }                                         // "pdf", "jpg", …
+  val stem = name.removeSuffix(".$ext").ifBlank { "file" }
+  return stem.replace(Regex("[^A-Za-z0-9._-]"), "_").take(60) +
+    if (ext.isNotBlank()) ".$ext" else ""
+}
+```
+
+The 60-char cap on `stem` prevents pathological names; the `.ext` is appended afterwards so the file extension is always preserved.
+
+### 7A.5 Progress accounting
+
+The orchestrator (§9) tracks two cost surfaces:
+
+| Surface | Estimate | Used for |
+|:---|:---|:---|
+| Tab writes | constant per tab | dominant when attachments are local or absent |
+| Attachment bytes | sum of `attachment.size_bytes` | dominant when downloads are in flight |
+
+Progress percent = `(tabsWritten + bytesTransferred / totalAttachmentBytes * weightedTabsEquivalent) / totalSteps`. The "(network)" suffix is appended to step messages whenever the bundler is awaiting an `ensureLocal()` that started in `Downloading` state.
+
+### 7A.6 README augmentation
+
+After the bundler finishes per aircraft, the orchestrator appends a per-aircraft block to the README listing any non-`Local` attachments — the rendered `[upload pending]` / `[download failed]` markers in the CSVs are durable references, and the README provides the inspector-readable summary.
 
 ---
 
@@ -766,18 +921,35 @@ Because the file is opened only once per export and writes are sequential, conte
 val exportDataManagerModule = module {
   factory<LogbookExportAggregator> {
     LogbookExportAggregator(
-      fleetManager = get(),
-      logsManager = get(),
-      tasksManager = get(),
-      taskDueManager = get(),
-      squawkManager = get(),
-      technicianManager = get(),
+      fleetManager = get<FleetManager>(),
+      logsManager = get<MaintenanceLogManager>(),
+      tasksManager = get<TaskDataManager>(),
+      taskDueManager = get<TaskDueManager>(),
+      squawkManager = get<SquawkManager>(),
+      technicianManager = get<TechnicianManager>(),
+      attachmentManager = get<AttachmentManager>(),
     )
   }
-  factory { ReadmeRenderer(appVersion = get()) }
-  singleOf(::ExportManagerImpl) bind ExportManager::class
+  factory<ReadmeRenderer> { ReadmeRenderer(appVersion = get<AppVersionProvider>().version) }
+  single<ExportManager> {
+    ExportManagerImpl(
+      fleetManager = get<FleetManager>(),
+      aggregator = get<LogbookExportAggregator>(),
+      readmeRenderer = get<ReadmeRenderer>(),
+      attachmentBundler = get<AttachmentBundler>(),
+      clock = Clock.System,
+      timeZone = TimeZone.currentSystemDefault(),
+    )
+  }
+  factory<AttachmentBundler> {
+    AttachmentBundler(attachmentManager = get<AttachmentManager>())
+  }
 }
 ```
+
+Per project convention, all Koin `get()` calls are typed (`get<ClassType>()`) — this makes dependency resolution explicit at the call site and produces clearer errors when a binding is missing.
+
+`AppVersionProvider` is a small interface wrapping app-info so `ReadmeRenderer` can read the version from a non-Composable context; `getAppVersion()` in `core:appinfo` is a `@Composable` and can't be called from the export pipeline. Add a trivial expect/actual `AppVersionProvider` (`core/appinfo`) returning `version: String`.
 
 ### 12.2 `ExportUiModule`
 
@@ -915,12 +1087,14 @@ Each phase is independently reviewable and ships to dogfood. The flag stays off 
 
 ---
 
-## 18. Open Questions
+## 18. Decisions
 
-1. **Time-zone source.** Use device-current TZ at export time? Or store the TZ alongside each log timestamp (proto change) and render in the log's original TZ? PRD §8 Q1 recommends device-current — staying with that. Open to revisit if early-access users report off-by-one dates.
-2. **iOS ZIP writer maintenance burden.** A hand-rolled ZIP writer is ~250 LOC and unit-testable, but it's still surface area we own. If maintenance proves painful, swap to SSZipArchive via CocoaPods. Decision deferred until Phase 4 review.
-3. **DEFLATE vs STORED for iOS.** PRD performance targets are met by either. STORED is simpler (no compression stream); DEFLATE produces ~5× smaller zips for CSV. Recommendation: DEFLATE via Foundation `compression_stream`. Fallback to STORED is a one-line change in the actual.
-4. **Should the Compliance tab include `force_complied_status` records that have no log entry behind them?** Currently a task can be marked complied without a log via `MaintenanceTask.force_complied_status`. The aggregator's `dueByTaskId` already accounts for this via `TaskDueManager`. The Compliance tab's "Last Complied — Date" should reflect either source.
+The questions raised during design review are resolved as follows. New questions discovered during implementation should be added below with `Pending:` until resolved.
+
+1. **Time-zone source.** **Decision:** Use the device's current time zone at export time. Each `Date` cell renders the log's `timestamp` as `LocalDateTime` in `TimeZone.currentSystemDefault()`. Revisit only if cross-time-zone operators report off-by-one-day issues.
+2. **iOS ZIP writer.** **Decision:** Hand-roll the pure-Kotlin ZIP writer in `iosMain` for MVP. ~250 LOC, fully unit-testable from JVM tests via the same byte format. Revisit if the writer becomes a maintenance burden.
+3. **Compression mode.** **Decision:** DEFLATE on both platforms — Android uses `java.util.zip.ZipOutputStream` defaults; iOS uses Foundation `compression_stream` via cinterop driving the deflate engine.
+4. **Compliance tab — force-complied tasks without log entries.** **Decision:** Do **not** treat `MaintenanceTask.force_complied_status` as a Last-Complied source. The Compliance tab's `Last Complied — Date` / `Last Complied — Hours` columns are populated **only** from the most recent log entry that references the task via `inspection_ids`. If a task has been force-complied with no backing log, both Last-Complied columns are blank. The Next Due columns still reflect `TaskDueManager.computeNextDue(...)` — which itself accounts for force-complied state — so Status remains accurate.
 
 ---
 

@@ -27,7 +27,8 @@ Today, none of this is possible from inside the app. This PRD specifies a **Logb
 - **Whole truth.** All log entries, compliance events (ADs, SBs, inspections), and squawks for the chosen scope, plus the technician sign-offs that close each one.
 - **Two scopes.** Per-aircraft export (most common) and whole-fleet export (single zip).
 - **Date-range filter.** Optional. Defaults to all-time.
-- **Offline-capable.** Export runs against the local-first store (R1); no network round-trip required once data is hydrated.
+- **Offline-capable for the textual data.** Logs, tasks, squawks, and aircraft records run against the local-first store (R1) with no network round-trip. Attachment binaries (§4.10) may require a download for entries that have never been opened on this device.
+- **Attachment binaries included.** Every IMAGE / PDF / FILE attachment referenced by any exported log, task, or squawk is downloaded (if not already local) and embedded in the zip alongside the CSVs. LINK-type attachments stay textual — their URL is preserved in the relevant CSV cell. See §4.10.
 
 ### 2.2 Non-Goals (this release)
 
@@ -37,7 +38,6 @@ Today, none of this is possible from inside the app. This PRD specifies a **Logb
 - **Re-import / round-trip.** This release is one-way. The export is for human consumption; we do not commit to parsing exported files back into the app.
 - **Editing exported files in-app.** Exports are snapshots. Subsequent log edits do not propagate to a previously exported file.
 - **Server-side generation.** The export runs entirely on-device. No new backend.
-- **Attachment payload bundling.** We export attachment *metadata* (name, type, sha256) but not the binary content in MVP. Bundling photos and PDFs is tracked under §10.
 
 ---
 
@@ -141,10 +141,14 @@ Hopply_Logs_N12345_20260518.zip
     ├── 10_Compliance.csv
     ├── 11_Squawks.csv
     ├── 20_Technicians.csv
+    ├── attachments/             ← binaries (images, PDFs, files) — see §4.10
+    │   ├── 8f3a_8130-3_form.pdf
+    │   ├── 9b21_oil_filter_after.jpg
+    │   └── …
     └── README.txt
 ```
 
-Numeric prefixes (`00_`, `01_`, …) preserve logbook order when CSVs are imported as sheets — Google Sheets imports tabs in alphabetical order.
+Numeric prefixes (`00_`, `01_`, …) preserve logbook order when CSVs are imported as sheets — Google Sheets imports tabs in alphabetical order. The `attachments/` folder is excluded from spreadsheet import; the CSV rows reference files inside it by relative path.
 
 ### 4.6 Zip layout — multi-aircraft
 
@@ -153,14 +157,20 @@ Hopply_Logs_Fleet_20260518.zip
 ├── 00_Fleet_Summary.csv     ← reflects ONLY the aircraft selected, not the whole fleet
 ├── README.txt
 ├── N12345_Cessna_172/
-│   └── ... (same structure as single-aircraft)
+│   ├── 00_Aircraft_Info.csv  …  20_Technicians.csv
+│   └── attachments/          ← per-aircraft binaries
 └── N67890_Beechcraft_A36/
-    └── ...
+    ├── 00_Aircraft_Info.csv  …  20_Technicians.csv
+    └── attachments/
 ```
+
+Attachments are scoped per-aircraft and live inside that aircraft's subfolder. There is no top-level `attachments/` folder, so a file referenced only by `N67890`'s log will never be duplicated under `N12345`.
 
 If two selected aircraft share a tail number (legacy data quality issue), the second is disambiguated with a `(2)` suffix on the folder name.
 
 ### 4.7 Tab specifications
+
+> **Reference sample:** see `docs/export_logs_sample/N12345_Cessna_172/` for a hand-written set of every CSV in this section populated with realistic data. The sample demonstrates the multi-value newline-in-cell convention, the attachments folder, all status / dismiss-reason values, and the cross-references between tabs (e.g. Squawk `sq-002-oilcap` addressed by Engine log `log-008-oilchange-2026`).
 
 All tabs share the following conventions:
 
@@ -168,6 +178,7 @@ All tabs share the following conventions:
 - **Times** (airframe / engine / prop hours) are decimal hours to **1 decimal place**, e.g. `1247.3`. Empty when the original log didn't record that component's time.
 - **Identifiers** (`Log ID`, `Task ID`, `Squawk ID`) are the internal UUID strings. These are included so users can cross-reference between tabs.
 - **Empty cells** for unset optional fields (no `N/A` or `—` literal sentinels).
+- **Multi-value cells** (Inspections, Reference Numbers, Squawks Addressed, Attachments) join entries with a single `\n` (LF) **inside** an RFC 4180–quoted cell. Google Sheets renders these as multi-line cells, one entry per line, which preserves readability and keeps each entry independently filterable. Commas inside an entry never become part of the field separator because the cell is fully quoted. Example raw bytes for a 2-entry Inspections cell: `"Annual\n100hr"` (newline literal between entries, surrounding double quotes are part of the CSV record).
 
 #### 4.7.1 `00_Aircraft_Info.csv`
 
@@ -201,13 +212,13 @@ Logs whose `component_type == COMPONENT_AIRFRAME`. Columns:
 | 2 | Airframe Time | `airframe_time` |
 | 3 | Engine 1 Time | `engine_hour` (when the log was filed against airframe but engine hour recorded) |
 | 4 | Work Description | `work_description` (multi-line preserved, CSV-quoted) |
-| 5 | Inspections | comma-separated names of inspection cards from `inspection_ids` (resolved against MaintenanceTask titles) |
-| 6 | Reference Numbers | comma-separated `reference_number` of any task referenced via `inspection_ids` (e.g. `AD 2019-20-10, SB 2024-03`) |
-| 7 | Squawks Addressed | comma-separated squawk titles + IDs from `squawk_ids` |
+| 5 | Inspections | newline-joined names of inspection cards from `inspection_ids` (resolved against `MaintenanceTask.title`). One entry per line within the cell — see Multi-value cells convention in §4.7. |
+| 6 | Reference Numbers | newline-joined `reference_number` of any task referenced via `inspection_ids` (e.g. `AD 2019-20-10\nSB 2024-03`). Empty entries omitted. |
+| 7 | Squawks Addressed | newline-joined squawk titles from `squawk_ids` (one per line). |
 | 8 | Technician | `technician.name` (falls back to `technician_id` if name missing) |
 | 9 | Cert Type | `technician.certificate_type` rendered (e.g. `A&P`, `IA`, `Repairman`) |
 | 10 | Cert # | `technician.cert_number` |
-| 11 | Attachments | comma-separated `attachment.name` values |
+| 11 | Attachments | newline-joined `attachment.name → attachments/<file>` entries (one per line); LINK-type rendered as `name → <url>`. See §4.10 for the filename scheme and §4.7 for the multi-value cell convention. |
 | 12 | Log ID | `MaintenanceLog.id` |
 
 Rows ordered **oldest → newest** (paper-logbook order, opposite of the in-app list view which is newest-first).
@@ -264,8 +275,8 @@ All `MaintenanceTask` records — active and historical. One row per task. Colum
 | 4 | Reference # | `reference_number` |
 | 5 | Authority | `compliance_authority` |
 | 6 | Schedule | Human-readable interval rule (e.g. `Every 12 months`, `Every 100 hours`, `On condition`, `One-time`) |
-| 7 | Last Complied — Date | Date of most recent log entry referencing this task, or `force_complied_status.complied_date` |
-| 8 | Last Complied — Hours | Engine hours at last compliance |
+| 7 | Last Complied — Date | Date of most recent log entry whose `inspection_ids` references this task. Blank if no log exists, even when `force_complied_status` is set (see §8 Decision 6). |
+| 8 | Last Complied — Hours | Engine hours from the same log row as Last Complied — Date. Blank if no log exists. |
 | 9 | Next Due — Date | Computed by `TaskDueManager` |
 | 10 | Next Due — Hours | Computed by `TaskDueManager` |
 | 11 | Status | `OK`, `Due Soon`, `Overdue`, `Complied (one-time)` |
@@ -356,10 +367,12 @@ Tab order in a paper logbook
   →  Compliance  →  Squawks  →  Technicians
 
 Notes
-- Dates are YYYY-MM-DD in the time zone the entry was created.
+- Dates are YYYY-MM-DD in the export device's local time zone.
 - Times are decimal hours (1247.3, not 1247:18).
-- Attachments are listed by filename. The attachment binaries themselves
-  are not included in this export.
+- Attachment binaries (photos, PDFs, files) are bundled under the
+  attachments/ folder. The CSV "Attachments" column shows
+  "<name> → attachments/<file>" so you can locate each file after
+  extracting the zip. LINK-type attachments show the original URL.
 - This export is a snapshot. It does not update when logs change in Hopply.
 ```
 
@@ -373,6 +386,62 @@ Notes
 
 - iOS: no permission needed (app's Documents container).
 - Android: no runtime permission needed for MediaStore-based Downloads writes on API 30+ (minSdk 33 — always satisfied).
+
+### 4.10 Attachment bundling
+
+Every IMAGE / PDF / FILE attachment referenced by any exported log, task, or squawk is downloaded (if not already local) and embedded in the zip under the owning aircraft's `attachments/` folder. LINK-type attachments — which have no binary, only a URL — are not downloaded; their URL is preserved verbatim in the CSV cell.
+
+#### 4.10.1 Source of bytes
+
+Hopply's `AttachmentManager` already provides a `ensureLocal(attachment): Flow<DownloadState>` API that downloads a REMOTE_ONLY blob to the local store and emits `Downloading(progress) → Done` (or `Failed(error)`). The export reuses this contract:
+
+- For each attachment in scope, call `ensureLocal()` and await `Done`.
+- Once local, read the file bytes from `LocalBlobStore.localUri(blobId)` and stream them into the zip entry.
+- If `ensureLocal()` emits `Failed`, fall back to a placeholder cell in the CSV (see §4.10.4).
+
+This means attachments **may require network** for entries that have never been viewed on this device. The progress UI accounts for this — see §4.10.3.
+
+#### 4.10.2 Filename scheme inside `attachments/`
+
+```
+attachments/<short_id>_<sanitized_name>
+```
+
+Where:
+- `<short_id>` = first 4 hex characters of `attachment.id` — keeps filenames short and avoids collisions for attachments that share a display name.
+- `<sanitized_name>` = `attachment.name` with non-alphanumeric characters (except `.`, `-`, `_`) replaced by `_`. If `name` is empty, the file extension is inferred from `mime_type` and the file is named `<short_id>.<ext>`.
+
+Examples:
+- `8f3a_8130-3_form.pdf`
+- `9b21_oil_filter_after.jpg`
+- `c40e_left_magneto_part_label.heic`
+
+Two attachments with the same `attachment.id` short-id prefix collide every ~65k attachments per aircraft — far beyond realistic scale.
+
+#### 4.10.3 Progress and selection-screen feedback
+
+- The Selection screen's button-label size estimate now includes the sum of `attachment.size_bytes` for every attachment in scope. A typical 1-aircraft × 200-log export with 50 photos jumps from ~500 KB (text-only) to ~80 MB (with photos), so the size hint is genuinely informative.
+- The Running state's step messages include attachment work: `Downloading 12 of 47 attachments — Engine 1, N12345 (3.2 MB)`. Percent is computed from cumulative bytes transferred, not row count.
+- If any attachment requires a download, the Running state is marked `(network)` so the user understands the export isn't purely offline.
+
+#### 4.10.4 Failure modes
+
+| Condition | Behaviour |
+|:---|:---|
+| Attachment is LINK-type | No binary write. CSV cell shows `"name → <url>"`. |
+| Attachment is already SYNCED locally | Stream from disk into zip. No network. |
+| Attachment is REMOTE_ONLY, download succeeds | `ensureLocal()` runs, bytes installed, then streamed into zip. |
+| Attachment is REMOTE_ONLY, download fails (network, auth, integrity) | Skip the file. CSV cell renders `"name → [download failed]"`. Export does **not** abort. The README's notes section lists the failing attachment IDs. |
+| Attachment is PENDING_UPLOAD (never reached the server) | Skip. CSV cell renders `"name → [upload pending]"`. README notes it. |
+| Anonymous user with REMOTE_ONLY attachment | Skip. CSV cell renders `"name → [download requires sign-in]"`. README notes it. |
+| Attachment proto present but `storage_path` and `url` both empty (R1-era legacy) | Skip with `"name → [legacy attachment]"`. README notes it. |
+| Disk space exhausted mid-export | Abort export, surface error state, delete partial zip. The Selection screen returns with prior selections preserved. |
+
+The export's success criterion is that the *spreadsheet* is complete and accurate. A missing binary degrades to a textual marker; it does not invalidate the spreadsheet.
+
+#### 4.10.5 Cancellation
+
+Cancel while attachments are downloading aborts the in-flight `ensureLocal()` collection and discards the partial zip. No half-downloaded blobs are written to the local store — `AttachmentManager` already handles its own atomicity.
 
 ---
 
@@ -444,6 +513,12 @@ The flow is a single forward-only journey: Settings → Selection → Progress �
 | Filename collision (re-export same day) | Overwrite without prompting. Different dates keep distinct files. |
 | Disk full during write | Abort, surface error toast, no partial file left on disk (write to temp, rename on completion). |
 | Cancellation mid-export | Discard temp file. Sheet returns to configuration state. |
+| Attachment binary not yet downloaded to this device | `AttachmentManager.ensureLocal()` is called as the export reaches that attachment. Export progress reflects the in-flight downloads. See §4.10. |
+| Attachment download fails (network / auth / sha256 mismatch) | Skip the file, mark the CSV cell `name → [download failed]`, record the attachment id in the README's notes. Export succeeds with a textual marker. |
+| Attachment never uploaded (PENDING_UPLOAD on this device) | Skip with `[upload pending]` marker. README lists the affected attachments. |
+| Anonymous user, attachment is REMOTE_ONLY | Skip with `[download requires sign-in]` marker. Encourages sign-in flow before retrying. |
+| Same attachment referenced by multiple logs in the same aircraft | Written to `attachments/` exactly once (keyed by attachment.id). Each referencing CSV row links to the same path. |
+| Same attachment referenced across aircraft (rare; copy/share) | Written once **per aircraft folder** for self-containment. The zip remains internally consistent even if a single subfolder is extracted in isolation. |
 
 ---
 
@@ -451,9 +526,11 @@ The flow is a single forward-only journey: Settings → Selection → Progress �
 
 ### 7.1 Quantitative
 
-- 95th percentile single-aircraft export of an aircraft with 200 log entries completes in **under 5 seconds** on a 2022-era Android mid-range device.
-- Multi-aircraft export of 10 aircraft × 100 logs each completes in **under 30 seconds**.
-- Exported zip size for the above multi-aircraft case is **under 5 MB** (CSVs are textual; this is comfortable headroom).
+- 95th percentile single-aircraft export of an aircraft with 200 log entries and **all attachments already local** completes in **under 5 seconds** on a 2022-era Android mid-range device.
+- Same as above with **all attachments REMOTE_ONLY** on a 50 Mbps Wi-Fi link with 50 attachments totaling 80 MB completes in **under 30 seconds**.
+- Multi-aircraft export of 10 aircraft × 100 logs each with all attachments local completes in **under 30 seconds**. With attachments to download, scales linearly with attachment payload size.
+- Exported zip size: text-only is **under 5 MB**; with attachments, dominated by attachment payload (`attachment.size_bytes` sum).
+- Memory ceiling stays under **100 MB** regardless of attachment payload size — attachments stream directly from local files into zip entries without being buffered whole.
 
 ### 7.2 Qualitative
 
@@ -467,13 +544,16 @@ The flow is a single forward-only journey: Settings → Selection → Progress �
 
 ---
 
-## 8. Open Questions
+## 8. Decisions
 
-1. **Time zone for `Date` columns.** Use the local time zone the log was created in (requires storing TZ alongside the timestamp — not currently captured), or use the device's current TZ at export time, or UTC? **Recommendation:** device-current TZ at export time for MVP; revisit if users report off-by-one-day issues from cross-TZ operators.
-2. **What renders for `Cert Type` when both legacy `cert_type` (string) and `certificate_type` (enum) are present?** Prefer the enum and render `A&P/IA` when applicable; fall back to the legacy string only if enum is `NONE`.
-3. **Cross-component duplication of compliance entries.** For an annual that covers airframe + engines + props, do users expect the row to appear in all three tabs (paper-logbook behaviour) or only the tab it was filed under (current data model)? **Recommendation:** MVP single-tab routing; gather feedback before duplicating. See §10.
-4. **Multi-engine indexing.** Are engines ordered by `Aircraft.engine[]` position in the proto, or do users want left/right naming for twins? **Recommendation:** numeric `Engine 1, Engine 2` for MVP; engine position labels are a UI concern that can layer on later.
-5. **Squawk priority rendering.** Should `AOG` be rendered as `AOG` (the industry term) or `Aircraft On Ground` for export readers unfamiliar with the acronym? **Recommendation:** `AOG` to match in-app and paper-logbook usage.
+The questions raised during PRD review are resolved as follows.
+
+1. **Time zone for `Date` columns.** **Decision:** Device-current time zone at export time. Each timestamp renders as `LocalDateTime` in `TimeZone.currentSystemDefault()`. Revisit only if cross-time-zone operators report off-by-one-day issues.
+2. **Cert Type rendering.** **Decision:** Prefer the `certificate_type` enum and render `A&P` / `Repairman` accordingly; fall back to the legacy `cert_type` string only when the enum is `CERTIFICATE_TYPE_NONE`.
+3. **Cross-component duplication of compliance entries.** **Decision:** MVP routes each log entry to a single tab matching its `component_type`. A single annual that covers airframe + engines + props appears once (in whichever tab the log was filed under, typically airframe). Revisit after early-access feedback — duplication is tracked under §10 Future Work.
+4. **Multi-engine indexing.** **Decision:** Numeric `Engine 1, Engine 2, …` ordered by position in `Aircraft.engine[]`. Left/right or other position labels are deferred.
+5. **Squawk priority rendering.** **Decision:** Render as `AOG` (industry abbreviation), matching in-app usage. `Aircraft On Ground` is not used.
+6. **Compliance tab — Last Complied source.** **Decision:** `Last Complied — Date` / `Last Complied — Hours` reflect only log-derived compliance (the most recent log referencing the task via `inspection_ids`). `MaintenanceTask.force_complied_status` is **not** consulted for the Last-Complied columns. A force-complied task with no backing log shows blank Last-Complied columns; its Status and Next Due columns still reflect `TaskDueManager` output (which does honour force-complied state).
 
 ---
 
@@ -484,6 +564,7 @@ The flow is a single forward-only journey: Settings → Selection → Progress �
 - **`feature/squawk/datamanager`** — `SquawkManager` for squawks.
 - **`feature/fleet/datamanager`** — `FleetManager.observeAircraft()` for whole-fleet enumeration.
 - **`feature/technician/datamanager`** — `TechnicianManager` to resolve technician records when a log carries only `technician_id`.
+- **`feature/attachment/datamanager`** — `AttachmentManager.ensureLocal()` to download REMOTE_ONLY blobs; `LocalBlobStore.localUri()` to stream bytes into the zip.
 - **`core:appinfo`** — read app version / build for the `Export App Version` field.
 - **`core:storage` (R1)** — exports read from the local entity store; no Firestore round-trip required.
 
@@ -513,14 +594,13 @@ The CSV + ZIP writer lives in `commonMain` using `kotlinx.io` primitives. Platfo
 |:---|:---|
 | **XLSX output (single multi-tab workbook)** | Removes the manual "import each CSV as a tab" step. Needs a KMM-compatible XLSX writer; ZIP-of-CSVs unblocks the use case faster. |
 | **Direct push to Google Sheets via OAuth** | Best UX (one tap → workbook opens in Sheets), but adds an OAuth flow, new scopes, and a token store. |
-| **Bundle attachment binaries in the zip** | Useful for handover packages. Adds size and pulls in attachment blob download paths from `core/storage` R2. |
 | **PDF facsimile** | A printable logbook-page rendering would close the loop for users who still file paper. Adds a PDF generator dependency. |
 | **Scheduled / automated exports** | "Email me a backup zip every quarter." Server pipeline needed; out of scope for an on-device-only feature. |
 | **Background completion notification** | If the export runs while the app is backgrounded or terminated, post a system notification with the saved path. Needs platform-specific notification plumbing. |
 | **Persist last-used selection across sessions** | Remember which aircraft and date range were picked last time. Skipped in MVP to keep state model simple; revisit if users report repetitive picking. |
 | **Re-import / round-trip from CSV** | Risk surface is large (data validation, conflict resolution with sync). |
-| **Cross-component duplication of compliance entries** | Driven by user feedback after MVP — see §8 Open Q3. |
-| **Export of attachment thumbnails into a `99_Attachments_Index.csv`** | Useful for cataloguing photos and 8130s but secondary to the textual logbook. |
+| **Cross-component duplication of compliance entries** | Driven by user feedback after MVP — see §8 Decision 3. |
+| **A standalone `99_Attachments_Index.csv` listing every attachment with metadata** | Useful for cataloguing photos and 8130s separately from the per-log columns. The MVP already bundles binaries; an index sheet is purely a cross-reference convenience. |
 
 ---
 
