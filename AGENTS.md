@@ -36,6 +36,7 @@ core/
   auth/                 # Firebase Auth with platform-specific implementations
   storage/              # R1 local-first foundation — SQLDelight schema, EntityStore, CollectionKind
   datetime/             # Date/time utilities — WireInstantFactory, platform-specific formatters
+  appinfo/              # Cross-platform app version/build info (AppInfo expect/actual)
   attachments/          # Scaffolding only — directory exists but is NOT yet wired into settings.gradle.kts
 feature/
   fleet/                # Fleet dashboard (canonical layout, no update — dashboard is read-only)
@@ -72,6 +73,10 @@ feature/
     datamanager/        #   AttachmentManager, LocalBlobStore, platform-specific impls
     sharedassets/       #   Strings, type icons
     viewing/            #   AttachmentRow, AttachmentSection
+  export/               # Planned logbook export feature — CSV-in-ZIP archival export
+    datamanager/        #   ExportManager, aggregator, CSV writers, ZIP/destination actuals
+    sharedassets/       #   Export UI strings and README template
+    update/             #   ExportSelectionRoute/Screen + ExportViewModel
   sync/                 # Local-first sync engine (R1 implementation)
     data/               #   SyncEngine, HydrationRunner, PullListener, PushWorker,
                         #   FirestorePullSubscription, FirestoreRemoteFetcher, FirestoreSyncWriter,
@@ -134,6 +139,7 @@ update        →  :model, :datamanager, :viewing, :sharedassets, core:*
 - **`feature/userprofile/`** — legacy structure; being unified with Technician (see `docs/userprofile_as_technician.md`).
 - **`feature/aircraft/dashboard/`** — single submodule (no canonical split); owns its own ViewModel and DI module.
 - **`feature/fleet/`** — ViewModel lives inside `viewing/` (no separate update layer); fleet dashboard is read-only.
+- **`feature/export/`** — planned canonical module with `datamanager`, `sharedassets`, and `update`, but no `model` or `viewing` submodules. Export is a single user-driven flow rather than a standalone read-only display surface.
 
 ### Koin modules
 
@@ -162,6 +168,13 @@ Documents store binary blobs (e.g., field `AIRCRAFT_INFO_BLOB`). Decode: `Aircra
 
 ### Local-first storage (R1)
 `core/storage` provides `EntityStore` (SQLDelight-backed), `CollectionKind`, and Koin modules. `feature/sync/data` implements the sync engine: `SyncEngine` orchestrates `HydrationRunner` (initial pull), `PullListener` (real-time Firestore updates), and `PushWorker` (local → Firestore writes). Aircraft-scoped collections (tasks, logs, squawks) sync per-aircraft. Binary blob transfers use platform WorkManager (Android) and URLSession (iOS). See `docs/storage_r1_design.md`.
+
+### Logbook export (planned)
+`feature/export` will implement the logbook export described in `docs/export_logs_PRD.md` and `docs/export_logs_design.md`. The feature exports selected aircraft from Settings → Export logs into Google-Sheets-ready CSV files packaged in a ZIP. Data is aggregated on-device from the local-first store using `FleetManager`, `MaintenanceLogManager`, `TaskDataManager`/`TaskDueManager`, `SquawkManager`, `TechnicianManager`, and attachment APIs; no Firestore schema or proto changes are planned.
+
+Export output mirrors paper logbook volumes: `00_Aircraft_Info.csv`, `01_Airframe.csv`, one `02_Engine_N.csv` per engine, one `03_Propeller_N.csv` per propeller, `10_Compliance.csv`, `11_Squawks.csv`, `20_Technicians.csv`, optional multi-aircraft `00_Fleet_Summary.csv`, bundled `attachments/`, and `README.txt`. Use `docs/export_logs_sample/N12345_Cessna_172/` as the byte-level fixture shape for golden writer tests.
+
+Important export rules: rows for log tabs are oldest-first; CSV is UTF-8/RFC 4180 with CRLF line endings; multi-value cells use a single LF inside a quoted cell; timestamps render as dates in the device-current time zone at export time; compliance Last Complied fields come only from log entries that reference a task via `inspection_ids`, not from `force_complied_status`; LINK attachments remain URLs, while IMAGE/PDF/FILE attachments are included when local or downloadable and degrade to textual markers on failure.
 
 ### Dependency Injection
 - Central aggregation: `composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/di/initKoin.kt`
@@ -193,11 +206,11 @@ Documents store binary blobs (e.g., field `AIRCRAFT_INFO_BLOB`). Decode: `Aircra
 
 Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, intentional typography hierarchy, consistent spacing tokens. Prioritize clarity and readability over information density.
 
-**Read `.impeccable.md` before any UI work.** It defines the required aviation palette (Aviation Blue primary, Instrument Amber accent ≤10% of color moments, semantic forest/amber status colors), required typography (Space Grotesk titles, JetBrains Mono for technical data, system sans for body), and brand principles (Dependability First, Clarity over Density, Progressive Disclosure). Dynamic color is disabled; the aviation palette is the brand.
+**Read `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` before any UI work.** Together they define the required aviation palette (Aviation Blue primary, Instrument Amber accent ≤10% of color moments, semantic forest/amber status colors), required typography (Space Grotesk titles, JetBrains Mono for technical data, system sans for body), and brand principles (Dependability First, Clarity over Density, Progressive Disclosure). Dynamic color is disabled; the aviation palette is the brand.
 
 ## Design Docs
 
-Feature PRDs and architecture design docs live in `docs/` — including `storage_r1_design.md`, `storage_r2_design.md`, `attachments_design.md`, `squawk_design.md`, `technician_design.md`, `userprofile_as_technician.md`, `aircraft_overview_tabs.md`, and `intelligentsearch.md`. Consult these before making non-trivial changes to a feature area.
+Feature PRDs and architecture design docs live in `docs/` — including `storage_r1_design.md`, `storage_r2_design.md`, `attachments_design.md`, `squawk_design.md`, `technician_design.md`, `userprofile_as_technician.md`, `aircraft_overview_tabs.md`, `intelligentsearch.md`, `export_logs_PRD.md`, and `export_logs_design.md`. Consult these before making non-trivial changes to a feature area. For export work, also inspect `docs/export_logs_sample/`.
 
 ## Dogfood Builds
 
