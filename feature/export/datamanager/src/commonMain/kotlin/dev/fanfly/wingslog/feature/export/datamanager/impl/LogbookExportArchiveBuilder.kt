@@ -36,6 +36,7 @@ class LogbookExportArchiveBuilder {
   fun buildEntries(
     request: ExportRequest,
     bundles: List<AircraftBundle>,
+    attachmentManifests: Map<String, AttachmentExportManifest> = emptyMap(),
     generatedAt: LocalDateTime,
     timeZone: TimeZone,
   ): List<ZipEntryPayload> {
@@ -51,23 +52,33 @@ class LogbookExportArchiveBuilder {
 
     bundles.forEach { bundle ->
       val folder = if (multiAircraft) "${bundle.aircraft.folderName()}/" else ""
+      val attachments = attachmentManifests[bundle.aircraft.id] ?: AttachmentExportManifest(
+        byAttachmentId = emptyMap(),
+        notes = emptyList(),
+      )
       entries += csvEntry("${folder}00_Aircraft_Info.csv", aircraftInfoRows(bundle, request, generatedAt, timeZone))
-      entries += csvEntry("${folder}01_Airframe.csv", airframeRows(bundle, timeZone))
+      entries += csvEntry("${folder}01_Airframe.csv", airframeRows(bundle, attachments, timeZone))
       bundle.aircraft.engine.forEachIndexed { index, engine ->
-        entries += csvEntry("${folder}02_Engine_${index + 1}.csv", engineRows(bundle, engine, index, timeZone))
+        entries += csvEntry("${folder}02_Engine_${index + 1}.csv", engineRows(bundle, attachments, engine, index, timeZone))
         entries += csvEntry(
           "${folder}03_Propeller_${index + 1}.csv",
-          propellerRows(bundle, engine.propeller, index, timeZone),
+          propellerRows(bundle, attachments, engine.propeller, index, timeZone),
         )
       }
       if (bundle.aircraft.engine.isEmpty()) {
-        entries += csvEntry("${folder}02_Engine_Unknown.csv", engineRows(bundle, null, 0, timeZone))
-        entries += csvEntry("${folder}03_Propeller_Unknown.csv", propellerRows(bundle, null, 0, timeZone))
+        entries += csvEntry("${folder}02_Engine_Unknown.csv", engineRows(bundle, attachments, null, 0, timeZone))
+        entries += csvEntry("${folder}03_Propeller_Unknown.csv", propellerRows(bundle, attachments, null, 0, timeZone))
       }
       entries += csvEntry("${folder}10_Compliance.csv", complianceRows(bundle, timeZone))
       entries += csvEntry("${folder}11_Squawks.csv", squawkRows(bundle, timeZone))
       entries += csvEntry("${folder}20_Technicians.csv", technicianRows(bundle, timeZone))
-      entries += textEntry("${folder}README.txt", readme(bundle, request, generatedAt, timeZone))
+      entries += textEntry("${folder}README.txt", readme(bundle, request, attachments, generatedAt, timeZone))
+      attachments.byAttachmentId.values.forEach { payload ->
+        entries += ZipEntryPayload(
+          path = "$folder${payload.relativePath}",
+          bytes = payload.bytes,
+        )
+      }
     }
 
     return entries
@@ -111,7 +122,11 @@ class LogbookExportArchiveBuilder {
     )
   }
 
-  private fun airframeRows(bundle: AircraftBundle, timeZone: TimeZone): List<List<String>> =
+  private fun airframeRows(
+    bundle: AircraftBundle,
+    attachments: AttachmentExportManifest,
+    timeZone: TimeZone,
+  ): List<List<String>> =
     buildList {
       add(
         listOf(
@@ -131,11 +146,12 @@ class LogbookExportArchiveBuilder {
       )
       bundle.logs
         .filter { it.component_type == ComponentType.COMPONENT_AIRFRAME }
-        .forEach { add(logRow(bundle, it, it.airframe_time, it.engine_hour, timeZone)) }
+        .forEach { add(logRow(bundle, attachments, it, it.airframe_time, it.engine_hour, timeZone)) }
     }
 
   private fun engineRows(
     bundle: AircraftBundle,
+    attachments: AttachmentExportManifest,
     engine: Engine?,
     index: Int,
     timeZone: TimeZone,
@@ -168,11 +184,12 @@ class LogbookExportArchiveBuilder {
           it.component_type == ComponentType.COMPONENT_ENGINE &&
             (serial.isBlank() || it.component_serial == serial)
         }
-        .forEach { add(logRow(bundle, it, it.engine_hour, it.airframe_time, timeZone)) }
+        .forEach { add(logRow(bundle, attachments, it, it.engine_hour, it.airframe_time, timeZone)) }
     }
 
   private fun propellerRows(
     bundle: AircraftBundle,
+    attachments: AttachmentExportManifest,
     propeller: Propeller?,
     index: Int,
     timeZone: TimeZone,
@@ -223,7 +240,7 @@ class LogbookExportArchiveBuilder {
               technician?.name.orEmpty(),
               technician.certTypeLabel(),
               technician?.cert_number.orEmpty(),
-              log.attachments.attachmentCell(),
+              log.attachments.attachmentCell(attachments),
               log.id,
             )
           )
@@ -376,9 +393,16 @@ class LogbookExportArchiveBuilder {
   private fun readme(
     bundle: AircraftBundle,
     request: ExportRequest,
+    attachments: AttachmentExportManifest,
     generatedAt: LocalDateTime,
     timeZone: TimeZone,
-  ): String =
+  ): String {
+    val attachmentNotes = attachments.notes
+      .takeIf { it.isNotEmpty() }
+      ?.joinToString(separator = "\n") { "- $it" }
+      ?.let { "\nAttachment notes\n$it\n" }
+      .orEmpty()
+    return (
     """
     Hopply Logbook Export
 
@@ -403,13 +427,16 @@ class LogbookExportArchiveBuilder {
     - Dates are YYYY-MM-DD in the export device's local time zone.
     - Times are decimal hours (1247.3, not 1247:18).
     - Multi-value cells hold one entry per line within a single quoted cell.
-    - LINK-type attachments show the original URL. Binary attachment export will stream files
-      into attachments/ once the blob reader contract is available to this module.
+    - Attachment binaries are bundled under the attachments/ folder when available.
+      LINK-type attachments show the original URL.
     - This export is a snapshot. It does not update when logs change in Hopply.
-    """.trimIndent() + "\n"
+    """.trimIndent() + "\n" + attachmentNotes
+      )
+  }
 
   private fun logRow(
     bundle: AircraftBundle,
+    attachments: AttachmentExportManifest,
     log: MaintenanceLog,
     primaryHours: Double,
     secondaryHours: Double,
@@ -427,7 +454,7 @@ class LogbookExportArchiveBuilder {
       technician?.name.orEmpty(),
       technician.certTypeLabel(),
       technician?.cert_number.orEmpty(),
-      log.attachments.attachmentCell(),
+      log.attachments.attachmentCell(attachments),
       log.id,
     )
   }
@@ -451,13 +478,14 @@ class LogbookExportArchiveBuilder {
   private fun MaintenanceLog.squawkTitles(bundle: AircraftBundle): String =
     squawk_ids.joinToString("\n") { id -> bundle.squawksById[id]?.title ?: "[deleted: $id]" }
 
-  private fun List<Attachment>.attachmentCell(): String =
+  private fun List<Attachment>.attachmentCell(manifest: AttachmentExportManifest): String =
     joinToString("\n") { attachment ->
       val name = attachment.name.ifBlank { attachment.id.ifBlank { "Attachment" } }
       if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) {
         "$name -> ${attachment.url.ifBlank { attachment.download_url }}"
       } else {
-        "$name -> [binary export pending]"
+        val payload = manifest.byAttachmentId[attachment.id]
+        if (payload != null) "$name -> ${payload.relativePath}" else "$name -> [attachment unavailable]"
       }
     }
 

@@ -14,6 +14,7 @@ import kotlin.time.Clock
  */
 class LogbookExportManager(
   private val aggregator: LogbookExportAggregator,
+  private val attachmentExportResolver: AttachmentExportResolver,
   private val archiveBuilder: LogbookExportArchiveBuilder,
   private val zipFileWriter: ZipFileWriter,
   private val exportFileStore: ExportFileStore,
@@ -37,12 +38,16 @@ class LogbookExportManager(
       )
       aggregator.collect(request, aircraftId)
     }
+    val attachmentManifests = bundles.associate { bundle ->
+      bundle.aircraft.id to attachmentExportResolver.resolve(bundle)
+    }
 
     emit(ExportProgress.Running(step = "", percent = 55))
     val generatedAt = clock.now().toLocalDateTime(timeZone)
     val entries = archiveBuilder.buildEntries(
       request = request,
       bundles = bundles,
+      attachmentManifests = attachmentManifests,
       generatedAt = generatedAt,
       timeZone = timeZone,
     )
