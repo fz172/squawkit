@@ -32,4 +32,5 @@
   <string name="export_location_downloads_hopply">Saved to Downloads/Hopply</string>
   <string name="export_location_files_hopply">Saved to Files → Hopply</string>
   <string name="export_error_title">Export failed</string>
+  <string name="export_error_body">The export could not be completed. Try again.</string>
 </resources>

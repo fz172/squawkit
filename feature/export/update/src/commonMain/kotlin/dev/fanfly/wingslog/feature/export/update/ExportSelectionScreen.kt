@@ -51,6 +51,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_clear_all
 import wingslog.feature.export.sharedassets.generated.resources.export_custom
 import wingslog.feature.export.sharedassets.generated.resources.export_custom_coming_soon
 import wingslog.feature.export.sharedassets.generated.resources.export_date_range_section
+import wingslog.feature.export.sharedassets.generated.resources.export_error_body
 import wingslog.feature.export.sharedassets.generated.resources.export_error_title
 import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_details_incomplete
 import wingslog.feature.export.sharedassets.generated.resources.export_include_open_squawks
@@ -396,7 +397,7 @@ private fun ErrorContent(
     modifier = modifier,
     icon = Icons.Default.ErrorOutline,
     title = stringResource(Res.string.export_error_title),
-    body = state.message,
+    body = state.message.ifBlank { stringResource(Res.string.export_error_body) },
   ) {
     Button(onClick = onRetry) {
       Text(stringResource(CoreRes.string.retry).uppercase())
