@@ -168,6 +168,7 @@ class ExportViewModel(
     is ExportProgress.Success -> ExportUiState.Success(
       fileName = filePath.substringAfterLast('/').ifBlank { filePath },
       displayLocation = displayLocation,
+      displayLocationKind = displayLocationKind,
       filePath = filePath,
       sizeBytes = sizeBytes,
     )

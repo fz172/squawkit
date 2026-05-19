@@ -29,5 +29,7 @@
 %2$s</string>
   <string name="export_stub_preview_file_name">Hopply_Logs_preview.zip</string>
   <string name="export_stub_preview_location">Preview only</string>
+  <string name="export_location_downloads_hopply">Saved to Downloads/Hopply</string>
+  <string name="export_location_files_hopply">Saved to Files → Hopply</string>
   <string name="export_error_title">Export failed</string>
 </resources>

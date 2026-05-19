@@ -20,7 +20,14 @@ sealed interface ExportProgress {
     val filePath: String,
     val displayLocation: String,
     val sizeBytes: Long,
+    val displayLocationKind: ExportDisplayLocation = ExportDisplayLocation.UNKNOWN,
   ) : ExportProgress
 
   data class Error(val message: String, val cause: Throwable? = null) : ExportProgress
+}
+
+enum class ExportDisplayLocation {
+  UNKNOWN,
+  DOWNLOADS_HOPPLY,
+  FILES_HOPPLY,
 }

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import dev.fanfly.wingslog.feature.export.update.viewmodel.AircraftSelectionRow
 import dev.fanfly.wingslog.feature.export.update.viewmodel.DateRangeOption
 import dev.fanfly.wingslog.feature.export.update.viewmodel.ExportUiState
@@ -69,6 +70,8 @@ import wingslog.feature.export.sharedassets.generated.resources.export_selection
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preparing
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_file_name
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_location
+import wingslog.feature.export.sharedassets.generated.resources.export_location_downloads_hopply
+import wingslog.feature.export.sharedassets.generated.resources.export_location_files_hopply
 import wingslog.feature.export.sharedassets.generated.resources.export_success_body
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
@@ -362,7 +365,14 @@ private fun SuccessContent(
     stringResource(Res.string.export_stub_preview_file_name)
   }
   val displayLocation = state.displayLocation.ifBlank {
-    stringResource(Res.string.export_stub_preview_location)
+    when (state.displayLocationKind) {
+      ExportDisplayLocation.DOWNLOADS_HOPPLY ->
+        stringResource(Res.string.export_location_downloads_hopply)
+      ExportDisplayLocation.FILES_HOPPLY ->
+        stringResource(Res.string.export_location_files_hopply)
+      ExportDisplayLocation.UNKNOWN ->
+        stringResource(Res.string.export_stub_preview_location)
+    }
   }
   StatusContent(
     modifier = modifier,

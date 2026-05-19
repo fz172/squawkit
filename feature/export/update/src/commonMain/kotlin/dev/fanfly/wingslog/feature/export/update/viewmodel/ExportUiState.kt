@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.update.viewmodel
 
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import kotlinx.datetime.LocalDate
 
 sealed interface ExportUiState {
@@ -20,6 +21,7 @@ sealed interface ExportUiState {
   data class Success(
     val fileName: String,
     val displayLocation: String,
+    val displayLocationKind: ExportDisplayLocation,
     val filePath: String,
     val sizeBytes: Long,
   ) : ExportUiState
