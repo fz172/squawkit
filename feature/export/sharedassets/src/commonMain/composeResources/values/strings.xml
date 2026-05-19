@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="feature_name_export_logs">Export logs</string>
-  <string name="export_logs_coming_soon_title">Export logs</string>
-  <string name="export_logs_coming_soon_body">CSV logbook export is being built. This screen will let you choose aircraft, date range, and attachments before saving a ZIP to Files or Downloads.</string>
+  <string name="export_aircraft_section">Aircraft</string>
+  <string name="export_date_range_section">Date range</string>
+  <string name="export_options_section">Options</string>
+  <string name="export_select_all">Select all</string>
+  <string name="export_clear_all">Clear all</string>
+  <string name="export_selection_summary">%1$d of %2$d aircraft selected · %3$d log entries in scope</string>
+  <string name="export_untitled_aircraft">Untitled aircraft</string>
+  <string name="export_aircraft_details_incomplete">Aircraft details incomplete</string>
+  <string name="export_no_aircraft_title">No aircraft to export</string>
+  <string name="export_no_aircraft_body">Add an aircraft in Fleet to get started.</string>
+  <string name="export_log_count">%1$d logs</string>
+  <string name="export_all_time">All time</string>
+  <string name="export_last_12_months">Last 12 months</string>
+  <string name="export_custom">Custom</string>
+  <string name="export_custom_coming_soon">Custom date pickers arrive with the export writer slice.</string>
+  <string name="export_include_open_squawks">Include open squawks</string>
+  <string name="export_primary_action">Export · ~%1$s</string>
+  <string name="export_size_zero_kb">0 KB</string>
+  <string name="export_size_kb">%1$s KB</string>
+  <string name="export_size_mb">%1$s MB</string>
+  <string name="export_select_aircraft_helper">Select at least one aircraft</string>
+  <string name="export_running_title">Preparing export</string>
+  <string name="export_stub_preparing">Preparing export...</string>
+  <string name="export_success_title">Export ready</string>
+  <string name="export_success_body">%1$s
+%2$s</string>
+  <string name="export_stub_preview_file_name">Hopply_Logs_preview.zip</string>
+  <string name="export_stub_preview_location">Preview only</string>
+  <string name="export_error_title">Export failed</string>
 </resources>

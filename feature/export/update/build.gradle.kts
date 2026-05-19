@@ -44,12 +44,15 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":feature:export:datamanager"))
       implementation(project(":feature:export:sharedassets"))
+      implementation(project(":feature:fleet:datamanager"))
+      implementation(project(":feature:logs:datamanager"))
       implementation(project(":core:ui"))
 
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.compose.foundation)
       implementation(libs.components.resources)
       implementation(libs.androidx.navigation.compose)
+      implementation(libs.kotlinx.datetime)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
     }
   }
