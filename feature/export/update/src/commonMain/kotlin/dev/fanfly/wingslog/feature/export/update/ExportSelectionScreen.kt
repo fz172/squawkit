@@ -78,6 +78,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_log_count
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_body
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_title
 import wingslog.feature.export.sharedassets.generated.resources.export_options_section
+import wingslog.feature.export.sharedassets.generated.resources.export_open
 import wingslog.feature.export.sharedassets.generated.resources.export_primary_action
 import wingslog.feature.export.sharedassets.generated.resources.export_running_title
 import wingslog.feature.export.sharedassets.generated.resources.export_size_kb
@@ -109,6 +110,7 @@ fun ExportSelectionScreen(
   onToggleIncludeOpenSquawks: () -> Unit,
   onExport: () -> Unit,
   onCancel: () -> Unit,
+  onOpenExport: (String) -> Unit,
   onDone: () -> Unit,
   onRetry: () -> Unit,
 ) {
@@ -148,6 +150,7 @@ fun ExportSelectionScreen(
       is ExportUiState.Success -> SuccessContent(
         state = state,
         modifier = Modifier.padding(innerPadding),
+        onOpen = onOpenExport,
         onDone = onDone,
       )
       is ExportUiState.Error -> ErrorContent(
@@ -464,6 +467,7 @@ private fun RunningContent(
 private fun SuccessContent(
   state: ExportUiState.Success,
   modifier: Modifier,
+  onOpen: (String) -> Unit,
   onDone: () -> Unit,
 ) {
   val fileName = state.fileName.ifBlank {
@@ -485,8 +489,13 @@ private fun SuccessContent(
     title = stringResource(Res.string.export_success_title),
     body = stringResource(Res.string.export_success_body, fileName, displayLocation),
   ) {
-    Button(onClick = onDone) {
-      Text(stringResource(CoreRes.string.done).uppercase())
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+      TextButton(onClick = { onOpen(state.filePath) }) {
+        Text(stringResource(Res.string.export_open).uppercase())
+      }
+      Button(onClick = onDone) {
+        Text(stringResource(CoreRes.string.done).uppercase())
+      }
     }
   }
 }

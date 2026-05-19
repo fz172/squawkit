@@ -13,6 +13,7 @@ fun ExportSelectionRoute(
   viewModel: ExportViewModel = koinViewModel(),
 ) {
   val state by viewModel.state.collectAsStateWithLifecycle()
+  val exportFileOpener = rememberExportFileOpener()
 
   ExportSelectionScreen(
     state = state,
@@ -26,6 +27,7 @@ fun ExportSelectionRoute(
     onToggleIncludeOpenSquawks = viewModel::onToggleIncludeOpenSquawks,
     onExport = viewModel::onExport,
     onCancel = viewModel::onCancel,
+    onOpenExport = exportFileOpener::open,
     onDone = {
       viewModel.onDone()
       navController.popBackStack()

@@ -6,6 +6,10 @@
 	<true/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>UISupportsDocumentBrowser</key>
+	<false/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
     <key>BGTaskSchedulerPermittedIdentifiers</key>

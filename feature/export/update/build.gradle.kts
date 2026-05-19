@@ -57,6 +57,10 @@ kotlin {
       implementation(libs.kotlinx.datetime)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
     }
+
+    androidMain.dependencies {
+      implementation(libs.androidx.core.ktx)
+    }
   }
 }
 
