@@ -21,6 +21,8 @@ fun ExportSelectionRoute(
     onSelectAll = viewModel::onSelectAll,
     onClearAll = viewModel::onClearAll,
     onDateRangeChange = viewModel::onDateRangeChange,
+    onCustomStartChange = viewModel::onCustomStartChange,
+    onCustomEndChange = viewModel::onCustomEndChange,
     onToggleIncludeOpenSquawks = viewModel::onToggleIncludeOpenSquawks,
     onExport = viewModel::onExport,
     onCancel = viewModel::onCancel,

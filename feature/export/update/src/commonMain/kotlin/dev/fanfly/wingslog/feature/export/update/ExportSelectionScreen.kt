@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package dev.fanfly.wingslog.feature.export.update
 
 import androidx.compose.foundation.clickable
@@ -19,26 +21,41 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import dev.fanfly.wingslog.feature.export.update.viewmodel.AircraftSelectionRow
 import dev.fanfly.wingslog.feature.export.update.viewmodel.DateRangeOption
 import dev.fanfly.wingslog.feature.export.update.viewmodel.ExportUiState
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
@@ -49,7 +66,8 @@ import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_
 import wingslog.feature.export.sharedassets.generated.resources.export_all_time
 import wingslog.feature.export.sharedassets.generated.resources.export_clear_all
 import wingslog.feature.export.sharedassets.generated.resources.export_custom
-import wingslog.feature.export.sharedassets.generated.resources.export_custom_coming_soon
+import wingslog.feature.export.sharedassets.generated.resources.export_custom_end_date
+import wingslog.feature.export.sharedassets.generated.resources.export_custom_start_date
 import wingslog.feature.export.sharedassets.generated.resources.export_date_range_section
 import wingslog.feature.export.sharedassets.generated.resources.export_error_body
 import wingslog.feature.export.sharedassets.generated.resources.export_error_title
@@ -78,7 +96,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_success_t
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import wingslog.feature.export.sharedassets.generated.resources.export_untitled_aircraft
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExportSelectionScreen(
   state: ExportUiState,
@@ -87,6 +104,8 @@ fun ExportSelectionScreen(
   onSelectAll: () -> Unit,
   onClearAll: () -> Unit,
   onDateRangeChange: (DateRangeOption) -> Unit,
+  onCustomStartChange: (LocalDate) -> Unit,
+  onCustomEndChange: (LocalDate) -> Unit,
   onToggleIncludeOpenSquawks: () -> Unit,
   onExport: () -> Unit,
   onCancel: () -> Unit,
@@ -117,6 +136,8 @@ fun ExportSelectionScreen(
         onSelectAll = onSelectAll,
         onClearAll = onClearAll,
         onDateRangeChange = onDateRangeChange,
+        onCustomStartChange = onCustomStartChange,
+        onCustomEndChange = onCustomEndChange,
         onToggleIncludeOpenSquawks = onToggleIncludeOpenSquawks,
       )
       is ExportUiState.Running -> RunningContent(
@@ -146,6 +167,8 @@ private fun ConfiguringContent(
   onSelectAll: () -> Unit,
   onClearAll: () -> Unit,
   onDateRangeChange: (DateRangeOption) -> Unit,
+  onCustomStartChange: (LocalDate) -> Unit,
+  onCustomEndChange: (LocalDate) -> Unit,
   onToggleIncludeOpenSquawks: () -> Unit,
 ) {
   if (!state.isLoadingAircraft && state.aircraft.isEmpty()) {
@@ -214,10 +237,12 @@ private fun ConfiguringContent(
         )
       }
       if (state.dateRange == DateRangeOption.Custom) {
-        Text(
-          text = stringResource(Res.string.export_custom_coming_soon),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Spacer(Modifier.height(Spacing.small))
+        CustomDateRangeFields(
+          start = state.customStart,
+          end = state.customEnd,
+          onStartChange = onCustomStartChange,
+          onEndChange = onCustomEndChange,
         )
       }
     }
@@ -281,6 +306,85 @@ private fun AircraftRow(
       style = MaterialTheme.typography.labelMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+  }
+}
+
+@Composable
+private fun CustomDateRangeFields(
+  start: LocalDate,
+  end: LocalDate,
+  onStartChange: (LocalDate) -> Unit,
+  onEndChange: (LocalDate) -> Unit,
+) {
+  Column(
+    verticalArrangement = Arrangement.spacedBy(Spacing.small),
+  ) {
+    DatePickerField(
+      label = stringResource(Res.string.export_custom_start_date),
+      date = start,
+      onDateChange = onStartChange,
+    )
+    DatePickerField(
+      label = stringResource(Res.string.export_custom_end_date),
+      date = end,
+      onDateChange = onEndChange,
+    )
+  }
+}
+
+@Composable
+private fun DatePickerField(
+  label: String,
+  date: LocalDate,
+  onDateChange: (LocalDate) -> Unit,
+) {
+  var showPicker by remember { mutableStateOf(false) }
+
+  OutlinedButton(
+    onClick = { showPicker = true },
+    modifier = Modifier.fillMaxWidth(),
+  ) {
+    Column(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalAlignment = Alignment.Start,
+    ) {
+      Text(
+        text = label,
+        style = MaterialTheme.typography.labelMedium,
+      )
+      Text(
+        text = date.toDisplayFormat(),
+        style = MaterialTheme.typography.bodyLarge,
+      )
+    }
+  }
+
+  if (showPicker) {
+    val datePickerState = rememberDatePickerState(
+      initialSelectedDateMillis = date.toDatePickerMillis(),
+    )
+    DatePickerDialog(
+      onDismissRequest = { showPicker = false },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            datePickerState.selectedDateMillis
+              ?.toDatePickerLocalDate()
+              ?.let(onDateChange)
+            showPicker = false
+          },
+        ) {
+          Text(stringResource(CoreRes.string.done).uppercase())
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showPicker = false }) {
+          Text(stringResource(CoreRes.string.cancel).uppercase())
+        }
+      },
+    ) {
+      DatePicker(state = datePickerState)
+    }
   }
 }
 
@@ -475,3 +579,11 @@ private fun readableBytes(bytes: Long): String = when {
     ((bytes / 100_000L) / 10.0).toString(),
   )
 }
+
+private fun LocalDate.toDatePickerMillis(): Long =
+  LocalDateTime(year, month, day, 12, 0, 0)
+    .toInstant(TimeZone.UTC)
+    .toEpochMilliseconds()
+
+private fun Long.toDatePickerLocalDate(): LocalDate =
+  Instant.fromEpochMilliseconds(this).toLocalDateTime(TimeZone.UTC).date

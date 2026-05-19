@@ -15,7 +15,8 @@
   <string name="export_all_time">All time</string>
   <string name="export_last_12_months">Last 12 months</string>
   <string name="export_custom">Custom</string>
-  <string name="export_custom_coming_soon">Custom date pickers arrive with the export writer slice.</string>
+  <string name="export_custom_start_date">Start date</string>
+  <string name="export_custom_end_date">End date</string>
   <string name="export_include_open_squawks">Include open squawks</string>
   <string name="export_primary_action">Export · ~%1$s</string>
   <string name="export_size_zero_kb">0 KB</string>

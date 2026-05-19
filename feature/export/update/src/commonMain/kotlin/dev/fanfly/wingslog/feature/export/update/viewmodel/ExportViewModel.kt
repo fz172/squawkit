@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
@@ -130,6 +131,30 @@ class ExportViewModel(
 
   fun onDateRangeChange(option: DateRangeOption) = reduceConfiguring { current ->
     current.copy(dateRange = option).recomputeEstimates()
+  }
+
+  /**
+   * Updates the inclusive custom start date and keeps the custom range valid.
+   */
+  fun onCustomStartChange(date: LocalDate) = reduceConfiguring { current ->
+    val end = if (date > current.customEnd) date else current.customEnd
+    current.copy(
+      dateRange = DateRangeOption.Custom,
+      customStart = date,
+      customEnd = end,
+    ).recomputeEstimates()
+  }
+
+  /**
+   * Updates the inclusive custom end date and keeps the custom range valid.
+   */
+  fun onCustomEndChange(date: LocalDate) = reduceConfiguring { current ->
+    val start = if (date < current.customStart) date else current.customStart
+    current.copy(
+      dateRange = DateRangeOption.Custom,
+      customStart = start,
+      customEnd = date,
+    ).recomputeEstimates()
   }
 
   fun onToggleIncludeOpenSquawks() = reduceConfiguring { current ->
