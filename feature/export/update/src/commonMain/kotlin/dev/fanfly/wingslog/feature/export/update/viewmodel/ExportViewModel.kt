@@ -3,12 +3,16 @@ package dev.fanfly.wingslog.feature.export.update.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.aircraft.AttachmentType.ATTACHMENT_TYPE_LINK
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +37,8 @@ class ExportViewModel(
   private val exportManager: ExportManager,
   private val fleetManager: FleetManager,
   private val logsManager: MaintenanceLogManager,
+  private val taskDataManager: TaskDataManager,
+  private val squawkManager: SquawkManager,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
@@ -64,8 +70,18 @@ class ExportViewModel(
           } else {
             combine(
               aircraft.map { item ->
-                logsManager.observeLogs(item.id).map { logs ->
-                  item.toSelectionRow(logCount = logs.size)
+                combine(
+                  logsManager.observeLogs(item.id),
+                  taskDataManager.observeTasks(item.id),
+                  squawkManager.observeSquawks(item.id),
+                ) { logs, tasks, squawks ->
+                  val attachmentSizeBytes = logs.sumOf { it.attachments.exportedBytes() } +
+                    tasks.sumOf { it.attachments.exportedBytes() } +
+                    squawks.sumOf { it.attachments.exportedBytes() }
+                  item.toSelectionRow(
+                    logCount = logs.size,
+                    attachmentSizeBytes = attachmentSizeBytes,
+                  )
                 }
               }
             ) { rows -> rows.toList() }
@@ -193,18 +209,29 @@ class ExportViewModel(
   private fun ExportUiState.Configuring.recomputeEstimates(): ExportUiState.Configuring {
     val selectedRows = aircraft.filter { it.aircraftId in selectedAircraftIds }
     val logCount = selectedRows.sumOf { it.logCount }
+    val attachmentBytes = selectedRows.sumOf { it.attachmentSizeBytes }
     val csvBytes = 64_000L + (logCount * 600L) + (selectedRows.size * 8_000L)
     return copy(
       estimatedLogCount = logCount,
-      estimatedSizeBytes = if (selectedRows.isEmpty()) 0L else csvBytes,
+      estimatedSizeBytes = if (selectedRows.isEmpty()) 0L else csvBytes + attachmentBytes,
     )
   }
 
-  private fun Aircraft.toSelectionRow(logCount: Int) = AircraftSelectionRow(
+  private fun Aircraft.toSelectionRow(
+    logCount: Int,
+    attachmentSizeBytes: Long,
+  ) = AircraftSelectionRow(
     aircraftId = id,
     tailNumber = tail_number,
     makeModel = listOf(make, model).filter { it.isNotBlank() }.joinToString(" ")
       .ifBlank { serial },
     logCount = logCount,
+    attachmentSizeBytes = attachmentSizeBytes,
   )
+
+  private fun List<Attachment>.exportedBytes(): Long = filter { attachment ->
+    attachment.type != ATTACHMENT_TYPE_LINK
+  }.sumOf { attachment ->
+    attachment.size_bytes.coerceAtLeast(0L)
+  }
 }

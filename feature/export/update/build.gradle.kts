@@ -46,6 +46,8 @@ kotlin {
       implementation(project(":feature:export:sharedassets"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:logs:datamanager"))
+      implementation(project(":feature:squawk:datamanager"))
+      implementation(project(":feature:tasks:datamanager"))
       implementation(project(":core:ui"))
 
       implementation(libs.koin.compose.viewmodel)

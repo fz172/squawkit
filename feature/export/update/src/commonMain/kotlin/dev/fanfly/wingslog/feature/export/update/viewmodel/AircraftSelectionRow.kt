@@ -8,4 +8,5 @@ data class AircraftSelectionRow(
   val tailNumber: String,
   val makeModel: String,
   val logCount: Int,
+  val attachmentSizeBytes: Long,
 )
