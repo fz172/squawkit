@@ -16,7 +16,7 @@ import platform.Foundation.create
 import platform.Foundation.writeToFile
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
-internal actual class ExportFileStore {
+actual class ExportFileStore {
   actual suspend fun writeZip(fileName: String, bytes: ByteArray): ExportedFile =
     withContext(Dispatchers.Default) {
       val docs = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)

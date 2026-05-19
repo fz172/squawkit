@@ -6,7 +6,10 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-internal class StubExportManager : ExportManager {
+/**
+ * Temporary export manager used while the writer is being built out.
+ */
+class StubExportManager : ExportManager {
   override fun exportLogs(request: ExportRequest): Flow<ExportProgress> =
     flow {
       emit(ExportProgress.Running(step = "", percent = 20))

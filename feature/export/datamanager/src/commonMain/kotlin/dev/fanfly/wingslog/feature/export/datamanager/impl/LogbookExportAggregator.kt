@@ -27,7 +27,10 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import com.squareup.wire.Instant as WireInstant
 
-internal class LogbookExportAggregator(
+/**
+ * Builds a consistent, in-memory export snapshot for one aircraft.
+ */
+class LogbookExportAggregator(
   private val fleetManager: FleetManager,
   private val logsManager: MaintenanceLogManager,
   private val tasksManager: TaskDataManager,
@@ -37,6 +40,12 @@ internal class LogbookExportAggregator(
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
+  /**
+   * Collects aircraft, logs, tasks, squawks, and technician data for [aircraftId].
+   *
+   * The returned bundle is date-filtered for timestamped records and sorted oldest first for
+   * paper-logbook order.
+   */
   suspend fun collect(request: ExportRequest, aircraftId: String): AircraftBundle = coroutineScope {
     val aircraftDeferred = async { fleetManager.loadAircraft(aircraftId).first() }
     val logsDeferred = async { logsManager.observeLogs(aircraftId).first() }
@@ -115,7 +124,10 @@ internal class LogbookExportAggregator(
       dismiss_reason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN
 }
 
-internal data class AircraftBundle(
+/**
+ * Aggregated records needed to write one aircraft folder in an export archive.
+ */
+data class AircraftBundle(
   val aircraft: Aircraft,
   val logs: List<MaintenanceLog>,
   val tasks: List<MaintenanceTask>,

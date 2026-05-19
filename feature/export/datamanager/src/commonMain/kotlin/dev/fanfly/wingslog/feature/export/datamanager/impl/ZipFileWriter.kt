@@ -1,6 +1,9 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
-internal data class ZipEntryPayload(
+/**
+ * In-memory file payload to place inside an export ZIP archive.
+ */
+data class ZipEntryPayload(
   val path: String,
   val bytes: ByteArray,
 ) {
@@ -11,6 +14,12 @@ internal data class ZipEntryPayload(
   }
 }
 
-internal expect class ZipFileWriter {
+/**
+ * Platform ZIP archive writer.
+ */
+expect class ZipFileWriter {
+  /**
+   * Packages [entries] into a ZIP archive and returns the archive bytes.
+   */
   fun write(entries: List<ZipEntryPayload>): ByteArray
 }

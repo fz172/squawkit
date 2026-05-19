@@ -26,6 +26,9 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
+/**
+ * Coordinates export selection state and progress for the export destination.
+ */
 class ExportViewModel(
   private val exportManager: ExportManager,
   private val fleetManager: FleetManager,
@@ -117,6 +120,9 @@ class ExportViewModel(
     current.copy(includeOpenSquawks = !current.includeOpenSquawks).recomputeEstimates()
   }
 
+  /**
+   * Starts export generation using the current configuration.
+   */
   fun onExport() {
     val configuring = _state.value as? ExportUiState.Configuring ?: return
     if (configuring.selectedAircraftIds.isEmpty()) return
@@ -129,17 +135,26 @@ class ExportViewModel(
     }
   }
 
+  /**
+   * Cancels an in-flight export and restores the last editable configuration.
+   */
   fun onCancel() {
     exportJob?.cancel()
     exportJob = null
     _state.value = lastConfiguring
   }
 
+  /**
+   * Dismisses terminal export state without discarding the previous configuration.
+   */
   fun onDone() {
     exportJob = null
     _state.value = lastConfiguring
   }
 
+  /**
+   * Returns from an error state to the last editable configuration.
+   */
   fun onRetry() {
     _state.value = lastConfiguring
   }

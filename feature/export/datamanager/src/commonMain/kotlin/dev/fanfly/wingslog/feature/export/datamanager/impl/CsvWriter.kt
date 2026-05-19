@@ -1,6 +1,9 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
-internal object CsvWriter {
+/**
+ * RFC 4180 CSV renderer used by export writers.
+ */
+object CsvWriter {
   private const val CRLF = "\r\n"
 
   fun write(rows: List<List<String>>): String =

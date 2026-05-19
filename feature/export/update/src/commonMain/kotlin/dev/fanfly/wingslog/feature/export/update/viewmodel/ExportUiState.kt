@@ -3,7 +3,13 @@ package dev.fanfly.wingslog.feature.export.update.viewmodel
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import kotlinx.datetime.LocalDate
 
+/**
+ * Complete state model for the export selection destination.
+ */
 sealed interface ExportUiState {
+  /**
+   * Editable export setup with live aircraft selection and size estimates.
+   */
   data class Configuring(
     val aircraft: List<AircraftSelectionRow> = emptyList(),
     val selectedAircraftIds: Set<String> = emptySet(),
@@ -18,6 +24,9 @@ sealed interface ExportUiState {
 
   data class Running(val step: String, val percent: Int) : ExportUiState
 
+  /**
+   * Completed export details shown after the archive is saved.
+   */
   data class Success(
     val fileName: String,
     val displayLocation: String,
@@ -29,6 +38,9 @@ sealed interface ExportUiState {
   data class Error(val message: String) : ExportUiState
 }
 
+/**
+ * Display-ready aircraft row used by the export picker.
+ */
 data class AircraftSelectionRow(
   val aircraftId: String,
   val tailNumber: String,
@@ -36,6 +48,9 @@ data class AircraftSelectionRow(
   val logCount: Int,
 )
 
+/**
+ * Date-range options exposed by the selection UI.
+ */
 enum class DateRangeOption {
   AllTime,
   Last12Months,

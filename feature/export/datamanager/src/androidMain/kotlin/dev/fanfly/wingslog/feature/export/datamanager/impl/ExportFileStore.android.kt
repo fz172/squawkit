@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
-internal actual class ExportFileStore {
+actual class ExportFileStore {
   actual suspend fun writeZip(fileName: String, bytes: ByteArray): ExportedFile =
     withContext(Dispatchers.IO) {
       val directory = File(

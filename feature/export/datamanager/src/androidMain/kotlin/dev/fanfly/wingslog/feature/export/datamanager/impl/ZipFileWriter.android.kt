@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-internal actual class ZipFileWriter {
+actual class ZipFileWriter {
   actual fun write(entries: List<ZipEntryPayload>): ByteArray {
     val output = ByteArrayOutputStream()
     ZipOutputStream(output).use { zip ->
