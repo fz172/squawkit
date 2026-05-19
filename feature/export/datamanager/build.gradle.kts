@@ -1,7 +1,38 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kover)
+}
+
+val versionPropsFile = rootProject.file("version.properties")
+
+val generateExportVersionKt by tasks.registering {
+  val outputDir = layout.buildDirectory.dir(
+    "generated/exportVersion/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl"
+  )
+  inputs.file(versionPropsFile)
+  outputs.dir(outputDir)
+
+  doFirst {
+    val props = Properties().apply {
+      if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
+    }
+    val versionName = "${props["major"]}.${props["minor"]}.${props["buildDate"]}.${props["patch"]}"
+    val versionCode = props["versionCode"]?.toString().orEmpty()
+    val displayVersion = if (versionCode.isBlank()) {
+      "Hopply $versionName"
+    } else {
+      "Hopply $versionName ($versionCode)"
+    }
+    outputDir.get().asFile.also { it.mkdirs() }
+      .resolve("GeneratedExportVersionInfo.kt")
+      .writeText(
+        "package dev.fanfly.wingslog.feature.export.datamanager.impl\n\n" +
+          "const val GENERATED_EXPORT_APP_VERSION = \"$displayVersion\"\n"
+      )
+  }
 }
 
 android {
@@ -32,6 +63,10 @@ kotlin {
   iosSimulatorArm64()
 
   sourceSets {
+    commonMain {
+      kotlin.srcDir(layout.buildDirectory.dir("generated/exportVersion/commonMain/kotlin"))
+    }
+
     commonMain.dependencies {
       implementation(project(":core:datetime"))
       implementation(project(":core:storage"))
@@ -49,6 +84,12 @@ kotlin {
       implementation(libs.koin.core)
       implementation(libs.kermit)
     }
+  }
+}
+
+tasks.configureEach {
+  if (name.startsWith("compile") && name.contains("Kotlin")) {
+    dependsOn(generateExportVersionKt)
   }
 }
 

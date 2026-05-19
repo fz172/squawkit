@@ -29,7 +29,9 @@ class LogbookExportArchiveBuilderTest {
       )
     )
 
-    val entries = LogbookExportArchiveBuilder().buildEntries(
+    val entries = LogbookExportArchiveBuilder(
+      appVersion = "Hopply 1.0.260519.10 (364)",
+    ).buildEntries(
       request = ExportRequest(
         aircraftIds = listOf(bundle.aircraft.id),
         dateRange = ExportDateRange.AllTime,
@@ -59,6 +61,10 @@ class LogbookExportArchiveBuilderTest {
         "missing.pdf -> [attachment unavailable]")
     assertThat(entries["README.txt"]?.bytes?.decodeToString())
       .contains("Attachment efgh5678 has no local blob record.")
+    assertThat(entries["00_Aircraft_Info.csv"]?.bytes?.decodeToString())
+      .contains("Export App Version,Hopply 1.0.260519.10 (364)")
+    assertThat(entries["README.txt"]?.bytes?.decodeToString())
+      .contains("App:       Hopply 1.0.260519.10 (364)")
   }
 
   private fun aircraftBundle(logs: List<MaintenanceLog>) = AircraftBundle(

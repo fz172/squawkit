@@ -28,7 +28,9 @@ import com.squareup.wire.Instant as WireInstant
 /**
  * Builds the CSV entries that make up a Hopply logbook export archive.
  */
-class LogbookExportArchiveBuilder {
+class LogbookExportArchiveBuilder(
+  private val appVersion: String = GENERATED_EXPORT_APP_VERSION,
+) {
 
   /**
    * Creates all ZIP entry payloads for [bundles], including fleet summary and README files.
@@ -118,7 +120,7 @@ class LogbookExportArchiveBuilder {
       listOf("Open Squawks", openSquawks.toString()),
       listOf("Export Generated", generatedAt.exportTimestamp(timeZone)),
       listOf("Export Period", request.dateRange.label()),
-      listOf("Export App Version", "Hopply"),
+      listOf("Export App Version", appVersion),
     )
   }
 
@@ -409,7 +411,7 @@ class LogbookExportArchiveBuilder {
     Generated: ${generatedAt.exportTimestamp(timeZone)}
     Scope:     ${bundle.aircraft.make} ${bundle.aircraft.model} ${bundle.aircraft.tail_number}
     Period:    ${request.dateRange.label()}
-    App:       Hopply
+    App:       $appVersion
 
     How to import into Google Sheets
     1. Open https://sheets.google.com and create a new blank spreadsheet.
