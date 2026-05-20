@@ -12,7 +12,7 @@ Aircraft owners and mechanics are legally and operationally tied to **paper logb
 - Annual / pre-buy inspection handoff to an A&P or IA who works off paper or Excel.
 - Backup against vendor outage or account loss (regulatory exposure if records vanish).
 - Pre-sale due-diligence packages, where the buyer's mechanic wants times, ADs, and SBs in a single workbook.
-- Personal archive — a CSV/Sheet copy is auditable and survives any future migration.
+- Personal archive — a CSV/XLSX copy is auditable and survives any future migration.
 
 Today, none of this is possible from inside the app. This PRD specifies a **Logbook Export** feature that produces a Google-Sheets-compatible workbook whose tab and column structure mirrors the conventions of FAA-style paper logbooks.
 
@@ -23,16 +23,15 @@ Today, none of this is possible from inside the app. This PRD specifies a **Logb
 ### 2.1 Goals
 
 - **Logbook fidelity.** Output tab names and columns that an A&P would recognise on sight — one tab per logbook volume (airframe, each engine, each prop), with familiar columns (Date, Total Time, Description of Work, Reference, Technician + Cert #).
-- **Google Sheets first.** Files must import cleanly into Google Sheets with no manual cell formatting. CSV/UTF-8, ISO dates, decimal hours.
+- **Google Sheets first.** Files must import cleanly into Google Sheets with no manual cell formatting. XLSX workbook plus CSV/UTF-8 fallback, ISO dates, decimal hours.
 - **Whole truth.** All log entries, compliance events (ADs, SBs, inspections), and squawks for the chosen scope, plus the technician sign-offs that close each one.
 - **Two scopes.** Per-aircraft export (most common) and whole-fleet export (single zip).
 - **Date-range filter.** Optional. Defaults to all-time.
 - **Offline-capable for the textual data.** Logs, tasks, squawks, and aircraft records run against the local-first store (R1) with no network round-trip. Attachment binaries (§4.10) may require a download for entries that have never been opened on this device.
-- **Attachment binaries included.** Every IMAGE / PDF / FILE attachment referenced by any exported log, task, or squawk is downloaded (if not already local) and embedded in the zip alongside the CSVs. LINK-type attachments stay textual — their URL is preserved in the relevant CSV cell. See §4.10.
+- **Attachment binaries included.** Every IMAGE / PDF / FILE attachment referenced by any exported log, task, or squawk is downloaded (if not already local) and embedded in the zip alongside the CSVs and XLSX workbook. Attachments are not embedded inside the workbook. LINK-type attachments stay textual — their URL is preserved in the relevant spreadsheet cell. See §4.10.
 
 ### 2.2 Non-Goals (this release)
 
-- **XLSX output.** Deferred — CSV-in-ZIP is the MVP format. XLSX is tracked under §10 Future Work.
 - **Direct Google Sheets push** via OAuth. Same — future work.
 - **PDF facsimile** of a paper logbook page. Out of scope for MVP.
 - **Re-import / round-trip.** This release is one-way. The export is for human consumption; we do not commit to parsing exported files back into the app.
@@ -112,10 +111,10 @@ Cancellation discards the temp file and returns to the configuration state with 
 
 Output layout is determined by **how many aircraft the user selected**, not by a separate scope toggle:
 
-- **Single-aircraft export (1 aircraft selected):** one ZIP archive containing one aircraft folder of CSVs plus a README.
-- **Multi-aircraft export (≥2 aircraft selected):** one ZIP archive containing one subfolder per selected aircraft, a top-level `00_Fleet_Summary.csv` that reflects only the selected aircraft, and a README.
+- **Single-aircraft export (1 aircraft selected):** one ZIP archive containing CSVs, a README, a generated XLSX workbook, and any attachment files.
+- **Multi-aircraft export (≥2 aircraft selected):** one ZIP archive containing one subfolder per selected aircraft, a top-level `00_Fleet_Summary.csv`, a generated XLSX workbook, and per-aircraft README/attachment files.
 
-All CSV files are **UTF-8, RFC 4180–compliant**, comma-separated, with `CRLF` line endings, and quoted fields where content contains commas, quotes, or newlines.
+All CSV files are **UTF-8, RFC 4180–compliant**, comma-separated, with `CRLF` line endings, and quoted fields where content contains commas, quotes, or newlines. The XLSX workbook contains the same table data as the CSV files, without embedding attachment binaries.
 
 ### 4.4 File naming
 
@@ -131,30 +130,31 @@ Filenames use the aircraft's tail number with non-alphanumeric characters replac
 
 ```
 Hopply_Logs_N12345_20260518.zip
-└── N12345_Cessna_172/
-    ├── 00_Aircraft_Info.csv
-    ├── 01_Airframe.csv
-    ├── 02_Engine_1.csv          ← one per engine
-    ├── 02_Engine_2.csv
-    ├── 03_Propeller_1.csv       ← one per propeller (per engine)
-    ├── 03_Propeller_2.csv
-    ├── 10_Compliance.csv
-    ├── 11_Squawks.csv
-    ├── 20_Technicians.csv
-    ├── attachments/             ← binaries (images, PDFs, files) — see §4.10
-    │   ├── 8f3a_8130-3_form.pdf
-    │   ├── 9b21_oil_filter_after.jpg
-    │   └── …
-    └── README.txt
+├── Hopply_Logs_N12345_20260518.xlsx
+├── 00_Aircraft_Info.csv
+├── 01_Airframe.csv
+├── 02_Engine_1.csv          ← one per engine
+├── 02_Engine_2.csv
+├── 03_Propeller_1.csv       ← one per propeller (per engine)
+├── 03_Propeller_2.csv
+├── 10_Compliance.csv
+├── 11_Squawks.csv
+├── 20_Technicians.csv
+├── attachments/             ← binaries (images, PDFs, files) — see §4.10
+│   ├── 8f3a_8130-3_form.pdf
+│   ├── 9b21_oil_filter_after.jpg
+│   └── …
+└── README.txt
 ```
 
-Numeric prefixes (`00_`, `01_`, …) preserve logbook order when CSVs are imported as sheets — Google Sheets imports tabs in alphabetical order. The `attachments/` folder is excluded from spreadsheet import; the CSV rows reference files inside it by relative path.
+Numeric prefixes (`00_`, `01_`, …) preserve logbook order when CSVs are imported as sheets — Google Sheets imports tabs in alphabetical order. The included XLSX workbook already contains these tables as ordered tabs. The `attachments/` folder is excluded from spreadsheet import; spreadsheet rows reference files inside it by relative path.
 
 ### 4.6 Zip layout — multi-aircraft
 
 ```
 Hopply_Logs_Fleet_20260518.zip
 ├── 00_Fleet_Summary.csv     ← reflects ONLY the aircraft selected, not the whole fleet
+├── Hopply_Logs_Fleet_20260518.xlsx
 ├── README.txt
 ├── N12345_Cessna_172/
 │   ├── 00_Aircraft_Info.csv  …  20_Technicians.csv
@@ -349,6 +349,13 @@ Period:    All time
 App:       Hopply 1.4.0 (147)
 
 How to import into Google Sheets
+1. Extract this ZIP and locate the included `Hopply_Logs_*.xlsx` workbook.
+2. Open https://sheets.google.com and create a new blank spreadsheet.
+3. File → Import → Upload → choose the `Hopply_Logs_*.xlsx` workbook.
+4. Select "Replace spreadsheet" and click "Import data".
+   The workbook already contains one tab for each exported table.
+
+CSV fallback
 1. Open https://sheets.google.com and create a new blank spreadsheet.
 2. File → Import → Upload → choose 00_Aircraft_Info.csv.
 3. Select "Insert new sheet(s)" and click "Import data".
@@ -365,9 +372,10 @@ Notes
 - Dates are YYYY-MM-DD in the export device's local time zone.
 - Times are decimal hours (1247.3, not 1247:18).
 - Attachment binaries (photos, PDFs, files) are bundled under the
-  attachments/ folder. The CSV "Attachments" column shows
+  attachments/ folder. The spreadsheet "Attachments" column shows
   "<name> → attachments/<file>" so you can locate each file after
-  extracting the zip. LINK-type attachments show the original URL.
+  extracting the zip. Attachments are not embedded in the XLSX workbook.
+  LINK-type attachments show the original URL.
 - This export is a snapshot. It does not update when logs change in Hopply.
 ```
 
@@ -587,7 +595,6 @@ The CSV + ZIP writer lives in `commonMain` using `kotlinx.io` primitives. Platfo
 
 | Item | Why deferred |
 |:---|:---|
-| **XLSX output (single multi-tab workbook)** | Removes the manual "import each CSV as a tab" step. Needs a KMM-compatible XLSX writer; ZIP-of-CSVs unblocks the use case faster. |
 | **Direct push to Google Sheets via OAuth** | Best UX (one tap → workbook opens in Sheets), but adds an OAuth flow, new scopes, and a token store. |
 | **PDF facsimile** | A printable logbook-page rendering would close the loop for users who still file paper. Adds a PDF generator dependency. |
 | **Scheduled / automated exports** | "Email me a backup zip every quarter." Server pipeline needed; out of scope for an on-device-only feature. |

@@ -31,6 +31,7 @@ import com.squareup.wire.Instant as WireInstant
 class LogbookExportArchiveBuilder(
   private val appVersion: String = GENERATED_EXPORT_APP_VERSION,
   private val readmeTemplate: String = GENERATED_EXPORT_README_TEMPLATE,
+  private val xlsxWorkbookWriter: XlsxWorkbookWriter = XlsxWorkbookWriter(),
 ) {
 
   /**
@@ -43,38 +44,25 @@ class LogbookExportArchiveBuilder(
     generatedAt: LocalDateTime,
     timeZone: TimeZone,
   ): List<ZipEntryPayload> {
-    val multiAircraft = bundles.size > 1
     val entries = mutableListOf<ZipEntryPayload>()
-
-    if (multiAircraft) {
-      entries += csvEntry(
-        path = "00_Fleet_Summary.csv",
-        rows = fleetSummaryRows(bundles),
+    val tables = exportTables(request, bundles, attachmentManifests, generatedAt, timeZone)
+    tables.forEach { table ->
+      entries += csvEntry(table.csvPath, table.rows)
+    }
+    if (tables.isNotEmpty()) {
+      entries += ZipEntryPayload(
+        path = workbookFileName(bundles, generatedAt.date),
+        bytes = xlsxWorkbookWriter.write(tables.map { XlsxSheet(name = it.sheetName, rows = it.rows) }),
       )
     }
 
+    val multiAircraft = bundles.size > 1
     bundles.forEach { bundle ->
       val folder = if (multiAircraft) "${bundle.aircraft.folderName()}/" else ""
       val attachments = attachmentManifests[bundle.aircraft.id] ?: AttachmentExportManifest(
         byAttachmentId = emptyMap(),
         notes = emptyList(),
       )
-      entries += csvEntry("${folder}00_Aircraft_Info.csv", aircraftInfoRows(bundle, request, generatedAt, timeZone))
-      entries += csvEntry("${folder}01_Airframe.csv", airframeRows(bundle, attachments, timeZone))
-      bundle.aircraft.engine.forEachIndexed { index, engine ->
-        entries += csvEntry("${folder}02_Engine_${index + 1}.csv", engineRows(bundle, attachments, engine, index, timeZone))
-        entries += csvEntry(
-          "${folder}03_Propeller_${index + 1}.csv",
-          propellerRows(bundle, attachments, engine.propeller, index, timeZone),
-        )
-      }
-      if (bundle.aircraft.engine.isEmpty()) {
-        entries += csvEntry("${folder}02_Engine_Unknown.csv", engineRows(bundle, attachments, null, 0, timeZone))
-        entries += csvEntry("${folder}03_Propeller_Unknown.csv", propellerRows(bundle, attachments, null, 0, timeZone))
-      }
-      entries += csvEntry("${folder}10_Compliance.csv", complianceRows(bundle, timeZone))
-      entries += csvEntry("${folder}11_Squawks.csv", squawkRows(bundle, timeZone))
-      entries += csvEntry("${folder}20_Technicians.csv", technicianRows(bundle, timeZone))
       entries += textEntry("${folder}README.txt", readme(bundle, request, attachments, generatedAt, timeZone))
       attachments.byAttachmentId.values.forEach { payload ->
         entries += ZipEntryPayload(
@@ -87,6 +75,103 @@ class LogbookExportArchiveBuilder(
     return entries
   }
 
+  private fun exportTables(
+    request: ExportRequest,
+    bundles: List<AircraftBundle>,
+    attachmentManifests: Map<String, AttachmentExportManifest>,
+    generatedAt: LocalDateTime,
+    timeZone: TimeZone,
+  ): List<LogbookExportTable> {
+    val multiAircraft = bundles.size > 1
+    return buildList {
+      if (multiAircraft) {
+        add(
+          LogbookExportTable(
+            csvPath = "00_Fleet_Summary.csv",
+            sheetName = "00 Fleet Summary",
+            rows = fleetSummaryRows(bundles),
+          )
+        )
+      }
+
+      bundles.forEach { bundle ->
+        val folder = if (multiAircraft) "${bundle.aircraft.folderName()}/" else ""
+        val sheetPrefix = if (multiAircraft) "${bundle.aircraft.safeTailNumber()} " else ""
+        val attachments = attachmentManifests[bundle.aircraft.id] ?: AttachmentExportManifest(
+          byAttachmentId = emptyMap(),
+          notes = emptyList(),
+        )
+        add(
+          LogbookExportTable(
+            csvPath = "${folder}00_Aircraft_Info.csv",
+            sheetName = "${sheetPrefix}00 Aircraft Info",
+            rows = aircraftInfoRows(bundle, request, generatedAt, timeZone),
+          )
+        )
+        add(
+          LogbookExportTable(
+            csvPath = "${folder}01_Airframe.csv",
+            sheetName = "${sheetPrefix}01 Airframe",
+            rows = airframeRows(bundle, attachments, timeZone),
+          )
+        )
+        bundle.aircraft.engine.forEachIndexed { index, engine ->
+          add(
+            LogbookExportTable(
+              csvPath = "${folder}02_Engine_${index + 1}.csv",
+              sheetName = "${sheetPrefix}02 Engine ${index + 1}",
+              rows = engineRows(bundle, attachments, engine, index, timeZone),
+            )
+          )
+          add(
+            LogbookExportTable(
+              csvPath = "${folder}03_Propeller_${index + 1}.csv",
+              sheetName = "${sheetPrefix}03 Prop ${index + 1}",
+              rows = propellerRows(bundle, attachments, engine.propeller, index, timeZone),
+            )
+          )
+        }
+        if (bundle.aircraft.engine.isEmpty()) {
+          add(
+            LogbookExportTable(
+              csvPath = "${folder}02_Engine_Unknown.csv",
+              sheetName = "${sheetPrefix}02 Engine Unknown",
+              rows = engineRows(bundle, attachments, null, 0, timeZone),
+            )
+          )
+          add(
+            LogbookExportTable(
+              csvPath = "${folder}03_Propeller_Unknown.csv",
+              sheetName = "${sheetPrefix}03 Prop Unknown",
+              rows = propellerRows(bundle, attachments, null, 0, timeZone),
+            )
+          )
+        }
+        add(
+          LogbookExportTable(
+            csvPath = "${folder}10_Compliance.csv",
+            sheetName = "${sheetPrefix}10 Compliance",
+            rows = complianceRows(bundle, timeZone),
+          )
+        )
+        add(
+          LogbookExportTable(
+            csvPath = "${folder}11_Squawks.csv",
+            sheetName = "${sheetPrefix}11 Squawks",
+            rows = squawkRows(bundle, timeZone),
+          )
+        )
+        add(
+          LogbookExportTable(
+            csvPath = "${folder}20_Technicians.csv",
+            sheetName = "${sheetPrefix}20 Technicians",
+            rows = technicianRows(bundle, timeZone),
+          )
+        )
+      }
+    }
+  }
+
   /**
    * Returns the PRD filename for a single-aircraft or fleet export.
    */
@@ -95,6 +180,9 @@ class LogbookExportArchiveBuilder(
     val subject = if (bundles.size == 1) bundles.first().aircraft.safeTailNumber() else "Fleet"
     return "Hopply_Logs_${subject}_$stamp.zip"
   }
+
+  private fun workbookFileName(bundles: List<AircraftBundle>, date: LocalDate): String =
+    fileName(bundles, date).removeSuffix(".zip") + ".xlsx"
 
   private fun aircraftInfoRows(
     bundle: AircraftBundle,

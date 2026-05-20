@@ -1104,7 +1104,7 @@ The questions raised during design review are resolved as follows. New questions
 
 Listed here so the design doc is self-contained:
 
-- No XLSX writing in MVP — CSV in ZIP only.
+- XLSX writing is local-only; no direct Google Sheets API integration.
 - No OAuth-based direct Google Sheets push.
 - Attachment binaries are bundled for IMAGE / PDF / FILE attachments when local or downloadable; failures degrade to textual markers in the CSV and README notes.
 - No PDF rendering.

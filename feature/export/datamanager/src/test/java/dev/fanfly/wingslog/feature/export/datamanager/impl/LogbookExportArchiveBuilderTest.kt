@@ -8,6 +8,8 @@ import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import java.io.ByteArrayInputStream
+import java.util.zip.ZipInputStream
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import org.junit.Test
@@ -75,7 +77,31 @@ class LogbookExportArchiveBuilderTest {
       .doesNotContain("Technician ID")
     assertThat(entries["20_Technicians.csv"]?.bytes?.decodeToString())
       .doesNotContain("Sign-Offs in Export")
+    val workbookEntries = readZipEntries(
+      requireNotNull(entries["Hopply_Logs_N12345_20260519.xlsx"]?.bytes)
+    )
+    assertThat(workbookEntries.keys).containsAtLeast(
+      "[Content_Types].xml",
+      "xl/workbook.xml",
+      "xl/worksheets/sheet1.xml",
+    )
+    assertThat(workbookEntries["xl/workbook.xml"])
+      .contains("<sheet name=\"00 Aircraft Info\"")
+    assertThat(workbookEntries["xl/workbook.xml"])
+      .contains("<sheet name=\"01 Airframe\"")
+    assertThat(workbookEntries["xl/worksheets/sheet2.xml"])
+      .contains("inspection photo.jpg -&gt; attachments/abcd_inspection_photo.jpg")
   }
+
+  private fun readZipEntries(bytes: ByteArray): Map<String, String> =
+    buildMap {
+      ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
+        while (true) {
+          val entry = zip.nextEntry ?: break
+          put(entry.name, zip.readBytes().decodeToString())
+        }
+      }
+    }
 
   private fun aircraftBundle(logs: List<MaintenanceLog>) = AircraftBundle(
     aircraft = Aircraft(
