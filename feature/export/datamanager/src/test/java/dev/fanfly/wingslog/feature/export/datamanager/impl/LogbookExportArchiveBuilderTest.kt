@@ -65,6 +65,16 @@ class LogbookExportArchiveBuilderTest {
       .contains("Export App Version,Hopply 1.0.260519.10 (364)")
     assertThat(entries["README.txt"]?.bytes?.decodeToString())
       .contains("App:       Hopply 1.0.260519.10 (364)")
+    assertThat(entries["01_Airframe.csv"]?.bytes?.decodeToString())
+      .doesNotContain("Log ID")
+    assertThat(entries["10_Compliance.csv"]?.bytes?.decodeToString())
+      .doesNotContain("Task ID")
+    assertThat(entries["11_Squawks.csv"]?.bytes?.decodeToString())
+      .doesNotContain("Squawk ID")
+    assertThat(entries["20_Technicians.csv"]?.bytes?.decodeToString())
+      .doesNotContain("Technician ID")
+    assertThat(entries["20_Technicians.csv"]?.bytes?.decodeToString())
+      .doesNotContain("Sign-Offs in Export")
   }
 
   private fun aircraftBundle(logs: List<MaintenanceLog>) = AircraftBundle(

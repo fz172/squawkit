@@ -1,8 +1,8 @@
-Title,Component,Type,Reference #,Authority,Schedule,Last Complied — Date,Last Complied — Hours,Next Due — Date,Next Due — Hours,Status,One-Time,Notes,Compliance Details,Task ID
-Annual Inspection,Airframe,Routine Inspection,,,Every 12 months,2025-12-18,1241.2,2026-12-18,,OK,No,"FAR 91.409 annual. Required for all aircraft used in Part 91 operations.",,task-001-annual
-100hr Inspection,Engine,Routine Inspection,,,Every 100 engine hours,2024-09-21,1192.4,,1292.4,Overdue,No,"100-hour inspection required when aircraft is operated for hire (FAR 91.409(b)).",,task-002-100hr
-ELT Battery,Airframe,Routine Inspection,,FAR 91.207,Every 24 months,2024-11-15,1206.4,2026-11-15,,Due Soon,No,"FAR 91.207 ELT battery replacement.",,task-003-elt
-Pitot-Static Check,Airframe,Routine Inspection,FAR 91.411,FAA,Every 24 months,2025-03-22,1218.7,2027-03-22,,OK,No,"IFR pitot-static system and altimeter check.","Altimeter, VSI, and ASI must be within tolerance per FAR 91.411.",task-004-pitot
-Transponder Certification,Airframe,Routine Inspection,FAR 91.413,FAA,Every 24 months,,,2025-01-01,,Overdue,No,"Mode A, C, and S transponder check.",,task-005-xpdr
-AD 2019-20-10 — Slick Magneto,Engine,Airworthiness Directive,AD 2019-20-10,FAA,One-time,2025-05-30,1224.6,,,"Complied (one-time)",Yes,"Replace pre-2019 Slick 4376 magneto with overhauled or new unit.","Inspect magneto for cracked distributor block. If cracked, replace with overhauled or new unit before next flight.",task-006-ad-mag
-SB 2024-03 — Door Seal Service,Airframe,Service Bulletin,SB 2024-03,Cessna,On condition,,,,,Overdue,No,"Inspect door seals for deterioration per SB 2024-03.","Replace deteriorated seals with P/N 0510105-1.",task-007-sb-doorseal
+Title,Component,Type,Reference #,Authority,Schedule,Last Complied — Date,Last Complied — Hours,Next Due — Date,Next Due — Hours,Status,One-Time,Notes,Compliance Details
+Annual Inspection,Airframe,Routine Inspection,,,Every 12 months,2025-12-18,1241.2,2026-12-18,,OK,No,"FAR 91.409 annual. Required for all aircraft used in Part 91 operations.",
+100hr Inspection,Engine,Routine Inspection,,,Every 100 engine hours,2024-09-21,1192.4,,1292.4,Overdue,No,"100-hour inspection required when aircraft is operated for hire (FAR 91.409(b)).",
+ELT Battery,Airframe,Routine Inspection,,FAR 91.207,Every 24 months,2024-11-15,1206.4,2026-11-15,,Due Soon,No,"FAR 91.207 ELT battery replacement.",
+Pitot-Static Check,Airframe,Routine Inspection,FAR 91.411,FAA,Every 24 months,2025-03-22,1218.7,2027-03-22,,OK,No,"IFR pitot-static system and altimeter check.","Altimeter, VSI, and ASI must be within tolerance per FAR 91.411."
+Transponder Certification,Airframe,Routine Inspection,FAR 91.413,FAA,Every 24 months,,,2025-01-01,,Overdue,No,"Mode A, C, and S transponder check.",
+AD 2019-20-10 — Slick Magneto,Engine,Airworthiness Directive,AD 2019-20-10,FAA,One-time,2025-05-30,1224.6,,,"Complied (one-time)",Yes,"Replace pre-2019 Slick 4376 magneto with overhauled or new unit.","Inspect magneto for cracked distributor block. If cracked, replace with overhauled or new unit before next flight."
+SB 2024-03 — Door Seal Service,Airframe,Service Bulletin,SB 2024-03,Cessna,On condition,,,,,Overdue,No,"Inspect door seals for deterioration per SB 2024-03.","Replace deteriorated seals with P/N 0510105-1."

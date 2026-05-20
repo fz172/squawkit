@@ -1,9 +1,9 @@
-Date,Airframe Time,Engine 1 Time,Work Description,Inspections,Reference Numbers,Squawks Addressed,Technician,Cert Type,Cert #,Attachments,Log ID
+Date,Airframe Time,Engine 1 Time,Work Description,Inspections,Reference Numbers,Squawks Addressed,Technician,Cert Type,Cert #,Attachments
 2024-08-04,4321.2,1180.2,"Annual inspection completed per FAR 91.409. Airworthy. All squawks resolved.","Annual
 ELT Battery",,"Left landing light inoperative
 Static wick missing – left aileron",Mike Johnson,A&P/IA,4509876,"Annual signoff page → attachments/8f3a_annual_signoff_2024.pdf
-Logbook page photo → attachments/9b21_logbook_page.jpg",log-001-annual-2024
-2024-11-15,4395.8,1206.4,"ELT battery replacement. Replaced battery in ACK E-04 ELT with Panasonic CR123A. Activated briefly (<1 sec) to verify function. Squawk code [unique to aircraft] verified with Unicom. Registration card updated. Next replacement: 24 months.","ELT Battery",,,Jane Smith,A&P,3201234,,log-002-elt-2024
-2025-03-22,4438.1,1218.7,"Pitot-static system check per FAR 91.411. Altimeter, VSI, and ASI tested. All within tolerance. IFR certification current for 24 months.","Pitot-Static Check","FAR 91.411",,Mike Johnson,A&P/IA,4509876,"Pitot-static cert → attachments/c40e_pitot_static_cert.pdf",log-003-pitot-2025
-2025-07-09,4471.5,1228.0,"Right rear door seal replacement. Replaced cabin door seal P/N 0510105-1. Door closes and latches normally. Cabin noise reduced.",,,Right rear door seal air leak,Jane Smith,A&P,3201234,,log-004-doorseal-2025
-2025-12-18,4506.3,1241.2,"Annual inspection completed per FAR 91.409. Airworthy. Pitot-static still current. Compass swing performed.","Annual",,,Mike Johnson,A&P/IA,4509876,"Annual signoff page → attachments/3d17_annual_signoff_2025.pdf",log-005-annual-2025
+Logbook page photo → attachments/9b21_logbook_page.jpg"
+2024-11-15,4395.8,1206.4,"ELT battery replacement. Replaced battery in ACK E-04 ELT with Panasonic CR123A. Activated briefly (<1 sec) to verify function. Squawk code [unique to aircraft] verified with Unicom. Registration card updated. Next replacement: 24 months.","ELT Battery",,,Jane Smith,A&P,3201234,
+2025-03-22,4438.1,1218.7,"Pitot-static system check per FAR 91.411. Altimeter, VSI, and ASI tested. All within tolerance. IFR certification current for 24 months.","Pitot-Static Check","FAR 91.411",,Mike Johnson,A&P/IA,4509876,"Pitot-static cert → attachments/c40e_pitot_static_cert.pdf"
+2025-07-09,4471.5,1228.0,"Right rear door seal replacement. Replaced cabin door seal P/N 0510105-1. Door closes and latches normally. Cabin noise reduced.",,,Right rear door seal air leak,Jane Smith,A&P,3201234,
+2025-12-18,4506.3,1241.2,"Annual inspection completed per FAR 91.409. Airworthy. Pitot-static still current. Compass swing performed.","Annual",,,Mike Johnson,A&P/IA,4509876,"Annual signoff page → attachments/3d17_annual_signoff_2025.pdf"

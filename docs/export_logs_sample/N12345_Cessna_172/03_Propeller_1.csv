@@ -9,5 +9,5 @@ Blade 2 Make,McCauley
 Blade 2 Model,DTM7657
 Blade 2 Serial,B-7657-B
 ,
-Date,Prop Time,Airframe Time,Work Description,Inspections,Reference Numbers,Technician,Cert Type,Cert #,Attachments,Log ID
-2025-10-04,872.6,4490.2,"Propeller dynamic balance performed. Initial vibration: 0.42 IPS. Final vibration: 0.06 IPS. Trim weights installed at clock positions 4 and 9. Log entry in propeller logbook page 12.",,,Mike Johnson,A&P/IA,4509876,"Balance report → attachments/f44a_prop_balance_report.pdf",log-009-propbalance-2025
+Date,Prop Time,Airframe Time,Work Description,Inspections,Reference Numbers,Technician,Cert Type,Cert #,Attachments
+2025-10-04,872.6,4490.2,"Propeller dynamic balance performed. Initial vibration: 0.42 IPS. Final vibration: 0.06 IPS. Trim weights installed at clock positions 4 and 9. Log entry in propeller logbook page 12.",,,Mike Johnson,A&P/IA,4509876,"Balance report → attachments/f44a_prop_balance_report.pdf"

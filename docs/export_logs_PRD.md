@@ -170,13 +170,13 @@ If two selected aircraft share a tail number (legacy data quality issue), the se
 
 ### 4.7 Tab specifications
 
-> **Reference sample:** see `docs/export_logs_sample/N12345_Cessna_172/` for a hand-written set of every CSV in this section populated with realistic data. The sample demonstrates the multi-value newline-in-cell convention, the attachments folder, all status / dismiss-reason values, and the cross-references between tabs (e.g. Squawk `sq-002-oilcap` addressed by Engine log `log-008-oilchange-2026`).
+> **Reference sample:** see `docs/export_logs_sample/N12345_Cessna_172/` for a hand-written set of every CSV in this section populated with realistic data. The sample demonstrates the multi-value newline-in-cell convention, the attachments folder, all status / dismiss-reason values, and the cross-references between tabs.
 
 All tabs share the following conventions:
 
 - **Dates** are `YYYY-MM-DD` in the local time zone the entry was created in. Sortable lex = sortable chronologically.
 - **Times** (airframe / engine / prop hours) are decimal hours to **1 decimal place**, e.g. `1247.3`. Empty when the original log didn't record that component's time.
-- **Identifiers** (`Log ID`, `Task ID`, `Squawk ID`) are the internal UUID strings. These are included so users can cross-reference between tabs.
+- **Internal identifiers are omitted.** CSV tabs do not expose raw database IDs; cross-references are rendered as user-readable names and dates where possible.
 - **Empty cells** for unset optional fields (no `N/A` or `—` literal sentinels).
 - **Multi-value cells** (Inspections, Reference Numbers, Squawks Addressed, Attachments) join entries with a single `\n` (LF) **inside** an RFC 4180–quoted cell. Google Sheets renders these as multi-line cells, one entry per line, which preserves readability and keeps each entry independently filterable. Commas inside an entry never become part of the field separator because the cell is fully quoted. Example raw bytes for a 2-entry Inspections cell: `"Annual\n100hr"` (newline literal between entries, surrounding double quotes are part of the CSV record).
 
@@ -219,7 +219,6 @@ Logs whose `component_type == COMPONENT_AIRFRAME`. Columns:
 | 9 | Cert Type | `technician.certificate_type` rendered (e.g. `A&P`, `IA`, `Repairman`) |
 | 10 | Cert # | `technician.cert_number` |
 | 11 | Attachments | newline-joined `attachment.name → attachments/<file>` entries (one per line); LINK-type rendered as `name → <url>`. See §4.10 for the filename scheme and §4.7 for the multi-value cell convention. |
-| 12 | Log ID | `MaintenanceLog.id` |
 
 Rows ordered **oldest → newest** (paper-logbook order, opposite of the in-app list view which is newest-first).
 
@@ -233,8 +232,8 @@ Make,Lycoming
 Model,O-320-E2D
 Serial,L-12345-78
 ,
-Date,Engine Time,Airframe Time,Work Description,Inspections,Reference Numbers,Squawks Addressed,Technician,Cert Type,Cert #,Attachments,Log ID
-2024-08-04,1180.2,4480.1,"Oil & filter change. SAE 100 added...",100hr,SB 2024-03,,Jane Smith,A&P/IA,3201234,,abc-123
+Date,Engine Time,Airframe Time,Work Description,Inspections,Reference Numbers,Squawks Addressed,Technician,Cert Type,Cert #,Attachments
+2024-08-04,1180.2,4480.1,"Oil & filter change. SAE 100 added...",100hr,SB 2024-03,,Jane Smith,A&P/IA,3201234,
 ...
 ```
 
@@ -256,7 +255,7 @@ Blade 2 Make,McCauley
 Blade 2 Model,DTM7657
 Blade 2 Serial,B-7657-B
 ,
-Date,Prop Time,Airframe Time,Work Description,Inspections,Reference Numbers,Technician,Cert Type,Cert #,Attachments,Log ID
+Date,Prop Time,Airframe Time,Work Description,Inspections,Reference Numbers,Technician,Cert Type,Cert #,Attachments
 ```
 
 Filter: logs where `component_type == COMPONENT_PROPELLER` AND `component_serial` matches the propeller hub serial or any blade serial.
@@ -283,7 +282,6 @@ All `MaintenanceTask` records — active and historical. One row per task. Colum
 | 12 | One-Time | `Yes` / `No` |
 | 13 | Notes | `notes` |
 | 14 | Compliance Details | `compliance_details` |
-| 15 | Task ID | `MaintenanceTask.id` |
 
 Rows ordered **status priority desc, then title asc** (overdue first — the most useful view for an inspector).
 
@@ -300,11 +298,9 @@ Columns:
 | 5 | Component | `component_type` |
 | 6 | Component Serial | `component_serial` |
 | 7 | Status | `Open` / `Addressed` / `Dismissed` |
-| 8 | Addressed By — Log ID | `addressed_by_log_id` |
-| 9 | Addressed By — Date | log date of that linked log entry |
-| 10 | Dismiss Reason | rendered enum (`Obsolete`, `Not Reproducible`, `Duplicate`, `Intended Behavior`) |
-| 11 | Dismissed | `dismissed_at` (date) |
-| 12 | Squawk ID | `Squawk.id` |
+| 8 | Addressed By — Date | log date of that linked log entry |
+| 9 | Dismiss Reason | rendered enum (`Obsolete`, `Not Reproducible`, `Duplicate`, `Intended Behavior`) |
+| 10 | Dismissed | `dismissed_at` (date) |
 
 Rows ordered **created date descending** (newest first — squawks are read forward-in-time more often than logs).
 
@@ -320,10 +316,8 @@ Distinct technicians who signed off any log in scope. Columns:
 | 2 | Cert Type |
 | 3 | Cert # |
 | 4 | Cert Expiration |
-| 5 | Sign-Offs in Export | count of log entries in this export where this technician signed |
-| 6 | Technician ID |
 
-Rows ordered by Sign-Offs descending.
+Rows ordered by technician name.
 
 #### 4.7.8 `00_Fleet_Summary.csv` (multi-aircraft only)
 
@@ -504,7 +498,7 @@ The flow is a single forward-only journey: Settings → Selection → Progress �
 | Log entry's `technician` is missing (legacy data) | Technician columns left blank; `Technicians` tab does not list an entry for the missing person. |
 | Log's `component_serial` doesn't match any current engine/prop serial (component replaced) | Entry is still routed to its `component_type` tab. If the matching component no longer exists, the entry lands in a fallback `02_Engine_Unknown.csv` / `03_Propeller_Unknown.csv` tab so it's not lost. The README explains this. |
 | Empty date range (no rows in range) | All log tabs render headers + zero rows. `Aircraft_Info` notes the empty period. Export still succeeds. |
-| Inspection / Squawk ID references an entity that has been deleted | The referenced title/reference is rendered as `[deleted: <id>]` to preserve the cross-reference without crashing the export. |
+| Inspection / Squawk reference points to an entity that has been deleted | The referenced title/reference is rendered as `[deleted]` to preserve that something was referenced without exposing the internal ID. |
 | Concurrent log edit during export | Export reads a snapshot at start; later edits do not affect the file in progress. |
 | User has zero aircraft in their fleet | The Selection screen renders an empty-state card (`No aircraft to export. Add an aircraft in Fleet to get started.`) instead of the aircraft list. The Export button is hidden. |
 | User clears all aircraft selections | Export button disabled with helper text `Select at least one aircraft`. |

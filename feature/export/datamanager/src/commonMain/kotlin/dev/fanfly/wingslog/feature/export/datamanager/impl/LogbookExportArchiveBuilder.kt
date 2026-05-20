@@ -144,7 +144,6 @@ class LogbookExportArchiveBuilder(
           "Cert Type",
           "Cert #",
           "Attachments",
-          "Log ID",
         )
       )
       bundle.logs
@@ -178,7 +177,6 @@ class LogbookExportArchiveBuilder(
           "Cert Type",
           "Cert #",
           "Attachments",
-          "Log ID",
         )
       )
       val serial = engine?.serial.orEmpty()
@@ -221,7 +219,6 @@ class LogbookExportArchiveBuilder(
           "Cert Type",
           "Cert #",
           "Attachments",
-          "Log ID",
         )
       )
       val serial = hub?.serial.orEmpty()
@@ -244,7 +241,6 @@ class LogbookExportArchiveBuilder(
               technician.certTypeLabel(),
               technician?.cert_number.orEmpty(),
               log.attachments.attachmentCell(attachments),
-              log.id,
             )
           )
         }
@@ -268,7 +264,6 @@ class LogbookExportArchiveBuilder(
           "One-Time",
           "Notes",
           "Compliance Details",
-          "Task ID",
         )
       )
       bundle.tasks.forEach { task ->
@@ -290,7 +285,6 @@ class LogbookExportArchiveBuilder(
             if (task.is_one_time) "Yes" else "No",
             task.notes.orEmpty(),
             task.compliance_details.orEmpty(),
-            task.id.orEmpty(),
           )
         )
       }
@@ -307,11 +301,9 @@ class LogbookExportArchiveBuilder(
           "Component",
           "Component Serial",
           "Status",
-          "Addressed By - Log ID",
           "Addressed By - Date",
           "Dismiss Reason",
           "Dismissed",
-          "Squawk ID",
         )
       )
       bundle.squawks.forEach { squawk ->
@@ -325,11 +317,9 @@ class LogbookExportArchiveBuilder(
             squawk.component_type.label(),
             squawk.component_serial,
             squawk.statusLabel(),
-            squawk.addressed_by_log_id,
             addressedLog?.timestamp.date(timeZone),
             squawk.dismiss_reason.label(),
             squawk.dismissed_at.date(timeZone),
-            squawk.id,
           )
         )
       }
@@ -337,10 +327,7 @@ class LogbookExportArchiveBuilder(
 
   private fun technicianRows(bundle: AircraftBundle, timeZone: TimeZone): List<List<String>> =
     buildList {
-      add(listOf("Name", "Cert Type", "Cert #", "Cert Expiration", "Sign-Offs in Export", "Technician ID"))
-      val signOffs = bundle.logs.mapNotNull { it.technician_id.takeIf(String::isNotBlank) }
-        .groupingBy { it }
-        .eachCount()
+      add(listOf("Name", "Cert Type", "Cert #", "Cert Expiration"))
       bundle.techniciansById.values.sortedBy { it.name }.forEach { technician ->
         add(
           listOf(
@@ -352,8 +339,6 @@ class LogbookExportArchiveBuilder(
             } else {
               technician.cert_expiration.date(timeZone)
             },
-            (signOffs[technician.id] ?: 0).toString(),
-            technician.id,
           )
         )
       }
@@ -437,7 +422,6 @@ class LogbookExportArchiveBuilder(
       technician.certTypeLabel(),
       technician?.cert_number.orEmpty(),
       log.attachments.attachmentCell(attachments),
-      log.id,
     )
   }
 
@@ -451,14 +435,14 @@ class LogbookExportArchiveBuilder(
     technician?.takeIf { it.name.isNotBlank() } ?: bundle.techniciansById[technician_id]
 
   private fun MaintenanceLog.inspectionTitles(bundle: AircraftBundle): String =
-    inspection_ids.joinToString("\n") { id -> bundle.tasksById[id]?.title ?: "[deleted: $id]" }
+    inspection_ids.joinToString("\n") { id -> bundle.tasksById[id]?.title ?: "[deleted]" }
 
   private fun MaintenanceLog.referenceNumbers(bundle: AircraftBundle): String =
     inspection_ids.mapNotNull { id -> bundle.tasksById[id]?.reference_number?.takeIf(String::isNotBlank) }
       .joinToString("\n")
 
   private fun MaintenanceLog.squawkTitles(bundle: AircraftBundle): String =
-    squawk_ids.joinToString("\n") { id -> bundle.squawksById[id]?.title ?: "[deleted: $id]" }
+    squawk_ids.joinToString("\n") { id -> bundle.squawksById[id]?.title ?: "[deleted]" }
 
   private fun List<Attachment>.attachmentCell(manifest: AttachmentExportManifest): String =
     joinToString("\n") { attachment ->
@@ -484,10 +468,9 @@ class LogbookExportArchiveBuilder(
         }
         rule.engine_hour_rule != null -> "Every ${rule.engine_hour_rule!!.interval_hours.formatHours()} engine hours"
         rule.on_condition_rule != null -> rule.on_condition_rule!!.description.ifBlank { "On condition" }
-        rule.linked_rule != null -> {
-          val parentId = rule.linked_rule!!.parent_inspection_id
-          "Linked to ${bundle.tasksById[parentId]?.title ?: "[deleted: $parentId]"}"
-        }
+        rule.linked_rule != null -> "Linked to ${
+          bundle.tasksById[rule.linked_rule!!.parent_inspection_id]?.title ?: "[deleted]"
+        }"
         rule.immediate_rule != null -> "Immediate"
         else -> "Unknown"
       }

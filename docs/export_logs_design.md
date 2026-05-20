@@ -377,7 +377,7 @@ For an airframe / engine / prop row's multi-value columns:
 private const val CELL_SEP = "\n"   // newline-joined inside an RFC-4180-quoted cell
 
 val inspectionTitles = log.inspection_ids
-  .map { id -> bundle.tasksById[id]?.title ?: "[deleted: $id]" }
+  .map { id -> bundle.tasksById[id]?.title ?: "[deleted]" }
   .joinToString(CELL_SEP)
 
 val referenceNumbers = log.inspection_ids
@@ -385,7 +385,7 @@ val referenceNumbers = log.inspection_ids
   .joinToString(CELL_SEP)
 
 val squawkTitles = log.squawk_ids
-  .map { id -> bundle.squawksById[id]?.title ?: "[deleted: $id]" }
+  .map { id -> bundle.squawksById[id]?.title ?: "[deleted]" }
   .joinToString(CELL_SEP)
 
 val attachments = log.attachments.map { att -> AttachmentCell.format(att, bundle.attachmentPaths) }
@@ -982,8 +982,8 @@ modules(
 | Aircraft has zero logs / squawks | Tab CSVs still emitted with header row only — `LogbookExportWriter` writes the header unconditionally and zero data rows. |
 | Aircraft has no engines / props | `bundle.aircraft.engine` empty → `forEachIndexed` no-ops → tabs not emitted. |
 | Orphaned engine/prop serial (component replaced) | Routed to `02_Engine_Unknown.csv` / `03_Propeller_Unknown.csv`. README explains. |
-| Deleted task referenced by `inspection_ids` | Title cell rendered as `[deleted: <id>]`; reference number omitted. |
-| Deleted squawk referenced by `squawk_ids` | Same: `[deleted: <id>]`. |
+| Deleted task referenced by `inspection_ids` | Title cell rendered as `[deleted]`; reference number omitted. |
+| Deleted squawk referenced by `squawk_ids` | Same: `[deleted]`. |
 | Cancel mid-export | Orchestrator's `finally` deletes `<file>.partial`; ViewModel restores last `Configuring`. |
 | Disk full / write error | Orchestrator emits `Error`; partial file deleted. UI shows `Error` state with retry. |
 | Filename collision (same day) | `SystemFileSystem.atomicMove` overwrites; no prompt. |
