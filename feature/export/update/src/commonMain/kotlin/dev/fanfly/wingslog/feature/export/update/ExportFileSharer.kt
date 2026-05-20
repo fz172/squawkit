@@ -3,13 +3,13 @@ package dev.fanfly.wingslog.feature.export.update
 import androidx.compose.runtime.Composable
 
 /**
- * Shares a completed export archive through the platform share surface.
+ * Opens a platform email draft for a completed export archive.
  */
 interface ExportFileSharer {
   /**
-   * Returns true when the platform accepted the share request.
+   * Returns true when the platform accepted the email draft request.
    */
-  fun share(filePath: String, chooserTitle: String): Boolean
+  fun share(filePath: String, chooserTitle: String, subject: String, body: String): Boolean
 }
 
 /**

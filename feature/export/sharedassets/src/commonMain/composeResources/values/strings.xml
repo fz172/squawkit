@@ -31,13 +31,21 @@
 %2$s
 
 %3$s</string>
-  <string name="export_success_instructions">Share this ZIP to yourself, unzip it, then open README.txt for import steps.</string>
+  <string name="export_success_instructions">Email this ZIP to yourself, unzip it, then open README.txt for import steps.</string>
   <string name="export_stub_preview_file_name">Hopply_Logs_preview.zip</string>
   <string name="export_stub_preview_location">Preview only</string>
   <string name="export_location_downloads_hopply">Saved to Downloads/Hopply</string>
   <string name="export_location_files_hopply">Saved to Files → Hopply</string>
-  <string name="export_share">Share</string>
-  <string name="export_share_title">Share export</string>
+  <string name="export_share">Email</string>
+  <string name="export_share_title">Email export</string>
+  <string name="export_email_subject">Hopply logbook export: %1$s</string>
+  <string name="export_email_body">Hi,
+
+Your Hopply logbook export is attached.
+
+To use it, save the ZIP file, unzip it, and open README.txt for import steps. The ZIP includes an XLSX workbook, CSV files, and any available attachments.
+
+Thank you for choosing Hopply.</string>
   <string name="export_error_title">Export failed</string>
   <string name="export_error_body">The export could not be completed. Try again.</string>
 </resources>

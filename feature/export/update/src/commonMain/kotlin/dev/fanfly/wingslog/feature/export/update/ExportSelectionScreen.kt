@@ -72,6 +72,8 @@ import wingslog.feature.export.sharedassets.generated.resources.export_date_rang
 import wingslog.feature.export.sharedassets.generated.resources.export_error_body
 import wingslog.feature.export.sharedassets.generated.resources.export_error_title
 import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_details_incomplete
+import wingslog.feature.export.sharedassets.generated.resources.export_email_body
+import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_log_count
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_body
@@ -112,7 +114,7 @@ fun ExportSelectionScreen(
   onCustomEndChange: (LocalDate) -> Unit,
   onExport: () -> Unit,
   onCancel: () -> Unit,
-  onShareExport: (String, String) -> Unit,
+  onShareExport: (String, String, String, String) -> Unit,
   onDone: () -> Unit,
   onRetry: () -> Unit,
 ) {
@@ -461,7 +463,7 @@ private fun ExportProgressStep.label(): String = when (this) {
 private fun SuccessContent(
   state: ExportUiState.Success,
   modifier: Modifier,
-  onShare: (String, String) -> Unit,
+  onShare: (String, String, String, String) -> Unit,
   onDone: () -> Unit,
 ) {
   val fileName = state.fileName.ifBlank {
@@ -490,7 +492,9 @@ private fun SuccessContent(
   ) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
       val shareTitle = stringResource(Res.string.export_share_title)
-      TextButton(onClick = { onShare(state.filePath, shareTitle) }) {
+      val emailSubject = stringResource(Res.string.export_email_subject, fileName)
+      val emailBody = stringResource(Res.string.export_email_body)
+      TextButton(onClick = { onShare(state.filePath, shareTitle, emailSubject, emailBody) }) {
         Text(stringResource(Res.string.export_share).uppercase())
       }
       Button(onClick = onDone) {
