@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.export.update.viewmodel
 
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
+import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import kotlinx.datetime.LocalDate
 
@@ -14,6 +15,7 @@ sealed interface ExportUiState {
   data class Configuring(
     val aircraft: List<AircraftSelectionRow> = emptyList(),
     val selectedAircraftIds: Set<String> = emptySet(),
+    val formats: Set<ExportFormat> = ExportFormat.ALL,
     val dateRange: DateRangeOption = DateRangeOption.AllTime,
     val customStart: LocalDate,
     val customEnd: LocalDate,
@@ -22,10 +24,11 @@ sealed interface ExportUiState {
     val isLoadingAircraft: Boolean = true,
   ) : ExportUiState
 
-  data class Running(val step: ExportProgressStep, val percent: Int) : ExportUiState
+  data class Running(val step: ExportProgressStep, val percent: Int) :
+    ExportUiState
 
   /**
-   * Completed export details shown after the archive is saved.
+   * Completed export details shown on the result screen after the archive is saved.
    */
   data class Success(
     val fileName: String,
@@ -33,6 +36,11 @@ sealed interface ExportUiState {
     val displayLocationKind: ExportDisplayLocation,
     val filePath: String,
     val sizeBytes: Long,
+    val formats: Set<ExportFormat>,
+    val selectedTailNumbers: List<String>,
+    val dateRange: DateRangeOption,
+    val customStart: LocalDate,
+    val customEnd: LocalDate,
   ) : ExportUiState
 
   data class Error(val message: String) : ExportUiState

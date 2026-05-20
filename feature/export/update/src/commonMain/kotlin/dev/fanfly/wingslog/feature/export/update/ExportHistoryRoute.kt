@@ -18,7 +18,8 @@ fun ExportHistoryRoute(
   ExportHistoryScreen(
     state = state,
     onNavigateBack = { navController.popBackStack() },
+    onNew = { navController.popBackStack() },
     onShareExport = exportFileSharer::share,
-    onDelete = { record -> viewModel.onDelete(record.filePath) },
+    onDelete = { record -> viewModel.onDelete(record.file_path) },
   )
 }

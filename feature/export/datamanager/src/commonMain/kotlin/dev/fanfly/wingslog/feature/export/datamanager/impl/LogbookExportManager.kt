@@ -1,9 +1,13 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.export.ExportRecord
+import dev.fanfly.wingslog.export.ExportRecordAircraft
+import dev.fanfly.wingslog.export.ExportRecordDateRange
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
+import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
-import dev.fanfly.wingslog.feature.export.datamanager.ExportRecord
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -60,6 +64,10 @@ class LogbookExportManager(
 
     emit(ExportProgress.Running(step = ExportProgressStep.SAVING_FILE, percent = 95))
     val saved = exportFileStore.writeZip(fileName, zipBytes)
+    // Persist the full scope so export history can rediscover it without parsing the file name.
+    exportFileStore.saveRecord(
+      buildRecord(request, bundles, saved, createdAtEpochMillis = clock.now().toEpochMilliseconds()),
+    )
     emit(
       ExportProgress.Success(
         filePath = saved.filePath,
@@ -76,4 +84,37 @@ class LogbookExportManager(
 
   override suspend fun deleteExport(filePath: String): Boolean =
     exportFileStore.deleteExport(filePath)
+
+  private fun buildRecord(
+    request: ExportRequest,
+    bundles: List<AircraftBundle>,
+    saved: ExportedFile,
+    createdAtEpochMillis: Long,
+  ): ExportRecord = ExportRecord(
+    file_path = saved.filePath,
+    file_name = saved.fileName,
+    size_bytes = saved.sizeBytes,
+    created_at_epoch_millis = createdAtEpochMillis,
+    display_location = saved.displayLocationKind.name,
+    formats = ExportFormat.entries.filter { it in request.formats }.map { it.name },
+    date_range = request.dateRange.toRecordDateRange(),
+    aircraft = bundles.map { bundle ->
+      ExportRecordAircraft(
+        tail_number = bundle.aircraft.tail_number,
+        make_model = listOf(bundle.aircraft.make, bundle.aircraft.model)
+          .filter { it.isNotBlank() }
+          .joinToString(" "),
+      )
+    },
+  )
+
+  private fun ExportDateRange.toRecordDateRange(): ExportRecordDateRange = when (this) {
+    ExportDateRange.AllTime -> ExportRecordDateRange(kind = "ALL_TIME")
+    is ExportDateRange.LastNMonths -> ExportRecordDateRange(kind = "LAST_N_MONTHS", months = months)
+    is ExportDateRange.Custom -> ExportRecordDateRange(
+      kind = "CUSTOM",
+      custom_start = start.toString(),
+      custom_end = endInclusive.toString(),
+    )
+  }
 }

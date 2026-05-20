@@ -64,12 +64,23 @@ class LogbookExportAggregator(
         if (request.includeOpenSquawks) squawks else squawks.filter { it.isClosed() }
       }
       .sortedBy { it.created_at?.getEpochSecond() ?: Long.MIN_VALUE }
+    // Tasks are a recurring program, not dated events, so a date range scopes them to the work
+    // actually recorded in that window: keep a task only if an in-range log complied with it.
+    // "All time" keeps the full program.
+    val tasksInRange = if (request.dateRange is ExportDateRange.AllTime) {
+      allTasks
+    } else {
+      val workedOnTaskIds = logsInRange.flatMap { it.inspection_ids }.toSet()
+      allTasks.filter { it.id in workedOnTaskIds }
+    }
     val techniciansById = resolveTechnicians(logsInRange)
-    val dueByTaskId = allTasks.associate { task ->
+    // Next-due is a forward-looking fact, so it is computed from the full history; last-complied
+    // reflects the in-range compliance shown alongside the task.
+    val dueByTaskId = tasksInRange.associate { task ->
       task.id to taskDueManager.computeNextDue(task, allLogs, allTasks)
     }
-    val lastCompliedByTaskId = allTasks.associate { task ->
-      task.id to allLogs
+    val lastCompliedByTaskId = tasksInRange.associate { task ->
+      task.id to logsInRange
         .filter { log -> task.id in log.inspection_ids }
         .maxByOrNull { log -> log.timestamp?.getEpochSecond() ?: Long.MIN_VALUE }
     }.filterValues { it != null }.mapValues { (_, log) -> log!! }
@@ -77,10 +88,12 @@ class LogbookExportAggregator(
     AircraftBundle(
       aircraft = aircraft,
       logs = logsInRange,
-      tasks = allTasks,
+      tasks = tasksInRange,
       dueByTaskId = dueByTaskId,
       lastCompliedByTaskId = lastCompliedByTaskId,
       squawks = squawksInRange,
+      // Full map so log rows can still resolve inspection titles, references, and linked schedules
+      // for tasks that fall outside the displayed list.
       tasksById = allTasks.associateBy { it.id },
       squawksById = allSquawks.associateBy { it.id },
       techniciansById = techniciansById,

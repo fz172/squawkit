@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res
@@ -21,6 +22,7 @@ fun WingsLogTopAppBar(
   title: String,
   onBackClick: () -> Unit,
   scrollBehavior: TopAppBarScrollBehavior? = null,
+  actions: @Composable RowScope.() -> Unit = {},
 ) {
   TopAppBar(
     title = { Text(text = title) },
@@ -32,6 +34,7 @@ fun WingsLogTopAppBar(
         )
       }
     },
+    actions = actions,
     scrollBehavior = scrollBehavior,
     colors = TopAppBarDefaults.topAppBarColors(
       containerColor = MaterialTheme.colorScheme.background,

@@ -6,13 +6,20 @@ import android.content.Context
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.core.net.toUri
+import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
-import dev.fanfly.wingslog.feature.export.datamanager.ExportRecord
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.IOException
 
 actual class ExportFileStore(private val context: Context) {
+  // App-private index of export metadata. Survives alongside the user-visible archives in
+  // Downloads/Hopply; the archives are the source of truth for existence, this is the source of
+  // truth for the scope (formats / date range / aircraft) that can't be read back off the file.
+  private val indexFile: File
+    get() = File(context.filesDir, "export_record_index.pb")
+
   // Writes through MediaStore so the archive lands in the user-visible Downloads/Hopply
   // folder without requiring storage permissions on Android 10+ (scoped storage).
   actual suspend fun writeZip(fileName: String, bytes: ByteArray): ExportedFile =
@@ -45,45 +52,67 @@ actual class ExportFileStore(private val context: Context) {
       )
     }
 
+  actual suspend fun saveRecord(record: ExportRecord): Unit =
+    withContext(Dispatchers.IO) {
+      writeIndex(ExportRecordManifest.upsert(readIndex(), record))
+    }
+
   actual suspend fun listExports(): List<ExportRecord> =
     withContext(Dispatchers.IO) {
-      val collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-      val projection = arrayOf(
-        MediaStore.Downloads._ID,
-        MediaStore.Downloads.DISPLAY_NAME,
-        MediaStore.Downloads.SIZE,
-        MediaStore.Downloads.DATE_ADDED,
-      )
-      val selection = "${MediaStore.Downloads.RELATIVE_PATH} LIKE ?"
-      val selectionArgs = arrayOf("%${Environment.DIRECTORY_DOWNLOADS}/Hopply/%")
-      val sortOrder = "${MediaStore.Downloads.DATE_ADDED} DESC"
-
-      val records = mutableListOf<ExportRecord>()
-      context.contentResolver.query(collection, projection, selection, selectionArgs, sortOrder)
-        ?.use { cursor ->
-          val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID)
-          val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads.DISPLAY_NAME)
-          val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads.SIZE)
-          val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads.DATE_ADDED)
-          while (cursor.moveToNext()) {
-            val id = cursor.getLong(idColumn)
-            records += ExportRecord(
-              filePath = ContentUris.withAppendedId(collection, id).toString(),
-              fileName = cursor.getString(nameColumn),
-              sizeBytes = cursor.getLong(sizeColumn),
-              // DATE_ADDED is stored in seconds since the epoch.
-              createdAtEpochMillis = cursor.getLong(dateColumn) * 1_000L,
-              displayLocationKind = ExportDisplayLocation.DOWNLOADS_HOPPLY,
-            )
-          }
-        }
-      records
+      val reconciled = ExportRecordManifest.reconcile(readIndex(), discoverArchives())
+      writeIndex(reconciled)
+      reconciled
     }
 
   actual suspend fun deleteExport(filePath: String): Boolean =
     withContext(Dispatchers.IO) {
-      runCatching {
+      val removed = runCatching {
         context.contentResolver.delete(filePath.toUri(), null, null) > 0
       }.getOrDefault(false)
+      writeIndex(ExportRecordManifest.remove(readIndex(), filePath))
+      removed
     }
+
+  private fun discoverArchives(): List<ExportRecord> {
+    val collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+    val projection = arrayOf(
+      MediaStore.Downloads._ID,
+      MediaStore.Downloads.DISPLAY_NAME,
+      MediaStore.Downloads.SIZE,
+      MediaStore.Downloads.DATE_ADDED,
+    )
+    val selection = "${MediaStore.Downloads.RELATIVE_PATH} LIKE ?"
+    val selectionArgs = arrayOf("%${Environment.DIRECTORY_DOWNLOADS}/Hopply/%")
+    val sortOrder = "${MediaStore.Downloads.DATE_ADDED} DESC"
+
+    val records = mutableListOf<ExportRecord>()
+    context.contentResolver.query(collection, projection, selection, selectionArgs, sortOrder)
+      ?.use { cursor ->
+        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID)
+        val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads.DISPLAY_NAME)
+        val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads.SIZE)
+        val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads.DATE_ADDED)
+        while (cursor.moveToNext()) {
+          val id = cursor.getLong(idColumn)
+          records += ExportRecord(
+            file_path = ContentUris.withAppendedId(collection, id).toString(),
+            file_name = cursor.getString(nameColumn),
+            size_bytes = cursor.getLong(sizeColumn),
+            // DATE_ADDED is stored in seconds since the epoch.
+            created_at_epoch_millis = cursor.getLong(dateColumn) * 1_000L,
+            display_location = ExportDisplayLocation.DOWNLOADS_HOPPLY.name,
+          )
+        }
+      }
+    return records
+  }
+
+  private fun readIndex(): List<ExportRecord> =
+    runCatching { indexFile.takeIf { it.exists() }?.readBytes() }
+      .getOrNull()
+      .let(ExportRecordManifest::decode)
+
+  private fun writeIndex(records: List<ExportRecord>) {
+    runCatching { indexFile.writeBytes(ExportRecordManifest.encode(records)) }
+  }
 }

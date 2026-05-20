@@ -1,59 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="feature_name_export_logs">Export logs</string>
+
+  <!-- Setup: report formats -->
+  <string name="export_formats_section">Report formats</string>
+  <string name="export_format_pdf_sub">Print-ready</string>
+  <string name="export_format_csv_sub">Plain text</string>
+  <string name="export_format_xlsx_sub">Spreadsheet</string>
+  <string name="export_formats_helper">%1$s bundled in a ZIP with your attached files.</string>
+  <string name="export_formats_helper_empty">Pick at least one report format.</string>
+  <string name="export_format_pick_one">Pick at least one format</string>
+
+  <!-- Setup: aircraft -->
   <string name="export_aircraft_section">Aircraft</string>
-  <string name="export_date_range_section">Date range</string>
   <string name="export_select_all">Select all</string>
   <string name="export_clear_all">Clear all</string>
-  <string name="export_selection_summary">%1$d of %2$d aircraft selected</string>
   <string name="export_untitled_aircraft">Untitled aircraft</string>
   <string name="export_aircraft_details_incomplete">Aircraft details incomplete</string>
   <string name="export_no_aircraft_title">No aircraft to export</string>
   <string name="export_no_aircraft_body">Add an aircraft in Fleet to get started.</string>
-  <string name="export_log_count">%1$d logs</string>
+
+  <!-- Setup: date range -->
+  <string name="export_date_range_section">Date range</string>
   <string name="export_all_time">All time</string>
   <string name="export_last_12_months">Last 12 months</string>
+  <string name="export_last_n_months">Last %1$d months</string>
   <string name="export_custom">Custom</string>
   <string name="export_custom_start_date">Start date</string>
   <string name="export_custom_end_date">End date</string>
-  <string name="export_primary_action">Export · ~%1$s</string>
+
+  <!-- Setup: footer -->
+  <string name="export_footer_aircraft_count">%1$d aircraft</string>
+  <string name="export_estimated_size">~%1$s</string>
+  <string name="export_primary_action">Export ZIP</string>
+
+  <!-- Sizes -->
   <string name="export_size_zero_kb">0 KB</string>
   <string name="export_size_kb">%1$s KB</string>
   <string name="export_size_mb">%1$s MB</string>
-  <string name="export_select_aircraft_helper">Select at least one aircraft</string>
+
+  <!-- Running -->
   <string name="export_running_title">Preparing export</string>
   <string name="export_progress_collecting_data">Collecting aircraft data...</string>
   <string name="export_progress_building_archive">Building archive...</string>
   <string name="export_progress_compressing_archive">Compressing files...</string>
   <string name="export_progress_saving_file">Saving export...</string>
-  <string name="export_success_title">Export ready</string>
-  <string name="export_success_body">%1$s
-%2$s
 
-%3$s</string>
-  <string name="export_success_instructions">Email this ZIP to yourself, unzip it, then open README.txt for import steps.</string>
+  <!-- Result: success -->
+  <string name="export_success_title">Export ready</string>
   <string name="export_stub_preview_file_name">Hopply_Logs_preview.zip</string>
-  <string name="export_stub_preview_location">Preview only</string>
-  <string name="export_location_downloads_hopply">Saved to Downloads/Hopply</string>
-  <string name="export_location_files_hopply">Saved to Files → Hopply</string>
-  <string name="export_share">Email</string>
-  <string name="export_share_title">Email export</string>
+  <string name="export_stub_preview_location">Saved to this device</string>
+  <string name="export_location_downloads_hopply">Saved to Downloads · Hopply</string>
+  <string name="export_location_files_hopply">Saved to Files · Hopply</string>
+  <string name="export_receipt_file_subtitle">%1$s · ZIP containing %2$s + attachments</string>
+  <string name="export_receipt_aircraft">Aircraft</string>
+  <string name="export_receipt_range">Range</string>
+  <string name="export_receipt_attachments">Attachments</string>
+  <string name="export_receipt_attachments_included">Included</string>
+  <string name="export_aircraft_summary_more">%1$s + %2$d more</string>
+
+  <!-- Result: actions -->
+  <string name="export_share">Share</string>
+  <string name="export_view_exports">View exports</string>
+  <string name="export_share_title">Share export</string>
   <string name="export_email_subject">Hopply logbook export: %1$s</string>
   <string name="export_email_body">Hi,
 
 Your Hopply logbook export is attached.
 
-To use it, save the ZIP file, unzip it, and open README.txt for import steps. The ZIP includes an XLSX workbook, CSV files, and any available attachments.
+To use it, save the ZIP file and unzip it. The ZIP contains your selected report documents plus any available attachments, and a README.txt with import steps.
 
 Thank you for choosing Hopply.</string>
+
+  <!-- Result: error -->
   <string name="export_error_title">Export failed</string>
-  <string name="export_error_body">The export could not be completed. Try again.</string>
+  <string name="export_error_subtitle">Something went wrong while building the ZIP. Try again in a moment.</string>
+  <string name="export_error_details">If this keeps happening, contact support@fanfly.dev so we can look into it.</string>
+  <string name="export_try_again">Try again</string>
+  <string name="export_back_to_setup">Back to setup</string>
+
+  <!-- History -->
   <string name="export_history_action">Export history</string>
   <string name="export_history_title">Export history</string>
   <string name="export_history_empty_title">No exports yet</string>
-  <string name="export_history_empty_body">Exports you generate will appear here so you can email or remove them later.</string>
+  <string name="export_history_empty_body">Generate a printable PDF or spreadsheet of your maintenance logs to share with your mechanic, IA, or insurance.</string>
+  <string name="export_history_new">New export</string>
   <string name="export_history_item_meta">%1$s · %2$s</string>
-  <string name="export_history_actions">Actions</string>
   <string name="export_history_delete">Delete</string>
   <string name="export_history_delete_confirm_title">Delete export?</string>
   <string name="export_history_delete_confirm_body">%1$s will be permanently removed from this device.</string>

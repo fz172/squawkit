@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType.ATTACHMENT_TYPE_LINK
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
+import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
@@ -21,7 +22,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
@@ -44,7 +44,8 @@ class ExportViewModel(
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
 
-  private val today = clock.now().toLocalDateTime(timeZone).date
+  private val today = clock.now()
+    .toLocalDateTime(timeZone).date
   private val defaultConfiguring = ExportUiState.Configuring(
     customStart = today.minus(DatePeriod(months = 12)),
     customEnd = today,
@@ -76,9 +77,10 @@ class ExportViewModel(
                   taskDataManager.observeTasks(item.id),
                   squawkManager.observeSquawks(item.id),
                 ) { logs, tasks, squawks ->
-                  val attachmentSizeBytes = logs.sumOf { it.attachments.exportedBytes() } +
-                    tasks.sumOf { it.attachments.exportedBytes() } +
-                    squawks.sumOf { it.attachments.exportedBytes() }
+                  val attachmentSizeBytes =
+                    logs.sumOf { it.attachments.exportedBytes() } +
+                      tasks.sumOf { it.attachments.exportedBytes() } +
+                      squawks.sumOf { it.attachments.exportedBytes() }
                   item.toSelectionRow(
                     logCount = logs.size,
                     attachmentSizeBytes = attachmentSizeBytes,
@@ -90,8 +92,10 @@ class ExportViewModel(
         }
         .collect { rows ->
           _state.update { current ->
-            val currentConfig = current as? ExportUiState.Configuring ?: lastConfiguring
-            val rowIds = rows.map { it.aircraftId }.toSet()
+            val currentConfig =
+              current as? ExportUiState.Configuring ?: lastConfiguring
+            val rowIds = rows.map { it.aircraftId }
+              .toSet()
             val selectedIds = if (!hasInitializedSelection) {
               hasInitializedSelection = true
               rowIds
@@ -102,10 +106,14 @@ class ExportViewModel(
               aircraft = rows,
               selectedAircraftIds = selectedIds,
               isLoadingAircraft = false,
-            ).recomputeEstimates()
-          }.also {
-            (_state.value as? ExportUiState.Configuring)?.let { lastConfiguring = it }
+            )
+              .recomputeEstimates()
           }
+            .also {
+              (_state.value as? ExportUiState.Configuring)?.let {
+                lastConfiguring = it
+              }
+            }
         }
     }
   }
@@ -116,22 +124,42 @@ class ExportViewModel(
     } else {
       current.selectedAircraftIds + id
     }
-    current.copy(selectedAircraftIds = selected).recomputeEstimates()
+    current.copy(selectedAircraftIds = selected)
+      .recomputeEstimates()
   }
 
   fun onSelectAll() = reduceConfiguring { current ->
     current.copy(
-      selectedAircraftIds = current.aircraft.map { it.aircraftId }.toSet()
-    ).recomputeEstimates()
+      selectedAircraftIds = current.aircraft.map { it.aircraftId }
+        .toSet()
+    )
+      .recomputeEstimates()
   }
 
   fun onClearAll() = reduceConfiguring { current ->
-    current.copy(selectedAircraftIds = emptySet()).recomputeEstimates()
+    current.copy(selectedAircraftIds = emptySet())
+      .recomputeEstimates()
   }
 
-  fun onDateRangeChange(option: DateRangeOption) = reduceConfiguring { current ->
-    current.copy(dateRange = option).recomputeEstimates()
+  /**
+   * Toggles a report format, keeping at least one selected so the export always produces a document.
+   */
+  fun onToggleFormat(format: ExportFormat) = reduceConfiguring { current ->
+    val next = if (format in current.formats) {
+      if (current.formats.size == 1) return@reduceConfiguring current
+      current.formats - format
+    } else {
+      current.formats + format
+    }
+    current.copy(formats = next)
+      .recomputeEstimates()
   }
+
+  fun onDateRangeChange(option: DateRangeOption) =
+    reduceConfiguring { current ->
+      current.copy(dateRange = option)
+        .recomputeEstimates()
+    }
 
   /**
    * Updates the inclusive custom start date and keeps the custom range valid.
@@ -142,7 +170,8 @@ class ExportViewModel(
       dateRange = DateRangeOption.Custom,
       customStart = date,
       customEnd = end,
-    ).recomputeEstimates()
+    )
+      .recomputeEstimates()
   }
 
   /**
@@ -154,7 +183,8 @@ class ExportViewModel(
       dateRange = DateRangeOption.Custom,
       customStart = start,
       customEnd = date,
-    ).recomputeEstimates()
+    )
+      .recomputeEstimates()
   }
 
   /**
@@ -166,9 +196,10 @@ class ExportViewModel(
     lastConfiguring = configuring
     exportJob?.cancel()
     exportJob = viewModelScope.launch {
-      exportManager.exportLogs(configuring.toRequest()).collect { progress ->
-        _state.value = progress.toUiState()
-      }
+      exportManager.exportLogs(configuring.toRequest())
+        .collect { progress ->
+          _state.value = progress.toUiState()
+        }
     }
   }
 
@@ -213,6 +244,7 @@ class ExportViewModel(
       DateRangeOption.Custom -> ExportDateRange.Custom(customStart, customEnd)
     },
     includeOpenSquawks = true,
+    formats = formats,
   )
 
   private fun ExportProgress.toUiState(): ExportUiState = when (this) {
@@ -223,7 +255,15 @@ class ExportViewModel(
       displayLocationKind = displayLocationKind,
       filePath = filePath,
       sizeBytes = sizeBytes,
+      formats = lastConfiguring.formats,
+      selectedTailNumbers = lastConfiguring.aircraft
+        .filter { it.aircraftId in lastConfiguring.selectedAircraftIds }
+        .map { it.tailNumber },
+      dateRange = lastConfiguring.dateRange,
+      customStart = lastConfiguring.customStart,
+      customEnd = lastConfiguring.customEnd,
     )
+
     is ExportProgress.Error -> ExportUiState.Error(message)
   }
 
@@ -231,11 +271,17 @@ class ExportViewModel(
     val selectedRows = aircraft.filter { it.aircraftId in selectedAircraftIds }
     val logCount = selectedRows.sumOf { it.logCount }
     val attachmentBytes = selectedRows.sumOf { it.attachmentSizeBytes }
-    val csvBytes = 64_000L + (logCount * 600L) + (selectedRows.size * 8_000L)
-    val pdfBytes = 28_000L + (logCount * 380L) + (selectedRows.size * 12_000L)
+    // Per-format contribution; attachments and README ride along regardless of selection.
+    val reportBytes = formats.sumOf { format ->
+      when (format) {
+        ExportFormat.CSV -> 64_000L + (logCount * 600L) + (selectedRows.size * 8_000L)
+        ExportFormat.PDF -> 28_000L + (logCount * 380L) + (selectedRows.size * 12_000L)
+        ExportFormat.XLSX -> 40_000L + (logCount * 220L) + (selectedRows.size * 10_000L)
+      }
+    }
     return copy(
       estimatedLogCount = logCount,
-      estimatedSizeBytes = if (selectedRows.isEmpty()) 0L else csvBytes + pdfBytes + attachmentBytes,
+      estimatedSizeBytes = if (selectedRows.isEmpty()) 0L else reportBytes + attachmentBytes,
     )
   }
 
@@ -245,7 +291,8 @@ class ExportViewModel(
   ) = AircraftSelectionRow(
     aircraftId = id,
     tailNumber = tail_number,
-    makeModel = listOf(make, model).filter { it.isNotBlank() }.joinToString(" ")
+    makeModel = listOf(make, model).filter { it.isNotBlank() }
+      .joinToString(" ")
       .ifBlank { serial },
     logCount = logCount,
     attachmentSizeBytes = attachmentSizeBytes,

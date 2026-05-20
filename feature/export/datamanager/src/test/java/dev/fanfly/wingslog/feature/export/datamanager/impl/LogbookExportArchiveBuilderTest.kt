@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
+import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import java.io.ByteArrayInputStream
 import java.util.zip.ZipInputStream
@@ -254,6 +255,53 @@ class LogbookExportArchiveBuilderTest {
     assertThat(workbookText).contains("Action Date")
     assertThat(workbookText).contains("Dismissed - Obsolete")
     assertThat(workbookText).doesNotContain("Dismiss Reason")
+  }
+
+  @Test
+  fun buildEntries_onlyWritesSelectedReportFormatsButAlwaysKeepsAttachmentsAndReadme() {
+    val photo = attachment(id = "abcd1234", name = "inspection photo.jpg")
+    val bundle = aircraftBundle(
+      logs = listOf(
+        MaintenanceLog(
+          id = "log-1",
+          work_description = "Annual inspection",
+          component_type = ComponentType.COMPONENT_AIRFRAME,
+          attachments = listOf(photo),
+        )
+      )
+    )
+
+    val entries = LogbookExportArchiveBuilder().buildEntries(
+      request = ExportRequest(
+        aircraftIds = listOf(bundle.aircraft.id),
+        dateRange = ExportDateRange.AllTime,
+        includeOpenSquawks = true,
+        formats = setOf(ExportFormat.CSV),
+      ),
+      bundles = listOf(bundle),
+      attachmentManifests = mapOf(
+        bundle.aircraft.id to AttachmentExportManifest(
+          byAttachmentId = mapOf(
+            photo.id to AttachmentExportPayload(
+              attachmentId = photo.id,
+              relativePath = "attachments/abcd_inspection_photo.jpg",
+              bytes = "photo-bytes".encodeToByteArray(),
+            )
+          ),
+          notes = emptyList(),
+        )
+      ),
+      generatedAt = LocalDateTime(2026, 5, 20, 9, 30),
+      timeZone = TimeZone.UTC,
+    ).associateBy { it.path }
+
+    // CSV selected → CSV present; PDF and XLSX omitted.
+    assertThat(entries.keys).contains("$aircraftFolder/csv/00_Aircraft_Info.csv")
+    assertThat(entries.keys).doesNotContain("$aircraftFolder/N12345_Cessna_172.pdf")
+    assertThat(entries.keys).doesNotContain("$aircraftFolder/Hopply_Logs_N12345_20260520.xlsx")
+    // Attachments and README ride along regardless of the format selection.
+    assertThat(entries.keys).contains("$aircraftFolder/attachments/abcd_inspection_photo.jpg")
+    assertThat(entries.keys).contains("README.txt")
   }
 
   @Test

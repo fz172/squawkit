@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager
 
+import dev.fanfly.wingslog.export.ExportRecord
 import kotlinx.coroutines.flow.Flow
 
 /**

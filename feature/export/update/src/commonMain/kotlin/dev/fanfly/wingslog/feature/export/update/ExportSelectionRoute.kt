@@ -23,6 +23,7 @@ fun ExportSelectionRoute(
     onToggleAircraft = viewModel::onToggleAircraft,
     onSelectAll = viewModel::onSelectAll,
     onClearAll = viewModel::onClearAll,
+    onToggleFormat = viewModel::onToggleFormat,
     onDateRangeChange = viewModel::onDateRangeChange,
     onCustomStartChange = viewModel::onCustomStartChange,
     onCustomEndChange = viewModel::onCustomEndChange,
