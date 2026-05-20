@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.storage.di.platformStorageModule
 import dev.fanfly.wingslog.core.storage.di.storageModule
 import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportDataManagerModule
+import dev.fanfly.wingslog.feature.export.datamanager.di.exportPlatformModule
 import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUiModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
 import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
@@ -47,6 +48,7 @@ fun initKoin(
     attachmentModule,
     platformAttachmentModule,
     exportDataManagerModule,
+    exportPlatformModule,
     exportUiModule,
     featureLabModule,
     technicianDataManagerModule,

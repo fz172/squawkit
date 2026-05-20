@@ -2,6 +2,4 @@
 <paths>
     <!-- Exposes filesDir/blobs/ for sharing attachment files with external viewers. -->
     <files-path name="blobs" path="blobs/" />
-    <!-- Exposes generated logbook exports saved under public Downloads/Hopply. -->
-    <external-path name="exports" path="Download/Hopply/" />
 </paths>

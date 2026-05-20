@@ -10,6 +10,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ExportSelectionRoute(
   navController: NavController,
+  onNavigateToHistory: () -> Unit,
   viewModel: ExportViewModel = koinViewModel(),
 ) {
   val state by viewModel.state.collectAsStateWithLifecycle()
@@ -18,6 +19,7 @@ fun ExportSelectionRoute(
   ExportSelectionScreen(
     state = state,
     onNavigateBack = { navController.popBackStack() },
+    onNavigateToHistory = onNavigateToHistory,
     onToggleAircraft = viewModel::onToggleAircraft,
     onSelectAll = viewModel::onSelectAll,
     onClearAll = viewModel::onClearAll,

@@ -5,7 +5,7 @@
   <string name="export_date_range_section">Date range</string>
   <string name="export_select_all">Select all</string>
   <string name="export_clear_all">Clear all</string>
-  <string name="export_selection_summary">%1$d of %2$d aircraft selected · %3$d log entries in scope</string>
+  <string name="export_selection_summary">%1$d of %2$d aircraft selected</string>
   <string name="export_untitled_aircraft">Untitled aircraft</string>
   <string name="export_aircraft_details_incomplete">Aircraft details incomplete</string>
   <string name="export_no_aircraft_title">No aircraft to export</string>
@@ -48,4 +48,13 @@ To use it, save the ZIP file, unzip it, and open README.txt for import steps. Th
 Thank you for choosing Hopply.</string>
   <string name="export_error_title">Export failed</string>
   <string name="export_error_body">The export could not be completed. Try again.</string>
+  <string name="export_history_action">Export history</string>
+  <string name="export_history_title">Export history</string>
+  <string name="export_history_empty_title">No exports yet</string>
+  <string name="export_history_empty_body">Exports you generate will appear here so you can email or remove them later.</string>
+  <string name="export_history_item_meta">%1$s · %2$s</string>
+  <string name="export_history_actions">Actions</string>
+  <string name="export_history_delete">Delete</string>
+  <string name="export_history_delete_confirm_title">Delete export?</string>
+  <string name="export_history_delete_confirm_body">%1$s will be permanently removed from this device.</string>
 </resources>

@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.export.datamanager.impl
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
+import dev.fanfly.wingslog.feature.export.datamanager.ExportRecord
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -62,10 +63,17 @@ class LogbookExportManager(
     emit(
       ExportProgress.Success(
         filePath = saved.filePath,
-        displayLocation = saved.filePath,
+        fileName = saved.fileName,
+        // Left blank so the UI renders the localized label from displayLocationKind.
+        displayLocation = "",
         sizeBytes = saved.sizeBytes,
         displayLocationKind = saved.displayLocationKind,
       )
     )
   }
+
+  override suspend fun listExports(): List<ExportRecord> = exportFileStore.listExports()
+
+  override suspend fun deleteExport(filePath: String): Boolean =
+    exportFileStore.deleteExport(filePath)
 }

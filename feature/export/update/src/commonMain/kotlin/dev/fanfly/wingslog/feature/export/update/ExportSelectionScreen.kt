@@ -11,14 +11,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
@@ -71,6 +74,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_custom_st
 import wingslog.feature.export.sharedassets.generated.resources.export_date_range_section
 import wingslog.feature.export.sharedassets.generated.resources.export_error_body
 import wingslog.feature.export.sharedassets.generated.resources.export_error_title
+import wingslog.feature.export.sharedassets.generated.resources.export_history_action
 import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_details_incomplete
 import wingslog.feature.export.sharedassets.generated.resources.export_email_body
 import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
@@ -106,6 +110,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_untitled_
 fun ExportSelectionScreen(
   state: ExportUiState,
   onNavigateBack: () -> Unit,
+  onNavigateToHistory: () -> Unit,
   onToggleAircraft: (String) -> Unit,
   onSelectAll: () -> Unit,
   onClearAll: () -> Unit,
@@ -138,6 +143,7 @@ fun ExportSelectionScreen(
       is ExportUiState.Configuring -> ConfiguringContent(
         state = state,
         modifier = Modifier.padding(innerPadding),
+        onNavigateToHistory = onNavigateToHistory,
         onToggleAircraft = onToggleAircraft,
         onSelectAll = onSelectAll,
         onClearAll = onClearAll,
@@ -169,6 +175,7 @@ fun ExportSelectionScreen(
 private fun ConfiguringContent(
   state: ExportUiState.Configuring,
   modifier: Modifier,
+  onNavigateToHistory: () -> Unit,
   onToggleAircraft: (String) -> Unit,
   onSelectAll: () -> Unit,
   onClearAll: () -> Unit,
@@ -177,7 +184,7 @@ private fun ConfiguringContent(
   onCustomEndChange: (LocalDate) -> Unit,
 ) {
   if (!state.isLoadingAircraft && state.aircraft.isEmpty()) {
-    EmptyAircraftContent(modifier)
+    EmptyAircraftContent(modifier, onNavigateToHistory)
     return
   }
 
@@ -189,6 +196,7 @@ private fun ConfiguringContent(
   ) {
     item {
       Spacer(Modifier.height(Spacing.small))
+      ExportHistoryEntry(onClick = onNavigateToHistory)
       SectionTitle(stringResource(Res.string.export_aircraft_section))
       Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
         FilterChip(
@@ -207,7 +215,6 @@ private fun ConfiguringContent(
           Res.string.export_selection_summary,
           state.selectedAircraftIds.size,
           state.aircraft.size,
-          state.estimatedLogCount,
         ),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -396,6 +403,7 @@ private fun ExportBottomBar(
   Column(
     modifier = Modifier
       .fillMaxWidth()
+      .navigationBarsPadding()
       .padding(Spacing.screenPadding),
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
@@ -523,13 +531,48 @@ private fun ErrorContent(
 }
 
 @Composable
-private fun EmptyAircraftContent(modifier: Modifier) {
+private fun EmptyAircraftContent(
+  modifier: Modifier,
+  onNavigateToHistory: () -> Unit,
+) {
   StatusContent(
     modifier = modifier,
     icon = Icons.Default.FileDownload,
     title = stringResource(Res.string.export_no_aircraft_title),
     body = stringResource(Res.string.export_no_aircraft_body),
-  )
+  ) {
+    OutlinedButton(onClick = onNavigateToHistory) {
+      Text(stringResource(Res.string.export_history_action).uppercase())
+    }
+  }
+}
+
+@Composable
+private fun ExportHistoryEntry(onClick: () -> Unit) {
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .clickable(onClick = onClick)
+      .padding(vertical = Spacing.medium),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+  ) {
+    Icon(
+      imageVector = Icons.Default.History,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.primary,
+    )
+    Text(
+      text = stringResource(Res.string.export_history_action),
+      style = MaterialTheme.typography.titleMedium,
+      modifier = Modifier.weight(1f),
+    )
+    Icon(
+      imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+  }
 }
 
 @Composable

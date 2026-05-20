@@ -11,6 +11,7 @@ sealed interface ExportProgress {
    */
   data class Success(
     val filePath: String,
+    val fileName: String,
     val displayLocation: String,
     val sizeBytes: Long,
     val displayLocationKind: ExportDisplayLocation = ExportDisplayLocation.UNKNOWN,

@@ -18,4 +18,9 @@ val exportUiModule = module {
       squawkManager = get<SquawkManager>(),
     )
   }
+  viewModel {
+    ExportHistoryViewModel(
+      exportManager = get<ExportManager>(),
+    )
+  }
 }

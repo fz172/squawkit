@@ -13,4 +13,14 @@ interface ExportManager {
    * unless the collector is cancelled.
    */
   fun exportLogs(request: ExportRequest): Flow<ExportProgress>
+
+  /**
+   * Returns previously generated export archives, newest first.
+   */
+  suspend fun listExports(): List<ExportRecord>
+
+  /**
+   * Deletes the export referenced by [filePath]. Returns true when an archive was removed.
+   */
+  suspend fun deleteExport(filePath: String): Boolean
 }

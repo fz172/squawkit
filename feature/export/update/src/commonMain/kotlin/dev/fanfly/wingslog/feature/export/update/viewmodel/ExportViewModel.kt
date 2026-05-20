@@ -218,7 +218,7 @@ class ExportViewModel(
   private fun ExportProgress.toUiState(): ExportUiState = when (this) {
     is ExportProgress.Running -> ExportUiState.Running(step, percent)
     is ExportProgress.Success -> ExportUiState.Success(
-      fileName = filePath.substringAfterLast('/').ifBlank { filePath },
+      fileName = fileName,
       displayLocation = displayLocation,
       displayLocationKind = displayLocationKind,
       filePath = filePath,
@@ -232,9 +232,10 @@ class ExportViewModel(
     val logCount = selectedRows.sumOf { it.logCount }
     val attachmentBytes = selectedRows.sumOf { it.attachmentSizeBytes }
     val csvBytes = 64_000L + (logCount * 600L) + (selectedRows.size * 8_000L)
+    val pdfBytes = 28_000L + (logCount * 380L) + (selectedRows.size * 12_000L)
     return copy(
       estimatedLogCount = logCount,
-      estimatedSizeBytes = if (selectedRows.isEmpty()) 0L else csvBytes + attachmentBytes,
+      estimatedSizeBytes = if (selectedRows.isEmpty()) 0L else csvBytes + pdfBytes + attachmentBytes,
     )
   }
 
