@@ -9,18 +9,18 @@ import androidx.core.content.FileProvider
 import java.io.File
 
 @Composable
-actual fun rememberExportFileOpener(): ExportFileOpener {
+actual fun rememberExportFileSharer(): ExportFileSharer {
   val context = LocalContext.current
   return remember(context) {
-    AndroidExportFileOpener(context.applicationContext)
+    AndroidExportFileSharer(context.applicationContext)
   }
 }
 
-private class AndroidExportFileOpener(
+private class AndroidExportFileSharer(
   private val context: Context,
-) : ExportFileOpener {
+) : ExportFileSharer {
 
-  override fun open(filePath: String): Boolean {
+  override fun share(filePath: String, chooserTitle: String): Boolean {
     val file = File(filePath)
     if (!file.exists()) return false
 
@@ -29,11 +29,12 @@ private class AndroidExportFileOpener(
       "${context.packageName}.fileprovider",
       file,
     )
-    val intent = Intent(Intent.ACTION_VIEW).apply {
-      setDataAndType(contentUri, "application/zip")
-      addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+    val intent = Intent(Intent.ACTION_SEND).apply {
+      type = "application/zip"
+      putExtra(Intent.EXTRA_STREAM, contentUri)
+      addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    val chooser = Intent.createChooser(intent, null).apply {
+    val chooser = Intent.createChooser(intent, chooserTitle).apply {
       addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
     return runCatching {

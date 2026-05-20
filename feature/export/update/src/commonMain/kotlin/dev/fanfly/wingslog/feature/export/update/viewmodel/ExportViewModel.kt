@@ -157,10 +157,6 @@ class ExportViewModel(
     ).recomputeEstimates()
   }
 
-  fun onToggleIncludeOpenSquawks() = reduceConfiguring { current ->
-    current.copy(includeOpenSquawks = !current.includeOpenSquawks).recomputeEstimates()
-  }
-
   /**
    * Starts export generation using the current configuration.
    */
@@ -216,7 +212,7 @@ class ExportViewModel(
       DateRangeOption.Last12Months -> ExportDateRange.LastNMonths(12)
       DateRangeOption.Custom -> ExportDateRange.Custom(customStart, customEnd)
     },
-    includeOpenSquawks = includeOpenSquawks,
+    includeOpenSquawks = true,
   )
 
   private fun ExportProgress.toUiState(): ExportUiState = when (this) {

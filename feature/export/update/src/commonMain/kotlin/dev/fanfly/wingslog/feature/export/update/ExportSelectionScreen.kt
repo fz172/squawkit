@@ -30,7 +30,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -73,13 +72,10 @@ import wingslog.feature.export.sharedassets.generated.resources.export_date_rang
 import wingslog.feature.export.sharedassets.generated.resources.export_error_body
 import wingslog.feature.export.sharedassets.generated.resources.export_error_title
 import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_details_incomplete
-import wingslog.feature.export.sharedassets.generated.resources.export_include_open_squawks
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_log_count
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_body
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_title
-import wingslog.feature.export.sharedassets.generated.resources.export_options_section
-import wingslog.feature.export.sharedassets.generated.resources.export_open
 import wingslog.feature.export.sharedassets.generated.resources.export_primary_action
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_building_archive
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_collecting_data
@@ -92,6 +88,8 @@ import wingslog.feature.export.sharedassets.generated.resources.export_size_zero
 import wingslog.feature.export.sharedassets.generated.resources.export_select_aircraft_helper
 import wingslog.feature.export.sharedassets.generated.resources.export_select_all
 import wingslog.feature.export.sharedassets.generated.resources.export_selection_summary
+import wingslog.feature.export.sharedassets.generated.resources.export_share
+import wingslog.feature.export.sharedassets.generated.resources.export_share_title
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_file_name
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_location
 import wingslog.feature.export.sharedassets.generated.resources.export_location_downloads_hopply
@@ -111,10 +109,9 @@ fun ExportSelectionScreen(
   onDateRangeChange: (DateRangeOption) -> Unit,
   onCustomStartChange: (LocalDate) -> Unit,
   onCustomEndChange: (LocalDate) -> Unit,
-  onToggleIncludeOpenSquawks: () -> Unit,
   onExport: () -> Unit,
   onCancel: () -> Unit,
-  onOpenExport: (String) -> Unit,
+  onShareExport: (String, String) -> Unit,
   onDone: () -> Unit,
   onRetry: () -> Unit,
 ) {
@@ -144,7 +141,6 @@ fun ExportSelectionScreen(
         onDateRangeChange = onDateRangeChange,
         onCustomStartChange = onCustomStartChange,
         onCustomEndChange = onCustomEndChange,
-        onToggleIncludeOpenSquawks = onToggleIncludeOpenSquawks,
       )
       is ExportUiState.Running -> RunningContent(
         state = state,
@@ -154,7 +150,7 @@ fun ExportSelectionScreen(
       is ExportUiState.Success -> SuccessContent(
         state = state,
         modifier = Modifier.padding(innerPadding),
-        onOpen = onOpenExport,
+        onShare = onShareExport,
         onDone = onDone,
       )
       is ExportUiState.Error -> ErrorContent(
@@ -176,7 +172,6 @@ private fun ConfiguringContent(
   onDateRangeChange: (DateRangeOption) -> Unit,
   onCustomStartChange: (LocalDate) -> Unit,
   onCustomEndChange: (LocalDate) -> Unit,
-  onToggleIncludeOpenSquawks: () -> Unit,
 ) {
   if (!state.isLoadingAircraft && state.aircraft.isEmpty()) {
     EmptyAircraftContent(modifier)
@@ -250,24 +245,6 @@ private fun ConfiguringContent(
           end = state.customEnd,
           onStartChange = onCustomStartChange,
           onEndChange = onCustomEndChange,
-        )
-      }
-    }
-
-    item {
-      SectionTitle(stringResource(Res.string.export_options_section))
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Text(
-          text = stringResource(Res.string.export_include_open_squawks),
-          style = MaterialTheme.typography.bodyLarge,
-          modifier = Modifier.weight(1f),
-        )
-        Switch(
-          checked = state.includeOpenSquawks,
-          onCheckedChange = { onToggleIncludeOpenSquawks() },
         )
       }
       Spacer(Modifier.height(Spacing.massive))
@@ -483,7 +460,7 @@ private fun ExportProgressStep.label(): String = when (this) {
 private fun SuccessContent(
   state: ExportUiState.Success,
   modifier: Modifier,
-  onOpen: (String) -> Unit,
+  onShare: (String, String) -> Unit,
   onDone: () -> Unit,
 ) {
   val fileName = state.fileName.ifBlank {
@@ -506,8 +483,9 @@ private fun SuccessContent(
     body = stringResource(Res.string.export_success_body, fileName, displayLocation),
   ) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-      TextButton(onClick = { onOpen(state.filePath) }) {
-        Text(stringResource(Res.string.export_open).uppercase())
+      val shareTitle = stringResource(Res.string.export_share_title)
+      TextButton(onClick = { onShare(state.filePath, shareTitle) }) {
+        Text(stringResource(Res.string.export_share).uppercase())
       }
       Button(onClick = onDone) {
         Text(stringResource(CoreRes.string.done).uppercase())

@@ -17,7 +17,6 @@ sealed interface ExportUiState {
     val dateRange: DateRangeOption = DateRangeOption.AllTime,
     val customStart: LocalDate,
     val customEnd: LocalDate,
-    val includeOpenSquawks: Boolean = true,
     val estimatedSizeBytes: Long = 0L,
     val estimatedLogCount: Int = 0,
     val isLoadingAircraft: Boolean = true,
