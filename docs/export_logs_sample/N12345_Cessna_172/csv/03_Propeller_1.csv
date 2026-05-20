@@ -1,0 +1,13 @@
+Propeller Position,1 (Engine 1)
+Hub Make,McCauley
+Hub Model,1A170/DTM
+Hub Serial,DTM-9912
+Blade 1 Make,McCauley
+Blade 1 Model,DTM7657
+Blade 1 Serial,B-7657-A
+Blade 2 Make,McCauley
+Blade 2 Model,DTM7657
+Blade 2 Serial,B-7657-B
+,
+Date,Prop Time,Airframe Time,Work Description,Inspections,Reference Numbers,Technician,Cert Type,Cert #,Attachments
+2025-10-04,872.6,4490.2,"Propeller dynamic balance performed. Initial vibration: 0.42 IPS. Final vibration: 0.06 IPS. Trim weights installed at clock positions 4 and 9. Log entry in propeller logbook page 12.",,,Mike Johnson,A&P/IA,4509876,"Balance report → attachments/f44a_prop_balance_report.pdf"

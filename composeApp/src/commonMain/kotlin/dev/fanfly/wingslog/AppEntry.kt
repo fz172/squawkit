@@ -26,6 +26,8 @@ import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.AircraftOverviewScreen
+import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
+import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
@@ -295,6 +297,15 @@ private fun NavGraphBuilder.settingsGraph(
     }
     composable(Screen.SyncSettings.route) {
       SyncSettingsScreen(navController = navController)
+    }
+    composable(Screen.ExportLogs.route) {
+      ExportSelectionRoute(
+        navController = navController,
+        onNavigateToHistory = { navController.navigate(Screen.ExportHistory.route) },
+      )
+    }
+    composable(Screen.ExportHistory.route) {
+      ExportHistoryRoute(navController = navController)
     }
     composable(Screen.FeatureLab.route) {
       FeatureLabScreen(

@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Doc: Export Email Automation</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --surface-alt: #eef3f9;
+      --text: #122033;
+      --muted: #53657d;
+      --line: #d8e1ec;
+      --blue: #1f5fa8;
+      --blue-soft: #dbe9fb;
+      --green: #156f4a;
+      --amber: #9a6200;
+      --red: #a33a32;
+      --shadow: rgba(18, 32, 51, 0.08);
+      --mono: "SFMono-Regular", "JetBrains Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+    .page-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 28px;
+      align-items: start;
+    }
+    .doc-body {
+      min-width: 0;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0 0 12px;
+    }
+
+    h1 { font-size: 2rem; }
+    h2 {
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      font-size: 1.35rem;
+    }
+    h3 {
+      margin-top: 24px;
+      font-size: 1.05rem;
+    }
+
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin: 16px 0;
+      box-shadow: 0 1px 2px rgba(18, 32, 51, 0.04);
+    }
+    .hero {
+      background: linear-gradient(180deg, var(--surface), var(--surface-alt));
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+    .toc {
+      position: sticky;
+      top: 20px;
+      align-self: start;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 10px 30px var(--shadow);
+    }
+    .toc-title {
+      margin: 0 0 10px;
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .toc ol {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .toc li {
+      margin: 0 0 8px;
+      color: var(--muted);
+    }
+    .toc a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .toc a:hover {
+      color: var(--blue);
+    }
+    code, pre {
+      font-family: var(--mono);
+      font-size: 0.92rem;
+    }
+    pre {
+      overflow-x: auto;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #0f1b2d;
+      color: #eef4ff;
+      border: 1px solid #20314d;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    th {
+      background: var(--surface-alt);
+      font-size: 0.92rem;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .ok { color: var(--green); font-weight: 600; }
+    .warn { color: var(--amber); font-weight: 600; }
+    .risk { color: var(--red); font-weight: 600; }
+    ul, ol { padding-left: 20px; }
+    section[id] { scroll-margin-top: 24px; }
+
+    @media (max-width: 980px) {
+      main {
+        max-width: 980px;
+      }
+      .page-shell {
+        grid-template-columns: 1fr;
+      }
+      .toc {
+        position: sticky;
+        top: 12px;
+        z-index: 10;
+        max-height: 42vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="page-shell">
+      <div class="doc-body">
+        <section class="hero">
+          <div>
+            <span class="pill">Draft</span>
+            <span class="pill">Last updated: 2026-05-20</span>
+          </div>
+          <h1>Design Doc: Automatic Email Delivery for Export</h1>
+          <p class="muted">
+            Extends <code>docs/export_logs_design.md</code> with automatic delivery after export
+            generation, a reminder path when no email is known, and an export history model that can
+            represent both local and remote archives across devices.
+          </p>
+        </section>
+
+    <section id="problem" class="card">
+      <h2>1. Problem</h2>
+      <p>
+        The current export flow ends with a local file and a manual share action. That is adequate
+        when the user is on the same device and wants to pick an email app themselves, but it
+        breaks two product goals:
+      </p>
+      <ol>
+        <li>The app cannot complete the handoff automatically even when it already knows where the export should be sent.</li>
+        <li>The export history only reflects files discoverable on the current device, so a user on a second phone cannot see that an export already happened elsewhere.</li>
+      </ol>
+      <p>
+        We need a delivery model where export generation remains device-local, but delivery and
+        history metadata are durable at the account level.
+      </p>
+    </section>
+
+    <section id="product-decision">
+      <h2>2. Product Decision</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Behavior</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>User email is known</td>
+            <td>Generate the export as usual, upload/archive it, then automatically send the delivery email when export processing completes.</td>
+          </tr>
+          <tr>
+            <td>User email is not known</td>
+            <td>Keep the current success screen and manual share flow, but add a reminder on the export ready screen telling the user to update their email address in <code>Backup &amp; Sync</code> settings.</td>
+          </tr>
+          <tr>
+            <td>Export history</td>
+            <td>Keep showing all past exports, but each row may represent either a <strong>local</strong> archive on this device or a <strong>remote</strong> archive created elsewhere.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="goals">
+      <h2>3. Goals and Non-Goals</h2>
+      <div class="card">
+        <h3>Goals</h3>
+        <ul>
+          <li>Automatically send the export email when a deliverable email address is already known.</li>
+          <li>Preserve the current manual share escape hatch when no email is known.</li>
+          <li>Make export history account-scoped instead of device-scoped.</li>
+          <li>Allow history rows to clearly distinguish local versus remote archive availability.</li>
+          <li>Allow signed-in users to delete the local file, remote blob, and export record as one action.</li>
+          <li>Do this without changing the logbook export archive format itself.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Non-Goals</h3>
+        <ul>
+          <li>Replacing the existing ZIP/PDF/XLSX/CSV export generation pipeline.</li>
+          <li>Building a general outbound email platform for arbitrary app messages.</li>
+          <li>Supporting automatic delivery or remote export history for signed-out users.</li>
+          <li>Supporting anonymous users with automatic email send.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="ux">
+      <h2>4. Proposed User Experience</h2>
+
+      <h3>4.1 Export selection and run</h3>
+      <p>
+        The export selection flow in <code>feature/export/update/ExportSelectionScreen.kt</code>
+        stays unchanged until completion. The main branching begins only after archive creation.
+      </p>
+
+      <h3>4.2 Success state when email is known</h3>
+      <ul>
+        <li>The app still shows the export-ready result screen.</li>
+        <li>The primary message changes from "share this file" to "email sent" or "sending email" depending on delivery state.</li>
+        <li>The user can still open history and manually share the local file if it exists on the current device.</li>
+        <li>If automatic send fails, the result screen degrades to a retry/manual-share recovery state instead of pretending success.</li>
+      </ul>
+
+      <h3>4.3 Success state when email is unknown</h3>
+      <ul>
+        <li>Keep the current share-first action set.</li>
+        <li>Add a reminder card on the success screen: "Add your email in Backup &amp; Sync to send future exports automatically."</li>
+        <li>The reminder deep-links to <code>Screen.SyncSettings</code>.</li>
+      </ul>
+
+      <h3>4.4 Export history</h3>
+      <ul>
+        <li>History remains the single list of past exports.</li>
+        <li>A <strong>local</strong> item can be shared or deleted on this device.</li>
+        <li>A <strong>remote</strong> item was generated earlier for the same account but its file is not present on this device.</li>
+        <li>Remote items still show timestamp, aircraft/date-range summary, and delivery status.</li>
+        <li>Remote-only rows support delete in the first release; delete removes the remote blob and the export record.</li>
+      </ul>
+    </section>
+
+    <section id="architecture">
+      <h2>5. Architecture</h2>
+      <pre>
+ExportSelectionScreen
+      |
+      v
+ExportViewModel
+      |
+      v
+ExportManager.exportLogs(request)
+      |
+      +-- generate archive bytes locally
+      +-- write local file when current device can store it
+      +-- create/export manifest record
+      +-- upload archive blob for account-scoped history
+      +-- enqueue automatic email delivery if email address is known
+      |
+      v
+ExportProgress.Success(...)
+      |
+      v
+ExportResult + ExportHistory observe manifest state
+      </pre>
+
+      <div class="card">
+        <h3>New subsystem split</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Responsibility</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ExportManager</code></td>
+              <td>Still owns archive generation orchestration.</td>
+            </tr>
+            <tr>
+              <td><code>ExportHistoryRepository</code></td>
+              <td>Reads and writes durable export manifest records, merging local file presence with remote account history.</td>
+            </tr>
+            <tr>
+              <td><code>ExportDeliveryManager</code></td>
+              <td>Uploads the finished archive, requests automatic email delivery, and updates delivery state.</td>
+            </tr>
+            <tr>
+              <td><code>EmailAddressResolver</code></td>
+              <td>Determines whether the signed-in user has a deliverable email address and where that value comes from.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="email-source">
+      <h2>6. Source of Truth for Email Address</h2>
+      <p>
+        The current <code>SyncSettings</code> feature has no editable email field. This design adds
+        one explicitly instead of inferring that <code>FirebaseAuth.currentUser.email</code> is
+        always sufficient.
+      </p>
+
+      <div class="card">
+        <h3>Resolution rules</h3>
+        <ol>
+          <li>Use an explicit export-delivery email saved in <code>Backup &amp; Sync</code> settings if present.</li>
+          <li>Otherwise, fall back to the signed-in auth email when non-blank and verified enough for product policy.</li>
+          <li>If neither exists, treat the user email as unknown and keep the current manual flow.</li>
+        </ol>
+      </div>
+
+      <p>
+        The settings UI should expose a single editable row under <code>Backup &amp; Sync</code>,
+        phrased as the destination for automatic exports. The doc does not require a broader
+        profile-edit redesign; this can live beside the existing sync toggles.
+      </p>
+      <p>
+        This is a strictly signed-in feature. Signed-out users cannot edit the destination email,
+        cannot upload remote export blobs, and cannot use automatic delivery.
+      </p>
+    </section>
+
+    <section id="data-model">
+      <h2>7. Data Model</h2>
+
+      <h3>7.1 Evolve the existing device-local manifest</h3>
+      <p>
+        The current proto in <code>core/model/src/commonMain/proto/export/export_record.proto</code>
+        is already richer than a thin file listing. It persists:
+      </p>
+      <ul>
+        <li><code>file_path</code>, <code>file_name</code>, <code>size_bytes</code>, and creation time</li>
+        <li><code>display_location</code></li>
+        <li><code>formats</code></li>
+        <li>a flattened display-ready <code>date_range</code></li>
+        <li>a display-ready aircraft snapshot list</li>
+      </ul>
+      <p>
+        The current implementation also uses an app-private <code>ExportRecordIndex</code> as a
+        metadata manifest and reconciles it against archives discovered on disk. In other words,
+        today's design is already:
+      </p>
+      <ul>
+        <li>manifest-backed for scope metadata</li>
+        <li>local-device-only for existence</li>
+        <li>keyed by <code>file_path</code>, which is not stable across devices</li>
+      </ul>
+      <p>
+        The design change needed for automatic delivery is therefore not "add metadata from
+        scratch." It is "evolve the existing local manifest into an account-scoped manifest that
+        can survive across devices and delivery states."
+      </p>
+
+      <h3>7.2 Proposed additive shape</h3>
+      <p>
+        The most important missing fields are a stable export identifier and backend delivery
+        metadata. The existing scope fields should be preserved rather than replaced.
+      </p>
+
+<pre>
+data class ExportRecord(
+  val exportId: String,
+  val fileName: String,
+  val sizeBytes: Long,
+  val createdAtEpochMillis: Long,
+  val displayLocationKind: ExportDisplayLocation,
+  val availability: ExportAvailability,
+  val delivery: ExportDeliveryState,
+  val destinationEmail: String?,
+  val aircraftSummary: List&lt;String&gt;,
+  val dateRangeSummary: String,
+  val localFilePath: String?,
+  val remoteArchiveRef: String?,
+)
+
+enum class ExportAvailability {
+  LOCAL,
+  REMOTE,
+  LOCAL_AND_REMOTE,
+}
+
+sealed interface ExportDeliveryState {
+  data object NotRequested : ExportDeliveryState
+  data object Queued : ExportDeliveryState
+  data object Sending : ExportDeliveryState
+  data class Sent(val sentAtEpochMillis: Long) : ExportDeliveryState
+  data class Failed(val reason: String) : ExportDeliveryState
+}
+      </pre>
+
+      <h3>7.3 Proto implications</h3>
+      <p>
+        Based on the current proto and implementation, the backend-ready version should be treated
+        as an additive schema evolution, not a separate unrelated record type.
+      </p>
+      <ul>
+        <li>Keep the current display-ready fields: formats, date range, and aircraft summary.</li>
+        <li>Add a stable <code>export_id</code> because <code>file_path</code> is only a local join key.</li>
+        <li>Add backend-oriented fields such as remote archive reference, destination email snapshot, and delivery state.</li>
+        <li>Allow records to remain visible even when the local file is absent, which is the opposite of the current prune-on-missing behavior.</li>
+      </ul>
+
+      <h3>7.4 Why both local and remote references matter</h3>
+      <ul>
+        <li><code>localFilePath</code> is needed for share/open/delete actions on the current device.</li>
+        <li><code>remoteArchiveRef</code> is needed so another device can still show the export in history.</li>
+        <li><code>availability</code> prevents UI code from guessing from null fields repeatedly.</li>
+      </ul>
+    </section>
+
+    <section id="storage-sync">
+      <h2>8. Storage and Sync Model</h2>
+      <div class="card">
+        <h3>Local</h3>
+        <p>
+          Keep writing the archive to the platform-visible location using the existing
+          <code>ExportFileStore</code> actuals. That preserves manual share and offline access on
+          the generating device.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Remote</h3>
+        <p>
+          Add a lightweight export manifest collection plus remote blob storage. The manifest is
+          account-scoped metadata; the blob is the optional downloadable archive payload.
+        </p>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>Proposed shape</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Manifest metadata</td>
+            <td><code>users/{uid}/export_history/{exportId}</code> or equivalent sync-backed collection with timestamp, filename, summaries, delivery state, and remote blob reference.</td>
+          </tr>
+          <tr>
+            <td>Archive blob</td>
+            <td>Remote object storage entry keyed by <code>uid/exportId/fileName</code>.</td>
+          </tr>
+          <tr>
+            <td>Local mirror</td>
+            <td>SQLDelight entity table for export manifests so history loads offline after the first sync.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        This is intentionally the same pattern already used elsewhere in the local-first system:
+        user-visible metadata should sync as structured entities, while large binary payloads live
+        in blob storage.
+      </p>
+      <p>
+        One behavior must change from the current implementation: today missing local archives are
+        pruned from history when the on-device index is reconciled. For cross-device history, the
+        synced manifest becomes the source of truth for record existence, while the local file
+        system only answers whether this device currently has a downloadable/shareable copy.
+      </p>
+    </section>
+
+    <section id="firebase-backend">
+      <h2>9. Firebase Backend Design</h2>
+      <p>
+        Automatic delivery is not a client-only feature. The app needs Firebase Storage for the
+        archive blob, Firestore for manifest state, and a Firebase Cloud Function to perform the
+        trusted send operation.
+      </p>
+
+      <div class="card">
+        <h3>9.1 Proposed Firebase pieces</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Firebase service</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Firebase Auth</td>
+              <td>Defines the owning <code>uid</code>. Automatic delivery and remote export history are allowed only for signed-in non-anonymous users.</td>
+            </tr>
+            <tr>
+              <td>Firebase Storage</td>
+              <td>Stores the generated export archive at a stable per-user object path.</td>
+            </tr>
+            <tr>
+              <td>Cloud Firestore</td>
+              <td>Stores the export history manifest and delivery state so all devices can observe it.</td>
+            </tr>
+            <tr>
+              <td>Firebase Cloud Functions</td>
+              <td>Runs the trusted backend send flow and updates delivery state transitions.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>9.2 Blob and manifest shape</h3>
+        <pre>
+Storage:
+  gs://&lt;bucket&gt;/users/{uid}/exports/{exportId}/{fileName}
+
+Firestore:
+  users/{uid}/export_history/{exportId}
+        </pre>
+        <p>
+          The archive object path mirrors the existing repo convention of user-scoped storage paths.
+          The Firestore document holds lightweight metadata only, including filename, size,
+          creation time, aircraft/date-range summary, destination email snapshot, and delivery
+          state.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>9.3 Recommended Cloud Function contract</h3>
+        <p>
+          Use a callable function for the initial implementation:
+          <code>requestExportDelivery(exportId)</code>.
+        </p>
+        <ol>
+          <li>The client generates the archive locally.</li>
+          <li>The client uploads the archive to Firebase Storage using the signed-in user's credentials.</li>
+          <li>The client writes or updates the Firestore manifest with <code>delivery = Queued</code>.</li>
+          <li>The client calls the Cloud Function with only the <code>exportId</code>.</li>
+          <li>The Cloud Function derives <code>uid</code> from the Firebase auth context, loads the manifest, validates ownership, validates destination email, and performs the send.</li>
+        </ol>
+        <p>
+          The client should not pass raw storage paths or arbitrary destination emails as trusted
+          send parameters when the server can derive them from owned manifest state.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>9.4 Why callable instead of Storage-triggered first</h3>
+        <ul>
+          <li>It gives the client an explicit transition point after upload and manifest write.</li>
+          <li>It keeps the server logic keyed by a stable business ID, <code>exportId</code>, instead of reverse-parsing object paths.</li>
+          <li>It is easier to make idempotent and easier to retry intentionally from the UI.</li>
+          <li>It avoids triggering sends for every object upload under a broad storage prefix.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>9.5 Cloud Function responsibilities</h3>
+        <ol>
+          <li>Authenticate the caller and reject anonymous or missing auth context.</li>
+          <li>Load <code>users/{uid}/export_history/{exportId}</code>.</li>
+          <li>Verify the manifest is in a sendable state and has a valid <code>remoteArchiveRef</code>.</li>
+          <li>Transition Firestore state from <code>Queued</code> to <code>Sending</code>.</li>
+          <li>Fetch the archive bytes or generate a short-lived signed download URL for the mail provider.</li>
+          <li>Send the email through the chosen provider.</li>
+          <li>Write back <code>Sent</code> or <code>Failed</code> with timestamp and server-side error details safe for display.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>9.6 Mail delivery mode</h3>
+        <p>
+          The backend email always uses a signed download link. The server never attaches archive
+          files directly to the outbound email.
+        </p>
+        <p>
+          This avoids mail-provider attachment limits, reduces Cloud Function memory/runtime
+          pressure, and keeps delivery behavior consistent regardless of export size.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>9.6a Remote retention policy</h3>
+        <p>
+          Remote export archive blobs are retained for <strong>60 days</strong>. The manifest
+          should record the remote expiry time so the UI can explain when a remote archive is no
+          longer expected to be downloadable.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>9.7 Idempotency</h3>
+        <p>
+          The Cloud Function must be idempotent. Repeated calls for the same
+          <code>exportId</code> must not send duplicate emails once a manifest is already marked
+          <code>Sent</code>.
+        </p>
+        <pre>
+if delivery == Sent:
+  return success
+if delivery == Sending and lease not expired:
+  return in_progress
+if delivery == Queued or retryable Failed:
+  acquire lease and continue
+        </pre>
+        <p>
+          A simple lease field such as <code>deliveryLeaseExpiresAt</code> is enough to prevent two
+          concurrent send attempts from racing.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>9.8 Security rules boundary</h3>
+        <ul>
+          <li>Firebase Storage rules should allow a user to write only under <code>users/{uid}/exports/*</code>.</li>
+          <li>Firestore rules should allow a user to read their own export history documents.</li>
+          <li>Clients should not be allowed to mark a delivery as <code>Sent</code>; only the backend should write terminal delivery success state.</li>
+          <li>Destination email should be treated as user-owned input, but final send eligibility should still be validated server-side.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>9.9 Recommended Firestore document shape</h3>
+        <pre>
+{
+  exportId: string,
+  uid: string,
+  fileName: string,
+  sizeBytes: number,
+  createdAt: timestamp,
+  aircraftSummary: string[],
+  dateRangeSummary: string,
+  localGenerated: boolean,
+  remoteArchiveRef: string | null,
+  destinationEmail: string | null,
+  destinationEmailSource: "SYNC_SETTINGS" | "AUTH_PROFILE" | null,
+  deliveryState: "NOT_REQUESTED" | "QUEUED" | "SENDING" | "SENT" | "FAILED",
+  deliverySentAt: timestamp | null,
+  deliveryFailureCode: string | null,
+  deliveryFailureMessage: string | null,
+  deliveryLeaseExpiresAt: timestamp | null
+}
+        </pre>
+        <p>
+          The local app can map this into the richer KMM <code>ExportRecord</code> model by
+          combining synced manifest state with local file existence checks.
+        </p>
+      </div>
+    </section>
+
+    <section id="backend-location">
+      <h2>10. Backend Code Location in This Repo</h2>
+      <p>
+        This repository is currently structured as a mobile application monorepo. The top-level
+        directories are app/runtime concerns such as <code>app/</code>, <code>composeApp/</code>,
+        <code>core/</code>, <code>feature/</code>, <code>iosApp/</code>, and <code>docs/</code>.
+        There is no existing backend or Firebase Functions workspace.
+      </p>
+
+      <div class="card">
+        <h3>10.1 Recommendation</h3>
+        <p>
+          Add a new top-level <code>backend/</code> workspace, not a KMM feature module.
+        </p>
+        <pre>
+/app
+/backend
+/composeApp
+/core
+/docs
+/feature
+/iosApp
+        </pre>
+        <pre>
+/backend
+  /firebase
+    /functions
+    /firestore
+    /storage
+        </pre>
+        <p>
+          This is the cleanest fit for the current repo because Cloud Functions are deployment
+          infrastructure, not runtime app code. They should live beside the app, not inside
+          <code>feature/export</code> or <code>core</code>.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>10.2 Why not put backend code under <code>feature/export</code></h3>
+        <ul>
+          <li><code>feature/export</code> follows the app's canonical KMM feature-module pattern and is built into the client.</li>
+          <li>Firebase Cloud Functions will likely be TypeScript or JavaScript, with its own package manager, lockfile, emulator config, and deployment lifecycle.</li>
+          <li>Mixing server code into the KMM module tree makes build ownership and dependency boundaries unclear.</li>
+          <li>The backend will serve account-level export history and delivery state, which are broader than one UI module.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>10.3 Why not put backend code under <code>core/</code></h3>
+        <ul>
+          <li><code>core/</code> in this repo is shared app code consumed by Android and iOS targets.</li>
+          <li>Cloud Functions do not participate in the KMM compilation model.</li>
+          <li>Keeping backend code outside <code>core/</code> avoids implying shared runtime or binary linkage that does not exist.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>10.4 Recommended directory layout</h3>
+        <pre>
+backend/
+  README.md
+  firebase/
+    firebase.json
+    .firebaserc
+    firestore/
+      firestore.rules
+      firestore.indexes.json
+    storage/
+      storage.rules
+    functions/
+      package.json
+      tsconfig.json
+      src/
+        index.ts
+        config/
+          env.ts
+          firebaseAdmin.ts
+        export/
+          requestExportDelivery.ts
+          retryExportDelivery.ts
+          exportDeliveryService.ts
+          exportManifestRepository.ts
+          exportMailer.ts
+          exportStorage.ts
+          exportModels.ts
+        shared/
+          errors.ts
+          logging.ts
+          auth.ts
+      test/
+        export/
+          requestExportDelivery.test.ts
+          exportDeliveryService.test.ts
+          exportManifestRepository.test.ts
+          exportMailer.test.ts
+        </pre>
+        <p>
+          This keeps backend ownership explicit at the repo root while still grouping Firebase
+          configuration, rules, and functions together under one subtree.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>10.5 Function naming and ownership</h3>
+        <p>
+          Put export-specific backend code under
+          <code>backend/firebase/functions/src/export/</code>. That matches how the client
+          codebase groups features by domain, but without forcing backend code into the client
+          module graph.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Path</th>
+              <th>Responsibility</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>src/export/requestExportDelivery.ts</code></td>
+              <td>Callable function entrypoint for initial automatic send.</td>
+            </tr>
+            <tr>
+              <td><code>src/export/retryExportDelivery.ts</code></td>
+              <td>Callable function entrypoint for explicit resend/retry from history UI.</td>
+            </tr>
+            <tr>
+              <td><code>src/export/exportDeliveryService.ts</code></td>
+              <td>Pure orchestration: load manifest, acquire lease, create link or attachment, send email, update state.</td>
+            </tr>
+            <tr>
+              <td><code>src/export/exportManifestRepository.ts</code></td>
+              <td>Firestore reads/writes for <code>users/{uid}/export_history/{exportId}</code>.</td>
+            </tr>
+            <tr>
+              <td><code>src/export/exportStorage.ts</code></td>
+              <td>Firebase Storage helpers for object existence, metadata, and signed URLs.</td>
+            </tr>
+            <tr>
+              <td><code>src/export/exportMailer.ts</code></td>
+              <td>Mail provider adapter such as Resend, SendGrid, or SMTP wrapper.</td>
+            </tr>
+            <tr>
+              <td><code>src/export/exportModels.ts</code></td>
+              <td>Server-side manifest and delivery-state types.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>10.6 Shared schema ownership</h3>
+        <p>
+          The client KMM code and the Cloud Function will both depend on the same conceptual export
+          manifest schema, but this repo does not currently have a cross-language schema generation
+          layer for Kotlin and TypeScript. For the first implementation:
+        </p>
+        <ol>
+          <li>Define the canonical schema in this design doc and mirror it manually in Kotlin and TypeScript.</li>
+          <li>Keep field names stable and flat.</li>
+          <li>Avoid clever nested structures until the backend shape settles.</li>
+        </ol>
+        <p>
+          If the backend surface grows later, we can introduce a generated JSON-schema or protobuf
+          contract, but that would be overkill for the first export-delivery function.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>10.7 Deployment ownership</h3>
+        <ul>
+          <li>The mobile app continues to build with Gradle and Xcode from the existing repo root.</li>
+          <li>The Firebase backend gets its own Node/TypeScript toolchain under <code>backend/firebase/functions</code>.</li>
+          <li>Firebase rules and function deployment commands should run from the repo root or the <code>backend/</code> workspace, not from any KMM module.</li>
+          <li>CI can later add a separate backend validation job without entangling it with Android/iOS compilation.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>10.8 Alternative: separate backend repo</h3>
+        <p>
+          A separate repo is defensible if the backend team or deployment cadence is fully
+          independent. Based on the current structure, though, that would introduce more overhead
+          than value for this feature: two repos, duplicated issue context, and harder cross-review
+          between client manifest changes and backend delivery logic.
+        </p>
+        <p>
+          For this project's current size, a top-level <code>backend/</code> workspace inside this
+          repo is the better default.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>10.9 Public repo and secrets handling</h3>
+        <p>
+          Adding a <code>backend/</code> workspace to a public GitHub repo does not by itself leak
+          credentials. The risk comes from what is committed inside it.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Safe to commit</th>
+              <th>Must not be committed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <code>firebase.json</code>, <code>.firebaserc</code> project aliases,
+                <code>firestore.rules</code>, <code>firestore.indexes.json</code>,
+                <code>storage.rules</code>, <code>package.json</code>,
+                <code>tsconfig.json</code>, Cloud Function source code
+              </td>
+              <td>
+                service account JSON keys, <code>.env</code> files with secrets, mail-provider API
+                keys, SMTP passwords, private tokens, downloaded Admin SDK credentials
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Firebase project IDs are usually not secrets. Client Firebase config values are also
+          usually not secrets. The sensitive material is privileged backend credentials and third-
+          party provider secrets.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>10.10 Recommended secret storage model</h3>
+        <ol>
+          <li>Commit backend source and Firebase config normally.</li>
+          <li>Store mail-provider secrets in Firebase Functions secret/env management, not in the repo.</li>
+          <li>Load secrets in function code from the runtime environment only.</li>
+          <li>Keep local developer secret files ignored by git.</li>
+          <li>Never commit a service-account key file for deployment or local testing.</li>
+        </ol>
+        <pre>
+backend/
+  firebase/
+    functions/
+      .env.example        # placeholders only, safe to commit
+      .gitignore          # ignores real .env files and local secret material
+        </pre>
+      </div>
+
+      <div class="card">
+        <h3>10.11 Recommended gitignore additions</h3>
+        <pre>
+# Backend local secrets
+backend/firebase/functions/.env
+backend/firebase/functions/.env.*
+!backend/firebase/functions/.env.example
+
+# Firebase / GCP credential files
+*service-account*.json
+*firebase-adminsdk*.json
+        </pre>
+        <p>
+          The exact ignore patterns can be tightened later, but the main rule is simple: the public
+          repo may contain backend code and config, but not secret-bearing files.
+        </p>
+      </div>
+    </section>
+
+    <section id="delivery-flow">
+      <h2>11. Delivery Flow</h2>
+      <pre>
+1. User taps Export
+2. ExportManager builds archive locally
+3. ExportHistoryRepository creates manifest: availability = LOCAL, delivery = NotRequested
+4. If a destination email exists:
+   a. ExportDeliveryManager uploads archive blob
+   b. Manifest becomes availability = LOCAL_AND_REMOTE and writes remoteArchiveRef
+   c. Client marks delivery = Queued
+   d. Client calls Firebase callable function requestExportDelivery(exportId)
+   e. Cloud Function moves delivery state Queued -> Sending -> Sent or Failed
+5. If no destination email exists:
+   a. No automatic send request is made
+   b. Manifest remains local-only
+   c. Success UI shows reminder to update email in Backup & Sync
+      </pre>
+
+      <div class="card">
+        <h3>Important sequencing rule</h3>
+        <p>
+          The email should be sent only after the archive blob is durably accessible to the backend
+          mail sender. Otherwise we risk sending the user a broken link or an attachment request
+          pointing at a local-only file.
+        </p>
+      </div>
+    </section>
+
+    <section id="ui-changes">
+      <h2>12. UI Changes</h2>
+
+      <h3>12.1 Backup &amp; Sync settings</h3>
+      <ul>
+        <li>Add an editable email destination row below the existing sync toggles.</li>
+        <li>Show resolved source when helpful: explicit export email versus signed-in account email.</li>
+        <li>Keep this field in <code>feature/sync/settings</code> rather than inventing a second settings surface.</li>
+        <li>Hide or disable this row when the user is signed out, since automatic export delivery is a signed-in-only feature.</li>
+      </ul>
+
+      <h3>12.2 Export success screen</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Condition</th>
+            <th>Result screen behavior</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Email known, delivery queued/sent</td>
+            <td>Show delivery status card. Primary action becomes <code>View exports</code> or <code>Done</code>; manual share is secondary.</td>
+          </tr>
+          <tr>
+            <td>Email unknown</td>
+            <td>Keep current manual share primary action and add reminder card linking to <code>Backup &amp; Sync</code>.</td>
+          </tr>
+          <tr>
+            <td>Email known, delivery failed</td>
+            <td>Show failure banner with <code>Retry send</code> and manual share fallback.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>12.3 Export history screen</h3>
+      <ul>
+        <li>Each row shows one of: <code>Local</code>, <code>Remote</code>, or <code>Local + Remote</code>.</li>
+        <li>Each row also shows delivery state: sent, pending, failed, or manual-only.</li>
+        <li>For remote-only rows, hide local share actions but still allow delete.</li>
+        <li>For local rows, keep the current share/delete actions.</li>
+        <li>Delete means best-effort removal of the local file, remote blob, and synced export record as one user action.</li>
+      </ul>
+    </section>
+
+    <section id="api-sketch">
+      <h2>13. API Sketch</h2>
+      <pre>
+interface EmailAddressResolver {
+  suspend fun resolveExportDestinationEmail(): ResolvedExportEmail?
+}
+
+data class ResolvedExportEmail(
+  val email: String,
+  val source: ExportEmailSource,
+)
+
+enum class ExportEmailSource {
+  SYNC_SETTINGS,
+  AUTH_PROFILE,
+}
+
+interface ExportDeliveryManager {
+  suspend fun uploadAndSend(
+    exportId: String,
+    fileName: String,
+    bytes: ByteArray,
+    destinationEmail: String,
+  ): ExportDeliveryResult
+}
+
+data class ExportDeliveryResult(
+  val remoteArchiveRef: String,
+  val state: ExportDeliveryState,
+)
+
+interface ExportDeliveryBackend {
+  suspend fun requestExportDelivery(exportId: String): ExportDeliveryState
+}
+      </pre>
+
+      <p>
+        <code>ExportManager.exportLogs()</code> should continue exposing a single user-facing flow.
+        The new delivery and history dependencies should stay behind the manager boundary so the UI
+        does not orchestrate backend work directly.
+      </p>
+    </section>
+
+    <section id="failure-handling">
+      <h2>14. Failure Handling</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Failure</th>
+            <th>Expected behavior</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Archive generation fails</td>
+            <td>Current export error path. No success record.</td>
+          </tr>
+          <tr>
+            <td>Local file write fails</td>
+            <td>Export fails; we should not send email for an archive we cannot fully finalize locally in this release.</td>
+          </tr>
+          <tr>
+            <td>Remote upload fails</td>
+            <td>Success screen shows local export ready but automatic delivery failed. History row becomes <code>LOCAL + Failed</code> only if local write succeeded.</td>
+          </tr>
+          <tr>
+            <td>Email send fails after upload</td>
+            <td>History row stays visible with <code>Failed</code>; user can retry send later or manually share the local archive.</td>
+          </tr>
+          <tr>
+            <td>User opens history on another device before blob download support exists</td>
+            <td>Show remote metadata row with no local share action, but still allow remote delete.</td>
+          </tr>
+          <tr>
+            <td>Delete requested for a remote-only row</td>
+            <td>Delete the synced export record and remote blob; local deletion is a no-op on this device because no local file exists.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="testing">
+      <h2>15. Testing</h2>
+      <ul>
+        <li>Unit tests for email resolution precedence: explicit settings email wins over auth email.</li>
+        <li>Unit tests for manifest merge logic: local-only, remote-only, and local-plus-remote collapse into one row per export ID.</li>
+        <li>ViewModel tests for success UI branching when email is known versus unknown.</li>
+        <li>Delivery manager tests for manifest state transitions: <code>NotRequested -> Queued -> Sent</code> and failure variants.</li>
+        <li>History screen tests for action availability based on <code>ExportAvailability</code>.</li>
+        <li>Deletion tests for local-only, remote-only, and local-plus-remote records.</li>
+        <li>Cloud Function tests for auth rejection, ownership validation, idempotent resend suppression, and signed-link generation.</li>
+      </ul>
+    </section>
+
+    <section id="rollout">
+      <h2>16. Rollout Plan</h2>
+      <ol>
+        <li>Add manifest-backed history and remote upload plumbing first, behind a feature flag.</li>
+        <li>Add the <code>Backup &amp; Sync</code> email field and export success reminder.</li>
+        <li>Enable automatic send only for signed-in users with a resolved email address.</li>
+        <li>Ship remote-delete support in the first release; remote download/recover can remain a follow-up if needed.</li>
+      </ol>
+    </section>
+
+    <section id="open-questions">
+      <h2>17. Resolved Product Decisions</h2>
+      <ol>
+        <li>The backend email always uses a signed download link. The server never attaches archive files directly.</li>
+        <li>Remote archive blobs are retained for 60 days.</li>
+        <li>Automatic delivery and destination-email editing are strictly signed-in features.</li>
+        <li>Delete removes the local file, remote blob, and export record; remote-only rows must support delete in the first release.</li>
+      </ol>
+    </section>
+
+    <section id="recommended-scope" class="card">
+      <h2>18. Recommended Scope for First Implementation</h2>
+      <p>
+        The narrowest coherent implementation is:
+      </p>
+      <ol>
+        <li>Add a manifest-backed export history model with <code>LOCAL</code> and <code>REMOTE</code> availability.</li>
+        <li>Add a destination email field under <code>Backup &amp; Sync</code> plus auth-email fallback.</li>
+        <li>After local export completes, upload the archive to Firebase Storage and trigger a callable Cloud Function only when a destination email resolves.</li>
+        <li>Keep manual share intact as the fallback path and as the primary action when no email is known.</li>
+        <li>Implement signed-link-only delivery, 60-day remote retention, and end-to-end delete in the first backend-backed release.</li>
+      </ol>
+      <p class="muted">
+        That yields the requested behavior without forcing a broader export format redesign.
+      </p>
+    </section>
+      </div>
+
+      <aside class="toc" aria-label="Table of contents">
+        <p class="toc-title">Contents</p>
+        <ol>
+          <li><a href="#problem">Problem</a></li>
+          <li><a href="#product-decision">Product Decision</a></li>
+          <li><a href="#goals">Goals and Non-Goals</a></li>
+          <li><a href="#ux">Proposed User Experience</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#email-source">Source of Truth for Email Address</a></li>
+          <li><a href="#data-model">Data Model</a></li>
+          <li><a href="#storage-sync">Storage and Sync Model</a></li>
+          <li><a href="#firebase-backend">Firebase Backend Design</a></li>
+          <li><a href="#backend-location">Backend Code Location in This Repo</a></li>
+          <li><a href="#delivery-flow">Delivery Flow</a></li>
+          <li><a href="#ui-changes">UI Changes</a></li>
+          <li><a href="#api-sketch">API Sketch</a></li>
+          <li><a href="#failure-handling">Failure Handling</a></li>
+          <li><a href="#testing">Testing</a></li>
+          <li><a href="#rollout">Rollout Plan</a></li>
+          <li><a href="#open-questions">Resolved Product Decisions</a></li>
+          <li><a href="#recommended-scope">Recommended Scope for First Implementation</a></li>
+        </ol>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

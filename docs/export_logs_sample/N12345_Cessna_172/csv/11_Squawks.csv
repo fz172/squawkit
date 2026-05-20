@@ -1,0 +1,6 @@
+Created,Title,Description,Priority,Component,Component Serial,Status,Addressed By — Date,Dismiss Reason,Dismissed
+2026-03-02,Left landing light inoperative,"Landing light bulb burned out on left main gear. Navigation light functioning normally. Right landing light OK.",Low,Airframe,17265432,Open,,,
+2026-01-18,Oil filler cap O-ring deteriorated,"O-ring on oil filler cap is cracked and has lost elasticity. No leakage observed but replacement recommended before next flight.",Medium,Engine,L-12345-78H,Addressed,2026-02-14,,
+2025-04-12,Engine won't start – fuel issue suspected,"Engine fails to start after repeated attempts. Fuel pressure reads normal. Starter engagement confirmed. Vapor lock or possible contaminated fuel suspected.",AOG,Engine,L-12345-78H,Addressed,2025-05-30,,
+2024-07-22,Static wick missing – left aileron,"Static wick found missing from left aileron trailing edge. All other static wicks intact. No precipitation static issues reported in flight.",Low,Airframe,17265432,Addressed,2024-08-04,,
+2024-06-30,COM1 intermittent static above FL080,"COM1 radio develops intermittent static and occasional dropout above 8,000 ft MSL. COM2 unaffected. Issue began approximately 20 flight hours ago.",Medium,Airframe,17265432,Dismissed,,Not Reproducible,2024-09-12

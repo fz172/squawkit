@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option java_package = "dev.fanfly.wingslog.export";
+option java_multiple_files = true;
+
+// Persisted metadata for a generated export archive.
+//
+// Written next to the ZIP at export time (see LogbookExportManager) and read back when listing
+// history, so every archive's full scope — formats, date range, and aircraft — is rediscoverable
+// without parsing the file name. The archive itself remains the source of truth for existence;
+// records whose file is gone are pruned when the index is read.
+message ExportRecord {
+  // Shareable reference to the archive: a `content://` URI on Android, a file path on iOS.
+  // Stable across write and list, so it is the join key between the index and the on-disk archive.
+  string file_path = 1;
+  // Display name of the archive (e.g. `Hopply_Logs_N532SL_20260519.zip`).
+  string file_name = 2;
+  int64 size_bytes = 3;
+  // Creation time in epoch milliseconds, used to sort and label the entry.
+  int64 created_at_epoch_millis = 4;
+  // Name of the kotlin ExportDisplayLocation that produced this archive.
+  string display_location = 5;
+  // Names of the kotlin ExportFormat documents bundled inside the ZIP, in canonical order.
+  repeated string formats = 6;
+  ExportRecordDateRange date_range = 7;
+  repeated ExportRecordAircraft aircraft = 8;
+}
+
+// Flattened, display-ready snapshot of the request's date range.
+message ExportRecordDateRange {
+  // "ALL_TIME" | "LAST_N_MONTHS" | "CUSTOM".
+  string kind = 1;
+  // Number of months for the LAST_N_MONTHS kind.
+  int32 months = 2;
+  // ISO `yyyy-mm-dd` bounds for the CUSTOM kind.
+  string custom_start = 3;
+  string custom_end = 4;
+}
+
+message ExportRecordAircraft {
+  string tail_number = 1;
+  string make_model = 2;
+}
+
+// Index of all export records known to this device.
+message ExportRecordIndex {
+  repeated ExportRecord records = 1;
+}

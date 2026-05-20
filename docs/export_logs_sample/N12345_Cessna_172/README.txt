@@ -7,9 +7,16 @@ App:       Hopply 1.4.0 (147)
 
 How to import into Google Sheets
 1. Open https://sheets.google.com and create a new blank spreadsheet.
-2. File -> Import -> Upload -> choose 00_Aircraft_Info.csv.
+2. File -> Import -> Upload -> choose the included Hopply_Logs_*.xlsx workbook.
+3. Select "Replace spreadsheet" and click "Import data".
+   The workbook already contains one tab for each exported table.
+
+CSV fallback
+1. Open https://sheets.google.com and create a new blank spreadsheet.
+2. File -> Import -> Upload -> choose csv/00_Aircraft_Info.csv.
 3. Select "Insert new sheet(s)" and click "Import data".
-4. Repeat for each CSV in the order they are numbered (00, 01, 02, ...).
+   This adds the CSV as a new tab instead of replacing the current sheet.
+4. Repeat for each CSV in the csv/ folder in the order they are numbered (00, 01, 02, ...).
    The numeric prefixes keep the tabs in logbook order.
 5. After the last CSV, delete the default "Sheet1" tab.
 
@@ -24,8 +31,10 @@ Notes
   Attachments) hold one entry per line within a single quoted cell.
   Google Sheets renders these as multi-line cells. Grow the row to see
   every entry.
+- CSV files are bundled under the csv/ folder.
 - Attachment binaries (photos, PDFs, files) are bundled under the
   attachments/ folder. The CSV "Attachments" column shows
   "<name> -> attachments/<file>" so you can locate each file after
-  extracting the zip. LINK-type attachments show the original URL.
+  extracting the zip. Attachments are not embedded in the XLSX workbook.
+  LINK-type attachments show the original URL.
 - This export is a snapshot. It does not update when logs change in Hopply.

@@ -12,7 +12,7 @@ Aircraft owners and mechanics are legally and operationally tied to **paper logb
 - Annual / pre-buy inspection handoff to an A&P or IA who works off paper or Excel.
 - Backup against vendor outage or account loss (regulatory exposure if records vanish).
 - Pre-sale due-diligence packages, where the buyer's mechanic wants times, ADs, and SBs in a single workbook.
-- Personal archive — a CSV/Sheet copy is auditable and survives any future migration.
+- Personal archive — a CSV/XLSX copy is auditable and survives any future migration.
 
 Today, none of this is possible from inside the app. This PRD specifies a **Logbook Export** feature that produces a Google-Sheets-compatible workbook whose tab and column structure mirrors the conventions of FAA-style paper logbooks.
 
@@ -23,16 +23,15 @@ Today, none of this is possible from inside the app. This PRD specifies a **Logb
 ### 2.1 Goals
 
 - **Logbook fidelity.** Output tab names and columns that an A&P would recognise on sight — one tab per logbook volume (airframe, each engine, each prop), with familiar columns (Date, Total Time, Description of Work, Reference, Technician + Cert #).
-- **Google Sheets first.** Files must import cleanly into Google Sheets with no manual cell formatting. CSV/UTF-8, ISO dates, decimal hours.
+- **Google Sheets first.** Files must import cleanly into Google Sheets with no manual cell formatting. XLSX workbook plus CSV/UTF-8 fallback, ISO dates, decimal hours.
 - **Whole truth.** All log entries, compliance events (ADs, SBs, inspections), and squawks for the chosen scope, plus the technician sign-offs that close each one.
 - **Two scopes.** Per-aircraft export (most common) and whole-fleet export (single zip).
 - **Date-range filter.** Optional. Defaults to all-time.
 - **Offline-capable for the textual data.** Logs, tasks, squawks, and aircraft records run against the local-first store (R1) with no network round-trip. Attachment binaries (§4.10) may require a download for entries that have never been opened on this device.
-- **Attachment binaries included.** Every IMAGE / PDF / FILE attachment referenced by any exported log, task, or squawk is downloaded (if not already local) and embedded in the zip alongside the CSVs. LINK-type attachments stay textual — their URL is preserved in the relevant CSV cell. See §4.10.
+- **Attachment binaries included.** Every IMAGE / PDF / FILE attachment referenced by any exported log, task, or squawk is downloaded (if not already local) and embedded in the zip alongside the CSVs and XLSX workbook. Attachments are not embedded inside the workbook. LINK-type attachments stay textual — their URL is preserved in the relevant spreadsheet cell. See §4.10.
 
 ### 2.2 Non-Goals (this release)
 
-- **XLSX output.** Deferred — CSV-in-ZIP is the MVP format. XLSX is tracked under §10 Future Work.
 - **Direct Google Sheets push** via OAuth. Same — future work.
 - **PDF facsimile** of a paper logbook page. Out of scope for MVP.
 - **Re-import / round-trip.** This release is one-way. The export is for human consumption; we do not commit to parsing exported files back into the app.
@@ -79,7 +78,7 @@ A full-screen destination (not a modal sheet) that collects everything needed fo
 
 The selection cardinality drives the output layout (§4.5–4.6):
 - **1 aircraft selected** → per-aircraft zip layout.
-- **2 or more aircraft selected** → multi-aircraft zip layout with a `00_Fleet_Summary.csv` reflecting the selected subset (not the entire fleet).
+- **2 or more aircraft selected** → multi-aircraft zip layout with a `csv/00_Fleet_Summary.csv` reflecting the selected subset (not the entire fleet).
 
 #### 4.2.2 Date range section
 
@@ -112,10 +111,10 @@ Cancellation discards the temp file and returns to the configuration state with 
 
 Output layout is determined by **how many aircraft the user selected**, not by a separate scope toggle:
 
-- **Single-aircraft export (1 aircraft selected):** one ZIP archive containing one aircraft folder of CSVs plus a README.
-- **Multi-aircraft export (≥2 aircraft selected):** one ZIP archive containing one subfolder per selected aircraft, a top-level `00_Fleet_Summary.csv` that reflects only the selected aircraft, and a README.
+- **Single-aircraft export (1 aircraft selected):** one ZIP archive containing a `csv/` folder, a README, a generated XLSX workbook, and any attachment files.
+- **Multi-aircraft export (≥2 aircraft selected):** one ZIP archive containing a `csv/` folder with one subfolder per selected aircraft, a top-level README, a generated XLSX workbook, and per-aircraft README/attachment files.
 
-All CSV files are **UTF-8, RFC 4180–compliant**, comma-separated, with `CRLF` line endings, and quoted fields where content contains commas, quotes, or newlines.
+All CSV files are bundled under `csv/`. They are **UTF-8, RFC 4180–compliant**, comma-separated, with `CRLF` line endings, and quoted fields where content contains commas, quotes, or newlines. The XLSX workbook contains the same table data as the CSV files, without embedding attachment binaries.
 
 ### 4.4 File naming
 
@@ -131,52 +130,59 @@ Filenames use the aircraft's tail number with non-alphanumeric characters replac
 
 ```
 Hopply_Logs_N12345_20260518.zip
-└── N12345_Cessna_172/
-    ├── 00_Aircraft_Info.csv
-    ├── 01_Airframe.csv
-    ├── 02_Engine_1.csv          ← one per engine
-    ├── 02_Engine_2.csv
-    ├── 03_Propeller_1.csv       ← one per propeller (per engine)
-    ├── 03_Propeller_2.csv
-    ├── 10_Compliance.csv
-    ├── 11_Squawks.csv
-    ├── 20_Technicians.csv
-    ├── attachments/             ← binaries (images, PDFs, files) — see §4.10
-    │   ├── 8f3a_8130-3_form.pdf
-    │   ├── 9b21_oil_filter_after.jpg
-    │   └── …
-    └── README.txt
+├── Hopply_Logs_N12345_20260518.xlsx
+├── csv/
+│   ├── 00_Aircraft_Info.csv
+│   ├── 01_Airframe.csv
+│   ├── 02_Engine_1.csv          ← one per engine
+│   ├── 02_Engine_2.csv
+│   ├── 03_Propeller_1.csv       ← one per propeller (per engine)
+│   ├── 03_Propeller_2.csv
+│   ├── 10_Compliance.csv
+│   ├── 11_Squawks.csv
+│   └── 20_Technicians.csv
+├── attachments/             ← binaries (images, PDFs, files) — see §4.10
+│   ├── 8f3a_8130-3_form.pdf
+│   ├── 9b21_oil_filter_after.jpg
+│   └── …
+└── README.txt
 ```
 
-Numeric prefixes (`00_`, `01_`, …) preserve logbook order when CSVs are imported as sheets — Google Sheets imports tabs in alphabetical order. The `attachments/` folder is excluded from spreadsheet import; the CSV rows reference files inside it by relative path.
+Numeric prefixes (`00_`, `01_`, …) preserve logbook order when CSVs are imported as sheets — Google Sheets imports tabs in alphabetical order. The included XLSX workbook already contains these tables as ordered tabs. The `csv/` folder is a fallback for apps that prefer CSV import. The `attachments/` folder is excluded from spreadsheet import; spreadsheet rows reference files inside it by relative path.
 
 ### 4.6 Zip layout — multi-aircraft
 
 ```
 Hopply_Logs_Fleet_20260518.zip
-├── 00_Fleet_Summary.csv     ← reflects ONLY the aircraft selected, not the whole fleet
+├── Hopply_Logs_Fleet_20260518.xlsx
 ├── README.txt
+├── csv/
+│   ├── 00_Fleet_Summary.csv     ← reflects ONLY the aircraft selected, not the whole fleet
+│   ├── N12345_Cessna_172/
+│   │   └── 00_Aircraft_Info.csv  …  20_Technicians.csv
+│   └── N67890_Beechcraft_A36/
+│       └── 00_Aircraft_Info.csv  …  20_Technicians.csv
 ├── N12345_Cessna_172/
-│   ├── 00_Aircraft_Info.csv  …  20_Technicians.csv
+│   ├── README.txt
 │   └── attachments/          ← per-aircraft binaries
 └── N67890_Beechcraft_A36/
-    ├── 00_Aircraft_Info.csv  …  20_Technicians.csv
+    ├── README.txt
     └── attachments/
 ```
 
-Attachments are scoped per-aircraft and live inside that aircraft's subfolder. There is no top-level `attachments/` folder, so a file referenced only by `N67890`'s log will never be duplicated under `N12345`.
+CSV files are scoped under `csv/`. Attachments are scoped per-aircraft and live inside that aircraft's subfolder. There is no top-level `attachments/` folder, so a file referenced only by `N67890`'s log will never be duplicated under `N12345`.
 
 If two selected aircraft share a tail number (legacy data quality issue), the second is disambiguated with a `(2)` suffix on the folder name.
 
 ### 4.7 Tab specifications
 
-> **Reference sample:** see `docs/export_logs_sample/N12345_Cessna_172/` for a hand-written set of every CSV in this section populated with realistic data. The sample demonstrates the multi-value newline-in-cell convention, the attachments folder, all status / dismiss-reason values, and the cross-references between tabs (e.g. Squawk `sq-002-oilcap` addressed by Engine log `log-008-oilchange-2026`).
+> **Reference sample:** see `docs/export_logs_sample/N12345_Cessna_172/` for a hand-written set of every CSV in this section populated with realistic data. The sample demonstrates the multi-value newline-in-cell convention, the attachments folder, all status / dismiss-reason values, and the cross-references between tabs.
 
 All tabs share the following conventions:
 
 - **Dates** are `YYYY-MM-DD` in the local time zone the entry was created in. Sortable lex = sortable chronologically.
 - **Times** (airframe / engine / prop hours) are decimal hours to **1 decimal place**, e.g. `1247.3`. Empty when the original log didn't record that component's time.
-- **Identifiers** (`Log ID`, `Task ID`, `Squawk ID`) are the internal UUID strings. These are included so users can cross-reference between tabs.
+- **Internal identifiers are omitted.** CSV tabs do not expose raw database IDs; cross-references are rendered as user-readable names and dates where possible.
 - **Empty cells** for unset optional fields (no `N/A` or `—` literal sentinels).
 - **Multi-value cells** (Inspections, Reference Numbers, Squawks Addressed, Attachments) join entries with a single `\n` (LF) **inside** an RFC 4180–quoted cell. Google Sheets renders these as multi-line cells, one entry per line, which preserves readability and keeps each entry independently filterable. Commas inside an entry never become part of the field separator because the cell is fully quoted. Example raw bytes for a 2-entry Inspections cell: `"Annual\n100hr"` (newline literal between entries, surrounding double quotes are part of the CSV record).
 
@@ -219,7 +225,6 @@ Logs whose `component_type == COMPONENT_AIRFRAME`. Columns:
 | 9 | Cert Type | `technician.certificate_type` rendered (e.g. `A&P`, `IA`, `Repairman`) |
 | 10 | Cert # | `technician.cert_number` |
 | 11 | Attachments | newline-joined `attachment.name → attachments/<file>` entries (one per line); LINK-type rendered as `name → <url>`. See §4.10 for the filename scheme and §4.7 for the multi-value cell convention. |
-| 12 | Log ID | `MaintenanceLog.id` |
 
 Rows ordered **oldest → newest** (paper-logbook order, opposite of the in-app list view which is newest-first).
 
@@ -233,8 +238,8 @@ Make,Lycoming
 Model,O-320-E2D
 Serial,L-12345-78
 ,
-Date,Engine Time,Airframe Time,Work Description,Inspections,Reference Numbers,Squawks Addressed,Technician,Cert Type,Cert #,Attachments,Log ID
-2024-08-04,1180.2,4480.1,"Oil & filter change. SAE 100 added...",100hr,SB 2024-03,,Jane Smith,A&P/IA,3201234,,abc-123
+Date,Engine Time,Airframe Time,Work Description,Inspections,Reference Numbers,Squawks Addressed,Technician,Cert Type,Cert #,Attachments
+2024-08-04,1180.2,4480.1,"Oil & filter change. SAE 100 added...",100hr,SB 2024-03,,Jane Smith,A&P/IA,3201234,
 ...
 ```
 
@@ -256,7 +261,7 @@ Blade 2 Make,McCauley
 Blade 2 Model,DTM7657
 Blade 2 Serial,B-7657-B
 ,
-Date,Prop Time,Airframe Time,Work Description,Inspections,Reference Numbers,Technician,Cert Type,Cert #,Attachments,Log ID
+Date,Prop Time,Airframe Time,Work Description,Inspections,Reference Numbers,Technician,Cert Type,Cert #,Attachments
 ```
 
 Filter: logs where `component_type == COMPONENT_PROPELLER` AND `component_serial` matches the propeller hub serial or any blade serial.
@@ -283,7 +288,6 @@ All `MaintenanceTask` records — active and historical. One row per task. Colum
 | 12 | One-Time | `Yes` / `No` |
 | 13 | Notes | `notes` |
 | 14 | Compliance Details | `compliance_details` |
-| 15 | Task ID | `MaintenanceTask.id` |
 
 Rows ordered **status priority desc, then title asc** (overdue first — the most useful view for an inspector).
 
@@ -300,11 +304,9 @@ Columns:
 | 5 | Component | `component_type` |
 | 6 | Component Serial | `component_serial` |
 | 7 | Status | `Open` / `Addressed` / `Dismissed` |
-| 8 | Addressed By — Log ID | `addressed_by_log_id` |
-| 9 | Addressed By — Date | log date of that linked log entry |
-| 10 | Dismiss Reason | rendered enum (`Obsolete`, `Not Reproducible`, `Duplicate`, `Intended Behavior`) |
-| 11 | Dismissed | `dismissed_at` (date) |
-| 12 | Squawk ID | `Squawk.id` |
+| 8 | Addressed By — Date | log date of that linked log entry |
+| 9 | Dismiss Reason | rendered enum (`Obsolete`, `Not Reproducible`, `Duplicate`, `Intended Behavior`) |
+| 10 | Dismissed | `dismissed_at` (date) |
 
 Rows ordered **created date descending** (newest first — squawks are read forward-in-time more often than logs).
 
@@ -320,10 +322,8 @@ Distinct technicians who signed off any log in scope. Columns:
 | 2 | Cert Type |
 | 3 | Cert # |
 | 4 | Cert Expiration |
-| 5 | Sign-Offs in Export | count of log entries in this export where this technician signed |
-| 6 | Technician ID |
 
-Rows ordered by Sign-Offs descending.
+Rows ordered by technician name.
 
 #### 4.7.8 `00_Fleet_Summary.csv` (multi-aircraft only)
 
@@ -355,10 +355,18 @@ Period:    All time
 App:       Hopply 1.4.0 (147)
 
 How to import into Google Sheets
+1. Extract this ZIP and locate the included `Hopply_Logs_*.xlsx` workbook.
+2. Open https://sheets.google.com and create a new blank spreadsheet.
+3. File → Import → Upload → choose the `Hopply_Logs_*.xlsx` workbook.
+4. Select "Replace spreadsheet" and click "Import data".
+   The workbook already contains one tab for each exported table.
+
+CSV fallback
 1. Open https://sheets.google.com and create a new blank spreadsheet.
-2. File → Import → Upload → choose 00_Aircraft_Info.csv.
+2. File → Import → Upload → choose csv/00_Aircraft_Info.csv.
 3. Select "Insert new sheet(s)" and click "Import data".
-4. Repeat for each CSV in the order they are numbered (00, 01, 02, …).
+   This adds the CSV as a new tab instead of replacing the current sheet.
+4. Repeat for each CSV in the csv/ folder in the order they are numbered (00, 01, 02, …).
    The numeric prefixes keep the tabs in logbook order.
 5. After the last CSV, delete the default "Sheet1" tab.
 
@@ -369,10 +377,13 @@ Tab order in a paper logbook
 Notes
 - Dates are YYYY-MM-DD in the export device's local time zone.
 - Times are decimal hours (1247.3, not 1247:18).
+- CSV files are bundled under the csv/ folder. Fleet exports keep each aircraft's CSVs
+  in its own folder inside csv/.
 - Attachment binaries (photos, PDFs, files) are bundled under the
-  attachments/ folder. The CSV "Attachments" column shows
+  attachments/ folder. The spreadsheet "Attachments" column shows
   "<name> → attachments/<file>" so you can locate each file after
-  extracting the zip. LINK-type attachments show the original URL.
+  extracting the zip. Attachments are not embedded in the XLSX workbook.
+  LINK-type attachments show the original URL.
 - This export is a snapshot. It does not update when logs change in Hopply.
 ```
 
@@ -503,7 +514,7 @@ The flow is a single forward-only journey: Settings → Selection → Progress �
 | Log entry's `technician` is missing (legacy data) | Technician columns left blank; `Technicians` tab does not list an entry for the missing person. |
 | Log's `component_serial` doesn't match any current engine/prop serial (component replaced) | Entry is still routed to its `component_type` tab. If the matching component no longer exists, the entry lands in a fallback `02_Engine_Unknown.csv` / `03_Propeller_Unknown.csv` tab so it's not lost. The README explains this. |
 | Empty date range (no rows in range) | All log tabs render headers + zero rows. `Aircraft_Info` notes the empty period. Export still succeeds. |
-| Inspection / Squawk ID references an entity that has been deleted | The referenced title/reference is rendered as `[deleted: <id>]` to preserve the cross-reference without crashing the export. |
+| Inspection / Squawk reference points to an entity that has been deleted | The referenced title/reference is rendered as `[deleted]` to preserve that something was referenced without exposing the internal ID. |
 | Concurrent log edit during export | Export reads a snapshot at start; later edits do not affect the file in progress. |
 | User has zero aircraft in their fleet | The Selection screen renders an empty-state card (`No aircraft to export. Add an aircraft in Fleet to get started.`) instead of the aircraft list. The Export button is hidden. |
 | User clears all aircraft selections | Export button disabled with helper text `Select at least one aircraft`. |
@@ -575,7 +586,7 @@ A new `feature/export` module. Because export has one user-driven flow (Selectio
 ```
 feature/export/
   datamanager/    # ExportManager interface + LogbookExportWriter (CSV + ZIP)
-  sharedassets/   # Strings for selection screen, README template
+  sharedassets/   # Strings for selection screen and export progress
   update/         # ExportSelectionRoute, ExportSelectionScreen,
                   # ExportViewModel, ExportUiState (sealed: Configuring | Running | Success | Error)
 ```
@@ -592,7 +603,6 @@ The CSV + ZIP writer lives in `commonMain` using `kotlinx.io` primitives. Platfo
 
 | Item | Why deferred |
 |:---|:---|
-| **XLSX output (single multi-tab workbook)** | Removes the manual "import each CSV as a tab" step. Needs a KMM-compatible XLSX writer; ZIP-of-CSVs unblocks the use case faster. |
 | **Direct push to Google Sheets via OAuth** | Best UX (one tap → workbook opens in Sheets), but adds an OAuth flow, new scopes, and a token store. |
 | **PDF facsimile** | A printable logbook-page rendering would close the loop for users who still file paper. Adds a PDF generator dependency. |
 | **Scheduled / automated exports** | "Email me a backup zip every quarter." Server pipeline needed; out of scope for an on-device-only feature. |

@@ -70,7 +70,7 @@ feature/export/
 
   sharedassets/
     src/commonMain/composeResources/values/strings.xml
-    src/commonMain/composeResources/files/readme_template.txt
+    src/commonMain/composeResources/values/strings.xml
     src/commonMain/kotlin/.../sharedassets/   # (no Kotlin yet — resources only)
 
   update/
@@ -377,7 +377,7 @@ For an airframe / engine / prop row's multi-value columns:
 private const val CELL_SEP = "\n"   // newline-joined inside an RFC-4180-quoted cell
 
 val inspectionTitles = log.inspection_ids
-  .map { id -> bundle.tasksById[id]?.title ?: "[deleted: $id]" }
+  .map { id -> bundle.tasksById[id]?.title ?: "[deleted]" }
   .joinToString(CELL_SEP)
 
 val referenceNumbers = log.inspection_ids
@@ -385,7 +385,7 @@ val referenceNumbers = log.inspection_ids
   .joinToString(CELL_SEP)
 
 val squawkTitles = log.squawk_ids
-  .map { id -> bundle.squawksById[id]?.title ?: "[deleted: $id]" }
+  .map { id -> bundle.squawksById[id]?.title ?: "[deleted]" }
   .joinToString(CELL_SEP)
 
 val attachments = log.attachments.map { att -> AttachmentCell.format(att, bundle.attachmentPaths) }
@@ -982,8 +982,8 @@ modules(
 | Aircraft has zero logs / squawks | Tab CSVs still emitted with header row only — `LogbookExportWriter` writes the header unconditionally and zero data rows. |
 | Aircraft has no engines / props | `bundle.aircraft.engine` empty → `forEachIndexed` no-ops → tabs not emitted. |
 | Orphaned engine/prop serial (component replaced) | Routed to `02_Engine_Unknown.csv` / `03_Propeller_Unknown.csv`. README explains. |
-| Deleted task referenced by `inspection_ids` | Title cell rendered as `[deleted: <id>]`; reference number omitted. |
-| Deleted squawk referenced by `squawk_ids` | Same: `[deleted: <id>]`. |
+| Deleted task referenced by `inspection_ids` | Title cell rendered as `[deleted]`; reference number omitted. |
+| Deleted squawk referenced by `squawk_ids` | Same: `[deleted]`. |
 | Cancel mid-export | Orchestrator's `finally` deletes `<file>.partial`; ViewModel restores last `Configuring`. |
 | Disk full / write error | Orchestrator emits `Error`; partial file deleted. UI shows `Error` state with retry. |
 | Filename collision (same day) | `SystemFileSystem.atomicMove` overwrites; no prompt. |
@@ -1043,7 +1043,7 @@ CSV cell content is **English-only** for MVP. Rationale:
 - The target user is an A&P / IA reviewing in a spreadsheet — the conventions (e.g. `A&P`, `AOG`, `Service Bulletin`) are English-language industry terms.
 - Localizing CSV content adds review burden without clear demand.
 
-UI strings (selection screen, progress messages, success/error states) **are** localized via Compose resources in `feature/export/sharedassets/`. Per project convention (`CLAUDE.md` reference to centralized string resources), the README template is also a localized resource — but its body remains English in MVP; the resource indirection just sets us up for future translation.
+UI strings (selection screen, progress messages, success/error states) **are** localized via Compose resources in `feature/export/sharedassets/`. The generated archive `README.txt` body lives as a plain text template at `feature/export/datamanager/src/commonMain/resources/export_readme_template.txt`; Gradle turns that text file into a generated constant for common code so the editable template is not native Kotlin source.
 
 ---
 
@@ -1057,6 +1057,8 @@ UI strings (selection screen, progress messages, success/error states) **are** l
 - No `ExportManager` implementation yet — Koin module registers a stub.
 
 This ships as a no-op feature behind feature flag (`FeatureFlags.exportLogsEnabled`) so the entry-point UI work can land independently.
+
+The flag is stored as positive `export_logs_enabled` state in `FeatureLabSettings`, unlike the older `*_disabled` flags. Default value is false so the Phase 1 Settings entry stays hidden until explicitly enabled in Feature Lab.
 
 ### Phase 2 — Selection screen + ViewModel
 
@@ -1102,9 +1104,9 @@ The questions raised during design review are resolved as follows. New questions
 
 Listed here so the design doc is self-contained:
 
-- No XLSX writing in MVP — CSV in ZIP only.
+- XLSX writing is local-only; no direct Google Sheets API integration.
 - No OAuth-based direct Google Sheets push.
-- No attachment binary bundling — metadata only.
+- Attachment binaries are bundled for IMAGE / PDF / FILE attachments when local or downloadable; failures degrade to textual markers in the CSV and README notes.
 - No PDF rendering.
 - No server-side generation; pipeline is entirely on-device.
 - No re-import / round-trip.

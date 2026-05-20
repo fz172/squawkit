@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Engineering
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -36,9 +37,11 @@ import wingslog.core.ui.generated.resources.settings
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.feature_lab
 import wingslog.feature.settings.generated.resources.sign_out
+import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import wingslog.feature.sync.sharedassets.generated.resources.feature_name_backup_and_sync
 import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians
 import wingslog.feature.settings.generated.resources.Res as SettingsRes
+import wingslog.feature.export.sharedassets.generated.resources.Res as ExportRes
 import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
@@ -98,6 +101,15 @@ fun SettingsScreen(
         onClick = { navController.navigate(Screen.SyncSettings.route) },
         settingsLevel = SettingsLevel.DEFAULT
       )
+
+      if (user.featureFlags.exportLogsEnabled) {
+        SettingsRow(
+          icon = Icons.Default.FileDownload,
+          title = stringResource(ExportRes.string.feature_name_export_logs),
+          onClick = { navController.navigate(Screen.ExportLogs.route) },
+          settingsLevel = SettingsLevel.DEFAULT
+        )
+      }
 
       SettingsRow(
         icon = Icons.Default.Tune,
