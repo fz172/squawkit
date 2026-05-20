@@ -7,6 +7,7 @@ plugins {
 }
 
 val versionPropsFile = rootProject.file("version.properties")
+val readmeTemplateFile = layout.projectDirectory.file("src/commonMain/resources/export_readme_template.txt")
 
 val generateExportVersionKt by tasks.registering {
   val outputDir = layout.buildDirectory.dir(
@@ -34,6 +35,39 @@ val generateExportVersionKt by tasks.registering {
       )
   }
 }
+
+val generateExportReadmeTemplateKt by tasks.registering {
+  val outputDir = layout.buildDirectory.dir(
+    "generated/exportReadmeTemplate/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl"
+  )
+  inputs.file(readmeTemplateFile)
+  outputs.dir(outputDir)
+
+  doFirst {
+    outputDir.get().asFile.also { it.mkdirs() }
+      .resolve("GeneratedExportReadmeTemplate.kt")
+      .writeText(
+        "package dev.fanfly.wingslog.feature.export.datamanager.impl\n\n" +
+          "const val GENERATED_EXPORT_README_TEMPLATE = ${readmeTemplateFile.asFile.readText().toKotlinStringLiteral()}\n"
+      )
+  }
+}
+
+fun String.toKotlinStringLiteral(): String =
+  buildString {
+    append("\"")
+    this@toKotlinStringLiteral.forEach { char ->
+      when (char) {
+        '\\' -> append("\\\\")
+        '"' -> append("\\\"")
+        '\n' -> append("\\n")
+        '\r' -> append("\\r")
+        '\t' -> append("\\t")
+        else -> append(char)
+      }
+    }
+    append("\"")
+  }
 
 android {
   namespace = "dev.fanfly.wingslog.feature.export.datamanager"
@@ -65,6 +99,7 @@ kotlin {
   sourceSets {
     commonMain {
       kotlin.srcDir(layout.buildDirectory.dir("generated/exportVersion/commonMain/kotlin"))
+      kotlin.srcDir(layout.buildDirectory.dir("generated/exportReadmeTemplate/commonMain/kotlin"))
     }
 
     commonMain.dependencies {
@@ -90,6 +125,7 @@ kotlin {
 tasks.configureEach {
   if (name.startsWith("compile") && name.contains("Kotlin")) {
     dependsOn(generateExportVersionKt)
+    dependsOn(generateExportReadmeTemplateKt)
   }
 }
 

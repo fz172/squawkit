@@ -30,6 +30,7 @@ import com.squareup.wire.Instant as WireInstant
  */
 class LogbookExportArchiveBuilder(
   private val appVersion: String = GENERATED_EXPORT_APP_VERSION,
+  private val readmeTemplate: String = GENERATED_EXPORT_README_TEMPLATE,
 ) {
 
   /**
@@ -402,38 +403,17 @@ class LogbookExportArchiveBuilder(
     val attachmentNotes = attachments.notes
       .takeIf { it.isNotEmpty() }
       ?.joinToString(separator = "\n") { "- $it" }
-      ?.let { "\nAttachment notes\n$it\n" }
+      ?.let { "\nAttachment notes\n$it" }
       .orEmpty()
-    return (
-    """
-    Hopply Logbook Export
-
-    Generated: ${generatedAt.exportTimestamp(timeZone)}
-    Scope:     ${bundle.aircraft.make} ${bundle.aircraft.model} ${bundle.aircraft.tail_number}
-    Period:    ${request.dateRange.label()}
-    App:       $appVersion
-
-    How to import into Google Sheets
-    1. Open https://sheets.google.com and create a new blank spreadsheet.
-    2. File -> Import -> Upload -> choose 00_Aircraft_Info.csv.
-    3. Select "Insert new sheet(s)" and click "Import data".
-    4. Repeat for each CSV in the order they are numbered (00, 01, 02, ...).
-       The numeric prefixes keep the tabs in logbook order.
-    5. After the last CSV, delete the default "Sheet1" tab.
-
-    Tab order in a paper logbook
-      Aircraft Info -> Airframe -> Engines -> Propellers
-      -> Compliance -> Squawks -> Technicians
-
-    Notes
-    - Dates are YYYY-MM-DD in the export device's local time zone.
-    - Times are decimal hours (1247.3, not 1247:18).
-    - Multi-value cells hold one entry per line within a single quoted cell.
-    - Attachment binaries are bundled under the attachments/ folder when available.
-      LINK-type attachments show the original URL.
-    - This export is a snapshot. It does not update when logs change in Hopply.
-    """.trimIndent() + "\n" + attachmentNotes
+    return ReadmeTemplateRenderer(readmeTemplate).render(
+      mapOf(
+        "generated_at" to generatedAt.exportTimestamp(timeZone),
+        "scope" to "${bundle.aircraft.make} ${bundle.aircraft.model} ${bundle.aircraft.tail_number}",
+        "period" to request.dateRange.label(),
+        "app_version" to appVersion,
+        "attachment_notes" to attachmentNotes,
       )
+    )
   }
 
   private fun logRow(

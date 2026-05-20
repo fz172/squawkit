@@ -358,6 +358,7 @@ How to import into Google Sheets
 1. Open https://sheets.google.com and create a new blank spreadsheet.
 2. File → Import → Upload → choose 00_Aircraft_Info.csv.
 3. Select "Insert new sheet(s)" and click "Import data".
+   This adds the CSV as a new tab instead of replacing the current sheet.
 4. Repeat for each CSV in the order they are numbered (00, 01, 02, …).
    The numeric prefixes keep the tabs in logbook order.
 5. After the last CSV, delete the default "Sheet1" tab.
@@ -575,7 +576,7 @@ A new `feature/export` module. Because export has one user-driven flow (Selectio
 ```
 feature/export/
   datamanager/    # ExportManager interface + LogbookExportWriter (CSV + ZIP)
-  sharedassets/   # Strings for selection screen, README template
+  sharedassets/   # Strings for selection screen and export progress
   update/         # ExportSelectionRoute, ExportSelectionScreen,
                   # ExportViewModel, ExportUiState (sealed: Configuring | Running | Success | Error)
 ```

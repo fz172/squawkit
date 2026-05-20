@@ -70,7 +70,7 @@ feature/export/
 
   sharedassets/
     src/commonMain/composeResources/values/strings.xml
-    src/commonMain/composeResources/files/readme_template.txt
+    src/commonMain/composeResources/values/strings.xml
     src/commonMain/kotlin/.../sharedassets/   # (no Kotlin yet — resources only)
 
   update/
@@ -1043,7 +1043,7 @@ CSV cell content is **English-only** for MVP. Rationale:
 - The target user is an A&P / IA reviewing in a spreadsheet — the conventions (e.g. `A&P`, `AOG`, `Service Bulletin`) are English-language industry terms.
 - Localizing CSV content adds review burden without clear demand.
 
-UI strings (selection screen, progress messages, success/error states) **are** localized via Compose resources in `feature/export/sharedassets/`. Per project convention (`CLAUDE.md` reference to centralized string resources), the README template is also a localized resource — but its body remains English in MVP; the resource indirection just sets us up for future translation.
+UI strings (selection screen, progress messages, success/error states) **are** localized via Compose resources in `feature/export/sharedassets/`. The generated archive `README.txt` body lives as a plain text template at `feature/export/datamanager/src/commonMain/resources/export_readme_template.txt`; Gradle turns that text file into a generated constant for common code so the editable template is not native Kotlin source.
 
 ---
 
