@@ -92,6 +92,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_share
 import wingslog.feature.export.sharedassets.generated.resources.export_share_title
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_file_name
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_location
+import wingslog.feature.export.sharedassets.generated.resources.export_success_instructions
 import wingslog.feature.export.sharedassets.generated.resources.export_location_downloads_hopply
 import wingslog.feature.export.sharedassets.generated.resources.export_location_files_hopply
 import wingslog.feature.export.sharedassets.generated.resources.export_success_body
@@ -480,7 +481,12 @@ private fun SuccessContent(
     modifier = modifier,
     icon = Icons.Default.CheckCircle,
     title = stringResource(Res.string.export_success_title),
-    body = stringResource(Res.string.export_success_body, fileName, displayLocation),
+    body = stringResource(
+      Res.string.export_success_body,
+      fileName,
+      displayLocation,
+      stringResource(Res.string.export_success_instructions),
+    ),
   ) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
       val shareTitle = stringResource(Res.string.export_share_title)

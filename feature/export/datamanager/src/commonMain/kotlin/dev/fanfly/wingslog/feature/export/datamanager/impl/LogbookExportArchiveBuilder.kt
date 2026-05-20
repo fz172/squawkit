@@ -47,7 +47,7 @@ class LogbookExportArchiveBuilder(
     val entries = mutableListOf<ZipEntryPayload>()
     val tables = exportTables(request, bundles, attachmentManifests, generatedAt, timeZone)
     tables.forEach { table ->
-      entries += csvEntry(table.csvPath, table.rows)
+      entries += csvEntry("csv/${table.csvPath}", table.rows)
     }
     if (tables.isNotEmpty()) {
       entries += ZipEntryPayload(

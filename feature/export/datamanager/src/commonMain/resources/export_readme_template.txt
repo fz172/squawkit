@@ -14,10 +14,10 @@ How to import into Google Sheets
 
 CSV fallback
 1. Open https://sheets.google.com and create a new blank spreadsheet.
-2. File -> Import -> Upload -> choose 00_Aircraft_Info.csv.
+2. File -> Import -> Upload -> choose csv/00_Aircraft_Info.csv.
 3. Select "Insert new sheet(s)" and click "Import data".
    This adds the CSV as a new tab instead of replacing the current sheet.
-4. Repeat for each CSV in the order they are numbered (00, 01, 02, ...).
+4. Repeat for each CSV in the csv/ folder in the order they are numbered (00, 01, 02, ...).
    The numeric prefixes keep the tabs in logbook order.
 5. After the last CSV, delete the default "Sheet1" tab.
 
@@ -29,6 +29,8 @@ Notes
 - Dates are YYYY-MM-DD in the export device's local time zone.
 - Times are decimal hours (1247.3, not 1247:18).
 - Multi-value cells hold one entry per line within a single quoted cell.
+- CSV files are bundled under the csv/ folder. Fleet exports keep each aircraft's CSVs
+  in its own folder inside csv/.
 - Attachment binaries are bundled under the attachments/ folder when available.
   They are not embedded in the XLSX workbook.
   LINK-type attachments show the original URL.

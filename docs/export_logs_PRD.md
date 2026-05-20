@@ -78,7 +78,7 @@ A full-screen destination (not a modal sheet) that collects everything needed fo
 
 The selection cardinality drives the output layout (§4.5–4.6):
 - **1 aircraft selected** → per-aircraft zip layout.
-- **2 or more aircraft selected** → multi-aircraft zip layout with a `00_Fleet_Summary.csv` reflecting the selected subset (not the entire fleet).
+- **2 or more aircraft selected** → multi-aircraft zip layout with a `csv/00_Fleet_Summary.csv` reflecting the selected subset (not the entire fleet).
 
 #### 4.2.2 Date range section
 
@@ -111,10 +111,10 @@ Cancellation discards the temp file and returns to the configuration state with 
 
 Output layout is determined by **how many aircraft the user selected**, not by a separate scope toggle:
 
-- **Single-aircraft export (1 aircraft selected):** one ZIP archive containing CSVs, a README, a generated XLSX workbook, and any attachment files.
-- **Multi-aircraft export (≥2 aircraft selected):** one ZIP archive containing one subfolder per selected aircraft, a top-level `00_Fleet_Summary.csv`, a generated XLSX workbook, and per-aircraft README/attachment files.
+- **Single-aircraft export (1 aircraft selected):** one ZIP archive containing a `csv/` folder, a README, a generated XLSX workbook, and any attachment files.
+- **Multi-aircraft export (≥2 aircraft selected):** one ZIP archive containing a `csv/` folder with one subfolder per selected aircraft, a top-level README, a generated XLSX workbook, and per-aircraft README/attachment files.
 
-All CSV files are **UTF-8, RFC 4180–compliant**, comma-separated, with `CRLF` line endings, and quoted fields where content contains commas, quotes, or newlines. The XLSX workbook contains the same table data as the CSV files, without embedding attachment binaries.
+All CSV files are bundled under `csv/`. They are **UTF-8, RFC 4180–compliant**, comma-separated, with `CRLF` line endings, and quoted fields where content contains commas, quotes, or newlines. The XLSX workbook contains the same table data as the CSV files, without embedding attachment binaries.
 
 ### 4.4 File naming
 
@@ -131,15 +131,16 @@ Filenames use the aircraft's tail number with non-alphanumeric characters replac
 ```
 Hopply_Logs_N12345_20260518.zip
 ├── Hopply_Logs_N12345_20260518.xlsx
-├── 00_Aircraft_Info.csv
-├── 01_Airframe.csv
-├── 02_Engine_1.csv          ← one per engine
-├── 02_Engine_2.csv
-├── 03_Propeller_1.csv       ← one per propeller (per engine)
-├── 03_Propeller_2.csv
-├── 10_Compliance.csv
-├── 11_Squawks.csv
-├── 20_Technicians.csv
+├── csv/
+│   ├── 00_Aircraft_Info.csv
+│   ├── 01_Airframe.csv
+│   ├── 02_Engine_1.csv          ← one per engine
+│   ├── 02_Engine_2.csv
+│   ├── 03_Propeller_1.csv       ← one per propeller (per engine)
+│   ├── 03_Propeller_2.csv
+│   ├── 10_Compliance.csv
+│   ├── 11_Squawks.csv
+│   └── 20_Technicians.csv
 ├── attachments/             ← binaries (images, PDFs, files) — see §4.10
 │   ├── 8f3a_8130-3_form.pdf
 │   ├── 9b21_oil_filter_after.jpg
@@ -147,24 +148,29 @@ Hopply_Logs_N12345_20260518.zip
 └── README.txt
 ```
 
-Numeric prefixes (`00_`, `01_`, …) preserve logbook order when CSVs are imported as sheets — Google Sheets imports tabs in alphabetical order. The included XLSX workbook already contains these tables as ordered tabs. The `attachments/` folder is excluded from spreadsheet import; spreadsheet rows reference files inside it by relative path.
+Numeric prefixes (`00_`, `01_`, …) preserve logbook order when CSVs are imported as sheets — Google Sheets imports tabs in alphabetical order. The included XLSX workbook already contains these tables as ordered tabs. The `csv/` folder is a fallback for apps that prefer CSV import. The `attachments/` folder is excluded from spreadsheet import; spreadsheet rows reference files inside it by relative path.
 
 ### 4.6 Zip layout — multi-aircraft
 
 ```
 Hopply_Logs_Fleet_20260518.zip
-├── 00_Fleet_Summary.csv     ← reflects ONLY the aircraft selected, not the whole fleet
 ├── Hopply_Logs_Fleet_20260518.xlsx
 ├── README.txt
+├── csv/
+│   ├── 00_Fleet_Summary.csv     ← reflects ONLY the aircraft selected, not the whole fleet
+│   ├── N12345_Cessna_172/
+│   │   └── 00_Aircraft_Info.csv  …  20_Technicians.csv
+│   └── N67890_Beechcraft_A36/
+│       └── 00_Aircraft_Info.csv  …  20_Technicians.csv
 ├── N12345_Cessna_172/
-│   ├── 00_Aircraft_Info.csv  …  20_Technicians.csv
+│   ├── README.txt
 │   └── attachments/          ← per-aircraft binaries
 └── N67890_Beechcraft_A36/
-    ├── 00_Aircraft_Info.csv  …  20_Technicians.csv
+    ├── README.txt
     └── attachments/
 ```
 
-Attachments are scoped per-aircraft and live inside that aircraft's subfolder. There is no top-level `attachments/` folder, so a file referenced only by `N67890`'s log will never be duplicated under `N12345`.
+CSV files are scoped under `csv/`. Attachments are scoped per-aircraft and live inside that aircraft's subfolder. There is no top-level `attachments/` folder, so a file referenced only by `N67890`'s log will never be duplicated under `N12345`.
 
 If two selected aircraft share a tail number (legacy data quality issue), the second is disambiguated with a `(2)` suffix on the folder name.
 
@@ -357,10 +363,10 @@ How to import into Google Sheets
 
 CSV fallback
 1. Open https://sheets.google.com and create a new blank spreadsheet.
-2. File → Import → Upload → choose 00_Aircraft_Info.csv.
+2. File → Import → Upload → choose csv/00_Aircraft_Info.csv.
 3. Select "Insert new sheet(s)" and click "Import data".
    This adds the CSV as a new tab instead of replacing the current sheet.
-4. Repeat for each CSV in the order they are numbered (00, 01, 02, …).
+4. Repeat for each CSV in the csv/ folder in the order they are numbered (00, 01, 02, …).
    The numeric prefixes keep the tabs in logbook order.
 5. After the last CSV, delete the default "Sheet1" tab.
 
@@ -371,6 +377,8 @@ Tab order in a paper logbook
 Notes
 - Dates are YYYY-MM-DD in the export device's local time zone.
 - Times are decimal hours (1247.3, not 1247:18).
+- CSV files are bundled under the csv/ folder. Fleet exports keep each aircraft's CSVs
+  in its own folder inside csv/.
 - Attachment binaries (photos, PDFs, files) are bundled under the
   attachments/ folder. The spreadsheet "Attachments" column shows
   "<name> → attachments/<file>" so you can locate each file after

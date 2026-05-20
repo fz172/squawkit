@@ -28,7 +28,10 @@
   <string name="export_progress_saving_file">Saving export...</string>
   <string name="export_success_title">Export ready</string>
   <string name="export_success_body">%1$s
-%2$s</string>
+%2$s
+
+%3$s</string>
+  <string name="export_success_instructions">Share this ZIP to yourself, unzip it, then open README.txt for import steps.</string>
   <string name="export_stub_preview_file_name">Hopply_Logs_preview.zip</string>
   <string name="export_stub_preview_location">Preview only</string>
   <string name="export_location_downloads_hopply">Saved to Downloads/Hopply</string>
