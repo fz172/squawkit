@@ -1243,6 +1243,12 @@ interface ExportDeliveryBackend {
           Exit criteria: a signed-in user with a resolved destination email can complete a local
           export and receive a backend-generated delivery email without manual share.
         </p>
+        <p class="muted">
+          <strong>Status:</strong> Complete. The app now queues delivery through the callable,
+          the backend sends signed-link email via the configured provider, and manifest state moves
+          through <code>QUEUED</code>, <code>SENDING</code>, <code>SENT</code>, or
+          <code>FAILED</code>.
+        </p>
       </div>
 
       <div class="card">

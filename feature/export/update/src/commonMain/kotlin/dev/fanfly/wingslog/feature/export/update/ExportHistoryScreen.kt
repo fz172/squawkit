@@ -66,6 +66,11 @@ import wingslog.feature.export.sharedassets.generated.resources.export_email_sub
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_title
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_failed
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_manual
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_queued
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_sending
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_sent
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_body
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_title
 import wingslog.feature.export.sharedassets.generated.resources.export_history_item_meta
@@ -198,6 +203,7 @@ private fun ExportHistoryCard(
   val aircraftTitle = aircraftSummary(record)
   val scope = scopeLine(record)
   val availability = availabilityLabel(record)
+  val delivery = deliveryLabel(record)
   val canShare = record.file_path.isNotBlank()
   val canDelete = record.remote_archive_ref.isBlank()
 
@@ -269,6 +275,11 @@ private fun ExportHistoryCard(
       }
       Text(
         text = availability,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      Text(
+        text = delivery,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -391,4 +402,13 @@ private fun availabilityLabel(record: ExportRecord): String = when {
     stringResource(Res.string.export_history_status_remote_only)
   else ->
     stringResource(Res.string.export_history_status_local_only)
+}
+
+@Composable
+private fun deliveryLabel(record: ExportRecord): String = when (record.delivery_state) {
+  "QUEUED" -> stringResource(Res.string.export_history_delivery_queued)
+  "SENDING" -> stringResource(Res.string.export_history_delivery_sending)
+  "SENT" -> stringResource(Res.string.export_history_delivery_sent)
+  "FAILED" -> stringResource(Res.string.export_history_delivery_failed)
+  else -> stringResource(Res.string.export_history_delivery_manual)
 }

@@ -29,7 +29,12 @@ class ExportHistoryRemoteRepository(
       storage.reference(remotePath).putData(archiveBytes.toFirebaseData())
       val synced = record.copy(
         remote_archive_ref = remotePath,
-        delivery_state = record.delivery_state.ifBlank { ExportDeliveryStates.NOT_REQUESTED },
+        delivery_state = record.delivery_state.ifBlank {
+          record.destination_email
+            .takeIf { it.isNotBlank() }
+            ?.let { ExportDeliveryStates.QUEUED }
+            ?: ExportDeliveryStates.NOT_REQUESTED
+        },
         remote_expires_at_epoch_millis = (clock.now() + 60.days).toEpochMilliseconds(),
       )
       document(user.uid, record.export_id).set(synced.toWire(user.uid))

@@ -59,13 +59,21 @@ SDK from the app once you want to test the production configuration end to end.
 
 ## Export-delivery status
 
-`requestExportDelivery(exportId)` is present as a Milestone 0 callable boundary only.
+`requestExportDelivery(exportId)` is now the active Milestone 4 callable path.
 
 - it validates auth, App Check, allowed app ID, and a non-empty `exportId`
-- it does not read manifests, sign URLs, or send mail yet
-- it returns a typed placeholder response so the client can integrate against the callable name and request shape early
+- it loads `users/{uid}/export_history/{exportId}` from Firestore
+- it acquires a short delivery lease to avoid duplicate concurrent sends
+- it generates a signed download URL for the uploaded archive in Cloud Storage
+- it sends mail through the configured provider and writes back `SENT` or `FAILED`
 
-Mail-provider integration belongs to later milestones and should continue to load credentials only from runtime environment or Firebase-managed secrets, never from committed files.
+Provider credentials still belong only in runtime environment or Firebase-managed secrets, never in committed files.
+
+Current provider contract:
+
+- `EXPORT_DELIVERY_PROVIDER=resend`
+- `EXPORT_DELIVERY_FROM_EMAIL=<verified sender>`
+- `EXPORT_DELIVERY_API_KEY=<provider secret>`
 
 ## Android App Check requirements
 

@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordAircraft
@@ -26,9 +27,12 @@ class LogbookExportManager(
   private val zipFileWriter: ZipFileWriter,
   private val exportFileStore: ExportFileStore,
   private val remoteRepository: ExportHistoryRemoteRepository,
+  private val deliveryBackend: ExportDeliveryBackend,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ExportManager {
+
+  private val log = Logger.withTag("LogbookExportManager")
 
   override fun exportLogs(request: ExportRequest): Flow<ExportProgress> = flow {
     if (request.aircraftIds.isEmpty()) {
@@ -74,9 +78,10 @@ class LogbookExportManager(
       createdAtEpochMillis = clock.now().toEpochMilliseconds(),
     )
     exportFileStore.saveRecord(localRecord)
-    val syncedRecord = remoteRepository.uploadAndSync(localRecord, zipBytes)
-    if (syncedRecord != localRecord) {
-      exportFileStore.saveRecord(syncedRecord)
+    val remoteRecord = remoteRepository.uploadAndSync(localRecord, zipBytes)
+    val finalRecord = remoteRecord.requestDeliveryIfEligible()
+    if (finalRecord != localRecord) {
+      exportFileStore.saveRecord(finalRecord)
     }
     emit(
       ExportProgress.Success(
@@ -86,6 +91,8 @@ class LogbookExportManager(
         displayLocation = "",
         sizeBytes = saved.sizeBytes,
         displayLocationKind = saved.displayLocationKind,
+        deliveryState = finalRecord.delivery_state,
+        deliveryFailureMessage = finalRecord.delivery_failure_message,
       )
     )
   }
@@ -134,5 +141,21 @@ class LogbookExportManager(
       custom_start = start.toString(),
       custom_end = endInclusive.toString(),
     )
+  }
+
+  private suspend fun ExportRecord.requestDeliveryIfEligible(): ExportRecord {
+    if (remote_archive_ref.isBlank() || destination_email.isBlank()) return this
+    return runCatching {
+      val delivery = deliveryBackend.requestExportDelivery(export_id)
+      copy(
+        delivery_state = delivery.deliveryState,
+        delivery_sent_at_epoch_millis = delivery.deliverySentAtEpochMillis,
+        delivery_failure_code = delivery.deliveryFailureCode,
+        delivery_failure_message = delivery.deliveryFailureMessage,
+      )
+    }.getOrElse { error ->
+      log.w(error) { "export delivery request failed for $export_id" }
+      this
+    }
   }
 }

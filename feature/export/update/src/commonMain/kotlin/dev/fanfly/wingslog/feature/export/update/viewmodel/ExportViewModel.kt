@@ -303,6 +303,8 @@ class ExportViewModel(
       customStart = lastConfiguring.customStart,
       customEnd = lastConfiguring.customEnd,
       deliveryInfo = latestDeliveryInfo,
+      deliveryState = deliveryState,
+      deliveryFailureMessage = deliveryFailureMessage,
     )
 
     is ExportProgress.Error -> ExportUiState.Error(message)

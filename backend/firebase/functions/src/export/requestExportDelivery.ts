@@ -1,10 +1,8 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 import { FUNCTION_REGION } from "../config/env.js";
-import {
-  EXPORT_DELIVERY_STATE,
-  type ExportDeliveryState,
-} from "./exportModels.js";
+import { ExportDeliveryService } from "./exportDeliveryService.js";
+import { type DeliveryDispatchResult } from "./exportModels.js";
 import { requireAuthenticatedApp } from "../shared/auth.js";
 
 export type RequestExportDeliveryRequest = {
@@ -12,34 +10,40 @@ export type RequestExportDeliveryRequest = {
 };
 
 export type RequestExportDeliveryResponse = {
-  status: "accepted";
+  status: DeliveryDispatchResult["status"];
   exportId: string;
   uid: string;
   appId: string;
-  deliveryState: ExportDeliveryState;
-  message: string;
+  deliveryState: DeliveryDispatchResult["deliveryState"];
+  deliverySentAtEpochMillis: number;
+  deliveryFailureCode: string;
+  deliveryFailureMessage: string;
 };
+
+const deliveryService = new ExportDeliveryService();
 
 export const requestExportDelivery = onCall<
   RequestExportDeliveryRequest,
-  RequestExportDeliveryResponse
+  Promise<RequestExportDeliveryResponse>
 >(
   {
     region: FUNCTION_REGION,
     enforceAppCheck: true,
   },
-  (request) => {
+  async request => {
     const { uid, appId } = requireAuthenticatedApp(request);
     const { exportId } = parseRequest(request.data);
+    const result = await deliveryService.requestDelivery(uid, exportId);
 
     return {
-      status: "accepted",
+      status: result.status,
       exportId,
       uid,
       appId,
-      deliveryState: EXPORT_DELIVERY_STATE.NOT_IMPLEMENTED,
-      message:
-        "requestExportDelivery is scaffolded for Milestone 0 but delivery is not implemented yet.",
+      deliveryState: result.deliveryState,
+      deliverySentAtEpochMillis: result.deliverySentAtEpochMillis ?? 0,
+      deliveryFailureCode: result.deliveryFailureCode ?? "",
+      deliveryFailureMessage: result.deliveryFailureMessage ?? "",
     };
   },
 );

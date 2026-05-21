@@ -148,9 +148,15 @@ import wingslog.feature.export.sharedassets.generated.resources.export_stub_prev
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_location
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_auth
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_explicit
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_manual
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_manual_title
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_pending
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_pending_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_ready_title
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_sent
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_sent_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
 import wingslog.feature.export.sharedassets.generated.resources.export_try_again
 import wingslog.feature.export.sharedassets.generated.resources.export_untitled_aircraft
@@ -876,13 +882,27 @@ private fun SuccessResult(
 
 @Composable
 private fun DeliveryStatusCard(state: ExportUiState.Success) {
-  val title = if (state.deliveryInfo == null) {
-    stringResource(Res.string.export_success_delivery_manual_title)
-  } else {
-    stringResource(Res.string.export_success_delivery_ready_title)
+  val title = when {
+    state.deliveryInfo == null -> stringResource(Res.string.export_success_delivery_manual_title)
+    state.deliveryState == "SENT" -> stringResource(Res.string.export_success_delivery_sent_title)
+    state.deliveryState == "FAILED" -> stringResource(Res.string.export_success_delivery_failed_title)
+    state.deliveryState == "QUEUED" || state.deliveryState == "SENDING" ->
+      stringResource(Res.string.export_success_delivery_pending_title)
+    else -> stringResource(Res.string.export_success_delivery_ready_title)
   }
-  val body = when (val delivery = state.deliveryInfo) {
-    null -> stringResource(Res.string.export_success_delivery_manual)
+  val stateBody = when {
+    state.deliveryInfo == null -> stringResource(Res.string.export_success_delivery_manual)
+    state.deliveryState == "SENT" -> stringResource(Res.string.export_success_delivery_sent)
+    state.deliveryState == "FAILED" ->
+      state.deliveryFailureMessage.ifBlank {
+        stringResource(Res.string.export_success_delivery_failed)
+      }
+    state.deliveryState == "QUEUED" || state.deliveryState == "SENDING" ->
+      stringResource(Res.string.export_success_delivery_pending)
+    else -> stringResource(Res.string.export_success_delivery_pending)
+  }
+  val destinationBody = when (val delivery = state.deliveryInfo) {
+    null -> ""
     else -> when (delivery.source) {
       ExportDeliveryEmailSource.EXPLICIT ->
         stringResource(Res.string.export_success_delivery_explicit, delivery.destinationEmail)
@@ -890,6 +910,7 @@ private fun DeliveryStatusCard(state: ExportUiState.Success) {
         stringResource(Res.string.export_success_delivery_auth, delivery.destinationEmail)
     }
   }
+  val body = listOf(stateBody, destinationBody).filter { it.isNotBlank() }.joinToString("\n")
 
   Column(
     modifier = Modifier

@@ -15,6 +15,8 @@ sealed interface ExportProgress {
     val displayLocation: String,
     val sizeBytes: Long,
     val displayLocationKind: ExportDisplayLocation = ExportDisplayLocation.UNKNOWN,
+    val deliveryState: String = "",
+    val deliveryFailureMessage: String = "",
   ) : ExportProgress
 
   data class Error(val message: String, val cause: Throwable? = null) : ExportProgress

@@ -45,6 +45,8 @@ sealed interface ExportUiState {
     val customStart: LocalDate,
     val customEnd: LocalDate,
     val deliveryInfo: ExportDeliveryInfo?,
+    val deliveryState: String = "",
+    val deliveryFailureMessage: String = "",
   ) : ExportUiState
 
   data class Error(val message: String) : ExportUiState
