@@ -1,12 +1,5 @@
 <resources>
   <string name="setting_item_sync">Cloud Sync</string>
-  <string name="sync_export_delivery_title">Export delivery email</string>
-  <string name="sync_export_delivery_description">Choose where future automatic export emails should go. If blank, Hopply falls back to your signed-in account email.</string>
-  <string name="sync_export_delivery_disabled_body">Sign in with a permanent account to configure automatic export delivery. Manual share still works.</string>
-  <string name="sync_export_delivery_field_label">Destination email</string>
-  <string name="sync_export_delivery_helper">Leave blank to use your signed-in account email when available.</string>
-  <string name="sync_export_delivery_resolved_explicit">Using explicit destination: %1$s</string>
-  <string name="sync_export_delivery_resolved_auth">Using signed-in account email: %1$s</string>
   <string name="sync_attachments_disclaimer">Attachments require an internet connection and a permanent (non-anonymous) account. Your aircraft, logs, tasks, technicians and license info sync automatically.</string>
   <string name="sync_hero_title_signin">Sign in to enable sync</string>
   <string name="sync_hero_body_signin">You're using the app anonymously. All data stays on this device. Sign in with a permanent account on the previous screen to back things up.</string>

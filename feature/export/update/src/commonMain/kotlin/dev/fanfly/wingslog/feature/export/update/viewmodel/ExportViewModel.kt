@@ -138,8 +138,22 @@ class ExportViewModel(
           authEmail.isNotBlank() -> ExportDeliveryInfo(authEmail, ExportDeliveryEmailSource.AUTH_FALLBACK)
           else -> null
         }
-      }.collect { latestDeliveryInfo = it }
+      }.collect { info ->
+        latestDeliveryInfo = info
+        val current = _state.value as? ExportUiState.Configuring ?: return@collect
+        val prefs = syncPreferences.state.value
+        val next = current.copy(
+          exportDestinationEmail = prefs.exportDestinationEmail,
+          resolvedDeliveryInfo = info,
+        )
+        lastConfiguring = next
+        _state.value = next
+      }
     }
+  }
+
+  fun onExportDestinationEmailChanged(email: String) {
+    viewModelScope.launch { syncPreferences.setExportDestinationEmail(email) }
   }
 
   fun onToggleAircraft(id: String) = reduceConfiguring { current ->
