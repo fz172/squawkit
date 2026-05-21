@@ -1,4 +1,8 @@
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onCall } from "firebase-functions/v2/https";
+
+import { FUNCTION_REGION } from "./config/env.js";
+import { requestExportDelivery } from "./export/requestExportDelivery.js";
+import { requireAuthenticatedApp } from "./shared/auth.js";
 
 type HealthProbeResponse = {
   status: "ok";
@@ -7,29 +11,21 @@ type HealthProbeResponse = {
   appId: string;
 };
 
-const ALLOWED_APP_IDS = new Set([
-  "1:811416892017:android:27fbaf1c76bb16a3f961d0",
-]);
-
 export const health_probe = onCall<unknown, HealthProbeResponse>(
   {
+    region: FUNCTION_REGION,
     enforceAppCheck: true,
   },
   (request) => {
-    if (request.auth == null) {
-      throw new HttpsError("unauthenticated", "Sign-in required.")
-    }
-
-    const appId = request.app?.appId
-    if (appId == null || !ALLOWED_APP_IDS.has(appId)) {
-      throw new HttpsError("permission-denied", "Unauthorized app.")
-    }
+    const { uid, appId } = requireAuthenticatedApp(request);
 
     return {
       status: "ok",
       message: "health probe passed",
-      uid: request.auth.uid,
+      uid,
       appId,
-    }
+    };
   },
-)
+);
+
+export { requestExportDelivery };
