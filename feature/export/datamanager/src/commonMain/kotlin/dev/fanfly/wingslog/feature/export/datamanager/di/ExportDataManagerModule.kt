@@ -18,6 +18,9 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.gitlive.firebase.storage.FirebaseStorage
 import org.koin.dsl.module
 
 val exportDataManagerModule = module {
@@ -25,38 +28,38 @@ val exportDataManagerModule = module {
   single { LogbookExportArchiveBuilder() }
   single {
     AttachmentExportResolver(
-      attachmentManager = get<AttachmentManager>(),
-      localBlobStore = get<LocalBlobStore>(),
-      blobFilesystem = get<BlobFilesystem>(),
+      get<AttachmentManager>(),
+      get<LocalBlobStore>(),
+      get<BlobFilesystem>(),
     )
   }
   single {
     LogbookExportAggregator(
-      fleetManager = get<FleetManager>(),
-      logsManager = get<MaintenanceLogManager>(),
-      tasksManager = get<TaskDataManager>(),
-      taskDueManager = get<TaskDueManager>(),
-      squawkManager = get<SquawkManager>(),
-      technicianManager = get<TechnicianManager>(),
+      get<FleetManager>(),
+      get<MaintenanceLogManager>(),
+      get<TaskDataManager>(),
+      get<TaskDueManager>(),
+      get<SquawkManager>(),
+      get<TechnicianManager>(),
     )
   }
   single {
     ExportHistoryRemoteRepository(
-      auth = get(),
-      firestore = get(),
-      storage = get(),
+      get<FirebaseAuth>(),
+      get<FirebaseFirestore>(),
+      get<FirebaseStorage>(),
     )
   }
   single { ExportDeliveryBackend() }
   single<ExportManager> {
     LogbookExportManager(
-      aggregator = get<LogbookExportAggregator>(),
-      attachmentExportResolver = get<AttachmentExportResolver>(),
-      archiveBuilder = get<LogbookExportArchiveBuilder>(),
-      zipFileWriter = get<ZipFileWriter>(),
-      exportFileStore = get<ExportFileStore>(),
-      remoteRepository = get<ExportHistoryRemoteRepository>(),
-      deliveryBackend = get<ExportDeliveryBackend>(),
+      get<LogbookExportAggregator>(),
+      get<AttachmentExportResolver>(),
+      get<LogbookExportArchiveBuilder>(),
+      get<ZipFileWriter>(),
+      get<ExportFileStore>(),
+      get<ExportHistoryRemoteRepository>(),
+      get<ExportDeliveryBackend>(),
     )
   }
 }
