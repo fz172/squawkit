@@ -42,6 +42,23 @@ The callable is intentionally locked down:
 That means a raw HTTP POST is not a valid production-style call path. Use a real Firebase client
 SDK from the app once you want to test the production configuration end to end.
 
+## Android App Check requirements
+
+Before production calls from Android will work, both sides must be enabled:
+
+1. In Firebase Console, register the Android app under App Check and select the Play Integrity provider.
+2. In Google Play Console, link the Play Integrity API to the same Google Cloud project as Firebase.
+3. In Firebase Console, enable App Check enforcement for **Cloud Functions** after you confirm metrics look healthy.
+4. In the Android app, initialize Firebase App Check before using other Firebase SDKs.
+
+This repo's Android app now installs:
+
+- `PlayIntegrityAppCheckProviderFactory` for non-debug builds
+- `DebugAppCheckProviderFactory` for debug builds
+
+For emulator or local debug testing, register the emitted debug token in Firebase Console:
+App Check -> Android app -> Manage debug tokens.
+
 ## Deploy
 
 From `backend/firebase/`:
@@ -49,6 +66,11 @@ From `backend/firebase/`:
 ```bash
 firebase deploy --only functions
 ```
+
+This deploys the callable into project `wingslog-9ca4e` from `.firebaserc`.
+
+If you want this callable to be Android-only, remove the iOS app ID from
+`functions/src/index.ts` before deploying.
 
 ## What this proves
 

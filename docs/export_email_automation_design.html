@@ -1144,8 +1144,130 @@ interface ExportDeliveryBackend {
       </ol>
     </section>
 
+    <section id="implementation-plan">
+      <h2>17. High-Level Implementation Plan by Milestone</h2>
+
+      <div class="card">
+        <h3>17.1 Milestone 0: Backend foundation and callable hardening</h3>
+        <p>
+          Establish the Firebase Functions workspace as production infrastructure before export
+          email logic lands.
+        </p>
+        <ul>
+          <li>Keep the existing <code>backend/firebase/</code> workspace as the canonical server root.</li>
+          <li>Add the real export-delivery callable skeleton beside the current health probe.</li>
+          <li>Finalize App Check, auth, and allowed-app enforcement for callable access.</li>
+          <li>Add deployment documentation, secret placeholders, and runtime/version policy.</li>
+        </ul>
+        <p class="muted">
+          Exit criteria: backend repo layout, deploy path, auth/app-check policy, and secret
+          handling are stable enough that the client can safely start integrating against a
+          trusted callable boundary.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>17.2 Milestone 1: Manifest-backed export history on device</h3>
+        <p>
+          Introduce the export-history domain first, without automatic email send, so later stages
+          can attach delivery state to a durable business record instead of to transient UI state.
+        </p>
+        <ul>
+          <li>Add the synced/local export record model in <code>feature/export</code>.</li>
+          <li>Persist one stable <code>exportId</code> per successful local export.</li>
+          <li>Build list/read/delete plumbing for local-only records and merged local-plus-remote records.</li>
+          <li>Keep current manual share behavior unchanged for the user-facing success flow.</li>
+        </ul>
+        <p class="muted">
+          Exit criteria: the app can show export history from stable records, and delete/share no
+          longer depends on one-shot success-screen state.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>17.3 Milestone 2: Email destination source of truth and UI readiness</h3>
+        <p>
+          Add the product decision points around destination email before introducing backend send
+          attempts.
+        </p>
+        <ul>
+          <li>Add an editable destination email field under <code>Backup &amp; Sync</code>.</li>
+          <li>Implement resolver precedence: explicit settings email first, auth email second.</li>
+          <li>Update export success UI to branch between "email will be sent" and "manual share only".</li>
+          <li>Keep this strictly signed-in; anonymous users stay on the manual export path.</li>
+        </ul>
+        <p class="muted">
+          Exit criteria: the client can reliably decide whether automatic delivery should be
+          requested and can explain that decision in UI.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>17.4 Milestone 3: Remote upload and manifest sync</h3>
+        <p>
+          Teach the client to make an export backend-visible before any email send is attempted.
+        </p>
+        <ul>
+          <li>Upload completed export archives to Firebase Storage under the user-scoped path.</li>
+          <li>Write or update the Firestore manifest with remote archive reference and delivery snapshot fields.</li>
+          <li>Record initial delivery states such as <code>NOT_REQUESTED</code> and <code>QUEUED</code>.</li>
+          <li>Expose remote-aware history state in the export history UI.</li>
+        </ul>
+        <p class="muted">
+          Exit criteria: a completed export has both a local artifact and a backend-readable
+          manifest row, even if automatic send is still disabled.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>17.5 Milestone 4: Server-driven automatic email delivery</h3>
+        <p>
+          Introduce the end-to-end automatic send only after local export, upload, and manifest
+          state are durable.
+        </p>
+        <ul>
+          <li>Implement <code>requestExportDelivery(exportId)</code> in Cloud Functions.</li>
+          <li>Add backend validation for manifest ownership, sendable state, and destination email.</li>
+          <li>Generate signed download links and send through the chosen mail provider.</li>
+          <li>Write back terminal delivery states and retry-safe failure metadata.</li>
+        </ul>
+        <p class="muted">
+          Exit criteria: a signed-in user with a resolved destination email can complete a local
+          export and receive a backend-generated delivery email without manual share.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>17.6 Milestone 5: Recovery, delete, and operational hardening</h3>
+        <p>
+          Finish the first production-ready slice by making the system manageable after the happy
+          path succeeds.
+        </p>
+        <ul>
+          <li>Add retry behavior for failed delivery states from history.</li>
+          <li>Ship end-to-end delete for local files, remote blobs, and manifests.</li>
+          <li>Enforce remote retention and expiry messaging in the history UI.</li>
+          <li>Add monitoring, structured logs, and mail-provider failure inspection for operations.</li>
+        </ul>
+        <p class="muted">
+          Exit criteria: delivery failures are visible and recoverable, deletes are coherent across
+          local and remote state, and the backend is operable in production.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>17.7 Suggested shipping sequence</h3>
+        <ol>
+          <li>Ship Milestones 1 and 2 together behind a feature flag if the team wants user-visible history before backend delivery.</li>
+          <li>Land Milestone 3 in dogfood/internal testing first to validate upload and manifest correctness.</li>
+          <li>Enable Milestone 4 only after mail-provider secrets, signed-link generation, and idempotency are proven in staging-like usage.</li>
+          <li>Treat Milestone 5 as release hardening, not an optional polish pass, because remote delete and failure recovery are part of the promised product behavior.</li>
+        </ol>
+      </div>
+    </section>
+
     <section id="open-questions">
-      <h2>17. Resolved Product Decisions</h2>
+      <h2>18. Resolved Product Decisions</h2>
       <ol>
         <li>The backend email always uses a signed download link. The server never attaches archive files directly.</li>
         <li>Remote archive blobs are retained for 60 days.</li>
@@ -1155,7 +1277,7 @@ interface ExportDeliveryBackend {
     </section>
 
     <section id="recommended-scope" class="card">
-      <h2>18. Recommended Scope for First Implementation</h2>
+      <h2>19. Recommended Scope for First Implementation</h2>
       <p>
         The narrowest coherent implementation is:
       </p>
@@ -1191,6 +1313,7 @@ interface ExportDeliveryBackend {
           <li><a href="#failure-handling">Failure Handling</a></li>
           <li><a href="#testing">Testing</a></li>
           <li><a href="#rollout">Rollout Plan</a></li>
+          <li><a href="#implementation-plan">High-Level Implementation Plan by Milestone</a></li>
           <li><a href="#open-questions">Resolved Product Decisions</a></li>
           <li><a href="#recommended-scope">Recommended Scope for First Implementation</a></li>
         </ol>

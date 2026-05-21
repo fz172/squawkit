@@ -9,7 +9,6 @@ type HealthProbeResponse = {
 
 const ALLOWED_APP_IDS = new Set([
   "1:811416892017:android:27fbaf1c76bb16a3f961d0",
-  "1:811416892017:ios:e04bbe689405347df961d0",
 ]);
 
 export const health_probe = onCall<unknown, HealthProbeResponse>(
