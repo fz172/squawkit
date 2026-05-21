@@ -43,6 +43,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(libs.gitlive.firebase.auth)
+      implementation(libs.ktor.client.core)
       implementation(project(":core:ui"))
       implementation(project(":core:appinfo"))
       implementation(project(":core:auth"))
