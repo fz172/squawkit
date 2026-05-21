@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
+  alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.kover)
 }
 
@@ -118,6 +119,9 @@ kotlin {
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.koin.core)
       implementation(libs.kermit)
+      implementation(libs.gitlive.firebase.auth)
+      implementation(libs.gitlive.firebase.firestore)
+      implementation(libs.gitlive.firebase.storage)
     }
 
     androidMain.dependencies {

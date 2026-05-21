@@ -1138,7 +1138,7 @@ interface ExportDeliveryBackend {
       <h2>16. Rollout Plan</h2>
       <ol>
         <li>Add manifest-backed history and remote upload plumbing first, behind a feature flag.</li>
-        <li>Add the <code>Backup &amp; Sync</code> email field and export success reminder.</li>
+        <li>Add the export-setup email field and export success reminder.</li>
         <li>Enable automatic send only for signed-in users with a resolved email address.</li>
         <li>Ship remote-delete support in the first release; remote download/recover can remain a follow-up if needed.</li>
       </ol>
@@ -1164,6 +1164,7 @@ interface ExportDeliveryBackend {
           handling are stable enough that the client can safely start integrating against a
           trusted callable boundary.
         </p>
+        <p class="muted"><strong>Status:</strong> Complete.</p>
       </div>
 
       <div class="card">
@@ -1182,6 +1183,7 @@ interface ExportDeliveryBackend {
           Exit criteria: the app can show export history from stable records, and delete/share no
           longer depends on one-shot success-screen state.
         </p>
+        <p class="muted"><strong>Status:</strong> Complete.</p>
       </div>
 
       <div class="card">
@@ -1191,7 +1193,7 @@ interface ExportDeliveryBackend {
           attempts.
         </p>
         <ul>
-          <li>Add an editable destination email field under <code>Backup &amp; Sync</code>.</li>
+          <li>Add an editable destination email field in export setup.</li>
           <li>Implement resolver precedence: explicit settings email first, auth email second.</li>
           <li>Update export success UI to branch between "email will be sent" and "manual share only".</li>
           <li>Keep this strictly signed-in; anonymous users stay on the manual export path.</li>
@@ -1200,6 +1202,7 @@ interface ExportDeliveryBackend {
           Exit criteria: the client can reliably decide whether automatic delivery should be
           requested and can explain that decision in UI.
         </p>
+        <p class="muted"><strong>Status:</strong> Complete.</p>
       </div>
 
       <div class="card">
@@ -1216,6 +1219,11 @@ interface ExportDeliveryBackend {
         <p class="muted">
           Exit criteria: a completed export has both a local artifact and a backend-readable
           manifest row, even if automatic send is still disabled.
+        </p>
+        <p class="muted">
+          <strong>Status:</strong> Complete. Remote-backed records now upload to Firebase Storage,
+          write a Firestore manifest snapshot, and render cloud-aware history state while remote
+          delete remains deferred to Milestone 5.
         </p>
       </div>
 

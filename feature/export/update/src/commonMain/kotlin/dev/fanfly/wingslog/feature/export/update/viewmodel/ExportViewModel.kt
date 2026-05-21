@@ -283,6 +283,8 @@ class ExportViewModel(
     },
     includeOpenSquawks = true,
     formats = formats,
+    destinationEmail = latestDeliveryInfo?.destinationEmail,
+    destinationEmailSource = latestDeliveryInfo?.source?.name,
   )
 
   private fun ExportProgress.toUiState(): ExportUiState = when (this) {

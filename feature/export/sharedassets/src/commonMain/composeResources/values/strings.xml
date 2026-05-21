@@ -61,7 +61,7 @@
   <string name="export_location_files_hopply">Saved to Files · Hopply</string>
   <string name="export_success_delivery_manual_title">Manual share</string>
   <string name="export_success_delivery_ready_title">Automatic delivery setup</string>
-  <string name="export_success_delivery_manual">No delivery email is configured for this signed-in state. Use Share for now, or add one in Backup &amp; Sync.</string>
+  <string name="export_success_delivery_manual">No delivery email is configured for this signed-in state. Use Share for now, or add one in export setup.</string>
   <string name="export_success_delivery_explicit">This export is ready for future automatic delivery to %1$s. Backend sending is not active in this phase, so use Share for now.</string>
   <string name="export_success_delivery_auth">This export is ready to use your signed-in account email %1$s for future automatic delivery. Backend sending is not active in this phase, so use Share for now.</string>
   <string name="export_receipt_file_subtitle">%1$s · ZIP containing %2$s + attachments</string>
@@ -98,6 +98,9 @@ Thank you for choosing Hopply.</string>
   <string name="export_history_empty_body">Generate a printable PDF or spreadsheet of your maintenance logs to share with your mechanic, IA, or insurance.</string>
   <string name="export_history_new">New export</string>
   <string name="export_history_item_meta">%1$s · %2$s</string>
+  <string name="export_history_status_local_only">On this device only</string>
+  <string name="export_history_status_local_and_remote">On this device and in cloud</string>
+  <string name="export_history_status_remote_only">In cloud only</string>
   <string name="export_history_delete">Delete</string>
   <string name="export_history_delete_confirm_title">Delete export?</string>
   <string name="export_history_delete_confirm_body">%1$s will be permanently removed from this device.</string>

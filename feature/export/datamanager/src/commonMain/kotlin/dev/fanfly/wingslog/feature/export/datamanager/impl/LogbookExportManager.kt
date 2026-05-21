@@ -25,6 +25,7 @@ class LogbookExportManager(
   private val archiveBuilder: LogbookExportArchiveBuilder,
   private val zipFileWriter: ZipFileWriter,
   private val exportFileStore: ExportFileStore,
+  private val remoteRepository: ExportHistoryRemoteRepository,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ExportManager {
@@ -66,9 +67,17 @@ class LogbookExportManager(
     emit(ExportProgress.Running(step = ExportProgressStep.SAVING_FILE, percent = 95))
     val saved = exportFileStore.writeZip(fileName, zipBytes)
     // Persist the full scope so export history can rediscover it without parsing the file name.
-    exportFileStore.saveRecord(
-      buildRecord(request, bundles, saved, createdAtEpochMillis = clock.now().toEpochMilliseconds()),
+    val localRecord = buildRecord(
+      request = request,
+      bundles = bundles,
+      saved = saved,
+      createdAtEpochMillis = clock.now().toEpochMilliseconds(),
     )
+    exportFileStore.saveRecord(localRecord)
+    val syncedRecord = remoteRepository.uploadAndSync(localRecord, zipBytes)
+    if (syncedRecord != localRecord) {
+      exportFileStore.saveRecord(syncedRecord)
+    }
     emit(
       ExportProgress.Success(
         filePath = saved.filePath,
@@ -81,7 +90,11 @@ class LogbookExportManager(
     )
   }
 
-  override suspend fun listExports(): List<ExportRecord> = exportFileStore.listExports()
+  override suspend fun listExports(): List<ExportRecord> =
+    ExportRecordMerge.merge(
+      local = exportFileStore.listExports(),
+      remote = remoteRepository.listRemoteRecords(),
+    )
 
   override suspend fun deleteExport(exportId: String): Boolean =
     exportFileStore.deleteExport(exportId)
@@ -108,6 +121,9 @@ class LogbookExportManager(
           .joinToString(" "),
       )
     },
+    destination_email = request.destinationEmail.orEmpty(),
+    destination_email_source = request.destinationEmailSource.orEmpty(),
+    delivery_state = ExportDeliveryStates.NOT_REQUESTED,
   )
 
   private fun ExportDateRange.toRecordDateRange(): ExportRecordDateRange = when (this) {

@@ -26,6 +26,18 @@ message ExportRecord {
   repeated string formats = 6;
   ExportRecordDateRange date_range = 7;
   repeated ExportRecordAircraft aircraft = 8;
+  // Firebase Storage object path for the remote archive, when uploaded.
+  string remote_archive_ref = 10;
+  // Delivery snapshot captured at export time.
+  string destination_email = 11;
+  string destination_email_source = 12;
+  // "NOT_REQUESTED" | "QUEUED" | "SENDING" | "SENT" | "FAILED".
+  string delivery_state = 13;
+  int64 delivery_sent_at_epoch_millis = 14;
+  string delivery_failure_code = 15;
+  string delivery_failure_message = 16;
+  // When the remote archive is expected to expire, in epoch millis.
+  int64 remote_expires_at_epoch_millis = 17;
 }
 
 // Flattened, display-ready snapshot of the request's date range.

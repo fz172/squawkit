@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.LocalBlobStore
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.impl.AttachmentExportResolver
 import dev.fanfly.wingslog.feature.export.datamanager.impl.ExportFileStore
+import dev.fanfly.wingslog.feature.export.datamanager.impl.ExportHistoryRemoteRepository
 import dev.fanfly.wingslog.feature.export.datamanager.impl.LogbookExportAggregator
 import dev.fanfly.wingslog.feature.export.datamanager.impl.LogbookExportArchiveBuilder
 import dev.fanfly.wingslog.feature.export.datamanager.impl.LogbookExportManager
@@ -38,6 +39,13 @@ val exportDataManagerModule = module {
       technicianManager = get<TechnicianManager>(),
     )
   }
+  single {
+    ExportHistoryRemoteRepository(
+      auth = get(),
+      firestore = get(),
+      storage = get(),
+    )
+  }
   single<ExportManager> {
     LogbookExportManager(
       aggregator = get<LogbookExportAggregator>(),
@@ -45,6 +53,7 @@ val exportDataManagerModule = module {
       archiveBuilder = get<LogbookExportArchiveBuilder>(),
       zipFileWriter = get<ZipFileWriter>(),
       exportFileStore = get<ExportFileStore>(),
+      remoteRepository = get<ExportHistoryRemoteRepository>(),
     )
   }
 }

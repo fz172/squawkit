@@ -9,4 +9,7 @@ data class ExportRequest(
   val includeOpenSquawks: Boolean,
   /** Report documents to write inside the ZIP. Attachments and README are always included. */
   val formats: Set<ExportFormat> = ExportFormat.ALL,
+  /** Snapshot of the resolved automatic-delivery destination, if any. */
+  val destinationEmail: String? = null,
+  val destinationEmailSource: String? = null,
 )
