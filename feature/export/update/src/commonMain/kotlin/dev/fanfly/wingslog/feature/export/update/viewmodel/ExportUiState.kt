@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.export.update.viewmodel
 
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import kotlinx.datetime.LocalDate
@@ -41,6 +42,7 @@ sealed interface ExportUiState {
     val dateRange: DateRangeOption,
     val customStart: LocalDate,
     val customEnd: LocalDate,
+    val deliveryInfo: ExportDeliveryInfo?,
   ) : ExportUiState
 
   data class Error(val message: String) : ExportUiState

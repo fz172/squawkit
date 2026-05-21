@@ -23,6 +23,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -37,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.sync.data.HydrationState
 import dev.fanfly.wingslog.feature.sync.data.SyncFailure
 import dev.fanfly.wingslog.feature.sync.settings.compose.SyncHeroIllustration
@@ -45,6 +47,13 @@ import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.sync.settings.generated.resources.Res
 import wingslog.feature.sync.settings.generated.resources.setting_item_sync
 import wingslog.feature.sync.settings.generated.resources.setting_item_sync_on_cellular
+import wingslog.feature.sync.settings.generated.resources.sync_export_delivery_description
+import wingslog.feature.sync.settings.generated.resources.sync_export_delivery_disabled_body
+import wingslog.feature.sync.settings.generated.resources.sync_export_delivery_field_label
+import wingslog.feature.sync.settings.generated.resources.sync_export_delivery_helper
+import wingslog.feature.sync.settings.generated.resources.sync_export_delivery_resolved_auth
+import wingslog.feature.sync.settings.generated.resources.sync_export_delivery_resolved_explicit
+import wingslog.feature.sync.settings.generated.resources.sync_export_delivery_title
 import wingslog.feature.sync.settings.generated.resources.sync_attachments_disclaimer
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_active
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_paused
@@ -137,6 +146,11 @@ fun SyncSettingsScreen(
           }
         }
 
+        ExportDeliveryCard(
+          state = state,
+          onEmailChanged = viewModel::onExportDestinationEmailChanged,
+        )
+
         StatusSection(state = state)
 
         Text(
@@ -148,6 +162,56 @@ fun SyncSettingsScreen(
         Spacer(Modifier.height(Spacing.large))
       }
     }
+  }
+}
+
+@Composable
+private fun ExportDeliveryCard(
+  state: SyncSettingsUiState,
+  onEmailChanged: (String) -> Unit,
+) {
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+      .background(MaterialTheme.colorScheme.surfaceContainerLow)
+      .padding(Spacing.large),
+    verticalArrangement = Arrangement.spacedBy(Spacing.small),
+  ) {
+    Text(
+      text = stringResource(Res.string.sync_export_delivery_title),
+      style = MaterialTheme.typography.titleMedium,
+    )
+    Text(
+      text = if (state.signedIn) {
+        stringResource(Res.string.sync_export_delivery_description)
+      } else {
+        stringResource(Res.string.sync_export_delivery_disabled_body)
+      },
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    OutlinedTextField(
+      value = state.exportDestinationEmail,
+      onValueChange = onEmailChanged,
+      enabled = state.signedIn,
+      singleLine = true,
+      modifier = Modifier.fillMaxWidth(),
+      label = { Text(stringResource(Res.string.sync_export_delivery_field_label)) },
+      supportingText = {
+        Text(
+          text = when (val resolved = state.resolvedExportDelivery) {
+            null -> stringResource(Res.string.sync_export_delivery_helper)
+            else -> when (resolved.source) {
+              ExportDeliveryEmailSource.EXPLICIT ->
+                stringResource(Res.string.sync_export_delivery_resolved_explicit, resolved.destinationEmail)
+              ExportDeliveryEmailSource.AUTH_FALLBACK ->
+                stringResource(Res.string.sync_export_delivery_resolved_auth, resolved.destinationEmail)
+            }
+          }
+        )
+      },
+    )
   }
 }
 

@@ -72,6 +72,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusOkContainer
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import dev.fanfly.wingslog.feature.export.update.viewmodel.AircraftSelectionRow
@@ -137,6 +138,11 @@ import wingslog.feature.export.sharedassets.generated.resources.export_size_mb
 import wingslog.feature.export.sharedassets.generated.resources.export_size_zero_kb
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_file_name
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_location
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_auth
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_explicit
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_manual
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_manual_title
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_ready_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
 import wingslog.feature.export.sharedassets.generated.resources.export_try_again
 import wingslog.feature.export.sharedassets.generated.resources.export_untitled_aircraft
@@ -777,6 +783,7 @@ private fun SuccessResult(
     title = stringResource(Res.string.export_success_title),
     subtitle = location,
     body = {
+      DeliveryStatusCard(state)
       ReceiptCard(
         fileName = fileName,
         sizeText = readableBytes(state.sizeBytes),
@@ -808,6 +815,44 @@ private fun SuccessResult(
       }
     },
   )
+}
+
+@Composable
+private fun DeliveryStatusCard(state: ExportUiState.Success) {
+  val title = if (state.deliveryInfo == null) {
+    stringResource(Res.string.export_success_delivery_manual_title)
+  } else {
+    stringResource(Res.string.export_success_delivery_ready_title)
+  }
+  val body = when (val delivery = state.deliveryInfo) {
+    null -> stringResource(Res.string.export_success_delivery_manual)
+    else -> when (delivery.source) {
+      ExportDeliveryEmailSource.EXPLICIT ->
+        stringResource(Res.string.export_success_delivery_explicit, delivery.destinationEmail)
+      ExportDeliveryEmailSource.AUTH_FALLBACK ->
+        stringResource(Res.string.export_success_delivery_auth, delivery.destinationEmail)
+    }
+  }
+
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+      .background(MaterialTheme.colorScheme.secondaryContainer)
+      .padding(Spacing.large),
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+  ) {
+    Text(
+      text = title,
+      style = MaterialTheme.typography.titleSmall,
+      color = MaterialTheme.colorScheme.onSecondaryContainer,
+    )
+    Text(
+      text = body,
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSecondaryContainer,
+    )
+  }
 }
 
 @Composable

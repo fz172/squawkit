@@ -52,6 +52,11 @@
   <string name="export_stub_preview_location">Saved to this device</string>
   <string name="export_location_downloads_hopply">Saved to Downloads · Hopply</string>
   <string name="export_location_files_hopply">Saved to Files · Hopply</string>
+  <string name="export_success_delivery_manual_title">Manual share</string>
+  <string name="export_success_delivery_ready_title">Automatic delivery setup</string>
+  <string name="export_success_delivery_manual">No delivery email is configured for this signed-in state. Use Share for now, or add one in Backup &amp; Sync.</string>
+  <string name="export_success_delivery_explicit">This export is ready for future automatic delivery to %1$s. Backend sending is not active in this phase, so use Share for now.</string>
+  <string name="export_success_delivery_auth">This export is ready to use your signed-in account email %1$s for future automatic delivery. Backend sending is not active in this phase, so use Share for now.</string>
   <string name="export_receipt_file_subtitle">%1$s · ZIP containing %2$s + attachments</string>
   <string name="export_receipt_aircraft">Aircraft</string>
   <string name="export_receipt_range">Range</string>

@@ -2,6 +2,8 @@ package dev.fanfly.wingslog.feature.sync.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.sync.data.HydrationState
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
@@ -43,10 +45,19 @@ class SyncSettingsViewModel(
       _attachmentEnabled,
     ) { user, prefs, failure, hydration, attachmentEnabled ->
       val signedIn = user != null && !user.isAnonymous
+      val explicitEmail = prefs.exportDestinationEmail.trim()
+      val authEmail = user?.email.orEmpty().trim()
       SyncSettingsUiState(
         signedIn = signedIn,
         cloudSyncEnabled = prefs.cloudSyncEnabled,
         allowUploadOnCellular = prefs.allowUploadOnCellular,
+        exportDestinationEmail = prefs.exportDestinationEmail,
+        resolvedExportDelivery = when {
+          !signedIn -> null
+          explicitEmail.isNotBlank() -> ExportDeliveryInfo(explicitEmail, ExportDeliveryEmailSource.EXPLICIT)
+          authEmail.isNotBlank() -> ExportDeliveryInfo(authEmail, ExportDeliveryEmailSource.AUTH_FALLBACK)
+          else -> null
+        },
         failure = failure,
         hydration = hydration,
         attachmentEnabled = attachmentEnabled,
@@ -73,6 +84,10 @@ class SyncSettingsViewModel(
   fun onAllowUploadOnCellularToggled(allowed: Boolean) {
     viewModelScope.launch { syncPreferences.setAllowUploadOnCellular(allowed) }
   }
+
+  fun onExportDestinationEmailChanged(email: String) {
+    viewModelScope.launch { syncPreferences.setExportDestinationEmail(email) }
+  }
 }
 
 /** Pure render input for [SyncSettingsScreen]. */
@@ -80,6 +95,8 @@ data class SyncSettingsUiState(
   val signedIn: Boolean,
   val cloudSyncEnabled: Boolean,
   val allowUploadOnCellular: Boolean,
+  val exportDestinationEmail: String,
+  val resolvedExportDelivery: ExportDeliveryInfo?,
   val failure: SyncFailure?,
   val hydration: HydrationState,
   val attachmentEnabled: Boolean = true,
@@ -89,6 +106,8 @@ data class SyncSettingsUiState(
       signedIn = false,
       cloudSyncEnabled = true,
       allowUploadOnCellular = false,
+      exportDestinationEmail = "",
+      resolvedExportDelivery = null,
       failure = null,
       hydration = HydrationState.Idle,
     )

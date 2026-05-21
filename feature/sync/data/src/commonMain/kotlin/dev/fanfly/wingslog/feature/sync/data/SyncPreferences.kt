@@ -4,6 +4,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.Flow
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.stateIn
 data class SyncPrefs(
   val cloudSyncEnabled: Boolean = true,
   val allowUploadOnCellular: Boolean = false,
+  val exportDestinationEmail: String = "",
 )
 
 class SyncPreferences(
@@ -42,16 +44,17 @@ class SyncPreferences(
   val state: StateFlow<SyncPrefs> = auth.authStateChanged
     .flatMapLatest { user ->
       val uid = user?.uid ?: return@flatMapLatest flowOf(SyncPrefs())
-      db.schemaQueries.selectConfig(uid, KEY_CLOUD_SYNC_ENABLED).asFlow()
-        .mapToOneOrNull(ioContext)
-        .map { value -> value?.toBoolean() ?: true }
-        .combine(
-          db.schemaQueries.selectConfig(uid, KEY_ALLOW_UPLOAD_ON_CELLULAR).asFlow()
-            .mapToOneOrNull(ioContext)
-            .map { value -> value?.toBoolean() ?: false }
-        ) { cloudSync, cellular ->
-          SyncPrefs(cloudSyncEnabled = cloudSync, allowUploadOnCellular = cellular)
-        }
+      combine(
+        booleanConfig(uid, KEY_CLOUD_SYNC_ENABLED, defaultValue = true),
+        booleanConfig(uid, KEY_ALLOW_UPLOAD_ON_CELLULAR, defaultValue = false),
+        stringConfig(uid, KEY_EXPORT_DESTINATION_EMAIL),
+      ) { cloudSync, cellular, exportDestinationEmail ->
+          SyncPrefs(
+            cloudSyncEnabled = cloudSync,
+            allowUploadOnCellular = cellular,
+            exportDestinationEmail = exportDestinationEmail,
+          )
+      }
     }
     .stateIn(
       scope = scope,
@@ -69,8 +72,27 @@ class SyncPreferences(
     db.schemaQueries.upsertConfig(uid, KEY_ALLOW_UPLOAD_ON_CELLULAR, allowed.toString())
   }
 
+  fun setExportDestinationEmail(email: String) {
+    val uid = auth.currentUser?.uid ?: return
+    db.schemaQueries.upsertConfig(uid, KEY_EXPORT_DESTINATION_EMAIL, email.trim())
+  }
+
+  private fun booleanConfig(
+    uid: String,
+    key: String,
+    defaultValue: Boolean,
+  ): Flow<Boolean> = db.schemaQueries.selectConfig(uid, key).asFlow()
+    .mapToOneOrNull(ioContext)
+    .map { value -> value?.toBoolean() ?: defaultValue }
+
+  private fun stringConfig(uid: String, key: String): Flow<String> =
+    db.schemaQueries.selectConfig(uid, key).asFlow()
+      .mapToOneOrNull(ioContext)
+      .map { value -> value.orEmpty() }
+
   companion object {
     private const val KEY_CLOUD_SYNC_ENABLED = "cloud_sync_enabled"
     private const val KEY_ALLOW_UPLOAD_ON_CELLULAR = "allow_upload_on_cellular"
+    private const val KEY_EXPORT_DESTINATION_EMAIL = "export_destination_email"
   }
 }

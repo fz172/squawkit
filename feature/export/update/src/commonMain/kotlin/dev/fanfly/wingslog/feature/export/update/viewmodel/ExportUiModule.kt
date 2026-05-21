@@ -4,7 +4,9 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -16,6 +18,8 @@ val exportUiModule = module {
       logsManager = get<MaintenanceLogManager>(),
       taskDataManager = get<TaskDataManager>(),
       squawkManager = get<SquawkManager>(),
+      syncPreferences = get<SyncPreferences>(),
+      auth = get<FirebaseAuth>(),
     )
   }
   viewModel {
