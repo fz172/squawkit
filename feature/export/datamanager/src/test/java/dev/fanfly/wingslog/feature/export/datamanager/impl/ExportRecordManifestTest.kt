@@ -70,9 +70,9 @@ class ExportRecordManifestTest {
     )
     val discovered = listOf(
       // Same archive, but disk reports the authoritative size/timestamp.
-      record("", "content://a", "A.zip", createdAt = 999L, size = 4_096L),
+      localRecord("content://a", "A.zip", createdAt = 999L, size = 4_096L),
       // Archive with no manifest is ignored.
-      record("", "content://b", "B.zip", createdAt = 500L, size = 2_048L),
+      localRecord("content://b", "B.zip", createdAt = 500L, size = 2_048L),
     )
 
     val result = ExportRecordManifest.reconcile(stored, discovered)
@@ -103,5 +103,18 @@ class ExportRecordManifestTest {
     created_at_epoch_millis = createdAt,
     formats = formats,
     date_range = dateRange,
+  )
+
+  private fun localRecord(
+    filePath: String,
+    fileName: String,
+    createdAt: Long = 0L,
+    size: Long = 0L,
+  ) = LocalArchiveRecord(
+    filePath = filePath,
+    fileName = fileName,
+    sizeBytes = size,
+    createdAtEpochMillis = createdAt,
+    displayLocation = dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation.DOWNLOADS_HOPPLY,
   )
 }

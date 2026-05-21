@@ -42,20 +42,20 @@ internal object ExportRecordManifest {
    */
   fun reconcile(
     stored: List<ExportRecord>,
-    discovered: List<ExportRecord>,
+    discovered: List<LocalArchiveRecord>,
   ): List<ExportRecord> {
     val manifestByPath = stored.filter(::hasExportId).associateBy { it.file_path }
     return discovered
       .mapNotNull { disk ->
-        val manifest = manifestByPath[disk.file_path] ?: return@mapNotNull null
+        val manifest = manifestByPath[disk.filePath] ?: return@mapNotNull null
         manifest.copy(
-          file_path = disk.file_path,
-          file_name = disk.file_name.ifBlank { manifest.file_name },
-          size_bytes = disk.size_bytes,
+          file_path = disk.filePath,
+          file_name = disk.fileName.ifBlank { manifest.file_name },
+          size_bytes = disk.sizeBytes,
           created_at_epoch_millis =
-            if (disk.created_at_epoch_millis > 0L) disk.created_at_epoch_millis
+            if (disk.createdAtEpochMillis > 0L) disk.createdAtEpochMillis
             else manifest.created_at_epoch_millis,
-          display_location = disk.display_location.ifBlank { manifest.display_location },
+          display_location = disk.displayLocation.name,
         )
       }
       .sortedByDescending { it.created_at_epoch_millis }

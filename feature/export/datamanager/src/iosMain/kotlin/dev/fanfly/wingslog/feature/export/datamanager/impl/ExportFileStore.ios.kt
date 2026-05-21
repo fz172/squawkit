@@ -74,7 +74,7 @@ actual class ExportFileStore {
       removed
     }
 
-  private fun discoverArchives(): List<ExportRecord> {
+  private fun discoverArchives(): List<LocalArchiveRecord> {
     val fm = NSFileManager.defaultManager
     val names = fm.contentsOfDirectoryAtPath(exportDirectory, null).orEmpty()
     return names.filterIsInstance<String>()
@@ -85,13 +85,12 @@ actual class ExportFileStore {
         val size = (attributes?.get(NSFileSize) as? NSNumber)?.longLongValue ?: 0L
         val modified = (attributes?.get(NSFileModificationDate) as? NSDate)
           ?.timeIntervalSince1970 ?: 0.0
-        ExportRecord(
-          export_id = "",
-          file_path = path,
-          file_name = name,
-          size_bytes = size,
-          created_at_epoch_millis = (modified * 1_000).toLong(),
-          display_location = ExportDisplayLocation.FILES_HOPPLY.name,
+        LocalArchiveRecord(
+          filePath = path,
+          fileName = name,
+          sizeBytes = size,
+          createdAtEpochMillis = (modified * 1_000).toLong(),
+          displayLocation = ExportDisplayLocation.FILES_HOPPLY,
         )
       }
   }
