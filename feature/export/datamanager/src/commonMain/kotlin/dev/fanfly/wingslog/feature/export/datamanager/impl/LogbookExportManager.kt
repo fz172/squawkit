@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordAircraft
 import dev.fanfly.wingslog.export.ExportRecordDateRange
@@ -91,7 +92,7 @@ class LogbookExportManager(
     saved: ExportedFile,
     createdAtEpochMillis: Long,
   ): ExportRecord = ExportRecord(
-    export_id = generateExportId(),
+    export_id = generateRandomId(),
     file_path = saved.filePath,
     file_name = saved.fileName,
     size_bytes = saved.sizeBytes,
