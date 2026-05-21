@@ -16,43 +16,39 @@ import dev.fanfly.wingslog.export.ExportRecordIndex
  */
 internal object ExportRecordManifest {
 
-  private const val LEGACY_EXPORT_ID_PREFIX = "legacy:"
-
   /** Decodes the persisted index, tolerating absent or corrupt bytes by returning an empty list. */
   fun decode(bytes: ByteArray?): List<ExportRecord> =
     bytes?.let { runCatching { ExportRecordIndex.ADAPTER.decode(it) }.getOrNull() }
       ?.records
-      ?.map(::ensureExportId)
+      ?.filter(::hasExportId)
       .orEmpty()
 
   fun encode(records: List<ExportRecord>): ByteArray =
-    ExportRecordIndex(records = records.map(::ensureExportId)).encode()
+    ExportRecordIndex(records = records.filter(::hasExportId)).encode()
 
   /** Inserts or replaces [record] (keyed by `export_id`) in [stored]. */
   fun upsert(stored: List<ExportRecord>, record: ExportRecord): List<ExportRecord> =
-    stored.filterNot { keyOf(it) == keyOf(record) } + ensureExportId(record)
+    if (!hasExportId(record)) stored
+    else stored.filterNot { it.export_id == record.export_id } + record
 
   fun remove(stored: List<ExportRecord>, exportId: String): List<ExportRecord> =
-    stored.filterNot { keyOf(it) == exportId }
+    stored.filterNot { it.export_id == exportId }
 
   /**
    * Merges stored manifests onto the archives actually present on disk.
    *
-   * The result mirrors [discovered] exactly (so deleted archives drop out and unknown archives are
-   * still listed with minimal metadata), enriched with the manifest's scope where one exists.
+   * The result contains only known manifest-backed exports whose archives still exist on disk.
    * Returned newest-first; persist it back as the new index to self-heal stale entries.
    */
   fun reconcile(
     stored: List<ExportRecord>,
     discovered: List<ExportRecord>,
   ): List<ExportRecord> {
-    val manifestByPath = stored.map(::ensureExportId).associateBy { it.file_path }
+    val manifestByPath = stored.filter(::hasExportId).associateBy { it.file_path }
     return discovered
-      .map { diskRecord ->
-        val disk = ensureExportId(diskRecord)
-        val manifest = manifestByPath[disk.file_path] ?: return@map disk
+      .mapNotNull { disk ->
+        val manifest = manifestByPath[disk.file_path] ?: return@mapNotNull null
         manifest.copy(
-          export_id = manifest.export_id.ifBlank { disk.export_id },
           file_path = disk.file_path,
           file_name = disk.file_name.ifBlank { manifest.file_name },
           size_bytes = disk.size_bytes,
@@ -65,11 +61,5 @@ internal object ExportRecordManifest {
       .sortedByDescending { it.created_at_epoch_millis }
   }
 
-  private fun ensureExportId(record: ExportRecord): ExportRecord =
-    if (record.export_id.isNotBlank()) record
-    else record.copy(export_id = legacyExportId(record.file_path))
-
-  private fun legacyExportId(filePath: String): String = "$LEGACY_EXPORT_ID_PREFIX$filePath"
-
-  private fun keyOf(record: ExportRecord): String = ensureExportId(record).export_id
+  private fun hasExportId(record: ExportRecord): Boolean = record.export_id.isNotBlank()
 }
