@@ -3,6 +3,9 @@
     {
       "source": "functions",
       "codebase": "default",
+      "predeploy": [
+        "cd \"$RESOURCE_DIR\" && npx tsc"
+      ],
       "ignore": [
         "node_modules",
         ".git",

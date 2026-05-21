@@ -20,43 +20,46 @@ internal object ExportRecordManifest {
   fun decode(bytes: ByteArray?): List<ExportRecord> =
     bytes?.let { runCatching { ExportRecordIndex.ADAPTER.decode(it) }.getOrNull() }
       ?.records
+      ?.filter(::hasExportId)
       .orEmpty()
 
   fun encode(records: List<ExportRecord>): ByteArray =
-    ExportRecordIndex(records = records).encode()
+    ExportRecordIndex(records = records.filter(::hasExportId)).encode()
 
-  /** Inserts or replaces [record] (keyed by `file_path`) in [stored]. */
+  /** Inserts or replaces [record] (keyed by `export_id`) in [stored]. */
   fun upsert(stored: List<ExportRecord>, record: ExportRecord): List<ExportRecord> =
-    stored.filterNot { it.file_path == record.file_path } + record
+    if (!hasExportId(record)) stored
+    else stored.filterNot { it.export_id == record.export_id } + record
 
-  fun remove(stored: List<ExportRecord>, filePath: String): List<ExportRecord> =
-    stored.filterNot { it.file_path == filePath }
+  fun remove(stored: List<ExportRecord>, exportId: String): List<ExportRecord> =
+    stored.filterNot { it.export_id == exportId }
 
   /**
    * Merges stored manifests onto the archives actually present on disk.
    *
-   * The result mirrors [discovered] exactly (so deleted archives drop out and unknown archives are
-   * still listed with minimal metadata), enriched with the manifest's scope where one exists.
+   * The result contains only known manifest-backed exports whose archives still exist on disk.
    * Returned newest-first; persist it back as the new index to self-heal stale entries.
    */
   fun reconcile(
     stored: List<ExportRecord>,
-    discovered: List<ExportRecord>,
+    discovered: List<LocalArchiveRecord>,
   ): List<ExportRecord> {
-    val manifestByPath = stored.associateBy { it.file_path }
+    val manifestByPath = stored.filter(::hasExportId).associateBy { it.file_path }
     return discovered
-      .map { disk ->
-        val manifest = manifestByPath[disk.file_path] ?: return@map disk
+      .mapNotNull { disk ->
+        val manifest = manifestByPath[disk.filePath] ?: return@mapNotNull null
         manifest.copy(
-          file_path = disk.file_path,
-          file_name = disk.file_name.ifBlank { manifest.file_name },
-          size_bytes = disk.size_bytes,
+          file_path = disk.filePath,
+          file_name = disk.fileName.ifBlank { manifest.file_name },
+          size_bytes = disk.sizeBytes,
           created_at_epoch_millis =
-            if (disk.created_at_epoch_millis > 0L) disk.created_at_epoch_millis
+            if (disk.createdAtEpochMillis > 0L) disk.createdAtEpochMillis
             else manifest.created_at_epoch_millis,
-          display_location = disk.display_location.ifBlank { manifest.display_location },
+          display_location = disk.displayLocation.name,
         )
       }
       .sortedByDescending { it.created_at_epoch_millis }
   }
+
+  private fun hasExportId(record: ExportRecord): Boolean = record.export_id.isNotBlank()
 }

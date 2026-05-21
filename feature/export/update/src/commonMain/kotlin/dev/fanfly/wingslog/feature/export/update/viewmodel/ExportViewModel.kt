@@ -6,6 +6,8 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType.ATTACHMENT_TYPE_LINK
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
@@ -13,7 +15,9 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +44,8 @@ class ExportViewModel(
   private val logsManager: MaintenanceLogManager,
   private val taskDataManager: TaskDataManager,
   private val squawkManager: SquawkManager,
+  private val syncPreferences: SyncPreferences,
+  private val auth: FirebaseAuth,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
@@ -57,9 +63,11 @@ class ExportViewModel(
   private var lastConfiguring: ExportUiState.Configuring = defaultConfiguring
   private var exportJob: Job? = null
   private var hasInitializedSelection = false
+  private var latestDeliveryInfo: ExportDeliveryInfo? = null
 
   init {
     observeAircraft()
+    observeDeliveryInfo()
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -116,6 +124,36 @@ class ExportViewModel(
             }
         }
     }
+  }
+
+  private fun observeDeliveryInfo() {
+    viewModelScope.launch {
+      combine(auth.authStateChanged, syncPreferences.state) { user, prefs ->
+        val signedIn = user != null && !user.isAnonymous
+        val explicitEmail = prefs.exportDestinationEmail.trim()
+        val authEmail = user?.email.orEmpty().trim()
+        when {
+          !signedIn -> null
+          explicitEmail.isNotBlank() -> ExportDeliveryInfo(explicitEmail, ExportDeliveryEmailSource.EXPLICIT)
+          authEmail.isNotBlank() -> ExportDeliveryInfo(authEmail, ExportDeliveryEmailSource.AUTH_FALLBACK)
+          else -> null
+        }
+      }.collect { info ->
+        latestDeliveryInfo = info
+        val current = _state.value as? ExportUiState.Configuring ?: return@collect
+        val prefs = syncPreferences.state.value
+        val next = current.copy(
+          exportDestinationEmail = prefs.exportDestinationEmail,
+          resolvedDeliveryInfo = info,
+        )
+        lastConfiguring = next
+        _state.value = next
+      }
+    }
+  }
+
+  fun onExportDestinationEmailChanged(email: String) {
+    viewModelScope.launch { syncPreferences.setExportDestinationEmail(email) }
   }
 
   fun onToggleAircraft(id: String) = reduceConfiguring { current ->
@@ -262,6 +300,7 @@ class ExportViewModel(
       dateRange = lastConfiguring.dateRange,
       customStart = lastConfiguring.customStart,
       customEnd = lastConfiguring.customEnd,
+      deliveryInfo = latestDeliveryInfo,
     )
 
     is ExportProgress.Error -> ExportUiState.Error(message)

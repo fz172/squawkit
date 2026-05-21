@@ -46,6 +46,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -72,6 +73,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusOkContainer
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import dev.fanfly.wingslog.feature.export.update.viewmodel.AircraftSelectionRow
@@ -101,6 +103,13 @@ import wingslog.feature.export.sharedassets.generated.resources.export_custom_st
 import wingslog.feature.export.sharedassets.generated.resources.export_date_range_section
 import wingslog.feature.export.sharedassets.generated.resources.export_email_body
 import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
+import wingslog.feature.export.sharedassets.generated.resources.export_delivery_description
+import wingslog.feature.export.sharedassets.generated.resources.export_delivery_disabled_body
+import wingslog.feature.export.sharedassets.generated.resources.export_delivery_field_label
+import wingslog.feature.export.sharedassets.generated.resources.export_delivery_helper
+import wingslog.feature.export.sharedassets.generated.resources.export_delivery_resolved_auth
+import wingslog.feature.export.sharedassets.generated.resources.export_delivery_resolved_explicit
+import wingslog.feature.export.sharedassets.generated.resources.export_delivery_title
 import wingslog.feature.export.sharedassets.generated.resources.export_error_details
 import wingslog.feature.export.sharedassets.generated.resources.export_error_subtitle
 import wingslog.feature.export.sharedassets.generated.resources.export_error_title
@@ -137,6 +146,11 @@ import wingslog.feature.export.sharedassets.generated.resources.export_size_mb
 import wingslog.feature.export.sharedassets.generated.resources.export_size_zero_kb
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_file_name
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_location
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_auth
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_explicit
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_manual
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_manual_title
+import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_ready_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
 import wingslog.feature.export.sharedassets.generated.resources.export_try_again
 import wingslog.feature.export.sharedassets.generated.resources.export_untitled_aircraft
@@ -155,6 +169,7 @@ fun ExportSelectionScreen(
   onDateRangeChange: (DateRangeOption) -> Unit,
   onCustomStartChange: (LocalDate) -> Unit,
   onCustomEndChange: (LocalDate) -> Unit,
+  onExportDestinationEmailChanged: (String) -> Unit,
   onExport: () -> Unit,
   onCancel: () -> Unit,
   onShareExport: (String, String, String, String) -> Unit,
@@ -198,6 +213,7 @@ fun ExportSelectionScreen(
         onDateRangeChange = onDateRangeChange,
         onCustomStartChange = onCustomStartChange,
         onCustomEndChange = onCustomEndChange,
+        onExportDestinationEmailChanged = onExportDestinationEmailChanged,
         onNavigateToHistory = onNavigateToHistory,
       )
       is ExportUiState.Running -> RunningContent(
@@ -234,6 +250,7 @@ private fun ConfiguringContent(
   onDateRangeChange: (DateRangeOption) -> Unit,
   onCustomStartChange: (LocalDate) -> Unit,
   onCustomEndChange: (LocalDate) -> Unit,
+  onExportDestinationEmailChanged: (String) -> Unit,
   onNavigateToHistory: () -> Unit,
 ) {
   if (!state.isLoadingAircraft && state.aircraft.isEmpty()) {
@@ -287,8 +304,54 @@ private fun ConfiguringContent(
         onCustomStartChange = onCustomStartChange,
         onCustomEndChange = onCustomEndChange,
       )
+    }
+
+    item {
+      DeliveryConfigSection(
+        state = state,
+        onEmailChanged = onExportDestinationEmailChanged,
+      )
       Spacer(Modifier.height(Spacing.medium))
     }
+  }
+}
+
+@Composable
+private fun DeliveryConfigSection(
+  state: ExportUiState.Configuring,
+  onEmailChanged: (String) -> Unit,
+) {
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+    SectionHeader(title = stringResource(Res.string.export_delivery_title))
+    Text(
+      text = if (state.resolvedDeliveryInfo == null && state.exportDestinationEmail.isBlank()) {
+        stringResource(Res.string.export_delivery_disabled_body)
+      } else {
+        stringResource(Res.string.export_delivery_description)
+      },
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    OutlinedTextField(
+      value = state.exportDestinationEmail,
+      onValueChange = onEmailChanged,
+      singleLine = true,
+      modifier = Modifier.fillMaxWidth(),
+      label = { Text(stringResource(Res.string.export_delivery_field_label)) },
+      supportingText = {
+        Text(
+          text = when (val resolved = state.resolvedDeliveryInfo) {
+            null -> stringResource(Res.string.export_delivery_helper)
+            else -> when (resolved.source) {
+              ExportDeliveryEmailSource.EXPLICIT ->
+                stringResource(Res.string.export_delivery_resolved_explicit, resolved.destinationEmail)
+              ExportDeliveryEmailSource.AUTH_FALLBACK ->
+                stringResource(Res.string.export_delivery_resolved_auth, resolved.destinationEmail)
+            }
+          }
+        )
+      },
+    )
   }
 }
 
@@ -777,6 +840,7 @@ private fun SuccessResult(
     title = stringResource(Res.string.export_success_title),
     subtitle = location,
     body = {
+      DeliveryStatusCard(state)
       ReceiptCard(
         fileName = fileName,
         sizeText = readableBytes(state.sizeBytes),
@@ -808,6 +872,44 @@ private fun SuccessResult(
       }
     },
   )
+}
+
+@Composable
+private fun DeliveryStatusCard(state: ExportUiState.Success) {
+  val title = if (state.deliveryInfo == null) {
+    stringResource(Res.string.export_success_delivery_manual_title)
+  } else {
+    stringResource(Res.string.export_success_delivery_ready_title)
+  }
+  val body = when (val delivery = state.deliveryInfo) {
+    null -> stringResource(Res.string.export_success_delivery_manual)
+    else -> when (delivery.source) {
+      ExportDeliveryEmailSource.EXPLICIT ->
+        stringResource(Res.string.export_success_delivery_explicit, delivery.destinationEmail)
+      ExportDeliveryEmailSource.AUTH_FALLBACK ->
+        stringResource(Res.string.export_success_delivery_auth, delivery.destinationEmail)
+    }
+  }
+
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+      .background(MaterialTheme.colorScheme.secondaryContainer)
+      .padding(Spacing.large),
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+  ) {
+    Text(
+      text = title,
+      style = MaterialTheme.typography.titleSmall,
+      color = MaterialTheme.colorScheme.onSecondaryContainer,
+    )
+    Text(
+      text = body,
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSecondaryContainer,
+    )
+  }
 }
 
 @Composable

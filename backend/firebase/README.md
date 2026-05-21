@@ -1,18 +1,28 @@
-# Firebase Backend Health Probe
+# Firebase Backend
 
-This is the minimal Firebase backend scaffold for WingsLog/Hopply.
+This is the Firebase backend workspace for WingsLog/Hopply.
 
-It is intentionally small:
+Milestone 0 is intentionally small but production-shaped:
 
 - one Firebase workspace at `backend/firebase/`
 - one TypeScript Cloud Functions package at `backend/firebase/functions/`
-- one callable function, `health_probe`
+- two callable entrypoints:
+  - `health_probe`
+  - `requestExportDelivery`
+
+## Runtime policy
+
+- Cloud Functions 2nd gen
+- Node.js `22` runtime in `functions/package.json`
+- region fixed to `us-central1` in code
+- deploys always build via `firebase.json` `predeploy`
 
 ## Before first use
 
 1. Install the Firebase CLI if you do not already have it.
 2. Replace `your-firebase-project-id` in `.firebaserc` with the real project ID.
-3. From `backend/firebase/functions/`, install dependencies.
+3. From `backend/firebase/functions/`, install dependencies with `npm install`.
+4. If you need local placeholder env values, copy `.env.example` to an untracked local file and edit that copy only.
 
 ## Local development
 
@@ -29,18 +39,50 @@ From `backend/firebase/`:
 firebase emulators:start --only functions
 ```
 
-The callable function name is `health_probe`.
+Callable names:
+
+- `health_probe`
+- `requestExportDelivery`
 
 ## Production behavior
 
-The callable is intentionally locked down:
+Both callables are intentionally locked down:
 
 - requires Firebase Authentication
 - requires valid App Check tokens
 - rejects calls from Firebase app IDs outside this repo's Android and iOS apps
 
+The allowed Firebase app IDs are enforced in `functions/src/shared/auth.ts`.
+
 That means a raw HTTP POST is not a valid production-style call path. Use a real Firebase client
 SDK from the app once you want to test the production configuration end to end.
+
+## Export-delivery status
+
+`requestExportDelivery(exportId)` is present as a Milestone 0 callable boundary only.
+
+- it validates auth, App Check, allowed app ID, and a non-empty `exportId`
+- it does not read manifests, sign URLs, or send mail yet
+- it returns a typed placeholder response so the client can integrate against the callable name and request shape early
+
+Mail-provider integration belongs to later milestones and should continue to load credentials only from runtime environment or Firebase-managed secrets, never from committed files.
+
+## Android App Check requirements
+
+Before production calls from Android will work, both sides must be enabled:
+
+1. In Firebase Console, register the Android app under App Check and select the Play Integrity provider.
+2. In Google Play Console, link the Play Integrity API to the same Google Cloud project as Firebase.
+3. In Firebase Console, enable App Check enforcement for **Cloud Functions** after you confirm metrics look healthy.
+4. In the Android app, initialize Firebase App Check before using other Firebase SDKs.
+
+This repo's Android app now installs:
+
+- `PlayIntegrityAppCheckProviderFactory` for non-debug builds
+- `DebugAppCheckProviderFactory` for debug builds
+
+For emulator or local debug testing, register the emitted debug token in Firebase Console:
+App Check -> Android app -> Manage debug tokens.
 
 ## Deploy
 
@@ -50,10 +92,19 @@ From `backend/firebase/`:
 firebase deploy --only functions
 ```
 
+This deploys the callables into project `wingslog-9ca4e` from `.firebaserc`.
+
+## Secrets policy
+
+- Commit `.env.example` placeholders only.
+- Keep real `.env`, `.env.*`, and service-account files out of git.
+- Prefer Firebase Functions secret/env management for provider credentials.
+- Never commit deployment credentials or mail-provider API keys.
+
 ## What this proves
 
 - Firebase workspace layout is correct
 - TypeScript function build works
 - Functions emulator starts
 - Deploy path is valid
-- App can later call a callable function before export-email work begins
+- App can call a locked-down callable function boundary before export-email work begins

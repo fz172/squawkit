@@ -98,6 +98,23 @@ class SyncPreferencesTest {
     assertThat(dbValue).isEqualTo("false")
   }
 
+  @Test
+  fun setExportDestinationEmail_updatesDatabaseAndState() = runTest {
+    val dispatcher = UnconfinedTestDispatcher(testScheduler)
+    val preferences = SyncPreferences(db, auth, ioContext = dispatcher, scope = backgroundScope)
+    val uid = "user-1"
+    val user = mockUser(uid)
+    authState.value = user
+    every { auth.currentUser } returns user
+
+    preferences.setExportDestinationEmail("pilot@example.com ")
+
+    preferences.state.filter { it.exportDestinationEmail == "pilot@example.com" }.first()
+    val dbValue = db.schemaQueries.selectConfig(uid, "export_destination_email").executeAsOneOrNull()
+    assertThat(dbValue).isEqualTo("pilot@example.com")
+    assertThat(preferences.state.value.exportDestinationEmail).isEqualTo("pilot@example.com")
+  }
+
   private fun mockUser(uid: String): FirebaseUser = mockk {
     every { this@mockk.uid } returns uid
     every { isAnonymous } returns false

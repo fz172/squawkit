@@ -32,11 +32,11 @@ class ExportHistoryViewModel(
   }
 
   /**
-   * Deletes the export at [filePath] and reloads the list.
+   * Deletes the export at [exportId] and reloads the list.
    */
-  fun onDelete(filePath: String) {
+  fun onDelete(exportId: String) {
     viewModelScope.launch {
-      exportManager.deleteExport(filePath)
+      exportManager.deleteExport(exportId)
       _state.value = ExportHistoryUiState.Loaded(exportManager.listExports())
     }
   }

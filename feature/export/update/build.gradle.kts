@@ -47,6 +47,7 @@ kotlin {
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:squawk:datamanager"))
+      implementation(project(":feature:sync:data"))
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":core:ui"))
 
@@ -54,6 +55,7 @@ kotlin {
       implementation(libs.compose.foundation)
       implementation(libs.components.resources)
       implementation(libs.androidx.navigation.compose)
+      implementation(libs.gitlive.firebase.auth)
       implementation(libs.kotlinx.datetime)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
     }

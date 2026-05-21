@@ -64,16 +64,20 @@ actual class ExportFileStore(private val context: Context) {
       reconciled
     }
 
-  actual suspend fun deleteExport(filePath: String): Boolean =
+  actual suspend fun deleteExport(exportId: String): Boolean =
     withContext(Dispatchers.IO) {
-      val removed = runCatching {
-        context.contentResolver.delete(filePath.toUri(), null, null) > 0
-      }.getOrDefault(false)
-      writeIndex(ExportRecordManifest.remove(readIndex(), filePath))
+      val reconciled = ExportRecordManifest.reconcile(readIndex(), discoverArchives())
+      val record = reconciled.firstOrNull { it.export_id == exportId }
+      val removed = record?.file_path?.takeIf { it.isNotBlank() }?.let { filePath ->
+        runCatching {
+          context.contentResolver.delete(filePath.toUri(), null, null) > 0
+        }.getOrDefault(false)
+      } ?: false
+      writeIndex(ExportRecordManifest.remove(reconciled, exportId))
       removed
     }
 
-  private fun discoverArchives(): List<ExportRecord> {
+  private fun discoverArchives(): List<LocalArchiveRecord> {
     val collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
     val projection = arrayOf(
       MediaStore.Downloads._ID,
@@ -85,7 +89,7 @@ actual class ExportFileStore(private val context: Context) {
     val selectionArgs = arrayOf("%${Environment.DIRECTORY_DOWNLOADS}/Hopply/%")
     val sortOrder = "${MediaStore.Downloads.DATE_ADDED} DESC"
 
-    val records = mutableListOf<ExportRecord>()
+    val records = mutableListOf<LocalArchiveRecord>()
     context.contentResolver.query(collection, projection, selection, selectionArgs, sortOrder)
       ?.use { cursor ->
         val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID)
@@ -94,13 +98,13 @@ actual class ExportFileStore(private val context: Context) {
         val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads.DATE_ADDED)
         while (cursor.moveToNext()) {
           val id = cursor.getLong(idColumn)
-          records += ExportRecord(
-            file_path = ContentUris.withAppendedId(collection, id).toString(),
-            file_name = cursor.getString(nameColumn),
-            size_bytes = cursor.getLong(sizeColumn),
+          records += LocalArchiveRecord(
+            filePath = ContentUris.withAppendedId(collection, id).toString(),
+            fileName = cursor.getString(nameColumn),
+            sizeBytes = cursor.getLong(sizeColumn),
             // DATE_ADDED is stored in seconds since the epoch.
-            created_at_epoch_millis = cursor.getLong(dateColumn) * 1_000L,
-            display_location = ExportDisplayLocation.DOWNLOADS_HOPPLY.name,
+            createdAtEpochMillis = cursor.getLong(dateColumn) * 1_000L,
+            displayLocation = ExportDisplayLocation.DOWNLOADS_HOPPLY,
           )
         }
       }

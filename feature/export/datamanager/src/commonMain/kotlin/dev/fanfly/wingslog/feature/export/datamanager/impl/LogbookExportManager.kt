@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordAircraft
 import dev.fanfly.wingslog.export.ExportRecordDateRange
@@ -82,8 +83,8 @@ class LogbookExportManager(
 
   override suspend fun listExports(): List<ExportRecord> = exportFileStore.listExports()
 
-  override suspend fun deleteExport(filePath: String): Boolean =
-    exportFileStore.deleteExport(filePath)
+  override suspend fun deleteExport(exportId: String): Boolean =
+    exportFileStore.deleteExport(exportId)
 
   private fun buildRecord(
     request: ExportRequest,
@@ -91,6 +92,7 @@ class LogbookExportManager(
     saved: ExportedFile,
     createdAtEpochMillis: Long,
   ): ExportRecord = ExportRecord(
+    export_id = generateRandomId(),
     file_path = saved.filePath,
     file_name = saved.fileName,
     size_bytes = saved.sizeBytes,

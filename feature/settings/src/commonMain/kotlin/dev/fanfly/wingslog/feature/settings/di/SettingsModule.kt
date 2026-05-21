@@ -8,7 +8,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val settingsModule = module {
-  single { FeatureLabBackendProbe(get()) }
+  single { FeatureLabBackendProbe() }
   viewModel {
     SettingsViewModel(
       get(),

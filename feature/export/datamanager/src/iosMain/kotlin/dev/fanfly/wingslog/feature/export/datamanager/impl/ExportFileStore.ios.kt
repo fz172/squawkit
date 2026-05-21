@@ -63,14 +63,18 @@ actual class ExportFileStore {
       reconciled
     }
 
-  actual suspend fun deleteExport(filePath: String): Boolean =
+  actual suspend fun deleteExport(exportId: String): Boolean =
     withContext(Dispatchers.Default) {
-      val removed = NSFileManager.defaultManager.removeItemAtPath(filePath, null)
-      writeBytes(indexPath, ExportRecordManifest.encode(ExportRecordManifest.remove(readIndex(), filePath)))
+      val reconciled = ExportRecordManifest.reconcile(readIndex(), discoverArchives())
+      val record = reconciled.firstOrNull { it.export_id == exportId }
+      val removed = record?.file_path?.takeIf { it.isNotBlank() }?.let { filePath ->
+        NSFileManager.defaultManager.removeItemAtPath(filePath, null)
+      } ?: false
+      writeBytes(indexPath, ExportRecordManifest.encode(ExportRecordManifest.remove(reconciled, exportId)))
       removed
     }
 
-  private fun discoverArchives(): List<ExportRecord> {
+  private fun discoverArchives(): List<LocalArchiveRecord> {
     val fm = NSFileManager.defaultManager
     val names = fm.contentsOfDirectoryAtPath(exportDirectory, null).orEmpty()
     return names.filterIsInstance<String>()
@@ -81,12 +85,12 @@ actual class ExportFileStore {
         val size = (attributes?.get(NSFileSize) as? NSNumber)?.longLongValue ?: 0L
         val modified = (attributes?.get(NSFileModificationDate) as? NSDate)
           ?.timeIntervalSince1970 ?: 0.0
-        ExportRecord(
-          file_path = path,
-          file_name = name,
-          size_bytes = size,
-          created_at_epoch_millis = (modified * 1_000).toLong(),
-          display_location = ExportDisplayLocation.FILES_HOPPLY.name,
+        LocalArchiveRecord(
+          filePath = path,
+          fileName = name,
+          sizeBytes = size,
+          createdAtEpochMillis = (modified * 1_000).toLong(),
+          displayLocation = ExportDisplayLocation.FILES_HOPPLY,
         )
       }
   }
