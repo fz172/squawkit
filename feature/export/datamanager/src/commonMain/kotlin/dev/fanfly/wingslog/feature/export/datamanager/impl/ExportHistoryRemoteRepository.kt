@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.firebase.data.toFirebaseData
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordAircraft
 import dev.fanfly.wingslog.export.ExportRecordDateRange

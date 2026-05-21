@@ -106,6 +106,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:datetime"))
       implementation(project(":core:storage"))
+      implementation(project(":core:firebase"))
       implementation(project(":core:model"))
       implementation(project(":core:appinfo"))
       implementation(project(":feature:fleet:datamanager"))

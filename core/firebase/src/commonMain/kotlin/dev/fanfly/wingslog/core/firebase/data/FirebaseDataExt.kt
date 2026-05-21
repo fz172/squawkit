@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.export.datamanager.impl
+package dev.fanfly.wingslog.core.firebase.data
 
 import dev.gitlive.firebase.storage.Data
 

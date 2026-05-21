@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.sync.data.blob
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.firebase.data.toFirebaseData
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.feature.attachment.datamanager.BlobFilesystem
@@ -37,15 +38,19 @@ class BlobUploadDriver(
         log.v { "upload skipped: ${id.value} already SYNCED" }
         return true
       }
+
       RemoteState.Uploading -> {
         // Previous attempt left the row stuck in UPLOADING (process died). Reset and retry.
         blobs.markFailedTransient(id)
       }
+
       RemoteState.RemoteOnly -> {
         log.w { "upload skipped: ${id.value} is REMOTE_ONLY — should not be scheduled for upload" }
         return true
       }
-      RemoteState.LocalOnly -> { /* proceed */ }
+
+      RemoteState.LocalOnly -> { /* proceed */
+      }
     }
 
     val user = auth.currentUser
@@ -65,10 +70,14 @@ class BlobUploadDriver(
     blobs.markUploading(id)
 
     val remotePath = ref.remotePath
-      ?: "${ref.scope.toPath().trim('/')}/blobs/${id.value}"
+      ?: "${
+        ref.scope.toPath()
+          .trim('/')
+      }/blobs/${id.value}"
 
     return try {
-      storage.reference(remotePath).putData(bytes.toFirebaseData())
+      storage.reference(remotePath)
+        .putData(bytes.toFirebaseData())
       blobs.markUploaded(id, remotePath)
       log.i { "uploaded ${id.value} → $remotePath" }
       true
