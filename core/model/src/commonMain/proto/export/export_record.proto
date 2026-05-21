@@ -10,6 +10,8 @@ option java_multiple_files = true;
 // without parsing the file name. The archive itself remains the source of truth for existence;
 // records whose file is gone are pruned when the index is read.
 message ExportRecord {
+  // Stable export identifier generated when the archive is first written.
+  string export_id = 9;
   // Shareable reference to the archive: a `content://` URI on Android, a file path on iOS.
   // Stable across write and list, so it is the join key between the index and the on-disk archive.
   string file_path = 1;

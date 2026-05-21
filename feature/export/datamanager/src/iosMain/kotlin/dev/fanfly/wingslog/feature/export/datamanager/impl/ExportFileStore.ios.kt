@@ -63,10 +63,14 @@ actual class ExportFileStore {
       reconciled
     }
 
-  actual suspend fun deleteExport(filePath: String): Boolean =
+  actual suspend fun deleteExport(exportId: String): Boolean =
     withContext(Dispatchers.Default) {
-      val removed = NSFileManager.defaultManager.removeItemAtPath(filePath, null)
-      writeBytes(indexPath, ExportRecordManifest.encode(ExportRecordManifest.remove(readIndex(), filePath)))
+      val reconciled = ExportRecordManifest.reconcile(readIndex(), discoverArchives())
+      val record = reconciled.firstOrNull { it.export_id == exportId }
+      val removed = record?.file_path?.takeIf { it.isNotBlank() }?.let { filePath ->
+        NSFileManager.defaultManager.removeItemAtPath(filePath, null)
+      } ?: false
+      writeBytes(indexPath, ExportRecordManifest.encode(ExportRecordManifest.remove(reconciled, exportId)))
       removed
     }
 
@@ -82,6 +86,7 @@ actual class ExportFileStore {
         val modified = (attributes?.get(NSFileModificationDate) as? NSDate)
           ?.timeIntervalSince1970 ?: 0.0
         ExportRecord(
+          export_id = "",
           file_path = path,
           file_name = name,
           size_bytes = size,

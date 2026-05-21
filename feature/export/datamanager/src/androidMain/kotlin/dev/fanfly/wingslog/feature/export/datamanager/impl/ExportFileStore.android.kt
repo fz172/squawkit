@@ -64,12 +64,16 @@ actual class ExportFileStore(private val context: Context) {
       reconciled
     }
 
-  actual suspend fun deleteExport(filePath: String): Boolean =
+  actual suspend fun deleteExport(exportId: String): Boolean =
     withContext(Dispatchers.IO) {
-      val removed = runCatching {
-        context.contentResolver.delete(filePath.toUri(), null, null) > 0
-      }.getOrDefault(false)
-      writeIndex(ExportRecordManifest.remove(readIndex(), filePath))
+      val reconciled = ExportRecordManifest.reconcile(readIndex(), discoverArchives())
+      val record = reconciled.firstOrNull { it.export_id == exportId }
+      val removed = record?.file_path?.takeIf { it.isNotBlank() }?.let { filePath ->
+        runCatching {
+          context.contentResolver.delete(filePath.toUri(), null, null) > 0
+        }.getOrDefault(false)
+      } ?: false
+      writeIndex(ExportRecordManifest.remove(reconciled, exportId))
       removed
     }
 
@@ -95,6 +99,7 @@ actual class ExportFileStore(private val context: Context) {
         while (cursor.moveToNext()) {
           val id = cursor.getLong(idColumn)
           records += ExportRecord(
+            export_id = "",
             file_path = ContentUris.withAppendedId(collection, id).toString(),
             file_name = cursor.getString(nameColumn),
             size_bytes = cursor.getLong(sizeColumn),

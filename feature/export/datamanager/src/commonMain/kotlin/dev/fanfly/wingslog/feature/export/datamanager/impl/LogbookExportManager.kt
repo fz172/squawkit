@@ -82,8 +82,8 @@ class LogbookExportManager(
 
   override suspend fun listExports(): List<ExportRecord> = exportFileStore.listExports()
 
-  override suspend fun deleteExport(filePath: String): Boolean =
-    exportFileStore.deleteExport(filePath)
+  override suspend fun deleteExport(exportId: String): Boolean =
+    exportFileStore.deleteExport(exportId)
 
   private fun buildRecord(
     request: ExportRequest,
@@ -91,6 +91,7 @@ class LogbookExportManager(
     saved: ExportedFile,
     createdAtEpochMillis: Long,
   ): ExportRecord = ExportRecord(
+    export_id = generateExportId(),
     file_path = saved.filePath,
     file_name = saved.fileName,
     size_bytes = saved.sizeBytes,

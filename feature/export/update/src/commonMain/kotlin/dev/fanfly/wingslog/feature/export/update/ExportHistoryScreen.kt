@@ -172,7 +172,7 @@ private fun ExportList(
     contentPadding = PaddingValues(vertical = Spacing.small),
     verticalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
-    items(exports, key = { it.file_path }) { record ->
+    items(exports, key = { it.export_id }) { record ->
       ExportHistoryCard(
         record = record,
         onShareExport = onShareExport,

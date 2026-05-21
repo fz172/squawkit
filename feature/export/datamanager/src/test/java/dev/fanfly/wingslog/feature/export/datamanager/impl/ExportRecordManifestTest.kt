@@ -16,8 +16,8 @@ class ExportRecordManifestTest {
   @Test
   fun encodeDecode_roundTripsRecords() {
     val records = listOf(
-      record("content://a", "A.zip", formats = listOf("PDF", "CSV")),
-      record("content://b", "B.zip", formats = listOf("XLSX")),
+      record("export-a", "content://a", "A.zip", formats = listOf("PDF", "CSV")),
+      record("export-b", "content://b", "B.zip", formats = listOf("XLSX")),
     )
 
     val decoded = ExportRecordManifest.decode(ExportRecordManifest.encode(records))
@@ -27,8 +27,8 @@ class ExportRecordManifestTest {
 
   @Test
   fun upsert_replacesByFilePath() {
-    val original = record("content://a", "A.zip", formats = listOf("PDF"))
-    val replacement = record("content://a", "A.zip", formats = listOf("PDF", "XLSX"))
+    val original = record("export-a", "content://a", "A.zip", formats = listOf("PDF"))
+    val replacement = record("export-a", "content://b", "A.zip", formats = listOf("PDF", "XLSX"))
 
     val result = ExportRecordManifest.upsert(listOf(original), replacement)
 
@@ -36,37 +36,38 @@ class ExportRecordManifestTest {
   }
 
   @Test
-  fun remove_dropsMatchingFilePath() {
-    val a = record("content://a", "A.zip")
-    val b = record("content://b", "B.zip")
+  fun remove_dropsMatchingExportId() {
+    val a = record("export-a", "content://a", "A.zip")
+    val b = record("export-b", "content://b", "B.zip")
 
-    assertThat(ExportRecordManifest.remove(listOf(a, b), "content://a")).containsExactly(b)
+    assertThat(ExportRecordManifest.remove(listOf(a, b), "export-a")).containsExactly(b)
   }
 
   @Test
   fun reconcile_enrichesDiscoveredAndDropsDeletedAndSortsNewestFirst() {
     val stored = listOf(
       record(
-        "content://a", "A.zip",
+        "export-a", "content://a", "A.zip",
         formats = listOf("PDF", "XLSX"),
         dateRange = ExportRecordDateRange(kind = "LAST_N_MONTHS", months = 12),
         createdAt = 100L,
         size = 1L,
       ),
       // Manifest for an archive the user deleted outside the app — must not survive.
-      record("content://gone", "Gone.zip", formats = listOf("CSV")),
+      record("export-gone", "content://gone", "Gone.zip", formats = listOf("CSV")),
     )
     val discovered = listOf(
       // Same archive, but disk reports the authoritative size/timestamp.
-      record("content://a", "A.zip", createdAt = 999L, size = 4_096L),
+      record("", "content://a", "A.zip", createdAt = 999L, size = 4_096L),
       // Archive with no manifest (e.g. created before this feature) stays minimal.
-      record("content://b", "B.zip", createdAt = 500L, size = 2_048L),
+      record("", "content://b", "B.zip", createdAt = 500L, size = 2_048L),
     )
 
     val result = ExportRecordManifest.reconcile(stored, discovered)
 
     assertThat(result.map { it.file_path }).containsExactly("content://a", "content://b").inOrder()
     val enriched = result.first { it.file_path == "content://a" }
+    assertThat(enriched.export_id).isEqualTo("export-a")
     assertThat(enriched.formats).containsExactly("PDF", "XLSX").inOrder()
     assertThat(enriched.date_range?.kind).isEqualTo("LAST_N_MONTHS")
     // Volatile facts come from disk.
@@ -74,9 +75,11 @@ class ExportRecordManifestTest {
     assertThat(enriched.created_at_epoch_millis).isEqualTo(999L)
     // Unknown archive has no rich scope.
     assertThat(result.first { it.file_path == "content://b" }.formats).isEmpty()
+    assertThat(result.first { it.file_path == "content://b" }.export_id).isEqualTo("legacy:content://b")
   }
 
   private fun record(
+    exportId: String,
     filePath: String,
     fileName: String,
     formats: List<String> = emptyList(),
@@ -84,6 +87,7 @@ class ExportRecordManifestTest {
     createdAt: Long = 0L,
     size: Long = 0L,
   ) = ExportRecord(
+    export_id = exportId,
     file_path = filePath,
     file_name = fileName,
     size_bytes = size,

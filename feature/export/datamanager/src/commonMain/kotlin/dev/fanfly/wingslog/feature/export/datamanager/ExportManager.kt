@@ -21,7 +21,7 @@ interface ExportManager {
   suspend fun listExports(): List<ExportRecord>
 
   /**
-   * Deletes the export referenced by [filePath]. Returns true when an archive was removed.
+   * Deletes the export referenced by [exportId]. Returns true when an archive was removed.
    */
-  suspend fun deleteExport(filePath: String): Boolean
+  suspend fun deleteExport(exportId: String): Boolean
 }
