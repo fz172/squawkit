@@ -56,7 +56,10 @@ export class ExportDeliveryService {
       await this.mailer.send({
         destinationEmail,
         fileName: manifest.fileName,
+        sizeBytes: manifest.sizeBytes,
+        generatedAtEpochMillis: manifest.createdAtEpochMillis,
         downloadUrl: signedUrl,
+        linkExpiresAtEpochMillis: nowEpochMillis + EXPORT_DELIVERY_SIGNED_URL_TTL_MS,
       });
       const sentAtEpochMillis = Date.now();
       await this.manifestRepository.markSent(uid, exportId, sentAtEpochMillis);

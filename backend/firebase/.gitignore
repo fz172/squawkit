@@ -2,7 +2,6 @@
 firebase-debug.log
 firebase-debug.*.log
 firepit*.txt
-functions/.env
 functions/.env.*
 !functions/.env.example
 *service-account*.json
