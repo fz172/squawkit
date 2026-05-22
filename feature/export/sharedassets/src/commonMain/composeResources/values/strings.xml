@@ -48,7 +48,7 @@
 
   <!-- Running -->
   <string name="export_running_title">Preparing export</string>
-  <string name="export_running_progress_percent">%1$d%% complete</string>
+  <string name="export_running_progress_percent">%1$d% complete</string>
   <string name="export_running_cancel_notice">Leaving this screen now will cancel the export.</string>
   <string name="export_running_steps_title">Current progress</string>
   <string name="export_progress_collecting_data">Collecting aircraft data...</string>
@@ -59,10 +59,10 @@
   <string name="export_progress_compressing_archive_detail">Packing documents and attachments into the final ZIP archive.</string>
   <string name="export_progress_saving_file">Saving export...</string>
   <string name="export_progress_saving_file_detail">Writing the ZIP to your device and updating local export history.</string>
-  <string name="export_progress_uploading_archive">Uploading to cloud...</string>
-  <string name="export_progress_uploading_archive_detail">Syncing the archive and manifest so it is available beyond this device.</string>
-  <string name="export_progress_requesting_delivery">Requesting email delivery...</string>
-  <string name="export_progress_requesting_delivery_detail">Asking the backend to send your secure download email.</string>
+  <string name="export_progress_uploading_archive">Sending email...</string>
+  <string name="export_progress_uploading_archive_detail">Uploading your archive and requesting your secure email delivery.</string>
+  <string name="export_progress_requesting_delivery">Sending email...</string>
+  <string name="export_progress_requesting_delivery_detail">Uploading your archive and requesting your secure email delivery.</string>
 
   <!-- Result: success -->
   <string name="export_success_title">Export ready</string>

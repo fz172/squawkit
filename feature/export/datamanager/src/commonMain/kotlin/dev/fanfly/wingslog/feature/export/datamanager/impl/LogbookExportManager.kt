@@ -81,7 +81,7 @@ class LogbookExportManager(
     emit(ExportProgress.Running(step = ExportProgressStep.UPLOADING_ARCHIVE, percent = 86))
     val remoteRecord = remoteRepository.uploadAndSync(localRecord, zipBytes)
     if (remoteRecord.remote_archive_ref.isNotBlank() && remoteRecord.destination_email.isNotBlank()) {
-      emit(ExportProgress.Running(step = ExportProgressStep.REQUESTING_DELIVERY, percent = 95))
+      emit(ExportProgress.Running(step = ExportProgressStep.UPLOADING_ARCHIVE, percent = 95))
     }
     val finalRecord = remoteRecord.requestDeliveryIfEligible()
     if (finalRecord != localRecord) {

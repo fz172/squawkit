@@ -904,7 +904,6 @@ private fun exportRunningPhases(): List<ExportProgressStep> = listOf(
   ExportProgressStep.COMPRESSING_ARCHIVE,
   ExportProgressStep.SAVING_FILE,
   ExportProgressStep.UPLOADING_ARCHIVE,
-  ExportProgressStep.REQUESTING_DELIVERY,
 )
 
 @Composable
@@ -914,7 +913,7 @@ private fun ExportProgressStep.label(): String = when (this) {
   ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive)
   ExportProgressStep.SAVING_FILE -> stringResource(Res.string.export_progress_saving_file)
   ExportProgressStep.UPLOADING_ARCHIVE -> stringResource(Res.string.export_progress_uploading_archive)
-  ExportProgressStep.REQUESTING_DELIVERY -> stringResource(Res.string.export_progress_requesting_delivery)
+  ExportProgressStep.REQUESTING_DELIVERY -> stringResource(Res.string.export_progress_uploading_archive)
 }
 
 @Composable
@@ -924,7 +923,7 @@ private fun ExportProgressStep.detail(): String = when (this) {
   ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive_detail)
   ExportProgressStep.SAVING_FILE -> stringResource(Res.string.export_progress_saving_file_detail)
   ExportProgressStep.UPLOADING_ARCHIVE -> stringResource(Res.string.export_progress_uploading_archive_detail)
-  ExportProgressStep.REQUESTING_DELIVERY -> stringResource(Res.string.export_progress_requesting_delivery_detail)
+  ExportProgressStep.REQUESTING_DELIVERY -> stringResource(Res.string.export_progress_uploading_archive_detail)
 }
 
 // ─── Result · Success ───────────────────────────────────────────────────────
