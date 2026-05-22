@@ -68,12 +68,15 @@ actual class ExportFileStore(private val context: Context) {
     withContext(Dispatchers.IO) {
       val reconciled = ExportRecordManifest.reconcile(readIndex(), discoverArchives())
       val record = reconciled.firstOrNull { it.export_id == exportId }
-      val removed = record?.file_path?.takeIf { it.isNotBlank() }?.let { filePath ->
-        runCatching {
-          context.contentResolver.delete(filePath.toUri(), null, null) > 0
-        }.getOrDefault(false)
-      } ?: false
-      writeIndex(ExportRecordManifest.remove(reconciled, exportId))
+      if (record == null) return@withContext false
+
+      val removed = record.file_path.takeIf { it.isNotBlank() }?.let { filePath ->
+        runCatching { context.contentResolver.delete(filePath.toUri(), null, null) > 0 }.getOrDefault(false)
+      } ?: true
+
+      if (removed) {
+        writeIndex(ExportRecordManifest.remove(reconciled, exportId))
+      }
       removed
     }
 

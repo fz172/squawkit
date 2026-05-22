@@ -8,4 +8,5 @@ enum class ExportProgressStep {
   BUILDING_ARCHIVE,
   COMPRESSING_ARCHIVE,
   SAVING_FILE,
+  UPLOADING_ARCHIVE,
 }

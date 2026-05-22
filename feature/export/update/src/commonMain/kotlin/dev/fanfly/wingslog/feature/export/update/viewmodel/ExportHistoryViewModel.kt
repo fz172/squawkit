@@ -40,4 +40,14 @@ class ExportHistoryViewModel(
       _state.value = ExportHistoryUiState.Loaded(exportManager.listExports())
     }
   }
+
+  /**
+   * Retries a failed delivery and reloads the list so the refreshed state is visible.
+   */
+  fun onRetryDelivery(exportId: String) {
+    viewModelScope.launch {
+      exportManager.retryDelivery(exportId)
+      _state.value = ExportHistoryUiState.Loaded(exportManager.listExports())
+    }
+  }
 }

@@ -27,7 +27,6 @@ fun ExportSelectionRoute(
     onDateRangeChange = viewModel::onDateRangeChange,
     onCustomStartChange = viewModel::onCustomStartChange,
     onCustomEndChange = viewModel::onCustomEndChange,
-    onExportDestinationEmailChanged = viewModel::onExportDestinationEmailChanged,
     onExport = viewModel::onExport,
     onCancel = viewModel::onCancel,
     onShareExport = exportFileSharer::share,

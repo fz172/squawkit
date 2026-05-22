@@ -24,4 +24,10 @@ interface ExportManager {
    * Deletes the export referenced by [exportId]. Returns true when an archive was removed.
    */
   suspend fun deleteExport(exportId: String): Boolean
+
+  /**
+   * Retries automatic delivery for a previously failed export. Returns true when a retry request
+   * was accepted.
+   */
+  suspend fun retryDelivery(exportId: String): Boolean
 }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,7 +36,9 @@ import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.IosShare
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TableView
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
@@ -46,7 +49,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -73,7 +75,6 @@ import dev.fanfly.wingslog.core.ui.theme.StatusOk
 import dev.fanfly.wingslog.core.ui.theme.StatusOkContainer
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
-import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import dev.fanfly.wingslog.feature.export.update.viewmodel.AircraftSelectionRow
@@ -103,12 +104,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_custom_st
 import wingslog.feature.export.sharedassets.generated.resources.export_date_range_section
 import wingslog.feature.export.sharedassets.generated.resources.export_email_body
 import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
-import wingslog.feature.export.sharedassets.generated.resources.export_delivery_description
-import wingslog.feature.export.sharedassets.generated.resources.export_delivery_disabled_body
-import wingslog.feature.export.sharedassets.generated.resources.export_delivery_field_label
-import wingslog.feature.export.sharedassets.generated.resources.export_delivery_helper
-import wingslog.feature.export.sharedassets.generated.resources.export_delivery_resolved_auth
-import wingslog.feature.export.sharedassets.generated.resources.export_delivery_resolved_explicit
+import wingslog.feature.export.sharedassets.generated.resources.export_delivery_note
 import wingslog.feature.export.sharedassets.generated.resources.export_delivery_title
 import wingslog.feature.export.sharedassets.generated.resources.export_error_details
 import wingslog.feature.export.sharedassets.generated.resources.export_error_subtitle
@@ -129,14 +125,23 @@ import wingslog.feature.export.sharedassets.generated.resources.export_no_aircra
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_title
 import wingslog.feature.export.sharedassets.generated.resources.export_primary_action
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_building_archive
+import wingslog.feature.export.sharedassets.generated.resources.export_progress_building_archive_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_collecting_data
+import wingslog.feature.export.sharedassets.generated.resources.export_progress_collecting_data_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_compressing_archive
+import wingslog.feature.export.sharedassets.generated.resources.export_progress_compressing_archive_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_saving_file
+import wingslog.feature.export.sharedassets.generated.resources.export_progress_saving_file_detail
+import wingslog.feature.export.sharedassets.generated.resources.export_progress_uploading_archive
+import wingslog.feature.export.sharedassets.generated.resources.export_progress_uploading_archive_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_aircraft
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_attachments
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_attachments_included
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_file_subtitle
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_range
+import wingslog.feature.export.sharedassets.generated.resources.export_running_cancel_notice
+import wingslog.feature.export.sharedassets.generated.resources.export_running_progress_percent
+import wingslog.feature.export.sharedassets.generated.resources.export_running_steps_title
 import wingslog.feature.export.sharedassets.generated.resources.export_running_title
 import wingslog.feature.export.sharedassets.generated.resources.export_select_all
 import wingslog.feature.export.sharedassets.generated.resources.export_share
@@ -147,7 +152,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_size_zero
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_file_name
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_location
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_auth
-import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_explicit
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_manual
@@ -175,7 +179,6 @@ fun ExportSelectionScreen(
   onDateRangeChange: (DateRangeOption) -> Unit,
   onCustomStartChange: (LocalDate) -> Unit,
   onCustomEndChange: (LocalDate) -> Unit,
-  onExportDestinationEmailChanged: (String) -> Unit,
   onExport: () -> Unit,
   onCancel: () -> Unit,
   onShareExport: (String, String, String, String) -> Unit,
@@ -219,7 +222,6 @@ fun ExportSelectionScreen(
         onDateRangeChange = onDateRangeChange,
         onCustomStartChange = onCustomStartChange,
         onCustomEndChange = onCustomEndChange,
-        onExportDestinationEmailChanged = onExportDestinationEmailChanged,
         onNavigateToHistory = onNavigateToHistory,
       )
       is ExportUiState.Running -> RunningContent(
@@ -256,7 +258,6 @@ private fun ConfiguringContent(
   onDateRangeChange: (DateRangeOption) -> Unit,
   onCustomStartChange: (LocalDate) -> Unit,
   onCustomEndChange: (LocalDate) -> Unit,
-  onExportDestinationEmailChanged: (String) -> Unit,
   onNavigateToHistory: () -> Unit,
 ) {
   if (!state.isLoadingAircraft && state.aircraft.isEmpty()) {
@@ -312,52 +313,6 @@ private fun ConfiguringContent(
       )
     }
 
-    item {
-      DeliveryConfigSection(
-        state = state,
-        onEmailChanged = onExportDestinationEmailChanged,
-      )
-      Spacer(Modifier.height(Spacing.medium))
-    }
-  }
-}
-
-@Composable
-private fun DeliveryConfigSection(
-  state: ExportUiState.Configuring,
-  onEmailChanged: (String) -> Unit,
-) {
-  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-    SectionHeader(title = stringResource(Res.string.export_delivery_title))
-    Text(
-      text = if (state.resolvedDeliveryInfo == null && state.exportDestinationEmail.isBlank()) {
-        stringResource(Res.string.export_delivery_disabled_body)
-      } else {
-        stringResource(Res.string.export_delivery_description)
-      },
-      style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    OutlinedTextField(
-      value = state.exportDestinationEmail,
-      onValueChange = onEmailChanged,
-      singleLine = true,
-      modifier = Modifier.fillMaxWidth(),
-      label = { Text(stringResource(Res.string.export_delivery_field_label)) },
-      supportingText = {
-        Text(
-          text = when (val resolved = state.resolvedDeliveryInfo) {
-            null -> stringResource(Res.string.export_delivery_helper)
-            else -> when (resolved.source) {
-              ExportDeliveryEmailSource.EXPLICIT ->
-                stringResource(Res.string.export_delivery_resolved_explicit, resolved.destinationEmail)
-              ExportDeliveryEmailSource.AUTH_FALLBACK ->
-                stringResource(Res.string.export_delivery_resolved_auth, resolved.destinationEmail)
-            }
-          }
-        )
-      },
-    )
   }
 }
 
@@ -755,6 +710,17 @@ private fun ExportBottomBar(
       )
     }
 
+    state.resolvedDeliveryInfo?.let { deliveryInfo ->
+      Text(
+        text = stringResource(
+          Res.string.export_delivery_note,
+          deliveryInfo.destinationEmail,
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+
     Button(
       onClick = onExport,
       enabled = state.selectedAircraftIds.isNotEmpty() && state.formats.isNotEmpty(),
@@ -785,6 +751,8 @@ private fun RunningContent(
   modifier: Modifier,
   onCancel: () -> Unit,
 ) {
+  val phases = exportRunningPhases()
+  val currentIndex = phases.indexOf(state.step).coerceAtLeast(0)
   ResultShell(
     modifier = modifier,
     heroIcon = Icons.Default.FolderZip,
@@ -793,10 +761,48 @@ private fun RunningContent(
     title = stringResource(Res.string.export_running_title),
     subtitle = state.step.label(),
     body = {
-      LinearProgressIndicator(
-        progress = { state.percent / 100f },
-        modifier = Modifier.fillMaxWidth(),
-      )
+      Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+        LinearProgressIndicator(
+          progress = { state.percent / 100f },
+          modifier = Modifier.fillMaxWidth(),
+        )
+        Text(
+          text = stringResource(Res.string.export_running_progress_percent, state.percent),
+          style = WingslogTypography.dataMedium,
+          color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+          text = state.step.detail(),
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+          text = stringResource(Res.string.export_running_cancel_notice),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Column(
+          modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(Spacing.medium),
+          verticalArrangement = Arrangement.spacedBy(Spacing.small),
+        ) {
+          Text(
+            text = stringResource(Res.string.export_running_steps_title),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+          )
+          phases.forEachIndexed { index, step ->
+            ProgressStepRow(
+              label = step.label(),
+              active = index == currentIndex,
+              complete = index < currentIndex,
+            )
+          }
+        }
+      }
     },
     actions = {
       ResultSecondaryButton(
@@ -809,11 +815,65 @@ private fun RunningContent(
 }
 
 @Composable
+private fun ProgressStepRow(
+  label: String,
+  active: Boolean,
+  complete: Boolean,
+) {
+  val icon = when {
+    complete -> Icons.Default.CheckCircle
+    active -> Icons.Default.Schedule
+    else -> Icons.Default.RadioButtonUnchecked
+  }
+  val tint = when {
+    complete -> StatusOk
+    active -> MaterialTheme.colorScheme.primary
+    else -> MaterialTheme.colorScheme.onSurfaceVariant
+  }
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Icon(
+      imageVector = icon,
+      contentDescription = null,
+      tint = tint,
+      modifier = Modifier.size(18.dp),
+    )
+    Text(
+      text = label,
+      style = if (active) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodySmall,
+      color = if (active) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+      fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
+    )
+  }
+}
+
+private fun exportRunningPhases(): List<ExportProgressStep> = listOf(
+  ExportProgressStep.COLLECTING_DATA,
+  ExportProgressStep.BUILDING_ARCHIVE,
+  ExportProgressStep.COMPRESSING_ARCHIVE,
+  ExportProgressStep.SAVING_FILE,
+  ExportProgressStep.UPLOADING_ARCHIVE,
+)
+
+@Composable
 private fun ExportProgressStep.label(): String = when (this) {
   ExportProgressStep.COLLECTING_DATA -> stringResource(Res.string.export_progress_collecting_data)
   ExportProgressStep.BUILDING_ARCHIVE -> stringResource(Res.string.export_progress_building_archive)
   ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive)
   ExportProgressStep.SAVING_FILE -> stringResource(Res.string.export_progress_saving_file)
+  ExportProgressStep.UPLOADING_ARCHIVE -> stringResource(Res.string.export_progress_uploading_archive)
+}
+
+@Composable
+private fun ExportProgressStep.detail(): String = when (this) {
+  ExportProgressStep.COLLECTING_DATA -> stringResource(Res.string.export_progress_collecting_data_detail)
+  ExportProgressStep.BUILDING_ARCHIVE -> stringResource(Res.string.export_progress_building_archive_detail)
+  ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive_detail)
+  ExportProgressStep.SAVING_FILE -> stringResource(Res.string.export_progress_saving_file_detail)
+  ExportProgressStep.UPLOADING_ARCHIVE -> stringResource(Res.string.export_progress_uploading_archive_detail)
 }
 
 // ─── Result · Success ───────────────────────────────────────────────────────
@@ -903,12 +963,7 @@ private fun DeliveryStatusCard(state: ExportUiState.Success) {
   }
   val destinationBody = when (val delivery = state.deliveryInfo) {
     null -> ""
-    else -> when (delivery.source) {
-      ExportDeliveryEmailSource.EXPLICIT ->
-        stringResource(Res.string.export_success_delivery_explicit, delivery.destinationEmail)
-      ExportDeliveryEmailSource.AUTH_FALLBACK ->
-        stringResource(Res.string.export_success_delivery_auth, delivery.destinationEmail)
-    }
+    else -> stringResource(Res.string.export_success_delivery_auth, delivery.destinationEmail)
   }
   val body = listOf(stateBody, destinationBody).filter { it.isNotBlank() }.joinToString("\n")
 

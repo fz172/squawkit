@@ -29,12 +29,7 @@
   <string name="export_custom_start_date">Start date</string>
   <string name="export_custom_end_date">End date</string>
   <string name="export_delivery_title">Export delivery email</string>
-  <string name="export_delivery_description">Choose where future automatic export emails should go. If blank, Hopply falls back to your signed-in account email.</string>
-  <string name="export_delivery_disabled_body">Leave this blank to keep using manual share, or enter an email for future automatic delivery.</string>
-  <string name="export_delivery_field_label">Destination email</string>
-  <string name="export_delivery_helper">Leave blank to use your signed-in account email when available.</string>
-  <string name="export_delivery_resolved_explicit">Using explicit destination: %1$s</string>
-  <string name="export_delivery_resolved_auth">Using signed-in account email: %1$s</string>
+  <string name="export_delivery_note">Your export will be sent to %1$s.</string>
 
   <!-- Setup: footer -->
   <string name="export_footer_aircraft_count">%1$d aircraft</string>
@@ -48,10 +43,19 @@
 
   <!-- Running -->
   <string name="export_running_title">Preparing export</string>
+  <string name="export_running_progress_percent">%1$d% complete</string>
+  <string name="export_running_cancel_notice">Leaving this screen now will cancel the export.</string>
+  <string name="export_running_steps_title">Current progress</string>
   <string name="export_progress_collecting_data">Collecting aircraft data...</string>
-  <string name="export_progress_building_archive">Building archive...</string>
+  <string name="export_progress_collecting_data_detail">Loading logs, tasks, squawks, and attachments for the selected aircraft.</string>
+  <string name="export_progress_building_archive">Generating reports...</string>
+  <string name="export_progress_building_archive_detail">Writing the PDF, CSV, XLSX, and README contents for the ZIP.</string>
   <string name="export_progress_compressing_archive">Compressing files...</string>
+  <string name="export_progress_compressing_archive_detail">Packing documents and attachments into the final ZIP archive.</string>
   <string name="export_progress_saving_file">Saving export...</string>
+  <string name="export_progress_saving_file_detail">Writing the ZIP to your device and updating local export history.</string>
+  <string name="export_progress_uploading_archive">Sending email...</string>
+  <string name="export_progress_uploading_archive_detail">Uploading your archive and requesting your secure email delivery.</string>
 
   <!-- Result: success -->
   <string name="export_success_title">Export ready</string>
@@ -64,11 +68,10 @@
   <string name="export_success_delivery_pending_title">Delivery requested</string>
   <string name="export_success_delivery_sent_title">Email sent</string>
   <string name="export_success_delivery_failed_title">Delivery failed</string>
-  <string name="export_success_delivery_manual">No delivery email is configured for this signed-in state. Use Share for now, or add one in export setup.</string>
+  <string name="export_success_delivery_manual">No delivery email is available for this signed-in state. Use Share for now.</string>
   <string name="export_success_delivery_pending">Your export email has been requested. Delivery can take a moment.</string>
   <string name="export_success_delivery_sent">Your export email was sent with a secure download link.</string>
   <string name="export_success_delivery_failed">Automatic delivery failed. Use Share for now, then retry from export history later.</string>
-  <string name="export_success_delivery_explicit">Destination: %1$s</string>
   <string name="export_success_delivery_auth">Destination: signed-in account email %1$s</string>
   <string name="export_receipt_file_subtitle">%1$s · ZIP containing %2$s + attachments</string>
   <string name="export_receipt_aircraft">Aircraft</string>
@@ -112,7 +115,12 @@ Thank you for choosing Hopply.</string>
   <string name="export_history_delivery_sending">Sending email</string>
   <string name="export_history_delivery_sent">Email sent</string>
   <string name="export_history_delivery_failed">Email delivery failed</string>
+  <string name="export_history_delivery_retry">Retry email delivery</string>
+  <string name="export_history_remote_expires_on">Cloud copy expires %1$s</string>
+  <string name="export_history_remote_expired">Cloud copy expired %1$s</string>
   <string name="export_history_delete">Delete</string>
   <string name="export_history_delete_confirm_title">Delete export?</string>
   <string name="export_history_delete_confirm_body">%1$s will be permanently removed from this device.</string>
+  <string name="export_history_delete_confirm_body_device_and_cloud">%1$s will be permanently removed from this device and cloud.</string>
+  <string name="export_history_delete_confirm_body_cloud_only">%1$s will be permanently removed from cloud.</string>
 </resources>
