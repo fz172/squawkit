@@ -10,4 +10,5 @@ data class FleetDashboardUiState(
   val aircraftHealthStatus: Map<String, DueStatus> = emptyMap(),
   val isLoading: Boolean = false,
   val selfPhotoUri: String? = null,
+  val selfDisplayName: String? = null,
 )

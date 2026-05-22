@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
@@ -26,6 +27,7 @@ class FleetDashboardViewModel(
   private val taskDataManager: TaskDataManager,
   private val taskDueManager: TaskDueManager,
   private val authManager: AuthManager,
+  private val technicianManager: TechnicianManager,
 ) : ViewModel() {
 
   private var fleetInfoJob: Job? = null
@@ -41,10 +43,14 @@ class FleetDashboardViewModel(
 
   private fun observeSelf() {
     viewModelScope.launch {
-      _uiState.update {
-        it.copy(
-          selfPhotoUri = authManager.getCurrentUser()?.photoURL
-        )
+      technicianManager.observeSelf().collect { self ->
+        _uiState.update {
+          it.copy(
+            selfPhotoUri = authManager.getCurrentUser()?.photoURL,
+            selfDisplayName = self?.name?.takeIf { name -> name.isNotBlank() }
+              ?: authManager.getCurrentUser()?.displayName?.takeIf { name -> name.isNotBlank() },
+          )
+        }
       }
     }
   }

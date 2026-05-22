@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AirplanemodeActive
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
@@ -76,6 +76,7 @@ fun DashboardScreen(
           IconButton(onClick = onOpenSettings) {
             TopBarAvatar(
               photoUri = uiState.selfPhotoUri,
+              displayName = uiState.selfDisplayName,
               contentDescription = stringResource(CoreUiRes.string.settings),
             )
           }
@@ -132,14 +133,38 @@ fun DashboardScreen(
 @Composable
 private fun TopBarAvatar(
   photoUri: String?,
+  displayName: String?,
   contentDescription: String?,
 ) {
+  val initials = displayName
+    ?.split(" ")
+    ?.filter { it.isNotBlank() }
+    ?.take(2)
+    ?.map { it.first().uppercaseChar() }
+    ?.joinToString("")
+    ?.takeIf { it.isNotBlank() }
+
   if (!photoUri.isNullOrBlank()) {
     CircularImage(
       photoUri = photoUri,
       contentDescription = contentDescription,
       size = Spacing.huge,
     )
+  } else if (initials != null) {
+    Box(
+      modifier = Modifier
+        .size(Spacing.huge)
+        .clip(CircleShape)
+        .background(MaterialTheme.colorScheme.primaryContainer),
+      contentAlignment = Alignment.Center,
+    ) {
+      Text(
+        text = initials,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onPrimaryContainer,
+      )
+    }
   } else {
     Box(
       modifier = Modifier
@@ -148,9 +173,11 @@ private fun TopBarAvatar(
         .background(MaterialTheme.colorScheme.primaryContainer),
       contentAlignment = Alignment.Center,
     ) {
-      Icon(
-        Icons.Default.AccountCircle,
-        contentDescription = stringResource(CoreUiRes.string.settings)
+      Text(
+        text = "?",
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onPrimaryContainer,
       )
     }
   }
