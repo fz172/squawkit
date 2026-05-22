@@ -23,6 +23,7 @@ val exportUiModule = module {
   viewModel {
     ExportHistoryViewModel(
       exportManager = get<ExportManager>(),
+      auth = get<FirebaseAuth>(),
     )
   }
 }

@@ -43,7 +43,7 @@ export type ExportManifestAircraft = {
 };
 
 export type DeliveryDispatchResult = {
-  status: "sent" | "already-sent" | "in-progress" | "failed";
+  status: "sent" | "already-sent" | "in-progress" | "failed" | "resend-throttled";
   deliveryState: ExportDeliveryState;
   deliverySentAtEpochMillis?: number;
   deliveryFailureCode?: string;

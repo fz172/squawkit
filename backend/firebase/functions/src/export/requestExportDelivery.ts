@@ -25,8 +25,8 @@ export const requestExportDelivery = onCall<
   },
   async request => {
     const { uid, appId } = requireAuthenticatedApp(request);
-    const { exportId } = parseRequest(request.data);
-    const result = await deliveryService.requestDelivery(uid, exportId);
+    const { exportId, forceResend } = parseRequest(request.data);
+    const result = await deliveryService.requestDelivery(uid, exportId, forceResend);
 
     return RequestExportDeliveryResponse.create({
       status: result.status,
@@ -42,7 +42,8 @@ export const requestExportDelivery = onCall<
 );
 
 function parseRequest(data: unknown): RequestExportDeliveryRequest {
-  const exportId = RequestExportDeliveryRequest.fromJSON(data).exportId.trim();
+  const parsed = RequestExportDeliveryRequest.fromJSON(data);
+  const exportId = parsed.exportId.trim();
 
   if (exportId.length === 0) {
     throw new HttpsError(
@@ -51,5 +52,5 @@ function parseRequest(data: unknown): RequestExportDeliveryRequest {
     );
   }
 
-  return { exportId };
+  return { exportId, forceResend: parsed.forceResend };
 }

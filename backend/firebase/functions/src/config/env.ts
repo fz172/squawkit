@@ -8,6 +8,15 @@ export const EXPORT_DELIVERY_PROVIDER = process.env.EXPORT_DELIVERY_PROVIDER ?? 
 export const EXPORT_DELIVERY_SIGNED_URL_TTL_MS = 24 * 60 * 60 * 1000;
 export const EXPORT_DELIVERY_LEASE_TTL_MS = 10 * 60 * 1000;
 
+// Minimum gap before the same already-delivered export can be re-sent. Configured in seconds via
+// .env (EXPORT_DELIVERY_RESEND_COOLDOWN_SECONDS); defaults to 24 hours.
+export const EXPORT_DELIVERY_RESEND_COOLDOWN_SECONDS = readNonNegativeIntEnv(
+  "EXPORT_DELIVERY_RESEND_COOLDOWN_SECONDS",
+  24 * 60 * 60,
+);
+export const EXPORT_DELIVERY_RESEND_COOLDOWN_MS =
+  EXPORT_DELIVERY_RESEND_COOLDOWN_SECONDS * 1000;
+
 export type ExportDeliveryConfig = {
   provider: string;
   fromEmail: string;
@@ -20,6 +29,13 @@ export function requireExportDeliveryConfig(): ExportDeliveryConfig {
     fromEmail: requiredEnv("EXPORT_DELIVERY_FROM_EMAIL"),
     apiKey: requiredSecretValue(EXPORT_DELIVERY_API_KEY.value(), "EXPORT_DELIVERY_API_KEY"),
   };
+}
+
+function readNonNegativeIntEnv(name: string, fallback: number): number {
+  const raw = process.env[name]?.trim();
+  if (raw == null || raw.length === 0) return fallback;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : fallback;
 }
 
 function requiredEnv(name: string): string {

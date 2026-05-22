@@ -7,6 +7,8 @@ option java_multiple_files = true;
 
 message RequestExportDeliveryRequest {
   string export_id = 1;
+  // When true, re-send an already-delivered export (subject to the server-side resend cooldown).
+  bool force_resend = 2;
 }
 
 message RequestExportDeliveryResponse {

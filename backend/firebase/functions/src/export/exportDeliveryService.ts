@@ -3,6 +3,7 @@ import * as logger from "firebase-functions/logger";
 
 import {
   EXPORT_DELIVERY_LEASE_TTL_MS,
+  EXPORT_DELIVERY_RESEND_COOLDOWN_MS,
   EXPORT_DELIVERY_SIGNED_URL_TTL_MS,
 } from "../config/env.js";
 import {
@@ -20,19 +21,29 @@ export class ExportDeliveryService {
     private readonly mailer: ExportMailer = new ExportMailer(),
   ) {}
 
-  async requestDelivery(uid: string, exportId: string): Promise<DeliveryDispatchResult> {
+  async requestDelivery(
+    uid: string,
+    exportId: string,
+    forceResend = false,
+  ): Promise<DeliveryDispatchResult> {
     const nowEpochMillis = Date.now();
-    logger.info("export_delivery_request_started", {uid, exportId});
+    logger.info("export_delivery_request_started", {uid, exportId, forceResend});
     const lease = await this.manifestRepository.beginDelivery(
       uid,
       exportId,
       nowEpochMillis,
       nowEpochMillis + EXPORT_DELIVERY_LEASE_TTL_MS,
+      forceResend,
+      EXPORT_DELIVERY_RESEND_COOLDOWN_MS,
     );
     if (lease.kind !== "proceed") {
-      logger.info("export_delivery_request_short_circuited", {
+      const event = lease.kind === "resend-throttled"
+        ? "export_delivery_resend_throttled"
+        : "export_delivery_request_short_circuited";
+      logger.info(event, {
         uid,
         exportId,
+        forceResend,
         status: lease.result.status,
         deliveryState: lease.result.deliveryState,
       });

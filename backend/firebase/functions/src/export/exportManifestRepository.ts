@@ -11,6 +11,7 @@ import {
 type DeliveryLeaseResult =
   | { kind: "proceed"; manifest: ExportManifest }
   | { kind: "already-sent"; result: DeliveryDispatchResult }
+  | { kind: "resend-throttled"; result: DeliveryDispatchResult }
   | { kind: "in-progress"; result: DeliveryDispatchResult };
 
 export class ExportManifestRepository {
@@ -27,6 +28,8 @@ export class ExportManifestRepository {
     exportId: string,
     nowEpochMillis: number,
     leaseExpiresAtEpochMillis: number,
+    forceResend: boolean,
+    resendCooldownMs: number,
   ): Promise<DeliveryLeaseResult> {
     const ref = this.document(uid, exportId);
     return adminDb.runTransaction(async transaction => {
@@ -36,14 +39,21 @@ export class ExportManifestRepository {
       }
       const manifest = toManifest(snapshot.data(), exportId, uid);
       if (manifest.deliveryState === EXPORT_DELIVERY_STATE.SENT) {
-        return {
-          kind: "already-sent",
-          result: {
-            status: "already-sent",
-            deliveryState: EXPORT_DELIVERY_STATE.SENT,
-            deliverySentAtEpochMillis: manifest.deliverySentAtEpochMillis ?? 0,
-          },
-        };
+        const sentAtEpochMillis = manifest.deliverySentAtEpochMillis ?? 0;
+        // A plain (non-forced) request never re-sends an already-delivered export. A forced resend
+        // re-sends only once the per-export cooldown has elapsed, otherwise it's throttled.
+        const cooldownActive = sentAtEpochMillis + resendCooldownMs > nowEpochMillis;
+        if (!forceResend || cooldownActive) {
+          return {
+            kind: forceResend ? "resend-throttled" : "already-sent",
+            result: {
+              status: forceResend ? "resend-throttled" : "already-sent",
+              deliveryState: EXPORT_DELIVERY_STATE.SENT,
+              deliverySentAtEpochMillis: sentAtEpochMillis,
+            },
+          };
+        }
+        // Forced resend past the cooldown falls through to acquire a fresh delivery lease below.
       }
       const leaseExpiresAt = manifest.deliveryLeaseExpiresAtEpochMillis ?? 0;
       if (

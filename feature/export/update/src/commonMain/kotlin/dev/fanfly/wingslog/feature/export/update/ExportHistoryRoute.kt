@@ -20,6 +20,7 @@ fun ExportHistoryRoute(
     onNavigateBack = { navController.popBackStack() },
     onNew = { navController.popBackStack() },
     onShareExport = exportFileSharer::share,
+    onResendDelivery = { record -> viewModel.onResendDelivery(record.export_id) },
     onRetryDelivery = { record -> viewModel.onRetryDelivery(record.export_id) },
     onDelete = { record -> viewModel.onDelete(record.export_id) },
   )

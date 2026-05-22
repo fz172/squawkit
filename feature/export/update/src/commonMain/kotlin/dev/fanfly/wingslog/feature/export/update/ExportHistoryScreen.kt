@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.IosShare
@@ -56,10 +57,7 @@ import dev.fanfly.wingslog.feature.export.update.viewmodel.ExportHistoryUiState
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
-import kotlin.time.Clock
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_all_time
@@ -76,23 +74,27 @@ import wingslog.feature.export.sharedassets.generated.resources.export_history_d
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_retry
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_sending
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_sent
-import wingslog.feature.export.sharedassets.generated.resources.export_history_remote_expired
-import wingslog.feature.export.sharedassets.generated.resources.export_history_remote_expires_on
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_body
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_title
 import wingslog.feature.export.sharedassets.generated.resources.export_history_item_meta
 import wingslog.feature.export.sharedassets.generated.resources.export_history_new
+import wingslog.feature.export.sharedassets.generated.resources.export_history_remote_expired
+import wingslog.feature.export.sharedassets.generated.resources.export_history_remote_expires_on
 import wingslog.feature.export.sharedassets.generated.resources.export_history_status_local_and_remote
 import wingslog.feature.export.sharedassets.generated.resources.export_history_status_local_only
 import wingslog.feature.export.sharedassets.generated.resources.export_history_status_remote_only
 import wingslog.feature.export.sharedassets.generated.resources.export_history_title
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_last_n_months
+import wingslog.feature.export.sharedassets.generated.resources.export_resend_email
 import wingslog.feature.export.sharedassets.generated.resources.export_share
 import wingslog.feature.export.sharedassets.generated.resources.export_share_title
 import wingslog.feature.export.sharedassets.generated.resources.export_size_kb
 import wingslog.feature.export.sharedassets.generated.resources.export_size_mb
 import wingslog.feature.export.sharedassets.generated.resources.export_size_zero_kb
+import kotlin.time.Clock
+import kotlin.time.Instant
+import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @Composable
 fun ExportHistoryScreen(
@@ -100,6 +102,7 @@ fun ExportHistoryScreen(
   onNavigateBack: () -> Unit,
   onNew: () -> Unit,
   onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
+  onResendDelivery: (ExportRecord) -> Unit,
   onRetryDelivery: (ExportRecord) -> Unit,
   onDelete: (ExportRecord) -> Unit,
 ) {
@@ -120,8 +123,10 @@ fun ExportHistoryScreen(
         } else {
           ExportList(
             exports = state.exports,
+            canEmailDelivery = state.canEmailDelivery,
             modifier = contentModifier,
             onShareExport = onShareExport,
+            onResendDelivery = onResendDelivery,
             onRetryDelivery = onRetryDelivery,
             onDelete = onDelete,
           )
@@ -180,8 +185,10 @@ private fun EmptyContent(modifier: Modifier, onNew: () -> Unit) {
 @Composable
 private fun ExportList(
   exports: List<ExportRecord>,
+  canEmailDelivery: Boolean,
   modifier: Modifier,
   onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
+  onResendDelivery: (ExportRecord) -> Unit,
   onRetryDelivery: (ExportRecord) -> Unit,
   onDelete: (ExportRecord) -> Unit,
 ) {
@@ -193,7 +200,9 @@ private fun ExportList(
     items(exports, key = { it.export_id }) { record ->
       ExportHistoryCard(
         record = record,
+        canEmailDelivery = canEmailDelivery,
         onShareExport = onShareExport,
+        onResendDelivery = { onResendDelivery(record) },
         onRetryDelivery = { onRetryDelivery(record) },
         onDelete = { onDelete(record) },
       )
@@ -204,7 +213,9 @@ private fun ExportList(
 @Composable
 private fun ExportHistoryCard(
   record: ExportRecord,
+  canEmailDelivery: Boolean,
   onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
+  onResendDelivery: () -> Unit,
   onRetryDelivery: () -> Unit,
   onDelete: () -> Unit,
 ) {
@@ -217,12 +228,21 @@ private fun ExportHistoryCard(
   val availability = availabilityLabel(record)
   val delivery = deliveryLabel(record)
   val retention = retentionLabel(record)
-  val canShare = record.file_path.isNotBlank()
   val canDelete = true
   val canRetry =
     record.delivery_state == "FAILED" &&
       record.remote_archive_ref.isNotBlank() &&
       record.destination_email.isNotBlank()
+  // Email-account users re-send the export by email from the remote archive (no local file needed).
+  // The retry affordance already covers the failed case, so don't double up.
+  val canResend = canEmailDelivery &&
+    record.remote_archive_ref.isNotBlank() &&
+    record.destination_email.isNotBlank() &&
+    !canRetry
+  // Device share stays for non-email users, and as a fallback for email users whose archive never
+  // reached remote storage (so it still has a local copy).
+  val canShareDevice = record.file_path.isNotBlank() &&
+    (!canEmailDelivery || record.remote_archive_ref.isBlank())
 
   Row(
     modifier = Modifier
@@ -322,7 +342,19 @@ private fun ExportHistoryCard(
           )
         }
       }
-      if (canShare) {
+      if (canResend) {
+        FilledTonalIconButton(
+          onClick = onResendDelivery,
+          modifier = Modifier.size(36.dp),
+        ) {
+          Icon(
+            imageVector = Icons.Default.Email,
+            contentDescription = stringResource(Res.string.export_resend_email),
+            modifier = Modifier.size(18.dp),
+          )
+        }
+      }
+      if (canShareDevice) {
         FilledTonalIconButton(
           onClick = { onShareExport(record.file_path, shareTitle, emailSubject, emailBody) },
           modifier = Modifier.size(36.dp),

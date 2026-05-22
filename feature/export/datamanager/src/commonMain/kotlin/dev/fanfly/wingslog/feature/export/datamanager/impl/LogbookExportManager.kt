@@ -84,12 +84,19 @@ class LogbookExportManager(
       emit(ExportProgress.Running(step = ExportProgressStep.UPLOADING_ARCHIVE, percent = 95))
     }
     val finalRecord = remoteRecord.requestDeliveryIfEligible()
-    if (finalRecord != localRecord) {
+    // Email users receive the archive by email and keep a cloud copy, so the on-device file is
+    // redundant; drop it. Anyone else relies on the local file for the native share sheet.
+    val deliveredByEmail =
+      finalRecord.remote_archive_ref.isNotBlank() && finalRecord.destination_email.isNotBlank()
+    if (deliveredByEmail) {
+      exportFileStore.deleteExport(finalRecord.export_id)
+    } else if (finalRecord != localRecord) {
       exportFileStore.saveRecord(finalRecord)
     }
     emit(
       ExportProgress.Success(
-        filePath = saved.filePath,
+        // Cleared when the local file was deleted so nothing tries to share a stale path.
+        filePath = if (deliveredByEmail) "" else saved.filePath,
         fileName = saved.fileName,
         // Left blank so the UI renders the localized label from displayLocationKind.
         displayLocation = "",
@@ -131,6 +138,21 @@ class LogbookExportManager(
       true
     }.getOrElse { error ->
       log.w(error) { "export delivery retry failed for $exportId" }
+      false
+    }
+  }
+
+  override suspend fun resendDelivery(exportId: String): Boolean {
+    val record =
+      listExports().firstOrNull { it.export_id == exportId } ?: return false
+    // Reuse the archive already in remote storage; never regenerate or re-upload a local file.
+    if (record.remote_archive_ref.isBlank() || record.destination_email.isBlank()) return false
+    return runCatching {
+      // forceResend re-sends an already-delivered export, subject to the server-side cooldown.
+      deliveryBackend.requestExportDelivery(exportId, forceResend = true)
+      true
+    }.getOrElse { error ->
+      log.w(error) { "export delivery resend failed for $exportId" }
       false
     }
   }

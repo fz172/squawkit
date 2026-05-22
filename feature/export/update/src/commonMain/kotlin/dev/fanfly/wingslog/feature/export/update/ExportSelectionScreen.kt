@@ -929,13 +929,17 @@ private fun SuccessResult(
   val emailSubject = stringResource(Res.string.export_email_subject, fileName)
   val emailBody = stringResource(Res.string.export_email_body)
 
+  // Email users have their archive delivered by email and the on-device file is removed, so the
+  // device-location subtitle and the manual share button don't apply to them.
+  val deliveredByEmail = state.deliveryInfo != null
+
   ResultShell(
     modifier = modifier,
     heroIcon = Icons.Default.CheckCircle,
     heroColor = StatusOk,
     heroContainer = StatusOkContainer,
     title = stringResource(Res.string.export_success_title),
-    subtitle = location,
+    subtitle = if (deliveredByEmail) "" else location,
     body = {
       DeliveryStatusCard(state)
       ReceiptCard(
@@ -951,18 +955,20 @@ private fun SuccessResult(
       )
     },
     actions = {
-      ResultPrimaryButton(
-        label = stringResource(Res.string.export_share),
-        icon = Icons.Default.IosShare,
-        onClick = {
-          onShare(
-            state.filePath,
-            shareTitle,
-            emailSubject,
-            emailBody
-          )
-        },
-      )
+      if (!deliveredByEmail) {
+        ResultPrimaryButton(
+          label = stringResource(Res.string.export_share),
+          icon = Icons.Default.IosShare,
+          onClick = {
+            onShare(
+              state.filePath,
+              shareTitle,
+              emailSubject,
+              emailBody
+            )
+          },
+        )
+      }
       Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
         ResultSecondaryButton(
           modifier = Modifier.weight(1f),
@@ -1243,12 +1249,14 @@ private fun ResultShell(
         textAlign = TextAlign.Center,
         color = MaterialTheme.colorScheme.onSurface,
       )
-      Text(
-        text = subtitle,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-      )
+      if (subtitle.isNotBlank()) {
+        Text(
+          text = subtitle,
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          textAlign = TextAlign.Center,
+        )
+      }
     }
     body()
     Spacer(Modifier.weight(1f))

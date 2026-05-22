@@ -116,6 +116,7 @@ Thank you for choosing Hopply.</string>
   <string name="export_history_delivery_sent">Email sent</string>
   <string name="export_history_delivery_failed">Email delivery failed</string>
   <string name="export_history_delivery_retry">Retry email delivery</string>
+  <string name="export_resend_email">Email this export again</string>
   <string name="export_history_remote_expires_on">Cloud copy expires %1$s</string>
   <string name="export_history_remote_expired">Cloud copy expired %1$s</string>
   <string name="export_history_delete">Delete</string>

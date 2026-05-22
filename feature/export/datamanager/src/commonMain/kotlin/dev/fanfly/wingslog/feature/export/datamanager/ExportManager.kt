@@ -30,4 +30,10 @@ interface ExportManager {
    * was accepted.
    */
   suspend fun retryDelivery(exportId: String): Boolean
+
+  /**
+   * Sends a fresh delivery email for an already-uploaded export, reusing the archive in remote
+   * storage. No local file is generated or uploaded. Returns true when the request was accepted.
+   */
+  suspend fun resendDelivery(exportId: String): Boolean
 }

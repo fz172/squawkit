@@ -11,6 +11,8 @@ export const protobufPackage = "dev.fanfly.wingslog.rpc.request_export_delivery"
 
 export interface RequestExportDeliveryRequest {
   exportId: string;
+  /** When true, re-send an already-delivered export (subject to the server-side resend cooldown). */
+  forceResend: boolean;
 }
 
 export interface RequestExportDeliveryResponse {
@@ -25,13 +27,16 @@ export interface RequestExportDeliveryResponse {
 }
 
 function createBaseRequestExportDeliveryRequest(): RequestExportDeliveryRequest {
-  return { exportId: "" };
+  return { exportId: "", forceResend: false };
 }
 
 export const RequestExportDeliveryRequest: MessageFns<RequestExportDeliveryRequest> = {
   encode(message: RequestExportDeliveryRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.exportId !== "") {
       writer.uint32(10).string(message.exportId);
+    }
+    if (message.forceResend !== false) {
+      writer.uint32(16).bool(message.forceResend);
     }
     return writer;
   },
@@ -51,6 +56,14 @@ export const RequestExportDeliveryRequest: MessageFns<RequestExportDeliveryReque
           message.exportId = reader.string();
           continue;
         }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.forceResend = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -67,6 +80,11 @@ export const RequestExportDeliveryRequest: MessageFns<RequestExportDeliveryReque
         : isSet(object.export_id)
         ? globalThis.String(object.export_id)
         : "",
+      forceResend: isSet(object.forceResend)
+        ? globalThis.Boolean(object.forceResend)
+        : isSet(object.force_resend)
+        ? globalThis.Boolean(object.force_resend)
+        : false,
     };
   },
 
@@ -74,6 +92,9 @@ export const RequestExportDeliveryRequest: MessageFns<RequestExportDeliveryReque
     const obj: any = {};
     if (message.exportId !== "") {
       obj.exportId = message.exportId;
+    }
+    if (message.forceResend !== false) {
+      obj.forceResend = message.forceResend;
     }
     return obj;
   },
@@ -84,6 +105,7 @@ export const RequestExportDeliveryRequest: MessageFns<RequestExportDeliveryReque
   fromPartial<I extends Exact<DeepPartial<RequestExportDeliveryRequest>, I>>(object: I): RequestExportDeliveryRequest {
     const message = createBaseRequestExportDeliveryRequest();
     message.exportId = object.exportId ?? "";
+    message.forceResend = object.forceResend ?? false;
     return message;
   },
 };
