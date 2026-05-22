@@ -4,13 +4,12 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.flow.Flow
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -18,6 +17,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlin.coroutines.CoroutineContext
 
 /**
  * R1 sync user preferences. One flag, surfaced via the dedicated sync settings page:
@@ -47,10 +47,10 @@ class SyncPreferences(
         booleanConfig(uid, KEY_CLOUD_SYNC_ENABLED, defaultValue = true),
         booleanConfig(uid, KEY_ALLOW_UPLOAD_ON_CELLULAR, defaultValue = false),
       ) { cloudSync, cellular ->
-          SyncPrefs(
-            cloudSyncEnabled = cloudSync,
-            allowUploadOnCellular = cellular,
-          )
+        SyncPrefs(
+          cloudSyncEnabled = cloudSync,
+          allowUploadOnCellular = cellular,
+        )
       }
     }
     .stateIn(
@@ -61,19 +61,28 @@ class SyncPreferences(
 
   fun setCloudSyncEnabled(enabled: Boolean) {
     val uid = auth.currentUser?.uid ?: return
-    db.schemaQueries.upsertConfig(uid, KEY_CLOUD_SYNC_ENABLED, enabled.toString())
+    db.schemaQueries.upsertConfig(
+      uid,
+      KEY_CLOUD_SYNC_ENABLED,
+      enabled.toString()
+    )
   }
 
   fun setAllowUploadOnCellular(allowed: Boolean) {
     val uid = auth.currentUser?.uid ?: return
-    db.schemaQueries.upsertConfig(uid, KEY_ALLOW_UPLOAD_ON_CELLULAR, allowed.toString())
+    db.schemaQueries.upsertConfig(
+      uid,
+      KEY_ALLOW_UPLOAD_ON_CELLULAR,
+      allowed.toString()
+    )
   }
 
   private fun booleanConfig(
     uid: String,
     key: String,
     defaultValue: Boolean,
-  ): Flow<Boolean> = db.schemaQueries.selectConfig(uid, key).asFlow()
+  ): Flow<Boolean> = db.schemaQueries.selectConfig(uid, key)
+    .asFlow()
     .mapToOneOrNull(ioContext)
     .map { value -> value?.toBoolean() ?: defaultValue }
 

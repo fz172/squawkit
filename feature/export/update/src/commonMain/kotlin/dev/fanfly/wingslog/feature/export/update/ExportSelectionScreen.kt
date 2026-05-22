@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,8 +35,8 @@ import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.IosShare
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TableView
 import androidx.compose.material.icons.filled.Tune
@@ -64,9 +63,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
@@ -85,10 +84,8 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.done
 import wingslog.feature.export.sharedassets.generated.resources.Res
@@ -102,10 +99,9 @@ import wingslog.feature.export.sharedassets.generated.resources.export_custom
 import wingslog.feature.export.sharedassets.generated.resources.export_custom_end_date
 import wingslog.feature.export.sharedassets.generated.resources.export_custom_start_date
 import wingslog.feature.export.sharedassets.generated.resources.export_date_range_section
+import wingslog.feature.export.sharedassets.generated.resources.export_delivery_note
 import wingslog.feature.export.sharedassets.generated.resources.export_email_body
 import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
-import wingslog.feature.export.sharedassets.generated.resources.export_delivery_note
-import wingslog.feature.export.sharedassets.generated.resources.export_delivery_title
 import wingslog.feature.export.sharedassets.generated.resources.export_error_details
 import wingslog.feature.export.sharedassets.generated.resources.export_error_subtitle
 import wingslog.feature.export.sharedassets.generated.resources.export_error_title
@@ -166,6 +162,8 @@ import wingslog.feature.export.sharedassets.generated.resources.export_try_again
 import wingslog.feature.export.sharedassets.generated.resources.export_untitled_aircraft
 import wingslog.feature.export.sharedassets.generated.resources.export_view_exports
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
+import kotlin.time.Instant
+import wingslog.core.ui.generated.resources.Res as CoreRes
 
 @Composable
 fun ExportSelectionScreen(
@@ -224,11 +222,13 @@ fun ExportSelectionScreen(
         onCustomEndChange = onCustomEndChange,
         onNavigateToHistory = onNavigateToHistory,
       )
+
       is ExportUiState.Running -> RunningContent(
         state = state,
         modifier = Modifier.padding(innerPadding),
         onCancel = onCancel,
       )
+
       is ExportUiState.Success -> SuccessResult(
         state = state,
         modifier = Modifier.padding(innerPadding),
@@ -236,6 +236,7 @@ fun ExportSelectionScreen(
         onHistory = onNavigateToHistory,
         onDone = onDone,
       )
+
       is ExportUiState.Error -> ErrorResult(
         modifier = Modifier.padding(innerPadding),
         onRetry = onRetry,
@@ -325,9 +326,21 @@ private data class FormatChoice(
 )
 
 private val FORMAT_CHOICES = listOf(
-  FormatChoice(ExportFormat.PDF, Icons.Default.PictureAsPdf, Res.string.export_format_pdf_sub),
-  FormatChoice(ExportFormat.CSV, Icons.Default.Description, Res.string.export_format_csv_sub),
-  FormatChoice(ExportFormat.XLSX, Icons.Default.TableView, Res.string.export_format_xlsx_sub),
+  FormatChoice(
+    ExportFormat.PDF,
+    Icons.Default.PictureAsPdf,
+    Res.string.export_format_pdf_sub
+  ),
+  FormatChoice(
+    ExportFormat.CSV,
+    Icons.Default.Description,
+    Res.string.export_format_csv_sub
+  ),
+  FormatChoice(
+    ExportFormat.XLSX,
+    Icons.Default.TableView,
+    Res.string.export_format_xlsx_sub
+  ),
 )
 
 @Composable
@@ -357,7 +370,8 @@ private fun FormatSection(
         imageVector = Icons.Default.FolderZip,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(16.dp).padding(top = 1.dp),
+        modifier = Modifier.size(16.dp)
+          .padding(top = 1.dp),
       )
       Text(
         text = if (formats.isEmpty()) {
@@ -486,7 +500,11 @@ private fun SelectionIndicator(
       .background(if (selected) accent else Color.Transparent)
       .then(
         if (selected) Modifier
-        else Modifier.border(2.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+        else Modifier.border(
+          2.dp,
+          MaterialTheme.colorScheme.outlineVariant,
+          shape
+        )
       ),
     contentAlignment = Alignment.Center,
   ) {
@@ -636,12 +654,14 @@ private fun DateField(
     }
   }
   if (showPicker) {
-    val pickerState = rememberDatePickerState(initialSelectedDateMillis = date.toDatePickerMillis())
+    val pickerState =
+      rememberDatePickerState(initialSelectedDateMillis = date.toDatePickerMillis())
     DatePickerDialog(
       onDismissRequest = { showPicker = false },
       confirmButton = {
         TextButton(onClick = {
-          pickerState.selectedDateMillis?.toDatePickerLocalDate()?.let(onChange)
+          pickerState.selectedDateMillis?.toDatePickerLocalDate()
+            ?.let(onChange)
           showPicker = false
         }) { Text(stringResource(CoreRes.string.done).uppercase()) }
       },
@@ -688,7 +708,10 @@ private fun ExportBottomBar(
           modifier = Modifier.size(14.dp),
         )
         Text(
-          text = stringResource(Res.string.export_footer_aircraft_count, state.selectedAircraftIds.size),
+          text = stringResource(
+            Res.string.export_footer_aircraft_count,
+            state.selectedAircraftIds.size
+          ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurface,
         )
@@ -704,7 +727,10 @@ private fun ExportBottomBar(
         )
       }
       Text(
-        text = stringResource(Res.string.export_estimated_size, readableBytes(state.estimatedSizeBytes)),
+        text = stringResource(
+          Res.string.export_estimated_size,
+          readableBytes(state.estimatedSizeBytes)
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -752,7 +778,8 @@ private fun RunningContent(
   onCancel: () -> Unit,
 ) {
   val phases = exportRunningPhases()
-  val currentIndex = phases.indexOf(state.step).coerceAtLeast(0)
+  val currentIndex = phases.indexOf(state.step)
+    .coerceAtLeast(0)
   ResultShell(
     modifier = modifier,
     heroIcon = Icons.Default.FolderZip,
@@ -767,7 +794,10 @@ private fun RunningContent(
           modifier = Modifier.fillMaxWidth(),
         )
         Text(
-          text = stringResource(Res.string.export_running_progress_percent, state.percent),
+          text = stringResource(
+            Res.string.export_running_progress_percent,
+            state.percent
+          ),
           style = WingslogTypography.dataMedium,
           color = MaterialTheme.colorScheme.onSurface,
         )
@@ -886,7 +916,8 @@ private fun SuccessResult(
   onHistory: () -> Unit,
   onDone: () -> Unit,
 ) {
-  val fileName = state.fileName.ifBlank { stringResource(Res.string.export_stub_preview_file_name) }
+  val fileName =
+    state.fileName.ifBlank { stringResource(Res.string.export_stub_preview_file_name) }
   val location = state.displayLocation.ifBlank {
     when (state.displayLocationKind) {
       ExportDisplayLocation.DOWNLOADS_HOPPLY -> stringResource(Res.string.export_location_downloads_hopply)
@@ -912,14 +943,25 @@ private fun SuccessResult(
         sizeText = readableBytes(state.sizeBytes),
         formats = state.formats,
         aircraftSummary = aircraftSummary(state.selectedTailNumbers),
-        rangeText = rangeSummary(state.dateRange, state.customStart, state.customEnd),
+        rangeText = rangeSummary(
+          state.dateRange,
+          state.customStart,
+          state.customEnd
+        ),
       )
     },
     actions = {
       ResultPrimaryButton(
         label = stringResource(Res.string.export_share),
         icon = Icons.Default.IosShare,
-        onClick = { onShare(state.filePath, shareTitle, emailSubject, emailBody) },
+        onClick = {
+          onShare(
+            state.filePath,
+            shareTitle,
+            emailSubject,
+            emailBody
+          )
+        },
       )
       Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
         ResultSecondaryButton(
@@ -948,6 +990,7 @@ private fun DeliveryStatusCard(state: ExportUiState.Success) {
     state.deliveryState == "FAILED" -> stringResource(Res.string.export_success_delivery_failed_title)
     state.deliveryState == "QUEUED" || state.deliveryState == "SENDING" ->
       stringResource(Res.string.export_success_delivery_pending_title)
+
     else -> stringResource(Res.string.export_success_delivery_ready_title)
   }
   val stateBody = when {
@@ -957,15 +1000,21 @@ private fun DeliveryStatusCard(state: ExportUiState.Success) {
       state.deliveryFailureMessage.ifBlank {
         stringResource(Res.string.export_success_delivery_failed)
       }
+
     state.deliveryState == "QUEUED" || state.deliveryState == "SENDING" ->
       stringResource(Res.string.export_success_delivery_pending)
+
     else -> stringResource(Res.string.export_success_delivery_pending)
   }
   val destinationBody = when (val delivery = state.deliveryInfo) {
     null -> ""
-    else -> stringResource(Res.string.export_success_delivery_auth, delivery.destinationEmail)
+    else -> stringResource(
+      Res.string.export_success_delivery_auth,
+      delivery.destinationEmail
+    )
   }
-  val body = listOf(stateBody, destinationBody).filter { it.isNotBlank() }.joinToString("\n")
+  val body = listOf(stateBody, destinationBody).filter { it.isNotBlank() }
+    .joinToString("\n")
 
   Column(
     modifier = Modifier
@@ -1036,15 +1085,28 @@ private fun ReceiptCard(
           color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
-          text = stringResource(Res.string.export_receipt_file_subtitle, sizeText, joinFormats(formats)),
+          text = stringResource(
+            Res.string.export_receipt_file_subtitle,
+            sizeText,
+            joinFormats(formats)
+          ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
     }
     androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-    ReceiptRow(Icons.Default.Flight, stringResource(Res.string.export_receipt_aircraft), aircraftSummary, mono = true)
-    ReceiptRow(Icons.Default.DateRange, stringResource(Res.string.export_receipt_range), rangeText)
+    ReceiptRow(
+      Icons.Default.Flight,
+      stringResource(Res.string.export_receipt_aircraft),
+      aircraftSummary,
+      mono = true
+    )
+    ReceiptRow(
+      Icons.Default.DateRange,
+      stringResource(Res.string.export_receipt_range),
+      rangeText
+    )
     ReceiptRow(
       Icons.Default.Attachment,
       stringResource(Res.string.export_receipt_attachments),
@@ -1054,7 +1116,12 @@ private fun ReceiptCard(
 }
 
 @Composable
-private fun ReceiptRow(icon: ImageVector, label: String, value: String, mono: Boolean = false) {
+private fun ReceiptRow(
+  icon: ImageVector,
+  label: String,
+  value: String,
+  mono: Boolean = false
+) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
@@ -1151,7 +1218,8 @@ private fun ResultShell(
       .padding(top = Spacing.large, bottom = Spacing.extraLarge),
   ) {
     Column(
-      modifier = Modifier.fillMaxWidth().padding(top = Spacing.large, bottom = Spacing.extraLarge),
+      modifier = Modifier.fillMaxWidth()
+        .padding(top = Spacing.large, bottom = Spacing.extraLarge),
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
@@ -1191,14 +1259,23 @@ private fun ResultShell(
 }
 
 @Composable
-private fun ResultPrimaryButton(label: String, icon: ImageVector?, onClick: () -> Unit) {
+private fun ResultPrimaryButton(
+  label: String,
+  icon: ImageVector?,
+  onClick: () -> Unit
+) {
   Button(
     onClick = onClick,
-    modifier = Modifier.fillMaxWidth().height(Spacing.buttonHeight),
+    modifier = Modifier.fillMaxWidth()
+      .height(Spacing.buttonHeight),
     shape = RoundedCornerShape(Spacing.buttonCornerRadius),
   ) {
     if (icon != null) {
-      Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(20.dp))
+      Icon(
+        imageVector = icon,
+        contentDescription = null,
+        modifier = Modifier.size(20.dp)
+      )
       Spacer(Modifier.width(Spacing.small))
     }
     Text(text = label, style = MaterialTheme.typography.titleMedium)
@@ -1216,18 +1293,24 @@ private fun ResultSecondaryButton(
   if (plain) {
     TextButton(
       onClick = onClick,
-      modifier = modifier.fillMaxWidth().height(48.dp),
+      modifier = modifier.fillMaxWidth()
+        .height(48.dp),
     ) {
       Text(text = label, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
   } else {
     OutlinedButton(
       onClick = onClick,
-      modifier = modifier.fillMaxWidth().height(48.dp),
+      modifier = modifier.fillMaxWidth()
+        .height(48.dp),
       shape = RoundedCornerShape(Spacing.chipCornerRadius),
     ) {
       if (icon != null) {
-        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp))
+        Icon(
+          imageVector = icon,
+          contentDescription = null,
+          modifier = Modifier.size(18.dp)
+        )
         Spacer(Modifier.width(Spacing.small))
       }
       Text(text = label)
@@ -1263,7 +1346,10 @@ private fun EmptyAircraftContent(
 // ─── Shared helpers ─────────────────────────────────────────────────────────
 
 @Composable
-private fun SectionHeader(title: String, action: (@Composable () -> Unit)? = null) {
+private fun SectionHeader(
+  title: String,
+  action: (@Composable () -> Unit)? = null
+) {
   Row(
     modifier = Modifier.fillMaxWidth(),
     verticalAlignment = Alignment.CenterVertically,
@@ -1281,29 +1367,42 @@ private fun SectionHeader(title: String, action: (@Composable () -> Unit)? = nul
 
 /** Joins formats in canonical order: "PDF", "PDF + CSV", "PDF, CSV + XLSX". */
 private fun joinFormats(formats: Set<ExportFormat>): String {
-  val ordered = ExportFormat.entries.filter { it in formats }.map { it.name }
+  val ordered = ExportFormat.entries.filter { it in formats }
+    .map { it.name }
   return when (ordered.size) {
     0 -> "—"
     1 -> ordered[0]
     2 -> "${ordered[0]} + ${ordered[1]}"
-    else -> "${ordered.dropLast(1).joinToString(", ")} + ${ordered.last()}"
+    else -> "${
+      ordered.dropLast(1)
+        .joinToString(", ")
+    } + ${ordered.last()}"
   }
 }
 
 @Composable
-private fun aircraftSummary(tailNumbers: List<String>): String = when (tailNumbers.size) {
-  0 -> "—"
-  1 -> tailNumbers[0]
-  2 -> tailNumbers.joinToString(", ")
-  else -> stringResource(Res.string.export_aircraft_summary_more, tailNumbers[0], tailNumbers.size - 1)
-}
+private fun aircraftSummary(tailNumbers: List<String>): String =
+  when (tailNumbers.size) {
+    0 -> "—"
+    1 -> tailNumbers[0]
+    2 -> tailNumbers.joinToString(", ")
+    else -> stringResource(
+      Res.string.export_aircraft_summary_more,
+      tailNumbers[0],
+      tailNumbers.size - 1
+    )
+  }
 
 @Composable
 private fun rangeSummary(state: ExportUiState.Configuring): String =
   rangeSummary(state.dateRange, state.customStart, state.customEnd)
 
 @Composable
-private fun rangeSummary(range: DateRangeOption, start: LocalDate, end: LocalDate): String =
+private fun rangeSummary(
+  range: DateRangeOption,
+  start: LocalDate,
+  end: LocalDate
+): String =
   when (range) {
     DateRangeOption.AllTime -> stringResource(Res.string.export_all_time)
     DateRangeOption.Last12Months -> stringResource(Res.string.export_last_12_months)
@@ -1313,8 +1412,15 @@ private fun rangeSummary(range: DateRangeOption, start: LocalDate, end: LocalDat
 @Composable
 private fun readableBytes(bytes: Long): String = when {
   bytes <= 0L -> stringResource(Res.string.export_size_zero_kb)
-  bytes < 1_000_000L -> stringResource(Res.string.export_size_kb, ((bytes + 999L) / 1_000L).toString())
-  else -> stringResource(Res.string.export_size_mb, ((bytes / 100_000L) / 10.0).toString())
+  bytes < 1_000_000L -> stringResource(
+    Res.string.export_size_kb,
+    ((bytes + 999L) / 1_000L).toString()
+  )
+
+  else -> stringResource(
+    Res.string.export_size_mb,
+    ((bytes / 100_000L) / 10.0).toString()
+  )
 }
 
 private fun LocalDate.toDatePickerMillis(): Long =
@@ -1323,4 +1429,5 @@ private fun LocalDate.toDatePickerMillis(): Long =
     .toEpochMilliseconds()
 
 private fun Long.toDatePickerLocalDate(): LocalDate =
-  Instant.fromEpochMilliseconds(this).toLocalDateTime(TimeZone.UTC).date
+  Instant.fromEpochMilliseconds(this)
+    .toLocalDateTime(TimeZone.UTC).date

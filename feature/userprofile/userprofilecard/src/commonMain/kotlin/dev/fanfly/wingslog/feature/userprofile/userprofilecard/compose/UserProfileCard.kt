@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -31,7 +30,7 @@ import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
-import dev.fanfly.wingslog.core.ui.common.compose.CircularImage
+import dev.fanfly.wingslog.core.ui.common.compose.AvatarIcon
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.displayResId
@@ -68,27 +67,27 @@ fun UserProfileCard(
       Card(
         shape = RoundedCornerShape(Spacing.large),
         modifier = Modifier
-            .fillMaxWidth()
-            .background(
-              brush = Brush.verticalGradient(
-                0f to background,
-                0.7f to surfaceContainer,
-                1f to surfaceContainer,
-              ),
-              shape = RoundedCornerShape(Spacing.large),
+          .fillMaxWidth()
+          .background(
+            brush = Brush.verticalGradient(
+              0f to background,
+              0.7f to surfaceContainer,
+              1f to surfaceContainer,
             ),
+            shape = RoundedCornerShape(Spacing.large),
+          ),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
       ) {
         Row(
           modifier = Modifier
-              .fillMaxWidth()
-              .padding(
-                start = Spacing.large,
-                end = Spacing.large,
-                top = Spacing.large,
-                bottom = Spacing.xLarge,
-              ),
+            .fillMaxWidth()
+            .padding(
+              start = Spacing.large,
+              end = Spacing.large,
+              top = Spacing.large,
+              bottom = Spacing.xLarge,
+            ),
           verticalAlignment = Alignment.Top,
         ) {
           // Reserve horizontal space for the overlapping avatar + gap to text
@@ -108,8 +107,8 @@ fun UserProfileCard(
       self = self,
       photoUri = photoUri,
       modifier = Modifier
-          .align(Alignment.TopStart)
-          .offset(x = AvatarOffsetX),
+        .align(Alignment.TopStart)
+        .offset(x = AvatarOffsetX),
     )
   }
 }
@@ -140,11 +139,11 @@ private fun ProfileNameAndCreds(self: Technician?) {
 
   val showExpiration =
     self.cert_expire_limit != CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES
-        && self.cert_expiration != null
+      && self.cert_expiration != null
   if (showExpiration) {
     Text(
       text = self.cert_expiration!!.toLocalDate()
-          .toDisplayFormat(),
+        .toDisplayFormat(),
       style = MaterialTheme.typography.bodySmall,
       color = certExpiryColor(self.cert_expiration!!),
     )
@@ -157,51 +156,23 @@ private fun ProfileAvatar(
   photoUri: String?,
   modifier: Modifier = Modifier,
 ) {
-  val hasPhoto = !photoUri.isNullOrBlank()
-  val initials = self?.name
-      ?.split(" ")
-      ?.filter { it.isNotBlank() }
-      ?.take(2)
-      ?.map {
-        it.first()
-            .uppercaseChar()
-      }
-      ?.joinToString("")
-      ?.takeIf { it.isNotBlank() }
-
   Box(
     modifier = modifier
-        .size(AvatarSize + AvatarRingWidth * 2)
-        .clip(CircleShape)
-        .background(MaterialTheme.colorScheme.background)
-        .padding(AvatarRingWidth)
-        .clip(CircleShape),
+      .size(AvatarSize + AvatarRingWidth * 2)
+      .clip(CircleShape)
+      .background(MaterialTheme.colorScheme.background)
+      .padding(AvatarRingWidth)
+      .clip(CircleShape),
     contentAlignment = Alignment.Center,
   ) {
-    if (hasPhoto || initials == null) {
-      // Photo or anonymous icon fallback via CircularImage
-      CircularImage(
-        photoUri = photoUri,
-        contentDescription = stringResource(CardRes.string.profile_picture),
-        size = AvatarSize,
-        fallbackRes = SharedAssetsRes.drawable.ic_anonymous_user,
-      )
-    } else {
-      // Initials avatar
-      Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primaryContainer),
-        contentAlignment = Alignment.Center,
-      ) {
-        Text(
-          text = initials,
-          style = MaterialTheme.typography.headlineSmall,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.onPrimaryContainer,
-        )
-      }
-    }
+    AvatarIcon(
+      displayName = self?.name,
+      photoUri = photoUri,
+      size = AvatarSize,
+      contentDescription = stringResource(CardRes.string.profile_picture),
+      textStyle = MaterialTheme.typography.headlineSmall,
+      fallbackRes = SharedAssetsRes.drawable.ic_anonymous_user,
+    )
   }
 }
 
@@ -209,8 +180,8 @@ private fun ProfileAvatar(
 private fun certExpiryColor(expiration: WireInstant): Color {
   val expiryDate = expiration.toLocalDate()
   val today = Clock.System.now()
-      .toLocalDateTime(TimeZone.currentSystemDefault())
-      .date
+    .toLocalDateTime(TimeZone.currentSystemDefault())
+    .date
   val daysUntil = expiryDate.toEpochDays() - today.toEpochDays()
   return when {
     daysUntil < 0 -> MaterialTheme.colorScheme.error
