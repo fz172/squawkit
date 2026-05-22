@@ -99,7 +99,7 @@ The application focuses on General Aviation (GA) aircraft management, specifical
   Not Reproducible / Duplicate / Intended Behavior); dismissed squawks can be **Reopened**.
 - Bidirectional linkage: `MaintenanceLog.squawk_ids` ↔ `Squawk.addressed_by_log_id`. Linking from either the
   log form (`SquawkPickerSheet`) or the squawk form (`LogPickerSheet`).
-- AOG squawks surface in `AogAlertSection` on the Aircraft Overview tab. (Fleet-dashboard AOG badge is **not yet** built.)
+- AOG squawks surface in `AogAlertSection` on the Aircraft Overview tab. (A fleet-dashboard AOG badge was considered but **deliberately left out of scope**.)
 - See `docs/user_squawking_prd.md` and `docs/squawk_design.md`.
 
 ### 3.5 Logbook Export (Implemented — `feature/export`)

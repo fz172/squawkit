@@ -8,8 +8,9 @@
 > **Implementation status.** Shipped in `feature/squawk/`. Beyond this PRD, squawks gained a **Dismiss**
 > terminal state (with a reason) and a **Reopen** action, so the lifecycle is Open → Addressed **or** Open →
 > Dismissed → (Reopen). The **Squawks tab** (Overview → Squawks → Tasks → Logs), AOG alert on the Overview tab,
-> and bidirectional log↔squawk linkage are all implemented. **Not yet implemented:** the Fleet-dashboard AOG
-> badge (§8). See `squawk_design.md` for the per-design delta notes.
+> and bidirectional log↔squawk linkage are all implemented. The Fleet-dashboard AOG badge (§8) was
+> **deliberately dropped from scope** — the Overview-tab alert is considered sufficient and the fleet badge is
+> not planned. See `squawk_design.md` for the per-design delta notes.
 
 ---
 
@@ -140,8 +141,9 @@ AOG (Aircraft on Ground) means the aircraft is grounded until the squawk is reso
     - Each AOG squawk is shown as a row with priority chip, title, and a "View Squawks" action that switches to the Squawks tab.
     - Section collapses when no AOG squawks are open.
 
-- **Fleet Dashboard:**
-    - Aircraft card shows a small AOG badge (similar to how due-status is shown today) when any AOG squawk is open.
+- **Fleet Dashboard:** *(dropped — not implemented, not planned)*
+    - ~~Aircraft card shows a small AOG badge (similar to how due-status is shown today) when any AOG squawk is open.~~
+      Deliberately out of scope; AOG is surfaced on the Aircraft Overview tab only.
 
 - **No flight blocking:** The app does not technically block log entry creation for a grounded aircraft — this is a display concern only. Regulatory enforcement is the user's responsibility.
 

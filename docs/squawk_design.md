@@ -20,8 +20,9 @@ Implemented in `feature/squawk/` (canonical layout), local-first over `EntitySto
   resolving log can be linked directly from the squawk — in addition to the log-form `SquawkPickerSheet` path in §7.1.
 - `DualSegmentedFilter` was extracted to `core/ui` as designed (§5); the 4-tab order **Overview → Squawks →
   Tasks → Logs** (§6) shipped via an `AircraftTab` enum.
-- **Not implemented:** the Fleet-dashboard AOG badge (§7.3 / PRD §8). AOG visibility is the Overview-tab
-  `AogAlertSection` only.
+- **Intentionally not built:** the Fleet-dashboard AOG badge (§7.3 / PRD §8) was dropped from scope. AOG
+  visibility is provided by the Overview-tab `AogAlertSection`, which is considered sufficient; surfacing AOG on
+  the fleet cards is not planned.
 - Attachment fields in the squawk form are gated behind the `attachmentUploadEnabled` feature-lab flag.
 
 ---
@@ -348,7 +349,11 @@ combine(
 
 **`AircraftOverviewContent` (Overview tab):** Render `AogAlertSection(aogSquawks, onViewSquawksTab)` above `CriticalAlertsSection` when `aogSquawks` is non-empty. `onViewSquawksTab` animates the pager to index 1.
 
-### 7.3 `feature/fleet` — Fleet Dashboard AOG Badge
+### 7.3 `feature/fleet` — Fleet Dashboard AOG Badge — DROPPED (out of scope)
+
+> This section was **not implemented and is not planned.** AOG status is surfaced via the Overview-tab
+> `AogAlertSection` only; the fleet-dashboard cards intentionally do not carry an AOG badge. The design below is
+> retained for context.
 
 **`FleetDashboardViewModel`:** Inject `SquawkManager`. For each aircraft in the fleet, observe squawks and derive `hasAog: Boolean`. Surface as a flag on the per-aircraft card state.
 
