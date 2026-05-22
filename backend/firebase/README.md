@@ -73,7 +73,19 @@ Current provider contract:
 
 - `EXPORT_DELIVERY_PROVIDER=resend`
 - `EXPORT_DELIVERY_FROM_EMAIL=<verified sender>`
-- `EXPORT_DELIVERY_API_KEY=<provider secret>`
+
+Keep `EXPORT_DELIVERY_PROVIDER` and `EXPORT_DELIVERY_FROM_EMAIL` as normal function env values.
+Store `EXPORT_DELIVERY_API_KEY` in Google Cloud Secret Manager and bind it to
+`requestExportDelivery`.
+
+Set the secret once with the Firebase CLI:
+
+```bash
+firebase functions:secrets:set EXPORT_DELIVERY_API_KEY
+```
+
+Then deploy functions normally. Firebase will keep the secret in Secret Manager and mount it only
+into functions that declare access to it.
 
 ## Android App Check requirements
 
@@ -107,6 +119,7 @@ This deploys the callables into project `wingslog-9ca4e` from `.firebaserc`.
 - Commit `.env.example` placeholders only.
 - Keep real `.env`, `.env.*`, and service-account files out of git.
 - Prefer Firebase Functions secret/env management for provider credentials.
+- `EXPORT_DELIVERY_API_KEY` is now expected from Secret Manager, not `.env`.
 - Never commit deployment credentials or mail-provider API keys.
 
 ## What this proves

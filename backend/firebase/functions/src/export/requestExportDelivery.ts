@@ -1,6 +1,9 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
-import { FUNCTION_REGION } from "../config/env.js";
+import {
+  EXPORT_DELIVERY_API_KEY,
+  FUNCTION_REGION,
+} from "../config/env.js";
 import { ExportDeliveryService } from "./exportDeliveryService.js";
 import { type DeliveryDispatchResult } from "./exportModels.js";
 import { requireAuthenticatedApp } from "../shared/auth.js";
@@ -18,6 +21,7 @@ export const requestExportDelivery = onCall<
   {
     region: FUNCTION_REGION,
     enforceAppCheck: true,
+    secrets: [EXPORT_DELIVERY_API_KEY],
   },
   async request => {
     const { uid, appId } = requireAuthenticatedApp(request);
