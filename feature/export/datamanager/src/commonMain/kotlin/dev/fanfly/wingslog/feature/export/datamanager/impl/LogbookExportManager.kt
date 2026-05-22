@@ -40,12 +40,12 @@ class LogbookExportManager(
       return@flow
     }
 
-    emit(ExportProgress.Running(step = ExportProgressStep.COLLECTING_DATA, percent = 10))
+    emit(ExportProgress.Running(step = ExportProgressStep.COLLECTING_DATA, percent = 8))
     val bundles = request.aircraftIds.mapIndexed { index, aircraftId ->
       emit(
         ExportProgress.Running(
           step = ExportProgressStep.COLLECTING_DATA,
-          percent = 10 + ((index + 1) * 35 / request.aircraftIds.size),
+          percent = 8 + ((index + 1) * 24 / request.aircraftIds.size),
         )
       )
       aggregator.collect(request, aircraftId)
@@ -54,7 +54,7 @@ class LogbookExportManager(
       bundle.aircraft.id to attachmentExportResolver.resolve(bundle)
     }
 
-    emit(ExportProgress.Running(step = ExportProgressStep.BUILDING_ARCHIVE, percent = 55))
+    emit(ExportProgress.Running(step = ExportProgressStep.BUILDING_ARCHIVE, percent = 42))
     val generatedAt = clock.now().toLocalDateTime(timeZone)
     val entries = archiveBuilder.buildEntries(
       request = request,
@@ -64,11 +64,11 @@ class LogbookExportManager(
       timeZone = timeZone,
     )
 
-    emit(ExportProgress.Running(step = ExportProgressStep.COMPRESSING_ARCHIVE, percent = 80))
+    emit(ExportProgress.Running(step = ExportProgressStep.COMPRESSING_ARCHIVE, percent = 60))
     val zipBytes = zipFileWriter.write(entries)
     val fileName = archiveBuilder.fileName(bundles, generatedAt.date)
 
-    emit(ExportProgress.Running(step = ExportProgressStep.SAVING_FILE, percent = 95))
+    emit(ExportProgress.Running(step = ExportProgressStep.SAVING_FILE, percent = 74))
     val saved = exportFileStore.writeZip(fileName, zipBytes)
     // Persist the full scope so export history can rediscover it without parsing the file name.
     val localRecord = buildRecord(
@@ -78,7 +78,11 @@ class LogbookExportManager(
       createdAtEpochMillis = clock.now().toEpochMilliseconds(),
     )
     exportFileStore.saveRecord(localRecord)
+    emit(ExportProgress.Running(step = ExportProgressStep.UPLOADING_ARCHIVE, percent = 86))
     val remoteRecord = remoteRepository.uploadAndSync(localRecord, zipBytes)
+    if (remoteRecord.remote_archive_ref.isNotBlank() && remoteRecord.destination_email.isNotBlank()) {
+      emit(ExportProgress.Running(step = ExportProgressStep.REQUESTING_DELIVERY, percent = 95))
+    }
     val finalRecord = remoteRecord.requestDeliveryIfEligible()
     if (finalRecord != localRecord) {
       exportFileStore.saveRecord(finalRecord)
