@@ -67,10 +67,15 @@ actual class ExportFileStore {
     withContext(Dispatchers.Default) {
       val reconciled = ExportRecordManifest.reconcile(readIndex(), discoverArchives())
       val record = reconciled.firstOrNull { it.export_id == exportId }
-      val removed = record?.file_path?.takeIf { it.isNotBlank() }?.let { filePath ->
+      if (record == null) return@withContext false
+
+      val removed = record.file_path.takeIf { it.isNotBlank() }?.let { filePath ->
         NSFileManager.defaultManager.removeItemAtPath(filePath, null)
-      } ?: false
-      writeBytes(indexPath, ExportRecordManifest.encode(ExportRecordManifest.remove(reconciled, exportId)))
+      } ?: true
+
+      if (removed) {
+        writeBytes(indexPath, ExportRecordManifest.encode(ExportRecordManifest.remove(reconciled, exportId)))
+      }
       removed
     }
 

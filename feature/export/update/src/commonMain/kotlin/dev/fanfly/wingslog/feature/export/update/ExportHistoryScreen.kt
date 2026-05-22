@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.IosShare
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -56,6 +57,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
+import kotlin.time.Clock
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
@@ -65,12 +67,17 @@ import wingslog.feature.export.sharedassets.generated.resources.export_email_bod
 import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body_cloud_only
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body_device_and_cloud
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_title
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_failed
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_manual
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_queued
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_retry
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_sending
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_sent
+import wingslog.feature.export.sharedassets.generated.resources.export_history_remote_expired
+import wingslog.feature.export.sharedassets.generated.resources.export_history_remote_expires_on
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_body
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_title
 import wingslog.feature.export.sharedassets.generated.resources.export_history_item_meta
@@ -93,6 +100,7 @@ fun ExportHistoryScreen(
   onNavigateBack: () -> Unit,
   onNew: () -> Unit,
   onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
+  onRetryDelivery: (ExportRecord) -> Unit,
   onDelete: (ExportRecord) -> Unit,
 ) {
   Scaffold(
@@ -114,6 +122,7 @@ fun ExportHistoryScreen(
             exports = state.exports,
             modifier = contentModifier,
             onShareExport = onShareExport,
+            onRetryDelivery = onRetryDelivery,
             onDelete = onDelete,
           )
         }
@@ -173,6 +182,7 @@ private fun ExportList(
   exports: List<ExportRecord>,
   modifier: Modifier,
   onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
+  onRetryDelivery: (ExportRecord) -> Unit,
   onDelete: (ExportRecord) -> Unit,
 ) {
   LazyColumn(
@@ -184,6 +194,7 @@ private fun ExportList(
       ExportHistoryCard(
         record = record,
         onShareExport = onShareExport,
+        onRetryDelivery = { onRetryDelivery(record) },
         onDelete = { onDelete(record) },
       )
     }
@@ -194,6 +205,7 @@ private fun ExportList(
 private fun ExportHistoryCard(
   record: ExportRecord,
   onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
+  onRetryDelivery: () -> Unit,
   onDelete: () -> Unit,
 ) {
   var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -204,8 +216,13 @@ private fun ExportHistoryCard(
   val scope = scopeLine(record)
   val availability = availabilityLabel(record)
   val delivery = deliveryLabel(record)
+  val retention = retentionLabel(record)
   val canShare = record.file_path.isNotBlank()
-  val canDelete = record.remote_archive_ref.isBlank()
+  val canDelete = true
+  val canRetry =
+    record.delivery_state == "FAILED" &&
+      record.remote_archive_ref.isNotBlank() &&
+      record.destination_email.isNotBlank()
 
   Row(
     modifier = Modifier
@@ -283,9 +300,28 @@ private fun ExportHistoryCard(
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
+      if (retention.isNotBlank()) {
+        Text(
+          text = retention,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+      if (canRetry) {
+        FilledTonalIconButton(
+          onClick = onRetryDelivery,
+          modifier = Modifier.size(36.dp),
+        ) {
+          Icon(
+            imageVector = Icons.Default.Refresh,
+            contentDescription = stringResource(Res.string.export_history_delivery_retry),
+            modifier = Modifier.size(18.dp),
+          )
+        }
+      }
       if (canShare) {
         FilledTonalIconButton(
           onClick = { onShareExport(record.file_path, shareTitle, emailSubject, emailBody) },
@@ -319,7 +355,7 @@ private fun ExportHistoryCard(
       onDismissRequest = { showDeleteConfirm = false },
       title = { Text(stringResource(Res.string.export_history_delete_confirm_title)) },
       text = {
-        Text(stringResource(Res.string.export_history_delete_confirm_body, record.file_name))
+        Text(deleteConfirmBody(record))
       },
       confirmButton = {
         TextButton(
@@ -338,6 +374,16 @@ private fun ExportHistoryCard(
       },
     )
   }
+}
+
+@Composable
+private fun deleteConfirmBody(record: ExportRecord): String = when {
+  record.file_path.isNotBlank() && record.remote_archive_ref.isNotBlank() ->
+    stringResource(Res.string.export_history_delete_confirm_body_device_and_cloud, record.file_name)
+  record.remote_archive_ref.isNotBlank() ->
+    stringResource(Res.string.export_history_delete_confirm_body_cloud_only, record.file_name)
+  else ->
+    stringResource(Res.string.export_history_delete_confirm_body, record.file_name)
 }
 
 /** Aircraft tail summary ("N532SL" / "N532SL +2"), falling back to the file name for legacy records. */
@@ -411,4 +457,15 @@ private fun deliveryLabel(record: ExportRecord): String = when (record.delivery_
   "SENT" -> stringResource(Res.string.export_history_delivery_sent)
   "FAILED" -> stringResource(Res.string.export_history_delivery_failed)
   else -> stringResource(Res.string.export_history_delivery_manual)
+}
+
+@Composable
+private fun retentionLabel(record: ExportRecord): String {
+  if (record.remote_archive_ref.isBlank() || record.remote_expires_at_epoch_millis <= 0L) return ""
+  val expiry = formatDate(record.remote_expires_at_epoch_millis)
+  return if (record.remote_expires_at_epoch_millis <= Clock.System.now().toEpochMilliseconds()) {
+    stringResource(Res.string.export_history_remote_expired, expiry)
+  } else {
+    stringResource(Res.string.export_history_remote_expires_on, expiry)
+  }
 }

@@ -103,8 +103,33 @@ class LogbookExportManager(
       remote = remoteRepository.listRemoteRecords(),
     )
 
-  override suspend fun deleteExport(exportId: String): Boolean =
-    exportFileStore.deleteExport(exportId)
+  override suspend fun deleteExport(exportId: String): Boolean {
+    val localRecord = exportFileStore.listExports().firstOrNull { it.export_id == exportId }
+    val remoteRecord = remoteRepository.listRemoteRecords().firstOrNull { it.export_id == exportId }
+
+    if (remoteRecord != null && !remoteRepository.deleteExport(exportId, remoteRecord.remote_archive_ref)) {
+      return false
+    }
+
+    return when {
+      localRecord != null -> exportFileStore.deleteExport(exportId)
+      remoteRecord != null -> true
+      else -> false
+    }
+  }
+
+  override suspend fun retryDelivery(exportId: String): Boolean {
+    val record = listExports().firstOrNull { it.export_id == exportId } ?: return false
+    if (record.delivery_state != ExportDeliveryStates.FAILED) return false
+    if (record.remote_archive_ref.isBlank() || record.destination_email.isBlank()) return false
+    return runCatching {
+      deliveryBackend.requestExportDelivery(exportId)
+      true
+    }.getOrElse { error ->
+      log.w(error) { "export delivery retry failed for $exportId" }
+      false
+    }
+  }
 
   private fun buildRecord(
     request: ExportRequest,

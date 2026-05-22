@@ -112,7 +112,12 @@ Thank you for choosing Hopply.</string>
   <string name="export_history_delivery_sending">Sending email</string>
   <string name="export_history_delivery_sent">Email sent</string>
   <string name="export_history_delivery_failed">Email delivery failed</string>
+  <string name="export_history_delivery_retry">Retry email delivery</string>
+  <string name="export_history_remote_expires_on">Cloud copy expires %1$s</string>
+  <string name="export_history_remote_expired">Cloud copy expired %1$s</string>
   <string name="export_history_delete">Delete</string>
   <string name="export_history_delete_confirm_title">Delete export?</string>
   <string name="export_history_delete_confirm_body">%1$s will be permanently removed from this device.</string>
+  <string name="export_history_delete_confirm_body_device_and_cloud">%1$s will be permanently removed from this device and cloud.</string>
+  <string name="export_history_delete_confirm_body_cloud_only">%1$s will be permanently removed from cloud.</string>
 </resources>

@@ -1,4 +1,5 @@
 import { HttpsError } from "firebase-functions/v2/https";
+import * as logger from "firebase-functions/logger";
 
 import {
   EXPORT_DELIVERY_LEASE_TTL_MS,
@@ -21,6 +22,7 @@ export class ExportDeliveryService {
 
   async requestDelivery(uid: string, exportId: string): Promise<DeliveryDispatchResult> {
     const nowEpochMillis = Date.now();
+    logger.info("export_delivery_request_started", {uid, exportId});
     const lease = await this.manifestRepository.beginDelivery(
       uid,
       exportId,
@@ -28,6 +30,12 @@ export class ExportDeliveryService {
       nowEpochMillis + EXPORT_DELIVERY_LEASE_TTL_MS,
     );
     if (lease.kind !== "proceed") {
+      logger.info("export_delivery_request_short_circuited", {
+        uid,
+        exportId,
+        status: lease.result.status,
+        deliveryState: lease.result.deliveryState,
+      });
       return lease.result;
     }
 
@@ -52,6 +60,12 @@ export class ExportDeliveryService {
       });
       const sentAtEpochMillis = Date.now();
       await this.manifestRepository.markSent(uid, exportId, sentAtEpochMillis);
+      logger.info("export_delivery_request_sent", {
+        uid,
+        exportId,
+        deliveryState: EXPORT_DELIVERY_STATE.SENT,
+        sentAtEpochMillis,
+      });
       return {
         status: "sent",
         deliveryState: EXPORT_DELIVERY_STATE.SENT,
@@ -60,6 +74,12 @@ export class ExportDeliveryService {
     } catch (error) {
       const failureCode = error instanceof HttpsError ? error.code : "mail-send-failed";
       const failureMessage = error instanceof Error ? error.message : "Export delivery failed.";
+      logger.warn("export_delivery_request_failed", {
+        uid,
+        exportId,
+        failureCode,
+        failureMessage,
+      });
       await this.manifestRepository.markFailed(uid, exportId, failureCode, failureMessage);
       return {
         status: "failed",

@@ -1267,6 +1267,11 @@ interface ExportDeliveryBackend {
           Exit criteria: delivery failures are visible and recoverable, deletes are coherent across
           local and remote state, and the backend is operable in production.
         </p>
+        <p class="muted">
+          <strong>Status:</strong> Complete. Export history now supports retrying failed delivery,
+          delete removes local and remote export state coherently, the UI surfaces remote expiry,
+          and the backend emits structured delivery logs for operations.
+        </p>
       </div>
 
       <div class="card">

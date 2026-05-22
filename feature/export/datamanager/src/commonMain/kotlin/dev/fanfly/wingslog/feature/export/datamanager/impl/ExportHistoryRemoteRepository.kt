@@ -61,6 +61,21 @@ class ExportHistoryRemoteRepository(
     }
   }
 
+  suspend fun deleteExport(exportId: String, remoteArchiveRef: String): Boolean {
+    val user = auth.currentUser ?: return false
+    if (user.isAnonymous) return false
+    return runCatching {
+      if (remoteArchiveRef.isNotBlank()) {
+        storage.reference(remoteArchiveRef).delete()
+      }
+      document(user.uid, exportId).delete()
+      true
+    }.getOrElse { error ->
+      log.w(error) { "remote export delete failed for $exportId" }
+      false
+    }
+  }
+
   private fun collection(uid: String) =
     firestore.collection("users").document(uid).collection("export_history")
 
