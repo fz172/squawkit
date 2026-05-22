@@ -61,8 +61,6 @@
   <string name="export_progress_saving_file_detail">Writing the ZIP to your device and updating local export history.</string>
   <string name="export_progress_uploading_archive">Sending email...</string>
   <string name="export_progress_uploading_archive_detail">Uploading your archive and requesting your secure email delivery.</string>
-  <string name="export_progress_requesting_delivery">Sending email...</string>
-  <string name="export_progress_requesting_delivery_detail">Uploading your archive and requesting your secure email delivery.</string>
 
   <!-- Result: success -->
   <string name="export_success_title">Export ready</string>

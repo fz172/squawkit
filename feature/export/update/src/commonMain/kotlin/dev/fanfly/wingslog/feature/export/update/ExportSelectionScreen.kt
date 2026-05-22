@@ -137,8 +137,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_progress_
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_collecting_data_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_compressing_archive
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_compressing_archive_detail
-import wingslog.feature.export.sharedassets.generated.resources.export_progress_requesting_delivery
-import wingslog.feature.export.sharedassets.generated.resources.export_progress_requesting_delivery_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_saving_file
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_saving_file_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_uploading_archive
@@ -913,7 +911,6 @@ private fun ExportProgressStep.label(): String = when (this) {
   ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive)
   ExportProgressStep.SAVING_FILE -> stringResource(Res.string.export_progress_saving_file)
   ExportProgressStep.UPLOADING_ARCHIVE -> stringResource(Res.string.export_progress_uploading_archive)
-  ExportProgressStep.REQUESTING_DELIVERY -> stringResource(Res.string.export_progress_uploading_archive)
 }
 
 @Composable
@@ -923,7 +920,6 @@ private fun ExportProgressStep.detail(): String = when (this) {
   ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive_detail)
   ExportProgressStep.SAVING_FILE -> stringResource(Res.string.export_progress_saving_file_detail)
   ExportProgressStep.UPLOADING_ARCHIVE -> stringResource(Res.string.export_progress_uploading_archive_detail)
-  ExportProgressStep.REQUESTING_DELIVERY -> stringResource(Res.string.export_progress_uploading_archive_detail)
 }
 
 // ─── Result · Success ───────────────────────────────────────────────────────
