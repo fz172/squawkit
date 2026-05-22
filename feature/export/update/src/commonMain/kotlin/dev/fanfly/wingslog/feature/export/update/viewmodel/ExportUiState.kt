@@ -20,7 +20,6 @@ sealed interface ExportUiState {
     val dateRange: DateRangeOption = DateRangeOption.AllTime,
     val customStart: LocalDate,
     val customEnd: LocalDate,
-    val exportDestinationEmail: String = "",
     val resolvedDeliveryInfo: ExportDeliveryInfo? = null,
     val estimatedSizeBytes: Long = 0L,
     val estimatedLogCount: Int = 0,

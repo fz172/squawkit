@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.stateIn
 data class SyncPrefs(
   val cloudSyncEnabled: Boolean = true,
   val allowUploadOnCellular: Boolean = false,
-  val exportDestinationEmail: String = "",
 )
 
 class SyncPreferences(
@@ -47,12 +46,10 @@ class SyncPreferences(
       combine(
         booleanConfig(uid, KEY_CLOUD_SYNC_ENABLED, defaultValue = true),
         booleanConfig(uid, KEY_ALLOW_UPLOAD_ON_CELLULAR, defaultValue = false),
-        stringConfig(uid, KEY_EXPORT_DESTINATION_EMAIL),
-      ) { cloudSync, cellular, exportDestinationEmail ->
+      ) { cloudSync, cellular ->
           SyncPrefs(
             cloudSyncEnabled = cloudSync,
             allowUploadOnCellular = cellular,
-            exportDestinationEmail = exportDestinationEmail,
           )
       }
     }
@@ -72,11 +69,6 @@ class SyncPreferences(
     db.schemaQueries.upsertConfig(uid, KEY_ALLOW_UPLOAD_ON_CELLULAR, allowed.toString())
   }
 
-  fun setExportDestinationEmail(email: String) {
-    val uid = auth.currentUser?.uid ?: return
-    db.schemaQueries.upsertConfig(uid, KEY_EXPORT_DESTINATION_EMAIL, email.trim())
-  }
-
   private fun booleanConfig(
     uid: String,
     key: String,
@@ -85,14 +77,8 @@ class SyncPreferences(
     .mapToOneOrNull(ioContext)
     .map { value -> value?.toBoolean() ?: defaultValue }
 
-  private fun stringConfig(uid: String, key: String): Flow<String> =
-    db.schemaQueries.selectConfig(uid, key).asFlow()
-      .mapToOneOrNull(ioContext)
-      .map { value -> value.orEmpty() }
-
   companion object {
     private const val KEY_CLOUD_SYNC_ENABLED = "cloud_sync_enabled"
     private const val KEY_ALLOW_UPLOAD_ON_CELLULAR = "allow_upload_on_cellular"
-    private const val KEY_EXPORT_DESTINATION_EMAIL = "export_destination_email"
   }
 }
