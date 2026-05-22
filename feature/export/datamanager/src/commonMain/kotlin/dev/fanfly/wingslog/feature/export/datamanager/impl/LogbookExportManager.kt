@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordAircraft
@@ -25,9 +26,13 @@ class LogbookExportManager(
   private val archiveBuilder: LogbookExportArchiveBuilder,
   private val zipFileWriter: ZipFileWriter,
   private val exportFileStore: ExportFileStore,
+  private val remoteRepository: ExportHistoryRemoteRepository,
+  private val deliveryBackend: ExportDeliveryBackend,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ExportManager {
+
+  private val log = Logger.withTag("LogbookExportManager")
 
   override fun exportLogs(request: ExportRequest): Flow<ExportProgress> = flow {
     if (request.aircraftIds.isEmpty()) {
@@ -66,9 +71,18 @@ class LogbookExportManager(
     emit(ExportProgress.Running(step = ExportProgressStep.SAVING_FILE, percent = 95))
     val saved = exportFileStore.writeZip(fileName, zipBytes)
     // Persist the full scope so export history can rediscover it without parsing the file name.
-    exportFileStore.saveRecord(
-      buildRecord(request, bundles, saved, createdAtEpochMillis = clock.now().toEpochMilliseconds()),
+    val localRecord = buildRecord(
+      request = request,
+      bundles = bundles,
+      saved = saved,
+      createdAtEpochMillis = clock.now().toEpochMilliseconds(),
     )
+    exportFileStore.saveRecord(localRecord)
+    val remoteRecord = remoteRepository.uploadAndSync(localRecord, zipBytes)
+    val finalRecord = remoteRecord.requestDeliveryIfEligible()
+    if (finalRecord != localRecord) {
+      exportFileStore.saveRecord(finalRecord)
+    }
     emit(
       ExportProgress.Success(
         filePath = saved.filePath,
@@ -77,11 +91,17 @@ class LogbookExportManager(
         displayLocation = "",
         sizeBytes = saved.sizeBytes,
         displayLocationKind = saved.displayLocationKind,
+        deliveryState = finalRecord.delivery_state,
+        deliveryFailureMessage = finalRecord.delivery_failure_message,
       )
     )
   }
 
-  override suspend fun listExports(): List<ExportRecord> = exportFileStore.listExports()
+  override suspend fun listExports(): List<ExportRecord> =
+    ExportRecordMerge.merge(
+      local = exportFileStore.listExports(),
+      remote = remoteRepository.listRemoteRecords(),
+    )
 
   override suspend fun deleteExport(exportId: String): Boolean =
     exportFileStore.deleteExport(exportId)
@@ -108,6 +128,9 @@ class LogbookExportManager(
           .joinToString(" "),
       )
     },
+    destination_email = request.destinationEmail.orEmpty(),
+    destination_email_source = request.destinationEmailSource.orEmpty(),
+    delivery_state = ExportDeliveryStates.NOT_REQUESTED,
   )
 
   private fun ExportDateRange.toRecordDateRange(): ExportRecordDateRange = when (this) {
@@ -118,5 +141,21 @@ class LogbookExportManager(
       custom_start = start.toString(),
       custom_end = endInclusive.toString(),
     )
+  }
+
+  private suspend fun ExportRecord.requestDeliveryIfEligible(): ExportRecord {
+    if (remote_archive_ref.isBlank() || destination_email.isBlank()) return this
+    return runCatching {
+      val delivery = deliveryBackend.requestExportDelivery(export_id)
+      copy(
+        delivery_state = delivery.deliveryState,
+        delivery_sent_at_epoch_millis = delivery.deliverySentAtEpochMillis,
+        delivery_failure_code = delivery.deliveryFailureCode,
+        delivery_failure_message = delivery.deliveryFailureMessage,
+      )
+    }.getOrElse { error ->
+      log.w(error) { "export delivery request failed for $export_id" }
+      this
+    }
   }
 }

@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
+  alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.kover)
 }
 
@@ -105,6 +106,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:datetime"))
       implementation(project(":core:storage"))
+      implementation(project(":core:firebase"))
       implementation(project(":core:model"))
       implementation(project(":core:appinfo"))
       implementation(project(":feature:fleet:datamanager"))
@@ -118,6 +120,10 @@ kotlin {
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.koin.core)
       implementation(libs.kermit)
+      implementation(libs.gitlive.firebase.auth)
+      implementation(libs.gitlive.firebase.firestore)
+      implementation(libs.gitlive.firebase.functions)
+      implementation(libs.gitlive.firebase.storage)
     }
 
     androidMain.dependencies {

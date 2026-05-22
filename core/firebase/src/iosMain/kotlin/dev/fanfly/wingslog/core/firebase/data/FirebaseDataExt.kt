@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.sync.data.blob
+package dev.fanfly.wingslog.core.firebase.data
 
 import dev.gitlive.firebase.storage.Data
 import kotlinx.cinterop.BetaInteropApi

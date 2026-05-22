@@ -66,10 +66,18 @@ import wingslog.feature.export.sharedassets.generated.resources.export_email_sub
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_title
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_failed
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_manual
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_queued
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_sending
+import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_sent
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_body
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_title
 import wingslog.feature.export.sharedassets.generated.resources.export_history_item_meta
 import wingslog.feature.export.sharedassets.generated.resources.export_history_new
+import wingslog.feature.export.sharedassets.generated.resources.export_history_status_local_and_remote
+import wingslog.feature.export.sharedassets.generated.resources.export_history_status_local_only
+import wingslog.feature.export.sharedassets.generated.resources.export_history_status_remote_only
 import wingslog.feature.export.sharedassets.generated.resources.export_history_title
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_last_n_months
@@ -194,6 +202,10 @@ private fun ExportHistoryCard(
   val emailBody = stringResource(Res.string.export_email_body)
   val aircraftTitle = aircraftSummary(record)
   val scope = scopeLine(record)
+  val availability = availabilityLabel(record)
+  val delivery = deliveryLabel(record)
+  val canShare = record.file_path.isNotBlank()
+  val canDelete = record.remote_archive_ref.isBlank()
 
   Row(
     modifier = Modifier
@@ -261,29 +273,43 @@ private fun ExportHistoryCard(
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
+      Text(
+        text = availability,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      Text(
+        text = delivery,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
-      FilledTonalIconButton(
-        onClick = { onShareExport(record.file_path, shareTitle, emailSubject, emailBody) },
-        modifier = Modifier.size(36.dp),
-      ) {
-        Icon(
-          imageVector = Icons.Default.IosShare,
-          contentDescription = stringResource(Res.string.export_share),
-          modifier = Modifier.size(18.dp),
-        )
+      if (canShare) {
+        FilledTonalIconButton(
+          onClick = { onShareExport(record.file_path, shareTitle, emailSubject, emailBody) },
+          modifier = Modifier.size(36.dp),
+        ) {
+          Icon(
+            imageVector = Icons.Default.IosShare,
+            contentDescription = stringResource(Res.string.export_share),
+            modifier = Modifier.size(18.dp),
+          )
+        }
       }
-      IconButton(
-        onClick = { showDeleteConfirm = true },
-        modifier = Modifier.size(36.dp),
-        colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.error),
-      ) {
-        Icon(
-          imageVector = Icons.Default.Delete,
-          contentDescription = stringResource(Res.string.export_history_delete),
-          modifier = Modifier.size(18.dp),
-        )
+      if (canDelete) {
+        IconButton(
+          onClick = { showDeleteConfirm = true },
+          modifier = Modifier.size(36.dp),
+          colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        ) {
+          Icon(
+            imageVector = Icons.Default.Delete,
+            contentDescription = stringResource(Res.string.export_history_delete),
+            modifier = Modifier.size(18.dp),
+          )
+        }
       }
     }
   }
@@ -366,4 +392,23 @@ private fun readableBytes(bytes: Long): String = when {
   bytes <= 0L -> stringResource(Res.string.export_size_zero_kb)
   bytes < 1_000_000L -> stringResource(Res.string.export_size_kb, ((bytes + 999L) / 1_000L).toString())
   else -> stringResource(Res.string.export_size_mb, ((bytes / 100_000L) / 10.0).toString())
+}
+
+@Composable
+private fun availabilityLabel(record: ExportRecord): String = when {
+  record.file_path.isNotBlank() && record.remote_archive_ref.isNotBlank() ->
+    stringResource(Res.string.export_history_status_local_and_remote)
+  record.remote_archive_ref.isNotBlank() ->
+    stringResource(Res.string.export_history_status_remote_only)
+  else ->
+    stringResource(Res.string.export_history_status_local_only)
+}
+
+@Composable
+private fun deliveryLabel(record: ExportRecord): String = when (record.delivery_state) {
+  "QUEUED" -> stringResource(Res.string.export_history_delivery_queued)
+  "SENDING" -> stringResource(Res.string.export_history_delivery_sending)
+  "SENT" -> stringResource(Res.string.export_history_delivery_sent)
+  "FAILED" -> stringResource(Res.string.export_history_delivery_failed)
+  else -> stringResource(Res.string.export_history_delivery_manual)
 }

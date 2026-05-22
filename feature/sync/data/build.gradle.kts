@@ -38,6 +38,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":core:storage"))
+      api(project(":core:firebase"))
       api(project(":feature:attachment:datamanager"))
       api(libs.gitlive.firebase.auth)
       api(libs.gitlive.firebase.firestore)

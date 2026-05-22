@@ -283,6 +283,8 @@ class ExportViewModel(
     },
     includeOpenSquawks = true,
     formats = formats,
+    destinationEmail = latestDeliveryInfo?.destinationEmail,
+    destinationEmailSource = latestDeliveryInfo?.source?.name,
   )
 
   private fun ExportProgress.toUiState(): ExportUiState = when (this) {
@@ -301,6 +303,8 @@ class ExportViewModel(
       customStart = lastConfiguring.customStart,
       customEnd = lastConfiguring.customEnd,
       deliveryInfo = latestDeliveryInfo,
+      deliveryState = deliveryState,
+      deliveryFailureMessage = deliveryFailureMessage,
     )
 
     is ExportProgress.Error -> ExportUiState.Error(message)

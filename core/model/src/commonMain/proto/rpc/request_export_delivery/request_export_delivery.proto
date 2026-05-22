@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package dev.fanfly.wingslog.rpc.request_export_delivery;
+
+option java_package = "dev.fanfly.wingslog.rpc.requestexportdelivery";
+option java_multiple_files = true;
+
+message RequestExportDeliveryRequest {
+  string export_id = 1;
+}
+
+message RequestExportDeliveryResponse {
+  string status = 1;
+  string export_id = 2;
+  string uid = 3;
+  string app_id = 4;
+  string delivery_state = 5;
+  int64 delivery_sent_at_epoch_millis = 6;
+  string delivery_failure_code = 7;
+  string delivery_failure_message = 8;
+}
