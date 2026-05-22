@@ -87,6 +87,18 @@ firebase functions:secrets:set EXPORT_DELIVERY_API_KEY
 Then deploy functions normally. Firebase will keep the secret in Secret Manager and mount it only
 into functions that declare access to it.
 
+To update the secret later, run the same command again and enter the new value:
+
+```bash
+firebase functions:secrets:set EXPORT_DELIVERY_API_KEY
+```
+
+Then redeploy so the latest secret version is picked up by the deployed function:
+
+```bash
+firebase deploy --only functions
+```
+
 ## Android App Check requirements
 
 Before production calls from Android will work, both sides must be enabled:
