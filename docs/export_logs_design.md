@@ -1,8 +1,23 @@
 # Design Doc: Logbook Export
 
 **PRD:** `docs/export_logs_PRD.md`
-**Status:** Draft
-**Last updated:** 2026-05-18
+**Status:** ✅ Implemented (scope expanded)
+**Last updated:** 2026-05-22
+
+---
+
+## Implementation status — ✅ SHIPPED
+
+Built in `feature/export/` per the module layout in §2, reading the local-first store via the feature managers.
+Deltas from this design:
+
+- **PDF output** ships in addition to CSV + XLSX (`PdfExportWriter` alongside `CsvWriter` / `XlsxWorkbookWriter`).
+- **Export history + email delivery** were added (this design said "No changes to … sync engine" and "No new
+  backend"): `ExportHistoryRemoteRepository` uploads archives to Firebase Storage and syncs a manifest to
+  Firestore (`users/{uid}/export_history/{exportId}`); `ExportDeliveryBackend` calls the `requestExportDelivery`
+  Cloud Function. `ExportManager` gained `listExports`, `deleteExport`, `retryDelivery`, and `resendDelivery`,
+  and the `update/` layer gained an `ExportHistoryScreen` + `ExportHistoryViewModel` and `ExportFileSharer`.
+  See `export_email_automation_design.html`.
 
 ---
 

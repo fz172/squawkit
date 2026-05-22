@@ -1,7 +1,19 @@
 # PRD: Logbook Export
 
-**Status:** Draft
-**Last updated:** 2026-05-18
+**Status:** ✅ Implemented (scope expanded beyond this PRD)
+**Last updated:** 2026-05-22
+
+---
+
+> **Implementation status.** Shipped in `feature/export/` (`datamanager` + `sharedassets` + `update`), reading
+> from the local-first store as designed. Two deliberate expansions beyond this PRD:
+> - **PDF output added.** §2.2 listed a PDF facsimile as a non-goal, but the shipped ZIP bundles a **PDF**
+>   alongside the CSV files and the XLSX workbook.
+> - **Server-side email delivery added.** §2.2 ("No new backend") and §10 ("Scheduled / automated exports… out
+>   of scope") were superseded: exports can optionally be **emailed** via the `requestExportDelivery` Firebase
+>   Function (`backend/firebase/functions/`), which generates a signed download URL and mails it. The app keeps
+>   an **export history** (list / delete / retry / **re-send**), uploading archives to Firebase Storage with a
+>   Firestore manifest. See `export_email_automation_design.html` for that design.
 
 ---
 

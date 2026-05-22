@@ -1,6 +1,9 @@
 # Aircraft Overview: 3-Tab Refactor Plan
 
-**Status: IMPLEMENTED** — All open questions resolved; code lives in `feature/aircraft/dashboard/`.
+**Status: IMPLEMENTED — now 4 tabs.** Code lives in `feature/aircraft/dashboard/`. This doc describes the
+original 3-tab split (Overview / Maintenance Tasks / Logs). A **Squawks** tab was later inserted at index 1, so
+the shipped order is **Overview → Squawks → Tasks → Logs** (see `squawk_design.md` §6). Tab indices are now an
+`AircraftTab` enum and the FAB is context-sensitive to the active tab.
 
 ## Goal
 

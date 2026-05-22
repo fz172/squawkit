@@ -1,5 +1,11 @@
 # PRD: Attachments for Maintenance Logs and Inspection Items
 
+> **Implementation status.** Attachments shipped via the local-first **R2** design
+> ([`storage_r2_design.md`](storage_r2_design.md)) — `feature/attachment/` with a local blob store and background
+> upload/download, available on logs, tasks, and squawks. The feature is gated behind the `attachmentUploadEnabled`
+> feature-lab flag. The product requirements below remain the source of truth for behavior; the storage mechanism
+> follows R2, not the older `attachments_design.md`.
+
 ## Overview
 
 Users need to attach supporting documents and media to maintenance log entries and maintenance tasks — service letters, AD notices, photos of work performed, 8130 forms, part condition photos, manufacturer manuals, and external references. Today there is no way to link these to a specific log or maintenance task, so records are incomplete and users have to manage files externally.

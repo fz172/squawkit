@@ -7,6 +7,30 @@
 
 ---
 
+## Implementation status — ✅ SHIPPED (default, only path)
+
+R1 is fully implemented and is the only data path. The design below is preserved as the rationale of record;
+the notable deltas between the design and what actually shipped:
+
+- **No rollout flag.** The `ENABLE_LOCAL_FIRST_R1` flag and dual-implementation plan in §12 were not used. The
+  old Firestore-direct managers and the `core/database` module were **removed**; each manager has a single
+  `EntityStore`-backed impl. Firebase helpers were centralized into a new `core/firebase` module instead.
+- **`CollectionKind` has 8 kinds**, not 6: the §3.1 set plus `FeatureLab` (`feature_lab_settings`) and `Squawk`.
+  `UserProfile` shipped as **`UserInfo`** (`wireName = "user_info"`, schema `userinfo.UserInfo`).
+- **Firestore wire format = `SyncDocWire`** (`feature/sync/data`): `payload` (Base64 **string**), `deleted`,
+  `schema` (proto FQN), `lastUpdateTimestamp` (`Timestamp.ServerTimestamp` on write). The `AIRCRAFT_INFO_BLOB`
+  field name and native-blob approach are gone.
+- **Push is per-document, not batched.** The §5.2 `WriteBatch` design was not adopted; `PushWorker` drains
+  `dirty=1` rows (pages of ~200) and writes each via `FirestoreSyncWriter` (`ref.set(wire)`).
+- **Schema also ships `sync_config`** (per-uid preferences, e.g. `cloud_sync_enabled`, `allow_upload_on_cellular`)
+  and **`blob_object` is present now** — the R2 blob table/infra was brought forward, not deferred as §4 implies.
+- **Settings UI** lives in `feature/sync/settings` (`SyncSettingsScreen` / `SyncSettingsViewModel`) with **two**
+  toggles — *Cloud Sync* (master) and *Sync on Cellular* — not the single Settings row described in §8.
+- **Scope split:** top-level kinds (Aircraft, Technician, UserInfo) hydrate on sign-in; per-aircraft kinds
+  (MaintenanceLog, MaintenanceTask, MaintenanceOverview, Squawk) hydrate per aircraft.
+
+---
+
 ## 1. Goals & non-goals for this release
 
 **In:**

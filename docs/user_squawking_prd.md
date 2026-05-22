@@ -1,7 +1,15 @@
 # PRD: User Squawking Support
 
-**Status:** Draft
-**Last updated:** 2026-05-10
+**Status:** ✅ Implemented (with additions)
+**Last updated:** 2026-05-22
+
+---
+
+> **Implementation status.** Shipped in `feature/squawk/`. Beyond this PRD, squawks gained a **Dismiss**
+> terminal state (with a reason) and a **Reopen** action, so the lifecycle is Open → Addressed **or** Open →
+> Dismissed → (Reopen). The **Squawks tab** (Overview → Squawks → Tasks → Logs), AOG alert on the Overview tab,
+> and bidirectional log↔squawk linkage are all implemented. **Not yet implemented:** the Fleet-dashboard AOG
+> badge (§8). See `squawk_design.md` for the per-design delta notes.
 
 ---
 

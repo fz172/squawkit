@@ -7,6 +7,25 @@
 
 ---
 
+## Implementation status — ✅ SUBSTANTIALLY IMPLEMENTED (UI behind a feature flag)
+
+The R2 architecture is built and wired:
+
+- `feature/attachment/` module exists with `model/`, `datamanager/`, `sharedassets/`, and `viewing/` submodules.
+- `core/storage` ships the `blob_object` table plus the `RemoteState` / `BlobId` types.
+- The blob sync drivers live in `feature/sync/data/blob/` — `BlobUploadDriver`, `BlobDownloadDriver`,
+  `BlobDeleteDriver` — with platform schedulers: `WorkManagerUploadScheduler` (Android) and
+  `UrlSessionUploadScheduler` + `BGProcessingTask` (iOS), plus a foreground scheduler.
+- Attachments are consumed by logs, tasks, and squawks.
+
+**Gating:** the attachment UI (and the *Sync on Cellular* toggle) is shown only when the `attachmentUploadEnabled`
+feature-lab flag is on — so the feature is present but not yet enabled for general use.
+
+**De-registration:** `core/attachments` was removed from `settings.gradle.kts` (superseded by `feature/attachment`),
+though its stale build files still exist on disk and are slated for deletion.
+
+---
+
 ## 1. Goals & non-goals
 
 **In:**

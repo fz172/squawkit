@@ -1,8 +1,28 @@
 # Design Doc: User Squawking
 
 **PRD:** `docs/user_squawking_prd.md`
-**Status:** Draft
-**Last updated:** 2026-05-11
+**Status:** ✅ Implemented (with additions)
+**Last updated:** 2026-05-22
+
+---
+
+## Implementation status — ✅ SHIPPED
+
+Implemented in `feature/squawk/` (canonical layout), local-first over `EntityStore<Squawk>`
+(`CollectionKind.Squawk`). Notable deltas from the design as written:
+
+- **Dismiss / Reopen flow added** (beyond Open/Addressed). The proto gained `dismiss_reason`
+  (`SquawkDismissReason`: Obsolete / Not Reproducible / Duplicate / Intended Behavior) and `dismissed_at`.
+  `SquawkStatus` is **OPEN / ADDRESSED / DISMISSED**; `SquawkManager` adds `dismissSquawk()` and `reopenSquawk()`;
+  the update layer has a `DismissSquawkDialog`. The Squawks-tab filter is **Open / Closed** (Closed = Addressed
+  + Dismissed), not the "Open / Addressed" split drawn in §6.
+- **Squawk form is a 2-tab form** (`SquawkBasicTab` + `SquawkDetailsTab`) and includes a `LogPickerSheet` so a
+  resolving log can be linked directly from the squawk — in addition to the log-form `SquawkPickerSheet` path in §7.1.
+- `DualSegmentedFilter` was extracted to `core/ui` as designed (§5); the 4-tab order **Overview → Squawks →
+  Tasks → Logs** (§6) shipped via an `AircraftTab` enum.
+- **Not implemented:** the Fleet-dashboard AOG badge (§7.3 / PRD §8). AOG visibility is the Overview-tab
+  `AogAlertSection` only.
+- Attachment fields in the squawk form are gated behind the `attachmentUploadEnabled` feature-lab flag.
 
 ---
 

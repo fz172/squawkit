@@ -1,7 +1,14 @@
 # User-as-Technician Refactor
 
-**Status:** Draft  
-**Date:** 2026-05-09
+**Status:** Partially landed
+**Date:** 2026-05-22
+
+---
+
+> **Implementation status.** The `UserInfo` proto (`core/model/.../proto/userinfo/user_info.proto`) and the
+> `CollectionKind.UserInfo` synced kind have landed, so user-profile data now rides the local-first sync path as
+> a top-level kind. The legacy `feature/userprofile/` module (`database/`, `sharedassets/`, `userprofilecard/`)
+> still exists; full consolidation of the profile/technician identity is ongoing.
 
 ---
 

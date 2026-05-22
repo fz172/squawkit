@@ -1,5 +1,9 @@
 # Technician Feature Design Document
 
+> **Implementation status — ✅ Shipped.** Implemented in `feature/technician/` (`datamanager` + `manage` +
+> `sharedassets`). `TechnicianManager` is local-first over `EntityStore<Technician>` (`CollectionKind.Technician`,
+> a top-level synced kind). The snapshot-into-log behavior described below is in place.
+
 ## 1. Overview
 The goal is to allow users to specify "who did the work" (a Technician) for each maintenance log entry. The user can either leave it empty or select a technician from a predefined list.
 

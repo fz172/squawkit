@@ -1,5 +1,12 @@
 # Design Doc: Attachments for Maintenance Logs and Inspection Items
 
+> **Status / supersession.** This is the **original** (pre-local-first) attachment design — it assumes logs live
+> directly in Firestore (`users/{uid}/fleet/{aircraftId}/...`). The **storage and sync mechanism here is
+> superseded** by the local-first R2 design in [`storage_r2_design.md`](storage_r2_design.md), which is what
+> actually shipped (`feature/attachment/` + `core/storage` `blob_object` + blob drivers in
+> `feature/sync/data/blob/`, gated behind the `attachmentUploadEnabled` feature-lab flag). The **product
+> requirements** below (supported file types, size caps, attach-during-form UX) remain largely valid.
+
 ## Context
 
 Maintenance logs are stored as protobuf blobs in Firestore at:

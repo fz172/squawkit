@@ -8,7 +8,7 @@ WingsLog is a **Kotlin Multiplatform Mobile (KMM)** app for aviation logbook and
 
 The user-facing app is branded **Hopply**; codebase identifiers (`wingslog`, package `dev.fanfly.wingslog`, Gradle module names) still use the original WingsLog name.
 
-The app is moving to a **local-first architecture** (R1 in progress): a SQLDelight entity store with a Firestore sync engine handles offline reads and push/pull sync. See `docs/storage_r1_design.md`.
+The app uses a **local-first architecture** (R1 — shipped, default path): a SQLDelight entity store is the single source of truth for every read and write, and a Firestore sync engine pushes local changes and pulls remote ones in the background. There is **no Firestore in the UI read path** and **no rollout flag** — local-first is the only code path. Local-first **attachments** (R2) infrastructure has largely landed (local blob store + background upload/download), but the attachment UI is gated behind the `attachmentUploadEnabled` feature-lab flag. See `docs/storage_r1_design.md` and `docs/storage_r2_design.md`.
 
 ## Build & CI Commands
 
@@ -31,22 +31,25 @@ CI (`.github/workflows/ci.yml`) runs lint → assembleDebug → testDebugUnitTes
 app/                    # Android entry point (MainActivity, WingsLogApplication)
 composeApp/             # Shared Compose UI — nested navigation sub-graphs rooted at AppEntry + central Koin init
 core/
-  model/                # Wire-generated protobuf models (Aircraft, MaintenanceLog, InspectionCard…)
-  ui/                   # Material 3 theme, color tokens, shared Compose components
+  model/                # Wire-generated protobuf models (Aircraft, MaintenanceLog, Squawk, InspectionCard…)
+  ui/                   # Material 3 theme, color tokens, shared Compose components (incl. DualSegmentedFilter, AvatarIcon)
   auth/                 # Firebase Auth with platform-specific implementations
-  storage/              # R1 local-first foundation — SQLDelight schema, EntityStore, CollectionKind
+  firebase/             # Centralized Firebase utilities — FirebaseDataExt (ByteArray↔Firebase Storage Data, expect/actual)
+  storage/              # R1 local-first foundation — SQLDelight schema (entity, sync_cursor, sync_config, blob_object),
+                        #   EntityStore, CollectionKind (8 kinds), EntityCodecRegistry, blob RemoteState
   datetime/             # Date/time utilities — WireInstantFactory, platform-specific formatters
   appinfo/              # Cross-platform app version/build info (AppInfo expect/actual)
-  attachments/          # Scaffolding only — directory exists but is NOT yet wired into settings.gradle.kts
+  attachments/          # ORPHANED — superseded by feature/attachment; de-registered from settings.gradle.kts
+                        #   (stale build files remain, slated for deletion). Do NOT add to here.
 feature/
   fleet/                # Fleet dashboard (canonical layout, no update — dashboard is read-only)
     model/              #   Aircraft-related domain types
-    datamanager/        #   FleetManager: observes aircraft via Firestore Flow, CRUD
+    datamanager/        #   FleetManager: observes aircraft via EntityStore<Aircraft> Flow, CRUD
     sharedassets/       #   Strings, drawables shared across fleet UI
     viewing/            #   DashboardScreen + AircraftDashboardCard + FleetDashboardViewModel
   aircraft/             # Aircraft detail view (tab-based; not part of fleet/ module)
-    dashboard/          #   AircraftOverviewScreen, tab composables (Overview, Tasks, Logs),
-                        #   AircraftOverviewViewModel, AircraftDashboardModule
+    dashboard/          #   AircraftOverviewScreen, 4 tab composables (Overview → Squawks → Tasks → Logs),
+                        #   AircraftOverviewViewModel, AircraftDashboardModule, AircraftTab enum
   logs/                 # Maintenance log UI (canonical layout)
     datamanager/        #   MaintenanceLogManager: CRUD for logs and maintenance overview
     sharedassets/       #   Strings, shared helpers
@@ -58,35 +61,38 @@ feature/
     sharedassets/       #   Strings, drawables
     viewing/            #   TaskCard, TaskDetailSheet (read-only composables)
     update/             #   AddTaskScreen, EditTaskScreen, ViewModels, form sections
-  squawk/               # Aircraft squawk (defect/discrepancy) tracking (canonical layout)
-    model/              #   Squawk domain types
-    datamanager/        #   SquawkManager
-    sharedassets/       #   Strings, drawables
-    viewing/            #   Squawk list/detail composables
-    update/             #   Add/edit screens, ViewModels
+  squawk/               # Aircraft squawk (defect/discrepancy) tracking (canonical layout) — surfaced as Aircraft Overview tab 2
+    model/              #   SquawkWithStatus, SquawkStatus (OPEN / ADDRESSED / DISMISSED)
+    datamanager/        #   SquawkManager (CRUD + markAddressed + dismissSquawk/reopenSquawk) over EntityStore<Squawk>
+    sharedassets/       #   Strings, priority colors, dismiss-reason labels
+    viewing/            #   SquawkCard, SquawkDetailSheet, SquawkPickerSheet, AogAlertSection
+    update/             #   SquawkFormScreen (2-tab add/edit), LogPickerSheet, DismissSquawkDialog, SquawkFormViewModel
   technician/           # Technician management
     datamanager/        #   TechnicianManager
     manage/             #   Combined list + edit screens + ViewModels (TechnicianListScreen, EditTechnicianScreen)
     sharedassets/       #   CertificateInputFields, TechnicianPickerSheet, strings
-  attachment/           # File/image attachment feature (R2 design; partial implementation)
+  attachment/           # File/image attachment feature (R2 — substantially implemented; UI behind attachmentUploadEnabled flag)
     model/              #   AttachmentStatus, AttachmentWithState, BlobSyncState, PendingAttachment
-    datamanager/        #   AttachmentManager, LocalBlobStore, platform-specific impls
+    datamanager/        #   AttachmentManager, LocalBlobStore (SQLDelight blob_object), AttachmentOpener, QuotaChecker
     sharedassets/       #   Strings, type icons
     viewing/            #   AttachmentRow, AttachmentSection
-  export/               # Planned logbook export feature — CSV-in-ZIP archival export
-    datamanager/        #   ExportManager, aggregator, CSV writers, ZIP/destination actuals
-    sharedassets/       #   Export UI strings and README template
-    update/             #   ExportSelectionRoute/Screen + ExportViewModel
-  sync/                 # Local-first sync engine (R1 implementation)
-    data/               #   SyncEngine, HydrationRunner, PullListener, PushWorker,
-                        #   FirestorePullSubscription, FirestoreRemoteFetcher, FirestoreSyncWriter,
+  export/               # Logbook export (datamanager + sharedassets + update; no model/viewing)
+    datamanager/        #   ExportManager (exportLogs Flow, listExports, deleteExport, retryDelivery, resendDelivery);
+                        #   LogbookExportManager reads local EntityStore via feature managers; PDF/CSV/XLSX writers + ZipFileWriter;
+                        #   ExportHistoryRemoteRepository (Firebase Storage + Firestore manifest); ExportDeliveryBackend
+                        #   → requestExportDelivery Cloud Function (email delivery)
+    sharedassets/       #   Strings for selection / progress / history / delivery
+    update/             #   ExportSelectionScreen, ExportHistoryScreen, ExportViewModel, ExportHistoryViewModel, ExportFileSharer
+  sync/                 # Local-first sync engine (R1 implementation — the only Firestore client)
+    data/               #   SyncEngine, HydrationRunner, PullListener, PushWorker, SyncCursorStore, SyncPreferences,
+                        #   FirestorePullSubscription, FirestoreRemoteFetcher, FirestoreSyncWriter, SyncDocWire, TombstoneGc,
                         #   blob/ — BlobUploadDriver, BlobDownloadDriver, BlobDeleteDriver,
                         #   Android WorkManager workers, iOS URLSessionUploadScheduler
-    settings/           #   SyncSettingsScreen, SyncSettingsViewModel
+    settings/           #   SyncSettingsScreen, SyncSettingsViewModel (Cloud Sync + Sync-on-Cellular toggles)
     sharedassets/       #   Sync-related shared strings/drawables
-  featurelab/           # Firestore-backed feature flags
+  featurelab/           # Firestore-backed feature flags (FeatureLab CollectionKind, synced like other entities)
     datamanager/        #   FeatureLabManager, FeatureFlags, Koin module
-  settings/             # App settings screen (flat module, no submodule structure)
+  settings/             # App settings screen (flat module, no submodule structure); also hosts FeatureLab screen + Export logs row
   userprofile/          # Profile edit UI + database (legacy; unification with Technician in progress)
     database/           #   UserProfileManager (Firestore)
     sharedassets/       #   Strings, anonymous user icon
@@ -95,6 +101,8 @@ feature/
                         #   FakeDataGenerator, StressTestScreen, StressTestViewModel, StressTestModule
     config/             #   StressTestPlugin — shared composable UI + route registration used by
                         #   both platforms' thin wiring layers (see Dogfood Builds below)
+backend/                # Firebase Cloud Functions (TypeScript, Functions v2, Node 22) — NOT a Gradle module
+  firebase/functions/   #   health_probe; requestExportDelivery (export email delivery: signed URL + mailer + Firestore manifest)
 ```
 
 ## Canonical Feature Module Pattern
@@ -139,7 +147,7 @@ update        →  :model, :datamanager, :viewing, :sharedassets, core:*
 - **`feature/userprofile/`** — legacy structure; being unified with Technician (see `docs/userprofile_as_technician.md`).
 - **`feature/aircraft/dashboard/`** — single submodule (no canonical split); owns its own ViewModel and DI module.
 - **`feature/fleet/`** — ViewModel lives inside `viewing/` (no separate update layer); fleet dashboard is read-only.
-- **`feature/export/`** — planned canonical module with `datamanager`, `sharedassets`, and `update`, but no `model` or `viewing` submodules. Export is a single user-driven flow rather than a standalone read-only display surface.
+- **`feature/export/`** — `datamanager` + `sharedassets` + `update` only (no `model` or `viewing`); export is a single user-driven flow with no standalone read surface.
 
 ### Koin modules
 
@@ -147,34 +155,27 @@ Each submodule that provides injectable objects declares its own `*Module.kt`. A
 
 ## Architecture
 
-**Stack:** MVVM + StateFlow | Koin DI | Kotlin Coroutines/Flow | Firebase Firestore (real-time) | SQLDelight (local store, R1) | Protocol Buffers (Wire 6) | Compose Multiplatform
+**Stack:** MVVM + StateFlow | Koin DI | Kotlin Coroutines/Flow | SQLDelight (local-first store, R1) | Firebase Firestore (background sync only) | Protocol Buffers (Wire 6) | Compose Multiplatform
 
 ### Layering pattern (each feature follows this)
 
 1. **UI** — `@Composable` screen collects `StateFlow<UiState>` from ViewModel via `koinViewModel()`
 2. **ViewModel** — holds `MutableStateFlow<UiState>`, combines data from one or more managers using `combine()` / `flatMapLatest()`
-3. **Manager (interface + impl)** — `datamanager/` module; interface defines the contract, `impl/` handles Firestore/local storage. Injected via Koin.
+3. **Manager (interface + impl)** — `datamanager/` module; interface defines the contract, `impl/` reads/writes the local `EntityStore` (never Firestore). Injected via Koin.
 
 ### Data flow example
 ```
-Firestore snapshot → Flow<List<Aircraft>> (FleetManagerImpl)
-  → flatMapLatest → combine(tasks, logs per aircraft)
+EntityStore<Aircraft>.observeAll (SQLDelight Flow, FleetManagerImpl)
+  → flatMapLatest → combine(tasks, logs, squawks per aircraft)
   → FleetDashboardViewModel._uiState (StateFlow)
   → DashboardScreen (collectAsStateWithLifecycle)
 ```
 
 ### Firestore + Protobuf serialization
-Documents store binary blobs (e.g., field `AIRCRAFT_INFO_BLOB`). Decode: `Aircraft.ADAPTER.decode(doc.getBlobAsBytes(AIRCRAFT_INFO_BLOB))`. Proto definitions live in `core/model/src/commonMain/proto/`.
+Proto definitions live in `core/model/src/commonMain/proto/`. Feature managers **never touch Firestore** — they read/write the local `EntityStore` only. The sync engine is the sole Firestore client: each synced entity is one `SyncDocWire` document — `payload` (Base64-encoded proto bytes), `deleted`, `schema` (proto FQN), and `lastUpdateTimestamp` (Firestore server timestamp). The old `core/database` module and its `AIRCRAFT_INFO_BLOB` / `getBlobAsBytes` pattern have been **removed**.
 
-### Local-first storage (R1)
-`core/storage` provides `EntityStore` (SQLDelight-backed), `CollectionKind`, and Koin modules. `feature/sync/data` implements the sync engine: `SyncEngine` orchestrates `HydrationRunner` (initial pull), `PullListener` (real-time Firestore updates), and `PushWorker` (local → Firestore writes). Aircraft-scoped collections (tasks, logs, squawks) sync per-aircraft. Binary blob transfers use platform WorkManager (Android) and URLSession (iOS). See `docs/storage_r1_design.md`.
-
-### Logbook export (planned)
-`feature/export` will implement the logbook export described in `docs/export_logs_PRD.md` and `docs/export_logs_design.md`. The feature exports selected aircraft from Settings → Export logs into Google-Sheets-ready CSV files packaged in a ZIP. Data is aggregated on-device from the local-first store using `FleetManager`, `MaintenanceLogManager`, `TaskDataManager`/`TaskDueManager`, `SquawkManager`, `TechnicianManager`, and attachment APIs; no Firestore schema or proto changes are planned.
-
-Export output mirrors paper logbook volumes: `00_Aircraft_Info.csv`, `01_Airframe.csv`, one `02_Engine_N.csv` per engine, one `03_Propeller_N.csv` per propeller, `10_Compliance.csv`, `11_Squawks.csv`, `20_Technicians.csv`, optional multi-aircraft `00_Fleet_Summary.csv`, bundled `attachments/`, and `README.txt`. Use `docs/export_logs_sample/N12345_Cessna_172/` as the byte-level fixture shape for golden writer tests.
-
-Important export rules: rows for log tabs are oldest-first; CSV is UTF-8/RFC 4180 with CRLF line endings; multi-value cells use a single LF inside a quoted cell; timestamps render as dates in the device-current time zone at export time; compliance Last Complied fields come only from log entries that reference a task via `inspection_ids`, not from `force_complied_status`; LINK attachments remain URLs, while IMAGE/PDF/FILE attachments are included when local or downloadable and degrade to textual markers on failure.
+### Local-first storage (R1 — shipped, default path)
+`core/storage` provides `EntityStore` (SQLDelight-backed), `CollectionKind` (8 kinds: Aircraft, MaintenanceTask, MaintenanceLog, MaintenanceOverview, Technician, UserInfo, FeatureLab, Squawk), `EntityCodecRegistry`, and Koin modules. Schema tables: `entity`, `sync_cursor`, `sync_config`, `blob_object`. `feature/sync/data` implements the sync engine: `SyncEngine` (gated on signed-in AND non-anonymous AND cloud-sync-enabled) orchestrates `HydrationRunner` (initial pull), `PullListener` / `FirestorePullSubscription` (real-time updates), and `PushWorker` (drains `dirty=1` rows via `FirestoreSyncWriter`). Top-level kinds (Aircraft, Technician, UserInfo) hydrate on sign-in; per-aircraft kinds (logs, tasks, overview, squawks) hydrate per aircraft. Conflict resolution is last-writer-wins on Firestore server timestamp; dirty rows are immune from remote overwrite (no local clock in the ordering logic). Anonymous users are fully offline (engine idle). Binary blob transfers (R2) use WorkManager (Android) and background URLSession (iOS). See `docs/storage_r1_design.md`.
 
 ### Dependency Injection
 - Central aggregation: `composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/di/initKoin.kt`
@@ -210,7 +211,7 @@ Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, i
 
 ## Design Docs
 
-Feature PRDs and architecture design docs live in `docs/` — including `storage_r1_design.md`, `storage_r2_design.md`, `attachments_design.md`, `squawk_design.md`, `technician_design.md`, `userprofile_as_technician.md`, `aircraft_overview_tabs.md`, `intelligentsearch.md`, `export_logs_PRD.md`, and `export_logs_design.md`. Consult these before making non-trivial changes to a feature area. For export work, also inspect `docs/export_logs_sample/`.
+Feature PRDs and architecture design docs live in `docs/` — including `PRD.md` (product overview), `storage_mode_PRD.md` / `storage_r1_design.md` / `storage_r2_design.md` (local-first), `attachments_PRD.md` / `attachments_design.md`, `squawk_design.md` / `user_squawking_prd.md`, `export_logs_PRD.md` / `export_logs_design.md` / `export_email_automation_design.html`, `technician_design.md`, `userprofile_as_technician.md`, `aircraft_overview_tabs.md`, and `intelligentsearch.md`. Consult these before making non-trivial changes to a feature area. Each design/PRD doc carries an **Implementation Status** note near the top reflecting what has actually shipped vs. the original plan. For export work, also inspect `docs/export_logs_sample/`.
 
 ## Dogfood Builds
 
@@ -249,5 +250,5 @@ Both wiring files are structurally identical — they implement `DogfoodFeatureE
 - **Instants**: Always use `kotlin.time.Instant`, never `kotlinx.datetime.Instant`.
 - **ViewModels in `fleet/`**: The ViewModel lives inside the `viewing/` submodule (no separate layer), since fleet has no editable screen at the feature level.
 - **`technician/manage`**: This feature uses `manage/` instead of the canonical `viewing/` + `update/` split — both read and write screens coexist in one submodule. New features should prefer the canonical pattern unless the feature is inherently CRUD-only with no standalone viewing screen.
-- **Feature flags**: Controlled by `FeatureLabManager` (Firestore-backed). Check `FeatureFlags` before shipping experimental code paths.
+- **Feature flags**: Controlled by `FeatureLabManager` (Firestore-backed; `attachmentUploadEnabled` gates the attachment UI). Check `FeatureFlags` before shipping experimental code paths.
 - **Transitive deps**: `core:storage` and `core:ui` api-export most shared deps; don't redeclare them in downstream modules.

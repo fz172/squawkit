@@ -1,10 +1,18 @@
 ## PRD: Local-First Storage with Optional Cloud Sync
 
-**Status:** Draft
+**Status:** R1 ✅ Shipped · R2 substantially implemented (attachment UI behind `attachmentUploadEnabled` flag)
 **Owner:** @fanzhang172
 **Created:** 2026-04-28
-**Last updated:** 2026-05-10
+**Last updated:** 2026-05-22
 **Targets:** Android (minSdk 33), iOS — Compose Multiplatform
+
+---
+
+> **Implementation status.** R1 (local-first protos + cloud sync, milestones M1–M3 + the R1 portion of M6) is
+> shipped as the default and only data path. R2 (local-first attachments, M4–M5 + iOS background uploads) is
+> substantially implemented — the `feature/attachment` module, `blob_object` store, and background
+> upload/download/delete drivers all exist — but the attachment UI is gated behind the `attachmentUploadEnabled`
+> feature-lab flag. See `storage_r1_design.md` and `storage_r2_design.md` for the per-design delta notes.
 
 ---
 
