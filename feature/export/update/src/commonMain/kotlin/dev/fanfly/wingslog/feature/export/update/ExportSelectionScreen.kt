@@ -313,31 +313,6 @@ private fun ConfiguringContent(
       )
     }
 
-    state.resolvedDeliveryInfo?.let {
-      item {
-        DeliveryConfigSection(
-          state = state,
-        )
-        Spacer(Modifier.height(Spacing.medium))
-      }
-    }
-  }
-}
-
-@Composable
-private fun DeliveryConfigSection(
-  state: ExportUiState.Configuring,
-) {
-  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-    SectionHeader(title = stringResource(Res.string.export_delivery_title))
-    Text(
-      text = stringResource(
-        Res.string.export_delivery_note,
-        state.resolvedDeliveryInfo?.destinationEmail.orEmpty(),
-      ),
-      style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
   }
 }
 
@@ -730,6 +705,17 @@ private fun ExportBottomBar(
       }
       Text(
         text = stringResource(Res.string.export_estimated_size, readableBytes(state.estimatedSizeBytes)),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+
+    state.resolvedDeliveryInfo?.let { deliveryInfo ->
+      Text(
+        text = stringResource(
+          Res.string.export_delivery_note,
+          deliveryInfo.destinationEmail,
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
