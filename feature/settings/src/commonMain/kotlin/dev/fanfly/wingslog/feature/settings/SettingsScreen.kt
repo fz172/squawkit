@@ -102,14 +102,12 @@ fun SettingsScreen(
         settingsLevel = SettingsLevel.DEFAULT
       )
 
-      if (user.featureFlags.exportLogsEnabled) {
-        SettingsRow(
-          icon = Icons.Default.FileDownload,
-          title = stringResource(ExportRes.string.feature_name_export_logs),
-          onClick = { navController.navigate(Screen.ExportLogs.route) },
-          settingsLevel = SettingsLevel.DEFAULT
-        )
-      }
+      SettingsRow(
+        icon = Icons.Default.FileDownload,
+        title = stringResource(ExportRes.string.feature_name_export_logs),
+        onClick = { navController.navigate(Screen.ExportLogs.route) },
+        settingsLevel = SettingsLevel.DEFAULT
+      )
 
       SettingsRow(
         icon = Icons.Default.Tune,

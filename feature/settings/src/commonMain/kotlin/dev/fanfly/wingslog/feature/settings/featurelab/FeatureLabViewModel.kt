@@ -33,10 +33,4 @@ class FeatureLabViewModel(
       featureLabManager.update(_flags.value.copy(attachmentUploadEnabled = enabled))
     }
   }
-
-  fun setExportLogsEnabled(enabled: Boolean) {
-    viewModelScope.launch {
-      featureLabManager.update(_flags.value.copy(exportLogsEnabled = enabled))
-    }
-  }
 }

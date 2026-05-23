@@ -53,11 +53,9 @@ class FeatureLabManagerImpl(
 private fun FeatureLabSettings.toFeatureFlags() = FeatureFlags(
   technicianEnabled = !technician_disabled,
   attachmentUploadEnabled = !attachment_upload_disabled,
-  exportLogsEnabled = export_logs_enabled,
 )
 
 private fun FeatureFlags.toProto() = FeatureLabSettings(
   technician_disabled = !technicianEnabled,
   attachment_upload_disabled = !attachmentUploadEnabled,
-  export_logs_enabled = exportLogsEnabled,
 )

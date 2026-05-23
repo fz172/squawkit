@@ -9,6 +9,4 @@
   <string name="feature_lab_technician_subtitle">Enable the technician roster and performed-by picker on maintenance logs.</string>
   <string name="feature_lab_attachments_title">Attachment Uploads</string>
   <string name="feature_lab_attachments_subtitle">Allow attaching files and links to maintenance records.</string>
-  <string name="feature_lab_export_logs_title">Logbook Export</string>
-  <string name="feature_lab_export_logs_subtitle">Show the Settings entry for the in-progress CSV-in-ZIP logbook export.</string>
 </resources>

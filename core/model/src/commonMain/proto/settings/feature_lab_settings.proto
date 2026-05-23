@@ -4,7 +4,9 @@ option java_package = "dev.fanfly.wingslog.core.model.settings";
 option java_multiple_files = true;
 
 message FeatureLabSettings {
+  reserved 3;
+  reserved "export_logs_enabled";
+
   bool technician_disabled = 1;
   bool attachment_upload_disabled = 2;
-  bool export_logs_enabled = 3;
 }
