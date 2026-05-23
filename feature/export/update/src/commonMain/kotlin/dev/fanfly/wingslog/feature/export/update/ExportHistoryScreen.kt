@@ -18,20 +18,23 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.IosShare
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Cloud
+import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -44,12 +47,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordDateRange
@@ -57,6 +63,7 @@ import dev.fanfly.wingslog.feature.export.update.viewmodel.ExportHistoryUiState
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.feature.export.sharedassets.generated.resources.Res
@@ -68,23 +75,24 @@ import wingslog.feature.export.sharedassets.generated.resources.export_history_d
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body_cloud_only
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body_device_and_cloud
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_title
-import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_retry
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_body
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_title
 import wingslog.feature.export.sharedassets.generated.resources.export_history_item_meta
+import wingslog.feature.export.sharedassets.generated.resources.export_history_menu_delete
+import wingslog.feature.export.sharedassets.generated.resources.export_history_menu_resend
+import wingslog.feature.export.sharedassets.generated.resources.export_history_menu_save
+import wingslog.feature.export.sharedassets.generated.resources.export_history_menu_share
+import wingslog.feature.export.sharedassets.generated.resources.export_history_more_actions
 import wingslog.feature.export.sharedassets.generated.resources.export_history_new
-import wingslog.feature.export.sharedassets.generated.resources.export_history_remote_expired
-import wingslog.feature.export.sharedassets.generated.resources.export_history_remote_expires_on
+import wingslog.feature.export.sharedassets.generated.resources.export_history_status_cloud
+import wingslog.feature.export.sharedassets.generated.resources.export_history_status_device
 import wingslog.feature.export.sharedassets.generated.resources.export_history_title
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_last_n_months
-import wingslog.feature.export.sharedassets.generated.resources.export_resend_email
-import wingslog.feature.export.sharedassets.generated.resources.export_share
 import wingslog.feature.export.sharedassets.generated.resources.export_share_title
 import wingslog.feature.export.sharedassets.generated.resources.export_size_kb
 import wingslog.feature.export.sharedassets.generated.resources.export_size_mb
 import wingslog.feature.export.sharedassets.generated.resources.export_size_zero_kb
-import kotlin.time.Clock
 import kotlin.time.Instant
 import wingslog.core.ui.generated.resources.Res as CoreRes
 
@@ -96,6 +104,7 @@ fun ExportHistoryScreen(
   onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
   onResendDelivery: (ExportRecord) -> Unit,
   onRetryDelivery: (ExportRecord) -> Unit,
+  onSaveToDevice: (ExportRecord) -> Unit,
   onDelete: (ExportRecord) -> Unit,
 ) {
   Scaffold(
@@ -121,6 +130,7 @@ fun ExportHistoryScreen(
             onShareExport = onShareExport,
             onResendDelivery = onResendDelivery,
             onRetryDelivery = onRetryDelivery,
+            onSaveToDevice = onSaveToDevice,
             onDelete = onDelete,
           )
         }
@@ -183,6 +193,7 @@ private fun ExportList(
   onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
   onResendDelivery: (ExportRecord) -> Unit,
   onRetryDelivery: (ExportRecord) -> Unit,
+  onSaveToDevice: (ExportRecord) -> Unit,
   onDelete: (ExportRecord) -> Unit,
 ) {
   LazyColumn(
@@ -197,6 +208,7 @@ private fun ExportList(
         onShareExport = onShareExport,
         onResendDelivery = { onResendDelivery(record) },
         onRetryDelivery = { onRetryDelivery(record) },
+        onSaveToDevice = { onSaveToDevice(record) },
         onDelete = { onDelete(record) },
       )
     }
@@ -210,17 +222,18 @@ private fun ExportHistoryCard(
   onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
   onResendDelivery: () -> Unit,
   onRetryDelivery: () -> Unit,
+  onSaveToDevice: () -> Unit,
   onDelete: () -> Unit,
 ) {
   var showDeleteConfirm by remember { mutableStateOf(false) }
+  var menuExpanded by remember { mutableStateOf(false) }
   val shareTitle = stringResource(Res.string.export_share_title)
   val emailSubject =
     stringResource(Res.string.export_email_subject, record.file_name)
   val emailBody = stringResource(Res.string.export_email_body)
   val aircraftTitle = aircraftSummary(record)
   val scope = scopeLine(record)
-  val retention = retentionLabel(record)
-  val canDelete = true
+  val onDevice = record.file_path.isNotBlank()
   val canRetry =
     record.delivery_state == "FAILED" &&
       record.remote_archive_ref.isNotBlank() &&
@@ -231,10 +244,12 @@ private fun ExportHistoryCard(
     record.remote_archive_ref.isNotBlank() &&
     record.destination_email.isNotBlank() &&
     !canRetry
-  // Device share stays for non-email users, and as a fallback for email users whose archive never
-  // reached remote storage (so it still has a local copy).
-  val canShareDevice = record.file_path.isNotBlank() &&
-    (!canEmailDelivery || record.remote_archive_ref.isBlank())
+  // Any on-device file can go through the native share sheet, including one an email user pulled
+  // down via "Save to device".
+  val canShareDevice = onDevice
+  // Remote-only archives can be pulled down to the device for offline sharing.
+  val canSaveToDevice = !onDevice && record.remote_archive_ref.isNotBlank()
+  val hasUpperMenuItems = canResend || canRetry || canShareDevice || canSaveToDevice
 
   Row(
     modifier = Modifier
@@ -247,6 +262,7 @@ private fun ExportHistoryCard(
         shape = RoundedCornerShape(Spacing.cardCornerRadius),
       )
       .padding(Spacing.medium),
+    verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
     Box(
@@ -282,16 +298,15 @@ private fun ExportHistoryCard(
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
+      val storageStatus = exportStorageStatus(
+        canEmailDelivery = canEmailDelivery,
+        onDevice = onDevice,
+        onRemote = record.remote_archive_ref.isNotBlank(),
+      )
       Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
       ) {
-        Icon(
-          imageVector = Icons.Default.Schedule,
-          contentDescription = null,
-          tint = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.size(13.dp),
-        )
         Text(
           text = stringResource(
             Res.string.export_history_item_meta,
@@ -301,72 +316,97 @@ private fun ExportHistoryCard(
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-      }
-      if (retention.isNotBlank()) {
-        Text(
-          text = retention,
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (storageStatus != null) {
+          Text(
+            text = "·",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+          Icon(
+            imageVector = storageStatus.icon,
+            contentDescription = null,
+            tint = storageStatus.color,
+            modifier = Modifier.size(13.dp),
+          )
+          Text(
+            text = stringResource(storageStatus.label),
+            style = MaterialTheme.typography.bodySmall,
+            color = storageStatus.color,
+          )
+        }
       }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
-      if (canRetry) {
-        FilledTonalIconButton(
-          onClick = onRetryDelivery,
-          modifier = Modifier.size(36.dp),
-        ) {
-          Icon(
-            imageVector = Icons.Default.Refresh,
-            contentDescription = stringResource(Res.string.export_history_delivery_retry),
-            modifier = Modifier.size(18.dp),
+    Box {
+      IconButton(
+        onClick = { menuExpanded = true },
+        modifier = Modifier.size(40.dp),
+      ) {
+        Icon(
+          imageVector = Icons.Default.MoreVert,
+          contentDescription = stringResource(Res.string.export_history_more_actions),
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+      DropdownMenu(
+        expanded = menuExpanded,
+        onDismissRequest = { menuExpanded = false },
+      ) {
+        if (canResend || canRetry) {
+          DropdownMenuItem(
+            text = { Text(stringResource(Res.string.export_history_menu_resend)) },
+            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+            onClick = {
+              menuExpanded = false
+              if (canRetry) onRetryDelivery() else onResendDelivery()
+            },
           )
         }
-      }
-      if (canResend) {
-        IconButton(
-          onClick = onResendDelivery,
-          modifier = Modifier.size(36.dp),
-        ) {
-          Icon(
-            imageVector = Icons.Default.Email,
-            contentDescription = stringResource(Res.string.export_resend_email),
-            modifier = Modifier.size(Spacing.extraLarge),
+        if (canShareDevice) {
+          DropdownMenuItem(
+            text = { Text(stringResource(Res.string.export_history_menu_share)) },
+            leadingIcon = { Icon(Icons.Default.IosShare, contentDescription = null) },
+            onClick = {
+              menuExpanded = false
+              onShareExport(record.file_path, shareTitle, emailSubject, emailBody)
+            },
           )
         }
-      }
-      if (canShareDevice) {
-        IconButton(
-          onClick = {
-            onShareExport(
-              record.file_path,
-              shareTitle,
-              emailSubject,
-              emailBody
+        if (canSaveToDevice) {
+          DropdownMenuItem(
+            text = { Text(stringResource(Res.string.export_history_menu_save)) },
+            leadingIcon = { Icon(Icons.Default.Download, contentDescription = null) },
+            onClick = {
+              menuExpanded = false
+              onSaveToDevice()
+            },
+          )
+        }
+        if (hasUpperMenuItems) {
+          HorizontalDivider(
+            modifier = Modifier.padding(vertical = Spacing.extraSmall),
+            color = MaterialTheme.colorScheme.outlineVariant,
+          )
+        }
+        DropdownMenuItem(
+          text = {
+            Text(
+              text = stringResource(Res.string.export_history_menu_delete),
+              color = MaterialTheme.colorScheme.error,
             )
           },
-          modifier = Modifier.size(36.dp),
-        ) {
-          Icon(
-            imageVector = Icons.Default.IosShare,
-            contentDescription = stringResource(Res.string.export_share),
-            modifier = Modifier.size(Spacing.extraLarge),
-          )
-        }
-      }
-      if (canDelete) {
-        IconButton(
-          onClick = { showDeleteConfirm = true },
-          modifier = Modifier.size(36.dp),
-          colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.error),
-        ) {
-          Icon(
-            imageVector = Icons.Default.Delete,
-            contentDescription = stringResource(Res.string.export_history_delete),
-            modifier = Modifier.size(Spacing.extraLarge),
-          )
-        }
+          leadingIcon = {
+            Icon(
+              imageVector = Icons.Default.Delete,
+              contentDescription = null,
+              tint = MaterialTheme.colorScheme.error,
+            )
+          },
+          onClick = {
+            menuExpanded = false
+            showDeleteConfirm = true
+          },
+        )
       }
     }
   }
@@ -492,15 +532,35 @@ private fun readableBytes(bytes: Long): String = when {
   )
 }
 
+private data class StorageStatus(
+  val icon: ImageVector,
+  val color: Color,
+  val label: StringResource,
+)
+
+/**
+ * Where the archive currently lives, for cloud-sync users. Returns null when no badge is warranted:
+ * a no-email user (everything is local) or a fully synced file (local and remote).
+ */
 @Composable
-private fun retentionLabel(record: ExportRecord): String {
-  if (record.remote_archive_ref.isBlank() || record.remote_expires_at_epoch_millis <= 0L) return ""
-  val expiry = formatDate(record.remote_expires_at_epoch_millis)
-  return if (record.remote_expires_at_epoch_millis <= Clock.System.now()
-      .toEpochMilliseconds()
-  ) {
-    stringResource(Res.string.export_history_remote_expired, expiry)
-  } else {
-    stringResource(Res.string.export_history_remote_expires_on, expiry)
-  }
+private fun exportStorageStatus(
+  canEmailDelivery: Boolean,
+  onDevice: Boolean,
+  onRemote: Boolean,
+): StorageStatus? = when {
+  !canEmailDelivery -> null
+  onDevice && onRemote -> null
+  onRemote -> StorageStatus(
+    icon = Icons.Outlined.Cloud,
+    color = MaterialTheme.colorScheme.primary,
+    label = Res.string.export_history_status_cloud,
+  )
+
+  onDevice -> StorageStatus(
+    icon = Icons.Outlined.Smartphone,
+    color = StatusWarning,
+    label = Res.string.export_history_status_device,
+  )
+
+  else -> null
 }

@@ -120,6 +120,7 @@ kotlin {
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.koin.core)
       implementation(libs.kermit)
+      implementation(libs.ktor.client.core)
       implementation(libs.gitlive.firebase.auth)
       implementation(libs.gitlive.firebase.firestore)
       implementation(libs.gitlive.firebase.functions)

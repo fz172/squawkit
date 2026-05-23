@@ -21,6 +21,7 @@ import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.storage.FirebaseStorage
+import io.ktor.client.HttpClient
 import org.koin.dsl.module
 
 val exportDataManagerModule = module {
@@ -48,6 +49,7 @@ val exportDataManagerModule = module {
       get<FirebaseAuth>(),
       get<FirebaseFirestore>(),
       get<FirebaseStorage>(),
+      get<HttpClient>(),
     )
   }
   single { ExportDeliveryBackend() }

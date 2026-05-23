@@ -35,6 +35,8 @@
   <string name="export_footer_aircraft_count">%1$d aircraft</string>
   <string name="export_estimated_size">~%1$s</string>
   <string name="export_primary_action">Export ZIP</string>
+  <string name="export_email_action">Email export</string>
+  <string name="export_sent_to">Sent to %1$s</string>
 
   <!-- Sizes -->
   <string name="export_size_zero_kb">0 KB</string>
@@ -46,6 +48,7 @@
   <string name="export_running_progress_percent">%1$d% complete</string>
   <string name="export_running_cancel_notice">Leaving this screen now will cancel the export.</string>
   <string name="export_running_steps_title">Current progress</string>
+  <string name="export_running_stage_counter">%1$d / %2$d</string>
   <string name="export_progress_collecting_data">Collecting aircraft data...</string>
   <string name="export_progress_collecting_data_detail">Loading logs, tasks, squawks, and attachments for the selected aircraft.</string>
   <string name="export_progress_building_archive">Generating reports...</string>
@@ -59,6 +62,10 @@
 
   <!-- Result: success -->
   <string name="export_success_title">Export ready</string>
+  <string name="export_success_sent_title">Export sent</string>
+  <string name="export_success_emailed_subtitle">Secure download link emailed to</string>
+  <string name="export_no_email_note_title">No email on file.</string>
+  <string name="export_no_email_note_body">Share manually below.</string>
   <string name="export_stub_preview_file_name">Hopply_Logs_preview.zip</string>
   <string name="export_stub_preview_location">Saved to this device</string>
   <string name="export_location_downloads_hopply">Saved to Downloads · Hopply</string>
@@ -114,6 +121,13 @@ Thank you for choosing Hopply.</string>
   <string name="export_history_delivery_failed">Email delivery failed</string>
   <string name="export_history_delivery_retry">Retry email delivery</string>
   <string name="export_resend_email">Email this export again</string>
+  <string name="export_history_more_actions">More actions</string>
+  <string name="export_history_menu_resend">Resend email</string>
+  <string name="export_history_menu_share">Share file</string>
+  <string name="export_history_menu_save">Save to device</string>
+  <string name="export_history_menu_delete">Delete export</string>
+  <string name="export_history_status_cloud">In the cloud</string>
+  <string name="export_history_status_device">On device</string>
   <string name="export_history_remote_expires_on">Cloud copy expires %1$s</string>
   <string name="export_history_remote_expired">Cloud copy expired %1$s</string>
   <string name="export_history_delete">Delete</string>

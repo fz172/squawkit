@@ -8,6 +8,9 @@ import dev.fanfly.wingslog.export.ExportRecordDateRange
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.storage.FirebaseStorage
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.readRawBytes
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
@@ -16,10 +19,26 @@ class ExportHistoryRemoteRepository(
   private val auth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
   private val storage: FirebaseStorage,
+  private val httpClient: HttpClient,
   private val clock: Clock = Clock.System,
 ) {
 
   private val log = Logger.withTag(TAG)
+
+  /**
+   * Downloads the archive bytes for [remoteArchiveRef] from storage, or null on failure. Fetches a
+   * download URL then reads it over HTTP, mirroring the blob download path.
+   */
+  suspend fun downloadArchive(remoteArchiveRef: String): ByteArray? {
+    if (remoteArchiveRef.isBlank()) return null
+    return runCatching {
+      val url = storage.reference(remoteArchiveRef).getDownloadUrl()
+      httpClient.get(url).readRawBytes()
+    }.getOrElse { error ->
+      log.w(error) { "remote export download failed for $remoteArchiveRef" }
+      null
+    }
+  }
 
   suspend fun uploadAndSync(record: ExportRecord, archiveBytes: ByteArray): ExportRecord {
     val user = auth.currentUser ?: return record

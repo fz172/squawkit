@@ -36,4 +36,11 @@ interface ExportManager {
    * storage. No local file is generated or uploaded. Returns true when the request was accepted.
    */
   suspend fun resendDelivery(exportId: String): Boolean
+
+  /**
+   * Downloads a remote-only export's archive to this device and records the local copy, so it can
+   * be shared from the device afterward. Returns true when a local file is present once finished
+   * (including the no-op case where it was already on device).
+   */
+  suspend fun saveToDevice(exportId: String): Boolean
 }

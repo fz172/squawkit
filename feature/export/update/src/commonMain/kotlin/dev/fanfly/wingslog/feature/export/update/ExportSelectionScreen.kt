@@ -28,21 +28,24 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.IosShare
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TableView
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
-import androidx.compose.material3.DatePicker
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,7 +55,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,7 +66,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -96,10 +102,8 @@ import wingslog.feature.export.sharedassets.generated.resources.export_all_time
 import wingslog.feature.export.sharedassets.generated.resources.export_back_to_setup
 import wingslog.feature.export.sharedassets.generated.resources.export_clear_all
 import wingslog.feature.export.sharedassets.generated.resources.export_custom
-import wingslog.feature.export.sharedassets.generated.resources.export_custom_end_date
-import wingslog.feature.export.sharedassets.generated.resources.export_custom_start_date
 import wingslog.feature.export.sharedassets.generated.resources.export_date_range_section
-import wingslog.feature.export.sharedassets.generated.resources.export_delivery_note
+import wingslog.feature.export.sharedassets.generated.resources.export_email_action
 import wingslog.feature.export.sharedassets.generated.resources.export_email_body
 import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
 import wingslog.feature.export.sharedassets.generated.resources.export_error_details
@@ -110,7 +114,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_footer_ai
 import wingslog.feature.export.sharedassets.generated.resources.export_format_csv_sub
 import wingslog.feature.export.sharedassets.generated.resources.export_format_pdf_sub
 import wingslog.feature.export.sharedassets.generated.resources.export_format_xlsx_sub
-import wingslog.feature.export.sharedassets.generated.resources.export_formats_helper
 import wingslog.feature.export.sharedassets.generated.resources.export_formats_helper_empty
 import wingslog.feature.export.sharedassets.generated.resources.export_formats_section
 import wingslog.feature.export.sharedassets.generated.resources.export_history_action
@@ -119,27 +122,23 @@ import wingslog.feature.export.sharedassets.generated.resources.export_location_
 import wingslog.feature.export.sharedassets.generated.resources.export_location_files_hopply
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_body
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_title
+import wingslog.feature.export.sharedassets.generated.resources.export_no_email_note_body
+import wingslog.feature.export.sharedassets.generated.resources.export_no_email_note_title
 import wingslog.feature.export.sharedassets.generated.resources.export_primary_action
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_building_archive
-import wingslog.feature.export.sharedassets.generated.resources.export_progress_building_archive_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_collecting_data
-import wingslog.feature.export.sharedassets.generated.resources.export_progress_collecting_data_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_compressing_archive
-import wingslog.feature.export.sharedassets.generated.resources.export_progress_compressing_archive_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_saving_file
-import wingslog.feature.export.sharedassets.generated.resources.export_progress_saving_file_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_uploading_archive
-import wingslog.feature.export.sharedassets.generated.resources.export_progress_uploading_archive_detail
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_aircraft
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_attachments
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_attachments_included
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_file_subtitle
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_range
-import wingslog.feature.export.sharedassets.generated.resources.export_running_cancel_notice
-import wingslog.feature.export.sharedassets.generated.resources.export_running_progress_percent
-import wingslog.feature.export.sharedassets.generated.resources.export_running_steps_title
+import wingslog.feature.export.sharedassets.generated.resources.export_running_stage_counter
 import wingslog.feature.export.sharedassets.generated.resources.export_running_title
 import wingslog.feature.export.sharedassets.generated.resources.export_select_all
+import wingslog.feature.export.sharedassets.generated.resources.export_sent_to
 import wingslog.feature.export.sharedassets.generated.resources.export_share
 import wingslog.feature.export.sharedassets.generated.resources.export_share_title
 import wingslog.feature.export.sharedassets.generated.resources.export_size_kb
@@ -157,6 +156,8 @@ import wingslog.feature.export.sharedassets.generated.resources.export_success_d
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_ready_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_sent
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_sent_title
+import wingslog.feature.export.sharedassets.generated.resources.export_success_emailed_subtitle
+import wingslog.feature.export.sharedassets.generated.resources.export_success_sent_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
 import wingslog.feature.export.sharedassets.generated.resources.export_try_again
 import wingslog.feature.export.sharedassets.generated.resources.export_untitled_aircraft
@@ -361,26 +362,14 @@ private fun FormatSection(
         )
       }
     }
-    Spacer(Modifier.height(Spacing.small))
-    Row(
-      verticalAlignment = Alignment.Top,
-      horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-    ) {
-      Icon(
-        imageVector = Icons.Default.FolderZip,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(16.dp)
-          .padding(top = 1.dp),
-      )
+    // The picker enforces at least one format; the advisory only surfaces in the edge case.
+    if (formats.isEmpty()) {
+      Spacer(Modifier.height(Spacing.small))
       Text(
-        text = if (formats.isEmpty()) {
-          stringResource(Res.string.export_formats_helper_empty)
-        } else {
-          stringResource(Res.string.export_formats_helper, joinFormats(formats))
-        },
+        text = stringResource(Res.string.export_formats_helper_empty),
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = MaterialTheme.colorScheme.tertiary,
+        modifier = Modifier.padding(start = Spacing.extraSmall),
       )
     }
   }
@@ -549,11 +538,13 @@ private fun DateRangeSection(
     }
     if (state.dateRange == DateRangeOption.Custom) {
       Spacer(Modifier.height(Spacing.medium))
-      CustomRangeCard(
+      CombinedRangeField(
         start = state.customStart,
         end = state.customEnd,
-        onStartChange = onCustomStartChange,
-        onEndChange = onCustomEndChange,
+        onChange = { newStart, newEnd ->
+          onCustomStartChange(newStart)
+          onCustomEndChange(newEnd)
+        },
       )
     }
   }
@@ -587,40 +578,20 @@ private fun RangePill(
   }
 }
 
+/**
+ * Single combined range readout ("MM/DD/YYYY → MM/DD/YYYY") that opens a range picker, rather than
+ * two stranded date fields. Both bounds are always set, so neither can be left at a stale default.
+ */
 @Composable
-private fun CustomRangeCard(
+private fun CombinedRangeField(
   start: LocalDate,
   end: LocalDate,
-  onStartChange: (LocalDate) -> Unit,
-  onEndChange: (LocalDate) -> Unit,
-) {
-  // Two clearly tappable fields so neither bound can be left at its default by accident.
-  Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-    DateField(
-      modifier = Modifier.weight(1f),
-      label = stringResource(Res.string.export_custom_start_date),
-      date = start,
-      onChange = onStartChange,
-    )
-    DateField(
-      modifier = Modifier.weight(1f),
-      label = stringResource(Res.string.export_custom_end_date),
-      date = end,
-      onChange = onEndChange,
-    )
-  }
-}
-
-@Composable
-private fun DateField(
-  label: String,
-  date: LocalDate,
-  onChange: (LocalDate) -> Unit,
-  modifier: Modifier = Modifier,
+  onChange: (LocalDate, LocalDate) -> Unit,
 ) {
   var showPicker by remember { mutableStateOf(false) }
   Row(
-    modifier = modifier
+    modifier = Modifier
+      .fillMaxWidth()
       .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .background(MaterialTheme.colorScheme.surfaceContainer)
       .border(
@@ -629,39 +600,48 @@ private fun DateField(
         shape = RoundedCornerShape(Spacing.cardCornerRadius),
       )
       .clickable { showPicker = true }
-      .padding(horizontal = Spacing.medium, vertical = Spacing.medium),
+      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
     verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
     Icon(
       imageVector = Icons.Default.Event,
       contentDescription = null,
       tint = MaterialTheme.colorScheme.primary,
-      modifier = Modifier.size(18.dp),
+      modifier = Modifier.size(20.dp),
     )
     Column(modifier = Modifier.weight(1f)) {
       Text(
-        text = label.uppercase(),
+        text = stringResource(Res.string.export_receipt_range).uppercase(),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
       Text(
-        text = date.toDisplayFormat(),
+        text = "${start.toDisplayFormat()}  →  ${end.toDisplayFormat()}",
         style = WingslogTypography.dataMedium,
         color = MaterialTheme.colorScheme.onSurface,
         maxLines = 1,
       )
     }
+    Icon(
+      imageVector = Icons.Default.EditCalendar,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.size(20.dp),
+    )
   }
   if (showPicker) {
-    val pickerState =
-      rememberDatePickerState(initialSelectedDateMillis = date.toDatePickerMillis())
+    val pickerState = rememberDateRangePickerState(
+      initialSelectedStartDateMillis = start.toDatePickerMillis(),
+      initialSelectedEndDateMillis = end.toDatePickerMillis(),
+    )
     DatePickerDialog(
       onDismissRequest = { showPicker = false },
       confirmButton = {
         TextButton(onClick = {
-          pickerState.selectedDateMillis?.toDatePickerLocalDate()
-            ?.let(onChange)
+          val newStart = pickerState.selectedStartDateMillis?.toDatePickerLocalDate()
+          val newEnd = pickerState.selectedEndDateMillis?.toDatePickerLocalDate()
+          if (newStart != null && newEnd != null) onChange(newStart, newEnd)
           showPicker = false
         }) { Text(stringResource(CoreRes.string.done).uppercase()) }
       },
@@ -671,7 +651,10 @@ private fun DateField(
         }
       },
     ) {
-      DatePicker(state = pickerState)
+      DateRangePicker(
+        state = pickerState,
+        modifier = Modifier.weight(1f),
+      )
     }
   }
 }
@@ -683,6 +666,7 @@ private fun ExportBottomBar(
   state: ExportUiState.Configuring,
   onExport: () -> Unit,
 ) {
+  val deliveryEmail = state.resolvedDeliveryInfo?.destinationEmail
   Column(
     modifier = Modifier
       .fillMaxWidth()
@@ -692,55 +676,36 @@ private fun ExportBottomBar(
       .padding(top = Spacing.medium, bottom = Spacing.large),
     verticalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
+    // Single muted summary line: ✈ N aircraft · range · ~size.
     Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-      ) {
-        Icon(
-          imageVector = Icons.Default.Flight,
-          contentDescription = null,
-          tint = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.size(14.dp),
-        )
-        Text(
-          text = stringResource(
-            Res.string.export_footer_aircraft_count,
-            state.selectedAircraftIds.size
-          ),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-          text = "·",
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-          text = rangeSummary(state),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
+      Icon(
+        imageVector = Icons.Default.Flight,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(14.dp),
+      )
+      Text(
+        text = stringResource(
+          Res.string.export_footer_aircraft_count,
+          state.selectedAircraftIds.size
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurface,
+      )
+      MetaDot()
+      Text(
+        text = rangeSummary(state),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      MetaDot()
       Text(
         text = stringResource(
           Res.string.export_estimated_size,
           readableBytes(state.estimatedSizeBytes)
-        ),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-
-    state.resolvedDeliveryInfo?.let { deliveryInfo ->
-      Text(
-        text = stringResource(
-          Res.string.export_delivery_note,
-          deliveryInfo.destinationEmail,
         ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -756,17 +721,39 @@ private fun ExportBottomBar(
       shape = RoundedCornerShape(Spacing.buttonCornerRadius),
     ) {
       Icon(
-        imageVector = Icons.Default.FolderZip,
+        imageVector = if (deliveryEmail != null) Icons.Default.Mail else Icons.Default.FolderZip,
         contentDescription = null,
         modifier = Modifier.size(20.dp),
       )
       Spacer(Modifier.width(Spacing.small))
       Text(
-        text = stringResource(Res.string.export_primary_action),
+        text = stringResource(
+          if (deliveryEmail != null) Res.string.export_email_action
+          else Res.string.export_primary_action
+        ),
         style = MaterialTheme.typography.titleMedium,
       )
     }
+
+    if (deliveryEmail != null) {
+      Text(
+        text = stringResource(Res.string.export_sent_to, deliveryEmail),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+      )
+    }
   }
+}
+
+@Composable
+private fun MetaDot() {
+  Text(
+    text = "·",
+    style = MaterialTheme.typography.bodySmall,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+  )
 }
 
 // ─── Running ──────────────────────────────────────────────────────────────
@@ -788,42 +775,45 @@ private fun RunningContent(
     title = stringResource(Res.string.export_running_title),
     subtitle = state.step.label(),
     body = {
-      Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-        LinearProgressIndicator(
-          progress = { state.percent / 100f },
-          modifier = Modifier.fillMaxWidth(),
-        )
-        Text(
-          text = stringResource(
-            Res.string.export_running_progress_percent,
-            state.percent
-          ),
-          style = WingslogTypography.dataMedium,
-          color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-          text = state.step.detail(),
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-          text = stringResource(Res.string.export_running_cancel_notice),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+      Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+          LinearProgressIndicator(
+            progress = { state.percent / 100f },
+            modifier = Modifier.fillMaxWidth(),
+          )
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+          ) {
+            Text(
+              text = "${state.percent}%",
+              style = WingslogTypography.dataMedium,
+              color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+              text = stringResource(
+                Res.string.export_running_stage_counter,
+                currentIndex + 1,
+                phases.size,
+              ),
+              style = WingslogTypography.dataMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
+        }
         Column(
           modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(Spacing.medium),
-          verticalArrangement = Arrangement.spacedBy(Spacing.small),
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .border(
+              width = Spacing.hairline,
+              color = MaterialTheme.colorScheme.outlineVariant,
+              shape = RoundedCornerShape(Spacing.cardCornerRadius),
+            )
+            .padding(Spacing.large),
+          verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
-          Text(
-            text = stringResource(Res.string.export_running_steps_title),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-          )
           phases.forEachIndexed { index, step ->
             ProgressStepRow(
               label = step.label(),
@@ -850,31 +840,45 @@ private fun ProgressStepRow(
   active: Boolean,
   complete: Boolean,
 ) {
-  val icon = when {
-    complete -> Icons.Default.CheckCircle
-    active -> Icons.Default.Schedule
-    else -> Icons.Default.RadioButtonUnchecked
-  }
-  val tint = when {
-    complete -> StatusOk
-    active -> MaterialTheme.colorScheme.primary
-    else -> MaterialTheme.colorScheme.onSurfaceVariant
-  }
   Row(
     modifier = Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    Icon(
-      imageVector = icon,
-      contentDescription = null,
-      tint = tint,
+    Box(
       modifier = Modifier.size(18.dp),
-    )
+      contentAlignment = Alignment.Center,
+    ) {
+      when {
+        complete -> Icon(
+          imageVector = Icons.Default.CheckCircle,
+          contentDescription = null,
+          tint = StatusOk,
+          modifier = Modifier.size(18.dp),
+        )
+
+        active -> CircularProgressIndicator(
+          modifier = Modifier.size(14.dp),
+          strokeWidth = 2.dp,
+          color = MaterialTheme.colorScheme.primary,
+        )
+
+        else -> Icon(
+          imageVector = Icons.Default.RadioButtonUnchecked,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.outlineVariant,
+          modifier = Modifier.size(14.dp),
+        )
+      }
+    }
     Text(
       text = label,
       style = if (active) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodySmall,
-      color = if (active) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+      color = when {
+        active -> MaterialTheme.colorScheme.onSurface
+        complete -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+      },
       fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
     )
   }
@@ -895,15 +899,6 @@ private fun ExportProgressStep.label(): String = when (this) {
   ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive)
   ExportProgressStep.SAVING_FILE -> stringResource(Res.string.export_progress_saving_file)
   ExportProgressStep.UPLOADING_ARCHIVE -> stringResource(Res.string.export_progress_uploading_archive)
-}
-
-@Composable
-private fun ExportProgressStep.detail(): String = when (this) {
-  ExportProgressStep.COLLECTING_DATA -> stringResource(Res.string.export_progress_collecting_data_detail)
-  ExportProgressStep.BUILDING_ARCHIVE -> stringResource(Res.string.export_progress_building_archive_detail)
-  ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive_detail)
-  ExportProgressStep.SAVING_FILE -> stringResource(Res.string.export_progress_saving_file_detail)
-  ExportProgressStep.UPLOADING_ARCHIVE -> stringResource(Res.string.export_progress_uploading_archive_detail)
 }
 
 // ─── Result · Success ───────────────────────────────────────────────────────
@@ -929,33 +924,61 @@ private fun SuccessResult(
   val emailSubject = stringResource(Res.string.export_email_subject, fileName)
   val emailBody = stringResource(Res.string.export_email_body)
 
-  // Email users have their archive delivered by email and the on-device file is removed, so the
-  // device-location subtitle and the manual share button don't apply to them.
+  // Email users have their archive delivered by email; the device subtitle and manual-share button
+  // apply only to the no-email path.
   val deliveredByEmail = state.deliveryInfo != null
+  // Delivery is asynchronous, so right after export the state is usually QUEUED/SENDING rather than
+  // SENT. Treat anything that isn't an outright failure as the clean "Export sent" success; only a
+  // genuine failure falls back to the status card.
+  val deliveryFailed = deliveredByEmail && state.deliveryState == "FAILED"
+  val emailSucceeded = deliveredByEmail && !deliveryFailed
 
   ResultShell(
     modifier = modifier,
-    heroIcon = Icons.Default.CheckCircle,
+    heroIcon = Icons.Default.Check,
     heroColor = StatusOk,
     heroContainer = StatusOkContainer,
-    title = stringResource(Res.string.export_success_title),
+    title = stringResource(
+      if (emailSucceeded) Res.string.export_success_sent_title else Res.string.export_success_title
+    ),
     subtitle = if (deliveredByEmail) "" else location,
+    subtitleContent = if (emailSucceeded) {
+      { EmailedSubtitle(state.deliveryInfo?.destinationEmail.orEmpty()) }
+    } else {
+      null
+    },
     body = {
-      DeliveryStatusCard(state)
-      ReceiptCard(
-        fileName = fileName,
-        sizeText = readableBytes(state.sizeBytes),
-        formats = state.formats,
-        aircraftSummary = aircraftSummary(state.selectedTailNumbers),
-        rangeText = rangeSummary(
-          state.dateRange,
-          state.customStart,
-          state.customEnd
-        ),
-      )
+      Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+        when {
+          !deliveredByEmail -> NoEmailNote()
+          deliveryFailed -> DeliveryStatusCard(state)
+        }
+        ReceiptCard(
+          fileName = fileName,
+          sizeText = readableBytes(state.sizeBytes),
+          formats = state.formats,
+          aircraftSummary = aircraftSummary(state.selectedTailNumbers),
+          rangeText = rangeSummary(
+            state.dateRange,
+            state.customStart,
+            state.customEnd
+          ),
+        )
+      }
     },
     actions = {
-      if (!deliveredByEmail) {
+      if (deliveredByEmail) {
+        ResultPrimaryButton(
+          label = stringResource(CoreRes.string.done),
+          icon = null,
+          onClick = onDone,
+        )
+        ResultSecondaryButton(
+          label = stringResource(Res.string.export_view_exports),
+          icon = Icons.Default.History,
+          onClick = onHistory,
+        )
+      } else {
         ResultPrimaryButton(
           label = stringResource(Res.string.export_share),
           icon = Icons.Default.IosShare,
@@ -968,24 +991,85 @@ private fun SuccessResult(
             )
           },
         )
-      }
-      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-        ResultSecondaryButton(
-          modifier = Modifier.weight(1f),
-          label = stringResource(Res.string.export_view_exports),
-          icon = Icons.Default.History,
-          onClick = onHistory,
-        )
-        ResultSecondaryButton(
-          modifier = Modifier.weight(1f),
-          label = stringResource(CoreRes.string.done),
-          icon = null,
-          plain = true,
-          onClick = onDone,
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+          ResultSecondaryButton(
+            modifier = Modifier.weight(1f),
+            label = stringResource(Res.string.export_view_exports),
+            icon = Icons.Default.History,
+            onClick = onHistory,
+          )
+          ResultSecondaryButton(
+            modifier = Modifier.weight(1f),
+            label = stringResource(CoreRes.string.done),
+            icon = null,
+            plain = true,
+            onClick = onDone,
+          )
+        }
       }
     },
   )
+}
+
+/** Emailed-success subtitle with the destination address rendered in mono, per the design. */
+@Composable
+private fun EmailedSubtitle(email: String) {
+  Text(
+    text = buildAnnotatedString {
+      append(stringResource(Res.string.export_success_emailed_subtitle))
+      if (email.isNotBlank()) {
+        append(" ")
+        withStyle(
+          WingslogTypography.dataMedium.toSpanStyle()
+            .copy(color = MaterialTheme.colorScheme.onSurface)
+        ) { append(email) }
+      }
+    },
+    style = MaterialTheme.typography.bodyMedium,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    textAlign = TextAlign.Center,
+  )
+}
+
+/** Quiet inline advisory shown on the no-email success path, above the receipt. */
+@Composable
+private fun NoEmailNote() {
+  val accent = MaterialTheme.colorScheme.primary
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .clip(RoundedCornerShape(Spacing.chipCornerRadius))
+      .background(accent.copy(alpha = 0.08f))
+      .border(
+        width = Spacing.hairline,
+        color = accent.copy(alpha = 0.22f),
+        shape = RoundedCornerShape(Spacing.chipCornerRadius),
+      )
+      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+  ) {
+    Icon(
+      imageVector = Icons.Default.Info,
+      contentDescription = null,
+      tint = accent,
+      modifier = Modifier.size(20.dp),
+    )
+    Text(
+      text = buildAnnotatedString {
+        withStyle(
+          SpanStyle(
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+          )
+        ) { append(stringResource(Res.string.export_no_email_note_title)) }
+        append(" ")
+        append(stringResource(Res.string.export_no_email_note_body))
+      },
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+  }
 }
 
 @Composable
@@ -1216,6 +1300,7 @@ private fun ResultShell(
   subtitle: String,
   body: @Composable () -> Unit,
   actions: @Composable ColumnScope.() -> Unit,
+  subtitleContent: (@Composable () -> Unit)? = null,
 ) {
   Column(
     modifier = modifier
@@ -1233,7 +1318,12 @@ private fun ResultShell(
         modifier = Modifier
           .size(72.dp)
           .clip(RoundedCornerShape(percent = 50))
-          .background(heroContainer),
+          .background(heroContainer)
+          .border(
+            width = 1.5.dp,
+            color = heroColor.copy(alpha = 0.35f),
+            shape = RoundedCornerShape(percent = 50),
+          ),
         contentAlignment = Alignment.Center,
       ) {
         Icon(
@@ -1249,7 +1339,9 @@ private fun ResultShell(
         textAlign = TextAlign.Center,
         color = MaterialTheme.colorScheme.onSurface,
       )
-      if (subtitle.isNotBlank()) {
+      if (subtitleContent != null) {
+        subtitleContent()
+      } else if (subtitle.isNotBlank()) {
         Text(
           text = subtitle,
           style = MaterialTheme.typography.bodyMedium,

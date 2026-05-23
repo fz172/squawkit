@@ -96,4 +96,17 @@ class ExportHistoryViewModel(
       )
     }
   }
+
+  /**
+   * Downloads a remote-only export to this device, then reloads so it surfaces as on-device.
+   */
+  fun onSaveToDevice(exportId: String) {
+    viewModelScope.launch {
+      exportManager.saveToDevice(exportId)
+      _state.value = ExportHistoryUiState.Loaded(
+        exportManager.listExports(),
+        canEmailDelivery
+      )
+    }
+  }
 }
