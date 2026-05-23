@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Attachment
@@ -280,7 +279,7 @@ private fun ConfiguringContent(
 
     item {
       val allSelected = state.selectedAircraftIds.size == state.aircraft.size
-      SectionHeader(
+      Section(
         title = stringResource(Res.string.export_aircraft_section),
         action = if (state.aircraft.size > 1) {
           {
@@ -295,15 +294,17 @@ private fun ConfiguringContent(
         } else {
           null
         },
-      )
-    }
-
-    items(state.aircraft, key = { it.aircraftId }) { aircraft ->
-      AircraftCard(
-        aircraft = aircraft,
-        selected = aircraft.aircraftId in state.selectedAircraftIds,
-        onClick = { onToggleAircraft(aircraft.aircraftId) },
-      )
+      ) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+          state.aircraft.forEach { aircraft ->
+            AircraftCard(
+              aircraft = aircraft,
+              selected = aircraft.aircraftId in state.selectedAircraftIds,
+              onClick = { onToggleAircraft(aircraft.aircraftId) },
+            )
+          }
+        }
+      }
     }
 
     item {
@@ -349,8 +350,7 @@ private fun FormatSection(
   formats: Set<ExportFormat>,
   onToggleFormat: (ExportFormat) -> Unit,
 ) {
-  Column {
-    SectionHeader(title = stringResource(Res.string.export_formats_section))
+  Section(title = stringResource(Res.string.export_formats_section)) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
       FORMAT_CHOICES.forEach { choice ->
         FormatChip(
@@ -517,8 +517,7 @@ private fun DateRangeSection(
   onCustomStartChange: (LocalDate) -> Unit,
   onCustomEndChange: (LocalDate) -> Unit,
 ) {
-  Column {
-    SectionHeader(title = stringResource(Res.string.export_date_range_section))
+  Section(title = stringResource(Res.string.export_date_range_section)) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
       RangePill(
         label = stringResource(Res.string.export_all_time),
@@ -1444,6 +1443,20 @@ private fun EmptyAircraftContent(
 }
 
 // ─── Shared helpers ─────────────────────────────────────────────────────────
+
+/** A section header with a consistent gap above its content, regardless of where it sits. */
+@Composable
+private fun Section(
+  title: String,
+  action: (@Composable () -> Unit)? = null,
+  content: @Composable ColumnScope.() -> Unit,
+) {
+  Column {
+    SectionHeader(title = title, action = action)
+    Spacer(Modifier.height(Spacing.medium))
+    content()
+  }
+}
 
 @Composable
 private fun SectionHeader(
