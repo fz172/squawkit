@@ -68,21 +68,13 @@ import wingslog.feature.export.sharedassets.generated.resources.export_history_d
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body_cloud_only
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body_device_and_cloud
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_title
-import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_failed
-import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_manual
-import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_queued
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_retry
-import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_sending
-import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_sent
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_body
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_title
 import wingslog.feature.export.sharedassets.generated.resources.export_history_item_meta
 import wingslog.feature.export.sharedassets.generated.resources.export_history_new
 import wingslog.feature.export.sharedassets.generated.resources.export_history_remote_expired
 import wingslog.feature.export.sharedassets.generated.resources.export_history_remote_expires_on
-import wingslog.feature.export.sharedassets.generated.resources.export_history_status_local_and_remote
-import wingslog.feature.export.sharedassets.generated.resources.export_history_status_local_only
-import wingslog.feature.export.sharedassets.generated.resources.export_history_status_remote_only
 import wingslog.feature.export.sharedassets.generated.resources.export_history_title
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_last_n_months
@@ -114,7 +106,8 @@ fun ExportHistoryScreen(
       )
     },
   ) { innerPadding ->
-    val contentModifier = Modifier.padding(innerPadding).fillMaxSize()
+    val contentModifier = Modifier.padding(innerPadding)
+      .fillMaxSize()
     when (state) {
       is ExportHistoryUiState.Loading -> LoadingContent(contentModifier)
       is ExportHistoryUiState.Loaded ->
@@ -221,12 +214,11 @@ private fun ExportHistoryCard(
 ) {
   var showDeleteConfirm by remember { mutableStateOf(false) }
   val shareTitle = stringResource(Res.string.export_share_title)
-  val emailSubject = stringResource(Res.string.export_email_subject, record.file_name)
+  val emailSubject =
+    stringResource(Res.string.export_email_subject, record.file_name)
   val emailBody = stringResource(Res.string.export_email_body)
   val aircraftTitle = aircraftSummary(record)
   val scope = scopeLine(record)
-  val availability = availabilityLabel(record)
-  val delivery = deliveryLabel(record)
   val retention = retentionLabel(record)
   val canDelete = true
   val canRetry =
@@ -310,16 +302,6 @@ private fun ExportHistoryCard(
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
-      Text(
-        text = availability,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-      Text(
-        text = delivery,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
       if (retention.isNotBlank()) {
         Text(
           text = retention,
@@ -343,26 +325,33 @@ private fun ExportHistoryCard(
         }
       }
       if (canResend) {
-        FilledTonalIconButton(
+        IconButton(
           onClick = onResendDelivery,
           modifier = Modifier.size(36.dp),
         ) {
           Icon(
             imageVector = Icons.Default.Email,
             contentDescription = stringResource(Res.string.export_resend_email),
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(Spacing.extraLarge),
           )
         }
       }
       if (canShareDevice) {
-        FilledTonalIconButton(
-          onClick = { onShareExport(record.file_path, shareTitle, emailSubject, emailBody) },
+        IconButton(
+          onClick = {
+            onShareExport(
+              record.file_path,
+              shareTitle,
+              emailSubject,
+              emailBody
+            )
+          },
           modifier = Modifier.size(36.dp),
         ) {
           Icon(
             imageVector = Icons.Default.IosShare,
             contentDescription = stringResource(Res.string.export_share),
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(Spacing.extraLarge),
           )
         }
       }
@@ -375,7 +364,7 @@ private fun ExportHistoryCard(
           Icon(
             imageVector = Icons.Default.Delete,
             contentDescription = stringResource(Res.string.export_history_delete),
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(Spacing.extraLarge),
           )
         }
       }
@@ -411,11 +400,22 @@ private fun ExportHistoryCard(
 @Composable
 private fun deleteConfirmBody(record: ExportRecord): String = when {
   record.file_path.isNotBlank() && record.remote_archive_ref.isNotBlank() ->
-    stringResource(Res.string.export_history_delete_confirm_body_device_and_cloud, record.file_name)
+    stringResource(
+      Res.string.export_history_delete_confirm_body_device_and_cloud,
+      record.file_name
+    )
+
   record.remote_archive_ref.isNotBlank() ->
-    stringResource(Res.string.export_history_delete_confirm_body_cloud_only, record.file_name)
+    stringResource(
+      Res.string.export_history_delete_confirm_body_cloud_only,
+      record.file_name
+    )
+
   else ->
-    stringResource(Res.string.export_history_delete_confirm_body, record.file_name)
+    stringResource(
+      Res.string.export_history_delete_confirm_body,
+      record.file_name
+    )
 }
 
 /** Aircraft tail summary ("N532SL" / "N532SL +2"), falling back to the file name for legacy records. */
@@ -433,30 +433,43 @@ private fun aircraftSummary(record: ExportRecord): String {
 private fun scopeLine(record: ExportRecord): String {
   val formats = joinFormats(record.formats)
   val range = rangeLabel(record.date_range)
-  return listOf(formats, range).filter { it.isNotBlank() }.joinToString(" · ")
+  return listOf(formats, range).filter { it.isNotBlank() }
+    .joinToString(" · ")
 }
 
 private fun joinFormats(formats: List<String>): String = when (formats.size) {
   0 -> ""
   1 -> formats[0]
   2 -> "${formats[0]} + ${formats[1]}"
-  else -> "${formats.dropLast(1).joinToString(", ")} + ${formats.last()}"
+  else -> "${
+    formats.dropLast(1)
+      .joinToString(", ")
+  } + ${formats.last()}"
 }
 
 @Composable
-private fun rangeLabel(range: ExportRecordDateRange?): String = when (range?.kind) {
-  null, "" -> ""
-  "ALL_TIME" -> stringResource(Res.string.export_all_time)
-  "LAST_N_MONTHS" ->
-    if (range.months == 12) stringResource(Res.string.export_last_12_months)
-    else stringResource(Res.string.export_last_n_months, range.months)
-  "CUSTOM" -> {
-    val start = runCatching { LocalDate.parse(range.custom_start).toDisplayFormat() }.getOrDefault(range.custom_start)
-    val end = runCatching { LocalDate.parse(range.custom_end).toDisplayFormat() }.getOrDefault(range.custom_end)
-    "$start – $end"
+private fun rangeLabel(range: ExportRecordDateRange?): String =
+  when (range?.kind) {
+    null, "" -> ""
+    "ALL_TIME" -> stringResource(Res.string.export_all_time)
+    "LAST_N_MONTHS" ->
+      if (range.months == 12) stringResource(Res.string.export_last_12_months)
+      else stringResource(Res.string.export_last_n_months, range.months)
+
+    "CUSTOM" -> {
+      val start = runCatching {
+        LocalDate.parse(range.custom_start)
+          .toDisplayFormat()
+      }.getOrDefault(range.custom_start)
+      val end = runCatching {
+        LocalDate.parse(range.custom_end)
+          .toDisplayFormat()
+      }.getOrDefault(range.custom_end)
+      "$start – $end"
+    }
+
+    else -> ""
   }
-  else -> ""
-}
 
 @Composable
 private fun formatDate(epochMillis: Long): String =
@@ -468,34 +481,24 @@ private fun formatDate(epochMillis: Long): String =
 @Composable
 private fun readableBytes(bytes: Long): String = when {
   bytes <= 0L -> stringResource(Res.string.export_size_zero_kb)
-  bytes < 1_000_000L -> stringResource(Res.string.export_size_kb, ((bytes + 999L) / 1_000L).toString())
-  else -> stringResource(Res.string.export_size_mb, ((bytes / 100_000L) / 10.0).toString())
-}
+  bytes < 1_000_000L -> stringResource(
+    Res.string.export_size_kb,
+    ((bytes + 999L) / 1_000L).toString()
+  )
 
-@Composable
-private fun availabilityLabel(record: ExportRecord): String = when {
-  record.file_path.isNotBlank() && record.remote_archive_ref.isNotBlank() ->
-    stringResource(Res.string.export_history_status_local_and_remote)
-  record.remote_archive_ref.isNotBlank() ->
-    stringResource(Res.string.export_history_status_remote_only)
-  else ->
-    stringResource(Res.string.export_history_status_local_only)
-}
-
-@Composable
-private fun deliveryLabel(record: ExportRecord): String = when (record.delivery_state) {
-  "QUEUED" -> stringResource(Res.string.export_history_delivery_queued)
-  "SENDING" -> stringResource(Res.string.export_history_delivery_sending)
-  "SENT" -> stringResource(Res.string.export_history_delivery_sent)
-  "FAILED" -> stringResource(Res.string.export_history_delivery_failed)
-  else -> stringResource(Res.string.export_history_delivery_manual)
+  else -> stringResource(
+    Res.string.export_size_mb,
+    ((bytes / 100_000L) / 10.0).toString()
+  )
 }
 
 @Composable
 private fun retentionLabel(record: ExportRecord): String {
   if (record.remote_archive_ref.isBlank() || record.remote_expires_at_epoch_millis <= 0L) return ""
   val expiry = formatDate(record.remote_expires_at_epoch_millis)
-  return if (record.remote_expires_at_epoch_millis <= Clock.System.now().toEpochMilliseconds()) {
+  return if (record.remote_expires_at_epoch_millis <= Clock.System.now()
+      .toEpochMilliseconds()
+  ) {
     stringResource(Res.string.export_history_remote_expired, expiry)
   } else {
     stringResource(Res.string.export_history_remote_expires_on, expiry)

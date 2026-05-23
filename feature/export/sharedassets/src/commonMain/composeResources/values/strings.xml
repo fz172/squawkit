@@ -107,9 +107,6 @@ Thank you for choosing Hopply.</string>
   <string name="export_history_empty_body">Generate a printable PDF or spreadsheet of your maintenance logs to share with your mechanic, IA, or insurance.</string>
   <string name="export_history_new">New export</string>
   <string name="export_history_item_meta">%1$s · %2$s</string>
-  <string name="export_history_status_local_only">On this device only</string>
-  <string name="export_history_status_local_and_remote">On this device and in cloud</string>
-  <string name="export_history_status_remote_only">In cloud only</string>
   <string name="export_history_delivery_manual">Manual share only</string>
   <string name="export_history_delivery_queued">Email requested</string>
   <string name="export_history_delivery_sending">Sending email</string>
