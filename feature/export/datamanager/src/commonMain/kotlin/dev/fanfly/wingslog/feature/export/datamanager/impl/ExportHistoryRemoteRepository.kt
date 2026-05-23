@@ -43,6 +43,9 @@ class ExportHistoryRemoteRepository(
   suspend fun uploadAndSync(record: ExportRecord, archiveBytes: ByteArray): ExportRecord {
     val user = auth.currentUser ?: return record
     if (user.isAnonymous) return record
+    // Email is the source of truth for cloud storage: with no delivery email there is nothing to
+    // send and no reason to keep a cloud copy, so the export stays on-device only.
+    if (record.destination_email.isBlank()) return record
 
     val remotePath = remoteArchivePath(user.uid, record.export_id, record.file_name)
     return runCatching {
