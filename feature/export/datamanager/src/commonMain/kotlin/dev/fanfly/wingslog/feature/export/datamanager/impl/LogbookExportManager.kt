@@ -84,19 +84,14 @@ class LogbookExportManager(
       emit(ExportProgress.Running(step = ExportProgressStep.UPLOADING_ARCHIVE, percent = 95))
     }
     val finalRecord = remoteRecord.requestDeliveryIfEligible()
-    // Email users receive the archive by email and keep a cloud copy, so the on-device file is
-    // redundant; drop it. Anyone else relies on the local file for the native share sheet.
-    val deliveredByEmail =
-      finalRecord.remote_archive_ref.isNotBlank() && finalRecord.destination_email.isNotBlank()
-    if (deliveredByEmail) {
-      exportFileStore.deleteExport(finalRecord.export_id)
-    } else if (finalRecord != localRecord) {
+    // Keep the on-device file after delivery so every export stays available both locally and in
+    // the cloud. The persisted local record carries the remote ref + delivery state once synced.
+    if (finalRecord != localRecord) {
       exportFileStore.saveRecord(finalRecord)
     }
     emit(
       ExportProgress.Success(
-        // Cleared when the local file was deleted so nothing tries to share a stale path.
-        filePath = if (deliveredByEmail) "" else saved.filePath,
+        filePath = saved.filePath,
         fileName = saved.fileName,
         // Left blank so the UI renders the localized label from displayLocationKind.
         displayLocation = "",
@@ -155,6 +150,29 @@ class LogbookExportManager(
       log.w(error) { "export delivery resend failed for $exportId" }
       false
     }
+  }
+
+  override suspend fun saveToDevice(exportId: String): Boolean {
+    // Already on device (local record carries a file path)? Nothing to download.
+    val local = exportFileStore.listExports().firstOrNull { it.export_id == exportId }
+    if (local != null && local.file_path.isNotBlank()) return true
+
+    val remote =
+      remoteRepository.listRemoteRecords().firstOrNull { it.export_id == exportId } ?: return false
+    if (remote.remote_archive_ref.isBlank()) return false
+
+    val bytes = remoteRepository.downloadArchive(remote.remote_archive_ref) ?: return false
+    val saved = exportFileStore.writeZip(remote.file_name, bytes)
+    // Persist a local record so history shows it as on-device and the share sheet has a real file.
+    // Merge keeps the remote delivery/archive fields, so the cloud copy stays referenced.
+    exportFileStore.saveRecord(
+      remote.copy(
+        file_path = saved.filePath,
+        size_bytes = saved.sizeBytes,
+        display_location = saved.displayLocationKind.name,
+      )
+    )
+    return true
   }
 
   private fun buildRecord(
