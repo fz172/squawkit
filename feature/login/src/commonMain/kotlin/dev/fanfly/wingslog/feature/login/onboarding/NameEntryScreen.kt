@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.onboarding
+package dev.fanfly.wingslog.feature.login.onboarding
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -61,13 +61,13 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.composeapp.generated.resources.Res
-import wingslog.composeapp.generated.resources.onboarding_continue
-import wingslog.composeapp.generated.resources.onboarding_name_body
-import wingslog.composeapp.generated.resources.onboarding_name_eyebrow
-import wingslog.composeapp.generated.resources.onboarding_name_headline
-import wingslog.composeapp.generated.resources.onboarding_name_hint
-import wingslog.composeapp.generated.resources.onboarding_name_label
+import wingslog.feature.login.generated.resources.Res
+import wingslog.feature.login.generated.resources.onboarding_continue
+import wingslog.feature.login.generated.resources.onboarding_name_body
+import wingslog.feature.login.generated.resources.onboarding_name_eyebrow
+import wingslog.feature.login.generated.resources.onboarding_name_headline
+import wingslog.feature.login.generated.resources.onboarding_name_hint
+import wingslog.feature.login.generated.resources.onboarding_name_label
 import wingslog.core.ui.generated.resources.ic_launcher_foreground
 import wingslog.core.ui.generated.resources.Res as UiRes
 

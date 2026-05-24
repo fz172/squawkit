@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.onboarding
+package dev.fanfly.wingslog.feature.login.onboarding
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -46,9 +46,9 @@ import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.composeapp.generated.resources.Res
-import wingslog.composeapp.generated.resources.onboarding_welcome_aboard
-import wingslog.composeapp.generated.resources.onboarding_welcome_tagline
+import wingslog.feature.login.generated.resources.Res
+import wingslog.feature.login.generated.resources.onboarding_welcome_aboard
+import wingslog.feature.login.generated.resources.onboarding_welcome_tagline
 import wingslog.core.ui.generated.resources.ic_launcher_foreground
 import wingslog.core.ui.generated.resources.Res as UiRes
 

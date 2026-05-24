@@ -12,14 +12,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
-import dev.fanfly.wingslog.feature.login.LoginScreen
+import dev.fanfly.wingslog.feature.login.AuthFlow
 
 @Composable
 fun WebApp() {
-    // Koin is started in main(); koinViewModel() inside LoginScreen resolves against it.
+    // Koin is started in main(); AuthFlow resolves LoginViewModel / OnboardingActions /
+    // OnboardingPreferences from it.
     WingslogTheme {
-        var signedIn by remember { mutableStateOf(false) }
-        if (signedIn) {
+        var onboarded by remember { mutableStateOf(false) }
+        if (onboarded) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "Signed in 🎉",
@@ -27,7 +28,7 @@ fun WebApp() {
                 )
             }
         } else {
-            LoginScreen(onLoginSuccess = { signedIn = true })
+            AuthFlow(onComplete = { onboarded = true })
         }
     }
 }

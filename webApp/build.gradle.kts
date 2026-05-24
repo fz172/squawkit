@@ -18,6 +18,7 @@ kotlin {
             // core:ui api-exports compose.ui, material3, and material-icons-extended.
             implementation(project(":core:ui"))
             implementation(project(":core:auth"))
+            implementation(project(":core:storage"))
             implementation(project(":feature:login"))
             implementation(libs.compose.foundation)
 

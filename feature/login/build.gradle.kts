@@ -48,6 +48,8 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:ui"))
       implementation(project(":core:auth"))
+      // OnboardingPreferences (hasSeenWelcome flag) reads/writes the local store.
+      implementation(project(":core:storage"))
 
       // Compose resources (this module owns its login strings + Google icon)
       implementation(libs.components.resources)

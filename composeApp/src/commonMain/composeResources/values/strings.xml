@@ -1,15 +1,4 @@
 <resources>
-  <!-- Onboarding: name entry -->
-  <string name="onboarding_name_eyebrow">QUICK HELLO</string>
-  <string name="onboarding_name_headline">What should we\ncall you?</string>
-  <string name="onboarding_name_body">Just so we know who's logging any maintenance work. You can change it anytime in Settings.</string>
-  <string name="onboarding_name_label">YOUR NAME</string>
-  <string name="onboarding_name_hint">e.g. Amelia Earhart</string>
-  <string name="onboarding_continue">Continue</string>
-  <!-- Onboarding: welcome -->
-  <string name="onboarding_welcome_aboard">Welcome aboard</string>
-  <string name="onboarding_welcome_tagline">Let's get your hangar set up.</string>
-
   <!-- Database integrity recovery -->
   <string name="database_error">Database Error</string>
   <string name="clearing_local_data">Clearing local data…</string>

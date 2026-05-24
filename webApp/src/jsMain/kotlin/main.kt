@@ -2,12 +2,17 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
+import dev.fanfly.wingslog.core.storage.di.platformStorageModule
+import dev.fanfly.wingslog.core.storage.di.storageModule
 import dev.fanfly.wingslog.feature.login.di.loginModule
+import dev.fanfly.wingslog.feature.login.onboarding.OnboardingActions
+import dev.fanfly.wingslog.web.InMemoryOnboardingActions
 import dev.fanfly.wingslog.web.WebApp
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.FirebaseOptions
 import dev.gitlive.firebase.initialize
 import org.koin.core.context.startKoin
+import org.koin.dsl.module
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
@@ -26,7 +31,15 @@ fun main() {
     )
 
     startKoin {
-        modules(commonAuthModule, authModule, loginModule)
+        modules(
+            commonAuthModule,
+            authModule,
+            storageModule,
+            platformStorageModule,
+            loginModule,
+            // TODO(M4): swap for the real TechnicianManager-backed actions once it's on JS.
+            module { single<OnboardingActions> { InMemoryOnboardingActions() } },
+        )
     }
 
     ComposeViewport(viewportContainerId = "ComposeTarget") {
