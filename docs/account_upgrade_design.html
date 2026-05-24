@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Doc: Guest → Account Upgrade</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb; --surface: #ffffff; --surface-alt: #eef3f9;
+      --text: #122033; --muted: #53657d; --line: #d8e1ec;
+      --blue: #1f5fa8; --blue-soft: #dbe9fb;
+      --green: #156f4a; --green-soft: #d8f0e3;
+      --amber: #9a6200; --amber-soft: #fdeecb;
+      --red: #a33a32; --red-soft: #f7dedb;
+      --shadow: rgba(18, 32, 51, 0.08);
+      --mono: "SFMono-Regular", "JetBrains Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.55; }
+    main { max-width: 1240px; margin: 0 auto; padding: 32px 20px 56px; }
+    .page-shell { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 28px; align-items: start; }
+    .doc-body { min-width: 0; }
+    h1, h2, h3, h4 { line-height: 1.2; margin: 0 0 12px; }
+    h1 { font-size: 2rem; }
+    h2 { margin-top: 38px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 1.35rem; }
+    h3 { margin-top: 24px; font-size: 1.08rem; }
+    h4 { margin-top: 18px; font-size: 0.95rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-alt); padding: 1px 6px; border-radius: 6px; }
+    pre { background: #0f1c2e; color: #e6eef9; border-radius: 14px; padding: 16px 18px; overflow: auto; font-family: var(--mono); font-size: 0.84rem; line-height: 1.5; margin: 16px 0; }
+    pre .c { color: #7d96b5; }
+    pre .k { color: #7cc4ff; }
+    pre .s { color: #9be0b0; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 16px 0; box-shadow: 0 1px 2px rgba(18,32,51,0.04); }
+    .hero { background: linear-gradient(180deg, var(--surface), var(--surface-alt)); border: 1px solid var(--line); border-radius: 20px; padding: 26px; margin-bottom: 24px; }
+    .hero h1 { margin-bottom: 8px; }
+    .lede { font-size: 1.1rem; color: var(--muted); margin: 0; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 0.82rem; font-weight: 600; margin: 0 6px 6px 0; }
+    .pill.green { background: var(--green-soft); color: var(--green); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+    .pill.red { background: var(--red-soft); color: var(--red); }
+    .toc { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow: auto; background: rgba(255,255,255,0.9); backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px var(--shadow); }
+    .toc-title { margin: 0 0 10px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .toc ol { margin: 0; padding-left: 18px; }
+    .toc li { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92rem; }
+    th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+    th { background: var(--surface-alt); font-weight: 600; }
+    .callout { border-radius: 14px; padding: 14px 18px; margin: 16px 0; border: 1px solid var(--line); }
+    .callout.note { background: var(--blue-soft); border-color: #bcd6f5; }
+    .callout.win { background: var(--green-soft); border-color: #aee0c6; }
+    .callout.warn { background: var(--amber-soft); border-color: #f0d79a; }
+    .callout.risk { background: var(--red-soft); border-color: #efc4bf; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; font-family: var(--mono); font-size: 0.82rem; white-space: pre; overflow-x: auto; color: var(--text); line-height: 1.5; }
+    ol.steps { counter-reset: step; list-style: none; padding-left: 0; }
+    ol.steps > li { position: relative; padding-left: 40px; margin: 14px 0; }
+    ol.steps > li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; font-size: 0.85rem; display: grid; place-items: center; }
+    @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <div>
+      <span class="pill amber">Status: Proposed</span>
+      <span class="pill">Design Doc</span>
+      <span class="pill">core:auth · core:storage · feature:sync</span>
+    </div>
+    <h1>Guest → Account Upgrade — Technical Design</h1>
+    <p class="lede">How an anonymous user becomes a permanent Google/Apple account with their local-first data intact, using Firebase account linking to preserve the UID and the existing sync engine to push that data to the account. Gated behind a Feature Lab flag. Companion to <a href="account_upgrade_PRD.html">the PRD</a>.</p>
+  </div>
+
+  <div class="page-shell">
+    <div class="doc-body">
+
+      <h2 id="key-insight">1. The Key Insight</h2>
+      <p>Every local record is stored under <code>EntityScope.userRoot(uid)</code> → <code>/users/{uid}/…</code>. The UID is the join key between the local SQLDelight store and Firestore. Two facts make the upgrade clean:</p>
+      <ul>
+        <li><b>Firebase account linking preserves the UID.</b> <code>FirebaseUser.linkWithCredential(...)</code> attaches a permanent credential (Google/Apple) to the <i>same</i> anonymous user. The UID does not change, so <b>every local row stays valid with zero migration</b>.</li>
+        <li><b>The sync engine already does the syncing.</b> <code>SyncEngine</code> idles while <code>user == null || user.isAnonymous</code>. The instant the user becomes non-anonymous (same UID), it wakes, hydrates, and <code>PushWorker</code> drains the local <code>dirty=1</code> rows to Firestore. Since guests never synced, <b>all</b> their rows are dirty and get pushed.</li>
+      </ul>
+      <div class="callout risk">
+        <strong>What we must NOT do</strong>
+        The login screen's "Sign in with Google" calls <code>signInWithCredential</code>, which mints a <b>new UID</b> and orphans all guest data. The upgrade path must use <code>linkWithCredential</code>, never <code>signInWithCredential</code>, on the clean path.
+      </div>
+
+      <h2 id="architecture">2. Architecture Overview</h2>
+      <div class="diagram">
+ GUEST (anonymous uid = A)                 PERMANENT (uid = A, linked)
+ ┌─────────────────────────┐               ┌─────────────────────────┐
+ │ SQLDelight entity store  │               │ SQLDelight entity store  │
+ │   scope = users/A/…      │  link(cred)   │   scope = users/A/…      │
+ │   every row dirty=1      │ ───────────▶  │   (unchanged)            │
+ │ SyncEngine: IDLE         │  same UID     │ SyncEngine: ACTIVE       │
+ └─────────────────────────┘               └───────────┬─────────────┘
+                                                        │ push dirty rows
+                                                        ▼
+                                              Firestore /users/A/…  (synced)
+
+ COLLISION (cred already belongs to uid = B):
+   link(cred) → FirebaseAuthUserCollisionException
+   → confirm merge → signInWithCredential(cred)  [now uid = B]
+   → reassign local scope  A ⟶ B  (mark dirty, reset cursors)
+   → SyncEngine hydrates B's cloud set + pushes reassigned rows  (union)
+      </div>
+
+      <h2 id="auth">3. Auth Layer Changes (<code>core:auth</code>)</h2>
+      <p>Add an upgrade-oriented API to <code>AuthManager</code>. The primary provider is platform-determined: Google on Android, Apple on iOS. The result is a sealed type so the ViewModel can branch on link-success vs collision vs cancel vs error.</p>
+      <pre><span class="c">// commonMain — AuthManager.kt (additions)</span>
+<span class="k">sealed interface</span> AccountUpgradeResult {
+  <span class="k">data class</span> Linked(<span class="k">val</span> user: FirebaseUser) : AccountUpgradeResult      <span class="c">// clean: same uid, now permanent</span>
+  <span class="k">data class</span> CredentialInUse(<span class="k">val</span> credential: AuthCredential) : AccountUpgradeResult <span class="c">// collision → offer merge</span>
+  <span class="k">data object</span> Cancelled : AccountUpgradeResult                          <span class="c">// user dismissed provider sheet</span>
+  <span class="k">data class</span> Failed(<span class="k">val</span> message: String) : AccountUpgradeResult
+}
+
+<span class="k">interface</span> AuthManager {
+  <span class="c">// …existing…</span>
+  <span class="c">/** Links the platform's primary provider (Google on Android, Apple on iOS) to the</span>
+  <span class="c">    current anonymous user, preserving the UID. */</span>
+  <span class="k">suspend fun</span> upgradeAnonymousAccount(): AccountUpgradeResult
+
+  <span class="c">/** Merge path: sign in to the existing account that owns [credential]. Returns the new</span>
+  <span class="c">    permanent user (different UID) or Failed. Caller reassigns local data afterward. */</span>
+  <span class="k">suspend fun</span> signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult
+}</pre>
+      <h4>Android (<code>androidMain</code>)</h4>
+      <p>Reuse the existing Credential Manager + Google ID-token plumbing (already present for <code>signInWithGoogle</code>), but call <code>currentUser.linkWithCredential(googleCredential)</code> instead of <code>signInWithCredential</code>. Catch <code>FirebaseAuthUserCollisionException</code> (GitLive surfaces this) and return <code>CredentialInUse(googleCredential)</code>.</p>
+      <h4>iOS (<code>iosMain</code>)</h4>
+      <p>Implement Sign in with Apple via <code>ASAuthorizationController</code> with a hashed nonce, then build a GitLive <code>OAuthProvider.credential("apple.com", idToken, rawNonce)</code> and <code>linkWithCredential</code>. This also closes the current gap where iOS has no real provider (<code>signInWithGoogle</code> returns null on iOS). Apple is required by App Store policy once Google is offered.</p>
+      <div class="callout note">
+        <strong>App Store compliance</strong>
+        Offering Google sign-in on iOS would require Sign in with Apple alongside it. Splitting providers by platform (Google→Android, Apple→iOS) keeps each store happy and matches each platform's native identity.
+      </div>
+
+      <h2 id="clean-path">4. Clean Link Path</h2>
+      <ol class="steps">
+        <li>User taps the upgrade CTA in Settings → <code>UpgradeViewModel.startUpgrade()</code> calls <code>authManager.upgradeAnonymousAccount()</code>.</li>
+        <li>Provider sheet returns an ID token; <code>linkWithCredential</code> succeeds → <code>Linked(user)</code>. UID unchanged; <code>user.isAnonymous</code> is now false.</li>
+        <li><code>SyncEngine</code>'s auth-state collector sees a non-anonymous user (and <code>cloudSyncEnabled</code>) → leaves idle, runs <code>HydrationRunner</code> (cloud is empty for a first-time UID, so nothing to pull) and <code>PushWorker</code> drains the dirty rows.</li>
+        <li>UI shows progress, then a single "Syncing complete" state (no record count). The Settings profile card flips from guest to the real identity.</li>
+      </ol>
+      <p>No storage migration runs on this path. The only state that changed is the Firebase user's provider set and <code>isAnonymous</code> flag.</p>
+
+      <h2 id="merge-path">5. Merge Path (Collision)</h2>
+      <p>When the credential already belongs to account <code>B</code>, linking throws a collision. We cannot link (the credential is taken), so we sign in to <code>B</code> and bring the guest's local data along by re-scoping it from <code>A</code> to <code>B</code>.</p>
+      <ol class="steps">
+        <li><code>upgradeAnonymousAccount()</code> returns <code>CredentialInUse(cred)</code>. The VM shows the merge confirmation dialog (PRD §6).</li>
+        <li>On confirm, capture the guest UID <code>A = authManager.getCurrentUser().uid</code> <b>before</b> switching, then call <code>signInToExistingAccount(cred)</code> → signed in as <code>B</code>. (The anonymous user <code>A</code> becomes orphaned in Firebase Auth; its <b>local</b> rows still exist, keyed by <code>A</code>.)</li>
+        <li>Run <code>LocalAccountMigrator.reassign(fromUid = A, toUid = B)</code> (see §6) — re-scope local entities &amp; blobs to <code>B</code>, mark them <code>dirty=1</code>, clear sync cursors so hydration re-runs for <code>B</code>.</li>
+        <li><code>SyncEngine</code> (now user <code>B</code>, non-anonymous) hydrates <code>B</code>'s existing cloud set and pushes the reassigned dirty rows. The result is an additive <b>union</b> of both record sets.</li>
+        <li>Success state: "Syncing complete." (Same copy as the clean path; the user is not shown a record count or a merge-specific message.)</li>
+      </ol>
+      <div class="callout warn">
+        <strong>Why re-scope instead of a server merge?</strong>
+        The local-first store and sync engine already do the heavy lifting. Re-keying the local rows to <code>B</code> and marking them dirty turns "merge" into "a normal push," reusing the proven conflict model (last-writer-wins on Firestore server timestamp; dirty rows are immune from remote overwrite). No new server code, no temp staging area.
+      </div>
+
+      <h2 id="storage">6. Local Data Re-keying (<code>core:storage</code>)</h2>
+      <p>The merge needs one new storage operation. The store already exposes <code>DatabaseIntegrityChecker.wipeDataForUser(uid)</code>; add a sibling that <i>moves</i> rather than wipes:</p>
+      <pre><span class="c">// core:storage — runs in a single SQLDelight transaction</span>
+<span class="k">interface</span> LocalAccountMigrator {
+  <span class="c">/** Re-scope every local row owned by [fromUid] to [toUid], mark entities dirty so the</span>
+  <span class="c">    sync engine re-uploads them under the new account, and reset sync cursors so [toUid]</span>
+  <span class="c">    hydrates its existing cloud set. Idempotent and safe to re-run. */</span>
+  <span class="k">suspend fun</span> reassign(fromUid: String, toUid: String)
+}</pre>
+      <ul>
+        <li><code>entity</code> table: <code>UPDATE … SET scope = users/{toUid}/…, dirty = 1 WHERE scope = users/{fromUid}/…</code></li>
+        <li><code>sync_cursor</code> table: delete cursors for both UIDs so <code>HydrationRunner</code> re-runs for <code>toUid</code>.</li>
+        <li><code>blob_object</code> table: re-scope blob ownership to <code>toUid</code> and reset remote state so <code>BlobUploadDriver</code> re-uploads (it also gates on non-anonymous).</li>
+      </ul>
+      <p>Because reassignment is a single idempotent transaction keyed on scope, it is <b>resumable</b>: if it ran partially, re-running completes it; if it fully ran, re-running is a no-op (no rows match <code>fromUid</code> anymore).</p>
+
+      <h2 id="sync">7. Sync Integration</h2>
+      <p>No change to the sync engine's logic; the upgrade simply flips the gating condition. Relevant existing behavior we rely on:</p>
+      <table>
+        <tr><th>Mechanism</th><th>Role in upgrade</th></tr>
+        <tr><td>Auth-state gating (<code>user.isAnonymous</code>)</td><td>Linking flips this to false → engine activates for the same/!new UID.</td></tr>
+        <tr><td><code>PushWorker</code> (drains <code>dirty=1</code>)</td><td>Uploads all guest records (clean path) or reassigned records (merge path).</td></tr>
+        <tr><td><code>HydrationRunner</code> / <code>PullListener</code></td><td>Clean path: nothing to pull. Merge path: pulls account <code>B</code>'s existing set.</td></tr>
+        <tr><td>Last-writer-wins + dirty immunity</td><td>On merge, reassigned local rows (dirty) are never clobbered by the remote pull before they upload.</td></tr>
+        <tr><td><code>cloudSyncEnabled</code> master toggle</td><td>If a user has cloud sync off, upgrading still links the account; syncing begins when they enable sync. Surfaced in Backup &amp; Sync settings.</td></tr>
+      </table>
+
+      <h2 id="ui">8. UI (<code>feature:settings</code> + upgrade flow)</h2>
+      <p>Entry point is the Settings profile area only, and is shown only when the Feature Lab flag is on <b>and</b> the current user is anonymous. The <code>UserProfileCard</code> gains a guest variant; a new upgrade flow (bottom sheet or dedicated screen) owns the steps. There is no benefits/promo screen: the CTA leads straight into the provider sign-in.</p>
+      <pre><span class="c">// UpgradeUiState — drives the upgrade sheet</span>
+<span class="k">sealed interface</span> UpgradeUiState {
+  <span class="k">data object</span> Idle : UpgradeUiState              <span class="c">// CTA visible, sheet closed</span>
+  <span class="k">data object</span> Authenticating : UpgradeUiState    <span class="c">// provider sheet / linking</span>
+  <span class="k">data class</span> ConfirmMerge(<span class="k">val</span> credential: AuthCredential, <span class="k">val</span> email: String) : UpgradeUiState
+  <span class="k">data object</span> Working : UpgradeUiState           <span class="c">// pushing / reassign+sync</span>
+  <span class="k">data object</span> Success : UpgradeUiState           <span class="c">// renders "Syncing complete" — no count, no merge-specific copy</span>
+  <span class="k">data class</span> Error(<span class="k">val</span> message: String) : UpgradeUiState
+}</pre>
+      <p>Visual language follows <code>DESIGN.md</code>: aviation-blue primary action, a single committed primary button per step, and a calm, definite <code>Success</code> state ("Syncing complete") with no record count. <code>ConfirmMerge</code> carries the existing account's email only to label the merge dialog, not to display a count. Provider button label and icon switch per platform (Google / Apple). The merge confirmation is an <code>AlertDialog</code> (a genuine destructive-adjacent decision), consistent with the logout-warning pattern already shipped.</p>
+
+      <h2 id="errors">9. Error Handling &amp; Recovery</h2>
+      <table>
+        <tr><th>Failure</th><th>Handling</th></tr>
+        <tr><td>Provider sheet cancelled</td><td><code>Cancelled</code> → back to Idle, no change.</td></tr>
+        <tr><td>No network</td><td><code>Failed("needs internet")</code>; retry available; local data untouched.</td></tr>
+        <tr><td>Collision but user cancels merge</td><td>Do <b>not</b> call <code>signInToExistingAccount</code>; remain guest <code>A</code>.</td></tr>
+        <tr><td>App killed after <code>signInToExistingAccount</code> but before reassign completes</td><td>On launch, if local rows exist under a UID ≠ <code>currentUser.uid</code> and the current user is non-anonymous, run <code>reassign(orphanUid, currentUid)</code>. Idempotent (§6).</td></tr>
+        <tr><td>Push fails after a successful link</td><td>Account is linked (upgrade done); rows stay dirty and upload later via normal sync. No data loss.</td></tr>
+      </table>
+      <div class="callout note">
+        <strong>Launch-time reconciliation</strong>
+        A startup check ("is there local data owned by a UID other than the signed-in non-anonymous user?") makes the merge crash-safe and also cleans up any future edge where the auth UID and local scope diverge.
+      </div>
+
+      <h2 id="edge">10. Edge Cases</h2>
+      <table>
+        <tr><th>Case</th><th>Behavior</th></tr>
+        <tr><td>Duplicate logical record on merge</td><td>Additive union; both appear. v1 accepts; dedupe is fast-follow (PRD §7).</td></tr>
+        <tr><td>Apple "Hide My Email"</td><td>Relay address used; no special handling.</td></tr>
+        <tr><td>Guest with zero records upgrades</td><td>Clean link; nothing to push; still shows "Syncing complete."</td></tr>
+        <tr><td>Re-tap upgrade after already permanent</td><td>CTA is hidden for non-anonymous users; flow is unreachable.</td></tr>
+        <tr><td>Blob (attachment) re-upload on merge</td><td><code>reassign</code> resets blob remote state; <code>BlobUploadDriver</code> re-uploads under <code>B</code>.</td></tr>
+      </table>
+
+      <h2 id="security">11. Security &amp; Privacy</h2>
+      <ul>
+        <li>Apple Sign In uses a SHA-256-hashed nonce to prevent replay; raw nonce kept only for the credential exchange.</li>
+        <li>No new PII is stored beyond what the provider returns (email, display name) and what already syncs.</li>
+        <li>The orphaned anonymous Firebase user (merge path) holds no cloud data (guests never synced) and is left to Firebase's anonymous-account lifecycle.</li>
+      </ul>
+
+      <h2 id="testing">12. Testing Plan</h2>
+      <ul>
+        <li><b>Unit:</b> <code>AccountUpgradeResult</code> branching; <code>LocalAccountMigrator.reassign</code> re-scopes + marks dirty + clears cursors; idempotency (run twice).</li>
+        <li><b>Integration:</b> clean link → all dirty rows pushed; merge → union of two sets; interrupted-merge recovery on simulated restart.</li>
+        <li><b>Manual matrix:</b> Android/Google + iOS/Apple × {new account, existing account, cancel, offline, Hide-My-Email}.</li>
+        <li><b>Guardrail:</b> assert zero record loss across every path; assert no UID-scope divergence after reconciliation.</li>
+      </ul>
+
+      <h2 id="rollout">13. Rollout</h2>
+      <ul>
+        <li>Gated behind a Feature Lab flag (<code>FeatureLabManager</code>), off by default; the Settings affordance and the whole flow are hidden until the flag is on, mirroring how other experimental surfaces ship.</li>
+        <li>Land <code>core:auth</code> + <code>core:storage</code> + sync wiring first (no UI), then the Settings UI behind the flag.</li>
+        <li>Watch conversion, collision rate, and post-merge duplicate rate (PRD §4) to decide on dedupe fast-follow and extra entry points.</li>
+      </ul>
+
+      <h2 id="open">14. Open Questions</h2>
+      <ul>
+        <li>Should <code>reassign</code> live on the existing <code>DatabaseIntegrityChecker</code> or a new dedicated type? (Leaning new type for single responsibility.)</li>
+        <li>iOS Apple Sign In: implement natively per-screen, or via a shared expect/actual entry to keep the Compose layer platform-agnostic?</li>
+      </ul>
+
+      <div class="callout note">
+        <strong>Implementation Status</strong>
+        Proposed. Not yet built. Update this note as the auth, storage, and sync pieces land.
+      </div>
+
+    </div>
+
+    <nav class="toc">
+      <p class="toc-title">On this page</p>
+      <ol>
+        <li><a href="#key-insight">The Key Insight</a></li>
+        <li><a href="#architecture">Architecture Overview</a></li>
+        <li><a href="#auth">Auth Layer Changes</a></li>
+        <li><a href="#clean-path">Clean Link Path</a></li>
+        <li><a href="#merge-path">Merge Path (Collision)</a></li>
+        <li><a href="#storage">Local Data Re-keying</a></li>
+        <li><a href="#sync">Sync Integration</a></li>
+        <li><a href="#ui">UI</a></li>
+        <li><a href="#errors">Error Handling &amp; Recovery</a></li>
+        <li><a href="#edge">Edge Cases</a></li>
+        <li><a href="#security">Security &amp; Privacy</a></li>
+        <li><a href="#testing">Testing Plan</a></li>
+        <li><a href="#rollout">Rollout</a></li>
+        <li><a href="#open">Open Questions</a></li>
+      </ol>
+    </nav>
+  </div>
+</main>
+</body>
+</html>

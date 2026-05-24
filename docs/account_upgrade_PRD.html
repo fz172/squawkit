@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRD: Guest → Account Upgrade</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --surface-alt: #eef3f9;
+      --text: #122033;
+      --muted: #53657d;
+      --line: #d8e1ec;
+      --blue: #1f5fa8;
+      --blue-soft: #dbe9fb;
+      --green: #156f4a;
+      --green-soft: #d8f0e3;
+      --amber: #9a6200;
+      --amber-soft: #fdeecb;
+      --red: #a33a32;
+      --red-soft: #f7dedb;
+      --shadow: rgba(18, 32, 51, 0.08);
+      --mono: "SFMono-Regular", "JetBrains Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.55; }
+    main { max-width: 1240px; margin: 0 auto; padding: 32px 20px 56px; }
+    .page-shell { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 28px; align-items: start; }
+    .doc-body { min-width: 0; }
+    h1, h2, h3, h4 { line-height: 1.2; margin: 0 0 12px; }
+    h1 { font-size: 2rem; }
+    h2 { margin-top: 38px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 1.35rem; }
+    h3 { margin-top: 24px; font-size: 1.08rem; }
+    h4 { margin-top: 18px; font-size: 0.95rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-alt); padding: 1px 6px; border-radius: 6px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 16px 0; box-shadow: 0 1px 2px rgba(18,32,51,0.04); }
+    .hero { background: linear-gradient(180deg, var(--surface), var(--surface-alt)); border: 1px solid var(--line); border-radius: 20px; padding: 26px; margin-bottom: 24px; }
+    .hero h1 { margin-bottom: 8px; }
+    .lede { font-size: 1.1rem; color: var(--muted); margin: 0; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 0.82rem; font-weight: 600; margin: 0 6px 6px 0; }
+    .pill.green { background: var(--green-soft); color: var(--green); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+    .pill.red { background: var(--red-soft); color: var(--red); }
+    .toc { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow: auto; background: rgba(255,255,255,0.9); backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px var(--shadow); }
+    .toc-title { margin: 0 0 10px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .toc ol { margin: 0; padding-left: 18px; }
+    .toc li { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92rem; }
+    th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+    th { background: var(--surface-alt); font-weight: 600; }
+    .callout { border-radius: 14px; padding: 14px 18px; margin: 16px 0; border: 1px solid var(--line); }
+    .callout.note { background: var(--blue-soft); border-color: #bcd6f5; }
+    .callout.win { background: var(--green-soft); border-color: #aee0c6; }
+    .callout.warn { background: var(--amber-soft); border-color: #f0d79a; }
+    .callout.risk { background: var(--red-soft); border-color: #efc4bf; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    ul.checks { list-style: none; padding-left: 0; }
+    ul.checks li { padding-left: 26px; position: relative; margin: 8px 0; }
+    ul.checks li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+    ul.nots li::before { content: "✕"; color: var(--red); }
+    .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 12px; }
+    .meta-grid .card { margin: 0; }
+    .kpi { font-size: 1.4rem; font-weight: 700; color: var(--blue); }
+    @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <div>
+      <span class="pill amber">Status: Proposed</span>
+      <span class="pill">PRD</span>
+      <span class="pill">Auth · Local-first · Sync</span>
+    </div>
+    <h1>Guest → Account Upgrade</h1>
+    <p class="lede">Let an anonymous (guest) user create a permanent account without losing any of the records they have already entered, syncing the records on device to a real, multi-device account.</p>
+  </div>
+
+  <div class="page-shell">
+    <div class="doc-body">
+
+      <div class="callout note">
+        <strong>Decisions locked for this PRD</strong>
+        Providers: <b>Google (Android) + Apple (iOS)</b>, App Store compliant. Collision behavior: <b>merge guest data into the existing account</b>. Entry point: <b>Settings profile area</b> only. Rollout: <b>gated behind a Feature Lab flag</b>, off by default. See <a href="account_upgrade_design.html">the companion Design Doc</a> for the technical approach.
+      </div>
+
+      <h2 id="problem">1. Problem &amp; Background</h2>
+      <p>Hopply lets people start immediately as a <b>guest</b> ("Continue without account" on the login screen, backed by Firebase anonymous auth). Guests get the full local-first experience: aircraft, maintenance logs, tasks, squawks, and attachments are written to the on-device SQLDelight store. The catch is severe and invisible:</p>
+      <ul>
+        <li><b>Guest data is local-only and never synced to an account.</b> The sync engine is idle for anonymous users (<code>user == null || user.isAnonymous</code> → no hydration, no push). Nothing leaves the device.</li>
+        <li><b>Logging out erases everything, permanently.</b> We just shipped a warning dialog for exactly this, but a warning is a tombstone, not a solution.</li>
+        <li><b>There is no non-destructive path to a real account today.</b> The login screen's "Sign in with Google" calls <code>signInWithCredential</code>, which swaps the anonymous session for a brand-new UID. Because every local record is keyed by <code>userRoot(uid)</code>, switching UID <b>orphans all guest data</b>.</li>
+      </ul>
+      <p>The user most exposed is precisely the one we most want to keep: a pilot or mechanic who trusted the app enough to log real, safety-critical records as a guest. Device loss, a reinstall, or a mistaken logout wipes weeks of work. That directly violates the product's first principle, <b>Dependability First</b>.</p>
+
+      <h2 id="goals">2. Goals &amp; Non-Goals</h2>
+      <h4>Goals</h4>
+      <ul class="checks">
+        <li>A guest can convert to a permanent Google/Apple account <b>without re-entering or losing any data</b>.</li>
+        <li>The upgrade is <b>zero-friction</b>: one provider tap, no data migration the user has to think about.</li>
+        <li>After upgrade, all existing on-device records are <b>synced to the account</b> and available on the user's other devices.</li>
+        <li>If the chosen account already has Hopply data, the guest's on-device records are <b>merged in</b>, not dropped.</li>
+        <li>The flow <b>never destroys data</b> on cancel, error, or interruption.</li>
+      </ul>
+      <h4>Non-Goals</h4>
+      <ul class="checks nots">
+        <li>Downgrade (permanent account → guest).</li>
+        <li>Email/password or phone providers (Google + Apple only for v1).</li>
+        <li>A manual, record-by-record conflict-resolution UI for duplicates created on merge (v1 accepts additive union; see Risks).</li>
+        <li>Linking a second provider to an already-permanent account (account management is out of scope).</li>
+        <li>Changing the existing first-run login screen's two-button layout.</li>
+      </ul>
+
+      <h2 id="users">3. Users &amp; Use Cases</h2>
+      <table>
+        <tr><th>Persona</th><th>Situation</th><th>What the upgrade does for them</th></tr>
+        <tr><td>Invested guest</td><td>Logged a fleet's worth of records before deciding to commit.</td><td>Keeps every record; syncs them all to a durable account with a single tap.</td></tr>
+        <tr><td>New-device pilot</td><td>Got a new phone; logged a few entries as a guest on each.</td><td>Upgrades on one device into an existing account; that device's entries merge into the cloud set.</td></tr>
+        <tr><td>Device-loss-averse mechanic</td><td>Realizes their records exist only on a phone they take into hangars.</td><td>Backs up before something happens, from a clear Settings prompt.</td></tr>
+      </table>
+
+      <h2 id="metrics">4. Success Metrics</h2>
+      <div class="meta-grid">
+        <div class="card"><div class="kpi">↑</div><div class="muted">Guest→account conversion rate</div></div>
+        <div class="card"><div class="kpi">↓</div><div class="muted">"Lost my data" support contacts</div></div>
+        <div class="card"><div class="kpi">↑</div><div class="muted">Post-upgrade 30-day retention</div></div>
+        <div class="card"><div class="kpi">≈100%</div><div class="muted">Upgrades completing with 0 record loss</div></div>
+      </div>
+      <ul>
+        <li><b>Primary:</b> % of active guest users who complete an upgrade (funnel: prompt seen → provider tapped → linked/merged).</li>
+        <li><b>Guardrail:</b> records-lost-on-upgrade must be effectively zero; merge collision rate and post-merge duplicate rate are watched.</li>
+        <li><b>Counter-metric:</b> upgrade attempts that fail or are abandoned mid-flow (should stay low and never lose data).</li>
+      </ul>
+
+      <h2 id="requirements">5. Functional Requirements</h2>
+      <table>
+        <tr><th>#</th><th>Requirement</th><th>Priority</th></tr>
+        <tr><td>R1</td><td>Anonymous users see a "Create account to sync your records" affordance in the Settings profile area; permanent users do not.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R2</td><td>The upgrade offers Google on Android and Apple on iOS, using Firebase <b>account linking</b> so the UID (and therefore all local data) is preserved.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R3</td><td>On a clean link, all existing on-device records sync to the account automatically (no user-visible migration step).</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R4</td><td>If the chosen account already exists, the user is told clearly and offered to <b>merge</b> their device records into it; on confirm, guest records are added to that account's cloud set.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R5</td><td>Cancel at any step leaves the user as a guest with data fully intact. No silent account switching.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R6</td><td>Errors (network, provider, token) are recoverable and non-destructive; the user can retry.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R7</td><td>The flow communicates progress and a single, calm success state ("Syncing complete") with no record count.</td><td><span class="pill">P1</span></td></tr>
+        <tr><td>R10</td><td>The entire feature (the Settings affordance and the whole flow) is gated behind a Feature Lab flag, off by default until rollout.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R8</td><td>An interrupted merge (app killed mid-flow) recovers safely on next launch without duplicating or losing records.</td><td><span class="pill">P1</span></td></tr>
+        <tr><td>R9</td><td>The existing destructive "Sign in with Google" behavior is not reachable for a signed-in guest (the upgrade path replaces it in-app).</td><td><span class="pill">P1</span></td></tr>
+      </table>
+
+      <h2 id="ux">6. UX &amp; Flow</h2>
+      <h3>Entry: Settings profile</h3>
+      <p>For an anonymous user, the Settings profile card presents a guest identity plus a prominent call to action and a quiet reassurance of <i>why</i>:</p>
+      <div class="card">
+        <p class="muted" style="margin-top:0">Profile card (guest state)</p>
+        <p style="margin:0"><b>Guest</b> · Your records are saved only on this device.<br>
+        <span class="pill">Create account to sync</span></p>
+      </div>
+
+      <h3>Happy path (clean link)</h3>
+      <ol>
+        <li>Tap <b>Create account to sync</b> → the platform sign-in sheet opens directly (Google on Android, Apple on iOS). No interstitial promo or benefits screen.</li>
+        <li>Progress: "Syncing your records…"</li>
+        <li>Success: "Syncing complete." The profile card switches to the real identity.</li>
+      </ol>
+
+      <h3>Merge path (account already exists)</h3>
+      <ol>
+        <li>Steps 1–2 as above; linking detects the credential already belongs to an account.</li>
+        <li>Confirm dialog: "This Google account already has Hopply data. Sync this device's records into it? You may see duplicates if you logged the same aircraft in both places."</li>
+        <li>On <b>Merge</b>: progress ("Syncing your records…") → success ("Syncing complete.").</li>
+        <li>On <b>Cancel</b>: return to guest, no account switch, data untouched.</li>
+      </ol>
+
+      <div class="callout win">
+        <strong>Peak-end design</strong>
+        The most anxious moment (committing an account while holding irreplaceable local data) is wrapped in a visible progress state and a calm, definite close. The experience ends on "Syncing complete," not a blank screen, so the user knows their records are safe.
+      </div>
+
+      <h2 id="edge">7. Edge Cases &amp; Risks</h2>
+      <table>
+        <tr><th>Case</th><th>Expected behavior</th></tr>
+        <tr><td>User cancels the provider sheet</td><td>Stay a guest; nothing changes.</td></tr>
+        <tr><td>Offline during upgrade</td><td>Linking needs connectivity; show a clear "needs internet" message and let them retry. Data is never touched.</td></tr>
+        <tr><td>Link succeeds but cloud push is slow/offline afterward</td><td>Upgrade is considered done (account linked); syncing completes in the background, with sync status visible in Backup &amp; Sync settings.</td></tr>
+        <tr><td>Chosen account already has data (collision)</td><td>Merge path (R4).</td></tr>
+        <tr><td>Same aircraft logged in both guest and existing account</td><td><b>Known v1 limitation:</b> both copies appear (additive union). User can delete duplicates manually. Auto-dedupe is a future improvement.</td></tr>
+        <tr><td>App killed mid-merge</td><td>Resumable, idempotent reconciliation on next launch (R8).</td></tr>
+        <tr><td>Apple "Hide My Email"</td><td>Fully supported; the relay address is used as the account email.</td></tr>
+      </table>
+      <div class="callout risk">
+        <strong>Primary risk: merge duplicates</strong>
+        Merging is an additive union of two record sets, not a semantic merge. A user who logged the same tail number in both places will see it twice. We accept this for v1 (clearly messaged), monitor the duplicate rate, and treat semantic dedupe as a fast-follow if the rate is high.
+      </div>
+
+      <h2 id="scope">8. Scope &amp; Phasing</h2>
+      <table>
+        <tr><th>Phase</th><th>Includes</th></tr>
+        <tr><td><b>v1</b></td><td>Feature Lab flag gate, Settings entry, Google (Android) + Apple (iOS) linking, clean-link sync, merge-on-collision, cancel/error safety, interruption recovery, "Syncing complete" success state.</td></tr>
+        <tr><td>Fast-follow</td><td>Duplicate detection/dedupe after merge; additional entry points (dashboard banner, contextual nudges) if conversion is low.</td></tr>
+        <tr><td>Later</td><td>Email/password provider; account management (link/unlink multiple providers); guest-data import across reinstalls.</td></tr>
+      </table>
+
+      <h2 id="open">9. Open Questions</h2>
+      <ul>
+        <li>Is a one-time post-login nudge (outside Settings) worth it later, or does Settings-only keep the surface clean per the chosen scope?</li>
+        <li>What is the exit criterion for graduating the feature off its Feature Lab flag (conversion, collision rate, duplicate rate thresholds)?</li>
+      </ul>
+
+      <div class="callout note">
+        <strong>Implementation Status</strong>
+        Proposed. Not yet built. The companion <a href="account_upgrade_design.html">Design Doc</a> specifies the auth, storage, and sync changes. This note will be updated to reflect what actually ships.
+      </div>
+
+    </div>
+
+    <nav class="toc">
+      <p class="toc-title">On this page</p>
+      <ol>
+        <li><a href="#problem">Problem &amp; Background</a></li>
+        <li><a href="#goals">Goals &amp; Non-Goals</a></li>
+        <li><a href="#users">Users &amp; Use Cases</a></li>
+        <li><a href="#metrics">Success Metrics</a></li>
+        <li><a href="#requirements">Functional Requirements</a></li>
+        <li><a href="#ux">UX &amp; Flow</a></li>
+        <li><a href="#edge">Edge Cases &amp; Risks</a></li>
+        <li><a href="#scope">Scope &amp; Phasing</a></li>
+        <li><a href="#open">Open Questions</a></li>
+      </ol>
+    </nav>
+  </div>
+</main>
+</body>
+</html>
