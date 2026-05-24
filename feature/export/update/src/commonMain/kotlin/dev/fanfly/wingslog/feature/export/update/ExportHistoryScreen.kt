@@ -57,7 +57,6 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.StatusWarning
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordDateRange
@@ -581,9 +580,11 @@ private fun exportStorageStatus(
     label = Res.string.export_history_status_cloud,
   )
 
+  // "On device" is a neutral location, not a caution: keep it informational so it doesn't read
+  // as a warning (the Semantic Lock Rule reserves amber for action-required states).
   onDevice -> StorageStatus(
     icon = Icons.Outlined.Smartphone,
-    color = StatusWarning,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
     label = Res.string.export_history_status_device,
   )
 

@@ -144,13 +144,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_stub_prev
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_auth
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed_title
-import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_manual
-import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_manual_title
-import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_pending
-import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_pending_title
-import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_ready_title
-import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_sent
-import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_sent_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_emailed_subtitle
 import wingslog.feature.export.sharedassets.generated.resources.export_success_sent_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
@@ -930,6 +923,24 @@ private fun SuccessResult(
   val deliveryFailed =
     deliveredByEmail && state.persistedDeliveryState == "FAILED"
   val emailSucceeded = deliveredByEmail && !deliveryFailed
+  // A failed email delivery folds into the receipt as a labeled status section rather than a
+  // separate stacked card, so the success screen stays a single card.
+  val deliveryFailure = if (deliveryFailed) {
+    val reason = state.deliveryFailureMessage.ifBlank {
+      stringResource(Res.string.export_success_delivery_failed)
+    }
+    val destination = state.deliveryInfo?.destinationEmail.orEmpty()
+    DeliveryFailure(
+      title = stringResource(Res.string.export_success_delivery_failed_title),
+      message = if (destination.isNotBlank()) {
+        reason + "\n" + stringResource(Res.string.export_success_delivery_auth, destination)
+      } else {
+        reason
+      },
+    )
+  } else {
+    null
+  }
 
   ResultShell(
     modifier = modifier,
@@ -946,22 +957,18 @@ private fun SuccessResult(
       null
     },
     body = {
-      Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-        if (deliveryFailed) {
-          DeliveryStatusCard(state)
-        }
-        ReceiptCard(
-          fileName = fileName,
-          sizeText = readableBytes(state.sizeBytes),
-          formats = state.formats,
-          aircraftSummary = aircraftSummary(state.selectedTailNumbers),
-          rangeText = rangeSummary(
-            state.dateRange,
-            state.customStart,
-            state.customEnd
-          ),
-        )
-      }
+      ReceiptCard(
+        fileName = fileName,
+        sizeText = readableBytes(state.sizeBytes),
+        formats = state.formats,
+        aircraftSummary = aircraftSummary(state.selectedTailNumbers),
+        rangeText = rangeSummary(
+          state.dateRange,
+          state.customStart,
+          state.customEnd
+        ),
+        deliveryFailure = deliveryFailure,
+      )
     },
     actions = {
       if (deliveredByEmail) {
@@ -1028,58 +1035,32 @@ private fun EmailedSubtitle(email: String) {
   )
 }
 
+/** Failed-delivery summary folded into the receipt card, so the success screen stays one card. */
+private data class DeliveryFailure(val title: String, val message: String)
+
 @Composable
-private fun DeliveryStatusCard(state: ExportUiState.Success) {
-  val title = when {
-    state.deliveryInfo == null -> stringResource(Res.string.export_success_delivery_manual_title)
-    state.persistedDeliveryState == "SENT" -> stringResource(Res.string.export_success_delivery_sent_title)
-    state.persistedDeliveryState == "FAILED" -> stringResource(Res.string.export_success_delivery_failed_title)
-    state.persistedDeliveryState == "QUEUED" || state.persistedDeliveryState == "SENDING" ->
-      stringResource(Res.string.export_success_delivery_pending_title)
-
-    else -> stringResource(Res.string.export_success_delivery_ready_title)
-  }
-  val stateBody = when {
-    state.deliveryInfo == null -> stringResource(Res.string.export_success_delivery_manual)
-    state.persistedDeliveryState == "SENT" -> stringResource(Res.string.export_success_delivery_sent)
-    state.persistedDeliveryState == "FAILED" ->
-      state.deliveryFailureMessage.ifBlank {
-        stringResource(Res.string.export_success_delivery_failed)
-      }
-
-    state.persistedDeliveryState == "QUEUED" || state.persistedDeliveryState == "SENDING" ->
-      stringResource(Res.string.export_success_delivery_pending)
-
-    else -> stringResource(Res.string.export_success_delivery_pending)
-  }
-  val destinationBody = when (val delivery = state.deliveryInfo) {
-    null -> ""
-    else -> stringResource(
-      Res.string.export_success_delivery_auth,
-      delivery.destinationEmail
-    )
-  }
-  val body = listOf(stateBody, destinationBody).filter { it.isNotBlank() }
-    .joinToString("\n")
-
-  Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .background(MaterialTheme.colorScheme.secondaryContainer)
-      .padding(Spacing.large),
-    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+private fun DeliveryFailureSection(failure: DeliveryFailure) {
+  Row(
+    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    Text(
-      text = title,
-      style = MaterialTheme.typography.titleSmall,
-      color = MaterialTheme.colorScheme.onSecondaryContainer,
+    Icon(
+      imageVector = Icons.Default.ErrorOutline,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.error,
+      modifier = Modifier.size(20.dp),
     )
-    Text(
-      text = body,
-      style = MaterialTheme.typography.bodyMedium,
-      color = MaterialTheme.colorScheme.onSecondaryContainer,
-    )
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+      Text(
+        text = failure.title,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.error,
+      )
+      Text(
+        text = failure.message,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
   }
 }
 
@@ -1090,6 +1071,7 @@ private fun ReceiptCard(
   formats: Set<ExportFormat>,
   aircraftSummary: String,
   rangeText: String,
+  deliveryFailure: DeliveryFailure? = null,
 ) {
   Column(
     modifier = Modifier
@@ -1104,6 +1086,10 @@ private fun ReceiptCard(
       .padding(Spacing.large),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
+    if (deliveryFailure != null) {
+      DeliveryFailureSection(deliveryFailure)
+      androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    }
     Row(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(Spacing.large),
@@ -1265,10 +1251,11 @@ private fun ResultShell(
       .padding(top = Spacing.large, bottom = Spacing.extraLarge),
   ) {
     Column(
+      // Tight icon/title/subtitle cluster, then a generous gap before the content below.
       modifier = Modifier.fillMaxWidth()
-        .padding(top = Spacing.large, bottom = Spacing.extraLarge),
+        .padding(top = Spacing.large, bottom = Spacing.huge),
       horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+      verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
       Box(
         modifier = Modifier

@@ -68,14 +68,7 @@
   <string name="export_stub_preview_location">Saved to this device</string>
   <string name="export_location_downloads_hopply">Saved to Downloads · Hopply</string>
   <string name="export_location_files_hopply">Saved to Files · Hopply</string>
-  <string name="export_success_delivery_manual_title">Manual share</string>
-  <string name="export_success_delivery_ready_title">Automatic delivery</string>
-  <string name="export_success_delivery_pending_title">Delivery requested</string>
-  <string name="export_success_delivery_sent_title">Email sent</string>
   <string name="export_success_delivery_failed_title">Delivery failed</string>
-  <string name="export_success_delivery_manual">No delivery email is available for this signed-in state. Use Share for now.</string>
-  <string name="export_success_delivery_pending">Your export email has been requested. Delivery can take a moment.</string>
-  <string name="export_success_delivery_sent">Your export email was sent with a secure download link.</string>
   <string name="export_success_delivery_failed">Automatic delivery failed. Use Share for now, then retry from export history later.</string>
   <string name="export_success_delivery_auth">Destination: signed-in account email %1$s</string>
   <string name="export_receipt_file_subtitle">%1$s · ZIP containing %2$s + attachments</string>
