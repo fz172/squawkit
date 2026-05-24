@@ -21,8 +21,6 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,14 +37,16 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.delete_failed
 import wingslog.core.ui.generated.resources.save_failed
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachmentRes
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
-import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.update.generated.resources.log_not_found
 import wingslog.feature.logs.update.generated.resources.work_description_required
+import kotlin.time.Clock
+import kotlin.time.Instant
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachmentRes
+import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 
 class MaintenanceLogFormViewModel(
   private val logManager: MaintenanceLogManager,
@@ -67,7 +67,8 @@ class MaintenanceLogFormViewModel(
   private var saveJob: Job? = null
   private val _uiState = MutableStateFlow(
     MaintenanceLogFormUiState(
-      maintenanceDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+      maintenanceDate = Clock.System.now()
+        .toLocalDateTime(TimeZone.currentSystemDefault()).date
     )
   )
   val uiState: StateFlow<MaintenanceLogFormUiState> = _uiState.asStateFlow()
@@ -104,7 +105,8 @@ class MaintenanceLogFormViewModel(
       technicianManager.observeSelfId(),
     ) { technicians, selfId ->
       val self = technicians.find { it.id == selfId }
-      val others = technicians.filter { it.id != selfId }.sortedBy { it.name.lowercase() }
+      val others = technicians.filter { it.id != selfId }
+        .sortedBy { it.name.lowercase() }
       Pair(self, listOfNotNull(self) + others)
     }
       .onEach { (selfTech, available) ->
@@ -150,9 +152,10 @@ class MaintenanceLogFormViewModel(
 
   private fun loadAircraft() {
     viewModelScope.launch {
-      fleetManager.loadAircraft(aircraftId).collect { aircraft ->
-        _uiState.update { it.copy(aircraft = aircraft) }
-      }
+      fleetManager.loadAircraft(aircraftId)
+        .collect { aircraft ->
+          _uiState.update { it.copy(aircraft = aircraft) }
+        }
     }
   }
 
@@ -173,7 +176,8 @@ class MaintenanceLogFormViewModel(
               .toLocalDateTime(TimeZone.currentSystemDefault()).date
           } else null
         }
-        val existingAttachments = log.attachments.map { PendingAttachment.Saved(it) }
+        val existingAttachments =
+          log.attachments.map { PendingAttachment.Saved(it) }
         _uiState.update {
           it.copy(
             isLoading = false,
@@ -207,7 +211,8 @@ class MaintenanceLogFormViewModel(
   fun onMaintenanceDateChange(date: LocalDate?) =
     _uiState.update { it.copy(maintenanceDate = date) }
 
-  fun onWorkDescriptionChange(value: String) = _uiState.update { it.copy(workDescription = value) }
+  fun onWorkDescriptionChange(value: String) =
+    _uiState.update { it.copy(workDescription = value) }
 
   fun onTechnicianSelect(technician: Technician?) =
     _uiState.update {
@@ -217,11 +222,18 @@ class MaintenanceLogFormViewModel(
       )
     }
 
-  fun showTechnicianPicker() = _uiState.update { it.copy(showTechnicianPicker = true) }
-  fun hideTechnicianPicker() = _uiState.update { it.copy(showTechnicianPicker = false) }
+  fun showTechnicianPicker() =
+    _uiState.update { it.copy(showTechnicianPicker = true) }
 
-  fun showInspectionPicker() = _uiState.update { it.copy(showInspectionPicker = true) }
-  fun hideInspectionPicker() = _uiState.update { it.copy(showInspectionPicker = false) }
+  fun hideTechnicianPicker() =
+    _uiState.update { it.copy(showTechnicianPicker = false) }
+
+  fun showInspectionPicker() =
+    _uiState.update { it.copy(showInspectionPicker = true) }
+
+  fun hideInspectionPicker() =
+    _uiState.update { it.copy(showInspectionPicker = false) }
+
   fun toggleInspectionSelection(cardId: String) {
     _uiState.update { state ->
       val current = state.selectedInspectionIds.toMutableList()
@@ -241,7 +253,9 @@ class MaintenanceLogFormViewModel(
   fun toggleSquawkSelection(squawkId: String) {
     _uiState.update { state ->
       val current = state.selectedSquawkIds.toMutableList()
-      if (squawkId in current) current.remove(squawkId) else current.add(squawkId)
+      if (squawkId in current) current.remove(squawkId) else current.add(
+        squawkId
+      )
       state.copy(selectedSquawkIds = current)
     }
   }
@@ -252,9 +266,15 @@ class MaintenanceLogFormViewModel(
     }
   }
 
-  fun onEngineTimeChange(value: String) = _uiState.update { it.copy(engineTime = value) }
-  fun onAirframeTimeChange(value: String) = _uiState.update { it.copy(airframeTime = value) }
-  fun onPropTimeChange(value: String) = _uiState.update { it.copy(propTime = value) }
+  fun onEngineTimeChange(value: String) =
+    _uiState.update { it.copy(engineTime = value) }
+
+  fun onAirframeTimeChange(value: String) =
+    _uiState.update { it.copy(airframeTime = value) }
+
+  fun onPropTimeChange(value: String) =
+    _uiState.update { it.copy(propTime = value) }
+
   fun onComponentTypeChange(value: ComponentType) {
     _uiState.update { state ->
       val aircraft = state.aircraft
@@ -270,9 +290,11 @@ class MaintenanceLogFormViewModel(
         ComponentType.COMPONENT_PROPELLER -> {
           val propSerials = aircraft?.engine?.flatMap { engine ->
             buildList {
-              engine.propeller?.hub?.serial?.takeIf { it.isNotEmpty() }?.let { add(it) }
+              engine.propeller?.hub?.serial?.takeIf { it.isNotEmpty() }
+                ?.let { add(it) }
               engine.propeller?.blades?.forEach { blade ->
-                blade.serial.takeIf { it.isNotEmpty() }?.let { add(it) }
+                blade.serial.takeIf { it.isNotEmpty() }
+                  ?.let { add(it) }
               }
             }
           } ?: emptyList()
@@ -293,8 +315,11 @@ class MaintenanceLogFormViewModel(
 
   // ── Attachments ─────────────────────────────────────────────────────────────
 
-  fun showAttachmentPicker() = _uiState.update { it.copy(showAttachmentPicker = true) }
-  fun hideAttachmentPicker() = _uiState.update { it.copy(showAttachmentPicker = false) }
+  fun showAttachmentPicker() =
+    _uiState.update { it.copy(showAttachmentPicker = true) }
+
+  fun hideAttachmentPicker() =
+    _uiState.update { it.copy(showAttachmentPicker = false) }
 
   fun onFilePickError() {
     viewModelScope.launch { _events.send(MaintenanceLogFormEvent.PickError) }
@@ -317,7 +342,11 @@ class MaintenanceLogFormViewModel(
             file.name
           )
           _uiState.update { s ->
-            s.copy(pendingAttachments = s.pendingAttachments + PendingAttachment.Local(attachment))
+            s.copy(
+              pendingAttachments = s.pendingAttachments + PendingAttachment.Local(
+                attachment
+              )
+            )
           }
           anyAdded = true
         } catch (e: Exception) {
@@ -344,7 +373,11 @@ class MaintenanceLogFormViewModel(
       displayName
     )
     _uiState.update { state ->
-      state.copy(pendingAttachments = state.pendingAttachments + PendingAttachment.LocalLink(attachment))
+      state.copy(
+        pendingAttachments = state.pendingAttachments + PendingAttachment.LocalLink(
+          attachment
+        )
+      )
     }
     viewModelScope.launch { _events.send(MaintenanceLogFormEvent.LinkAdded) }
   }
@@ -357,7 +390,10 @@ class MaintenanceLogFormViewModel(
           pending is PendingAttachment.Local -> null
           pending is PendingAttachment.LocalLink -> null
           pending is PendingAttachment.Saved && pending.attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK -> null
-          pending is PendingAttachment.Saved -> PendingAttachment.PendingDelete(pending.attachment)
+          pending is PendingAttachment.Saved -> PendingAttachment.PendingDelete(
+            pending.attachment
+          )
+
           else -> pending
         }
       }
@@ -384,7 +420,8 @@ class MaintenanceLogFormViewModel(
       val resolvedLogId = logId ?: generateRandomId()
 
       // 1. Tombstone any deleted attachments (best-effort; BlobDeleteDriver finishes cleanup)
-      val toDelete = state.pendingAttachments.filterIsInstance<PendingAttachment.PendingDelete>()
+      val toDelete =
+        state.pendingAttachments.filterIsInstance<PendingAttachment.PendingDelete>()
       toDelete.forEach { attachmentManager.delete(it.attachment) }
 
       // 2. Build final attachment list — Local items already have fully-populated protos
@@ -408,7 +445,8 @@ class MaintenanceLogFormViewModel(
       }
       val now = Clock.System.now()
       val timestampInstant =
-        state.maintenanceDate?.atStartOfDayIn(TimeZone.currentSystemDefault()) ?: now
+        state.maintenanceDate?.atStartOfDayIn(TimeZone.currentSystemDefault())
+          ?: now
       val log = MaintenanceLog(
         id = resolvedLogId,
         timestamp = toWireInstant(
@@ -437,23 +475,28 @@ class MaintenanceLogFormViewModel(
       result
         .onSuccess {
           if (state.selectedSquawkIds.isNotEmpty()) {
-            squawkManager.markAddressed(aircraftId, state.selectedSquawkIds, resolvedLogId)
+            squawkManager.markAddressed(
+              aircraftId,
+              state.selectedSquawkIds,
+              resolvedLogId
+            )
           }
           state.selectedInspectionIds.forEach { cardId ->
-            state.availableInspectionCards.find { it.id == cardId }?.let { card ->
-              if (card.force_due_date != null || card.force_due_engine_hour > 0f ||
-                card.force_complied_status != null
-              ) {
-                inspectionDataManager.updateTask(
-                  aircraftId,
-                  card.copy(
-                    force_due_date = null,
-                    force_due_engine_hour = 0f,
-                    force_complied_status = null,
+            state.availableInspectionCards.find { it.id == cardId }
+              ?.let { card ->
+                if (card.force_due_date != null || card.force_due_engine_hour > 0f ||
+                  card.force_complied_status != null
+                ) {
+                  inspectionDataManager.updateTask(
+                    aircraftId,
+                    card.copy(
+                      force_due_date = null,
+                      force_due_engine_hour = 0f,
+                      force_complied_status = null,
+                    )
                   )
-                )
+                }
               }
-            }
           }
           _events.send(MaintenanceLogFormEvent.SaveSuccess)
         }

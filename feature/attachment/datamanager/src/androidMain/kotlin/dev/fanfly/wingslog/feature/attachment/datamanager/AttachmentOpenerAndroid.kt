@@ -9,13 +9,14 @@ import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
-import java.io.File
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
+import java.io.File
 
 /**
  * R2 [AttachmentOpener] for Android. Routes through [LocalBlobStore] instead of using the
@@ -28,7 +29,8 @@ class AttachmentOpenerAndroid(
 ) : AttachmentOpener {
 
   private val _downloadingIds = MutableStateFlow<Set<String>>(emptySet())
-  override val downloadingIds: StateFlow<Set<String>> = _downloadingIds.asStateFlow()
+  override val downloadingIds: StateFlow<Set<String>> =
+    _downloadingIds.asStateFlow()
 
   override fun open(attachment: Attachment): Flow<OpenState> = flow {
     emit(OpenState.Downloading)
@@ -38,7 +40,10 @@ class AttachmentOpenerAndroid(
         if (!it.startsWith("http://") && !it.startsWith("https://")) "https://$it" else it
       }
       context.startActivity(
-        Intent(Intent.ACTION_VIEW, url.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        Intent(
+          Intent.ACTION_VIEW,
+          url.toUri()
+        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
       )
       emit(OpenState.Done)
       return@flow
@@ -50,14 +55,19 @@ class AttachmentOpenerAndroid(
     try {
       val ref = blobs.get(BlobId(attachment.id))
       when {
-        ref == null && attachment.sha256.isBlank() -> emit(OpenState.Failed(LegacyAttachment()))
+        ref == null && attachment.sha256.isBlank() -> emit(
+          OpenState.Failed(
+            LegacyAttachment()
+          )
+        )
 
         ref == null || ref.remoteState == RemoteState.RemoteOnly -> {
           // Row missing (reconciler not yet run) or row present but not downloaded yet — same path.
           var downloadError: Throwable? = null
-          attachmentManager.ensureLocal(attachment).collect { state ->
-            if (state is DownloadState.Failed) downloadError = state.error
-          }
+          attachmentManager.ensureLocal(attachment)
+            .collect { state ->
+              if (state is DownloadState.Failed) downloadError = state.error
+            }
           if (downloadError != null) {
             emit(OpenState.Failed(downloadError!!))
           } else {
@@ -74,7 +84,7 @@ class AttachmentOpenerAndroid(
     }
   }
 
-  private suspend fun kotlinx.coroutines.flow.FlowCollector<OpenState>.emitOpenLocalFile(
+  private suspend fun FlowCollector<OpenState>.emitOpenLocalFile(
     attachment: Attachment,
   ) {
     val file = File(context.filesDir, blobRelativePath(attachment.id))
@@ -92,9 +102,11 @@ class AttachmentOpenerAndroid(
         setDataAndType(contentUri, attachment.mime_type.ifEmpty { "*/*" })
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
       }
-      context.startActivity(Intent.createChooser(intent, null).also {
-        it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-      })
+      context.startActivity(
+        Intent.createChooser(intent, null)
+          .also {
+            it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          })
       emit(OpenState.Done)
     } catch (e: Exception) {
       emit(OpenState.Failed(e))
