@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog.web
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 
 @Composable
 fun WebApp() {
-    MaterialTheme {
+    WingslogTheme {
         LoginScreen()
     }
 }

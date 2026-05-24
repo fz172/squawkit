@@ -45,38 +45,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
+import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
+import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import dev.fanfly.wingslog.web.generated.resources.Res
 import dev.fanfly.wingslog.web.generated.resources.continue_without_account
 import dev.fanfly.wingslog.web.generated.resources.ic_google_rd_na
 import dev.fanfly.wingslog.web.generated.resources.legal_disclaimer
 import dev.fanfly.wingslog.web.generated.resources.login_prompt
 import dev.fanfly.wingslog.web.generated.resources.mission_statement
-import dev.fanfly.wingslog.web.generated.resources.space_grotesk_bold
-import dev.fanfly.wingslog.web.generated.resources.space_grotesk_medium
-import dev.fanfly.wingslog.web.generated.resources.space_grotesk_semibold
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-private val AviationBlue80 = Color(0xFFA7C8FF)
-private val AviationBlue10 = Color(0xFF001849)
 private val LoginBackground = AviationBlue10
 private val LoginOnBackground = Color(0xFFF0F4FF)
 private val LoginOnBackgroundMuted = Color(0xFF8AAAD4)
 private val DialogBackground = Color(0xFF071840)
-
-@Composable
-private fun rememberBrandHeadlineFamily(): FontFamily {
-    val medium = Font(Res.font.space_grotesk_medium, weight = FontWeight.Medium)
-    val semiBold = Font(Res.font.space_grotesk_semibold, weight = FontWeight.SemiBold)
-    val bold = Font(Res.font.space_grotesk_bold, weight = FontWeight.Bold)
-    return remember(medium, semiBold, bold) { FontFamily(medium, semiBold, bold) }
-}
 
 @Composable
 fun LoginScreen() {

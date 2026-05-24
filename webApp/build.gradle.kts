@@ -15,10 +15,12 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.compose.ui)
-            implementation(libs.material3)
+            // core:ui api-exports compose.ui, material3, and material-icons-extended.
+            implementation(project(":core:ui"))
             implementation(libs.compose.foundation)
-            implementation(libs.material.icons.extended)
+            // components-resources must be declared directly: the Compose Resources
+            // plugin only wires this module's generated Res class onto the compile
+            // path when the dependency is present here, not transitively.
             implementation(libs.components.resources)
         }
     }

@@ -7,9 +7,19 @@ shared code). **M1 compile path validated:** `core:model`, `core:datetime`, and
 coil, ktor-client-core, `compose-ui-tooling-preview`, material-icons-extended all have
 JS variants — none were blockers). JS `actual`s added for `toWireInstant`,
 `platformColorScheme` (returns null → aviation palette), and `rememberBrandHeadlineFamily`
-(Space Grotesk). **Not yet done in M1:** `webApp` still uses its own duplicated tokens/
-fonts; switching it to `WingslogTheme` and deleting the duplicates is the remaining step.
-This doc is the ordered plan to grow that seed into a real, code-sharing web client.
+(Space Grotesk). **M1 complete:** `webApp` now depends on `:core:ui`, renders through
+`WingslogTheme`, and its duplicated color tokens + bundled Space Grotesk fonts have been
+deleted — the first proof a downstream JS consumer can actually *use* the shared modules.
+Next: M2 — extract `LoginScreen` into a new `feature/login` module and bring up
+`core:auth` on JS, so `webApp` and `composeApp` share one real login screen with working
+sign-in. This doc is the ordered plan to grow that seed into a real, code-sharing web
+client.
+
+> **Gotcha discovered in M1:** `components-resources` must be declared *directly* in a
+> module's dependencies (not relied on transitively via `core:ui`'s `api`) — the Compose
+> Resources Gradle plugin only wires that module's generated `Res` class onto the compile
+> path when the dependency is present locally. This is an exception to the repo rule about
+> not redeclaring `core:ui`-exported deps.
 
 ## Goal & strategy
 
@@ -56,12 +66,11 @@ can therefore run on web with the same `commonMain` code — only initialization
 - Run locally: `./gradlew :webApp:jsBrowserDevelopmentRun` (dev/unminified — fast).
   Avoid `jsBrowserProductionWebpack` while iterating (Terser on ~42 MiB = minutes).
 
-> **Note (M1/M2 ordering):** M1 and M2 are independent tracks — presentation
-> (model/theme) vs. identity (auth). Model/theme leads because it is the lower-risk
-> refactor *and* the more foundational one: adding a `js` target to
+> **Note (M1/M2 ordering):** M1 (presentation: model/theme) leads because it is the
+> lower-risk refactor *and* the more foundational one: adding a `js` target to
 > `core:model`/`core:ui` is the first real test of whether the shared Kotlin graph
-> compiles to JS at all, and it blocks M3–M6. Auth is a self-contained branch that
-> only blocks M3/M4, so it can slot in any time before then.
+> compiles to JS at all, and it blocks M3–M6. M2 (extract `feature/login` + auth)
+> builds directly on M1's shared `core:ui` and brings up `core:auth` on JS.
 
 ## Milestone 1 — Share the design system & model
 **Goal:** web renders with the real `WingslogTheme`; delete `webApp`'s duplicated
@@ -75,18 +84,43 @@ tokens/fonts. Also the foundational JS-compile test for the whole shared graph.
   `core:ui` theme + resources; remove the duplicates.
 - **Demo:** login screen rendered via shared theme, pixel-consistent with the apps.
 
-## Milestone 2 — Real authentication on web
-**Goal:** the login buttons actually sign in. Proves the Firebase-JS path end-to-end
-(self-contained; prerequisite for storage/sync in M3/M4).
-- Add `js(IR)` target to `core:auth` (its `commonMain` only needs
-  gitlive-firebase-auth + koin + kermit — all JS-capable).
-- Add `core/auth/src/jsMain/.../AuthManagerImpl.kt`: Google via Firebase JS
-  `signInWithPopup` (GitLive `GoogleAuthProvider`), `signInAnonymously`, sign-out.
-- Initialize the Firebase JS SDK in `webApp` (firebase config in `index.html` or a
-  generated config), so GitLive has an app to attach to.
-- `webApp` depends on `:core:auth`; wire `LoginScreen` buttons + an anonymous path to
-  `AuthManager`; show signed-in state (e.g. display name) to prove the round trip.
-- **Demo:** click "Continue with Google" → real Google account → UI shows the user.
+## Milestone 2 — Extract `feature/login` and real auth on web
+**Goal:** `webApp` reuses the *real production* `LoginScreen` (no more mock) with
+working Google/anonymous sign-in — and `composeApp`'s local copy is deleted, leaving a
+single source.
+
+**Why extract instead of reuse in place:** the screen itself is portable; the blocker is
+that it lives in `composeApp`, whose dependency closure is the entire app (sync, storage,
+every feature, navigation, the god-level `initKoin`). `composeApp` can never compile to
+JS. Pulling `LoginScreen` into its own `feature/login` module shrinks its closure to
+`core:auth` + `core:ui` + its own resources — a small, JS-capable island. Keeping
+`core:auth` as a dependency is fine (deliberately accepted): its `commonMain` is only
+gitlive-firebase-auth + koin + kermit (all JS-capable), and the Android-only bits
+(play-services-auth, credentials, googleid) stay in `androidMain`.
+
+Order matters — keep Android/iOS green at every step:
+1. **Create `feature/login`** (flat module, like `feature/settings`): move `LoginScreen`
+   + `LoginViewModel`. Depends on `:core:auth` + `:core:ui`. Android + iOS targets first.
+2. **Resource placement** — shared asset → common lib; feature-only asset → the feature:
+   - `ic_launcher_foreground` (the Hopply brand mark) is used by `LoginScreen`,
+     `NameEntryScreen`, *and* `WelcomeScreen` → move it into **`core:ui`** and repoint all
+     three. Same brand mark, single source (no generic-vector substitution).
+   - `ic_google_rd_na` + the `google_logo`/login strings are login-only → move into
+     **`feature/login`**.
+   - The `app/src/main/res` launcher mipmap and `drawable-night` Google variant are
+     separate Android platform resources — leave them.
+3. **Rewire `composeApp` `AppEntry`** to the extracted screen; delete `composeApp/login/`.
+   Verify Android + iOS still build before going further.
+4. **Add `js(IR)` to `feature/login` and `core:auth`.** Add
+   `core/auth/src/jsMain/.../AuthManagerImpl.kt`: Google via Firebase JS `signInWithPopup`
+   (GitLive `GoogleAuthProvider`), `signInAnonymously`, sign-out. Initialize the Firebase
+   JS SDK in `webApp` (config in `index.html` or generated) so GitLive has an app to
+   attach to.
+5. **Point `webApp` at `feature/login`**; delete the mock `LoginScreen.kt` + duplicate
+   strings. Because `core:auth` is a real dependency, the reused screen and working
+   sign-in land together — no dead-button interim state.
+- **Demo:** click "Continue with Google" → real Google account → signed-in state. Same
+  screen renders on Android, iOS, and web from one source.
 
 ## Milestone 3 — Local-first storage on web
 **Goal:** `EntityStore` works on web.
@@ -134,6 +168,7 @@ Track which shared modules have gained a `js(IR)` target (✅ = has JS target):
 | `core:datetime` | ✅ | M1 |
 | `core:ui` | ✅ | M1 |
 | `core:auth` | ☐ | M2 |
+| `feature:login` (new — extracted from `composeApp`) | ☐ | M2 |
 | `core:storage` | ☐ | M3 |
 | `feature:sync:data` | ☐ | M4 |
 | `feature:fleet:*`, `feature:aircraft:dashboard` | ☐ | M5 |
