@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mission_statement">Track the important stuff for your airplane</string>
+    <string name="login_prompt">Log in to manage your aircraft maintenance records.</string>
+    <string name="continue_without_account">Continue Anonymously</string>
+    <string name="legal_disclaimer">Hopply is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.</string>
+</resources>
