@@ -46,7 +46,7 @@ fun TaskCardItem(
     DueStatus.DUE_SOON -> StatusWarning
     DueStatus.COMPLIED -> StatusOk
     DueStatus.NORMAL -> if (isOnCondition) MaterialTheme.colorScheme.onSurfaceVariant
-    else MaterialTheme.colorScheme.primary
+    else StatusOk
   }
 
   val badgeText = when (status) {

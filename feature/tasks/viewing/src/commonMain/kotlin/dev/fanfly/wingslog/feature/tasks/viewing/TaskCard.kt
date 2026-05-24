@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
@@ -130,7 +129,6 @@ fun TaskCard(
             fontWeight = FontWeight.Bold,
             color = statusColor,
           )
-
         }
       }
     }

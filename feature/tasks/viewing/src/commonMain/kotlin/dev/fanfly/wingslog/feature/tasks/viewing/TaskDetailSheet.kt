@@ -37,11 +37,8 @@ import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
-import kotlinx.datetime.format.MonthNames
-import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
@@ -65,14 +62,6 @@ import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 
-private val HeroDueDateFormat = LocalDate.Format {
-  monthName(MonthNames.ENGLISH_ABBREVIATED)
-  char(' ')
-  day()
-  char(',')
-  char(' ')
-  year()
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -247,14 +236,14 @@ private fun dueStatusColor(status: DueStatus): Color = when (status) {
 
 @Composable
 private fun StatusBadge(dueStatus: DueMetadata) {
-  val (label, bgColor, fgColor) = when {
-    dueStatus.status == DueStatus.OVERDUE -> Triple(
+  val (label, bgColor, fgColor) = when (dueStatus.status) {
+    DueStatus.OVERDUE -> Triple(
       stringResource(ViewingRes.string.badge_overdue),
       MaterialTheme.colorScheme.error,
       MaterialTheme.colorScheme.onError,
     )
 
-    dueStatus.status == DueStatus.DUE_SOON -> Triple(
+    DueStatus.DUE_SOON -> Triple(
       stringResource(SharedRes.string.maintenance_due_title),
       StatusWarningContainer,
       StatusWarning,
@@ -335,7 +324,7 @@ private fun DueDateHero(dueStatus: DueMetadata) {
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-          text = HeroDueDateFormat.format(nextDueDate)
+          text = nextDueDate.toDisplayFormat(numberOnly = false)
             .uppercase(),
           style = WingslogTypography.heroDisplay,
           color = accentColor,
