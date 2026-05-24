@@ -10,10 +10,16 @@ JS variants — none were blockers). JS `actual`s added for `toWireInstant`,
 (Space Grotesk). **M1 complete:** `webApp` now depends on `:core:ui`, renders through
 `WingslogTheme`, and its duplicated color tokens + bundled Space Grotesk fonts have been
 deleted — the first proof a downstream JS consumer can actually *use* the shared modules.
-Next: M2 — extract `LoginScreen` into a new `feature/login` module and bring up
-`core:auth` on JS, so `webApp` and `composeApp` share one real login screen with working
-sign-in. This doc is the ordered plan to grow that seed into a real, code-sharing web
-client.
+**M2 largely complete:** `LoginScreen`/`LoginViewModel` extracted into `feature/login`
+(JS-capable, depends only on `core:ui` + `core:auth`); `core:auth` has a `js` target +
+`jsMain` `AuthManagerImpl`; `webApp` initializes Firebase JS, starts Koin, and renders the
+*shared* production `LoginScreen` — the mock and `composeApp`'s copy are deleted (single
+source across Android/iOS/web). All three platforms compile. **Remaining M2 gaps:**
+(a) Google sign-in on web returns null — needs Firebase-JS `signInWithPopup` interop;
+anonymous works. (b) Runtime sign-in needs Anonymous auth enabled in the Firebase console
+and a real Firebase *web app* registration for a proper `appId`. Next: close those gaps,
+then M3 (local-first storage on web). This doc is the ordered plan to grow that seed into a
+real, code-sharing web client.
 
 > **Gotcha discovered in M1:** `components-resources` must be declared *directly* in a
 > module's dependencies (not relied on transitively via `core:ui`'s `api`) — the Compose
@@ -167,8 +173,8 @@ Track which shared modules have gained a `js(IR)` target (✅ = has JS target):
 | `core:model` | ✅ | M1 |
 | `core:datetime` | ✅ | M1 |
 | `core:ui` | ✅ | M1 |
-| `core:auth` | ☐ | M2 |
-| `feature:login` (new — extracted from `composeApp`) | ☐ | M2 |
+| `core:auth` | ✅ | M2 |
+| `feature:login` (new — extracted from `composeApp`) | ✅ | M2 |
 | `core:storage` | ☐ | M3 |
 | `feature:sync:data` | ☐ | M4 |
 | `feature:fleet:*`, `feature:aircraft:dashboard` | ☐ | M5 |
