@@ -61,6 +61,11 @@ import wingslog.feature.settings.generated.resources.account_upgrade_success
 import wingslog.feature.settings.generated.resources.account_upgrade_working
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.feature_lab
+import wingslog.feature.settings.generated.resources.settings_export_subtitle
+import wingslog.feature.settings.generated.resources.settings_feature_lab_subtitle
+import wingslog.feature.settings.generated.resources.settings_logout_subtitle
+import wingslog.feature.settings.generated.resources.settings_sync_subtitle
+import wingslog.feature.settings.generated.resources.settings_technicians_subtitle
 import wingslog.feature.settings.generated.resources.sign_out
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import wingslog.feature.sync.sharedassets.generated.resources.feature_name_backup_and_sync
@@ -146,6 +151,7 @@ fun SettingsScreen(
         SettingsRow(
           icon = Icons.Default.Engineering,
           title = stringResource(TechnicianRes.string.manage_technicians),
+          subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
           onClick = { navController.navigate(Screen.ManageTechnicians.route) },
           settingsLevel = SettingsLevel.DEFAULT
         )
@@ -154,6 +160,7 @@ fun SettingsScreen(
       SettingsRow(
         icon = Icons.Default.CloudSync,
         title = stringResource(SyncRes.string.feature_name_backup_and_sync),
+        subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
         onClick = { navController.navigate(Screen.SyncSettings.route) },
         settingsLevel = SettingsLevel.DEFAULT
       )
@@ -161,6 +168,7 @@ fun SettingsScreen(
       SettingsRow(
         icon = Icons.Default.FileDownload,
         title = stringResource(ExportRes.string.feature_name_export_logs),
+        subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
         onClick = { navController.navigate(Screen.ExportLogs.route) },
         settingsLevel = SettingsLevel.DEFAULT
       )
@@ -168,6 +176,7 @@ fun SettingsScreen(
       SettingsRow(
         icon = Icons.Default.Tune,
         title = stringResource(SettingsRes.string.feature_lab),
+        subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
         onClick = { navController.navigate(Screen.FeatureLab.route) },
         settingsLevel = SettingsLevel.DEFAULT
       )
@@ -184,7 +193,7 @@ fun SettingsScreen(
         subtitle = if (guestCanUpgrade) {
           stringResource(SettingsRes.string.account_upgrade_login_subtitle)
         } else {
-          null
+          stringResource(SettingsRes.string.settings_logout_subtitle)
         },
         onClick = {
           when {
