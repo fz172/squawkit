@@ -15,6 +15,8 @@ import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.storage.DriverFactory
 import dev.fanfly.wingslog.core.storage.EntityCodecRegistry
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
+import dev.fanfly.wingslog.core.storage.LocalAccountMigratorImpl
 import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.core.storage.WireCodec
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
@@ -88,6 +90,8 @@ import org.koin.dsl.module
   single<DatabaseIntegrityChecker> {
     DatabaseIntegrityChecker(db = get<WingsLogDatabase>(), driver = get<SqlDriver>())
   }
+
+  single<LocalAccountMigrator> { LocalAccountMigratorImpl(db = get<WingsLogDatabase>()) }
 
   single<DatabaseHealth> { DatabaseHealth(isCorrupted = !get<DatabaseIntegrityChecker>().checkIntegrity()) }
 }
