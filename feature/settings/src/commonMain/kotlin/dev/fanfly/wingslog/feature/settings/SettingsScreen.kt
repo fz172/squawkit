@@ -180,28 +180,29 @@ fun SettingsScreen(
         settingsLevel = SettingsLevel.DEFAULT
       )
 
-      SettingsRow(
-        icon = if (guestCanUpgrade) Icons.AutoMirrored.Filled.Login
-        else Icons.AutoMirrored.Filled.Logout,
-        title = stringResource(
-          if (guestCanUpgrade) SettingsRes.string.account_upgrade_login_cta
-          else SettingsRes.string.sign_out
-        ),
-        // Guest + flag on: "Log in" runs the upgrade, with a subtitle explaining it. Real accounts
-        // log out; guests without the flag still get the destructive erase warning.
-        subtitle = if (guestCanUpgrade) {
-          stringResource(SettingsRes.string.account_upgrade_login_subtitle)
-        } else {
-          stringResource(SettingsRes.string.settings_logout_subtitle)
-        },
-        onClick = {
-          when {
-            guestCanUpgrade -> accountUpgradeViewModel.startUpgrade()
-            else -> settingsViewModel.logOut()
-          }
-        },
-        settingsLevel = if (guestCanUpgrade) SettingsLevel.DEFAULT else SettingsLevel.DANGER,
-      )
+      // Guest + flag on shows "Log in" (runs the upgrade); real accounts show "Log out". An
+      // anonymous user without the upgrade flag has no sign-out action — logging out would
+      // erase their on-device data, so we don't offer it.
+      if (guestCanUpgrade || !user.isAnonymous) {
+        SettingsRow(
+          icon = if (guestCanUpgrade) Icons.AutoMirrored.Filled.Login
+          else Icons.AutoMirrored.Filled.Logout,
+          title = stringResource(
+            if (guestCanUpgrade) SettingsRes.string.account_upgrade_login_cta
+            else SettingsRes.string.sign_out
+          ),
+          subtitle = if (guestCanUpgrade) {
+            stringResource(SettingsRes.string.account_upgrade_login_subtitle)
+          } else {
+            stringResource(SettingsRes.string.settings_logout_subtitle)
+          },
+          onClick = {
+            if (guestCanUpgrade) accountUpgradeViewModel.startUpgrade()
+            else settingsViewModel.logOut()
+          },
+          settingsLevel = if (guestCanUpgrade) SettingsLevel.DEFAULT else SettingsLevel.DANGER,
+        )
+      }
 
       Spacer(modifier = Modifier.weight(1f))
 
