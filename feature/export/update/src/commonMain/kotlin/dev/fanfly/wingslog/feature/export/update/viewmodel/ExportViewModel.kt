@@ -6,15 +6,16 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType.ATTACHMENT_TYPE_LINK
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
-import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,6 +44,7 @@ class ExportViewModel(
   private val logsManager: MaintenanceLogManager,
   private val taskDataManager: TaskDataManager,
   private val squawkManager: SquawkManager,
+  private val featureLabManager: FeatureLabManager,
   private val auth: FirebaseAuth,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
@@ -126,22 +128,35 @@ class ExportViewModel(
 
   private fun observeDeliveryInfo() {
     viewModelScope.launch {
-      auth.authStateChanged.collect { user ->
-        val signedIn = user != null && !user.isAnonymous
-        val authEmail = user?.email.orEmpty().trim()
-        val info = when {
-          !signedIn -> null
-          authEmail.isNotBlank() -> ExportDeliveryInfo(authEmail, ExportDeliveryEmailSource.AUTH_FALLBACK)
-          else -> null
+      combine(
+        auth.authStateChanged,
+        featureLabManager.observe(),
+      ) { user, flags -> user to flags.exportEmailDeliveryEnabled }
+        .collect { (user, emailDeliveryEnabled) ->
+          val signedIn = user != null && !user.isAnonymous
+          val authEmail = user?.email.orEmpty()
+            .trim()
+          // When email delivery is disabled, behave as if the user has no email account: no
+          // resolved delivery info means no upload, no server-side email, and the local-only UI.
+          val info = when {
+            !emailDeliveryEnabled -> null
+            !signedIn -> null
+            authEmail.isNotBlank() -> ExportDeliveryInfo(
+              authEmail,
+              ExportDeliveryEmailSource.AUTH_FALLBACK
+            )
+
+            else -> null
+          }
+          latestDeliveryInfo = info
+          val current =
+            _state.value as? ExportUiState.Configuring ?: return@collect
+          val next = current.copy(
+            resolvedDeliveryInfo = info,
+          )
+          lastConfiguring = next
+          _state.value = next
         }
-        latestDeliveryInfo = info
-        val current = _state.value as? ExportUiState.Configuring ?: return@collect
-        val next = current.copy(
-          resolvedDeliveryInfo = info,
-        )
-        lastConfiguring = next
-        _state.value = next
-      }
     }
   }
 

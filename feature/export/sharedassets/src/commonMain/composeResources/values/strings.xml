@@ -64,8 +64,6 @@
   <string name="export_success_title">Export ready</string>
   <string name="export_success_sent_title">Export sent</string>
   <string name="export_success_emailed_subtitle">Secure download link emailed to</string>
-  <string name="export_no_email_note_title">No email on file.</string>
-  <string name="export_no_email_note_body">Share manually below.</string>
   <string name="export_stub_preview_file_name">Hopply_Logs_preview.zip</string>
   <string name="export_stub_preview_location">Saved to this device</string>
   <string name="export_location_downloads_hopply">Saved to Downloads · Hopply</string>

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Engineering
+import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -33,6 +34,8 @@ import wingslog.feature.settings.generated.resources.Res
 import wingslog.feature.settings.generated.resources.feature_lab
 import wingslog.feature.settings.generated.resources.feature_lab_attachments_subtitle
 import wingslog.feature.settings.generated.resources.feature_lab_attachments_title
+import wingslog.feature.settings.generated.resources.feature_lab_export_email_subtitle
+import wingslog.feature.settings.generated.resources.feature_lab_export_email_title
 import wingslog.feature.settings.generated.resources.feature_lab_subtitle
 import wingslog.feature.settings.generated.resources.feature_lab_technician_subtitle
 import wingslog.feature.settings.generated.resources.feature_lab_technician_title
@@ -86,6 +89,16 @@ fun FeatureLabScreen(
         subtitle = stringResource(Res.string.feature_lab_attachments_subtitle),
         checked = flags.attachmentUploadEnabled,
         onCheckedChange = viewModel::setAttachmentUploadEnabled,
+      )
+
+      HorizontalDivider()
+
+      FeatureToggleRow(
+        icon = Icons.Default.Mail,
+        title = stringResource(Res.string.feature_lab_export_email_title),
+        subtitle = stringResource(Res.string.feature_lab_export_email_subtitle),
+        checked = flags.exportEmailDeliveryEnabled,
+        onCheckedChange = viewModel::setExportEmailDeliveryEnabled,
       )
 
       HorizontalDivider()

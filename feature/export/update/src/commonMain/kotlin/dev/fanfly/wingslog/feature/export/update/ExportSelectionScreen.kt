@@ -30,13 +30,12 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.IosShare
+import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.TableView
@@ -65,11 +64,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
@@ -121,8 +119,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_location_
 import wingslog.feature.export.sharedassets.generated.resources.export_location_files_hopply
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_body
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_title
-import wingslog.feature.export.sharedassets.generated.resources.export_no_email_note_body
-import wingslog.feature.export.sharedassets.generated.resources.export_no_email_note_title
 import wingslog.feature.export.sharedassets.generated.resources.export_primary_action
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_building_archive
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_collecting_data
@@ -638,8 +634,10 @@ private fun CombinedRangeField(
       onDismissRequest = { showPicker = false },
       confirmButton = {
         TextButton(onClick = {
-          val newStart = pickerState.selectedStartDateMillis?.toDatePickerLocalDate()
-          val newEnd = pickerState.selectedEndDateMillis?.toDatePickerLocalDate()
+          val newStart =
+            pickerState.selectedStartDateMillis?.toDatePickerLocalDate()
+          val newEnd =
+            pickerState.selectedEndDateMillis?.toDatePickerLocalDate()
           if (newStart != null && newEnd != null) onChange(newStart, newEnd)
           showPicker = false
         }) { Text(stringResource(CoreRes.string.done).uppercase()) }
@@ -948,9 +946,8 @@ private fun SuccessResult(
     },
     body = {
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-        when {
-          !deliveredByEmail -> NoEmailNote()
-          deliveryFailed -> DeliveryStatusCard(state)
+        if (deliveryFailed) {
+          DeliveryStatusCard(state)
         }
         ReceiptCard(
           fileName = fileName,
@@ -1028,47 +1025,6 @@ private fun EmailedSubtitle(email: String) {
     color = MaterialTheme.colorScheme.onSurfaceVariant,
     textAlign = TextAlign.Center,
   )
-}
-
-/** Quiet inline advisory shown on the no-email success path, above the receipt. */
-@Composable
-private fun NoEmailNote() {
-  val accent = MaterialTheme.colorScheme.primary
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(Spacing.chipCornerRadius))
-      .background(accent.copy(alpha = 0.08f))
-      .border(
-        width = Spacing.hairline,
-        color = accent.copy(alpha = 0.22f),
-        shape = RoundedCornerShape(Spacing.chipCornerRadius),
-      )
-      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-  ) {
-    Icon(
-      imageVector = Icons.Default.Info,
-      contentDescription = null,
-      tint = accent,
-      modifier = Modifier.size(20.dp),
-    )
-    Text(
-      text = buildAnnotatedString {
-        withStyle(
-          SpanStyle(
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-          )
-        ) { append(stringResource(Res.string.export_no_email_note_title)) }
-        append(" ")
-        append(stringResource(Res.string.export_no_email_note_body))
-      },
-      style = MaterialTheme.typography.bodyMedium,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-  }
 }
 
 @Composable

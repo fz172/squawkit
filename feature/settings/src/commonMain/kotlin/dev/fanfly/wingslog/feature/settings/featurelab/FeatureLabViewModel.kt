@@ -18,7 +18,8 @@ class FeatureLabViewModel(
 
   init {
     viewModelScope.launch {
-      featureLabManager.observe().collect { _flags.value = it }
+      featureLabManager.observe()
+        .collect { _flags.value = it }
     }
   }
 
@@ -31,6 +32,12 @@ class FeatureLabViewModel(
   fun setAttachmentUploadEnabled(enabled: Boolean) {
     viewModelScope.launch {
       featureLabManager.update(_flags.value.copy(attachmentUploadEnabled = enabled))
+    }
+  }
+
+  fun setExportEmailDeliveryEnabled(enabled: Boolean) {
+    viewModelScope.launch {
+      featureLabManager.update(_flags.value.copy(exportEmailDeliveryEnabled = enabled))
     }
   }
 }

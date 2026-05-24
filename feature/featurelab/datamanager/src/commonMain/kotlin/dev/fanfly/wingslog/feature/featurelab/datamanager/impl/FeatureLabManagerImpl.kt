@@ -21,7 +21,8 @@ class FeatureLabManagerImpl(
   storeFactory: EntityStoreFactory,
 ) : FeatureLabManager {
 
-  private val store: EntityStore<FeatureLabSettings> = storeFactory.create(CollectionKind.FeatureLab)
+  private val store: EntityStore<FeatureLabSettings> =
+    storeFactory.create(CollectionKind.FeatureLab)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observe(): Flow<FeatureFlags> =
@@ -42,7 +43,8 @@ class FeatureLabManagerImpl(
     val uid = firebaseAuth.currentUser?.uid
       ?: error("Cannot update feature lab settings when no user is signed in")
     store.put(DOC_ID, flags.toProto(), EntityScope.userRoot(uid))
-  }.onFailure { logger.w(it) { "Error updating feature lab settings" } }.map { }
+  }.onFailure { logger.w(it) { "Error updating feature lab settings" } }
+    .map { }
 
   companion object {
     private val logger = Logger.withTag("FeatureLabManagerImpl")
@@ -53,9 +55,11 @@ class FeatureLabManagerImpl(
 private fun FeatureLabSettings.toFeatureFlags() = FeatureFlags(
   technicianEnabled = !technician_disabled,
   attachmentUploadEnabled = !attachment_upload_disabled,
+  exportEmailDeliveryEnabled = export_email_delivery_enabled,
 )
 
 private fun FeatureFlags.toProto() = FeatureLabSettings(
   technician_disabled = !technicianEnabled,
   attachment_upload_disabled = !attachmentUploadEnabled,
+  export_email_delivery_enabled = exportEmailDeliveryEnabled,
 )
