@@ -27,5 +27,9 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
         }
+        jsMain.dependencies {
+            // Copies sql.js's sql-wasm.wasm into the bundle (see webpack.config.d).
+            implementation(devNpm("copy-webpack-plugin", "9.1.0"))
+        }
     }
 }
