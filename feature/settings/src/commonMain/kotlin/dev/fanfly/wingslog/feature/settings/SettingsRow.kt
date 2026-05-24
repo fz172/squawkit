@@ -2,11 +2,13 @@ package dev.fanfly.wingslog.feature.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -50,6 +52,8 @@ fun SettingsRow(
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
+      // M3 list item minimums: ~56dp single-line, ~72dp two-line (Settings-style summary rows).
+      .heightIn(min = if (subtitle != null) 72.dp else 56.dp)
       .padding(horizontal = Spacing.small, vertical = Spacing.large),
     verticalAlignment = Alignment.CenterVertically
   ) {
@@ -71,8 +75,11 @@ fun SettingsRow(
 
     Spacer(modifier = Modifier.width(Spacing.large))
 
-    // --- Title (+ optional subtitle) ---
-    Column(modifier = Modifier.weight(1f)) {
+    // --- Title (+ optional supporting text) ---
+    Column(
+      modifier = Modifier.weight(1f),
+      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+    ) {
       Text(
         text = title,
         style = MaterialTheme.typography.bodyLarge,
@@ -81,7 +88,7 @@ fun SettingsRow(
       if (subtitle != null) {
         Text(
           text = subtitle,
-          style = MaterialTheme.typography.bodySmall,
+          style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
