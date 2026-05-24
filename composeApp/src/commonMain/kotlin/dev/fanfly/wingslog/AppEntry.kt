@@ -42,7 +42,7 @@ import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
-import dev.fanfly.wingslog.login.LoginScreen
+import dev.fanfly.wingslog.feature.login.LoginScreen
 import dev.fanfly.wingslog.onboarding.NameEntryScreen
 import dev.fanfly.wingslog.onboarding.OnboardingPreferences
 import dev.fanfly.wingslog.onboarding.WelcomeScreen

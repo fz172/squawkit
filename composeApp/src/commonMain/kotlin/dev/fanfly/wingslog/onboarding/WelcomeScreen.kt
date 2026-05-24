@@ -47,9 +47,10 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.composeapp.generated.resources.Res
-import wingslog.composeapp.generated.resources.ic_launcher_foreground
 import wingslog.composeapp.generated.resources.onboarding_welcome_aboard
 import wingslog.composeapp.generated.resources.onboarding_welcome_tagline
+import wingslog.core.ui.generated.resources.ic_launcher_foreground
+import wingslog.core.ui.generated.resources.Res as UiRes
 
 @Composable
 fun WelcomeScreen(
@@ -142,7 +143,7 @@ fun WelcomeScreen(
       contentAlignment = Alignment.Center,
     ) {
       Icon(
-        painter = painterResource(Res.drawable.ic_launcher_foreground),
+        painter = painterResource(UiRes.drawable.ic_launcher_foreground),
         contentDescription = null,
         modifier = Modifier.size(150.dp),
         tint = AviationBlue80,

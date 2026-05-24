@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.login.data
+package dev.fanfly.wingslog.feature.login.data
 
 import androidx.lifecycle.ViewModel
 import dev.fanfly.wingslog.core.auth.AuthManager

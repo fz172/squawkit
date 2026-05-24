@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.login
+package dev.fanfly.wingslog.feature.login
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -53,22 +53,23 @@ import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
-import dev.fanfly.wingslog.login.data.LoginViewModel
+import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.composeapp.generated.resources.Res
-import wingslog.composeapp.generated.resources.continue_without_account
-import wingslog.composeapp.generated.resources.google_logo
-import wingslog.composeapp.generated.resources.ic_google_rd_na
-import wingslog.composeapp.generated.resources.ic_launcher_foreground
-import wingslog.composeapp.generated.resources.legal_disclaimer
-import wingslog.composeapp.generated.resources.login_prompt
-import wingslog.composeapp.generated.resources.mission_statement
-import wingslog.composeapp.generated.resources.sign_in_anonymous_error
-import wingslog.composeapp.generated.resources.sign_in_error
-import wingslog.composeapp.generated.resources.sign_in_with_google
+import wingslog.core.ui.generated.resources.ic_launcher_foreground
+import wingslog.feature.login.generated.resources.Res
+import wingslog.feature.login.generated.resources.continue_without_account
+import wingslog.feature.login.generated.resources.google_logo
+import wingslog.feature.login.generated.resources.ic_google_rd_na
+import wingslog.feature.login.generated.resources.legal_disclaimer
+import wingslog.feature.login.generated.resources.login_prompt
+import wingslog.feature.login.generated.resources.mission_statement
+import wingslog.feature.login.generated.resources.sign_in_anonymous_error
+import wingslog.feature.login.generated.resources.sign_in_error
+import wingslog.feature.login.generated.resources.sign_in_with_google
+import wingslog.core.ui.generated.resources.Res as UiRes
 
 private val LoginBackground = AviationBlue10
 private val LoginOnBackground = Color(0xFFF0F4FF)
@@ -156,7 +157,7 @@ fun LoginScreen(
         contentAlignment = Alignment.Center,
       ) {
         Icon(
-          painter = painterResource(Res.drawable.ic_launcher_foreground),
+          painter = painterResource(UiRes.drawable.ic_launcher_foreground),
           contentDescription = null,
           modifier = Modifier
             .size(180.dp)

@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
 import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
 import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
 import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
+import dev.fanfly.wingslog.feature.login.di.loginModule
 import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
 import dev.fanfly.wingslog.feature.sync.data.blob.di.blobSchedulerModule
@@ -63,6 +64,7 @@ fun initKoin(
     squawkUiModule,
     fleetDataManagerModule,
     appModule,
+    loginModule,
     settingsModule,
     syncSettingsModule,
     fleetViewingModule,
