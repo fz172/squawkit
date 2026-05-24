@@ -22,7 +22,7 @@ compose.resources {
 kotlin {
   jvmToolchain(21)
   androidTarget()
-  iosX64()
+
   iosArm64()
   iosSimulatorArm64()
 
