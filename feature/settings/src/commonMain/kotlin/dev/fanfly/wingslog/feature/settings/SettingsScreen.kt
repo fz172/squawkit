@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudSync
-import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Tune
@@ -51,8 +51,11 @@ import wingslog.core.ui.generated.resources.settings
 import wingslog.feature.settings.generated.resources.anon_logout_warning_body
 import wingslog.feature.settings.generated.resources.anon_logout_warning_confirm
 import wingslog.feature.settings.generated.resources.anon_logout_warning_title
-import wingslog.feature.settings.generated.resources.account_upgrade_cta
 import wingslog.feature.settings.generated.resources.account_upgrade_error
+import wingslog.feature.settings.generated.resources.account_upgrade_info_body
+import wingslog.feature.settings.generated.resources.account_upgrade_info_confirm
+import wingslog.feature.settings.generated.resources.account_upgrade_info_title
+import wingslog.feature.settings.generated.resources.account_upgrade_login_cta
 import wingslog.feature.settings.generated.resources.account_upgrade_merge_body
 import wingslog.feature.settings.generated.resources.account_upgrade_merge_confirm
 import wingslog.feature.settings.generated.resources.account_upgrade_merge_title
@@ -81,6 +84,7 @@ fun SettingsScreen(
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
   val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
   var showAnonLogoutWarning by remember { mutableStateOf(false) }
+  var showLoginInfo by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
 
   val upgradeSuccessMessage = stringResource(SettingsRes.string.account_upgrade_success)
@@ -137,16 +141,9 @@ fun SettingsScreen(
         photoUri = user.photoUri,
       )
 
-      // Guests can convert to a permanent account that syncs their on-device records. Gated behind
-      // the Feature Lab flag until rollout.
-      if (user.isAnonymous && user.featureFlags.accountUpgradeEnabled) {
-        SettingsRow(
-          icon = Icons.Default.CloudUpload,
-          title = stringResource(SettingsRes.string.account_upgrade_cta),
-          onClick = { accountUpgradeViewModel.startUpgrade() },
-          settingsLevel = SettingsLevel.DEFAULT
-        )
-      }
+      // For a guest with the upgrade flag on, "Log in" connects their on-device records to a real
+      // account (the upgrade flow). It replaces the destructive guest logout entirely.
+      val guestCanUpgrade = user.isAnonymous && user.featureFlags.accountUpgradeEnabled
 
       if (user.featureFlags.technicianEnabled) {
         SettingsRow(
@@ -179,14 +176,22 @@ fun SettingsScreen(
       )
 
       SettingsRow(
-        icon = Icons.AutoMirrored.Filled.Logout,
-        title = stringResource(SettingsRes.string.sign_out),
-        // Guest data is local-only: warn before logging out wipes it for good. Real accounts
-        // are backed by cloud sync, so they log out without a prompt.
+        icon = if (guestCanUpgrade) Icons.AutoMirrored.Filled.Login
+        else Icons.AutoMirrored.Filled.Logout,
+        title = stringResource(
+          if (guestCanUpgrade) SettingsRes.string.account_upgrade_login_cta
+          else SettingsRes.string.sign_out
+        ),
+        // Guest + flag on: "Log in" opens the info dialog, then the upgrade. Real accounts log out.
+        // Guest without the flag still gets the destructive erase warning.
         onClick = {
-          if (user.isAnonymous) showAnonLogoutWarning = true else settingsViewModel.logOut()
+          when {
+            guestCanUpgrade -> showLoginInfo = true
+            user.isAnonymous -> showAnonLogoutWarning = true
+            else -> settingsViewModel.logOut()
+          }
         },
-        settingsLevel = SettingsLevel.DANGER
+        settingsLevel = if (guestCanUpgrade) SettingsLevel.DEFAULT else SettingsLevel.DANGER,
       )
 
       Spacer(modifier = Modifier.weight(1f))
@@ -223,6 +228,30 @@ fun SettingsScreen(
       },
       dismissButton = {
         TextButton(onClick = { showAnonLogoutWarning = false }) {
+          Text(stringResource(Res.string.cancel))
+        }
+      },
+    )
+  }
+
+  // Informational dialog shown before the upgrade so the guest knows what logging in does.
+  if (showLoginInfo) {
+    AlertDialog(
+      onDismissRequest = { showLoginInfo = false },
+      title = { Text(stringResource(SettingsRes.string.account_upgrade_info_title)) },
+      text = { Text(stringResource(SettingsRes.string.account_upgrade_info_body)) },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            showLoginInfo = false
+            accountUpgradeViewModel.startUpgrade()
+          }
+        ) {
+          Text(stringResource(SettingsRes.string.account_upgrade_info_confirm))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showLoginInfo = false }) {
           Text(stringResource(Res.string.cancel))
         }
       },
