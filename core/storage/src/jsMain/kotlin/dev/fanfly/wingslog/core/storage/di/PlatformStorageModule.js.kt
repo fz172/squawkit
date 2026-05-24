@@ -5,5 +5,6 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 actual val platformStorageModule: Module = module {
-  single { DriverFactory() }
+  // The Worker is provided by the host app (webApp), which owns the bundled worker file.
+  single { DriverFactory(get()) }
 }

@@ -23,7 +23,7 @@ fun WebApp() {
         if (onboarded) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Signed in 🎉",
+                    text = "Signed in",
                     style = MaterialTheme.typography.headlineMedium,
                 )
             }

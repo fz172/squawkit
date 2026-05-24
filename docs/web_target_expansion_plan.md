@@ -157,11 +157,14 @@ Order matters — keep Android/iOS green at every step:
 
 ## Milestone 3 — Local-first storage on web
 **Goal:** `EntityStore` works on web.
-- Add `js(IR)` to `core:storage`; add `core/storage/src/jsMain/DriverFactory.js.kt`
-  using SQLDelight `web-worker-driver` (sql.js worker asset wired into the webpack
-  bundle / `index.html`).
-- Provide JS Koin bindings; verify schema creation + a read/write round-trip.
-- **Demo:** write an entity locally on web, read it back across reload (IndexedDB).
+- Add `js(IR)` to `core:storage`; `core/storage/src/jsMain/DriverFactory.js.kt` uses
+  SQLDelight `web-worker-driver` over a sql.js worker. The JS `DriverFactory` takes the
+  `Worker` from the host app and swallows `Schema.create` "table exists" on reload.
+- Persistence: SQLDelight ships no persistent web worker, so `webApp` bundles a small
+  **custom sql.js → IndexedDB worker** (`sqljs-idb.worker.js`): whole-file `db.export()`
+  snapshot to IndexedDB after writes, restored on startup. **Interim** — migration to the
+  maintained, OPFS-backed engine is tracked as **M7**.
+- **Demo:** write data on web, reload the page, confirm it's still there (IndexedDB).
 
 ## Milestone 4 — Sync engine on web
 **Goal:** signed-in web user's local store syncs with Firestore.
@@ -188,6 +191,26 @@ Order matters — keep Android/iOS green at every step:
 - Re-evaluate attachments (R2) on web — real blob upload/download via fetch, or keep
   gated.
 - **Demo:** create/edit aircraft, logs, tasks, squawks from the browser.
+
+## Milestone 7 — Durable web storage: migrate to sqlite-wasm + OPFS
+**Goal:** replace the interim sql.js→IndexedDB worker (M3) with a maintained, scalable,
+durable backend.
+- **Why:** the M3 worker snapshots the *entire* DB to IndexedDB on every write (O(db size),
+  doesn't scale) and is bespoke code we own. The long-term target is the official
+  **`@sqlite.org/sqlite-wasm`** build on **OPFS** using its **SyncAccessHandle-Pool VFS**.
+- **Why this specific stack:**
+  - OPFS is the browser's purpose-built persistent file storage (real block I/O, scales).
+  - `@sqlite.org/sqlite-wasm` is maintained by the SQLite authors (unlike `absurd-sql`,
+    which is effectively abandoned and needs `SharedArrayBuffer`).
+  - The SAH-Pool VFS needs **no `COOP`/`COEP` headers** — important because those headers
+    break Firebase `signInWithPopup` (the app's Google sign-in).
+- **Work:** write a worker that bridges SQLDelight's `WebWorkerDriver` message protocol
+  (`exec` / `*_transaction`) to the sqlite-wasm OO1 API over an OPFS SAH-Pool VFS. Add
+  version-aware create/migrate (replacing the M3 "swallow Schema.create" hack). Only the
+  worker + JS `DriverFactory` change — `EntityStore`/managers/UI are untouched (the backend
+  is isolated behind that seam).
+- **Demo:** same as M3 (write → reload → data persists), but durable and scalable, and with
+  schema migrations handled.
 
 ---
 

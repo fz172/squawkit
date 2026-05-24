@@ -8,11 +8,13 @@ import dev.fanfly.wingslog.feature.login.di.loginModule
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingActions
 import dev.fanfly.wingslog.web.InMemoryOnboardingActions
 import dev.fanfly.wingslog.web.WebApp
+import dev.fanfly.wingslog.web.createSqlJsWorker
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.FirebaseOptions
 import dev.gitlive.firebase.initialize
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
+import org.w3c.dom.Worker
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
@@ -37,8 +39,12 @@ fun main() {
             storageModule,
             platformStorageModule,
             loginModule,
-            // TODO(M4): swap for the real TechnicianManager-backed actions once it's on JS.
-            module { single<OnboardingActions> { InMemoryOnboardingActions() } },
+            module {
+                // The host app owns the bundled sql.js worker file (persists to IndexedDB).
+                single<Worker> { createSqlJsWorker() }
+                // TODO(M4): swap for the real TechnicianManager-backed actions once it's on JS.
+                single<OnboardingActions> { InMemoryOnboardingActions() }
+            },
         )
     }
 
