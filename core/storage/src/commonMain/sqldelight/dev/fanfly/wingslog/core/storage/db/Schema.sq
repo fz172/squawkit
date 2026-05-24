@@ -247,3 +247,27 @@ DELETE FROM entity WHERE scope_path LIKE :scopePrefix;
 
 deleteSyncCursorsForUser:
 DELETE FROM sync_cursor WHERE uid = :uid;
+
+-- Account-merge re-keying (guest → account upgrade, see docs/account_upgrade_design.html §6).
+-- Moves every local row owned by one uid into another uid's scope by rewriting the
+-- "/users/{uid}/" prefix. Entities are marked dirty with remote_updated_at cleared so the sync
+-- engine re-uploads them under the destination account; blobs are reset to LOCAL_ONLY so they
+-- re-upload. Callers also drop both uids' sync cursors so the destination re-hydrates.
+
+-- :remainderStart is the 1-based index just past the old "/users/{fromUid}/" prefix; substr returns
+-- the path tail, which is re-prefixed with :newPrefix. It is bound as text and SQLite coerces it to
+-- an integer for substr (SQLDelight types a bare substr offset parameter as String).
+reassignEntities:
+UPDATE entity
+SET scope_path = :newPrefix || substr(scope_path, :remainderStart),
+    dirty = 1,
+    remote_updated_at = NULL
+WHERE scope_path LIKE :oldPrefixLike;
+
+reassignBlobs:
+UPDATE blob_object
+SET scope_path = :newPrefix || substr(scope_path, :remainderStart),
+    remote_state = 'LOCAL_ONLY',
+    remote_path = NULL,
+    upload_attempts = 0
+WHERE scope_path LIKE :oldPrefixLike;
