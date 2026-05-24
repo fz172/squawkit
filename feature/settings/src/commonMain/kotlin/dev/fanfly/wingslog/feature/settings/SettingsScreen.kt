@@ -3,19 +3,25 @@ package dev.fanfly.wingslog.feature.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,6 +40,8 @@ import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
+import dev.fanfly.wingslog.feature.settings.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeUiState
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -43,6 +51,13 @@ import wingslog.core.ui.generated.resources.settings
 import wingslog.feature.settings.generated.resources.anon_logout_warning_body
 import wingslog.feature.settings.generated.resources.anon_logout_warning_confirm
 import wingslog.feature.settings.generated.resources.anon_logout_warning_title
+import wingslog.feature.settings.generated.resources.account_upgrade_cta
+import wingslog.feature.settings.generated.resources.account_upgrade_error
+import wingslog.feature.settings.generated.resources.account_upgrade_merge_body
+import wingslog.feature.settings.generated.resources.account_upgrade_merge_confirm
+import wingslog.feature.settings.generated.resources.account_upgrade_merge_title
+import wingslog.feature.settings.generated.resources.account_upgrade_success
+import wingslog.feature.settings.generated.resources.account_upgrade_working
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.feature_lab
 import wingslog.feature.settings.generated.resources.sign_out
@@ -60,10 +75,16 @@ import wingslog.feature.technician.sharedassets.generated.resources.Res as Techn
 fun SettingsScreen(
   navController: NavController,
   settingsViewModel: SettingsViewModel = koinViewModel(),
+  accountUpgradeViewModel: AccountUpgradeViewModel = koinViewModel(),
 ) {
 
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
+  val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
   var showAnonLogoutWarning by remember { mutableStateOf(false) }
+  val snackbarHostState = remember { SnackbarHostState() }
+
+  val upgradeSuccessMessage = stringResource(SettingsRes.string.account_upgrade_success)
+  val upgradeErrorMessage = stringResource(SettingsRes.string.account_upgrade_error)
 
   // This LaunchedEffect will run when 'user' state changes
   LaunchedEffect(user) {
@@ -79,12 +100,31 @@ fun SettingsScreen(
     }
   }
 
+  // Terminal upgrade states surface as a snackbar, then reset to Idle.
+  LaunchedEffect(upgradeState) {
+    when (upgradeState) {
+      is UpgradeUiState.Success -> {
+        snackbarHostState.showSnackbar(upgradeSuccessMessage)
+        accountUpgradeViewModel.dismiss()
+      }
+
+      is UpgradeUiState.Error -> {
+        snackbarHostState.showSnackbar(upgradeErrorMessage)
+        accountUpgradeViewModel.dismiss()
+      }
+
+      else -> Unit
+    }
+  }
+
   Scaffold(
     topBar = {
       WingsLogTopAppBar(
         title = stringResource(Res.string.settings),
         onBackClick = { navController.popBackStack() })
-    }) { innerPadding ->
+    },
+    snackbarHost = { SnackbarHost(snackbarHostState) },
+  ) { innerPadding ->
     Column(
       modifier = Modifier
         .padding(innerPadding)
@@ -96,6 +136,18 @@ fun SettingsScreen(
         self = user.selfTechnician,
         photoUri = user.photoUri,
       )
+
+      // Guests can convert to a permanent account that syncs their on-device records. Gated behind
+      // the Feature Lab flag until rollout.
+      if (user.isAnonymous && user.featureFlags.accountUpgradeEnabled) {
+        SettingsRow(
+          icon = Icons.Default.CloudUpload,
+          title = stringResource(SettingsRes.string.account_upgrade_cta),
+          onClick = { accountUpgradeViewModel.startUpgrade() },
+          settingsLevel = SettingsLevel.DEFAULT
+        )
+      }
+
       if (user.featureFlags.technicianEnabled) {
         SettingsRow(
           icon = Icons.Default.Engineering,
@@ -175,5 +227,40 @@ fun SettingsScreen(
         }
       },
     )
+  }
+
+  when (upgradeState) {
+    is UpgradeUiState.ConfirmMerge -> AlertDialog(
+      onDismissRequest = { accountUpgradeViewModel.cancelMerge() },
+      title = { Text(stringResource(SettingsRes.string.account_upgrade_merge_title)) },
+      text = { Text(stringResource(SettingsRes.string.account_upgrade_merge_body)) },
+      confirmButton = {
+        TextButton(onClick = { accountUpgradeViewModel.confirmMerge() }) {
+          Text(stringResource(SettingsRes.string.account_upgrade_merge_confirm))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { accountUpgradeViewModel.cancelMerge() }) {
+          Text(stringResource(Res.string.cancel))
+        }
+      },
+    )
+
+    is UpgradeUiState.Working -> AlertDialog(
+      // Non-dismissable: provider sign-in / sync re-keying is in flight.
+      onDismissRequest = {},
+      confirmButton = {},
+      text = {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(Spacing.large),
+        ) {
+          CircularProgressIndicator(modifier = Modifier.size(Spacing.xLarge))
+          Text(stringResource(SettingsRes.string.account_upgrade_working))
+        }
+      },
+    )
+
+    else -> Unit
   }
 }
