@@ -17,6 +17,7 @@
 		3D25BC162F6FC23100EFFADF /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC152F6FC23100EFFADF /* FirebaseStorage */; };
 		3D25BC182F6FC23100EFFADF /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC172F6FC23100EFFADF /* FirebaseStorageCombine-Community */; };
 		3D25BC232F6FC42800EFFADF /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC222F6FC42800EFFADF /* FirebaseAuth */; };
+		3D25BC332F701A7500EFFADF /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC322F701A7500EFFADF /* FirebaseFunctions */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +52,7 @@
 			files = (
 				3D25BC102F6FC23100EFFADF /* FirebaseDatabase in Frameworks */,
 				3D25BC232F6FC42800EFFADF /* FirebaseAuth in Frameworks */,
+				3D25BC332F701A7500EFFADF /* FirebaseFunctions in Frameworks */,
 				3D25BC082F6FC23100EFFADF /* FirebaseAnalytics in Frameworks */,
 				3D25BC0A2F6FC23100EFFADF /* FirebaseAnalyticsCore in Frameworks */,
 				3D25BC0E2F6FC23100EFFADF /* FirebaseCore in Frameworks */,
@@ -120,6 +122,7 @@
 				3D25BC152F6FC23100EFFADF /* FirebaseStorage */,
 				3D25BC172F6FC23100EFFADF /* FirebaseStorageCombine-Community */,
 				3D25BC222F6FC42800EFFADF /* FirebaseAuth */,
+				3D25BC322F701A7500EFFADF /* FirebaseFunctions */,
 			);
 			productName = iosApp;
 			productReference = 3D25BBF32F6FBB7500EFFADF /* iosApp.app */;
@@ -574,6 +577,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3D25BC062F6FC23100EFFADF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;
+		};
+		3D25BC322F701A7500EFFADF /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3D25BC062F6FC23100EFFADF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

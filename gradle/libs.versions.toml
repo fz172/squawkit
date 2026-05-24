@@ -1,7 +1,7 @@
 [versions]
 agp = "9.2.1"
 coilCompose = "3.4.0"
-kotlinxCoroutines = "1.10.2"
+kotlinxCoroutines = "1.11.0"
 composeMultiplatform = "1.10.3"
 
 composeBom = "2026.04.01"
@@ -46,7 +46,6 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fir
 firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
 firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 firebase-functions = { module = "com.google.firebase:firebase-functions" }
-firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 
 gitlive-firebase-firestore = { group = "dev.gitlive", name = "firebase-firestore", version.ref = "gitlive" }
 gitlive-firebase-auth = { group = "dev.gitlive", name = "firebase-auth", version.ref = "gitlive" }
