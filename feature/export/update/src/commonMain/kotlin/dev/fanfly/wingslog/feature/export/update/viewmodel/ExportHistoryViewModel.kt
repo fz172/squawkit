@@ -31,6 +31,7 @@ class ExportHistoryViewModel(
 
   // Email-account users share by re-sending the delivery email; everyone else uses the device sheet.
   private var canEmailDelivery: Boolean = false
+  private var observedUid: String? = null
 
   init {
     observeAuth()
@@ -40,13 +41,22 @@ class ExportHistoryViewModel(
   private fun observeAuth() {
     viewModelScope.launch {
       auth.authStateChanged.collect { user ->
+        val uid = user?.uid
         canEmailDelivery =
           user != null && !user.isAnonymous && !user.email.isNullOrBlank()
-        _state.update { current ->
-          if (current is ExportHistoryUiState.Loaded) {
-            current.copy(canEmailDelivery = canEmailDelivery)
-          } else {
-            current
+        if (uid != observedUid) {
+          observedUid = uid
+          _state.value = ExportHistoryUiState.Loaded(
+            exportManager.listExports(),
+            canEmailDelivery,
+          )
+        } else {
+          _state.update { current ->
+            if (current is ExportHistoryUiState.Loaded) {
+              current.copy(canEmailDelivery = canEmailDelivery)
+            } else {
+              current
+            }
           }
         }
       }

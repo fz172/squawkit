@@ -53,7 +53,7 @@ class TechnicianManagerImpl(
     }
   }
 
-  override suspend fun ensureSelfProfile(): Result<Unit> = runCatching {
+  override suspend fun ensureSelfProfile(replaceExistingName: Boolean): Result<Unit> = runCatching {
     val user = firebaseAuth.currentUser ?: return@runCatching
     if (user.isAnonymous) return@runCatching
     val uid = user.uid
@@ -83,10 +83,15 @@ class TechnicianManagerImpl(
     if (localSelfId == null) {
       userInfoStore.put("main", UserInfo(self_technician_id = selfId), userScope)
     }
-    // Backfill a blank name from the account. Don't fabricate a record when none is present
-    // locally yet — hydration will bring the real one (overwriting it here would clobber it).
+    // Backfill from the account. During guest upgrade, replace the guest-entered self name with
+    // the permanent provider name while preserving certificate fields on the existing record.
     val existing = technicianStore.observe(selfId, userScope).firstOrNull()?.value
-    if (existing != null && existing.name.isBlank() && accountName.isNotBlank()) {
+    if (
+      existing != null &&
+      accountName.isNotBlank() &&
+      (existing.name.isBlank() || replaceExistingName) &&
+      existing.name != accountName
+    ) {
       technicianStore.put(selfId, existing.copy(name = accountName), userScope)
       logger.d { "Self-technician name backfilled id=$selfId name='$accountName'" }
     }

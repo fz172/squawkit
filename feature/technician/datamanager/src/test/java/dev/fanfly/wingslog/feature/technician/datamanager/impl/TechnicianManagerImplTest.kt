@@ -166,6 +166,64 @@ class TechnicianManagerImplTest {
     assertThat(result.isFailure).isTrue()
   }
 
+  @Test
+  fun ensureSelfProfile_withExistingName_keepsNameByDefault() = runTest {
+    val userScope = EntityScope.userRoot(TEST_USER_ID)
+    val existing = buildTestTechnician(id = TEST_TECHNICIAN_ID, name = "Guest Pilot")
+    every { userInfoStore.observe("main", userScope) } returns flowOf(
+      StorageEntity(
+        id = "main",
+        value = UserInfo(self_technician_id = TEST_TECHNICIAN_ID),
+        updatedAt = Instant.DISTANT_PAST,
+      )
+    )
+    every { technicianStore.observe(TEST_TECHNICIAN_ID, userScope) } returns flowOf(
+      StorageEntity(
+        id = TEST_TECHNICIAN_ID,
+        value = existing,
+        updatedAt = Instant.DISTANT_PAST,
+      )
+    )
+
+    val result = manager.ensureSelfProfile()
+
+    assertThat(result.isSuccess).isTrue()
+    coVerify(exactly = 0) {
+      technicianStore.put(TEST_TECHNICIAN_ID, any(), userScope)
+    }
+  }
+
+  @Test
+  fun ensureSelfProfile_whenReplacingName_usesAccountName() = runTest {
+    val userScope = EntityScope.userRoot(TEST_USER_ID)
+    val existing = buildTestTechnician(id = TEST_TECHNICIAN_ID, name = "Guest Pilot")
+    every { userInfoStore.observe("main", userScope) } returns flowOf(
+      StorageEntity(
+        id = "main",
+        value = UserInfo(self_technician_id = TEST_TECHNICIAN_ID),
+        updatedAt = Instant.DISTANT_PAST,
+      )
+    )
+    every { technicianStore.observe(TEST_TECHNICIAN_ID, userScope) } returns flowOf(
+      StorageEntity(
+        id = TEST_TECHNICIAN_ID,
+        value = existing,
+        updatedAt = Instant.DISTANT_PAST,
+      )
+    )
+
+    val result = manager.ensureSelfProfile(replaceExistingName = true)
+
+    assertThat(result.isSuccess).isTrue()
+    coVerify {
+      technicianStore.put(
+        TEST_TECHNICIAN_ID,
+        existing.copy(name = "Test User"),
+        userScope,
+      )
+    }
+  }
+
   private fun buildTestTechnician(
     id: String = TEST_TECHNICIAN_ID,
     name: String = "Jane Smith",

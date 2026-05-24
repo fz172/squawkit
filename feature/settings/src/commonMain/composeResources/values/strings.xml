@@ -8,9 +8,6 @@
   <string name="settings_feature_lab_subtitle">Advanced controls, synced across your devices</string>
   <string name="account_upgrade_login_cta">Log in</string>
   <string name="account_upgrade_login_subtitle">Connect your records to an account to sync and back them up</string>
-  <string name="account_upgrade_merge_title">Account already exists</string>
-  <string name="account_upgrade_merge_body">This account already has Hopply data. Sync this device's records into it? You may see duplicates if you logged the same aircraft in both places.</string>
-  <string name="account_upgrade_merge_confirm">Sync</string>
   <string name="account_upgrade_working">Syncing your records…</string>
   <string name="account_upgrade_success">Syncing complete</string>
   <string name="account_upgrade_error">Couldn't complete sync. Please try again.</string>

@@ -15,16 +15,16 @@ expect class ExportFileStore {
    * Persists [record] in the app-private metadata index so its full scope is rediscoverable when
    * listing history. Keyed by `export_id`; replaces any existing record for the same export.
    */
-  suspend fun saveRecord(record: ExportRecord)
+  suspend fun saveRecord(ownerUid: String, record: ExportRecord)
 
   /**
    * Lists previously written export archives, newest first, enriched with stored metadata.
    */
-  suspend fun listExports(): List<ExportRecord>
+  suspend fun listExports(ownerUid: String): List<ExportRecord>
 
   /**
    * Deletes the export referenced by [exportId] and forgets its metadata. Returns true when an
    * archive was removed.
    */
-  suspend fun deleteExport(exportId: String): Boolean
+  suspend fun deleteExport(ownerUid: String, exportId: String): Boolean
 }

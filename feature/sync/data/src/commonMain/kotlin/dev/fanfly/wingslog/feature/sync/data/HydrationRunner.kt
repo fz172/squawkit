@@ -73,26 +73,35 @@ class HydrationRunner(
   ): Long? {
     if (docs.isEmpty()) return null
     var maxTs = Long.MIN_VALUE
+    val writtenDocs = mutableListOf<RemoteEntity>()
     db.transaction {
       for (doc in docs) {
-        db.schemaQueries.upsert(
+        val local = db.schemaQueries.selectOneForSync(
           collection = kind,
-          scope_path = scope.toPath(),
+          scope = scope.toPath(),
           id = doc.id,
-          payload = doc.payload,
-          payload_schema = kind.schemaName,
-          updated_at = doc.remoteTsMs,
-          remote_updated_at = doc.remoteTsMs,
-          dirty = false,
-          deleted = doc.deleted,
-        )
+        ).executeAsOneOrNull()
+        if (local?.dirty != true) {
+          db.schemaQueries.upsert(
+            collection = kind,
+            scope_path = scope.toPath(),
+            id = doc.id,
+            payload = doc.payload,
+            payload_schema = kind.schemaName,
+            updated_at = doc.remoteTsMs,
+            remote_updated_at = doc.remoteTsMs,
+            dirty = false,
+            deleted = doc.deleted,
+          )
+          writtenDocs += doc
+        }
         if (doc.remoteTsMs > maxTs) maxTs = doc.remoteTsMs
       }
     }
     // Mirror what PullListener does: notify the hook for each written (non-deleted) doc so blob
     // index rows are created for attachments that arrived during the initial hydration bulk-pull.
     if (postWriteHook != null) {
-      for (doc in docs) {
+      for (doc in writtenDocs) {
         if (!doc.deleted) postWriteHook.onEntityWritten(kind, scope, doc.payload)
       }
     }

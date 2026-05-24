@@ -55,8 +55,8 @@ class AuthManagerImpl(
 
   override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult {
     return try {
-      authProvider.signInWithCredential(credential)
-      val user = authProvider.currentUser
+      val result = authProvider.signInWithCredential(credential)
+      val user = result.user ?: authProvider.currentUser
         ?: return AccountUpgradeResult.Failed("Sign-in returned no user")
       AccountUpgradeResult.Linked(user)
     } catch (e: Exception) {

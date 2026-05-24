@@ -62,6 +62,7 @@ val exportDataManagerModule = module {
       get<ExportFileStore>(),
       get<ExportHistoryRemoteRepository>(),
       get<ExportDeliveryBackend>(),
+      get<FirebaseAuth>(),
     )
   }
 }

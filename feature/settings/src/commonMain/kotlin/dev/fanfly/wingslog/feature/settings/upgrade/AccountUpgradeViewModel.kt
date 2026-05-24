@@ -2,16 +2,18 @@ package dev.fanfly.wingslog.feature.settings.upgrade
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.gitlive.firebase.auth.AuthCredential
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Orchestrates upgrading a guest (anonymous) session to a permanent account.
@@ -29,64 +31,66 @@ class AccountUpgradeViewModel(
   private val syncEngine: SyncEngine,
 ) : ViewModel() {
 
-  private val log = Logger.withTag(TAG)
-
   private val _state = MutableStateFlow<UpgradeUiState>(UpgradeUiState.Idle)
   val state: StateFlow<UpgradeUiState> = _state.asStateFlow()
 
   fun startUpgrade() {
     if (_state.value == UpgradeUiState.Working) return
+    // Capture the guest UID before provider sign-in can switch FirebaseAuth to an existing user.
+    val guestUid = authManager.getCurrentUser()?.uid
     _state.value = UpgradeUiState.Working
     viewModelScope.launch {
       _state.value = when (val result = authManager.upgradeAnonymousAccount()) {
-        is AccountUpgradeResult.Linked -> {
-          // Linking doesn't fire authStateChanged, so seed the profile (name + photo) and kick
-          // the sync engine explicitly — otherwise the now-permanent data never reaches the cloud.
-          technicianManager.ensureSelfProfile()
-          syncEngine.resyncCurrentUser()
-          UpgradeUiState.Success
+        is AccountUpgradeResult.Linked -> finishLinkedAccount(result.user.uid)
+        is AccountUpgradeResult.CredentialInUse -> {
+          if (guestUid == null) {
+            UpgradeUiState.Error("No signed-in user to merge")
+          } else {
+            mergeExistingAccount(guestUid = guestUid, credential = result.credential)
+          }
         }
-
-        is AccountUpgradeResult.CredentialInUse -> UpgradeUiState.ConfirmMerge(result.credential)
         is AccountUpgradeResult.Cancelled -> UpgradeUiState.Idle
         is AccountUpgradeResult.Failed -> UpgradeUiState.Error(result.message)
       }
     }
   }
 
-  fun confirmMerge() {
-    val confirm = _state.value as? UpgradeUiState.ConfirmMerge ?: return
-    // Capture the guest UID before switching accounts; we're still anonymous at this point.
-    val guestUid = authManager.getCurrentUser()?.uid
-    if (guestUid == null) {
-      _state.value = UpgradeUiState.Error("No signed-in user to merge")
-      return
+  private suspend fun finishLinkedAccount(accountUid: String): UpgradeUiState {
+    if (!awaitPermanentCurrentUser(accountUid)) {
+      return UpgradeUiState.Error("Sign-in did not switch to the permanent account")
     }
-    _state.value = UpgradeUiState.Working
-    viewModelScope.launch {
-      _state.value = when (val result = authManager.signInToExistingAccount(confirm.credential)) {
-        is AccountUpgradeResult.Linked -> {
-          // Re-key this device's records into the existing account; the sync engine pushes them up.
-          migrator.reassign(fromUid = guestUid, toUid = result.user.uid)
-          // Seed/backfill the profile name from the account (or keep the merged one).
-          technicianManager.ensureSelfProfile()
-          // Sign-in fired authStateChanged, but re-keying happened after; nudge sync to push it.
-          syncEngine.resyncCurrentUser()
-          UpgradeUiState.Success
-        }
 
-        is AccountUpgradeResult.Failed -> UpgradeUiState.Error(result.message)
-        else -> {
-          log.w { "Unexpected result on merge sign-in: $result" }
-          UpgradeUiState.Error("Sign-in failed")
-        }
-      }
-    }
+    // Linking doesn't fire authStateChanged, so seed the profile (name + photo) and kick
+    // the sync engine explicitly — otherwise the now-permanent data never reaches the cloud.
+    technicianManager.ensureSelfProfile(replaceExistingName = true)
+    refreshLocalAccountData()
+    return UpgradeUiState.Success
   }
 
-  /** User declined the merge; stay a guest with data intact. */
-  fun cancelMerge() {
-    _state.value = UpgradeUiState.Idle
+  private suspend fun mergeExistingAccount(
+    guestUid: String,
+    credential: AuthCredential,
+  ): UpgradeUiState {
+    return when (val result = authManager.signInToExistingAccount(credential)) {
+      is AccountUpgradeResult.Linked -> {
+        val accountUid = result.user.uid
+        if (!awaitPermanentCurrentUser(accountUid)) {
+          UpgradeUiState.Error("Sign-in did not switch to the permanent account")
+        } else {
+          // Re-key this device's records into the existing account; the sync engine pushes them up.
+          migrator.reassign(fromUid = guestUid, toUid = accountUid)
+          // Replace the guest profile name with the permanent account name.
+          technicianManager.ensureSelfProfile(replaceExistingName = true)
+          // Sign-in fired authStateChanged, but re-keying happened after; hydrate and nudge sync
+          // so local reads include the permanent account's aircraft before the UI leaves Working.
+          refreshLocalAccountData()
+          UpgradeUiState.Success
+        }
+      }
+
+      is AccountUpgradeResult.Failed -> UpgradeUiState.Error(result.message)
+      else -> UpgradeUiState.Error("Sign-in failed")
+    }
   }
 
   /** Dismiss a terminal (Success/Error) state back to Idle. */
@@ -94,7 +98,22 @@ class AccountUpgradeViewModel(
     _state.value = UpgradeUiState.Idle
   }
 
+  private suspend fun awaitPermanentCurrentUser(expectedUid: String): Boolean =
+    withTimeoutOrNull(CURRENT_USER_SWITCH_TIMEOUT_MS) {
+      while (true) {
+        val current = authManager.getCurrentUser()
+        if (current?.uid == expectedUid && !current.isAnonymous) return@withTimeoutOrNull true
+        delay(CURRENT_USER_SWITCH_POLL_MS)
+      }
+    } == true
+
+  private suspend fun refreshLocalAccountData() {
+    syncEngine.hydrateCurrentUserNow()
+    syncEngine.resyncCurrentUser()
+  }
+
   companion object {
-    private const val TAG = "AccountUpgradeViewModel"
+    private const val CURRENT_USER_SWITCH_TIMEOUT_MS = 3_000L
+    private const val CURRENT_USER_SWITCH_POLL_MS = 50L
   }
 }
