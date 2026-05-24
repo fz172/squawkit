@@ -5,6 +5,7 @@ import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.await
+import kotlinx.coroutines.flow.first
 
 class AuthManagerImpl(
   private val authProvider: FirebaseAuth,
@@ -14,8 +15,13 @@ class AuthManagerImpl(
 
   /**
    * Tries to return the currently authenticated user without prompting.
+   *
+   * Firebase JS restores the persisted session (including anonymous) from IndexedDB
+   * asynchronously, so `currentUser` is still null at page load. Await the first
+   * `authStateChanged` emission instead — that fires once the SDK has resolved the
+   * persisted state, so a returning user is recognized across reloads.
    */
-  override suspend fun trySilentLogin(): FirebaseUser? = authProvider.currentUser
+  override suspend fun trySilentLogin(): FirebaseUser? = authProvider.authStateChanged.first()
 
   /**
    * GitLive exposes no `signInWithPopup`, so we call the modular Firebase JS Auth SDK directly
