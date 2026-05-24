@@ -1,25 +1,33 @@
 # Web Target Expansion Plan
 
-**Implementation Status (2026-05-24):** Milestone 0 shipped — a standalone `webApp`
-Kotlin/JS module renders a static login screen (`ComposeViewport` + Compose MP, no
-shared code). **M1 compile path validated:** `core:model`, `core:datetime`, and
-`core:ui` now declare a `js(IR)` target and all compile clean to JS (Wire protobuf,
-coil, ktor-client-core, `compose-ui-tooling-preview`, material-icons-extended all have
-JS variants — none were blockers). JS `actual`s added for `toWireInstant`,
-`platformColorScheme` (returns null → aviation palette), and `rememberBrandHeadlineFamily`
-(Space Grotesk). **M1 complete:** `webApp` now depends on `:core:ui`, renders through
-`WingslogTheme`, and its duplicated color tokens + bundled Space Grotesk fonts have been
-deleted — the first proof a downstream JS consumer can actually *use* the shared modules.
-**M2 largely complete:** `LoginScreen`/`LoginViewModel` extracted into `feature/login`
-(JS-capable, depends only on `core:ui` + `core:auth`); `core:auth` has a `js` target +
-`jsMain` `AuthManagerImpl`; `webApp` initializes Firebase JS, starts Koin, and renders the
-*shared* production `LoginScreen` — the mock and `composeApp`'s copy are deleted (single
-source across Android/iOS/web). All three platforms compile. **Remaining M2 gaps:**
-(a) Google sign-in on web returns null — needs Firebase-JS `signInWithPopup` interop;
-anonymous works. (b) Runtime sign-in needs Anonymous auth enabled in the Firebase console
-and a real Firebase *web app* registration for a proper `appId`. Next: close those gaps,
-then M3 (local-first storage on web). This doc is the ordered plan to grow that seed into a
-real, code-sharing web client.
+**Implementation Status (2026-05-24):** This doc is the ordered plan to grow the
+standalone `webApp` seed into a real, code-sharing web client.
+
+- **M0 — ✅ shipped.** Standalone `webApp` Kotlin/JS module renders a login screen
+  (`ComposeViewport` + Compose MP).
+- **M1 — ✅ complete.** `core:model`, `core:datetime`, and `core:ui` gained `js(IR)`
+  targets and compile clean to JS (Wire protobuf, coil, ktor-client-core,
+  `compose-ui-tooling-preview`, material-icons-extended all have JS variants — none
+  blocked). JS `actual`s added (`toWireInstant`, `platformColorScheme` → null aviation
+  palette, `rememberBrandHeadlineFamily` → Space Grotesk). `webApp` renders through the
+  shared `WingslogTheme`; its duplicated tokens/fonts deleted.
+- **M2 — ✅ complete.** `LoginScreen`/`LoginViewModel` extracted into a JS-capable
+  `feature/login` (deps: only `core:ui` + `core:auth`); `core:auth` has a `js` target +
+  `jsMain` `AuthManagerImpl`; `webApp` initializes Firebase JS, starts Koin, and renders
+  the *shared* production login screen — the mock and `composeApp`'s copy deleted (single
+  source across Android/iOS/web). **Both anonymous and Google sign-in verified working in
+  the browser.** Google goes through a deliberate GitLive + raw-Firebase-JS hybrid (see
+  M2 step 4).
+
+**What's next:**
+1. **`upgradeAnonymousAccount()` on web** — still stubbed in `jsMain` `AuthManagerImpl`;
+   needs Firebase-JS `linkWithPopup` (the account-upgrade contract merged from main).
+   Until then a guest on web can't upgrade in place.
+2. **Polish (optional):** the Firebase web `appId` in `webApp/src/jsMain/kotlin/main.kt`
+   is synthesized — auth works without it, but register a real Firebase *web app* for a
+   proper value before any production use.
+3. **M3 — local-first storage on web** (next milestone proper): `js` target on
+   `core:storage` + a SQLDelight web-worker (sql.js) `DriverFactory`. See the M3 section.
 
 > **Gotcha discovered in M1:** `components-resources` must be declared *directly* in a
 > module's dependencies (not relied on transitively via `core:ui`'s `api`) — the Compose
@@ -117,11 +125,14 @@ Order matters — keep Android/iOS green at every step:
      separate Android platform resources — leave them.
 3. **Rewire `composeApp` `AppEntry`** to the extracted screen; delete `composeApp/login/`.
    Verify Android + iOS still build before going further.
-4. **Add `js(IR)` to `feature/login` and `core:auth`.** Add
-   `core/auth/src/jsMain/.../AuthManagerImpl.kt`: Google via Firebase JS `signInWithPopup`
-   (GitLive `GoogleAuthProvider`), `signInAnonymously`, sign-out. Initialize the Firebase
-   JS SDK in `webApp` (config in `index.html` or generated) so GitLive has an app to
-   attach to.
+4. **Add `js(IR)` to `feature/login` and `core:auth`.** `jsMain` `AuthManagerImpl` does
+   anonymous / silent / sign-out through GitLive. Google sign-in is a **deliberate
+   hybrid**: GitLive exposes no `signInWithPopup`, so `core/auth/src/jsMain/FirebaseAuthJs.kt`
+   declares minimal `@JsModule("firebase/auth")` externals (`getAuth`, `signInWithPopup`,
+   `GoogleAuthProvider`) and calls the raw Firebase JS SDK directly. Both `getAuth()` and
+   GitLive's `Firebase.auth` resolve the *same* default-app Auth singleton, so after the
+   popup resolves the result surfaces through GitLive's `currentUser` — no special-casing
+   downstream. `webApp.main()` initializes the Firebase JS app via `Firebase.initialize`.
 5. **Point `webApp` at `feature/login`**; delete the mock `LoginScreen.kt` + duplicate
    strings. Because `core:auth` is a real dependency, the reused screen and working
    sign-in land together — no dead-button interim state.
