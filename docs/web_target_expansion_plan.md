@@ -18,12 +18,26 @@ standalone `webApp` seed into a real, code-sharing web client.
   source across Android/iOS/web). **Both anonymous and Google sign-in verified working in
   the browser.** Google goes through a deliberate GitLive + raw-Firebase-JS hybrid (see
   M2 step 4).
+- **M3 — ✅ code-complete; browser runtime pending.** `core:storage` has a `js` target.
+  To make the browser sql.js driver work the whole `WingsLogDatabase` was switched to
+  `generateAsync=true`; the Android/iOS sync drivers wrap the async schema via
+  `Schema.synchronous()`. The suspend cascade was absorbed: `TombstoneGc.runOnce`,
+  `DatabaseIntegrityChecker.wipe*`, `OnboardingPreferences.setHasSeenWelcome`,
+  `SyncPreferences` setters, and `SyncCursorStore`/`PullListener`/`HydrationRunner` write
+  paths are now `suspend`, with callers updated to await them (e.g. logout waits for the
+  wipe). `Dispatchers.IO` (absent on JS) is replaced by an expect/actual `storageIoContext`
+  (IO on mobile, Default on web). JS `DriverFactory` uses `WebWorkerDriver` +
+  `@cashapp/sqldelight-sqljs-worker`. **Verified:** Android `assembleDebug` + full
+  `testDebugUnitTest`, iOS compile, webApp JS bundle all green. **Pending:** in-browser
+  read/write round-trip (the sql.js worker + WASM load, like auth, needs a browser test).
 
 **What's next (in order):**
-1. **M3 — local-first storage on web** (the immediate next milestone): `js` target on
-   `core:storage` + a SQLDelight web-worker (sql.js) `DriverFactory`. Gateway to M4 (sync)
-   and showing real data. See the M3 section.
-2. **M4+** as laid out below (sync, then read-only fleet, then editing).
+1. **M4 — sync engine on web.** `js` target on `feature:sync:data`. Note: its **read**
+   paths still use synchronous `executeAsOneOrNull`/`executeAsList` (they compile and work
+   on mobile's sync driver but would throw on the async web driver) — these must move to
+   `awaitAs*` for web. `core:storage`'s own `EntityStore` is already async-safe (Flow reads
+   + `awaitAsOneOrNull`). Blob drivers stub on web. See the M4 section.
+2. **M5+** as laid out below (read-only fleet, then editing).
 3. **`upgradeAnonymousAccount()` on web — deferred to last** (by decision). Still stubbed
    in `jsMain` `AuthManagerImpl`; needs Firebase-JS `linkWithPopup`. Until then a guest on
    web can't upgrade in place — acceptable while web is pre-production.
@@ -188,7 +202,7 @@ Track which shared modules have gained a `js(IR)` target (✅ = has JS target):
 | `core:ui` | ✅ | M1 |
 | `core:auth` | ✅ | M2 |
 | `feature:login` (new — extracted from `composeApp`) | ✅ | M2 |
-| `core:storage` | ☐ | M3 |
+| `core:storage` | ✅ | M3 |
 | `feature:sync:data` | ☐ | M4 |
 | `feature:fleet:*`, `feature:aircraft:dashboard` | ☐ | M5 |
 | `feature:{logs,tasks,squawk}:{model,datamanager,viewing,sharedassets}` | ☐ | M5 |

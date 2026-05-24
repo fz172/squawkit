@@ -18,7 +18,7 @@ class TombstoneGc(
   private val db: WingsLogDatabase,
   private val retention: Duration = 30.days,
 ) {
-  fun runOnce(now: Instant = Clock.System.now()) {
+  suspend fun runOnce(now: Instant = Clock.System.now()) {
     val cutoffMs = (now - retention).toEpochMilliseconds()
     db.schemaQueries.gcTombstones(cutoffMs)
   }

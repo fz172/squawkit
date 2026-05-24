@@ -60,7 +60,7 @@ class SettingsViewModelTest {
 
     every { technicianManager.observeSelf() } returns flowOf(null)
 
-    justRun { dbChecker.wipeDataForUser(any()) }
+    coJustRun { dbChecker.wipeDataForUser(any()) }
     coJustRun { attachmentManager.wipeLocalData(any()) }
     coJustRun { authManager.logOut() }
   }
@@ -77,7 +77,7 @@ class SettingsViewModelTest {
     viewModel.logOut()
     advanceUntilIdle()
 
-    verify { dbChecker.wipeDataForUser(TEST_USER_ID) }
+    coVerify { dbChecker.wipeDataForUser(TEST_USER_ID) }
   }
 
   @Test
@@ -108,7 +108,7 @@ class SettingsViewModelTest {
     viewModel.logOut()
     advanceUntilIdle()
 
-    verify(exactly = 0) { dbChecker.wipeDataForUser(any()) }
+    coVerify(exactly = 0) { dbChecker.wipeDataForUser(any()) }
     coVerify(exactly = 0) { attachmentManager.wipeLocalData(any()) }
   }
 

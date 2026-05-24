@@ -15,7 +15,7 @@ class OnboardingPreferences(
       ?.toBoolean() ?: false
   }
 
-  fun setHasSeenWelcome() {
+  suspend fun setHasSeenWelcome() {
     val uid = auth.currentUser?.uid ?: return
     db.schemaQueries.upsertConfig(uid, KEY_HAS_SEEN_WELCOME, true.toString())
   }

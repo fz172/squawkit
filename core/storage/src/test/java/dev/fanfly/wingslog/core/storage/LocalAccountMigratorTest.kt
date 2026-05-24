@@ -1,10 +1,13 @@
 package dev.fanfly.wingslog.core.storage
 
+import app.cash.sqldelight.async.coroutines.awaitAsList
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
+import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 
@@ -19,12 +22,13 @@ class LocalAccountMigratorTest {
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.create(driver)
+    // Schema is async-generated; the sync JVM driver wraps it via .synchronous().
+    WingsLogDatabase.Schema.synchronous().create(driver)
     db = createWingsLogDatabase(driver)
     migrator = LocalAccountMigratorImpl(db)
   }
 
-  private fun insertEntity(uid: String, id: String, dirty: Boolean, remoteUpdatedAt: Long?) {
+  private suspend fun insertEntity(uid: String, id: String, dirty: Boolean, remoteUpdatedAt: Long?) {
     db.schemaQueries.upsert(
       collection = CollectionKind.Aircraft,
       scope_path = "/users/$uid/fleet",
@@ -39,7 +43,7 @@ class LocalAccountMigratorTest {
   }
 
   @Test
-  fun reassign_movesEntityToNewScope_marksDirty_clearsRemoteTimestamp() = runBlocking {
+  fun reassign_movesEntityToNewScope_marksDirty_clearsRemoteTimestamp() = runTest {
     insertEntity(FROM_UID, "ac-1", dirty = false, remoteUpdatedAt = 5_000L)
 
     migrator.reassign(FROM_UID, TO_UID)
@@ -47,36 +51,36 @@ class LocalAccountMigratorTest {
     val oldScope = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/$FROM_UID/fleet",
-    ).executeAsList()
+    ).awaitAsList()
     assertThat(oldScope).isEmpty()
 
     val moved = db.schemaQueries.selectOneForSync(
       collection = CollectionKind.Aircraft,
       scope = "/users/$TO_UID/fleet",
       id = "ac-1",
-    ).executeAsOneOrNull()
+    ).awaitAsOneOrNull()
     assertThat(moved).isNotNull()
     assertThat(moved!!.dirty).isTrue()
     assertThat(moved.remote_updated_at).isNull()
   }
 
   @Test
-  fun reassign_leavesOtherUsersDataUntouched() {
+  fun reassign_leavesOtherUsersDataUntouched() = runTest {
     insertEntity(FROM_UID, "ac-from", dirty = false, remoteUpdatedAt = null)
     insertEntity("someone-else", "ac-other", dirty = false, remoteUpdatedAt = null)
 
-    runBlocking { migrator.reassign(FROM_UID, TO_UID) }
+    migrator.reassign(FROM_UID, TO_UID)
 
     val other = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/someone-else/fleet",
-    ).executeAsList()
+    ).awaitAsList()
     assertThat(other).hasSize(1)
     assertThat(other[0].id).isEqualTo("ac-other")
   }
 
   @Test
-  fun reassign_resetsBlobScopeAndRemoteState() {
+  fun reassign_resetsBlobScopeAndRemoteState() = runTest {
     db.schemaQueries.upsertBlob(
       id = "blob-1",
       scope_path = "/users/$FROM_UID/fleet",
@@ -92,9 +96,9 @@ class LocalAccountMigratorTest {
       deleted = false,
     )
 
-    runBlocking { migrator.reassign(FROM_UID, TO_UID) }
+    migrator.reassign(FROM_UID, TO_UID)
 
-    val blob = db.schemaQueries.selectBlobById("blob-1").executeAsOneOrNull()
+    val blob = db.schemaQueries.selectBlobById("blob-1").awaitAsOneOrNull()
     assertThat(blob).isNotNull()
     assertThat(blob!!.scope_path).isEqualTo("/users/$TO_UID/fleet")
     assertThat(blob.remote_state).isEqualTo(RemoteState.LocalOnly)
@@ -103,7 +107,7 @@ class LocalAccountMigratorTest {
   }
 
   @Test
-  fun reassign_dropsSyncCursorsForBothUids() {
+  fun reassign_dropsSyncCursorsForBothUids() = runTest {
     listOf(FROM_UID, TO_UID).forEach { uid ->
       db.schemaQueries.upsertCursor(
         uid = uid,
@@ -116,44 +120,42 @@ class LocalAccountMigratorTest {
       )
     }
 
-    runBlocking { migrator.reassign(FROM_UID, TO_UID) }
+    migrator.reassign(FROM_UID, TO_UID)
 
     listOf(FROM_UID, TO_UID).forEach { uid ->
       val cursor = db.schemaQueries.selectCursor(
         uid = uid,
         collection = CollectionKind.Aircraft,
         scope_path = "/users/$uid/fleet",
-      ).executeAsOneOrNull()
+      ).awaitAsOneOrNull()
       assertThat(cursor).isNull()
     }
   }
 
   @Test
-  fun reassign_isIdempotent() {
+  fun reassign_isIdempotent() = runTest {
     insertEntity(FROM_UID, "ac-1", dirty = false, remoteUpdatedAt = null)
 
-    runBlocking {
-      migrator.reassign(FROM_UID, TO_UID)
-      migrator.reassign(FROM_UID, TO_UID)
-    }
+    migrator.reassign(FROM_UID, TO_UID)
+    migrator.reassign(FROM_UID, TO_UID)
 
     val moved = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/$TO_UID/fleet",
-    ).executeAsList()
+    ).awaitAsList()
     assertThat(moved).hasSize(1)
   }
 
   @Test
-  fun reassign_isNoopWhenUidsAreEqual() {
+  fun reassign_isNoopWhenUidsAreEqual() = runTest {
     insertEntity(FROM_UID, "ac-1", dirty = false, remoteUpdatedAt = null)
 
-    runBlocking { migrator.reassign(FROM_UID, FROM_UID) }
+    migrator.reassign(FROM_UID, FROM_UID)
 
     val stillThere = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/$FROM_UID/fleet",
-    ).executeAsList()
+    ).awaitAsList()
     assertThat(stillThere).hasSize(1)
   }
 }

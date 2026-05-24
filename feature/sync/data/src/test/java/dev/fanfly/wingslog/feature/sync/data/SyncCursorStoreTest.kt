@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.data
 
+import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -7,6 +8,7 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import org.junit.Before
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 
@@ -27,7 +29,7 @@ class SyncCursorStoreTest {
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.create(driver)
+    WingsLogDatabase.Schema.synchronous().create(driver)
     db = createWingsLogDatabase(driver)
     store = SyncCursorStore(db)
   }
@@ -35,7 +37,7 @@ class SyncCursorStoreTest {
   // get — returns null when no cursor row exists
 
   @Test
-  fun get_noCursorRow_returnsNull() {
+  fun get_noCursorRow_returnsNull() = runTest {
     val cursor = store.get(
       TEST_UID,
       TEST_KIND,
@@ -47,7 +49,7 @@ class SyncCursorStoreTest {
   // markHydrated — writes cursor with hydrated=true, failed_attempts=0
 
   @Test
-  fun markHydrated_createsCursorWithHydratedTrue() {
+  fun markHydrated_createsCursorWithHydratedTrue() = runTest {
     store.markHydrated(
       TEST_UID,
       TEST_KIND,
@@ -67,7 +69,7 @@ class SyncCursorStoreTest {
   }
 
   @Test
-  fun markHydrated_withNullLastSeen_storesNullLastSeenRemote() {
+  fun markHydrated_withNullLastSeen_storesNullLastSeenRemote() = runTest {
     store.markHydrated(
       TEST_UID,
       TEST_KIND,
@@ -87,7 +89,7 @@ class SyncCursorStoreTest {
   // recordFailure — increments failed_attempts, sets last_attempt_at, hydrated stays false
 
   @Test
-  fun recordFailure_firstAttempt_failedAttemptsIsOne() {
+  fun recordFailure_firstAttempt_failedAttemptsIsOne() = runTest {
     store.recordFailure(
       TEST_UID,
       TEST_KIND,
@@ -106,7 +108,7 @@ class SyncCursorStoreTest {
   }
 
   @Test
-  fun recordFailure_calledTwice_failedAttemptsIsTwo() {
+  fun recordFailure_calledTwice_failedAttemptsIsTwo() = runTest {
     store.recordFailure(
       TEST_UID,
       TEST_KIND,
@@ -127,7 +129,7 @@ class SyncCursorStoreTest {
   }
 
   @Test
-  fun recordFailure_afterHydrated_hydratedStaysTrue() {
+  fun recordFailure_afterHydrated_hydratedStaysTrue() = runTest {
     store.markHydrated(
       TEST_UID,
       TEST_KIND,
@@ -153,7 +155,7 @@ class SyncCursorStoreTest {
   // advanceLastSeen — only advances when new remoteTs is strictly greater
 
   @Test
-  fun advanceLastSeen_noCursorRow_createsCursorWithGivenTs() {
+  fun advanceLastSeen_noCursorRow_createsCursorWithGivenTs() = runTest {
     store.advanceLastSeen(
       TEST_UID,
       TEST_KIND,
@@ -171,7 +173,7 @@ class SyncCursorStoreTest {
   }
 
   @Test
-  fun advanceLastSeen_newerTs_updatesLastSeenRemote() {
+  fun advanceLastSeen_newerTs_updatesLastSeenRemote() = runTest {
     store.advanceLastSeen(
       TEST_UID,
       TEST_KIND,
@@ -194,7 +196,7 @@ class SyncCursorStoreTest {
   }
 
   @Test
-  fun advanceLastSeen_olderTs_doesNotDecrement() {
+  fun advanceLastSeen_olderTs_doesNotDecrement() = runTest {
     store.advanceLastSeen(
       TEST_UID,
       TEST_KIND,
@@ -217,7 +219,7 @@ class SyncCursorStoreTest {
   }
 
   @Test
-  fun advanceLastSeen_sameTs_doesNotDecrement() {
+  fun advanceLastSeen_sameTs_doesNotDecrement() = runTest {
     store.advanceLastSeen(
       TEST_UID,
       TEST_KIND,
@@ -242,7 +244,7 @@ class SyncCursorStoreTest {
   // Scope and kind isolation
 
   @Test
-  fun cursors_differentScopesSameKind_areIsolated() {
+  fun cursors_differentScopesSameKind_areIsolated() = runTest {
     val scopeOther = EntityScope.aircraftChild(
       TEST_UID,
       "other-aircraft"
@@ -263,7 +265,7 @@ class SyncCursorStoreTest {
   }
 
   @Test
-  fun cursors_differentKindsSameScope_areIsolated() {
+  fun cursors_differentKindsSameScope_areIsolated() = runTest {
     store.markHydrated(
       TEST_UID,
       TEST_KIND,

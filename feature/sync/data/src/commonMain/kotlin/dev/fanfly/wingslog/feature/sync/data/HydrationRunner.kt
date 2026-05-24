@@ -66,7 +66,7 @@ class HydrationRunner(
     }
   }
 
-  private fun applyAndComputeMaxTs(
+  private suspend fun applyAndComputeMaxTs(
     kind: CollectionKind,
     scope: EntityScope,
     docs: List<RemoteEntity>,

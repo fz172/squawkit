@@ -45,7 +45,7 @@ class PullListener(
    * Wraps the read+write in a single SQLDelight transaction so a concurrent local `put` can't slip
    * a row into a state the comparator didn't see.
    */
-  fun apply(remote: RemoteEntity): Long {
+  suspend fun apply(remote: RemoteEntity): Long {
     var written = false
     db.transaction {
       val local =
@@ -72,7 +72,7 @@ class PullListener(
     return remote.remoteTsMs
   }
 
-  private fun upsertFromRemote(remote: RemoteEntity) {
+  private suspend fun upsertFromRemote(remote: RemoteEntity) {
     db.schemaQueries.upsert(
       collection = kind,
       scope_path = scope.toPath(),

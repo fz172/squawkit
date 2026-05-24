@@ -10,6 +10,9 @@ import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderF
 import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.di.initKoin
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 
@@ -23,7 +26,8 @@ class WingsLogApplication : Application() {
     initKoin(dogfoodExtensions = createDogfoodExtensions()) {
       androidContext(this@WingsLogApplication)
     }
-    get<TombstoneGc>().runOnce()
+    // Best-effort startup GC; runOnce() is now suspend (async-generated queries).
+    CoroutineScope(Dispatchers.Default).launch { get<TombstoneGc>().runOnce() }
     get<SyncEngine>().start()
   }
 

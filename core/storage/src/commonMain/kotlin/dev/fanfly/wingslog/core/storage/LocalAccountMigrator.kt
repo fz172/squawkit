@@ -2,8 +2,6 @@ package dev.fanfly.wingslog.core.storage
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 
 /**
@@ -38,7 +36,7 @@ class LocalAccountMigratorImpl(
     val oldPrefixLike = "$oldPrefix%"
     // 1-based index of the path tail that follows the old prefix (SQLite substr is 1-based).
     val remainderStart = (oldPrefix.length + 1).toString()
-    withContext(Dispatchers.IO) {
+    withContext(storageIoContext) {
       db.schemaQueries.transaction {
         db.schemaQueries.reassignEntities(newPrefix, remainderStart, oldPrefixLike)
         db.schemaQueries.reassignBlobs(newPrefix, remainderStart, oldPrefixLike)

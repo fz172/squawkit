@@ -40,7 +40,7 @@ class SyncCursorStore(private val db: WingsLogDatabase) {
       scope.toPath()
     ).executeAsOneOrNull()?.toCursor(scope)
 
-  fun markHydrated(
+  suspend fun markHydrated(
     uid: String,
     kind: CollectionKind,
     scope: EntityScope,
@@ -57,7 +57,7 @@ class SyncCursorStore(private val db: WingsLogDatabase) {
     )
   }
 
-  fun advanceLastSeen(
+  suspend fun advanceLastSeen(
     uid: String,
     kind: CollectionKind,
     scope: EntityScope,
@@ -82,7 +82,7 @@ class SyncCursorStore(private val db: WingsLogDatabase) {
     )
   }
 
-  fun recordFailure(
+  suspend fun recordFailure(
     uid: String,
     kind: CollectionKind,
     scope: EntityScope,

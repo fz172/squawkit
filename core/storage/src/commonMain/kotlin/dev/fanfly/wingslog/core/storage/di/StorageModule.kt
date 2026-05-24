@@ -21,9 +21,8 @@ import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.core.storage.WireCodec
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.core.storage.storageIoContext
 import kotlin.time.ExperimentalTime
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -81,7 +80,7 @@ import org.koin.dsl.module
     EntityStoreFactory(
       db = get(),
       codecs = get(),
-      ioContext = Dispatchers.IO,
+      ioContext = storageIoContext,
     )
   }
 

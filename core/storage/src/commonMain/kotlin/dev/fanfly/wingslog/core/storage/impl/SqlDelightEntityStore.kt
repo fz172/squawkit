@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.storage.impl
 
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
@@ -82,7 +83,7 @@ class SqlDelightEntityStore<T : Any>(
       kind,
       scope.toPath(),
       id
-    ).executeAsOneOrNull()
+    ).awaitAsOneOrNull()
     val payloadBytes = existing?.payload ?: ByteArray(0)
     val now = clock.now().toEpochMilliseconds()
     db.schemaQueries.upsert(

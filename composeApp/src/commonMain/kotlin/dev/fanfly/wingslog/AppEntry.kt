@@ -68,13 +68,17 @@ fun AppEntry() {
   val firebaseAuth: FirebaseAuth = koinInject()
   val dogfoodExts: DogfoodFeatureExtensions = koinInject()
   val onboardingPrefs: OnboardingPreferences = koinInject()
+  val scope = rememberCoroutineScope()
 
   if (health.isCorrupted) {
     WingslogTheme {
       IntegrityRecoveryDialog(
         onWipe = {
-          checker.wipeAllData()
-          authManager.logOut()
+          // wipeAllData() is now suspend (async-generated queries); log out only after it completes.
+          scope.launch {
+            checker.wipeAllData()
+            authManager.logOut()
+          }
         },
       )
     }
@@ -155,6 +159,7 @@ private fun NavGraphBuilder.authGraph(
     }
     composable(Screen.Welcome.route) {
       val technicianManager: TechnicianManager = koinInject()
+      val welcomeScope = rememberCoroutineScope()
       val selfTech by technicianManager.observeSelf()
         .collectAsStateWithLifecycle(null)
       var welcomeChecked by remember { mutableStateOf(false) }
@@ -173,9 +178,12 @@ private fun NavGraphBuilder.authGraph(
         WelcomeScreen(
           name = selfTech?.name.orEmpty(),
           onDone = {
-            onboardingPrefs.setHasSeenWelcome()
-            navController.navigate(GRAPH_FLEET) {
-              popUpTo(GRAPH_AUTH) { inclusive = true }
+            // setHasSeenWelcome() is now suspend; persist the flag before navigating away.
+            welcomeScope.launch {
+              onboardingPrefs.setHasSeenWelcome()
+              navController.navigate(GRAPH_FLEET) {
+                popUpTo(GRAPH_AUTH) { inclusive = true }
+              }
             }
           },
         )

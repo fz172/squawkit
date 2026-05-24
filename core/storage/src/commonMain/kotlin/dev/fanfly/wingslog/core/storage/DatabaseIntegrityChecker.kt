@@ -41,7 +41,7 @@ class DatabaseIntegrityChecker(
     }
   }
 
-  fun wipeAllData() {
+  suspend fun wipeAllData() {
     try {
       db.schemaQueries.wipeAllBlobObjects()
       db.schemaQueries.wipeAllSyncCursors()
@@ -57,7 +57,7 @@ class DatabaseIntegrityChecker(
    * on next sign-in. blob_object rows and files are handled separately by
    * [AttachmentManager.wipeLocalData]. Call this from the sign-out path before clearing auth state.
    */
-  fun wipeDataForUser(uid: String) {
+  suspend fun wipeDataForUser(uid: String) {
     val scopePrefix = "/users/$uid/%"
     try {
       db.schemaQueries.deleteEntitiesForUser(scopePrefix)

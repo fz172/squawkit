@@ -59,7 +59,7 @@ class SyncPreferences(
       initialValue = SyncPrefs()
     )
 
-  fun setCloudSyncEnabled(enabled: Boolean) {
+  suspend fun setCloudSyncEnabled(enabled: Boolean) {
     val uid = auth.currentUser?.uid ?: return
     db.schemaQueries.upsertConfig(
       uid,
@@ -68,7 +68,7 @@ class SyncPreferences(
     )
   }
 
-  fun setAllowUploadOnCellular(allowed: Boolean) {
+  suspend fun setAllowUploadOnCellular(allowed: Boolean) {
     val uid = auth.currentUser?.uid ?: return
     db.schemaQueries.upsertConfig(
       uid,

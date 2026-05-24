@@ -30,11 +30,16 @@ kotlin {
   iosArm64()
   iosSimulatorArm64()
 
+  js(IR) {
+    browser()
+  }
+
   sourceSets {
     commonMain.dependencies {
       api(project(":core:model"))
       api(libs.sqldelight.runtime)
       api(libs.sqldelight.coroutines.extensions)
+      api(libs.sqldelight.async.extensions)
       api(libs.kotlinx.coroutines.core)
       api(libs.kotlinx.datetime)
       api(libs.koin.core)
@@ -47,6 +52,12 @@ kotlin {
     }
     iosMain.dependencies {
       api(libs.sqldelight.native.driver)
+    }
+    jsMain.dependencies {
+      api(libs.sqldelight.web.worker.driver)
+      // sql.js worker prebuilt by Cash App + the sql.js WASM engine it loads.
+      implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.3.2"))
+      implementation(npm("sql.js", "1.8.0"))
     }
   }
 }
@@ -63,6 +74,9 @@ sqldelight {
     create("WingsLogDatabase") {
       packageName.set("dev.fanfly.wingslog.core.storage.db")
       version = 3
+      // Required for the browser sql.js web-worker driver (async). Mobile sync drivers
+      // wrap the async-generated schema via Schema.synchronous() in their DriverFactory.
+      generateAsync.set(true)
     }
   }
 }
