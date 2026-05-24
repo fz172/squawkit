@@ -52,7 +52,7 @@
   <string name="schedule_preview_empty_secondary">Pick how this task is tracked below</string>
   <string name="schedule_preview_linked_unset_primary">Linked task not chosen</string>
   <string name="schedule_preview_linked_unset_secondary">Pick a task to link to below</string>
-  <string name="schedule_preview_linked_primary">Due whenever \"%1$s\" is due</string>
+  <string name="schedule_preview_linked_primary">Due whenever "%1$s" is due</string>
   <string name="schedule_preview_linked_one_time_secondary">Will move to history after first log</string>
   <string name="schedule_preview_linked_repeating_secondary">Repeats with the linked task</string>
   <string name="schedule_preview_asap_primary">Due now — ASAP</string>
