@@ -40,4 +40,10 @@ class FeatureLabViewModel(
       featureLabManager.update(_flags.value.copy(exportEmailDeliveryEnabled = enabled))
     }
   }
+
+  fun setAccountUpgradeEnabled(enabled: Boolean) {
+    viewModelScope.launch {
+      featureLabManager.update(_flags.value.copy(accountUpgradeEnabled = enabled))
+    }
+  }
 }

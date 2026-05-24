@@ -56,10 +56,12 @@ private fun FeatureLabSettings.toFeatureFlags() = FeatureFlags(
   technicianEnabled = !technician_disabled,
   attachmentUploadEnabled = !attachment_upload_disabled,
   exportEmailDeliveryEnabled = export_email_delivery_enabled,
+  accountUpgradeEnabled = account_upgrade_enabled,
 )
 
 private fun FeatureFlags.toProto() = FeatureLabSettings(
   technician_disabled = !technicianEnabled,
   attachment_upload_disabled = !attachmentUploadEnabled,
   export_email_delivery_enabled = exportEmailDeliveryEnabled,
+  account_upgrade_enabled = accountUpgradeEnabled,
 )
