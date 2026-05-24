@@ -4,6 +4,13 @@
   <string name="anon_logout_warning_title">Log out and erase data?</string>
   <string name="anon_logout_warning_body">You're signed in as a guest, so all your aircraft, logs, and records live only on this device. Logging out permanently deletes them — they can't be recovered. Export your logbook and save the file somewhere safe before you log out.</string>
   <string name="anon_logout_warning_confirm">Log out and erase</string>
+  <string name="account_upgrade_cta">Create account to sync</string>
+  <string name="account_upgrade_merge_title">Account already exists</string>
+  <string name="account_upgrade_merge_body">This account already has Hopply data. Sync this device\'s records into it? You may see duplicates if you logged the same aircraft in both places.</string>
+  <string name="account_upgrade_merge_confirm">Sync</string>
+  <string name="account_upgrade_working">Syncing your records…</string>
+  <string name="account_upgrade_success">Syncing complete</string>
+  <string name="account_upgrade_error">Couldn\'t complete sync. Please try again.</string>
   <string name="app_version">App Version: %1$s</string>
   <string name="remove_local_data">Remove this account from this device</string>
   <string name="feature_lab">Feature Lab</string>
