@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,6 +42,7 @@ fun SettingsRow(
   title: String,
   onClick: () -> Unit,
   settingsLevel: SettingsLevel = DEFAULT,
+  subtitle: String? = null,
 ) {
   val tint =
     if (settingsLevel == DEFAULT) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error
@@ -69,13 +71,21 @@ fun SettingsRow(
 
     Spacer(modifier = Modifier.width(Spacing.large))
 
-    // --- Title ---
-    Text(
-      text = title,
-      style = MaterialTheme.typography.bodyLarge,
-      modifier = Modifier.weight(1f),
-      color = tint,
-    )
+    // --- Title (+ optional subtitle) ---
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = title,
+        style = MaterialTheme.typography.bodyLarge,
+        color = tint,
+      )
+      if (subtitle != null) {
+        Text(
+          text = subtitle,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    }
     if (settingsLevel != SettingsLevel.DANGER) {
       Icon(
         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,

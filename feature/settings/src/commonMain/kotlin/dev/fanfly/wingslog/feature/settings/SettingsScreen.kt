@@ -52,10 +52,8 @@ import wingslog.feature.settings.generated.resources.anon_logout_warning_body
 import wingslog.feature.settings.generated.resources.anon_logout_warning_confirm
 import wingslog.feature.settings.generated.resources.anon_logout_warning_title
 import wingslog.feature.settings.generated.resources.account_upgrade_error
-import wingslog.feature.settings.generated.resources.account_upgrade_info_body
-import wingslog.feature.settings.generated.resources.account_upgrade_info_confirm
-import wingslog.feature.settings.generated.resources.account_upgrade_info_title
 import wingslog.feature.settings.generated.resources.account_upgrade_login_cta
+import wingslog.feature.settings.generated.resources.account_upgrade_login_subtitle
 import wingslog.feature.settings.generated.resources.account_upgrade_merge_body
 import wingslog.feature.settings.generated.resources.account_upgrade_merge_confirm
 import wingslog.feature.settings.generated.resources.account_upgrade_merge_title
@@ -84,7 +82,6 @@ fun SettingsScreen(
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
   val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
   var showAnonLogoutWarning by remember { mutableStateOf(false) }
-  var showLoginInfo by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
 
   val upgradeSuccessMessage = stringResource(SettingsRes.string.account_upgrade_success)
@@ -182,11 +179,16 @@ fun SettingsScreen(
           if (guestCanUpgrade) SettingsRes.string.account_upgrade_login_cta
           else SettingsRes.string.sign_out
         ),
-        // Guest + flag on: "Log in" opens the info dialog, then the upgrade. Real accounts log out.
-        // Guest without the flag still gets the destructive erase warning.
+        // Guest + flag on: "Log in" runs the upgrade, with a subtitle explaining it. Real accounts
+        // log out; guests without the flag still get the destructive erase warning.
+        subtitle = if (guestCanUpgrade) {
+          stringResource(SettingsRes.string.account_upgrade_login_subtitle)
+        } else {
+          null
+        },
         onClick = {
           when {
-            guestCanUpgrade -> showLoginInfo = true
+            guestCanUpgrade -> accountUpgradeViewModel.startUpgrade()
             user.isAnonymous -> showAnonLogoutWarning = true
             else -> settingsViewModel.logOut()
           }
@@ -228,30 +230,6 @@ fun SettingsScreen(
       },
       dismissButton = {
         TextButton(onClick = { showAnonLogoutWarning = false }) {
-          Text(stringResource(Res.string.cancel))
-        }
-      },
-    )
-  }
-
-  // Informational dialog shown before the upgrade so the guest knows what logging in does.
-  if (showLoginInfo) {
-    AlertDialog(
-      onDismissRequest = { showLoginInfo = false },
-      title = { Text(stringResource(SettingsRes.string.account_upgrade_info_title)) },
-      text = { Text(stringResource(SettingsRes.string.account_upgrade_info_body)) },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            showLoginInfo = false
-            accountUpgradeViewModel.startUpgrade()
-          }
-        ) {
-          Text(stringResource(SettingsRes.string.account_upgrade_info_confirm))
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { showLoginInfo = false }) {
           Text(stringResource(Res.string.cancel))
         }
       },
