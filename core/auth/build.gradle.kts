@@ -39,6 +39,10 @@ kotlin {
       api(libs.koin.core)
       implementation(libs.kermit)
     }
+    jsMain.dependencies {
+      // For kotlinx.coroutines' Promise.await() used by the Firebase JS popup sign-in.
+      implementation(libs.kotlinx.coroutines.core)
+    }
     androidMain.dependencies {
       api(project(":core:model"))
 

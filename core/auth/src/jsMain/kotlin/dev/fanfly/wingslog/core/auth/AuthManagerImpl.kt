@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
+import kotlinx.coroutines.await
 
 class AuthManagerImpl(
   private val authProvider: FirebaseAuth,
@@ -17,12 +18,18 @@ class AuthManagerImpl(
   override suspend fun trySilentLogin(): FirebaseUser? = authProvider.currentUser
 
   /**
-   * Google Sign-In on web requires Firebase JS `signInWithPopup`, which the GitLive
-   * common API does not expose. Deferred — returns null for now (anonymous works).
+   * GitLive exposes no `signInWithPopup`, so we call the modular Firebase JS Auth SDK directly
+   * (see [FirebaseAuthJs]). It drives the same default-app Auth singleton GitLive wraps, so the
+   * result surfaces through [FirebaseAuth.currentUser] once the popup resolves.
    */
   override suspend fun signInWithGoogle(): FirebaseUser? {
-    logger.w { "signInWithGoogle() is not yet supported on web" }
-    return null
+    return try {
+      signInWithPopup(getAuth(), GoogleAuthProvider()).await()
+      authProvider.currentUser
+    } catch (e: Throwable) {
+      logger.e(e) { "Google sign-in failed" }
+      null
+    }
   }
 
   /**
