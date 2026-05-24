@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabViewModel
 import dev.fanfly.wingslog.feature.settings.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -24,6 +25,7 @@ val settingsModule = module {
     AccountUpgradeViewModel(
       authManager = get<AuthManager>(),
       migrator = get<LocalAccountMigrator>(),
+      technicianManager = get<TechnicianManager>(),
     )
   }
 }

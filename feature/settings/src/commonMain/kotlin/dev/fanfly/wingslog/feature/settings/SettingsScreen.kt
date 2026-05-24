@@ -106,6 +106,8 @@ fun SettingsScreen(
   LaunchedEffect(upgradeState) {
     when (upgradeState) {
       is UpgradeUiState.Success -> {
+        // Linking didn't fire authStateChanged; pull the new photo / non-anonymous state in now.
+        settingsViewModel.refreshAccountState()
         snackbarHostState.showSnackbar(upgradeSuccessMessage)
         accountUpgradeViewModel.dismiss()
       }

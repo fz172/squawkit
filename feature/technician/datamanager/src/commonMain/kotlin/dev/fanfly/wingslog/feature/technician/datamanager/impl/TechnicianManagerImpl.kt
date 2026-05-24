@@ -49,34 +49,48 @@ class TechnicianManagerImpl(
   private suspend fun bootstrapSelfTechnician() {
     firebaseAuth.authStateChanged.collect { user ->
       if (user == null || user.isAnonymous) return@collect
-      val uid = user.uid
-      val userScope = EntityScope.userRoot(uid)
-
-      val existingSelfId = if (syncPreferences.state.value.cloudSyncEnabled) {
-        readSelfIdFromFirestore(uid)
-      } else {
-        userInfoStore.observe("main", userScope)
-          .firstOrNull()
-          ?.value?.self_technician_id?.takeIf { it.isNotBlank() }
-      }
-
-      if (existingSelfId.isNullOrBlank()) {
-        val newId = generateRandomId()
-        val selfTech = Technician(
-          id = newId,
-          name = user.displayName.orEmpty()
-            .ifBlank { user.email.orEmpty() },
-        )
-        technicianStore.put(newId, selfTech, userScope)
-        userInfoStore.put(
-          "main",
-          UserInfo(self_technician_id = newId),
-          userScope
-        )
-        logger.d { "Self-technician bootstrapped id=$newId" }
-      }
+      ensureSelfProfile()
     }
   }
+
+  override suspend fun ensureSelfProfile(): Result<Unit> = runCatching {
+    val user = firebaseAuth.currentUser ?: return@runCatching
+    if (user.isAnonymous) return@runCatching
+    val uid = user.uid
+    val userScope = EntityScope.userRoot(uid)
+    val accountName = user.displayName.orEmpty().ifBlank { user.email.orEmpty() }
+
+    // Prefer a locally-known self id; fall back to Firestore (cloud may have one we haven't
+    // hydrated yet) so we don't create a duplicate.
+    val localSelfId = userInfoStore.observe("main", userScope)
+      .firstOrNull()
+      ?.value?.self_technician_id?.takeIf { it.isNotBlank() }
+    val selfId = localSelfId ?: if (syncPreferences.state.value.cloudSyncEnabled) {
+      readSelfIdFromFirestore(uid)
+    } else {
+      null
+    }
+
+    if (selfId.isNullOrBlank()) {
+      val newId = generateRandomId()
+      technicianStore.put(newId, Technician(id = newId, name = accountName), userScope)
+      userInfoStore.put("main", UserInfo(self_technician_id = newId), userScope)
+      logger.d { "Self-technician created id=$newId name='$accountName'" }
+      return@runCatching
+    }
+
+    // Record the id locally if only Firestore knew it.
+    if (localSelfId == null) {
+      userInfoStore.put("main", UserInfo(self_technician_id = selfId), userScope)
+    }
+    // Backfill a blank name from the account. Don't fabricate a record when none is present
+    // locally yet — hydration will bring the real one (overwriting it here would clobber it).
+    val existing = technicianStore.observe(selfId, userScope).firstOrNull()?.value
+    if (existing != null && existing.name.isBlank() && accountName.isNotBlank()) {
+      technicianStore.put(selfId, existing.copy(name = accountName), userScope)
+      logger.d { "Self-technician name backfilled id=$selfId name='$accountName'" }
+    }
+  }.onFailure { logger.w(it) { "ensureSelfProfile failed" } }
 
   @OptIn(ExperimentalEncodingApi::class)
   private suspend fun readSelfIdFromFirestore(uid: String): String? = try {
