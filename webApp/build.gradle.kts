@@ -17,16 +17,14 @@ kotlin {
         commonMain.dependencies {
             // core:ui api-exports compose.ui, material3, and material-icons-extended.
             implementation(project(":core:ui"))
+            implementation(project(":core:auth"))
+            implementation(project(":feature:login"))
             implementation(libs.compose.foundation)
-            // components-resources must be declared directly: the Compose Resources
-            // plugin only wires this module's generated Res class onto the compile
-            // path when the dependency is present here, not transitively.
-            implementation(libs.components.resources)
+
+            // Firebase init (FirebaseOptions / Firebase.initialize) + DI.
+            implementation(libs.gitlive.firebase.auth)
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
         }
     }
-}
-
-compose.resources {
-    publicResClass = true
-    packageOfResClass = "dev.fanfly.wingslog.web.generated.resources"
 }
