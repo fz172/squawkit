@@ -22,8 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -83,6 +85,7 @@ fun SettingsRow(
       Text(
         text = title,
         style = MaterialTheme.typography.bodyLarge,
+        fontWeight = FontWeight.SemiBold,
         color = tint,
       )
       if (subtitle != null) {
@@ -90,6 +93,7 @@ fun SettingsRow(
           text = subtitle,
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.alpha(0.6f)
         )
       }
     }
@@ -110,6 +114,7 @@ fun SettingsRowPreview() {
     SettingsRow(
       icon = Icons.AutoMirrored.Filled.ArrowBack,
       title = "Test",
+      subtitle = "Menu 1, item 2",
       onClick = {},
     )
   }

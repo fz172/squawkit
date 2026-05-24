@@ -27,9 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,9 +46,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.settings
-import wingslog.feature.settings.generated.resources.anon_logout_warning_body
-import wingslog.feature.settings.generated.resources.anon_logout_warning_confirm
-import wingslog.feature.settings.generated.resources.anon_logout_warning_title
+import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import wingslog.feature.settings.generated.resources.account_upgrade_error
 import wingslog.feature.settings.generated.resources.account_upgrade_login_cta
 import wingslog.feature.settings.generated.resources.account_upgrade_login_subtitle
@@ -67,11 +63,10 @@ import wingslog.feature.settings.generated.resources.settings_logout_subtitle
 import wingslog.feature.settings.generated.resources.settings_sync_subtitle
 import wingslog.feature.settings.generated.resources.settings_technicians_subtitle
 import wingslog.feature.settings.generated.resources.sign_out
-import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import wingslog.feature.sync.sharedassets.generated.resources.feature_name_backup_and_sync
 import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians
-import wingslog.feature.settings.generated.resources.Res as SettingsRes
 import wingslog.feature.export.sharedassets.generated.resources.Res as ExportRes
+import wingslog.feature.settings.generated.resources.Res as SettingsRes
 import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
@@ -86,11 +81,12 @@ fun SettingsScreen(
 
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
   val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
-  var showAnonLogoutWarning by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
 
-  val upgradeSuccessMessage = stringResource(SettingsRes.string.account_upgrade_success)
-  val upgradeErrorMessage = stringResource(SettingsRes.string.account_upgrade_error)
+  val upgradeSuccessMessage =
+    stringResource(SettingsRes.string.account_upgrade_success)
+  val upgradeErrorMessage =
+    stringResource(SettingsRes.string.account_upgrade_error)
 
   // This LaunchedEffect will run when 'user' state changes
   LaunchedEffect(user) {
@@ -145,7 +141,8 @@ fun SettingsScreen(
 
       // For a guest with the upgrade flag on, "Log in" connects their on-device records to a real
       // account (the upgrade flow). It replaces the destructive guest logout entirely.
-      val guestCanUpgrade = user.isAnonymous && user.featureFlags.accountUpgradeEnabled
+      val guestCanUpgrade =
+        user.isAnonymous && user.featureFlags.accountUpgradeEnabled
 
       if (user.featureFlags.technicianEnabled) {
         SettingsRow(
@@ -198,7 +195,6 @@ fun SettingsScreen(
         onClick = {
           when {
             guestCanUpgrade -> accountUpgradeViewModel.startUpgrade()
-            user.isAnonymous -> showAnonLogoutWarning = true
             else -> settingsViewModel.logOut()
           }
         },
@@ -217,32 +213,6 @@ fun SettingsScreen(
         modifier = Modifier.align(Alignment.CenterHorizontally)
       )
     }
-  }
-
-  if (showAnonLogoutWarning) {
-    AlertDialog(
-      onDismissRequest = { showAnonLogoutWarning = false },
-      title = { Text(stringResource(SettingsRes.string.anon_logout_warning_title)) },
-      text = { Text(stringResource(SettingsRes.string.anon_logout_warning_body)) },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            showAnonLogoutWarning = false
-            settingsViewModel.logOut()
-          }
-        ) {
-          Text(
-            text = stringResource(SettingsRes.string.anon_logout_warning_confirm),
-            color = MaterialTheme.colorScheme.error,
-          )
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { showAnonLogoutWarning = false }) {
-          Text(stringResource(Res.string.cancel))
-        }
-      },
-    )
   }
 
   when (upgradeState) {
