@@ -24,4 +24,15 @@ interface TechnicianManager {
    * Handles anonymous users who have no bootstrapped technician record yet.
    */
   suspend fun saveSelfName(name: String): Result<Unit>
+
+  /**
+   * Ensures the signed-in (non-anonymous) user has a self-technician, seeding its name from the
+   * Firebase account's display name / email and backfilling a blank name. When
+   * [replaceExistingName] is true, the account name replaces the current local self name; this is
+   * used after guest account upgrade so the guest profile becomes the provider profile.
+   *
+   * Call this after an account upgrade: linking a provider does not fire `authStateChanged`, so the
+   * sign-in bootstrap would otherwise never run and the profile (name + photo) would stay stale.
+   */
+  suspend fun ensureSelfProfile(replaceExistingName: Boolean = false): Result<Unit>
 }

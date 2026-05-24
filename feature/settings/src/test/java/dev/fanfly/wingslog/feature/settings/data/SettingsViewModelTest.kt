@@ -55,6 +55,7 @@ class SettingsViewModelTest {
     every { mockUser.uid } returns TEST_USER_ID
     every { mockUser.photoURL } returns null
     every { mockUser.displayName } returns "Test User"
+    every { mockUser.isAnonymous } returns false
     every { authManager.getCurrentUser() } returns mockUser
 
     every { technicianManager.observeSelf() } returns flowOf(null)

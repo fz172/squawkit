@@ -17,8 +17,8 @@ actual class ExportFileStore(private val context: Context) {
   // App-private index of export metadata. Survives alongside the user-visible archives in
   // Downloads/Hopply; the archives are the source of truth for existence, this is the source of
   // truth for the scope (formats / date range / aircraft) that can't be read back off the file.
-  private val indexFile: File
-    get() = File(context.filesDir, "export_record_index.pb")
+  private fun indexFile(ownerUid: String): File =
+    File(context.filesDir, "export_record_index_${ownerUid.toFileSegment()}.pb")
 
   // Writes through MediaStore so the archive lands in the user-visible Downloads/Hopply
   // folder without requiring storage permissions on Android 10+ (scoped storage).
@@ -52,21 +52,21 @@ actual class ExportFileStore(private val context: Context) {
       )
     }
 
-  actual suspend fun saveRecord(record: ExportRecord): Unit =
+  actual suspend fun saveRecord(ownerUid: String, record: ExportRecord): Unit =
     withContext(Dispatchers.IO) {
-      writeIndex(ExportRecordManifest.upsert(readIndex(), record))
+      writeIndex(ownerUid, ExportRecordManifest.upsert(readIndex(ownerUid), record))
     }
 
-  actual suspend fun listExports(): List<ExportRecord> =
+  actual suspend fun listExports(ownerUid: String): List<ExportRecord> =
     withContext(Dispatchers.IO) {
-      val reconciled = ExportRecordManifest.reconcile(readIndex(), discoverArchives())
-      writeIndex(reconciled)
+      val reconciled = ExportRecordManifest.reconcile(readIndex(ownerUid), discoverArchives())
+      writeIndex(ownerUid, reconciled)
       reconciled
     }
 
-  actual suspend fun deleteExport(exportId: String): Boolean =
+  actual suspend fun deleteExport(ownerUid: String, exportId: String): Boolean =
     withContext(Dispatchers.IO) {
-      val reconciled = ExportRecordManifest.reconcile(readIndex(), discoverArchives())
+      val reconciled = ExportRecordManifest.reconcile(readIndex(ownerUid), discoverArchives())
       val record = reconciled.firstOrNull { it.export_id == exportId }
       if (record == null) return@withContext false
 
@@ -75,7 +75,7 @@ actual class ExportFileStore(private val context: Context) {
       } ?: true
 
       if (removed) {
-        writeIndex(ExportRecordManifest.remove(reconciled, exportId))
+        writeIndex(ownerUid, ExportRecordManifest.remove(reconciled, exportId))
       }
       removed
     }
@@ -114,12 +114,15 @@ actual class ExportFileStore(private val context: Context) {
     return records
   }
 
-  private fun readIndex(): List<ExportRecord> =
-    runCatching { indexFile.takeIf { it.exists() }?.readBytes() }
+  private fun readIndex(ownerUid: String): List<ExportRecord> =
+    runCatching { indexFile(ownerUid).takeIf { it.exists() }?.readBytes() }
       .getOrNull()
       .let(ExportRecordManifest::decode)
 
-  private fun writeIndex(records: List<ExportRecord>) {
-    runCatching { indexFile.writeBytes(ExportRecordManifest.encode(records)) }
+  private fun writeIndex(ownerUid: String, records: List<ExportRecord>) {
+    runCatching { indexFile(ownerUid).writeBytes(ExportRecordManifest.encode(records)) }
   }
+
+  private fun String.toFileSegment(): String =
+    replace(Regex("[^A-Za-z0-9._-]"), "_")
 }

@@ -180,12 +180,12 @@
       <p>Because reassignment is a single idempotent transaction keyed on scope, it is <b>resumable</b>: if it ran partially, re-running completes it; if it fully ran, re-running is a no-op (no rows match <code>fromUid</code> anymore).</p>
 
       <h2 id="sync">7. Sync Integration</h2>
-      <p>No change to the sync engine's logic; the upgrade simply flips the gating condition. Relevant existing behavior we rely on:</p>
+      <p>The upgrade flips the sync gating condition and performs one foreground hydration before returning control to the UI. Relevant behavior we rely on:</p>
       <table>
         <tr><th>Mechanism</th><th>Role in upgrade</th></tr>
         <tr><td>Auth-state gating (<code>user.isAnonymous</code>)</td><td>Linking flips this to false → engine activates for the same/!new UID.</td></tr>
         <tr><td><code>PushWorker</code> (drains <code>dirty=1</code>)</td><td>Uploads all guest records (clean path) or reassigned records (merge path).</td></tr>
-        <tr><td><code>HydrationRunner</code> / <code>PullListener</code></td><td>Clean path: nothing to pull. Merge path: pulls account <code>B</code>'s existing set.</td></tr>
+        <tr><td><code>HydrationRunner</code> / <code>PullListener</code></td><td>Clean path: pushes the now-permanent local set. Merge path: foreground-hydrates account <code>B</code>'s existing set before the UI leaves the working state.</td></tr>
         <tr><td>Last-writer-wins + dirty immunity</td><td>On merge, reassigned local rows (dirty) are never clobbered by the remote pull before they upload.</td></tr>
         <tr><td><code>cloudSyncEnabled</code> master toggle</td><td>If a user has cloud sync off, upgrading still links the account; syncing begins when they enable sync. Surfaced in Backup &amp; Sync settings.</td></tr>
       </table>
@@ -195,20 +195,17 @@
       <pre><span class="c">// UpgradeUiState — drives the upgrade sheet</span>
 <span class="k">sealed interface</span> UpgradeUiState {
   <span class="k">data object</span> Idle : UpgradeUiState              <span class="c">// CTA visible, sheet closed</span>
-  <span class="k">data object</span> Authenticating : UpgradeUiState    <span class="c">// provider sheet / linking</span>
-  <span class="k">data class</span> ConfirmMerge(<span class="k">val</span> credential: AuthCredential, <span class="k">val</span> email: String) : UpgradeUiState
-  <span class="k">data object</span> Working : UpgradeUiState           <span class="c">// pushing / reassign+sync</span>
+  <span class="k">data object</span> Working : UpgradeUiState           <span class="c">// provider sign-in / linking / reassign+sync</span>
   <span class="k">data object</span> Success : UpgradeUiState           <span class="c">// renders "Syncing complete" — no count, no merge-specific copy</span>
   <span class="k">data class</span> Error(<span class="k">val</span> message: String) : UpgradeUiState
 }</pre>
-      <p>Visual language follows <code>DESIGN.md</code>: aviation-blue primary action, a single committed primary button per step, and a calm, definite <code>Success</code> state ("Syncing complete") with no record count. <code>ConfirmMerge</code> carries the existing account's email only to label the merge dialog, not to display a count. Provider button label and icon switch per platform (Google / Apple). The merge confirmation is an <code>AlertDialog</code> (a genuine destructive-adjacent decision), consistent with the logout-warning pattern already shipped.</p>
+      <p>Visual language follows <code>DESIGN.md</code>: aviation-blue primary action, a single committed primary button per step, and a calm, definite <code>Success</code> state ("Syncing complete") with no record count. Provider button label and icon switch per platform (Google / Apple). If the selected provider account already exists, the app automatically signs in to that account and reassigns this device's guest records without showing a second confirmation dialog.</p>
 
       <h2 id="errors">9. Error Handling &amp; Recovery</h2>
       <table>
         <tr><th>Failure</th><th>Handling</th></tr>
         <tr><td>Provider sheet cancelled</td><td><code>Cancelled</code> → back to Idle, no change.</td></tr>
         <tr><td>No network</td><td><code>Failed("needs internet")</code>; retry available; local data untouched.</td></tr>
-        <tr><td>Collision but user cancels merge</td><td>Do <b>not</b> call <code>signInToExistingAccount</code>; remain guest <code>A</code>.</td></tr>
         <tr><td>App killed after <code>signInToExistingAccount</code> but before reassign completes</td><td>On launch, if local rows exist under a UID ≠ <code>currentUser.uid</code> and the current user is non-anonymous, run <code>reassign(orphanUid, currentUid)</code>. Idempotent (§6).</td></tr>
         <tr><td>Push fails after a successful link</td><td>Account is linked (upgrade done); rows stay dirty and upload later via normal sync. No data loss.</td></tr>
       </table>

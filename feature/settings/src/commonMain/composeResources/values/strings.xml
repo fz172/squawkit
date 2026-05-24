@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="sign_out">Log out</string>
-  <string name="anon_logout_warning_title">Log out and erase data?</string>
-  <string name="anon_logout_warning_body">You're signed in as a guest, so all your aircraft, logs, and records live only on this device. Logging out permanently deletes them — they can't be recovered. Export your logbook and save the file somewhere safe before you log out.</string>
-  <string name="anon_logout_warning_confirm">Log out and erase</string>
+  <string name="settings_logout_subtitle">Sign out of your account on this device</string>
+  <string name="settings_technicians_subtitle">Manage technician info who performs maintenance work</string>
+  <string name="settings_sync_subtitle">Keep your records synced across devices</string>
+  <string name="settings_export_subtitle">Export and share your logbook</string>
+  <string name="settings_feature_lab_subtitle">Advanced controls, synced across your devices</string>
+  <string name="account_upgrade_login_cta">Log in</string>
+  <string name="account_upgrade_login_subtitle">Connect your records to an account to sync and back them up</string>
+  <string name="account_upgrade_working">Syncing your records…</string>
+  <string name="account_upgrade_success">Syncing complete</string>
+  <string name="account_upgrade_error">Couldn't complete sync. Please try again.</string>
   <string name="app_version">App Version: %1$s</string>
   <string name="remove_local_data">Remove this account from this device</string>
   <string name="feature_lab">Feature Lab</string>

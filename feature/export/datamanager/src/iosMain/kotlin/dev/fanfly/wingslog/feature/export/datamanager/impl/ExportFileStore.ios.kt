@@ -33,8 +33,8 @@ actual class ExportFileStore {
   // App-private metadata index. The leading dot keeps it out of the ".zip" archive listing and
   // tucked away from the Files app; the archives are the source of truth for existence, this is
   // the source of truth for scope (formats / date range / aircraft).
-  private val indexPath: String
-    get() = "$exportDirectory/.export_record_index.pb"
+  private fun indexPath(ownerUid: String): String =
+    "$exportDirectory/.export_record_index_${ownerUid.toFileSegment()}.pb"
 
   actual suspend fun writeZip(fileName: String, bytes: ByteArray): ExportedFile =
     withContext(Dispatchers.Default) {
@@ -49,23 +49,26 @@ actual class ExportFileStore {
       )
     }
 
-  actual suspend fun saveRecord(record: ExportRecord): Unit =
+  actual suspend fun saveRecord(ownerUid: String, record: ExportRecord): Unit =
     withContext(Dispatchers.Default) {
       ensureDirectory()
-      writeBytes(indexPath, ExportRecordManifest.encode(ExportRecordManifest.upsert(readIndex(), record)))
+      writeBytes(
+        indexPath(ownerUid),
+        ExportRecordManifest.encode(ExportRecordManifest.upsert(readIndex(ownerUid), record))
+      )
     }
 
-  actual suspend fun listExports(): List<ExportRecord> =
+  actual suspend fun listExports(ownerUid: String): List<ExportRecord> =
     withContext(Dispatchers.Default) {
-      val reconciled = ExportRecordManifest.reconcile(readIndex(), discoverArchives())
+      val reconciled = ExportRecordManifest.reconcile(readIndex(ownerUid), discoverArchives())
       ensureDirectory()
-      writeBytes(indexPath, ExportRecordManifest.encode(reconciled))
+      writeBytes(indexPath(ownerUid), ExportRecordManifest.encode(reconciled))
       reconciled
     }
 
-  actual suspend fun deleteExport(exportId: String): Boolean =
+  actual suspend fun deleteExport(ownerUid: String, exportId: String): Boolean =
     withContext(Dispatchers.Default) {
-      val reconciled = ExportRecordManifest.reconcile(readIndex(), discoverArchives())
+      val reconciled = ExportRecordManifest.reconcile(readIndex(ownerUid), discoverArchives())
       val record = reconciled.firstOrNull { it.export_id == exportId }
       if (record == null) return@withContext false
 
@@ -74,7 +77,7 @@ actual class ExportFileStore {
       } ?: true
 
       if (removed) {
-        writeBytes(indexPath, ExportRecordManifest.encode(ExportRecordManifest.remove(reconciled, exportId)))
+        writeBytes(indexPath(ownerUid), ExportRecordManifest.encode(ExportRecordManifest.remove(reconciled, exportId)))
       }
       removed
     }
@@ -107,8 +110,8 @@ actual class ExportFileStore {
     }
   }
 
-  private fun readIndex(): List<ExportRecord> =
-    ExportRecordManifest.decode(NSData.dataWithContentsOfFile(indexPath)?.toByteArray())
+  private fun readIndex(ownerUid: String): List<ExportRecord> =
+    ExportRecordManifest.decode(NSData.dataWithContentsOfFile(indexPath(ownerUid))?.toByteArray())
 
   private fun writeBytes(path: String, bytes: ByteArray) {
     val data: NSData = bytes.usePinned { pinned ->
@@ -124,4 +127,7 @@ actual class ExportFileStore {
     out.usePinned { pinned -> memcpy(pinned.addressOf(0), bytes, length.convert()) }
     return out
   }
+
+  private fun String.toFileSegment(): String =
+    replace(Regex("[^A-Za-z0-9._-]"), "_")
 }

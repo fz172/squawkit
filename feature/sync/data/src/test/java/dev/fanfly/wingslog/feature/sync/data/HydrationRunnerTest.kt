@@ -89,6 +89,52 @@ class HydrationRunnerTest {
   }
 
   @Test
+  fun runFor_success_doesNotOverwriteDirtyLocalRows() = runTest {
+    val localPayload = byteArrayOf(0x11)
+    val remotePayload = byteArrayOf(0x22)
+    db.schemaQueries.upsert(
+      collection = TEST_KIND,
+      scope_path = TEST_SCOPE.toPath(),
+      id = "log-dirty",
+      payload = localPayload,
+      payload_schema = TEST_KIND.schemaName,
+      updated_at = 500L,
+      remote_updated_at = null,
+      dirty = true,
+      deleted = false,
+    )
+    coEvery {
+      fetcher.fetchAll(
+        TEST_KIND,
+        TEST_SCOPE
+      )
+    } returns listOf(
+      buildRemoteEntity(
+        id = "log-dirty",
+        payload = remotePayload,
+        remoteTsMs = 5000L,
+      )
+    )
+
+    val result = runner.runFor(
+      TEST_UID,
+      TEST_KIND,
+      TEST_SCOPE
+    )
+
+    assertThat(result).isTrue()
+    val row = db.schemaQueries.selectOneForSync(
+      TEST_KIND,
+      TEST_SCOPE.toPath(),
+      "log-dirty"
+    ).executeAsOne()
+    assertThat(row.dirty).isTrue()
+    assertThat(row.payload.asList()).containsExactly(0x11.toByte())
+    assertThat(row.remote_updated_at).isNull()
+    assertThat(cursors.get(TEST_UID, TEST_KIND, TEST_SCOPE)!!.lastSeenRemote).isEqualTo(5000L)
+  }
+
+  @Test
   fun runFor_success_marksCursorHydratedTrue() = runTest {
     coEvery {
       fetcher.fetchAll(
