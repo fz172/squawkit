@@ -8,6 +8,8 @@ data class SettingsUiState(
   val selfTechnician: Technician? = null,
   val userStatus: UserStatus = UserStatus.UNKNOWN,
   val featureFlags: FeatureFlags = FeatureFlags(),
+  // Guest (anonymous) accounts keep all data on-device only; logging out erases it permanently.
+  val isAnonymous: Boolean = false,
 )
 
 enum class UserStatus {

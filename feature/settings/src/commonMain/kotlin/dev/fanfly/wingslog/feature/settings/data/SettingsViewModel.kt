@@ -48,6 +48,7 @@ class SettingsViewModel(
           photoUri = authManager.getCurrentUser()?.photoURL,
           selfTechnician = self,
           userStatus = UserStatus.LOGGED_IN,
+          isAnonymous = authManager.getCurrentUser()?.isAnonymous == true,
         )
       }
     }

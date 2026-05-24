@@ -12,13 +12,18 @@ import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,7 +38,11 @@ import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res
+import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.settings
+import wingslog.feature.settings.generated.resources.anon_logout_warning_body
+import wingslog.feature.settings.generated.resources.anon_logout_warning_confirm
+import wingslog.feature.settings.generated.resources.anon_logout_warning_title
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.feature_lab
 import wingslog.feature.settings.generated.resources.sign_out
@@ -54,6 +63,7 @@ fun SettingsScreen(
 ) {
 
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
+  var showAnonLogoutWarning by remember { mutableStateOf(false) }
 
   // This LaunchedEffect will run when 'user' state changes
   LaunchedEffect(user) {
@@ -119,7 +129,11 @@ fun SettingsScreen(
       SettingsRow(
         icon = Icons.AutoMirrored.Filled.Logout,
         title = stringResource(SettingsRes.string.sign_out),
-        onClick = { settingsViewModel.logOut() },
+        // Guest data is local-only: warn before logging out wipes it for good. Real accounts
+        // are backed by cloud sync, so they log out without a prompt.
+        onClick = {
+          if (user.isAnonymous) showAnonLogoutWarning = true else settingsViewModel.logOut()
+        },
         settingsLevel = SettingsLevel.DANGER
       )
 
@@ -135,5 +149,31 @@ fun SettingsScreen(
         modifier = Modifier.align(Alignment.CenterHorizontally)
       )
     }
+  }
+
+  if (showAnonLogoutWarning) {
+    AlertDialog(
+      onDismissRequest = { showAnonLogoutWarning = false },
+      title = { Text(stringResource(SettingsRes.string.anon_logout_warning_title)) },
+      text = { Text(stringResource(SettingsRes.string.anon_logout_warning_body)) },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            showAnonLogoutWarning = false
+            settingsViewModel.logOut()
+          }
+        ) {
+          Text(
+            text = stringResource(SettingsRes.string.anon_logout_warning_confirm),
+            color = MaterialTheme.colorScheme.error,
+          )
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showAnonLogoutWarning = false }) {
+          Text(stringResource(Res.string.cancel))
+        }
+      },
+    )
   }
 }
