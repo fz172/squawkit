@@ -19,15 +19,19 @@ standalone `webApp` seed into a real, code-sharing web client.
   the browser.** Google goes through a deliberate GitLive + raw-Firebase-JS hybrid (see
   M2 step 4).
 
-**What's next:**
-1. **`upgradeAnonymousAccount()` on web** — still stubbed in `jsMain` `AuthManagerImpl`;
-   needs Firebase-JS `linkWithPopup` (the account-upgrade contract merged from main).
-   Until then a guest on web can't upgrade in place.
-2. **Polish (optional):** the Firebase web `appId` in `webApp/src/jsMain/kotlin/main.kt`
-   is synthesized — auth works without it, but register a real Firebase *web app* for a
-   proper value before any production use.
-3. **M3 — local-first storage on web** (next milestone proper): `js` target on
-   `core:storage` + a SQLDelight web-worker (sql.js) `DriverFactory`. See the M3 section.
+**What's next (in order):**
+1. **M3 — local-first storage on web** (the immediate next milestone): `js` target on
+   `core:storage` + a SQLDelight web-worker (sql.js) `DriverFactory`. Gateway to M4 (sync)
+   and showing real data. See the M3 section.
+2. **M4+** as laid out below (sync, then read-only fleet, then editing).
+3. **`upgradeAnonymousAccount()` on web — deferred to last** (by decision). Still stubbed
+   in `jsMain` `AuthManagerImpl`; needs Firebase-JS `linkWithPopup`. Until then a guest on
+   web can't upgrade in place — acceptable while web is pre-production.
+
+**Anytime / non-blocking:** the Firebase web `appId` in `webApp/src/jsMain/kotlin/main.kt`
+is synthesized — auth works without it, but register a real Firebase *web app* (Console →
+Project settings → Your apps → Add app → Web) and paste its `appId` before any production
+deploy.
 
 > **Gotcha discovered in M1:** `components-resources` must be declared *directly* in a
 > module's dependencies (not relied on transitively via `core:ui`'s `api`) — the Compose
