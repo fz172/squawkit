@@ -6,11 +6,14 @@ import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import co.touchlab.kermit.Logger
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.auth.FirebaseAuthUserCollisionException
 import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.auth.GoogleAuthProvider
 
@@ -112,6 +115,57 @@ class AuthManagerImpl(
     } catch (e: Exception) {
       logger.e(e) { "Firebase sign-in failed" }
       null
+    }
+  }
+
+  /**
+   * Links a Google credential to the current anonymous user, preserving the UID. On a collision
+   * (the Google account already has a Firebase account), returns the credential so the caller can
+   * offer the merge path instead.
+   */
+  override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult {
+    val current = authProvider.currentUser
+      ?: return AccountUpgradeResult.Failed("No signed-in user to upgrade")
+    val firebaseCredential = try {
+      val request = GetCredentialRequest.Builder().addCredentialOption(
+        GetGoogleIdOption.Builder().setFilterByAuthorizedAccounts(false) // Show account picker
+          .setServerClientId(WEB_CLIENT_ID).build()
+      ).build()
+      val result = credentialManager.getCredential(context, request)
+      val googleIdTokenCredential = processCredential(result.credential)
+        ?: return AccountUpgradeResult.Failed("Could not read Google credential")
+      GoogleAuthProvider.credential(googleIdTokenCredential.idToken, null)
+    } catch (e: GetCredentialCancellationException) {
+      logger.d { "Account upgrade cancelled by user" }
+      return AccountUpgradeResult.Cancelled
+    } catch (e: Exception) {
+      logger.e(e) { "Account upgrade: credential retrieval failed" }
+      return AccountUpgradeResult.Failed(e.message ?: "Sign-in failed")
+    }
+
+    return try {
+      current.linkWithCredential(firebaseCredential)
+      val user = authProvider.currentUser
+        ?: return AccountUpgradeResult.Failed("Link returned no user")
+      AccountUpgradeResult.Linked(user)
+    } catch (e: FirebaseAuthUserCollisionException) {
+      logger.i { "Google account already in use; offering merge" }
+      AccountUpgradeResult.CredentialInUse(firebaseCredential)
+    } catch (e: Exception) {
+      logger.e(e) { "Account upgrade: linking failed" }
+      AccountUpgradeResult.Failed(e.message ?: "Linking failed")
+    }
+  }
+
+  override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult {
+    return try {
+      authProvider.signInWithCredential(credential)
+      val user = authProvider.currentUser
+        ?: return AccountUpgradeResult.Failed("Sign-in returned no user")
+      AccountUpgradeResult.Linked(user)
+    } catch (e: Exception) {
+      logger.e(e) { "Sign-in to existing account failed" }
+      AccountUpgradeResult.Failed(e.message ?: "Sign-in failed")
     }
   }
 
