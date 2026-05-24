@@ -23,7 +23,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,15 +43,11 @@ import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.Res
-import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.settings
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import wingslog.feature.settings.generated.resources.account_upgrade_error
 import wingslog.feature.settings.generated.resources.account_upgrade_login_cta
 import wingslog.feature.settings.generated.resources.account_upgrade_login_subtitle
-import wingslog.feature.settings.generated.resources.account_upgrade_merge_body
-import wingslog.feature.settings.generated.resources.account_upgrade_merge_confirm
-import wingslog.feature.settings.generated.resources.account_upgrade_merge_title
 import wingslog.feature.settings.generated.resources.account_upgrade_success
 import wingslog.feature.settings.generated.resources.account_upgrade_working
 import wingslog.feature.settings.generated.resources.app_version
@@ -219,22 +214,6 @@ fun SettingsScreen(
   }
 
   when (upgradeState) {
-    is UpgradeUiState.ConfirmMerge -> AlertDialog(
-      onDismissRequest = { accountUpgradeViewModel.cancelMerge() },
-      title = { Text(stringResource(SettingsRes.string.account_upgrade_merge_title)) },
-      text = { Text(stringResource(SettingsRes.string.account_upgrade_merge_body)) },
-      confirmButton = {
-        TextButton(onClick = { accountUpgradeViewModel.confirmMerge() }) {
-          Text(stringResource(SettingsRes.string.account_upgrade_merge_confirm))
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = { accountUpgradeViewModel.cancelMerge() }) {
-          Text(stringResource(Res.string.cancel))
-        }
-      },
-    )
-
     is UpgradeUiState.Working -> AlertDialog(
       // Non-dismissable: provider sign-in / sync re-keying is in flight.
       onDismissRequest = {},

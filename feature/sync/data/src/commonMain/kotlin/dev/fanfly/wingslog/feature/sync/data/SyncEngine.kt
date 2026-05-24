@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.update
@@ -81,6 +82,35 @@ class SyncEngine(
    */
   fun resyncCurrentUser() {
     resyncTrigger.tryEmit(Unit)
+  }
+
+  /**
+   * Foreground one-shot hydration for flows that need local reads to reflect the permanent account
+   * before returning control to the UI, such as guest -> existing-account merge.
+   *
+   * The background engine remains the long-lived source for listeners and retries; this method is
+   * only an immediate best-effort pull to remove the logout/login dependency after account merge.
+   */
+  suspend fun hydrateCurrentUserNow(): Boolean {
+    val user = auth.currentUser ?: return false
+    if (user.isAnonymous || !syncPreferences.state.value.cloudSyncEnabled) return false
+
+    val uid = user.uid
+    val userRoot = EntityScope.userRoot(uid)
+    var success = true
+    for (kind in TOP_LEVEL_KINDS) {
+      success = hydrationRunner.runFor(uid, kind, userRoot) && success
+    }
+
+    val aircraftStore: EntityStore<Aircraft> = storeFactory.create(CollectionKind.Aircraft)
+    val aircraftIds = aircraftStore.observeAll(userRoot).first().map { it.id }
+    for (aircraftId in aircraftIds) {
+      val aircraftScope = EntityScope.aircraftChild(uid, aircraftId)
+      for (kind in PER_AIRCRAFT_KINDS) {
+        success = hydrationRunner.runFor(uid, kind, aircraftScope) && success
+      }
+    }
+    return success
   }
 
   /**

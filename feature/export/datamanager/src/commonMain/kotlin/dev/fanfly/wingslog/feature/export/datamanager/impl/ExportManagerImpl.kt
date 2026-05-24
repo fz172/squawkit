@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.TimeZone
@@ -29,6 +30,7 @@ class ExportManagerImpl(
   private val exportFileStore: ExportFileStore,
   private val remoteRepository: ExportHistoryRemoteRepository,
   private val deliveryBackend: ExportDeliveryBackend,
+  private val auth: FirebaseAuth,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ExportManager {
@@ -71,6 +73,7 @@ class ExportManagerImpl(
 
     emit(ExportProgress.Running(step = ExportProgressStep.SAVING_FILE, percent = 74))
     val saved = exportFileStore.writeZip(fileName, zipBytes)
+    val ownerUid = currentOwnerUid()
     // Persist the full scope so export history can rediscover it without parsing the file name.
     val localRecord = buildRecord(
       request = request,
@@ -78,7 +81,9 @@ class ExportManagerImpl(
       saved = saved,
       createdAtEpochMillis = clock.now().toEpochMilliseconds(),
     )
-    exportFileStore.saveRecord(localRecord)
+    if (ownerUid != null) {
+      exportFileStore.saveRecord(ownerUid, localRecord)
+    }
     emit(ExportProgress.Running(step = ExportProgressStep.UPLOADING_ARCHIVE, percent = 86))
     val remoteRecord = remoteRepository.uploadAndSync(localRecord, zipBytes)
     if (remoteRecord.remote_archive_ref.isNotBlank() && remoteRecord.destination_email.isNotBlank()) {
@@ -87,8 +92,8 @@ class ExportManagerImpl(
     val finalRecord = remoteRecord.requestDeliveryIfEligible()
     // Keep the on-device file after delivery so every export stays available both locally and in
     // the cloud. The persisted local record carries the remote ref + delivery state once synced.
-    if (finalRecord != localRecord) {
-      exportFileStore.saveRecord(finalRecord)
+    if (ownerUid != null && finalRecord != localRecord) {
+      exportFileStore.saveRecord(ownerUid, finalRecord)
     }
     emit(
       ExportProgress.Success(
@@ -104,14 +109,23 @@ class ExportManagerImpl(
     )
   }
 
-  override suspend fun listExports(): List<ExportRecord> =
-    ExportRecordMerge.merge(
-      local = exportFileStore.listExports(),
-      remote = remoteRepository.listRemoteRecords(),
-    )
+  override suspend fun listExports(): List<ExportRecord> {
+    val ownerUid = currentOwnerUid()
+    return if (ownerUid == null) {
+      remoteRepository.listRemoteRecords()
+    } else {
+      ExportRecordMerge.merge(
+        local = exportFileStore.listExports(ownerUid),
+        remote = remoteRepository.listRemoteRecords(),
+      )
+    }
+  }
 
   override suspend fun deleteExport(exportId: String): Boolean {
-    val localRecord = exportFileStore.listExports().firstOrNull { it.export_id == exportId }
+    val ownerUid = currentOwnerUid()
+    val localRecord = ownerUid
+      ?.let { exportFileStore.listExports(it) }
+      ?.firstOrNull { it.export_id == exportId }
     val remoteRecord = remoteRepository.listRemoteRecords().firstOrNull { it.export_id == exportId }
 
     if (remoteRecord != null && !remoteRepository.deleteExport(exportId, remoteRecord.remote_archive_ref)) {
@@ -119,7 +133,7 @@ class ExportManagerImpl(
     }
 
     return when {
-      localRecord != null -> exportFileStore.deleteExport(exportId)
+      localRecord != null -> exportFileStore.deleteExport(ownerUid, exportId)
       remoteRecord != null -> true
       else -> false
     }
@@ -177,8 +191,9 @@ class ExportManagerImpl(
   }
 
   override suspend fun saveToDevice(exportId: String): Boolean {
+    val ownerUid = currentOwnerUid() ?: return false
     // Already on device (local record carries a file path)? Nothing to download.
-    val local = exportFileStore.listExports().firstOrNull { it.export_id == exportId }
+    val local = exportFileStore.listExports(ownerUid).firstOrNull { it.export_id == exportId }
     if (local != null && local.file_path.isNotBlank()) return true
 
     val remote =
@@ -190,6 +205,7 @@ class ExportManagerImpl(
     // Persist a local record so history shows it as on-device and the share sheet has a real file.
     // Merge keeps the remote delivery/archive fields, so the cloud copy stays referenced.
     exportFileStore.saveRecord(
+      ownerUid,
       remote.copy(
         file_path = saved.filePath,
         size_bytes = saved.sizeBytes,
@@ -198,6 +214,8 @@ class ExportManagerImpl(
     )
     return true
   }
+
+  private fun currentOwnerUid(): String? = auth.currentUser?.uid
 
   private fun buildRecord(
     request: ExportRequest,
