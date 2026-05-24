@@ -4,4 +4,5 @@ data class FeatureFlags(
   val technicianEnabled: Boolean = true,
   val attachmentUploadEnabled: Boolean = true,
   val exportEmailDeliveryEnabled: Boolean = false,
+  val accountUpgradeEnabled: Boolean = false,
 )

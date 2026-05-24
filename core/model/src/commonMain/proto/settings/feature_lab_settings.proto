@@ -10,4 +10,5 @@ message FeatureLabSettings {
   bool technician_disabled = 1;
   bool attachment_upload_disabled = 2;
   bool export_email_delivery_enabled = 4;
+  bool account_upgrade_enabled = 5;
 }
