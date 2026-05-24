@@ -927,7 +927,8 @@ private fun SuccessResult(
   // Delivery is asynchronous, so right after export the state is usually QUEUED/SENDING rather than
   // SENT. Treat anything that isn't an outright failure as the clean "Export sent" success; only a
   // genuine failure falls back to the status card.
-  val deliveryFailed = deliveredByEmail && state.deliveryState == "FAILED"
+  val deliveryFailed =
+    deliveredByEmail && state.persistedDeliveryState == "FAILED"
   val emailSucceeded = deliveredByEmail && !deliveryFailed
 
   ResultShell(
@@ -1031,22 +1032,22 @@ private fun EmailedSubtitle(email: String) {
 private fun DeliveryStatusCard(state: ExportUiState.Success) {
   val title = when {
     state.deliveryInfo == null -> stringResource(Res.string.export_success_delivery_manual_title)
-    state.deliveryState == "SENT" -> stringResource(Res.string.export_success_delivery_sent_title)
-    state.deliveryState == "FAILED" -> stringResource(Res.string.export_success_delivery_failed_title)
-    state.deliveryState == "QUEUED" || state.deliveryState == "SENDING" ->
+    state.persistedDeliveryState == "SENT" -> stringResource(Res.string.export_success_delivery_sent_title)
+    state.persistedDeliveryState == "FAILED" -> stringResource(Res.string.export_success_delivery_failed_title)
+    state.persistedDeliveryState == "QUEUED" || state.persistedDeliveryState == "SENDING" ->
       stringResource(Res.string.export_success_delivery_pending_title)
 
     else -> stringResource(Res.string.export_success_delivery_ready_title)
   }
   val stateBody = when {
     state.deliveryInfo == null -> stringResource(Res.string.export_success_delivery_manual)
-    state.deliveryState == "SENT" -> stringResource(Res.string.export_success_delivery_sent)
-    state.deliveryState == "FAILED" ->
+    state.persistedDeliveryState == "SENT" -> stringResource(Res.string.export_success_delivery_sent)
+    state.persistedDeliveryState == "FAILED" ->
       state.deliveryFailureMessage.ifBlank {
         stringResource(Res.string.export_success_delivery_failed)
       }
 
-    state.deliveryState == "QUEUED" || state.deliveryState == "SENDING" ->
+    state.persistedDeliveryState == "QUEUED" || state.persistedDeliveryState == "SENDING" ->
       stringResource(Res.string.export_success_delivery_pending)
 
     else -> stringResource(Res.string.export_success_delivery_pending)

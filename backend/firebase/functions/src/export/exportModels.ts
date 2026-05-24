@@ -22,7 +22,7 @@ export type ExportManifest = {
   remoteArchiveRef?: string | null;
   destinationEmail?: string | null;
   destinationEmailSource?: string | null;
-  deliveryState: ExportDeliveryState;
+  persistedDeliveryState: ExportDeliveryState;
   deliverySentAtEpochMillis?: number | null;
   deliveryFailureCode?: string | null;
   deliveryFailureMessage?: string | null;
@@ -43,8 +43,8 @@ export type ExportManifestAircraft = {
 };
 
 export type DeliveryDispatchResult = {
-  status: "sent" | "already-sent" | "in-progress" | "failed" | "resend-throttled";
-  deliveryState: ExportDeliveryState;
+  requestOutcome: "sent" | "already-sent" | "in-progress" | "failed" | "resend-throttled";
+  persistedDeliveryState: ExportDeliveryState;
   deliverySentAtEpochMillis?: number;
   deliveryFailureCode?: string;
   deliveryFailureMessage?: string;

@@ -2,11 +2,14 @@ package dev.fanfly.wingslog.feature.export.update.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryOutcome
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -18,8 +21,13 @@ class ExportHistoryViewModel(
   private val auth: FirebaseAuth,
 ) : ViewModel() {
 
-  private val _state = MutableStateFlow<ExportHistoryUiState>(ExportHistoryUiState.Loading)
+  private val _state =
+    MutableStateFlow<ExportHistoryUiState>(ExportHistoryUiState.Loading)
   val state: StateFlow<ExportHistoryUiState> = _state.asStateFlow()
+
+  // One-shot delivery outcomes (resend/retry) for the UI to surface as a snackbar.
+  private val _deliveryEvents = Channel<ExportDeliveryOutcome>()
+  val deliveryEvents = _deliveryEvents.receiveAsFlow()
 
   // Email-account users share by re-sending the delivery email; everyone else uses the device sheet.
   private var canEmailDelivery: Boolean = false
@@ -75,11 +83,12 @@ class ExportHistoryViewModel(
    */
   fun onRetryDelivery(exportId: String) {
     viewModelScope.launch {
-      exportManager.retryDelivery(exportId)
+      val outcome = exportManager.retryDelivery(exportId)
       _state.value = ExportHistoryUiState.Loaded(
         exportManager.listExports(),
         canEmailDelivery
       )
+      _deliveryEvents.send(outcome)
     }
   }
 
@@ -89,11 +98,12 @@ class ExportHistoryViewModel(
    */
   fun onResendDelivery(exportId: String) {
     viewModelScope.launch {
-      exportManager.resendDelivery(exportId)
+      val outcome = exportManager.resendDelivery(exportId)
       _state.value = ExportHistoryUiState.Loaded(
         exportManager.listExports(),
         canEmailDelivery
       )
+      _deliveryEvents.send(outcome)
     }
   }
 

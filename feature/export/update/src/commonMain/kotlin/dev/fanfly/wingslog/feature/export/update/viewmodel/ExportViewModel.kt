@@ -307,7 +307,7 @@ class ExportViewModel(
       customStart = lastConfiguring.customStart,
       customEnd = lastConfiguring.customEnd,
       deliveryInfo = latestDeliveryInfo,
-      deliveryState = deliveryState,
+      persistedDeliveryState = persistedDeliveryState,
       deliveryFailureMessage = deliveryFailureMessage,
     )
 

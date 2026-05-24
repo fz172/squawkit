@@ -32,27 +32,34 @@ class ExportHistoryRemoteRepository(
   suspend fun downloadArchive(remoteArchiveRef: String): ByteArray? {
     if (remoteArchiveRef.isBlank()) return null
     return runCatching {
-      val url = storage.reference(remoteArchiveRef).getDownloadUrl()
-      httpClient.get(url).readRawBytes()
+      val url = storage.reference(remoteArchiveRef)
+        .getDownloadUrl()
+      httpClient.get(url)
+        .readRawBytes()
     }.getOrElse { error ->
       log.w(error) { "remote export download failed for $remoteArchiveRef" }
       null
     }
   }
 
-  suspend fun uploadAndSync(record: ExportRecord, archiveBytes: ByteArray): ExportRecord {
+  suspend fun uploadAndSync(
+    record: ExportRecord,
+    archiveBytes: ByteArray
+  ): ExportRecord {
     val user = auth.currentUser ?: return record
     if (user.isAnonymous) return record
     // Email is the source of truth for cloud storage: with no delivery email there is nothing to
     // send and no reason to keep a cloud copy, so the export stays on-device only.
     if (record.destination_email.isBlank()) return record
 
-    val remotePath = remoteArchivePath(user.uid, record.export_id, record.file_name)
+    val remotePath =
+      remoteArchivePath(user.uid, record.export_id, record.file_name)
     return runCatching {
-      storage.reference(remotePath).putData(archiveBytes.toFirebaseData())
+      storage.reference(remotePath)
+        .putData(archiveBytes.toFirebaseData())
       val synced = record.copy(
         remote_archive_ref = remotePath,
-        delivery_state = record.delivery_state.ifBlank {
+        persisted_delivery_state = record.persisted_delivery_state.ifBlank {
           record.destination_email
             .takeIf { it.isNotBlank() }
             ?.let { ExportDeliveryStates.QUEUED }
@@ -73,22 +80,30 @@ class ExportHistoryRemoteRepository(
     if (user.isAnonymous) return emptyList()
     return runCatching {
       collection(user.uid).get().documents.mapNotNull { snapshot ->
-        runCatching { snapshot.data<ExportRecordWire>().toExportRecord() }
+        runCatching {
+          snapshot.data<ExportRecordWire>()
+            .toExportRecord()
+        }
           .onFailure { error -> log.w(error) { "skipping malformed export manifest ${snapshot.id}" } }
           .getOrNull()
-      }.sortedByDescending { it.created_at_epoch_millis }
+      }
+        .sortedByDescending { it.created_at_epoch_millis }
     }.getOrElse { error ->
       log.w(error) { "remote export history read failed for ${user.uid}" }
       emptyList()
     }
   }
 
-  suspend fun deleteExport(exportId: String, remoteArchiveRef: String): Boolean {
+  suspend fun deleteExport(
+    exportId: String,
+    remoteArchiveRef: String
+  ): Boolean {
     val user = auth.currentUser ?: return false
     if (user.isAnonymous) return false
     return runCatching {
       if (remoteArchiveRef.isNotBlank()) {
-        storage.reference(remoteArchiveRef).delete()
+        storage.reference(remoteArchiveRef)
+          .delete()
       }
       document(user.uid, exportId).delete()
       true
@@ -99,11 +114,18 @@ class ExportHistoryRemoteRepository(
   }
 
   private fun collection(uid: String) =
-    firestore.collection("users").document(uid).collection("export_history")
+    firestore.collection("users")
+      .document(uid)
+      .collection("export_history")
 
-  private fun document(uid: String, exportId: String) = collection(uid).document(exportId)
+  private fun document(uid: String, exportId: String) =
+    collection(uid).document(exportId)
 
-  private fun remoteArchivePath(uid: String, exportId: String, fileName: String): String =
+  private fun remoteArchivePath(
+    uid: String,
+    exportId: String,
+    fileName: String
+  ): String =
     "users/$uid/exports/$exportId/$fileName"
 
   companion object {
@@ -125,7 +147,7 @@ private data class ExportRecordWire(
   val remoteArchiveRef: String? = null,
   val destinationEmail: String? = null,
   val destinationEmailSource: String? = null,
-  val deliveryState: String = ExportDeliveryStates.NOT_REQUESTED,
+  val persistedDeliveryState: String = ExportDeliveryStates.NOT_REQUESTED,
   val deliverySentAtEpochMillis: Long? = null,
   val deliveryFailureCode: String? = null,
   val deliveryFailureMessage: String? = null,
@@ -159,7 +181,7 @@ private fun ExportRecord.toWire(uid: String) = ExportRecordWire(
   remoteArchiveRef = remote_archive_ref.nullIfBlank(),
   destinationEmail = destination_email.nullIfBlank(),
   destinationEmailSource = destination_email_source.nullIfBlank(),
-  deliveryState = delivery_state.ifBlank { ExportDeliveryStates.NOT_REQUESTED },
+  persistedDeliveryState = persisted_delivery_state.ifBlank { ExportDeliveryStates.NOT_REQUESTED },
   deliverySentAtEpochMillis = delivery_sent_at_epoch_millis.takeIf { it > 0L },
   deliveryFailureCode = delivery_failure_code.nullIfBlank(),
   deliveryFailureMessage = delivery_failure_message.nullIfBlank(),
@@ -179,7 +201,7 @@ private fun ExportRecordWire.toExportRecord() = ExportRecord(
   remote_archive_ref = remoteArchiveRef.orEmpty(),
   destination_email = destinationEmail.orEmpty(),
   destination_email_source = destinationEmailSource.orEmpty(),
-  delivery_state = deliveryState,
+  persisted_delivery_state = persistedDeliveryState,
   delivery_sent_at_epoch_millis = deliverySentAtEpochMillis ?: 0L,
   delivery_failure_code = deliveryFailureCode.orEmpty(),
   delivery_failure_message = deliveryFailureMessage.orEmpty(),

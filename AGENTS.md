@@ -78,7 +78,7 @@ feature/
     viewing/            #   AttachmentRow, AttachmentSection
   export/               # Logbook export (datamanager + sharedassets + update; no model/viewing)
     datamanager/        #   ExportManager (exportLogs Flow, listExports, deleteExport, retryDelivery, resendDelivery);
-                        #   LogbookExportManager reads local EntityStore via feature managers; PDF/CSV/XLSX writers + ZipFileWriter;
+                        #   ExportManagerImpl reads local EntityStore via feature managers; PDF/CSV/XLSX writers + ZipFileWriter;
                         #   ExportHistoryRemoteRepository (Firebase Storage + Firestore manifest); ExportDeliveryBackend
                         #   → requestExportDelivery Cloud Function (email delivery)
     sharedassets/       #   Strings for selection / progress / history / delivery

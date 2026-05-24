@@ -8,9 +8,9 @@ import dev.fanfly.wingslog.feature.export.datamanager.impl.AttachmentExportResol
 import dev.fanfly.wingslog.feature.export.datamanager.impl.ExportDeliveryBackend
 import dev.fanfly.wingslog.feature.export.datamanager.impl.ExportFileStore
 import dev.fanfly.wingslog.feature.export.datamanager.impl.ExportHistoryRemoteRepository
+import dev.fanfly.wingslog.feature.export.datamanager.impl.ExportManagerImpl
 import dev.fanfly.wingslog.feature.export.datamanager.impl.LogbookExportAggregator
 import dev.fanfly.wingslog.feature.export.datamanager.impl.LogbookExportArchiveBuilder
-import dev.fanfly.wingslog.feature.export.datamanager.impl.LogbookExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.impl.ZipFileWriter
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
@@ -54,7 +54,7 @@ val exportDataManagerModule = module {
   }
   single { ExportDeliveryBackend() }
   single<ExportManager> {
-    LogbookExportManager(
+    ExportManagerImpl(
       get<LogbookExportAggregator>(),
       get<AttachmentExportResolver>(),
       get<LogbookExportArchiveBuilder>(),

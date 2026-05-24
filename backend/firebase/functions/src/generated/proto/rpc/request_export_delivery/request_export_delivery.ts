@@ -16,11 +16,21 @@ export interface RequestExportDeliveryRequest {
 }
 
 export interface RequestExportDeliveryResponse {
-  status: string;
+  /**
+   * Outcome of THIS delivery request only — ephemeral, scoped to this single call:
+   * "sent" | "failed" | "resend-throttled" | "already-sent" | "in-progress". A throttled or
+   * already-sent request sends no new email, so this can differ from persisted_delivery_state.
+   */
+  requestOutcome: string;
   exportId: string;
   uid: string;
   appId: string;
-  deliveryState: string;
+  /**
+   * The export's delivery state persisted on its manifest and advanced across the export's whole
+   * lifecycle: "NOT_REQUESTED" | "QUEUED" | "SENDING" | "SENT" | "FAILED". Survives between
+   * requests; e.g. a throttled resend leaves it at "SENT".
+   */
+  persistedDeliveryState: string;
   deliverySentAtEpochMillis: number;
   deliveryFailureCode: string;
   deliveryFailureMessage: string;
@@ -112,11 +122,11 @@ export const RequestExportDeliveryRequest: MessageFns<RequestExportDeliveryReque
 
 function createBaseRequestExportDeliveryResponse(): RequestExportDeliveryResponse {
   return {
-    status: "",
+    requestOutcome: "",
     exportId: "",
     uid: "",
     appId: "",
-    deliveryState: "",
+    persistedDeliveryState: "",
     deliverySentAtEpochMillis: 0,
     deliveryFailureCode: "",
     deliveryFailureMessage: "",
@@ -125,8 +135,8 @@ function createBaseRequestExportDeliveryResponse(): RequestExportDeliveryRespons
 
 export const RequestExportDeliveryResponse: MessageFns<RequestExportDeliveryResponse> = {
   encode(message: RequestExportDeliveryResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.status !== "") {
-      writer.uint32(10).string(message.status);
+    if (message.requestOutcome !== "") {
+      writer.uint32(10).string(message.requestOutcome);
     }
     if (message.exportId !== "") {
       writer.uint32(18).string(message.exportId);
@@ -137,8 +147,8 @@ export const RequestExportDeliveryResponse: MessageFns<RequestExportDeliveryResp
     if (message.appId !== "") {
       writer.uint32(34).string(message.appId);
     }
-    if (message.deliveryState !== "") {
-      writer.uint32(42).string(message.deliveryState);
+    if (message.persistedDeliveryState !== "") {
+      writer.uint32(42).string(message.persistedDeliveryState);
     }
     if (message.deliverySentAtEpochMillis !== 0) {
       writer.uint32(48).int64(message.deliverySentAtEpochMillis);
@@ -164,7 +174,7 @@ export const RequestExportDeliveryResponse: MessageFns<RequestExportDeliveryResp
             break;
           }
 
-          message.status = reader.string();
+          message.requestOutcome = reader.string();
           continue;
         }
         case 2: {
@@ -196,7 +206,7 @@ export const RequestExportDeliveryResponse: MessageFns<RequestExportDeliveryResp
             break;
           }
 
-          message.deliveryState = reader.string();
+          message.persistedDeliveryState = reader.string();
           continue;
         }
         case 6: {
@@ -234,7 +244,11 @@ export const RequestExportDeliveryResponse: MessageFns<RequestExportDeliveryResp
 
   fromJSON(object: any): RequestExportDeliveryResponse {
     return {
-      status: isSet(object.status) ? globalThis.String(object.status) : "",
+      requestOutcome: isSet(object.requestOutcome)
+        ? globalThis.String(object.requestOutcome)
+        : isSet(object.request_outcome)
+        ? globalThis.String(object.request_outcome)
+        : "",
       exportId: isSet(object.exportId)
         ? globalThis.String(object.exportId)
         : isSet(object.export_id)
@@ -246,10 +260,10 @@ export const RequestExportDeliveryResponse: MessageFns<RequestExportDeliveryResp
         : isSet(object.app_id)
         ? globalThis.String(object.app_id)
         : "",
-      deliveryState: isSet(object.deliveryState)
-        ? globalThis.String(object.deliveryState)
-        : isSet(object.delivery_state)
-        ? globalThis.String(object.delivery_state)
+      persistedDeliveryState: isSet(object.persistedDeliveryState)
+        ? globalThis.String(object.persistedDeliveryState)
+        : isSet(object.persisted_delivery_state)
+        ? globalThis.String(object.persisted_delivery_state)
         : "",
       deliverySentAtEpochMillis: isSet(object.deliverySentAtEpochMillis)
         ? globalThis.Number(object.deliverySentAtEpochMillis)
@@ -271,8 +285,8 @@ export const RequestExportDeliveryResponse: MessageFns<RequestExportDeliveryResp
 
   toJSON(message: RequestExportDeliveryResponse): unknown {
     const obj: any = {};
-    if (message.status !== "") {
-      obj.status = message.status;
+    if (message.requestOutcome !== "") {
+      obj.requestOutcome = message.requestOutcome;
     }
     if (message.exportId !== "") {
       obj.exportId = message.exportId;
@@ -283,8 +297,8 @@ export const RequestExportDeliveryResponse: MessageFns<RequestExportDeliveryResp
     if (message.appId !== "") {
       obj.appId = message.appId;
     }
-    if (message.deliveryState !== "") {
-      obj.deliveryState = message.deliveryState;
+    if (message.persistedDeliveryState !== "") {
+      obj.persistedDeliveryState = message.persistedDeliveryState;
     }
     if (message.deliverySentAtEpochMillis !== 0) {
       obj.deliverySentAtEpochMillis = Math.round(message.deliverySentAtEpochMillis);
@@ -305,11 +319,11 @@ export const RequestExportDeliveryResponse: MessageFns<RequestExportDeliveryResp
     object: I,
   ): RequestExportDeliveryResponse {
     const message = createBaseRequestExportDeliveryResponse();
-    message.status = object.status ?? "";
+    message.requestOutcome = object.requestOutcome ?? "";
     message.exportId = object.exportId ?? "";
     message.uid = object.uid ?? "";
     message.appId = object.appId ?? "";
-    message.deliveryState = object.deliveryState ?? "";
+    message.persistedDeliveryState = object.persistedDeliveryState ?? "";
     message.deliverySentAtEpochMillis = object.deliverySentAtEpochMillis ?? 0;
     message.deliveryFailureCode = object.deliveryFailureCode ?? "";
     message.deliveryFailureMessage = object.deliveryFailureMessage ?? "";

@@ -116,7 +116,9 @@ Thank you for choosing Hopply.</string>
   <string name="export_history_delivery_queued">Email requested</string>
   <string name="export_history_delivery_sending">Sending email</string>
   <string name="export_history_delivery_sent">Email sent</string>
-  <string name="export_history_delivery_failed">Email delivery failed</string>
+  <string name="export_history_delivery_failed">Failed to send email</string>
+  <string name="export_history_delivery_throttled">Already sent recently — try again later</string>
+  <string name="export_history_delivery_in_progress">Email is already being sent</string>
   <string name="export_history_delivery_retry">Retry email delivery</string>
   <string name="export_resend_email">Email this export again</string>
   <string name="export_history_more_actions">More actions</string>

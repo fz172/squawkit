@@ -22,7 +22,7 @@ internal object ExportRecordMerge {
     remote_archive_ref = remote.remote_archive_ref.ifBlank { remote_archive_ref },
     destination_email = remote.destination_email.ifBlank { destination_email },
     destination_email_source = remote.destination_email_source.ifBlank { destination_email_source },
-    delivery_state = remote.delivery_state.ifBlank { delivery_state },
+    persisted_delivery_state = remote.persisted_delivery_state.ifBlank { persisted_delivery_state },
     delivery_sent_at_epoch_millis =
       remote.delivery_sent_at_epoch_millis.takeIf { it > 0L } ?: delivery_sent_at_epoch_millis,
     delivery_failure_code = remote.delivery_failure_code.ifBlank { delivery_failure_code },

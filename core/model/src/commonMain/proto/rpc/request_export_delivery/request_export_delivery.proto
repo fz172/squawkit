@@ -12,11 +12,17 @@ message RequestExportDeliveryRequest {
 }
 
 message RequestExportDeliveryResponse {
-  string status = 1;
+  // Outcome of THIS delivery request only — ephemeral, scoped to this single call:
+  // "sent" | "failed" | "resend-throttled" | "already-sent" | "in-progress". A throttled or
+  // already-sent request sends no new email, so this can differ from persisted_delivery_state.
+  string request_outcome = 1;
   string export_id = 2;
   string uid = 3;
   string app_id = 4;
-  string delivery_state = 5;
+  // The export's delivery state persisted on its manifest and advanced across the export's whole
+  // lifecycle: "NOT_REQUESTED" | "QUEUED" | "SENDING" | "SENT" | "FAILED". Survives between
+  // requests; e.g. a throttled resend leaves it at "SENT".
+  string persisted_delivery_state = 5;
   int64 delivery_sent_at_epoch_millis = 6;
   string delivery_failure_code = 7;
   string delivery_failure_message = 8;

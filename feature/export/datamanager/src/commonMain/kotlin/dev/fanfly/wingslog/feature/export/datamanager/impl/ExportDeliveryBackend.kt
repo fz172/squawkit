@@ -21,7 +21,8 @@ class ExportDeliveryBackend {
       )
       .data<RequestExportDeliveryResponseData>()
     return ExportDeliveryResult(
-      deliveryState = response.deliveryState,
+      requestOutcome = response.requestOutcome,
+      persistedDeliveryState = response.persistedDeliveryState,
       deliverySentAtEpochMillis = response.deliverySentAtEpochMillis,
       deliveryFailureCode = response.deliveryFailureCode,
       deliveryFailureMessage = response.deliveryFailureMessage,
@@ -40,7 +41,9 @@ private data class RequestExportDeliveryRequestData(
 )
 
 data class ExportDeliveryResult(
-  val deliveryState: String,
+  /** Backend disposition: "sent", "failed", "resend-throttled", "already-sent", or "in-progress". */
+  val requestOutcome: String = "",
+  val persistedDeliveryState: String,
   val deliverySentAtEpochMillis: Long = 0L,
   val deliveryFailureCode: String = "",
   val deliveryFailureMessage: String = "",
@@ -53,11 +56,11 @@ data class ExportDeliveryResult(
  */
 @Serializable
 private data class RequestExportDeliveryResponseData(
-  val status: String = "",
+  val requestOutcome: String = "",
   val exportId: String = "",
   val uid: String = "",
   val appId: String = "",
-  val deliveryState: String = "",
+  val persistedDeliveryState: String = "",
   val deliverySentAtEpochMillis: Long = 0L,
   val deliveryFailureCode: String = "",
   val deliveryFailureMessage: String = "",

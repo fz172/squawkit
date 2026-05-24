@@ -15,7 +15,7 @@ sealed interface ExportProgress {
     val displayLocation: String,
     val sizeBytes: Long,
     val displayLocationKind: ExportDisplayLocation = ExportDisplayLocation.UNKNOWN,
-    val deliveryState: String = "",
+    val persistedDeliveryState: String = "",
     val deliveryFailureMessage: String = "",
   ) : ExportProgress
 

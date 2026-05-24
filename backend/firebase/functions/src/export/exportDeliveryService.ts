@@ -44,8 +44,8 @@ export class ExportDeliveryService {
         uid,
         exportId,
         forceResend,
-        status: lease.result.status,
-        deliveryState: lease.result.deliveryState,
+        requestOutcome: lease.result.requestOutcome,
+        persistedDeliveryState: lease.result.persistedDeliveryState,
       });
       return lease.result;
     }
@@ -77,12 +77,12 @@ export class ExportDeliveryService {
       logger.info("export_delivery_request_sent", {
         uid,
         exportId,
-        deliveryState: EXPORT_DELIVERY_STATE.SENT,
+        persistedDeliveryState: EXPORT_DELIVERY_STATE.SENT,
         sentAtEpochMillis,
       });
       return {
-        status: "sent",
-        deliveryState: EXPORT_DELIVERY_STATE.SENT,
+        requestOutcome: "sent",
+        persistedDeliveryState: EXPORT_DELIVERY_STATE.SENT,
         deliverySentAtEpochMillis: sentAtEpochMillis,
       };
     } catch (error) {
@@ -96,8 +96,8 @@ export class ExportDeliveryService {
       });
       await this.manifestRepository.markFailed(uid, exportId, failureCode, failureMessage);
       return {
-        status: "failed",
-        deliveryState: EXPORT_DELIVERY_STATE.FAILED,
+        requestOutcome: "failed",
+        persistedDeliveryState: EXPORT_DELIVERY_STATE.FAILED,
         deliveryFailureCode: failureCode,
         deliveryFailureMessage: failureMessage,
       };

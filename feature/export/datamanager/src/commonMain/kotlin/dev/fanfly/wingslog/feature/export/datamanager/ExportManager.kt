@@ -26,16 +26,17 @@ interface ExportManager {
   suspend fun deleteExport(exportId: String): Boolean
 
   /**
-   * Retries automatic delivery for a previously failed export. Returns true when a retry request
-   * was accepted.
+   * Retries automatic delivery for a previously failed export, reporting whether the email was
+   * sent or why it failed.
    */
-  suspend fun retryDelivery(exportId: String): Boolean
+  suspend fun retryDelivery(exportId: String): ExportDeliveryOutcome
 
   /**
    * Sends a fresh delivery email for an already-uploaded export, reusing the archive in remote
-   * storage. No local file is generated or uploaded. Returns true when the request was accepted.
+   * storage. No local file is generated or uploaded. Reports whether the email was sent or why it
+   * failed.
    */
-  suspend fun resendDelivery(exportId: String): Boolean
+  suspend fun resendDelivery(exportId: String): ExportDeliveryOutcome
 
   /**
    * Downloads a remote-only export's archive to this device and records the local copy, so it can

@@ -38,7 +38,7 @@ export class ExportManifestRepository {
         throw new HttpsError("not-found", `Export ${exportId} does not exist.`);
       }
       const manifest = toManifest(snapshot.data(), exportId, uid);
-      if (manifest.deliveryState === EXPORT_DELIVERY_STATE.SENT) {
+      if (manifest.persistedDeliveryState === EXPORT_DELIVERY_STATE.SENT) {
         const sentAtEpochMillis = manifest.deliverySentAtEpochMillis ?? 0;
         // A plain (non-forced) request never re-sends an already-delivered export. A forced resend
         // re-sends only once the per-export cooldown has elapsed, otherwise it's throttled.
@@ -47,8 +47,8 @@ export class ExportManifestRepository {
           return {
             kind: forceResend ? "resend-throttled" : "already-sent",
             result: {
-              status: forceResend ? "resend-throttled" : "already-sent",
-              deliveryState: EXPORT_DELIVERY_STATE.SENT,
+              requestOutcome: forceResend ? "resend-throttled" : "already-sent",
+              persistedDeliveryState: EXPORT_DELIVERY_STATE.SENT,
               deliverySentAtEpochMillis: sentAtEpochMillis,
             },
           };
@@ -57,14 +57,14 @@ export class ExportManifestRepository {
       }
       const leaseExpiresAt = manifest.deliveryLeaseExpiresAtEpochMillis ?? 0;
       if (
-        manifest.deliveryState === EXPORT_DELIVERY_STATE.SENDING &&
+        manifest.persistedDeliveryState === EXPORT_DELIVERY_STATE.SENDING &&
         leaseExpiresAt > nowEpochMillis
       ) {
         return {
           kind: "in-progress",
           result: {
-            status: "in-progress",
-            deliveryState: EXPORT_DELIVERY_STATE.SENDING,
+            requestOutcome: "in-progress",
+            persistedDeliveryState: EXPORT_DELIVERY_STATE.SENDING,
           },
         };
       }
@@ -72,7 +72,7 @@ export class ExportManifestRepository {
       transaction.set(
         ref,
         {
-          deliveryState: EXPORT_DELIVERY_STATE.SENDING,
+          persistedDeliveryState: EXPORT_DELIVERY_STATE.SENDING,
           deliveryLeaseExpiresAtEpochMillis: leaseExpiresAtEpochMillis,
           deliveryFailureCode: FieldValue.delete(),
           deliveryFailureMessage: FieldValue.delete(),
@@ -83,7 +83,7 @@ export class ExportManifestRepository {
         kind: "proceed",
         manifest: {
           ...manifest,
-          deliveryState: EXPORT_DELIVERY_STATE.SENDING,
+          persistedDeliveryState: EXPORT_DELIVERY_STATE.SENDING,
           deliveryLeaseExpiresAtEpochMillis: leaseExpiresAtEpochMillis,
           deliveryFailureCode: undefined,
           deliveryFailureMessage: undefined,
@@ -95,7 +95,7 @@ export class ExportManifestRepository {
   async markSent(uid: string, exportId: string, sentAtEpochMillis: number): Promise<void> {
     await this.document(uid, exportId).set(
       {
-        deliveryState: EXPORT_DELIVERY_STATE.SENT,
+        persistedDeliveryState: EXPORT_DELIVERY_STATE.SENT,
         deliverySentAtEpochMillis: sentAtEpochMillis,
         deliveryFailureCode: FieldValue.delete(),
         deliveryFailureMessage: FieldValue.delete(),
@@ -113,7 +113,7 @@ export class ExportManifestRepository {
   ): Promise<void> {
     await this.document(uid, exportId).set(
       {
-        deliveryState: EXPORT_DELIVERY_STATE.FAILED,
+        persistedDeliveryState: EXPORT_DELIVERY_STATE.FAILED,
         deliveryFailureCode: failureCode,
         deliveryFailureMessage: failureMessage,
         deliveryLeaseExpiresAtEpochMillis: FieldValue.delete(),
@@ -148,7 +148,7 @@ function toManifest(
     remoteArchiveRef: readNullableString(data.remoteArchiveRef),
     destinationEmail: readNullableString(data.destinationEmail),
     destinationEmailSource: readNullableString(data.destinationEmailSource),
-    deliveryState: readDeliveryState(data.deliveryState),
+    persistedDeliveryState: readDeliveryState(data.persistedDeliveryState),
     deliverySentAtEpochMillis: readOptionalNumber(data.deliverySentAtEpochMillis),
     deliveryFailureCode: readNullableString(data.deliveryFailureCode),
     deliveryFailureMessage: readNullableString(data.deliveryFailureMessage),
@@ -211,7 +211,7 @@ function readOptionalNumber(value: unknown): number | null {
   return null;
 }
 
-function readDeliveryState(value: unknown): ExportManifest["deliveryState"] {
+function readDeliveryState(value: unknown): ExportManifest["persistedDeliveryState"] {
   const state = readString(value);
   switch (state) {
     case EXPORT_DELIVERY_STATE.NOT_REQUESTED:

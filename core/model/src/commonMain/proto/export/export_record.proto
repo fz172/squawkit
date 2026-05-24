@@ -5,7 +5,7 @@ option java_multiple_files = true;
 
 // Persisted metadata for a generated export archive.
 //
-// Written next to the ZIP at export time (see LogbookExportManager) and read back when listing
+// Written next to the ZIP at export time (see ExportManagerImpl) and read back when listing
 // history, so every archive's full scope — formats, date range, and aircraft — is rediscoverable
 // without parsing the file name. The archive itself remains the source of truth for existence;
 // records whose file is gone are pruned when the index is read.
@@ -31,8 +31,9 @@ message ExportRecord {
   // Delivery snapshot captured at export time.
   string destination_email = 11;
   string destination_email_source = 12;
+  // Delivery state persisted across the export's whole lifecycle:
   // "NOT_REQUESTED" | "QUEUED" | "SENDING" | "SENT" | "FAILED".
-  string delivery_state = 13;
+  string persisted_delivery_state = 13;
   int64 delivery_sent_at_epoch_millis = 14;
   string delivery_failure_code = 15;
   string delivery_failure_message = 16;

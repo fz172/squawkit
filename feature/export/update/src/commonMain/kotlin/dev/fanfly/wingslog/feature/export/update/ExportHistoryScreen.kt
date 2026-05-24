@@ -37,6 +37,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -106,6 +108,7 @@ fun ExportHistoryScreen(
   onRetryDelivery: (ExportRecord) -> Unit,
   onSaveToDevice: (ExportRecord) -> Unit,
   onDelete: (ExportRecord) -> Unit,
+  snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
   Scaffold(
     topBar = {
@@ -114,6 +117,7 @@ fun ExportHistoryScreen(
         onBackClick = onNavigateBack,
       )
     },
+    snackbarHost = { SnackbarHost(snackbarHostState) },
   ) { innerPadding ->
     val contentModifier = Modifier.padding(innerPadding)
       .fillMaxSize()
@@ -235,7 +239,7 @@ private fun ExportHistoryCard(
   val scope = scopeLine(record)
   val onDevice = record.file_path.isNotBlank()
   val canRetry =
-    record.delivery_state == "FAILED" &&
+    record.persisted_delivery_state == "FAILED" &&
       record.remote_archive_ref.isNotBlank() &&
       record.destination_email.isNotBlank()
   // Email-account users re-send the export by email from the remote archive (no local file needed).
@@ -249,7 +253,8 @@ private fun ExportHistoryCard(
   val canShareDevice = onDevice
   // Remote-only archives can be pulled down to the device for offline sharing.
   val canSaveToDevice = !onDevice && record.remote_archive_ref.isNotBlank()
-  val hasUpperMenuItems = canResend || canRetry || canShareDevice || canSaveToDevice
+  val hasUpperMenuItems =
+    canResend || canRetry || canShareDevice || canSaveToDevice
 
   Row(
     modifier = Modifier
@@ -355,7 +360,12 @@ private fun ExportHistoryCard(
         if (canResend || canRetry) {
           DropdownMenuItem(
             text = { Text(stringResource(Res.string.export_history_menu_resend)) },
-            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+            leadingIcon = {
+              Icon(
+                Icons.Default.Email,
+                contentDescription = null
+              )
+            },
             onClick = {
               menuExpanded = false
               if (canRetry) onRetryDelivery() else onResendDelivery()
@@ -365,17 +375,32 @@ private fun ExportHistoryCard(
         if (canShareDevice) {
           DropdownMenuItem(
             text = { Text(stringResource(Res.string.export_history_menu_share)) },
-            leadingIcon = { Icon(Icons.Default.IosShare, contentDescription = null) },
+            leadingIcon = {
+              Icon(
+                Icons.Default.IosShare,
+                contentDescription = null
+              )
+            },
             onClick = {
               menuExpanded = false
-              onShareExport(record.file_path, shareTitle, emailSubject, emailBody)
+              onShareExport(
+                record.file_path,
+                shareTitle,
+                emailSubject,
+                emailBody
+              )
             },
           )
         }
         if (canSaveToDevice) {
           DropdownMenuItem(
             text = { Text(stringResource(Res.string.export_history_menu_save)) },
-            leadingIcon = { Icon(Icons.Default.Download, contentDescription = null) },
+            leadingIcon = {
+              Icon(
+                Icons.Default.Download,
+                contentDescription = null
+              )
+            },
             onClick = {
               menuExpanded = false
               onSaveToDevice()

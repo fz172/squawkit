@@ -29,11 +29,11 @@ export const requestExportDelivery = onCall<
     const result = await deliveryService.requestDelivery(uid, exportId, forceResend);
 
     return RequestExportDeliveryResponse.create({
-      status: result.status,
+      requestOutcome: result.requestOutcome,
       exportId,
       uid,
       appId,
-      deliveryState: result.deliveryState,
+      persistedDeliveryState: result.persistedDeliveryState,
       deliverySentAtEpochMillis: result.deliverySentAtEpochMillis ?? 0,
       deliveryFailureCode: result.deliveryFailureCode ?? "",
       deliveryFailureMessage: result.deliveryFailureMessage ?? "",
