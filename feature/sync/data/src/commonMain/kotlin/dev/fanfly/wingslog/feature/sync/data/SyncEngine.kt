@@ -19,6 +19,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -65,6 +67,21 @@ class SyncEngine(
 
   /** Scope spun up per signed-in user; cancelled when the user changes or signs out. */
   private var userScope: CoroutineScope? = null
+
+  /**
+   * Manual nudge to re-evaluate the current user. Needed because linking a credential to an
+   * anonymous user upgrades it in place: the UID is unchanged, so Firebase fires no
+   * `authStateChanged`, yet sync must now activate to push the (previously guest) data up.
+   */
+  private val resyncTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+  /**
+   * Re-evaluate auth and (re)start sync for the *current* user. Call after an in-place account
+   * upgrade so the now-non-anonymous user's local data is hydrated/pushed.
+   */
+  fun resyncCurrentUser() {
+    resyncTrigger.tryEmit(Unit)
+  }
 
   /**
    * Active failure entries keyed by source: each `(kind, scope)` pair has its own entry for
@@ -121,7 +138,9 @@ class SyncEngine(
   fun start(): Job {
     return rootScope.launch {
       combine(
-        auth.authStateChanged,
+        // authStateChanged covers sign-in/out; resyncTrigger re-reads the current user for an
+        // in-place upgrade (linkWithCredential) that fires no auth-state change.
+        merge(auth.authStateChanged, resyncTrigger.map { auth.currentUser }),
         syncPreferences.state,
       ) { user, prefs -> user to prefs.cloudSyncEnabled }
         .collectLatest { (user, cloudSyncEnabled) ->
