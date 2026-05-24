@@ -54,6 +54,19 @@ class SettingsViewModel(
     }
   }
 
+  /**
+   * Re-reads account-derived fields (photo, anonymous flag) from the current Firebase user.
+   * Call after an account upgrade: linking does not fire authStateChanged, so the [observeSelf]
+   * collector may not re-emit on its own (e.g. when the self-technician name is unchanged).
+   */
+  fun refreshAccountState() {
+    val current = authManager.getCurrentUser()
+    _user.value = _user.value.copy(
+      photoUri = current?.photoURL,
+      isAnonymous = current?.isAnonymous == true,
+    )
+  }
+
   fun logOut() {
     val uid = authManager.getCurrentUser()?.uid
     viewModelScope.launch {

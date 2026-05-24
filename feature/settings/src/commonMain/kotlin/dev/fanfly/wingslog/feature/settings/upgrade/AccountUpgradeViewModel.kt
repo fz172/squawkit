@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 class AccountUpgradeViewModel(
   private val authManager: AuthManager,
   private val migrator: LocalAccountMigrator,
+  private val technicianManager: TechnicianManager,
 ) : ViewModel() {
 
   private val log = Logger.withTag(TAG)
@@ -35,7 +37,12 @@ class AccountUpgradeViewModel(
     _state.value = UpgradeUiState.Working
     viewModelScope.launch {
       _state.value = when (val result = authManager.upgradeAnonymousAccount()) {
-        is AccountUpgradeResult.Linked -> UpgradeUiState.Success
+        is AccountUpgradeResult.Linked -> {
+          // Linking doesn't fire authStateChanged, so seed the profile (name + photo) explicitly.
+          technicianManager.ensureSelfProfile()
+          UpgradeUiState.Success
+        }
+
         is AccountUpgradeResult.CredentialInUse -> UpgradeUiState.ConfirmMerge(result.credential)
         is AccountUpgradeResult.Cancelled -> UpgradeUiState.Idle
         is AccountUpgradeResult.Failed -> UpgradeUiState.Error(result.message)
@@ -57,6 +64,8 @@ class AccountUpgradeViewModel(
         is AccountUpgradeResult.Linked -> {
           // Re-key this device's records into the existing account; the sync engine pushes them up.
           migrator.reassign(fromUid = guestUid, toUid = result.user.uid)
+          // Seed/backfill the profile name from the account (or keep the merged one).
+          technicianManager.ensureSelfProfile()
           UpgradeUiState.Success
         }
 
