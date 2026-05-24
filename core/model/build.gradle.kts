@@ -29,6 +29,10 @@ kotlin {
   iosArm64()
   iosSimulatorArm64()
 
+  js(IR) {
+    browser()
+  }
+
   sourceSets {
     commonMain {
       dependencies {

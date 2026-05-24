@@ -8,7 +8,7 @@ kotlin {
     jvmToolchain(21)
 
     js(IR) {
-        moduleName = "webApp"
+        outputModuleName.set("webApp")
         browser()
         binaries.executable()
     }

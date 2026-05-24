@@ -1,8 +1,10 @@
-import androidx.compose.ui.window.CanvasBasedWindow
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.window.ComposeViewport
 import dev.fanfly.wingslog.web.WebApp
 
+@OptIn(ExperimentalComposeUiApi::class)
 fun main() {
-    CanvasBasedWindow(canvasElementId = "ComposeTarget", title = "Hopply") {
+    ComposeViewport(viewportContainerId = "ComposeTarget") {
         WebApp()
     }
 }
