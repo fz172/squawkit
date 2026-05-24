@@ -28,10 +28,8 @@ standalone `webApp` seed into a real, code-sharing web client.
    in `jsMain` `AuthManagerImpl`; needs Firebase-JS `linkWithPopup`. Until then a guest on
    web can't upgrade in place — acceptable while web is pre-production.
 
-**Anytime / non-blocking:** the Firebase web `appId` in `webApp/src/jsMain/kotlin/main.kt`
-is synthesized — auth works without it, but register a real Firebase *web app* (Console →
-Project settings → Your apps → Add app → Web) and paste its `appId` before any production
-deploy.
+_(Done: a real Firebase web app is registered; its `appId` is wired into
+`webApp/src/jsMain/kotlin/main.kt`.)_
 
 > **Gotcha discovered in M1:** `components-resources` must be declared *directly* in a
 > module's dependencies (not relied on transitively via `core:ui`'s `api`) — the Compose

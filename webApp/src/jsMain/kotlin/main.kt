@@ -12,12 +12,11 @@ import org.koin.core.context.startKoin
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     // Firebase JS has no google-services plugin to auto-init, so configure it
-    // explicitly. Values come from app/google-services.json (public client config).
-    // TODO: register a dedicated Firebase *web app* and use its appId here.
+    // explicitly. Values are the project's public web-app client config.
     Firebase.initialize(
         context = null,
         options = FirebaseOptions(
-            applicationId = "1:811416892017:web:wingslog",
+            applicationId = "1:811416892017:web:6680df6dd37a69d1f961d0",
             apiKey = "AIzaSyAo52Y7aQ4jhYGq4MioZK5mSffmmZES1qk",
             projectId = "wingslog-9ca4e",
             authDomain = "wingslog-9ca4e.firebaseapp.com",
