@@ -21,6 +21,7 @@ import wingslog.feature.squawk.sharedassets.generated.resources.squawk_updated
 fun EditSquawkRoute(
   navController: NavController,
   viewModel: SquawkFormViewModel = koinViewModel(),
+  attachmentsAvailable: Boolean = true,
 ) {
   val state by viewModel.state.collectAsStateWithLifecycle()
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
@@ -64,7 +65,7 @@ fun EditSquawkRoute(
     },
     onReopenClick = { viewModel.reopen(reopenedMessage) },
     attachmentSection = {
-      if (attachmentUploadEnabled) {
+      if (attachmentsAvailable && attachmentUploadEnabled) {
         AttachmentFormSection(
           visibleAttachments = pendingAttachments.visible(),
           isAnonymous = viewModel.isAnonymous,

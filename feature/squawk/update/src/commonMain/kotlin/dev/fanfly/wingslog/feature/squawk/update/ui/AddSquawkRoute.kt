@@ -19,6 +19,7 @@ import wingslog.feature.squawk.sharedassets.generated.resources.squawk_added
 fun AddSquawkRoute(
   navController: NavController,
   viewModel: SquawkFormViewModel = koinViewModel(),
+  attachmentsAvailable: Boolean = true,
 ) {
   val state by viewModel.state.collectAsStateWithLifecycle()
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
@@ -55,7 +56,7 @@ fun AddSquawkRoute(
     onDismissConfirm = {},
     onReopenClick = {},
     attachmentSection = {
-      if (attachmentUploadEnabled) {
+      if (attachmentsAvailable && attachmentUploadEnabled) {
         AttachmentFormSection(
           visibleAttachments = pendingAttachments.visible(),
           isAnonymous = viewModel.isAnonymous,

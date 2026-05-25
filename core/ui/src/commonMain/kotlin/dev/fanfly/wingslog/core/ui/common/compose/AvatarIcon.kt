@@ -35,13 +35,27 @@ fun AvatarIcon(
   val hasPhoto = !photoUri.isNullOrBlank()
 
   when {
-    hasPhoto -> CircularImage(
-      photoUri = photoUri,
-      contentDescription = contentDescription,
-      modifier = modifier,
-      size = size,
-      fallbackRes = fallbackRes,
-    )
+    hasPhoto -> Box(
+      modifier = modifier
+        .size(size)
+        .clip(CircleShape),
+      contentAlignment = Alignment.Center,
+    ) {
+      AvatarFallback(
+        initials = initials,
+        modifier = Modifier,
+        size = size,
+        textStyle = textStyle,
+        contentDescription = null,
+        fallbackRes = fallbackRes,
+      )
+      CircularImage(
+        photoUri = photoUri,
+        contentDescription = contentDescription,
+        modifier = Modifier,
+        size = size,
+      )
+    }
 
     initials != null -> InitialsCircle(initials, modifier, size, textStyle)
 
@@ -53,6 +67,28 @@ fun AvatarIcon(
       fallbackRes = fallbackRes,
     )
 
+    else -> InitialsCircle("?", modifier, size, textStyle)
+  }
+}
+
+@Composable
+private fun AvatarFallback(
+  initials: String?,
+  modifier: Modifier,
+  size: Dp,
+  textStyle: TextStyle,
+  contentDescription: String?,
+  fallbackRes: DrawableResource?,
+) {
+  when {
+    initials != null -> InitialsCircle(initials, modifier, size, textStyle)
+    fallbackRes != null -> CircularImage(
+      photoUri = null,
+      contentDescription = contentDescription,
+      modifier = modifier,
+      size = size,
+      fallbackRes = fallbackRes,
+    )
     else -> InitialsCircle("?", modifier, size, textStyle)
   }
 }

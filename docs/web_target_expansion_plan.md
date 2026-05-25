@@ -49,6 +49,11 @@ standalone `webApp` seed into a real, code-sharing web client.
   remains deferred. **Verified:** webApp JS bundle, Android and iOS simulator
   compilation, and initial browser render pass. **Pending:** sign in with a populated
   account and observe hydrated fleet/detail data in the browser.
+- **M6 — 🚧 in progress.** Browser routes now expose aircraft, maintenance log, task,
+  and squawk add/edit flows, plus Settings, Cloud Sync, Feature Lab, and technician
+  management. Browser attachment controls remain suppressed until blob handling is
+  implemented; export UI and anonymous account upgrade are still deferred.
+  **Verified:** webApp JS bundle plus Android and iOS simulator compilation pass.
 
 **What's next (in order):**
 1. Complete the pending signed-in browser hydration/push and local persistence verification through the M5 UI.
@@ -248,7 +253,10 @@ Track which shared modules have gained a `js(IR)` target (✅ = has JS target):
 | `feature:fleet:*`, `feature:aircraft:dashboard` | ✅ | M5 |
 | `feature:{logs,tasks,squawk}:{model,datamanager,viewing,sharedassets}` | ✅ | M5 |
 | `feature:attachment:{sharedassets,viewing}`, `feature:featurelab:datamanager` | ✅ | M5 dependency |
-| `feature:*:update`, `technician`, `settings`, `export` | ☐ | M6 |
+| `feature:{logs,tasks,squawk}:update`, `feature:technician:{manage,sharedassets}` | ✅ | M6 |
+| `core:appinfo`, `feature:settings`, `feature:sync:{settings,sharedassets}` | ✅ | M6 dependency |
+| `feature:userprofile:{sharedassets,userprofilecard}`, `feature:export:sharedassets` | ✅ | M6 dependency |
+| `feature:export:{datamanager,update}`, browser attachments, account upgrade | ☐ | M6 deferred |
 
 ## Open questions
 - Is the web client full parity, or a focused subset (e.g. view + light edit)? This

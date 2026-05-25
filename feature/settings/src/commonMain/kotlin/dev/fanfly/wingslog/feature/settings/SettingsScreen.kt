@@ -72,6 +72,7 @@ fun SettingsScreen(
   navController: NavController,
   settingsViewModel: SettingsViewModel = koinViewModel(),
   accountUpgradeViewModel: AccountUpgradeViewModel = koinViewModel(),
+  onExportLogs: (() -> Unit)? = { navController.navigate(Screen.ExportLogs.route) },
 ) {
 
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
@@ -159,13 +160,15 @@ fun SettingsScreen(
         settingsLevel = SettingsLevel.DEFAULT
       )
 
-      SettingsRow(
-        icon = Icons.Default.FileDownload,
-        title = stringResource(ExportRes.string.feature_name_export_logs),
-        subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
-        onClick = { navController.navigate(Screen.ExportLogs.route) },
-        settingsLevel = SettingsLevel.DEFAULT
-      )
+      if (onExportLogs != null) {
+        SettingsRow(
+          icon = Icons.Default.FileDownload,
+          title = stringResource(ExportRes.string.feature_name_export_logs),
+          subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
+          onClick = onExportLogs,
+          settingsLevel = SettingsLevel.DEFAULT
+        )
+      }
 
       SettingsRow(
         icon = Icons.Default.Tune,

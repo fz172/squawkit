@@ -29,8 +29,14 @@ kotlin {
             implementation(project(":feature:aircraft:dashboard"))
             implementation(project(":feature:logs:datamanager"))
             implementation(project(":feature:logs:viewing"))
+            implementation(project(":feature:logs:update"))
             implementation(project(":feature:tasks:datamanager"))
+            implementation(project(":feature:tasks:update"))
             implementation(project(":feature:squawk:datamanager"))
+            implementation(project(":feature:squawk:update"))
+            implementation(project(":feature:settings"))
+            implementation(project(":feature:sync:settings"))
+            implementation(project(":feature:technician:manage"))
             implementation(libs.compose.foundation)
             implementation(libs.androidx.navigation.compose)
 
@@ -38,10 +44,12 @@ kotlin {
             implementation(libs.gitlive.firebase.auth)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
         }
         jsMain.dependencies {
             // Copies sql.js's sql-wasm.wasm into the bundle (see webpack.config.d).
             implementation(devNpm("copy-webpack-plugin", "9.1.0"))
+            implementation(devNpm("os-browserify", "0.3.0"))
         }
     }
 }

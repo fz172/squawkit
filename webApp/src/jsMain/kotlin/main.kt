@@ -11,12 +11,18 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
 import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
 import dev.fanfly.wingslog.feature.login.di.loginModule
 import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
+import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
+import dev.fanfly.wingslog.feature.settings.di.settingsModule
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.di.syncModule
+import dev.fanfly.wingslog.feature.sync.settings.di.syncSettingsModule
 import dev.fanfly.wingslog.feature.squawk.datamanager.squawkModule
+import dev.fanfly.wingslog.feature.squawk.update.viewmodel.squawkUiModule
 import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
+import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
+import dev.fanfly.wingslog.feature.technician.manage.di.technicianManageModule
 import dev.fanfly.wingslog.web.WebApp
 import dev.fanfly.wingslog.web.createSqlJsWorker
 import dev.gitlive.firebase.Firebase
@@ -57,9 +63,15 @@ fun main() {
             fleetViewingModule,
             maintenanceDataManagerModule,
             maintenanceViewingModule,
+            maintenanceUpdateModule,
             tasksModule,
+            tasksUiModule,
             squawkModule,
+            squawkUiModule,
             aircraftDashboardModule,
+            technicianManageModule,
+            settingsModule,
+            syncSettingsModule,
             module {
                 // The host app owns the bundled sql.js worker file (persists to IndexedDB).
                 single<Worker> { createSqlJsWorker() }
