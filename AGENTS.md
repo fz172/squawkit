@@ -215,7 +215,15 @@ Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, i
 
 ## Design Docs
 
-Feature PRDs and architecture design docs live in `docs/` — including `PRD.md` (product overview), `storage_mode_PRD.md` / `storage_r1_design.md` / `storage_r2_design.md` (local-first), `attachments_PRD.md` / `attachments_design.md`, `squawk_design.md` / `user_squawking_prd.md`, `export_logs_PRD.md` / `export_logs_design.md` / `export_email_automation_design.html`, `technician_design.md`, `userprofile_as_technician.md`, `aircraft_overview_tabs.md`, and `intelligentsearch.md`. Consult these before making non-trivial changes to a feature area. Each design/PRD doc carries an **Implementation Status** note near the top reflecting what has actually shipped vs. the original plan. For export work, also inspect `docs/export_logs_sample/`.
+Feature PRDs and architecture design docs live in `docs/` — including `PRD.md` (product overview),
+`platform_feature_parity.html` (Android/iOS/web feature matrix), `storage_mode_PRD.md` /
+`storage_r1_design.md` / `storage_r2_design.md` (local-first), `attachments_PRD.md` /
+`attachments_design.md`, `squawk_design.md` / `user_squawking_prd.md`, `export_logs_PRD.md` /
+`export_logs_design.md` / `export_email_automation_design.html`, `technician_design.md`,
+`userprofile_as_technician.md`, `aircraft_overview_tabs.md`, and `intelligentsearch.md`. Consult
+these before making non-trivial changes to a feature area. Each design/PRD doc carries an *
+*Implementation Status** note near the top reflecting what has actually shipped vs. the original
+plan. For export work, also inspect `docs/export_logs_sample/`.
 
 ## Dogfood Builds
 

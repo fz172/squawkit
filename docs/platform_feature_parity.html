@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Hopply Platform Feature Parity</title>
+    <style>
+        :root {
+          color-scheme: light;
+          --bg: #f6f8fb;
+          --surface: #ffffff;
+          --surface-alt: #eef3f9;
+          --text: #122033;
+          --muted: #53657d;
+          --line: #d8e1ec;
+          --blue: #1f5fa8;
+          --blue-soft: #dbe9fb;
+          --green: #156f4a;
+          --green-soft: #d8f0e3;
+          --amber: #9a6200;
+          --amber-soft: #fdeecb;
+          --red: #a33a32;
+          --red-soft: #f7dedb;
+          --shadow: rgba(18, 32, 51, 0.08);
+          --mono: "SFMono-Regular", "JetBrains Mono", monospace;
+          --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+          margin: 0;
+          font-family: var(--sans);
+          background: var(--bg);
+          color: var(--text);
+          line-height: 1.5;
+        }
+        main {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 32px 20px 56px;
+        }
+        h1, h2 { line-height: 1.2; margin: 0 0 12px; }
+        h1 { font-size: 2rem; }
+        h2 {
+          margin-top: 30px;
+          font-size: 1.25rem;
+        }
+        p { margin: 0 0 14px; }
+        code {
+          background: var(--surface-alt);
+          border-radius: 6px;
+          font-family: var(--mono);
+          font-size: 0.88em;
+          padding: 1px 6px;
+        }
+        a { color: var(--blue); }
+        .hero {
+          background: linear-gradient(180deg, var(--surface), var(--surface-alt));
+          border: 1px solid var(--line);
+          border-radius: 20px;
+          margin-bottom: 22px;
+          padding: 26px;
+        }
+        .hero p { color: var(--muted); font-size: 1.03rem; max-width: 920px; }
+        .pill {
+          background: var(--blue-soft);
+          border-radius: 999px;
+          color: var(--blue);
+          display: inline-block;
+          font-size: 0.82rem;
+          font-weight: 650;
+          margin: 0 7px 10px 0;
+          padding: 4px 10px;
+        }
+        .pill.green { background: var(--green-soft); color: var(--green); }
+        .pill.amber { background: var(--amber-soft); color: var(--amber); }
+        .card {
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          box-shadow: 0 1px 2px rgba(18, 32, 51, 0.04);
+          margin-bottom: 20px;
+          padding: 18px 20px;
+        }
+        .callout {
+          background: var(--blue-soft);
+          border: 1px solid #bcd6f5;
+          border-radius: 14px;
+          margin-bottom: 20px;
+          padding: 14px 18px;
+        }
+        .callout strong { display: block; margin-bottom: 4px; }
+        .legend {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px 18px;
+          margin-top: 14px;
+        }
+        .legend-item {
+          align-items: center;
+          color: var(--muted);
+          display: inline-flex;
+          font-size: 0.92rem;
+          gap: 7px;
+        }
+        .check {
+          color: var(--green);
+          font-size: 1.15rem;
+          font-weight: 700;
+        }
+        .none { color: var(--muted); font-weight: 600; }
+        .design {
+          background: var(--surface-alt);
+          border-radius: 999px;
+          color: var(--muted);
+          display: inline-block;
+          font-size: 0.76rem;
+          font-weight: 650;
+          padding: 3px 8px;
+          white-space: nowrap;
+        }
+        .limited {
+          background: var(--amber-soft);
+          border-radius: 999px;
+          color: var(--amber);
+          display: inline-block;
+          font-size: 0.72rem;
+          font-weight: 650;
+          margin-left: 5px;
+          padding: 2px 7px;
+          vertical-align: middle;
+          white-space: nowrap;
+        }
+        .matrix-wrap {
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          overflow-x: auto;
+        }
+        table {
+          border-collapse: collapse;
+          font-size: 0.91rem;
+          min-width: 980px;
+          width: 100%;
+        }
+        th, td {
+          border-bottom: 1px solid var(--line);
+          padding: 10px 12px;
+          text-align: left;
+          vertical-align: top;
+        }
+        thead th {
+          background: var(--surface-alt);
+          color: var(--text);
+          font-weight: 650;
+          position: sticky;
+          top: 0;
+        }
+        tbody tr:last-child td { border-bottom: 0; }
+        td.platform, th.platform {
+          text-align: center;
+          width: 12%;
+        }
+        td.feature { font-weight: 550; width: 28%; }
+        td.note { color: var(--muted); width: 36%; }
+        tr.group td {
+          background: var(--surface-alt);
+          color: var(--blue);
+          font-size: 0.77rem;
+          font-weight: 700;
+          letter-spacing: 0.07em;
+          padding: 11px 12px 8px;
+          text-transform: uppercase;
+        }
+        ul.sources {
+          margin: 10px 0 0;
+          padding-left: 20px;
+        }
+        ul.sources li { margin: 7px 0; }
+        .muted { color: var(--muted); }
+        @media (max-width: 700px) {
+          main { padding: 16px 10px 36px; }
+          .hero, .card { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <section class="hero">
+        <span class="pill green">Implementation Snapshot</span>
+        <span class="pill">Android</span>
+        <span class="pill">iOS</span>
+        <span class="pill">Web</span>
+        <h1>Platform Feature Parity</h1>
+        <p>
+            Hopply capability coverage across Android, iOS, and the Kotlin/JS web host.
+            This matrix reflects wired functionality in the repository as of May 25, 2026,
+            including features available behind Feature Lab flags or dogfood tooling.
+        </p>
+        <div aria-label="Matrix legend" class="legend">
+            <span class="legend-item"><span aria-hidden="true" class="check">&#10003;</span> Supported in source</span>
+            <span class="legend-item"><span aria-hidden="true" class="none">&mdash;</span> Not supported</span>
+            <span class="legend-item"><span class="design">By design</span> Intentional platform scope</span>
+            <span class="legend-item"><span class="limited">Flagged / variant</span> Availability is gated</span>
+        </div>
+    </section>
+
+    <aside class="callout">
+        <strong>Web guest users are intentionally not supported.</strong>
+        Web requires a permanent account and does not expose anonymous sign-in or guest-to-account
+        upgrade. This is a product-scope decision, not an outstanding parity defect.
+    </aside>
+
+    <section aria-labelledby="matrix-heading">
+        <h2 id="matrix-heading">Feature Matrix</h2>
+        <div class="matrix-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th scope="col">Feature</th>
+                    <th class="platform" scope="col">Android</th>
+                    <th class="platform" scope="col">iOS</th>
+                    <th class="platform" scope="col">Web</th>
+                    <th scope="col">Availability / parity note</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="group">
+                    <td colspan="5">Access and Identity</td>
+                </tr>
+                <tr>
+                    <td class="feature">Google sign-in</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Native provider bridge on iOS; browser popup integration on
+                        web.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Name entry and welcome onboarding</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Shared <code>AuthFlow</code> and local onboarding state.</td>
+                </tr>
+                <tr>
+                    <td class="feature">Continue as guest</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="design">By design</span></td>
+                    <td class="note">Web intentionally requires a real account.</td>
+                </tr>
+                <tr>
+                    <td class="feature">Guest to permanent account upgrade</td>
+                    <td class="platform"><span class="check">&#10003;</span> <span class="limited">Flagged</span>
+                    </td>
+                    <td class="platform"><span class="none">&mdash;</span></td>
+                    <td class="platform"><span class="design">N/A</span></td>
+                    <td class="note">iOS Sign in with Apple link flow is not implemented; web has no
+                        guest session to upgrade.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Log out and local account-data removal</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Web has no local attachment bytes to remove because attachments
+                        are unavailable.
+                    </td>
+                </tr>
+
+                <tr class="group">
+                    <td colspan="5">Storage and Synchronization</td>
+                </tr>
+                <tr>
+                    <td class="feature">Local-first persistent entity storage</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">SQLDelight on mobile; SQLite WASM over OPFS on web.</td>
+                </tr>
+                <tr>
+                    <td class="feature">Cloud sync for permanent accounts</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Shared entity sync engine; authenticated web browser round-trip
+                        remains a verification item.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Backup and Sync settings</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Cloud sync settings route is present on all three platforms.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Database integrity recovery prompt</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="none">&mdash;</span></td>
+                    <td class="note">Mobile <code>AppEntry</code> surfaces recovery; the separate
+                        web host does not.
+                    </td>
+                </tr>
+
+                <tr class="group">
+                    <td colspan="5">Fleet and Maintenance Workflow</td>
+                </tr>
+                <tr>
+                    <td class="feature">Fleet dashboard</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Shared dashboard and fleet manager.</td>
+                </tr>
+                <tr>
+                    <td class="feature">Aircraft create and edit</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Web add/edit routes are wired in the M6 host.</td>
+                </tr>
+                <tr>
+                    <td class="feature">Aircraft overview tabs</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Overview, squawks, tasks, and logs read surfaces are shared.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Maintenance logs view, create, and edit</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Attachment controls are excluded on web; log record editing is
+                        supported.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Maintenance tasks view, create, and edit</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Due-status workflow is shared; attachment controls are excluded
+                        on web.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Squawks create, edit, and status handling</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Includes addressed and dismissed states; attachment controls
+                        are excluded on web.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Technician management</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">List and edit routes are available on web and mobile.</td>
+                </tr>
+
+                <tr class="group">
+                    <td colspan="5">Attachments</td>
+                </tr>
+                <tr>
+                    <td class="feature">Attachment add, view, and open UI</td>
+                    <td class="platform"><span class="check">&#10003;</span> <span class="limited">Flagged</span>
+                    </td>
+                    <td class="platform"><span class="check">&#10003;</span> <span class="limited">Flagged</span>
+                    </td>
+                    <td class="platform"><span class="none">&mdash;</span></td>
+                    <td class="note">Mobile UI is gated by <code>attachmentUploadEnabled</code>; web
+                        forces <code>attachmentsAvailable = false</code>.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Local blob persistence and integrity verification</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="none">&mdash;</span></td>
+                    <td class="note">Web binds disabled attachment services and has no SHA-256 blob
+                        path.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Background blob upload and lazy download</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="none">&mdash;</span></td>
+                    <td class="note">WorkManager on Android; background URLSession on iOS; web
+                        scheduler is empty.
+                    </td>
+                </tr>
+
+                <tr class="group">
+                    <td colspan="5">Export and Delivery</td>
+                </tr>
+                <tr>
+                    <td class="feature">Logbook export selection and generation</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="none">&mdash;</span></td>
+                    <td class="note">Mobile exports local records to logbook files; web omits the
+                        export entry point and modules.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Export history, delete, retry, and resend</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="none">&mdash;</span></td>
+                    <td class="note">Mobile route and ViewModel are registered through <code>composeApp</code>
+                        only.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Email delivery for exports</td>
+                    <td class="platform"><span class="check">&#10003;</span> <span class="limited">Flagged</span>
+                    </td>
+                    <td class="platform"><span class="check">&#10003;</span> <span class="limited">Flagged</span>
+                    </td>
+                    <td class="platform"><span class="none">&mdash;</span></td>
+                    <td class="note">Controlled by <code>exportEmailDeliveryEnabled</code>; web
+                        export flow is absent.
+                    </td>
+                </tr>
+
+                <tr class="group">
+                    <td colspan="5">Settings and Internal Tooling</td>
+                </tr>
+                <tr>
+                    <td class="feature">Settings screen</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Shared settings UI; platform-specific unavailable rows are
+                        suppressed.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Feature Lab</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Backed by the synced Feature Lab entity.</td>
+                </tr>
+                <tr>
+                    <td class="feature">Fake Data Generator</td>
+                    <td class="platform"><span class="check">&#10003;</span> <span class="limited">Dogfood</span>
+                    </td>
+                    <td class="platform"><span class="check">&#10003;</span> <span class="limited">Dogfood</span>
+                    </td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Web exposes the reusable stress-test plugin from Feature Lab.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section aria-labelledby="gaps-heading" class="card">
+        <h2 id="gaps-heading">Open Parity Work</h2>
+        <p>The matrix identifies these remaining functional gaps:</p>
+        <ul>
+            <li><strong>Web attachments:</strong> implement browser file/blob persistence, hashing,
+                open/download behavior, and transfer scheduling before enabling attachment controls.
+            </li>
+            <li><strong>Web export:</strong> add JS targets and browser download/delivery UX for
+                export generation and history.
+            </li>
+            <li><strong>iOS guest upgrade:</strong> wire the permanent-account linking provider for
+                anonymous mobile users.
+            </li>
+            <li><strong>Web integrity recovery UI:</strong> expose the local database recovery path
+                currently present in the mobile app shell.
+            </li>
+        </ul>
+        <p class="muted">Guest support on web is deliberately excluded and is therefore not listed
+            as parity work.</p>
+    </section>
+
+    <section aria-labelledby="sources-heading" class="card">
+        <h2 id="sources-heading">Source Anchors</h2>
+        <ul class="sources">
+            <li><code>composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/AppEntry.kt</code> -
+                Android/iOS routes, exports, mobile integrity recovery, and dogfood extension host.
+            </li>
+            <li><code>webApp/src/commonMain/kotlin/dev/fanfly/wingslog/web/WebApp.kt</code> - web
+                routes, excluded attachment surfaces, excluded export row, and stress-test route.
+            </li>
+            <li><code>core/auth/src/{androidMain,iosMain,jsMain}/...</code> and <code>feature/login/src/*Main/...</code>
+                - platform auth and guest policies.
+            </li>
+            <li><code>feature/attachment/datamanager/src/jsMain/...</code> and <code>feature/sync/data/src/jsMain/...</code>
+                - disabled web blob functionality.
+            </li>
+            <li><code>docs/web_target_expansion_plan.md</code> and
+                <code>docs/storage_r2_design.md</code> - web scope and attachment implementation
+                status.
+            </li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>
