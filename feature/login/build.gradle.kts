@@ -50,6 +50,8 @@ kotlin {
       implementation(project(":core:auth"))
       // OnboardingPreferences (hasSeenWelcome flag) reads/writes the local store.
       implementation(project(":core:storage"))
+      // The onboarding name step persists through the shared local-first technician manager.
+      implementation(project(":feature:technician:datamanager"))
 
       // Compose resources (this module owns its login strings + Google icon)
       implementation(libs.components.resources)

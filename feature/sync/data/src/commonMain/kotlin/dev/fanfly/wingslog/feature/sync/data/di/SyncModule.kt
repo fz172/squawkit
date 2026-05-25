@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.sync.data.SyncCursorStore
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 import dev.fanfly.wingslog.feature.sync.data.SyncWriter
+import dev.fanfly.wingslog.feature.sync.data.syncIoContext
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -25,8 +26,6 @@ import dev.gitlive.firebase.firestore.firestoreSettings
 import dev.gitlive.firebase.firestore.memoryCacheSettings
 import dev.gitlive.firebase.storage.FirebaseStorage
 import dev.gitlive.firebase.storage.storage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -52,7 +51,7 @@ val syncModule: Module = module {
     SyncPreferences(
       db = get<WingsLogDatabase>(),
       auth = get<FirebaseAuth>(),
-      ioContext = Dispatchers.IO,
+      ioContext = syncIoContext,
     )
   }
   single<SyncCursorStore> { SyncCursorStore(get<WingsLogDatabase>()) }
@@ -71,7 +70,7 @@ val syncModule: Module = module {
     PushWorker(
       db = get<WingsLogDatabase>(),
       writer = get<SyncWriter>(),
-      ioContext = Dispatchers.IO,
+      ioContext = syncIoContext,
     )
   }
   single<SyncEngine> {
@@ -94,7 +93,7 @@ val syncModule: Module = module {
       pushWorker = get<PushWorker>(),
       storeFactory = get<EntityStoreFactory>(),
       syncPreferences = get<SyncPreferences>(),
-      ioContext = Dispatchers.IO,
+      ioContext = syncIoContext,
       db = db,
       uploadScheduler = uploadScheduler,
     )

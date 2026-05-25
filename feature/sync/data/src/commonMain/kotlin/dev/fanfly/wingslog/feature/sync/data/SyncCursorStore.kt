@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.data
 
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.db.Sync_cursor
@@ -29,7 +30,7 @@ data class SyncCursor(
 
 class SyncCursorStore(private val db: WingsLogDatabase) {
 
-  fun get(
+  suspend fun get(
     uid: String,
     kind: CollectionKind,
     scope: EntityScope,
@@ -38,7 +39,7 @@ class SyncCursorStore(private val db: WingsLogDatabase) {
       uid,
       kind,
       scope.toPath()
-    ).executeAsOneOrNull()?.toCursor(scope)
+    ).awaitAsOneOrNull()?.toCursor(scope)
 
   suspend fun markHydrated(
     uid: String,

@@ -5,8 +5,9 @@ import dev.fanfly.wingslog.core.auth.di.commonAuthModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
 import dev.fanfly.wingslog.core.storage.di.storageModule
 import dev.fanfly.wingslog.feature.login.di.loginModule
-import dev.fanfly.wingslog.feature.login.onboarding.OnboardingActions
-import dev.fanfly.wingslog.web.InMemoryOnboardingActions
+import dev.fanfly.wingslog.feature.sync.data.SyncEngine
+import dev.fanfly.wingslog.feature.sync.data.di.syncModule
+import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
 import dev.fanfly.wingslog.web.WebApp
 import dev.fanfly.wingslog.web.createSqlJsWorker
 import dev.gitlive.firebase.Firebase
@@ -32,21 +33,22 @@ fun main() {
         ),
     )
 
-    startKoin {
+    val koinApplication = startKoin {
         modules(
             commonAuthModule,
             authModule,
             storageModule,
             platformStorageModule,
             loginModule,
+            syncModule,
+            technicianDataManagerModule,
             module {
                 // The host app owns the bundled sql.js worker file (persists to IndexedDB).
                 single<Worker> { createSqlJsWorker() }
-                // TODO(M4): swap for the real TechnicianManager-backed actions once it's on JS.
-                single<OnboardingActions> { InMemoryOnboardingActions() }
             },
         )
     }
+    koinApplication.koin.get<SyncEngine>().start()
 
     ComposeViewport(viewportContainerId = "ComposeTarget") {
         WebApp()

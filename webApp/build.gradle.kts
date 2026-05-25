@@ -20,6 +20,8 @@ kotlin {
             implementation(project(":core:auth"))
             implementation(project(":core:storage"))
             implementation(project(":feature:login"))
+            implementation(project(":feature:sync:data"))
+            implementation(project(":feature:technician:datamanager"))
             implementation(libs.compose.foundation)
 
             // Firebase init (FirebaseOptions / Firebase.initialize) + DI.

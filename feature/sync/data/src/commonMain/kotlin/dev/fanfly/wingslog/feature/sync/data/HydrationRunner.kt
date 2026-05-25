@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.data
 
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -80,7 +81,7 @@ class HydrationRunner(
           collection = kind,
           scope = scope.toPath(),
           id = doc.id,
-        ).executeAsOneOrNull()
+        ).awaitAsOneOrNull()
         if (local?.dirty != true) {
           db.schemaQueries.upsert(
             collection = kind,

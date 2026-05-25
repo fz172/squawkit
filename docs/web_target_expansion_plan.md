@@ -30,13 +30,20 @@ standalone `webApp` seed into a real, code-sharing web client.
   `@cashapp/sqldelight-sqljs-worker`. **Verified:** Android `assembleDebug` + full
   `testDebugUnitTest`, iOS compile, webApp JS bundle all green. **Pending:** in-browser
   read/write round-trip (the sql.js worker + WASM load, like auth, needs a browser test).
+-
+- **M4 — ✅ code-complete; authenticated browser round-trip pending.** `core:firebase`,
+  `feature:attachment:{model,datamanager}`, `feature:sync:data`, and
+  `feature:technician:datamanager` now have `js` targets. Sync database reads use async
+  SQLDelight query extensions and a platform sync dispatcher (`Default` on web). Web starts
+  `SyncEngine`; `feature:login` backs onboarding names with the shared real local-first
+  `TechnicianManager` adapter.
+  Attachments remain inactive on web through empty platform/scheduler modules and a guarded
+  SHA-256 stub. **Verified:** affected Android unit tests, iOS simulator compilation, webApp JS
+  bundle, and initial browser render all pass. **Pending:** Google-authenticated Firestore
+  hydration/push round-trip in the browser.
 
 **What's next (in order):**
-1. **M4 — sync engine on web.** `js` target on `feature:sync:data`. Note: its **read**
-   paths still use synchronous `executeAsOneOrNull`/`executeAsList` (they compile and work
-   on mobile's sync driver but would throw on the async web driver) — these must move to
-   `awaitAs*` for web. `core:storage`'s own `EntityStore` is already async-safe (Flow reads
-   + `awaitAsOneOrNull`). Blob drivers stub on web. See the M4 section.
+1. Complete the pending signed-in M4 browser hydration/push verification.
 2. **M5+** as laid out below (read-only fleet, then editing).
 3. **`upgradeAnonymousAccount()` on web — deferred to last** (by decision). Still stubbed
    in `jsMain` `AuthManagerImpl`; needs Firebase-JS `linkWithPopup`. Until then a guest on
@@ -226,7 +233,8 @@ Track which shared modules have gained a `js(IR)` target (✅ = has JS target):
 | `core:auth` | ✅ | M2 |
 | `feature:login` (new — extracted from `composeApp`) | ✅ | M2 |
 | `core:storage` | ✅ | M3 |
-| `feature:sync:data` | ☐ | M4 |
+| `core:firebase`, `feature:attachment:{model,datamanager}` | ✅ | M4 |
+| `feature:sync:data`, `feature:technician:datamanager` | ✅ | M4 |
 | `feature:fleet:*`, `feature:aircraft:dashboard` | ☐ | M5 |
 | `feature:{logs,tasks,squawk}:{model,datamanager,viewing,sharedassets}` | ☐ | M5 |
 | `feature:*:update`, `technician`, `settings`, `featurelab`, `export` | ☐ | M6 |

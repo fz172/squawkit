@@ -63,7 +63,6 @@ fun initKoin(
     squawkModule,
     squawkUiModule,
     fleetDataManagerModule,
-    appModule,
     loginModule,
     settingsModule,
     syncSettingsModule,

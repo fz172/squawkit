@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.data
 
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -53,14 +54,21 @@ class PullListener(
           kind,
           scope.toPath(),
           remote.id
-        ).executeAsOneOrNull()
+        )
+          .awaitAsOneOrNull()
       when {
-        local == null -> { upsertFromRemote(remote); written = true }
+        local == null -> {
+          upsertFromRemote(remote); written = true
+        }
+
         local.dirty -> {
           log.v { "skipping remote ${kind.wireName}/${remote.id}: local dirty, will reconcile via push echo" }
         }
 
-        remote.remoteTsMs > (local.remote_updated_at ?: 0L) -> { upsertFromRemote(remote); written = true }
+        remote.remoteTsMs > (local.remote_updated_at ?: 0L) -> {
+          upsertFromRemote(remote); written = true
+        }
+
         else -> {
           // Already up to date — happens on our own push echo or a duplicate snapshot tick.
         }

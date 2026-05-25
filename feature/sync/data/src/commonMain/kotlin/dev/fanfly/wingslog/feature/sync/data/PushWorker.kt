@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.data
 
+import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOne
 import co.touchlab.kermit.Logger
@@ -68,7 +69,7 @@ class PushWorker(
           scopePrefix = scopePrefix,
           limit = DRAIN_PAGE
         )
-        .executeAsList()
+        .awaitAsList()
       if (rows.isEmpty()) return
       for (row in rows) {
         val ok = pushOne(row)

@@ -26,7 +26,7 @@ private enum class AuthStep { Login, NameEntry, Welcome }
  * finished (or already finished) onboarding — the host decides where to go next (the fleet on
  * mobile, a placeholder on web today).
  *
- * Name persistence is delegated to [OnboardingActions] (app-provided); the welcome flag goes
+ * Name persistence is delegated to [OnboardingActions]; the welcome flag goes
  * through [OnboardingPreferences] (local store).
  */
 @Composable

@@ -5,9 +5,7 @@ import app.cash.sqldelight.coroutines.mapToOneOrNull
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,7 +33,7 @@ data class SyncPrefs(
 class SyncPreferences(
   private val db: WingsLogDatabase,
   private val auth: FirebaseAuth,
-  private val ioContext: CoroutineContext = Dispatchers.IO,
+  private val ioContext: CoroutineContext = syncIoContext,
   scope: CoroutineScope = CoroutineScope(SupervisorJob() + ioContext),
 ) {
 

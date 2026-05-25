@@ -27,6 +27,10 @@ kotlin {
   iosArm64()
   iosSimulatorArm64()
 
+  js(IR) {
+    browser()
+  }
+
   sourceSets {
     commonMain.dependencies {
       api(libs.gitlive.firebase.storage)
