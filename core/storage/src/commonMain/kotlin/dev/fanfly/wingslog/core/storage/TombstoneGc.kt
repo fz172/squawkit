@@ -16,10 +16,11 @@ import kotlin.time.Instant
 @OptIn(ExperimentalTime::class)
 class TombstoneGc(
   private val db: WingsLogDatabase,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   private val retention: Duration = 30.days,
 ) {
-  fun runOnce(now: Instant = Clock.System.now()) {
+  suspend fun runOnce(now: Instant = Clock.System.now()) {
     val cutoffMs = (now - retention).toEpochMilliseconds()
-    db.schemaQueries.gcTombstones(cutoffMs)
+    writeLock.withLock { db.schemaQueries.gcTombstones(cutoffMs) }
   }
 }

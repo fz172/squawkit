@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.data.blob.di
 
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.feature.attachment.datamanager.UploadScheduler
 import dev.fanfly.wingslog.feature.sync.data.blob.BlobDeleteDriver
 import dev.fanfly.wingslog.feature.sync.data.blob.BlobDownloadDriver
@@ -34,6 +35,7 @@ actual val blobSchedulerModule = module {
       blobs = get(),
       storage = get(),
       db = get(),
+      writeLock = get<DatabaseWriteLock>(),
     )
   }
 
@@ -48,6 +50,7 @@ actual val blobSchedulerModule = module {
       httpClient = get(),
       downloadDriver = get(),
       deleteDriver = get(),
+      writeLock = get<DatabaseWriteLock>(),
     )
   }
 

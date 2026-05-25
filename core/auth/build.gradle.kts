@@ -26,15 +26,22 @@ kotlin {
     }
   }
 
-  iosX64()
   iosArm64()
   iosSimulatorArm64()
+
+  js(IR) {
+    browser()
+  }
 
   sourceSets {
     commonMain.dependencies {
       api(libs.gitlive.firebase.auth)
       api(libs.koin.core)
       implementation(libs.kermit)
+    }
+    jsMain.dependencies {
+      // For kotlinx.coroutines' Promise.await() used by the Firebase JS popup sign-in.
+      implementation(libs.kotlinx.coroutines.core)
     }
     androidMain.dependencies {
       api(project(":core:model"))

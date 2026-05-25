@@ -46,8 +46,8 @@ import wingslog.feature.fleet.sharedassets.generated.resources.Res as FleetRes
 @Composable
 fun DashboardScreen(
   viewModel: FleetDashboardViewModel = koinViewModel(),
-  onOpenSettings: () -> Unit,
-  onAddAircraft: () -> Unit,
+  onOpenSettings: (() -> Unit)?,
+  onAddAircraft: (() -> Unit)?,
   onAircraftClick: (String) -> Unit,
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -68,18 +68,20 @@ fun DashboardScreen(
       TopAppBar(
         title = { Text(text = stringResource(CoreUiRes.string.app_name)) },
         actions = {
-          IconButton(onClick = onOpenSettings) {
-            AvatarIcon(
-              displayName = uiState.selfDisplayName,
-              photoUri = uiState.selfPhotoUri,
-              size = Spacing.huge,
-              contentDescription = stringResource(CoreUiRes.string.settings),
-            )
+          if (onOpenSettings != null) {
+            IconButton(onClick = onOpenSettings) {
+              AvatarIcon(
+                displayName = uiState.selfDisplayName,
+                photoUri = uiState.selfPhotoUri,
+                size = Spacing.huge,
+                contentDescription = stringResource(CoreUiRes.string.settings),
+              )
+            }
           }
         })
     },
     floatingActionButton = {
-      if (!uiState.isLoading && uiState.fleet.isNotEmpty()) {
+      if (onAddAircraft != null && !uiState.isLoading && uiState.fleet.isNotEmpty()) {
         FloatingActionButton(
           onClick = onAddAircraft,
           containerColor = MaterialTheme.colorScheme.primary,
@@ -104,7 +106,7 @@ fun DashboardScreen(
           title = stringResource(FleetRes.string.no_fleet_title),
           description = stringResource(FleetRes.string.no_fleet_description),
           icon = Icons.Default.AirplanemodeActive,
-          actionText = stringResource(FleetRes.string.add_first_aircraft),
+          actionText = onAddAircraft?.let { stringResource(FleetRes.string.add_first_aircraft) },
           onActionClick = onAddAircraft
         )
       } else {

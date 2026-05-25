@@ -40,7 +40,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.update.compose.ADJUSTMENT_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
-import dev.fanfly.wingslog.feature.tasks.update.compose.DeleteTaskConfirmDialog
+import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.update.compose.SCHEDULE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata

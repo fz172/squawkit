@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.sync.data
 
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
@@ -34,6 +36,7 @@ class PullListener(
   private val kind: CollectionKind,
   private val scope: EntityScope,
   private val db: WingsLogDatabase,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   private val postWriteHook: PostWriteHook? = null,
 ) {
 
@@ -45,24 +48,33 @@ class PullListener(
    * Wraps the read+write in a single SQLDelight transaction so a concurrent local `put` can't slip
    * a row into a state the comparator didn't see.
    */
-  fun apply(remote: RemoteEntity): Long {
+  suspend fun apply(remote: RemoteEntity): Long {
     var written = false
-    db.transaction {
-      val local =
-        db.schemaQueries.selectOneForSync(
-          kind,
-          scope.toPath(),
-          remote.id
-        ).executeAsOneOrNull()
-      when {
-        local == null -> { upsertFromRemote(remote); written = true }
-        local.dirty -> {
-          log.v { "skipping remote ${kind.wireName}/${remote.id}: local dirty, will reconcile via push echo" }
-        }
+    writeLock.withLock {
+      db.transaction {
+        val local =
+          db.schemaQueries.selectOneForSync(
+            kind,
+            scope.toPath(),
+            remote.id
+          )
+            .awaitAsOneOrNull()
+        when {
+          local == null -> {
+            upsertFromRemote(remote); written = true
+          }
 
-        remote.remoteTsMs > (local.remote_updated_at ?: 0L) -> { upsertFromRemote(remote); written = true }
-        else -> {
-          // Already up to date — happens on our own push echo or a duplicate snapshot tick.
+          local.dirty -> {
+            log.v { "skipping remote ${kind.wireName}/${remote.id}: local dirty, will reconcile via push echo" }
+          }
+
+          remote.remoteTsMs > (local.remote_updated_at ?: 0L) -> {
+            upsertFromRemote(remote); written = true
+          }
+
+          else -> {
+            // Already up to date — happens on our own push echo or a duplicate snapshot tick.
+          }
         }
       }
     }
@@ -72,7 +84,7 @@ class PullListener(
     return remote.remoteTsMs
   }
 
-  private fun upsertFromRemote(remote: RemoteEntity) {
+  private suspend fun upsertFromRemote(remote: RemoteEntity) {
     db.schemaQueries.upsert(
       collection = kind,
       scope_path = scope.toPath(),

@@ -1,13 +1,13 @@
 [versions]
 agp = "9.2.1"
-coilCompose = "3.4.0"
-kotlinxCoroutines = "1.10.2"
-composeMultiplatform = "1.10.3"
+coilCompose = "3.5.0-beta01"
+kotlinxCoroutines = "1.11.0"
+composeMultiplatform = "1.11.0"
 
-composeBom = "2026.04.01"
+composeBom = "2026.05.01"
 coreKtx = "1.18.0"
 credentials = "1.6.0"
-firebaseBom = "34.12.0"
+firebaseBom = "34.13.0"
 gitlive = "2.4.0"
 googleid = "1.2.0"
 jetbrainsLifecycle = "2.10.0"
@@ -15,9 +15,9 @@ junit = "4.13.2"
 kermit = "2.1.0"
 koin = "4.2.1"
 kotlin = "2.3.21"
-kotlinxDatetime = "0.7.1"
+kotlinxDatetime = "0.8.0"
 kover = "0.9.8"
-ktor = "3.4.3"
+ktor = "3.5.0"
 lifecycleRuntimeKtx = "2.10.0"
 material3 = "1.9.0"
 materialIconsExtended = "1.7.3"
@@ -26,7 +26,7 @@ navigationCompose = "2.9.2"
 playServicesAuth = "21.5.1"
 sqldelight = "2.3.2"
 truth = "1.4.5"
-wire = "6.2.0"
+wire = "6.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -46,7 +46,6 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fir
 firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
 firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 firebase-functions = { module = "com.google.firebase:firebase-functions" }
-firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 
 gitlive-firebase-firestore = { group = "dev.gitlive", name = "firebase-firestore", version.ref = "gitlive" }
 gitlive-firebase-auth = { group = "dev.gitlive", name = "firebase-auth", version.ref = "gitlive" }
@@ -77,10 +76,12 @@ material3 = { module = "org.jetbrains.compose.material3:material3", version.ref 
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 sqldelight-android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
+sqldelight-async-extensions = { module = "app.cash.sqldelight:async-extensions", version.ref = "sqldelight" }
 sqldelight-coroutines-extensions = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
 sqldelight-native-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
 sqldelight-runtime = { module = "app.cash.sqldelight:runtime", version.ref = "sqldelight" }
 sqldelight-sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
+sqldelight-web-worker-driver = { module = "app.cash.sqldelight:web-worker-driver", version.ref = "sqldelight" }
 truth = { module = "com.google.truth:truth", version.ref = "truth" }
 wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wire" }
 work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version = "2.10.1" }

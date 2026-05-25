@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.core.storage.impl
 
+import app.cash.sqldelight.async.coroutines.awaitAsList
+import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.Aircraft
@@ -37,7 +39,8 @@ class SqlDelightEntityStoreTest {
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.create(driver)
+    // Schema is async-generated; the sync JVM driver wraps it via .synchronous().
+    WingsLogDatabase.Schema.synchronous().create(driver)
     db = createWingsLogDatabase(driver)
 
     testClock = TestClock(Instant.fromEpochMilliseconds(1_000_000L))
@@ -103,7 +106,7 @@ class SqlDelightEntityStoreTest {
   fun put_marks_row_as_dirty() = runTest(ioContext) {
     store.put(TEST_AIRCRAFT_ID, buildTestAircraft(id = TEST_AIRCRAFT_ID), scopeA)
 
-    val dirtyRows = db.schemaQueries.selectDirty(limit = 10L).executeAsList()
+    val dirtyRows = db.schemaQueries.selectDirty(limit = 10L).awaitAsList()
 
     assertThat(dirtyRows).hasSize(1)
     assertThat(dirtyRows[0].id).isEqualTo(TEST_AIRCRAFT_ID)
@@ -119,7 +122,7 @@ class SqlDelightEntityStoreTest {
     testClock.advanceBy(1_000L)
     store.delete(TEST_AIRCRAFT_ID, scopeA)
 
-    val dirtyRows = db.schemaQueries.selectDirty(limit = 10L).executeAsList()
+    val dirtyRows = db.schemaQueries.selectDirty(limit = 10L).awaitAsList()
 
     // Only one row for this id (upsert replaces).
     val row = dirtyRows.single { it.id == TEST_AIRCRAFT_ID }

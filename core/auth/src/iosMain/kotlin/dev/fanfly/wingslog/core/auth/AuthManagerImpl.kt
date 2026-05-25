@@ -4,6 +4,45 @@ import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+
+/**
+ * Connects shared Compose login actions to the native sign-in presenter owned by the iOS app.
+ *
+ * The login screen disables its actions while a request is in flight, so a single pending
+ * continuation is sufficient and also prevents multiple native account-pickers from appearing.
+ */
+object IosGoogleSignInBridge {
+  private var signInHandler: (() -> Unit)? = null
+  private var pendingCompletion: Continuation<String?>? = null
+
+  fun install(signInHandler: () -> Unit) {
+    this.signInHandler = signInHandler
+  }
+
+  fun complete(errorMessage: String?) {
+    val completion = pendingCompletion ?: return
+    pendingCompletion = null
+    completion.resume(errorMessage)
+  }
+
+  internal suspend fun signIn(): String? = suspendCoroutine { continuation ->
+    val signIn = signInHandler
+    if (signIn == null) {
+      continuation.resume("Native Google Sign-In provider is not configured")
+      return@suspendCoroutine
+    }
+    if (pendingCompletion != null) {
+      continuation.resume("A Google Sign-In request is already in progress")
+      return@suspendCoroutine
+    }
+
+    pendingCompletion = continuation
+    signIn()
+  }
+}
 
 class AuthManagerImpl(
   private val authProvider: FirebaseAuth,
@@ -16,13 +55,18 @@ class AuthManagerImpl(
    */
   override suspend fun trySilentLogin(): FirebaseUser? = authProvider.currentUser
 
-  /**
-   * Google Sign-In is not supported on iOS.
-   * Returns null.
-   */
   override suspend fun signInWithGoogle(): FirebaseUser? {
-    logger.w { "signInWithGoogle() is not supported on iOS" }
-    return null
+    val error = IosGoogleSignInBridge.signIn()
+    if (error != null) {
+      logger.w { "Google sign-in failed: $error" }
+      return null
+    }
+
+    return authProvider.currentUser.also { user ->
+      if (user == null) {
+        logger.w { "Native Google sign-in completed without a Firebase user" }
+      }
+    }
   }
 
   /**

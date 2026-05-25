@@ -17,6 +17,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.AircraftOverviewContent
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewEvent
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewViewModel
@@ -31,6 +32,8 @@ import wingslog.core.ui.generated.resources.error_occurred
 fun AircraftOverviewScreen(
   navController: NavController,
   viewModel: AircraftOverviewViewModel = koinViewModel(),
+  onMutationAction: ((AircraftOverviewAction) -> Unit)? = viewModel::onAction,
+  attachmentsAvailable: Boolean = true,
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
@@ -107,7 +110,9 @@ fun AircraftOverviewScreen(
       AircraftOverviewContent(
         state = state,
         snackbarHostState = snackbarHostState,
-        onAction = viewModel::onAction
+        onAction = viewModel::onAction,
+        onMutationAction = onMutationAction,
+        attachmentsAvailable = attachmentsAvailable,
       )
     }
   }

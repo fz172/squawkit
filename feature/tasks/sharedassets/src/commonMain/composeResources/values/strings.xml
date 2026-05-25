@@ -24,4 +24,6 @@
   <string name="no_task_work_recorded">No task addressed by this log.</string>
   <string name="unknown_task">Unknown task (%1$s)</string>
   <string name="affects_n_tasks">Affects %1$d maintenance task(s)</string>
+  <string name="delete_task">Delete Task</string>
+  <string name="delete_task_confirmation">Delete "%1$s"? This cannot be undone. Maintenance logs that reference this task will not be deleted.</string>
 </resources>

@@ -94,8 +94,6 @@
   <string name="task_due_warning">Note: This task will be due on whichever comes first.</string>
   <string name="task_interval_description">Set a recurring interval based on time, engine hours, or both.</string>
 
-  <string name="delete_task">Delete Task</string>
-  <string name="delete_task_confirmation">Delete "%1$s"? This cannot be undone. Maintenance logs that reference this task will not be deleted.</string>
   <string name="basics">Basics</string>
   <string name="schedule">Schedule</string>
   <string name="task_identity_description">Define the core name and component category for this maintenance requirement.</string>

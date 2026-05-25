@@ -37,7 +37,6 @@ kotlin {
   }
 
   listOf(
-    iosX64(),
     iosArm64(),
     iosSimulatorArm64()
   ).forEach {
@@ -51,6 +50,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":feature:featurelab:datamanager"))
       implementation(project(":feature:settings"))
+      implementation(project(":feature:login"))
       implementation(project(":feature:export:datamanager"))
       implementation(project(":feature:export:update"))
       implementation(project(":core:auth"))

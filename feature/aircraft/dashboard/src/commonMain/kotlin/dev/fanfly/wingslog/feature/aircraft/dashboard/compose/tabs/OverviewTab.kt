@@ -34,6 +34,7 @@ fun OverviewTab(
   state: AircraftOverviewUiState.Success,
   onAction: (AircraftOverviewAction) -> Unit,
   onViewSquawksTab: () -> Unit = {},
+  onMutationAction: ((AircraftOverviewAction) -> Unit)? = onAction,
   modifier: Modifier = Modifier,
 ) {
   val scrollState = rememberScrollState()
@@ -92,12 +93,12 @@ fun OverviewTab(
     }
 
     state.logStats?.let { stats ->
-      if (stats.total == 0L) {
+      if (stats.total == 0L && onMutationAction != null) {
         LogOnboardingCard(
-          onAddLogClick = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
+          onAddLogClick = { onMutationAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
           modifier = Modifier.padding(horizontal = Spacing.screenPadding)
         )
-      } else {
+      } else if (stats.total > 0L) {
         LogStatsSection(
           stats = stats,
           modifier = Modifier.padding(horizontal = Spacing.screenPadding)

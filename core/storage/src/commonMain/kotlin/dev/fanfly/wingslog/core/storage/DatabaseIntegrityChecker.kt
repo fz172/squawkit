@@ -19,6 +19,7 @@ import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 class DatabaseIntegrityChecker(
   private val db: WingsLogDatabase,
   private val driver: SqlDriver,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -41,11 +42,13 @@ class DatabaseIntegrityChecker(
     }
   }
 
-  fun wipeAllData() {
+  suspend fun wipeAllData() {
     try {
-      db.schemaQueries.wipeAllBlobObjects()
-      db.schemaQueries.wipeAllSyncCursors()
-      db.schemaQueries.wipeAllEntities()
+      writeLock.withLock {
+        db.schemaQueries.wipeAllBlobObjects()
+        db.schemaQueries.wipeAllSyncCursors()
+        db.schemaQueries.wipeAllEntities()
+      }
       log.i { "wipeAllData: cleared entity, sync_cursor, and blob_object tables" }
     } catch (e: Exception) {
       log.e(e) { "wipeAllData failed" }
@@ -57,11 +60,13 @@ class DatabaseIntegrityChecker(
    * on next sign-in. blob_object rows and files are handled separately by
    * [AttachmentManager.wipeLocalData]. Call this from the sign-out path before clearing auth state.
    */
-  fun wipeDataForUser(uid: String) {
+  suspend fun wipeDataForUser(uid: String) {
     val scopePrefix = "/users/$uid/%"
     try {
-      db.schemaQueries.deleteEntitiesForUser(scopePrefix)
-      db.schemaQueries.deleteSyncCursorsForUser(uid)
+      writeLock.withLock {
+        db.schemaQueries.deleteEntitiesForUser(scopePrefix)
+        db.schemaQueries.deleteSyncCursorsForUser(uid)
+      }
       log.i { "wipeDataForUser: cleared entity and sync_cursor rows for uid=$uid" }
     } catch (e: Exception) {
       log.e(e) { "wipeDataForUser failed for uid=$uid" }

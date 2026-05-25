@@ -1,8 +1,12 @@
 package dev.fanfly.wingslog.core.storage
 
+import app.cash.sqldelight.async.coroutines.awaitAsList
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
+import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 
@@ -17,7 +21,8 @@ class DatabaseIntegrityCheckerTest {
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.create(driver)
+    // Schema is async-generated; the sync JVM driver wraps it via .synchronous().
+    WingsLogDatabase.Schema.synchronous().create(driver)
     db = createWingsLogDatabase(driver)
     checker = DatabaseIntegrityChecker(db, driver)
   }
@@ -25,9 +30,7 @@ class DatabaseIntegrityCheckerTest {
   // ---- wipeDataForUser ----
 
   @Test
-  fun wipeDataForUser_deletesEntitiesAndCursorsForUid() {
-    val scopePrefix = "/users/$TEST_UID/%"
-
+  fun wipeDataForUser_deletesEntitiesAndCursorsForUid() = runTest {
     // Insert an entity row in the target user's scope.
     db.schemaQueries.upsert(
       collection = CollectionKind.Aircraft,
@@ -56,19 +59,19 @@ class DatabaseIntegrityCheckerTest {
     val entitiesAfter = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/$TEST_UID/fleet",
-    ).executeAsList()
+    ).awaitAsList()
     assertThat(entitiesAfter).isEmpty()
 
     val cursorsAfter = db.schemaQueries.selectCursor(
       uid = TEST_UID,
       collection = CollectionKind.Aircraft,
       scope_path = "/users/$TEST_UID/fleet",
-    ).executeAsOneOrNull()
+    ).awaitAsOneOrNull()
     assertThat(cursorsAfter).isNull()
   }
 
   @Test
-  fun wipeDataForUser_doesNotDeleteEntitiesForOtherUser() {
+  fun wipeDataForUser_doesNotDeleteEntitiesForOtherUser() = runTest {
     // Insert entity for target user and a different user.
     db.schemaQueries.upsert(
       collection = CollectionKind.Aircraft,
@@ -98,13 +101,13 @@ class DatabaseIntegrityCheckerTest {
     val otherUserEntities = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/$OTHER_UID/fleet",
-    ).executeAsList()
+    ).awaitAsList()
     assertThat(otherUserEntities).hasSize(1)
     assertThat(otherUserEntities[0].id).isEqualTo("aircraft-other")
   }
 
   @Test
-  fun wipeDataForUser_doesNotDeleteCursorsForOtherUser() {
+  fun wipeDataForUser_doesNotDeleteCursorsForOtherUser() = runTest {
     db.schemaQueries.upsertCursor(
       uid = TEST_UID,
       collection = CollectionKind.Aircraft,
@@ -130,19 +133,19 @@ class DatabaseIntegrityCheckerTest {
       uid = OTHER_UID,
       collection = CollectionKind.Aircraft,
       scope_path = "/users/$OTHER_UID/fleet",
-    ).executeAsOneOrNull()
+    ).awaitAsOneOrNull()
     assertThat(otherCursor).isNotNull()
   }
 
   @Test
-  fun wipeDataForUser_isNoopWhenUserHasNoData() {
+  fun wipeDataForUser_isNoopWhenUserHasNoData() = runTest {
     // Call with a uid that has no rows — must not throw.
     checker.wipeDataForUser("nonexistent-uid")
     // If we reach here without exception the test passes.
   }
 
   @Test
-  fun wipeDataForUser_doesNotWipeUnrelatedScopePaths() {
+  fun wipeDataForUser_doesNotWipeUnrelatedScopePaths() = runTest {
     // A scope_path that contains the uid string but doesn't start with /users/<uid>/
     // (e.g. someone else's path that happens to mention our uid in a sub-path)
     // SQLite LIKE is used with prefix "/users/<uid>/%" so only exact prefix matches should go.
@@ -163,7 +166,7 @@ class DatabaseIntegrityCheckerTest {
     val remaining = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/$OTHER_UID/references/$TEST_UID/extra",
-    ).executeAsList()
+    ).awaitAsList()
     assertThat(remaining).hasSize(1)
   }
 }

@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.sync.data
 
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.db.Sync_cursor
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
@@ -27,9 +29,12 @@ data class SyncCursor(
   val lastAttemptAt: Long?,
 )
 
-class SyncCursorStore(private val db: WingsLogDatabase) {
+class SyncCursorStore(
+  private val db: WingsLogDatabase,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
+) {
 
-  fun get(
+  suspend fun get(
     uid: String,
     kind: CollectionKind,
     scope: EntityScope,
@@ -38,26 +43,28 @@ class SyncCursorStore(private val db: WingsLogDatabase) {
       uid,
       kind,
       scope.toPath()
-    ).executeAsOneOrNull()?.toCursor(scope)
+    ).awaitAsOneOrNull()?.toCursor(scope)
 
-  fun markHydrated(
+  suspend fun markHydrated(
     uid: String,
     kind: CollectionKind,
     scope: EntityScope,
     lastSeenRemote: Long?,
   ) {
-    db.schemaQueries.upsertCursor(
-      uid = uid,
-      collection = kind,
-      scope_path = scope.toPath(),
-      hydrated = true,
-      last_seen_remote = lastSeenRemote,
-      failed_attempts = 0L,
-      last_attempt_at = Clock.System.now().toEpochMilliseconds(),
-    )
+    writeLock.withLock {
+      db.schemaQueries.upsertCursor(
+        uid = uid,
+        collection = kind,
+        scope_path = scope.toPath(),
+        hydrated = true,
+        last_seen_remote = lastSeenRemote,
+        failed_attempts = 0L,
+        last_attempt_at = Clock.System.now().toEpochMilliseconds(),
+      )
+    }
   }
 
-  fun advanceLastSeen(
+  suspend fun advanceLastSeen(
     uid: String,
     kind: CollectionKind,
     scope: EntityScope,
@@ -71,18 +78,20 @@ class SyncCursorStore(private val db: WingsLogDatabase) {
     if (current != null && current.lastSeenRemote != null && current.lastSeenRemote >= remoteTs) {
       return
     }
-    db.schemaQueries.upsertCursor(
-      uid = uid,
-      collection = kind,
-      scope_path = scope.toPath(),
-      hydrated = current?.hydrated ?: false,
-      last_seen_remote = remoteTs,
-      failed_attempts = current?.failedAttempts?.toLong() ?: 0L,
-      last_attempt_at = current?.lastAttemptAt ?: Clock.System.now().toEpochMilliseconds(),
-    )
+    writeLock.withLock {
+      db.schemaQueries.upsertCursor(
+        uid = uid,
+        collection = kind,
+        scope_path = scope.toPath(),
+        hydrated = current?.hydrated ?: false,
+        last_seen_remote = remoteTs,
+        failed_attempts = current?.failedAttempts?.toLong() ?: 0L,
+        last_attempt_at = current?.lastAttemptAt ?: Clock.System.now().toEpochMilliseconds(),
+      )
+    }
   }
 
-  fun recordFailure(
+  suspend fun recordFailure(
     uid: String,
     kind: CollectionKind,
     scope: EntityScope,
@@ -92,15 +101,17 @@ class SyncCursorStore(private val db: WingsLogDatabase) {
       kind,
       scope
     )
-    db.schemaQueries.upsertCursor(
-      uid = uid,
-      collection = kind,
-      scope_path = scope.toPath(),
-      hydrated = current?.hydrated ?: false,
-      last_seen_remote = current?.lastSeenRemote,
-      failed_attempts = ((current?.failedAttempts ?: 0) + 1).toLong(),
-      last_attempt_at = Clock.System.now().toEpochMilliseconds(),
-    )
+    writeLock.withLock {
+      db.schemaQueries.upsertCursor(
+        uid = uid,
+        collection = kind,
+        scope_path = scope.toPath(),
+        hydrated = current?.hydrated ?: false,
+        last_seen_remote = current?.lastSeenRemote,
+        failed_attempts = ((current?.failedAttempts ?: 0) + 1).toLong(),
+        last_attempt_at = Clock.System.now().toEpochMilliseconds(),
+      )
+    }
   }
 
   private fun Sync_cursor.toCursor(scope: EntityScope): SyncCursor = SyncCursor(

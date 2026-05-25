@@ -48,11 +48,34 @@ val generateIosVersionKt by tasks.registering {
   }
 }
 
+val generateJsVersionKt by tasks.registering {
+  val outputDir = layout.buildDirectory.dir(
+    "generated/jsMain/kotlin/dev/fanfly/wingslog/core/appinfo"
+  )
+  outputs.dir(outputDir)
+  inputs.file(versionPropsFile)
+  doFirst {
+    val props = Properties().apply {
+      if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
+    }
+    val versionName = "${props["major"]}.${props["minor"]}" +
+      ".${props["buildDate"]}.${props["patch"]}"
+    outputDir.get().asFile.also { it.mkdirs() }
+      .resolve("GeneratedVersionInfo.kt")
+      .writeText(
+        "package dev.fanfly.wingslog.core.appinfo\n\n" +
+          "internal const val GENERATED_VERSION_NAME = \"$versionName\"\n"
+      )
+  }
+}
+
 kotlin {
   jvmToolchain(21)
 
   androidTarget()
-  iosX64()
+  js(IR) {
+    browser()
+  }
   iosArm64()
   iosSimulatorArm64()
 
@@ -66,6 +89,10 @@ kotlin {
     sourceSets.findByName("iosArm64Main")?.dependsOn(iosMain)
     sourceSets.findByName("iosSimulatorArm64Main")?.dependsOn(iosMain)
 
+    jsMain {
+      kotlin.srcDir(layout.buildDirectory.dir("generated/jsMain/kotlin"))
+    }
+
     commonMain.dependencies {
       implementation(libs.compose.ui)
     }
@@ -78,6 +105,7 @@ kotlin {
 
 tasks.configureEach {
   if (name.startsWith("compileKotlinIos")) dependsOn(generateIosVersionKt)
+  if (name == "compileKotlinJs") dependsOn(generateJsVersionKt)
 }
 
 dependencies {

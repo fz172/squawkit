@@ -1,12 +1,19 @@
 import SwiftUI
+import GoogleSignIn
 import FirebaseCore
 import ComposeApp
 
 
 class AppDelegate: NSObject, UIApplicationDelegate {
+  private let googleSignInProvider = NativeGoogleSignInProvider()
+
   func application(_ application: UIApplication,
                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
     FirebaseApp.configure()
+    MainEntry.shared.startSyncEngine()
+    MainEntry.shared.installGoogleSignInHandler { [weak self] in
+      self?.googleSignInProvider.signIn()
+    }
     // Register BGProcessingTask identifier "dev.fanfly.wingslog.blob-scan" with the OS.
     // Must be called before this method returns.
     MainEntry.shared.registerBgTasks()
@@ -44,6 +51,9 @@ struct iosApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onOpenURL { url in
+                    _ = GIDSignIn.sharedInstance.handle(url)
+                }
         }
     }
 }

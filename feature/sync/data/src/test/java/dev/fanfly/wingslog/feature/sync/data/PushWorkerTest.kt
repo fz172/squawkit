@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.data
 
+import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -33,7 +34,7 @@ class PushWorkerTest {
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.create(driver)
+    WingsLogDatabase.Schema.synchronous().create(driver)
     db = createWingsLogDatabase(driver)
 
     writer = mockk()
@@ -123,7 +124,7 @@ class PushWorkerTest {
 
   // --- helpers ---
 
-  private fun insertDirtyRow(id: String, updatedAt: Long = 1000L) {
+  private suspend fun insertDirtyRow(id: String, updatedAt: Long = 1000L) {
     db.schemaQueries.upsert(
       collection = TEST_KIND,
       scope_path = TEST_SCOPE.toPath(),

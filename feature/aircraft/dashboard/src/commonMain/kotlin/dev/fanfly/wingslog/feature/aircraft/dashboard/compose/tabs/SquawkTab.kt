@@ -46,6 +46,7 @@ private val squawkOrder = compareByDescending<SquawkWithStatus> {
 fun SquawkTab(
   state: AircraftOverviewUiState.Success,
   onAction: (AircraftOverviewAction) -> Unit,
+  onMutationAction: ((AircraftOverviewAction) -> Unit)? = onAction,
   modifier: Modifier = Modifier,
 ) {
   var showClosed by rememberSaveable { mutableStateOf(false) }
@@ -119,16 +120,15 @@ fun SquawkTab(
       item = selected,
       addressingLog = state.logForSelectedSquawk,
       onDismiss = { onAction(AircraftOverviewAction.DismissSquawkDetail) },
-      onEditClick = {
+      onEditClick = onMutationAction?.let { mutate -> {
         onAction(AircraftOverviewAction.DismissSquawkDetail)
-        onAction(
+        mutate(
           AircraftOverviewAction.EditSquawkClick(
             state.aircraft.id,
             selected.squawk.id
           )
         )
-      },
+      } },
     )
   }
 }
-

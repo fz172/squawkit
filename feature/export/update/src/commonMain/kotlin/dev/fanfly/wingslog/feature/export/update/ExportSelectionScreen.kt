@@ -929,11 +929,14 @@ private fun SuccessResult(
     val reason = state.deliveryFailureMessage.ifBlank {
       stringResource(Res.string.export_success_delivery_failed)
     }
-    val destination = state.deliveryInfo?.destinationEmail.orEmpty()
+    val destination = state.deliveryInfo.destinationEmail
     DeliveryFailure(
       title = stringResource(Res.string.export_success_delivery_failed_title),
       message = if (destination.isNotBlank()) {
-        reason + "\n" + stringResource(Res.string.export_success_delivery_auth, destination)
+        reason + "\n" + stringResource(
+          Res.string.export_success_delivery_auth,
+          destination
+        )
       } else {
         reason
       },
@@ -952,7 +955,7 @@ private fun SuccessResult(
     ),
     subtitle = if (deliveredByEmail) "" else location,
     subtitleContent = if (emailSucceeded) {
-      { EmailedSubtitle(state.deliveryInfo?.destinationEmail.orEmpty()) }
+      { EmailedSubtitle(state.deliveryInfo.destinationEmail) }
     } else {
       null
     },

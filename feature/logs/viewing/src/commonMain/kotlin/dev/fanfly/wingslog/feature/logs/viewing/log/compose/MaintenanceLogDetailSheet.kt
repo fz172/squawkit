@@ -62,7 +62,7 @@ fun MaintenanceLogDetailSheet(
   log: MaintenanceLog,
   availableCards: List<MaintenanceTask>,
   onDismiss: () -> Unit,
-  onEditClick: () -> Unit,
+  onEditClick: (() -> Unit)?,
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
@@ -78,8 +78,10 @@ fun MaintenanceLogDetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
     actionSlot = {
-      TextButton(onClick = onEditClick) {
-        Text(stringResource(MaintenanceRes.string.edit_log))
+      if (onEditClick != null) {
+        TextButton(onClick = onEditClick) {
+          Text(stringResource(MaintenanceRes.string.edit_log))
+        }
       }
     },
     headerSlot = {

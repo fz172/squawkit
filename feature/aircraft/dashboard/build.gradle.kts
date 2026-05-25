@@ -37,7 +37,10 @@ kotlin {
   androidTarget {
   }
 
-  iosX64()
+  js(IR) {
+    browser()
+  }
+
   iosArm64()
   iosSimulatorArm64()
 
@@ -52,7 +55,6 @@ kotlin {
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:model"))
       implementation(project(":feature:tasks:viewing"))
-      implementation(project(":feature:tasks:update"))
       implementation(project(":feature:tasks:sharedassets"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:sharedassets"))

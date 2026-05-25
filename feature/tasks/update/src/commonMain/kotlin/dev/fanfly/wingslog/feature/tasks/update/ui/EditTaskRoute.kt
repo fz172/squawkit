@@ -19,6 +19,7 @@ import wingslog.feature.tasks.update.generated.resources.task_updated
 fun EditTaskRoute(
   navController: NavController,
   viewModel: TaskViewModel = koinViewModel(),
+  attachmentsAvailable: Boolean = true,
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
@@ -78,7 +79,7 @@ fun EditTaskRoute(
         )
       },
       attachmentSection = {
-        if (attachmentUploadEnabled) {
+        if (attachmentsAvailable && attachmentUploadEnabled) {
           AttachmentFormSection(
             visibleAttachments = pendingAttachments.visible(),
             isAnonymous = viewModel.isAnonymous,

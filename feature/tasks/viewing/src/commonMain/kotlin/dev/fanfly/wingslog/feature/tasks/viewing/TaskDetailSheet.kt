@@ -69,7 +69,7 @@ fun TaskDetailSheet(
   cardWithStatus: MaintenanceTaskWithStatus,
   logs: List<MaintenanceLog>,
   onDismiss: () -> Unit,
-  onEditClick: () -> Unit,
+  onEditClick: (() -> Unit)?,
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
@@ -83,8 +83,10 @@ fun TaskDetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
     actionSlot = {
-      TextButton(onClick = onEditClick) {
-        Text(stringResource(SharedRes.string.edit_task))
+      if (onEditClick != null) {
+        TextButton(onClick = onEditClick) {
+          Text(stringResource(SharedRes.string.edit_task))
+        }
       }
     },
     headerSlot = {

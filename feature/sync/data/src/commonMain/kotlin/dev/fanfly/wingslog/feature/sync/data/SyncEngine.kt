@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.data
 
+import app.cash.sqldelight.async.coroutines.awaitAsList
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -12,7 +13,6 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.UploadScheduler
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine.Companion.PUSH_FAILURE_KEY
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Top-level orchestrator that wires Firestore sync to the local store for the signed-in user.
@@ -102,8 +103,11 @@ class SyncEngine(
       success = hydrationRunner.runFor(uid, kind, userRoot) && success
     }
 
-    val aircraftStore: EntityStore<Aircraft> = storeFactory.create(CollectionKind.Aircraft)
-    val aircraftIds = aircraftStore.observeAll(userRoot).first().map { it.id }
+    val aircraftStore: EntityStore<Aircraft> =
+      storeFactory.create(CollectionKind.Aircraft)
+    val aircraftIds = aircraftStore.observeAll(userRoot)
+      .first()
+      .map { it.id }
     for (aircraftId in aircraftIds) {
       val aircraftScope = EntityScope.aircraftChild(uid, aircraftId)
       for (kind in PER_AIRCRAFT_KINDS) {
@@ -124,8 +128,13 @@ class SyncEngine(
   /** `null` when sync is healthy. The most recent unresolved failure otherwise. */
   val failureState: StateFlow<SyncFailure?> =
     MutableStateFlow<SyncFailure?>(null).also { state ->
-      rootScope.launch { failures.collect { state.value = it.values.lastOrNull() } }
-    }.asStateFlow()
+      rootScope.launch {
+        failures.collect {
+          state.value = it.values.lastOrNull()
+        }
+      }
+    }
+      .asStateFlow()
 
   /**
    * Counters for the hydration UI. `total` is the number of `(kind, scope)` pairs that have
@@ -159,7 +168,8 @@ class SyncEngine(
           }
         }
       }
-    }.asStateFlow()
+    }
+      .asStateFlow()
 
   /**
    * Idempotent. Safe to call from app startup. The returned [Job] cancels the engine and tears
@@ -238,10 +248,14 @@ class SyncEngine(
       }
     }
 
-    val aircraftStore: EntityStore<Aircraft> = storeFactory.create(CollectionKind.Aircraft)
+    val aircraftStore: EntityStore<Aircraft> =
+      storeFactory.create(CollectionKind.Aircraft)
     scope.launch {
       aircraftStore.observeAll(userRoot)
-        .map { rows -> rows.map { it.id }.toSet() }
+        .map { rows ->
+          rows.map { it.id }
+            .toSet()
+        }
         .distinctUntilChanged()
         .collectLatest { aircraftIds ->
           aircraftSubScopeSupervisor.cancel()
@@ -349,38 +363,45 @@ class SyncEngine(
       kind,
       scope,
       watermark
-    ).collect { remotes ->
-      if (remotes.isEmpty()) return@collect
-      var maxTs = Long.MIN_VALUE
-      for (remote in remotes) {
-        val applied = listener.apply(remote)
-        if (applied > maxTs) maxTs = applied
+    )
+      .collect { remotes ->
+        if (remotes.isEmpty()) return@collect
+        var maxTs = Long.MIN_VALUE
+        for (remote in remotes) {
+          val applied = listener.apply(remote)
+          if (applied > maxTs) maxTs = applied
+        }
+        if (maxTs != Long.MIN_VALUE) {
+          cursors.advanceLastSeen(
+            uid,
+            kind,
+            scope,
+            maxTs
+          )
+        }
       }
-      if (maxTs != Long.MIN_VALUE) {
-        cursors.advanceLastSeen(
-          uid,
-          kind,
-          scope,
-          maxTs
-        )
-      }
-    }
   }
 
-  private fun schedulePendingBlobs(
+  private suspend fun schedulePendingBlobs(
     uid: String,
     scheduler: UploadScheduler,
     database: WingsLogDatabase,
   ) {
     val prefix = "/users/$uid/%"
-    database.schemaQueries.selectPendingUploads(scopePrefix = prefix, limit = 500)
-      .executeAsList()
+    database.schemaQueries.selectPendingUploads(
+      scopePrefix = prefix,
+      limit = 500
+    )
+      .awaitAsList()
       .forEach { row -> scheduler.scheduleUpload(BlobId(row.id)) }
-    database.schemaQueries.selectPendingDownloads(scopePrefix = prefix, limit = 500)
-      .executeAsList()
+    database.schemaQueries.selectPendingDownloads(
+      scopePrefix = prefix,
+      limit = 500
+    )
+      .awaitAsList()
       .forEach { row -> scheduler.scheduleDownload(BlobId(row.id)) }
     database.schemaQueries.selectBlobTombstones(limit = 500)
-      .executeAsList()
+      .awaitAsList()
       .forEach { row -> scheduler.scheduleDelete(BlobId(row.id)) }
   }
 

@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.sync.data
 
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
@@ -23,6 +25,7 @@ class HydrationRunner(
   private val db: WingsLogDatabase,
   private val fetcher: RemoteFetcher,
   private val cursors: SyncCursorStore,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   private val postWriteHook: PostWriteHook? = null,
 ) {
 
@@ -66,7 +69,7 @@ class HydrationRunner(
     }
   }
 
-  private fun applyAndComputeMaxTs(
+  private suspend fun applyAndComputeMaxTs(
     kind: CollectionKind,
     scope: EntityScope,
     docs: List<RemoteEntity>,
@@ -74,28 +77,30 @@ class HydrationRunner(
     if (docs.isEmpty()) return null
     var maxTs = Long.MIN_VALUE
     val writtenDocs = mutableListOf<RemoteEntity>()
-    db.transaction {
-      for (doc in docs) {
-        val local = db.schemaQueries.selectOneForSync(
-          collection = kind,
-          scope = scope.toPath(),
-          id = doc.id,
-        ).executeAsOneOrNull()
-        if (local?.dirty != true) {
-          db.schemaQueries.upsert(
+    writeLock.withLock {
+      db.transaction {
+        for (doc in docs) {
+          val local = db.schemaQueries.selectOneForSync(
             collection = kind,
-            scope_path = scope.toPath(),
+            scope = scope.toPath(),
             id = doc.id,
-            payload = doc.payload,
-            payload_schema = kind.schemaName,
-            updated_at = doc.remoteTsMs,
-            remote_updated_at = doc.remoteTsMs,
-            dirty = false,
-            deleted = doc.deleted,
-          )
-          writtenDocs += doc
+          ).awaitAsOneOrNull()
+          if (local?.dirty != true) {
+            db.schemaQueries.upsert(
+              collection = kind,
+              scope_path = scope.toPath(),
+              id = doc.id,
+              payload = doc.payload,
+              payload_schema = kind.schemaName,
+              updated_at = doc.remoteTsMs,
+              remote_updated_at = doc.remoteTsMs,
+              dirty = false,
+              deleted = doc.deleted,
+            )
+            writtenDocs += doc
+          }
+          if (doc.remoteTsMs > maxTs) maxTs = doc.remoteTsMs
         }
-        if (doc.remoteTsMs > maxTs) maxTs = doc.remoteTsMs
       }
     }
     // Mirror what PullListener does: notify the hook for each written (non-deleted) doc so blob
