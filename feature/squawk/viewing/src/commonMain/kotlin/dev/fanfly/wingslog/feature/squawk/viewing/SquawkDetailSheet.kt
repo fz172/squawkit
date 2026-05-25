@@ -52,14 +52,13 @@ fun SquawkDetailSheet(
       }
     },
     headerSlot = {
+      PriorityBadge(item)
+    },
+  ) {
       Text(
         text = squawk.title,
         style = MaterialTheme.typography.displaySmall,
       )
-    },
-  ) {
-    // Priority chip
-    PriorityBadge(item)
 
     // Reported date
     if ((squawk.created_at?.getEpochSecond() ?: 0L) > 0L) {
