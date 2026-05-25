@@ -47,7 +47,10 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
         }
         jsMain.dependencies {
-            // Copies sql.js's sql-wasm.wasm into the bundle (see webpack.config.d).
+            // M7 durable storage: official SQLite WASM build, driven by the OPFS SAH-Pool worker
+            // (src/jsMain/resources/sqlite-wasm-opfs.worker.js) behind SQLDelight's WebWorkerDriver.
+            implementation(npm("@sqlite.org/sqlite-wasm", "3.53.0-build1"))
+            // Copies sqlite3.wasm into the bundle root (see webpack.config.d/sqlite-wasm-copy.js).
             implementation(devNpm("copy-webpack-plugin", "9.1.0"))
             implementation(devNpm("os-browserify", "0.3.0"))
         }

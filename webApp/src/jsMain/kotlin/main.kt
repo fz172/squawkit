@@ -24,7 +24,7 @@ import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
 import dev.fanfly.wingslog.feature.technician.manage.di.technicianManageModule
 import dev.fanfly.wingslog.web.WebApp
-import dev.fanfly.wingslog.web.createSqlJsWorker
+import dev.fanfly.wingslog.web.createSqliteWorker
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.FirebaseOptions
 import dev.gitlive.firebase.initialize
@@ -73,8 +73,8 @@ fun main() {
             settingsModule,
             syncSettingsModule,
             module {
-                // The host app owns the bundled sql.js worker file (persists to IndexedDB).
-                single<Worker> { createSqlJsWorker() }
+                // The host app owns the bundled sqlite-wasm worker file (persists to OPFS).
+                single<Worker> { createSqliteWorker() }
             },
         )
     }

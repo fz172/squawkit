@@ -75,15 +75,27 @@ standalone `webApp` seed into a real, code-sharing web client.
   **account upgrade on web is dropped** (there are no anonymous users to upgrade);
   `upgradeAnonymousAccount()` stays a no-op stub. The login screen also now shows a
   "Continue with Apple" button on all platforms (UI only; provider not yet wired).
+- **M7 — ✅ code-complete; browser persistence verification pending.** The interim
+  sql.js→IndexedDB worker is replaced by the official `@sqlite.org/sqlite-wasm` build on OPFS via
+  its SAH-Pool VFS (`webApp/src/jsMain/resources/sqlite-wasm-opfs.worker.js`). It speaks the same
+  `WebWorkerDriver` message protocol, so `EntityStore`/managers/UI are untouched — only the worker,
+  the JS `DriverFactory`, and webpack wiring change. `DriverFactory.js.kt` now does version-aware
+  create/migrate via `PRAGMA user_version` (replacing the "swallow Schema.create" hack): it enqueues
+  `Schema.create` first (so tables exist before any app query on a fresh DB), and on an existing DB
+  reads `user_version` and runs `Schema.migrate` when behind. **Note:** this is a backend swap, not
+  a data migration — existing web users' sql.js/IndexedDB data is not carried into OPFS; the local
+  store starts empty and re-hydrates from Firestore on next sign-in (acceptable pre-production).
+  **Verified:** webApp JS dev bundle builds — the worker, `@sqlite.org/sqlite-wasm`, the OPFS async
+  proxy, and the copied `sqlite3.wasm` all emit; `core:storage` JS compiles. **Pending:** in a real
+  browser, confirm write→reload persistence and schema migration over OPFS.
 
 **What's next (in order):**
-1. In a running web build, confirm the live-update fix end-to-end: sign in with a populated
-   account and verify hydrated fleet/detail data appears without a reload, and that an added
-   aircraft shows on the dashboard immediately. This closes the pending signed-in browser
-   hydration/push and local-persistence verification carried since M4/M5.
-2. **M7 — durable web storage** (sqlite-wasm + OPFS), as laid out below. The remaining M6
-   surfaces (export UI, browser attachments) stay deferred; anonymous/account-upgrade on web is
-   now dropped rather than deferred.
+1. In a running web build, confirm (a) the live-update fix end-to-end (sign in with a populated
+   account → hydrated fleet/detail data appears without a reload; an added aircraft shows on the
+   dashboard immediately) and (b) M7 OPFS durability (write → reload → data persists). These close
+   the browser-runtime verification carried since M4/M5 and for M7.
+2. The remaining M6 surfaces (export UI, browser attachments) stay deferred;
+   anonymous/account-upgrade on web is dropped rather than deferred.
 
 _(Done: a real Firebase web app is registered; its `appId` is wired into
 `webApp/src/jsMain/kotlin/main.kt`.)_
@@ -237,7 +249,7 @@ Order matters — keep Android/iOS green at every step:
   gated.
 - **Demo:** create/edit aircraft, logs, tasks, squawks from the browser.
 
-## Milestone 7 — Durable web storage: migrate to sqlite-wasm + OPFS
+## Milestone 7 — Durable web storage: migrate to sqlite-wasm + OPFS ✅ code-complete (browser verification pending)
 **Goal:** replace the interim sql.js→IndexedDB worker (M3) with a maintained, scalable,
 durable backend.
 - **Why:** the M3 worker snapshots the *entire* DB to IndexedDB on every write (O(db size),
