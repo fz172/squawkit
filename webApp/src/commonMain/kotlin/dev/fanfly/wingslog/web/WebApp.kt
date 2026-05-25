@@ -21,6 +21,8 @@ import dev.fanfly.wingslog.feature.settings.SettingsScreen
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
+import dev.fanfly.wingslog.feature.stresstest.config.StressTestFeatureLabExtra
+import dev.fanfly.wingslog.feature.stresstest.config.registerStressTestRoutes
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
 import dev.fanfly.wingslog.feature.tasks.update.ui.AddTaskRoute
 import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
@@ -162,8 +164,12 @@ fun WebApp() {
           SyncSettingsScreen(navController = navController)
         }
         composable(Screen.FeatureLab.route) {
-          FeatureLabScreen(navController = navController)
+          FeatureLabScreen(
+            navController = navController,
+            dogfoodContent = { StressTestFeatureLabExtra(navController) },
+          )
         }
+        registerStressTestRoutes(this, navController)
         composable(Screen.ManageTechnicians.route) {
           val viewModel = koinViewModel<TechnicianListViewModel>()
           TechnicianListScreen(

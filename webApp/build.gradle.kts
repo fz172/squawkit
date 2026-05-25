@@ -37,6 +37,7 @@ kotlin {
             implementation(project(":feature:settings"))
             implementation(project(":feature:sync:settings"))
             implementation(project(":feature:technician:manage"))
+          implementation(project(":feature:stresstest:config"))
             implementation(libs.compose.foundation)
             implementation(libs.androidx.navigation.compose)
 

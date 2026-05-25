@@ -4,7 +4,9 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## What This Is
 
-WingsLog is a **Kotlin Multiplatform Mobile (KMM)** app for aviation logbook and fleet management — aircraft CRUD, maintenance logs, inspection compliance tracking, and due-status computation. Targets Android (minSdk 33) and iOS sharing Compose Multiplatform UI.
+WingsLog is a **Kotlin Multiplatform** app for aviation logbook and fleet management — aircraft
+CRUD, maintenance logs, inspection compliance tracking, and due-status computation. Targets
+Android (minSdk 33), iOS, and web sharing Compose Multiplatform UI.
 
 The user-facing app is branded **Hopply**; codebase identifiers (`wingslog`, package `dev.fanfly.wingslog`, Gradle module names) still use the original WingsLog name.
 
@@ -19,6 +21,7 @@ The app uses a **local-first architecture** (R1 — shipped, default path): a SQ
 ./gradlew testDebugUnitTest                      # Run all Android unit tests
 ./gradlew :feature:fleet:viewing:testDebugUnitTest  # Run tests for a single module
 ./gradlew :composeApp:iosSimulatorArm64Test      # Run iOS simulator unit tests (local only)
+./gradlew :webApp:jsBrowserDevelopmentWebpack    # Build the web app development bundle
 ```
 
 For the iOS dogfood build, select the **iosAppDogfood** scheme in Xcode and run. See [Dogfood Builds](#dogfood-builds) below.
@@ -30,6 +33,7 @@ CI (`.github/workflows/ci.yml`) runs lint → assembleDebug → testDebugUnitTes
 ```
 app/                    # Android entry point (MainActivity, WingsLogApplication)
 composeApp/             # Shared Compose UI — nested navigation sub-graphs rooted at AppEntry + central Koin init
+webApp/                 # Kotlin/JS web host — shared feature UI with OPFS SQLite storage and Firebase JS startup
 core/
   model/                # Wire-generated protobuf models (Aircraft, MaintenanceLog, Squawk, InspectionCard…)
   ui/                   # Material 3 theme, color tokens, shared Compose components (incl. DualSegmentedFilter, AvatarIcon)
@@ -215,7 +219,10 @@ Feature PRDs and architecture design docs live in `docs/` — including `PRD.md`
 
 ## Dogfood Builds
 
-The dogfood build includes the **Fake Data Generator** (`feature/stresstest`) — a screen that populates fake aircraft, logs, squawks, and tasks for UI stress testing. It is gated behind the `DogfoodFeatureExtensions` plugin interface defined in `composeApp/src/commonMain/`.
+The dogfood/debug tooling includes the **Fake Data Generator** (`feature/stresstest`) — a screen
+that populates fake aircraft, logs, squawks, and tasks for UI stress testing. Android and iOS gate
+it behind the `DogfoodFeatureExtensions` plugin interface defined in `composeApp/src/commonMain/`;
+the web host exposes the same reusable plugin directly from Feature Lab.
 
 ### Architecture
 
@@ -244,6 +251,13 @@ Both wiring files are structurally identical — they implement `DogfoodFeatureE
 - The **Dogfood** Xcode build configuration sets `SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG DOGFOOD"` and hardcodes `FRAMEWORK_SEARCH_PATHS` to the `Debug` KMP framework variant
 - The Compile Kotlin build phase remaps `CONFIGURATION=Dogfood → Debug` before invoking Gradle
 - Build: open `iosApp/iosApp.xcodeproj`, select the **iosAppDogfood** scheme, and run
+
+### Web
+
+- `webApp` depends on `feature:stresstest:config` and registers the plugin route and Koin module
+  directly.
+- The Fake Data Generator is reachable through **Settings → Feature Lab → Debug Tools**.
+- Build: `./gradlew :webApp:jsBrowserDevelopmentWebpack`
 
 ## Coding Conventions
 

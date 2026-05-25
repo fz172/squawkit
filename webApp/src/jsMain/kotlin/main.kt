@@ -14,11 +14,12 @@ import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerM
 import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
+import dev.fanfly.wingslog.feature.squawk.datamanager.squawkModule
+import dev.fanfly.wingslog.feature.squawk.update.viewmodel.squawkUiModule
+import dev.fanfly.wingslog.feature.stresstest.config.stressTestKoinModules
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.di.syncModule
 import dev.fanfly.wingslog.feature.sync.settings.di.syncSettingsModule
-import dev.fanfly.wingslog.feature.squawk.datamanager.squawkModule
-import dev.fanfly.wingslog.feature.squawk.update.viewmodel.squawkUiModule
 import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
@@ -72,6 +73,7 @@ fun main() {
             technicianManageModule,
             settingsModule,
             syncSettingsModule,
+            *stressTestKoinModules().toTypedArray(),
             module {
                 // The host app owns the bundled sqlite-wasm worker file (persists to OPFS).
                 single<Worker> { createSqliteWorker() }

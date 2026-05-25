@@ -32,6 +32,10 @@ kotlin {
 
   androidTarget()
 
+  js(IR) {
+    browser()
+  }
+
   iosArm64()
   iosSimulatorArm64()
 

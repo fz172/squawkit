@@ -55,6 +55,9 @@ standalone `webApp` seed into a real, code-sharing web client.
   implemented; export UI is still deferred. Anonymous sign-in / account upgrade on web is
   dropped (see "Web auth scope narrowed" below) — web requires a real account.
   **Verified:** webApp JS bundle plus Android and iOS simulator compilation pass.
+- **Web debug tooling (2026-05-25) — ✅ landed.** `feature:stresstest` and its config
+  plugin now compile for JS; the web host registers the same Fake Data Generator Koin
+  module, Feature Lab entry, and route used by mobile dogfood builds.
 - **Web live-update fix (2026-05-24) — ✅ landed.** On web, adding an aircraft (or hydrating
   on sign-in) did not refresh the dashboard until a page reload. Root cause: SQLDelight routes a
   write's change-notification to `driver.currentTransaction()`, which is thread-confined on
@@ -274,25 +277,26 @@ durable backend.
 ## Module target-coverage checklist
 Track which shared modules have gained a `js(IR)` target (✅ = has JS target):
 
-| Module | JS target | Milestone |
-|--------|-----------|-----------|
-| `webApp` | ✅ | M0 |
-| `core:model` | ✅ | M1 |
-| `core:datetime` | ✅ | M1 |
-| `core:ui` | ✅ | M1 |
-| `core:auth` | ✅ | M2 |
-| `feature:login` (new — extracted from `composeApp`) | ✅ | M2 |
-| `core:storage` | ✅ | M3 |
-| `core:firebase`, `feature:attachment:{model,datamanager}` | ✅ | M4 |
-| `feature:sync:data`, `feature:technician:datamanager` | ✅ | M4 |
-| `feature:fleet:*`, `feature:aircraft:dashboard` | ✅ | M5 |
-| `feature:{logs,tasks,squawk}:{model,datamanager,viewing,sharedassets}` | ✅ | M5 |
-| `feature:attachment:{sharedassets,viewing}`, `feature:featurelab:datamanager` | ✅ | M5 dependency |
-| `feature:{logs,tasks,squawk}:update`, `feature:technician:{manage,sharedassets}` | ✅ | M6 |
-| `core:appinfo`, `feature:settings`, `feature:sync:{settings,sharedassets}` | ✅ | M6 dependency |
-| `feature:userprofile:{sharedassets,userprofilecard}`, `feature:export:sharedassets` | ✅ | M6 dependency |
-| `feature:export:{datamanager,update}`, browser attachments | ☐ | M6 deferred |
-| anonymous sign-in / account upgrade on web | ✖︎ | dropped — web requires a real account |
+| Module                                                                              | JS target | Milestone                             |
+|-------------------------------------------------------------------------------------|-----------|---------------------------------------|
+| `webApp`                                                                            | ✅         | M0                                    |
+| `core:model`                                                                        | ✅         | M1                                    |
+| `core:datetime`                                                                     | ✅         | M1                                    |
+| `core:ui`                                                                           | ✅         | M1                                    |
+| `core:auth`                                                                         | ✅         | M2                                    |
+| `feature:login` (new — extracted from `composeApp`)                                 | ✅         | M2                                    |
+| `core:storage`                                                                      | ✅         | M3                                    |
+| `core:firebase`, `feature:attachment:{model,datamanager}`                           | ✅         | M4                                    |
+| `feature:sync:data`, `feature:technician:datamanager`                               | ✅         | M4                                    |
+| `feature:fleet:*`, `feature:aircraft:dashboard`                                     | ✅         | M5                                    |
+| `feature:{logs,tasks,squawk}:{model,datamanager,viewing,sharedassets}`              | ✅         | M5                                    |
+| `feature:attachment:{sharedassets,viewing}`, `feature:featurelab:datamanager`       | ✅         | M5 dependency                         |
+| `feature:{logs,tasks,squawk}:update`, `feature:technician:{manage,sharedassets}`    | ✅         | M6                                    |
+| `core:appinfo`, `feature:settings`, `feature:sync:{settings,sharedassets}`          | ✅         | M6 dependency                         |
+| `feature:userprofile:{sharedassets,userprofilecard}`, `feature:export:sharedassets` | ✅         | M6 dependency                         |
+| `feature:stresstest`, `feature:stresstest:config`                                   | ✅         | web debug tooling                     |
+| `feature:export:{datamanager,update}`, browser attachments                          | ☐         | M6 deferred                           |
+| anonymous sign-in / account upgrade on web                                          | ✖︎        | dropped — web requires a real account |
 
 ## Open questions
 - Is the web client full parity, or a focused subset (e.g. view + light edit)? This
