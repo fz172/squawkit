@@ -61,14 +61,17 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.ui.generated.resources.ic_launcher_foreground
 import wingslog.feature.login.generated.resources.Res
+import wingslog.feature.login.generated.resources.apple_logo
 import wingslog.feature.login.generated.resources.continue_without_account
 import wingslog.feature.login.generated.resources.google_logo
+import wingslog.feature.login.generated.resources.ic_apple
 import wingslog.feature.login.generated.resources.ic_google_rd_na
 import wingslog.feature.login.generated.resources.legal_disclaimer
 import wingslog.feature.login.generated.resources.login_prompt
 import wingslog.feature.login.generated.resources.mission_statement
 import wingslog.feature.login.generated.resources.sign_in_anonymous_error
 import wingslog.feature.login.generated.resources.sign_in_error
+import wingslog.feature.login.generated.resources.sign_in_with_apple
 import wingslog.feature.login.generated.resources.sign_in_with_google
 import wingslog.core.ui.generated.resources.Res as UiRes
 
@@ -76,6 +79,8 @@ private val LoginBackground = AviationBlue10
 private val LoginOnBackground = Color(0xFFF0F4FF)
 private val LoginOnBackgroundMuted = Color(0xFF8AAAD4)
 private val LoginErrorText = Color(0xFFFF8A80)
+private val AppleButtonBackground = Color(0xFF000000)
+private val AppleButtonContent = Color(0xFFFFFFFF)
 
 private val LoginButtonLabelStyle = TextStyle(
   fontWeight = FontWeight.SemiBold,
@@ -268,33 +273,22 @@ fun LoginScreen(
 
       Spacer(Modifier.height(Spacing.medium))
 
-      OutlinedButton(
+      // Continue with Apple — shown on every platform. Backend (signInWithApple) is not wired
+      // yet; tapping is a no-op until the Apple provider is implemented per platform.
+      Button(
         modifier = Modifier
           .fillMaxWidth()
           .height(54.dp),
         enabled = !isSigningIn,
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-        colors = ButtonDefaults.outlinedButtonColors(
-          contentColor = LoginOnBackgroundMuted,
-        ),
-        border = BorderStroke(
-          Spacing.hairline,
-          LoginOnBackgroundMuted.copy(alpha = 0.4f),
+        colors = ButtonDefaults.buttonColors(
+          containerColor = AppleButtonBackground,
+          contentColor = AppleButtonContent,
+          disabledContainerColor = AppleButtonBackground.copy(alpha = 0.4f),
+          disabledContentColor = AppleButtonContent.copy(alpha = 0.4f),
         ),
         onClick = {
-          scope.launch {
-            isSigningIn = true
-            try {
-              val credential = loginViewModel.loginAnonymously()
-              if (credential != null) {
-                onLoginSuccess()
-              } else {
-                error = signInAnonymousErrorMessage
-              }
-            } finally {
-              isSigningIn = false
-            }
-          }
+          // TODO(apple-signin): wire AuthManager.signInWithApple() per platform.
         },
       ) {
         Row(
@@ -302,14 +296,64 @@ fun LoginScreen(
           horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         ) {
           Icon(
-            imageVector = Icons.Filled.Person,
-            contentDescription = null,
+            painter = painterResource(Res.drawable.ic_apple),
+            contentDescription = stringResource(Res.string.apple_logo),
             modifier = Modifier.size(Spacing.xLarge),
+            tint = AppleButtonContent,
           )
           Text(
-            text = stringResource(Res.string.continue_without_account),
-            style = LoginSecondaryLabelStyle,
+            text = stringResource(Res.string.sign_in_with_apple),
+            style = LoginButtonLabelStyle,
           )
+        }
+      }
+
+      if (isAnonymousLoginSupported) {
+        Spacer(Modifier.height(Spacing.medium))
+
+        OutlinedButton(
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(54.dp),
+          enabled = !isSigningIn,
+          shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+          colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = LoginOnBackgroundMuted,
+          ),
+          border = BorderStroke(
+            Spacing.hairline,
+            LoginOnBackgroundMuted.copy(alpha = 0.4f),
+          ),
+          onClick = {
+            scope.launch {
+              isSigningIn = true
+              try {
+                val credential = loginViewModel.loginAnonymously()
+                if (credential != null) {
+                  onLoginSuccess()
+                } else {
+                  error = signInAnonymousErrorMessage
+                }
+              } finally {
+                isSigningIn = false
+              }
+            }
+          },
+        ) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+          ) {
+            Icon(
+              imageVector = Icons.Filled.Person,
+              contentDescription = null,
+              modifier = Modifier.size(Spacing.xLarge),
+            )
+            Text(
+              text = stringResource(Res.string.continue_without_account),
+              style = LoginSecondaryLabelStyle,
+            )
+          }
         }
       }
 
