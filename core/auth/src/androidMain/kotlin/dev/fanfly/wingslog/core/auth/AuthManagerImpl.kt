@@ -37,10 +37,14 @@ class AuthManagerImpl(
       return authProvider.currentUser
     }
     try {
-      val request = GetCredentialRequest.Builder().addCredentialOption(
-        GetGoogleIdOption.Builder().setFilterByAuthorizedAccounts(true)
-          .setServerClientId(WEB_CLIENT_ID).build()
-      ).build()
+      val request = GetCredentialRequest.Builder()
+        .addCredentialOption(
+          GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(true)
+            .setServerClientId(WEB_CLIENT_ID)
+            .build()
+        )
+        .build()
       val result = credentialManager.getCredential(context, request)
       val googleIdTokenCredential = processCredential(result.credential)
       if (googleIdTokenCredential != null) {
@@ -77,10 +81,14 @@ class AuthManagerImpl(
    */
   override suspend fun signInWithGoogle(): FirebaseUser? {
     try {
-      val request = GetCredentialRequest.Builder().addCredentialOption(
-        GetGoogleIdOption.Builder().setFilterByAuthorizedAccounts(false) // Show account picker
-          .setServerClientId(WEB_CLIENT_ID).build()
-      ).build()
+      val request = GetCredentialRequest.Builder()
+        .addCredentialOption(
+          GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(false) // Show account picker
+            .setServerClientId(WEB_CLIENT_ID)
+            .build()
+        )
+        .build()
       val result = credentialManager.getCredential(context, request)
       val googleIdTokenCredential = processCredential(result.credential)
       if (googleIdTokenCredential != null) {
@@ -131,10 +139,14 @@ class AuthManagerImpl(
     val current = authProvider.currentUser
       ?: return AccountUpgradeResult.Failed("No signed-in user to upgrade")
     val googleCredential = try {
-      val request = GetCredentialRequest.Builder().addCredentialOption(
-        GetGoogleIdOption.Builder().setFilterByAuthorizedAccounts(false) // Show account picker
-          .setServerClientId(WEB_CLIENT_ID).build()
-      ).build()
+      val request = GetCredentialRequest.Builder()
+        .addCredentialOption(
+          GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(false) // Show account picker
+            .setServerClientId(WEB_CLIENT_ID)
+            .build()
+        )
+        .build()
       val result = credentialManager.getCredential(context, request)
       processCredential(result.credential)
         ?: return AccountUpgradeResult.Failed("Could not read Google credential")
@@ -147,7 +159,8 @@ class AuthManagerImpl(
     }
 
     return try {
-      val firebaseCredential = GoogleAuthProvider.credential(googleCredential.idToken, null)
+      val firebaseCredential =
+        GoogleAuthProvider.credential(googleCredential.idToken, null)
       val result = current.linkWithCredential(firebaseCredential)
       val linkedUser = result.user ?: authProvider.currentUser ?: current
       val user = linkedUser.syncProfileFromProvider(
@@ -157,7 +170,8 @@ class AuthManagerImpl(
       AccountUpgradeResult.Linked(user)
     } catch (e: FirebaseAuthUserCollisionException) {
       logger.i { "Google account already in use; offering merge" }
-      val firebaseCredential = GoogleAuthProvider.credential(googleCredential.idToken, null)
+      val firebaseCredential =
+        GoogleAuthProvider.credential(googleCredential.idToken, null)
       AccountUpgradeResult.CredentialInUse(firebaseCredential)
     } catch (e: Exception) {
       logger.e(e) { "Account upgrade: linking failed" }
@@ -169,7 +183,7 @@ class AuthManagerImpl(
     return try {
       val result = authProvider.signInWithCredential(credential)
       val signedInUser = result.user ?: authProvider.currentUser
-        ?: return AccountUpgradeResult.Failed("Sign-in returned no user")
+      ?: return AccountUpgradeResult.Failed("Sign-in returned no user")
       val user = signedInUser.syncProfileFromProvider()
       if (user.isAnonymous) {
         return AccountUpgradeResult.Failed("Sign-in did not switch to the permanent account")
@@ -190,26 +204,22 @@ class AuthManagerImpl(
     }
   }
 
-  companion object {
-    private val logger = Logger.withTag("AuthManagerImpl")
-    private const val GOOGLE_PROVIDER_ID = "google.com"
-    private const val WEB_CLIENT_ID =
-      "811416892017-uul0d8vup8hie1o1172chid0q65k7vdi.apps.googleusercontent.com"
-  }
 
   private suspend fun FirebaseUser.syncProfileFromProvider(
     fallbackName: String? = null,
     fallbackPhotoUrl: String? = null,
   ): FirebaseUser {
     reload()
-    val googleProfile = providerData.firstOrNull { it.providerId == GOOGLE_PROVIDER_ID }
+    val googleProfile =
+      providerData.firstOrNull { it.providerId == GOOGLE_PROVIDER_ID }
     val accountName = googleProfile?.displayName?.takeIf { it.isNotBlank() }
       ?: fallbackName?.takeIf { it.isNotBlank() }
     val accountPhotoUrl = googleProfile?.photoURL?.takeIf { it.isNotBlank() }
       ?: fallbackPhotoUrl?.takeIf { it.isNotBlank() }
 
     val shouldUpdateName = accountName != null && accountName != displayName
-    val shouldUpdatePhoto = accountPhotoUrl != null && accountPhotoUrl != photoURL
+    val shouldUpdatePhoto =
+      accountPhotoUrl != null && accountPhotoUrl != photoURL
     if (shouldUpdateName || shouldUpdatePhoto) {
       updateProfile(
         displayName = accountName ?: displayName,
@@ -218,5 +228,12 @@ class AuthManagerImpl(
       reload()
     }
     return this
+  }
+
+  companion object {
+    private val logger = Logger.withTag("AuthManagerImpl")
+    private const val GOOGLE_PROVIDER_ID = "google.com"
+    private const val WEB_CLIENT_ID =
+      "811416892017-uul0d8vup8hie1o1172chid0q65k7vdi.apps.googleusercontent.com"
   }
 }
