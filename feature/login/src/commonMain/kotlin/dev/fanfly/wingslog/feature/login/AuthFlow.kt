@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.feature.login.onboarding.NameEntryScreen
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingActions
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingPreferences
 import dev.fanfly.wingslog.feature.login.onboarding.WelcomeScreen
+import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -33,12 +34,14 @@ private enum class AuthStep { Login, NameEntry, Welcome }
 fun AuthFlow(
   onComplete: () -> Unit,
   loginViewModel: LoginViewModel = koinViewModel(),
+  firebaseAuth: FirebaseAuth = koinInject(),
   actions: OnboardingActions = koinInject(),
   onboardingPreferences: OnboardingPreferences = koinInject(),
 ) {
   val scope = rememberCoroutineScope()
   var step by remember { mutableStateOf(AuthStep.Login) }
-  val selfName by actions.observeSelfName().collectAsState(null)
+  val selfName by actions.observeSelfName()
+    .collectAsState(null)
 
   when (step) {
     AuthStep.Login -> LoginScreen(
@@ -46,8 +49,15 @@ fun AuthFlow(
       onLoginSuccess = {
         // A returning user who already finished onboarding skips straight through.
         scope.launch {
-          if (onboardingPreferences.checkHasSeenWelcome()) onComplete()
-          else step = AuthStep.NameEntry
+          if (firebaseAuth.currentUser?.displayName.orEmpty()
+              .isEmpty()
+          ) {
+            step = AuthStep.NameEntry
+          } else if (!onboardingPreferences.checkHasSeenWelcome()) {
+            step = AuthStep.Welcome
+          } else {
+            onComplete()
+          }
         }
       },
     )
