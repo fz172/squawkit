@@ -17,8 +17,11 @@ import androidx.compose.ui.graphics.Color
  */
 @Immutable
 data class StatusTone(
+  /** Text, icon, and indicator color when rendered on a regular surface. */
   val accent: Color,
+  /** Compact status chip background. */
   val container: Color,
+  /** Compact status chip foreground paired with [container]. */
   val onContainer: Color,
 )
 
@@ -52,18 +55,38 @@ fun StatusColors.toneFor(tier: StatusTier): StatusTone = when (tier) {
   StatusTier.NEUTRAL -> neutral
 }
 
-internal fun statusColorsFor(colorScheme: ColorScheme, darkTheme: Boolean): StatusColors =
-  StatusColors(
-    blocking = StatusTone(
-      accent = colorScheme.error,
-      container = colorScheme.error,
-      onContainer = colorScheme.onError,
-    ),
-    critical = StatusTone(
+internal fun statusColorsFor(colorScheme: ColorScheme, darkTheme: Boolean): StatusColors {
+  val blocking = if (darkTheme) {
+    StatusTone(
+      // Standalone AOG labels/icons render on dark surfaces, not on this container.
       accent = colorScheme.error,
       container = colorScheme.errorContainer,
       onContainer = colorScheme.onErrorContainer,
-    ),
+    )
+  } else {
+    StatusTone(
+      accent = colorScheme.error,
+      container = colorScheme.error,
+      onContainer = colorScheme.onError,
+    )
+  }
+  val critical = if (darkTheme) {
+    StatusTone(
+      accent = colorScheme.error,
+      container = colorScheme.error,
+      onContainer = colorScheme.onError,
+    )
+  } else {
+    StatusTone(
+      accent = colorScheme.error,
+      container = colorScheme.errorContainer,
+      onContainer = colorScheme.onErrorContainer,
+    )
+  }
+
+  return StatusColors(
+    blocking = blocking,
+    critical = critical,
     caution = StatusTone(
       accent = if (darkTheme) StatusWarningDark else StatusWarningLight,
       container = if (darkTheme) StatusWarningContainerDark else StatusWarningContainerLight,
@@ -80,6 +103,7 @@ internal fun statusColorsFor(colorScheme: ColorScheme, darkTheme: Boolean): Stat
       onContainer = colorScheme.onSurfaceVariant,
     ),
   )
+}
 
 internal val LocalStatusColors = staticCompositionLocalOf {
   statusColorsFor(lightColorScheme(), darkTheme = false)

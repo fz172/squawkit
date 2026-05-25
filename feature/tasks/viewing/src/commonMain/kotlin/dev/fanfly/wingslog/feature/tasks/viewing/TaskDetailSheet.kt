@@ -25,7 +25,6 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
-import dev.fanfly.wingslog.core.ui.theme.AviationBlue90
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -98,7 +97,6 @@ fun TaskDetailSheet(
         Text(
           text = card.title,
           style = MaterialTheme.typography.displaySmall,
-          color = AviationBlue90,
         )
       }
     },
@@ -110,7 +108,6 @@ fun TaskDetailSheet(
       Text(
         text = card.title,
         style = MaterialTheme.typography.displaySmall,
-        color = AviationBlue90,
       )
     }
 
