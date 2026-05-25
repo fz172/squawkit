@@ -38,7 +38,7 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewActio
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
-import dev.fanfly.wingslog.feature.tasks.update.compose.DeleteTaskConfirmDialog
+import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -60,6 +60,8 @@ fun AircraftOverviewContent(
   state: AircraftOverviewUiState.Success,
   snackbarHostState: SnackbarHostState,
   onAction: (AircraftOverviewAction) -> Unit,
+  onMutationAction: ((AircraftOverviewAction) -> Unit)? = onAction,
+  attachmentsAvailable: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   val pagerState = rememberPagerState { AircraftTab.entries.size }
@@ -71,9 +73,9 @@ fun AircraftOverviewContent(
     modifier = modifier,
     snackbarHost = { SnackbarHost(snackbarHostState) },
     floatingActionButton = {
-      when (AircraftTab.entries.getOrNull(pagerState.currentPage)) {
+      if (onMutationAction != null) when (AircraftTab.entries.getOrNull(pagerState.currentPage)) {
         AircraftTab.SQUAWKS -> ExtendedFloatingActionButton(
-          onClick = { onAction(AircraftOverviewAction.AddSquawkClick(state.aircraft.id)) },
+          onClick = { onMutationAction(AircraftOverviewAction.AddSquawkClick(state.aircraft.id)) },
           icon = {
             Icon(
               Icons.Default.Add,
@@ -84,7 +86,7 @@ fun AircraftOverviewContent(
         )
 
         AircraftTab.TASKS -> ExtendedFloatingActionButton(
-          onClick = { onAction(AircraftOverviewAction.AddTaskClick(state.aircraft.id)) },
+          onClick = { onMutationAction(AircraftOverviewAction.AddTaskClick(state.aircraft.id)) },
           icon = {
             Icon(
               Icons.Default.Add,
@@ -95,7 +97,7 @@ fun AircraftOverviewContent(
         )
 
         AircraftTab.LOGS -> ExtendedFloatingActionButton(
-          onClick = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
+          onClick = { onMutationAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
           icon = {
             Icon(
               Icons.Default.Add,
@@ -121,11 +123,13 @@ fun AircraftOverviewContent(
           }
         },
         actions = {
-          IconButton(onClick = { onAction(AircraftOverviewAction.EditClick(state.aircraft.id)) }) {
-            Icon(
-              Icons.Default.Settings,
-              contentDescription = stringResource(MaintenanceRes.string.edit_aircraft)
-            )
+          if (onMutationAction != null) {
+            IconButton(onClick = { onMutationAction(AircraftOverviewAction.EditClick(state.aircraft.id)) }) {
+              Icon(
+                Icons.Default.Settings,
+                contentDescription = stringResource(MaintenanceRes.string.edit_aircraft)
+              )
+            }
           }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -144,13 +148,15 @@ fun AircraftOverviewContent(
           taskSheetOpenError = null
           onAction(AircraftOverviewAction.DismissTaskDetail)
         },
-        onEditClick = {
-          onAction(
-            AircraftOverviewAction.EditTaskClick(
-              state.aircraft.id,
-              selectedTask.card.id
+        onEditClick = onMutationAction?.let { mutate ->
+          {
+            mutate(
+              AircraftOverviewAction.EditTaskClick(
+                state.aircraft.id,
+                selectedTask.card.id
+              )
             )
-          )
+          }
         },
         onAttachmentTap = { attachment ->
           taskSheetOpenError = null
@@ -162,7 +168,7 @@ fun AircraftOverviewContent(
         },
         syncStates = state.syncStates,
         openError = taskSheetOpenError,
-        attachmentEnabled = state.attachmentEnabled,
+        attachmentEnabled = attachmentsAvailable && state.attachmentEnabled,
       )
     }
 
@@ -195,11 +201,13 @@ fun AircraftOverviewContent(
             state = state,
             onAction = onAction,
             onViewSquawksTab = { coroutineScope.launch { pagerState.animateScrollToPage(AircraftTab.SQUAWKS.ordinal) } },
+            onMutationAction = onMutationAction,
           )
 
           AircraftTab.SQUAWKS -> SquawkTab(
             state = state,
             onAction = onAction,
+            onMutationAction = onMutationAction,
           )
 
           AircraftTab.TASKS -> MaintenanceTasksTab(
@@ -210,19 +218,22 @@ fun AircraftOverviewContent(
           AircraftTab.LOGS -> LogsTab(
             aircraftId = state.aircraft.id,
             syncStates = state.syncStates,
-            onNavigateToAddLog = { onAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
-            onNavigateToEditLog = { logId ->
-              onAction(
+            onNavigateToAddLog = onMutationAction?.let { mutate ->
+              { mutate(AircraftOverviewAction.AddLogClick(state.aircraft.id)) }
+            },
+            onNavigateToEditLog = onMutationAction?.let { mutate -> { logId ->
+              mutate(
                 AircraftOverviewAction.EditLogClick(
                   state.aircraft.id,
                   logId
                 )
               )
-            },
+            } },
             onTaskClick = { taskId ->
               onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
               coroutineScope.launch { pagerState.animateScrollToPage(AircraftTab.TASKS.ordinal) }
             },
+            attachmentsAvailable = attachmentsAvailable,
           )
         }
       }

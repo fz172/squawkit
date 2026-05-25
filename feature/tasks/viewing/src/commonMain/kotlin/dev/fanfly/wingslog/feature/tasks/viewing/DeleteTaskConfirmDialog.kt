@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.update.compose
+package dev.fanfly.wingslog.feature.tasks.viewing
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -10,9 +10,9 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
-import wingslog.feature.tasks.update.generated.resources.Res
-import wingslog.feature.tasks.update.generated.resources.delete_task
-import wingslog.feature.tasks.update.generated.resources.delete_task_confirmation
+import wingslog.feature.tasks.sharedassets.generated.resources.Res
+import wingslog.feature.tasks.sharedassets.generated.resources.delete_task
+import wingslog.feature.tasks.sharedassets.generated.resources.delete_task_confirmation
 
 @Composable
 fun DeleteTaskConfirmDialog(

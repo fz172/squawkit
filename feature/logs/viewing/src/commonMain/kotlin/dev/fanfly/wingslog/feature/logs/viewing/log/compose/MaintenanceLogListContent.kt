@@ -83,11 +83,12 @@ fun MaintenanceLogListContent(
   onRetry: () -> Unit,
   onLogClick: (MaintenanceLog) -> Unit,
   onDismissDetail: () -> Unit,
-  onEditLog: (String) -> Unit,
-  onAddLog: () -> Unit,
+  onEditLog: ((String) -> Unit)?,
+  onAddLog: (() -> Unit)?,
   onAttachmentTap: (Attachment) -> Unit,
   openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
+  attachmentsAvailable: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   Box(
@@ -119,7 +120,7 @@ fun MaintenanceLogListContent(
             title = stringResource(SharedRes.string.no_maintenance_logs_title),
             description = stringResource(SharedRes.string.no_maintenance_logs_description),
             icon = Icons.Default.History,
-            actionText = stringResource(SharedRes.string.add_first_maintenance_log),
+            actionText = onAddLog?.let { stringResource(SharedRes.string.add_first_maintenance_log) },
             onActionClick = onAddLog
           )
         } else {
@@ -272,15 +273,15 @@ fun MaintenanceLogListContent(
                 log = log,
                 availableCards = uiState.availableCards,
                 onDismiss = onDismissDetail,
-                onEditClick = {
+                onEditClick = onEditLog?.let { edit -> {
                   onDismissDetail()
-                  onEditLog(log.id)
-                },
+                  edit(log.id)
+                } },
                 onAttachmentTap = onAttachmentTap,
                 syncStates = syncStates,
                 openError = openError,
                 technicianEnabled = uiState.technicianEnabled,
-                attachmentEnabled = uiState.attachmentEnabled,
+                attachmentEnabled = attachmentsAvailable && uiState.attachmentEnabled,
                 onTaskClick = onTaskClick?.let { cb ->
                   { taskId ->
                     onDismissDetail()

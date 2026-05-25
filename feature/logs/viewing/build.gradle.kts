@@ -36,6 +36,9 @@ kotlin {
     }
   }
 
+  js(IR) {
+    browser()
+  }
 
   iosArm64()
   iosSimulatorArm64()
@@ -56,7 +59,6 @@ kotlin {
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:sharedassets"))
       implementation(project(":feature:tasks:viewing"))
-      implementation(project(":feature:tasks:update"))
 
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:attachment:sharedassets"))

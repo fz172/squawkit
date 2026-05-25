@@ -41,12 +41,19 @@ standalone `webApp` seed into a real, code-sharing web client.
   SHA-256 stub. **Verified:** affected Android unit tests, iOS simulator compilation, webApp JS
   bundle, and initial browser render all pass. **Pending after M5 provides an observable data
   surface:** Google-authenticated Firestore hydration/push round-trip in the browser.
+- **M5 — ✅ code-complete; signed-in data verification pending.** `webApp` now routes
+  completed auth into the shared fleet dashboard and aircraft overview tabs. The fleet,
+  aircraft, log, task, and squawk read graph has JS targets and real Koin bindings.
+  The web host supplies no mutation destinations, so add/edit/delete controls remain
+  absent until M6; it also suppresses attachment presentation while browser blob handling
+  remains deferred. **Verified:** webApp JS bundle, Android and iOS simulator
+  compilation, and initial browser render pass. **Pending:** sign in with a populated
+  account and observe hydrated fleet/detail data in the browser.
 
 **What's next (in order):**
-1. **M5:** wire the read-only fleet/aircraft dashboard UI so hydrated data is observable.
-2. Complete the pending signed-in browser hydration/push and local persistence verification.
-3. **M6+** as laid out below (editing and remaining feature surfaces).
-4. **`upgradeAnonymousAccount()` on web — deferred to last** (by decision). Still stubbed
+1. Complete the pending signed-in browser hydration/push and local persistence verification through the M5 UI.
+2. **M6+** as laid out below (editing and remaining feature surfaces).
+3. **`upgradeAnonymousAccount()` on web — deferred to last** (by decision). Still stubbed
    in `jsMain` `AuthManagerImpl`; needs Firebase-JS `linkWithPopup`. Until then a guest on
    web can't upgrade in place — acceptable while web is pre-production.
 
@@ -190,6 +197,8 @@ Order matters — keep Android/iOS green at every step:
 - Add `js(IR)` to the read-path feature modules: `feature:fleet:*`,
   `feature:aircraft:dashboard`, and the `model`/`datamanager`/`viewing`/`sharedassets`
   of `logs`, `tasks`, `squawk`. Port `AppEntry`'s graph (or a web-tailored subset).
+- Mutation controls render only when their host supplies edit destinations; web omits
+  them until M6 wires those destinations, without a temporary `readOnly` mode flag.
 - **Demo:** sign in → fleet dashboard → aircraft overview tabs, all read-only, on web.
 
 ## Milestone 6 — Editing & remaining features
@@ -236,9 +245,10 @@ Track which shared modules have gained a `js(IR)` target (✅ = has JS target):
 | `core:storage` | ✅ | M3 |
 | `core:firebase`, `feature:attachment:{model,datamanager}` | ✅ | M4 |
 | `feature:sync:data`, `feature:technician:datamanager` | ✅ | M4 |
-| `feature:fleet:*`, `feature:aircraft:dashboard` | ☐ | M5 |
-| `feature:{logs,tasks,squawk}:{model,datamanager,viewing,sharedassets}` | ☐ | M5 |
-| `feature:*:update`, `technician`, `settings`, `featurelab`, `export` | ☐ | M6 |
+| `feature:fleet:*`, `feature:aircraft:dashboard` | ✅ | M5 |
+| `feature:{logs,tasks,squawk}:{model,datamanager,viewing,sharedassets}` | ✅ | M5 |
+| `feature:attachment:{sharedassets,viewing}`, `feature:featurelab:datamanager` | ✅ | M5 dependency |
+| `feature:*:update`, `technician`, `settings`, `export` | ☐ | M6 |
 
 ## Open questions
 - Is the web client full parity, or a focused subset (e.g. view + light edit)? This

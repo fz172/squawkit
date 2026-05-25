@@ -22,7 +22,17 @@ kotlin {
             implementation(project(":feature:login"))
             implementation(project(":feature:sync:data"))
             implementation(project(":feature:technician:datamanager"))
+            implementation(project(":feature:attachment:datamanager"))
+            implementation(project(":feature:featurelab:datamanager"))
+            implementation(project(":feature:fleet:datamanager"))
+            implementation(project(":feature:fleet:viewing"))
+            implementation(project(":feature:aircraft:dashboard"))
+            implementation(project(":feature:logs:datamanager"))
+            implementation(project(":feature:logs:viewing"))
+            implementation(project(":feature:tasks:datamanager"))
+            implementation(project(":feature:squawk:datamanager"))
             implementation(libs.compose.foundation)
+            implementation(libs.androidx.navigation.compose)
 
             // Firebase init (FirebaseOptions / Firebase.initialize) + DI.
             implementation(libs.gitlive.firebase.auth)

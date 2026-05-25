@@ -1,34 +1,62 @@
 package dev.fanfly.wingslog.web
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
+import dev.fanfly.wingslog.feature.aircraft.dashboard.AircraftOverviewScreen
+import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
 import dev.fanfly.wingslog.feature.login.AuthFlow
 
 @Composable
 fun WebApp() {
-    // Koin is started in main(); AuthFlow resolves LoginViewModel / OnboardingActions /
-    // OnboardingPreferences from it.
     WingslogTheme {
-        var onboarded by remember { mutableStateOf(false) }
-        if (onboarded) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "Signed in",
-                    style = MaterialTheme.typography.headlineMedium,
-                )
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background,
+        ) {
+            val navController = rememberNavController()
+            NavHost(
+                navController = navController,
+                startDestination = Screen.Login.route,
+            ) {
+                composable(Screen.Login.route) {
+                    AuthFlow(
+                        onComplete = {
+                            navController.navigate(Screen.Dashboard.route) {
+                                popUpTo(Screen.Login.route) { inclusive = true }
+                            }
+                        },
+                    )
+                }
+                composable(Screen.Dashboard.route) {
+                    DashboardScreen(
+                        onOpenSettings = null,
+                        onAddAircraft = null,
+                        onAircraftClick = { aircraftId ->
+                            navController.navigate(Screen.MaintenanceOverview.createRoute(aircraftId))
+                        },
+                    )
+                }
+                composable(
+                    route = Screen.MaintenanceOverview.route,
+                    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType }),
+                ) {
+                    AircraftOverviewScreen(
+                        navController = navController,
+                        onMutationAction = null,
+                        attachmentsAvailable = false,
+                    )
+                }
             }
-        } else {
-            AuthFlow(onComplete = { onboarded = true })
         }
     }
 }

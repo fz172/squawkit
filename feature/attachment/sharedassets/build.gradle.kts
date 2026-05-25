@@ -23,6 +23,10 @@ kotlin {
   jvmToolchain(21)
   androidTarget()
 
+  js(IR) {
+    browser()
+  }
+
   iosArm64()
   iosSimulatorArm64()
 

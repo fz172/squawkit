@@ -24,9 +24,10 @@ import org.koin.core.parameter.parametersOf
 fun LogsTab(
   aircraftId: String,
   syncStates: Map<String, BlobSyncState> = emptyMap(),
-  onNavigateToAddLog: () -> Unit,
-  onNavigateToEditLog: (logId: String) -> Unit,
+  onNavigateToAddLog: (() -> Unit)?,
+  onNavigateToEditLog: ((logId: String) -> Unit)?,
   onTaskClick: (taskId: String) -> Unit,
+  attachmentsAvailable: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   val viewModel: MaintenanceLogListViewModel =
@@ -39,8 +40,8 @@ fun LogsTab(
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {
-        is MaintenanceLogListEvent.NavigateToCreateLog -> onNavigateToAddLog()
-        is MaintenanceLogListEvent.NavigateToEditLog -> onNavigateToEditLog(event.logId)
+        is MaintenanceLogListEvent.NavigateToCreateLog -> onNavigateToAddLog?.invoke()
+        is MaintenanceLogListEvent.NavigateToEditLog -> onNavigateToEditLog?.invoke(event.logId)
       }
     }
   }
@@ -57,8 +58,8 @@ fun LogsTab(
       openError = null
       viewModel.onDismissDetail()
     },
-    onEditLog = viewModel::onEditLog,
-    onAddLog = viewModel::onAddLog,
+    onEditLog = onNavigateToEditLog?.let { viewModel::onEditLog },
+    onAddLog = onNavigateToAddLog?.let { viewModel::onAddLog },
     onAttachmentTap = { attachment ->
       openError = null
       coroutineScope.launch {
@@ -69,6 +70,7 @@ fun LogsTab(
     },
     openError = openError,
     onTaskClick = onTaskClick,
+    attachmentsAvailable = attachmentsAvailable,
     modifier = modifier,
   )
 }

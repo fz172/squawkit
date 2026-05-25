@@ -36,7 +36,7 @@ fun SquawkDetailSheet(
   item: SquawkWithStatus,
   addressingLog: MaintenanceLog?,
   onDismiss: () -> Unit,
-  onEditClick: () -> Unit,
+  onEditClick: (() -> Unit)?,
   modifier: Modifier = Modifier,
 ) {
   val squawk = item.squawk
@@ -45,8 +45,10 @@ fun SquawkDetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
     actionSlot = {
-      TextButton(onClick = onEditClick) {
-        Text(stringResource(Res.string.edit_squawk))
+      if (onEditClick != null) {
+        TextButton(onClick = onEditClick) {
+          Text(stringResource(Res.string.edit_squawk))
+        }
       }
     },
     headerSlot = {

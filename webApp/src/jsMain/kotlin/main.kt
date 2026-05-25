@@ -4,9 +4,18 @@ import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
 import dev.fanfly.wingslog.core.storage.di.storageModule
+import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
+import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
+import dev.fanfly.wingslog.feature.featurelab.datamanager.di.featureLabModule
+import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
+import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
 import dev.fanfly.wingslog.feature.login.di.loginModule
+import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
+import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.di.syncModule
+import dev.fanfly.wingslog.feature.squawk.datamanager.squawkModule
+import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
 import dev.fanfly.wingslog.web.WebApp
 import dev.fanfly.wingslog.web.createSqlJsWorker
@@ -41,7 +50,16 @@ fun main() {
             platformStorageModule,
             loginModule,
             syncModule,
+            platformAttachmentModule,
+            featureLabModule,
             technicianDataManagerModule,
+            fleetDataManagerModule,
+            fleetViewingModule,
+            maintenanceDataManagerModule,
+            maintenanceViewingModule,
+            tasksModule,
+            squawkModule,
+            aircraftDashboardModule,
             module {
                 // The host app owns the bundled sql.js worker file (persists to IndexedDB).
                 single<Worker> { createSqlJsWorker() }

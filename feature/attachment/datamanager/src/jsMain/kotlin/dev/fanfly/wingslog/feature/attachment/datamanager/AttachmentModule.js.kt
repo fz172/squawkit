@@ -4,7 +4,10 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 /**
- * Attachments are outside the current web scope. Keep the dependency JS-capable without
- * registering browser filesystem, picker, or opener implementations.
+ * Attachments are outside the current web scope. Read-only pages can still depend on their
+ * view models; these bindings expose empty state and reject any attempted blob interaction.
  */
-actual val platformAttachmentModule: Module = module {}
+actual val platformAttachmentModule: Module = module {
+  single<AttachmentManager> { DisabledWebAttachmentManager() }
+  single<AttachmentOpener> { DisabledWebAttachmentOpener() }
+}
