@@ -41,6 +41,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -525,7 +526,7 @@ private fun SkipCard(
   isSkipping: Boolean,
   onToggle: () -> Unit,
 ) {
-  val warning = MaterialTheme.colorScheme.error
+  val warning = MaterialTheme.statusColors.caution.accent
   val borderColor =
     if (isSkipping) warning else MaterialTheme.colorScheme.outlineVariant
   val bg =

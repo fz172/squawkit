@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 
 /**
  * Read-only informational banner for summarising a multi-step form's current state.
@@ -52,7 +53,7 @@ fun PreviewBanner(
   val accentColor = when (tone) {
     PreviewBannerTone.Neutral -> MaterialTheme.colorScheme.outline
     PreviewBannerTone.Active -> MaterialTheme.colorScheme.primary
-    PreviewBannerTone.Warn -> MaterialTheme.colorScheme.tertiary
+    PreviewBannerTone.Warn -> MaterialTheme.statusColors.caution.accent
   }
   val primaryTextColor = when (tone) {
     PreviewBannerTone.Neutral -> MaterialTheme.colorScheme.onSurfaceVariant

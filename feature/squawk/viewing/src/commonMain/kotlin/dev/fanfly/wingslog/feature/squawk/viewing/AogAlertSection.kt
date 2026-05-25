@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.aog_alert_subtitle
@@ -42,6 +43,7 @@ fun AogAlertSection(
   modifier: Modifier = Modifier,
 ) {
   if (aogSquawks.isEmpty()) return
+  val blocking = MaterialTheme.statusColors.blocking
 
   Card(
     modifier = modifier.fillMaxWidth(),
@@ -49,7 +51,7 @@ fun AogAlertSection(
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     border = BorderStroke(
       Spacing.hairline,
-      MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+      blocking.accent.copy(alpha = 0.5f)
     ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
@@ -64,14 +66,14 @@ fun AogAlertSection(
         Icon(
           imageVector = Icons.Default.FlightLand,
           contentDescription = null,
-          tint = MaterialTheme.colorScheme.error,
+          tint = blocking.accent,
           modifier = Modifier.size(Spacing.huge),
         )
         Text(
           text = stringResource(Res.string.aog_alert_title),
           style = MaterialTheme.typography.headlineSmall,
           fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.error,
+          color = blocking.accent,
         )
         Text(
           text = stringResource(Res.string.aog_alert_subtitle),
@@ -109,7 +111,7 @@ fun AogAlertSection(
       ) {
         Text(
           text = stringResource(Res.string.view_squawks),
-          color = MaterialTheme.colorScheme.error,
+          color = blocking.accent,
         )
       }
     }
@@ -121,6 +123,7 @@ private fun AogSquawkRow(
   squawk: Squawk,
   onViewClick: () -> Unit,
 ) {
+  val blocking = MaterialTheme.statusColors.blocking
   Row(
     modifier = Modifier
       .fillMaxWidth()
@@ -133,7 +136,7 @@ private fun AogSquawkRow(
       modifier = Modifier
         .padding(top = Spacing.extraSmall)
         .size(Spacing.extraSmall)
-        .background(MaterialTheme.colorScheme.error, CircleShape)
+        .background(blocking.accent, CircleShape)
     )
     Text(
       text = squawk.title,

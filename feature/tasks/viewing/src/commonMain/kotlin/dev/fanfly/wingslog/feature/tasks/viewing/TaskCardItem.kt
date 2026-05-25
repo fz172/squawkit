@@ -12,8 +12,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
-import dev.fanfly.wingslog.core.ui.theme.StatusOk
-import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
@@ -40,13 +39,14 @@ fun TaskCardItem(
   val dueDate = cardWithStatus.dueStatus.nextDueDate
   val dueEngine = cardWithStatus.dueStatus.nextDueEngine
   val isOnCondition = cardWithStatus.dueStatus.isOnCondition
+  val colors = MaterialTheme.statusColors
 
   val statusColor = when (status) {
-    DueStatus.OVERDUE -> MaterialTheme.colorScheme.error
-    DueStatus.DUE_SOON -> StatusWarning
-    DueStatus.COMPLIED -> StatusOk
+    DueStatus.OVERDUE -> colors.critical.accent
+    DueStatus.DUE_SOON -> colors.caution.accent
+    DueStatus.COMPLIED -> colors.positive.accent
     DueStatus.NORMAL -> if (isOnCondition) MaterialTheme.colorScheme.onSurfaceVariant
-    else StatusOk
+    else colors.positive.accent
   }
 
   val badgeText = when (status) {

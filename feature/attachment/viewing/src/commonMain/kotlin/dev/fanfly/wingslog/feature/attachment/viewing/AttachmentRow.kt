@@ -29,6 +29,7 @@ import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.attachment.sharedassets.generated.resources.Res
@@ -106,7 +107,7 @@ fun AttachmentRow(
       BlobSyncState.UploadFailed -> Icon(
         imageVector = Icons.Filled.CloudOff,
         contentDescription = null,
-        tint = MaterialTheme.colorScheme.error,
+        tint = MaterialTheme.statusColors.critical.accent,
         modifier = Modifier.size(Spacing.large),
       )
 

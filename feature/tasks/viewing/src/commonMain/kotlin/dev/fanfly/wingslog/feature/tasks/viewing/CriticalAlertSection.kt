@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import org.jetbrains.compose.resources.stringResource
@@ -46,7 +46,8 @@ fun CriticalAlertsSection(
   modifier: Modifier = Modifier,
 ) {
   val hasOverdue = overdueTasks.any { it.dueStatus.status == DueStatus.OVERDUE }
-  val titleColor = if (hasOverdue) MaterialTheme.colorScheme.error else StatusWarning
+  val colors = MaterialTheme.statusColors
+  val titleColor = if (hasOverdue) colors.critical.accent else colors.caution.accent
 
   Card(
     modifier = modifier.fillMaxWidth(),
@@ -115,7 +116,8 @@ private fun CriticalAlertItem(
   onClick: () -> Unit,
 ) {
   val isOverdue = cardWithStatus.dueStatus.status == DueStatus.OVERDUE
-  val dotColor = if (isOverdue) MaterialTheme.colorScheme.error else StatusWarning
+  val colors = MaterialTheme.statusColors
+  val dotColor = if (isOverdue) colors.critical.accent else colors.caution.accent
 
   val dueDate = cardWithStatus.dueStatus.nextDueDate
   val dueEngine = cardWithStatus.dueStatus.nextDueEngine

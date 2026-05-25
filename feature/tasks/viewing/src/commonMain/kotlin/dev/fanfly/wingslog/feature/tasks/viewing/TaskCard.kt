@@ -1,9 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.viewing
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,7 +25,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.StatusTier
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 
 @Composable
@@ -46,9 +47,16 @@ fun TaskCard(
   val isOverdue = dueStatus == DueStatus.OVERDUE
   val isDueSoon = dueStatus == DueStatus.DUE_SOON
   val isAlert = isOverdue || isDueSoon
+  val colors = MaterialTheme.statusColors
+  val badgeTier = when (dueStatus) {
+    DueStatus.OVERDUE -> StatusTier.CRITICAL
+    DueStatus.DUE_SOON -> StatusTier.CAUTION
+    DueStatus.COMPLIED -> StatusTier.POSITIVE
+    DueStatus.NORMAL -> StatusTier.NEUTRAL
+  }
 
   val borderColor = when {
-    isOverdue -> MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+    isOverdue -> colors.critical.accent.copy(alpha = 0.5f)
     isDueSoon -> statusColor.copy(alpha = 0.5f)
     else -> MaterialTheme.colorScheme.outlineVariant
   }
@@ -75,10 +83,7 @@ fun TaskCard(
         verticalAlignment = Alignment.CenterVertically,
       ) {
         if (badgeText.isNotBlank()) {
-          StatusBadge(
-            text = badgeText,
-            color = if (isOverdue) MaterialTheme.colorScheme.error else statusColor
-          )
+          StatusChip(label = badgeText, tier = badgeTier)
         } else {
           Icon(
             imageVector = icon,
@@ -135,32 +140,6 @@ fun TaskCard(
   }
 }
 
-@Composable
-private fun StatusBadge(
-  text: String,
-  color: Color,
-) {
-  Box(
-    modifier = Modifier
-      .background(
-        color.copy(alpha = 0.12f),
-        RoundedCornerShape(Spacing.extraSmall)
-      )
-      .padding(
-        horizontal = Spacing.small,
-        vertical = Spacing.extraSmall
-      )
-  ) {
-    Text(
-      text = text,
-      style = MaterialTheme.typography.labelSmall,
-      color = color,
-      fontWeight = FontWeight.Bold,
-      letterSpacing = 0.5.sp,
-    )
-  }
-}
-
 @Preview
 @Composable
 fun PreviewTaskCard() = TaskCard(
@@ -170,7 +149,7 @@ fun PreviewTaskCard() = TaskCard(
   statusValue = "05/13/2026",
   badgeText = "OVERDUE",
   icon = Icons.Default.Schedule,
-  statusColor = MaterialTheme.colorScheme.error,
+  statusColor = MaterialTheme.statusColors.critical.accent,
   dueStatus = DueStatus.OVERDUE,
   modifier = Modifier.fillMaxWidth()
 )

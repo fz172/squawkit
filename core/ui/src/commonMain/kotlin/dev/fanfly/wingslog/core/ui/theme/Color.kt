@@ -1,17 +1,6 @@
 package dev.fanfly.wingslog.core.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-
-// --- Apple Platform Colors (iOS Native look) ---
-val AppleBlue = Color(0xFF007AFF)
-val AppleSystemBackgroundLight = Color(0xFFFFFFFF)
-val AppleSystemBackgroundDark = Color(0xFF000000)
-val AppleSecondarySystemBackgroundLight = Color(0xFFF2F2F7)
-val AppleSecondarySystemBackgroundDark = Color(0xFF1C1C1E)
-val AppleSeparatorLight = Color(0xFFC6C6C8)
-val AppleSeparatorDark = Color(0xFF38383A)
 
 // --- Aviation Blue (primary) ---
 // References glass cockpit displays: Garmin G1000, ForeFlight, Jeppesen charts.
@@ -47,43 +36,21 @@ val Amber10 = Color(0xFF271900)          // On tertiary container — light mode
 // Previous pastel values (yellow #FFD54F, green #A5D6A7) failed contrast as text colors.
 //
 // Aviation semantics:
-//   StatusOk     → "in the green" / airworthy / go
-//   StatusWarning → amber caution annunciator — action required but not immediate
-val StatusOkLight =
+//   positive → "in the green" / airworthy / go
+//   caution  → amber caution annunciator — action required but not immediate
+internal val StatusOkLight =
   Color(0xFF276B39)          // Dark forest green — airworthy / compliant (Light mode)
-val StatusOkDark =
+internal val StatusOkDark =
   Color(0xFF81C784)          // Light green for contrast (Dark mode)
 
-val StatusOk: Color
-  @Composable
-  get() = if (isSystemInDarkTheme()) StatusOkDark else StatusOkLight
-
-val StatusOkContainerLight = Color(0xFFE3F2E8)
-val StatusOkContainerDark = Color(0xFF1B4D2B)
-
-val StatusOkContainer: Color
-  @Composable
-  get() = if (isSystemInDarkTheme()) StatusOkContainerDark else StatusOkContainerLight
+internal val StatusOkContainerLight = Color(0xFFE3F2E8)
+internal val StatusOkContainerDark = Color(0xFF1B4D2B)
 
 // Light Mode Colors
-val StatusWarningLight = Color(0xFF8B5E00)          // Darker text/icon
-val StatusWarningContainerLight = Color(0xFFFFECB3) // Pale background
+internal val StatusWarningLight = Color(0xFF8B5E00)          // Darker text/icon
+internal val StatusWarningContainerLight = Color(0xFFFFECB3) // Pale background
 
 // Dark Mode Colors
-val StatusWarningDark = Color(0xFFFFCA28)           // Bright amber text/icon
-val StatusWarningContainerDark =
+internal val StatusWarningDark = Color(0xFFFFCA28)           // Bright amber text/icon
+internal val StatusWarningContainerDark =
   Color(0xFF514500)  // Deep, dark gold background
-
-val StatusWarning: Color
-  @Composable
-  get() = if (isSystemInDarkTheme())
-    StatusWarningDark
-  else
-    StatusWarningLight
-
-val StatusWarningContainer: Color
-  @Composable
-  get() = if (isSystemInDarkTheme())
-    StatusWarningContainerDark
-  else
-    StatusWarningContainerLight

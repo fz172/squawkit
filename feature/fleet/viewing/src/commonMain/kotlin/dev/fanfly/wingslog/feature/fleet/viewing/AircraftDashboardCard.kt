@@ -15,22 +15,19 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.Propeller
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.aircraft.PropellerHub
+import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.StatusWarning
-import dev.fanfly.wingslog.core.ui.theme.StatusWarningContainer
+import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
@@ -88,16 +85,14 @@ fun AircraftDashboardCard(
         horizontalArrangement = Arrangement.spacedBy(Spacing.small)
       ) {
         when (healthStatus) {
-          DueStatus.OVERDUE -> HealthStatusBadge(
+          DueStatus.OVERDUE -> StatusChip(
             label = stringResource(Res.string.maintenance_due_title),
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            tier = StatusTier.CRITICAL,
           )
 
-          DueStatus.DUE_SOON -> HealthStatusBadge(
+          DueStatus.DUE_SOON -> StatusChip(
             label = stringResource(Res.string.maintenance_due_title),
-            containerColor = StatusWarningContainer,
-            contentColor = StatusWarning,
+            tier = StatusTier.CAUTION,
           )
 
           else -> {}
@@ -109,29 +104,6 @@ fun AircraftDashboardCard(
         )
       }
     }
-  }
-}
-
-@Composable
-private fun HealthStatusBadge(
-  label: String,
-  containerColor: Color,
-  contentColor: Color,
-) {
-  Surface(
-    shape = RoundedCornerShape(Spacing.badgeCornerRadius),
-    color = containerColor,
-  ) {
-    Text(
-      text = label,
-      style = MaterialTheme.typography.labelSmall,
-      fontWeight = FontWeight.Medium,
-      color = contentColor,
-      modifier = Modifier.padding(
-        horizontal = Spacing.extraSmall,
-        vertical = Spacing.extraSmall
-      )
-    )
   }
 }
 

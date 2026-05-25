@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.attachment.sharedassets.generated.resources.Res
@@ -53,7 +54,7 @@ fun AttachmentSection(
       Text(
         text = openError.ifBlank { stringResource(Res.string.open_failed) },
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.error,
+        color = MaterialTheme.statusColors.critical.accent,
       )
     }
   }

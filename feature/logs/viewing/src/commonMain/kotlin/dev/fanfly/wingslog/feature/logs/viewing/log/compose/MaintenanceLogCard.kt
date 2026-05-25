@@ -34,8 +34,6 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.StatusOk
-import dev.fanfly.wingslog.core.ui.theme.StatusOkContainer
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
@@ -171,8 +169,8 @@ private fun badgeSchemeFor(type: ComponentType): BadgeScheme = when (type) {
   )
 
   ComponentType.COMPONENT_AIRFRAME -> BadgeScheme(
-    StatusOkContainer,
-    StatusOk,
+    MaterialTheme.colorScheme.surfaceContainerHigh,
+    MaterialTheme.colorScheme.onSurfaceVariant,
   )
 
   ComponentType.COMPONENT_PROPELLER -> BadgeScheme(

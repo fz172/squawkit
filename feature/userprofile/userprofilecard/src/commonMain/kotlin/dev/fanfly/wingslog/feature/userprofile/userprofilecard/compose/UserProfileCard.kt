@@ -32,7 +32,7 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.AvatarIcon
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.StatusWarning
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.displayResId
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -183,9 +183,10 @@ private fun certExpiryColor(expiration: WireInstant): Color {
     .toLocalDateTime(TimeZone.currentSystemDefault())
     .date
   val daysUntil = expiryDate.toEpochDays() - today.toEpochDays()
+  val colors = MaterialTheme.statusColors
   return when {
-    daysUntil < 0 -> MaterialTheme.colorScheme.error
-    daysUntil <= 90 -> StatusWarning
+    daysUntil < 0 -> colors.critical.accent
+    daysUntil <= 90 -> colors.caution.accent
     else -> MaterialTheme.colorScheme.onSurfaceVariant
   }
 }

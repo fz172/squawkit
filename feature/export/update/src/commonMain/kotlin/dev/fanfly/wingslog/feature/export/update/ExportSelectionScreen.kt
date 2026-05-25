@@ -73,9 +73,8 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.StatusOk
-import dev.fanfly.wingslog.core.ui.theme.StatusOkContainer
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
@@ -357,7 +356,7 @@ private fun FormatSection(
       Text(
         text = stringResource(Res.string.export_formats_helper_empty),
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.tertiary,
+        color = MaterialTheme.statusColors.caution.accent,
         modifier = Modifier.padding(start = Spacing.extraSmall),
       )
     }
@@ -843,7 +842,7 @@ private fun ProgressStepRow(
         complete -> Icon(
           imageVector = Icons.Default.CheckCircle,
           contentDescription = null,
-          tint = StatusOk,
+          tint = MaterialTheme.statusColors.positive.accent,
           modifier = Modifier.size(18.dp),
         )
 
@@ -948,8 +947,8 @@ private fun SuccessResult(
   ResultShell(
     modifier = modifier,
     heroIcon = Icons.Default.Check,
-    heroColor = StatusOk,
-    heroContainer = StatusOkContainer,
+    heroColor = MaterialTheme.statusColors.positive.accent,
+    heroContainer = MaterialTheme.statusColors.positive.container,
     title = stringResource(
       if (emailSucceeded) Res.string.export_success_sent_title else Res.string.export_success_title
     ),
@@ -1049,14 +1048,14 @@ private fun DeliveryFailureSection(failure: DeliveryFailure) {
     Icon(
       imageVector = Icons.Default.ErrorOutline,
       contentDescription = null,
-      tint = MaterialTheme.colorScheme.error,
+      tint = MaterialTheme.statusColors.critical.accent,
       modifier = Modifier.size(20.dp),
     )
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
       Text(
         text = failure.title,
         style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.error,
+        color = MaterialTheme.statusColors.critical.accent,
       )
       Text(
         text = failure.message,
@@ -1194,8 +1193,8 @@ private fun ErrorResult(
   ResultShell(
     modifier = modifier,
     heroIcon = Icons.Default.ErrorOutline,
-    heroColor = MaterialTheme.colorScheme.error,
-    heroContainer = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
+    heroColor = MaterialTheme.statusColors.critical.accent,
+    heroContainer = MaterialTheme.statusColors.critical.container,
     title = stringResource(Res.string.export_error_title),
     subtitle = stringResource(Res.string.export_error_subtitle),
     body = {

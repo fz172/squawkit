@@ -17,21 +17,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
+import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue90
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.StatusOk
-import dev.fanfly.wingslog.core.ui.theme.StatusOkContainer
-import dev.fanfly.wingslog.core.ui.theme.StatusWarning
-import dev.fanfly.wingslog.core.ui.theme.StatusWarningContainer
+import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
@@ -230,43 +228,28 @@ fun TaskDetailSheet(
 
 @Composable
 private fun dueStatusColor(status: DueStatus): Color = when (status) {
-  DueStatus.OVERDUE -> MaterialTheme.colorScheme.error
-  DueStatus.DUE_SOON -> StatusWarning
-  DueStatus.COMPLIED -> StatusOk
-  DueStatus.NORMAL -> StatusOk
+  DueStatus.OVERDUE -> MaterialTheme.statusColors.critical.accent
+  DueStatus.DUE_SOON -> MaterialTheme.statusColors.caution.accent
+  DueStatus.COMPLIED -> MaterialTheme.statusColors.positive.accent
+  DueStatus.NORMAL -> MaterialTheme.statusColors.positive.accent
 }
 
 @Composable
 private fun StatusBadge(dueStatus: DueMetadata) {
-  val (label, bgColor, fgColor) = when (dueStatus.status) {
-    DueStatus.OVERDUE -> Triple(
+  val (label, tier) = when (dueStatus.status) {
+    DueStatus.OVERDUE -> Pair(
       stringResource(ViewingRes.string.badge_overdue),
-      MaterialTheme.colorScheme.error,
-      MaterialTheme.colorScheme.onError,
+      StatusTier.CRITICAL,
     )
 
-    DueStatus.DUE_SOON -> Triple(
+    DueStatus.DUE_SOON -> Pair(
       stringResource(SharedRes.string.maintenance_due_title),
-      StatusWarningContainer,
-      StatusWarning,
+      StatusTier.CAUTION,
     )
 
     else -> return
   }
-  Text(
-    text = label,
-    style = MaterialTheme.typography.labelSmall.copy(
-      fontWeight = FontWeight.ExtraBold,
-      letterSpacing = 0.5.sp,
-    ),
-    color = fgColor,
-    modifier = Modifier.background(
-      bgColor, RoundedCornerShape(Spacing.badgeCornerRadius)
-    )
-      .padding(
-        horizontal = Spacing.medium, vertical = Spacing.extraSmall
-      ),
-  )
+  StatusChip(label = label, tier = tier)
 }
 
 @Composable
@@ -278,19 +261,9 @@ private fun DueDateHero(dueStatus: DueMetadata) {
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
     when {
       dueStatus.status == DueStatus.COMPLIED -> {
-        Text(
-          text = stringResource(ViewingRes.string.completed),
-          style = MaterialTheme.typography.labelSmall.copy(
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 0.5.sp,
-          ),
-          color = StatusOk,
-          modifier = Modifier.background(
-            StatusOkContainer, RoundedCornerShape(Spacing.badgeCornerRadius)
-          )
-            .padding(
-              horizontal = Spacing.medium, vertical = Spacing.extraSmall
-            ),
+        StatusChip(
+          label = stringResource(ViewingRes.string.completed),
+          tier = StatusTier.POSITIVE,
         )
       }
 

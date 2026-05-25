@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.sync.data.HydrationState
 import dev.fanfly.wingslog.feature.sync.data.SyncFailure
 import dev.fanfly.wingslog.feature.sync.settings.compose.SyncHeroIllustration
@@ -240,6 +241,7 @@ private fun SyncToggleRow(
 
 @Composable
 private fun StatusSection(state: SyncSettingsUiState) {
+  val colors = MaterialTheme.statusColors
   // Three mutually exclusive cases — only one ever renders. The point of having all three drawn
   // out explicitly is so future-me can spot when a state is missing UX coverage.
   when {
@@ -247,8 +249,8 @@ private fun StatusSection(state: SyncSettingsUiState) {
       icon = Icons.Default.Warning,
       title = stringResource(Res.string.sync_status_error_title),
       body = state.failure.displayText(),
-      tint = MaterialTheme.colorScheme.error,
-      container = MaterialTheme.colorScheme.errorContainer,
+      tint = colors.critical.accent,
+      container = colors.critical.container,
     )
 
     state.signedIn && state.cloudSyncEnabled && state.hydration is HydrationState.InProgress -> {
@@ -289,8 +291,8 @@ private fun StatusSection(state: SyncSettingsUiState) {
         icon = Icons.Default.Info,
         title = stringResource(Res.string.sync_status_anonymous_title),
         body = stringResource(Res.string.sync_status_anonymous_body),
-        tint = MaterialTheme.colorScheme.secondary,
-        container = MaterialTheme.colorScheme.secondaryContainer,
+        tint = colors.neutral.accent,
+        container = colors.neutral.container,
       )
     }
 
@@ -298,16 +300,16 @@ private fun StatusSection(state: SyncSettingsUiState) {
       icon = Icons.Default.CloudOff,
       title = stringResource(Res.string.sync_status_off_title),
       body = stringResource(Res.string.sync_status_off_body),
-      tint = MaterialTheme.colorScheme.tertiary,
-      container = MaterialTheme.colorScheme.tertiaryContainer,
+      tint = colors.neutral.accent,
+      container = colors.neutral.container,
     )
 
     else -> StatusRow(
       icon = Icons.Default.Info,
       title = stringResource(Res.string.sync_status_synced_title),
       body = stringResource(Res.string.sync_status_synced_body),
-      tint = MaterialTheme.colorScheme.primary,
-      container = MaterialTheme.colorScheme.surfaceContainerHighest,
+      tint = colors.positive.accent,
+      container = colors.positive.container,
     )
   }
 }

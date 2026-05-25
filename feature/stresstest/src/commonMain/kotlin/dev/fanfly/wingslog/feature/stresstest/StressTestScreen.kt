@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.stresstest.generated.resources.Res
@@ -184,8 +185,9 @@ fun StressTestScreen(
 
           if (isError) {
             val error = state as StressTestState.Error
+            val colors = MaterialTheme.statusColors.critical
             Surface(
-              color = MaterialTheme.colorScheme.errorContainer,
+              color = colors.container,
               shape = RoundedCornerShape(Spacing.cardCornerRadius),
             ) {
               Text(
@@ -195,7 +197,7 @@ fun StressTestScreen(
                     ?: stringResource(Res.string.stress_test_unknown_error),
                 ),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer,
+                color = colors.onContainer,
                 modifier = Modifier.padding(Spacing.medium),
               )
             }
