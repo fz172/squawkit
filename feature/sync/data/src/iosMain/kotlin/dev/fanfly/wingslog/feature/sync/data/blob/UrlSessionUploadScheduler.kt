@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.sync.data.blob
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
@@ -58,12 +59,13 @@ class UrlSessionUploadScheduler(
   private val httpClient: HttpClient,
   private val downloadDriver: BlobDownloadDriver,
   private val deleteDriver: BlobDeleteDriver,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) : UploadScheduler {
 
   private val log = Logger.withTag(TAG)
   private var scope = newScope()
 
-  private val delegate = BlobUploadDelegate(blobs, db)
+  private val delegate = BlobUploadDelegate(blobs, db, writeLock)
 
   // Background URLSession — iOS reconnects to this session automatically on relaunch using
   // the same identifier, and delivers pending completion events to the delegate.
@@ -154,7 +156,7 @@ class UrlSessionUploadScheduler(
       }
       RemoteState.LocalOnly -> {
         // Clear any stale resume_url left by a prior kill between setResumeUrl and markUploading.
-        if (row.resume_url != null) db.schemaQueries.clearResumeUrl(id.value)
+        if (row.resume_url != null) writeLock.withLock { db.schemaQueries.clearResumeUrl(id.value) }
       }
     }
 
@@ -182,7 +184,7 @@ class UrlSessionUploadScheduler(
       sizeBytes = row.size_bytes,
     ) ?: return
 
-    db.schemaQueries.setResumeUrl(resumeUrl = sessionUri, id = id.value)
+    writeLock.withLock { db.schemaQueries.setResumeUrl(resumeUrl = sessionUri, id = id.value) }
     blobs.markUploading(id)
     enqueueBackgroundUpload(
       id = id,

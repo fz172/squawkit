@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.login.di
 
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingActions
@@ -18,6 +19,7 @@ val loginModule = module {
     OnboardingPreferences(
       get<WingsLogDatabase>(),
       get<FirebaseAuth>(),
+      get<DatabaseWriteLock>(),
     )
   }
   single<OnboardingActions> { TechnicianOnboardingActions(get<TechnicianManager>()) }

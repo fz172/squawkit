@@ -12,6 +12,7 @@ import app.cash.sqldelight.db.SqlDriver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.DriverFactory
 import dev.fanfly.wingslog.core.storage.EntityCodecRegistry
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
@@ -37,6 +38,10 @@ import org.koin.dsl.module
   single<SqlDriver> { get<DriverFactory>().createDriver() }
 
   single<WingsLogDatabase> { createWingsLogDatabase(get<SqlDriver>()) }
+
+  // Serializes all DB write-units so a write's change-notification is never captured by a
+  // concurrently-open transaction (see DatabaseWriteLock). Shared by every writer below.
+  single<DatabaseWriteLock> { DatabaseWriteLock() }
 
   single<EntityCodecRegistry> {
     EntityCodecRegistry().apply {
@@ -81,16 +86,23 @@ import org.koin.dsl.module
       db = get(),
       codecs = get(),
       ioContext = storageIoContext,
+      writeLock = get<DatabaseWriteLock>(),
     )
   }
 
-  single<TombstoneGc> { TombstoneGc(db = get()) }
+  single<TombstoneGc> { TombstoneGc(db = get(), writeLock = get<DatabaseWriteLock>()) }
 
   single<DatabaseIntegrityChecker> {
-    DatabaseIntegrityChecker(db = get<WingsLogDatabase>(), driver = get<SqlDriver>())
+    DatabaseIntegrityChecker(
+      db = get<WingsLogDatabase>(),
+      driver = get<SqlDriver>(),
+      writeLock = get<DatabaseWriteLock>(),
+    )
   }
 
-  single<LocalAccountMigrator> { LocalAccountMigratorImpl(db = get<WingsLogDatabase>()) }
+  single<LocalAccountMigrator> {
+    LocalAccountMigratorImpl(db = get<WingsLogDatabase>(), writeLock = get<DatabaseWriteLock>())
+  }
 
   single<DatabaseHealth> { DatabaseHealth(isCorrupted = !get<DatabaseIntegrityChecker>().checkIntegrity()) }
 }

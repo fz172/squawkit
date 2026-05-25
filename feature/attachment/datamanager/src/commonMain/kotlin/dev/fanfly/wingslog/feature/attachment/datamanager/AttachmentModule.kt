@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.feature.attachment.datamanager.impl.LocalFirstAttachmentManagerImpl
 import dev.fanfly.wingslog.feature.attachment.datamanager.impl.SqlDelightLocalBlobStore
@@ -19,6 +20,7 @@ val attachmentModule = module {
       db = get(),
       fs = get(),
       ioContext = Dispatchers.Default,
+      writeLock = get<DatabaseWriteLock>(),
     )
   }
   single<AttachmentManager> {

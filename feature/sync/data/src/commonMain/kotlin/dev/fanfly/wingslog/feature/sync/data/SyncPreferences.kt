@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.sync.data
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -34,6 +35,7 @@ class SyncPreferences(
   private val db: WingsLogDatabase,
   private val auth: FirebaseAuth,
   private val ioContext: CoroutineContext = syncIoContext,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   scope: CoroutineScope = CoroutineScope(SupervisorJob() + ioContext),
 ) {
 
@@ -59,20 +61,24 @@ class SyncPreferences(
 
   suspend fun setCloudSyncEnabled(enabled: Boolean) {
     val uid = auth.currentUser?.uid ?: return
-    db.schemaQueries.upsertConfig(
-      uid,
-      KEY_CLOUD_SYNC_ENABLED,
-      enabled.toString()
-    )
+    writeLock.withLock {
+      db.schemaQueries.upsertConfig(
+        uid,
+        KEY_CLOUD_SYNC_ENABLED,
+        enabled.toString()
+      )
+    }
   }
 
   suspend fun setAllowUploadOnCellular(allowed: Boolean) {
     val uid = auth.currentUser?.uid ?: return
-    db.schemaQueries.upsertConfig(
-      uid,
-      KEY_ALLOW_UPLOAD_ON_CELLULAR,
-      allowed.toString()
-    )
+    writeLock.withLock {
+      db.schemaQueries.upsertConfig(
+        uid,
+        KEY_ALLOW_UPLOAD_ON_CELLULAR,
+        allowed.toString()
+      )
+    }
   }
 
   private fun booleanConfig(

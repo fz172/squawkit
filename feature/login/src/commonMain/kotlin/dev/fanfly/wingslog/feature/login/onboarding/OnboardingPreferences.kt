@@ -1,12 +1,14 @@
 package dev.fanfly.wingslog.feature.login.onboarding
 
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.gitlive.firebase.auth.FirebaseAuth
 
 class OnboardingPreferences(
   private val db: WingsLogDatabase,
   private val auth: FirebaseAuth,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) {
 
   // suspend + awaitAsOneOrNull so it works on the async web (sql.js) driver, not just mobile.
@@ -19,7 +21,9 @@ class OnboardingPreferences(
 
   suspend fun setHasSeenWelcome() {
     val uid = auth.currentUser?.uid ?: return
-    db.schemaQueries.upsertConfig(uid, KEY_HAS_SEEN_WELCOME, true.toString())
+    writeLock.withLock {
+      db.schemaQueries.upsertConfig(uid, KEY_HAS_SEEN_WELCOME, true.toString())
+    }
   }
 
   companion object {

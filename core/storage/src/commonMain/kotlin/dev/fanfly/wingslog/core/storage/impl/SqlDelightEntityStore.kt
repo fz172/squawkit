@@ -5,6 +5,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityCodec
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
@@ -31,6 +32,7 @@ class SqlDelightEntityStore<T : Any>(
   private val codec: EntityCodec<T>,
   private val db: WingsLogDatabase,
   private val ioContext: CoroutineContext,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   private val clock: Clock = Clock.System,
 ) : EntityStore<T> {
 
@@ -62,41 +64,45 @@ class SqlDelightEntityStore<T : Any>(
     scope: EntityScope,
   ) {
     val now = clock.now().toEpochMilliseconds()
-    db.schemaQueries.upsert(
-      collection = kind,
-      scope_path = scope.toPath(),
-      id = id,
-      payload = codec.encode(value),
-      payload_schema = kind.schemaName,
-      updated_at = now,
-      remote_updated_at = null,
-      dirty = true,
-      deleted = false,
-    )
+    writeLock.withLock {
+      db.schemaQueries.upsert(
+        collection = kind,
+        scope_path = scope.toPath(),
+        id = id,
+        payload = codec.encode(value),
+        payload_schema = kind.schemaName,
+        updated_at = now,
+        remote_updated_at = null,
+        dirty = true,
+        deleted = false,
+      )
+    }
   }
 
   override suspend fun delete(
     id: String,
     scope: EntityScope,
   ) {
-    val existing = db.schemaQueries.selectOne(
-      kind,
-      scope.toPath(),
-      id
-    ).awaitAsOneOrNull()
-    val payloadBytes = existing?.payload ?: ByteArray(0)
     val now = clock.now().toEpochMilliseconds()
-    db.schemaQueries.upsert(
-      collection = kind,
-      scope_path = scope.toPath(),
-      id = id,
-      payload = payloadBytes,
-      payload_schema = kind.schemaName,
-      updated_at = now,
-      remote_updated_at = null,
-      dirty = true,
-      deleted = true,
-    )
+    writeLock.withLock {
+      val existing = db.schemaQueries.selectOne(
+        kind,
+        scope.toPath(),
+        id
+      ).awaitAsOneOrNull()
+      val payloadBytes = existing?.payload ?: ByteArray(0)
+      db.schemaQueries.upsert(
+        collection = kind,
+        scope_path = scope.toPath(),
+        id = id,
+        payload = payloadBytes,
+        payload_schema = kind.schemaName,
+        updated_at = now,
+        remote_updated_at = null,
+        dirty = true,
+        deleted = true,
+      )
+    }
   }
 
   // SQLDelight `selectAll` / `selectOne` return generated row types with `id`, `payload`,

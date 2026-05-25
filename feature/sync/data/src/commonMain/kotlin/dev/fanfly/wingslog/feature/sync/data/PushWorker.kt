@@ -4,6 +4,7 @@ import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOne
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.db.SelectDirtyInScope
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
@@ -30,6 +31,7 @@ class PushWorker(
   private val db: WingsLogDatabase,
   private val writer: SyncWriter,
   private val ioContext: CoroutineContext,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -93,11 +95,13 @@ class PushWorker(
         schema = row.collection.schemaName,
       ),
     )
-    db.schemaQueries.clearDirty(
-      row.collection,
-      row.scope_path,
-      row.id
-    )
+    writeLock.withLock {
+      db.schemaQueries.clearDirty(
+        row.collection,
+        row.scope_path,
+        row.id
+      )
+    }
     failureSink(null) // success — clear any previously-surfaced push failure.
     true
   }.getOrElse { e ->

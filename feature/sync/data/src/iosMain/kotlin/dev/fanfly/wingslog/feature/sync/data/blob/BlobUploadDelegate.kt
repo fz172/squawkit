@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.sync.data.blob
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
@@ -29,6 +30,7 @@ import platform.darwin.NSObject
 class BlobUploadDelegate(
   private val blobs: LocalBlobStore,
   private val db: WingsLogDatabase,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) : NSObject(), NSURLSessionTaskDelegateProtocol {
 
   private val log = Logger.withTag(TAG)
@@ -56,7 +58,7 @@ class BlobUploadDelegate(
         log.w { "no blob_object row for ${blobId.value} on completion; skipping" }
         return@launch
       }
-      db.schemaQueries.clearResumeUrl(blobId.value)
+      writeLock.withLock { db.schemaQueries.clearResumeUrl(blobId.value) }
       if (row.remote_state != RemoteState.Uploading) {
         log.w { "blob ${blobId.value} is ${row.remote_state.wireName} on completion; skipping transition" }
         return@launch

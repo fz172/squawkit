@@ -54,6 +54,18 @@ standalone `webApp` seed into a real, code-sharing web client.
   management. Browser attachment controls remain suppressed until blob handling is
   implemented; export UI and anonymous account upgrade are still deferred.
   **Verified:** webApp JS bundle plus Android and iOS simulator compilation pass.
+- **Web live-update fix (2026-05-24) — ✅ landed.** On web, adding an aircraft (or hydrating
+  on sign-in) did not refresh the dashboard until a page reload. Root cause: SQLDelight routes a
+  write's change-notification to `driver.currentTransaction()`, which is thread-confined on
+  Android/iOS but a single shared field on the web `WebWorkerDriver`. Because web runs everything
+  on one thread and the sync engine keeps suspending `db.transaction {}` blocks open across
+  `await()`s (`HydrationRunner`, `PullListener`), a concurrent UI `EntityStore.put` had its
+  `entity` notification captured by an open sync transaction — delivered late on commit, or
+  dropped on rollback — so live `asFlow` queries never fired. Fix: a shared `DatabaseWriteLock`
+  (`core:storage`) `Mutex` now serializes every DB write-unit (standalone mutations and
+  transactions) across all writers and all platforms, so notifications always fire immediately and
+  transactions never nest-corrupt. **Verified:** Android/JS/iOS compilation and affected Android
+  unit tests pass; in-browser add/hydrate live refresh still to be confirmed in a running web build.
 
 **What's next (in order):**
 1. Complete the pending signed-in browser hydration/push and local persistence verification through the M5 UI.

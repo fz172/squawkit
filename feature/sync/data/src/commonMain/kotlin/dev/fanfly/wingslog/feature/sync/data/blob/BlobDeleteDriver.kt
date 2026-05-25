@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.sync.data.blob
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
@@ -19,6 +20,7 @@ class BlobDeleteDriver(
   private val blobs: LocalBlobStore,
   private val storage: FirebaseStorage,
   private val db: WingsLogDatabase,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -51,7 +53,7 @@ class BlobDeleteDriver(
       }
     }
 
-    db.schemaQueries.hardDeleteBlob(id.value)
+    writeLock.withLock { db.schemaQueries.hardDeleteBlob(id.value) }
     log.i { "hard-deleted blob row ${id.value}" }
     return true
   }

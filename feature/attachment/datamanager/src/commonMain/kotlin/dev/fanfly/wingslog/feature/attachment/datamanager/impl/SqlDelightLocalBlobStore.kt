@@ -4,6 +4,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
@@ -36,6 +37,7 @@ class SqlDelightLocalBlobStore(
   private val fs: BlobFilesystem,
   private val ioContext: CoroutineContext,
   private val clock: Clock = Clock.System,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) : LocalBlobStore {
 
   override suspend fun put(
@@ -48,20 +50,22 @@ class SqlDelightLocalBlobStore(
     fs.write(rel, bytes)
     val sha = sha256Hex(bytes)
     val now = clock.now().toEpochMilliseconds()
-    db.schemaQueries.upsertBlob(
-      id = id.value,
-      scope_path = scope.toPath(),
-      relative_path = rel,
-      content_type = contentType,
-      size_bytes = bytes.size.toLong(),
-      sha256 = sha,
-      remote_state = RemoteState.LocalOnly,
-      remote_path = null,
-      upload_attempts = 0L,
-      last_attempt_at = null,
-      updated_at = now,
-      deleted = false,
-    )
+    writeLock.withLock {
+      db.schemaQueries.upsertBlob(
+        id = id.value,
+        scope_path = scope.toPath(),
+        relative_path = rel,
+        content_type = contentType,
+        size_bytes = bytes.size.toLong(),
+        sha256 = sha,
+        remote_state = RemoteState.LocalOnly,
+        remote_path = null,
+        upload_attempts = 0L,
+        last_attempt_at = null,
+        updated_at = now,
+        deleted = false,
+      )
+    }
     return loadRef(id) ?: error("upsertBlob did not produce a row for id=${id.value}")
   }
 
@@ -78,20 +82,22 @@ class SqlDelightLocalBlobStore(
       return
     }
     val now = clock.now().toEpochMilliseconds()
-    db.schemaQueries.upsertBlob(
-      id = id.value,
-      scope_path = scope.toPath(),
-      relative_path = blobRelativePath(id.value),
-      content_type = contentType,
-      size_bytes = sizeBytes,
-      sha256 = sha256,
-      remote_state = RemoteState.RemoteOnly,
-      remote_path = "${scope.toPath().trim('/')}/blobs/${id.value}",
-      upload_attempts = 0L,
-      last_attempt_at = null,
-      updated_at = now,
-      deleted = false,
-    )
+    writeLock.withLock {
+      db.schemaQueries.upsertBlob(
+        id = id.value,
+        scope_path = scope.toPath(),
+        relative_path = blobRelativePath(id.value),
+        content_type = contentType,
+        size_bytes = sizeBytes,
+        sha256 = sha256,
+        remote_state = RemoteState.RemoteOnly,
+        remote_path = "${scope.toPath().trim('/')}/blobs/${id.value}",
+        upload_attempts = 0L,
+        last_attempt_at = null,
+        updated_at = now,
+        deleted = false,
+      )
+    }
   }
 
   override fun observe(id: BlobId): Flow<BlobRef?> =
@@ -116,13 +122,15 @@ class SqlDelightLocalBlobStore(
     require(row.remote_state == RemoteState.LocalOnly) {
       "markUploading: invalid transition from ${row.remote_state.wireName}"
     }
-    db.schemaQueries.setBlobRemoteState(
-      remote_state = RemoteState.Uploading,
-      remote_path = row.remote_path,
-      last_attempt_at = clock.now().toEpochMilliseconds(),
-      upload_attempts = row.upload_attempts,
-      id = id.value,
-    )
+    writeLock.withLock {
+      db.schemaQueries.setBlobRemoteState(
+        remote_state = RemoteState.Uploading,
+        remote_path = row.remote_path,
+        last_attempt_at = clock.now().toEpochMilliseconds(),
+        upload_attempts = row.upload_attempts,
+        id = id.value,
+      )
+    }
   }
 
   override suspend fun markUploaded(id: BlobId, remotePath: String) {
@@ -130,13 +138,15 @@ class SqlDelightLocalBlobStore(
     require(row.remote_state == RemoteState.Uploading) {
       "markUploaded: invalid transition from ${row.remote_state.wireName}"
     }
-    db.schemaQueries.setBlobRemoteState(
-      remote_state = RemoteState.Synced,
-      remote_path = remotePath,
-      last_attempt_at = clock.now().toEpochMilliseconds(),
-      upload_attempts = 0L,
-      id = id.value,
-    )
+    writeLock.withLock {
+      db.schemaQueries.setBlobRemoteState(
+        remote_state = RemoteState.Synced,
+        remote_path = remotePath,
+        last_attempt_at = clock.now().toEpochMilliseconds(),
+        upload_attempts = 0L,
+        id = id.value,
+      )
+    }
   }
 
   override suspend fun markFailedTransient(id: BlobId) {
@@ -144,13 +154,15 @@ class SqlDelightLocalBlobStore(
     require(row.remote_state == RemoteState.Uploading) {
       "markFailedTransient: invalid transition from ${row.remote_state.wireName}"
     }
-    db.schemaQueries.setBlobRemoteState(
-      remote_state = RemoteState.LocalOnly,
-      remote_path = row.remote_path,
-      last_attempt_at = clock.now().toEpochMilliseconds(),
-      upload_attempts = row.upload_attempts + 1,
-      id = id.value,
-    )
+    writeLock.withLock {
+      db.schemaQueries.setBlobRemoteState(
+        remote_state = RemoteState.LocalOnly,
+        remote_path = row.remote_path,
+        last_attempt_at = clock.now().toEpochMilliseconds(),
+        upload_attempts = row.upload_attempts + 1,
+        id = id.value,
+      )
+    }
   }
 
   override suspend fun markFailedPermanent(id: BlobId, cause: Throwable) {
@@ -159,13 +171,15 @@ class SqlDelightLocalBlobStore(
       "markFailedPermanent: invalid transition from ${row.remote_state.wireName}"
     }
     Logger.w(throwable = cause) { "Permanent upload failure for blob ${id.value}" }
-    db.schemaQueries.setBlobRemoteState(
-      remote_state = RemoteState.LocalOnly,
-      remote_path = row.remote_path,
-      last_attempt_at = clock.now().toEpochMilliseconds(),
-      upload_attempts = row.upload_attempts + 1,
-      id = id.value,
-    )
+    writeLock.withLock {
+      db.schemaQueries.setBlobRemoteState(
+        remote_state = RemoteState.LocalOnly,
+        remote_path = row.remote_path,
+        last_attempt_at = clock.now().toEpochMilliseconds(),
+        upload_attempts = row.upload_attempts + 1,
+        id = id.value,
+      )
+    }
   }
 
   override suspend fun installDownloaded(
@@ -182,23 +196,27 @@ class SqlDelightLocalBlobStore(
       return Result.failure(IntegrityError(expected = expectedSha256, actual = actual))
     }
     fs.write(row.relative_path, bytes)
-    db.schemaQueries.setBlobRemoteState(
-      remote_state = RemoteState.Synced,
-      remote_path = row.remote_path,
-      last_attempt_at = clock.now().toEpochMilliseconds(),
-      upload_attempts = 0L,
-      id = id.value,
-    )
+    writeLock.withLock {
+      db.schemaQueries.setBlobRemoteState(
+        remote_state = RemoteState.Synced,
+        remote_path = row.remote_path,
+        last_attempt_at = clock.now().toEpochMilliseconds(),
+        upload_attempts = 0L,
+        id = id.value,
+      )
+    }
     return Result.success(Unit)
   }
 
   override suspend fun delete(id: BlobId) {
     val row = db.schemaQueries.selectBlobById(id.value).executeAsOneOrNull() ?: return
     fs.delete(row.relative_path)
-    db.schemaQueries.markBlobDeleted(
-      updated_at = clock.now().toEpochMilliseconds(),
-      id = id.value,
-    )
+    writeLock.withLock {
+      db.schemaQueries.markBlobDeleted(
+        updated_at = clock.now().toEpochMilliseconds(),
+        id = id.value,
+      )
+    }
   }
 
   private fun requireRow(id: BlobId): Blob_object =
@@ -215,7 +233,7 @@ class SqlDelightLocalBlobStore(
       .map { rows -> rows.map { it.toRef() } }
 
   override suspend fun resetUploadAttempts(id: BlobId) {
-    db.schemaQueries.resetUploadAttempts(id.value)
+    writeLock.withLock { db.schemaQueries.resetUploadAttempts(id.value) }
   }
 
   override suspend fun wipeForUser(uid: String) {
@@ -224,7 +242,7 @@ class SqlDelightLocalBlobStore(
     for (row in rows) {
       try { fs.delete(row.relative_path) } catch (_: Exception) {}
     }
-    db.schemaQueries.deleteBlobsForUser(prefix)
+    writeLock.withLock { db.schemaQueries.deleteBlobsForUser(prefix) }
   }
 
   private fun Blob_object.toRef(): BlobRef = BlobRef(

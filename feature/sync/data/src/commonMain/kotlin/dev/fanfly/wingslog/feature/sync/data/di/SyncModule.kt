@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.sync.data.di
 
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.PostWriteHook
@@ -52,9 +53,12 @@ val syncModule: Module = module {
       db = get<WingsLogDatabase>(),
       auth = get<FirebaseAuth>(),
       ioContext = syncIoContext,
+      writeLock = get<DatabaseWriteLock>(),
     )
   }
-  single<SyncCursorStore> { SyncCursorStore(get<WingsLogDatabase>()) }
+  single<SyncCursorStore> {
+    SyncCursorStore(get<WingsLogDatabase>(), writeLock = get<DatabaseWriteLock>())
+  }
   single<SyncWriter> { FirestoreSyncWriter(get<FirebaseFirestore>()) }
   single<RemoteFetcher> { FirestoreRemoteFetcher(get<FirebaseFirestore>()) }
   single<FirestorePullSubscription> { FirestorePullSubscription(get<FirebaseFirestore>()) }
@@ -63,6 +67,7 @@ val syncModule: Module = module {
       db = get<WingsLogDatabase>(),
       fetcher = get<RemoteFetcher>(),
       cursors = get<SyncCursorStore>(),
+      writeLock = get<DatabaseWriteLock>(),
       postWriteHook = getOrNull(),
     )
   }
@@ -71,12 +76,14 @@ val syncModule: Module = module {
       db = get<WingsLogDatabase>(),
       writer = get<SyncWriter>(),
       ioContext = syncIoContext,
+      writeLock = get<DatabaseWriteLock>(),
     )
   }
   single<SyncEngine> {
     val db = get<WingsLogDatabase>()
     val postWriteHook = getOrNull<PostWriteHook>()
     val uploadScheduler = getOrNull<UploadScheduler>()
+    val writeLock = get<DatabaseWriteLock>()
     SyncEngine(
       auth = get<FirebaseAuth>(),
       cursors = get<SyncCursorStore>(),
@@ -87,6 +94,7 @@ val syncModule: Module = module {
           kind = kind,
           scope = scope,
           db = db,
+          writeLock = writeLock,
           postWriteHook = postWriteHook,
         )
       },

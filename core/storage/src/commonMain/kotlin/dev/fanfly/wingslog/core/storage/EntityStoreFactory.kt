@@ -17,6 +17,7 @@ class EntityStoreFactory(
   private val db: WingsLogDatabase,
   private val codecs: EntityCodecRegistry,
   private val ioContext: CoroutineContext,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   private val clock: Clock = Clock.System,
 ) {
   fun <T : Any> create(kind: CollectionKind): EntityStore<T> = SqlDelightEntityStore(
@@ -24,6 +25,7 @@ class EntityStoreFactory(
     codec = codecs.codecFor(kind),
     db = db,
     ioContext = ioContext,
+    writeLock = writeLock,
     clock = clock,
   )
 }

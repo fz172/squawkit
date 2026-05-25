@@ -25,6 +25,7 @@ interface LocalAccountMigrator {
 
 class LocalAccountMigratorImpl(
   private val db: WingsLogDatabase,
+  private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) : LocalAccountMigrator {
 
   private val log = Logger.withTag(TAG)
@@ -37,12 +38,14 @@ class LocalAccountMigratorImpl(
     // 1-based index of the path tail that follows the old prefix (SQLite substr is 1-based).
     val remainderStart = (oldPrefix.length + 1).toString()
     withContext(storageIoContext) {
-      db.schemaQueries.transaction {
-        db.schemaQueries.reassignEntities(newPrefix, remainderStart, oldPrefixLike)
-        db.schemaQueries.reassignBlobs(newPrefix, remainderStart, oldPrefixLike)
-        // Drop both users' cursors so the destination account re-hydrates its existing cloud set.
-        db.schemaQueries.deleteSyncCursorsForUser(fromUid)
-        db.schemaQueries.deleteSyncCursorsForUser(toUid)
+      writeLock.withLock {
+        db.schemaQueries.transaction {
+          db.schemaQueries.reassignEntities(newPrefix, remainderStart, oldPrefixLike)
+          db.schemaQueries.reassignBlobs(newPrefix, remainderStart, oldPrefixLike)
+          // Drop both users' cursors so the destination account re-hydrates its existing cloud set.
+          db.schemaQueries.deleteSyncCursorsForUser(fromUid)
+          db.schemaQueries.deleteSyncCursorsForUser(toUid)
+        }
       }
     }
     log.i { "reassign: moved local data from uid=$fromUid to uid=$toUid" }
