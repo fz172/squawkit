@@ -68,7 +68,10 @@ standalone `webApp` seed into a real, code-sharing web client.
   unit tests pass; in-browser add/hydrate live refresh still to be confirmed in a running web build.
 
 **What's next (in order):**
-1. Complete the pending signed-in browser hydration/push and local persistence verification through the M5 UI.
+1. In a running web build, confirm the live-update fix end-to-end: sign in with a populated
+   account and verify hydrated fleet/detail data appears without a reload, and that an added
+   aircraft shows on the dashboard immediately. This closes the pending signed-in browser
+   hydration/push and local-persistence verification carried since M4/M5.
 2. **M6+** as laid out below (editing and remaining feature surfaces).
 3. **`upgradeAnonymousAccount()` on web — deferred to last** (by decision). Still stubbed
    in `jsMain` `AuthManagerImpl`; needs Firebase-JS `linkWithPopup`. Until then a guest on
