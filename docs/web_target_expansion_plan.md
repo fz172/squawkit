@@ -31,7 +31,7 @@ standalone `webApp` seed into a real, code-sharing web client.
   `testDebugUnitTest`, iOS compile, webApp JS bundle all green. **Pending:** in-browser
   read/write round-trip (the sql.js worker + WASM load, like auth, needs a browser test).
 -
-- **M4 — ✅ code-complete; authenticated browser round-trip pending.** `core:firebase`,
+- **M4 — ✅ code-complete; authenticated browser round-trip deferred until M5 UI.** `core:firebase`,
   `feature:attachment:{model,datamanager}`, `feature:sync:data`, and
   `feature:technician:datamanager` now have `js` targets. Sync database reads use async
   SQLDelight query extensions and a platform sync dispatcher (`Default` on web). Web starts
@@ -39,13 +39,14 @@ standalone `webApp` seed into a real, code-sharing web client.
   `TechnicianManager` adapter.
   Attachments remain inactive on web through empty platform/scheduler modules and a guarded
   SHA-256 stub. **Verified:** affected Android unit tests, iOS simulator compilation, webApp JS
-  bundle, and initial browser render all pass. **Pending:** Google-authenticated Firestore
-  hydration/push round-trip in the browser.
+  bundle, and initial browser render all pass. **Pending after M5 provides an observable data
+  surface:** Google-authenticated Firestore hydration/push round-trip in the browser.
 
 **What's next (in order):**
-1. Complete the pending signed-in M4 browser hydration/push verification.
-2. **M5+** as laid out below (read-only fleet, then editing).
-3. **`upgradeAnonymousAccount()` on web — deferred to last** (by decision). Still stubbed
+1. **M5:** wire the read-only fleet/aircraft dashboard UI so hydrated data is observable.
+2. Complete the pending signed-in browser hydration/push and local persistence verification.
+3. **M6+** as laid out below (editing and remaining feature surfaces).
+4. **`upgradeAnonymousAccount()` on web — deferred to last** (by decision). Still stubbed
    in `jsMain` `AuthManagerImpl`; needs Firebase-JS `linkWithPopup`. Until then a guest on
    web can't upgrade in place — acceptable while web is pre-production.
 
