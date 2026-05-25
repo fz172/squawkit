@@ -39,26 +39,21 @@ class AuthManagerImpl(
   }
 
   /**
-   * Signs in anonymously using Firebase Authentication.
-   * Does not interfere with [trySilentLogin] — if a user is already signed in
-   * (including anonymously), this is a no-op and returns the current user.
+   * Anonymous (guest) sign-in is not supported on web — web requires a real account. The login
+   * screen hides the anonymous option here (see `feature/login` `isAnonymousLoginSupported`); this
+   * guards the path in case it is ever invoked.
    */
   override suspend fun signInAnonymously(): FirebaseUser? {
-    if (authProvider.currentUser != null) {
-      return authProvider.currentUser
-    }
-    return try {
-      authProvider.signInAnonymously()
-      authProvider.currentUser
-    } catch (e: Exception) {
-      logger.e(e) { "Anonymous sign-in failed" }
-      null
-    }
+    logger.w { "Anonymous sign-in is not supported on web" }
+    return null
   }
 
+  /**
+   * No-op on web: anonymous users don't exist here, so there is nothing to upgrade.
+   */
   override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult {
-    logger.w { "upgradeAnonymousAccount() is not yet supported on web" }
-    return AccountUpgradeResult.Failed("Account upgrade is not available on web yet")
+    logger.w { "upgradeAnonymousAccount() is not applicable on web (no anonymous users)" }
+    return AccountUpgradeResult.Failed("Anonymous accounts are not supported on web")
   }
 
   override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult {

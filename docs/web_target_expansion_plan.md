@@ -52,7 +52,8 @@ standalone `webApp` seed into a real, code-sharing web client.
 - **M6 — 🚧 in progress.** Browser routes now expose aircraft, maintenance log, task,
   and squawk add/edit flows, plus Settings, Cloud Sync, Feature Lab, and technician
   management. Browser attachment controls remain suppressed until blob handling is
-  implemented; export UI and anonymous account upgrade are still deferred.
+  implemented; export UI is still deferred. Anonymous sign-in / account upgrade on web is
+  dropped (see "Web auth scope narrowed" below) — web requires a real account.
   **Verified:** webApp JS bundle plus Android and iOS simulator compilation pass.
 - **Web live-update fix (2026-05-24) — ✅ landed.** On web, adding an aircraft (or hydrating
   on sign-in) did not refresh the dashboard until a page reload. Root cause: SQLDelight routes a
@@ -67,15 +68,22 @@ standalone `webApp` seed into a real, code-sharing web client.
   transactions never nest-corrupt. **Verified:** Android/JS/iOS compilation and affected Android
   unit tests pass; in-browser add/hydrate live refresh still to be confirmed in a running web build.
 
+- **Web auth scope narrowed (2026-05-24) — ✅ landed.** Web requires a real account: anonymous
+  (guest) sign-in is no longer offered. The login screen hides the "Continue without account"
+  option on web (`feature/login` `isAnonymousLoginSupported = false`), and `jsMain`
+  `AuthManagerImpl.signInAnonymously()` is now an explicit unsupported no-op. Consequently
+  **account upgrade on web is dropped** (there are no anonymous users to upgrade);
+  `upgradeAnonymousAccount()` stays a no-op stub. The login screen also now shows a
+  "Continue with Apple" button on all platforms (UI only; provider not yet wired).
+
 **What's next (in order):**
 1. In a running web build, confirm the live-update fix end-to-end: sign in with a populated
    account and verify hydrated fleet/detail data appears without a reload, and that an added
    aircraft shows on the dashboard immediately. This closes the pending signed-in browser
    hydration/push and local-persistence verification carried since M4/M5.
-2. **M6+** as laid out below (editing and remaining feature surfaces).
-3. **`upgradeAnonymousAccount()` on web — deferred to last** (by decision). Still stubbed
-   in `jsMain` `AuthManagerImpl`; needs Firebase-JS `linkWithPopup`. Until then a guest on
-   web can't upgrade in place — acceptable while web is pre-production.
+2. **M7 — durable web storage** (sqlite-wasm + OPFS), as laid out below. The remaining M6
+   surfaces (export UI, browser attachments) stay deferred; anonymous/account-upgrade on web is
+   now dropped rather than deferred.
 
 _(Done: a real Firebase web app is registered; its `appId` is wired into
 `webApp/src/jsMain/kotlin/main.kt`.)_
@@ -271,7 +279,8 @@ Track which shared modules have gained a `js(IR)` target (✅ = has JS target):
 | `feature:{logs,tasks,squawk}:update`, `feature:technician:{manage,sharedassets}` | ✅ | M6 |
 | `core:appinfo`, `feature:settings`, `feature:sync:{settings,sharedassets}` | ✅ | M6 dependency |
 | `feature:userprofile:{sharedassets,userprofilecard}`, `feature:export:sharedassets` | ✅ | M6 dependency |
-| `feature:export:{datamanager,update}`, browser attachments, account upgrade | ☐ | M6 deferred |
+| `feature:export:{datamanager,update}`, browser attachments | ☐ | M6 deferred |
+| anonymous sign-in / account upgrade on web | ✖︎ | dropped — web requires a real account |
 
 ## Open questions
 - Is the web client full parity, or a focused subset (e.g. view + light edit)? This
