@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -30,6 +31,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedFloatingAction
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.AircraftDashboardTabRow
@@ -80,87 +83,95 @@ fun AircraftOverviewContent(
       if (onMutationAction != null) when (AircraftTab.entries.getOrNull(
         pagerState.currentPage
       )) {
-        AircraftTab.SQUAWKS -> ExtendedFloatingActionButton(
-          onClick = {
-            onMutationAction(
-              AircraftOverviewAction.AddSquawkClick(
-                state.aircraft.id
+        AircraftTab.SQUAWKS -> ConstrainedFloatingAction(ContentWidth.Form) {
+          ExtendedFloatingActionButton(
+            onClick = {
+              onMutationAction(
+                AircraftOverviewAction.AddSquawkClick(
+                  state.aircraft.id
+                )
               )
-            )
-          },
-          icon = {
-            Icon(
-              Icons.Default.Add, contentDescription = null
-            )
-          },
-          text = { Text(stringResource(SquawkSharedRes.string.add_squawk)) },
-        )
+            },
+            icon = {
+              Icon(
+                Icons.Default.Add, contentDescription = null
+              )
+            },
+            text = { Text(stringResource(SquawkSharedRes.string.add_squawk)) },
+          )
+        }
 
-        AircraftTab.TASKS -> ExtendedFloatingActionButton(
-          onClick = {
-            onMutationAction(
-              AircraftOverviewAction.AddTaskClick(
-                state.aircraft.id
+        AircraftTab.TASKS -> ConstrainedFloatingAction(ContentWidth.Form) {
+          ExtendedFloatingActionButton(
+            onClick = {
+              onMutationAction(
+                AircraftOverviewAction.AddTaskClick(
+                  state.aircraft.id
+                )
               )
-            )
-          },
-          icon = {
-            Icon(
-              Icons.Default.Add, contentDescription = null
-            )
-          },
-          text = { Text(stringResource(TasksSharedRes.string.add_task)) },
-        )
+            },
+            icon = {
+              Icon(
+                Icons.Default.Add, contentDescription = null
+              )
+            },
+            text = { Text(stringResource(TasksSharedRes.string.add_task)) },
+          )
+        }
 
-        AircraftTab.LOGS -> ExtendedFloatingActionButton(
-          onClick = {
-            onMutationAction(
-              AircraftOverviewAction.AddLogClick(
-                state.aircraft.id
+        AircraftTab.LOGS -> ConstrainedFloatingAction(ContentWidth.Form) {
+          ExtendedFloatingActionButton(
+            onClick = {
+              onMutationAction(
+                AircraftOverviewAction.AddLogClick(
+                  state.aircraft.id
+                )
               )
-            )
-          },
-          icon = {
-            Icon(
-              Icons.Default.Add, contentDescription = null
-            )
-          },
-          text = { Text(stringResource(LogsSharedRes.string.add_log)) },
-        )
+            },
+            icon = {
+              Icon(
+                Icons.Default.Add, contentDescription = null
+              )
+            },
+            text = { Text(stringResource(LogsSharedRes.string.add_log)) },
+          )
+        }
 
         else -> {}
       }
     },
     containerColor = MaterialTheme.colorScheme.surface,
     topBar = {
-      TopAppBar(
-        title = {}, navigationIcon = {
-          IconButton(onClick = { onAction(AircraftOverviewAction.BackClick) }) {
-            Icon(
-              Icons.AutoMirrored.Filled.ArrowBack,
-              contentDescription = stringResource(CoreRes.string.back)
-            )
-          }
-        }, actions = {
-          if (onMutationAction != null) {
-            IconButton(onClick = {
-              onMutationAction(
-                AircraftOverviewAction.EditClick(
-                  state.aircraft.id
-                )
-              )
-            }) {
+      ConstrainedTopBar {
+        TopAppBar(
+          title = {}, navigationIcon = {
+            IconButton(onClick = { onAction(AircraftOverviewAction.BackClick) }) {
               Icon(
-                Icons.Default.Settings,
-                contentDescription = stringResource(MaintenanceRes.string.edit_aircraft)
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(CoreRes.string.back)
               )
             }
-          }
-        }, colors = TopAppBarDefaults.topAppBarColors(
-          containerColor = Color.Transparent,
-          scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+          }, actions = {
+            if (onMutationAction != null) {
+              IconButton(onClick = {
+                onMutationAction(
+                  AircraftOverviewAction.EditClick(
+                    state.aircraft.id
+                  )
+                )
+              }) {
+                Icon(
+                  Icons.Default.Settings,
+                  contentDescription = stringResource(MaintenanceRes.string.edit_aircraft)
+                )
+              }
+            }
+          }, colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+          )
         )
-      )
+      }
     }) { paddingValues ->
 
     state.selectedTask?.let { selectedTask ->
@@ -210,7 +221,8 @@ fun AircraftOverviewContent(
       modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter
     ) {
       Column(
-        modifier = Modifier.constrainedContentWidth(ContentWidth.Form)
+        modifier = Modifier.fillMaxHeight()
+          .constrainedContentWidth(ContentWidth.Form)
           .padding(paddingValues)
       ) {
         AircraftDashboardTabRow(

@@ -34,6 +34,7 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
@@ -125,23 +126,25 @@ fun SquawkFormScreen(
     modifier = modifier,
     topBar = {
       Column {
-        TopAppBar(
-          title = {
-            Text(
-              text = screenTitle.uppercase(),
-              style = MaterialTheme.typography.titleLarge,
-              fontWeight = FontWeight.Bold,
-            )
-          },
-          navigationIcon = {
-            IconButton(onClick = { tryBack() }) {
-              Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = null
+        ConstrainedTopBar {
+          TopAppBar(
+            title = {
+              Text(
+                text = screenTitle.uppercase(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
               )
-            }
-          },
-        )
+            },
+            navigationIcon = {
+              IconButton(onClick = { tryBack() }) {
+                Icon(
+                  Icons.AutoMirrored.Filled.ArrowBack,
+                  contentDescription = null
+                )
+              }
+            },
+          )
+        }
         Box(
           modifier = Modifier.fillMaxWidth(),
           contentAlignment = Alignment.TopCenter

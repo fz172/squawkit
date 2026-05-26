@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
@@ -151,26 +152,28 @@ fun MaintenanceLogFormScreen(
   Scaffold(
     topBar = {
       Column {
-        TopAppBar(
-          title = {
-            Text(
-              text = if (viewModel.isEditMode)
-                stringResource(SharedRes.string.edit_log).uppercase()
-              else
-                stringResource(SharedRes.string.add_log).uppercase(),
-              style = MaterialTheme.typography.titleLarge,
-              fontWeight = FontWeight.Bold,
-            )
-          },
-          navigationIcon = {
-            IconButton(onClick = { tryNavigateBack() }) {
-              Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(CoreRes.string.back),
+        ConstrainedTopBar {
+          TopAppBar(
+            title = {
+              Text(
+                text = if (viewModel.isEditMode)
+                  stringResource(SharedRes.string.edit_log).uppercase()
+                else
+                  stringResource(SharedRes.string.add_log).uppercase(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
               )
-            }
-          },
-        )
+            },
+            navigationIcon = {
+              IconButton(onClick = { tryNavigateBack() }) {
+                Icon(
+                  Icons.AutoMirrored.Filled.ArrowBack,
+                  contentDescription = stringResource(CoreRes.string.back),
+                )
+              }
+            },
+          )
+        }
         Box(
           modifier = Modifier.fillMaxWidth(),
           contentAlignment = Alignment.TopCenter

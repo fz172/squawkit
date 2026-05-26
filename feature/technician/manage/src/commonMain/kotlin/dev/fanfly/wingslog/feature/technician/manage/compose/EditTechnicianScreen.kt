@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -93,22 +94,27 @@ fun EditTechnicianScreen(
   Scaffold(
     modifier = modifier.imePadding(),
     topBar = {
-      TopAppBar(
-        title = {
-          Text(
-            when {
-              uiState.id.isEmpty() -> stringResource(TechnicianRes.string.add_technician)
-              uiState.isSelf -> stringResource(TechnicianRes.string.my_profile)
-              else -> stringResource(TechnicianRes.string.edit_technician)
+      ConstrainedTopBar {
+        TopAppBar(
+          title = {
+            Text(
+              when {
+                uiState.id.isEmpty() -> stringResource(TechnicianRes.string.add_technician)
+                uiState.isSelf -> stringResource(TechnicianRes.string.my_profile)
+                else -> stringResource(TechnicianRes.string.edit_technician)
+              }
+            )
+          },
+          navigationIcon = {
+            IconButton(onClick = onNavigateBack) {
+              Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = null
+              )
             }
-          )
-        },
-        navigationIcon = {
-          IconButton(onClick = onNavigateBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-          }
-        },
-      )
+          },
+        )
+      }
     }
   ) { paddingValues ->
     Column(

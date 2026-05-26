@@ -55,12 +55,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.ui.generated.resources.ic_launcher_foreground
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.onboarding_continue
 import wingslog.feature.login.generated.resources.onboarding_name_body
@@ -68,7 +71,6 @@ import wingslog.feature.login.generated.resources.onboarding_name_eyebrow
 import wingslog.feature.login.generated.resources.onboarding_name_headline
 import wingslog.feature.login.generated.resources.onboarding_name_hint
 import wingslog.feature.login.generated.resources.onboarding_name_label
-import wingslog.core.ui.generated.resources.ic_launcher_foreground
 import wingslog.core.ui.generated.resources.Res as UiRes
 
 @Composable
@@ -111,6 +113,7 @@ fun NameEntryScreen(
     modifier = Modifier
       .fillMaxSize()
       .background(AviationBlue10),
+    contentAlignment = Alignment.TopCenter,
   ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
       drawCircle(
@@ -127,6 +130,7 @@ fun NameEntryScreen(
 
     Column(
       modifier = Modifier
+        .constrainedContentWidth(ContentWidth.Auth)
         .fillMaxSize()
         .padding(start = 28.dp, end = 28.dp, top = 70.dp),
     ) {

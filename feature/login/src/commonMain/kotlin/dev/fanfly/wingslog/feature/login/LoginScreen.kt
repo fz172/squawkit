@@ -50,6 +50,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -135,6 +137,7 @@ fun LoginScreen(
     modifier = Modifier
       .fillMaxSize()
       .background(LoginBackground),
+    contentAlignment = Alignment.TopCenter,
   ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
       drawCircle(
@@ -151,6 +154,7 @@ fun LoginScreen(
 
     Column(
       modifier = Modifier
+        .constrainedContentWidth(ContentWidth.Auth)
         .fillMaxSize()
         .navigationBarsPadding()
         .padding(horizontal = 28.dp),

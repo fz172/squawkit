@@ -29,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.ui.common.compose.AvatarIcon
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedFloatingAction
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
@@ -68,32 +70,36 @@ fun DashboardScreen(
   Scaffold(
     modifier = Modifier.fillMaxSize(),
     topBar = {
-      TopAppBar(
-        title = { Text(text = stringResource(CoreUiRes.string.app_name)) },
-        actions = {
-          if (onOpenSettings != null) {
-            IconButton(onClick = onOpenSettings) {
-              AvatarIcon(
-                displayName = uiState.selfDisplayName,
-                photoUri = uiState.selfPhotoUri,
-                size = Spacing.huge,
-                contentDescription = stringResource(CoreUiRes.string.settings),
-              )
+      ConstrainedTopBar {
+        TopAppBar(
+          title = { Text(text = stringResource(CoreUiRes.string.app_name)) },
+          actions = {
+            if (onOpenSettings != null) {
+              IconButton(onClick = onOpenSettings) {
+                AvatarIcon(
+                  displayName = uiState.selfDisplayName,
+                  photoUri = uiState.selfPhotoUri,
+                  size = Spacing.huge,
+                  contentDescription = stringResource(CoreUiRes.string.settings),
+                )
+              }
             }
-          }
-        })
+          })
+      }
     },
     floatingActionButton = {
       if (onAddAircraft != null && !uiState.isLoading && uiState.fleet.isNotEmpty()) {
-        FloatingActionButton(
-          onClick = onAddAircraft,
-          containerColor = MaterialTheme.colorScheme.primary,
-          contentColor = MaterialTheme.colorScheme.onPrimary
-        ) {
-          Icon(
-            Icons.Default.Add,
-            contentDescription = stringResource(CoreUiRes.string.add_aircraft)
-          )
+        ConstrainedFloatingAction(ContentWidth.Feed) {
+          FloatingActionButton(
+            onClick = onAddAircraft,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+          ) {
+            Icon(
+              Icons.Default.Add,
+              contentDescription = stringResource(CoreUiRes.string.add_aircraft)
+            )
+          }
         }
       }
     }

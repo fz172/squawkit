@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
@@ -57,10 +58,12 @@ fun FeatureLabScreen(
 
   Scaffold(
     topBar = {
-      WingsLogTopAppBar(
-        title = stringResource(Res.string.feature_lab),
-        onBackClick = { navController.popBackStack() },
-      )
+      ConstrainedTopBar {
+        WingsLogTopAppBar(
+          title = stringResource(Res.string.feature_lab),
+          onBackClick = { navController.popBackStack() },
+        )
+      }
     }
   ) { innerPadding ->
     Box(

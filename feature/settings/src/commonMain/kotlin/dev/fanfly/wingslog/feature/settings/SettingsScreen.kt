@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.appinfo.getAppVersion
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
@@ -122,9 +123,11 @@ fun SettingsScreen(
 
   Scaffold(
     topBar = {
-      WingsLogTopAppBar(
-        title = stringResource(Res.string.settings),
-        onBackClick = { navController.popBackStack() })
+      ConstrainedTopBar {
+        WingsLogTopAppBar(
+          title = stringResource(Res.string.settings),
+          onBackClick = { navController.popBackStack() })
+      }
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
   ) { innerPadding ->

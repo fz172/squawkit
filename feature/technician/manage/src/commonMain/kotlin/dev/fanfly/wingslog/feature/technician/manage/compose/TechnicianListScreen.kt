@@ -24,6 +24,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedFloatingAction
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
@@ -49,21 +51,28 @@ fun TechnicianListScreen(
   Scaffold(
     modifier = modifier,
     topBar = {
-      TopAppBar(
-        title = { Text(stringResource(TechnicianRes.string.manage_technicians)) },
-        navigationIcon = {
-          IconButton(onClick = onNavigateBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+      ConstrainedTopBar {
+        TopAppBar(
+          title = { Text(stringResource(TechnicianRes.string.manage_technicians)) },
+          navigationIcon = {
+            IconButton(onClick = onNavigateBack) {
+              Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = null
+              )
+            }
           }
-        }
-      )
+        )
+      }
     },
     floatingActionButton = {
-      FloatingActionButton(onClick = { onNavigateToEdit(null) }) {
-        Icon(
-          Icons.Default.Add,
-          contentDescription = stringResource(TechnicianRes.string.add_technician)
-        )
+      ConstrainedFloatingAction(ContentWidth.Reading) {
+        FloatingActionButton(onClick = { onNavigateToEdit(null) }) {
+          Icon(
+            Icons.Default.Add,
+            contentDescription = stringResource(TechnicianRes.string.add_technician)
+          )
+        }
       }
     }
   ) { paddingValues ->

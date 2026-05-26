@@ -34,6 +34,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
@@ -129,12 +130,14 @@ fun EditAircraftScreen(
   Scaffold(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
-      WingsLogTopAppBar(
-        title = if (uiState.aircraft.id == "") stringResource(CoreRes.string.add_aircraft)
-        else stringResource(MaintenanceRes.string.update_aircraft),
-        onBackClick = { tryNavigateBack() },
-        scrollBehavior = scrollBehavior,
-      )
+      ConstrainedTopBar {
+        WingsLogTopAppBar(
+          title = if (uiState.aircraft.id == "") stringResource(CoreRes.string.add_aircraft)
+          else stringResource(MaintenanceRes.string.update_aircraft),
+          onBackClick = { tryNavigateBack() },
+          scrollBehavior = scrollBehavior,
+        )
+      }
     }
   ) { innerPadding ->
     Box(

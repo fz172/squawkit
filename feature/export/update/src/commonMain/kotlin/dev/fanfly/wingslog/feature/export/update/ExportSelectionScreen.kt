@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -71,7 +72,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -173,23 +177,25 @@ fun ExportSelectionScreen(
 ) {
   Scaffold(
     topBar = {
-      WingsLogTopAppBar(
-        title = stringResource(Res.string.feature_name_export_logs),
-        onBackClick = when (state) {
-          is ExportUiState.Running -> onCancel
-          else -> onNavigateBack
-        },
-        actions = {
-          if (state is ExportUiState.Configuring && state.aircraft.isNotEmpty()) {
-            IconButton(onClick = onNavigateToHistory) {
-              Icon(
-                imageVector = Icons.Default.History,
-                contentDescription = stringResource(Res.string.export_history_action),
-              )
+      ConstrainedTopBar {
+        WingsLogTopAppBar(
+          title = stringResource(Res.string.feature_name_export_logs),
+          onBackClick = when (state) {
+            is ExportUiState.Running -> onCancel
+            else -> onNavigateBack
+          },
+          actions = {
+            if (state is ExportUiState.Configuring && state.aircraft.isNotEmpty()) {
+              IconButton(onClick = onNavigateToHistory) {
+                Icon(
+                  imageVector = Icons.Default.History,
+                  contentDescription = stringResource(Res.string.export_history_action),
+                )
+              }
             }
-          }
-        },
-      )
+          },
+        )
+      }
     },
     bottomBar = {
       if (state is ExportUiState.Configuring && state.aircraft.isNotEmpty()) {
@@ -254,56 +260,61 @@ private fun ConfiguringContent(
     return
   }
 
-  LazyColumn(
-    modifier = modifier
-      .fillMaxSize()
-      .padding(horizontal = Spacing.screenPadding),
-    verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
+  Box(
+    modifier = modifier.fillMaxSize(),
+    contentAlignment = Alignment.TopCenter,
   ) {
-    item {
-      Spacer(Modifier.height(Spacing.small))
-      FormatSection(formats = state.formats, onToggleFormat = onToggleFormat)
-    }
+    LazyColumn(
+      modifier = Modifier
+        .fillMaxHeight()
+        .constrainedContentWidth(ContentWidth.Form)
+        .padding(horizontal = Spacing.screenPadding),
+      verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
+    ) {
+      item {
+        Spacer(Modifier.height(Spacing.small))
+        FormatSection(formats = state.formats, onToggleFormat = onToggleFormat)
+      }
 
-    item {
-      val allSelected = state.selectedAircraftIds.size == state.aircraft.size
-      Section(
-        title = stringResource(Res.string.export_aircraft_section),
-        action = if (state.aircraft.size > 1) {
-          {
-            TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
-              Text(
-                stringResource(
-                  if (allSelected) Res.string.export_clear_all else Res.string.export_select_all
+      item {
+        val allSelected = state.selectedAircraftIds.size == state.aircraft.size
+        Section(
+          title = stringResource(Res.string.export_aircraft_section),
+          action = if (state.aircraft.size > 1) {
+            {
+              TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
+                Text(
+                  stringResource(
+                    if (allSelected) Res.string.export_clear_all else Res.string.export_select_all
+                  )
                 )
+              }
+            }
+          } else {
+            null
+          },
+        ) {
+          Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+            state.aircraft.forEach { aircraft ->
+              AircraftCard(
+                aircraft = aircraft,
+                selected = aircraft.aircraftId in state.selectedAircraftIds,
+                onClick = { onToggleAircraft(aircraft.aircraftId) },
               )
             }
           }
-        } else {
-          null
-        },
-      ) {
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-          state.aircraft.forEach { aircraft ->
-            AircraftCard(
-              aircraft = aircraft,
-              selected = aircraft.aircraftId in state.selectedAircraftIds,
-              onClick = { onToggleAircraft(aircraft.aircraftId) },
-            )
-          }
         }
       }
-    }
 
-    item {
-      DateRangeSection(
-        state = state,
-        onDateRangeChange = onDateRangeChange,
-        onCustomStartChange = onCustomStartChange,
-        onCustomEndChange = onCustomEndChange,
-      )
+      item {
+        DateRangeSection(
+          state = state,
+          onDateRangeChange = onDateRangeChange,
+          onCustomStartChange = onCustomStartChange,
+          onCustomEndChange = onCustomEndChange,
+        )
+      }
     }
-
   }
 }
 
@@ -656,82 +667,88 @@ private fun ExportBottomBar(
   onExport: () -> Unit,
 ) {
   val deliveryEmail = state.resolvedDeliveryInfo?.destinationEmail
-  Column(
+  Box(
     modifier = Modifier
       .fillMaxWidth()
       .background(MaterialTheme.colorScheme.background)
-      .navigationBarsPadding()
-      .padding(horizontal = Spacing.screenPadding)
-      .padding(top = Spacing.medium, bottom = Spacing.large),
-    verticalArrangement = Arrangement.spacedBy(Spacing.small),
+      .navigationBarsPadding(),
+    contentAlignment = Alignment.TopCenter,
   ) {
-    // Single muted summary line: ✈ N aircraft · range · ~size.
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-    ) {
-      Icon(
-        imageVector = Icons.Default.Flight,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(14.dp),
-      )
-      Text(
-        text = stringResource(
-          Res.string.export_footer_aircraft_count,
-          state.selectedAircraftIds.size
-        ),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurface,
-      )
-      MetaDot()
-      Text(
-        text = rangeSummary(state),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-      MetaDot()
-      Text(
-        text = stringResource(
-          Res.string.export_estimated_size,
-          readableBytes(state.estimatedSizeBytes)
-        ),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-
-    Button(
-      onClick = onExport,
-      enabled = state.selectedAircraftIds.isNotEmpty() && state.formats.isNotEmpty(),
+    Column(
       modifier = Modifier
-        .fillMaxWidth()
-        .height(Spacing.buttonHeight),
-      shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+        .constrainedContentWidth(ContentWidth.Form)
+        .padding(horizontal = Spacing.screenPadding)
+        .padding(top = Spacing.medium, bottom = Spacing.large),
+      verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-      Icon(
-        imageVector = if (deliveryEmail != null) Icons.Default.Mail else Icons.Default.FolderZip,
-        contentDescription = null,
-        modifier = Modifier.size(20.dp),
-      )
-      Spacer(Modifier.width(Spacing.small))
-      Text(
-        text = stringResource(
-          if (deliveryEmail != null) Res.string.export_email_action
-          else Res.string.export_primary_action
-        ),
-        style = MaterialTheme.typography.titleMedium,
-      )
-    }
+      // Single muted summary line: aircraft count, range, and estimated archive size.
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+      ) {
+        Icon(
+          imageVector = Icons.Default.Flight,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.size(14.dp),
+        )
+        Text(
+          text = stringResource(
+            Res.string.export_footer_aircraft_count,
+            state.selectedAircraftIds.size
+          ),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurface,
+        )
+        MetaDot()
+        Text(
+          text = rangeSummary(state),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        MetaDot()
+        Text(
+          text = stringResource(
+            Res.string.export_estimated_size,
+            readableBytes(state.estimatedSizeBytes)
+          ),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
 
-    if (deliveryEmail != null) {
-      Text(
-        text = stringResource(Res.string.export_sent_to, deliveryEmail),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth(),
-      )
+      Button(
+        onClick = onExport,
+        enabled = state.selectedAircraftIds.isNotEmpty() && state.formats.isNotEmpty(),
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(Spacing.buttonHeight),
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+      ) {
+        Icon(
+          imageVector = if (deliveryEmail != null) Icons.Default.Mail else Icons.Default.FolderZip,
+          contentDescription = null,
+          modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(Spacing.small))
+        Text(
+          text = stringResource(
+            if (deliveryEmail != null) Res.string.export_email_action
+            else Res.string.export_primary_action
+          ),
+          style = MaterialTheme.typography.titleMedium,
+        )
+      }
+
+      if (deliveryEmail != null) {
+        Text(
+          text = stringResource(Res.string.export_sent_to, deliveryEmail),
+          style = MaterialTheme.typography.labelSmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          textAlign = TextAlign.Center,
+          modifier = Modifier.fillMaxWidth(),
+        )
+      }
     }
   }
 }
@@ -1246,59 +1263,65 @@ private fun ResultShell(
   actions: @Composable ColumnScope.() -> Unit,
   subtitleContent: (@Composable () -> Unit)? = null,
 ) {
-  Column(
-    modifier = modifier
-      .fillMaxSize()
-      .padding(horizontal = Spacing.screenPadding)
-      .padding(top = Spacing.large, bottom = Spacing.extraLarge),
+  Box(
+    modifier = modifier.fillMaxSize(),
+    contentAlignment = Alignment.TopCenter,
   ) {
     Column(
-      // Tight icon/title/subtitle cluster, then a generous gap before the content below.
-      modifier = Modifier.fillMaxWidth()
-        .padding(top = Spacing.large, bottom = Spacing.huge),
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.spacedBy(Spacing.small),
+      modifier = Modifier
+        .fillMaxHeight()
+        .constrainedContentWidth(ContentWidth.Form)
+        .padding(horizontal = Spacing.screenPadding)
+        .padding(top = Spacing.large, bottom = Spacing.extraLarge),
     ) {
-      Box(
-        modifier = Modifier
-          .size(72.dp)
-          .clip(RoundedCornerShape(percent = 50))
-          .background(heroContainer)
-          .border(
-            width = 1.5.dp,
-            color = heroColor.copy(alpha = 0.35f),
-            shape = RoundedCornerShape(percent = 50),
-          ),
-        contentAlignment = Alignment.Center,
+      Column(
+        // Tight icon/title/subtitle cluster, then a generous gap before the content below.
+        modifier = Modifier.fillMaxWidth()
+          .padding(top = Spacing.large, bottom = Spacing.huge),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
-        Icon(
-          imageVector = heroIcon,
-          contentDescription = null,
-          tint = heroColor,
-          modifier = Modifier.size(36.dp),
-        )
-      }
-      Text(
-        text = title,
-        style = MaterialTheme.typography.headlineSmall,
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.onSurface,
-      )
-      if (subtitleContent != null) {
-        subtitleContent()
-      } else if (subtitle.isNotBlank()) {
+        Box(
+          modifier = Modifier
+            .size(72.dp)
+            .clip(RoundedCornerShape(percent = 50))
+            .background(heroContainer)
+            .border(
+              width = 1.5.dp,
+              color = heroColor.copy(alpha = 0.35f),
+              shape = RoundedCornerShape(percent = 50),
+            ),
+          contentAlignment = Alignment.Center,
+        ) {
+          Icon(
+            imageVector = heroIcon,
+            contentDescription = null,
+            tint = heroColor,
+            modifier = Modifier.size(36.dp),
+          )
+        }
         Text(
-          text = subtitle,
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          text = title,
+          style = MaterialTheme.typography.headlineSmall,
           textAlign = TextAlign.Center,
+          color = MaterialTheme.colorScheme.onSurface,
         )
+        if (subtitleContent != null) {
+          subtitleContent()
+        } else if (subtitle.isNotBlank()) {
+          Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+          )
+        }
       }
-    }
-    body()
-    Spacer(Modifier.weight(1f))
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-      actions()
+      body()
+      Spacer(Modifier.weight(1f))
+      Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+        actions()
+      }
     }
   }
 }

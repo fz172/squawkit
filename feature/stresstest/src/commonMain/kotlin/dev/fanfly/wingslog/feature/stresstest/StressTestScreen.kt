@@ -39,7 +39,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import org.jetbrains.compose.resources.stringResource
@@ -95,216 +98,224 @@ fun StressTestScreen(
 
   Scaffold(
     topBar = {
-      WingsLogTopAppBar(
-        title = stringResource(Res.string.stress_test_title),
-        onBackClick = { navController.popBackStack() },
-      )
+      ConstrainedTopBar {
+        WingsLogTopAppBar(
+          title = stringResource(Res.string.stress_test_title),
+          onBackClick = { navController.popBackStack() },
+        )
+      }
     }
   ) { innerPadding ->
-    Column(
+    Box(
       modifier = Modifier
         .padding(innerPadding)
-        .fillMaxSize()
-        .verticalScroll(rememberScrollState())
-        .padding(Spacing.screenPadding),
-      verticalArrangement = Arrangement.spacedBy(Spacing.large),
+        .fillMaxSize(),
+      contentAlignment = Alignment.TopCenter,
     ) {
+      Column(
+        modifier = Modifier
+          .constrainedContentWidth(ContentWidth.Form)
+          .fillMaxSize()
+          .verticalScroll(rememberScrollState())
+          .padding(Spacing.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.large),
+      ) {
 
-      Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-          imageVector = Icons.Default.BugReport,
-          contentDescription = null,
-          tint = MaterialTheme.colorScheme.primary,
-          modifier = Modifier.padding(end = Spacing.small),
-        )
-        Column {
-          Text(
-            text = stringResource(Res.string.stress_test_title),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          Icon(
+            imageVector = Icons.Default.BugReport,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(end = Spacing.small),
           )
-          Text(
-            text = stringResource(Res.string.stress_test_description),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-      }
-
-      val isRunning = state is StressTestState.Running
-      val isDone = state is StressTestState.Done
-      val isError = state is StressTestState.Error
-      val isIdle = state is StressTestState.Idle
-
-      AnimatedVisibility(visible = isIdle || isError) {
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
-
-          ConfigSection(title = stringResource(Res.string.stress_test_config_aircraft)) {
-            StepperRow(
-              label = stringResource(Res.string.stress_test_config_engines),
-              value = config.engineCount,
-              range = 1..2,
-              onDecrement = { viewModel.setEngineCount(config.engineCount - 1) },
-              onIncrement = { viewModel.setEngineCount(config.engineCount + 1) },
-            )
-            StepperRow(
-              label = stringResource(Res.string.stress_test_config_blades_per_engine),
-              value = config.bladesPerEngine,
-              range = 2..4,
-              onDecrement = { viewModel.setBladesPerEngine(config.bladesPerEngine - 1) },
-              onIncrement = { viewModel.setBladesPerEngine(config.bladesPerEngine + 1) },
-            )
-          }
-
-          ConfigSection(title = stringResource(Res.string.stress_test_config_records)) {
-            SliderRow(
-              label = stringResource(Res.string.stress_test_config_squawks),
-              value = config.squawkCount,
-              range = 2..15,
-              onValueChange = { viewModel.setSquawkCount(it) },
-            )
-            SliderRow(
-              label = stringResource(Res.string.stress_test_config_tasks),
-              value = config.taskCount,
-              range = 5..20,
-              onValueChange = { viewModel.setTaskCount(it) },
-            )
-            SliderRow(
-              label = stringResource(Res.string.stress_test_config_log_entries),
-              value = config.logCount,
-              range = 10..100,
-              onValueChange = { viewModel.setLogCount(it) },
-            )
-            SliderRow(
-              label = stringResource(Res.string.stress_test_config_technicians),
-              value = config.technicianCount,
-              range = 1..5,
-              onValueChange = { viewModel.setTechnicianCount(it) },
-            )
-          }
-
-          if (isError) {
-            val error = state as StressTestState.Error
-            val colors = MaterialTheme.statusColors.critical
-            Surface(
-              color = colors.container,
-              shape = RoundedCornerShape(Spacing.cardCornerRadius),
-            ) {
-              Text(
-                text = stringResource(
-                  Res.string.stress_test_error_message,
-                  error.message
-                    ?: stringResource(Res.string.stress_test_unknown_error),
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onContainer,
-                modifier = Modifier.padding(Spacing.medium),
-              )
-            }
-          }
-
-          Button(
-            onClick = viewModel::generate,
-            modifier = Modifier.fillMaxWidth()
-              .height(Spacing.buttonHeight),
-            shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-          ) {
-            Icon(
-              imageVector = Icons.Default.AirplanemodeActive,
-              contentDescription = null,
-              modifier = Modifier.padding(end = Spacing.small),
-            )
-            Text(stringResource(Res.string.stress_test_generate))
-          }
-        }
-      }
-
-      AnimatedVisibility(visible = isRunning) {
-        val running = state as? StressTestState.Running
-        Column(
-          verticalArrangement = Arrangement.spacedBy(Spacing.medium),
-          horizontalAlignment = Alignment.CenterHorizontally,
-          modifier = Modifier.fillMaxWidth(),
-        ) {
-          Spacer(Modifier.height(Spacing.large))
-          CircularProgressIndicator(modifier = Modifier.size(Spacing.massive))
-          Text(
-            text = running?.displayText()
-              ?: stringResource(Res.string.stress_test_working),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-          if (running != null && running.total > 0) {
-            val progress = running.progress.toFloat() / running.total
-            LinearProgressIndicator(
-              progress = { progress },
-              modifier = Modifier.fillMaxWidth(),
-            )
+          Column {
             Text(
-              text = stringResource(
-                Res.string.stress_test_progress_count,
-                running.progress,
-                running.total,
-              ),
-              style = MaterialTheme.typography.labelSmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-          }
-          Spacer(Modifier.height(Spacing.large))
-        }
-      }
-
-      AnimatedVisibility(visible = isDone) {
-        val done = state as? StressTestState.Done
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-          ) {
-            Box(
-              modifier = Modifier
-                .size(Spacing.extraLarge)
-                .background(
-                  color = MaterialTheme.colorScheme.primary,
-                  shape = RoundedCornerShape(50),
-                ),
-              contentAlignment = Alignment.Center,
-            ) {
-              Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(Spacing.large),
-              )
-            }
-            Text(
-              text = stringResource(Res.string.stress_test_complete),
+              text = stringResource(Res.string.stress_test_title),
               style = MaterialTheme.typography.titleMedium,
               fontWeight = FontWeight.SemiBold,
             )
-          }
-
-          Surface(
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            shape = RoundedCornerShape(Spacing.cardCornerRadius),
-            modifier = Modifier.fillMaxWidth(),
-          ) {
             Text(
-              text = done?.summary?.displayText() ?: "",
-              style = MaterialTheme.typography.bodySmall.copy(
-                fontFamily = FontFamily.Monospace
-              ),
-              modifier = Modifier.padding(Spacing.medium),
+              text = stringResource(Res.string.stress_test_description),
+              style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }
+        }
 
-          OutlinedButton(
-            onClick = viewModel::reset,
+        val isRunning = state is StressTestState.Running
+        val isDone = state is StressTestState.Done
+        val isError = state is StressTestState.Error
+        val isIdle = state is StressTestState.Idle
+
+        AnimatedVisibility(visible = isIdle || isError) {
+          Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
+            ConfigSection(title = stringResource(Res.string.stress_test_config_aircraft)) {
+              StepperRow(
+                label = stringResource(Res.string.stress_test_config_engines),
+                value = config.engineCount,
+                range = 1..2,
+                onDecrement = { viewModel.setEngineCount(config.engineCount - 1) },
+                onIncrement = { viewModel.setEngineCount(config.engineCount + 1) },
+              )
+              StepperRow(
+                label = stringResource(Res.string.stress_test_config_blades_per_engine),
+                value = config.bladesPerEngine,
+                range = 2..4,
+                onDecrement = { viewModel.setBladesPerEngine(config.bladesPerEngine - 1) },
+                onIncrement = { viewModel.setBladesPerEngine(config.bladesPerEngine + 1) },
+              )
+            }
+
+            ConfigSection(title = stringResource(Res.string.stress_test_config_records)) {
+              SliderRow(
+                label = stringResource(Res.string.stress_test_config_squawks),
+                value = config.squawkCount,
+                range = 2..15,
+                onValueChange = { viewModel.setSquawkCount(it) },
+              )
+              SliderRow(
+                label = stringResource(Res.string.stress_test_config_tasks),
+                value = config.taskCount,
+                range = 5..20,
+                onValueChange = { viewModel.setTaskCount(it) },
+              )
+              SliderRow(
+                label = stringResource(Res.string.stress_test_config_log_entries),
+                value = config.logCount,
+                range = 10..100,
+                onValueChange = { viewModel.setLogCount(it) },
+              )
+              SliderRow(
+                label = stringResource(Res.string.stress_test_config_technicians),
+                value = config.technicianCount,
+                range = 1..5,
+                onValueChange = { viewModel.setTechnicianCount(it) },
+              )
+            }
+
+            if (isError) {
+              val error = state as StressTestState.Error
+              val colors = MaterialTheme.statusColors.critical
+              Surface(
+                color = colors.container,
+                shape = RoundedCornerShape(Spacing.cardCornerRadius),
+              ) {
+                Text(
+                  text = stringResource(
+                    Res.string.stress_test_error_message,
+                    error.message
+                      ?: stringResource(Res.string.stress_test_unknown_error),
+                  ),
+                  style = MaterialTheme.typography.bodySmall,
+                  color = colors.onContainer,
+                  modifier = Modifier.padding(Spacing.medium),
+                )
+              }
+            }
+
+            Button(
+              onClick = viewModel::generate,
+              modifier = Modifier.fillMaxWidth()
+                .height(Spacing.buttonHeight),
+              shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+            ) {
+              Icon(
+                imageVector = Icons.Default.AirplanemodeActive,
+                contentDescription = null,
+                modifier = Modifier.padding(end = Spacing.small),
+              )
+              Text(stringResource(Res.string.stress_test_generate))
+            }
+          }
+        }
+
+        AnimatedVisibility(visible = isRunning) {
+          val running = state as? StressTestState.Running
+          Column(
+            verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(Spacing.buttonCornerRadius),
           ) {
-            Text(stringResource(Res.string.stress_test_regenerate))
+            Spacer(Modifier.height(Spacing.large))
+            CircularProgressIndicator(modifier = Modifier.size(Spacing.massive))
+            Text(
+              text = running?.displayText()
+                ?: stringResource(Res.string.stress_test_working),
+              style = MaterialTheme.typography.bodyMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (running != null && running.total > 0) {
+              val progress = running.progress.toFloat() / running.total
+              LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth(),
+              )
+              Text(
+                text = stringResource(
+                  Res.string.stress_test_progress_count,
+                  running.progress,
+                  running.total,
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+            Spacer(Modifier.height(Spacing.large))
+          }
+        }
+
+        AnimatedVisibility(visible = isDone) {
+          val done = state as? StressTestState.Done
+          Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            ) {
+              Box(
+                modifier = Modifier
+                  .size(Spacing.extraLarge)
+                  .background(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(50),
+                  ),
+                contentAlignment = Alignment.Center,
+              ) {
+                Icon(
+                  imageVector = Icons.Default.Check,
+                  contentDescription = null,
+                  tint = MaterialTheme.colorScheme.onPrimary,
+                  modifier = Modifier.size(Spacing.large),
+                )
+              }
+              Text(
+                text = stringResource(Res.string.stress_test_complete),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+              )
+            }
+
+            Surface(
+              color = MaterialTheme.colorScheme.surfaceVariant,
+              shape = RoundedCornerShape(Spacing.cardCornerRadius),
+              modifier = Modifier.fillMaxWidth(),
+            ) {
+              Text(
+                text = done?.summary?.displayText() ?: "",
+                style = MaterialTheme.typography.bodySmall.copy(
+                  fontFamily = FontFamily.Monospace
+                ),
+                modifier = Modifier.padding(Spacing.medium),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+
+            OutlinedButton(
+              onClick = viewModel::reset,
+              modifier = Modifier.fillMaxWidth(),
+              shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+            ) {
+              Text(stringResource(Res.string.stress_test_regenerate))
+            }
           }
         }
       }

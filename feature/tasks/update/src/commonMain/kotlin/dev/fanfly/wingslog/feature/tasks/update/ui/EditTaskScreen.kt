@@ -38,6 +38,7 @@ import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
@@ -144,22 +145,24 @@ fun EditTaskScreen(
   Scaffold(
     topBar = {
       Column {
-        TopAppBar(
-          title = {
-            Text(
-              stringResource(SharedTaskRes.string.edit_task).uppercase(),
-              style = MaterialTheme.typography.titleLarge,
-              fontWeight = FontWeight.Bold
-            )
-          },
-          navigationIcon = {
-            IconButton(onClick = { tryCancel() }) {
-              Icon(
-                Icons.AutoMirrored.Default.ArrowBack,
-                contentDescription = stringResource(CoreRes.string.back)
+        ConstrainedTopBar {
+          TopAppBar(
+            title = {
+              Text(
+                stringResource(SharedTaskRes.string.edit_task).uppercase(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
               )
-            }
-          })
+            },
+            navigationIcon = {
+              IconButton(onClick = { tryCancel() }) {
+                Icon(
+                  Icons.AutoMirrored.Default.ArrowBack,
+                  contentDescription = stringResource(CoreRes.string.back)
+                )
+              }
+            })
+        }
         Box(
           modifier = Modifier.fillMaxWidth(),
           contentAlignment = Alignment.TopCenter

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -55,7 +56,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.export.ExportRecord
@@ -111,10 +115,12 @@ fun ExportHistoryScreen(
 ) {
   Scaffold(
     topBar = {
-      WingsLogTopAppBar(
-        title = stringResource(Res.string.export_history_title),
-        onBackClick = onNavigateBack,
-      )
+      ConstrainedTopBar {
+        WingsLogTopAppBar(
+          title = stringResource(Res.string.export_history_title),
+          onBackClick = onNavigateBack,
+        )
+      }
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
   ) { innerPadding ->
@@ -154,36 +160,40 @@ private fun LoadingContent(modifier: Modifier) {
 
 @Composable
 private fun EmptyContent(modifier: Modifier, onNew: () -> Unit) {
-  Column(
-    modifier = modifier.padding(horizontal = Spacing.huge),
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(
-      space = Spacing.large,
-      alignment = Alignment.CenterVertically,
-    ),
+  Box(
+    modifier = modifier,
+    contentAlignment = Alignment.Center,
   ) {
-    Icon(
-      imageVector = Icons.Default.Inbox,
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.size(56.dp),
-    )
-    Text(
-      text = stringResource(Res.string.export_history_empty_title),
-      style = MaterialTheme.typography.headlineSmall,
-      textAlign = TextAlign.Center,
-    )
-    Text(
-      text = stringResource(Res.string.export_history_empty_body),
-      style = MaterialTheme.typography.bodyLarge,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      textAlign = TextAlign.Center,
-    )
-    Button(
-      onClick = onNew,
-      shape = RoundedCornerShape(Spacing.chipCornerRadius),
+    Column(
+      modifier = Modifier
+        .constrainedContentWidth(ContentWidth.Form)
+        .padding(horizontal = Spacing.huge),
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(Spacing.large),
     ) {
-      Text(stringResource(Res.string.export_history_new))
+      Icon(
+        imageVector = Icons.Default.Inbox,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(56.dp),
+      )
+      Text(
+        text = stringResource(Res.string.export_history_empty_title),
+        style = MaterialTheme.typography.headlineSmall,
+        textAlign = TextAlign.Center,
+      )
+      Text(
+        text = stringResource(Res.string.export_history_empty_body),
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+      )
+      Button(
+        onClick = onNew,
+        shape = RoundedCornerShape(Spacing.chipCornerRadius),
+      ) {
+        Text(stringResource(Res.string.export_history_new))
+      }
     }
   }
 }
@@ -199,21 +209,29 @@ private fun ExportList(
   onSaveToDevice: (ExportRecord) -> Unit,
   onDelete: (ExportRecord) -> Unit,
 ) {
-  LazyColumn(
-    modifier = modifier.padding(horizontal = Spacing.screenPadding),
-    contentPadding = PaddingValues(vertical = Spacing.small),
-    verticalArrangement = Arrangement.spacedBy(Spacing.small),
+  Box(
+    modifier = modifier,
+    contentAlignment = Alignment.TopCenter,
   ) {
-    items(exports, key = { it.export_id }) { record ->
-      ExportHistoryCard(
-        record = record,
-        canEmailDelivery = canEmailDelivery,
-        onShareExport = onShareExport,
-        onResendDelivery = { onResendDelivery(record) },
-        onRetryDelivery = { onRetryDelivery(record) },
-        onSaveToDevice = { onSaveToDevice(record) },
-        onDelete = { onDelete(record) },
-      )
+    LazyColumn(
+      modifier = Modifier
+        .fillMaxHeight()
+        .constrainedContentWidth(ContentWidth.Reading)
+        .padding(horizontal = Spacing.screenPadding),
+      contentPadding = PaddingValues(vertical = Spacing.small),
+      verticalArrangement = Arrangement.spacedBy(Spacing.small),
+    ) {
+      items(exports, key = { it.export_id }) { record ->
+        ExportHistoryCard(
+          record = record,
+          canEmailDelivery = canEmailDelivery,
+          onShareExport = onShareExport,
+          onResendDelivery = { onResendDelivery(record) },
+          onRetryDelivery = { onRetryDelivery(record) },
+          onSaveToDevice = { onSaveToDevice(record) },
+          onDelete = { onDelete(record) },
+        )
+      }
     }
   }
 }
