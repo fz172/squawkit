@@ -4,8 +4,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.ExperimentalBrowserHistoryApi
 import androidx.navigation.NavType
+import androidx.navigation.bindToBrowserNavigation
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -31,6 +38,7 @@ import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScree
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalBrowserHistoryApi::class)
 @Composable
 fun WebApp() {
   WingslogTheme {
@@ -39,6 +47,14 @@ fun WebApp() {
       color = MaterialTheme.colorScheme.background,
     ) {
       val navController = rememberNavController()
+      var browserNavigationBound by remember { mutableStateOf(false) }
+
+      LaunchedEffect(browserNavigationBound) {
+        if (browserNavigationBound) {
+          navController.bindToBrowserNavigation()
+        }
+      }
+
       NavHost(
         navController = navController,
         startDestination = Screen.Login.route,
@@ -49,6 +65,7 @@ fun WebApp() {
               navController.navigate(Screen.Dashboard.route) {
                 popUpTo(Screen.Login.route) { inclusive = true }
               }
+              browserNavigationBound = true
             },
           )
         }
