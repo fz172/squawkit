@@ -44,7 +44,7 @@ fun SquawkBasicTab(
   val displayDate = reportedDateFormatted.ifEmpty {
     remember {
       Clock.System.now()
-          .toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat()
+        .toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat()
     }
   }
 
@@ -57,8 +57,8 @@ fun SquawkBasicTab(
       value = displayDate,
       onValueChange = {},
       label = { Text(stringResource(Res.string.squawk_reported_on)) },
-      enabled = false,
       singleLine = true,
+      readOnly = true,
       modifier = Modifier.fillMaxWidth(),
     )
 
