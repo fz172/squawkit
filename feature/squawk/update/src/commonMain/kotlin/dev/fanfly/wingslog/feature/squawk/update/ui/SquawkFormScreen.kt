@@ -1,7 +1,10 @@
 package dev.fanfly.wingslog.feature.squawk.update.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -31,9 +34,11 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.update.compose.DismissSquawkDialog
 import dev.fanfly.wingslog.feature.squawk.update.compose.LogPickerSheet
@@ -137,11 +142,23 @@ fun SquawkFormScreen(
             }
           },
         )
-        IconLabelTabRow(
-          tabs = tabs,
-          selectedIndex = pagerState.currentPage,
-          onSelect = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
-        )
+        Box(
+          modifier = Modifier.fillMaxWidth(),
+          contentAlignment = Alignment.TopCenter
+        ) {
+          IconLabelTabRow(
+            tabs = tabs,
+            selectedIndex = pagerState.currentPage,
+            onSelect = {
+              coroutineScope.launch {
+                pagerState.animateScrollToPage(
+                  it
+                )
+              }
+            },
+            modifier = Modifier.constrainedContentWidth(ContentWidth.Form),
+          )
+        }
       }
     },
   ) { padding ->
@@ -156,36 +173,43 @@ fun SquawkFormScreen(
         beyondViewportPageCount = 1,
         verticalAlignment = Alignment.Top,
       ) { page ->
-        Column(
+        Box(
           modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(Spacing.screenPadding),
+            .fillMaxSize(),
+          contentAlignment = Alignment.TopCenter,
         ) {
-          when (page) {
-            0 -> SquawkBasicTab(
-              title = state.title,
-              onTitleChange = onTitleChange,
-              priority = state.priority,
-              onPriorityChange = onPriorityChange,
-              reportedDateFormatted = state.reportedDateFormatted,
-              readOnly = state.isAddressedReadOnly,
-              titleError = state.titleError,
-            )
+          Column(
+            modifier = Modifier
+              .fillMaxHeight()
+              .constrainedContentWidth(ContentWidth.Form)
+              .verticalScroll(rememberScrollState())
+              .padding(Spacing.screenPadding),
+          ) {
+            when (page) {
+              0 -> SquawkBasicTab(
+                title = state.title,
+                onTitleChange = onTitleChange,
+                priority = state.priority,
+                onPriorityChange = onPriorityChange,
+                reportedDateFormatted = state.reportedDateFormatted,
+                readOnly = state.isAddressedReadOnly,
+                titleError = state.titleError,
+              )
 
-            1 -> SquawkDetailsTab(
-              description = state.description,
-              onDescriptionChange = onDescriptionChange,
-              isEdit = isEdit,
-              addressedByLogId = state.addressedByLogId,
-              availableLogs = state.availableLogs,
-              onAddLog = onAddLog,
-              onClearLog = onClearLog,
-              readOnly = state.isAddressedReadOnly,
-              dismissReason = state.dismissReason,
-              dismissedAtFormatted = state.dismissedAtFormatted,
-              attachmentSection = attachmentSection,
-            )
+              1 -> SquawkDetailsTab(
+                description = state.description,
+                onDescriptionChange = onDescriptionChange,
+                isEdit = isEdit,
+                addressedByLogId = state.addressedByLogId,
+                availableLogs = state.availableLogs,
+                onAddLog = onAddLog,
+                onClearLog = onClearLog,
+                readOnly = state.isAddressedReadOnly,
+                dismissReason = state.dismissReason,
+                dismissedAtFormatted = state.dismissedAtFormatted,
+                attachmentSection = attachmentSection,
+              )
+            }
           }
         }
       }

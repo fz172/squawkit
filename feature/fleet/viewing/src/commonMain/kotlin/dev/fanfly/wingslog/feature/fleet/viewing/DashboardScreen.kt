@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.fleet.viewing
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,7 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.ui.common.compose.AvatarIcon
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.FleetDashboardViewModel
 import org.jetbrains.compose.resources.stringResource
@@ -111,7 +114,8 @@ fun DashboardScreen(
         )
       } else {
         LazyColumn(
-          modifier = Modifier.fillMaxSize()
+          modifier = Modifier.fillMaxHeight()
+            .constrainedContentWidth(ContentWidth.Feed)
             .padding(Spacing.screenPadding),
           verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
         ) {

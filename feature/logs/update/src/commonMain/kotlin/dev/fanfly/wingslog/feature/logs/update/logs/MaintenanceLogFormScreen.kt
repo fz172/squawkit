@@ -1,9 +1,10 @@
 package dev.fanfly.wingslog.feature.logs.update.logs
 
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -34,15 +35,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -59,30 +62,30 @@ import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogForm
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkPickerSheet
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskPickerSheet
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
-import kotlin.time.Instant
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.delete
 import wingslog.core.ui.generated.resources.ok
 import wingslog.core.ui.generated.resources.save
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.logs.sharedassets.generated.resources.edit_log
 import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.update.generated.resources.delete_log
 import wingslog.feature.logs.update.generated.resources.log_deleted
 import wingslog.feature.logs.update.generated.resources.log_saved
 import wingslog.feature.logs.update.generated.resources.log_updated
+import kotlin.time.Instant
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 
 @OptIn(
   ExperimentalMaterial3Api::class,
@@ -119,13 +122,15 @@ fun MaintenanceLogFormScreen(
     viewModel.events.collect { event ->
       when (event) {
         MaintenanceLogFormEvent.SaveSuccess -> {
-          val message = if (viewModel.isEditMode) logUpdatedMessage else logSavedMessage
+          val message =
+            if (viewModel.isEditMode) logUpdatedMessage else logSavedMessage
           navController.previousBackStackEntry?.savedStateHandle?.set(
             CROSS_SCREEN_SUCCESS_MESSAGE,
             message,
           )
           navController.popBackStack()
         }
+
         MaintenanceLogFormEvent.DeleteSuccess -> {
           navController.previousBackStackEntry?.savedStateHandle?.set(
             CROSS_SCREEN_SUCCESS_MESSAGE,
@@ -133,7 +138,11 @@ fun MaintenanceLogFormScreen(
           )
           navController.popBackStack()
         }
-        MaintenanceLogFormEvent.PickError -> snackbarHostState.showSnackbar(fileReadErrorMessage)
+
+        MaintenanceLogFormEvent.PickError -> snackbarHostState.showSnackbar(
+          fileReadErrorMessage
+        )
+
         else -> Unit
       }
     }
@@ -162,11 +171,23 @@ fun MaintenanceLogFormScreen(
             }
           },
         )
-        LogTabRow(
-          tabs = listOf(LOG_WORK_TAB, LOG_HOURS_TAB, LOG_RECORDS_TAB),
-          selectedIndex = pagerState.currentPage,
-          onSelect = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
-        )
+        Box(
+          modifier = Modifier.fillMaxWidth(),
+          contentAlignment = Alignment.TopCenter
+        ) {
+          LogTabRow(
+            tabs = listOf(LOG_WORK_TAB, LOG_HOURS_TAB, LOG_RECORDS_TAB),
+            selectedIndex = pagerState.currentPage,
+            onSelect = {
+              coroutineScope.launch {
+                pagerState.animateScrollToPage(
+                  it
+                )
+              }
+            },
+            modifier = Modifier.constrainedContentWidth(ContentWidth.Form),
+          )
+        }
       }
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -188,75 +209,87 @@ fun MaintenanceLogFormScreen(
   ) { innerPadding ->
     if (uiState.isLoading) {
       Box(
-        modifier = Modifier.fillMaxSize().padding(innerPadding),
+        modifier = Modifier.fillMaxSize()
+          .padding(innerPadding),
         contentAlignment = Alignment.Center,
       ) {
         CircularProgressIndicator()
       }
     } else {
-      Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+      Column(
+        modifier = Modifier.padding(innerPadding)
+          .fillMaxSize()
+      ) {
         HorizontalPager(
           state = pagerState,
           modifier = Modifier.weight(1f),
           beyondViewportPageCount = 2,
           verticalAlignment = Alignment.Top,
         ) { page ->
-          Column(
-            modifier = Modifier
-              .fillMaxSize()
-              .verticalScroll(rememberScrollState())
-              .padding(Spacing.screenPadding),
+          Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter,
           ) {
-            when (page) {
-              0 -> LogWorkTab(
-                maintenanceDate = uiState.maintenanceDate,
-                onDateClick = { showDatePicker = true },
-                workDescription = uiState.workDescription,
-                onWorkDescriptionChange = viewModel::onWorkDescriptionChange,
-                aircraft = uiState.aircraft,
-                selectedComponentType = uiState.selectedComponentType,
-                onComponentTypeChange = viewModel::onComponentTypeChange,
-                selectedSubComponent = uiState.selectedSubComponent,
-                onSubComponentChange = viewModel::onSubComponentChange,
-                error = uiState.error,
-              )
-              1 -> LogTimeTab(
-                engineTime = uiState.engineTime,
-                onEngineTimeChange = viewModel::onEngineTimeChange,
-                airframeTime = uiState.airframeTime,
-                onAirframeTimeChange = viewModel::onAirframeTimeChange,
-                propTime = uiState.propTime,
-                onPropTimeChange = viewModel::onPropTimeChange,
-              )
-              2 -> LogRecordsTab(
-                technicianEnabled = uiState.technicianEnabled,
-                selectedTechnician = uiState.selectedTechnician,
-                onTechnicianClick = viewModel::showTechnicianPicker,
-                selectedSquawkIds = uiState.selectedSquawkIds,
-                availableSquawks = uiState.availableSquawks,
-                onAddSquawkClick = viewModel::showSquawkPicker,
-                onRemoveSquawk = viewModel::removeSquawkId,
-                selectedInspectionIds = uiState.selectedInspectionIds,
-                availableInspectionCards = uiState.availableInspectionCards,
-                onAddTaskClick = viewModel::showInspectionPicker,
-                onRemoveTask = viewModel::removeInspectionId,
-                attachmentUploadEnabled = attachmentsAvailable && uiState.attachmentUploadEnabled,
-                attachmentSection = {
-                  AttachmentFormSection(
-                    visibleAttachments = uiState.visibleAttachments,
-                    isAnonymous = uiState.isAnonymous,
-                    filesAtLimit = uiState.filesAtLimit,
-                    showPickerSheet = uiState.showAttachmentPicker,
-                    onAddClick = viewModel::showAttachmentPicker,
-                    onRemove = viewModel::removeAttachment,
-                    onPickFiles = viewModel::addLocalFiles,
-                    onAddLink = viewModel::addLink,
-                    onDismissSheet = viewModel::hideAttachmentPicker,
-                    onPickError = viewModel::onFilePickError,
-                    modifier = Modifier,
-                  )
-                },
-              )
+            Column(
+              modifier = Modifier
+                .fillMaxHeight()
+                .constrainedContentWidth(ContentWidth.Form)
+                .verticalScroll(rememberScrollState())
+                .padding(Spacing.screenPadding),
+            ) {
+              when (page) {
+                0 -> LogWorkTab(
+                  maintenanceDate = uiState.maintenanceDate,
+                  onDateClick = { showDatePicker = true },
+                  workDescription = uiState.workDescription,
+                  onWorkDescriptionChange = viewModel::onWorkDescriptionChange,
+                  aircraft = uiState.aircraft,
+                  selectedComponentType = uiState.selectedComponentType,
+                  onComponentTypeChange = viewModel::onComponentTypeChange,
+                  selectedSubComponent = uiState.selectedSubComponent,
+                  onSubComponentChange = viewModel::onSubComponentChange,
+                  error = uiState.error,
+                )
+
+                1 -> LogTimeTab(
+                  engineTime = uiState.engineTime,
+                  onEngineTimeChange = viewModel::onEngineTimeChange,
+                  airframeTime = uiState.airframeTime,
+                  onAirframeTimeChange = viewModel::onAirframeTimeChange,
+                  propTime = uiState.propTime,
+                  onPropTimeChange = viewModel::onPropTimeChange,
+                )
+
+                2 -> LogRecordsTab(
+                  technicianEnabled = uiState.technicianEnabled,
+                  selectedTechnician = uiState.selectedTechnician,
+                  onTechnicianClick = viewModel::showTechnicianPicker,
+                  selectedSquawkIds = uiState.selectedSquawkIds,
+                  availableSquawks = uiState.availableSquawks,
+                  onAddSquawkClick = viewModel::showSquawkPicker,
+                  onRemoveSquawk = viewModel::removeSquawkId,
+                  selectedInspectionIds = uiState.selectedInspectionIds,
+                  availableInspectionCards = uiState.availableInspectionCards,
+                  onAddTaskClick = viewModel::showInspectionPicker,
+                  onRemoveTask = viewModel::removeInspectionId,
+                  attachmentUploadEnabled = attachmentsAvailable && uiState.attachmentUploadEnabled,
+                  attachmentSection = {
+                    AttachmentFormSection(
+                      visibleAttachments = uiState.visibleAttachments,
+                      isAnonymous = uiState.isAnonymous,
+                      filesAtLimit = uiState.filesAtLimit,
+                      showPickerSheet = uiState.showAttachmentPicker,
+                      onAddClick = viewModel::showAttachmentPicker,
+                      onRemove = viewModel::removeAttachment,
+                      onPickFiles = viewModel::addLocalFiles,
+                      onAddLink = viewModel::addLink,
+                      onDismissSheet = viewModel::hideAttachmentPicker,
+                      onPickError = viewModel::onFilePickError,
+                      modifier = Modifier,
+                    )
+                  },
+                )
+              }
             }
           }
         }
@@ -303,10 +336,12 @@ fun MaintenanceLogFormScreen(
   if (showDatePicker) {
     val initialMs = uiState.maintenanceDate?.let { date ->
       LocalDateTime(date.year, date.month, date.day, 12, 0, 0).let { ldt ->
-        Instant.fromEpochSeconds(ldt.date.toEpochDays() * 86400L).toEpochMilliseconds()
+        Instant.fromEpochSeconds(ldt.date.toEpochDays() * 86400L)
+          .toEpochMilliseconds()
       }
     }
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMs)
+    val datePickerState =
+      rememberDatePickerState(initialSelectedDateMillis = initialMs)
     DatePickerDialog(
       onDismissRequest = { showDatePicker = false },
       confirmButton = {
@@ -314,7 +349,8 @@ fun MaintenanceLogFormScreen(
           val selectedMs = datePickerState.selectedDateMillis
           if (selectedMs != null) {
             val selectedDate =
-              Instant.fromEpochMilliseconds(selectedMs).toLocalDateTime(TimeZone.UTC).date
+              Instant.fromEpochMilliseconds(selectedMs)
+                .toLocalDateTime(TimeZone.UTC).date
             viewModel.onMaintenanceDateChange(selectedDate)
           }
           showDatePicker = false

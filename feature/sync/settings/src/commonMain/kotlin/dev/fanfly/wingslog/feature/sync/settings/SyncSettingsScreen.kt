@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.sync.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,7 +36,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.sync.data.HydrationState
@@ -88,65 +91,69 @@ fun SyncSettingsScreen(
       )
     },
   ) { innerPadding ->
-    Column(
+    Box(
       modifier = Modifier
         .padding(innerPadding)
-        .fillMaxSize()
-        .verticalScroll(rememberScrollState()),
-      verticalArrangement = Arrangement.spacedBy(Spacing.large),
+        .fillMaxSize(),
+      contentAlignment = Alignment.TopCenter,
     ) {
-      // Hero takes the full width without horizontal padding so the illustration breathes.
-      Spacer(Modifier.height(Spacing.medium))
-      SyncHeroIllustration(active = state.signedIn && state.cloudSyncEnabled)
-
       Column(
         modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = Spacing.screenPadding),
+          .constrainedContentWidth(ContentWidth.Reading)
+          .fillMaxSize()
+          .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(Spacing.large),
       ) {
-        HeroCaption(state = state)
+        Spacer(Modifier.height(Spacing.medium))
+        SyncHeroIllustration(active = state.signedIn && state.cloudSyncEnabled)
 
-        ToggleCard {
-          SyncToggleRow(
-            title = stringResource(Res.string.setting_item_sync),
-            subtitle = when {
-              !state.signedIn -> stringResource(Res.string.sync_subtitle_signin)
-              state.cloudSyncEnabled -> stringResource(Res.string.sync_subtitle_active)
-              else -> stringResource(Res.string.sync_subtitle_off)
-            },
-            checked = state.cloudSyncEnabled,
-            enabled = state.signedIn,
-            onCheckedChange = viewModel::onCloudSyncToggled,
-          )
-          if (state.attachmentEnabled) {
-            HorizontalDivider(
-              color = MaterialTheme.colorScheme.outlineVariant.copy(
-                alpha = 0.4f
-              )
-            )
+        Column(
+          modifier = Modifier.padding(horizontal = Spacing.screenPadding),
+          verticalArrangement = Arrangement.spacedBy(Spacing.large),
+        ) {
+          HeroCaption(state = state)
+
+          ToggleCard {
             SyncToggleRow(
-              title = stringResource(Res.string.setting_item_sync_on_cellular),
-              subtitle = if (state.allowUploadOnCellular)
-                stringResource(Res.string.sync_subtitle_cellular_enabled)
-              else
-                stringResource(Res.string.sync_subtitle_cellular_disabled),
-              checked = state.allowUploadOnCellular,
-              enabled = state.signedIn && state.cloudSyncEnabled,
-              onCheckedChange = viewModel::onAllowUploadOnCellularToggled,
+              title = stringResource(Res.string.setting_item_sync),
+              subtitle = when {
+                !state.signedIn -> stringResource(Res.string.sync_subtitle_signin)
+                state.cloudSyncEnabled -> stringResource(Res.string.sync_subtitle_active)
+                else -> stringResource(Res.string.sync_subtitle_off)
+              },
+              checked = state.cloudSyncEnabled,
+              enabled = state.signedIn,
+              onCheckedChange = viewModel::onCloudSyncToggled,
             )
+            if (state.attachmentEnabled) {
+              HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(
+                  alpha = 0.4f
+                )
+              )
+              SyncToggleRow(
+                title = stringResource(Res.string.setting_item_sync_on_cellular),
+                subtitle = if (state.allowUploadOnCellular)
+                  stringResource(Res.string.sync_subtitle_cellular_enabled)
+                else
+                  stringResource(Res.string.sync_subtitle_cellular_disabled),
+                checked = state.allowUploadOnCellular,
+                enabled = state.signedIn && state.cloudSyncEnabled,
+                onCheckedChange = viewModel::onAllowUploadOnCellularToggled,
+              )
+            }
           }
+
+          StatusSection(state = state)
+
+          Text(
+            text = stringResource(Res.string.sync_attachments_disclaimer),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+
+          Spacer(Modifier.height(Spacing.large))
         }
-
-        StatusSection(state = state)
-
-        Text(
-          text = stringResource(Res.string.sync_attachments_disclaimer),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        Spacer(Modifier.height(Spacing.large))
       }
     }
   }

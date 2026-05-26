@@ -1,7 +1,8 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -26,8 +27,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.AircraftDashboardTabRow
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.AircraftTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.LogsTab
@@ -43,16 +47,16 @@ import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
-import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsSharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.edit_aircraft
-import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkSharedRes
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksSharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsSharedRes
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkSharedRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksSharedRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,35 +77,52 @@ fun AircraftOverviewContent(
     modifier = modifier,
     snackbarHost = { SnackbarHost(snackbarHostState) },
     floatingActionButton = {
-      if (onMutationAction != null) when (AircraftTab.entries.getOrNull(pagerState.currentPage)) {
+      if (onMutationAction != null) when (AircraftTab.entries.getOrNull(
+        pagerState.currentPage
+      )) {
         AircraftTab.SQUAWKS -> ExtendedFloatingActionButton(
-          onClick = { onMutationAction(AircraftOverviewAction.AddSquawkClick(state.aircraft.id)) },
+          onClick = {
+            onMutationAction(
+              AircraftOverviewAction.AddSquawkClick(
+                state.aircraft.id
+              )
+            )
+          },
           icon = {
             Icon(
-              Icons.Default.Add,
-              contentDescription = null
+              Icons.Default.Add, contentDescription = null
             )
           },
           text = { Text(stringResource(SquawkSharedRes.string.add_squawk)) },
         )
 
         AircraftTab.TASKS -> ExtendedFloatingActionButton(
-          onClick = { onMutationAction(AircraftOverviewAction.AddTaskClick(state.aircraft.id)) },
+          onClick = {
+            onMutationAction(
+              AircraftOverviewAction.AddTaskClick(
+                state.aircraft.id
+              )
+            )
+          },
           icon = {
             Icon(
-              Icons.Default.Add,
-              contentDescription = null
+              Icons.Default.Add, contentDescription = null
             )
           },
           text = { Text(stringResource(TasksSharedRes.string.add_task)) },
         )
 
         AircraftTab.LOGS -> ExtendedFloatingActionButton(
-          onClick = { onMutationAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
+          onClick = {
+            onMutationAction(
+              AircraftOverviewAction.AddLogClick(
+                state.aircraft.id
+              )
+            )
+          },
           icon = {
             Icon(
-              Icons.Default.Add,
-              contentDescription = null
+              Icons.Default.Add, contentDescription = null
             )
           },
           text = { Text(stringResource(LogsSharedRes.string.add_log)) },
@@ -113,32 +134,34 @@ fun AircraftOverviewContent(
     containerColor = MaterialTheme.colorScheme.surface,
     topBar = {
       TopAppBar(
-        title = {},
-        navigationIcon = {
+        title = {}, navigationIcon = {
           IconButton(onClick = { onAction(AircraftOverviewAction.BackClick) }) {
             Icon(
               Icons.AutoMirrored.Filled.ArrowBack,
               contentDescription = stringResource(CoreRes.string.back)
             )
           }
-        },
-        actions = {
+        }, actions = {
           if (onMutationAction != null) {
-            IconButton(onClick = { onMutationAction(AircraftOverviewAction.EditClick(state.aircraft.id)) }) {
+            IconButton(onClick = {
+              onMutationAction(
+                AircraftOverviewAction.EditClick(
+                  state.aircraft.id
+                )
+              )
+            }) {
               Icon(
                 Icons.Default.Settings,
                 contentDescription = stringResource(MaintenanceRes.string.edit_aircraft)
               )
             }
           }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
+        }, colors = TopAppBarDefaults.topAppBarColors(
           containerColor = Color.Transparent,
           scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
         )
       )
-    }
-  ) { paddingValues ->
+    }) { paddingValues ->
 
     state.selectedTask?.let { selectedTask ->
       TaskDetailSheet(
@@ -152,8 +175,7 @@ fun AircraftOverviewContent(
           {
             mutate(
               AircraftOverviewAction.EditTaskClick(
-                state.aircraft.id,
-                selectedTask.card.id
+                state.aircraft.id, selectedTask.card.id
               )
             )
           }
@@ -161,9 +183,11 @@ fun AircraftOverviewContent(
         onAttachmentTap = { attachment ->
           taskSheetOpenError = null
           coroutineScope.launch {
-            attachmentOpener.open(attachment).collect { openState ->
-              if (openState is OpenState.Failed) taskSheetOpenError = openState.error.message
-            }
+            attachmentOpener.open(attachment)
+              .collect { openState ->
+                if (openState is OpenState.Failed) taskSheetOpenError =
+                  openState.error.message
+              }
           }
         },
         syncStates = state.syncStates,
@@ -173,68 +197,87 @@ fun AircraftOverviewContent(
     }
 
     state.deletingTaskId?.let { deletingId ->
-      val title = (state.activeTasks + state.completedTasks)
-        .find { it.card.id == deletingId }?.card?.title ?: ""
+      val title =
+        (state.activeTasks + state.completedTasks).find { it.card.id == deletingId }?.card?.title
+          ?: ""
       DeleteTaskConfirmDialog(
         title = title,
         onConfirm = { onAction(AircraftOverviewAction.ConfirmDeleteTask) },
         onDismiss = { onAction(AircraftOverviewAction.CancelDeleteTask) },
       )
     }
-
-    Column(
-      modifier = Modifier
-        .fillMaxSize()
-        .padding(paddingValues)
+    Box(
+      modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter
     ) {
-      AircraftDashboardTabRow(
-        selectedTabIndex = pagerState.currentPage,
-        onTabSelected = { coroutineScope.launch { pagerState.animateScrollToPage(it) } }
-      )
-
-      HorizontalPager(
-        state = pagerState,
-        modifier = Modifier.weight(1f)
-      ) { page ->
-        when (AircraftTab.entries[page]) {
-          AircraftTab.OVERVIEW -> OverviewTab(
-            state = state,
-            onAction = onAction,
-            onViewSquawksTab = { coroutineScope.launch { pagerState.animateScrollToPage(AircraftTab.SQUAWKS.ordinal) } },
-            onMutationAction = onMutationAction,
-          )
-
-          AircraftTab.SQUAWKS -> SquawkTab(
-            state = state,
-            onAction = onAction,
-            onMutationAction = onMutationAction,
-          )
-
-          AircraftTab.TASKS -> MaintenanceTasksTab(
-            state = state,
-            onAction = onAction,
-          )
-
-          AircraftTab.LOGS -> LogsTab(
-            aircraftId = state.aircraft.id,
-            syncStates = state.syncStates,
-            onNavigateToAddLog = onMutationAction?.let { mutate ->
-              { mutate(AircraftOverviewAction.AddLogClick(state.aircraft.id)) }
-            },
-            onNavigateToEditLog = onMutationAction?.let { mutate -> { logId ->
-              mutate(
-                AircraftOverviewAction.EditLogClick(
-                  state.aircraft.id,
-                  logId
-                )
+      Column(
+        modifier = Modifier.constrainedContentWidth(ContentWidth.Form)
+          .padding(paddingValues)
+      ) {
+        AircraftDashboardTabRow(
+          selectedTabIndex = pagerState.currentPage,
+          modifier = Modifier.constrainedContentWidth(ContentWidth.Form),
+          onTabSelected = {
+            coroutineScope.launch {
+              pagerState.animateScrollToPage(
+                it
               )
-            } },
-            onTaskClick = { taskId ->
-              onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
-              coroutineScope.launch { pagerState.animateScrollToPage(AircraftTab.TASKS.ordinal) }
-            },
-            attachmentsAvailable = attachmentsAvailable,
-          )
+            }
+          })
+
+        HorizontalPager(
+          state = pagerState, modifier = Modifier.weight(1f)
+        ) { page ->
+          when (AircraftTab.entries[page]) {
+            AircraftTab.OVERVIEW -> OverviewTab(
+              state = state,
+              onAction = onAction,
+              onViewSquawksTab = {
+                coroutineScope.launch {
+                  pagerState.animateScrollToPage(
+                    AircraftTab.SQUAWKS.ordinal
+                  )
+                }
+              },
+              onMutationAction = onMutationAction,
+            )
+
+            AircraftTab.SQUAWKS -> SquawkTab(
+              state = state,
+              onAction = onAction,
+              onMutationAction = onMutationAction,
+            )
+
+            AircraftTab.TASKS -> MaintenanceTasksTab(
+              state = state,
+              onAction = onAction,
+            )
+
+            AircraftTab.LOGS -> LogsTab(
+              aircraftId = state.aircraft.id,
+              syncStates = state.syncStates,
+              onNavigateToAddLog = onMutationAction?.let { mutate ->
+                { mutate(AircraftOverviewAction.AddLogClick(state.aircraft.id)) }
+              },
+              onNavigateToEditLog = onMutationAction?.let { mutate ->
+                { logId ->
+                  mutate(
+                    AircraftOverviewAction.EditLogClick(
+                      state.aircraft.id, logId
+                    )
+                  )
+                }
+              },
+              onTaskClick = { taskId ->
+                onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
+                coroutineScope.launch {
+                  pagerState.animateScrollToPage(
+                    AircraftTab.TASKS.ordinal
+                  )
+                }
+              },
+              attachmentsAvailable = attachmentsAvailable,
+            )
+          }
         }
       }
     }

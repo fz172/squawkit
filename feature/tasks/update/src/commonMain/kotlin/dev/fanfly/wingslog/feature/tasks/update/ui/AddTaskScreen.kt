@@ -1,7 +1,10 @@
 package dev.fanfly.wingslog.feature.tasks.update.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -31,7 +34,9 @@ import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
@@ -118,19 +123,32 @@ fun AddTaskScreen(
               )
             }
           })
-        TaskTabRow(
-          tabs = listOf(
-            BASIC_TAB,
-            DETAILS_TAB,
-            SCHEDULE_TAB,
-          ),
-          selectedIndex = pagerState.currentPage,
-          onSelect = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
-        )
+        Box(
+          modifier = Modifier.fillMaxWidth(),
+          contentAlignment = Alignment.TopCenter
+        ) {
+          TaskTabRow(
+            tabs = listOf(
+              BASIC_TAB,
+              DETAILS_TAB,
+              SCHEDULE_TAB,
+            ),
+            selectedIndex = pagerState.currentPage,
+            onSelect = {
+              coroutineScope.launch {
+                pagerState.animateScrollToPage(
+                  it
+                )
+              }
+            },
+            modifier = Modifier.constrainedContentWidth(ContentWidth.Form),
+          )
+        }
       }
     }) { padding ->
     Column(
-      modifier = Modifier.padding(padding).fillMaxSize()
+      modifier = Modifier.padding(padding)
+        .fillMaxSize()
     ) {
       HorizontalPager(
         state = pagerState,
@@ -138,35 +156,42 @@ fun AddTaskScreen(
         beyondViewportPageCount = 2,
         verticalAlignment = Alignment.Top
       ) { page ->
-        Column(
-          modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-            .padding(Spacing.screenPadding)
+        Box(
+          modifier = Modifier.fillMaxSize(),
+          contentAlignment = Alignment.TopCenter,
         ) {
-          when (page) {
-            0 -> TaskIdentityTab(
-              title = title,
-              onTitleChange = { title = it },
-              component = component,
-              onComponentChange = { component = it },
-              complianceType = type,
-              onComplianceTypeChange = { type = it },
-            )
+          Column(
+            modifier = Modifier.fillMaxHeight()
+              .constrainedContentWidth(ContentWidth.Form)
+              .verticalScroll(rememberScrollState())
+              .padding(Spacing.screenPadding)
+          ) {
+            when (page) {
+              0 -> TaskIdentityTab(
+                title = title,
+                onTitleChange = { title = it },
+                component = component,
+                onComponentChange = { component = it },
+                complianceType = type,
+                onComplianceTypeChange = { type = it },
+              )
 
-            1 -> TaskDetailTab(
-              refNumber = refNumber,
-              onRefNumberChange = { refNumber = it },
-              complianceAuthority = complianceAuthority,
-              onComplianceAuthorityChange = { complianceAuthority = it },
-              complianceNotes = complianceNotes,
-              onComplianceNotesChange = { complianceNotes = it },
-              attachmentSection = attachmentSection
-            )
+              1 -> TaskDetailTab(
+                refNumber = refNumber,
+                onRefNumberChange = { refNumber = it },
+                complianceAuthority = complianceAuthority,
+                onComplianceAuthorityChange = { complianceAuthority = it },
+                complianceNotes = complianceNotes,
+                onComplianceNotesChange = { complianceNotes = it },
+                attachmentSection = attachmentSection
+              )
 
-            2 -> TaskScheduleTab(
-              state = schedule,
-              onChange = { schedule = it },
-              availableInspections = availableInspections,
-            )
+              2 -> TaskScheduleTab(
+                state = schedule,
+                onChange = { schedule = it },
+                availableInspections = availableInspections,
+              )
+            }
           }
         }
       }
@@ -180,8 +205,10 @@ fun AddTaskScreen(
             type = type,
             rules = schedule.toRules(),
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
-            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() } ?: "",
-            compliance_details = complianceNotes.takeIf { it.isNotBlank() } ?: "",
+            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() }
+              ?: "",
+            compliance_details = complianceNotes.takeIf { it.isNotBlank() }
+              ?: "",
             is_one_time = schedule.isOneTime,
             force_due_engine_hour = 0f,
             force_due_date = null,

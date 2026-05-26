@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.settings
 
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.appinfo.getAppVersion
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
@@ -125,94 +128,101 @@ fun SettingsScreen(
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
   ) { innerPadding ->
-    Column(
+    Box(
       modifier = Modifier
         .padding(innerPadding)
-        .fillMaxSize()
-        .padding(Spacing.screenPadding),
-      verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
+        .fillMaxSize(),
+      contentAlignment = Alignment.TopCenter,
     ) {
-      UserProfileCard(
-        self = user.selfTechnician,
-        photoUri = user.photoUri,
-      )
+      Column(
+        modifier = Modifier
+          .constrainedContentWidth(ContentWidth.Reading)
+          .fillMaxSize()
+          .padding(Spacing.screenPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
+      ) {
+        UserProfileCard(
+          self = user.selfTechnician,
+          photoUri = user.photoUri,
+        )
 
-      // For a guest with the upgrade flag on, "Log in" connects their on-device records to a real
-      // account (the upgrade flow). It replaces the destructive guest logout entirely.
-      val guestCanUpgrade =
-        user.isAnonymous && user.featureFlags.accountUpgradeEnabled
+        // For a guest with the upgrade flag on, "Log in" connects their on-device records to a real
+        // account (the upgrade flow). It replaces the destructive guest logout entirely.
+        val guestCanUpgrade =
+          user.isAnonymous && user.featureFlags.accountUpgradeEnabled
 
-      if (user.featureFlags.technicianEnabled) {
+        if (user.featureFlags.technicianEnabled) {
+          SettingsRow(
+            icon = Icons.Default.Engineering,
+            title = stringResource(TechnicianRes.string.manage_technicians),
+            subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
+            onClick = { navController.navigate(Screen.ManageTechnicians.route) },
+            settingsLevel = SettingsLevel.DEFAULT
+          )
+        }
+
         SettingsRow(
-          icon = Icons.Default.Engineering,
-          title = stringResource(TechnicianRes.string.manage_technicians),
-          subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
-          onClick = { navController.navigate(Screen.ManageTechnicians.route) },
+          icon = Icons.Default.CloudSync,
+          title = stringResource(SyncRes.string.feature_name_backup_and_sync),
+          subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
+          onClick = { navController.navigate(Screen.SyncSettings.route) },
           settingsLevel = SettingsLevel.DEFAULT
         )
-      }
 
-      SettingsRow(
-        icon = Icons.Default.CloudSync,
-        title = stringResource(SyncRes.string.feature_name_backup_and_sync),
-        subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
-        onClick = { navController.navigate(Screen.SyncSettings.route) },
-        settingsLevel = SettingsLevel.DEFAULT
-      )
+        if (onExportLogs != null) {
+          SettingsRow(
+            icon = Icons.Default.FileDownload,
+            title = stringResource(ExportRes.string.feature_name_export_logs),
+            subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
+            onClick = onExportLogs,
+            settingsLevel = SettingsLevel.DEFAULT
+          )
+        }
 
-      if (onExportLogs != null) {
         SettingsRow(
-          icon = Icons.Default.FileDownload,
-          title = stringResource(ExportRes.string.feature_name_export_logs),
-          subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
-          onClick = onExportLogs,
+          icon = Icons.Default.Tune,
+          title = stringResource(SettingsRes.string.feature_lab),
+          subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
+          onClick = { navController.navigate(Screen.FeatureLab.route) },
           settingsLevel = SettingsLevel.DEFAULT
         )
-      }
 
-      SettingsRow(
-        icon = Icons.Default.Tune,
-        title = stringResource(SettingsRes.string.feature_lab),
-        subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
-        onClick = { navController.navigate(Screen.FeatureLab.route) },
-        settingsLevel = SettingsLevel.DEFAULT
-      )
+        // Guest + flag on shows "Log in" (runs the upgrade); real accounts show "Log out". An
+        // anonymous user without the upgrade flag has no sign-out action — logging out would
+        // erase their on-device data, so we don't offer it.
+        if (guestCanUpgrade || !user.isAnonymous) {
+          SettingsRow(
+            icon = if (guestCanUpgrade) Icons.AutoMirrored.Filled.Login
+            else Icons.AutoMirrored.Filled.Logout,
+            title = stringResource(
+              if (guestCanUpgrade) SettingsRes.string.account_upgrade_login_cta
+              else SettingsRes.string.sign_out
+            ),
+            subtitle = if (guestCanUpgrade) {
+              stringResource(SettingsRes.string.account_upgrade_login_subtitle)
+            } else {
+              stringResource(SettingsRes.string.settings_logout_subtitle)
+            },
+            onClick = {
+              if (guestCanUpgrade) accountUpgradeViewModel.startUpgrade()
+              else settingsViewModel.logOut()
+            },
+            settingsLevel = if (guestCanUpgrade) SettingsLevel.DEFAULT else SettingsLevel.DANGER,
+          )
+        }
 
-      // Guest + flag on shows "Log in" (runs the upgrade); real accounts show "Log out". An
-      // anonymous user without the upgrade flag has no sign-out action — logging out would
-      // erase their on-device data, so we don't offer it.
-      if (guestCanUpgrade || !user.isAnonymous) {
-        SettingsRow(
-          icon = if (guestCanUpgrade) Icons.AutoMirrored.Filled.Login
-          else Icons.AutoMirrored.Filled.Logout,
-          title = stringResource(
-            if (guestCanUpgrade) SettingsRes.string.account_upgrade_login_cta
-            else SettingsRes.string.sign_out
+        Spacer(modifier = Modifier.weight(1f))
+
+        Text(
+          text = stringResource(
+            SettingsRes.string.app_version,
+            getAppVersion()
           ),
-          subtitle = if (guestCanUpgrade) {
-            stringResource(SettingsRes.string.account_upgrade_login_subtitle)
-          } else {
-            stringResource(SettingsRes.string.settings_logout_subtitle)
-          },
-          onClick = {
-            if (guestCanUpgrade) accountUpgradeViewModel.startUpgrade()
-            else settingsViewModel.logOut()
-          },
-          settingsLevel = if (guestCanUpgrade) SettingsLevel.DEFAULT else SettingsLevel.DANGER,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.align(Alignment.CenterHorizontally)
         )
       }
-
-      Spacer(modifier = Modifier.weight(1f))
-
-      Text(
-        text = stringResource(
-          SettingsRes.string.app_version,
-          getAppVersion()
-        ),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.align(Alignment.CenterHorizontally)
-      )
     }
   }
 

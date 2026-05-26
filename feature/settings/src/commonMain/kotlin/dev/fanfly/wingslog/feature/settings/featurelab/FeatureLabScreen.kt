@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.settings.featurelab
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +28,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -60,63 +63,70 @@ fun FeatureLabScreen(
       )
     }
   ) { innerPadding ->
-    Column(
+    Box(
       modifier = Modifier
         .padding(innerPadding)
-        .fillMaxSize()
-        .padding(Spacing.screenPadding),
+        .fillMaxSize(),
+      contentAlignment = Alignment.TopCenter,
     ) {
-      Text(
-        text = stringResource(Res.string.feature_lab_subtitle),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
+      Column(
+        modifier = Modifier
+          .constrainedContentWidth(ContentWidth.Reading)
+          .fillMaxSize()
+          .padding(Spacing.screenPadding),
+      ) {
+        Text(
+          text = stringResource(Res.string.feature_lab_subtitle),
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
 
-      Spacer(Modifier.height(Spacing.large))
+        Spacer(Modifier.height(Spacing.large))
 
-      HorizontalDivider()
+        HorizontalDivider()
 
-      FeatureToggleRow(
-        icon = Icons.Default.Engineering,
-        title = stringResource(Res.string.feature_lab_technician_title),
-        subtitle = stringResource(Res.string.feature_lab_technician_subtitle),
-        checked = flags.technicianEnabled,
-        onCheckedChange = viewModel::setTechnicianEnabled,
-      )
+        FeatureToggleRow(
+          icon = Icons.Default.Engineering,
+          title = stringResource(Res.string.feature_lab_technician_title),
+          subtitle = stringResource(Res.string.feature_lab_technician_subtitle),
+          checked = flags.technicianEnabled,
+          onCheckedChange = viewModel::setTechnicianEnabled,
+        )
 
-      HorizontalDivider()
+        HorizontalDivider()
 
-      FeatureToggleRow(
-        icon = Icons.Outlined.AttachFile,
-        title = stringResource(Res.string.feature_lab_attachments_title),
-        subtitle = stringResource(Res.string.feature_lab_attachments_subtitle),
-        checked = flags.attachmentUploadEnabled,
-        onCheckedChange = viewModel::setAttachmentUploadEnabled,
-      )
+        FeatureToggleRow(
+          icon = Icons.Outlined.AttachFile,
+          title = stringResource(Res.string.feature_lab_attachments_title),
+          subtitle = stringResource(Res.string.feature_lab_attachments_subtitle),
+          checked = flags.attachmentUploadEnabled,
+          onCheckedChange = viewModel::setAttachmentUploadEnabled,
+        )
 
-      HorizontalDivider()
+        HorizontalDivider()
 
-      FeatureToggleRow(
-        icon = Icons.Default.Mail,
-        title = stringResource(Res.string.feature_lab_export_email_title),
-        subtitle = stringResource(Res.string.feature_lab_export_email_subtitle),
-        checked = flags.exportEmailDeliveryEnabled,
-        onCheckedChange = viewModel::setExportEmailDeliveryEnabled,
-      )
+        FeatureToggleRow(
+          icon = Icons.Default.Mail,
+          title = stringResource(Res.string.feature_lab_export_email_title),
+          subtitle = stringResource(Res.string.feature_lab_export_email_subtitle),
+          checked = flags.exportEmailDeliveryEnabled,
+          onCheckedChange = viewModel::setExportEmailDeliveryEnabled,
+        )
 
-      HorizontalDivider()
+        HorizontalDivider()
 
-      FeatureToggleRow(
-        icon = Icons.Default.CloudUpload,
-        title = stringResource(Res.string.feature_lab_account_upgrade_title),
-        subtitle = stringResource(Res.string.feature_lab_account_upgrade_subtitle),
-        checked = flags.accountUpgradeEnabled,
-        onCheckedChange = viewModel::setAccountUpgradeEnabled,
-      )
+        FeatureToggleRow(
+          icon = Icons.Default.CloudUpload,
+          title = stringResource(Res.string.feature_lab_account_upgrade_title),
+          subtitle = stringResource(Res.string.feature_lab_account_upgrade_subtitle),
+          checked = flags.accountUpgradeEnabled,
+          onCheckedChange = viewModel::setAccountUpgradeEnabled,
+        )
 
-      HorizontalDivider()
+        HorizontalDivider()
 
-      dogfoodContent()
+        dogfoodContent()
+      }
     }
   }
 }

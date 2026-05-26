@@ -1,7 +1,10 @@
 package dev.fanfly.wingslog.feature.tasks.update.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -35,28 +38,30 @@ import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.ADJUSTMENT_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
-import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.update.compose.SCHEDULE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskAdjustmentsTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskDetailTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
-import kotlin.time.Clock
+import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.back
 import wingslog.core.ui.generated.resources.ok
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
+import kotlin.time.Clock
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 
 @OptIn(
   ExperimentalMaterial3Api::class,
@@ -155,20 +160,33 @@ fun EditTaskScreen(
               )
             }
           })
-        TaskTabRow(
-          tabs = listOf(
-            BASIC_TAB,
-            DETAILS_TAB,
-            SCHEDULE_TAB,
-            ADJUSTMENT_TAB
-          ),
-          selectedIndex = pagerState.currentPage,
-          onSelect = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
-        )
+        Box(
+          modifier = Modifier.fillMaxWidth(),
+          contentAlignment = Alignment.TopCenter
+        ) {
+          TaskTabRow(
+            tabs = listOf(
+              BASIC_TAB,
+              DETAILS_TAB,
+              SCHEDULE_TAB,
+              ADJUSTMENT_TAB
+            ),
+            selectedIndex = pagerState.currentPage,
+            onSelect = {
+              coroutineScope.launch {
+                pagerState.animateScrollToPage(
+                  it
+                )
+              }
+            },
+            modifier = Modifier.constrainedContentWidth(ContentWidth.Form),
+          )
+        }
       }
     }) { padding ->
     Column(
-      modifier = Modifier.padding(padding).fillMaxSize()
+      modifier = Modifier.padding(padding)
+        .fillMaxSize()
     ) {
       HorizontalPager(
         state = pagerState,
@@ -176,59 +194,67 @@ fun EditTaskScreen(
         beyondViewportPageCount = 3,
         verticalAlignment = Alignment.Top
       ) { page ->
-        Column(
-          modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-            .padding(Spacing.screenPadding)
+        Box(
+          modifier = Modifier.fillMaxSize(),
+          contentAlignment = Alignment.TopCenter,
         ) {
-          when (page) {
-            0 -> TaskIdentityTab(
-              title = title,
-              onTitleChange = { title = it },
-              component = component,
-              onComponentChange = null,
-              complianceType = type,
-              onComplianceTypeChange = null,
-            )
+          Column(
+            modifier = Modifier.fillMaxHeight()
+              .constrainedContentWidth(ContentWidth.Form)
+              .verticalScroll(rememberScrollState())
+              .padding(Spacing.screenPadding)
+          ) {
+            when (page) {
+              0 -> TaskIdentityTab(
+                title = title,
+                onTitleChange = { title = it },
+                component = component,
+                onComponentChange = null,
+                complianceType = type,
+                onComplianceTypeChange = null,
+              )
 
-            1 -> TaskDetailTab(
-              refNumber = refNumber,
-              onRefNumberChange = { refNumber = it },
-              complianceAuthority = complianceAuthority,
-              onComplianceAuthorityChange = { complianceAuthority = it },
-              complianceNotes = complianceNotes,
-              onComplianceNotesChange = { complianceNotes = it },
-              attachmentSection = attachmentSection
-            )
+              1 -> TaskDetailTab(
+                refNumber = refNumber,
+                onRefNumberChange = { refNumber = it },
+                complianceAuthority = complianceAuthority,
+                onComplianceAuthorityChange = { complianceAuthority = it },
+                complianceNotes = complianceNotes,
+                onComplianceNotesChange = { complianceNotes = it },
+                attachmentSection = attachmentSection
+              )
 
-            2 -> TaskScheduleTab(
-              state = schedule,
-              onChange = { schedule = it },
-              availableInspections = availableInspections.filter { it.id != card.id },
-            )
+              2 -> TaskScheduleTab(
+                state = schedule,
+                onChange = { schedule = it },
+                availableInspections = availableInspections.filter { it.id != card.id },
+              )
 
-            3 -> TaskAdjustmentsTab(
-              schedule = schedule,
-              forceOverrideEngine = forceOverrideEngine,
-              onForceOverrideEngineChange = { forceOverrideEngine = it },
-              forcedEngineHours = forcedEngineHours,
-              onForcedEngineHoursChange = { forcedEngineHours = it },
-              forceOverrideDate = forceOverrideDate,
-              onForceOverrideDateChange = { forceOverrideDate = it },
-              forcedDateMillis = forcedDateMillis,
-              onDateClick = { showDatePicker = true },
-              isSkipping = forceCompliedStatus != null,
-              onSkipToggle = {
-                forceCompliedStatus = if (forceCompliedStatus != null) null else {
-                  ForceCompliedStatus(
-                    complied_date = toWireInstant(Clock.System.now().epochSeconds),
-                    complied_engine_hours = currentEngineHours
-                  )
-                }
-              },
-              naturalDueDate = naturalDueMetadata?.nextDueDate,
-              naturalDueEngine = naturalDueMetadata?.nextDueEngine,
-              currentEngineHours = currentEngineHours,
-            )
+              3 -> TaskAdjustmentsTab(
+                schedule = schedule,
+                forceOverrideEngine = forceOverrideEngine,
+                onForceOverrideEngineChange = { forceOverrideEngine = it },
+                forcedEngineHours = forcedEngineHours,
+                onForcedEngineHoursChange = { forcedEngineHours = it },
+                forceOverrideDate = forceOverrideDate,
+                onForceOverrideDateChange = { forceOverrideDate = it },
+                forcedDateMillis = forcedDateMillis,
+                onDateClick = { showDatePicker = true },
+                isSkipping = forceCompliedStatus != null,
+                onSkipToggle = {
+                  forceCompliedStatus =
+                    if (forceCompliedStatus != null) null else {
+                      ForceCompliedStatus(
+                        complied_date = toWireInstant(Clock.System.now().epochSeconds),
+                        complied_engine_hours = currentEngineHours
+                      )
+                    }
+                },
+                naturalDueDate = naturalDueMetadata?.nextDueDate,
+                naturalDueEngine = naturalDueMetadata?.nextDueEngine,
+                currentEngineHours = currentEngineHours,
+              )
+            }
           }
         }
       }
@@ -240,13 +266,15 @@ fun EditTaskScreen(
           val ruleList = schedule.toRules(existingTimeRuleCreationDate)
 
           val updatedForceDueEngine =
-            if (forceOverrideEngine) forcedEngineHours.toFloatOrNull() ?: 0f else 0f
-          val updatedForceDueDate = if (forceOverrideDate) forcedDateMillis?.let {
-            toWireInstant(
-              it / 1000,
-              0
-            )
-          } else null
+            if (forceOverrideEngine) forcedEngineHours.toFloatOrNull()
+              ?: 0f else 0f
+          val updatedForceDueDate =
+            if (forceOverrideDate) forcedDateMillis?.let {
+              toWireInstant(
+                it / 1000,
+                0
+              )
+            } else null
 
           val isScheduleChanged = ruleList != card.rules ||
             schedule.isOneTime != card.is_one_time ||
@@ -260,8 +288,10 @@ fun EditTaskScreen(
             rules = ruleList,
             is_one_time = schedule.isOneTime,
             reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
-            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() } ?: "",
-            compliance_details = complianceNotes.takeIf { it.isNotBlank() } ?: "",
+            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() }
+              ?: "",
+            compliance_details = complianceNotes.takeIf { it.isNotBlank() }
+              ?: "",
             force_due_engine_hour = updatedForceDueEngine,
             force_due_date = updatedForceDueDate,
             force_complied_status = if (isScheduleChanged) null else forceCompliedStatus

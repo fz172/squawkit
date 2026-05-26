@@ -24,8 +24,8 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewViewM
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.error_occurred
+import wingslog.core.ui.generated.resources.Res as CoreRes
 
 
 @Composable
@@ -76,7 +76,12 @@ fun AircraftOverviewScreen(
           navController.navigate(Screen.AddSquawk.createRoute(event.aircraftId))
 
         is AircraftOverviewEvent.NavigateToEditSquawk ->
-          navController.navigate(Screen.EditSquawk.createRoute(event.aircraftId, event.squawkId))
+          navController.navigate(
+            Screen.EditSquawk.createRoute(
+              event.aircraftId,
+              event.squawkId
+            )
+          )
       }
     }
   }
@@ -84,7 +89,8 @@ fun AircraftOverviewScreen(
   val navBackStackEntry by navController.currentBackStackEntryAsState()
   LaunchedEffect(navBackStackEntry) {
     val handle = navBackStackEntry?.savedStateHandle ?: return@LaunchedEffect
-    val message = handle.get<String>(CROSS_SCREEN_SUCCESS_MESSAGE).orEmpty()
+    val message = handle.get<String>(CROSS_SCREEN_SUCCESS_MESSAGE)
+      .orEmpty()
     if (message.isNotEmpty()) {
       coroutineScope.launch {
         snackbarHostState.showSnackbar(message)

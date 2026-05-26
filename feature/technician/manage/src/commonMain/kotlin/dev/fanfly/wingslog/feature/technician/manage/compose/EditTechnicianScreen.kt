@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.technician.manage.compose
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -27,21 +29,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.EditTechnicianViewModel
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.CertificateInputFields
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.cancel
-import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
 import wingslog.feature.technician.sharedassets.generated.resources.delete_technician
 import wingslog.feature.technician.sharedassets.generated.resources.delete_technician_confirmation
 import wingslog.feature.technician.sharedassets.generated.resources.edit_technician
 import wingslog.feature.technician.sharedassets.generated.resources.my_profile
 import wingslog.feature.technician.sharedassets.generated.resources.name_required
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,47 +116,55 @@ fun EditTechnicianScreen(
         .fillMaxSize()
         .padding(paddingValues),
     ) {
-      Column(
-        modifier = Modifier
-          .weight(1f)
-          .fillMaxWidth()
-          .verticalScroll(rememberScrollState())
-          .padding(Spacing.large),
-        verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+      Box(
+        modifier = Modifier.weight(1f)
+          .fillMaxWidth(),
+        contentAlignment = Alignment.TopCenter,
       ) {
-        if (uiState.error != null) {
-          Text(
-            text = uiState.error!!,
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodyMedium,
+        Column(
+          modifier = Modifier
+            .fillMaxHeight()
+            .constrainedContentWidth(ContentWidth.Form)
+            .verticalScroll(rememberScrollState())
+            .padding(Spacing.large),
+          verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+        ) {
+          if (uiState.error != null) {
+            Text(
+              text = uiState.error!!,
+              color = MaterialTheme.colorScheme.error,
+              style = MaterialTheme.typography.bodyMedium,
+            )
+          }
+
+          OutlinedTextField(
+            value = uiState.name,
+            onValueChange = viewModel::updateName,
+            label = { Text(stringResource(TechnicianRes.string.name_required)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+          )
+
+          CertificateInputFields(
+            certType = uiState.certType,
+            onCertTypeChanged = viewModel::updateCertType,
+            certNumber = uiState.certNumber,
+            onCertNumberChanged = viewModel::updateCertNumber,
+            expireLimit = uiState.certExpireLimit,
+            onExpireLimitChanged = viewModel::updateCertExpireLimit,
+            expirationDate = uiState.certExpiration,
+            onExpirationDateChanged = viewModel::updateCertExpiration,
+            modifier = Modifier.fillMaxWidth(),
           )
         }
-
-        OutlinedTextField(
-          value = uiState.name,
-          onValueChange = viewModel::updateName,
-          label = { Text(stringResource(TechnicianRes.string.name_required)) },
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true,
-        )
-
-        CertificateInputFields(
-          certType = uiState.certType,
-          onCertTypeChanged = viewModel::updateCertType,
-          certNumber = uiState.certNumber,
-          onCertNumberChanged = viewModel::updateCertNumber,
-          expireLimit = uiState.certExpireLimit,
-          onExpireLimitChanged = viewModel::updateCertExpireLimit,
-          expirationDate = uiState.certExpiration,
-          onExpirationDateChanged = viewModel::updateCertExpiration,
-          modifier = Modifier.fillMaxWidth(),
-        )
       }
 
       BottomButtons(
         onPrimaryClick = viewModel::save,
         onSecondaryClick = onNavigateBack,
-        onDangerClick = if (uiState.id.isNotEmpty() && !uiState.isSelf) ({ showDeleteDialog = true }) else null,
+        onDangerClick = if (uiState.id.isNotEmpty() && !uiState.isSelf) ({
+          showDeleteDialog = true
+        }) else null,
         dangerLabel = stringResource(TechnicianRes.string.delete_technician),
         primaryEnabled = !uiState.isSaving,
         isPrimaryFunctionInProgress = uiState.isSaving,
