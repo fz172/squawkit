@@ -26,7 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -37,20 +36,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.AttachmentType
+import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
+import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.add
 import wingslog.core.ui.generated.resources.cancel
 import wingslog.core.ui.generated.resources.remove
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.add_link
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_limits_hint
 import wingslog.feature.attachment.sharedassets.generated.resources.attachments
@@ -64,6 +61,8 @@ import wingslog.feature.attachment.sharedassets.generated.resources.max_files_re
 import wingslog.feature.attachment.sharedassets.generated.resources.no_attachments
 import wingslog.feature.attachment.sharedassets.generated.resources.remove_attachment
 import wingslog.feature.attachment.sharedassets.generated.resources.sign_in_to_add_attachments
+import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 /**
  * Attachment section for forms. R2 simplification: every locally-added attachment is already on
@@ -100,11 +99,7 @@ fun AttachmentFormSection(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-      Text(
-        text = stringResource(AttachRes.string.attachments),
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.SemiBold,
-      )
+      FormSectionLabel(text = stringResource(AttachRes.string.attachments))
       if (!isAnonymous) {
         OutlinedButton(
           onClick = onAddClick,
@@ -306,21 +301,19 @@ private fun AttachmentPickerSheet(
           modifier = Modifier.fillMaxWidth(),
         )
       } else {
-        OutlinedTextField(
+        FormTextField(
           value = linkUrl,
           onValueChange = { linkUrl = it; urlError = false },
-          label = { Text(stringResource(AttachRes.string.link_url)) },
+          label = stringResource(AttachRes.string.link_url),
           isError = urlError,
-          supportingText = if (urlError) {
-            { Text(stringResource(AttachRes.string.invalid_url)) }
-          } else null,
+          supportingText = if (urlError) stringResource(AttachRes.string.invalid_url) else null,
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
         )
-        OutlinedTextField(
+        FormTextField(
           value = linkName,
           onValueChange = { linkName = it },
-          label = { Text(stringResource(AttachRes.string.link_name)) },
+          label = stringResource(AttachRes.string.link_name),
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
         )

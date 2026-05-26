@@ -31,12 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -48,7 +49,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.ui.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
@@ -95,6 +95,7 @@ import wingslog.feature.tasks.update.generated.resources.adj_skip_title_inactive
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_label
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.time.Clock
 import kotlin.time.Instant
 import wingslog.core.ui.generated.resources.Res as CoreRes
 
@@ -612,13 +613,7 @@ private fun AdjSectionLabel(
         )
       }
     }
-    Text(
-      label,
-      style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.9.sp),
-      fontWeight = FontWeight.Bold,
-      color = if (complete) MaterialTheme.colorScheme.primary
-      else MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    FormSectionLabel(text = label)
   }
 }
 

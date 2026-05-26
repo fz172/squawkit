@@ -7,8 +7,8 @@
   <string name="task_description_label">Task Description</string>
   <string name="task_description_placeholder">e.g. 100-Hour Inspection</string>
   <string name="task_title_helper">Provide a concise, technical name for this maintenance action as it appears in the service manual.</string>
-  <string name="component_type_description">Select the primary system or component this task pertains to for accurate telemetry tracking.</string>
-  <string name="compliance_type_description">Determine the regulatory nature of this task. Mandatory items will trigger critical system alerts.</string>
+  <string name="component_type_description">Select the primary system or component this task pertains to for accurate log grouping.</string>
+  <string name="compliance_type_description">Regulatory nature of this task. Mandatory items will trigger critical system alerts.</string>
   <string name="compliance_type_sb_full">SB (Service Bulletin)</string>
   <string name="compliance_type_ad_full">AD (Airworthiness Directive)</string>
   <string name="compliance_routine_sub">Scheduled maintenance intervals</string>

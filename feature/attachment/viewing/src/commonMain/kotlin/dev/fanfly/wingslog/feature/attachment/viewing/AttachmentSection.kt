@@ -8,9 +8,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
+import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -34,11 +34,7 @@ fun AttachmentSection(
   if (attachments.isEmpty()) return
 
   Column(modifier = modifier) {
-    Text(
-      text = stringResource(Res.string.attachments),
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.SemiBold,
-    )
+    FormSectionLabel(text = stringResource(Res.string.attachments))
     Spacer(Modifier.height(Spacing.small))
     attachments.forEach { attachment ->
       AttachmentRow(

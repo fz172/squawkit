@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.attachment.sharedassets.generated.resources.attachments
@@ -52,9 +52,9 @@ fun LogRecordsTab(
       ) {
         val displayText = selectedTechnician?.name
           ?: stringResource(TechnicianRes.string.select_technician)
-        TappableReadOnlyField(
+        FormValueField(
           value = displayText,
-          label = { Text(stringResource(TechnicianRes.string.performed_by)) },
+          label = stringResource(TechnicianRes.string.performed_by),
           onClick = onTechnicianClick,
           accessibilityDescription = stringResource(TechnicianRes.string.performed_by),
           leadingIcon = {

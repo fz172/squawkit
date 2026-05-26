@@ -1,13 +1,11 @@
 package dev.fanfly.wingslog.feature.technician.sharedassets.compose
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.Checkbox
@@ -15,9 +13,6 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -34,6 +29,9 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.aircraft.CertExpireLimit
 import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
+import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
+import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -81,11 +79,7 @@ fun CertificateInputFields(
   ) {
     // --- Certificate Type ---
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-      Text(
-        text = stringResource(Res.string.certificate_type),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
+      FormSectionLabel(text = stringResource(Res.string.certificate_type))
       val types = CertificateType.entries
       SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         types.forEachIndexed { index, type ->
@@ -103,71 +97,65 @@ fun CertificateInputFields(
       }
     }
 
-    // --- Certificate Number ---
-    OutlinedTextField(
+    FormTextField(
       value = certNumber,
       onValueChange = onCertNumberChanged,
-      label = { Text(stringResource(Res.string.certificate_number)) },
+      label = stringResource(Res.string.certificate_number),
       modifier = Modifier.fillMaxWidth(),
-      singleLine = true,
-      shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-      enabled = certType != CertificateType.CERTIFICATE_TYPE_NONE,
+      editable = certType != CertificateType.CERTIFICATE_TYPE_NONE,
     )
 
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // --- Expiration Date ---
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.SpaceBetween,
-      verticalAlignment = Alignment.CenterVertically
-    ) {
-      val expirationDateEnabled =
-        expireLimit != CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES && certType != CertificateType.CERTIFICATE_TYPE_NONE
-      OutlinedTextField(
-        value = if (expireLimit != CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES)
-          expirationDate?.toLocalDateTime(TimeZone.UTC)?.date?.toDisplayFormat()
-            ?: "" else "",
-        onValueChange = { },
-        readOnly = true,
-        label = { Text(stringResource(Res.string.expiration_date)) },
-        leadingIcon = {
-          Icon(
-            imageVector = Icons.Default.CalendarToday,
-            contentDescription = stringResource(CoreUiRes.string.select_date)
+    if (certType == CertificateType.CERTIFICATE_TYPE_NONE) {
+      FormValueField(
+        value = "",
+        label = stringResource(Res.string.expiration_date),
+        modifier = Modifier.fillMaxWidth(),
+      )
+    } else {
+      Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+        FormSectionLabel(text = stringResource(Res.string.expiration_date))
+        val expirationDateEnabled =
+          expireLimit != CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          FormValueField(
+            value = if (expirationDateEnabled)
+              expirationDate?.toLocalDateTime(TimeZone.UTC)?.date?.toDisplayFormat()
+                ?: "" else "",
+            label = stringResource(Res.string.expiration_date),
+            showLabel = false,
+            trailingIcon = if (expirationDateEnabled) {
+              {
+                Icon(
+                  imageVector = Icons.Default.CalendarToday,
+                  contentDescription = stringResource(CoreUiRes.string.select_date),
+                )
+              }
+            } else null,
+            onClick = if (expirationDateEnabled) {
+              { showDatePicker = true }
+            } else null,
+            accessibilityDescription = stringResource(CoreUiRes.string.select_date),
+            modifier = Modifier.weight(1f),
           )
-        },
-        enabled = false,
-        singleLine = true,
-        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-        modifier = Modifier
-          .weight(1f)
-          .clickable { if (expirationDateEnabled) showDatePicker = true },
-        colors = if (expirationDateEnabled) {
-          OutlinedTextFieldDefaults.colors(
-            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-            disabledBorderColor = MaterialTheme.colorScheme.outline,
-            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+          Spacer(modifier = Modifier.width(Spacing.large))
+          Text(text = stringResource(Res.string.never))
+          Checkbox(
+            checked = expireLimit == CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES,
+            onCheckedChange = { never ->
+              onExpireLimitChanged(
+                if (never) CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES
+                else CertExpireLimit.CERT_EXPIRE_LIMIT_EXPIRES
+              )
+            },
           )
-        } else {
-          OutlinedTextFieldDefaults.colors()
         }
-      )
-      Spacer(modifier = Modifier.width(Spacing.large))
-      Text(text = stringResource(Res.string.never))
-      Checkbox(
-        checked = expireLimit == CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES,
-        onCheckedChange = { never ->
-          onExpireLimitChanged(
-            if (never) CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES
-            else CertExpireLimit.CERT_EXPIRE_LIMIT_EXPIRES
-          )
-        },
-        enabled = certType != CertificateType.CERTIFICATE_TYPE_NONE,
-      )
+      }
     }
     if (showDatePicker) {
       val datePickerState = rememberDatePickerState()

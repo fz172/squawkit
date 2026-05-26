@@ -15,17 +15,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
+import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import org.jetbrains.compose.resources.stringResource
@@ -60,14 +60,14 @@ fun SquawkDetailsTab(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.large),
   ) {
-    // Description
-    OutlinedTextField(
+    FormTextField(
       value = description,
       onValueChange = onDescriptionChange,
-      label = { Text(stringResource(Res.string.squawk_description_label)) },
+      label = stringResource(Res.string.squawk_description_label),
+      singleLine = false,
       minLines = 4,
       modifier = Modifier.fillMaxWidth(),
-      readOnly = readOnly,
+      editable = !readOnly,
     )
 
     // Maintenance history (edit mode only)
@@ -81,11 +81,7 @@ fun SquawkDetailsTab(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-          Text(
-            text = stringResource(LogsRes.string.maintenance_history),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-          )
+          FormSectionLabel(stringResource(LogsRes.string.maintenance_history))
           if (addressedByLogId.isEmpty() && !isDismissed) {
             OutlinedButton(
               onClick = onAddLog,

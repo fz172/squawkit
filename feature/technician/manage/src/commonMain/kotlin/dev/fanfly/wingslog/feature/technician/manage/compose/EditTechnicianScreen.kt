@@ -17,7 +17,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,6 +33,7 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.EditTechnicianViewModel
@@ -143,10 +143,10 @@ fun EditTechnicianScreen(
             )
           }
 
-          OutlinedTextField(
+          FormTextField(
             value = uiState.name,
             onValueChange = viewModel::updateName,
-            label = { Text(stringResource(TechnicianRes.string.name_required)) },
+            label = stringResource(TechnicianRes.string.name_required),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
           )

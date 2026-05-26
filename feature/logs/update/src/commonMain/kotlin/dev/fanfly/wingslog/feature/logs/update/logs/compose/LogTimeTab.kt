@@ -4,11 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.update.generated.resources.Res
@@ -37,26 +36,26 @@ fun LogTimeTab(
       description = stringResource(Res.string.hours_section_description),
     ) {
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
-        OutlinedTextField(
+        FormTextField(
           value = engineTime,
           onValueChange = onEngineTimeChange,
-          label = { Text(stringResource(Res.string.engine_time_hours)) },
+          label = stringResource(Res.string.engine_time_hours),
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
           keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         )
-        OutlinedTextField(
+        FormTextField(
           value = airframeTime,
           onValueChange = onAirframeTimeChange,
-          label = { Text(stringResource(Res.string.airframe_time_hours)) },
+          label = stringResource(Res.string.airframe_time_hours),
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
           keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         )
-        OutlinedTextField(
+        FormTextField(
           value = propTime,
           onValueChange = onPropTimeChange,
-          label = { Text(stringResource(Res.string.prop_time_hours)) },
+          label = stringResource(Res.string.prop_time_hours),
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
           keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

@@ -24,14 +24,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
+import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.update.aircraft.viewmodel.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.blade_serial_numbers
 import wingslog.feature.logs.sharedassets.generated.resources.blade_with_index
 import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
@@ -43,6 +42,7 @@ import wingslog.feature.logs.update.generated.resources.model
 import wingslog.feature.logs.update.generated.resources.remove_blade
 import wingslog.feature.logs.update.generated.resources.remove_engine
 import wingslog.feature.logs.update.generated.resources.serial
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 
 @Composable
 fun EngineSection(
@@ -90,7 +90,7 @@ fun EngineSection(
         }
       }
 
-      InputField(
+      FormTextField(
         label = stringResource(Res.string.make),
         value = engine.make,
         isError = showValidationErrors && engine.make.isBlank()
@@ -102,7 +102,7 @@ fun EngineSection(
       }
 
       Row(horizontalArrangement = Arrangement.spacedBy(Spacing.large)) {
-        InputField(
+        FormTextField(
           label = stringResource(Res.string.model),
           value = engine.model,
           modifier = Modifier.weight(1f),
@@ -113,7 +113,7 @@ fun EngineSection(
             it
           )
         }
-        InputField(
+        FormTextField(
           label = stringResource(Res.string.serial),
           value = engine.serial,
           modifier = Modifier.weight(1f),
@@ -133,7 +133,7 @@ fun EngineSection(
         style = MaterialTheme.typography.labelSmall
       )
       val hub = engine.propeller?.hub ?: PropellerHub()
-      InputField(
+      FormTextField(
         label = stringResource(Res.string.make),
         value = hub.make,
 
@@ -145,7 +145,7 @@ fun EngineSection(
         )
       }
       Row(horizontalArrangement = Arrangement.spacedBy(Spacing.large)) {
-        InputField(
+        FormTextField(
           label = stringResource(Res.string.model),
           value = hub.model,
           modifier = Modifier.weight(1f),
@@ -156,7 +156,7 @@ fun EngineSection(
             it
           )
         }
-        InputField(
+        FormTextField(
           label = stringResource(
             Res.string.serial,
             ""
@@ -180,7 +180,7 @@ fun EngineSection(
       blades.withIndex().chunked(2).forEach { pair ->
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
           pair.forEach { (bladeIndex, blade) ->
-            InputField(
+            FormTextField(
               label = stringResource(
                 SharedRes.string.blade_with_index,
                 bladeIndex + 1

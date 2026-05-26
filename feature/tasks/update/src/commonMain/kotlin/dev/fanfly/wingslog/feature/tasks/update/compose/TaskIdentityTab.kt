@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
@@ -20,10 +18,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.ComponentType
+import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
+import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
 import wingslog.core.ui.generated.resources.component_type
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.compliance_ad_sub
@@ -38,6 +37,7 @@ import wingslog.feature.tasks.update.generated.resources.component_type_descript
 import wingslog.feature.tasks.update.generated.resources.task_description_placeholder
 import wingslog.feature.tasks.update.generated.resources.task_title
 import wingslog.feature.tasks.update.generated.resources.task_title_helper
+import wingslog.core.ui.generated.resources.Res as CoreRes
 
 /**
  * Identity tab for Add/Edit Maintenance Task screens.
@@ -57,31 +57,18 @@ fun TaskIdentityTab(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.massive),
   ) {
-    // ── Section 1: Task Title ─────────────────────────────────────────────
-    IdentitySection(
-      header = stringResource(Res.string.task_title),
-      description = stringResource(Res.string.task_title_helper),
-    ) {
-      OutlinedTextField(
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+      FormTextField(
+        label = stringResource(Res.string.task_title),
         value = title,
         onValueChange = onTitleChange,
         modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-
-        placeholder = {
-          Text(
-            text = stringResource(Res.string.task_description_placeholder),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.outline,
-          )
-        },
-        textStyle = MaterialTheme.typography.bodyLarge,
-        colors = OutlinedTextFieldDefaults.colors(
-          focusedBorderColor = MaterialTheme.colorScheme.primary,
-          unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-          focusedLabelColor = MaterialTheme.colorScheme.primary,
-          unfocusedLabelColor = MaterialTheme.colorScheme.outline,
-        ),
+        placeholder = stringResource(Res.string.task_description_placeholder),
+      )
+      Text(
+        text = stringResource(Res.string.task_title_helper),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.outline,
       )
     }
 
@@ -161,13 +148,7 @@ private fun IdentitySection(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    Text(
-      text = header.uppercase(),
-      style = MaterialTheme.typography.labelSmall,
-      fontWeight = FontWeight.Bold,
-      color = MaterialTheme.colorScheme.primary,
-      letterSpacing = 1.2.sp,
-    )
+    FormSectionLabel(header)
     Text(
       text = description,
       style = MaterialTheme.typography.bodySmall,
@@ -185,6 +166,29 @@ private fun IdentityRadioItem(
   subtitle: String = "",
   modifier: Modifier = Modifier,
 ) {
+  if (onClick == null) {
+    Column(
+      modifier = modifier.fillMaxWidth(),
+      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+    ) {
+      Text(
+        text = label.uppercase(),
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+        letterSpacing = 0.5.sp,
+      )
+      if (subtitle.isNotBlank()) {
+        Text(
+          text = subtitle.uppercase(),
+          style = MaterialTheme.typography.labelSmall,
+          color = MaterialTheme.colorScheme.outline,
+        )
+      }
+    }
+    return
+  }
+
   val interactionSource = remember { MutableInteractionSource() }
   Row(
     modifier = modifier
@@ -192,8 +196,7 @@ private fun IdentityRadioItem(
       .clickable(
         interactionSource = interactionSource,
         indication = null,
-        enabled = onClick != null,
-        onClick = { onClick?.invoke() },
+        onClick = onClick,
       ),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
@@ -201,12 +204,9 @@ private fun IdentityRadioItem(
     RadioButton(
       selected = selected,
       onClick = onClick,
-      enabled = onClick != null,
       colors = RadioButtonDefaults.colors(
         selectedColor = MaterialTheme.colorScheme.primary,
         unselectedColor = MaterialTheme.colorScheme.outlineVariant,
-        disabledSelectedColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-        disabledUnselectedColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
       ),
     )
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {

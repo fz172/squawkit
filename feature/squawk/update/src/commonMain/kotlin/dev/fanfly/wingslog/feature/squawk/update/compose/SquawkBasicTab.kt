@@ -3,8 +3,6 @@ package dev.fanfly.wingslog.feature.squawk.update.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -12,9 +10,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
+import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
+import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -47,59 +47,51 @@ fun SquawkBasicTab(
         .toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat()
     }
   }
+  val priorities = listOf(
+    SquawkPriority.SQUAWK_PRIORITY_LOW to stringResource(Res.string.priority_low),
+    SquawkPriority.SQUAWK_PRIORITY_MEDIUM to stringResource(Res.string.priority_medium),
+    SquawkPriority.SQUAWK_PRIORITY_HIGH to stringResource(Res.string.priority_high),
+    SquawkPriority.SQUAWK_PRIORITY_AOG to stringResource(Res.string.priority_aog),
+  )
 
   Column(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.large),
   ) {
-    // Reported date (read-only)
-    OutlinedTextField(
+    FormValueField(
       value = displayDate,
-      onValueChange = {},
-      label = { Text(stringResource(Res.string.squawk_reported_on)) },
-      singleLine = true,
-      readOnly = true,
+      label = stringResource(Res.string.squawk_reported_on),
       modifier = Modifier.fillMaxWidth(),
     )
 
-    // Title
-    OutlinedTextField(
+    FormTextField(
       value = title,
       onValueChange = onTitleChange,
-      label = { Text(stringResource(Res.string.squawk_title_label)) },
+      label = stringResource(Res.string.squawk_title_label),
       isError = titleError,
-      supportingText = if (titleError) {
-        { Text(stringResource(Res.string.squawk_title_required)) }
-      } else null,
-      singleLine = true,
+      supportingText = if (titleError) stringResource(Res.string.squawk_title_required) else null,
       modifier = Modifier.fillMaxWidth(),
-      readOnly = readOnly,
+      editable = !readOnly,
     )
 
-    // Priority
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-      Text(
-        text = stringResource(Res.string.squawk_priority_label),
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.SemiBold,
-      )
-      val priorities = listOf(
-        SquawkPriority.SQUAWK_PRIORITY_LOW to stringResource(Res.string.priority_low),
-        SquawkPriority.SQUAWK_PRIORITY_MEDIUM to stringResource(Res.string.priority_medium),
-        SquawkPriority.SQUAWK_PRIORITY_HIGH to stringResource(Res.string.priority_high),
-        SquawkPriority.SQUAWK_PRIORITY_AOG to stringResource(Res.string.priority_aog),
-      )
-      SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        priorities.forEachIndexed { index, (p, label) ->
-          SegmentedButton(
-            selected = priority == p,
-            onClick = { if (!readOnly) onPriorityChange(p) },
-            shape = SegmentedButtonDefaults.itemShape(
-              index = index,
-              count = priorities.size
-            ),
-            enabled = !readOnly,
-          ) { Text(label) }
+      FormSectionLabel(stringResource(Res.string.squawk_priority_label))
+      if (readOnly) {
+        Text(
+          text = priorities.first { it.first == priority }.second,
+        )
+      } else {
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+          priorities.forEachIndexed { index, (p, label) ->
+            SegmentedButton(
+              selected = priority == p,
+              onClick = { onPriorityChange(p) },
+              shape = SegmentedButtonDefaults.itemShape(
+                index = index,
+                count = priorities.size
+              ),
+            ) { Text(label) }
+          }
         }
       }
     }
