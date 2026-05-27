@@ -131,6 +131,23 @@ Two structural tones, one personality accent used sparingly, two semantic anchor
 - **Caution Amber** (#8B5E00 / surface: #FFECB3 / dark text: #FFCA28, dark surface: #514500): Advisory caution — action required, not immediate. The semantic amber paired with Airworthy Green. Matches the mental model of the amber annunciator panel light.
 
 ### Named Rules
+#### Color Mapping (from `Color.kt`)
+
+| M3 Role | Light | Dark | Usage |
+|----------|-----|------|-------|
+| Primary | `#1A5FAE` (AviationBlue40) | `#A7C8FF` (AviationBlue80) | Filled buttons, focus, active state, tail numbers |
+| Primary Container | `#D5E3FF` (AviationBlue90) | `#004785` (AviationBlue30) | Card backgrounds, chip fills, selected badges |
+| On Container | `#001849` (AviationBlue10) | — | On-primary text |
+| Secondary | `#525E72` (BlueGray40) | `#BAC8E0` (BlueGray80) | Secondary actions, inactive chrome |
+| Secondary Container | `#D6E4F5` (BlueGray90) | `#3A4557` (BlueGray30) | Secondary fills |
+| Tertiary (light) | `#7A5200` (Amber40) | `#FFBA4E` (Amber80) | Advisory — ≤10% of color moments |
+| Tertiary Container (light) | `#FFDFA6` (Amber90) | `#514500` (Amber30 dark) | Advisory background |
+| Positive text | `#276B39` (StatusOkLight) | `#81C784` (StatusOkDark) | Airworthy — text/icon only |
+| Positive container | `#E3F2E8` (StatusOkContainerLight) | `#1B4D2B` (StatusOkContainerDark) | Positive status chip bg |
+| Caution text | `#8B5E00` (StatusWarningLight) | `#FFCA28` (StatusWarningDark) | Due soon — text/icon |
+| Caution container | `#FFECB3` (StatusWarningContainerLight) | `#514500` (StatusWarningContainerDark) | Caution status chip bg |
+| Blocking/Error | M3 `error` / `errorContainer` | M3 `error` / `errorContainer` | AOG squawks, overdue |
+
 **The Advisory Rule.** Instrument Amber (tertiary) appears on ≤10% of any given screen. Its power comes from scarcity. A screen full of amber has no amber.
 
 **The Semantic Lock Rule.** Airworthy Green and Caution Amber are semantic signals, not decorative colors. They may not appear for brand moments, empty state illustrations, or visual interest. If a color looks like a status, it is a status.
@@ -159,6 +176,28 @@ Two structural tones, one personality accent used sparingly, two semantic anchor
 - **Data Large** (JetBrains Mono Bold, 16sp/24sp): Engine hours, airframe time, serial numbers — any value where character alignment is semantic.
 - **Data Medium** (JetBrains Mono Medium, 14sp/20sp): Compact technical identifiers within cards.
 - **Data Small** (JetBrains Mono Medium, 12sp/16sp): Inline technical data within list rows.
+
+### Exact M3 Typography Mappings (from `Type.kt`)
+
+| M3 Key | Weight | Size | Line Height | Use |
+|--------|------|------|---------|-----|
+| headlineLarge | Bold | 32sp | 40sp | Screen headings |
+| headlineMedium | Bold | 28sp | 36sp | Section headings |
+| headlineSmall | Bold | 24sp | 32sp | Detail titles, alert section headers |
+| titleLarge | SemiBold | 22sp | 28sp | Card headers, form titles |
+| titleMedium | SemiBold | 16sp | 24sp+0.15 | Tabs, secondary headings |
+| titleSmall | Medium | 14sp | 20sp+0.1 | Chip labels |
+| bodyLarge | Normal | 16sp | 24sp+0.5 | Primary paragraph content |
+| bodySmall | Normal | 12sp | 18sp+0.25 | Secondary card text |
+| bodyMedium | Normal | 14sp | 20sp+0.25 | List descriptions |
+| labelLarge | Medium | 14sp | 20sp+0.1 | **Button labels → UPPERCASE** |
+| labelMedium | Medium | 12sp | 16sp+0.5 | Badge labels, tech names |
+| labelSmall | Medium | 11sp | 16sp+0.5 | Timestamps, status values |
+| displaySmall | Black | 36sp | 40sp+0.0 | Hero display (tail numbers) |
+| heroDisplay | Black | 36sp | 40sp+0.0 | Aircraft make/model (Space Grotesk) |
+| dataLarge | JetBrains Mono Bold | 16sp | 24sp+0.0 | Engine hours, tach times |
+| dataMedium | JetBrains Mono Medium | 14sp | 20sp+0.0 | Tail numbers in cards |
+| dataSmall | JetBrains Mono Medium | 12sp | 16sp+0.0 | Inline technical data |
 
 ### Named Rules
 **The Mono Rule.** JetBrains Mono is reserved for technical aviation data: tail numbers, serial numbers, tach/Hobbs times, airframe hours. It never appears in UI chrome (buttons, labels, navigation, body copy).
@@ -202,7 +241,24 @@ Modal bottom sheet with `skipPartiallyExpanded = true` — always fully expanded
 Centered column: 80dp icon at 60% primary alpha, `headlineSmall` Bold title, `bodyLarge` description at `onSurfaceVariant`, optional primary Button with 32dp gap above. Empty states name the next action, not just the void.
 
 ### Status Badges
-4dp corner radius (`badgeCornerRadius`) — reads as a stamp, not a pill. Tinted background from the relevant container color, matched on-container text. Three semantic variants: primary (addressed), surface-variant (dismissed/inactive), semantic (OVERDUE = error, DUE SOON = caution-amber).
+
+4dp corner radius (`badgeCornerRadius`) — reads as a stamp, not a pill. Tinted background from the relevant container color, matched on-container text. Text is `labelSmall`/SemiBold/UPPERCASE/0.5sp letterSpacing, colored `tone.onContainer`.
+
+### StatusTier Enum Mapping (from `StatusColors.kt`)
+
+Maps domain status to M3 roles. **No ad-hoc color choices in feature code.** Use: `toneFor(tier)` → `StatusTone(accent, container, onContainer)`.
+
+| Tier | Condition | Text/Icon Color | Chip Container |
+|-----|-------|-----------------|--------------------|
+| BLOCKING | AOG, operational stop | `error` | `errorContainer` |
+| CRITICAL | Overdue, high-priority | `error` | `errorContainer` |
+| CAUTION | Due soon, medium | `#8B5E00` / `#FFCA28` (dark) | `#FFECB3` / `#514500` (dark) |
+| POSITIVE | Compliant, current | `#276B39` / `#81C784` (dark) | `#E3F2E8` / `#1B4D2B` (dark) |
+| NEUTRAL | Low-priority, inactive | `onSurfaceVariant` | `surfaceVariant` |
+
+### Component Border Accent Rule
+
+Overdue/DueSoon cards get a 1dp left-border accent at `statusTone.accent.copy(alpha = 0.5f)`. AOG squawks get `blocking.accent`. Normal cards get `outlineVariant`. Component type badges use context-specific fills (ENGINE → primaryContainer, AIRFRAME → surfaceContainerHigh, PROPELLER → secondaryContainer).
 
 ## 6. Do's and Don'ts
 
@@ -227,3 +283,308 @@ Centered column: 80dp icon at 60% primary alpha, `headlineSmall` Bold title, `bo
 - **Don't** use Space Grotesk for body text, form field values, or dense data labels. It is for headings and titles only.
 - **Don't** use JetBrains Mono for anything that is not a technical measurement or identifier. No buttons, no labels, no body copy.
 - **Don't** add decorative motion: no orchestrated entrances, no elastic or bounce easing, no scroll-driven choreography. Motion is state feedback only (150–250ms, ease-out).
+
+---
+
+## 7. Spacing & Radius
+
+All values from `Spacing` object (`core/ui/theme/Spacing.kt`). These are the only spacing tokens — never invent new ones.
+
+| Token | Value | Use |
+|-------|----------|---
+| `none` | 0dp | — |
+| `extraSmall` | 4dp | Tiny gaps (chip→chip, label→value, row item gaps) |
+| `small` | 8dp | Row-level gaps within cards |
+| `medium` | 12dp | Multi-line card section gaps (most common card-level gap) |
+| `large` | 16dp | Internal card padding, screen-content row gaps |
+| `xLarge` | 20dp | Component row spacing |
+| `extraLarge` | **24dp** | **Screen padding, card internal padding** (the primary structural spacing) |
+| `huge` | 32dp | Bottom-sheet footer spacer, large section gaps |
+| `massive` | 48dp | Rare — full page section gaps |
+
+### Radius
+| Token | Value | Use |
+|-------|------|---|
+| `badgeCornerRadius` | 4dp | Status chips, component type badges (reads as a stamp) |
+| `cardCornerRadius` | 12dp | All card surfaces |
+| `chipCornerRadius` | 12dp | Form controls, dropdowns, outlined fields |
+| `buttonCornerRadius` | **16dp** | All buttons |
+
+**Screen-level horizontal inset:** `Spacing.screenPadding` = `Spacing.large` = 16dp. All screen-level content starts at this inset.
+
+---
+
+## 8. Domain Data Shape
+
+The entity hierarchy (from protobuf sources in `core/model/src/commonMain/proto/`) determines the natural page navigation and content organization. **Every view groups by this shape.**
+
+```
+Fleet (collection)
+  └── Aircraft (core/model/aircraft/aircraft.proto)
+        id, make, model, serial, tail_number
+        ├── Engines[] (aircraft/engine.proto)
+        │     id, make, model, serial
+        │     └── Propeller (optional)
+        │          hub: PropellerHub (make, model, serial)
+        │          blades[]: PropellerBlade (serial)
+        │
+        ├── MaintenanceLog[] (aircraft/maintenance_log.proto)
+        │     id, timestamp, technician_id, work_description
+        │     component_type: COMPONENT_ENGINE | COMPONENT_AIRFRAME | COMPONENT_PROPELLER
+        │     component_serial (references Engine/Prop serial)
+        │     engine_hour, airframe_time, prop_time
+        │     inspection_ids[] (links to MaintenanceTask)
+        │     attachments[]
+        │     Technician {name, certificate}
+        │
+        ├── MaintenanceTask[] (aircraft/maintenance_task.proto)
+        │     id, title, component, notes
+        │     rules[]: TimeRule | EngineHourRule | OnConditionRule | LinkedRule | ImmediateRule
+        │     force_due_date, force_due_engine_hour
+        │     type: COMPLIANCE_TYPE_ROUTINE_INSPECTION | SERVICE_BULLETIN | AIRWORTHINESS_DIRECTIVE
+        │     reference_number, compliance_authority, compliance_details
+        │     is_one_time (moves to history after first log)
+        │     ForceCompliedStatus {complied_date, complied_engine_hours}
+        │     ComplianceType (ROUTINE_INSPECTION, SERVICE_BULLETIN, AIRWORTHINESS_DIRECTIVE)
+        │
+        ├── Squawk[] (aircraft/squawk.proto)
+        │     id, title, description
+        │     priority: SQUAWK_PRIORITY_LOW | MEDIUM | HIGH | AOG
+        │     component_type, component_serial
+        │     status: OPEN | ADDRESSED | DISMISSED
+        │     addressed_by_log_id, dismiss_reason, dismissed_at
+        │     attachments[]
+        │
+        └── MaintenanceOverview (aircraft/maintenance_overview.proto)
+              total_log_count, airframe/engine/prop_log_count
+              current_airframe_time, current_engine_time, current_prop_time
+```
+
+### How this shapes the UX
+
+The data model has four entity types per aircraft. Each maps to a tab. The Overview tab **does not list entities** — it aggregates them.
+
+| Tab | Source | Layout |
+|-----|---|---|
+| Overview (`feature/aircraft/dashboard`) | Aggregated | Vertical flow: hero → config → alerts → stats |
+| Squawks (`feature/squawk/viewing`) | `SquawkWithStatus` | Vertical card list + segmented filter (Open/Closed) |
+| Tasks (`feature/tasks/viewing`) | `MaintenanceTaskWithStatus` | Vertical card list + segmented filter (Active/Complied) |
+| Logs (`feature/logs/viewing`) | `MaintenanceLog` | Vertical card list + segmented filter (All/Inspection types) |
+
+**Overview tab layout priority (rule-driven, not alphabetical):**
+
+1. **Hero display** — `make model` + `tail_number` (heroDisplay Black 36sp) — one screen
+2. **Configuration card** — collapsible aircraft data (AircraftDataCard)
+3. **AOG alert** — open AOG squawks (AogAlertSection) — **only if AOG squawks exist**
+4. **Critical alerts** — overdue/due-soon tasks (CriticalAlertsSection) — **only if overdue exists**
+5. **Maintenance summary** — log stats (LogStatsSection) — only if total > 0; otherwise LogOnboardingCard
+
+When there are no overdue tasks, the Configuration card expands by default. When work is overdue it collapses — the pilot's attention goes to what matters first.
+
+---
+
+## 9. Screen Layouts
+
+### 9A. Fleet Dashboard (`feature/fleet/viewing/DashboardScreen.kt`)
+
+The fleet list **is** the page. No hero metrics. Primary data is the list of aircraft.
+
+```
+┌───────────────────────────┐
+│ WingsLog    [AvatarIcon]  │ ← TopAppBar (ConstrainedTopBar)
+│                           │
+│ ┌────────────────────┐    │
+│ │ Sling TSi        → │    │ ← AircraftDashboardCard
+│ │ N532SL   DueSoon   │    │   (surfaceContainer card +
+│ └─────────────────────────────────────────┘   outlineVariant border)
+│                                   │
+│ ┌─────────────────────┐         │
+│ │ Cessna 172      →  │         │
+│ │ ...          Airworthy │       │
+│ └───────────────────────────┘   │
+│                                   │
+│        [ + FAB (Add Aircraft) ]  │
+└─────────────────────────────────────┘
+```
+
+**AircraftDashboardCard anatomy** (`AircraftDashboardCard.kt`):
+```
+┌──────────────────────────────────────────────┐
+│ [Airframe chip]        [DUE SOON] →        │ ← Top row (SpaceBetween)
+│                                              │
+│ Sling TSi (titleLarge onSurface)             │
+│ N532SL (dataMedium primary)                  │ ← tail = JetBrains Mono
+│ ───────────────────────────────────────────  │ ← Divider
+│ 05/10/2026     Annual (primary)     J. Rivera│ ← Footer row
+└──────────────────────────────────────────────┘
+```
+
+Key detail: health status (`DueStatus?`) renders as a StatusChip (CRITICAL → error, CAUTION → caution, else hidden) or the card border color. The card border is always `outlineVariant` at 1dp.
+
+### 9B. Aircraft Detail — Overview Tab (`feature/aircraft/dashboard/compose/tabs/OverviewTab.kt`)
+
+```
+┌──────────────────────────────────────────────┐
+│ Sling Tsi        N532Sl                      │ ← Hero Row (heroDisplay × 2)
+│                                              │
+│ ┌──────── AIRCRAFT DATA (collapsible) ──────┐│
+│ │ [⬇] Component breakdown                   ││
+│ │ AIRFRAME        Sling TSi        S/N:      ││ ← ComponentCard (surfaceContainerLow)
+│ │               SLING532                      ││
+│ │ ENGINE 1         Rotax 915       S/N:      ││
+│ │                915-0001                     ││
+│ │ Propeller        Airmaster        S/N:      ││
+│ │                                AP430-001   ││
+│ │              B1   B2   B3                   ││ ← BladeChipsOverview (FlowRow)
+│ └─────────────────────────────────────────────┘│
+│                                              │
+│ ┌─── ✈ AOG ALERT ────────────────┐  │ ← AogAlertSection (only if AOG)
+│ │ AOG ALERT — aircraft grounded   │  │
+│ │ ─────────────────────────────── │  │
+│ │ [●] O2 pressure leaking         │  │
+│ │ [●] Engine fire warning         │  │
+│ │            VIEW SQUAWKS         │  │
+│ └──────────────────────────────────────┘│
+│                                              │
+│ ┌─── MAINTENANCE DUE ──────────────────────┐│ ← CriticalAlertsSection (only if overdue)
+│ │ [⚠] OVERDUE / AOG DUE SOON               ││
+│ │ ──────────────────────────────────────────│ │
+│ │ AIRWORTHINESS                             ││
+│ │ [●] 100 Hr Inspection    EXPIRED 03/15    ││
+│ │ [●] Annual                 DUE 14 DAYS     ││
+│ └────────────────────────────────────────────┘  │
+│                                              │
+│ MAINTENANCE SUMMARY                         │ ← LogStatsSection (or LogOnboardingCard)
+│ ┌──────────────┐ ┌──────────────┐           │
+│ │ 1432.5h      │ │ 1428.1h      │           │
+│ │ A/TOTAL      │ │ E/TOTAL      │           │
+│ └──────────────┘ └──────────────┘           │
+│ ┌──────────────┐ ┌──────────────┐           │
+│ │ 2340.3h      │ │      87      │           │
+│ │ P/TOTAL      │ │ LOGS         │           │
+│ └──────────────┘ └──────────────┘           │
+└──────────────────────────────────────────────┘
+```
+
+**Overview layout rules:**
+- AOG alerts above all — immediate operational stop
+- Critical alerts below — compliance work requiring attention
+- Health status determines card expansion: if no overdue, expand config; if overdue, collapse it (focus on alerts)
+- `Spacing.screenPadding` = 16dp on all content
+
+### 9C. Aircraft Tabs (`feature/aircraft/dashboard/compose/tabs/AircraftDashboardTabRow.kt`)
+
+Four tabs with icon+label, using `IconLabelTabSpec`:
+
+1. ✈ **Overview** (FlightTakeoff)
+2. 🐛 **Squawks** (BugReport)
+3. ✓ **Tasks** (TaskAlt)
+4. 📜 **Logs** (History)
+
+### 9D. Squawks List (`feature/squawk/viewing/`)
+
+```
+┌──────────────────────────────────────┐
+│ [  OPEN   |   CLOSED  ]             │ ← DualSegmentedFilter
+│ ───────────────────────────────── │
+│ ┌───────────┬──────────────┐  │   │
+│ │     AOG   │     OPEN     │  │   │
+│ │ [AOG] O2 pressure leaking to cabin  │  │
+│ │ 05/10/2026                     │   │
+│ └──────────────────────────────────┘ │ ← SquawkCard (red border)
+│                                      │
+│ ┌───────────┬──────────────┐       │
+│ │  MEDIUM   │    OPEN       │       │
+│ │ [MEDIUM] Engine...              │       │
+│ │ 05/08/2026                     │       │
+│ └────────────────────────────────┘       │
+└────────────────────────────────────────┴
+```
+
+**SquawkCard anatomy:** Left = PriorityBadge (StatusChip: AOG/CRITICAL/CAUTION/NEUTRAL) + StatusBadge (OPEN/ADDRESSED/DISMISSED). Right = chevron. Below = title (titleMedium/Bold) + description (bodySmall). Footer = date (labelSmall). AOG squawks get `blocking.accent.copy(alpha=0.5)` border.
+
+### 9E. Tasks List (`feature/tasks/viewing/`)
+
+```
+┌────────────────────────────────────────┐
+│ [ ACTIVE | COMPLIED ]                │ ← DualSegmentedFilter
+│ ─────────────────────────────────── │
+│ ┌───────────┬───────────────┐    │   │
+│ │   OVERDUE │   ✓          │    │   │
+│ │ 100 Hr                            │   │
+│ │ Annual + 100hr every 100h        │   │
+│ │ ─────────────────────────────── │   │
+│ │ DEADLINE                           │   │
+│ │ 03/15/2026                        │   │
+│ └────────────────────────────────────┘   │ ← TaskCard (red border)
+│                                          │
+│ ┌───────────┬───────────────┐        │
+│ │   DUE SOON│   ✓          │        │
+│ │ Annual                                   │
+│ │ Annual + 12 months from last             │
+│ │ ───────────────────────────────        │
+│ │ DUE DATE                                 │
+│ │ 05/20/2026                               │
+│ └───────────────────────────────────────  │  ← TaskCard (amber border)
+└───────────────────────────────────────────┘
+```
+
+### 9F. Logs List (`feature/logs/viewing/`)
+
+```
+┌──────────────────────────────────────┐
+│ [ All | Annual | ...  ]             │ ← DualSegmentedFilter
+│ ───────────────────────────────── │
+│ ┌────────┐   14.3h          →  │   │
+│ │ [ENGINE]                        │   │
+│ │ Replaced left magneto per       │   │ ← MaintenanceLogCard
+│ │ SB-1234. Mag drop within limits │   │
+│ │ ────────────────────────────── │   │
+│ │ 05/10/2026    Annual      J. Rivera │
+│ └──────────────────────────────────┘  │
+│ ┌────────┐    0.5h          →  │    │
+│ │ [A/FROM] │                         │    │
+│ │ Annual inspection completed        │    │
+│ │ ──────────────────────────────    │
+│ │ 04/15/2026    Annual + 100hr              │    │
+│ └──────────────────────────────────┘     │
+└───────────────────────────────────────┘
+```
+
+**MaintenanceLogCard anatomy:**  
+- Top row: ComponentTypeBadge (pill 4dp, ENGINE→primaryContainer, AIRFRAME→surfaceContainerHigh, PROPELLER→secondaryContainer) + tach hours (dataSmall+onSurfaceVariant) + chevron
+- Body: Full work description (bodyMedium+onSurface)
+- Divider: outlineVariant at 0.3 alpha
+- Footer: date (dataSmall) + inspection count (primary color) + technician name
+
+### 9G. Components Reference
+
+| Component | Source File | Pattern |
+|-----------|-----------|---|
+| AircraftDashboardCard | `DashboardScreen.kt` + `AircraftDashboardCard.kt` | Card with chip + status border |
+| LogCard | `MaintenanceLogCard.kt` | Card with component badge + divider |
+| TaskCard | `TaskCard.kt` | Card with icon + label/value + status border |
+| SquawkCard | `SquawkCard.kt` | Card with dual badges + title/desc |
+| StatusChip | `StatusChip.kt` | Pill, status-tier tinted |
+| ComponentTypeBadge | `MaintenanceLogCard.kt` | 4dp radius, tinted box |
+| BladeChipsOverview | `BladeChipsOverview.kt` | FlowRow of Surface chips |
+| AogAlertSection | `AogAlertSection.kt` | Icon + title + list + action bar |
+| CriticalAlertSection | `CriticalAlertsSection.kt` | Title + list + action bar |
+| LogStatsSection | `LogStatsSection.kt` | Title + card with stat cells |
+| DetailSheet | `DetailSheet.kt` | BottomSheet, always expanded |
+| EmptyState | `EmptyState.kt` | Centered icon+title+desc+action |
+| IconLabelTabRow | `IconLabelTabRow.kt` | Horizontal tab navigation |
+
+---
+
+## 10. The Critical Status Hierarchy
+
+This is the non-negotiable information priority that shapes every screen. Status flows vertically, never buried by sort order.
+
+1. **AOG Squawks** (BLOCKING, red) — immediate operational stop; always first
+2. **CRITICAL** (OVERDUE, red) — overdue compliance work
+3. **CAUTION** (DUE SOON, amber) — approaching deadline
+4. **POSITIVE** (COMPLIED, green) — completed/compliant
+5. **NEUTRAL** (normal, slate) — low-priority status
+
+When health is fully positive (no OVERDUE, no DUE SOON), the Configuration card expands by default. When anything is overdue, it collapses — attention goes to what matters.
