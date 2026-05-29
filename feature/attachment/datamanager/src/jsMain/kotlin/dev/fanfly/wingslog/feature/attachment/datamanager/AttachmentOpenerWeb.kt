@@ -23,6 +23,22 @@ internal class AttachmentOpenerWeb(
   override val downloadingIds: StateFlow<Set<String>> =
     _downloadingIds.asStateFlow()
 
+  // Outstanding object URLs created via URL.createObjectURL. Each entry is revoked either by its
+  // own per-URL timeout (after the popup has had time to load) or, defense in depth, by the
+  // beforeunload handler if the tab closes before the timeout fires.
+  private val outstandingObjectUrls = mutableSetOf<String>()
+  private var beforeUnloadRegistered = false
+
+  private fun ensureBeforeUnloadHook() {
+    if (beforeUnloadRegistered) return
+    beforeUnloadRegistered = true
+    window.addEventListener("beforeunload", {
+      // Copy to avoid mutating while iterating; revokeObjectUrl below removes from the set.
+      val snapshot = outstandingObjectUrls.toList()
+      for (url in snapshot) revokeObjectUrl(url)
+    })
+  }
+
   override fun open(attachment: Attachment): Flow<OpenState> {
     // Browsers only honour window.open() during a user-gesture stack. Both paths below must run
     // synchronously inside the click callback.
@@ -135,13 +151,17 @@ internal class AttachmentOpenerWeb(
   }
 
   private fun createObjectUrl(bytes: ByteArray, mimeType: String): String {
+    ensureBeforeUnloadHook()
     val data = Uint8Array(bytes.toTypedArray())
-    return js(
+    val url = js(
       "URL.createObjectURL(new Blob([data], { type: mimeType }))"
     ).unsafeCast<String>()
+    outstandingObjectUrls.add(url)
+    return url
   }
 
   private fun revokeObjectUrl(url: String) {
+    if (!outstandingObjectUrls.remove(url)) return  // already revoked
     js("URL.revokeObjectURL(url)")
   }
 
