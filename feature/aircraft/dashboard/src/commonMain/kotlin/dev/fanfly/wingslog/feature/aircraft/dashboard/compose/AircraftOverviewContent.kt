@@ -193,12 +193,15 @@ fun AircraftOverviewContent(
         },
         onAttachmentTap = { attachment ->
           taskSheetOpenError = null
+          // Call open() synchronously inside the click handler so AttachmentOpenerWeb can
+          // reserve window.open() during the user-gesture stack. Only the flow collection
+          // moves into the coroutine.
+          val openFlow = attachmentOpener.open(attachment)
           coroutineScope.launch {
-            attachmentOpener.open(attachment)
-              .collect { openState ->
-                if (openState is OpenState.Failed) taskSheetOpenError =
-                  openState.error.message
-              }
+            openFlow.collect { openState ->
+              if (openState is OpenState.Failed) taskSheetOpenError =
+                openState.error.message
+            }
           }
         },
         syncStates = state.syncStates,

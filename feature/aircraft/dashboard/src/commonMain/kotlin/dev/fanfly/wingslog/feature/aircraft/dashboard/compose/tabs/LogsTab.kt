@@ -62,8 +62,12 @@ fun LogsTab(
     onAddLog = onNavigateToAddLog?.let { viewModel::onAddLog },
     onAttachmentTap = { attachment ->
       openError = null
+      // Call open() synchronously inside the click handler so AttachmentOpenerWeb can
+      // reserve window.open() during the user-gesture stack. Only the flow collection
+      // moves into the coroutine.
+      val openFlow = attachmentOpener.open(attachment)
       coroutineScope.launch {
-        attachmentOpener.open(attachment).collect { state ->
+        openFlow.collect { state ->
           if (state is OpenState.Failed) openError = state.error.message
         }
       }
