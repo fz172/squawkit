@@ -1,8 +1,11 @@
 # Web Attachments Design
 
-**Status:** Proposed. This fills the web gap left by `docs/storage_r2_design.md`: the local-first
-attachment model is already the right product architecture, but the web target currently binds a
-disabled `AttachmentManager`, disables picker UI, and has no blob scheduler.
+**Status:** In progress. M0–M4 have landed. M5 (flip the UI gate to
+`attachmentUploadEnabled`) and M6 (hardening / release checks) remain.
+
+The bucket needs a one-time CORS rule before web downloads work —
+`backend/firebase/storage_cors.json` is the checked-in rule set; see
+`backend/firebase/README.md` for the `gcloud storage buckets update` command.
 
 **Companion docs:** [`storage_r2_design.md`](storage_r2_design.md),
 [`attachments_PRD.md`](attachments_PRD.md), [
