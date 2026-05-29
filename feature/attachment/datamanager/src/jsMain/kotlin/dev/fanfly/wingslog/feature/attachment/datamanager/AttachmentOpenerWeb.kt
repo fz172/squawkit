@@ -24,27 +24,20 @@ internal class AttachmentOpenerWeb(
     _downloadingIds.asStateFlow()
 
   override fun open(attachment: Attachment): Flow<OpenState> {
-    // Browsers only honour window.open() during a user-gesture stack. Reserving the tab here —
-    // while we're still in the onClick synchronous path — is what keeps the popup blocker quiet.
+    // Browsers only honour window.open() during a user-gesture stack. Both paths below must run
+    // synchronously inside the click callback.
     //
-    // For links we use "noopener,noreferrer" because we never need to touch the popup again; the
-    // browser hands us back null in that case and the tab still opens. For blobs we need the
-    // popup reference so we can navigate it to the object URL once OPFS bytes load — `noopener`
-    // would force the return to null even on success. We instead null out `popup.opener` after
-    // opening to defuse reverse-tabnabbing on the blob preview tab.
+    // Links: dispatch via a programmatic <a target="_blank" rel="noopener noreferrer"> click.
+    // Anchor clicks during a gesture are never popup-blocked, and we get noopener/noreferrer
+    // without window.open's lie-about-null-on-success behaviour.
+    //
+    // Blobs: window.open(about:blank) gives us a real popup handle (no noopener), which we
+    // navigate to the object URL once OPFS bytes load. Null out popup.opener immediately to
+    // defuse reverse-tabnabbing on the preview tab.
     val isLink = attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK
     if (isLink) {
-      val opened = window.open(
-        attachment.url.normalizeWebUrl(), "_blank", "noopener,noreferrer",
-      )
-      return flow {
-        emit(OpenState.Downloading)
-        if (opened == null) {
-          emit(OpenState.Failed(IllegalStateException("Browser blocked opening attachment")))
-        } else {
-          emit(OpenState.Done)
-        }
-      }
+      clickExternalLink(attachment.url.normalizeWebUrl())
+      return flow { emit(OpenState.Done) }
     }
 
     val popup: dynamic = window.open(BLANK_URL, "_blank")
@@ -120,6 +113,17 @@ internal class AttachmentOpenerWeb(
       closePopup(popup)
       throw e
     }
+  }
+
+  private fun clickExternalLink(url: String) {
+    val anchor = window.document.createElement("a").asDynamic()
+    anchor.href = url
+    anchor.target = "_blank"
+    anchor.rel = "noopener noreferrer"
+    // Append → click → remove. Not strictly required by spec but works across all browsers.
+    window.document.body?.appendChild(anchor.unsafeCast<org.w3c.dom.Node>())
+    anchor.click()
+    window.document.body?.removeChild(anchor.unsafeCast<org.w3c.dom.Node>())
   }
 
   private fun closePopup(popup: dynamic) {
