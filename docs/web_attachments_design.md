@@ -1,6 +1,7 @@
 # Web Attachments Design
 
-**Status:** In progress. M0–M5 have landed. M6 (hardening / release checks) remains.
+**Status:** Implementation complete (M0–M6 landed). Remaining work is manual cross-device
+verification per the M6 exit criteria.
 
 The bucket needs a one-time CORS rule before web downloads work —
 `backend/firebase/storage_cors.json` is the checked-in rule set; see
@@ -356,6 +357,10 @@ Exit criteria:
 - Quota and duplicate errors use existing shared copy and do not introduce web-only limits.
 
 ### M6 — Hardening and release checks
+
+**Landed:** [`5c718afd`](https://github.com/fz172/wingslog/commit/5c718afd) (object-URL
+bookkeeping). Refresh/close, OPFS write-denied, popup-blocked, and storage-path correctness
+were addressed inline as part of M3–M5.
 
 Goal: close the browser-specific reliability gaps before considering web attachments generally
 available.
