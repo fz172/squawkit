@@ -25,22 +25,38 @@ internal class AttachmentOpenerWeb(
 
   override fun open(attachment: Attachment): Flow<OpenState> {
     // Browsers only honour window.open() during a user-gesture stack. Reserving the tab here —
-    // while we're still in the onClick synchronous path — is what keeps the popup blocker quiet
-    // for both links (we navigate directly) and blobs (we navigate later once OPFS bytes load).
+    // while we're still in the onClick synchronous path — is what keeps the popup blocker quiet.
+    //
+    // For links we use "noopener,noreferrer" because we never need to touch the popup again; the
+    // browser hands us back null in that case and the tab still opens. For blobs we need the
+    // popup reference so we can navigate it to the object URL once OPFS bytes load — `noopener`
+    // would force the return to null even on success. We instead null out `popup.opener` after
+    // opening to defuse reverse-tabnabbing on the blob preview tab.
     val isLink = attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK
-    val initialUrl = if (isLink) attachment.url.normalizeWebUrl() else BLANK_URL
-    val popup: dynamic = window.open(initialUrl, "_blank", "noopener,noreferrer")
+    if (isLink) {
+      val opened = window.open(
+        attachment.url.normalizeWebUrl(), "_blank", "noopener,noreferrer",
+      )
+      return flow {
+        emit(OpenState.Downloading)
+        if (opened == null) {
+          emit(OpenState.Failed(IllegalStateException("Browser blocked opening attachment")))
+        } else {
+          emit(OpenState.Done)
+        }
+      }
+    }
+
+    val popup: dynamic = window.open(BLANK_URL, "_blank")
+    if (popup != null) {
+      try { popup.opener = null } catch (_: Throwable) { /* may throw in some sandboxes */ }
+    }
 
     return flow {
       emit(OpenState.Downloading)
 
       if (popup == null) {
         emit(OpenState.Failed(IllegalStateException("Browser blocked opening attachment")))
-        return@flow
-      }
-
-      if (isLink) {
-        emit(OpenState.Done)
         return@flow
       }
 
