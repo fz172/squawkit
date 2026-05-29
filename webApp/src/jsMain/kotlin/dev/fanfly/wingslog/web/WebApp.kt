@@ -102,7 +102,6 @@ fun WebApp() {
         ) {
           AircraftOverviewScreen(
             navController = navController,
-            attachmentsAvailable = false,
           )
         }
         composable(
@@ -113,7 +112,6 @@ fun WebApp() {
         ) {
           AddTaskRoute(
             navController = navController,
-            attachmentsAvailable = false
           )
         }
         composable(
@@ -125,7 +123,6 @@ fun WebApp() {
         ) {
           EditTaskRoute(
             navController = navController,
-            attachmentsAvailable = false
           )
         }
         composable(
@@ -136,7 +133,6 @@ fun WebApp() {
         ) {
           MaintenanceLogFormScreen(
             navController = navController,
-            attachmentsAvailable = false
           )
         }
         composable(
@@ -148,7 +144,6 @@ fun WebApp() {
         ) {
           MaintenanceLogFormScreen(
             navController = navController,
-            attachmentsAvailable = false
           )
         }
         composable(
@@ -159,7 +154,6 @@ fun WebApp() {
         ) {
           AddSquawkRoute(
             navController = navController,
-            attachmentsAvailable = false
           )
         }
         composable(
@@ -171,7 +165,6 @@ fun WebApp() {
         ) {
           EditSquawkRoute(
             navController = navController,
-            attachmentsAvailable = false
           )
         }
         composable(Screen.Settings.route) {
