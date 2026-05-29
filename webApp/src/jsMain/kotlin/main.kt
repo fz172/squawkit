@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.auth.di.commonAuthModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
 import dev.fanfly.wingslog.core.storage.di.storageModule
 import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
+import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
 import dev.fanfly.wingslog.feature.featurelab.datamanager.di.featureLabModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
@@ -35,54 +36,56 @@ import org.w3c.dom.Worker
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
-    // Firebase JS has no google-services plugin to auto-init, so configure it
-    // explicitly. Values are the project's public web-app client config.
-    Firebase.initialize(
-        context = null,
-        options = FirebaseOptions(
-            applicationId = "1:811416892017:web:6680df6dd37a69d1f961d0",
-            apiKey = "AIzaSyAo52Y7aQ4jhYGq4MioZK5mSffmmZES1qk",
-            projectId = "wingslog-9ca4e",
-            authDomain = "wingslog-9ca4e.firebaseapp.com",
-            storageBucket = "wingslog-9ca4e.firebasestorage.app",
-            gcmSenderId = "811416892017",
-        ),
+  // Firebase JS has no google-services plugin to auto-init, so configure it
+  // explicitly. Values are the project's public web-app client config.
+  Firebase.initialize(
+    context = null,
+    options = FirebaseOptions(
+      applicationId = "1:811416892017:web:6680df6dd37a69d1f961d0",
+      apiKey = "AIzaSyAo52Y7aQ4jhYGq4MioZK5mSffmmZES1qk",
+      projectId = "wingslog-9ca4e",
+      authDomain = "wingslog-9ca4e.firebaseapp.com",
+      storageBucket = "wingslog-9ca4e.firebasestorage.app",
+      gcmSenderId = "811416892017",
+    ),
+  )
+
+  val koinApplication = startKoin {
+    modules(
+      commonAuthModule,
+      authModule,
+      storageModule,
+      platformStorageModule,
+      loginModule,
+      syncModule,
+      attachmentModule,
+      platformAttachmentModule,
+      featureLabModule,
+      technicianDataManagerModule,
+      fleetDataManagerModule,
+      fleetViewingModule,
+      maintenanceDataManagerModule,
+      maintenanceViewingModule,
+      maintenanceUpdateModule,
+      tasksModule,
+      tasksUiModule,
+      squawkModule,
+      squawkUiModule,
+      aircraftDashboardModule,
+      technicianManageModule,
+      settingsModule,
+      syncSettingsModule,
+      *stressTestKoinModules().toTypedArray(),
+      module {
+        // The host app owns the bundled sqlite-wasm worker file (persists to OPFS).
+        single<Worker> { createSqliteWorker() }
+      },
     )
+  }
+  koinApplication.koin.get<SyncEngine>()
+    .start()
 
-    val koinApplication = startKoin {
-        modules(
-            commonAuthModule,
-            authModule,
-            storageModule,
-            platformStorageModule,
-            loginModule,
-            syncModule,
-            platformAttachmentModule,
-            featureLabModule,
-            technicianDataManagerModule,
-            fleetDataManagerModule,
-            fleetViewingModule,
-            maintenanceDataManagerModule,
-            maintenanceViewingModule,
-            maintenanceUpdateModule,
-            tasksModule,
-            tasksUiModule,
-            squawkModule,
-            squawkUiModule,
-            aircraftDashboardModule,
-            technicianManageModule,
-            settingsModule,
-            syncSettingsModule,
-            *stressTestKoinModules().toTypedArray(),
-            module {
-                // The host app owns the bundled sqlite-wasm worker file (persists to OPFS).
-                single<Worker> { createSqliteWorker() }
-            },
-        )
-    }
-    koinApplication.koin.get<SyncEngine>().start()
-
-    ComposeViewport(viewportContainerId = "ComposeTarget") {
-        WebApp()
-    }
+  ComposeViewport(viewportContainerId = "ComposeTarget") {
+    WebApp()
+  }
 }

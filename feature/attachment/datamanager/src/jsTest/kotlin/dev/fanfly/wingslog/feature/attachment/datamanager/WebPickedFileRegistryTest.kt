@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
+import dev.fanfly.wingslog.feature.attachment.model.WebPickedFileRegistry
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertNull
