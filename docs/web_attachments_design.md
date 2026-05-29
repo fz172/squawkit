@@ -1,7 +1,6 @@
 # Web Attachments Design
 
-**Status:** In progress. M0–M4 have landed. M5 (flip the UI gate to
-`attachmentUploadEnabled`) and M6 (hardening / release checks) remain.
+**Status:** In progress. M0–M5 have landed. M6 (hardening / release checks) remains.
 
 The bucket needs a one-time CORS rule before web downloads work —
 `backend/firebase/storage_cors.json` is the checked-in rule set; see
@@ -337,6 +336,8 @@ Exit criteria:
 - A sha256 mismatch keeps the row `REMOTE_ONLY` and surfaces an integrity failure.
 
 ### M5 — UI enablement
+
+**Landed:** [`52125440`](https://github.com/fz172/wingslog/commit/52125440)
 
 Goal: expose attachments on web behind the same product gate as mobile.
 
