@@ -90,7 +90,9 @@ internal class OpfsBlobFilesystem : BlobFilesystem {
       }
     }
 
-    return directory to parts.last()
+    // Pair(...) instead of `to` infix: `directory` is `dynamic`, so `directory to x` compiles
+    // to `directory.to(x)` as a JS method call instead of dispatching through the extension.
+    return Pair(directory, parts.last())
   }
 
   private suspend fun opfsRoot(): dynamic {
