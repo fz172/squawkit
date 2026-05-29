@@ -8,39 +8,40 @@ import kotlin.js.Promise
 /**
  * Browser [BlobFilesystem] backed by the Origin Private File System. Bytes live under
  * `OPFS/hopply/blobs/{id}.bin`, outside the SQLite OPFS file but under the same origin.
+ *
+ * **Important Kotlin/JS detail:** every navigation step (`getDirectory`, `getDirectoryHandle`,
+ * `getFileHandle`, `createWritable`, `getFile`, `arrayBuffer`, `write`, `close`) is materialized
+ * into its own `val` before being awaited. Chaining `awaitedPromise.method().await()` on a `dynamic`
+ * receiver makes the JS compiler emit only one state-machine suspension and drop the earlier ones,
+ * so `getDirectoryHandle` ends up being called on an unresolved Continuation token instead of the
+ * directory handle. Keep one suspend point per statement.
  */
 internal class OpfsBlobFilesystem : BlobFilesystem {
   override suspend fun write(relativePath: String, bytes: ByteArray) {
     val fileHandle = fileHandle(relativePath, create = true)
-    val writable = fileHandle.createWritable()
-      .unsafeCast<Promise<dynamic>>()
-      .await()
-    writable.write(bytes.toUint8Array())
-      .unsafeCast<Promise<Unit>>()
-      .await()
-    writable.close()
-      .unsafeCast<Promise<Unit>>()
-      .await()
+    val writablePromise = fileHandle.createWritable().unsafeCast<Promise<dynamic>>()
+    val writable = writablePromise.await()
+    val writePromise = writable.write(bytes.toUint8Array()).unsafeCast<Promise<Unit>>()
+    writePromise.await()
+    val closePromise = writable.close().unsafeCast<Promise<Unit>>()
+    closePromise.await()
   }
 
   override suspend fun read(relativePath: String): ByteArray {
     val fileHandle = fileHandle(relativePath, create = false)
-    val file = fileHandle.getFile()
-      .unsafeCast<Promise<dynamic>>()
-      .await()
-    val buffer = file.arrayBuffer()
-      .unsafeCast<Promise<dynamic>>()
-      .await()
+    val filePromise = fileHandle.getFile().unsafeCast<Promise<dynamic>>()
+    val file = filePromise.await()
+    val bufferPromise = file.arrayBuffer().unsafeCast<Promise<dynamic>>()
+    val buffer = bufferPromise.await()
     return Uint8Array(buffer.unsafeCast<ArrayBuffer>()).toByteArray()
   }
 
   override suspend fun delete(relativePath: String) {
-    val (directory, name) = parentDirectory(relativePath, create = false)
-      ?: return
+    val parent = parentDirectory(relativePath, create = false) ?: return
+    val (directory, name) = parent
     runCatching {
-      directory.removeEntry(name)
-        .unsafeCast<Promise<Unit>>()
-        .await()
+      val removePromise = directory.removeEntry(name).unsafeCast<Promise<Unit>>()
+      removePromise.await()
     }
   }
 
@@ -55,33 +56,35 @@ internal class OpfsBlobFilesystem : BlobFilesystem {
 
   private suspend fun fileHandle(
     relativePath: String,
-    create: Boolean
+    create: Boolean,
   ): dynamic {
-    val (directory, name) = parentDirectory(relativePath, create)
+    val parent = parentDirectory(relativePath, create)
       ?: throw IllegalStateException("OPFS path does not exist: $relativePath")
-    return directory.getFileHandle(name, options(create))
-      .unsafeCast<Promise<dynamic>>()
-      .await()
+    val (directory, name) = parent
+    val handlePromise = directory.getFileHandle(name, options(create)).unsafeCast<Promise<dynamic>>()
+    return handlePromise.await()
   }
 
   private suspend fun parentDirectory(
     relativePath: String,
     create: Boolean,
   ): Pair<dynamic, String>? {
-    val parts = relativePath.split('/')
-      .filter { it.isNotBlank() }
+    val parts = relativePath.split('/').filter { it.isNotBlank() }
     require(parts.isNotEmpty()) { "relativePath must include a file name" }
 
-    var directory = opfsRoot()
-      .getDirectoryHandle(APP_DIRECTORY, options(create))
+    val root = opfsRoot()
+    val appDirPromise = root.getDirectoryHandle(APP_DIRECTORY, options(create))
       .unsafeCast<Promise<dynamic>>()
-      .await()
+    var directory: dynamic = appDirPromise.await()
 
     for (part in parts.dropLast(1)) {
+      val nextPromise = try {
+        directory.getDirectoryHandle(part, options(create)).unsafeCast<Promise<dynamic>>()
+      } catch (e: Throwable) {
+        if (create) throw e else return null
+      }
       directory = try {
-        directory.getDirectoryHandle(part, options(create))
-          .unsafeCast<Promise<dynamic>>()
-          .await()
+        nextPromise.await()
       } catch (e: Throwable) {
         if (create) throw e else return null
       }
@@ -93,9 +96,8 @@ internal class OpfsBlobFilesystem : BlobFilesystem {
   private suspend fun opfsRoot(): dynamic {
     val storage = js("globalThis.navigator && globalThis.navigator.storage")
       ?: throw UnsupportedOperationException("OPFS is not available in this browser")
-    return storage.getDirectory()
-      .unsafeCast<Promise<dynamic>>()
-      .await()
+    val rootPromise = storage.getDirectory().unsafeCast<Promise<dynamic>>()
+    return rootPromise.await()
   }
 
   private fun options(create: Boolean): dynamic {
@@ -109,8 +111,7 @@ internal class OpfsBlobFilesystem : BlobFilesystem {
 
   private fun Uint8Array.toByteArray(): ByteArray =
     ByteArray(length) { index ->
-      asDynamic()[index].unsafeCast<Int>()
-        .toByte()
+      asDynamic()[index].unsafeCast<Int>().toByte()
     }
 
   private companion object {
