@@ -61,6 +61,9 @@ kotlin {
     iosMain.dependencies {
       implementation(libs.ktor.client.darwin)
     }
+    jsMain.dependencies {
+      implementation(libs.ktor.client.js)
+    }
   }
 }
 

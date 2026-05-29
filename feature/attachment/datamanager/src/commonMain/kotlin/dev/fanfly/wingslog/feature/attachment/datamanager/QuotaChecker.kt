@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
+import app.cash.sqldelight.async.coroutines.awaitAsOne
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOne
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -70,7 +71,7 @@ class QuotaChecker(
       return QuotaResult.PerParentExceeded(capBytes = perParentCapBytes, wouldBeBytes = wouldBe)
     }
     // 3. Per-user size — single SQL aggregate.
-    val used = db.schemaQueries.sumBlobSizeInScope(scope.toPath()).executeAsOne()
+    val used = db.schemaQueries.sumBlobSizeInScope(scope.toPath()).awaitAsOne()
     if (used + candidateBytes > perUserCapBytes) {
       return QuotaResult.PerUserExceeded(
         capBytes = perUserCapBytes,

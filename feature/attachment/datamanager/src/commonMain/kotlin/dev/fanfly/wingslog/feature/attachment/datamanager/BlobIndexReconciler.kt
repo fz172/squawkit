@@ -39,6 +39,7 @@ class BlobIndexReconciler(
       return
     }
 
+    val prefetch = uploadScheduler?.prefetchRemoteOnly ?: false
     for (att in attachments) {
       if (att.id.isBlank() || att.sha256.isBlank()) continue
       val blobId = BlobId(att.id)
@@ -50,7 +51,7 @@ class BlobIndexReconciler(
           contentType = att.mime_type.ifBlank { null },
           scope = scope,
         )
-        uploadScheduler?.scheduleDownload(blobId)
+        if (prefetch) uploadScheduler?.scheduleDownload(blobId)
       }
     }
   }

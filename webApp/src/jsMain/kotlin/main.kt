@@ -19,6 +19,7 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.squawkModule
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.squawkUiModule
 import dev.fanfly.wingslog.feature.stresstest.config.stressTestKoinModules
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
+import dev.fanfly.wingslog.feature.sync.data.blob.di.blobSchedulerModule
 import dev.fanfly.wingslog.feature.sync.data.di.syncModule
 import dev.fanfly.wingslog.feature.sync.settings.di.syncSettingsModule
 import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
@@ -58,6 +59,7 @@ fun main() {
       platformStorageModule,
       loginModule,
       syncModule,
+      blobSchedulerModule,
       attachmentModule,
       platformAttachmentModule,
       featureLabModule,
