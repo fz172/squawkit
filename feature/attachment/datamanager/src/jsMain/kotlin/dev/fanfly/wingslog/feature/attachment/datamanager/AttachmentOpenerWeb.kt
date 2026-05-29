@@ -23,72 +23,95 @@ internal class AttachmentOpenerWeb(
   override val downloadingIds: StateFlow<Set<String>> =
     _downloadingIds.asStateFlow()
 
-  override fun open(attachment: Attachment): Flow<OpenState> = flow {
-    emit(OpenState.Downloading)
+  override fun open(attachment: Attachment): Flow<OpenState> {
+    // Browsers only honour window.open() during a user-gesture stack. Reserving the tab here —
+    // while we're still in the onClick synchronous path — is what keeps the popup blocker quiet
+    // for both links (we navigate directly) and blobs (we navigate later once OPFS bytes load).
+    val isLink = attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK
+    val initialUrl = if (isLink) attachment.url.normalizeWebUrl() else BLANK_URL
+    val popup: dynamic = window.open(initialUrl, "_blank", "noopener,noreferrer")
 
-    if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) {
-      openUrl(attachment.url.normalizeWebUrl())
-      emit(OpenState.Done)
-      return@flow
-    }
+    return flow {
+      emit(OpenState.Downloading)
 
-    if (_downloadingIds.value.contains(attachment.id)) return@flow
-    _downloadingIds.update { it + attachment.id }
+      if (popup == null) {
+        emit(OpenState.Failed(IllegalStateException("Browser blocked opening attachment")))
+        return@flow
+      }
 
-    try {
-      val ref = blobs.get(BlobId(attachment.id))
-      when {
-        ref == null && attachment.sha256.isBlank() -> emit(
-          OpenState.Failed(
-            LegacyAttachment()
-          )
-        )
+      if (isLink) {
+        emit(OpenState.Done)
+        return@flow
+      }
 
-        ref == null || ref.remoteState == RemoteState.RemoteOnly -> {
-          var downloadError: Throwable? = null
-          attachmentManager.ensureLocal(attachment)
-            .collect { state ->
-              if (state is DownloadState.Failed) downloadError = state.error
+      if (_downloadingIds.value.contains(attachment.id)) {
+        // A concurrent open is already in flight — close this duplicate tab.
+        closePopup(popup)
+        return@flow
+      }
+      _downloadingIds.update { it + attachment.id }
+
+      try {
+        val ref = blobs.get(BlobId(attachment.id))
+        when {
+          ref == null && attachment.sha256.isBlank() -> {
+            closePopup(popup)
+            emit(OpenState.Failed(LegacyAttachment()))
+          }
+
+          ref == null || ref.remoteState == RemoteState.RemoteOnly -> {
+            var downloadError: Throwable? = null
+            attachmentManager.ensureLocal(attachment)
+              .collect { state ->
+                if (state is DownloadState.Failed) downloadError = state.error
+              }
+            if (downloadError != null) {
+              closePopup(popup)
+              emit(OpenState.Failed(downloadError))
+            } else {
+              navigatePopupToLocalBytes(popup, attachment)
+              emit(OpenState.Done)
             }
-          if (downloadError != null) {
-            emit(OpenState.Failed(downloadError))
-          } else {
-            openLocalBytes(attachment)
+          }
+
+          else -> {
+            navigatePopupToLocalBytes(popup, attachment)
             emit(OpenState.Done)
           }
         }
-
-        else -> {
-          openLocalBytes(attachment)
-          emit(OpenState.Done)
-        }
+      } catch (e: Exception) {
+        closePopup(popup)
+        emit(OpenState.Failed(e))
+      } finally {
+        _downloadingIds.update { it - attachment.id }
       }
-    } catch (e: Exception) {
-      emit(OpenState.Failed(e))
-    } finally {
-      _downloadingIds.update { it - attachment.id }
     }
   }
 
-  private suspend fun openLocalBytes(attachment: Attachment) {
+  private suspend fun navigatePopupToLocalBytes(popup: dynamic, attachment: Attachment) {
     val bytes = fs.read(blobRelativePath(attachment.id))
     val mimeType = attachment.mime_type.ifBlank { "application/octet-stream" }
     val objectUrl = createObjectUrl(bytes, mimeType)
     try {
-      openUrl(objectUrl)
+      popup.location.href = objectUrl
+      // Give the new tab time to load the bytes before revoking the URL.
       window.setTimeout(
         handler = { revokeObjectUrl(objectUrl) },
         timeout = OBJECT_URL_REVOKE_DELAY_MS,
       )
     } catch (e: Throwable) {
       revokeObjectUrl(objectUrl)
+      closePopup(popup)
       throw e
     }
   }
 
-  private fun openUrl(url: String) {
-    window.open(url, "_blank", "noopener,noreferrer")
-      ?: throw IllegalStateException("Browser blocked opening attachment")
+  private fun closePopup(popup: dynamic) {
+    try {
+      popup.close()
+    } catch (_: Throwable) {
+      // Ignore — popup may already be closed or detached.
+    }
   }
 
   private fun createObjectUrl(bytes: ByteArray, mimeType: String): String {
@@ -107,5 +130,6 @@ internal class AttachmentOpenerWeb(
 
   private companion object {
     private const val OBJECT_URL_REVOKE_DELAY_MS = 60_000
+    private const val BLANK_URL = "about:blank"
   }
 }
