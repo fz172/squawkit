@@ -52,7 +52,9 @@ standalone `webApp` seed into a real, code-sharing web client.
 - **M6 — 🚧 in progress.** Browser routes now expose aircraft, maintenance log, task,
   and squawk add/edit flows, plus Settings, Cloud Sync, Feature Lab, and technician
   management. Browser attachment controls remain suppressed until blob handling is
-  implemented; export UI is still deferred. Anonymous sign-in / account upgrade on web is
+  implemented; the target design is tracked in
+  [`web_attachments_design.md`](web_attachments_design.md). Export UI is still deferred.
+  Anonymous sign-in / account upgrade on web is
   dropped (see "Web auth scope narrowed" below) — web requires a real account.
   **Verified:** webApp JS bundle plus Android and iOS simulator compilation pass.
 - **Web debug tooling (2026-05-25) — ✅ landed.** `feature:stresstest` and its config
@@ -69,7 +71,8 @@ standalone `webApp` seed into a real, code-sharing web client.
   (`core:storage`) `Mutex` now serializes every DB write-unit (standalone mutations and
   transactions) across all writers and all platforms, so notifications always fire immediately and
   transactions never nest-corrupt. **Verified:** Android/JS/iOS compilation and affected Android
-  unit tests pass; in-browser add/hydrate live refresh still to be confirmed in a running web build.
+  unit tests pass; in-browser add/hydrate live refresh confirmed in a running web build
+  (2026-05-29).
 
 - **Web auth scope narrowed (2026-05-24) — ✅ landed.** Web requires a real account: anonymous
   (guest) sign-in is no longer offered. The login screen hides the "Continue without account"
@@ -78,7 +81,7 @@ standalone `webApp` seed into a real, code-sharing web client.
   **account upgrade on web is dropped** (there are no anonymous users to upgrade);
   `upgradeAnonymousAccount()` stays a no-op stub. The login screen also now shows a
   "Continue with Apple" button on all platforms (UI only; provider not yet wired).
-- **M7 — ✅ code-complete; browser persistence verification pending.** The interim
+- **M7 — ✅ verified.** The interim
   sql.js→IndexedDB worker is replaced by the official `@sqlite.org/sqlite-wasm` build on OPFS via
   its SAH-Pool VFS (`webApp/src/jsMain/resources/sqlite-wasm-opfs.worker.js`). It speaks the same
   `WebWorkerDriver` message protocol, so `EntityStore`/managers/UI are untouched — only the worker,
@@ -89,16 +92,14 @@ standalone `webApp` seed into a real, code-sharing web client.
   a data migration — existing web users' sql.js/IndexedDB data is not carried into OPFS; the local
   store starts empty and re-hydrates from Firestore on next sign-in (acceptable pre-production).
   **Verified:** webApp JS dev bundle builds — the worker, `@sqlite.org/sqlite-wasm`, the OPFS async
-  proxy, and the copied `sqlite3.wasm` all emit; `core:storage` JS compiles. **Pending:** in a real
-  browser, confirm write→reload persistence and schema migration over OPFS.
+  proxy, and the copied `sqlite3.wasm` all emit; `core:storage` JS compiles; in-browser
+  write→reload persistence over OPFS is confirmed (2026-05-29).
 
 **What's next (in order):**
-1. In a running web build, confirm (a) the live-update fix end-to-end (sign in with a populated
-   account → hydrated fleet/detail data appears without a reload; an added aircraft shows on the
-   dashboard immediately) and (b) M7 OPFS durability (write → reload → data persists). These close
-   the browser-runtime verification carried since M4/M5 and for M7.
-2. The remaining M6 surfaces (export UI, browser attachments) stay deferred;
-   anonymous/account-upgrade on web is dropped rather than deferred.
+
+1. The remaining M6 surfaces (export UI, browser attachments) stay deferred;
+   browser attachments are specified in [`web_attachments_design.md`](web_attachments_design.md),
+   and anonymous/account-upgrade on web is dropped rather than deferred.
 
 _(Done: a real Firebase web app is registered; its `appId` is wired into
 `webApp/src/jsMain/kotlin/main.kt`.)_
