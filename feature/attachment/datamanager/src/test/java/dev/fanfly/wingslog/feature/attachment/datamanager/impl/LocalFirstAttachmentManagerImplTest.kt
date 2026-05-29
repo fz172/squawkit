@@ -15,19 +15,19 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_AIRCRAFT_ID = "aircraft-abc"
-private const val TEST_SHA256 = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+private const val TEST_SHA256 =
+  "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 private val FIXED_EPOCH_SECONDS = 1_700_000_000L
 
 @OptIn(ExperimentalTime::class)
@@ -53,7 +53,12 @@ class LocalFirstAttachmentManagerImplTest {
     every { mockUser.uid } returns TEST_USER_ID
     every { auth.getCurrentUser() } returns mockUser
 
-    manager = LocalFirstAttachmentManagerImpl(blobs, auth, fileByteReader, clock = clock)
+    manager = LocalFirstAttachmentManagerImpl(
+      blobs,
+      auth,
+      fileByteReader,
+      clock = clock
+    )
   }
 
   // ---- helpers ----
@@ -63,7 +68,12 @@ class LocalFirstAttachmentManagerImplTest {
     name: String = "photo.jpg",
     mimeType: String = "image/jpeg",
     sizeBytes: Long = 1024L,
-  ) = PickedFile(uri = uri, name = name, mimeType = mimeType, sizeBytes = sizeBytes)
+  ) = PickedFile(
+    uri = uri,
+    name = name,
+    mimeType = mimeType,
+    sizeBytes = sizeBytes
+  )
 
   private fun buildBlobRef(
     sha256: String = TEST_SHA256,
@@ -86,13 +96,24 @@ class LocalFirstAttachmentManagerImplTest {
 
   @Test
   fun addPickedFile_populatesSha256FromBlobRefAndStoragePath() = runTest {
-    val picked = buildPickedFile(uri = "content://example/photo.jpg", mimeType = "image/jpeg")
+    val picked = buildPickedFile(
+      uri = "content://example/photo.jpg",
+      mimeType = "image/jpeg"
+    )
     val fakeBytes = byteArrayOf(1, 2, 3)
     every { fileByteReader.readBytes(picked.uri) } returns fakeBytes
-    coEvery { blobs.put(any(), fakeBytes, contentType = any(), scope = any()) } returns
+    coEvery {
+      blobs.put(
+        any(),
+        fakeBytes,
+        contentType = any(),
+        scope = any()
+      )
+    } returns
       buildBlobRef(sha256 = TEST_SHA256)
 
-    val result = manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "My Photo")
+    val result =
+      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "My Photo")
 
     assertThat(result.sha256).isEqualTo(TEST_SHA256)
     assertThat(result.storage_path)
@@ -112,12 +133,22 @@ class LocalFirstAttachmentManagerImplTest {
   fun addPickedFile_createdAtMatchesFixedClock() = runTest {
     val picked = buildPickedFile()
     every { fileByteReader.readBytes(any()) } returns byteArrayOf(1)
-    coEvery { blobs.put(any(), any(), contentType = any(), scope = any()) } returns buildBlobRef()
+    coEvery {
+      blobs.put(
+        any(),
+        any(),
+        contentType = any(),
+        scope = any()
+      )
+    } returns buildBlobRef()
 
-    val result = manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "file")
+    val result =
+      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "file")
 
     assertThat(result.created_at).isNotNull()
-    assertThat(result.created_at!!.getEpochSecond()).isEqualTo(FIXED_EPOCH_SECONDS)
+    assertThat(result.created_at!!.getEpochSecond()).isEqualTo(
+      FIXED_EPOCH_SECONDS
+    )
   }
 
   @Test
@@ -126,7 +157,11 @@ class LocalFirstAttachmentManagerImplTest {
 
     var caught: Throwable? = null
     try {
-      manager.addPickedFile(TEST_AIRCRAFT_ID, buildPickedFile(), displayName = "file")
+      manager.addPickedFile(
+        TEST_AIRCRAFT_ID,
+        buildPickedFile(),
+        displayName = "file"
+      )
     } catch (e: IllegalStateException) {
       caught = e
     }
@@ -140,7 +175,11 @@ class LocalFirstAttachmentManagerImplTest {
 
     var caught: Throwable? = null
     try {
-      manager.addPickedFile(TEST_AIRCRAFT_ID, buildPickedFile(), displayName = "file")
+      manager.addPickedFile(
+        TEST_AIRCRAFT_ID,
+        buildPickedFile(),
+        displayName = "file"
+      )
     } catch (e: IllegalStateException) {
       caught = e
     }
@@ -152,9 +191,17 @@ class LocalFirstAttachmentManagerImplTest {
   fun addPickedFile_derivesType_imagePng_toImage() = runTest {
     val picked = buildPickedFile(mimeType = "image/png")
     every { fileByteReader.readBytes(any()) } returns byteArrayOf(1)
-    coEvery { blobs.put(any(), any(), contentType = any(), scope = any()) } returns buildBlobRef()
+    coEvery {
+      blobs.put(
+        any(),
+        any(),
+        contentType = any(),
+        scope = any()
+      )
+    } returns buildBlobRef()
 
-    val result = manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "pic")
+    val result =
+      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "pic")
 
     assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_IMAGE")
   }
@@ -163,9 +210,17 @@ class LocalFirstAttachmentManagerImplTest {
   fun addPickedFile_derivesType_applicationPdf_toPdf() = runTest {
     val picked = buildPickedFile(mimeType = "application/pdf")
     every { fileByteReader.readBytes(any()) } returns byteArrayOf(1)
-    coEvery { blobs.put(any(), any(), contentType = any(), scope = any()) } returns buildBlobRef()
+    coEvery {
+      blobs.put(
+        any(),
+        any(),
+        contentType = any(),
+        scope = any()
+      )
+    } returns buildBlobRef()
 
-    val result = manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "doc.pdf")
+    val result =
+      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "doc.pdf")
 
     assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_PDF")
   }
@@ -174,9 +229,17 @@ class LocalFirstAttachmentManagerImplTest {
   fun addPickedFile_derivesType_textPlain_toFile() = runTest {
     val picked = buildPickedFile(mimeType = "text/plain")
     every { fileByteReader.readBytes(any()) } returns byteArrayOf(1)
-    coEvery { blobs.put(any(), any(), contentType = any(), scope = any()) } returns buildBlobRef()
+    coEvery {
+      blobs.put(
+        any(),
+        any(),
+        contentType = any(),
+        scope = any()
+      )
+    } returns buildBlobRef()
 
-    val result = manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "notes.txt")
+    val result =
+      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "notes.txt")
 
     assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_FILE")
   }
@@ -200,7 +263,9 @@ class LocalFirstAttachmentManagerImplTest {
     val result = manager.makeLink("https://example.com", displayName = "Link")
 
     assertThat(result.created_at).isNotNull()
-    assertThat(result.created_at!!.getEpochSecond()).isEqualTo(FIXED_EPOCH_SECONDS)
+    assertThat(result.created_at!!.getEpochSecond()).isEqualTo(
+      FIXED_EPOCH_SECONDS
+    )
   }
 
   // ---- delete ----
@@ -218,8 +283,19 @@ class LocalFirstAttachmentManagerImplTest {
   fun delete_callsBlobsDelete_withBlobIdMatchingAttachmentId() = runTest {
     val fakeBytes = byteArrayOf(1)
     every { fileByteReader.readBytes(any()) } returns fakeBytes
-    coEvery { blobs.put(any(), any(), contentType = any(), scope = any()) } returns buildBlobRef()
-    val attachment = manager.addPickedFile(TEST_AIRCRAFT_ID, buildPickedFile(), displayName = "file")
+    coEvery {
+      blobs.put(
+        any(),
+        any(),
+        contentType = any(),
+        scope = any()
+      )
+    } returns buildBlobRef()
+    val attachment = manager.addPickedFile(
+      TEST_AIRCRAFT_ID,
+      buildPickedFile(),
+      displayName = "file"
+    )
 
     manager.delete(attachment)
 
@@ -233,7 +309,8 @@ class LocalFirstAttachmentManagerImplTest {
     val id = "att-local"
     every { blobs.observe(BlobId(id)) } returns flowOf(buildBlobRef(remoteState = RemoteState.LocalOnly))
 
-    val status = manager.observeStatus(id).first()
+    val status = manager.observeStatus(id)
+      .first()
 
     assertThat(status).isEqualTo(AttachmentStatus.LocalOnly)
   }
@@ -243,7 +320,8 @@ class LocalFirstAttachmentManagerImplTest {
     val id = "att-uploading"
     every { blobs.observe(BlobId(id)) } returns flowOf(buildBlobRef(remoteState = RemoteState.Uploading))
 
-    val status = manager.observeStatus(id).first()
+    val status = manager.observeStatus(id)
+      .first()
 
     assertThat(status).isInstanceOf(AttachmentStatus.Uploading::class.java)
     assertThat((status as AttachmentStatus.Uploading).progress).isEqualTo(0f)
@@ -254,7 +332,8 @@ class LocalFirstAttachmentManagerImplTest {
     val id = "att-synced"
     every { blobs.observe(BlobId(id)) } returns flowOf(buildBlobRef(remoteState = RemoteState.Synced))
 
-    val status = manager.observeStatus(id).first()
+    val status = manager.observeStatus(id)
+      .first()
 
     assertThat(status).isEqualTo(AttachmentStatus.Synced)
   }
@@ -264,7 +343,8 @@ class LocalFirstAttachmentManagerImplTest {
     val id = "att-remote"
     every { blobs.observe(BlobId(id)) } returns flowOf(buildBlobRef(remoteState = RemoteState.RemoteOnly))
 
-    val status = manager.observeStatus(id).first()
+    val status = manager.observeStatus(id)
+      .first()
 
     assertThat(status).isEqualTo(AttachmentStatus.RemoteOnly)
   }
@@ -274,7 +354,8 @@ class LocalFirstAttachmentManagerImplTest {
     val id = "att-unknown"
     every { blobs.observe(BlobId(id)) } returns flowOf(null)
 
-    val status = manager.observeStatus(id).first()
+    val status = manager.observeStatus(id)
+      .first()
 
     assertThat(status).isEqualTo(AttachmentStatus.RemoteOnly)
   }

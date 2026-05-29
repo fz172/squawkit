@@ -8,6 +8,8 @@ import org.koin.dsl.module
  * view models; these bindings expose empty state and reject any attempted blob interaction.
  */
 actual val platformAttachmentModule: Module = module {
+  single<FileByteReader> { WebFileByteReader() }
+  single<BlobFilesystem> { OpfsBlobFilesystem() }
   single<AttachmentManager> { DisabledWebAttachmentManager() }
   single<AttachmentOpener> { DisabledWebAttachmentOpener() }
 }
