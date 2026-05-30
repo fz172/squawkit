@@ -25,4 +25,12 @@ interface UploadScheduler {
    * against a stale auth token.
    */
   fun cancelAll()
+
+  /**
+   * Whether the sync engine should proactively schedule downloads for REMOTE_ONLY rows at
+   * sign-in. Mobile platforms prefetch eagerly so attachments are ready offline; the web
+   * scheduler returns `false` to preserve OPFS quota and bandwidth — REMOTE_ONLY rows are
+   * downloaded lazily via [scheduleDownload] when the user opens them.
+   */
+  val prefetchRemoteOnly: Boolean get() = true
 }

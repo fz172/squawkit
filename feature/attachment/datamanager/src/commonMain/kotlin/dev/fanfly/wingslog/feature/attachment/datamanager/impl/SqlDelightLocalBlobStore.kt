@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager.impl
 
+import app.cash.sqldelight.async.coroutines.awaitAsList
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
@@ -76,7 +78,7 @@ class SqlDelightLocalBlobStore(
     contentType: String?,
     scope: EntityScope,
   ) {
-    val existing = db.schemaQueries.selectBlobById(id.value).executeAsOneOrNull()
+    val existing = db.schemaQueries.selectBlobById(id.value).awaitAsOneOrNull()
     if (existing != null) {
       // §6.1: idempotent — never overwrite a row that has progressed past REMOTE_ONLY.
       return
@@ -109,7 +111,7 @@ class SqlDelightLocalBlobStore(
   override suspend fun get(id: BlobId): BlobRef? = loadRef(id)
 
   override suspend fun localUri(id: BlobId): String? {
-    val row = db.schemaQueries.selectBlobById(id.value).executeAsOneOrNull() ?: return null
+    val row = db.schemaQueries.selectBlobById(id.value).awaitAsOneOrNull() ?: return null
     return when (row.remote_state) {
       RemoteState.LocalOnly, RemoteState.Uploading, RemoteState.Synced ->
         if (fs.exists(row.relative_path)) fs.uriFor(row.relative_path) else null
@@ -209,7 +211,7 @@ class SqlDelightLocalBlobStore(
   }
 
   override suspend fun delete(id: BlobId) {
-    val row = db.schemaQueries.selectBlobById(id.value).executeAsOneOrNull() ?: return
+    val row = db.schemaQueries.selectBlobById(id.value).awaitAsOneOrNull() ?: return
     fs.delete(row.relative_path)
     writeLock.withLock {
       db.schemaQueries.markBlobDeleted(
@@ -219,12 +221,12 @@ class SqlDelightLocalBlobStore(
     }
   }
 
-  private fun requireRow(id: BlobId): Blob_object =
-    db.schemaQueries.selectBlobById(id.value).executeAsOneOrNull()
+  private suspend fun requireRow(id: BlobId): Blob_object =
+    db.schemaQueries.selectBlobById(id.value).awaitAsOneOrNull()
       ?: error("blob_object row not found for id=${id.value}")
 
-  private fun loadRef(id: BlobId): BlobRef? =
-    db.schemaQueries.selectBlobById(id.value).executeAsOneOrNull()?.toRef()
+  private suspend fun loadRef(id: BlobId): BlobRef? =
+    db.schemaQueries.selectBlobById(id.value).awaitAsOneOrNull()?.toRef()
 
   override fun observeForScope(scopePath: String): Flow<List<BlobRef>> =
     db.schemaQueries.selectBlobsForScope(scopePath)
@@ -238,7 +240,7 @@ class SqlDelightLocalBlobStore(
 
   override suspend fun wipeForUser(uid: String) {
     val prefix = "/users/$uid/%"
-    val rows = db.schemaQueries.selectBlobsForScopePrefix(prefix).executeAsList()
+    val rows = db.schemaQueries.selectBlobsForScopePrefix(prefix).awaitAsList()
     for (row in rows) {
       try { fs.delete(row.relative_path) } catch (_: Exception) {}
     }

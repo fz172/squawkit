@@ -134,6 +134,26 @@ This deploys the callables into project `wingslog-9ca4e` from `.firebaserc`.
 - `EXPORT_DELIVERY_API_KEY` is now expected from Secret Manager, not `.env`.
 - Never commit deployment credentials or mail-provider API keys.
 
+## Storage bucket CORS
+
+The web app (`webApp`) downloads attachment bytes by `fetch`ing the
+`firebasestorage.googleapis.com` download URL returned by
+`StorageReference.getDownloadUrl()`. Browsers enforce CORS on that request,
+and the storage bucket ships with no CORS rules — so every download fails
+with `TypeError: Failed to fetch` until the bucket is configured.
+
+`storage_cors.json` in this directory is the minimal rule set: allow `GET`
+from any origin (the download URL contains a per-object access token, so
+the token is the auth — `*` is safe). Apply it once per environment with:
+
+```bash
+gcloud storage buckets update gs://wingslog-9ca4e.firebasestorage.app \
+  --cors-file=backend/firebase/storage_cors.json
+```
+
+(or the equivalent `gsutil cors set` if you prefer the older CLI). Native
+iOS and Android use the binary Firebase SDK protocol and don't need CORS.
+
 ## What this proves
 
 - Firebase workspace layout is correct

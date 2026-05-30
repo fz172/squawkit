@@ -1,8 +1,11 @@
 # Web Attachments Design
 
-**Status:** Proposed. This fills the web gap left by `docs/storage_r2_design.md`: the local-first
-attachment model is already the right product architecture, but the web target currently binds a
-disabled `AttachmentManager`, disables picker UI, and has no blob scheduler.
+**Status:** Implementation complete (M0–M6 landed). Remaining work is manual cross-device
+verification per the M6 exit criteria.
+
+The bucket needs a one-time CORS rule before web downloads work —
+`backend/firebase/storage_cors.json` is the checked-in rule set; see
+`backend/firebase/README.md` for the `gcloud storage buckets update` command.
 
 **Companion docs:** [`storage_r2_design.md`](storage_r2_design.md),
 [`attachments_PRD.md`](attachments_PRD.md), [
@@ -227,6 +230,8 @@ should not expose partial UI.
 
 ### M0 — Compile-safe foundation
 
+**Landed:** [`a62f0782`](https://github.com/fz172/wingslog/commit/a62f0782)
+
 Goal: replace the current "throws on web" primitives with real implementations that can be tested
 without enabling the attachment UI.
 
@@ -243,6 +248,8 @@ Exit criteria:
 - Android/iOS attachment tests remain green.
 
 ### M1 — Local browser byte storage
+
+**Landed:** [`c84c3942`](https://github.com/fz172/wingslog/commit/c84c3942)
 
 Goal: make picked browser bytes durable in OPFS through the existing `LocalBlobStore` contract, but
 still without upload/download or visible UI.
@@ -265,6 +272,8 @@ Exit criteria:
 
 ### M2 — Local add and local open
 
+**Landed:** [`b35d8cd0`](https://github.com/fz172/wingslog/commit/b35d8cd0)
+
 Goal: allow the common `AttachmentManager` and opener to work for locally picked files and links,
 without remote transfer.
 
@@ -286,6 +295,8 @@ Exit criteria:
 
 ### M3 — Foreground sync workers
 
+**Landed:** [`7cc7eb3d`](https://github.com/fz172/wingslog/commit/7cc7eb3d)
+
 Goal: connect browser-local rows to Firebase Storage using the existing common blob drivers.
 
 Work:
@@ -305,6 +316,10 @@ Exit criteria:
 
 ### M4 — Remote-only download and open
 
+**Landed:** [`f133edf5`](https://github.com/fz172/wingslog/commit/f133edf5) (M4 wiring shipped as
+part of M3 [`7cc7eb3d`](https://github.com/fz172/wingslog/commit/7cc7eb3d); this commit adds the
+bucket CORS rule required at runtime.)
+
 Goal: support the second-device path before making the UI generally available.
 
 Work:
@@ -323,6 +338,8 @@ Exit criteria:
 
 ### M5 — UI enablement
 
+**Landed:** [`52125440`](https://github.com/fz172/wingslog/commit/52125440)
+
 Goal: expose attachments on web behind the same product gate as mobile.
 
 Work:
@@ -340,6 +357,10 @@ Exit criteria:
 - Quota and duplicate errors use existing shared copy and do not introduce web-only limits.
 
 ### M6 — Hardening and release checks
+
+**Landed:** [`5c718afd`](https://github.com/fz172/wingslog/commit/5c718afd) (object-URL
+bookkeeping). Refresh/close, OPFS write-denied, popup-blocked, and storage-path correctness
+were addressed inline as part of M3–M5.
 
 Goal: close the browser-specific reliability gaps before considering web attachments generally
 available.

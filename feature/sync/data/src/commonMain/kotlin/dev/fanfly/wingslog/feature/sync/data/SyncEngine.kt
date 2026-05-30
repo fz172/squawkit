@@ -394,12 +394,14 @@ class SyncEngine(
     )
       .awaitAsList()
       .forEach { row -> scheduler.scheduleUpload(BlobId(row.id)) }
-    database.schemaQueries.selectPendingDownloads(
-      scopePrefix = prefix,
-      limit = 500
-    )
-      .awaitAsList()
-      .forEach { row -> scheduler.scheduleDownload(BlobId(row.id)) }
+    if (scheduler.prefetchRemoteOnly) {
+      database.schemaQueries.selectPendingDownloads(
+        scopePrefix = prefix,
+        limit = 500
+      )
+        .awaitAsList()
+        .forEach { row -> scheduler.scheduleDownload(BlobId(row.id)) }
+    }
     database.schemaQueries.selectBlobTombstones(limit = 500)
       .awaitAsList()
       .forEach { row -> scheduler.scheduleDelete(BlobId(row.id)) }
