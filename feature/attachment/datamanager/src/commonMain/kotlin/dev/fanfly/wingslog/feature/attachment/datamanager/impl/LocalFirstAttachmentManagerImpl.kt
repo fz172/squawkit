@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.transformWhile
 
 /**
- * Local-first [AttachmentManager]. See docs/storage_r2_design.md §6.2 + §6.3.
+ * Local-first [AttachmentManager]. See docs/storage/storage_r2_design.md §6.2 + §6.3.
  *
  * `addPickedFile` writes bytes to disk, inserts a `LOCAL_ONLY` blob_object row, and schedules
  * the upload via [uploadScheduler]. No network I/O on the calling coroutine.

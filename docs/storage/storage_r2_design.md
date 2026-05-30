@@ -448,7 +448,7 @@ The ViewModel combines this with `attachmentOpener.downloadingIds`, applying `Do
 
 `AttachmentSection` and `AttachmentRow` change their primary list parameter from `List<Attachment>` + `Set<String> downloadingIds` to `List<AttachmentWithState>`. The `downloadingIds` set is folded in by the ViewModel before the call; composables no longer need it as a separate argument.
 
-The trailing icon slot in `AttachmentRow` renders the status icon per the table in `attachments_PRD.md §Viewing`. The `OpenInNew` arrow is shown alongside the status icon only when the row is tappable (`Synced`, `RemoteOnly`, link). For `PendingUpload` and `UploadFailed` the `OpenInNew` arrow is hidden.
+The trailing icon slot in `AttachmentRow` renders the status icon per the table in `../attachments/attachments_PRD.md` §Viewing. The `OpenInNew` arrow is shown alongside the status icon only when the row is tappable (`Synced`, `RemoteOnly`, link). For `PendingUpload` and `UploadFailed` the `OpenInNew` arrow is hidden.
 
 Tapping an `UploadFailed` row triggers a prompt; the handler calls `AttachmentManager.retryUpload(id)` which resets `upload_attempts = 0` so the uploader picks the row up on its next pass.
 

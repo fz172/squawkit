@@ -1,6 +1,6 @@
 # Design Doc: Logbook Export
 
-**PRD:** `docs/export_logs_PRD.md`
+**PRD:** `docs/export/export_logs_PRD.md`
 **Status:** ✅ Implemented (scope expanded)
 **Last updated:** 2026-05-22
 

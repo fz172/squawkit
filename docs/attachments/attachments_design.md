@@ -2,7 +2,7 @@
 
 > **Status / supersession.** This is the **original** (pre-local-first) attachment design — it assumes logs live
 > directly in Firestore (`users/{uid}/fleet/{aircraftId}/...`). The **storage and sync mechanism here is
-> superseded** by the local-first R2 design in [`storage_r2_design.md`](storage_r2_design.md), which is what
+> superseded** by the local-first R2 design in [`storage_r2_design.md`](../storage/storage_r2_design.md), which is what
 > actually shipped (`feature/attachment/` + `core/storage` `blob_object` + blob drivers in
 > `feature/sync/data/blob/`, gated behind the `attachmentUploadEnabled` feature-lab flag). The **product
 > requirements** below (supported file types, size caps, attach-during-form UX) remain largely valid.
@@ -230,7 +230,7 @@ sealed class PendingAttachment {
 - **Files**: maximum 3 per log/card (across `Local` + `Saved` items, excluding `PendingDelete`). The "Choose file" button is disabled and shows "Maximum 3 files reached" when the count is at 3.
 - **Links**: unlimited.
 - **Per-parent total size**: 25 MB summed across all file attachments on a single log/card (links don't count). Computed from `PickedFile.sizeBytes` (pending) + `Attachment.size_bytes` (saved) before adding. If a new file would push the parent over 25 MB, show an inline error: "Adding this file would exceed the 25 MB limit for this entry."
-- **Per-user total storage**: 1 GB summed across all of the user's attachments (every log + every inspection card combined). Computed from `blob_object.size_bytes` summed across the user's scope (counts both `LOCAL_ONLY` and `REMOTE_ONLY` rows so the cap is consistent regardless of which device the user is on). If exceeded, show an inline error: "You've reached the 1 GB attachment limit. Remove an attachment before adding more." See `storage_r2_design.md` §9b for enforcement details.
+- **Per-user total storage**: 1 GB summed across all of the user's attachments (every log + every inspection card combined). Computed from `blob_object.size_bytes` summed across the user's scope (counts both `LOCAL_ONLY` and `REMOTE_ONLY` rows so the cap is consistent regardless of which device the user is on). If exceeded, show an inline error: "You've reached the 1 GB attachment limit. Remove an attachment before adding more." See `../storage/storage_r2_design.md` §9b for enforcement details.
 - **Per-parent duplicate**: a file whose sha256 matches another non-LINK attachment already on the parent (`Local` or `Saved`, excluding `PendingDelete`) is rejected before it joins the pending list. Show an inline error: "This file is already attached to this entry." Sha256 is computed from the picked bytes — the same hash used for the integrity check on download. Renaming the file on disk does not bypass the check; matching the byte content does. Links are never deduplicated (two different display names pointing at the same URL are allowed).
 
 ### Add-link UX
@@ -558,6 +558,6 @@ feature/tasks/update          ← picker sheet lives here; adds dep on feature/a
 
 4. **Image compression.** None. Files are uploaded as-is.
 
-5. **Anonymous users.** R2 lifts the R1 restriction — anonymous users may add attachments. Bytes are stored locally; uploads to Firebase Storage happen only after the account is linked to a permanent provider. See `storage_r2_design.md` §9.
+5. **Anonymous users.** R2 lifts the R1 restriction — anonymous users may add attachments. Bytes are stored locally; uploads to Firebase Storage happen only after the account is linked to a permanent provider. See `../storage/storage_r2_design.md` §9.
 
 6. **Firebase Storage pricing.** Free tier: 5 GB storage, 1 GB/day download. The 1 GB-per-user app cap keeps each individual user under the project's free-tier headroom even with a small population. Document in the release notes that attachments count against project storage quota.

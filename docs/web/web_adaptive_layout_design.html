@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WingsLog / Hopply — Adaptive Layout Redesign (Web + Large-Screen Tablet)</title>
+<style>
+  :root{
+    --primary:#1A5FAE; --primary-soft:#EAF1FC; --accent:#A7C8FF;
+    --bg:#0f1115; --panel:#171a21; --panel-2:#1d212b; --line:#2a2f3b;
+    --ink:#e7e9ee; --ink-2:#aab0bd; --faint:#7c828f;
+    --ok:#1F7A45; --ok-bg:#10301e; --ok-fg:#74D99A;
+    --warn:#8B5E00; --warn-bg:#33270a; --warn-fg:#FFC65A;
+    --err:#BA1A1A; --err-bg:#3a1714; --err-fg:#FF8A82;
+    --mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+    --head:'Space Grotesk',system-ui,sans-serif;
+    --body:system-ui,-apple-system,'Segoe UI',sans-serif;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(110% 70% at 100% 0%,#141823 0%,transparent 55%),var(--bg);
+    color:var(--ink);font-family:var(--body);line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px 120px}
+  header.hero{padding:64px 0 40px;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font-family:var(--head);font-weight:700;font-size:38px;letter-spacing:-.02em;margin:14px 0 10px;line-height:1.1}
+  .sub{color:var(--ink-2);font-size:17px;max-width:70ch}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+  .tag{font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2)}
+  .tag.status{border-color:color-mix(in oklab,var(--warn) 50%,transparent);color:var(--warn-fg);background:var(--warn-bg)}
+  h2{font-family:var(--head);font-weight:700;font-size:25px;letter-spacing:-.01em;margin:52px 0 6px;
+    padding-top:18px;border-top:1px solid var(--line)}
+  h2 .n{font-family:var(--mono);color:var(--accent);font-size:16px;margin-right:12px;font-weight:500}
+  h3{font-family:var(--head);font-weight:600;font-size:18px;margin:30px 0 8px;color:#fff}
+  h4{font-family:var(--head);font-weight:600;font-size:15px;margin:20px 0 6px;color:var(--accent)}
+  p{margin:10px 0}
+  a{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--panel-2);padding:2px 6px;border-radius:6px;border:1px solid var(--line);color:#dfe5f1}
+  pre{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;overflow:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:#d7dce6}
+  pre .c{color:var(--faint)}
+  ul,ol{margin:10px 0;padding-left:22px}
+  li{margin:6px 0}
+  .lead{font-size:16px;color:var(--ink-2)}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px}
+  th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--head);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);background:var(--panel)}
+  tr:hover td{background:#14171f}
+  td code{white-space:nowrap}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}.wrap{padding:0 18px 80px}h1{font-size:30px}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+  .card.reuse{border-left:3px solid var(--ok)}
+  .card.refactor{border-left:3px solid var(--warn-fg)}
+  .card.remove{border-left:3px solid var(--err-fg)}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 9px;border-radius:6px;font-weight:600}
+  .pill.reuse{background:var(--ok-bg);color:var(--ok-fg)} .pill.refactor{background:var(--warn-bg);color:var(--warn-fg)}
+  .pill.remove{background:var(--err-bg);color:var(--err-fg)} .pill.new{background:#13233f;color:var(--accent)}
+  .callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--panel);border-radius:10px;padding:14px 18px;margin:18px 0}
+  .callout.warn{border-left-color:var(--warn-fg)}
+  .callout .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+  .callout.warn .lbl{color:var(--warn-fg)}
+  nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 22px;margin:30px 0 10px;
+    columns:2;column-gap:30px}
+  nav.toc a{display:block;color:var(--ink-2);text-decoration:none;font-size:13.5px;padding:3px 0;break-inside:avoid}
+  nav.toc a:hover{color:var(--accent)}
+  @media(max-width:760px){nav.toc{columns:1}}
+  .ascii{font-family:var(--mono);font-size:11.5px;line-height:1.35;color:var(--ink-2);white-space:pre;overflow:auto}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin:10px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+  hr{border:none;border-top:1px solid var(--line);margin:40px 0}
+  .foot{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">WingsLog · Hopply — Design / Implementation Plan</div>
+  <h1>Adaptive Layout Redesign<br>Web &amp; Large-Screen Tablet</h1>
+  <p class="sub">Move WingsLog from a single-column, phone-shaped Compose UI to a genuinely adaptive shell —
+  persistent sidebar on desktop, navigation rail on tablet, bottom bar on phone — driven by the
+  <em>Hopply&nbsp;Web</em> design handoff. This document covers what to <strong>reuse</strong>,
+  <strong>refactor</strong>, and <strong>remove</strong> in the current layout system, and how to switch
+  between the mobile single-column layout and the adaptive system at runtime.</p>
+  <div class="meta">
+    <span class="tag status">Status: Proposed — not yet implemented</span>
+    <span class="tag">Target: web + tablet (iPad, Android tablets)</span>
+    <span class="tag">Compose Multiplatform 1.11 · Material3 1.9</span>
+    <span class="tag">Source: Hopply Web.html handoff</span>
+  </div>
+</header>
+
+<p class="lead">This plan describes <em>layout architecture</em>, not pixel-level styling. The visual
+language (Space Grotesk + JetBrains Mono, blue primary, red/amber/green status, 12px cards, both themes)
+already exists in <code>WingslogTheme</code> and the design handoff — the work here is the adaptive
+<strong>shell</strong>, the <strong>navigation model</strong>, and the <strong>multi-pane</strong> surfaces.</p>
+
+<nav class="toc">
+  <a href="#tldr">0 · TL;DR</a>
+  <a href="#source">1 · The source design (Hopply Web)</a>
+  <a href="#current">2 · Current layout system — audit</a>
+  <a href="#gap">3 · Gap analysis</a>
+  <a href="#target">4 · Target adaptive architecture</a>
+  <a href="#switch">5 · The switch: single-column → adaptive</a>
+  <a href="#navmodel">6 · Navigation model change (aircraft-scoped)</a>
+  <a href="#rrr">7 · Reuse / Refactor / Remove</a>
+  <a href="#components">8 · Component-by-component mapping</a>
+  <a href="#screens">9 · Per-screen plan</a>
+  <a href="#milestones">10 · Phased milestones</a>
+  <a href="#risks">11 · Risks &amp; open decisions</a>
+</nav>
+
+<!-- ============================================================= -->
+<h2 id="tldr"><span class="n">0</span>TL;DR</h2>
+<ul>
+  <li><strong>One new shell, built on <code>NavigationSuiteScaffold</code>.</strong> Wrap the
+  authenticated app in Material3’s <code>NavigationSuiteScaffold</code>, which renders the navigation
+  container as <em>bottom bar → navigation rail → permanent drawer</em> automatically by window size.
+  We accept its default drawer width for the initial refactor (we are <em>not</em> reproducing the
+  prototype’s bespoke 264px sidebar yet — see D2).</li>
+  <li><strong>The navigation model flips — but only above phone.</strong> On tablet/desktop the selected
+  aircraft becomes an <em>ambient app-level context</em> chosen from a switcher (in the top bar), with
+  sections (Dashboard / Tasks / Logs / Squawks) scoped to it, plus global Settings. On
+  <strong>phone there is no room for a switcher</strong>, so COMPACT keeps a <em>dedicated fleet landing
+  page</em> exactly like the app today (aircraft list → tap → scoped sections). This tier-dependent root
+  is the single biggest change.</li>
+  <li><strong>Detail &amp; edit flows become panes/drawers on large screens</strong>, staying as
+  full-screen pushes / bottom sheets on compact. Same composable content, different container.</li>
+  <li><strong>The data/domain layer is untouched.</strong> Local-first <code>EntityStore</code>,
+  every ViewModel, and the sync engine carry over verbatim — this is a UI-shell change.</li>
+  <li><strong>Add three dependencies:</strong> <code>material3-window-size-class</code>,
+  <code>material3-adaptive</code>, <code>material3-adaptive-navigation-suite</code> (all multiplatform).</li>
+  <li><strong>Reuse the most, remove the least.</strong> Screen <em>content</em> composables survive;
+  the per-screen <code>Scaffold</code>/<code>TopAppBar</code>/<code>FAB</code> chrome and the
+  flat <code>NavHost</code> graph are what gets refactored.</li>
+</ul>
+
+<!-- ============================================================= -->
+<h2 id="source"><span class="n">1</span>The source design — <em>Hopply Web</em></h2>
+<p>The handoff bundle (<code>wingslog-app/</code>) is a React/CSS prototype. The primary file is
+<code>project/Hopply Web.html</code>, which composes <code>web/theme.css</code> (the adaptive design
+system) plus per-screen JSX. The chat transcript (<code>chats/chat5.md</code>) records the intent:</p>
+<blockquote class="callout"><span class="lbl">Design intent (verbatim)</span>
+<p style="margin:6px 0 0">“Every screen is a 390px iOS frame stretched to fill a desktop window — back-buttons,
+bottom sheets, and a FAB don't belong on web… a genuinely adaptive Hopply web app, demonstrated
+phone → tablet → desktop.”</p></blockquote>
+
+<h3>Shell anatomy</h3>
+<div class="ascii">
+ DESKTOP (≥1180px)                      TABLET (≤1040px)            PHONE (≤720px)
+┌────────────┬───────────────────────┐ ┌──┬──────────────────┐  ┌──────────────────┐
+│  SIDEBAR   │  TOPBAR (title/theme) │ │▓ │ TOPBAR           │  │ MOBILE TOP (sw)  │
+│  264px     ├───────────────────────┤ │▓ ├──────────────────┤  ├──────────────────┤
+│  • brand   │                       │ │▓ │                  │  │                  │
+│  • AIRCRAFT│   CONTENT     ┌──────┐│ │▓ │   CONTENT        │  │   CONTENT        │
+│    SWITCHER│   (main)      │ RAIL ││ │▓ │  (single col)    │  │  (single col)    │
+│  • sections│               │320px ││ │▓ │                  │  │                  │
+│  • settings│               └──────┘│ │▓ │                  │  ├──────────────────┤
+│  • account │                       │ │▓ │                  │  │ ▢ ▢ ▢ ▢ ▢ bottom │
+└────────────┴───────────────────────┘ └──┴──────────────────┘  └──────────────────┘
+   full labels        mini icon-rail (76px)                       sidebar→bottom nav
+</div>
+
+<h3>Breakpoints in the prototype (<code>theme.css</code>)</h3>
+<table>
+  <tr><th>CSS max-width</th><th>What changes</th></tr>
+  <tr><td><code>≥ 1180</code> (default)</td><td>Full sidebar (264px) + topbar; dashboard is 2-pane (<code>1fr</code> + 320px sticky rail); detail screens use 2-column grids.</td></tr>
+  <tr><td><code>≤ 1180</code></td><td>Dashboard rail drops below main (single column); export grid tightens.</td></tr>
+  <tr><td><code>≤ 1040</code></td><td>Sidebar collapses to a <strong>76px icon rail</strong> (labels/switcher meta hidden); two-column → one; aircraft cards stay 2-up.</td></tr>
+  <tr><td><code>≤ 860</code></td><td>All card grids and stat rows collapse to a single column; export becomes single column.</td></tr>
+  <tr><td><code>≤ 720</code> (phone)</td><td><strong>Full native chrome swap:</strong> sidebar &amp; topbar hidden; 56px mobile top bar with inline aircraft switcher; fixed <strong>bottom tab bar</strong> (5 items); logs <strong>table → cards</strong>; right <strong>drawer → bottom sheet</strong>; modal → bottom sheet.</td></tr>
+  <tr><td><code>≤ 420</code></td><td>Fine tuning (hero stat gaps, key-value grid to single column).</td></tr>
+</table>
+
+<h3>Navigation taxonomy (final, per chat5/chat6)</h3>
+<ul>
+  <li><strong>Per-aircraft sections</strong> (scoped to the switcher selection): <code>Dashboard</code>, <code>Tasks</code>, <code>Logs</code>, <code>Squawks</code>.</li>
+  <li><strong>Global / workspace</strong>: <code>Settings</code> (Export was removed from the sidebar and now lives <em>inside</em> Settings → “Export all logs”).</li>
+  <li><strong>Aircraft switcher</strong>: dropdown in the sidebar (and inline in the mobile top bar) with per-aircraft overdue/open-squawk badges and an “Add aircraft” affordance.</li>
+  <li><strong>Badges</strong>: Tasks shows overdue count; Squawks shows open count; these roll up into the switcher.</li>
+</ul>
+
+<h3>Surfaces that become multi-pane / drawer on large screens</h3>
+<table>
+  <tr><th>Surface</th><th>Compact (today)</th><th>Large (target)</th></tr>
+  <tr><td>Dashboard</td><td>stacked sections</td><td>main column + sticky “Upcoming Maintenance” rail (320px)</td></tr>
+  <tr><td>Logs</td><td>cards</td><td>real data table; row → right detail drawer</td></tr>
+  <tr><td>Tasks / Squawks</td><td>single-column cards</td><td>2-col card grid; card → right detail drawer</td></tr>
+  <tr><td>Task add/edit</td><td>full screen / bottom sheet</td><td>centered modal with tab strip (Identity / Details / Schedule / Overrides)</td></tr>
+  <tr><td>Export</td><td>full-screen steps</td><td>config column + sticky live summary panel; or modal</td></tr>
+</table>
+
+<!-- ============================================================= -->
+<h2 id="current"><span class="n">2</span>Current layout system — audit</h2>
+<p>What actually exists in the codebase today (verified against <code>AppEntry.kt</code>,
+<code>core/ui/.../navigation/Screen.kt</code>, and a repo-wide search):</p>
+
+<h3>2.1 Navigation: a flat stack of full-screen destinations</h3>
+<p><code>AppEntry.kt</code> hosts a single <code>NavHost</code> with four nested graphs:</p>
+<pre><span class="c">// composeApp/.../AppEntry.kt</span>
+NavHost(navController, startDestination = GRAPH_AUTH) {
+  authGraph(navController)       <span class="c">// Login / AuthFlow</span>
+  fleetGraph(navController)      <span class="c">// Dashboard (aircraft list) → Add/Edit aircraft</span>
+  aircraftGraph(navController)   <span class="c">// maintenance_overview/{aircraftId} → add/edit task,log,squawk</span>
+  settingsGraph(navController)   <span class="c">// Settings → Sync, Export, History, Technicians, FeatureLab</span>
+}</pre>
+<p>The flow is strictly hierarchical and back-stack driven:
+<code>Dashboard (fleet)</code> → tap aircraft → <code>MaintenanceOverview/{aircraftId}</code>
+(tabs <em>inside</em> the screen) → push <code>maintenance_task_edit/{aircraftId}/{cardId}</code>, etc.
+Aircraft identity is carried as a <strong>route argument</strong>, re-parsed on every destination.</p>
+
+<h3>2.2 The only “adaptivity” today is max-width capping</h3>
+<p><code>core/ui/.../compose/AdaptiveLayout.kt</code> provides <code>ContentWidth</code> +
+<code>Modifier.constrainedContentWidth()</code> + <code>ConstrainedTopBar</code> /
+<code>ConstrainedFloatingAction</code>. These only <em>cap and center</em> a single column on wide
+screens (Feed 840 / Reading 720 / Form 680 / Auth 480). Used in ~18 files.</p>
+<div class="callout warn"><span class="lbl">Key finding</span>
+<p style="margin:6px 0 0">There is <strong>no</strong> <code>WindowSizeClass</code>, <code>NavigationRail</code>,
+<code>NavigationSuiteScaffold</code>, <code>ListDetailPaneScaffold</code>, or any
+<code>material3.adaptive</code> usage anywhere in the repo. The web build is literally the phone layout,
+width-capped. That is exactly the “stretched mobile” problem the design sets out to fix.</p></div>
+
+<h3>2.3 Per-screen chrome is duplicated and phone-shaped</h3>
+<p>Each feature screen owns its own <code>Scaffold</code> + <code>TopAppBar</code> (with a back arrow) +
+often a FAB. There is no shared shell; navigation chrome is re-implemented per screen. This is fine for a
+phone stack but is the thing that must move into a single adaptive shell.</p>
+
+<!-- ============================================================= -->
+<h2 id="gap"><span class="n">3</span>Gap analysis</h2>
+<table>
+  <tr><th>Capability</th><th>Design needs</th><th>Repo today</th><th>Gap</th></tr>
+  <tr><td>Window-size awareness</td><td>4–5 width tiers</td><td>none</td><td><span class="pill new">build</span> tier model from <code>WindowSizeClass</code> + custom thresholds</td></tr>
+  <tr><td>Persistent nav container</td><td>sidebar / rail / bottom bar</td><td>per-screen top bars only</td><td><span class="pill new">adopt</span> <code>NavigationSuiteScaffold</code> (auto by size)</td></tr>
+  <tr><td>Ambient aircraft context</td><td>switcher, app-level selection</td><td>route argument</td><td><span class="pill refactor">refactor</span> nav model</td></tr>
+  <tr><td>Multi-pane (list + detail)</td><td>logs/tasks/squawks → drawer</td><td>full-screen push</td><td><span class="pill new">build</span> detail-pane host</td></tr>
+  <tr><td>Dashboard side-rail</td><td>main + 320px sticky rail</td><td>single column</td><td><span class="pill refactor">refactor</span> dashboard composable</td></tr>
+  <tr><td>Logs as data table</td><td>table on wide, cards on compact</td><td>cards only</td><td><span class="pill new">build</span> table variant</td></tr>
+  <tr><td>Drawer vs bottom sheet</td><td>by tier</td><td>bottom sheet / push</td><td><span class="pill new">build</span> adaptive container</td></tr>
+  <tr><td>Theme toggle</td><td>light/dark toggle in chrome</td><td>theme exists; toggle in Settings</td><td><span class="pill reuse">reuse</span> surface toggle in top bar</td></tr>
+</table>
+
+<!-- ============================================================= -->
+<h2 id="target"><span class="n">4</span>Target adaptive architecture</h2>
+
+<h3>4.1 Dependencies to add</h3>
+<p>Compose Multiplatform 1.11 ships the adaptive artifacts as multiplatform libraries. Add to
+<code>gradle/libs.versions.toml</code> and the <code>core:ui</code> (and/or <code>composeApp</code>)
+<code>commonMain</code> source set:</p>
+<pre><span class="c"># libs.versions.toml</span>
+material3AdaptiveNav = "org.jetbrains.compose.material3.adaptive:adaptive-navigation-suite"
+material3Adaptive    = "org.jetbrains.compose.material3.adaptive:adaptive"
+material3WindowSize  = "org.jetbrains.compose.material3:material3-window-size-class"</pre>
+<p>These give us <code>currentWindowAdaptiveInfo()</code>, <code>WindowSizeClass</code>,
+<code>NavigationSuiteScaffold</code>, and <code>ListDetailPaneScaffold</code> /
+<code>SupportingPaneScaffold</code>. Whether we adopt <code>NavigationSuiteScaffold</code> wholesale or
+build a custom shell is discussed in §4.3.</p>
+
+<h3>4.2 The window-width tier model</h3>
+<p>Material3’s default <code>WindowWidthSizeClass</code> buckets (Compact &lt;600, Medium 600–840,
+Expanded ≥840) are coarser than the prototype’s CSS breakpoints. Define a single source of truth that
+maps width to a WingsLog tier, approximating the design’s px thresholds as dp:</p>
+<pre><span class="c">// core/ui/.../compose/LayoutTier.kt  (new)</span>
+enum class LayoutTier { COMPACT, MEDIUM, EXPANDED, LARGE }
+
+<span class="c">// Thresholds chosen to mirror the prototype's 720 / 1040 / 1180 CSS breakpoints.</span>
+@Composable
+fun rememberLayoutTier(): LayoutTier {
+  val w = currentWindowAdaptiveInfo().windowSizeClass
+      .windowWidthSizeClass /* or raw widthDp */
+  return when {
+    widthDp &lt; 700  -> LayoutTier.COMPACT    <span class="c">// phone: bottom bar, sheets, 1 col</span>
+    widthDp &lt; 1040 -> LayoutTier.MEDIUM     <span class="c">// tablet portrait: icon rail, 1–2 col, drawers</span>
+    widthDp &lt; 1240 -> LayoutTier.EXPANDED   <span class="c">// tablet landscape / laptop: sidebar, 2 col, no dash-rail</span>
+    else           -> LayoutTier.LARGE      <span class="c">// desktop: sidebar + sticky dash rail, max-width</span>
+  }
+}</pre>
+<div class="callout"><span class="lbl">Why a custom tier, not raw WindowSizeClass</span>
+<p style="margin:6px 0 0">The prototype switches the navigation container at 720px and the dashboard rail
+at 1180px — neither lines up with the 600/840 default buckets. Reading raw <code>widthDp</code> from
+<code>currentWindowAdaptiveInfo()</code> (or constructing a <code>WindowSizeClass</code> with custom
+breakpoints) keeps the Compose layout faithful to the approved design. The dp values are tunable.</p></div>
+
+<table>
+  <tr><th>LayoutTier</th><th>≈ CSS</th><th>Nav container</th><th>Content panes</th><th>Overlays</th></tr>
+  <tr><td><code>COMPACT</code></td><td>≤720</td><td>bottom bar + mobile top</td><td>single column</td><td>bottom sheet / full screen</td></tr>
+  <tr><td><code>MEDIUM</code></td><td>720–1040</td><td>navigation rail (icons)</td><td>1–2 col grids, no dash rail</td><td>right drawer / dialog</td></tr>
+  <tr><td><code>EXPANDED</code></td><td>1040–1180</td><td>full sidebar</td><td>2-col grids, no dash rail</td><td>right drawer / dialog</td></tr>
+  <tr><td><code>LARGE</code></td><td>≥1180</td><td>full sidebar</td><td>main + 320 sticky rail, max-width</td><td>right drawer / dialog</td></tr>
+</table>
+
+<h3>4.3 The shell: <code>AdaptiveAppShell</code> on <code>NavigationSuiteScaffold</code></h3>
+<div class="callout"><span class="lbl">Decision D2 — settled</span>
+<p style="margin:6px 0 0">Use Material3 <code>NavigationSuiteScaffold</code> for the initial refactor and
+accept its default nav-container sizing. <strong>Do not</strong> hand-build the prototype’s 264px sidebar
+yet; if the default drawer looks wrong on desktop we’ll switch to a custom shell as a follow-up.</p></div>
+<p><code>NavigationSuiteScaffold</code> maps the navigation container by window size automatically
+(Compact → bottom bar, Medium → navigation rail, Expanded → permanent drawer). We feed it the section
+items and host the active section in its content slot. The aircraft <strong>switcher lives in the top
+bar</strong> (a dropdown) rather than inside the nav container — this avoids fighting the scaffold’s
+drawer header and works identically across rail and drawer.</p>
+<pre><span class="c">// composeApp/.../shell/AdaptiveAppShell.kt  (new)</span>
+@Composable
+fun AdaptiveAppShell(...) {
+  val tier = rememberLayoutTier()
+
+  <span class="c">// COMPACT root is the dedicated fleet landing page (see §6 / D1), not a scoped section.</span>
+  <span class="c">// Above phone, the switcher in the top bar selects the ambient aircraft.</span>
+  NavigationSuiteScaffold(
+    navigationSuiteItems = {
+      sections.forEach { s -&gt;
+        item(
+          selected = s.id == current,
+          onClick  = { go(s) },
+          icon     = { Icon(s.icon, null) },
+          label    = { Text(s.label) },
+          badge    = { badgeFor(s)?.let { Badge { Text("$it") } } },
+        )
+      }
+    },
+  ) {
+    Column(Modifier.fillMaxSize()) {
+      WingsTopBar(
+        title = …, sub = …,
+        switcher = if (tier != COMPACT) { AircraftSwitcher(selected, ::pick) } else null,
+        themeToggle = …,
+      )
+      SectionHost(showDashRail = tier == LARGE)   <span class="c">// rail pane only at LARGE</span>
+    }
+  }
+}</pre>
+<p><strong>Follow-up (deferred):</strong> a custom <code>Row</code>-based shell
+(<code>WingsSidebar</code>/<code>WingsRail</code>/<code>WingsBottomBar</code>) that reproduces the
+prototype’s 264px sidebar with the in-rail switcher, section labels, and account footer — only if the
+default scaffold isn’t good enough. Not in scope for the first pass.</p>
+
+<h3>4.4 Detail panes &amp; overlays</h3>
+<p>Introduce one adaptive container that resolves by tier so call-sites stay tier-agnostic:</p>
+<pre><span class="c">// core/ui/.../compose/AdaptiveDetail.kt  (new)</span>
+@Composable fun AdaptiveDetailContainer(open: Boolean, onDismiss, content) =
+  when (rememberLayoutTier()) {
+    COMPACT -> ModalBottomSheet(onDismiss) { content() }   <span class="c">// = today's bottom sheet</span>
+    else    -> EndDrawer(width = 460.dp, onDismiss) { content() }  <span class="c">// right-side drawer</span>
+  }</pre>
+<p>Add/edit forms use the same idea: <code>COMPACT</code> → full-screen route (today’s behavior) or
+bottom sheet; <code>MEDIUM+</code> → centered <code>Dialog</code> sized like the prototype modal.
+The <em>form content composable is identical</em> across tiers.</p>
+
+<!-- ============================================================= -->
+<h2 id="switch"><span class="n">5</span>The switch: single-column → adaptive</h2>
+<p>How runtime layout selection works, and how we migrate without a big-bang rewrite.</p>
+
+<h3>5.1 Runtime mechanism</h3>
+<ol>
+  <li><code>AppEntry</code> wraps the authenticated graph in <code>AdaptiveAppShell</code>.</li>
+  <li>The shell reads <code>rememberLayoutTier()</code> once and recomposes when the window resizes
+  (web window drag, tablet rotation, multi-window). Because the tier is derived state, the entire shell
+  reflows — sidebar ⇄ rail ⇄ bottom bar — without navigation events.</li>
+  <li>Section content is hosted by an inner <code>NavHost</code> whose start destination is the selected
+  section; the outer (auth) <code>NavHost</code> remains for login/onboarding.</li>
+  <li>Detail/edit invocations call <code>AdaptiveDetailContainer</code> / the adaptive dialog, which pick
+  sheet vs drawer vs dialog by tier — so a row tapped at desktop opens a drawer, the same row at phone
+  opens a sheet.</li>
+</ol>
+
+<h3>5.2 Migration strategy — strangler, screen by screen</h3>
+<p>The content composables already exist; we re-host them. Recommended order keeps the app shippable at
+every step:</p>
+<ol>
+  <li><strong>Stand up the shell</strong> behind a feature flag (<code>adaptiveShellEnabled</code> in
+  <code>FeatureFlags</code>), defaulting on for web, off for phone, so the existing stack stays intact
+  on mobile until parity is proven.</li>
+  <li><strong>Re-host sections</strong> (Dashboard → Tasks → Logs → Squawks → Settings) one at a time:
+  strip each screen’s own <code>Scaffold</code>/<code>TopAppBar</code>/<code>FAB</code>, expose a pure
+  <em>content</em> composable, and mount it in the shell’s <code>SectionHost</code>.</li>
+  <li><strong>Convert overlays</strong>: wrap existing detail sheets / edit screens in
+  <code>AdaptiveDetailContainer</code> and the adaptive dialog.</li>
+  <li><strong>Add wide-only affordances</strong>: dashboard side-rail, logs table, 2-col grids.</li>
+  <li><strong>Flip the flag</strong> on for all tiers once compact parity is confirmed; delete the
+  legacy graph wiring.</li>
+</ol>
+
+<h3>5.3 What stays single-column forever</h3>
+<p>COMPACT is still the native phone experience — the design is explicit that phone should remain
+faithful to the current app. So “single-column layout system” is not removed; it becomes the
+<code>COMPACT</code> branch of the same shell. <code>constrainedContentWidth</code> stays useful for
+capping content inside a pane at MEDIUM/EXPANDED where there is no second pane.</p>
+
+<!-- ============================================================= -->
+<h2 id="navmodel"><span class="n">6</span>Navigation model change (aircraft-scoped)</h2>
+<div class="callout warn"><span class="lbl">Biggest behavioral change — and it is tier-dependent</span>
+<p style="margin:6px 0 0">Above phone, aircraft moves from a <em>pushed route argument</em> to an
+<em>app-level ambient selection</em>: sections render against the selected aircraft and switching swaps
+content in place. <strong>On phone there is no switcher</strong>, so COMPACT keeps the current model —
+a dedicated fleet landing page is the root, and tapping an aircraft enters its scoped sections.</p></div>
+
+<table>
+  <tr><th></th><th>Today (stack)</th><th>COMPACT (phone)</th><th>MEDIUM+ (tablet/desktop)</th></tr>
+  <tr><td>Root</td><td>Fleet Dashboard (aircraft list)</td><td><strong>Fleet landing page</strong> (kept, ≈ today)</td><td>Selected-aircraft Dashboard; switcher in top bar <em>is</em> the fleet landing</td></tr>
+  <tr><td>Aircraft identity</td><td><code>{aircraftId}</code> route arg</td><td>selection on entering an aircraft from the landing page</td><td>ambient <code>selectedAircraftId</code> at shell scope, passed to sections</td></tr>
+  <tr><td>Sections</td><td>tabs inside <code>MaintenanceOverview</code></td><td>bottom-bar tabs once inside an aircraft</td><td>nav-rail/drawer destinations (Dashboard/Tasks/Logs/Squawks)</td></tr>
+  <tr><td>Switch aircraft</td><td>back to fleet, tap another</td><td>back to fleet landing, tap another</td><td>top-bar switcher dropdown, swaps in place</td></tr>
+  <tr><td>Deep links</td><td><code>maintenance_overview/{id}</code></td><td colspan="2"><code>?aircraft={id}&amp;section=tasks</code> on web (mirror the prototype’s URL params)</td></tr>
+</table>
+
+<h4>Fleet landing — resolved (D1)</h4>
+<p>The switcher in the tablet/desktop nav chrome <em>is</em> the fleet overview, so no separate fleet
+destination is needed there. But because the switcher cannot be shown on phone, COMPACT <strong>retains a
+dedicated fleet landing page</strong> — the same aircraft-list entry point the app has today — as the
+root of the phone experience. Net effect: one fleet-list composable, surfaced as the COMPACT root and
+(optionally) reachable on wide screens, while the switcher handles aircraft selection above phone.</p>
+
+<!-- ============================================================= -->
+<h2 id="rrr"><span class="n">7</span>Reuse / Refactor / Remove</h2>
+
+<h3 style="color:var(--ok-fg)">✓ Reuse (carries over essentially unchanged)</h3>
+<div class="card reuse">
+<ul style="margin:0">
+  <li><strong>Entire domain/data layer</strong> — <code>EntityStore</code>, every feature
+  <code>datamanager</code> + Manager, the Firestore sync engine. The redesign does not touch storage.</li>
+  <li><strong>All ViewModels &amp; StateFlow</strong> — sections bind to the same VMs.</li>
+  <li><strong>Theme &amp; tokens</strong> — <code>WingslogTheme</code>, fonts, palette, status colors,
+  both light/dark. The toggle just surfaces in the top bar.</li>
+  <li><strong>Screen <em>content</em> composables</strong> — aircraft overview content, task/log/squawk
+  lists, forms — reused as pane content once their own scaffolding is peeled off.</li>
+  <li><strong>Existing detail bottom sheets</strong> — become the COMPACT branch of
+  <code>AdaptiveDetailContainer</code>.</li>
+  <li><code>ContentWidth</code> / <code>constrainedContentWidth</code> — still used to cap single-pane
+  width at MEDIUM/EXPANDED.</li>
+</ul>
+</div>
+
+<h3 style="color:var(--warn-fg)">↻ Refactor</h3>
+<div class="card refactor">
+<ul style="margin:0">
+  <li><strong><code>AppEntry.kt</code> NavHost</strong> — the flat 4-graph stack becomes
+  [auth graph] → [<code>AdaptiveAppShell</code> hosting a section <code>NavHost</code>]. Aircraft &amp;
+  global sub-graphs collapse into shell sections.</li>
+  <li><strong>Aircraft identity plumbing</strong> — from route arg to ambient
+  <code>selectedAircraftId</code>; <code>Screen.MaintenanceOverview</code> and friends are reframed.</li>
+  <li><strong>Per-screen chrome</strong> — remove each screen’s <code>Scaffold</code>/
+  <code>TopAppBar</code>/back-arrow/<code>FAB</code>; expose content-only composables. Primary actions
+  move to the top bar / toolbar (FAB → toolbar button on wide; FAB may remain at COMPACT).</li>
+  <li><strong>Dashboard</strong> — split into main column + “Upcoming Maintenance” rail (rail shown only
+  at LARGE).</li>
+  <li><strong>Logs</strong> — add a table layout for MEDIUM+; keep cards for COMPACT.</li>
+  <li><strong><code>AircraftOverviewScreen</code> internal tabs</strong> — Overview/Tasks/Logs tabs are
+  promoted to shell-level sections; the overview’s stat blocks become the 2-column grid.</li>
+</ul>
+</div>
+
+<h3 style="color:var(--err-fg)">✕ Remove / retire</h3>
+<div class="card remove">
+<ul style="margin:0">
+  <li><strong>“Stretched mobile” assumption</strong> — single-column-only as the <em>web</em> layout.</li>
+  <li><strong>Back-button-driven aircraft navigation</strong> on large screens (replaced by the
+  switcher; back stack still applies to overlays/forms).</li>
+  <li><strong>Export as a top-level destination</strong> — per chat6 it lives inside Settings only.</li>
+  <li><strong>Duplicated per-screen top bars</strong> on wide screens — superseded by the shell top bar
+  (the composables themselves are refactored, not all deleted, since COMPACT may still use a compact top).</li>
+  <li><strong>FAB on wide screens</strong> — replaced by toolbar/primary buttons.</li>
+  <li>(Decision) the standalone <strong>fleet Dashboard list</strong> as the only root — see §6/§11.</li>
+</ul>
+</div>
+
+<!-- ============================================================= -->
+<h2 id="components"><span class="n">8</span>Component-by-component mapping</h2>
+<table>
+  <tr><th>Prototype element</th><th>Compose target</th><th>Status</th></tr>
+  <tr><td>Sidebar / icon rail / bottom tab bar (5 items)</td><td><code>NavigationSuiteScaffold</code> items (auto-selected by size)</td><td><span class="pill new">adopt</span></td></tr>
+  <tr><td>Bespoke 264px sidebar (brand + footer)</td><td>custom <code>WingsSidebar</code></td><td><span class="pill refactor">deferred</span> (D2 — only if scaffold looks wrong)</td></tr>
+  <tr><td>Aircraft switcher dropdown + badges</td><td><code>AircraftSwitcher</code> in the top bar (<code>DropdownMenu</code>)</td><td><span class="pill new">new</span></td></tr>
+  <tr><td>Fleet landing page (phone root)</td><td>reuse existing <code>DashboardScreen</code> aircraft list</td><td><span class="pill reuse">reuse</span></td></tr>
+  <tr><td>Top bar (title/sub/theme/bell)</td><td><code>WingsTopBar</code></td><td><span class="pill new">new</span></td></tr>
+  <tr><td>Dashboard hero + stat tiles + aircraft cards</td><td>reuse <code>AircraftOverviewContent</code> blocks</td><td><span class="pill reuse">reuse</span></td></tr>
+  <tr><td>“Upcoming Maintenance” rail (320px)</td><td><code>UpcomingRail</code> pane</td><td><span class="pill new">new</span></td></tr>
+  <tr><td>Logs data table</td><td><code>LogsTable</code> (Lazy + sticky header)</td><td><span class="pill new">new</span></td></tr>
+  <tr><td>Logs cards (compact)</td><td>existing log cards</td><td><span class="pill reuse">reuse</span></td></tr>
+  <tr><td>Right detail drawer ⇄ bottom sheet</td><td><code>AdaptiveDetailContainer</code></td><td><span class="pill new">new</span></td></tr>
+  <tr><td>Task edit modal (tabbed)</td><td>adaptive <code>Dialog</code> wrapping existing form</td><td><span class="pill refactor">refactor</span></td></tr>
+  <tr><td>Export config + sticky summary</td><td>2-pane at MEDIUM+, stacked at COMPACT</td><td><span class="pill refactor">refactor</span></td></tr>
+  <tr><td>Theme toggle</td><td>icon button in top bar → existing theme state</td><td><span class="pill reuse">reuse</span></td></tr>
+</table>
+
+<!-- ============================================================= -->
+<h2 id="screens"><span class="n">9</span>Per-screen plan</h2>
+<h4>Dashboard (per-aircraft)</h4>
+<p>Hero (fleet/aircraft status) + status tiles (overdue / due-soon / airworthy) + aircraft card(s).
+LARGE adds the sticky Upcoming-Maintenance rail; EXPANDED and below stack it under the main column.</p>
+<h4>Tasks</h4>
+<p>Segmented control (Due / History) + card grid (2-col at EXPANDED+, 1-col below). Card → detail in
+<code>AdaptiveDetailContainer</code>. Add/edit via adaptive dialog (tabs: Identity / Details / Schedule /
+Overrides). Overdue badge feeds the sidebar/bottom-bar + switcher.</p>
+<h4>Logs</h4>
+<p>Toolbar (search + type chips). <code>LogsTable</code> at MEDIUM+ with sticky header and row→drawer;
+cards at COMPACT. Add-log via adaptive dialog/sheet.</p>
+<h4>Squawks</h4>
+<p>2-col card grid (grounding/monitor/minor/closed). “Closed” rolls up deferred + resolved (chat6). Card
+→ drawer; add/edit via adaptive container. Open-count badge.</p>
+<h4>Settings (global)</h4>
+<p>Profile card + appearance (theme switch) + time source + notifications + technicians + sync +
+<strong>Export</strong> (entry point lives here). Reading-width single column; no second pane.</p>
+<h4>Export</h4>
+<p>Config column + sticky live summary at MEDIUM+; stacked at COMPACT. Works as a page or a modal.</p>
+
+<!-- ============================================================= -->
+<h2 id="milestones"><span class="n">10</span>Phased milestones</h2>
+<table>
+  <tr><th>Milestone</th><th>Scope</th><th>Exit criteria</th></tr>
+  <tr><td><strong>M0 — Foundations</strong></td><td>Add adaptive deps; <code>LayoutTier</code>; <code>adaptiveShellEnabled</code> flag</td><td>Tier recomposes on resize; flag gates nothing yet</td></tr>
+  <tr><td><strong>M1 — Shell</strong></td><td><code>AdaptiveAppShell</code> on <code>NavigationSuiteScaffold</code> + top bar + top-bar switcher; COMPACT fleet landing page; render one placeholder section</td><td>Bottom-bar ⇄ rail ⇄ drawer reflow verified web + tablet; phone shows fleet landing root</td></tr>
+  <tr><td><strong>M2 — Aircraft-scoped nav</strong></td><td>Ambient <code>selectedAircraftId</code> above phone; sections hosted; switcher swaps in place; phone enters sections from the landing page; URL params on web</td><td>Switch aircraft without push/pop (wide); landing→sections (phone); deep links work</td></tr>
+  <tr><td><strong>M3 — Sections re-hosted</strong></td><td>Dashboard, Tasks, Logs, Squawks, Settings content-only; chrome removed</td><td>Compact parity with current app behind flag</td></tr>
+  <tr><td><strong>M4 — Overlays</strong></td><td><code>AdaptiveDetailContainer</code> + adaptive dialogs for all detail/edit</td><td>Drawer on wide, sheet on phone, same content</td></tr>
+  <tr><td><strong>M5 — Wide affordances</strong></td><td>Dashboard rail, logs table, 2-col grids, export 2-pane</td><td>Matches prototype at LARGE</td></tr>
+  <tr><td><strong>M6 — Flip &amp; cleanup</strong></td><td>Enable flag all tiers; delete legacy graph wiring; retire FAB-on-wide</td><td>Single shell path; legacy code removed</td></tr>
+</table>
+
+<!-- ============================================================= -->
+<h2 id="risks"><span class="n">11</span>Risks &amp; open decisions</h2>
+<table>
+  <tr><th>#</th><th>Decision / risk</th><th>Recommendation</th></tr>
+  <tr><td>D1 <span class="pill reuse">settled</span></td><td>Fleet overview — dedicated landing vs switcher</td><td><strong>Both, by tier.</strong> Above phone the top-bar switcher is the fleet landing. On phone (no switcher room) keep a dedicated fleet landing page like the app today, as the COMPACT root.</td></tr>
+  <tr><td>D2 <span class="pill reuse">settled</span></td><td>Custom shell vs <code>NavigationSuiteScaffold</code></td><td><strong>NavigationSuiteScaffold</strong> for the initial refactor; accept its default nav sizing (don’t rebuild the 264px sidebar). Switch to a custom shell only if it looks wrong.</td></tr>
+  <tr><td>D3</td><td>Tier thresholds in dp vs the prototype’s CSS px</td><td>Start at 700/1040/1240 dp; tune on real tablets. dp ≈ px for layout reasoning but verify on iPad + Android.</td></tr>
+  <tr><td>D4</td><td>Back-stack semantics with ambient aircraft + section nav</td><td>Section nav = no back stack between sections (like tabs); back applies to overlays/forms; keep system-back closing overlays first.</td></tr>
+  <tr><td>R1</td><td>Compact regressions while refactoring chrome out of screens</td><td>Feature-flag + keep COMPACT branch behavior identical; screenshot-test the phone path.</td></tr>
+  <tr><td>R2</td><td>Web window-resize reflow performance (Babel-free, but heavy recompositions)</td><td>Hoist tier to a single <code>remember</code>; avoid per-item width reads; test rapid drag-resize.</td></tr>
+  <tr><td>R3</td><td>iOS/Android tablet multi-window &amp; rotation</td><td><code>currentWindowAdaptiveInfo()</code> already reacts; verify safe-area insets in shell (bottom bar uses <code>env(safe-area)</code> equivalent).</td></tr>
+  <tr><td>R4</td><td>Drawer/dialog focus + a11y on web</td><td>Trap focus, escape-to-close, aria roles; reuse Compose’s dialog semantics.</td></tr>
+</table>
+
+<div class="foot">
+  WingsLog (Hopply) · Adaptive Layout Redesign plan · derived from the <em>Hopply Web</em> design handoff
+  (<code>Hopply Web.html</code>, <code>web/theme.css</code>, <code>chats/chat5.md</code>) and a current-state
+  audit of <code>AppEntry.kt</code>, <code>Screen.kt</code>, and <code>core/ui/.../AdaptiveLayout.kt</code>.
+  Status: <strong>Proposed</strong> — no implementation has shipped. Update this note with commit hashes as
+  milestones land.
+</div>
+
+</div>
+</body>
+</html>

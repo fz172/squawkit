@@ -8,7 +8,7 @@ import kotlinx.coroutines.withContext
  * Re-keys this device's local data from one user (UID) to another. Used by the account-merge path
  * of the guest → account upgrade: when a guest links into an account that already exists, the app
  * signs in to that account (a new UID) and calls [reassign] to bring the guest's on-device records
- * along. See docs/account_upgrade_design.html §6.
+ * along. See docs/account/account_upgrade_design.html §6.
  */
 interface LocalAccountMigrator {
   /**

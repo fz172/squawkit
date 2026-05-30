@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
  * `dev.fanfly.wingslog.core.storage.EntityStore` shape but for `blob_object` rows + filesystem
  * bytes. The only path that writes the `blob_object` table.
  *
- * See docs/storage_r2_design.md §6.1.
+ * See docs/storage/storage_r2_design.md §6.1.
  *
  * State machine (§5):
  *

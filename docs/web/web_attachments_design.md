@@ -7,8 +7,8 @@ The bucket needs a one-time CORS rule before web downloads work —
 `backend/firebase/storage_cors.json` is the checked-in rule set; see
 `backend/firebase/README.md` for the `gcloud storage buckets update` command.
 
-**Companion docs:** [`storage_r2_design.md`](storage_r2_design.md),
-[`attachments_PRD.md`](attachments_PRD.md), [
+**Companion docs:** [`storage_r2_design.md`](../storage/storage_r2_design.md),
+[`attachments_PRD.md`](../attachments/attachments_PRD.md), [
 `web_target_expansion_plan.md`](web_target_expansion_plan.md).
 
 ## 1. Goal

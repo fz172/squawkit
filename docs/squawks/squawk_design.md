@@ -1,6 +1,6 @@
 # Design Doc: User Squawking
 
-**PRD:** `docs/user_squawking_prd.md`
+**PRD:** `docs/squawks/user_squawking_prd.md`
 **Status:** ✅ Implemented (with additions)
 **Last updated:** 2026-05-22
 

@@ -7,7 +7,7 @@ import app.cash.sqldelight.ColumnAdapter
  * subtype here, register a codec, done" — never "scatter a string."
  *
  * The on-disk column is `TEXT`, so adding a subtype is a zero-migration change. See
- * docs/storage_r1_design.md §4.2.1 for the rationale.
+ * docs/storage/storage_r1_design.md §4.2.1 for the rationale.
  */
 sealed interface CollectionKind {
   /** Stable wire name — persisted as the `collection` column value. Never change once shipped. */

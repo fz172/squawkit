@@ -7,7 +7,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 /**
- * Caller-facing projection of one `blob_object` row. See docs/storage_r2_design.md §6.1.
+ * Caller-facing projection of one `blob_object` row. See docs/storage/storage_r2_design.md §6.1.
  */
 @OptIn(ExperimentalTime::class)
 data class BlobRef(

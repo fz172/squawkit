@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.settings.upgrade
 
 /**
  * Drives the guest → account upgrade flow surfaced from the Settings profile area.
- * See docs/account_upgrade_design.html §8.
+ * See docs/account/account_upgrade_design.html §8.
  */
 sealed interface UpgradeUiState {
   /** Nothing in flight; the CTA is shown for anonymous users when the flag is on. */

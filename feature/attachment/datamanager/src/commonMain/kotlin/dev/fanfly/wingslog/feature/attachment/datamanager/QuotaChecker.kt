@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /**
- * Enforces the three attachment caps from docs/storage_r2_design.md §9b:
+ * Enforces the three attachment caps from docs/storage/storage_r2_design.md §9b:
  *
  * | Check | Value |
  * |---|---|

@@ -18,7 +18,7 @@ interface EntityCodec<T : Any> {
 /**
  * [EntityCodec] backed by a Wire [ProtoAdapter]. Proto wire format is rename-tolerant by design,
  * which is what gives the storage layer its forward-compatibility guarantee
- * (see storage_r1_design.md §4.2.2).
+ * (see docs/storage/storage_r1_design.md §4.2.2).
  */
 class WireCodec<T : Message<T, *>>(private val adapter: ProtoAdapter<T>) : EntityCodec<T> {
   override fun encode(value: T): ByteArray = adapter.encode(value)

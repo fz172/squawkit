@@ -100,7 +100,7 @@ The application focuses on General Aviation (GA) aircraft management, specifical
 - Bidirectional linkage: `MaintenanceLog.squawk_ids` ↔ `Squawk.addressed_by_log_id`. Linking from either the
   log form (`SquawkPickerSheet`) or the squawk form (`LogPickerSheet`).
 - AOG squawks surface in `AogAlertSection` on the Aircraft Overview tab. (A fleet-dashboard AOG badge was considered but **deliberately left out of scope**.)
-- See `docs/user_squawking_prd.md` and `docs/squawk_design.md`.
+- See `docs/squawks/user_squawking_prd.md` and `docs/squawks/squawk_design.md`.
 
 ### 3.5 Logbook Export (Implemented — `feature/export`)
 
@@ -111,7 +111,7 @@ The application focuses on General Aviation (GA) aircraft management, specifical
   saved to Files (iOS) / Downloads (Android). Reads run entirely against the local-first store.
 - **Email delivery**: optionally email the export via the `requestExportDelivery` Firebase Function (signed URL +
   mailer + Firestore manifest). Export history supports re-send, retry, and delete.
-- See `docs/export_logs_PRD.md`, `docs/export_logs_design.md`, and `docs/export_email_automation_design.html`.
+- See `docs/export/export_logs_PRD.md`, `docs/export/export_logs_design.md`, and `docs/export/export_email_automation_design.html`.
 
 ### 3.6 Weight & Balance (Future)
 
@@ -150,13 +150,13 @@ The application focuses on General Aviation (GA) aircraft management, specifical
 4. **Phase 4** ✅ Compliance Logic — `feature/tasks` with `TaskDataManager` + `TaskDueManager`.
    `DueStatus` computed per task; surfaced in Aircraft Overview (Maintenance Tasks tab + CriticalAlertSection).
 5. **Phase 5** ✅ Local-first storage (R1): SQLDelight entity store + Firestore sync engine. Shipped as the
-   default and only data path (no rollout flag). See `docs/storage_r1_design.md`.
+   default and only data path (no rollout flag). See `docs/storage/storage_r1_design.md`.
 6. **Phase 6** ✅ Squawks — ad-hoc defect tracking (`feature/squawk`), Open → Addressed/Dismissed lifecycle,
-   AOG alert on Aircraft Overview, log↔squawk linkage. See `docs/squawk_design.md`.
+   AOG alert on Aircraft Overview, log↔squawk linkage. See `docs/squawks/squawk_design.md`.
 7. **Phase 7** (Substantially implemented — behind feature flag) — Attachments R2: local blob store, background
-   upload, lazy download on logs/tasks/squawks. Gated behind `attachmentUploadEnabled`. See `docs/storage_r2_design.md`.
+   upload, lazy download on logs/tasks/squawks. Gated behind `attachmentUploadEnabled`. See `docs/storage/storage_r2_design.md`.
 8. **Phase 8** ✅ Logbook Export (`feature/export`) — on-device PDF/CSV/XLSX ZIP export, per-aircraft or fleet,
-   plus optional server-side email delivery (Firebase Functions backend). See `docs/export_logs_PRD.md` and
-   `docs/export_email_automation_design.html`.
+   plus optional server-side email delivery (Firebase Functions backend). See `docs/export/export_logs_PRD.md` and
+   `docs/export/export_email_automation_design.html`.
 9. **Phase 9** (Future) — Weight & Balance Calculator.
-10. **Phase 10** (Future) — Intelligent Search (FTS5 + vector embeddings). See `docs/intelligentsearch.md`.
+10. **Phase 10** (Future) — Intelligent Search (FTS5 + vector embeddings). See `docs/search/intelligentsearch.md`.

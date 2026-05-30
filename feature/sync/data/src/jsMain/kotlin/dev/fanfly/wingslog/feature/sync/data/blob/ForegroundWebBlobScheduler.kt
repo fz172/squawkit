@@ -18,7 +18,7 @@ import kotlinx.coroutines.sync.withLock
  * deletes that don't terminate before the tab closes resume on next visit via
  * [dev.fanfly.wingslog.feature.sync.data.SyncEngine.schedulePendingBlobs] startup scan.
  *
- * Per `docs/web_attachments_design.md` §5:
+ * Per `docs/web/web_attachments_design.md` §5:
  *  - Duplicate schedules are coalesced per operation via the in-flight sets.
  *  - On transient driver failure the job retries with exponential backoff
  *    (30s, 60s, 120s, …, capped at 60min) while the tab stays open.

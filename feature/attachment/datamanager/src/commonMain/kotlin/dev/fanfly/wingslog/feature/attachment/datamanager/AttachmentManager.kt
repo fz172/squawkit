@@ -8,7 +8,7 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Local-first attachment coordinator. See docs/storage_r2_design.md §6.2.
+ * Local-first attachment coordinator. See docs/storage/storage_r2_design.md §6.2.
  *
  * Replaces the R1 async-upload surface: in R2 the manager is a thin wrapper around
  * [LocalBlobStore] (and, in PR 5, an upload scheduler) — it does not block the form save flow

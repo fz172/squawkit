@@ -20,7 +20,7 @@ import java.io.File
 
 /**
  * R2 [AttachmentOpener] for Android. Routes through [LocalBlobStore] instead of using the
- * proto's (now-reserved) `download_url` field. See docs/storage_r2_design.md §7.
+ * proto's (now-reserved) `download_url` field. See docs/storage/storage_r2_design.md §7.
  */
 class AttachmentOpenerAndroid(
   private val context: Context,

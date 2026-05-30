@@ -10,7 +10,7 @@ Android (minSdk 33), iOS, and web sharing Compose Multiplatform UI.
 
 The user-facing app is branded **Hopply**; codebase identifiers (`wingslog`, package `dev.fanfly.wingslog`, Gradle module names) still use the original WingsLog name.
 
-The app uses a **local-first architecture** (R1 — shipped, default path): a SQLDelight entity store is the single source of truth for every read and write, and a Firestore sync engine pushes local changes and pulls remote ones in the background. There is **no Firestore in the UI read path** and **no rollout flag** — local-first is the only code path. Local-first **attachments** (R2) infrastructure has largely landed (local blob store + background upload/download), but the attachment UI is gated behind the `attachmentUploadEnabled` feature-lab flag. See `docs/storage_r1_design.md` and `docs/storage_r2_design.md`.
+The app uses a **local-first architecture** (R1 — shipped, default path): a SQLDelight entity store is the single source of truth for every read and write, and a Firestore sync engine pushes local changes and pulls remote ones in the background. There is **no Firestore in the UI read path** and **no rollout flag** — local-first is the only code path. Local-first **attachments** (R2) infrastructure has largely landed (local blob store + background upload/download), but the attachment UI is gated behind the `attachmentUploadEnabled` feature-lab flag. See `docs/storage/storage_r1_design.md` and `docs/storage/storage_r2_design.md`.
 
 ## Build & CI Commands
 
@@ -148,7 +148,7 @@ update        →  :model, :datamanager, :viewing, :sharedassets, core:*
 
 - **`feature/technician/manage/`** — uses `manage/` instead of `viewing/` + `update/` split; both list and edit screens coexist in one submodule. New features should prefer canonical unless CRUD-only with no standalone view.
 - **`feature/settings/`** — flat module; single screen with no submodule structure.
-- **`feature/userprofile/`** — legacy structure; being unified with Technician (see `docs/userprofile_as_technician.md`).
+- **`feature/userprofile/`** — legacy structure; being unified with Technician (see `docs/technician/userprofile_as_technician.md`).
 - **`feature/aircraft/dashboard/`** — single submodule (no canonical split); owns its own ViewModel and DI module.
 - **`feature/fleet/`** — ViewModel lives inside `viewing/` (no separate update layer); fleet dashboard is read-only.
 - **`feature/export/`** — `datamanager` + `sharedassets` + `update` only (no `model` or `viewing`); export is a single user-driven flow with no standalone read surface.
@@ -179,7 +179,7 @@ EntityStore<Aircraft>.observeAll (SQLDelight Flow, FleetManagerImpl)
 Proto definitions live in `core/model/src/commonMain/proto/`. Feature managers **never touch Firestore** — they read/write the local `EntityStore` only. The sync engine is the sole Firestore client: each synced entity is one `SyncDocWire` document — `payload` (Base64-encoded proto bytes), `deleted`, `schema` (proto FQN), and `lastUpdateTimestamp` (Firestore server timestamp). The old `core/database` module and its `AIRCRAFT_INFO_BLOB` / `getBlobAsBytes` pattern have been **removed**.
 
 ### Local-first storage (R1 — shipped, default path)
-`core/storage` provides `EntityStore` (SQLDelight-backed), `CollectionKind` (8 kinds: Aircraft, MaintenanceTask, MaintenanceLog, MaintenanceOverview, Technician, UserInfo, FeatureLab, Squawk), `EntityCodecRegistry`, and Koin modules. Schema tables: `entity`, `sync_cursor`, `sync_config`, `blob_object`. `feature/sync/data` implements the sync engine: `SyncEngine` (gated on signed-in AND non-anonymous AND cloud-sync-enabled) orchestrates `HydrationRunner` (initial pull), `PullListener` / `FirestorePullSubscription` (real-time updates), and `PushWorker` (drains `dirty=1` rows via `FirestoreSyncWriter`). Top-level kinds (Aircraft, Technician, UserInfo) hydrate on sign-in; per-aircraft kinds (logs, tasks, overview, squawks) hydrate per aircraft. Conflict resolution is last-writer-wins on Firestore server timestamp; dirty rows are immune from remote overwrite (no local clock in the ordering logic). Anonymous users are fully offline (engine idle). Binary blob transfers (R2) use WorkManager (Android) and background URLSession (iOS). See `docs/storage_r1_design.md`.
+`core/storage` provides `EntityStore` (SQLDelight-backed), `CollectionKind` (8 kinds: Aircraft, MaintenanceTask, MaintenanceLog, MaintenanceOverview, Technician, UserInfo, FeatureLab, Squawk), `EntityCodecRegistry`, and Koin modules. Schema tables: `entity`, `sync_cursor`, `sync_config`, `blob_object`. `feature/sync/data` implements the sync engine: `SyncEngine` (gated on signed-in AND non-anonymous AND cloud-sync-enabled) orchestrates `HydrationRunner` (initial pull), `PullListener` / `FirestorePullSubscription` (real-time updates), and `PushWorker` (drains `dirty=1` rows via `FirestoreSyncWriter`). Top-level kinds (Aircraft, Technician, UserInfo) hydrate on sign-in; per-aircraft kinds (logs, tasks, overview, squawks) hydrate per aircraft. Conflict resolution is last-writer-wins on Firestore server timestamp; dirty rows are immune from remote overwrite (no local clock in the ordering logic). Anonymous users are fully offline (engine idle). Binary blob transfers (R2) use WorkManager (Android) and background URLSession (iOS). See `docs/storage/storage_r1_design.md`.
 
 ### Dependency Injection
 - Central aggregation: `composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/di/initKoin.kt`
@@ -215,15 +215,27 @@ Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, i
 
 ## Design Docs
 
-Feature PRDs and architecture design docs live in `docs/` — including `PRD.md` (product overview),
-`platform_feature_parity.html` (Android/iOS/web feature matrix), `storage_mode_PRD.md` /
-`storage_r1_design.md` / `storage_r2_design.md` (local-first), `attachments_PRD.md` /
-`attachments_design.md`, `squawk_design.md` / `user_squawking_prd.md`, `export_logs_PRD.md` /
-`export_logs_design.md` / `export_email_automation_design.html`, `technician_design.md`,
-`userprofile_as_technician.md`, `aircraft_overview_tabs.md`, and `intelligentsearch.md`. Consult
-these before making non-trivial changes to a feature area. Each design/PRD doc carries an *
-*Implementation Status** note near the top reflecting what has actually shipped vs. the original
-plan. For export work, also inspect `docs/export_logs_sample/`.
+Feature PRDs and architecture design docs live in `docs/`, organized into **per-topic subfolders**:
+
+- `docs/product/` — `PRD.md` (product overview), `platform_feature_parity.html` (Android/iOS/web feature matrix)
+- `docs/storage/` — `storage_mode_PRD.md`, `storage_r1_design.md`, `storage_r2_design.md` (local-first)
+- `docs/attachments/` — `attachments_PRD.md`, `attachments_design.md`
+- `docs/squawks/` — `user_squawking_prd.md`, `squawk_design.md`
+- `docs/export/` — `export_logs_PRD.md`, `export_logs_design.md`, `export_email_automation_design.html`, plus the `export_logs_sample/` reference bundle
+- `docs/technician/` — `technician_design.md`, `userprofile_as_technician.md`
+- `docs/aircraft/` — `aircraft_overview_tabs.md`
+- `docs/search/` — `intelligentsearch.md`
+- `docs/account/` — `account_upgrade_PRD.html`, `account_upgrade_design.html`
+- `docs/web/` — `web_target_expansion_plan.md`, `web_attachments_design.md`, `web_adaptive_layout_design.html`
+
+Consult the relevant doc before making non-trivial changes to a feature area. Each design/PRD doc
+carries an **Implementation Status** note near the top reflecting what has actually shipped vs. the
+original plan.
+
+**Doc format policy:** all *new* docs are authored in **HTML** (self-contained, styled). Existing
+Markdown docs stay as-is until they're substantially rewritten; do not bulk-convert. When adding a
+doc, place it in the matching subfolder (create a new one if no topic fits) and link related docs
+with relative paths.
 
 ## Dogfood Builds
 

@@ -6,7 +6,7 @@ import dev.gitlive.firebase.auth.FirebaseUser
 /**
  * Outcome of upgrading an anonymous (guest) session to a permanent Google/Apple account.
  *
- * See docs/account_upgrade_design.html. The clean path links the provider to the existing
+ * See docs/account/account_upgrade_design.html. The clean path links the provider to the existing
  * anonymous user (UID preserved → local data needs no migration). A collision means the chosen
  * account already exists, so the caller offers the merge path via [AuthManager.signInToExistingAccount].
  */

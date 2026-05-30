@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.core.storage.blob
 import app.cash.sqldelight.ColumnAdapter
 
 /**
- * The four states a blob can be in relative to Firebase Storage. See docs/storage_r2_design.md §5.
+ * The four states a blob can be in relative to Firebase Storage. See docs/storage/storage_r2_design.md §5.
  *
  * Transitions:
  * - `LOCAL_ONLY → UPLOADING → SYNCED` — the upload happy path.

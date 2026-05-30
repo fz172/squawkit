@@ -5,7 +5,7 @@ package dev.fanfly.wingslog.feature.attachment.datamanager
  * [SqlDelightLocalBlobStore] consults this for actual disk I/O — the database row tracks "is the
  * file present?" via state, but the bytes live on disk.
  *
- * See docs/storage_r2_design.md §6.1 ("`BlobFilesystem.kt` expect — filesDir, read/write/delete").
+ * See docs/storage/storage_r2_design.md §6.1 ("`BlobFilesystem.kt` expect — filesDir, read/write/delete").
  *
  * In production:
  * - Android: rooted at `Context.filesDir/blobs/`.

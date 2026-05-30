@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.attachment.model
 
 /**
- * Outcome of `QuotaChecker.check`. See docs/storage_r2_design.md §9b. The picker calls this
+ * Outcome of `QuotaChecker.check`. See docs/storage/storage_r2_design.md §9b. The picker calls this
  * synchronously before adding a candidate file to the form's pending list; on rejection it
  * surfaces the corresponding inline error string from `feature/attachment/sharedassets`.
  */

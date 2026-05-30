@@ -90,7 +90,7 @@ class AuthManagerImpl(
   /**
    * iOS upgrade uses Sign in with Apple. The native ASAuthorization flow (nonce + identity token →
    * OAuthProvider.credential("apple.com", …) → linkWithCredential) is not wired yet; until then this
-   * reports a failure rather than silently doing nothing. Tracked in docs/account_upgrade_design.html.
+   * reports a failure rather than silently doing nothing. Tracked in docs/account/account_upgrade_design.html.
    */
   override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult {
     logger.w { "upgradeAnonymousAccount() not yet implemented on iOS (pending Sign in with Apple)" }
