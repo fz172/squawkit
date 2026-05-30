@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,9 +19,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.core.ui.shell.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.AircraftOverviewScreen
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
+import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
@@ -36,6 +41,7 @@ import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalBrowserHistoryApi::class)
@@ -48,6 +54,8 @@ fun WebApp() {
     ) {
       val navController = rememberNavController()
       var browserNavigationBound by remember { mutableStateOf(false) }
+      val featureLabManager: FeatureLabManager = koinInject()
+      val flags by featureLabManager.observe().collectAsState(FeatureFlags())
 
       LaunchedEffect(browserNavigationBound) {
         if (browserNavigationBound) {
@@ -62,11 +70,24 @@ fun WebApp() {
         composable(Screen.Login.route) {
           AuthFlow(
             onComplete = {
-              navController.navigate(Screen.Dashboard.route) {
+              // Behind the adaptiveShellEnabled flag, land in the adaptive shell instead of the
+              // legacy single-column dashboard. Default path is unchanged.
+              val destination =
+                if (flags.adaptiveShellEnabled) Screen.AdaptiveShell.route else Screen.Dashboard.route
+              navController.navigate(destination) {
                 popUpTo(Screen.Login.route) { inclusive = true }
               }
               browserNavigationBound = true
             },
+          )
+        }
+        composable(Screen.AdaptiveShell.route) {
+          val viewModel = koinViewModel<AdaptiveShellViewModel>()
+          val state by viewModel.uiState.collectAsState()
+          AdaptiveAppShell(
+            state = state,
+            onSelectAircraft = viewModel::selectAircraft,
+            onOpenSettings = { navController.navigate(Screen.Settings.route) },
           )
         }
         composable(Screen.Dashboard.route) {

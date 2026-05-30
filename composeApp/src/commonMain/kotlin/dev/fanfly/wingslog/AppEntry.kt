@@ -5,6 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
@@ -20,6 +22,10 @@ import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
+import dev.fanfly.wingslog.core.ui.shell.AdaptiveAppShell
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
+import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.aircraft.dashboard.AircraftOverviewScreen
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
@@ -46,6 +52,7 @@ private const val GRAPH_AUTH = "graph_auth"
 private const val GRAPH_FLEET = "graph_fleet"
 private const val GRAPH_AIRCRAFT = "graph_aircraft"
 private const val GRAPH_SETTINGS = "graph_settings"
+private const val GRAPH_SHELL = "graph_shell"
 
 @Composable
 fun AppEntry() {
@@ -54,6 +61,8 @@ fun AppEntry() {
   val authManager: AuthManager = koinInject()
   val firebaseAuth: FirebaseAuth = koinInject()
   val dogfoodExts: DogfoodFeatureExtensions = koinInject()
+  val featureLabManager: FeatureLabManager = koinInject()
+  val flags by featureLabManager.observe().collectAsState(FeatureFlags())
   val scope = rememberCoroutineScope()
 
   if (health.isCorrupted) {
@@ -92,16 +101,20 @@ fun AppEntry() {
         navController,
         startDestination = GRAPH_AUTH
       ) {
-        authGraph(navController)
+        authGraph(navController, adaptiveShellEnabled = { flags.adaptiveShellEnabled })
         fleetGraph(navController)
         aircraftGraph(navController)
         settingsGraph(navController, dogfoodExts)
+        shellGraph(navController)
       }
     }
   }
 }
 
-private fun NavGraphBuilder.authGraph(navController: NavController) {
+private fun NavGraphBuilder.authGraph(
+  navController: NavController,
+  adaptiveShellEnabled: () -> Boolean,
+) {
   navigation(
     startDestination = Screen.Login.route,
     route = GRAPH_AUTH
@@ -110,10 +123,30 @@ private fun NavGraphBuilder.authGraph(navController: NavController) {
       // The whole sign-in + onboarding flow now lives in feature/login as AuthFlow.
       AuthFlow(
         onComplete = {
-          navController.navigate(GRAPH_FLEET) {
+          // Behind the adaptiveShellEnabled flag, land authenticated users in the new adaptive
+          // shell instead of the legacy fleet stack. Default path is unchanged.
+          val destination = if (adaptiveShellEnabled()) GRAPH_SHELL else GRAPH_FLEET
+          navController.navigate(destination) {
             popUpTo(GRAPH_AUTH) { inclusive = true }
           }
         },
+      )
+    }
+  }
+}
+
+private fun NavGraphBuilder.shellGraph(navController: NavController) {
+  navigation(
+    startDestination = Screen.AdaptiveShell.route,
+    route = GRAPH_SHELL
+  ) {
+    composable(Screen.AdaptiveShell.route) {
+      val viewModel = koinViewModel<AdaptiveShellViewModel>()
+      val state by viewModel.uiState.collectAsState()
+      AdaptiveAppShell(
+        state = state,
+        onSelectAircraft = viewModel::selectAircraft,
+        onOpenSettings = { navController.navigate(GRAPH_SETTINGS) },
       )
     }
   }
