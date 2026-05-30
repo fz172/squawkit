@@ -19,6 +19,7 @@ sealed class Screen(val route: String) {
   data object NameEntry : Screen("name_entry")
   data object Welcome : Screen("welcome")
   data object Dashboard : Screen("main")
+  data object AdaptiveShell : Screen("adaptive_shell")
   data object Settings : Screen("settings")
   data object SyncSettings : Screen("sync_settings")
   data object ExportLogs : Screen("export_logs")

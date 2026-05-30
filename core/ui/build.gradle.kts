@@ -50,6 +50,7 @@ kotlin {
       api(project(":core:datetime"))
       api(libs.compose.ui)
       api(libs.material3)
+      api(libs.material3.adaptive.navigation.suite)
       api(libs.material.icons.extended)
       api(libs.components.resources)
       api(libs.kotlinx.datetime)
