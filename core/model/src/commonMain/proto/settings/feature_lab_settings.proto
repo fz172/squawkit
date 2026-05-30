@@ -11,4 +11,5 @@ message FeatureLabSettings {
   bool attachment_upload_disabled = 2;
   bool export_email_delivery_enabled = 4;
   bool account_upgrade_enabled = 5;
+  bool adaptive_shell_enabled = 6;
 }

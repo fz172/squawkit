@@ -57,6 +57,7 @@ private fun FeatureLabSettings.toFeatureFlags() = FeatureFlags(
   attachmentUploadEnabled = !attachment_upload_disabled,
   exportEmailDeliveryEnabled = export_email_delivery_enabled,
   accountUpgradeEnabled = account_upgrade_enabled,
+  adaptiveShellEnabled = adaptive_shell_enabled,
 )
 
 private fun FeatureFlags.toProto() = FeatureLabSettings(
@@ -64,4 +65,5 @@ private fun FeatureFlags.toProto() = FeatureLabSettings(
   attachment_upload_disabled = !attachmentUploadEnabled,
   export_email_delivery_enabled = exportEmailDeliveryEnabled,
   account_upgrade_enabled = accountUpgradeEnabled,
+  adaptive_shell_enabled = adaptiveShellEnabled,
 )
