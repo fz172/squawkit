@@ -166,8 +166,8 @@ phone → tablet → desktop.”</p></blockquote>
 <h3>Breakpoints in the prototype (<code>theme.css</code>)</h3>
 <table>
   <tr><th>CSS max-width</th><th>What changes</th></tr>
-  <tr><td><code>≥ 1180</code> (default)</td><td>Full sidebar (264px) + topbar; dashboard is 2-pane (<code>1fr</code> + 320px sticky rail); detail screens use 2-column grids.</td></tr>
-  <tr><td><code>≤ 1180</code></td><td>Dashboard rail drops below main (single column); export grid tightens.</td></tr>
+  <tr><td><code>≥ 1180</code> (default)</td><td>Full sidebar (264px) + topbar; dashboard keeps aircraft data and maintenance summary full-width, then uses a lower 2-pane grid (<code>1fr</code> + 320px); detail screens use 2-column grids.</td></tr>
+  <tr><td><code>≤ 1180</code></td><td>Dashboard lower grid stacks to one column; export grid tightens.</td></tr>
   <tr><td><code>≤ 1040</code></td><td>Sidebar collapses to a <strong>76px icon rail</strong> (labels/switcher meta hidden); two-column → one; aircraft cards stay 2-up.</td></tr>
   <tr><td><code>≤ 860</code></td><td>All card grids and stat rows collapse to a single column; export becomes single column.</td></tr>
   <tr><td><code>≤ 720</code> (phone)</td><td><strong>Full native chrome swap:</strong> sidebar &amp; topbar hidden; 56px mobile top bar with inline aircraft switcher; fixed <strong>bottom tab bar</strong> (5 items); logs <strong>table → cards</strong>; right <strong>drawer → bottom sheet</strong>; modal → bottom sheet.</td></tr>
@@ -185,7 +185,7 @@ phone → tablet → desktop.”</p></blockquote>
 <h3>Surfaces that become multi-pane / drawer on large screens</h3>
 <table>
   <tr><th>Surface</th><th>Compact (today)</th><th>Large (target)</th></tr>
-  <tr><td>Dashboard</td><td>stacked sections</td><td>main column + sticky “Upcoming Maintenance” rail (320px)</td></tr>
+  <tr><td>Dashboard</td><td>stacked sections</td><td>full-width aircraft data + maintenance summary, then Recent Activity left and Next Due/Open Squawks right</td></tr>
   <tr><td>Logs</td><td>cards</td><td>real data table; row → right detail drawer</td></tr>
   <tr><td>Tasks / Squawks</td><td>single-column cards</td><td>2-col card grid; card → right detail drawer</td></tr>
   <tr><td>Task add/edit</td><td>full screen / bottom sheet</td><td>centered modal with tab strip (Identity / Details / Schedule / Overrides)</td></tr>
@@ -235,7 +235,7 @@ phone stack but is the thing that must move into a single adaptive shell.</p>
   <tr><td>Persistent nav container</td><td>sidebar / rail / bottom bar</td><td>per-screen top bars only</td><td><span class="pill new">adopt</span> <code>NavigationSuiteScaffold</code> (auto by size)</td></tr>
   <tr><td>Ambient aircraft context</td><td>switcher, app-level selection</td><td>route argument</td><td><span class="pill refactor">refactor</span> nav model</td></tr>
   <tr><td>Multi-pane (list + detail)</td><td>logs/tasks/squawks → drawer</td><td>full-screen push</td><td><span class="pill new">build</span> detail-pane host</td></tr>
-  <tr><td>Dashboard side-rail</td><td>main + 320px sticky rail</td><td>single column</td><td><span class="pill refactor">refactor</span> dashboard composable</td></tr>
+  <tr><td>Dashboard lower grid</td><td>Recent Activity left + 320px Next Due/Open Squawks column</td><td>single column</td><td><span class="pill refactor">refactor</span> dashboard composable</td></tr>
   <tr><td>Logs as data table</td><td>table on wide, cards on compact</td><td>cards only</td><td><span class="pill new">build</span> table variant</td></tr>
   <tr><td>Drawer vs bottom sheet</td><td>by tier</td><td>bottom sheet / push</td><td><span class="pill new">build</span> adaptive container</td></tr>
   <tr><td>Theme toggle</td><td>light/dark toggle in chrome</td><td>theme exists; toggle in Settings</td><td><span class="pill reuse">reuse</span> surface toggle in top bar</td></tr>
@@ -272,12 +272,12 @@ fun rememberLayoutTier(): LayoutTier {
   return when {
     widthDp &lt; 700  -> LayoutTier.COMPACT    <span class="c">// phone: bottom bar, sheets, 1 col</span>
     widthDp &lt; 1040 -> LayoutTier.MEDIUM     <span class="c">// tablet portrait: icon rail, 1–2 col, drawers</span>
-    widthDp &lt; 1240 -> LayoutTier.EXPANDED   <span class="c">// tablet landscape / laptop: sidebar, 2 col, no dash-rail</span>
-    else           -> LayoutTier.LARGE      <span class="c">// desktop: sidebar + sticky dash rail, max-width</span>
+    widthDp &lt; 1240 -> LayoutTier.EXPANDED   <span class="c">// tablet landscape / laptop: sidebar, 2 col, no dash grid</span>
+    else           -> LayoutTier.LARGE      <span class="c">// desktop: sidebar + lower dashboard grid, max-width</span>
   }
 }</pre>
 <div class="callout"><span class="lbl">Why a custom tier, not raw WindowSizeClass</span>
-<p style="margin:6px 0 0">The prototype switches the navigation container at 720px and the dashboard rail
+<p style="margin:6px 0 0">The prototype switches the navigation container at 720px and the dashboard lower grid
 at 1180px — neither lines up with the 600/840 default buckets. Reading raw <code>widthDp</code> from
 <code>currentWindowAdaptiveInfo()</code> (or constructing a <code>WindowSizeClass</code> with custom
 breakpoints) keeps the Compose layout faithful to the approved design. The dp values are tunable.</p></div>
@@ -285,9 +285,9 @@ breakpoints) keeps the Compose layout faithful to the approved design. The dp va
 <table>
   <tr><th>LayoutTier</th><th>≈ CSS</th><th>Nav container</th><th>Content panes</th><th>Overlays</th></tr>
   <tr><td><code>COMPACT</code></td><td>≤720</td><td>bottom bar + mobile top</td><td>single column</td><td>bottom sheet / full screen</td></tr>
-  <tr><td><code>MEDIUM</code></td><td>720–1040</td><td>navigation rail (icons)</td><td>1–2 col grids, no dash rail</td><td>right drawer / dialog</td></tr>
-  <tr><td><code>EXPANDED</code></td><td>1040–1180</td><td>full sidebar</td><td>2-col grids, no dash rail</td><td>right drawer / dialog</td></tr>
-  <tr><td><code>LARGE</code></td><td>≥1180</td><td>full sidebar</td><td>main + 320 sticky rail, max-width</td><td>right drawer / dialog</td></tr>
+  <tr><td><code>MEDIUM</code></td><td>720–1040</td><td>navigation rail (icons)</td><td>1–2 col grids, no dash grid</td><td>right drawer / dialog</td></tr>
+  <tr><td><code>EXPANDED</code></td><td>1040–1180</td><td>full sidebar</td><td>2-col grids, no dash grid</td><td>right drawer / dialog</td></tr>
+  <tr><td><code>LARGE</code></td><td>≥1180</td><td>full sidebar</td><td>full-width top content + lower 1fr/320 grid, max-width</td><td>right drawer / dialog</td></tr>
 </table>
 
 <h3>4.3 The shell: <code>AdaptiveAppShell</code> on <code>NavigationSuiteScaffold</code></h3>
@@ -328,7 +328,7 @@ fun AdaptiveAppShell(...) {
         switcher = if (tier != COMPACT) { AircraftSwitcher(selected, ::pick) } else null,
         themeToggle = …,
       )
-      SectionHost(showDashRail = tier == LARGE)   <span class="c">// rail pane only at LARGE</span>
+      SectionHost(showDashboardGrid = tier == LARGE) <span class="c">// lower dashboard grid only at LARGE</span>
     }
   }
 }</pre>
@@ -378,7 +378,7 @@ every step:</p>
   <em>content</em> composable, and mount it in the shell’s <code>SectionHost</code>.</li>
   <li><strong>Convert overlays</strong>: wrap existing detail sheets / edit screens in
   <code>AdaptiveDetailContainer</code> and the adaptive dialog.</li>
-  <li><strong>Add wide-only affordances</strong>: dashboard side-rail, logs table, 2-col grids.</li>
+  <li><strong>Add wide-only affordances</strong>: dashboard lower two-column grid, logs table, 2-col grids.</li>
   <li><strong>Flip the flag</strong> on for all tiers once compact parity is confirmed; delete the
   legacy graph wiring.</li>
 </ol>
@@ -444,8 +444,8 @@ root of the phone experience. Net effect: one fleet-list composable, surfaced as
   <li><strong>Per-screen chrome</strong> — remove each screen’s <code>Scaffold</code>/
   <code>TopAppBar</code>/back-arrow/<code>FAB</code>; expose content-only composables. Primary actions
   move to the top bar / toolbar (FAB → toolbar button on wide; FAB may remain at COMPACT).</li>
-  <li><strong>Dashboard</strong> — split into main column + “Upcoming Maintenance” rail (rail shown only
-  at LARGE).</li>
+  <li><strong>Dashboard</strong> — keep aircraft data and maintenance summary full-width, then split lower
+  content into Recent Activity left and Next Due/Open Squawks right at LARGE.</li>
   <li><strong>Logs</strong> — add a table layout for MEDIUM+; keep cards for COMPACT.</li>
   <li><strong><code>AircraftOverviewScreen</code> internal tabs</strong> — Overview/Tasks/Logs tabs are
   promoted to shell-level sections; the overview’s stat blocks become the 2-column grid.</li>
@@ -476,7 +476,7 @@ root of the phone experience. Net effect: one fleet-list composable, surfaced as
   <tr><td>Fleet landing page (phone root)</td><td>reuse existing <code>DashboardScreen</code> aircraft list</td><td><span class="pill reuse">reuse</span></td></tr>
   <tr><td>Top bar (title/sub/theme/bell)</td><td><code>WingsTopBar</code></td><td><span class="pill new">new</span></td></tr>
   <tr><td>Dashboard hero + stat tiles + aircraft cards</td><td>reuse <code>AircraftOverviewContent</code> blocks</td><td><span class="pill reuse">reuse</span></td></tr>
-  <tr><td>“Upcoming Maintenance” rail (320px)</td><td><code>DashboardRail</code> pane</td><td><span class="pill reuse">done</span></td></tr>
+  <tr><td>Dashboard lower two-column grid</td><td><code>DashboardLowerGrid</code> section</td><td><span class="pill reuse">done</span></td></tr>
   <tr><td>Logs data table</td><td><code>MaintenanceLogTable</code> on MEDIUM+</td><td><span class="pill reuse">done</span></td></tr>
   <tr><td>Logs cards (compact)</td><td>existing log cards</td><td><span class="pill reuse">reuse</span></td></tr>
   <tr><td>Right detail drawer ⇄ bottom sheet</td><td><code>AdaptiveDetailContainer</code></td><td><span class="pill new">new</span></td></tr>
@@ -489,7 +489,7 @@ root of the phone experience. Net effect: one fleet-list composable, surfaced as
 <h2 id="screens"><span class="n">9</span>Per-screen plan</h2>
 <h4>Dashboard (per-aircraft)</h4>
 <p>Hero (fleet/aircraft status) + status tiles (overdue / due-soon / airworthy) + aircraft card(s).
-LARGE adds the sticky Upcoming-Maintenance rail; EXPANDED and below stack it under the main column.</p>
+LARGE adds the lower dashboard grid; EXPANDED and below stack those cards under the main column.</p>
 <h4>Tasks</h4>
 <p>Segmented control (Due / History) + card grid (2-col at EXPANDED+, 1-col below). Card → detail in
 <code>AdaptiveDetailContainer</code>. Add/edit via adaptive dialog (tabs: Identity / Details / Schedule /
@@ -519,7 +519,7 @@ adaptive shell.</p>
   <tr><td><strong>M2 — Aircraft-scoped nav</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/22214fb9" style="font-family:var(--mono);font-size:11px">22214fb9</a></td><td>Section + selection + <code>entered</code> hoisted into <code>AdaptiveShellViewModel</code> (single source of truth). Switcher swaps the ambient aircraft in place above phone; COMPACT shows a fleet-landing root (placeholder list) until an aircraft is opened, then sections + bottom bar with a back-to-fleet arrow. Wired in both hosts. <code>AdaptiveShellViewModelTest</code> covers the transitions. <em>Real <code>DashboardScreen</code> landing → M3; web URL-param deep-linking still outstanding for this milestone.</em></td><td>✅ Wide swap-in-place &amp; phone landing→sections (compiles Android/JS/iOS, VM tested). ⏳ URL deep links pending.</td></tr>
   <tr><td><strong>M3 — Sections re-hosted</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/80125c5c" style="font-family:var(--mono);font-size:11px">80125c5c</a></td><td>Real per-aircraft content via <code>AircraftSectionContent</code> (reuses the existing Overview/Tasks/Logs/Squawks tabs, scoped to the ambient aircraft); <code>AircraftOverviewViewModel</code> parameterized by <code>aircraftId</code> (SavedStateHandle fallback keeps the legacy route intact). <code>fleetLanding</code> now renders the real <code>DashboardScreen</code>. Add/edit flows route through the host <code>NavController</code>. <em>Settings still a placeholder w/ escape hatch (full embed later); sidebar badges TODO.</em></td><td>✅ Compiles Android/JS/iOS, tests pass. Compact parity to confirm by dogfood.</td></tr>
   <tr><td><strong>M4 — Overlays</strong> <span class="pill reuse">landed (partial)</span><br><a href="https://github.com/fz172/wingslog/commit/f69fc9ee" style="font-family:var(--mono);font-size:11px">f69fc9ee</a></td><td>Shared <code>DetailSheet</code> is now adaptive (bottom sheet on COMPACT → end-drawer over a scrim on MEDIUM+), upgrading task/log/squawk detail overlays at once. Driven by a new <code>LocalLayoutTier</code> the shell publishes (so overlays in their own window get the right tier; defaults to COMPACT off-shell). <em>Add/edit forms still open as full-screen routes — rendering them as centered dialogs on wide is split out into M7.</em></td><td>✅ Detail drawer/sheet by tier (compiles Android/JS/iOS, tests pass). Edit-as-dialog → M7.</td></tr>
-  <tr><td><strong>M5 — Wide affordances</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/e7bfa5bd" style="font-family:var(--mono);font-size:11px">e7bfa5bd</a></td><td><strong>Done:</strong> task &amp; squawk card lists become 2-column grids on EXPANDED/LARGE (<code>AdaptiveCardList</code> + <code>LayoutTier.cardColumns</code>, keyed off <code>LocalLayoutTier</code>; legacy stays single-column). LARGE dashboard now uses a main column plus 320dp <code>DashboardRail</code> for upcoming maintenance, recent activity, and open squawks. Logs use <code>MaintenanceLogTable</code> on MEDIUM+ and cards on COMPACT. Export setup uses a two-pane configuration + summary/action layout on MEDIUM+ with the compact bottom action preserved.</td><td>✅ Rail, table, and export pane compile Android/JS; web development bundle builds. iOS compile remains covered by the earlier M5 slice unless rerun before merge.</td></tr>
+  <tr><td><strong>M5 — Wide affordances</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/e7bfa5bd" style="font-family:var(--mono);font-size:11px">e7bfa5bd</a></td><td><strong>Done:</strong> task &amp; squawk card lists become 2-column grids on EXPANDED/LARGE (<code>AdaptiveCardList</code> + <code>LayoutTier.cardColumns</code>, keyed off <code>LocalLayoutTier</code>; legacy stays single-column). LARGE dashboard keeps aircraft data and maintenance summary full-width, then uses <code>DashboardLowerGrid</code> with Recent Activity on the left and a 320dp Next Due/Open Squawks column on the right. Logs use <code>MaintenanceLogTable</code> on MEDIUM+ and cards on COMPACT. Export setup uses a two-pane configuration + summary/action layout on MEDIUM+ with the compact bottom action preserved.</td><td>✅ Dashboard lower grid, logs table, and export pane compile Android/JS; web development bundle builds. iOS compile remains covered by the earlier M5 slice unless rerun before merge.</td></tr>
   <tr><td><strong>M6 — Native Settings section</strong> <span class="pill new">next</span></td><td>Replace <code>SettingsSectionPlaceholder</code> with a shell-native settings page modeled after <code>docs/web/WingsLog App.zip</code> → <code>web/settings.jsx</code>: profile card, appearance, technician profiles, sync/cloud backup, Feature Lab, Export entry point, app version, and account actions. Refactor <code>SettingsScreen</code> into reusable content plus a legacy scaffold wrapper so the adaptive shell can host settings without pushing the standalone settings route. Keep the implementation outside <code>core:ui</code>; either add a host-provided <code>settingsContent</code> slot or map <code>ShellSection.SETTINGS</code> at the host/feature boundary where <code>feature:settings</code> dependencies are legal. Secondary flows (Sync Settings, Feature Lab, technicians, export) may still push existing routes in this milestone, but the root Settings destination must remain inside the shell.</td><td>Selecting Settings from sidebar, rail, bottom bar, or account footer renders the native settings content in the adaptive shell with no “Open settings” placeholder and no standalone settings page hop. Reading width is capped with <code>ContentWidth.Reading</code>; COMPACT keeps bottom navigation; MEDIUM+ keeps rail/sidebar chrome. Android, iOS, and web compile.</td></tr>
   <tr><td><strong>M7 — Edit-as-dialog</strong></td><td>Add/edit forms (task, log, squawk, aircraft) open as centered dialogs on MEDIUM+ instead of full-screen routes; full-screen on COMPACT. Carried over from M4.</td><td>Forms are dialogs on wide, full-screen on phone, same content</td></tr>
   <tr><td><strong>M8 — Flip &amp; cleanup</strong></td><td>Enable flag all tiers; delete legacy graph wiring; retire FAB-on-wide</td><td>Single shell path; legacy code removed</td></tr>

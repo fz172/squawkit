@@ -149,63 +149,53 @@ private fun LargeOverviewTab(
 ) {
   val overdueTasks =
     state.activeTasks.filter { it.dueStatus.status == DueStatus.OVERDUE || it.dueStatus.status == DueStatus.DUE_SOON }
-  Row(
-    modifier = modifier.fillMaxSize().padding(horizontal = Spacing.screenPadding),
-    horizontalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
+  Column(
+    modifier = modifier
+      .fillMaxSize()
+      .verticalScroll(rememberScrollState())
+      .padding(horizontal = Spacing.screenPadding)
+      .padding(top = Spacing.medium),
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
-    Column(
-      modifier = Modifier
-        .weight(1f)
-        .fillMaxSize()
-        .verticalScroll(rememberScrollState())
-        .padding(top = Spacing.medium),
-      verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
-    ) {
-      OverviewHero(state)
+    OverviewHero(state)
 
-      AircraftDataCard(
-        state.aircraft,
-        initiallyExpanded = overdueTasks.isEmpty()
+    AircraftDataCard(
+      state.aircraft,
+      initiallyExpanded = overdueTasks.isEmpty()
+    )
+
+    if (state.aogSquawks.isNotEmpty()) {
+      AogAlertSection(
+        aogSquawks = state.aogSquawks,
+        onViewSquawksClick = onViewSquawksTab,
       )
-
-      if (state.aogSquawks.isNotEmpty()) {
-        AogAlertSection(
-          aogSquawks = state.aogSquawks,
-          onViewSquawksClick = onViewSquawksTab,
-        )
-      }
-
-      if (overdueTasks.isNotEmpty()) {
-        CriticalAlertsSection(
-          overdueTasks = overdueTasks,
-          onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
-        )
-      }
-
-      state.logStats?.let { stats ->
-        if (stats.total == 0L && onMutationAction != null) {
-          LogOnboardingCard(
-            onAddLogClick = { onMutationAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
-          )
-        } else if (stats.total > 0L) {
-          LogStatsSection(stats = stats)
-        }
-      }
-
-      Spacer(Modifier.height(Spacing.screenPadding))
     }
 
-    DashboardRail(
+    if (overdueTasks.isNotEmpty()) {
+      CriticalAlertsSection(
+        overdueTasks = overdueTasks,
+        onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
+      )
+    }
+
+    state.logStats?.let { stats ->
+      if (stats.total == 0L && onMutationAction != null) {
+        LogOnboardingCard(
+          onAddLogClick = { onMutationAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
+        )
+      } else if (stats.total > 0L) {
+        LogStatsSection(stats = stats)
+      }
+    }
+
+    DashboardLowerGrid(
       state = state,
       onTaskClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
       onLogsClick = onViewLogsTab,
       onViewSquawksClick = onViewSquawksTab,
-      modifier = Modifier
-        .width(320.dp)
-        .fillMaxSize()
-        .verticalScroll(rememberScrollState())
-        .padding(top = Spacing.medium, bottom = Spacing.screenPadding),
     )
+
+    Spacer(Modifier.height(Spacing.screenPadding))
   }
 }
 
@@ -237,7 +227,7 @@ private fun OverviewHero(
 }
 
 @Composable
-private fun DashboardRail(
+private fun DashboardLowerGrid(
   state: AircraftOverviewUiState.Success,
   onTaskClick: (MaintenanceTaskWithStatus) -> Unit,
   onLogsClick: () -> Unit,
@@ -248,28 +238,16 @@ private fun DashboardRail(
   val openSquawks = state.squawks.filter { it.status == SquawkStatus.OPEN }
     .sortedByDescending { it.squawk.created_at?.getEpochSecond() ?: 0L }
 
-  Column(
+  Row(
     modifier = modifier,
-    verticalArrangement = Arrangement.spacedBy(Spacing.large),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
-    if (nextTask != null) {
-      RailCard(title = "Upcoming maintenance") {
-        TaskCardItem(
-          cardWithStatus = nextTask,
-          onClick = { onTaskClick(nextTask) },
-        )
-      }
-    } else {
-      RailCard(title = "Upcoming maintenance") {
-        EmptyRailState(
-          icon = Icons.Default.CheckCircle,
-          title = "No upcoming tasks",
-          body = "Scheduled maintenance is up to date.",
-        )
-      }
-    }
-
-    RailCard(title = "Recent activity") {
+    RailCard(
+      title = "Recent activity",
+      actionLabel = "All logs",
+      onActionClick = onLogsClick,
+      modifier = Modifier.weight(1f),
+    ) {
       if (state.recentLogs.isEmpty()) {
         EmptyRailState(
           icon = Icons.Default.Description,
@@ -286,25 +264,48 @@ private fun DashboardRail(
       }
     }
 
-    RailCard(title = "Open squawks", actionLabel = "All", onActionClick = onViewSquawksClick) {
-      if (openSquawks.isEmpty()) {
-        EmptyRailState(
-          icon = Icons.Default.CheckCircle,
-          title = "No open squawks",
-          body = "No active discrepancies for this aircraft.",
-        )
-      } else {
-        openSquawks.take(3).forEachIndexed { index, item ->
-          SquawkRailRow(
-            title = item.squawk.title,
-            subtitle = item.squawk.description.ifBlank {
-              item.squawk.created_at?.toLocalDate()?.toDisplayFormat()
-                ?: ""
-            },
-            onClick = onViewSquawksClick,
+    Column(
+      modifier = Modifier.width(320.dp),
+      verticalArrangement = Arrangement.spacedBy(Spacing.large),
+    ) {
+      if (nextTask != null) {
+        RailCard(title = "Next due") {
+          TaskCardItem(
+            cardWithStatus = nextTask,
+            onClick = { onTaskClick(nextTask) },
           )
-          if (index < openSquawks.take(3).lastIndex) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+        }
+      } else {
+        RailCard(title = "Next due") {
+          EmptyRailState(
+            icon = Icons.Default.CheckCircle,
+            title = "No upcoming tasks",
+            body = "Scheduled maintenance is up to date.",
+          )
+        }
+      }
+
+      RailCard(title = "Open squawks", actionLabel = "All", onActionClick = onViewSquawksClick) {
+        if (openSquawks.isEmpty()) {
+          EmptyRailState(
+            icon = Icons.Default.CheckCircle,
+            title = "No open squawks",
+            body = "No active discrepancies for this aircraft.",
+          )
+        } else {
+          val previewSquawks = openSquawks.take(3)
+          previewSquawks.forEachIndexed { index, item ->
+            SquawkRailRow(
+              title = item.squawk.title,
+              subtitle = item.squawk.description.ifBlank {
+                item.squawk.created_at?.toLocalDate()?.toDisplayFormat()
+                  ?: ""
+              },
+              onClick = onViewSquawksClick,
+            )
+            if (index < previewSquawks.lastIndex) {
+              HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+            }
           }
         }
       }
