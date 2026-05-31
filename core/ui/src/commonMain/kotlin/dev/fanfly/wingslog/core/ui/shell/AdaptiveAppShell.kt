@@ -333,7 +333,10 @@ private fun ScaffoldShell(
       state = state,
       showBack = tier == LayoutTier.COMPACT && state.entered,
       onExitToFleet = onExitToFleet,
-      showTopBarSwitcher = tier == LayoutTier.MEDIUM,
+      // The switcher lives in the top bar on both the rail (MEDIUM) and the bottom-bar (COMPACT)
+      // tiers — neither has a sidebar to host it, and on COMPACT it's the only in-place way to
+      // switch aircraft without returning to the fleet landing.
+      showTopBarSwitcher = true,
       onSelectAircraft = onSelectAircraft,
       content = content,
     )
