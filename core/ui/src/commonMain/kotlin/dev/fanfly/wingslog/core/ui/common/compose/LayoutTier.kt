@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.ui.common.compose
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -40,6 +41,14 @@ enum class LayoutTier {
   /** True only on the widest tier, where the dashboard shows its main column + sticky side rail. */
   val hasDashboardRail: Boolean get() = this == LARGE
 }
+
+/**
+ * The current [LayoutTier], published by the adaptive shell so overlays (drawers, sheets, dialogs)
+ * that render in their own window — outside the shell's `BoxWithConstraints` — can still pick a
+ * tier-appropriate presentation. Defaults to [LayoutTier.COMPACT] so any surface shown outside the
+ * shell (e.g. the legacy stack) keeps its phone-style behavior.
+ */
+val LocalLayoutTier = compositionLocalOf { LayoutTier.COMPACT }
 
 /** Inclusive lower bounds for each tier, in dp. Tunable; verify on real tablets (see design §11 D3). */
 object LayoutBreakpoints {

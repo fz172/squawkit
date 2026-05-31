@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
@@ -41,6 +42,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +53,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.common.compose.LayoutTier
+import dev.fanfly.wingslog.core.ui.common.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.layoutTierFor
 
 /** Lightweight aircraft projection used by the shell's switcher. */
@@ -116,10 +119,43 @@ fun AdaptiveAppShell(
   onAddAircraft: () -> Unit,
   sectionContent: @Composable (section: ShellSection, aircraftId: String?) -> Unit,
   fleetLanding: @Composable (onAircraftClick: (String) -> Unit) -> Unit,
+  onEditAircraft: (() -> Unit)? = null,
 ) {
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
     val content: @Composable () -> Unit = { sectionContent(state.section, state.selectedAircraftId) }
+    CompositionLocalProvider(LocalLayoutTier provides tier) {
+      ShellForTier(
+        tier = tier,
+        state = state,
+        onSelectSection = onSelectSection,
+        onSelectAircraft = onSelectAircraft,
+        onEnterAircraft = onEnterAircraft,
+        onExitToFleet = onExitToFleet,
+        onOpenSettings = onOpenSettings,
+        onAddAircraft = onAddAircraft,
+        onEditAircraft = onEditAircraft,
+        fleetLanding = fleetLanding,
+        content = content,
+      )
+    }
+  }
+}
+
+@Composable
+private fun ShellForTier(
+  tier: LayoutTier,
+  state: AdaptiveShellUiState,
+  onSelectSection: (ShellSection) -> Unit,
+  onSelectAircraft: (String) -> Unit,
+  onEnterAircraft: (String) -> Unit,
+  onExitToFleet: () -> Unit,
+  onOpenSettings: () -> Unit,
+  onAddAircraft: () -> Unit,
+  onEditAircraft: (() -> Unit)?,
+  fleetLanding: @Composable (onAircraftClick: (String) -> Unit) -> Unit,
+  content: @Composable () -> Unit,
+) {
     when {
       tier == LayoutTier.COMPACT && !state.entered ->
         fleetLanding(onEnterAircraft)
@@ -131,6 +167,7 @@ fun AdaptiveAppShell(
           onSelectAircraft = onSelectAircraft,
           onOpenSettings = onOpenSettings,
           onAddAircraft = onAddAircraft,
+          onEditAircraft = onEditAircraft,
           content = content,
         )
 
@@ -141,10 +178,10 @@ fun AdaptiveAppShell(
           onSelectSection = onSelectSection,
           onSelectAircraft = onSelectAircraft,
           onExitToFleet = onExitToFleet,
+          onEditAircraft = onEditAircraft,
           content = content,
         )
     }
-  }
 }
 
 /* ---------------------------------------------------------------------------------------------- */
@@ -158,6 +195,7 @@ private fun SidebarShell(
   onSelectAircraft: (String) -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
+  onEditAircraft: (() -> Unit)?,
   content: @Composable () -> Unit,
 ) {
   Row(modifier = Modifier.fillMaxSize()) {
@@ -176,6 +214,7 @@ private fun SidebarShell(
         onExitToFleet = {},
         showTopBarSwitcher = false,
         onSelectAircraft = onSelectAircraft,
+        onEditAircraft = onEditAircraft,
         content = content,
       )
     }
@@ -312,6 +351,7 @@ private fun ScaffoldShell(
   onSelectSection: (ShellSection) -> Unit,
   onSelectAircraft: (String) -> Unit,
   onExitToFleet: () -> Unit,
+  onEditAircraft: (() -> Unit)?,
   content: @Composable () -> Unit,
 ) {
   val navType =
@@ -338,6 +378,7 @@ private fun ScaffoldShell(
       // switch aircraft without returning to the fleet landing.
       showTopBarSwitcher = true,
       onSelectAircraft = onSelectAircraft,
+      onEditAircraft = onEditAircraft,
       content = content,
     )
   }
@@ -355,6 +396,7 @@ private fun ShellContent(
   onExitToFleet: () -> Unit,
   showTopBarSwitcher: Boolean,
   onSelectAircraft: (String) -> Unit,
+  onEditAircraft: (() -> Unit)?,
   content: @Composable () -> Unit,
 ) {
   Scaffold(
@@ -369,6 +411,12 @@ private fun ShellContent(
           }
         },
         actions = {
+          // Edit the current aircraft (per-aircraft sections only); Settings is global.
+          if (onEditAircraft != null && state.section != ShellSection.SETTINGS) {
+            IconButton(onClick = onEditAircraft) {
+              Icon(Icons.Filled.Edit, contentDescription = "Edit aircraft")
+            }
+          }
           if (showTopBarSwitcher) {
             TopBarSwitcher(state = state, onSelectAircraft = onSelectAircraft)
           }
