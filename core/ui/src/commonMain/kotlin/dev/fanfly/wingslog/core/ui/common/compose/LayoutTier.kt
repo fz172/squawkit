@@ -40,6 +40,9 @@ enum class LayoutTier {
 
   /** True only on the widest tier, where the dashboard shows its main column + sticky side rail. */
   val hasDashboardRail: Boolean get() = this == LARGE
+
+  /** Number of columns to use for browseable card grids (tasks, squawks, aircraft). */
+  val cardColumns: Int get() = if (this == EXPANDED || this == LARGE) 2 else 1
 }
 
 /**
