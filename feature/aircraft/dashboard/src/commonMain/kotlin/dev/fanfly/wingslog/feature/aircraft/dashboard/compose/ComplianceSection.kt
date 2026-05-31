@@ -11,8 +11,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import dev.fanfly.wingslog.core.ui.common.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
@@ -78,14 +80,16 @@ fun ComplianceSection(
         )
       }
     } else {
-      Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-        displayList.forEach { item ->
-          TaskCardItem(
-            cardWithStatus = item,
-            onClick = { onCardClick(item) },
-            modifier = Modifier.fillMaxWidth(),
-          )
-        }
+      AdaptiveCardList(
+        items = displayList,
+        columns = LocalLayoutTier.current.cardColumns,
+        spacing = Spacing.medium,
+      ) { item ->
+        TaskCardItem(
+          cardWithStatus = item,
+          onClick = { onCardClick(item) },
+          modifier = Modifier.fillMaxWidth(),
+        )
       }
     }
   }

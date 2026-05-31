@@ -26,6 +26,7 @@ sealed interface AircraftOverviewUiState {
     val logStats: LogStats? = null,
     val activeTasks: List<MaintenanceTaskWithStatus> = emptyList(),
     val completedTasks: List<MaintenanceTaskWithStatus> = emptyList(),
+    val recentLogs: List<MaintenanceLog> = emptyList(),
     val selectedTask: MaintenanceTaskWithStatus? = null,
     val logsForSelectedTask: List<MaintenanceLog> = emptyList(),
     val deletingTaskId: String? = null,

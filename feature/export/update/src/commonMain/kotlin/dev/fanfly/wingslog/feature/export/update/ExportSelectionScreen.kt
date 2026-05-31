@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -46,6 +47,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -197,11 +199,6 @@ fun ExportSelectionScreen(
         )
       }
     },
-    bottomBar = {
-      if (state is ExportUiState.Configuring && state.aircraft.isNotEmpty()) {
-        ExportBottomBar(state, onExport)
-      }
-    },
   ) { innerPadding ->
     when (state) {
       is ExportUiState.Configuring -> ConfiguringContent(
@@ -215,6 +212,7 @@ fun ExportSelectionScreen(
         onCustomStartChange = onCustomStartChange,
         onCustomEndChange = onCustomEndChange,
         onNavigateToHistory = onNavigateToHistory,
+        onExport = onExport,
       )
 
       is ExportUiState.Running -> RunningContent(
@@ -254,66 +252,136 @@ private fun ConfiguringContent(
   onCustomStartChange: (LocalDate) -> Unit,
   onCustomEndChange: (LocalDate) -> Unit,
   onNavigateToHistory: () -> Unit,
+  onExport: () -> Unit,
 ) {
   if (!state.isLoadingAircraft && state.aircraft.isEmpty()) {
     EmptyAircraftContent(modifier, onNavigateToHistory)
     return
   }
 
-  Box(
-    modifier = modifier.fillMaxSize(),
-    contentAlignment = Alignment.TopCenter,
-  ) {
-    LazyColumn(
-      modifier = Modifier
-        .fillMaxHeight()
-        .constrainedContentWidth(ContentWidth.Form)
-        .padding(horizontal = Spacing.screenPadding),
-      verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
-    ) {
-      item {
-        Spacer(Modifier.height(Spacing.small))
-        FormatSection(formats = state.formats, onToggleFormat = onToggleFormat)
-      }
-
-      item {
-        val allSelected = state.selectedAircraftIds.size == state.aircraft.size
-        Section(
-          title = stringResource(Res.string.export_aircraft_section),
-          action = if (state.aircraft.size > 1) {
-            {
-              TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
-                Text(
-                  stringResource(
-                    if (allSelected) Res.string.export_clear_all else Res.string.export_select_all
-                  )
-                )
-              }
-            }
-          } else {
-            null
-          },
-        ) {
-          Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-            state.aircraft.forEach { aircraft ->
-              AircraftCard(
-                aircraft = aircraft,
-                selected = aircraft.aircraftId in state.selectedAircraftIds,
-                onClick = { onToggleAircraft(aircraft.aircraftId) },
-              )
-            }
-          }
-        }
-      }
-
-      item {
-        DateRangeSection(
+  BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+    val showSummaryPane = maxWidth > 860.dp && state.aircraft.isNotEmpty()
+    if (showSummaryPane) {
+      Row(
+        modifier = Modifier
+          .fillMaxSize()
+          .padding(horizontal = Spacing.screenPadding),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
+      ) {
+        ExportSetupList(
           state = state,
+          onToggleAircraft = onToggleAircraft,
+          onSelectAll = onSelectAll,
+          onClearAll = onClearAll,
+          onToggleFormat = onToggleFormat,
           onDateRangeChange = onDateRangeChange,
           onCustomStartChange = onCustomStartChange,
           onCustomEndChange = onCustomEndChange,
+          modifier = Modifier.weight(1f).fillMaxHeight(),
+        )
+        ExportSummaryPane(
+          state = state,
+          onExport = onExport,
+          modifier = Modifier
+            .width(340.dp)
+            .padding(top = Spacing.small),
         )
       }
+    } else {
+      Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter,
+      ) {
+        ExportSetupList(
+          state = state,
+          onToggleAircraft = onToggleAircraft,
+          onSelectAll = onSelectAll,
+          onClearAll = onClearAll,
+          onToggleFormat = onToggleFormat,
+          onDateRangeChange = onDateRangeChange,
+          onCustomStartChange = onCustomStartChange,
+          onCustomEndChange = onCustomEndChange,
+          modifier = Modifier
+            .fillMaxHeight()
+            .constrainedContentWidth(ContentWidth.Form)
+            .padding(horizontal = Spacing.screenPadding),
+          bottomPadding = Spacing.buttonHeight + Spacing.huge,
+        )
+        if (state.aircraft.isNotEmpty()) {
+          Box(
+            modifier = Modifier.align(Alignment.BottomCenter),
+          ) {
+            ExportBottomBar(state, onExport)
+          }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun ExportSetupList(
+  state: ExportUiState.Configuring,
+  onToggleAircraft: (String) -> Unit,
+  onSelectAll: () -> Unit,
+  onClearAll: () -> Unit,
+  onToggleFormat: (ExportFormat) -> Unit,
+  onDateRangeChange: (DateRangeOption) -> Unit,
+  onCustomStartChange: (LocalDate) -> Unit,
+  onCustomEndChange: (LocalDate) -> Unit,
+  modifier: Modifier = Modifier,
+  bottomPadding: Dp = Spacing.screenPadding,
+) {
+  LazyColumn(
+    modifier = modifier,
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
+  ) {
+    item {
+      Spacer(Modifier.height(Spacing.small))
+      FormatSection(formats = state.formats, onToggleFormat = onToggleFormat)
+    }
+
+    item {
+      val allSelected = state.selectedAircraftIds.size == state.aircraft.size
+      Section(
+        title = stringResource(Res.string.export_aircraft_section),
+        action = if (state.aircraft.size > 1) {
+          {
+            TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
+              Text(
+                stringResource(
+                  if (allSelected) Res.string.export_clear_all else Res.string.export_select_all
+                )
+              )
+            }
+          }
+        } else {
+          null
+        },
+      ) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+          state.aircraft.forEach { aircraft ->
+            AircraftCard(
+              aircraft = aircraft,
+              selected = aircraft.aircraftId in state.selectedAircraftIds,
+              onClick = { onToggleAircraft(aircraft.aircraftId) },
+            )
+          }
+        }
+      }
+    }
+
+    item {
+      DateRangeSection(
+        state = state,
+        onDateRangeChange = onDateRangeChange,
+        onCustomStartChange = onCustomStartChange,
+        onCustomEndChange = onCustomEndChange,
+      )
+    }
+
+    item {
+      Spacer(Modifier.height(bottomPadding))
     }
   }
 }
@@ -754,6 +822,123 @@ private fun ExportBottomBar(
 }
 
 @Composable
+private fun ExportSummaryPane(
+  state: ExportUiState.Configuring,
+  onExport: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val deliveryEmail = state.resolvedDeliveryInfo?.destinationEmail
+  Column(
+    modifier = modifier
+      .fillMaxWidth()
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+      .background(MaterialTheme.colorScheme.surfaceContainer)
+      .border(
+        width = Spacing.hairline,
+        color = MaterialTheme.colorScheme.outlineVariant,
+        shape = RoundedCornerShape(Spacing.cardCornerRadius),
+      ),
+  ) {
+    Text(
+      text = "Export summary",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold,
+      color = MaterialTheme.colorScheme.onSurface,
+      modifier = Modifier.padding(horizontal = Spacing.large, vertical = Spacing.medium),
+    )
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    SummaryRow("Formats", joinFormats(state.formats).ifBlank { "—" }, mono = true)
+    SummaryRow(
+      "Aircraft",
+      "${state.selectedAircraftIds.size} of ${state.aircraft.size}",
+      mono = true,
+    )
+    SummaryRow("Range", rangeSummary(state), mono = false)
+    SummaryRow(
+      "Est. size",
+      stringResource(Res.string.export_estimated_size, readableBytes(state.estimatedSizeBytes)),
+      mono = true,
+    )
+
+    Column(
+      modifier = Modifier.padding(Spacing.large),
+      verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+    ) {
+      if (deliveryEmail != null) {
+        Row(
+          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          Icon(
+            imageVector = Icons.Default.Mail,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp),
+          )
+          Text(
+            text = stringResource(Res.string.export_sent_to, deliveryEmail),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      }
+      Button(
+        onClick = onExport,
+        enabled = state.selectedAircraftIds.isNotEmpty() && state.formats.isNotEmpty(),
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(Spacing.buttonHeight),
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+      ) {
+        Icon(
+          imageVector = if (deliveryEmail != null) Icons.Default.Mail else Icons.Default.FolderZip,
+          contentDescription = null,
+          modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(Spacing.small))
+        Text(
+          text = stringResource(
+            if (deliveryEmail != null) Res.string.export_email_action
+            else Res.string.export_primary_action
+          ),
+          style = MaterialTheme.typography.titleMedium,
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun SummaryRow(
+  label: String,
+  value: String,
+  mono: Boolean,
+) {
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(
+      text = label,
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Text(
+      text = value,
+      style = if (mono) WingslogTypography.dataSmall else MaterialTheme.typography.bodyMedium,
+      fontWeight = FontWeight.SemiBold,
+      color = MaterialTheme.colorScheme.onSurface,
+      textAlign = TextAlign.End,
+      modifier = Modifier.padding(start = Spacing.medium),
+    )
+  }
+  HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+}
+
+@Composable
 private fun MetaDot() {
   Text(
     text = "·",
@@ -1107,7 +1292,7 @@ private fun ReceiptCard(
   ) {
     if (deliveryFailure != null) {
       DeliveryFailureSection(deliveryFailure)
-      androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+      HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
     Row(
       verticalAlignment = Alignment.CenterVertically,
@@ -1146,7 +1331,7 @@ private fun ReceiptCard(
         )
       }
     }
-    androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     ReceiptRow(
       Icons.Default.Flight,
       stringResource(Res.string.export_receipt_aircraft),

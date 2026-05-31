@@ -168,6 +168,7 @@ fun AircraftSectionContent(
           state = state,
           onAction = onAction,
           onViewSquawksTab = { onNavigateToSection(ShellSection.SQUAWKS) },
+          onViewLogsTab = { onNavigateToSection(ShellSection.LOGS) },
           onMutationAction = onAction,
         )
 

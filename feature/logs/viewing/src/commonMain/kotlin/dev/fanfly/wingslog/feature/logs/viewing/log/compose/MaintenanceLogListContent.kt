@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +52,7 @@ import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
@@ -174,7 +176,7 @@ fun MaintenanceLogListContent(
                 shape = RoundedCornerShape(Spacing.smallCornerRadius),
                 color = if (filterActive) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surfaceContainer,
-                border = androidx.compose.foundation.BorderStroke(
+                border = BorderStroke(
                   Spacing.hairline,
                   if (filterActive) MaterialTheme.colorScheme.primary
                   else MaterialTheme.colorScheme.outlineVariant
@@ -245,6 +247,17 @@ fun MaintenanceLogListContent(
                   }
                 }
               }
+            } else if (LocalLayoutTier.current.hasSideNav) {
+              // MEDIUM and wider: a real data table instead of cards.
+              MaintenanceLogTable(
+                logs = uiState.logs,
+                technicianEnabled = uiState.technicianEnabled,
+                onLogClick = onLogClick,
+                modifier = Modifier
+                  .weight(1f)
+                  .fillMaxWidth()
+                  .padding(horizontal = Spacing.screenPadding),
+              )
             } else {
               LazyColumn(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -318,7 +331,7 @@ private fun ActiveFilterChip(
   Surface(
     shape = RoundedCornerShape(Spacing.chipCornerRadius),
     color = MaterialTheme.colorScheme.primaryContainer,
-    border = androidx.compose.foundation.BorderStroke(
+    border = BorderStroke(
       Spacing.hairline,
       MaterialTheme.colorScheme.primary
     ),

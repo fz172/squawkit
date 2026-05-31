@@ -177,6 +177,8 @@ class AircraftOverviewViewModel(
             logStats = stats,
             activeTasks = active,
             completedTasks = complied,
+            recentLogs = logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
+              .take(4),
             selectedTask = refreshedSelected,
             logsForSelectedTask = refreshedDetailLogs,
             deletingTaskId = current?.deletingTaskId,
