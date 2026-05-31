@@ -30,8 +30,10 @@ fun LogsTab(
   attachmentsAvailable: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
+  // Key by aircraftId: in the adaptive shell the switcher swaps aircraft within the same
+  // composition site, so an unkeyed ViewModel would be reused and keep the previous aircraft's logs.
   val viewModel: MaintenanceLogListViewModel =
-    koinViewModel(parameters = { parametersOf(aircraftId) })
+    koinViewModel(key = aircraftId, parameters = { parametersOf(aircraftId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val attachmentOpener: AttachmentOpener = koinInject()
   val coroutineScope = rememberCoroutineScope()
