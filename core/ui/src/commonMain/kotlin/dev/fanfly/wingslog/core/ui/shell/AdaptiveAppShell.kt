@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.core.ui.shell
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -13,8 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -28,14 +24,12 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
@@ -55,12 +49,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.common.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.layoutTierFor
 
-/** Lightweight aircraft projection used by the shell's switcher and fleet landing. */
+/** Lightweight aircraft projection used by the shell's switcher. */
 data class ShellAircraft(
   val id: String,
   val tail: String,
@@ -69,7 +62,6 @@ data class ShellAircraft(
 
 /**
  * Top-level sections of the adaptive shell. The first four are per-aircraft; [SETTINGS] is global.
- * Labels are placeholders for M1/M2 and move to string resources when sections are re-hosted (M3).
  */
 enum class ShellSection(val label: String, val icon: ImageVector) {
   DASHBOARD("Dashboard", Icons.Filled.Dashboard),
@@ -105,12 +97,13 @@ data class AdaptiveShellUiState(
  * - **EXPANDED / LARGE** — a custom [WingsSidebar] (brand + aircraft switcher + sections + account
  *   footer), matching the design mock (D2: custom sidebar).
  * - **MEDIUM** — `NavigationSuiteScaffold` icon rail, with the switcher in the top bar.
- * - **COMPACT** — fleet-landing root until an aircraft is opened ([onEnterAircraft]); then sections
+ * - **COMPACT** — [fleetLanding] root until an aircraft is opened ([onEnterAircraft]); then sections
  *   with a bottom bar and a back arrow to the fleet.
  *
- * Tier is derived from the measured [BoxWithConstraints] width (not `LocalWindowInfo`, which is
- * unreliable on Kotlin/JS). Section content is a placeholder until M3. Pure UI: plain state +
- * callbacks so both hosts (`AppEntry`, `WebApp`) can use it.
+ * Section bodies are supplied by the host via [sectionContent] (M3: real per-aircraft content), and
+ * the phone root by [fleetLanding] (the real fleet list) — both are host slots because real content
+ * lives in feature modules that `core:ui` cannot depend on. Tier is derived from the measured
+ * [BoxWithConstraints] width (not `LocalWindowInfo`, which is unreliable on Kotlin/JS).
  */
 @Composable
 fun AdaptiveAppShell(
@@ -121,17 +114,15 @@ fun AdaptiveAppShell(
   onExitToFleet: () -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
+  sectionContent: @Composable (section: ShellSection, aircraftId: String?) -> Unit,
+  fleetLanding: @Composable (onAircraftClick: (String) -> Unit) -> Unit,
 ) {
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
+    val content: @Composable () -> Unit = { sectionContent(state.section, state.selectedAircraftId) }
     when {
       tier == LayoutTier.COMPACT && !state.entered ->
-        FleetLanding(
-          aircraft = state.aircraft,
-          onEnterAircraft = onEnterAircraft,
-          onAddAircraft = onAddAircraft,
-          onOpenSettings = onOpenSettings,
-        )
+        fleetLanding(onEnterAircraft)
 
       tier.hasFullSidebar ->
         SidebarShell(
@@ -140,6 +131,7 @@ fun AdaptiveAppShell(
           onSelectAircraft = onSelectAircraft,
           onOpenSettings = onOpenSettings,
           onAddAircraft = onAddAircraft,
+          content = content,
         )
 
       else ->
@@ -149,7 +141,7 @@ fun AdaptiveAppShell(
           onSelectSection = onSelectSection,
           onSelectAircraft = onSelectAircraft,
           onExitToFleet = onExitToFleet,
-          onOpenSettings = onOpenSettings,
+          content = content,
         )
     }
   }
@@ -166,6 +158,7 @@ private fun SidebarShell(
   onSelectAircraft: (String) -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
+  content: @Composable () -> Unit,
 ) {
   Row(modifier = Modifier.fillMaxSize()) {
     WingsSidebar(
@@ -183,7 +176,7 @@ private fun SidebarShell(
         onExitToFleet = {},
         showTopBarSwitcher = false,
         onSelectAircraft = onSelectAircraft,
-        onOpenSettings = onOpenSettings,
+        content = content,
       )
     }
   }
@@ -209,11 +202,7 @@ private fun WingsSidebar(
       ) {
         Icon(Icons.Filled.Flight, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.width(10.dp))
-        Text(
-          "Hopply",
-          style = MaterialTheme.typography.titleLarge,
-          fontWeight = FontWeight.Bold,
-        )
+        Text("Hopply", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
       }
 
       SidebarSwitcher(
@@ -302,38 +291,13 @@ private fun SidebarSwitcher(
         Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
       }
     }
-    DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-      state.aircraft.forEach { ac ->
-        DropdownMenuItem(
-          text = {
-            Column {
-              Text(ac.tail, style = MaterialTheme.typography.titleSmall)
-              if (ac.name.isNotBlank()) {
-                Text(ac.name, style = MaterialTheme.typography.bodySmall)
-              }
-            }
-          },
-          onClick = {
-            onSelectAircraft(ac.id)
-            open = false
-          },
-          trailingIcon = {
-            if (ac.id == state.selectedAircraftId) {
-              Icon(Icons.Filled.Check, contentDescription = null)
-            }
-          },
-        )
-      }
-      HorizontalDivider()
-      DropdownMenuItem(
-        text = { Text("Add aircraft") },
-        leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
-        onClick = {
-          onAddAircraft()
-          open = false
-        },
-      )
-    }
+    AircraftDropdown(
+      expanded = open,
+      onDismiss = { open = false },
+      state = state,
+      onSelectAircraft = onSelectAircraft,
+      onAddAircraft = onAddAircraft,
+    )
   }
 }
 
@@ -348,7 +312,7 @@ private fun ScaffoldShell(
   onSelectSection: (ShellSection) -> Unit,
   onSelectAircraft: (String) -> Unit,
   onExitToFleet: () -> Unit,
-  onOpenSettings: () -> Unit,
+  content: @Composable () -> Unit,
 ) {
   val navType =
     if (tier == LayoutTier.COMPACT) NavigationSuiteType.NavigationBar else NavigationSuiteType.NavigationRail
@@ -369,15 +333,18 @@ private fun ScaffoldShell(
       state = state,
       showBack = tier == LayoutTier.COMPACT && state.entered,
       onExitToFleet = onExitToFleet,
-      showTopBarSwitcher = tier == LayoutTier.MEDIUM,
+      // The switcher lives in the top bar on both the rail (MEDIUM) and the bottom-bar (COMPACT)
+      // tiers — neither has a sidebar to host it, and on COMPACT it's the only in-place way to
+      // switch aircraft without returning to the fleet landing.
+      showTopBarSwitcher = true,
       onSelectAircraft = onSelectAircraft,
-      onOpenSettings = onOpenSettings,
+      content = content,
     )
   }
 }
 
 /* ---------------------------------------------------------------------------------------------- */
-/* Shared content: top bar + section placeholder                                                  */
+/* Shared content: top bar + host-provided section body                                           */
 /* ---------------------------------------------------------------------------------------------- */
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -388,7 +355,7 @@ private fun ShellContent(
   onExitToFleet: () -> Unit,
   showTopBarSwitcher: Boolean,
   onSelectAircraft: (String) -> Unit,
-  onOpenSettings: () -> Unit,
+  content: @Composable () -> Unit,
 ) {
   Scaffold(
     topBar = {
@@ -409,15 +376,8 @@ private fun ShellContent(
       )
     },
   ) { padding ->
-    Box(
-      modifier = Modifier.fillMaxSize().padding(padding),
-      contentAlignment = Alignment.Center,
-    ) {
-      SectionPlaceholder(
-        section = state.section,
-        selected = state.selectedAircraft,
-        onOpenSettings = onOpenSettings,
-      )
+    Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+      content()
     }
   }
 }
@@ -433,111 +393,56 @@ private fun TopBarSwitcher(
       Text(state.selectedAircraft?.tail ?: "Select aircraft")
       Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
     }
-    DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-      state.aircraft.forEach { ac ->
-        DropdownMenuItem(
-          text = {
-            Column {
-              Text(ac.tail, style = MaterialTheme.typography.titleSmall)
-              if (ac.name.isNotBlank()) {
-                Text(ac.name, style = MaterialTheme.typography.bodySmall)
-              }
-            }
-          },
-          onClick = {
-            onSelectAircraft(ac.id)
-            open = false
-          },
-          trailingIcon = {
-            if (ac.id == state.selectedAircraftId) {
-              Icon(Icons.Filled.Check, contentDescription = null)
-            }
-          },
-        )
-      }
-    }
+    AircraftDropdown(
+      expanded = open,
+      onDismiss = { open = false },
+      state = state,
+      onSelectAircraft = onSelectAircraft,
+      onAddAircraft = null,
+    )
   }
 }
 
-/* ---------------------------------------------------------------------------------------------- */
-/* COMPACT root: fleet landing                                                                     */
-/* ---------------------------------------------------------------------------------------------- */
-
-/**
- * Phone-only root: the fleet list. M2 placeholder built from [AdaptiveShellUiState.aircraft]; M3
- * swaps in the real `DashboardScreen` via a host slot (design D1).
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FleetLanding(
-  aircraft: List<ShellAircraft>,
-  onEnterAircraft: (String) -> Unit,
-  onAddAircraft: () -> Unit,
-  onOpenSettings: () -> Unit,
+private fun AircraftDropdown(
+  expanded: Boolean,
+  onDismiss: () -> Unit,
+  state: AdaptiveShellUiState,
+  onSelectAircraft: (String) -> Unit,
+  onAddAircraft: (() -> Unit)?,
 ) {
-  Scaffold(
-    topBar = {
-      TopAppBar(
-        title = { Text("Fleet") },
-        actions = {
-          IconButton(onClick = onAddAircraft) {
-            Icon(Icons.Filled.Add, contentDescription = "Add aircraft")
+  DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+    state.aircraft.forEach { ac ->
+      DropdownMenuItem(
+        text = {
+          Column {
+            Text(ac.tail, style = MaterialTheme.typography.titleSmall)
+            if (ac.name.isNotBlank()) {
+              Text(ac.name, style = MaterialTheme.typography.bodySmall)
+            }
           }
-          IconButton(onClick = onOpenSettings) {
-            Icon(Icons.Filled.Settings, contentDescription = "Settings")
+        },
+        onClick = {
+          onSelectAircraft(ac.id)
+          onDismiss()
+        },
+        trailingIcon = {
+          if (ac.id == state.selectedAircraftId) {
+            Icon(Icons.Filled.Check, contentDescription = null)
           }
         },
       )
-    },
-  ) { padding ->
-    if (aircraft.isEmpty()) {
-      Box(
-        modifier = Modifier.fillMaxSize().padding(padding),
-        contentAlignment = Alignment.Center,
-      ) {
-        Text("No aircraft yet", style = MaterialTheme.typography.bodyMedium)
-      }
-    } else {
-      LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-        items(aircraft, key = { it.id }) { ac ->
-          ListItem(
-            headlineContent = { Text(ac.tail) },
-            supportingContent = { if (ac.name.isNotBlank()) Text(ac.name) },
-            modifier = Modifier.clickable { onEnterAircraft(ac.id) },
-          )
-          HorizontalDivider()
-        }
-      }
     }
-  }
-}
-
-@Composable
-private fun SectionPlaceholder(
-  section: ShellSection,
-  selected: ShellAircraft?,
-  onOpenSettings: () -> Unit,
-) {
-  Column(
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(8.dp),
-  ) {
-    Icon(section.icon, contentDescription = null)
-    Text(section.label, style = MaterialTheme.typography.headlineSmall)
-    val subtitle = when (section) {
-      ShellSection.SETTINGS -> "Global workspace settings"
-      else -> selected?.let { "${it.tail} · ${it.name}" } ?: "No aircraft selected"
-    }
-    Text(
-      subtitle,
-      style = MaterialTheme.typography.bodyMedium,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      textAlign = TextAlign.Center,
-    )
-    if (section == ShellSection.SETTINGS) {
-      // M1/M2 placeholder: keep the real settings (and Feature Lab toggle) reachable so a dogfooder
-      // who enabled the shell can still turn it back off.
-      Button(onClick = onOpenSettings) { Text("Open settings") }
+    if (onAddAircraft != null) {
+      HorizontalDivider()
+      DropdownMenuItem(
+        text = { Text("Add aircraft") },
+        leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
+        onClick = {
+          onAddAircraft()
+          onDismiss()
+        },
+      )
     }
   }
 }

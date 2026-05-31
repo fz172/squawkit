@@ -23,6 +23,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.shell.AdaptiveAppShell
+import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
@@ -151,6 +152,22 @@ private fun NavGraphBuilder.shellGraph(navController: NavController) {
         onExitToFleet = viewModel::exitToFleet,
         onOpenSettings = { navController.navigate(GRAPH_SETTINGS) },
         onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+        sectionContent = { section, aircraftId ->
+          ShellSectionBody(
+            section = section,
+            aircraftId = aircraftId,
+            navController = navController,
+            onNavigateToSection = viewModel::selectSection,
+            onOpenSettings = { navController.navigate(GRAPH_SETTINGS) },
+          )
+        },
+        fleetLanding = { onAircraftClick ->
+          DashboardScreen(
+            onOpenSettings = { navController.navigate(GRAPH_SETTINGS) },
+            onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+            onAircraftClick = onAircraftClick,
+          )
+        },
       )
     }
   }

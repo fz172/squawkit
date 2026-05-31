@@ -32,17 +32,20 @@ fun ComplianceSection(
   showComplied: Boolean,
   onToggleComplied: (Boolean) -> Unit,
   onCardClick: (MaintenanceTaskWithStatus) -> Unit = {},
+  showHeader: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   Column(
     modifier = modifier,
     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
   ) {
-    Text(
-      text = stringResource(SharedRes.string.maintenance_tasks),
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
-    )
+    if (showHeader) {
+      Text(
+        text = stringResource(SharedRes.string.maintenance_tasks),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+      )
+    }
 
     DualSegmentedFilter(
       option1 = stringResource(

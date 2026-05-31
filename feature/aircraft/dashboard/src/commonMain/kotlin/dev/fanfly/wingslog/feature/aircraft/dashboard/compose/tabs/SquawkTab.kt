@@ -47,6 +47,7 @@ fun SquawkTab(
   state: AircraftOverviewUiState.Success,
   onAction: (AircraftOverviewAction) -> Unit,
   onMutationAction: ((AircraftOverviewAction) -> Unit)? = onAction,
+  showHeader: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   var showClosed by rememberSaveable { mutableStateOf(false) }
@@ -67,11 +68,13 @@ fun SquawkTab(
   ) {
     Spacer(Modifier.height(Spacing.medium))
 
-    Text(
-      text = stringResource(Res.string.squawks),
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
-    )
+    if (showHeader) {
+      Text(
+        text = stringResource(Res.string.squawks),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+      )
+    }
 
     DualSegmentedFilter(
       option1 = stringResource(Res.string.open_with_count, openSquawks.size),
