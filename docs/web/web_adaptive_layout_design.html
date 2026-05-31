@@ -291,10 +291,12 @@ breakpoints) keeps the Compose layout faithful to the approved design. The dp va
 </table>
 
 <h3>4.3 The shell: <code>AdaptiveAppShell</code> on <code>NavigationSuiteScaffold</code></h3>
-<div class="callout"><span class="lbl">Decision D2 — settled</span>
-<p style="margin:6px 0 0">Use Material3 <code>NavigationSuiteScaffold</code> for the initial refactor and
-accept its default nav-container sizing. <strong>Do not</strong> hand-build the prototype’s 264px sidebar
-yet; if the default drawer looks wrong on desktop we’ll switch to a custom shell as a follow-up.</p></div>
+<div class="callout"><span class="lbl">Decision D2 — revised</span>
+<p style="margin:6px 0 0">Started on <code>NavigationSuiteScaffold</code> (M1). Because its drawer can’t host the
+aircraft switcher in the sidebar the way the mock shows, the shell now uses a <strong>custom
+<code>WingsSidebar</code></strong> at EXPANDED/LARGE (brand + switcher + sections + account footer),
+while MEDIUM keeps the scaffold rail (switcher in the top bar) and COMPACT keeps the scaffold bottom
+bar + fleet landing.</p></div>
 <p><code>NavigationSuiteScaffold</code> maps the navigation container by window size automatically
 (Compact → bottom bar, Medium → navigation rail, Expanded → permanent drawer). We feed it the section
 items and host the active section in its content slot. The aircraft <strong>switcher lives in the top
@@ -468,9 +470,9 @@ root of the phone experience. Net effect: one fleet-list composable, surfaced as
 <h2 id="components"><span class="n">8</span>Component-by-component mapping</h2>
 <table>
   <tr><th>Prototype element</th><th>Compose target</th><th>Status</th></tr>
-  <tr><td>Sidebar / icon rail / bottom tab bar (5 items)</td><td><code>NavigationSuiteScaffold</code> items (auto-selected by size)</td><td><span class="pill new">adopt</span></td></tr>
-  <tr><td>Bespoke 264px sidebar (brand + footer)</td><td>custom <code>WingsSidebar</code></td><td><span class="pill refactor">deferred</span> (D2 — only if scaffold looks wrong)</td></tr>
-  <tr><td>Aircraft switcher dropdown + badges</td><td><code>AircraftSwitcher</code> in the top bar (<code>DropdownMenu</code>)</td><td><span class="pill new">new</span></td></tr>
+  <tr><td>Icon rail (MEDIUM) / bottom tab bar (COMPACT)</td><td><code>NavigationSuiteScaffold</code> rail &amp; bottom bar</td><td><span class="pill reuse">done</span></td></tr>
+  <tr><td>Bespoke 264px sidebar (brand + switcher + footer)</td><td>custom <code>WingsSidebar</code> (EXPANDED/LARGE)</td><td><span class="pill reuse">done</span> (D2 revised)</td></tr>
+  <tr><td>Aircraft switcher dropdown</td><td>in the sidebar (EXPANDED/LARGE) and the top bar (MEDIUM); badges still TODO</td><td><span class="pill reuse">done</span></td></tr>
   <tr><td>Fleet landing page (phone root)</td><td>reuse existing <code>DashboardScreen</code> aircraft list</td><td><span class="pill reuse">reuse</span></td></tr>
   <tr><td>Top bar (title/sub/theme/bell)</td><td><code>WingsTopBar</code></td><td><span class="pill new">new</span></td></tr>
   <tr><td>Dashboard hero + stat tiles + aircraft cards</td><td>reuse <code>AircraftOverviewContent</code> blocks</td><td><span class="pill reuse">reuse</span></td></tr>
@@ -522,7 +524,7 @@ cards at COMPACT. Add-log via adaptive dialog/sheet.</p>
 <table>
   <tr><th>#</th><th>Decision / risk</th><th>Recommendation</th></tr>
   <tr><td>D1 <span class="pill reuse">settled</span></td><td>Fleet overview — dedicated landing vs switcher</td><td><strong>Both, by tier.</strong> Above phone the top-bar switcher is the fleet landing. On phone (no switcher room) keep a dedicated fleet landing page like the app today, as the COMPACT root.</td></tr>
-  <tr><td>D2 <span class="pill reuse">settled</span></td><td>Custom shell vs <code>NavigationSuiteScaffold</code></td><td><strong>NavigationSuiteScaffold</strong> for the initial refactor; accept its default nav sizing (don’t rebuild the 264px sidebar). Switch to a custom shell only if it looks wrong.</td></tr>
+  <tr><td>D2 <span class="pill reuse">revised</span></td><td>Custom shell vs <code>NavigationSuiteScaffold</code></td><td>Started on <code>NavigationSuiteScaffold</code> (M1). <strong>Revised:</strong> the default drawer can’t host the aircraft switcher in the sidebar as the mock requires, so EXPANDED/LARGE now use a <strong>custom <code>WingsSidebar</code></strong> (brand + switcher + sections + account footer). MEDIUM keeps the scaffold rail (switcher in top bar); COMPACT keeps the scaffold bottom bar + fleet landing.</td></tr>
   <tr><td>D3</td><td>Tier thresholds in dp vs the prototype’s CSS px</td><td>Start at 700/1040/1240 dp; tune on real tablets. dp ≈ px for layout reasoning but verify on iPad + Android.</td></tr>
   <tr><td>D4</td><td>Back-stack semantics with ambient aircraft + section nav</td><td>Section nav = no back stack between sections (like tabs); back applies to overlays/forms; keep system-back closing overlays first.</td></tr>
   <tr><td>R1</td><td>Compact regressions while refactoring chrome out of screens</td><td>Feature-flag + keep COMPACT branch behavior identical; screenshot-test the phone path.</td></tr>
