@@ -145,8 +145,12 @@ private fun NavGraphBuilder.shellGraph(navController: NavController) {
       val state by viewModel.uiState.collectAsState()
       AdaptiveAppShell(
         state = state,
+        onSelectSection = viewModel::selectSection,
         onSelectAircraft = viewModel::selectAircraft,
+        onEnterAircraft = viewModel::enterAircraft,
+        onExitToFleet = viewModel::exitToFleet,
         onOpenSettings = { navController.navigate(GRAPH_SETTINGS) },
+        onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
       )
     }
   }
