@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.ui.shell
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -44,7 +45,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.common.compose.LayoutTier
-import dev.fanfly.wingslog.core.ui.common.compose.rememberLayoutTier
+import dev.fanfly.wingslog.core.ui.common.compose.layoutTierFor
 
 /** Lightweight aircraft projection used by the shell's switcher and fleet landing. */
 data class ShellAircraft(
@@ -95,9 +96,13 @@ private fun navTypeFor(tier: LayoutTier): NavigationSuiteType = when (tier) {
  *
  * Navigation model (M2): the selected aircraft is **ambient** app-level state chosen from the
  * switcher above phone — switching swaps content in place, no push/pop. On COMPACT there is no room
- * for a switcher, so the [fleetLanding]-style root is shown until an aircraft is opened
+ * for a switcher, so the fleet-landing root is shown until an aircraft is opened
  * ([onEnterAircraft]); the back arrow returns to it. Section content is still a placeholder until
  * M3. See `docs/web/web_adaptive_layout_design.html`.
+ *
+ * The tier is derived from the measured [BoxWithConstraints] width rather than `LocalWindowInfo`,
+ * because the latter does not reliably report the window width on Kotlin/JS — which would otherwise
+ * collapse the web layout to the COMPACT single-column path on wide windows.
  *
  * Pure UI: takes plain [AdaptiveShellUiState] + callbacks so both hosts (`AppEntry`, `WebApp`) can
  * use it.
@@ -113,63 +118,64 @@ fun AdaptiveAppShell(
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
 ) {
-  val tier = rememberLayoutTier()
+  BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val tier = layoutTierFor(maxWidth)
 
-  // COMPACT root is the fleet landing until an aircraft is opened; above phone the switcher is the
-  // fleet overview and sections render directly.
-  if (tier == LayoutTier.COMPACT && !state.entered) {
-    FleetLanding(
-      aircraft = state.aircraft,
-      onEnterAircraft = onEnterAircraft,
-      onAddAircraft = onAddAircraft,
-      onOpenSettings = onOpenSettings,
-    )
-    return
-  }
-
-  NavigationSuiteScaffold(
-    layoutType = navTypeFor(tier),
-    navigationSuiteItems = {
-      ShellSection.entries.forEach { s ->
-        item(
-          selected = s == state.section,
-          onClick = { onSelectSection(s) },
-          icon = { Icon(s.icon, contentDescription = null) },
-          label = { Text(s.label) },
-        )
-      }
-    },
-  ) {
-    Scaffold(
-      topBar = {
-        TopAppBar(
-          title = { Text(state.section.label) },
-          navigationIcon = {
-            // On phone, offer a way back to the fleet landing from a section.
-            if (tier == LayoutTier.COMPACT && state.entered) {
-              IconButton(onClick = onExitToFleet) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to fleet")
-              }
-            }
-          },
-          actions = {
-            // The switcher lives in the top bar above phone; COMPACT uses the fleet landing instead.
-            if (tier.hasSideNav) {
-              AircraftSwitcher(state = state, onSelectAircraft = onSelectAircraft)
-            }
-          },
-        )
-      },
-    ) { padding ->
-      Box(
-        modifier = Modifier.fillMaxSize().padding(padding),
-        contentAlignment = Alignment.Center,
+    // COMPACT root is the fleet landing until an aircraft is opened; above phone the switcher is the
+    // fleet overview and sections render directly.
+    if (tier == LayoutTier.COMPACT && !state.entered) {
+      FleetLanding(
+        aircraft = state.aircraft,
+        onEnterAircraft = onEnterAircraft,
+        onAddAircraft = onAddAircraft,
+        onOpenSettings = onOpenSettings,
+      )
+    } else {
+      NavigationSuiteScaffold(
+        layoutType = navTypeFor(tier),
+        navigationSuiteItems = {
+          ShellSection.entries.forEach { s ->
+            item(
+              selected = s == state.section,
+              onClick = { onSelectSection(s) },
+              icon = { Icon(s.icon, contentDescription = null) },
+              label = { Text(s.label) },
+            )
+          }
+        },
       ) {
-        SectionPlaceholder(
-          section = state.section,
-          selected = state.selectedAircraft,
-          onOpenSettings = onOpenSettings,
-        )
+        Scaffold(
+          topBar = {
+            TopAppBar(
+              title = { Text(state.section.label) },
+              navigationIcon = {
+                // On phone, offer a way back to the fleet landing from a section.
+                if (tier == LayoutTier.COMPACT && state.entered) {
+                  IconButton(onClick = onExitToFleet) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to fleet")
+                  }
+                }
+              },
+              actions = {
+                // The switcher lives in the top bar above phone; COMPACT uses the fleet landing.
+                if (tier.hasSideNav) {
+                  AircraftSwitcher(state = state, onSelectAircraft = onSelectAircraft)
+                }
+              },
+            )
+          },
+        ) { padding ->
+          Box(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentAlignment = Alignment.Center,
+          ) {
+            SectionPlaceholder(
+              section = state.section,
+              selected = state.selectedAircraft,
+              onOpenSettings = onOpenSettings,
+            )
+          }
+        }
       }
     }
   }

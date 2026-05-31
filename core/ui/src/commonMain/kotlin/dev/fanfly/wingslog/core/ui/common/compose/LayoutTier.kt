@@ -60,12 +60,13 @@ fun layoutTierFor(widthDp: Dp): LayoutTier = when {
 }
 
 /**
- * The current [LayoutTier] for the active window. Reads the window container size from
- * [LocalWindowInfo] and recomputes whenever the window resizes (web window drag, tablet rotation,
- * multi-window), so the whole shell reflows without any navigation event.
+ * The current [LayoutTier] for the active window, from [LocalWindowInfo]'s container size.
  *
- * Deliberately dependency-free: it relies only on core Compose UI rather than the
- * `material3-window-size-class` artifact, keeping the tier model usable everywhere `core:ui` is.
+ * **Caveat:** on Kotlin/JS this does not reliably report the window width, which collapses wide web
+ * windows to [LayoutTier.COMPACT]. For layout decisions prefer wrapping content in
+ * `BoxWithConstraints` and calling [layoutTierFor]`(maxWidth)`, which uses the measured constraints
+ * and is correct on every platform (this is what `AdaptiveAppShell` does). This helper remains for
+ * Android/iOS callers that need a window-level tier outside a layout scope.
  */
 @Composable
 fun rememberLayoutTier(): LayoutTier {
