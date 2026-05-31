@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -175,7 +176,7 @@ fun MaintenanceLogListContent(
                 shape = RoundedCornerShape(Spacing.smallCornerRadius),
                 color = if (filterActive) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surfaceContainer,
-                border = androidx.compose.foundation.BorderStroke(
+                border = BorderStroke(
                   Spacing.hairline,
                   if (filterActive) MaterialTheme.colorScheme.primary
                   else MaterialTheme.colorScheme.outlineVariant
@@ -246,8 +247,8 @@ fun MaintenanceLogListContent(
                   }
                 }
               }
-            } else if (LocalLayoutTier.current.hasFullSidebar) {
-              // Wide screens: a real data table instead of cards.
+            } else if (LocalLayoutTier.current.hasSideNav) {
+              // MEDIUM and wider: a real data table instead of cards.
               MaintenanceLogTable(
                 logs = uiState.logs,
                 technicianEnabled = uiState.technicianEnabled,
@@ -330,7 +331,7 @@ private fun ActiveFilterChip(
   Surface(
     shape = RoundedCornerShape(Spacing.chipCornerRadius),
     color = MaterialTheme.colorScheme.primaryContainer,
-    border = androidx.compose.foundation.BorderStroke(
+    border = BorderStroke(
       Spacing.hairline,
       MaterialTheme.colorScheme.primary
     ),

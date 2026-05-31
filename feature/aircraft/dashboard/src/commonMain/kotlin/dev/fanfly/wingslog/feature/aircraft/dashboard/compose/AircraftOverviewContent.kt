@@ -253,6 +253,13 @@ fun AircraftOverviewContent(
                   )
                 }
               },
+              onViewLogsTab = {
+                coroutineScope.launch {
+                  pagerState.animateScrollToPage(
+                    AircraftTab.LOGS.ordinal
+                  )
+                }
+              },
               onMutationAction = onMutationAction,
             )
 
