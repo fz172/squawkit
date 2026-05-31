@@ -76,10 +76,8 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -262,8 +260,7 @@ private fun ConfiguringContent(
   }
 
   BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-    val tier = layoutTierFor(maxWidth)
-    val showSummaryPane = tier != LayoutTier.COMPACT && state.aircraft.isNotEmpty()
+    val showSummaryPane = maxWidth > 860.dp && state.aircraft.isNotEmpty()
     if (showSummaryPane) {
       Row(
         modifier = Modifier
