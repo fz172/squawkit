@@ -51,6 +51,7 @@ import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
@@ -245,6 +246,17 @@ fun MaintenanceLogListContent(
                   }
                 }
               }
+            } else if (LocalLayoutTier.current.hasFullSidebar) {
+              // Wide screens: a real data table instead of cards.
+              MaintenanceLogTable(
+                logs = uiState.logs,
+                technicianEnabled = uiState.technicianEnabled,
+                onLogClick = onLogClick,
+                modifier = Modifier
+                  .weight(1f)
+                  .fillMaxWidth()
+                  .padding(horizontal = Spacing.screenPadding),
+              )
             } else {
               LazyColumn(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
