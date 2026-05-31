@@ -149,12 +149,16 @@ fun AircraftSectionContent(
       ShellSection.TASKS -> MaintenanceTasksTab(
         state = state,
         onAction = viewModel::onAction,
+        // The shell top bar already shows the section title; avoid duplicating it.
+        showHeader = false,
       )
 
       ShellSection.SQUAWKS -> SquawkTab(
         state = state,
         onAction = viewModel::onAction,
         onMutationAction = viewModel::onAction,
+        // The shell top bar already shows the section title; avoid duplicating it.
+        showHeader = false,
       )
 
       ShellSection.LOGS -> LogsTab(

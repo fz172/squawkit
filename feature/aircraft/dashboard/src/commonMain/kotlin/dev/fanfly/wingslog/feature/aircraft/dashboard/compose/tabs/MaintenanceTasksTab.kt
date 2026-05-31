@@ -23,6 +23,7 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiSta
 fun MaintenanceTasksTab(
   state: AircraftOverviewUiState.Success,
   onAction: (AircraftOverviewAction) -> Unit,
+  showHeader: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   val scrollState = rememberScrollState()
@@ -33,7 +34,7 @@ fun MaintenanceTasksTab(
       .fillMaxSize()
       .verticalScroll(scrollState)
       .padding(horizontal = Spacing.screenPadding),
-    verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
+    verticalArrangement = Arrangement.spacedBy(Spacing.medium)
   ) {
     Spacer(Modifier.height(Spacing.medium))
 
@@ -43,6 +44,7 @@ fun MaintenanceTasksTab(
       showComplied = showComplied,
       onToggleComplied = { showComplied = it },
       onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
+      showHeader = showHeader,
     )
 
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))
