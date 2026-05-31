@@ -144,6 +144,9 @@ class MaintenanceLogListViewModel(
   }
 
   fun onEditLog(logId: String) {
+    // Dismiss the detail overlay before navigating: in the adaptive shell the detail is a drawer
+    // (Dialog) that would otherwise float above the pushed edit screen.
+    _selectedLog.value = null
     viewModelScope.launch {
       _events.send(MaintenanceLogListEvent.NavigateToEditLog(aircraftId, logId))
     }

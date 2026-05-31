@@ -12,6 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -27,6 +31,12 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewActio
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewEvent
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewViewModel
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
+import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
+import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
+import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -96,6 +106,9 @@ fun AircraftSectionContent(
   val viewModel: AircraftOverviewViewModel =
     koinViewModel(key = aircraftId, parameters = { parametersOf(aircraftId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val attachmentOpener: AttachmentOpener = koinInject()
+  val coroutineScope = rememberCoroutineScope()
+  var taskSheetOpenError by remember(aircraftId) { mutableStateOf<String?>(null) }
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
@@ -138,44 +151,87 @@ fun AircraftSectionContent(
         Text("Couldn't load this aircraft")
       }
 
-    is AircraftOverviewUiState.Success -> when (section) {
-      ShellSection.DASHBOARD -> OverviewTab(
-        state = state,
-        onAction = viewModel::onAction,
-        onViewSquawksTab = { onNavigateToSection(ShellSection.SQUAWKS) },
-        onMutationAction = viewModel::onAction,
-      )
+    is AircraftOverviewUiState.Success -> {
+      when (section) {
+        ShellSection.DASHBOARD -> OverviewTab(
+          state = state,
+          onAction = viewModel::onAction,
+          onViewSquawksTab = { onNavigateToSection(ShellSection.SQUAWKS) },
+          onMutationAction = viewModel::onAction,
+        )
 
-      ShellSection.TASKS -> MaintenanceTasksTab(
-        state = state,
-        onAction = viewModel::onAction,
-        // The shell top bar already shows the section title; avoid duplicating it.
-        showHeader = false,
-      )
+        ShellSection.TASKS -> MaintenanceTasksTab(
+          state = state,
+          onAction = viewModel::onAction,
+          // The shell top bar already shows the section title; avoid duplicating it.
+          showHeader = false,
+        )
 
-      ShellSection.SQUAWKS -> SquawkTab(
-        state = state,
-        onAction = viewModel::onAction,
-        onMutationAction = viewModel::onAction,
-        // The shell top bar already shows the section title; avoid duplicating it.
-        showHeader = false,
-      )
+        ShellSection.SQUAWKS -> SquawkTab(
+          state = state,
+          onAction = viewModel::onAction,
+          onMutationAction = viewModel::onAction,
+          // The shell top bar already shows the section title; avoid duplicating it.
+          showHeader = false,
+        )
 
-      ShellSection.LOGS -> LogsTab(
-        aircraftId = aircraftId,
-        syncStates = state.syncStates,
-        onNavigateToAddLog = { viewModel.onAction(AircraftOverviewAction.AddLogClick(aircraftId)) },
-        onNavigateToEditLog = { logId ->
-          viewModel.onAction(AircraftOverviewAction.EditLogClick(aircraftId, logId))
-        },
-        onTaskClick = { taskId ->
-          viewModel.onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
-          onNavigateToSection(ShellSection.TASKS)
-        },
-        attachmentsAvailable = state.attachmentEnabled,
-      )
+        ShellSection.LOGS -> LogsTab(
+          aircraftId = aircraftId,
+          syncStates = state.syncStates,
+          onNavigateToAddLog = { viewModel.onAction(AircraftOverviewAction.AddLogClick(aircraftId)) },
+          onNavigateToEditLog = { logId ->
+            viewModel.onAction(AircraftOverviewAction.EditLogClick(aircraftId, logId))
+          },
+          onTaskClick = { taskId ->
+            viewModel.onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
+            onNavigateToSection(ShellSection.TASKS)
+          },
+          attachmentsAvailable = state.attachmentEnabled,
+        )
 
-      ShellSection.SETTINGS -> Unit
+        ShellSection.SETTINGS -> Unit
+      }
+
+      // Task detail + delete confirmation overlays. SquawkTab and LogsTab render their own detail
+      // overlays; the task detail lives at this level in the legacy screen too (it can be opened
+      // from the Tasks tab or jumped to from a log), so render it here for the shell path.
+      state.selectedTask?.let { selectedTask ->
+        TaskDetailSheet(
+          cardWithStatus = selectedTask,
+          logs = state.logsForSelectedTask,
+          onDismiss = {
+            taskSheetOpenError = null
+            viewModel.onAction(AircraftOverviewAction.DismissTaskDetail)
+          },
+          onEditClick = {
+            viewModel.onAction(
+              AircraftOverviewAction.EditTaskClick(aircraftId, selectedTask.card.id)
+            )
+          },
+          onAttachmentTap = { attachment ->
+            taskSheetOpenError = null
+            val openFlow = attachmentOpener.open(attachment)
+            coroutineScope.launch {
+              openFlow.collect { openState ->
+                if (openState is OpenState.Failed) taskSheetOpenError = openState.error.message
+              }
+            }
+          },
+          syncStates = state.syncStates,
+          openError = taskSheetOpenError,
+          attachmentEnabled = state.attachmentEnabled,
+        )
+      }
+
+      state.deletingTaskId?.let { deletingId ->
+        val title = (state.activeTasks + state.completedTasks)
+          .find { it.card.id == deletingId }?.card?.title ?: ""
+        DeleteTaskConfirmDialog(
+          title = title,
+          onConfirm = { viewModel.onAction(AircraftOverviewAction.ConfirmDeleteTask) },
+          onDismiss = { viewModel.onAction(AircraftOverviewAction.CancelDeleteTask) },
+        )
+      }
     }
   }
 }

@@ -109,6 +109,9 @@ fun WebApp() {
                 onAircraftClick = onAircraftClick,
               )
             },
+            onEditAircraft = {
+              state.selectedAircraftId?.let { navController.navigate(Screen.EditAircraft.createRoute(it)) }
+            },
           )
         }
         composable(Screen.Dashboard.route) {
