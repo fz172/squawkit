@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.ui.shell.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.shell.ShellAircraft
+import dev.fanfly.wingslog.core.ui.shell.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,7 +48,25 @@ class AdaptiveShellViewModel(
     }
   }
 
+  /** Switcher selection (above phone): swaps the ambient aircraft in place. */
   fun selectAircraft(id: String) {
     _uiState.update { it.copy(selectedAircraftId = id) }
+  }
+
+  /** Switches the active top-level section. */
+  fun selectSection(section: ShellSection) {
+    _uiState.update { it.copy(section = section) }
+  }
+
+  /** Phone: open an aircraft from the fleet landing, resetting to its Dashboard section. */
+  fun enterAircraft(id: String) {
+    _uiState.update {
+      it.copy(selectedAircraftId = id, entered = true, section = ShellSection.DASHBOARD)
+    }
+  }
+
+  /** Phone: return from a section back to the fleet landing. */
+  fun exitToFleet() {
+    _uiState.update { it.copy(entered = false) }
   }
 }

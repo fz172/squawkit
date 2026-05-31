@@ -1,11 +1,16 @@
 package dev.fanfly.wingslog.core.ui.shell
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Checklist
@@ -17,7 +22,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -38,25 +46,16 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.common.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.rememberLayoutTier
 
-/** Lightweight aircraft projection used by the shell's switcher. */
+/** Lightweight aircraft projection used by the shell's switcher and fleet landing. */
 data class ShellAircraft(
   val id: String,
   val tail: String,
   val name: String,
 )
 
-/** Plain UI state for [AdaptiveAppShell]; produced by a host-side ViewModel. */
-data class AdaptiveShellUiState(
-  val aircraft: List<ShellAircraft> = emptyList(),
-  val selectedAircraftId: String? = null,
-) {
-  val selectedAircraft: ShellAircraft?
-    get() = aircraft.firstOrNull { it.id == selectedAircraftId }
-}
-
 /**
  * Top-level sections of the adaptive shell. The first four are per-aircraft; [SETTINGS] is global.
- * Labels are placeholders for M1 and move to string resources when sections are re-hosted (M3).
+ * Labels are placeholders for M1/M2 and move to string resources when sections are re-hosted (M3).
  */
 enum class ShellSection(val label: String, val icon: ImageVector) {
   DASHBOARD("Dashboard", Icons.Filled.Dashboard),
@@ -64,6 +63,22 @@ enum class ShellSection(val label: String, val icon: ImageVector) {
   LOGS("Logs", Icons.Filled.Description),
   SQUAWKS("Squawks", Icons.Filled.Warning),
   SETTINGS("Settings", Icons.Filled.Settings),
+}
+
+/** Plain UI state for [AdaptiveAppShell]; produced by a host-side ViewModel. */
+data class AdaptiveShellUiState(
+  val aircraft: List<ShellAircraft> = emptyList(),
+  val selectedAircraftId: String? = null,
+  val section: ShellSection = ShellSection.DASHBOARD,
+  /**
+   * Whether an aircraft has been opened from the fleet landing. Only meaningful on COMPACT, where
+   * the landing page is the root; above phone the switcher selects in place and sections are always
+   * shown. See `docs/web/web_adaptive_layout_design.html` §6.
+   */
+  val entered: Boolean = false,
+) {
+  val selectedAircraft: ShellAircraft?
+    get() = aircraft.firstOrNull { it.id == selectedAircraftId }
 }
 
 /** Maps a [LayoutTier] to the navigation container the shell should show. */
@@ -74,32 +89,51 @@ private fun navTypeFor(tier: LayoutTier): NavigationSuiteType = when (tier) {
 }
 
 /**
- * The adaptive web/tablet shell (M1). Built on [NavigationSuiteScaffold], whose container reflows
+ * The adaptive web/tablet shell. Built on [NavigationSuiteScaffold], whose container reflows
  * bottom bar -> rail -> permanent drawer; the type is driven by [rememberLayoutTier] so the
- * breakpoints match the design prototype rather than Material's defaults.
+ * breakpoints match the design prototype.
  *
- * Pure UI: it takes plain [AdaptiveShellUiState] + callbacks so it can be hosted by both the
- * Android/iOS app (`AppEntry`) and the web app (`WebApp`). M1 renders placeholder section content
- * to verify the reflow and the switcher; real content, aircraft-scoped routing, and the phone
- * fleet-landing root arrive in M2/M3. See `docs/web/web_adaptive_layout_design.html`.
+ * Navigation model (M2): the selected aircraft is **ambient** app-level state chosen from the
+ * switcher above phone — switching swaps content in place, no push/pop. On COMPACT there is no room
+ * for a switcher, so the [fleetLanding]-style root is shown until an aircraft is opened
+ * ([onEnterAircraft]); the back arrow returns to it. Section content is still a placeholder until
+ * M3. See `docs/web/web_adaptive_layout_design.html`.
+ *
+ * Pure UI: takes plain [AdaptiveShellUiState] + callbacks so both hosts (`AppEntry`, `WebApp`) can
+ * use it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdaptiveAppShell(
   state: AdaptiveShellUiState,
+  onSelectSection: (ShellSection) -> Unit,
   onSelectAircraft: (String) -> Unit,
+  onEnterAircraft: (String) -> Unit,
+  onExitToFleet: () -> Unit,
   onOpenSettings: () -> Unit,
+  onAddAircraft: () -> Unit,
 ) {
-  var section by remember { mutableStateOf(ShellSection.DASHBOARD) }
   val tier = rememberLayoutTier()
+
+  // COMPACT root is the fleet landing until an aircraft is opened; above phone the switcher is the
+  // fleet overview and sections render directly.
+  if (tier == LayoutTier.COMPACT && !state.entered) {
+    FleetLanding(
+      aircraft = state.aircraft,
+      onEnterAircraft = onEnterAircraft,
+      onAddAircraft = onAddAircraft,
+      onOpenSettings = onOpenSettings,
+    )
+    return
+  }
 
   NavigationSuiteScaffold(
     layoutType = navTypeFor(tier),
     navigationSuiteItems = {
       ShellSection.entries.forEach { s ->
         item(
-          selected = s == section,
-          onClick = { section = s },
+          selected = s == state.section,
+          onClick = { onSelectSection(s) },
           icon = { Icon(s.icon, contentDescription = null) },
           label = { Text(s.label) },
         )
@@ -109,10 +143,17 @@ fun AdaptiveAppShell(
     Scaffold(
       topBar = {
         TopAppBar(
-          title = { Text(section.label) },
+          title = { Text(state.section.label) },
+          navigationIcon = {
+            // On phone, offer a way back to the fleet landing from a section.
+            if (tier == LayoutTier.COMPACT && state.entered) {
+              IconButton(onClick = onExitToFleet) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to fleet")
+              }
+            }
+          },
           actions = {
-            // The switcher lives in the top bar above phone; on COMPACT the (future) fleet
-            // landing page handles aircraft selection instead.
+            // The switcher lives in the top bar above phone; COMPACT uses the fleet landing instead.
             if (tier.hasSideNav) {
               AircraftSwitcher(state = state, onSelectAircraft = onSelectAircraft)
             }
@@ -125,7 +166,7 @@ fun AdaptiveAppShell(
         contentAlignment = Alignment.Center,
       ) {
         SectionPlaceholder(
-          section = section,
+          section = state.section,
           selected = state.selectedAircraft,
           onOpenSettings = onOpenSettings,
         )
@@ -171,6 +212,55 @@ private fun AircraftSwitcher(
   }
 }
 
+/**
+ * Phone-only root: the fleet list. M2 placeholder built from [AdaptiveShellUiState.aircraft]; M3
+ * swaps in the real `DashboardScreen` via a host slot (design D1).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FleetLanding(
+  aircraft: List<ShellAircraft>,
+  onEnterAircraft: (String) -> Unit,
+  onAddAircraft: () -> Unit,
+  onOpenSettings: () -> Unit,
+) {
+  Scaffold(
+    topBar = {
+      TopAppBar(
+        title = { Text("Fleet") },
+        actions = {
+          IconButton(onClick = onAddAircraft) {
+            Icon(Icons.Filled.Add, contentDescription = "Add aircraft")
+          }
+          IconButton(onClick = onOpenSettings) {
+            Icon(Icons.Filled.Settings, contentDescription = "Settings")
+          }
+        },
+      )
+    },
+  ) { padding ->
+    if (aircraft.isEmpty()) {
+      Box(
+        modifier = Modifier.fillMaxSize().padding(padding),
+        contentAlignment = Alignment.Center,
+      ) {
+        Text("No aircraft yet", style = MaterialTheme.typography.bodyMedium)
+      }
+    } else {
+      LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
+        items(aircraft, key = { it.id }) { ac ->
+          ListItem(
+            headlineContent = { Text(ac.tail) },
+            supportingContent = { if (ac.name.isNotBlank()) Text(ac.name) },
+            modifier = Modifier.clickable { onEnterAircraft(ac.id) },
+          )
+          HorizontalDivider()
+        }
+      }
+    }
+  }
+}
+
 @Composable
 private fun SectionPlaceholder(
   section: ShellSection,
@@ -194,7 +284,7 @@ private fun SectionPlaceholder(
       textAlign = TextAlign.Center,
     )
     if (section == ShellSection.SETTINGS) {
-      // M1 placeholder: keep the real settings (and Feature Lab toggle) reachable so a dogfooder
+      // M1/M2 placeholder: keep the real settings (and Feature Lab toggle) reachable so a dogfooder
       // who enabled the shell can still turn it back off.
       Button(onClick = onOpenSettings) { Text("Open settings") }
     }
