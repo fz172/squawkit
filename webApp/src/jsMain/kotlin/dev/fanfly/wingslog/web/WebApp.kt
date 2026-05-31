@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.shell.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.AircraftOverviewScreen
+import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
@@ -92,6 +93,22 @@ fun WebApp() {
             onExitToFleet = viewModel::exitToFleet,
             onOpenSettings = { navController.navigate(Screen.Settings.route) },
             onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+            sectionContent = { section, aircraftId ->
+              ShellSectionBody(
+                section = section,
+                aircraftId = aircraftId,
+                navController = navController,
+                onNavigateToSection = viewModel::selectSection,
+                onOpenSettings = { navController.navigate(Screen.Settings.route) },
+              )
+            },
+            fleetLanding = { onAircraftClick ->
+              DashboardScreen(
+                onOpenSettings = { navController.navigate(Screen.Settings.route) },
+                onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+                onAircraftClick = onAircraftClick,
+              )
+            },
           )
         }
         composable(Screen.Dashboard.route) {

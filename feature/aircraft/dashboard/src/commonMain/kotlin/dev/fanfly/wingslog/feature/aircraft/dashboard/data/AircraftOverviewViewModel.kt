@@ -1,12 +1,10 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.data
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.SquawkPriority
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -43,10 +41,8 @@ class AircraftOverviewViewModel(
   private val squawkManager: SquawkManager,
   private val auth: FirebaseAuth,
   private val featureLabManager: FeatureLabManager,
-  savedStateHandle: SavedStateHandle,
+  private val aircraftId: String,
 ) : ViewModel() {
-
-  private val aircraftId: String = checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
 
   private val _uiState = MutableStateFlow<AircraftOverviewUiState>(AircraftOverviewUiState.Loading)
   val uiState: StateFlow<AircraftOverviewUiState> = _uiState.asStateFlow()

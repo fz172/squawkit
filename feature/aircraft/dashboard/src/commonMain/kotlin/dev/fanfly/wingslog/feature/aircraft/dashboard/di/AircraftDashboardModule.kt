@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.di
 
 import androidx.lifecycle.SavedStateHandle
+import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewViewModel
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
@@ -15,7 +16,11 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val aircraftDashboardModule = module {
-  viewModel {
+  // aircraftId comes from an explicit parameter (adaptive shell, ambient selection) when present,
+  // otherwise from the navigation SavedStateHandle (legacy maintenance_overview/{aircraftId} route).
+  viewModel { params ->
+    val aircraftId = params.getOrNull<String>()
+      ?: checkNotNull(get<SavedStateHandle>().get<String>(Screen.AIRCRAFT_ID))
     AircraftOverviewViewModel(
       get<FleetManager>(),
       get<MaintenanceLogManager>(),
@@ -26,7 +31,7 @@ val aircraftDashboardModule = module {
       get<SquawkManager>(),
       get<FirebaseAuth>(),
       get<FeatureLabManager>(),
-      get<SavedStateHandle>(),
+      aircraftId,
     )
   }
 }
