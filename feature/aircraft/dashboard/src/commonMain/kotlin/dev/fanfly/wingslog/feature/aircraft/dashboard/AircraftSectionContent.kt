@@ -178,9 +178,14 @@ fun AircraftSectionContent(
         ShellSection.LOGS -> LogsTab(
           aircraftId = aircraftId,
           syncStates = state.syncStates,
-          onNavigateToAddLog = { viewModel.onAction(AircraftOverviewAction.AddLogClick(aircraftId)) },
+          // Navigate directly rather than re-entering AircraftOverviewViewModel.onAction: the log
+          // tab already routes through its own ViewModel's event channel, and a second hop through
+          // the overview VM's rendezvous channel did not reliably reach this composable's collector.
+          onNavigateToAddLog = {
+            navController.navigate(Screen.AddMaintenanceLog.createRoute(aircraftId))
+          },
           onNavigateToEditLog = { logId ->
-            viewModel.onAction(AircraftOverviewAction.EditLogClick(aircraftId, logId))
+            navController.navigate(Screen.EditMaintenanceLog.createRoute(aircraftId, logId))
           },
           onTaskClick = { taskId ->
             viewModel.onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
