@@ -41,6 +41,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +52,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.common.compose.LayoutTier
+import dev.fanfly.wingslog.core.ui.common.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.layoutTierFor
 
 /** Lightweight aircraft projection used by the shell's switcher. */
@@ -120,6 +122,36 @@ fun AdaptiveAppShell(
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
     val content: @Composable () -> Unit = { sectionContent(state.section, state.selectedAircraftId) }
+    CompositionLocalProvider(LocalLayoutTier provides tier) {
+      ShellForTier(
+        tier = tier,
+        state = state,
+        onSelectSection = onSelectSection,
+        onSelectAircraft = onSelectAircraft,
+        onEnterAircraft = onEnterAircraft,
+        onExitToFleet = onExitToFleet,
+        onOpenSettings = onOpenSettings,
+        onAddAircraft = onAddAircraft,
+        fleetLanding = fleetLanding,
+        content = content,
+      )
+    }
+  }
+}
+
+@Composable
+private fun ShellForTier(
+  tier: LayoutTier,
+  state: AdaptiveShellUiState,
+  onSelectSection: (ShellSection) -> Unit,
+  onSelectAircraft: (String) -> Unit,
+  onEnterAircraft: (String) -> Unit,
+  onExitToFleet: () -> Unit,
+  onOpenSettings: () -> Unit,
+  onAddAircraft: () -> Unit,
+  fleetLanding: @Composable (onAircraftClick: (String) -> Unit) -> Unit,
+  content: @Composable () -> Unit,
+) {
     when {
       tier == LayoutTier.COMPACT && !state.entered ->
         fleetLanding(onEnterAircraft)
@@ -144,7 +176,6 @@ fun AdaptiveAppShell(
           content = content,
         )
     }
-  }
 }
 
 /* ---------------------------------------------------------------------------------------------- */
