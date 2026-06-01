@@ -69,4 +69,12 @@ class AdaptiveShellViewModel(
   fun exitToFleet() {
     _uiState.update { it.copy(entered = false) }
   }
+
+  /**
+   * Open the global Settings section in the shell. Sets `entered` so that on COMPACT (where the
+   * fleet landing is the root) the section view with its bottom bar is shown instead of the landing.
+   */
+  fun openSettings() {
+    _uiState.update { it.copy(section = ShellSection.SETTINGS, entered = true) }
+  }
 }

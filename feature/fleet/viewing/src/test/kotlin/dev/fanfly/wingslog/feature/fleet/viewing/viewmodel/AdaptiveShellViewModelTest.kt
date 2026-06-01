@@ -89,4 +89,16 @@ class AdaptiveShellViewModelTest {
     vm.selectSection(ShellSection.SQUAWKS)
     assertThat(vm.uiState.value.section).isEqualTo(ShellSection.SQUAWKS)
   }
+
+  @Test
+  fun openSettingsSelectsSettingsAndEnters() = runTest {
+    val vm = AdaptiveShellViewModel(fleetManager)
+    runCurrent()
+
+    vm.openSettings()
+    val s = vm.uiState.value
+    assertThat(s.section).isEqualTo(ShellSection.SETTINGS)
+    // entered so COMPACT shows the section view (with bottom bar) instead of the fleet landing.
+    assertThat(s.entered).isTrue()
+  }
 }

@@ -1,11 +1,7 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,7 +13,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
@@ -39,12 +34,11 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * Host entry point for the adaptive shell's section bodies (M3): maps a [ShellSection] (+ optional
- * ambient [aircraftId]) to the right content. Both hosts (`AppEntry`, `WebApp`) call this from the
- * shell's `sectionContent` slot.
+ * Host entry point for the adaptive shell's **per-aircraft** section bodies: maps a [ShellSection]
+ * (+ optional ambient [aircraftId]) to the right content. Both hosts (`AppEntry`, `WebApp`) call this
+ * from the shell's `sectionContent` slot for everything except [ShellSection.SETTINGS], which is
+ * global and rendered by the host directly (it depends on `feature:settings`).
  *
- * - [ShellSection.SETTINGS] → a placeholder with a path to the real settings ([onOpenSettings]); the
- *   full settings screen is embedded in a later milestone.
  * - per-aircraft sections → [AircraftSectionContent], or an empty state when no aircraft exists.
  */
 @Composable
@@ -53,32 +47,18 @@ fun ShellSectionBody(
   aircraftId: String?,
   navController: NavController,
   onNavigateToSection: (ShellSection) -> Unit,
-  onOpenSettings: () -> Unit,
 ) {
-  when {
-    section == ShellSection.SETTINGS -> SettingsSectionPlaceholder(onOpenSettings)
-    aircraftId != null -> AircraftSectionContent(
+  if (aircraftId != null) {
+    AircraftSectionContent(
       aircraftId = aircraftId,
       section = section,
       navController = navController,
       onNavigateToSection = onNavigateToSection,
     )
-
-    else -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+  } else {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
       Text("Add an aircraft to get started", style = MaterialTheme.typography.bodyMedium)
     }
-  }
-}
-
-@Composable
-private fun SettingsSectionPlaceholder(onOpenSettings: () -> Unit) {
-  Column(
-    modifier = Modifier.fillMaxSize().padding(24.dp),
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-  ) {
-    Text("Settings", style = MaterialTheme.typography.headlineSmall)
-    Button(onClick = onOpenSettings) { Text("Open settings") }
   }
 }
 

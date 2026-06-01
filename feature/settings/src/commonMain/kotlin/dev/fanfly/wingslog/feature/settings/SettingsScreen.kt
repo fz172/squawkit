@@ -70,33 +70,60 @@ import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
 
+/**
+ * Legacy standalone Settings route: the [SettingsContent] under its own scaffold + top bar. The
+ * adaptive shell hosts [SettingsContent] directly (the shell provides the chrome), so this wrapper
+ * is only used on the non-adaptive navigation path.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
   navController: NavController,
+  onExportLogs: (() -> Unit)? = { navController.navigate(Screen.ExportLogs.route) },
+) {
+  Scaffold(
+    topBar = {
+      ConstrainedTopBar {
+        WingsLogTopAppBar(
+          title = stringResource(Res.string.settings),
+          onBackClick = { navController.popBackStack() },
+        )
+      }
+    },
+  ) { innerPadding ->
+    SettingsContent(
+      navController = navController,
+      onExportLogs = onExportLogs,
+      modifier = Modifier.padding(innerPadding),
+    )
+  }
+}
+
+/**
+ * The settings body — profile card, technician profiles, sync/cloud backup, Export entry point,
+ * Feature Lab, account action, and app version — with no chrome of its own. Reusable so the adaptive
+ * shell can render it inside its own Settings section (M6) without pushing the standalone route.
+ * Secondary flows still navigate via [navController] to their existing routes.
+ */
+@Composable
+fun SettingsContent(
+  navController: NavController,
+  modifier: Modifier = Modifier,
   settingsViewModel: SettingsViewModel = koinViewModel(),
   accountUpgradeViewModel: AccountUpgradeViewModel = koinViewModel(),
   onExportLogs: (() -> Unit)? = { navController.navigate(Screen.ExportLogs.route) },
 ) {
-
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
   val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
 
-  val upgradeSuccessMessage =
-    stringResource(SettingsRes.string.account_upgrade_success)
-  val upgradeErrorMessage =
-    stringResource(SettingsRes.string.account_upgrade_error)
+  val upgradeSuccessMessage = stringResource(SettingsRes.string.account_upgrade_success)
+  val upgradeErrorMessage = stringResource(SettingsRes.string.account_upgrade_error)
 
-  // This LaunchedEffect will run when 'user' state changes
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {
-      // If the user becomes logged out, go to log in and clear everything up to main
       navController.navigate(Screen.Login.route) {
-        popUpTo(Screen.Dashboard.route) {
-          inclusive = true
-        }
-        // Ensure only one copy of the login screen
+        popUpTo(Screen.Dashboard.route) { inclusive = true }
         launchSingleTop = true
       }
     }
@@ -121,112 +148,97 @@ fun SettingsScreen(
     }
   }
 
-  Scaffold(
-    topBar = {
-      ConstrainedTopBar {
-        WingsLogTopAppBar(
-          title = stringResource(Res.string.settings),
-          onBackClick = { navController.popBackStack() })
-      }
-    },
-    snackbarHost = { SnackbarHost(snackbarHostState) },
-  ) { innerPadding ->
-    Box(
+  Box(
+    modifier = modifier.fillMaxSize(),
+    contentAlignment = Alignment.TopCenter,
+  ) {
+    Column(
       modifier = Modifier
-        .padding(innerPadding)
-        .fillMaxSize(),
-      contentAlignment = Alignment.TopCenter,
+        .constrainedContentWidth(ContentWidth.Reading)
+        .fillMaxSize()
+        .padding(Spacing.screenPadding),
+      verticalArrangement = Arrangement.spacedBy(Spacing.columnGap),
     ) {
-      Column(
-        modifier = Modifier
-          .constrainedContentWidth(ContentWidth.Reading)
-          .fillMaxSize()
-          .padding(Spacing.screenPadding),
-        verticalArrangement = Arrangement.spacedBy(Spacing.columnGap)
-      ) {
-        UserProfileCard(
-          self = user.selfTechnician,
-          photoUri = user.photoUri,
-        )
+      UserProfileCard(
+        self = user.selfTechnician,
+        photoUri = user.photoUri,
+      )
 
-        // For a guest with the upgrade flag on, "Log in" connects their on-device records to a real
-        // account (the upgrade flow). It replaces the destructive guest logout entirely.
-        val guestCanUpgrade =
-          user.isAnonymous && user.featureFlags.accountUpgradeEnabled
+      // For a guest with the upgrade flag on, "Log in" connects their on-device records to a real
+      // account (the upgrade flow). It replaces the destructive guest logout entirely.
+      val guestCanUpgrade = user.isAnonymous && user.featureFlags.accountUpgradeEnabled
 
-        if (user.featureFlags.technicianEnabled) {
-          SettingsRow(
-            icon = Icons.Default.Engineering,
-            title = stringResource(TechnicianRes.string.manage_technicians),
-            subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
-            onClick = { navController.navigate(Screen.ManageTechnicians.route) },
-            settingsLevel = SettingsLevel.DEFAULT
-          )
-        }
-
+      if (user.featureFlags.technicianEnabled) {
         SettingsRow(
-          icon = Icons.Default.CloudSync,
-          title = stringResource(SyncRes.string.feature_name_backup_and_sync),
-          subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
-          onClick = { navController.navigate(Screen.SyncSettings.route) },
-          settingsLevel = SettingsLevel.DEFAULT
-        )
-
-        if (onExportLogs != null) {
-          SettingsRow(
-            icon = Icons.Default.FileDownload,
-            title = stringResource(ExportRes.string.feature_name_export_logs),
-            subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
-            onClick = onExportLogs,
-            settingsLevel = SettingsLevel.DEFAULT
-          )
-        }
-
-        SettingsRow(
-          icon = Icons.Default.Tune,
-          title = stringResource(SettingsRes.string.feature_lab),
-          subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
-          onClick = { navController.navigate(Screen.FeatureLab.route) },
-          settingsLevel = SettingsLevel.DEFAULT
-        )
-
-        // Guest + flag on shows "Log in" (runs the upgrade); real accounts show "Log out". An
-        // anonymous user without the upgrade flag has no sign-out action — logging out would
-        // erase their on-device data, so we don't offer it.
-        if (guestCanUpgrade || !user.isAnonymous) {
-          SettingsRow(
-            icon = if (guestCanUpgrade) Icons.AutoMirrored.Filled.Login
-            else Icons.AutoMirrored.Filled.Logout,
-            title = stringResource(
-              if (guestCanUpgrade) SettingsRes.string.account_upgrade_login_cta
-              else SettingsRes.string.sign_out
-            ),
-            subtitle = if (guestCanUpgrade) {
-              stringResource(SettingsRes.string.account_upgrade_login_subtitle)
-            } else {
-              stringResource(SettingsRes.string.settings_logout_subtitle)
-            },
-            onClick = {
-              if (guestCanUpgrade) accountUpgradeViewModel.startUpgrade()
-              else settingsViewModel.logOut()
-            },
-            settingsLevel = if (guestCanUpgrade) SettingsLevel.DEFAULT else SettingsLevel.DANGER,
-          )
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Text(
-          text = stringResource(
-            SettingsRes.string.app_version,
-            getAppVersion()
-          ),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.align(Alignment.CenterHorizontally)
+          icon = Icons.Default.Engineering,
+          title = stringResource(TechnicianRes.string.manage_technicians),
+          subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
+          onClick = { navController.navigate(Screen.ManageTechnicians.route) },
+          settingsLevel = SettingsLevel.DEFAULT,
         )
       }
+
+      SettingsRow(
+        icon = Icons.Default.CloudSync,
+        title = stringResource(SyncRes.string.feature_name_backup_and_sync),
+        subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
+        onClick = { navController.navigate(Screen.SyncSettings.route) },
+        settingsLevel = SettingsLevel.DEFAULT,
+      )
+
+      if (onExportLogs != null) {
+        SettingsRow(
+          icon = Icons.Default.FileDownload,
+          title = stringResource(ExportRes.string.feature_name_export_logs),
+          subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
+          onClick = onExportLogs,
+          settingsLevel = SettingsLevel.DEFAULT,
+        )
+      }
+
+      SettingsRow(
+        icon = Icons.Default.Tune,
+        title = stringResource(SettingsRes.string.feature_lab),
+        subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
+        onClick = { navController.navigate(Screen.FeatureLab.route) },
+        settingsLevel = SettingsLevel.DEFAULT,
+      )
+
+      // Guest + flag on shows "Log in" (runs the upgrade); real accounts show "Log out". An
+      // anonymous user without the upgrade flag has no sign-out action — logging out would
+      // erase their on-device data, so we don't offer it.
+      if (guestCanUpgrade || !user.isAnonymous) {
+        SettingsRow(
+          icon = if (guestCanUpgrade) Icons.AutoMirrored.Filled.Login
+          else Icons.AutoMirrored.Filled.Logout,
+          title = stringResource(
+            if (guestCanUpgrade) SettingsRes.string.account_upgrade_login_cta
+            else SettingsRes.string.sign_out
+          ),
+          subtitle = if (guestCanUpgrade) {
+            stringResource(SettingsRes.string.account_upgrade_login_subtitle)
+          } else {
+            stringResource(SettingsRes.string.settings_logout_subtitle)
+          },
+          onClick = {
+            if (guestCanUpgrade) accountUpgradeViewModel.startUpgrade()
+            else settingsViewModel.logOut()
+          },
+          settingsLevel = if (guestCanUpgrade) SettingsLevel.DEFAULT else SettingsLevel.DANGER,
+        )
+      }
+
+      Spacer(modifier = Modifier.weight(1f))
+
+      Text(
+        text = stringResource(SettingsRes.string.app_version, getAppVersion()),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.align(Alignment.CenterHorizontally),
+      )
     }
+
+    SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
   }
 
   when (upgradeState) {
