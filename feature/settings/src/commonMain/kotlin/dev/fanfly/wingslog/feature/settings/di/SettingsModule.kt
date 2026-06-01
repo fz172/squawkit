@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.settings.di
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
+import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabViewModel
 import dev.fanfly.wingslog.feature.settings.upgrade.AccountUpgradeViewModel
@@ -19,6 +20,7 @@ val settingsModule = module {
       get(),
       get<DatabaseIntegrityChecker>(),
       get(),
+      get<AppearanceController>(),
     )
   }
   viewModel { FeatureLabViewModel(get()) }

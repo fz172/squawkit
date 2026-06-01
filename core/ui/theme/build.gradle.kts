@@ -49,6 +49,12 @@ kotlin {
       api(libs.material3)
       api(libs.compose.ui)
       api(libs.components.resources)
+      api(libs.koin.core)
+      implementation(libs.kotlinx.coroutines.core)
+    }
+
+    androidMain.dependencies {
+      implementation(libs.koin.android)
     }
   }
 }

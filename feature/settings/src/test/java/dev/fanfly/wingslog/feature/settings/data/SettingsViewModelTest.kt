@@ -3,6 +3,9 @@ package dev.fanfly.wingslog.feature.settings.data
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
+import dev.fanfly.wingslog.core.ui.theme.AppearanceController
+import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
+import dev.fanfly.wingslog.core.ui.theme.AppearanceStore
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
@@ -11,9 +14,7 @@ import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.justRun
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -38,7 +39,17 @@ class SettingsViewModelTest {
   private lateinit var attachmentManager: AttachmentManager
   private lateinit var dbChecker: DatabaseIntegrityChecker
   private lateinit var featureLabManager: FeatureLabManager
+  private lateinit var appearanceController: AppearanceController
   private lateinit var viewModel: SettingsViewModel
+
+  /** In-memory [AppearanceStore] so the controller needs no platform backing in tests. */
+  private class InMemoryAppearanceStore : AppearanceStore {
+    private var mode = AppearanceMode.SYSTEM
+    override fun load() = mode
+    override fun save(mode: AppearanceMode) {
+      this.mode = mode
+    }
+  }
 
   @Before
   fun setUp() {
@@ -49,6 +60,7 @@ class SettingsViewModelTest {
     attachmentManager = mockk(relaxed = true)
     dbChecker = mockk(relaxed = true)
     featureLabManager = mockk(relaxed = true)
+    appearanceController = AppearanceController(InMemoryAppearanceStore())
     every { featureLabManager.observe() } returns flowOf(FeatureFlags())
 
     val mockUser = mockk<FirebaseUser>()
@@ -72,7 +84,14 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_wipesUserData_whenUserSignedIn() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, technicianManager, attachmentManager, dbChecker, featureLabManager)
+    viewModel = SettingsViewModel(
+      authManager,
+      technicianManager,
+      attachmentManager,
+      dbChecker,
+      featureLabManager,
+      appearanceController
+    )
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -82,7 +101,14 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_wipesAttachmentData_whenUserSignedIn() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, technicianManager, attachmentManager, dbChecker, featureLabManager)
+    viewModel = SettingsViewModel(
+      authManager,
+      technicianManager,
+      attachmentManager,
+      dbChecker,
+      featureLabManager,
+      appearanceController
+    )
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -92,7 +118,14 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_callsAuthManagerLogOut() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, technicianManager, attachmentManager, dbChecker, featureLabManager)
+    viewModel = SettingsViewModel(
+      authManager,
+      technicianManager,
+      attachmentManager,
+      dbChecker,
+      featureLabManager,
+      appearanceController
+    )
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -103,7 +136,14 @@ class SettingsViewModelTest {
   @Test
   fun logOut_skipsWipe_whenNoUserSignedIn() = runTest(testDispatcher) {
     every { authManager.getCurrentUser() } returns null
-    viewModel = SettingsViewModel(authManager, technicianManager, attachmentManager, dbChecker, featureLabManager)
+    viewModel = SettingsViewModel(
+      authManager,
+      technicianManager,
+      attachmentManager,
+      dbChecker,
+      featureLabManager,
+      appearanceController
+    )
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -114,7 +154,14 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_setsStateToLoggedOut() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(authManager, technicianManager, attachmentManager, dbChecker, featureLabManager)
+    viewModel = SettingsViewModel(
+      authManager,
+      technicianManager,
+      attachmentManager,
+      dbChecker,
+      featureLabManager,
+      appearanceController
+    )
 
     viewModel.logOut()
     advanceUntilIdle()

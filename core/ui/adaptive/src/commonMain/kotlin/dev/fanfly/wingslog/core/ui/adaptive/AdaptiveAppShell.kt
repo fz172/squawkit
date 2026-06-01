@@ -58,6 +58,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.core.sharedassets.generated.resources.settings
@@ -383,7 +384,7 @@ private fun WingsSidebar(
         )
         Spacer(Modifier.width(6.dp))
         Text(
-          "Hopply",
+          stringResource(UiRes.string.app_name),
           style = MaterialTheme.typography.titleLarge,
           fontWeight = FontWeight.Bold
         )

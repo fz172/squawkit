@@ -79,6 +79,7 @@ fun SettingsContent(
   onExportLogs: (() -> Unit)? = { navController.navigate(Screen.ExportLogs.route) },
 ) {
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
+  val appearanceMode by settingsViewModel.appearanceMode.collectAsStateWithLifecycle()
   val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
 
@@ -167,6 +168,11 @@ fun SettingsContent(
         subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
         onClick = { navController.navigate(Screen.FeatureLab.route) },
         settingsLevel = SettingsLevel.DEFAULT,
+      )
+
+      AppearanceSettingRow(
+        mode = appearanceMode,
+        onModeChange = settingsViewModel::setAppearance,
       )
 
       // Guest + flag on shows "Log in" (runs the upgrade); real accounts show "Log out". An

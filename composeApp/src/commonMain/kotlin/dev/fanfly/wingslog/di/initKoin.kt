@@ -6,6 +6,8 @@ import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
 import dev.fanfly.wingslog.core.storage.di.storageModule
+import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
+import dev.fanfly.wingslog.core.ui.theme.di.appearanceStoreModule
 import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
@@ -43,6 +45,8 @@ fun initKoin(
     commonAuthModule,
     storageModule,
     platformStorageModule,
+    appearanceModule,
+    appearanceStoreModule,
     syncModule,
     blobSchedulerModule,
     authModule,

@@ -61,6 +61,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.apple_logo
@@ -182,7 +183,7 @@ fun LoginScreen(
 
       Text(
         text = buildAnnotatedString {
-          append("hopply")
+          append(stringResource(UiRes.string.app_name))
           withStyle(SpanStyle(color = AviationBlue80)) {
             append(".")
           }

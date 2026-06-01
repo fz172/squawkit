@@ -26,7 +26,9 @@ import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
+import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
+import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
@@ -60,10 +62,13 @@ fun AppEntry() {
   val authManager: AuthManager = koinInject()
   val firebaseAuth: FirebaseAuth = koinInject()
   val dogfoodExts: DogfoodFeatureExtensions = koinInject()
+  val appearanceController: AppearanceController = koinInject()
+  val appearanceMode by appearanceController.mode.collectAsState()
+  val darkTheme = appearanceMode.resolveDarkTheme()
   val scope = rememberCoroutineScope()
 
   if (health.isCorrupted) {
-    WingslogTheme {
+    WingslogTheme(darkTheme = darkTheme) {
       IntegrityRecoveryDialog(
         onWipe = {
           // wipeAllData() is now suspend (async-generated queries); log out only after it completes.
@@ -77,7 +82,7 @@ fun AppEntry() {
     return
   }
 
-  WingslogTheme {
+  WingslogTheme(darkTheme = darkTheme) {
     Surface(
       modifier = Modifier.fillMaxSize(),
       color = MaterialTheme.colorScheme.background,

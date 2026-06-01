@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
+import dev.fanfly.wingslog.core.ui.theme.AppearanceController
+import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
@@ -19,10 +21,16 @@ class SettingsViewModel(
   private val attachmentManager: AttachmentManager,
   private val dbChecker: DatabaseIntegrityChecker,
   private val featureLabManager: FeatureLabManager,
+  private val appearanceController: AppearanceController,
 ) : ViewModel() {
 
   private val _user = MutableStateFlow(SettingsUiState())
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
+
+  /** Device-local light/dark/system preference, shared with the root theme. */
+  val appearanceMode: StateFlow<AppearanceMode> = appearanceController.mode
+
+  fun setAppearance(mode: AppearanceMode) = appearanceController.setMode(mode)
 
   private var observeSelfJob: Job? = null
 

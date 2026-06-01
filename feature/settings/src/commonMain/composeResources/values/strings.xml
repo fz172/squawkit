@@ -12,6 +12,11 @@
   <string name="account_upgrade_success">Syncing complete</string>
   <string name="account_upgrade_error">Couldn't complete sync. Please try again.</string>
   <string name="app_version">App Version: %1$s</string>
+  <string name="appearance_title">Appearance</string>
+  <string name="appearance_subtitle">Choose how Hopply looks on this device</string>
+  <string name="appearance_light">Light</string>
+  <string name="appearance_system">System</string>
+  <string name="appearance_dark">Dark</string>
   <string name="remove_local_data">Remove this account from this device</string>
   <string name="feature_lab">Feature Lab</string>
   <string name="feature_lab_subtitle">Advanced controls. Changes sync across your devices.</string>

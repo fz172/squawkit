@@ -24,7 +24,9 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
+import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
+import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
@@ -50,7 +52,9 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalBrowserHistoryApi::class)
 @Composable
 fun WebApp() {
-  WingslogTheme {
+  val appearanceController: AppearanceController = koinInject()
+  val appearanceMode by appearanceController.mode.collectAsState()
+  WingslogTheme(darkTheme = appearanceMode.resolveDarkTheme()) {
     Surface(
       modifier = Modifier.fillMaxSize(),
       color = MaterialTheme.colorScheme.background,
