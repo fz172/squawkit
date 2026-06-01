@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.DropdownMenu
@@ -56,6 +55,9 @@ import dev.fanfly.wingslog.core.ui.common.compose.AvatarIcon
 import dev.fanfly.wingslog.core.ui.common.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.layoutTierFor
+import org.jetbrains.compose.resources.painterResource
+import wingslog.core.ui.generated.resources.ic_launcher_foreground
+import wingslog.core.ui.generated.resources.Res as UiRes
 
 /** Lightweight aircraft projection used by the shell's switcher. */
 data class ShellAircraft(
@@ -76,7 +78,12 @@ enum class ShellSection(val label: String, val icon: ImageVector) {
 }
 
 private val PER_AIRCRAFT_SECTIONS =
-  listOf(ShellSection.DASHBOARD, ShellSection.TASKS, ShellSection.LOGS, ShellSection.SQUAWKS)
+  listOf(
+    ShellSection.DASHBOARD,
+    ShellSection.SQUAWKS,
+    ShellSection.TASKS,
+    ShellSection.LOGS,
+  )
 
 /** Plain UI state for [AdaptiveAppShell]; produced by a host-side ViewModel. */
 data class AdaptiveShellUiState(
@@ -127,7 +134,8 @@ fun AdaptiveAppShell(
 ) {
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
-    val content: @Composable () -> Unit = { sectionContent(state.section, state.selectedAircraftId) }
+    val content: @Composable () -> Unit =
+      { sectionContent(state.section, state.selectedAircraftId) }
     CompositionLocalProvider(LocalLayoutTier provides tier) {
       ShellForTier(
         tier = tier,
@@ -160,32 +168,33 @@ private fun ShellForTier(
   fleetLanding: @Composable (onAircraftClick: (String) -> Unit) -> Unit,
   content: @Composable () -> Unit,
 ) {
-    when {
-      tier == LayoutTier.COMPACT && !state.entered ->
-        fleetLanding(onEnterAircraft)
+  when {
+    tier == LayoutTier.COMPACT && !state.entered ->
+      fleetLanding(onEnterAircraft)
 
-      tier.hasFullSidebar ->
-        SidebarShell(
-          state = state,
-          onSelectSection = onSelectSection,
-          onSelectAircraft = onSelectAircraft,
-          onOpenSettings = onOpenSettings,
-          onAddAircraft = onAddAircraft,
-          onEditAircraft = onEditAircraft,
-          content = content,
-        )
+    tier.hasFullSidebar ->
+      SidebarShell(
+        state = state,
+        onSelectSection = onSelectSection,
+        onSelectAircraft = onSelectAircraft,
+        onOpenSettings = onOpenSettings,
+        onAddAircraft = onAddAircraft,
+        onEditAircraft = onEditAircraft,
+        content = content,
+      )
 
-      else ->
-        ScaffoldShell(
-          tier = tier,
-          state = state,
-          onSelectSection = onSelectSection,
-          onSelectAircraft = onSelectAircraft,
-          onExitToFleet = onExitToFleet,
-          onEditAircraft = onEditAircraft,
-          content = content,
-        )
-    }
+    else ->
+      ScaffoldShell(
+        tier = tier,
+        state = state,
+        onSelectSection = onSelectSection,
+        onSelectAircraft = onSelectAircraft,
+        onOpenSettings = onOpenSettings,
+        onExitToFleet = onExitToFleet,
+        onEditAircraft = onEditAircraft,
+        content = content,
+      )
+  }
 }
 
 /* ---------------------------------------------------------------------------------------------- */
@@ -211,7 +220,10 @@ private fun SidebarShell(
       onOpenAccount = onOpenSettings,
     )
     VerticalDivider()
-    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+    Box(
+      modifier = Modifier.weight(1f)
+        .fillMaxHeight()
+    ) {
       ShellContent(
         state = state,
         showBack = false,
@@ -234,18 +246,31 @@ private fun WingsSidebar(
   onOpenAccount: () -> Unit,
 ) {
   Surface(
-    modifier = Modifier.fillMaxHeight().width(264.dp),
+    modifier = Modifier.fillMaxHeight()
+      .width(264.dp),
     color = MaterialTheme.colorScheme.surface,
   ) {
-    Column(modifier = Modifier.fillMaxHeight().padding(vertical = 12.dp)) {
+    Column(
+      modifier = Modifier.fillMaxHeight()
+        .padding(vertical = 12.dp)
+    ) {
       // Brand
       Row(
         modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        Icon(Icons.Filled.Flight, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.width(10.dp))
-        Text("Hopply", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Icon(
+          painter = painterResource(UiRes.drawable.ic_launcher_foreground),
+          contentDescription = null,
+          modifier = Modifier.size(44.dp),
+          tint = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+          "Hopply",
+          style = MaterialTheme.typography.titleLarge,
+          fontWeight = FontWeight.Bold
+        )
       }
 
       SidebarSwitcher(
@@ -257,7 +282,10 @@ private fun WingsSidebar(
 
       SidebarLabel("This aircraft")
       PER_AIRCRAFT_SECTIONS.forEach { section ->
-        SidebarItem(section, selected = state.section == section, onClick = { onSelectSection(section) })
+        SidebarItem(
+          section,
+          selected = state.section == section,
+          onClick = { onSelectSection(section) })
       }
 
       Spacer(Modifier.weight(1f))
@@ -266,7 +294,7 @@ private fun WingsSidebar(
       NavigationDrawerItem(
         label = {
           Text(
-            state.accountName ?: "Account",
+            accountLabel(state),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
           )
@@ -297,7 +325,11 @@ private fun SidebarLabel(text: String) {
 }
 
 @Composable
-private fun SidebarItem(section: ShellSection, selected: Boolean, onClick: () -> Unit) {
+private fun SidebarItem(
+  section: ShellSection,
+  selected: Boolean,
+  onClick: () -> Unit
+) {
   NavigationDrawerItem(
     label = { Text(section.label) },
     icon = { Icon(section.icon, contentDescription = null) },
@@ -332,9 +364,14 @@ private fun SidebarSwitcher(
             state.selectedAircraft?.tail ?: "Select aircraft",
             style = MaterialTheme.typography.titleSmall,
           )
-          state.selectedAircraft?.name?.takeIf { it.isNotBlank() }?.let {
-            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-          }
+          state.selectedAircraft?.name?.takeIf { it.isNotBlank() }
+            ?.let {
+              Text(
+                it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+              )
+            }
         }
         Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
       }
@@ -359,6 +396,7 @@ private fun ScaffoldShell(
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
   onSelectAircraft: (String) -> Unit,
+  onOpenSettings: () -> Unit,
   onExitToFleet: () -> Unit,
   onEditAircraft: (() -> Unit)?,
   content: @Composable () -> Unit,
@@ -369,11 +407,30 @@ private fun ScaffoldShell(
     layoutType = navType,
     navigationSuiteItems = {
       ShellSection.entries.forEach { s ->
+        val isAccount = s == ShellSection.SETTINGS
         item(
           selected = s == state.section,
-          onClick = { onSelectSection(s) },
-          icon = { Icon(s.icon, contentDescription = null) },
-          label = { Text(s.label) },
+          onClick = if (isAccount) onOpenSettings else {
+            { onSelectSection(s) }
+          },
+          icon = {
+            if (isAccount) {
+              AvatarIcon(
+                displayName = state.accountName,
+                photoUri = state.accountPhotoUrl,
+                size = 28.dp,
+              )
+            } else {
+              Icon(s.icon, contentDescription = null)
+            }
+          },
+          label = {
+            Text(
+              if (isAccount) accountLabel(state) else s.label,
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis,
+            )
+          },
         )
       }
     },
@@ -411,11 +468,20 @@ private fun ShellContent(
   Scaffold(
     topBar = {
       TopAppBar(
-        title = { Text(state.section.label) },
+        title = {
+          Text(
+            if (state.section == ShellSection.SETTINGS) accountLabel(state) else state.section.label,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
+        },
         navigationIcon = {
           if (showBack) {
             IconButton(onClick = onExitToFleet) {
-              Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to fleet")
+              Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back to fleet"
+              )
             }
           }
         },
@@ -433,11 +499,17 @@ private fun ShellContent(
       )
     },
   ) { padding ->
-    Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+    Box(
+      modifier = Modifier.fillMaxSize()
+        .padding(padding)
+    ) {
       content()
     }
   }
 }
+
+private fun accountLabel(state: AdaptiveShellUiState): String =
+  state.accountName?.takeIf { it.isNotBlank() } ?: "Account"
 
 @Composable
 private fun TopBarSwitcher(

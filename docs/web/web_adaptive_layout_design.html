@@ -85,7 +85,7 @@
   <strong>refactor</strong>, and <strong>remove</strong> in the current layout system, and how to switch
   between the mobile single-column layout and the adaptive system at runtime.</p>
   <div class="meta">
-    <span class="tag status">Status: M5 landed; M6 planned</span>
+    <span class="tag status">Status: M7 landed; M8 planned</span>
     <span class="tag">Target: web + tablet (iPad, Android tablets)</span>
     <span class="tag">Compose Multiplatform 1.11 · Material3 1.9</span>
     <span class="tag">Source: Hopply Web.html handoff</span>
@@ -503,10 +503,9 @@ cards at COMPACT. Add-log via adaptive dialog/sheet.</p>
 <h4>Settings (global)</h4>
 <p>Profile card + appearance (theme switch) + time source + notifications + technicians + sync +
 <strong>Export</strong> (entry point lives here). Reading-width single column; no second pane.
-<strong>Current implementation gap:</strong> <code>ShellSection.SETTINGS</code> still renders
-<code>SettingsSectionPlaceholder</code>, whose button pushes the legacy standalone
-<code>SettingsScreen</code>. M6 replaces that escape hatch with native settings content inside the
-adaptive shell.</p>
+<strong>Current implementation:</strong> <code>ShellSection.SETTINGS</code> renders native
+<code>SettingsContent</code> inside the adaptive shell; secondary settings flows still use existing
+routes.</p>
 <h4>Export</h4>
 <p>Config column + sticky live summary at MEDIUM+; stacked at COMPACT. Works as a page or a modal.</p>
 
@@ -521,7 +520,7 @@ adaptive shell.</p>
   <tr><td><strong>M4 — Overlays</strong> <span class="pill reuse">landed (partial)</span><br><a href="https://github.com/fz172/wingslog/commit/f69fc9ee" style="font-family:var(--mono);font-size:11px">f69fc9ee</a></td><td>Shared <code>DetailSheet</code> is now adaptive (bottom sheet on COMPACT → end-drawer over a scrim on MEDIUM+), upgrading task/log/squawk detail overlays at once. Driven by a new <code>LocalLayoutTier</code> the shell publishes (so overlays in their own window get the right tier; defaults to COMPACT off-shell). <em>Add/edit forms still open as full-screen routes — rendering them as centered dialogs on wide is split out into M7.</em></td><td>✅ Detail drawer/sheet by tier (compiles Android/JS/iOS, tests pass). Edit-as-dialog → M7.</td></tr>
   <tr><td><strong>M5 — Wide affordances</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/e7bfa5bd" style="font-family:var(--mono);font-size:11px">e7bfa5bd</a> · <a href="https://github.com/fz172/wingslog/commit/75b2d27e" style="font-family:var(--mono);font-size:11px">75b2d27e</a> · <a href="https://github.com/fz172/wingslog/commit/aa5af6b3" style="font-family:var(--mono);font-size:11px">aa5af6b3</a> · <a href="https://github.com/fz172/wingslog/commit/5b05f158" style="font-family:var(--mono);font-size:11px">5b05f158</a></td><td><strong>Done:</strong> task &amp; squawk card lists become 2-column grids on EXPANDED/LARGE (<code>AdaptiveCardList</code> + <code>LayoutTier.cardColumns</code>, keyed off <code>LocalLayoutTier</code>; legacy stays single-column). LARGE dashboard keeps aircraft data and maintenance summary full-width, then uses <code>DashboardLowerGrid</code> with Recent Activity on the left and a 320dp Next Due/Open Squawks column on the right. Logs use <code>MaintenanceLogTable</code> on MEDIUM+ and cards on COMPACT. Export setup uses a two-pane configuration + summary/action layout above 860dp with the compact bottom action preserved at narrower widths.</td><td>✅ Dashboard lower grid, logs table, and export pane compile on Android/JS; web development bundle builds. iOS compile passed across the M5 slice.</td></tr>
   <tr><td><strong>M6 — Native Settings section</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/a3efe9df" style="font-family:var(--mono);font-size:11px">a3efe9df</a></td><td><code>SettingsScreen</code> split into reusable <code>SettingsContent</code> (profile card, technician profiles, sync/cloud backup, Export entry, Feature Lab, account action, app version; Reading-width capped, own snackbar + upgrade dialog, no chrome) plus a thin legacy scaffold wrapper. The hosts render <code>SettingsContent</code> for <code>ShellSection.SETTINGS</code> via the existing <code>sectionContent</code> slot (mapped at the host boundary where <code>feature:settings</code> is a legal dep). <code>AdaptiveShellViewModel.openSettings()</code> selects SETTINGS + sets <code>entered</code>, so the sidebar account footer and the COMPACT fleet-landing settings action open the native section instead of pushing the standalone route. Secondary flows (Sync, Feature Lab, technicians, export) still push existing routes. <em>Design's "Appearance"/theme toggle omitted — no theme-preference infra yet.</em></td><td>✅ Settings renders natively in the shell (no placeholder, no standalone hop); Reading-width capped; COMPACT bottom nav / MEDIUM+ rail+sidebar preserved. Compiles Android/JS/iOS; VM tested.</td></tr>
-  <tr><td><strong>M7 — Edit-as-dialog</strong></td><td>Add/edit forms (task, log, squawk, aircraft) open as centered dialogs on MEDIUM+ instead of full-screen routes; full-screen on COMPACT. Carried over from M4.</td><td>Forms are dialogs on wide, full-screen on phone, same content</td></tr>
+  <tr><td><strong>M7 — Edit-as-dialog</strong> <span class="pill reuse">landed</span></td><td>Add/edit forms (task, log, squawk, aircraft) now use Navigation Compose dialog destinations in both hosts, wrapped by shared <code>AdaptiveFormDialogFrame</code>. COMPACT keeps a full-window frame so the existing forms behave like full-screen routes; MEDIUM+ constrains the same content in a centered dialog over the previous destination.</td><td>✅ Forms are dialogs on wide, full-screen on phone, same content. Compiles Android/JS/iOS.</td></tr>
   <tr><td><strong>M8 — Flip &amp; cleanup</strong></td><td>Enable flag all tiers; delete legacy graph wiring; retire FAB-on-wide</td><td>Single shell path; legacy code removed</td></tr>
 </table>
 
@@ -543,7 +542,7 @@ adaptive shell.</p>
   WingsLog (Hopply) · Adaptive Layout Redesign plan · derived from the <em>Hopply Web</em> design handoff
   (<code>Hopply Web.html</code>, <code>web/theme.css</code>, <code>chats/chat5.md</code>) and a current-state
   audit of <code>AppEntry.kt</code>, <code>Screen.kt</code>, and <code>core/ui/.../AdaptiveLayout.kt</code>.
-  Status: <strong>M5 landed; M6 planned</strong>. Keep commit hashes and milestone status updated as the
+  Status: <strong>M7 landed; M8 planned</strong>. Keep commit hashes and milestone status updated as the
   adaptive shell continues to land.
 </div>
 
