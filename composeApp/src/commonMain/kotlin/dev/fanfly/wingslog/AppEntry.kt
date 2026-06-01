@@ -9,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
@@ -18,28 +19,23 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
-import androidx.compose.ui.window.DialogProperties
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.common.compose.AdaptiveFormDialogFrame
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
-import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.shell.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.shell.ShellSection
+import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
-import dev.fanfly.wingslog.feature.settings.SettingsContent
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
-import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
-import dev.fanfly.wingslog.feature.aircraft.dashboard.AircraftOverviewScreen
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
+import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
-import dev.fanfly.wingslog.feature.settings.SettingsScreen
+import dev.fanfly.wingslog.feature.settings.SettingsContent
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
@@ -55,9 +51,6 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 private const val GRAPH_AUTH = "graph_auth"
-private const val GRAPH_FLEET = "graph_fleet"
-private const val GRAPH_AIRCRAFT = "graph_aircraft"
-private const val GRAPH_SETTINGS = "graph_settings"
 private const val GRAPH_SHELL = "graph_shell"
 
 @Composable
@@ -67,8 +60,6 @@ fun AppEntry() {
   val authManager: AuthManager = koinInject()
   val firebaseAuth: FirebaseAuth = koinInject()
   val dogfoodExts: DogfoodFeatureExtensions = koinInject()
-  val featureLabManager: FeatureLabManager = koinInject()
-  val flags by featureLabManager.observe().collectAsState(FeatureFlags())
   val scope = rememberCoroutineScope()
 
   if (health.isCorrupted) {
@@ -107,11 +98,10 @@ fun AppEntry() {
         navController,
         startDestination = GRAPH_AUTH
       ) {
-        authGraph(navController, adaptiveShellEnabled = { flags.adaptiveShellEnabled })
-        fleetGraph(navController)
-        aircraftGraph(navController)
-        settingsGraph(navController, dogfoodExts)
+        authGraph(navController)
         shellGraph(navController)
+        formDialogs(navController)
+        secondaryRoutes(navController, dogfoodExts)
       }
     }
   }
@@ -119,7 +109,6 @@ fun AppEntry() {
 
 private fun NavGraphBuilder.authGraph(
   navController: NavController,
-  adaptiveShellEnabled: () -> Boolean,
 ) {
   navigation(
     startDestination = Screen.Login.route,
@@ -129,10 +118,7 @@ private fun NavGraphBuilder.authGraph(
       // The whole sign-in + onboarding flow now lives in feature/login as AuthFlow.
       AuthFlow(
         onComplete = {
-          // Behind the adaptiveShellEnabled flag, land authenticated users in the new adaptive
-          // shell instead of the legacy fleet stack. Default path is unchanged.
-          val destination = if (adaptiveShellEnabled()) GRAPH_SHELL else GRAPH_FLEET
-          navController.navigate(destination) {
+          navController.navigate(GRAPH_SHELL) {
             popUpTo(GRAPH_AUTH) { inclusive = true }
           }
         },
@@ -185,187 +171,145 @@ private fun NavGraphBuilder.shellGraph(navController: NavController) {
   }
 }
 
-private fun NavGraphBuilder.fleetGraph(navController: NavController) {
-  navigation(
-    startDestination = Screen.Dashboard.route,
-    route = GRAPH_FLEET
+private fun NavGraphBuilder.formDialogs(navController: NavController) {
+  dialog(
+    route = Screen.AddAircraft.route,
+    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
   ) {
-    composable(Screen.Dashboard.route) {
-      DashboardScreen(
-        onOpenSettings = { navController.navigate(GRAPH_SETTINGS) },
-        onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
-        onAircraftClick = { aircraftId ->
-          navController.navigate(
-            Screen.MaintenanceOverview.createRoute(
-              aircraftId
-            )
-          )
-        },
-      )
+    AdaptiveFormDialogFrame {
+      EditAircraftScreen(navController = navController)
     }
-    dialog(
-      route = Screen.AddAircraft.route,
-      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-      AdaptiveFormDialogFrame {
-        EditAircraftScreen(navController = navController)
-      }
+  }
+  dialog(
+    route = Screen.EditAircraft.route,
+    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+      type = NavType.StringType
+      nullable = true
+    }),
+    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+  ) {
+    AdaptiveFormDialogFrame {
+      EditAircraftScreen(navController = navController)
     }
-    dialog(
-      route = Screen.EditAircraft.route,
-      arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-        type = NavType.StringType
-        nullable = true
-      }),
-      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-      AdaptiveFormDialogFrame {
-        EditAircraftScreen(navController = navController)
-      }
+  }
+  dialog(
+    route = Screen.AddMaintenanceTask.route,
+    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+      type = NavType.StringType
+    }),
+    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+  ) {
+    AdaptiveFormDialogFrame {
+      AddTaskRoute(navController = navController)
+    }
+  }
+  dialog(
+    route = Screen.EditMaintenanceTask.route,
+    arguments = listOf(
+      navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+      navArgument(Screen.CARD_ID) { type = NavType.StringType },
+    ),
+    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+  ) {
+    AdaptiveFormDialogFrame {
+      EditTaskRoute(navController = navController)
+    }
+  }
+  dialog(
+    route = Screen.AddMaintenanceLog.route,
+    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+      type = NavType.StringType
+    }),
+    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+  ) {
+    AdaptiveFormDialogFrame {
+      MaintenanceLogFormScreen(navController = navController)
+    }
+  }
+  dialog(
+    route = Screen.EditMaintenanceLog.route,
+    arguments = listOf(
+      navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+      navArgument(Screen.LOG_ID) { type = NavType.StringType },
+    ),
+    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+  ) {
+    AdaptiveFormDialogFrame {
+      MaintenanceLogFormScreen(navController = navController)
+    }
+  }
+  dialog(
+    route = Screen.AddSquawk.route,
+    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+      type = NavType.StringType
+    }),
+    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+  ) {
+    AdaptiveFormDialogFrame {
+      AddSquawkRoute(navController = navController)
+    }
+  }
+  dialog(
+    route = Screen.EditSquawk.route,
+    arguments = listOf(
+      navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+      navArgument(Screen.SQUAWK_ID) { type = NavType.StringType },
+    ),
+    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+  ) {
+    AdaptiveFormDialogFrame {
+      EditSquawkRoute(navController = navController)
     }
   }
 }
 
-private fun NavGraphBuilder.aircraftGraph(navController: NavController) {
-  navigation(
-    startDestination = Screen.MaintenanceOverview.route,
-    route = GRAPH_AIRCRAFT
-  ) {
-    composable(
-      route = Screen.MaintenanceOverview.route,
-      arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-        type = NavType.StringType
-      }),
-    ) {
-      AircraftOverviewScreen(navController = navController)
-    }
-    dialog(
-      route = Screen.AddMaintenanceTask.route,
-      arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-        type = NavType.StringType
-      }),
-      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-      AdaptiveFormDialogFrame {
-        AddTaskRoute(navController = navController)
-      }
-    }
-    dialog(
-      route = Screen.EditMaintenanceTask.route,
-      arguments = listOf(
-        navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
-        navArgument(Screen.CARD_ID) { type = NavType.StringType },
-      ),
-      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-      AdaptiveFormDialogFrame {
-        EditTaskRoute(navController = navController)
-      }
-    }
-    dialog(
-      route = Screen.AddMaintenanceLog.route,
-      arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-        type = NavType.StringType
-      }),
-      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-      AdaptiveFormDialogFrame {
-        MaintenanceLogFormScreen(navController = navController)
-      }
-    }
-    dialog(
-      route = Screen.EditMaintenanceLog.route,
-      arguments = listOf(
-        navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
-        navArgument(Screen.LOG_ID) { type = NavType.StringType },
-      ),
-      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-      AdaptiveFormDialogFrame {
-        MaintenanceLogFormScreen(navController = navController)
-      }
-    }
-    dialog(
-      route = Screen.AddSquawk.route,
-      arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-        type = NavType.StringType
-      }),
-      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-      AdaptiveFormDialogFrame {
-        AddSquawkRoute(navController = navController)
-      }
-    }
-    dialog(
-      route = Screen.EditSquawk.route,
-      arguments = listOf(
-        navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
-        navArgument(Screen.SQUAWK_ID) { type = NavType.StringType },
-      ),
-      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-      AdaptiveFormDialogFrame {
-        EditSquawkRoute(navController = navController)
-      }
-    }
-  }
-}
-
-private fun NavGraphBuilder.settingsGraph(
+private fun NavGraphBuilder.secondaryRoutes(
   navController: NavController,
   dogfoodExts: DogfoodFeatureExtensions
 ) {
-  navigation(
-    startDestination = Screen.Settings.route,
-    route = GRAPH_SETTINGS
-  ) {
-    composable(Screen.Settings.route) {
-      SettingsScreen(navController = navController)
-    }
-    composable(Screen.SyncSettings.route) {
-      SyncSettingsScreen(navController = navController)
-    }
-    composable(Screen.ExportLogs.route) {
-      ExportSelectionRoute(
-        navController = navController,
-        onNavigateToHistory = { navController.navigate(Screen.ExportHistory.route) },
-      )
-    }
-    composable(Screen.ExportHistory.route) {
-      ExportHistoryRoute(navController = navController)
-    }
-    composable(Screen.FeatureLab.route) {
-      FeatureLabScreen(
-        navController = navController,
-        dogfoodContent = { dogfoodExts.FeatureLabExtra(navController) },
-      )
-    }
-    dogfoodExts.registerRoutes(this, navController)
-    composable(Screen.ManageTechnicians.route) {
-      val viewModel = koinViewModel<TechnicianListViewModel>()
-      TechnicianListScreen(
-        viewModel = viewModel,
-        onNavigateBack = { navController.popBackStack() },
-        onNavigateToEdit = { id ->
-          navController.navigate(
-            Screen.EditTechnician.createRoute(
-              id
-            )
+  composable(Screen.SyncSettings.route) {
+    SyncSettingsScreen(navController = navController)
+  }
+  composable(Screen.ExportLogs.route) {
+    ExportSelectionRoute(
+      navController = navController,
+      onNavigateToHistory = { navController.navigate(Screen.ExportHistory.route) },
+    )
+  }
+  composable(Screen.ExportHistory.route) {
+    ExportHistoryRoute(navController = navController)
+  }
+  composable(Screen.FeatureLab.route) {
+    FeatureLabScreen(
+      navController = navController,
+      dogfoodContent = { dogfoodExts.FeatureLabExtra(navController) },
+    )
+  }
+  dogfoodExts.registerRoutes(this, navController)
+  composable(Screen.ManageTechnicians.route) {
+    val viewModel = koinViewModel<TechnicianListViewModel>()
+    TechnicianListScreen(
+      viewModel = viewModel,
+      onNavigateBack = { navController.popBackStack() },
+      onNavigateToEdit = { id ->
+        navController.navigate(
+          Screen.EditTechnician.createRoute(
+            id
           )
-        },
-      )
-    }
-    composable(
-      route = Screen.EditTechnician.route,
-      arguments = listOf(navArgument(Screen.TECHNICIAN_ID) {
-        type = NavType.StringType
-        nullable = true
-      }),
-    ) {
-      EditTechnicianScreen(
-        viewModel = koinViewModel(),
-        onNavigateBack = { navController.popBackStack() },
-      )
-    }
+        )
+      },
+    )
+  }
+  composable(
+    route = Screen.EditTechnician.route,
+    arguments = listOf(navArgument(Screen.TECHNICIAN_ID) {
+      type = NavType.StringType
+      nullable = true
+    }),
+  ) {
+    EditTechnicianScreen(
+      viewModel = koinViewModel(),
+      onNavigateBack = { navController.popBackStack() },
+    )
   }
 }

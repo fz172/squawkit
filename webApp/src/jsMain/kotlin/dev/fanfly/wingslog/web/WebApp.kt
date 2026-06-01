@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.ExperimentalBrowserHistoryApi
 import androidx.navigation.NavType
 import androidx.navigation.bindToBrowserNavigation
@@ -19,23 +20,18 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.compose.ui.window.DialogProperties
 import dev.fanfly.wingslog.core.ui.common.compose.AdaptiveFormDialogFrame
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.shell.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.shell.ShellSection
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
-import dev.fanfly.wingslog.feature.aircraft.dashboard.AircraftOverviewScreen
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.SettingsContent
-import dev.fanfly.wingslog.feature.settings.SettingsScreen
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
@@ -47,7 +43,6 @@ import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalBrowserHistoryApi::class)
@@ -60,8 +55,6 @@ fun WebApp() {
     ) {
       val navController = rememberNavController()
       var browserNavigationBound by remember { mutableStateOf(false) }
-      val featureLabManager: FeatureLabManager = koinInject()
-      val flags by featureLabManager.observe().collectAsState(FeatureFlags())
 
       LaunchedEffect(browserNavigationBound) {
         if (browserNavigationBound) {
@@ -76,11 +69,7 @@ fun WebApp() {
         composable(Screen.Login.route) {
           AuthFlow(
             onComplete = {
-              // Behind the adaptiveShellEnabled flag, land in the adaptive shell instead of the
-              // legacy single-column dashboard. Default path is unchanged.
-              val destination =
-                if (flags.adaptiveShellEnabled) Screen.AdaptiveShell.route else Screen.Dashboard.route
-              navController.navigate(destination) {
+              navController.navigate(Screen.AdaptiveShell.route) {
                 popUpTo(Screen.Login.route) { inclusive = true }
               }
               browserNavigationBound = true
@@ -123,19 +112,6 @@ fun WebApp() {
             },
           )
         }
-        composable(Screen.Dashboard.route) {
-          DashboardScreen(
-            onOpenSettings = { navController.navigate(Screen.Settings.route) },
-            onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
-            onAircraftClick = { aircraftId ->
-              navController.navigate(
-                Screen.MaintenanceOverview.createRoute(
-                  aircraftId
-                )
-              )
-            },
-          )
-        }
         dialog(
           route = Screen.AddAircraft.route,
           dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
@@ -155,16 +131,6 @@ fun WebApp() {
           AdaptiveFormDialogFrame {
             EditAircraftScreen(navController = navController)
           }
-        }
-        composable(
-          route = Screen.MaintenanceOverview.route,
-          arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-            type = NavType.StringType
-          }),
-        ) {
-          AircraftOverviewScreen(
-            navController = navController,
-          )
         }
         dialog(
           route = Screen.AddMaintenanceTask.route,
@@ -246,9 +212,6 @@ fun WebApp() {
               navController = navController,
             )
           }
-        }
-        composable(Screen.Settings.route) {
-          SettingsScreen(navController = navController, onExportLogs = null)
         }
         composable(Screen.SyncSettings.route) {
           SyncSettingsScreen(navController = navController)

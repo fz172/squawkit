@@ -23,6 +23,4 @@
   <string name="feature_lab_export_email_subtitle">Upload exports to the cloud and email a download link. When off, exports stay on this device only.</string>
   <string name="feature_lab_account_upgrade_title">Account Upgrade</string>
   <string name="feature_lab_account_upgrade_subtitle">Let guest users create an account and sync their on-device records to it.</string>
-  <string name="feature_lab_adaptive_shell_title">Adaptive Layout</string>
-  <string name="feature_lab_adaptive_shell_subtitle">Use the adaptive web/tablet shell (sidebar &amp; multi-pane) on large screens instead of the single-column layout.</string>
 </resources>

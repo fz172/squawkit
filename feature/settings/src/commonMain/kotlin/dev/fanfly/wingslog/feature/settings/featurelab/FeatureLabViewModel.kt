@@ -46,10 +46,4 @@ class FeatureLabViewModel(
       featureLabManager.update(_flags.value.copy(accountUpgradeEnabled = enabled))
     }
   }
-
-  fun setAdaptiveShellEnabled(enabled: Boolean) {
-    viewModelScope.launch {
-      featureLabManager.update(_flags.value.copy(adaptiveShellEnabled = enabled))
-    }
-  }
 }
