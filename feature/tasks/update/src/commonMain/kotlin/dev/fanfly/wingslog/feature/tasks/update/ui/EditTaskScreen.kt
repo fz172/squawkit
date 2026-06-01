@@ -22,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
@@ -143,6 +145,7 @@ fun EditTaskScreen(
   val coroutineScope = rememberCoroutineScope()
 
   Scaffold(
+    containerColor = MaterialTheme.colorScheme.background,
     topBar = {
       Column {
         ConstrainedTopBar {
@@ -161,7 +164,12 @@ fun EditTaskScreen(
                   contentDescription = stringResource(CoreRes.string.back)
                 )
               }
-            })
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+              containerColor = Color.Transparent,
+              scrolledContainerColor = Color.Transparent,
+            ),
+          )
         }
         Box(
           modifier = Modifier.fillMaxWidth(),

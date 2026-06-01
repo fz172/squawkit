@@ -14,12 +14,15 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import androidx.compose.ui.window.DialogProperties
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
+import dev.fanfly.wingslog.core.ui.common.compose.AdaptiveFormDialogFrame
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.shell.AdaptiveAppShell
@@ -200,17 +203,25 @@ private fun NavGraphBuilder.fleetGraph(navController: NavController) {
         },
       )
     }
-    composable(route = Screen.AddAircraft.route) {
-      EditAircraftScreen(navController = navController)
+    dialog(
+      route = Screen.AddAircraft.route,
+      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+      AdaptiveFormDialogFrame {
+        EditAircraftScreen(navController = navController)
+      }
     }
-    composable(
+    dialog(
       route = Screen.EditAircraft.route,
       arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
         type = NavType.StringType
         nullable = true
       }),
+      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-      EditAircraftScreen(navController = navController)
+      AdaptiveFormDialogFrame {
+        EditAircraftScreen(navController = navController)
+      }
     }
   }
 }
@@ -228,56 +239,74 @@ private fun NavGraphBuilder.aircraftGraph(navController: NavController) {
     ) {
       AircraftOverviewScreen(navController = navController)
     }
-    composable(
+    dialog(
       route = Screen.AddMaintenanceTask.route,
       arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
         type = NavType.StringType
       }),
+      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-      AddTaskRoute(navController = navController)
+      AdaptiveFormDialogFrame {
+        AddTaskRoute(navController = navController)
+      }
     }
-    composable(
+    dialog(
       route = Screen.EditMaintenanceTask.route,
       arguments = listOf(
         navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
         navArgument(Screen.CARD_ID) { type = NavType.StringType },
       ),
+      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-      EditTaskRoute(navController = navController)
+      AdaptiveFormDialogFrame {
+        EditTaskRoute(navController = navController)
+      }
     }
-    composable(
+    dialog(
       route = Screen.AddMaintenanceLog.route,
       arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
         type = NavType.StringType
       }),
+      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-      MaintenanceLogFormScreen(navController = navController)
+      AdaptiveFormDialogFrame {
+        MaintenanceLogFormScreen(navController = navController)
+      }
     }
-    composable(
+    dialog(
       route = Screen.EditMaintenanceLog.route,
       arguments = listOf(
         navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
         navArgument(Screen.LOG_ID) { type = NavType.StringType },
       ),
+      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-      MaintenanceLogFormScreen(navController = navController)
+      AdaptiveFormDialogFrame {
+        MaintenanceLogFormScreen(navController = navController)
+      }
     }
-    composable(
+    dialog(
       route = Screen.AddSquawk.route,
       arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
         type = NavType.StringType
       }),
+      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-      AddSquawkRoute(navController = navController)
+      AdaptiveFormDialogFrame {
+        AddSquawkRoute(navController = navController)
+      }
     }
-    composable(
+    dialog(
       route = Screen.EditSquawk.route,
       arguments = listOf(
         navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
         navArgument(Screen.SQUAWK_ID) { type = NavType.StringType },
       ),
+      dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-      EditSquawkRoute(navController = navController)
+      AdaptiveFormDialogFrame {
+        EditSquawkRoute(navController = navController)
+      }
     }
   }
 }
