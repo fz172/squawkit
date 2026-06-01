@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.feature.login.onboarding.OnboardingActions
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingPreferences
 import dev.fanfly.wingslog.feature.login.onboarding.WelcomeScreen
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -49,9 +50,11 @@ fun AuthFlow(
       onLoginSuccess = {
         // A returning user who already finished onboarding skips straight through.
         scope.launch {
-          if (firebaseAuth.currentUser?.displayName.orEmpty()
-              .isEmpty()
-          ) {
+          val accountName = firebaseAuth.currentUser?.displayName.orEmpty()
+          val localSelfName = actions.observeSelfName()
+            .firstOrNull()
+            .orEmpty()
+          if (accountName.isBlank() && localSelfName.isBlank()) {
             step = AuthStep.NameEntry
           } else if (!onboardingPreferences.checkHasSeenWelcome()) {
             step = AuthStep.Welcome
