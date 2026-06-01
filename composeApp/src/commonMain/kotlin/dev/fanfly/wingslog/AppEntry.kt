@@ -162,15 +162,6 @@ private fun NavGraphBuilder.shellGraph(navController: NavController) {
             onAircraftClick = onAircraftClick,
           )
         },
-        onEditAircraft = {
-          state.selectedAircraftId?.let {
-            navController.navigate(
-              Screen.EditAircraft.createRoute(
-                it
-              )
-            )
-          }
-        },
       )
     }
   }

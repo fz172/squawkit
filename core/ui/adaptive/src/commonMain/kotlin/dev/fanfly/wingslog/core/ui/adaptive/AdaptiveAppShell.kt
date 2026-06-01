@@ -53,9 +53,12 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
+import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /** Lightweight aircraft projection used by the shell's switcher. */
@@ -131,7 +134,6 @@ fun AdaptiveAppShell(
   onAddAircraft: () -> Unit,
   sectionContent: @Composable (section: ShellSection, aircraftId: String?) -> Unit,
   fleetLanding: @Composable (onAircraftClick: (String) -> Unit) -> Unit,
-  onEditAircraft: (() -> Unit)? = null,
 ) {
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
@@ -147,7 +149,6 @@ fun AdaptiveAppShell(
         onExitToFleet = onExitToFleet,
         onOpenSettings = onOpenSettings,
         onAddAircraft = onAddAircraft,
-        onEditAircraft = onEditAircraft,
         fleetLanding = fleetLanding,
         content = content,
       )
@@ -165,7 +166,6 @@ private fun ShellForTier(
   onExitToFleet: () -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
-  onEditAircraft: (() -> Unit)?,
   fleetLanding: @Composable (onAircraftClick: (String) -> Unit) -> Unit,
   content: @Composable () -> Unit,
 ) {
@@ -180,7 +180,6 @@ private fun ShellForTier(
         onSelectAircraft = onSelectAircraft,
         onOpenSettings = onOpenSettings,
         onAddAircraft = onAddAircraft,
-        onEditAircraft = onEditAircraft,
         content = content,
       )
 
@@ -193,7 +192,6 @@ private fun ShellForTier(
         onOpenSettings = onOpenSettings,
         onExitToFleet = onExitToFleet,
         onAddAircraft = onAddAircraft,
-        onEditAircraft = onEditAircraft,
         content = content,
       )
   }
@@ -210,7 +208,6 @@ private fun SidebarShell(
   onSelectAircraft: (String) -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
-  onEditAircraft: (() -> Unit)?,
   content: @Composable () -> Unit,
 ) {
   Row(modifier = Modifier.fillMaxSize()) {
@@ -232,7 +229,6 @@ private fun SidebarShell(
         onExitToFleet = {},
         showTopBarSwitcher = false,
         onSelectAircraft = onSelectAircraft,
-        onEditAircraft = onEditAircraft,
         content = content,
       )
     }
@@ -390,39 +386,28 @@ private fun ScaffoldShell(
   onOpenSettings: () -> Unit,
   onExitToFleet: () -> Unit,
   onAddAircraft: () -> Unit,
-  onEditAircraft: (() -> Unit)?,
   content: @Composable () -> Unit,
 ) {
   NavigationSuiteScaffold(
     layoutType = NavigationSuiteType.NavigationBar,
     navigationSuiteItems = {
-      ShellSection.entries.forEach { s ->
-        val isAccount = s == ShellSection.SETTINGS
-        item(
-          selected = s == state.section,
-          onClick = if (isAccount) onOpenSettings else {
-            { onSelectSection(s) }
-          },
-          icon = {
-            if (isAccount) {
-              AvatarIcon(
-                displayName = state.accountName,
-                photoUri = state.accountPhotoUrl,
-                size = 28.dp,
-              )
-            } else {
+      ShellSection.entries.filter { it != ShellSection.SETTINGS }
+        .forEach { s ->
+          item(
+            selected = s == state.section,
+            onClick = { onSelectSection(s) },
+            icon = {
               Icon(s.icon, contentDescription = null)
-            }
-          },
-          label = {
-            Text(
-              if (isAccount) accountLabel(state) else s.label,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-            )
-          },
-        )
-      }
+            },
+            label = {
+              Text(
+                s.label,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+              )
+            },
+          )
+        }
     },
   ) {
     ShellContent(
@@ -435,7 +420,7 @@ private fun ScaffoldShell(
       showTopBarSwitcher = true,
       onSelectAircraft = onSelectAircraft,
       onAddAircraft = onAddAircraft,
-      onEditAircraft = onEditAircraft,
+      onOpenSettings = onOpenSettings,
       content = content,
     )
   }
@@ -454,7 +439,7 @@ private fun ShellContent(
   showTopBarSwitcher: Boolean,
   onSelectAircraft: (String) -> Unit,
   onAddAircraft: (() -> Unit)? = null,
-  onEditAircraft: (() -> Unit)?,
+  onOpenSettings: (() -> Unit)? = null,
   content: @Composable () -> Unit,
 ) {
   Scaffold(
@@ -484,6 +469,16 @@ private fun ShellContent(
               onSelectAircraft = onSelectAircraft,
               onAddAircraft = onAddAircraft,
             )
+          }
+          if (onOpenSettings != null && state.section != ShellSection.SETTINGS) {
+            IconButton(onClick = onOpenSettings) {
+              AvatarIcon(
+                displayName = state.accountName,
+                photoUri = state.accountPhotoUrl,
+                size = Spacing.huge,
+                contentDescription = stringResource(UiRes.string.settings),
+              )
+            }
           }
         },
       )
