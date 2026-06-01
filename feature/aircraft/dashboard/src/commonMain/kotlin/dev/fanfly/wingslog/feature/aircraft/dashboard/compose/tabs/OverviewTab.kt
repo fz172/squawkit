@@ -104,7 +104,10 @@ fun OverviewTab(
     Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
       AircraftDataCard(
         state.aircraft,
-        initiallyExpanded = overdueTasks.isEmpty()
+        initiallyExpanded = overdueTasks.isEmpty(),
+        onEditClick = onMutationAction?.let { mutate ->
+          { mutate(AircraftOverviewAction.EditClick(state.aircraft.id)) }
+        },
       )
     }
 
@@ -171,7 +174,10 @@ private fun LargeOverviewTab(
 
     AircraftDataCard(
       state.aircraft,
-      initiallyExpanded = overdueTasks.isEmpty()
+      initiallyExpanded = overdueTasks.isEmpty(),
+      onEditClick = onMutationAction?.let { mutate ->
+        { mutate(AircraftOverviewAction.EditClick(state.aircraft.id)) }
+      },
     )
 
     if (state.aogSquawks.isNotEmpty()) {

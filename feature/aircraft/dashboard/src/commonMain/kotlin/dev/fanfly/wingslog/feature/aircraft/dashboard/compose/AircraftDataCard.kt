@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +38,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.component_airframe
 import wingslog.core.sharedassets.generated.resources.component_engine
+import wingslog.core.sharedassets.generated.resources.edit
 import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
 import wingslog.feature.logs.viewing.generated.resources.aircraft_data
@@ -52,6 +54,7 @@ import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 fun AircraftDataCard(
   aircraft: Aircraft,
   initiallyExpanded: Boolean = true,
+  onEditClick: (() -> Unit)? = null,
 ) {
   var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
   val rotationState by animateFloatAsState(
@@ -142,6 +145,17 @@ fun AircraftDataCard(
               label = label,
               engine = engine
             )
+          }
+
+          if (onEditClick != null) {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.End,
+            ) {
+              TextButton(onClick = onEditClick) {
+                Text(text = stringResource(CoreRes.string.edit))
+              }
+            }
           }
         }
       }

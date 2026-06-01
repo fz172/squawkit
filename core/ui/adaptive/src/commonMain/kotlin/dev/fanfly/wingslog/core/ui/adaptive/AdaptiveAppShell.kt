@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.DropdownMenu
@@ -475,12 +474,6 @@ private fun ShellContent(
           }
         },
         actions = {
-          // Edit the current aircraft (per-aircraft sections only); Settings is global.
-          if (onEditAircraft != null && state.section != ShellSection.SETTINGS) {
-            IconButton(onClick = onEditAircraft) {
-              Icon(Icons.Filled.Edit, contentDescription = "Edit aircraft")
-            }
-          }
           if (showTopBarSwitcher) {
             TopBarSwitcher(state = state, onSelectAircraft = onSelectAircraft)
           }
