@@ -2,8 +2,14 @@ package dev.fanfly.wingslog.feature.fleet.viewing.viewmodel
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
+import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.ui.shell.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.gitlive.firebase.auth.AuthCredential
+import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,11 +25,33 @@ import org.junit.Test
 class AdaptiveShellViewModelTest {
 
   private val fleet = MutableStateFlow<List<Aircraft>>(emptyList())
+  private val self = MutableStateFlow<Technician?>(null)
   private val fleetManager = object : FleetManager {
     override fun observeFleetDashboard(): Flow<List<Aircraft>> = fleet
     override suspend fun updateAircraft(aircraft: Aircraft) = Result.success(true)
     override fun loadAircraft(id: String): Flow<Aircraft?> = MutableStateFlow(null)
     override suspend fun deleteAircraft(id: String) = Result.success(true)
+  }
+  private val technicianManager = object : TechnicianManager {
+    override fun observeTechnicians(): Flow<List<Technician>> = MutableStateFlow(emptyList())
+    override fun loadTechnician(id: String): Flow<Technician?> = MutableStateFlow(null)
+    override fun observeSelf(): Flow<Technician?> = self
+    override fun observeSelfId(): Flow<String?> = MutableStateFlow(null)
+    override suspend fun updateTechnician(technician: Technician) = Result.success(true)
+    override suspend fun deleteTechnician(id: String) = Result.success(true)
+    override suspend fun saveSelfName(name: String) = Result.success(Unit)
+    override suspend fun ensureSelfProfile(replaceExistingName: Boolean) = Result.success(Unit)
+  }
+  private val authManager = object : AuthManager {
+    override fun getCurrentUser(): FirebaseUser? = null
+    override suspend fun trySilentLogin(): FirebaseUser? = null
+    override suspend fun signInWithGoogle(): FirebaseUser? = null
+    override suspend fun signInAnonymously(): FirebaseUser? = null
+    override suspend fun logOut() = Unit
+    override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult =
+      AccountUpgradeResult.Cancelled
+    override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult =
+      AccountUpgradeResult.Cancelled
   }
 
   @Before fun setUp() = Dispatchers.setMain(StandardTestDispatcher())
@@ -33,10 +61,16 @@ class AdaptiveShellViewModelTest {
   private fun aircraft(id: String, tail: String, make: String = "Cessna", model: String = "172") =
     Aircraft(id = id, make = make, model = model, tail_number = tail)
 
+  private fun viewModel() = AdaptiveShellViewModel(
+    fleetManager = fleetManager,
+    technicianManager = technicianManager,
+    authManager = authManager,
+  )
+
   @Test
   fun mapsFleetAndSelectsFirstByDefault() = runTest {
     fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
-    val vm = AdaptiveShellViewModel(fleetManager)
+    val vm = viewModel()
     runCurrent()
 
     val s = vm.uiState.value
@@ -50,7 +84,7 @@ class AdaptiveShellViewModelTest {
   @Test
   fun keepsSelectionAcrossReemissionWhenStillPresent() = runTest {
     fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
-    val vm = AdaptiveShellViewModel(fleetManager)
+    val vm = viewModel()
     runCurrent()
     vm.selectAircraft("a2")
 
@@ -68,7 +102,7 @@ class AdaptiveShellViewModelTest {
   @Test
   fun enterAircraftSetsEnteredAndResetsToDashboard() = runTest {
     fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
-    val vm = AdaptiveShellViewModel(fleetManager)
+    val vm = viewModel()
     runCurrent()
     vm.selectSection(ShellSection.LOGS)
 
@@ -84,7 +118,7 @@ class AdaptiveShellViewModelTest {
 
   @Test
   fun selectSectionUpdatesSection() = runTest {
-    val vm = AdaptiveShellViewModel(fleetManager)
+    val vm = viewModel()
     runCurrent()
     vm.selectSection(ShellSection.SQUAWKS)
     assertThat(vm.uiState.value.section).isEqualTo(ShellSection.SQUAWKS)
@@ -92,7 +126,7 @@ class AdaptiveShellViewModelTest {
 
   @Test
   fun openSettingsSelectsSettingsAndEnters() = runTest {
-    val vm = AdaptiveShellViewModel(fleetManager)
+    val vm = viewModel()
     runCurrent()
 
     vm.openSettings()
@@ -100,5 +134,16 @@ class AdaptiveShellViewModelTest {
     assertThat(s.section).isEqualTo(ShellSection.SETTINGS)
     // entered so COMPACT shows the section view (with bottom bar) instead of the fleet landing.
     assertThat(s.entered).isTrue()
+  }
+
+  @Test
+  fun observesSelfProfileForSidebarAccountEntry() = runTest {
+    val vm = viewModel()
+    runCurrent()
+
+    self.value = Technician(id = "self", name = "Avery Park")
+    runCurrent()
+
+    assertThat(vm.uiState.value.accountName).isEqualTo("Avery Park")
   }
 }

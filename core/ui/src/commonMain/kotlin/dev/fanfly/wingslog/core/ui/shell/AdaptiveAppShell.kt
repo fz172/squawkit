@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
@@ -51,7 +50,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.common.compose.AvatarIcon
 import dev.fanfly.wingslog.core.ui.common.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.layoutTierFor
@@ -82,6 +83,9 @@ data class AdaptiveShellUiState(
   val aircraft: List<ShellAircraft> = emptyList(),
   val selectedAircraftId: String? = null,
   val section: ShellSection = ShellSection.DASHBOARD,
+  /** Current user's display name + photo, for the sidebar account/settings entry. */
+  val accountName: String? = null,
+  val accountPhotoUrl: String? = null,
   /**
    * Whether an aircraft has been opened from the fleet landing. Only meaningful on COMPACT, where
    * the landing page is the root; above phone the switcher selects in place and sections are always
@@ -256,20 +260,25 @@ private fun WingsSidebar(
         SidebarItem(section, selected = state.section == section, onClick = { onSelectSection(section) })
       }
 
-      Spacer(Modifier.height(8.dp))
-      SidebarLabel("Workspace")
-      SidebarItem(
-        ShellSection.SETTINGS,
-        selected = state.section == ShellSection.SETTINGS,
-        onClick = { onSelectSection(ShellSection.SETTINGS) },
-      )
-
       Spacer(Modifier.weight(1f))
       HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
+      // Combined account + settings entry: the user's avatar and name; opens the Settings section.
       NavigationDrawerItem(
-        label = { Text("Account") },
-        icon = { Icon(Icons.Filled.AccountCircle, contentDescription = null) },
-        selected = false,
+        label = {
+          Text(
+            state.accountName ?: "Account",
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
+        },
+        icon = {
+          AvatarIcon(
+            displayName = state.accountName,
+            photoUri = state.accountPhotoUrl,
+            size = 28.dp,
+          )
+        },
+        selected = state.section == ShellSection.SETTINGS,
         onClick = onOpenAccount,
         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
       )

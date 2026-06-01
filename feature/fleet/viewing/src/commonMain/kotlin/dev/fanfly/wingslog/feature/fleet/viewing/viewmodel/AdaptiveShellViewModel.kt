@@ -2,10 +2,12 @@ package dev.fanfly.wingslog.feature.fleet.viewing.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.ui.shell.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.shell.ShellAircraft
 import dev.fanfly.wingslog.core.ui.shell.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,12 +24,15 @@ import kotlinx.coroutines.launch
  */
 class AdaptiveShellViewModel(
   fleetManager: FleetManager,
+  private val technicianManager: TechnicianManager,
+  private val authManager: AuthManager,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(AdaptiveShellUiState())
   val uiState: StateFlow<AdaptiveShellUiState> = _uiState.asStateFlow()
 
   init {
+    observeSelf()
     viewModelScope.launch {
       fleetManager.observeFleetDashboard().collect { fleet ->
         _uiState.update { state ->
@@ -43,6 +48,23 @@ class AdaptiveShellViewModel(
             ?.takeIf { id -> mapped.any { it.id == id } }
             ?: mapped.firstOrNull()?.id
           state.copy(aircraft = mapped, selectedAircraftId = selected)
+        }
+      }
+    }
+  }
+
+  /** Current user's name + photo for the sidebar account/settings entry. */
+  private fun observeSelf() {
+    viewModelScope.launch {
+      technicianManager.observeSelf().collect { self ->
+        val user = authManager.getCurrentUser()
+        _uiState.update {
+          it.copy(
+            accountPhotoUrl = user?.photoURL,
+            accountName = self?.name?.takeIf { name -> name.isNotBlank() }
+              ?: user?.displayName?.takeIf { name -> name.isNotBlank() }
+              ?: user?.email?.takeIf { email -> email.isNotBlank() },
+          )
         }
       }
     }
