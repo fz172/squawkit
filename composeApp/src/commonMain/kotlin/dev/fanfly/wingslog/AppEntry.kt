@@ -141,7 +141,6 @@ private fun NavGraphBuilder.shellGraph(navController: NavController) {
         onSelectAircraft = viewModel::selectAircraft,
         onEnterAircraft = viewModel::enterAircraft,
         onExitToFleet = viewModel::exitToFleet,
-        // Settings is a native section in the shell now (M6) — no standalone-route hop.
         onOpenSettings = viewModel::openSettings,
         onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
         sectionContent = { section, aircraftId ->

@@ -192,6 +192,7 @@ private fun ShellForTier(
         onSelectAircraft = onSelectAircraft,
         onOpenSettings = onOpenSettings,
         onExitToFleet = onExitToFleet,
+        onAddAircraft = onAddAircraft,
         onEditAircraft = onEditAircraft,
         content = content,
       )
@@ -388,6 +389,7 @@ private fun ScaffoldShell(
   onSelectAircraft: (String) -> Unit,
   onOpenSettings: () -> Unit,
   onExitToFleet: () -> Unit,
+  onAddAircraft: () -> Unit,
   onEditAircraft: (() -> Unit)?,
   content: @Composable () -> Unit,
 ) {
@@ -432,6 +434,7 @@ private fun ScaffoldShell(
       // switch aircraft without returning to the fleet landing.
       showTopBarSwitcher = true,
       onSelectAircraft = onSelectAircraft,
+      onAddAircraft = onAddAircraft,
       onEditAircraft = onEditAircraft,
       content = content,
     )
@@ -450,6 +453,7 @@ private fun ShellContent(
   onExitToFleet: () -> Unit,
   showTopBarSwitcher: Boolean,
   onSelectAircraft: (String) -> Unit,
+  onAddAircraft: (() -> Unit)? = null,
   onEditAircraft: (() -> Unit)?,
   content: @Composable () -> Unit,
 ) {
@@ -474,8 +478,12 @@ private fun ShellContent(
           }
         },
         actions = {
-          if (showTopBarSwitcher) {
-            TopBarSwitcher(state = state, onSelectAircraft = onSelectAircraft)
+          if (showTopBarSwitcher && state.section != ShellSection.SETTINGS) {
+            TopBarSwitcher(
+              state = state,
+              onSelectAircraft = onSelectAircraft,
+              onAddAircraft = onAddAircraft,
+            )
           }
         },
       )
@@ -497,6 +505,7 @@ private fun accountLabel(state: AdaptiveShellUiState): String =
 private fun TopBarSwitcher(
   state: AdaptiveShellUiState,
   onSelectAircraft: (String) -> Unit,
+  onAddAircraft: (() -> Unit)?,
 ) {
   var open by remember { mutableStateOf(false) }
   Box {
@@ -509,7 +518,7 @@ private fun TopBarSwitcher(
       onDismiss = { open = false },
       state = state,
       onSelectAircraft = onSelectAircraft,
-      onAddAircraft = null,
+      onAddAircraft = onAddAircraft,
     )
   }
 }
