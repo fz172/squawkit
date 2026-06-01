@@ -18,9 +18,7 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -33,9 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.appinfo.getAppVersion
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -46,8 +42,6 @@ import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeUiState
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.Res
-import wingslog.core.ui.generated.resources.settings
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import wingslog.feature.settings.generated.resources.account_upgrade_error
 import wingslog.feature.settings.generated.resources.account_upgrade_login_cta
@@ -71,39 +65,10 @@ import wingslog.feature.technician.sharedassets.generated.resources.Res as Techn
 
 
 /**
- * Legacy standalone Settings route: the [SettingsContent] under its own scaffold + top bar. The
- * adaptive shell hosts [SettingsContent] directly (the shell provides the chrome), so this wrapper
- * is only used on the non-adaptive navigation path.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SettingsScreen(
-  navController: NavController,
-  onExportLogs: (() -> Unit)? = { navController.navigate(Screen.ExportLogs.route) },
-) {
-  Scaffold(
-    topBar = {
-      ConstrainedTopBar {
-        WingsLogTopAppBar(
-          title = stringResource(Res.string.settings),
-          onBackClick = { navController.popBackStack() },
-        )
-      }
-    },
-  ) { innerPadding ->
-    SettingsContent(
-      navController = navController,
-      onExportLogs = onExportLogs,
-      modifier = Modifier.padding(innerPadding),
-    )
-  }
-}
-
-/**
  * The settings body — profile card, technician profiles, sync/cloud backup, Export entry point,
- * Feature Lab, account action, and app version — with no chrome of its own. Reusable so the adaptive
- * shell can render it inside its own Settings section (M6) without pushing the standalone route.
- * Secondary flows still navigate via [navController] to their existing routes.
+ * Feature Lab, account action, and app version — with no chrome of its own. The adaptive shell
+ * renders it inside its Settings section. Secondary flows still navigate via [navController] to
+ * their existing routes.
  */
 @Composable
 fun SettingsContent(
@@ -123,7 +88,7 @@ fun SettingsContent(
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {
       navController.navigate(Screen.Login.route) {
-        popUpTo(Screen.Dashboard.route) { inclusive = true }
+        popUpTo(Screen.AdaptiveShell.route) { inclusive = true }
         launchSingleTop = true
       }
     }

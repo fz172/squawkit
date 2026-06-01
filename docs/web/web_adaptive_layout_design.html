@@ -83,9 +83,9 @@
   persistent sidebar on desktop, navigation rail on tablet, bottom bar on phone — driven by the
   <em>Hopply&nbsp;Web</em> design handoff. This document covers what to <strong>reuse</strong>,
   <strong>refactor</strong>, and <strong>remove</strong> in the current layout system, and how to switch
-  between the mobile single-column layout and the adaptive system at runtime.</p>
+    between compact and wide adaptive layouts at runtime.</p>
   <div class="meta">
-    <span class="tag status">Status: M7 landed; M8 planned</span>
+    <span class="tag status">Status: M8 landed</span>
     <span class="tag">Target: web + tablet (iPad, Android tablets)</span>
     <span class="tag">Compose Multiplatform 1.11 · Material3 1.9</span>
     <span class="tag">Source: Hopply Web.html handoff</span>
@@ -194,11 +194,12 @@ phone → tablet → desktop.”</p></blockquote>
 
 <!-- ============================================================= -->
 <h2 id="current"><span class="n">2</span>Current layout system — audit</h2>
-<p>What actually exists in the codebase today (verified against <code>AppEntry.kt</code>,
-<code>core/ui/.../navigation/Screen.kt</code>, and a repo-wide search):</p>
+  <p>What existed before this adaptive-layout sequence (verified against <code>AppEntry.kt</code>,
+    <code>core/ui/.../navigation/Screen.kt</code>, and a repo-wide search before M0):</p>
 
-<h3>2.1 Navigation: a flat stack of full-screen destinations</h3>
-<p><code>AppEntry.kt</code> hosts a single <code>NavHost</code> with four nested graphs:</p>
+  <h3>2.1 Navigation: old flat stack of full-screen destinations</h3>
+  <p>Before M8, <code>AppEntry.kt</code> hosted a single <code>NavHost</code> with four nested
+    graphs:</p>
 <pre><span class="c">// composeApp/.../AppEntry.kt</span>
 NavHost(navController, startDestination = GRAPH_AUTH) {
   authGraph(navController)       <span class="c">// Login / AuthFlow</span>
@@ -206,10 +207,12 @@ NavHost(navController, startDestination = GRAPH_AUTH) {
   aircraftGraph(navController)   <span class="c">// maintenance_overview/{aircraftId} → add/edit task,log,squawk</span>
   settingsGraph(navController)   <span class="c">// Settings → Sync, Export, History, Technicians, FeatureLab</span>
 }</pre>
-<p>The flow is strictly hierarchical and back-stack driven:
+  <p>The old flow was strictly hierarchical and back-stack driven:
 <code>Dashboard (fleet)</code> → tap aircraft → <code>MaintenanceOverview/{aircraftId}</code>
 (tabs <em>inside</em> the screen) → push <code>maintenance_task_edit/{aircraftId}/{cardId}</code>, etc.
-Aircraft identity is carried as a <strong>route argument</strong>, re-parsed on every destination.</p>
+    Aircraft identity was carried as a <strong>route argument</strong>, re-parsed on every
+    destination.
+    M8 retired this graph in favor of the single adaptive shell path.</p>
 
 <h3>2.2 The only “adaptivity” today is max-width capping</h3>
 <p><code>core/ui/.../compose/AdaptiveLayout.kt</code> provides <code>ContentWidth</code> +
@@ -370,17 +373,22 @@ The <em>form content composable is identical</em> across tiers.</p>
 <p>The content composables already exist; we re-host them. Recommended order keeps the app shippable at
 every step:</p>
 <ol>
-  <li><strong>Stand up the shell</strong> behind a feature flag (<code>adaptiveShellEnabled</code> in
-  <code>FeatureFlags</code>), defaulting on for web, off for phone, so the existing stack stays intact
-  on mobile until parity is proven.</li>
+  <li><strong>Stand up the shell</strong> behind the temporary <code>adaptiveShellEnabled</code>
+    rollout
+    flag while parity is proven. <strong>M8 note:</strong> the flag is now retired and the shell is
+    the
+    permanent path on every target.
+  </li>
   <li><strong>Re-host sections</strong> (Dashboard → Tasks → Logs → Squawks → Settings) one at a time:
   strip each screen’s own <code>Scaffold</code>/<code>TopAppBar</code>/<code>FAB</code>, expose a pure
   <em>content</em> composable, and mount it in the shell’s <code>SectionHost</code>.</li>
   <li><strong>Convert overlays</strong>: wrap existing detail sheets / edit screens in
   <code>AdaptiveDetailContainer</code> and the adaptive dialog.</li>
   <li><strong>Add wide-only affordances</strong>: dashboard lower two-column grid, logs table, 2-col grids.</li>
-  <li><strong>Flip the flag</strong> on for all tiers once compact parity is confirmed; delete the
-  legacy graph wiring.</li>
+  <li><strong>Make the shell permanent</strong> for all tiers once compact parity is confirmed;
+    delete
+    the legacy graph wiring and Feature Lab toggle.
+  </li>
 </ol>
 
 <h3>5.3 What stays single-column forever</h3>
@@ -436,11 +444,15 @@ root of the phone experience. Net effect: one fleet-list composable, surfaced as
 <h3 style="color:var(--warn-fg)">↻ Refactor</h3>
 <div class="card refactor">
 <ul style="margin:0">
-  <li><strong><code>AppEntry.kt</code> NavHost</strong> — the flat 4-graph stack becomes
-  [auth graph] → [<code>AdaptiveAppShell</code> hosting a section <code>NavHost</code>]. Aircraft &amp;
-  global sub-graphs collapse into shell sections.</li>
+  <li><strong><code>AppEntry.kt</code> / <code>WebApp.kt</code> NavHosts</strong> — the legacy flat
+    stack
+    became auth → <code>AdaptiveAppShell</code>; form routes are dialog destinations and secondary
+    flows
+    remain pushed routes.
+  </li>
   <li><strong>Aircraft identity plumbing</strong> — from route arg to ambient
-  <code>selectedAircraftId</code>; <code>Screen.MaintenanceOverview</code> and friends are reframed.</li>
+    <code>selectedAircraftId</code>; the standalone maintenance-overview route is retired.
+  </li>
   <li><strong>Per-screen chrome</strong> — remove each screen’s <code>Scaffold</code>/
   <code>TopAppBar</code>/back-arrow/<code>FAB</code>; expose content-only composables. Primary actions
   move to the top bar / toolbar (FAB → toolbar button on wide; FAB may remain at COMPACT).</li>
@@ -456,6 +468,10 @@ root of the phone experience. Net effect: one fleet-list composable, surfaced as
 <div class="card remove">
 <ul style="margin:0">
   <li><strong>“Stretched mobile” assumption</strong> — single-column-only as the <em>web</em> layout.</li>
+  <li><strong><code>adaptiveShellEnabled</code> Feature Lab flag</strong> — retired in M8; the
+    adaptive
+    shell is always enabled.
+  </li>
   <li><strong>Back-button-driven aircraft navigation</strong> on large screens (replaced by the
   switcher; back stack still applies to overlays/forms).</li>
   <li><strong>Export as a top-level destination</strong> — per chat6 it lives inside Settings only.</li>
@@ -513,7 +529,17 @@ routes.</p>
 <h2 id="milestones"><span class="n">10</span>Phased milestones</h2>
 <table>
   <tr><th>Milestone</th><th>Scope</th><th>Exit criteria</th></tr>
-  <tr><td><strong>M0 — Foundations</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/ac6898b7" style="font-family:var(--mono);font-size:11px">ac6898b7</a></td><td><code>LayoutTier</code> (+ unit test) and the <code>adaptiveShellEnabled</code> flag. <code>LayoutTier</code> shipped dependency-free via <code>LocalWindowInfo</code>, so the adaptive deps (<code>NavigationSuiteScaffold</code>) move to M1 where they're first needed.</td><td>✅ Tier recomposes on resize; flag persists &amp; gates nothing yet</td></tr>
+  <tr>
+    <td><strong>M0 — Foundations</strong> <span class="pill reuse">landed</span><br><a
+            href="https://github.com/fz172/wingslog/commit/ac6898b7"
+            style="font-family:var(--mono);font-size:11px">ac6898b7</a></td>
+    <td><code>LayoutTier</code> (+ unit test) and the temporary <code>adaptiveShellEnabled</code>
+      rollout flag. <code>LayoutTier</code> shipped dependency-free via <code>LocalWindowInfo</code>,
+      so the adaptive deps (<code>NavigationSuiteScaffold</code>) move to M1 where they're first
+      needed. The rollout flag was retired in M8.
+    </td>
+    <td>✅ Tier recomposes on resize; rollout flag no longer gates runtime behavior</td>
+  </tr>
   <tr><td><strong>M1 — Shell</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/a9cf1d08" style="font-family:var(--mono);font-size:11px">a9cf1d08</a></td><td><code>AdaptiveAppShell</code> (in <code>core:ui</code> so both hosts use it) on <code>NavigationSuiteScaffold</code>, container type driven by <code>LayoutTier</code>; top-bar switcher above phone; placeholder sections; wired behind the flag in <strong>both</strong> <code>AppEntry</code> and <code>WebApp</code>. <em>COMPACT dedicated fleet-landing root deferred to M2 with the aircraft-scoped routing.</em></td><td>✅ Compiles Android/JS/iOS; tests pass. Visual bottom-bar ⇄ rail ⇄ drawer reflow to be confirmed by dogfood (flip the flag).</td></tr>
   <tr><td><strong>M2 — Aircraft-scoped nav</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/22214fb9" style="font-family:var(--mono);font-size:11px">22214fb9</a></td><td>Section + selection + <code>entered</code> hoisted into <code>AdaptiveShellViewModel</code> (single source of truth). Switcher swaps the ambient aircraft in place above phone; COMPACT shows a fleet-landing root (placeholder list) until an aircraft is opened, then sections + bottom bar with a back-to-fleet arrow. Wired in both hosts. <code>AdaptiveShellViewModelTest</code> covers the transitions. <em>Real <code>DashboardScreen</code> landing → M3; web URL-param deep-linking still outstanding for this milestone.</em></td><td>✅ Wide swap-in-place &amp; phone landing→sections (compiles Android/JS/iOS, VM tested). ⏳ URL deep links pending.</td></tr>
   <tr><td><strong>M3 — Sections re-hosted</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/80125c5c" style="font-family:var(--mono);font-size:11px">80125c5c</a></td><td>Real per-aircraft content via <code>AircraftSectionContent</code> (reuses the existing Overview/Tasks/Logs/Squawks tabs, scoped to the ambient aircraft); <code>AircraftOverviewViewModel</code> parameterized by <code>aircraftId</code> (SavedStateHandle fallback keeps the legacy route intact). <code>fleetLanding</code> now renders the real <code>DashboardScreen</code>. Add/edit flows route through the host <code>NavController</code>. <em>Settings still a placeholder w/ escape hatch (full embed later); sidebar badges TODO.</em></td><td>✅ Compiles Android/JS/iOS, tests pass. Compact parity to confirm by dogfood.</td></tr>
@@ -521,7 +547,17 @@ routes.</p>
   <tr><td><strong>M5 — Wide affordances</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/e7bfa5bd" style="font-family:var(--mono);font-size:11px">e7bfa5bd</a> · <a href="https://github.com/fz172/wingslog/commit/75b2d27e" style="font-family:var(--mono);font-size:11px">75b2d27e</a> · <a href="https://github.com/fz172/wingslog/commit/aa5af6b3" style="font-family:var(--mono);font-size:11px">aa5af6b3</a> · <a href="https://github.com/fz172/wingslog/commit/5b05f158" style="font-family:var(--mono);font-size:11px">5b05f158</a></td><td><strong>Done:</strong> task &amp; squawk card lists become 2-column grids on EXPANDED/LARGE (<code>AdaptiveCardList</code> + <code>LayoutTier.cardColumns</code>, keyed off <code>LocalLayoutTier</code>; legacy stays single-column). LARGE dashboard keeps aircraft data and maintenance summary full-width, then uses <code>DashboardLowerGrid</code> with Recent Activity on the left and a 320dp Next Due/Open Squawks column on the right. Logs use <code>MaintenanceLogTable</code> on MEDIUM+ and cards on COMPACT. Export setup uses a two-pane configuration + summary/action layout above 860dp with the compact bottom action preserved at narrower widths.</td><td>✅ Dashboard lower grid, logs table, and export pane compile on Android/JS; web development bundle builds. iOS compile passed across the M5 slice.</td></tr>
   <tr><td><strong>M6 — Native Settings section</strong> <span class="pill reuse">landed</span><br><a href="https://github.com/fz172/wingslog/commit/a3efe9df" style="font-family:var(--mono);font-size:11px">a3efe9df</a></td><td><code>SettingsScreen</code> split into reusable <code>SettingsContent</code> (profile card, technician profiles, sync/cloud backup, Export entry, Feature Lab, account action, app version; Reading-width capped, own snackbar + upgrade dialog, no chrome) plus a thin legacy scaffold wrapper. The hosts render <code>SettingsContent</code> for <code>ShellSection.SETTINGS</code> via the existing <code>sectionContent</code> slot (mapped at the host boundary where <code>feature:settings</code> is a legal dep). <code>AdaptiveShellViewModel.openSettings()</code> selects SETTINGS + sets <code>entered</code>, so the sidebar account footer and the COMPACT fleet-landing settings action open the native section instead of pushing the standalone route. Secondary flows (Sync, Feature Lab, technicians, export) still push existing routes. <em>Design's "Appearance"/theme toggle omitted — no theme-preference infra yet.</em></td><td>✅ Settings renders natively in the shell (no placeholder, no standalone hop); Reading-width capped; COMPACT bottom nav / MEDIUM+ rail+sidebar preserved. Compiles Android/JS/iOS; VM tested.</td></tr>
   <tr><td><strong>M7 — Edit-as-dialog</strong> <span class="pill reuse">landed</span></td><td>Add/edit forms (task, log, squawk, aircraft) now use Navigation Compose dialog destinations in both hosts, wrapped by shared <code>AdaptiveFormDialogFrame</code>. COMPACT keeps a full-window frame so the existing forms behave like full-screen routes; MEDIUM+ constrains the same content in a centered dialog over the previous destination.</td><td>✅ Forms are dialogs on wide, full-screen on phone, same content. Compiles Android/JS/iOS.</td></tr>
-  <tr><td><strong>M8 — Flip &amp; cleanup</strong></td><td>Enable flag all tiers; delete legacy graph wiring; retire FAB-on-wide</td><td>Single shell path; legacy code removed</td></tr>
+  <tr>
+    <td><strong>M8 — Flip &amp; cleanup</strong> <span class="pill reuse">landed</span></td>
+    <td>The adaptive shell is permanent on Android, iOS, and web. Removed
+      <code>adaptiveShellEnabled</code> from <code>FeatureFlags</code>, Feature Lab UI, and the
+      feature-lab proto surface; removed legacy dashboard/settings/maintenance-overview route wiring
+      and the standalone Settings scaffold wrapper.
+    </td>
+    <td>✅ Single shell path; Feature Lab no longer exposes the adaptive rollout toggle; legacy
+      routes retired
+    </td>
+  </tr>
 </table>
 
 <!-- ============================================================= -->
@@ -532,7 +568,11 @@ routes.</p>
   <tr><td>D2 <span class="pill reuse">revised</span></td><td>Custom shell vs <code>NavigationSuiteScaffold</code></td><td>Started on <code>NavigationSuiteScaffold</code> (M1). <strong>Revised:</strong> the default drawer can’t host the aircraft switcher in the sidebar as the mock requires, so EXPANDED/LARGE now use a <strong>custom <code>WingsSidebar</code></strong> (brand + switcher + sections + account footer). MEDIUM keeps the scaffold rail (switcher in top bar); COMPACT keeps the scaffold bottom bar + fleet landing.</td></tr>
   <tr><td>D3</td><td>Tier thresholds in dp vs the prototype’s CSS px</td><td>Start at 700/1040/1240 dp; tune on real tablets. dp ≈ px for layout reasoning but verify on iPad + Android.</td></tr>
   <tr><td>D4</td><td>Back-stack semantics with ambient aircraft + section nav</td><td>Section nav = no back stack between sections (like tabs); back applies to overlays/forms; keep system-back closing overlays first.</td></tr>
-  <tr><td>R1</td><td>Compact regressions while refactoring chrome out of screens</td><td>Feature-flag + keep COMPACT branch behavior identical; screenshot-test the phone path.</td></tr>
+  <tr>
+    <td>R1</td>
+    <td>Compact regressions while refactoring chrome out of screens</td>
+    <td>Keep COMPACT branch behavior identical and screenshot-test the phone path.</td>
+  </tr>
   <tr><td>R2</td><td>Web window-resize reflow performance (Babel-free, but heavy recompositions)</td><td>Hoist tier to a single <code>remember</code>; avoid per-item width reads; test rapid drag-resize.</td></tr>
   <tr><td>R3</td><td>iOS/Android tablet multi-window &amp; rotation</td><td><code>currentWindowAdaptiveInfo()</code> already reacts; verify safe-area insets in shell (bottom bar uses <code>env(safe-area)</code> equivalent).</td></tr>
   <tr><td>R4</td><td>Drawer/dialog focus + a11y on web</td><td>Trap focus, escape-to-close, aria roles; reuse Compose’s dialog semantics.</td></tr>
@@ -542,7 +582,7 @@ routes.</p>
   WingsLog (Hopply) · Adaptive Layout Redesign plan · derived from the <em>Hopply Web</em> design handoff
   (<code>Hopply Web.html</code>, <code>web/theme.css</code>, <code>chats/chat5.md</code>) and a current-state
   audit of <code>AppEntry.kt</code>, <code>Screen.kt</code>, and <code>core/ui/.../AdaptiveLayout.kt</code>.
-  Status: <strong>M7 landed; M8 planned</strong>. Keep commit hashes and milestone status updated as the
+  Status: <strong>M8 landed</strong>. Keep commit hashes and milestone status updated as the
   adaptive shell continues to land.
 </div>
 

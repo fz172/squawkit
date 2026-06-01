@@ -56,8 +56,14 @@ fun ShellSectionBody(
       onNavigateToSection = onNavigateToSection,
     )
   } else {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-      Text("Add an aircraft to get started", style = MaterialTheme.typography.bodyMedium)
+    Box(
+      modifier = Modifier.fillMaxSize(),
+      contentAlignment = Alignment.Center
+    ) {
+      Text(
+        "Add an aircraft to get started",
+        style = MaterialTheme.typography.bodyMedium
+      )
     }
   }
 }
@@ -100,17 +106,35 @@ fun AircraftSectionContent(
       { action ->
         when (action) {
           is AircraftOverviewAction.AddLogClick ->
-            navController.navigate(Screen.AddMaintenanceLog.createRoute(aircraftId))
+            navController.navigate(
+              Screen.AddMaintenanceLog.createRoute(
+                aircraftId
+              )
+            )
 
           is AircraftOverviewAction.EditLogClick ->
-            navController.navigate(Screen.EditMaintenanceLog.createRoute(aircraftId, action.logId))
+            navController.navigate(
+              Screen.EditMaintenanceLog.createRoute(
+                aircraftId,
+                action.logId
+              )
+            )
 
           is AircraftOverviewAction.AddTaskClick ->
-            navController.navigate(Screen.AddMaintenanceTask.createRoute(aircraftId))
+            navController.navigate(
+              Screen.AddMaintenanceTask.createRoute(
+                aircraftId
+              )
+            )
 
           is AircraftOverviewAction.EditTaskClick -> {
             viewModel.onAction(AircraftOverviewAction.DismissTaskDetail)
-            navController.navigate(Screen.EditMaintenanceTask.createRoute(aircraftId, action.cardId))
+            navController.navigate(
+              Screen.EditMaintenanceTask.createRoute(
+                aircraftId,
+                action.cardId
+              )
+            )
           }
 
           is AircraftOverviewAction.AddSquawkClick ->
@@ -118,7 +142,12 @@ fun AircraftSectionContent(
 
           is AircraftOverviewAction.EditSquawkClick -> {
             viewModel.onAction(AircraftOverviewAction.DismissSquawkDetail)
-            navController.navigate(Screen.EditSquawk.createRoute(aircraftId, action.squawkId))
+            navController.navigate(
+              Screen.EditSquawk.createRoute(
+                aircraftId,
+                action.squawkId
+              )
+            )
           }
 
           is AircraftOverviewAction.EditClick ->
@@ -133,12 +162,18 @@ fun AircraftSectionContent(
 
   when (val state = uiState) {
     AircraftOverviewUiState.Loading ->
-      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+      Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+      ) {
         CircularProgressIndicator()
       }
 
     AircraftOverviewUiState.Error ->
-      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+      Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+      ) {
         Text("Couldn't load this aircraft")
       }
 
@@ -171,7 +206,13 @@ fun AircraftSectionContent(
           aircraftId = aircraftId,
           syncStates = state.syncStates,
           // Route through the same onAction wrapper as every other section, which navigates directly.
-          onNavigateToAddLog = { onAction(AircraftOverviewAction.AddLogClick(aircraftId)) },
+          onNavigateToAddLog = {
+            onAction(
+              AircraftOverviewAction.AddLogClick(
+                aircraftId
+              )
+            )
+          },
           onNavigateToEditLog = { logId ->
             onAction(AircraftOverviewAction.EditLogClick(aircraftId, logId))
           },
@@ -197,14 +238,20 @@ fun AircraftSectionContent(
             onAction(AircraftOverviewAction.DismissTaskDetail)
           },
           onEditClick = {
-            onAction(AircraftOverviewAction.EditTaskClick(aircraftId, selectedTask.card.id))
+            onAction(
+              AircraftOverviewAction.EditTaskClick(
+                aircraftId,
+                selectedTask.card.id
+              )
+            )
           },
           onAttachmentTap = { attachment ->
             taskSheetOpenError = null
             val openFlow = attachmentOpener.open(attachment)
             coroutineScope.launch {
               openFlow.collect { openState ->
-                if (openState is OpenState.Failed) taskSheetOpenError = openState.error.message
+                if (openState is OpenState.Failed) taskSheetOpenError =
+                  openState.error.message
               }
             }
           },

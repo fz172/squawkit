@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.outlined.AttachFile
@@ -40,8 +39,6 @@ import wingslog.feature.settings.generated.resources.Res
 import wingslog.feature.settings.generated.resources.feature_lab
 import wingslog.feature.settings.generated.resources.feature_lab_account_upgrade_subtitle
 import wingslog.feature.settings.generated.resources.feature_lab_account_upgrade_title
-import wingslog.feature.settings.generated.resources.feature_lab_adaptive_shell_subtitle
-import wingslog.feature.settings.generated.resources.feature_lab_adaptive_shell_title
 import wingslog.feature.settings.generated.resources.feature_lab_attachments_subtitle
 import wingslog.feature.settings.generated.resources.feature_lab_attachments_title
 import wingslog.feature.settings.generated.resources.feature_lab_export_email_subtitle
@@ -127,16 +124,6 @@ fun FeatureLabScreen(
           subtitle = stringResource(Res.string.feature_lab_account_upgrade_subtitle),
           checked = flags.accountUpgradeEnabled,
           onCheckedChange = viewModel::setAccountUpgradeEnabled,
-        )
-
-        HorizontalDivider()
-
-        FeatureToggleRow(
-          icon = Icons.Default.Devices,
-          title = stringResource(Res.string.feature_lab_adaptive_shell_title),
-          subtitle = stringResource(Res.string.feature_lab_adaptive_shell_subtitle),
-          checked = flags.adaptiveShellEnabled,
-          onCheckedChange = viewModel::setAdaptiveShellEnabled,
         )
 
         HorizontalDivider()

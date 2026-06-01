@@ -70,10 +70,12 @@ data class ShellAircraft(
  * Top-level sections of the adaptive shell. The first four are per-aircraft; [SETTINGS] is global.
  */
 enum class ShellSection(val label: String, val icon: ImageVector) {
-  DASHBOARD("Dashboard", Icons.Filled.Dashboard),
+  DASHBOARD("Dashboard", Icons.Filled.Dashboard), SQUAWKS(
+    "Squawks",
+    Icons.Filled.Warning
+  ),
   TASKS("Tasks", Icons.Filled.Checklist),
   LOGS("Logs", Icons.Filled.Description),
-  SQUAWKS("Squawks", Icons.Filled.Warning),
   SETTINGS("Settings", Icons.Filled.Settings),
 }
 
