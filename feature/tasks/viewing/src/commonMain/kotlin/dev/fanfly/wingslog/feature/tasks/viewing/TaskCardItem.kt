@@ -18,7 +18,7 @@ import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.dash
+import wingslog.core.sharedassets.generated.resources.dash
 import wingslog.feature.tasks.viewing.generated.resources.badge_due
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
 import wingslog.feature.tasks.viewing.generated.resources.completed
@@ -26,7 +26,7 @@ import wingslog.feature.tasks.viewing.generated.resources.engine_hours_upper
 import wingslog.feature.tasks.viewing.generated.resources.label_deadline
 import wingslog.feature.tasks.viewing.generated.resources.label_due_engine
 import wingslog.feature.tasks.viewing.generated.resources.on_condition
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 
 @Composable

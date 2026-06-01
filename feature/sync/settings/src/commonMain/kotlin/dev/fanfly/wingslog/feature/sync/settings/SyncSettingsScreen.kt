@@ -36,10 +36,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.sync.data.HydrationState

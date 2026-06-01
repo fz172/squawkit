@@ -31,9 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.appinfo.getAppVersion
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus

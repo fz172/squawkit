@@ -7,12 +7,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.delete
+import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.feature.tasks.sharedassets.generated.resources.Res
 import wingslog.feature.tasks.sharedassets.generated.resources.delete_task
 import wingslog.feature.tasks.sharedassets.generated.resources.delete_task_confirmation
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @Composable
 fun DeleteTaskConfirmDialog(

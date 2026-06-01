@@ -20,12 +20,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
-import dev.fanfly.wingslog.core.ui.common.compose.AdaptiveFormDialogFrame
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
-import dev.fanfly.wingslog.core.ui.shell.AdaptiveAppShell
-import dev.fanfly.wingslog.core.ui.shell.ShellSection
+import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
+import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
+import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
@@ -164,7 +164,13 @@ private fun NavGraphBuilder.shellGraph(navController: NavController) {
           )
         },
         onEditAircraft = {
-          state.selectedAircraftId?.let { navController.navigate(Screen.EditAircraft.createRoute(it)) }
+          state.selectedAircraftId?.let {
+            navController.navigate(
+              Screen.EditAircraft.createRoute(
+                it
+              )
+            )
+          }
         },
       )
     }

@@ -46,8 +46,11 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      api(project(":core:model"))
       api(project(":core:datetime"))
+      api(project(":core:model"))
+      implementation(project(":core:sharedassets"))
+      implementation(project(":core:ui:adaptive"))
+      implementation(project(":core:ui:theme"))
       api(libs.compose.ui)
       api(libs.material3)
       api(libs.material3.adaptive.navigation.suite)
@@ -55,12 +58,6 @@ kotlin {
       api(libs.components.resources)
       api(libs.kotlinx.datetime)
       api(libs.compose.ui.tooling.preview)
-      implementation(libs.coil.compose)
-      implementation(libs.coil.network.ktor3)
-      implementation(libs.ktor.client.core)
-    }
-    androidMain.dependencies {
-      implementation(libs.ktor.client.okhttp)
     }
   }
 }

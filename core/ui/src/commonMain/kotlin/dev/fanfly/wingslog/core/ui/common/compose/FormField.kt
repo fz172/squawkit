@@ -29,8 +29,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res
-import wingslog.core.ui.generated.resources.required
+import wingslog.core.sharedassets.generated.resources.Res
+import wingslog.core.sharedassets.generated.resources.required
 
 /**
  * Text-entry field that switches to a non-input presentation when [editable] is false.

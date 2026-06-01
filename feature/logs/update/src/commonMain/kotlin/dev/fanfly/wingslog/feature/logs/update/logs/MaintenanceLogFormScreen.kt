@@ -44,13 +44,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_HOURS_TAB
@@ -71,11 +71,11 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.back
-import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.delete
-import wingslog.core.ui.generated.resources.ok
-import wingslog.core.ui.generated.resources.save
+import wingslog.core.sharedassets.generated.resources.back
+import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.delete
+import wingslog.core.sharedassets.generated.resources.ok
+import wingslog.core.sharedassets.generated.resources.save
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.logs.sharedassets.generated.resources.edit_log
@@ -85,7 +85,7 @@ import wingslog.feature.logs.update.generated.resources.log_deleted
 import wingslog.feature.logs.update.generated.resources.log_saved
 import wingslog.feature.logs.update.generated.resources.log_updated
 import kotlin.time.Instant
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes

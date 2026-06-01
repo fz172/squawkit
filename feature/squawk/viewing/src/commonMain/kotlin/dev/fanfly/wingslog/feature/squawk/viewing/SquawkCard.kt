@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate

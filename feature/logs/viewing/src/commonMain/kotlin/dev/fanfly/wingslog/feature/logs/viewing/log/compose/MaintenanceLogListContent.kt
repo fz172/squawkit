@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,21 +51,18 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
-import dev.fanfly.wingslog.core.ui.common.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.done
-import wingslog.core.ui.generated.resources.retry
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.core.sharedassets.generated.resources.done
+import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintenance_log
 import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_description
 import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_title
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.clear_filter
 import wingslog.feature.logs.viewing.generated.resources.failed_to_load_logs
 import wingslog.feature.logs.viewing.generated.resources.filter_by_type
@@ -73,6 +70,9 @@ import wingslog.feature.logs.viewing.generated.resources.log_count_n_entries
 import wingslog.feature.logs.viewing.generated.resources.log_count_one_entry
 import wingslog.feature.logs.viewing.generated.resources.no_logs_match_filter
 import wingslog.feature.logs.viewing.generated.resources.search_logs
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -199,7 +199,8 @@ fun MaintenanceLogListContent(
               LazyRow(
                 contentPadding = PaddingValues(horizontal = Spacing.screenPadding),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.small),
+                modifier = Modifier.fillMaxWidth()
+                  .padding(bottom = Spacing.small),
               ) {
                 items(uiState.filter.components.toList()) { component ->
                   ActiveFilterChip(
@@ -230,7 +231,8 @@ fun MaintenanceLogListContent(
 
             if (uiState.logs.isEmpty()) {
               Box(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
+                modifier = Modifier.weight(1f)
+                  .fillMaxWidth(),
                 contentAlignment = Alignment.Center
               ) {
                 Column(
@@ -260,7 +262,8 @@ fun MaintenanceLogListContent(
               )
             } else {
               LazyColumn(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
+                modifier = Modifier.weight(1f)
+                  .fillMaxWidth(),
                 contentPadding = PaddingValues(
                   start = Spacing.screenPadding,
                   end = Spacing.screenPadding,
@@ -286,10 +289,12 @@ fun MaintenanceLogListContent(
                 log = log,
                 availableCards = uiState.availableCards,
                 onDismiss = onDismissDetail,
-                onEditClick = onEditLog?.let { edit -> {
-                  onDismissDetail()
-                  edit(log.id)
-                } },
+                onEditClick = onEditLog?.let { edit ->
+                  {
+                    onDismissDetail()
+                    edit(log.id)
+                  }
+                },
                 onAttachmentTap = onAttachmentTap,
                 syncStates = syncStates,
                 openError = openError,

@@ -14,18 +14,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.LogStats
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.airframe_time_label
 import wingslog.feature.logs.sharedassets.generated.resources.engine_time_label
 import wingslog.feature.logs.sharedassets.generated.resources.prop_time_label
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.maintenance_summary
 import wingslog.feature.logs.viewing.generated.resources.total_logs
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable

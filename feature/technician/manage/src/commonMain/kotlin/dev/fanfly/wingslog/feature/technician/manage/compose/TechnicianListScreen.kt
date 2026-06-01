@@ -24,11 +24,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedFloatingAction
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
 import org.jetbrains.compose.resources.stringResource

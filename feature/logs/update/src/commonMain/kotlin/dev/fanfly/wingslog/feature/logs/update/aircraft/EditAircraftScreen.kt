@@ -33,30 +33,30 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.update.aircraft.compose.AirframeSection
 import dev.fanfly.wingslog.feature.logs.update.aircraft.compose.EngineSection
 import dev.fanfly.wingslog.feature.logs.update.aircraft.viewmodel.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.add_aircraft
-import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.component_airframe
-import wingslog.core.ui.generated.resources.component_engine
-import wingslog.core.ui.generated.resources.delete
+import wingslog.core.sharedassets.generated.resources.add_aircraft
+import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.component_airframe
+import wingslog.core.sharedassets.generated.resources.component_engine
+import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.feature.logs.sharedassets.generated.resources.delete_aircraft
 import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.logs.update.generated.resources.add_engine
 import wingslog.feature.logs.update.generated.resources.update_aircraft
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 

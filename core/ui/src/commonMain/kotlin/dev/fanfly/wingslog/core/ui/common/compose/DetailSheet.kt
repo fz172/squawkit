@@ -31,10 +31,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 /**
- * A standardized template for displaying record details, adaptive by [LocalLayoutTier]:
+ * A standardized template for displaying record details, adaptive by [dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier]:
  * - **COMPACT** — a [ModalBottomSheet] (the phone / legacy presentation).
  * - **MEDIUM and wider** — an end-aligned side drawer over a scrim, matching the adaptive web/tablet
  *   shell (see `docs/web/web_adaptive_layout_design.html` §4.4).
@@ -43,7 +45,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
  * shell, so the legacy stack is unaffected.
  *
  * Features:
- * - Consistent horizontal padding ([Spacing.extraLarge]).
+ * - Consistent horizontal padding ([dev.fanfly.wingslog.core.ui.theme.Spacing.extraLarge]).
  * - Built-in vertical scrolling.
  * - Standardized header layout with a title slot and an optional action slot.
  */
@@ -63,11 +65,19 @@ fun DetailSheet(
       sheetState = sheetState,
       modifier = modifier,
     ) {
-      DetailBody(actionSlot = actionSlot, headerSlot = headerSlot, content = content)
+      DetailBody(
+        actionSlot = actionSlot,
+        headerSlot = headerSlot,
+        content = content
+      )
     }
   } else {
     DetailEndDrawer(onDismiss = onDismiss, modifier = modifier) {
-      DetailBody(actionSlot = actionSlot, headerSlot = headerSlot, content = content)
+      DetailBody(
+        actionSlot = actionSlot,
+        headerSlot = headerSlot,
+        content = content
+      )
     }
   }
 }

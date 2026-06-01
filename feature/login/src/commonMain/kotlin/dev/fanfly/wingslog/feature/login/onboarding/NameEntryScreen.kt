@@ -55,15 +55,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.ic_launcher_foreground
+import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.onboarding_continue
 import wingslog.feature.login.generated.resources.onboarding_name_body
@@ -71,7 +71,7 @@ import wingslog.feature.login.generated.resources.onboarding_name_eyebrow
 import wingslog.feature.login.generated.resources.onboarding_name_headline
 import wingslog.feature.login.generated.resources.onboarding_name_hint
 import wingslog.feature.login.generated.resources.onboarding_name_label
-import wingslog.core.ui.generated.resources.Res as UiRes
+import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 @Composable
 fun NameEntryScreen(
@@ -110,8 +110,7 @@ fun NameEntryScreen(
   }
 
   Box(
-    modifier = Modifier
-      .fillMaxSize()
+    modifier = Modifier.fillMaxSize()
       .background(AviationBlue10),
     contentAlignment = Alignment.TopCenter,
   ) {
@@ -119,8 +118,7 @@ fun NameEntryScreen(
       drawCircle(
         brush = Brush.radialGradient(
           colors = listOf(
-            Color(0xFF2A6BC9).copy(alpha = 0.20f),
-            Color.Transparent
+            Color(0xFF2A6BC9).copy(alpha = 0.20f), Color.Transparent
           ),
           center = Offset(size.width / 2f, size.height * 0.618f),
           radius = size.width * 0.70f,
@@ -129,15 +127,13 @@ fun NameEntryScreen(
     }
 
     Column(
-      modifier = Modifier
-        .constrainedContentWidth(ContentWidth.Auth)
+      modifier = Modifier.constrainedContentWidth(ContentWidth.Auth)
         .fillMaxSize()
         .padding(start = 28.dp, end = 28.dp, top = 70.dp),
     ) {
       IconButton(
         onClick = onBack,
-        modifier = Modifier
-          .size(40.dp)
+        modifier = Modifier.size(40.dp)
           .background(Color.White.copy(alpha = 0.06f), CircleShape)
           .border(1.dp, Color.White.copy(alpha = 0.14f), CircleShape),
       ) {
@@ -152,16 +148,14 @@ fun NameEntryScreen(
       Spacer(Modifier.height(14.dp))
 
       Box(
-        modifier = Modifier
-          .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
           .height(120.dp),
         contentAlignment = Alignment.Center,
       ) {
         Icon(
           painter = painterResource(UiRes.drawable.ic_launcher_foreground),
           contentDescription = null,
-          modifier = Modifier
-            .size(108.dp)
+          modifier = Modifier.size(108.dp)
             .offset(y = bobY.dp)
             .rotate(bobRotation),
           tint = AviationBlue80,
@@ -220,8 +214,7 @@ fun NameEntryScreen(
       )
 
       Box(
-        modifier = Modifier
-          .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
           .background(
             Color.White.copy(alpha = 0.06f),
             RoundedCornerShape(Spacing.buttonCornerRadius)
@@ -236,8 +229,7 @@ fun NameEntryScreen(
         BasicTextField(
           value = name,
           onValueChange = { if (it.length <= 32) name = it },
-          modifier = Modifier
-            .fillMaxWidth()
+          modifier = Modifier.fillMaxWidth()
             .focusRequester(focusRequester),
           textStyle = TextStyle(
             fontFamily = headlineFamily,
@@ -257,8 +249,7 @@ fun NameEntryScreen(
           cursorBrush = SolidColor(AviationBlue80),
           decorationBox = { innerTextField ->
             Box(
-              modifier = Modifier
-                .height(50.dp)
+              modifier = Modifier.height(50.dp)
                 .fillMaxWidth(),
               contentAlignment = Alignment.CenterStart,
             ) {
@@ -284,8 +275,7 @@ fun NameEntryScreen(
       Button(
         onClick = { if (canContinue) onNext(name.trim()) },
         enabled = canContinue,
-        modifier = Modifier
-          .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
           .height(Spacing.buttonHeight),
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.buttonColors(

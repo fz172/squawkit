@@ -17,14 +17,14 @@ import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.component_type
+import wingslog.core.sharedassets.generated.resources.component_type
 import wingslog.feature.logs.sharedassets.generated.resources.maintenance_date
 import wingslog.feature.logs.update.generated.resources.Res
 import wingslog.feature.logs.update.generated.resources.component_section_description
 import wingslog.feature.logs.update.generated.resources.date_section_description
 import wingslog.feature.logs.update.generated.resources.tap_to_change_date
 import wingslog.feature.logs.update.generated.resources.work_description_required
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 
 @Composable

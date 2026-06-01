@@ -20,10 +20,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.core.ui.common.compose.AdaptiveCardList
+import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
-import dev.fanfly.wingslog.core.ui.common.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
@@ -127,15 +127,17 @@ fun SquawkTab(
       item = selected,
       addressingLog = state.logForSelectedSquawk,
       onDismiss = { onAction(AircraftOverviewAction.DismissSquawkDetail) },
-      onEditClick = onMutationAction?.let { mutate -> {
-        onAction(AircraftOverviewAction.DismissSquawkDetail)
-        mutate(
-          AircraftOverviewAction.EditSquawkClick(
-            state.aircraft.id,
-            selected.squawk.id
+      onEditClick = onMutationAction?.let { mutate ->
+        {
+          onAction(AircraftOverviewAction.DismissSquawkDetail)
+          mutate(
+            AircraftOverviewAction.EditSquawkClick(
+              state.aircraft.id,
+              selected.squawk.id
+            )
           )
-        )
-      } },
+        }
+      },
     )
   }
 }

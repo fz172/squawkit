@@ -35,11 +35,11 @@ import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
@@ -51,9 +51,9 @@ import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.back
+import wingslog.core.sharedassets.generated.resources.back
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 
 @OptIn(

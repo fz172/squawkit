@@ -51,8 +51,11 @@ kotlin {
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:sharedassets"))
       implementation(project(":feature:tasks:viewing"))
-
+      implementation(project(":core:nav"))
+      implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
+      implementation(project(":core:ui:adaptive"))
+      implementation(project(":core:ui:theme"))
       implementation(project(":core:datetime"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:sharedassets"))

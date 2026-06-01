@@ -23,7 +23,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.component_engine
+import wingslog.core.sharedassets.generated.resources.component_engine
 import wingslog.feature.logs.sharedassets.generated.resources.blade
 import wingslog.feature.logs.sharedassets.generated.resources.propeller_hub
 import wingslog.feature.logs.update.generated.resources.Res
@@ -34,7 +34,7 @@ import wingslog.feature.logs.update.generated.resources.no_engines_found
 import wingslog.feature.logs.update.generated.resources.no_propeller_components_found
 import wingslog.feature.logs.update.generated.resources.propeller_component
 import wingslog.feature.logs.update.generated.resources.type_make_model_serial
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogRes
 
 @OptIn(ExperimentalMaterial3Api::class)

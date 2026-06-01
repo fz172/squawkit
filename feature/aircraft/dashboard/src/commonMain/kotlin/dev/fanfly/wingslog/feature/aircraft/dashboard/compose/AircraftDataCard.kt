@@ -35,15 +35,15 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.component_airframe
-import wingslog.core.ui.generated.resources.component_engine
-import wingslog.core.ui.generated.resources.make_model_template
+import wingslog.core.sharedassets.generated.resources.component_airframe
+import wingslog.core.sharedassets.generated.resources.component_engine
+import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
 import wingslog.feature.logs.viewing.generated.resources.aircraft_data
 import wingslog.feature.logs.viewing.generated.resources.collapse_details
 import wingslog.feature.logs.viewing.generated.resources.expand_details
 import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 

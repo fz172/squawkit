@@ -28,23 +28,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.fanfly.wingslog.core.ui.common.compose.AvatarIcon
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedFloatingAction
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.FleetDashboardViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.add_aircraft
-import wingslog.core.ui.generated.resources.app_name
-import wingslog.core.ui.generated.resources.settings
+import wingslog.core.sharedassets.generated.resources.add_aircraft
+import wingslog.core.sharedassets.generated.resources.app_name
+import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.feature.fleet.sharedassets.generated.resources.add_first_aircraft
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_description
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_title
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreUiRes
 import wingslog.feature.fleet.sharedassets.generated.resources.Res as FleetRes
 
 @OptIn(ExperimentalMaterial3Api::class)

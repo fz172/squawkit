@@ -37,10 +37,10 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.none
-import wingslog.core.ui.generated.resources.ok
-import wingslog.core.ui.generated.resources.select_date
+import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.none
+import wingslog.core.sharedassets.generated.resources.ok
+import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.technician.sharedassets.generated.resources.Res
 import wingslog.feature.technician.sharedassets.generated.resources.certificate_number
 import wingslog.feature.technician.sharedassets.generated.resources.certificate_type
@@ -50,7 +50,7 @@ import wingslog.feature.technician.sharedassets.generated.resources.expiration_d
 import wingslog.feature.technician.sharedassets.generated.resources.never
 import kotlin.time.Clock
 import kotlin.time.Instant
-import wingslog.core.ui.generated.resources.Res as CoreUiRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreUiRes
 
 fun CertificateType.displayResId(): StringResource {
   return when (this) {

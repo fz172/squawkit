@@ -35,13 +35,13 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.update.compose.DismissSquawkDialog
 import dev.fanfly.wingslog.feature.squawk.update.compose.LogPickerSheet
@@ -50,14 +50,14 @@ import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsTab
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.details
+import wingslog.core.sharedassets.generated.resources.details
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
 import wingslog.feature.squawk.update.generated.resources.dismiss_issue
 import wingslog.feature.squawk.update.generated.resources.reopen_issue
 import wingslog.feature.squawk.update.generated.resources.tab_basic
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)

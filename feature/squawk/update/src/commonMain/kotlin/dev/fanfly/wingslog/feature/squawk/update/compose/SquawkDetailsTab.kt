@@ -29,14 +29,14 @@ import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.add
-import wingslog.core.ui.generated.resources.remove
+import wingslog.core.sharedassets.generated.resources.add
+import wingslog.core.sharedassets.generated.resources.remove
 import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.dismissed_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_description_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_not_yet_addressed
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
 @Composable
@@ -136,9 +136,9 @@ fun SquawkDetailsTab(
               associatedLog?.work_description?.takeIf { it.isNotBlank() }
                 ?: addressedByLogId
             val logDate = associatedLog?.timestamp
-                ?.takeIf { it.getEpochSecond() > 0L }
-                ?.toLocalDate()
-                ?.toDisplayFormat()
+              ?.takeIf { it.getEpochSecond() > 0L }
+              ?.toLocalDate()
+              ?.toDisplayFormat()
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
               Row(
                 modifier = Modifier.fillMaxWidth(),

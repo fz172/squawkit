@@ -29,10 +29,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res
-import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.delete
-import wingslog.core.ui.generated.resources.save_changes
+import wingslog.core.sharedassets.generated.resources.Res
+import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.delete
+import wingslog.core.sharedassets.generated.resources.save_changes
 
 @Composable
 fun BottomButtons(
@@ -48,12 +48,14 @@ fun BottomButtons(
   secondaryLabel: String = stringResource(Res.string.cancel),
 ) {
   Box(
-    modifier = modifier.fillMaxWidth().background(Color.Transparent)
+    modifier = modifier.fillMaxWidth()
+      .background(Color.Transparent)
       .padding(Spacing.screenPadding),
     contentAlignment = Alignment.Center
   ) {
     Row(
-      modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
+      modifier = Modifier.widthIn(max = 600.dp)
+        .fillMaxWidth(),
       horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
       verticalAlignment = Alignment.CenterVertically
     ) {
@@ -62,7 +64,8 @@ fun BottomButtons(
         OutlinedButton(
           onClick = onSecondaryClick,
           enabled = secondaryEnabled && !isPrimaryFunctionInProgress,
-          modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
+          modifier = Modifier.weight(1f)
+            .height(Spacing.buttonHeight),
           shape = RoundedCornerShape(Spacing.buttonCornerRadius),
           colors = ButtonDefaults.outlinedButtonColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -85,7 +88,8 @@ fun BottomButtons(
         OutlinedButton(
           onClick = onDangerClick,
           enabled = !isPrimaryFunctionInProgress,
-          modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
+          modifier = Modifier.weight(1f)
+            .height(Spacing.buttonHeight),
           shape = RoundedCornerShape(Spacing.buttonCornerRadius),
           colors = ButtonDefaults.outlinedButtonColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -112,7 +116,8 @@ fun BottomButtons(
       // 3. Save Button
       Button(
         onClick = onPrimaryClick,
-        modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
+        modifier = Modifier.weight(1f)
+          .height(Spacing.buttonHeight),
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.buttonColors(
           containerColor = MaterialTheme.colorScheme.primary,

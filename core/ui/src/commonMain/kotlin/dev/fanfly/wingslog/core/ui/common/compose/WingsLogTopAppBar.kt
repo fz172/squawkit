@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.ui.common.compose
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -10,11 +11,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res
-import wingslog.core.ui.generated.resources.back
+import wingslog.core.sharedassets.generated.resources.Res
+import wingslog.core.sharedassets.generated.resources.back
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

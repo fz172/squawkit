@@ -7,11 +7,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res
-import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.discard
-import wingslog.core.ui.generated.resources.unsaved_changes
-import wingslog.core.ui.generated.resources.unsaved_changes_message
+import wingslog.core.sharedassets.generated.resources.Res
+import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.discard
+import wingslog.core.sharedassets.generated.resources.unsaved_changes
+import wingslog.core.sharedassets.generated.resources.unsaved_changes_message
 
 @Composable
 fun UnsavedChangesDialog(

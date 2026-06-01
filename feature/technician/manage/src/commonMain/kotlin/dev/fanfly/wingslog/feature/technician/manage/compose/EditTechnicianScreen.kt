@@ -30,23 +30,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.EditTechnicianViewModel
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.CertificateInputFields
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
 import wingslog.feature.technician.sharedassets.generated.resources.delete_technician
 import wingslog.feature.technician.sharedassets.generated.resources.delete_technician_confirmation
 import wingslog.feature.technician.sharedassets.generated.resources.edit_technician
 import wingslog.feature.technician.sharedassets.generated.resources.my_profile
 import wingslog.feature.technician.sharedassets.generated.resources.name_required
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
 @OptIn(ExperimentalMaterial3Api::class)

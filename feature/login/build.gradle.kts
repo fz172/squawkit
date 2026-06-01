@@ -46,7 +46,10 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:sharedassets"))
+      implementation(project(":core:ui:theme"))
       implementation(project(":core:ui"))
+      implementation(project(":core:ui:adaptive"))
       implementation(project(":core:auth"))
       // OnboardingPreferences (hasSeenWelcome flag) reads/writes the local store.
       implementation(project(":core:storage"))

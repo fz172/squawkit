@@ -1,6 +1,7 @@
 [versions]
 agp = "9.2.1"
 coilCompose = "3.5.0-beta01"
+documentfile = "1.1.0"
 kotlinxCoroutines = "1.11.0"
 composeMultiplatform = "1.11.0"
 
@@ -31,6 +32,7 @@ wire = "6.4.0"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 androidx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coilCompose" }

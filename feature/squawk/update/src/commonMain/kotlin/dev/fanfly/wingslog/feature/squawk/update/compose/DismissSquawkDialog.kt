@@ -23,12 +23,12 @@ import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.feature.squawk.update.generated.resources.Res
 import wingslog.feature.squawk.update.generated.resources.dismiss_issue
 import wingslog.feature.squawk.update.generated.resources.dismiss_squawk_title
 import wingslog.feature.squawk.update.generated.resources.dismiss_squawk_warning
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @Composable
 fun DismissSquawkDialog(

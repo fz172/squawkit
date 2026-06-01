@@ -32,10 +32,10 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.make_model_template
+import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.feature.tasks.sharedassets.generated.resources.Res
 import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @Composable
 fun AircraftDashboardCard(

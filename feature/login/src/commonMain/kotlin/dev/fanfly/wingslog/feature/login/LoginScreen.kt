@@ -50,8 +50,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -61,7 +61,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.ui.generated.resources.ic_launcher_foreground
+import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.apple_logo
 import wingslog.feature.login.generated.resources.continue_without_account
@@ -75,7 +75,7 @@ import wingslog.feature.login.generated.resources.sign_in_anonymous_error
 import wingslog.feature.login.generated.resources.sign_in_error
 import wingslog.feature.login.generated.resources.sign_in_with_apple
 import wingslog.feature.login.generated.resources.sign_in_with_google
-import wingslog.core.ui.generated.resources.Res as UiRes
+import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 private val LoginBackground = AviationBlue10
 private val LoginOnBackground = Color(0xFFF0F4FF)

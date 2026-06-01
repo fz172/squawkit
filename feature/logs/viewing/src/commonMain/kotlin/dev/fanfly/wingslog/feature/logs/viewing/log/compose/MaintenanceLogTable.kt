@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,10 +35,10 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.hours_abbr_value
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
 // Shared column weights so the header and every row stay aligned.
 private const val W_DATE = 0.9f

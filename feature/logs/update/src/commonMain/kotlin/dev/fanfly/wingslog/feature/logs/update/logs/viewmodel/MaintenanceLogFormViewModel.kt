@@ -9,8 +9,8 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.common.UiText
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
@@ -37,14 +37,14 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import wingslog.core.ui.generated.resources.delete_failed
-import wingslog.core.ui.generated.resources.save_failed
+import wingslog.core.sharedassets.generated.resources.delete_failed
+import wingslog.core.sharedassets.generated.resources.save_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.logs.update.generated.resources.log_not_found
 import wingslog.feature.logs.update.generated.resources.work_description_required
 import kotlin.time.Clock
 import kotlin.time.Instant
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachmentRes
 import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 

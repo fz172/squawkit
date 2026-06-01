@@ -50,7 +50,7 @@ import kotlinx.datetime.daysUntil
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.select_date
+import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.adj_preview_hint
 import wingslog.feature.tasks.update.generated.resources.adj_preview_label_neutral
@@ -97,7 +97,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlin.time.Instant
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @Composable
 fun TaskAdjustmentsTab(
@@ -141,9 +141,13 @@ fun TaskAdjustmentsTab(
   }
 
   val timeZone = TimeZone.currentSystemDefault()
-  val today = remember { Clock.System.now().toLocalDateTime(timeZone).date }
+  val today = remember {
+    Clock.System.now()
+      .toLocalDateTime(timeZone).date
+  }
   val rescheduledDate = forcedDateMillis?.let {
-    Instant.fromEpochMilliseconds(it).toLocalDateTime(timeZone).date
+    Instant.fromEpochMilliseconds(it)
+      .toLocalDateTime(timeZone).date
   }
   val rescheduledEngine = forcedEngineHours.toFloatOrNull()
   // When skip is applied, advance the natural rule-derived next-due past today
@@ -152,7 +156,11 @@ fun TaskAdjustmentsTab(
   val skippedDueDate = if (mode == ScheduleMode.TIME)
     advanceDatePastToday(naturalDueDate, schedule, today) else null
   val skippedDueEngine = if (mode == ScheduleMode.HOURS)
-    advanceEnginePastNow(naturalDueEngine, schedule, currentEngineHours) else null
+    advanceEnginePastNow(
+      naturalDueEngine,
+      schedule,
+      currentEngineHours
+    ) else null
 
   Column(
     modifier = modifier.fillMaxWidth(),
@@ -227,8 +235,10 @@ fun TaskAdjustmentsTab(
 
       // ── Skip on, no advanceable rule (LINKED / ASAP / no interval) ───────
       isSkipping -> {
-        bannerPrimary = AnnotatedString(stringResource(Res.string.adj_preview_skip_primary))
-        bannerSecondary = AnnotatedString(stringResource(Res.string.adj_preview_skip_secondary))
+        bannerPrimary =
+          AnnotatedString(stringResource(Res.string.adj_preview_skip_primary))
+        bannerSecondary =
+          AnnotatedString(stringResource(Res.string.adj_preview_skip_secondary))
       }
 
       // ── Reschedule on, TIME mode ─────────────────────────────────────────
@@ -245,8 +255,12 @@ fun TaskAdjustmentsTab(
           )
           bannerSecondary = naturalDueDate?.let {
             val natStr = it.toDisplayFormat()
-            monoOn(stringResource(Res.string.adj_preview_was_date, natStr), natStr)
-          } ?: AnnotatedString(stringResource(Res.string.adj_preview_reschedule_was_date))
+            monoOn(
+              stringResource(Res.string.adj_preview_was_date, natStr),
+              natStr
+            )
+          }
+            ?: AnnotatedString(stringResource(Res.string.adj_preview_reschedule_was_date))
         } else {
           bannerPrimary = AnnotatedString(
             stringResource(Res.string.adj_preview_reschedule_date_primary, "—")
@@ -270,8 +284,12 @@ fun TaskAdjustmentsTab(
           )
           bannerSecondary = naturalDueEngine?.let {
             val natStr = formatEngineHours(it)
-            monoOn(stringResource(Res.string.adj_preview_was_hours, natStr), natStr)
-          } ?: AnnotatedString(stringResource(Res.string.adj_preview_reschedule_was_date))
+            monoOn(
+              stringResource(Res.string.adj_preview_was_hours, natStr),
+              natStr
+            )
+          }
+            ?: AnnotatedString(stringResource(Res.string.adj_preview_reschedule_was_date))
         } else {
           bannerPrimary = AnnotatedString(
             stringResource(
@@ -313,13 +331,15 @@ fun TaskAdjustmentsTab(
       }
 
       mode == ScheduleMode.LINKED -> {
-        bannerPrimary = AnnotatedString(stringResource(Res.string.adj_preview_neutral_primary))
+        bannerPrimary =
+          AnnotatedString(stringResource(Res.string.adj_preview_neutral_primary))
         bannerSecondary =
           AnnotatedString(stringResource(Res.string.adj_preview_neutral_secondary_linked))
       }
 
       else -> {
-        bannerPrimary = AnnotatedString(stringResource(Res.string.adj_preview_neutral_primary))
+        bannerPrimary =
+          AnnotatedString(stringResource(Res.string.adj_preview_neutral_primary))
         bannerSecondary =
           AnnotatedString(stringResource(Res.string.adj_preview_neutral_secondary_unset))
       }
@@ -633,11 +653,12 @@ internal fun advanceDatePastToday(
   return advanced
 }
 
-private fun LocalDate.step(unit: ScheduleTimeUnit, n: Int): LocalDate = when (unit) {
-  ScheduleTimeUnit.DAYS -> plus(n, DateTimeUnit.DAY)
-  ScheduleTimeUnit.MONTHS -> plus(n, DateTimeUnit.MONTH)
-  ScheduleTimeUnit.YEARS -> plus(n, DateTimeUnit.YEAR)
-}
+private fun LocalDate.step(unit: ScheduleTimeUnit, n: Int): LocalDate =
+  when (unit) {
+    ScheduleTimeUnit.DAYS -> plus(n, DateTimeUnit.DAY)
+    ScheduleTimeUnit.MONTHS -> plus(n, DateTimeUnit.MONTH)
+    ScheduleTimeUnit.YEARS -> plus(n, DateTimeUnit.YEAR)
+  }
 
 internal fun advanceEnginePastNow(
   natural: Float?,
@@ -697,13 +718,16 @@ private fun relativeEngineAgoPhrase(deltaHours: Float): String {
 internal fun formatEngineHours(value: Float): String {
   // Show integers without trailing decimal, otherwise one decimal place.
   val rounded = (value * 10f).roundToInt() / 10f
-  return if (rounded == rounded.toInt().toFloat()) rounded.toInt().toString()
+  return if (rounded == rounded.toInt()
+      .toFloat()
+  ) rounded.toInt()
+    .toString()
   else rounded.toString()
 }
 
 /**
  * Returns [text] as an AnnotatedString with each [fragment]'s first occurrence styled
- * in JetBrains Mono (via [WingslogTypography.dataMedium]). The surrounding text's
+ * in JetBrains Mono (via [dev.fanfly.wingslog.core.ui.theme.WingslogTypography.dataMedium]). The surrounding text's
  * fontSize is preserved — only the font family and letter spacing are overridden.
  */
 @Composable

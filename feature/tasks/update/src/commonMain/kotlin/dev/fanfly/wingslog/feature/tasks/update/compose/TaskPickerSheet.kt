@@ -28,7 +28,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.done
+import wingslog.core.sharedassets.generated.resources.done
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.compliance_type_ad
 import wingslog.feature.tasks.update.generated.resources.compliance_type_routine
@@ -36,7 +36,7 @@ import wingslog.feature.tasks.update.generated.resources.compliance_type_sb
 import wingslog.feature.tasks.update.generated.resources.no_tasks_configured
 import wingslog.feature.tasks.update.generated.resources.reference_and_component
 import wingslog.feature.tasks.update.generated.resources.select_task_work
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

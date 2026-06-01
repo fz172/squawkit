@@ -74,10 +74,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -94,8 +94,8 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.done
+import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.done
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_details_incomplete
 import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_section
@@ -157,7 +157,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_untitled_
 import wingslog.feature.export.sharedassets.generated.resources.export_view_exports
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import kotlin.time.Instant
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @Composable
 fun ExportSelectionScreen(
@@ -277,7 +277,8 @@ private fun ConfiguringContent(
           onDateRangeChange = onDateRangeChange,
           onCustomStartChange = onCustomStartChange,
           onCustomEndChange = onCustomEndChange,
-          modifier = Modifier.weight(1f).fillMaxHeight(),
+          modifier = Modifier.weight(1f)
+            .fillMaxHeight(),
         )
         ExportSummaryPane(
           state = state,
@@ -844,10 +845,17 @@ private fun ExportSummaryPane(
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold,
       color = MaterialTheme.colorScheme.onSurface,
-      modifier = Modifier.padding(horizontal = Spacing.large, vertical = Spacing.medium),
+      modifier = Modifier.padding(
+        horizontal = Spacing.large,
+        vertical = Spacing.medium
+      ),
     )
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-    SummaryRow("Formats", joinFormats(state.formats).ifBlank { "—" }, mono = true)
+    SummaryRow(
+      "Formats",
+      joinFormats(state.formats).ifBlank { "—" },
+      mono = true
+    )
     SummaryRow(
       "Aircraft",
       "${state.selectedAircraftIds.size} of ${state.aircraft.size}",
@@ -856,7 +864,10 @@ private fun ExportSummaryPane(
     SummaryRow("Range", rangeSummary(state), mono = false)
     SummaryRow(
       "Est. size",
-      stringResource(Res.string.export_estimated_size, readableBytes(state.estimatedSizeBytes)),
+      stringResource(
+        Res.string.export_estimated_size,
+        readableBytes(state.estimatedSizeBytes)
+      ),
       mono = true,
     )
 

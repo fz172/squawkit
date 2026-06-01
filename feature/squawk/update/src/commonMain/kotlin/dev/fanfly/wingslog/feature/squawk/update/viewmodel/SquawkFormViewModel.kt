@@ -14,7 +14,7 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile

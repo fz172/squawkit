@@ -23,7 +23,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.component_type
+import wingslog.core.sharedassets.generated.resources.component_type
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.compliance_ad_sub
 import wingslog.feature.tasks.update.generated.resources.compliance_routine_sub
@@ -37,7 +37,7 @@ import wingslog.feature.tasks.update.generated.resources.component_type_descript
 import wingslog.feature.tasks.update.generated.resources.task_description_placeholder
 import wingslog.feature.tasks.update.generated.resources.task_title
 import wingslog.feature.tasks.update.generated.resources.task_title_helper
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * Identity tab for Add/Edit Maintenance Task screens.

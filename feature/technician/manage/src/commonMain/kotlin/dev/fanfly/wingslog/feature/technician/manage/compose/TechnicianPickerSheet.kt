@@ -26,11 +26,11 @@ import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.done
-import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
+import wingslog.core.sharedassets.generated.resources.done
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
 import wingslog.feature.technician.sharedassets.generated.resources.select_technician
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,9 +80,10 @@ fun TechnicianPickerSheet(
               style = MaterialTheme.typography.bodyLarge,
             )
             if (technician.cert_type.isNotBlank() || technician.cert_number.isNotBlank()) {
-              val certText = listOf(technician.cert_type, technician.cert_number)
-                .filter { it.isNotBlank() }
-                .joinToString(" - ")
+              val certText =
+                listOf(technician.cert_type, technician.cert_number)
+                  .filter { it.isNotBlank() }
+                  .joinToString(" - ")
               Text(
                 text = certText,
                 style = MaterialTheme.typography.bodySmall,

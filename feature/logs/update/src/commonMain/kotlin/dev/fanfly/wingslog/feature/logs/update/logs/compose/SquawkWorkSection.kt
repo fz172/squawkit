@@ -23,12 +23,12 @@ import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.add
-import wingslog.core.ui.generated.resources.remove
-import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
+import wingslog.core.sharedassets.generated.resources.add
+import wingslog.core.sharedassets.generated.resources.remove
 import wingslog.feature.squawk.sharedassets.generated.resources.no_squawk_work_recorded
 import wingslog.feature.squawk.sharedassets.generated.resources.squawks
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 
 @Composable
 fun SquawkWorkSection(

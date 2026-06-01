@@ -27,34 +27,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
-import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.Res as CoreRes
-import wingslog.core.ui.generated.resources.unit_hours
-import wingslog.feature.logs.sharedassets.generated.resources.Res as MaintenanceRes
+import wingslog.core.sharedassets.generated.resources.unit_hours
 import wingslog.feature.logs.sharedassets.generated.resources.airframe_time_label
 import wingslog.feature.logs.sharedassets.generated.resources.edit_log
 import wingslog.feature.logs.sharedassets.generated.resources.engine_time_label
 import wingslog.feature.logs.sharedassets.generated.resources.prop_time_label
-import wingslog.feature.logs.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.logs.viewing.generated.resources.affected_maintenance_tasks
 import wingslog.feature.logs.viewing.generated.resources.no_tasks_linked
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_task
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.logs.sharedassets.generated.resources.Res as MaintenanceRes
+import wingslog.feature.logs.viewing.generated.resources.Res as ViewingRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +70,8 @@ fun MaintenanceLogDetailSheet(
   attachmentEnabled: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
-  val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
+  val dateStr = log.timestamp?.toLocalDate()
+    ?.toDisplayFormat()
     ?: stringResource(SharedTaskRes.string.unknown_date)
 
   DetailSheet(
@@ -101,7 +101,11 @@ fun MaintenanceLogDetailSheet(
     }
 
     Spacer(Modifier.height(Spacing.large))
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    HorizontalDivider(
+      color = MaterialTheme.colorScheme.outlineVariant.copy(
+        alpha = 0.5f
+      )
+    )
 
     // Affected Maintenance Tasks
     AffectedTasksSection(
@@ -121,7 +125,11 @@ fun MaintenanceLogDetailSheet(
     }
 
     // Footer: technician (if enabled) | date
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    HorizontalDivider(
+      color = MaterialTheme.colorScheme.outlineVariant.copy(
+        alpha = 0.5f
+      )
+    )
     Row(
       modifier = Modifier
         .fillMaxWidth()
@@ -189,7 +197,8 @@ private fun SheetHeroMetric(log: MaintenanceLog) {
         text = stringResource(CoreRes.string.unit_hours),
         style = MaterialTheme.typography.bodyLarge,
         fontWeight = FontWeight.Medium,
-        modifier = Modifier.alignByBaseline().padding(start = Spacing.extraSmall),
+        modifier = Modifier.alignByBaseline()
+          .padding(start = Spacing.extraSmall),
       )
     }
   }

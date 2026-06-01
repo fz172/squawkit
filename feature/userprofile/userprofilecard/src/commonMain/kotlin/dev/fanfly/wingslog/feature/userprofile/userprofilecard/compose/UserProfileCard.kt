@@ -30,9 +30,9 @@ import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
-import dev.fanfly.wingslog.core.ui.common.compose.AvatarIcon
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
+import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.displayResId
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

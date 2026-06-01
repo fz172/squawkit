@@ -42,7 +42,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":feature:stresstest"))
-      implementation(project(":core:ui"))
+      implementation(project(":core:ui:theme"))
       implementation(libs.components.resources)
       implementation(libs.androidx.navigation.compose)
       implementation(libs.material.icons.extended)

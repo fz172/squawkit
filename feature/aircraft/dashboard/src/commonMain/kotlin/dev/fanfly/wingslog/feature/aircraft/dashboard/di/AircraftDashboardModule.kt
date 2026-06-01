@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.di
 
 import androidx.lifecycle.SavedStateHandle
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewViewModel
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener

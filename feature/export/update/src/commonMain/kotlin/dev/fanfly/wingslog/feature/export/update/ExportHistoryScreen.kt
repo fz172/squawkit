@@ -56,10 +56,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.export.ExportRecord
@@ -70,7 +70,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_all_time
 import wingslog.feature.export.sharedassets.generated.resources.export_email_body
@@ -99,7 +99,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_size_kb
 import wingslog.feature.export.sharedassets.generated.resources.export_size_mb
 import wingslog.feature.export.sharedassets.generated.resources.export_size_zero_kb
 import kotlin.time.Instant
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @Composable
 fun ExportHistoryScreen(

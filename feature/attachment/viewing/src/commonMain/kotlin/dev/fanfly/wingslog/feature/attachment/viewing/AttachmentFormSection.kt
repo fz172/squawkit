@@ -45,9 +45,9 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.add
-import wingslog.core.ui.generated.resources.cancel
-import wingslog.core.ui.generated.resources.remove
+import wingslog.core.sharedassets.generated.resources.add
+import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.remove
 import wingslog.feature.attachment.sharedassets.generated.resources.add_link
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_limits_hint
 import wingslog.feature.attachment.sharedassets.generated.resources.attachments
@@ -61,7 +61,7 @@ import wingslog.feature.attachment.sharedassets.generated.resources.max_files_re
 import wingslog.feature.attachment.sharedassets.generated.resources.no_attachments
 import wingslog.feature.attachment.sharedassets.generated.resources.remove_attachment
 import wingslog.feature.attachment.sharedassets.generated.resources.sign_in_to_add_attachments
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 /**
@@ -207,7 +207,9 @@ private fun PendingAttachmentRow(
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier.weight(1f),
       )
-      IconButton(onClick = { if (isSavedFile) showConfirmDialog = true else onRemove() }) {
+      IconButton(onClick = {
+        if (isSavedFile) showConfirmDialog = true else onRemove()
+      }) {
         Icon(
           Icons.Default.Close,
           contentDescription = stringResource(AttachRes.string.remove_attachment),
@@ -216,7 +218,10 @@ private fun PendingAttachmentRow(
         )
       }
     }
-    Spacer(Modifier.fillMaxWidth().height(Spacing.extraSmall))
+    Spacer(
+      Modifier.fillMaxWidth()
+        .height(Spacing.extraSmall)
+    )
   }
 }
 
@@ -321,7 +326,9 @@ private fun AttachmentPickerSheet(
           horizontalArrangement = Arrangement.End,
           modifier = Modifier.fillMaxWidth()
         ) {
-          TextButton(onClick = { showLinkField = false; linkUrl = ""; linkName = "" }) {
+          TextButton(onClick = {
+            showLinkField = false; linkUrl = ""; linkName = ""
+          }) {
             Text(stringResource(CoreRes.string.cancel))
           }
           FilledTonalButton(onClick = {
@@ -335,7 +342,8 @@ private fun AttachmentPickerSheet(
                 } else {
                   "https://$trimmed"
                 }
-              val finalName = linkName.trim().ifBlank { normalized.extractDomain() }
+              val finalName = linkName.trim()
+                .ifBlank { normalized.extractDomain() }
               onAddLink(
                 normalized,
                 finalName
@@ -353,18 +361,26 @@ private fun AttachmentPickerSheet(
 
 private fun String.extractDomain(): String {
   val withoutScheme = if (contains("://")) substringAfter("://") else this
-  val hostAndPort = withoutScheme.substringBefore("/").substringBefore("?").substringBefore("#")
+  val hostAndPort = withoutScheme.substringBefore("/")
+    .substringBefore("?")
+    .substringBefore("#")
   val host = hostAndPort.substringBefore(":")
   return if (host.startsWith("www.")) host.drop(4) else host
 }
 
 private fun isValidUrl(url: String): Boolean {
   if (url.isBlank()) return false
-  val lower = url.lowercase().trim()
-  if (lower.startsWith("ftp://") || lower.startsWith("file://") || lower.startsWith("mailto:")) return false
+  val lower = url.lowercase()
+    .trim()
+  if (lower.startsWith("ftp://") || lower.startsWith("file://") || lower.startsWith(
+      "mailto:"
+    )
+  ) return false
   val normalized =
     if (lower.startsWith("http://") || lower.startsWith("https://")) lower else "https://$lower"
   val withoutProtocol = normalized.substringAfter("://")
   val dotIndex = withoutProtocol.indexOf('.')
-  return dotIndex > 0 && dotIndex < withoutProtocol.lastIndex && !withoutProtocol.contains(' ')
+  return dotIndex > 0 && dotIndex < withoutProtocol.lastIndex && !withoutProtocol.contains(
+    ' '
+  )
 }

@@ -46,6 +46,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
+      implementation(project(":core:ui:theme"))
+      implementation(project(":core:ui:adaptive"))
       implementation(project(":core:auth"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:sync:sharedassets"))

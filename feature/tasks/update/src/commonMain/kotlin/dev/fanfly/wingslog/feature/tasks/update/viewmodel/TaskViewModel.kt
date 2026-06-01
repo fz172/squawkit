@@ -12,7 +12,7 @@ import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile

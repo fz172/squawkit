@@ -38,8 +38,10 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":core:ui"))
+      implementation(project(":core:model"))
+      implementation(project(":core:sharedassets"))
       implementation(libs.components.resources)
+      api(libs.compose.ui)
     }
   }
 }

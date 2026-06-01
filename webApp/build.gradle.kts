@@ -16,7 +16,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             // core:ui api-exports compose.ui, material3, and material-icons-extended.
+            implementation(project(":core:nav"))
             implementation(project(":core:ui"))
+            implementation(project(":core:ui:adaptive"))
+            implementation(project(":core:ui:theme"))
             implementation(project(":core:auth"))
             implementation(project(":core:storage"))
             implementation(project(":feature:login"))

@@ -40,7 +40,9 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
+      implementation(project(":core:ui:theme"))
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:logs:sharedassets"))
       implementation(project(":feature:attachment:viewing"))

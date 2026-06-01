@@ -50,7 +50,10 @@ kotlin {
       implementation(project(":feature:squawk:datamanager"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:tasks:datamanager"))
+      implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
+      implementation(project(":core:ui:adaptive"))
+      implementation(project(":core:ui:theme"))
 
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.compose.foundation)

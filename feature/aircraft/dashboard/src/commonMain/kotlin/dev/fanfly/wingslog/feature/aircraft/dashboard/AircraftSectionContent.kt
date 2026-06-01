@@ -15,8 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
-import dev.fanfly.wingslog.core.ui.shell.ShellSection
+import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.LogsTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.MaintenanceTasksTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.OverviewTab
@@ -34,9 +34,9 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * Host entry point for the adaptive shell's **per-aircraft** section bodies: maps a [ShellSection]
+ * Host entry point for the adaptive shell's **per-aircraft** section bodies: maps a [dev.fanfly.wingslog.core.ui.adaptive.ShellSection]
  * (+ optional ambient [aircraftId]) to the right content. Both hosts (`AppEntry`, `WebApp`) call this
- * from the shell's `sectionContent` slot for everything except [ShellSection.SETTINGS], which is
+ * from the shell's `sectionContent` slot for everything except [dev.fanfly.wingslog.core.ui.adaptive.ShellSection.SETTINGS], which is
  * global and rendered by the host directly (it depends on `feature:settings`).
  *
  * - per-aircraft sections → [AircraftSectionContent], or an empty state when no aircraft exists.
@@ -69,7 +69,7 @@ fun ShellSectionBody(
 }
 
 /**
- * Renders the content of a single adaptive-shell [ShellSection] for a given aircraft (M3).
+ * Renders the content of a single adaptive-shell [dev.fanfly.wingslog.core.ui.adaptive.ShellSection] for a given aircraft (M3).
  *
  * Reuses the existing per-tab composables ([OverviewTab], [MaintenanceTasksTab], [LogsTab],
  * [SquawkTab]) but drives them from an [AircraftOverviewViewModel] scoped to the ambient
@@ -80,7 +80,7 @@ fun ShellSectionBody(
  * (overview → squawks, log → task) are surfaced via [onNavigateToSection] so the shell can switch
  * sections.
  *
- * [ShellSection.SETTINGS] is global and handled by the host, not here.
+ * [dev.fanfly.wingslog.core.ui.adaptive.ShellSection.SETTINGS] is global and handled by the host, not here.
  */
 @Composable
 fun AircraftSectionContent(

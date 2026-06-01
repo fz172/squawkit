@@ -7,14 +7,14 @@ import dev.fanfly.wingslog.aircraft.CertExpireLimit
 import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.datetime.toWireInstant
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Instant
 
 data class EditTechnicianUiState(
   val id: String = "",

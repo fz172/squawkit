@@ -9,7 +9,7 @@ import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.Propeller
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.aircraft.PropellerHub
-import dev.fanfly.wingslog.core.ui.common.navigation.Screen
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -54,7 +54,10 @@ kotlin {
       implementation(project(":feature:export:datamanager"))
       implementation(project(":feature:export:update"))
       implementation(project(":core:auth"))
+      implementation(project(":core:nav"))
       implementation(project(":core:ui"))
+      implementation(project(":core:ui:theme"))
+      implementation(project(":core:ui:adaptive"))
       implementation(project(":core:storage"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:sync:settings"))
@@ -95,7 +98,8 @@ kotlin {
       implementation(libs.coil.network.ktor3)
     }
 
-    val iosMain = sourceSets.findByName("iosMain") ?: sourceSets.create("iosMain")
+    val iosMain =
+      sourceSets.findByName("iosMain") ?: sourceSets.create("iosMain")
     iosMain.apply {
       dependsOn(commonMain.get())
       dependencies {
@@ -104,9 +108,12 @@ kotlin {
       }
     }
 
-    sourceSets.findByName("iosX64Main")?.dependsOn(iosMain)
-    sourceSets.findByName("iosArm64Main")?.dependsOn(iosMain)
-    sourceSets.findByName("iosSimulatorArm64Main")?.dependsOn(iosMain)
+    sourceSets.findByName("iosX64Main")
+      ?.dependsOn(iosMain)
+    sourceSets.findByName("iosArm64Main")
+      ?.dependsOn(iosMain)
+    sourceSets.findByName("iosSimulatorArm64Main")
+      ?.dependsOn(iosMain)
   }
 }
 

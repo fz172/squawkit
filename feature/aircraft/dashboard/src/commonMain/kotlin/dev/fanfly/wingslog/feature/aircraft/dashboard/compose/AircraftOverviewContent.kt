@@ -31,10 +31,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedFloatingAction
-import dev.fanfly.wingslog.core.ui.common.compose.ConstrainedTopBar
-import dev.fanfly.wingslog.core.ui.common.compose.ContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.AircraftDashboardTabRow
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.AircraftTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.LogsTab
@@ -50,12 +50,12 @@ import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import wingslog.core.ui.generated.resources.back
+import wingslog.core.sharedassets.generated.resources.back
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.logs.viewing.generated.resources.edit_aircraft
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsSharedRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkSharedRes

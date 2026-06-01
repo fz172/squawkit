@@ -28,8 +28,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,12 +39,12 @@ import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
-import dev.fanfly.wingslog.core.ui.common.compose.LayoutTier
-import dev.fanfly.wingslog.core.ui.common.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.AircraftDataCard
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.LogOnboardingCard
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.LogStatsSection
@@ -58,9 +58,9 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.CriticalAlertsSection
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.ui.generated.resources.make_model_template
+import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
-import wingslog.core.ui.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -95,7 +95,11 @@ fun OverviewTab(
     val overdueTasks =
       state.activeTasks.filter { it.dueStatus.status == DueStatus.OVERDUE || it.dueStatus.status == DueStatus.DUE_SOON }
 
-    OverviewHero(state, Modifier.padding(horizontal = Spacing.screenPadding).padding(top = Spacing.medium))
+    OverviewHero(
+      state,
+      Modifier.padding(horizontal = Spacing.screenPadding)
+        .padding(top = Spacing.medium)
+    )
 
     Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
       AircraftDataCard(
@@ -123,7 +127,13 @@ fun OverviewTab(
     state.logStats?.let { stats ->
       if (stats.total == 0L && onMutationAction != null) {
         LogOnboardingCard(
-          onAddLogClick = { onMutationAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
+          onAddLogClick = {
+            onMutationAction(
+              AircraftOverviewAction.AddLogClick(
+                state.aircraft.id
+              )
+            )
+          },
           modifier = Modifier.padding(horizontal = Spacing.screenPadding)
         )
       } else if (stats.total > 0L) {
@@ -181,7 +191,13 @@ private fun LargeOverviewTab(
     state.logStats?.let { stats ->
       if (stats.total == 0L && onMutationAction != null) {
         LogOnboardingCard(
-          onAddLogClick = { onMutationAction(AircraftOverviewAction.AddLogClick(state.aircraft.id)) },
+          onAddLogClick = {
+            onMutationAction(
+              AircraftOverviewAction.AddLogClick(
+                state.aircraft.id
+              )
+            )
+          },
         )
       } else if (stats.total > 0L) {
         LogStatsSection(stats = stats)
@@ -258,7 +274,11 @@ private fun DashboardLowerGrid(
         state.recentLogs.forEachIndexed { index, log ->
           RecentLogRow(log = log, onClick = onLogsClick)
           if (index < state.recentLogs.lastIndex) {
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+            HorizontalDivider(
+              color = MaterialTheme.colorScheme.outlineVariant.copy(
+                alpha = 0.55f
+              )
+            )
           }
         }
       }
@@ -285,7 +305,11 @@ private fun DashboardLowerGrid(
         }
       }
 
-      RailCard(title = "Open squawks", actionLabel = "All", onActionClick = onViewSquawksClick) {
+      RailCard(
+        title = "Open squawks",
+        actionLabel = "All",
+        onActionClick = onViewSquawksClick
+      ) {
         if (openSquawks.isEmpty()) {
           EmptyRailState(
             icon = Icons.Default.CheckCircle,
@@ -298,13 +322,18 @@ private fun DashboardLowerGrid(
             SquawkRailRow(
               title = item.squawk.title,
               subtitle = item.squawk.description.ifBlank {
-                item.squawk.created_at?.toLocalDate()?.toDisplayFormat()
+                item.squawk.created_at?.toLocalDate()
+                  ?.toDisplayFormat()
                   ?: ""
               },
               onClick = onViewSquawksClick,
             )
             if (index < previewSquawks.lastIndex) {
-              HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+              HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(
+                  alpha = 0.55f
+                )
+              )
             }
           }
         }
@@ -325,7 +354,10 @@ private fun RailCard(
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     color = MaterialTheme.colorScheme.surfaceContainer,
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
   ) {
     Column(
       modifier = Modifier.padding(Spacing.large),
@@ -347,7 +379,8 @@ private fun RailCard(
             text = actionLabel,
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.clickable(onClick = onActionClick).padding(Spacing.extraSmall),
+            modifier = Modifier.clickable(onClick = onActionClick)
+              .padding(Spacing.extraSmall),
           )
         }
       }
@@ -358,13 +391,15 @@ private fun RailCard(
 
 @Composable
 private fun RecentLogRow(log: MaintenanceLog, onClick: () -> Unit) {
-  val date = log.timestamp?.toLocalDate()?.toDisplayFormat()
+  val date = log.timestamp?.toLocalDate()
+    ?.toDisplayFormat()
     ?: stringResource(TasksRes.string.unknown_date)
   val hours = when (log.component_type) {
     ComponentType.COMPONENT_ENGINE -> log.engine_hour
     ComponentType.COMPONENT_AIRFRAME -> log.airframe_time
     ComponentType.COMPONENT_PROPELLER -> log.prop_time
-    else -> log.engine_hour.takeIf { it > 0.0 } ?: log.airframe_time.takeIf { it > 0.0 } ?: log.prop_time
+    else -> log.engine_hour.takeIf { it > 0.0 }
+      ?: log.airframe_time.takeIf { it > 0.0 } ?: log.prop_time
   }
   Row(
     modifier = Modifier
@@ -393,7 +428,11 @@ private fun RecentLogRow(log: MaintenanceLog, onClick: () -> Unit) {
       )
     }
     Column(horizontalAlignment = Alignment.End) {
-      Text(date, style = WingslogTypography.dataSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+      Text(
+        date,
+        style = WingslogTypography.dataSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+      )
       if (hours > 0.0) {
         Text(
           "${hours.formatToOneDecimalPlace()} hrs",
@@ -463,11 +502,15 @@ private fun RailComponentTypeBadge(type: ComponentType) {
     color = background,
   ) {
     Text(
-      text = type.displayName().uppercase(),
+      text = type.displayName()
+        .uppercase(),
       style = MaterialTheme.typography.labelSmall,
       fontWeight = FontWeight.SemiBold,
       color = content,
-      modifier = Modifier.padding(horizontal = Spacing.small, vertical = Spacing.extraSmall),
+      modifier = Modifier.padding(
+        horizontal = Spacing.small,
+        vertical = Spacing.extraSmall
+      ),
     )
   }
 }
@@ -479,7 +522,8 @@ private fun EmptyRailState(
   body: String,
 ) {
   Column(
-    modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.medium),
+    modifier = Modifier.fillMaxWidth()
+      .padding(vertical = Spacing.medium),
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
