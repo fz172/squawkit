@@ -58,6 +58,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.add_aircraft
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
@@ -242,7 +243,12 @@ private fun EmptyFleetScaffold(
       if (showAccountAction || inSettings) {
         TopAppBar(
           title = {
-            ActionBarTitle(state)
+            // No aircraft means no real section to name; only Settings gets a title here.
+            Text(
+              if (inSettings) state.section.label else "",
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis,
+            )
           },
           navigationIcon = {
             // While Settings is open, the content already shows the account avatar, so the top bar
@@ -412,7 +418,7 @@ private fun WingsSidebar(
       // Combined account + settings entry: the user's avatar and name; opens the Settings section.
       NavigationDrawerItem(
         label = {
-          ActionBarTitle(state)
+          AccountLabel(state)
         },
         icon = {
           AvatarIcon(
@@ -531,6 +537,10 @@ private fun ScaffoldShell(
         }
     },
   ) {
+    // Settings has no entry in the bottom/rail nav, so without this the only way out is to tap a
+    // tab. Remember the last tabbed section so the Settings back button returns where the user was.
+    val backTarget = remember { mutableStateOf(ShellSection.DASHBOARD) }
+    if (state.section != ShellSection.SETTINGS) backTarget.value = state.section
     ShellContent(
       state = state,
       // The switcher lives in the top bar on both the rail (MEDIUM) and the bottom-bar (COMPACT)
@@ -540,6 +550,7 @@ private fun ScaffoldShell(
       onSelectAircraft = onSelectAircraft,
       onAddAircraft = onAddAircraft,
       onOpenSettings = onOpenSettings,
+      onExitSettings = { onSelectSection(backTarget.value) },
       content = content,
     )
   }
@@ -557,6 +568,9 @@ private fun ShellContent(
   onSelectAircraft: (String) -> Unit,
   onAddAircraft: (() -> Unit)? = null,
   onOpenSettings: (() -> Unit)? = null,
+  // Non-sidebar tiers only: leaves the Settings section back to the tabbed views. Null in sidebar
+  // mode, where the sidebar itself is the way out.
+  onExitSettings: (() -> Unit)? = null,
   content: @Composable () -> Unit,
 ) {
   Scaffold(
@@ -564,6 +578,16 @@ private fun ShellContent(
       TopAppBar(
         title = {
           ActionBarTitle(state)
+        },
+        navigationIcon = {
+          if (onExitSettings != null && state.section == ShellSection.SETTINGS) {
+            IconButton(onClick = onExitSettings) {
+              Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(UiRes.string.back),
+              )
+            }
+          }
         },
         actions = {
           if (showTopBarSwitcher && state.section != ShellSection.SETTINGS) {
@@ -599,6 +623,14 @@ private fun ShellContent(
 @Composable
 private fun ActionBarTitle(state: AdaptiveShellUiState) = Text(
   state.section.label,
+  maxLines = 1,
+  overflow = TextOverflow.Ellipsis,
+)
+
+/** The sidebar account/settings entry label: the signed-in user's name, not the current section. */
+@Composable
+private fun AccountLabel(state: AdaptiveShellUiState) = Text(
+  state.accountName?.takeIf { it.isNotBlank() } ?: "Account",
   maxLines = 1,
   overflow = TextOverflow.Ellipsis,
 )
@@ -658,7 +690,7 @@ private fun AircraftDropdown(
     if (onAddAircraft != null) {
       HorizontalDivider()
       DropdownMenuItem(
-        text = { Text("Add aircraft") },
+        text = { Text(stringResource(UiRes.string.add_aircraft)) },
         leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
         onClick = {
           onAddAircraft()
