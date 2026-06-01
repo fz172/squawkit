@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
@@ -45,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,6 +58,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
@@ -131,7 +134,14 @@ fun AdaptiveAppShell(
       { sectionContent(state.section, state.selectedAircraftId) }
     CompositionLocalProvider(LocalLayoutTier provides tier) {
       if (state.aircraft.isEmpty()) {
-        emptyFleetContent()
+        EmptyFleetShell(
+          tier = tier,
+          state = state,
+          onSelectSection = onSelectSection,
+          onOpenSettings = onOpenSettings,
+          settingsContent = { sectionContent(ShellSection.SETTINGS, null) },
+          emptyFleetContent = emptyFleetContent,
+        )
       } else {
         ShellForTier(
           tier = tier,
@@ -143,6 +153,129 @@ fun AdaptiveAppShell(
           content = content,
         )
       }
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------- */
+/* Empty fleet — chrome with Settings still reachable                                              */
+/* ---------------------------------------------------------------------------------------------- */
+
+/**
+ * Shell shown while the fleet is empty. There are no aircraft to drive the per-aircraft sections, so
+ * the only live navigation is Settings (sign-out, sync, account upgrade). Per design:
+ * - **full sidebar** — keep the sidebar but disable the switcher and the per-aircraft sections,
+ *   leaving only the account/settings entry interactive.
+ * - **narrower tiers** — drop the nav container entirely and surface Settings via the top-right
+ *   account avatar button.
+ *
+ * The settings entry toggles: tapping it opens Settings, tapping it again returns to the
+ * add-aircraft prompt (there is no other section to navigate back through).
+ */
+@Composable
+private fun EmptyFleetShell(
+  tier: LayoutTier,
+  state: AdaptiveShellUiState,
+  onSelectSection: (ShellSection) -> Unit,
+  onOpenSettings: () -> Unit,
+  settingsContent: @Composable () -> Unit,
+  emptyFleetContent: @Composable () -> Unit,
+) {
+  val toggleSettings: () -> Unit = {
+    if (state.section == ShellSection.SETTINGS) onSelectSection(ShellSection.DASHBOARD)
+    else onOpenSettings()
+  }
+  val body: @Composable () -> Unit = {
+    if (state.section == ShellSection.SETTINGS) settingsContent() else emptyFleetContent()
+  }
+  if (tier.hasFullSidebar) {
+    Row(modifier = Modifier.fillMaxSize()) {
+      WingsSidebar(
+        state = state,
+        onSelectSection = onSelectSection,
+        onSelectAircraft = {},
+        onAddAircraft = {},
+        onOpenAccount = toggleSettings,
+        sectionsEnabled = false,
+        showSwitcher = false,
+      )
+      VerticalDivider()
+      Box(
+        modifier = Modifier.weight(1f)
+          .fillMaxHeight()
+      ) {
+        EmptyFleetScaffold(
+          state = state,
+          showAccountAction = false,
+          onToggleSettings = toggleSettings,
+          content = body,
+        )
+      }
+    }
+  } else {
+    EmptyFleetScaffold(
+      state = state,
+      showAccountAction = true,
+      onToggleSettings = toggleSettings,
+      content = body,
+    )
+  }
+}
+
+/**
+ * Body wrapper for [EmptyFleetShell]. Shows a top bar only when it carries something: the account
+ * avatar action (narrower tiers) or the "Account" title while Settings is open. Otherwise, the
+ * add-aircraft prompt renders full-bleed, as before.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EmptyFleetScaffold(
+  state: AdaptiveShellUiState,
+  showAccountAction: Boolean,
+  onToggleSettings: () -> Unit,
+  content: @Composable () -> Unit,
+) {
+  val inSettings = state.section == ShellSection.SETTINGS
+  Scaffold(
+    topBar = {
+      if (showAccountAction || inSettings) {
+        TopAppBar(
+          title = {
+            ActionBarTitle(state)
+          },
+          navigationIcon = {
+            // While Settings is open, the content already shows the account avatar, so the top bar
+            // offers a back affordance instead (there is no bottom nav to leave Settings from).
+            if (showAccountAction && inSettings) {
+              IconButton(onClick = onToggleSettings) {
+                Icon(
+                  Icons.AutoMirrored.Filled.ArrowBack,
+                  contentDescription = stringResource(UiRes.string.back),
+                )
+              }
+            }
+          },
+          actions = {
+            if (showAccountAction && !inSettings) {
+              IconButton(onClick = onToggleSettings) {
+                AvatarIcon(
+                  displayName = state.accountName,
+                  photoUri = state.accountPhotoUrl,
+                  size = Spacing.huge,
+                  contentDescription = stringResource(UiRes.string.settings),
+                )
+              }
+            }
+          },
+        )
+      }
+    },
+  ) { padding ->
+    Box(
+      modifier = Modifier.fillMaxSize()
+        .padding(padding)
+    ) {
+      content()
     }
   }
 }
@@ -170,7 +303,6 @@ private fun ShellForTier(
 
     else ->
       ScaffoldShell(
-        tier = tier,
         state = state,
         onSelectSection = onSelectSection,
         onSelectAircraft = onSelectAircraft,
@@ -224,6 +356,10 @@ private fun WingsSidebar(
   onSelectAircraft: (String) -> Unit,
   onAddAircraft: () -> Unit,
   onOpenAccount: () -> Unit,
+  // When false (empty fleet) the switcher is hidden and the per-aircraft sections are disabled,
+  // leaving only the account/settings entry interactive.
+  sectionsEnabled: Boolean = true,
+  showSwitcher: Boolean = true,
 ) {
   Surface(
     modifier = Modifier.fillMaxHeight()
@@ -253,17 +389,20 @@ private fun WingsSidebar(
         )
       }
 
-      SidebarSwitcher(
-        state = state,
-        onSelectAircraft = onSelectAircraft,
-        onAddAircraft = onAddAircraft,
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-      )
+      if (showSwitcher) {
+        SidebarSwitcher(
+          state = state,
+          onSelectAircraft = onSelectAircraft,
+          onAddAircraft = onAddAircraft,
+          modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+        )
+      }
 
       PER_AIRCRAFT_SECTIONS.forEach { section ->
         SidebarItem(
           section,
-          selected = state.section == section,
+          selected = sectionsEnabled && state.section == section,
+          enabled = sectionsEnabled,
           onClick = { onSelectSection(section) })
       }
 
@@ -272,11 +411,7 @@ private fun WingsSidebar(
       // Combined account + settings entry: the user's avatar and name; opens the Settings section.
       NavigationDrawerItem(
         label = {
-          Text(
-            accountLabel(state),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-          )
+          ActionBarTitle(state)
         },
         icon = {
           AvatarIcon(
@@ -297,16 +432,21 @@ private fun WingsSidebar(
 private fun SidebarItem(
   section: ShellSection,
   selected: Boolean,
-  onClick: () -> Unit
+  onClick: () -> Unit,
+  enabled: Boolean = true,
 ) {
   NavigationDrawerItem(
     label = { Text(section.label) },
     icon = { Icon(section.icon, contentDescription = null) },
     selected = selected,
-    onClick = onClick,
-    modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+    // NavigationDrawerItem has no `enabled` flag; when disabled we mute it and swallow the tap.
+    onClick = if (enabled) onClick else ({}),
+    modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+      .then(if (enabled) Modifier else Modifier.alpha(DisabledSectionAlpha)),
   )
 }
+
+private const val DisabledSectionAlpha = 0.38f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -361,7 +501,6 @@ private fun SidebarSwitcher(
 
 @Composable
 private fun ScaffoldShell(
-  tier: LayoutTier,
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
   onSelectAircraft: (String) -> Unit,
@@ -423,11 +562,7 @@ private fun ShellContent(
     topBar = {
       TopAppBar(
         title = {
-          Text(
-            if (state.section == ShellSection.SETTINGS) accountLabel(state) else state.section.label,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-          )
+          ActionBarTitle(state)
         },
         actions = {
           if (showTopBarSwitcher && state.section != ShellSection.SETTINGS) {
@@ -460,8 +595,12 @@ private fun ShellContent(
   }
 }
 
-private fun accountLabel(state: AdaptiveShellUiState): String =
-  state.accountName?.takeIf { it.isNotBlank() } ?: "Account"
+@Composable
+private fun ActionBarTitle(state: AdaptiveShellUiState) = Text(
+  state.section.label,
+  maxLines = 1,
+  overflow = TextOverflow.Ellipsis,
+)
 
 @Composable
 private fun TopBarSwitcher(
