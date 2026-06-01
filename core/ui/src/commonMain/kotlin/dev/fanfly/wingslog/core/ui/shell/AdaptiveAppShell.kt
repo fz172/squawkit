@@ -176,6 +176,7 @@ private fun ShellForTier(
 
     tier.hasFullSidebar ->
       SidebarShell(
+        tier = tier,
         state = state,
         onSelectSection = onSelectSection,
         onSelectAircraft = onSelectAircraft,
@@ -205,6 +206,7 @@ private fun ShellForTier(
 
 @Composable
 private fun SidebarShell(
+  tier: LayoutTier,
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
   onSelectAircraft: (String) -> Unit,
@@ -215,6 +217,7 @@ private fun SidebarShell(
 ) {
   Row(modifier = Modifier.fillMaxSize()) {
     WingsSidebar(
+      tier = tier,
       state = state,
       onSelectSection = onSelectSection,
       onSelectAircraft = onSelectAircraft,
@@ -241,6 +244,7 @@ private fun SidebarShell(
 
 @Composable
 private fun WingsSidebar(
+  tier: LayoutTier,
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
   onSelectAircraft: (String) -> Unit,
@@ -249,7 +253,7 @@ private fun WingsSidebar(
 ) {
   Surface(
     modifier = Modifier.fillMaxHeight()
-      .width(264.dp),
+      .width(tier.sidebarWidth),
     color = MaterialTheme.colorScheme.surface,
   ) {
     Column(
@@ -282,7 +286,6 @@ private fun WingsSidebar(
         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
       )
 
-      SidebarLabel("This aircraft")
       PER_AIRCRAFT_SECTIONS.forEach { section ->
         SidebarItem(
           section,
@@ -314,16 +317,6 @@ private fun WingsSidebar(
       )
     }
   }
-}
-
-@Composable
-private fun SidebarLabel(text: String) {
-  Text(
-    text = text,
-    style = MaterialTheme.typography.labelMedium,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-    modifier = Modifier.padding(start = 22.dp, top = 14.dp, bottom = 4.dp),
-  )
 }
 
 @Composable
@@ -389,7 +382,7 @@ private fun SidebarSwitcher(
 }
 
 /* ---------------------------------------------------------------------------------------------- */
-/* MEDIUM (rail) + COMPACT entered (bottom bar) — NavigationSuiteScaffold                          */
+/* COMPACT entered (bottom bar) — NavigationSuiteScaffold                                         */
 /* ---------------------------------------------------------------------------------------------- */
 
 @Composable
@@ -403,10 +396,8 @@ private fun ScaffoldShell(
   onEditAircraft: (() -> Unit)?,
   content: @Composable () -> Unit,
 ) {
-  val navType =
-    if (tier == LayoutTier.COMPACT) NavigationSuiteType.NavigationBar else NavigationSuiteType.NavigationRail
   NavigationSuiteScaffold(
-    layoutType = navType,
+    layoutType = NavigationSuiteType.NavigationBar,
     navigationSuiteItems = {
       ShellSection.entries.forEach { s ->
         val isAccount = s == ShellSection.SETTINGS

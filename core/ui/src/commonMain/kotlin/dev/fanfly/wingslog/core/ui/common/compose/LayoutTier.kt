@@ -1,10 +1,6 @@
 package dev.fanfly.wingslog.core.ui.common.compose
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -36,13 +32,15 @@ enum class LayoutTier {
   val hasSideNav: Boolean get() = this != COMPACT
 
   /** True when the layout is wide enough to show the full-width sidebar rather than the icon rail. */
-  val hasFullSidebar: Boolean get() = this == EXPANDED || this == LARGE
+  val hasFullSidebar: Boolean get() = this == EXPANDED || this == LARGE || this == MEDIUM
 
   /** True only on the widest tier, where the dashboard shows its main column + sticky side rail. */
   val hasDashboardRail: Boolean get() = this == LARGE
 
   /** Number of columns to use for browseable card grids (tasks, squawks, aircraft). */
   val cardColumns: Int get() = if (this == EXPANDED || this == LARGE) 2 else 1
+
+  val sidebarWidth: Dp get() = if (this == EXPANDED || this == LARGE) 264.dp else 224.dp
 }
 
 /**
@@ -69,24 +67,4 @@ fun layoutTierFor(widthDp: Dp): LayoutTier = when {
   widthDp < LayoutBreakpoints.expandedMin -> LayoutTier.MEDIUM
   widthDp < LayoutBreakpoints.largeMin -> LayoutTier.EXPANDED
   else -> LayoutTier.LARGE
-}
-
-/**
- * The current [LayoutTier] for the active window, from [LocalWindowInfo]'s container size.
- *
- * **Caveat:** on Kotlin/JS this does not reliably report the window width, which collapses wide web
- * windows to [LayoutTier.COMPACT]. For layout decisions prefer wrapping content in
- * `BoxWithConstraints` and calling [layoutTierFor]`(maxWidth)`, which uses the measured constraints
- * and is correct on every platform (this is what `AdaptiveAppShell` does). This helper remains for
- * Android/iOS callers that need a window-level tier outside a layout scope.
- */
-@Composable
-fun rememberLayoutTier(): LayoutTier {
-  val windowInfo = LocalWindowInfo.current
-  val density = LocalDensity.current
-  val widthPx = windowInfo.containerSize.width
-  return remember(widthPx, density.density) {
-    val widthDp = with(density) { widthPx.toDp() }
-    layoutTierFor(widthDp)
-  }
 }
