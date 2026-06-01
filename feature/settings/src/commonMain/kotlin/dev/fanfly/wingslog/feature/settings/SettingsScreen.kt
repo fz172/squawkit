@@ -7,8 +7,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -83,8 +87,10 @@ fun SettingsContent(
   val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
 
-  val upgradeSuccessMessage = stringResource(SettingsRes.string.account_upgrade_success)
-  val upgradeErrorMessage = stringResource(SettingsRes.string.account_upgrade_error)
+  val upgradeSuccessMessage =
+    stringResource(SettingsRes.string.account_upgrade_success)
+  val upgradeErrorMessage =
+    stringResource(SettingsRes.string.account_upgrade_error)
 
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {
@@ -123,83 +129,91 @@ fun SettingsContent(
         .constrainedContentWidth(ContentWidth.Reading)
         .fillMaxSize()
         .padding(Spacing.screenPadding),
-      verticalArrangement = Arrangement.spacedBy(Spacing.columnGap),
     ) {
-      UserProfileCard(
-        self = user.selfTechnician,
-        photoUri = user.photoUri,
-      )
+      // The list scrolls so every row stays reachable on short screens; the version footer below
+      // stays pinned at the bottom.
+      Column(
+        modifier = Modifier
+          .weight(1f)
+          .fillMaxWidth()
+          .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(Spacing.columnGap),
+      ) {
+        UserProfileCard(
+          self = user.selfTechnician,
+          photoUri = user.photoUri,
+        )
 
-      // For a guest with the upgrade flag on, "Log in" connects their on-device records to a real
-      // account (the upgrade flow). It replaces the destructive guest logout entirely.
-      val guestCanUpgrade = user.isAnonymous && user.featureFlags.accountUpgradeEnabled
+        // For a guest with the upgrade flag on, "Log in" connects their on-device records to a real
+        // account (the upgrade flow). It replaces the destructive guest logout entirely.
+        val guestCanUpgrade =
+          user.isAnonymous && user.featureFlags.accountUpgradeEnabled
 
-      if (user.featureFlags.technicianEnabled) {
+        if (user.featureFlags.technicianEnabled) {
+          SettingsRow(
+            icon = Icons.Default.Engineering,
+            title = stringResource(TechnicianRes.string.manage_technicians),
+            subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
+            onClick = { navController.navigate(Screen.ManageTechnicians.route) },
+            settingsLevel = SettingsLevel.DEFAULT,
+          )
+        }
+
         SettingsRow(
-          icon = Icons.Default.Engineering,
-          title = stringResource(TechnicianRes.string.manage_technicians),
-          subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
-          onClick = { navController.navigate(Screen.ManageTechnicians.route) },
+          icon = Icons.Default.CloudSync,
+          title = stringResource(SyncRes.string.feature_name_backup_and_sync),
+          subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
+          onClick = { navController.navigate(Screen.SyncSettings.route) },
           settingsLevel = SettingsLevel.DEFAULT,
         )
-      }
 
-      SettingsRow(
-        icon = Icons.Default.CloudSync,
-        title = stringResource(SyncRes.string.feature_name_backup_and_sync),
-        subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
-        onClick = { navController.navigate(Screen.SyncSettings.route) },
-        settingsLevel = SettingsLevel.DEFAULT,
-      )
+        if (onExportLogs != null) {
+          SettingsRow(
+            icon = Icons.Default.FileDownload,
+            title = stringResource(ExportRes.string.feature_name_export_logs),
+            subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
+            onClick = onExportLogs,
+            settingsLevel = SettingsLevel.DEFAULT,
+          )
+        }
 
-      if (onExportLogs != null) {
         SettingsRow(
-          icon = Icons.Default.FileDownload,
-          title = stringResource(ExportRes.string.feature_name_export_logs),
-          subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
-          onClick = onExportLogs,
+          icon = Icons.Default.Tune,
+          title = stringResource(SettingsRes.string.feature_lab),
+          subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
+          onClick = { navController.navigate(Screen.FeatureLab.route) },
           settingsLevel = SettingsLevel.DEFAULT,
         )
-      }
 
-      SettingsRow(
-        icon = Icons.Default.Tune,
-        title = stringResource(SettingsRes.string.feature_lab),
-        subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
-        onClick = { navController.navigate(Screen.FeatureLab.route) },
-        settingsLevel = SettingsLevel.DEFAULT,
-      )
-
-      AppearanceSettingRow(
-        mode = appearanceMode,
-        onModeChange = settingsViewModel::setAppearance,
-      )
-
-      // Guest + flag on shows "Log in" (runs the upgrade); real accounts show "Log out". An
-      // anonymous user without the upgrade flag has no sign-out action — logging out would
-      // erase their on-device data, so we don't offer it.
-      if (guestCanUpgrade || !user.isAnonymous) {
-        SettingsRow(
-          icon = if (guestCanUpgrade) Icons.AutoMirrored.Filled.Login
-          else Icons.AutoMirrored.Filled.Logout,
-          title = stringResource(
-            if (guestCanUpgrade) SettingsRes.string.account_upgrade_login_cta
-            else SettingsRes.string.sign_out
-          ),
-          subtitle = if (guestCanUpgrade) {
-            stringResource(SettingsRes.string.account_upgrade_login_subtitle)
-          } else {
-            stringResource(SettingsRes.string.settings_logout_subtitle)
-          },
-          onClick = {
-            if (guestCanUpgrade) accountUpgradeViewModel.startUpgrade()
-            else settingsViewModel.logOut()
-          },
-          settingsLevel = if (guestCanUpgrade) SettingsLevel.DEFAULT else SettingsLevel.DANGER,
+        AppearanceSettingRow(
+          mode = appearanceMode,
+          onModeChange = settingsViewModel::setAppearance,
         )
+
+        // Guest + flag on shows "Log in" (runs the upgrade); real accounts show "Log out". An
+        // anonymous user without the upgrade flag has no sign-out action — logging out would
+        // erase their on-device data, so we don't offer it.
+        if (guestCanUpgrade) {
+          SettingsRow(
+            icon = Icons.AutoMirrored.Filled.Login,
+            title = stringResource(SettingsRes.string.account_upgrade_login_cta),
+            subtitle =
+              stringResource(SettingsRes.string.account_upgrade_login_subtitle),
+            onClick = { accountUpgradeViewModel.startUpgrade() },
+            settingsLevel = SettingsLevel.DEFAULT
+          )
+        } else if (!user.isAnonymous) {
+          SettingsRow(
+            icon = Icons.AutoMirrored.Filled.Logout,
+            title = stringResource(SettingsRes.string.sign_out),
+            subtitle = stringResource(SettingsRes.string.settings_logout_subtitle),
+            onClick = { settingsViewModel.logOut() },
+            settingsLevel = SettingsLevel.DANGER,
+          )
+        }
       }
 
-      Spacer(modifier = Modifier.weight(1f))
+      Spacer(modifier = Modifier.height(Spacing.columnGap))
 
       Text(
         text = stringResource(SettingsRes.string.app_version, getAppVersion()),
@@ -209,7 +223,10 @@ fun SettingsContent(
       )
     }
 
-    SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+    SnackbarHost(
+      snackbarHostState,
+      modifier = Modifier.align(Alignment.BottomCenter)
+    )
   }
 
   when (upgradeState) {
