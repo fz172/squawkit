@@ -26,7 +26,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
-import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
+import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
@@ -43,6 +43,8 @@ import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
+import dev.gitlive.firebase.auth.FirebaseAuth
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalBrowserHistoryApi::class)
@@ -54,7 +56,18 @@ fun WebApp() {
       color = MaterialTheme.colorScheme.background,
     ) {
       val navController = rememberNavController()
+      val firebaseAuth: FirebaseAuth = koinInject()
       var browserNavigationBound by remember { mutableStateOf(false) }
+
+      LaunchedEffect(Unit) {
+        firebaseAuth.authStateChanged.collect { user ->
+          if (user == null) {
+            navController.navigate(Screen.Login.route) {
+              popUpTo(0) { inclusive = true }
+            }
+          }
+        }
+      }
 
       LaunchedEffect(browserNavigationBound) {
         if (browserNavigationBound) {
@@ -83,8 +96,6 @@ fun WebApp() {
             state = state,
             onSelectSection = viewModel::selectSection,
             onSelectAircraft = viewModel::selectAircraft,
-            onEnterAircraft = viewModel::enterAircraft,
-            onExitToFleet = viewModel::exitToFleet,
             onOpenSettings = viewModel::openSettings,
             onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
             sectionContent = { section, aircraftId ->
@@ -99,11 +110,9 @@ fun WebApp() {
                 )
               }
             },
-            fleetLanding = { onAircraftClick ->
-              DashboardScreen(
-                onOpenSettings = viewModel::openSettings,
+            emptyFleetContent = {
+              FleetEmptyState(
                 onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
-                onAircraftClick = onAircraftClick,
               )
             },
           )

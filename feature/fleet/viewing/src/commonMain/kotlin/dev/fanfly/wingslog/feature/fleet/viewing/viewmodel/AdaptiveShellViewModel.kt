@@ -83,27 +83,8 @@ class AdaptiveShellViewModel(
     _uiState.update { it.copy(section = section) }
   }
 
-  /** Phone: open an aircraft from the fleet landing, resetting to its Dashboard section. */
-  fun enterAircraft(id: String) {
-    _uiState.update {
-      it.copy(
-        selectedAircraftId = id,
-        entered = true,
-        section = ShellSection.DASHBOARD
-      )
-    }
-  }
-
-  /** Phone: return from a section back to the fleet landing. */
-  fun exitToFleet() {
-    _uiState.update { it.copy(entered = false) }
-  }
-
-  /**
-   * Open the global Settings section in the shell. Sets `entered` so that on COMPACT (where the
-   * fleet landing is the root) the section view with its bottom bar is shown instead of the landing.
-   */
+  /** Open the global Settings section in the shell. */
   fun openSettings() {
-    _uiState.update { it.copy(section = ShellSection.SETTINGS, entered = true) }
+    _uiState.update { it.copy(section = ShellSection.SETTINGS) }
   }
 }

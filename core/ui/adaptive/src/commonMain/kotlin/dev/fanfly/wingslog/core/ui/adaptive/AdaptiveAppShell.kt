@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
@@ -97,12 +96,6 @@ data class AdaptiveShellUiState(
   /** Current user's display name + photo, for the sidebar account/settings entry. */
   val accountName: String? = null,
   val accountPhotoUrl: String? = null,
-  /**
-   * Whether an aircraft has been opened from the fleet landing. Only meaningful on COMPACT, where
-   * the landing page is the root; above phone the switcher selects in place and sections are always
-   * shown. See `docs/web/web_adaptive_layout_design.html` §6.
-   */
-  val entered: Boolean = false,
 ) {
   val selectedAircraft: ShellAircraft?
     get() = aircraft.firstOrNull { it.id == selectedAircraftId }
@@ -115,12 +108,11 @@ data class AdaptiveShellUiState(
  * - **EXPANDED / LARGE** — a custom [WingsSidebar] (brand + aircraft switcher + sections + account
  *   footer), matching the design mock (D2: custom sidebar).
  * - **MEDIUM** — `NavigationSuiteScaffold` icon rail, with the switcher in the top bar.
- * - **COMPACT** — [fleetLanding] root until an aircraft is opened ([onEnterAircraft]); then sections
- *   with a bottom bar and a back arrow to the fleet.
+ * - **COMPACT** — the same section shell as rail tiers once an aircraft exists.
  *
  * Section bodies are supplied by the host via [sectionContent] (M3: real per-aircraft content), and
- * the phone root by [fleetLanding] (the real fleet list) — both are host slots because real content
- * lives in feature modules that `core:ui` cannot depend on. Tier is derived from the measured
+ * the no-aircraft prompt by [emptyFleetContent] — both are host slots because real content lives in
+ * feature modules that `core:ui` cannot depend on. Tier is derived from the measured
  * [BoxWithConstraints] width (not `LocalWindowInfo`, which is unreliable on Kotlin/JS).
  */
 @Composable
@@ -128,30 +120,29 @@ fun AdaptiveAppShell(
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
   onSelectAircraft: (String) -> Unit,
-  onEnterAircraft: (String) -> Unit,
-  onExitToFleet: () -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
   sectionContent: @Composable (section: ShellSection, aircraftId: String?) -> Unit,
-  fleetLanding: @Composable (onAircraftClick: (String) -> Unit) -> Unit,
+  emptyFleetContent: @Composable () -> Unit,
 ) {
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
     val content: @Composable () -> Unit =
       { sectionContent(state.section, state.selectedAircraftId) }
     CompositionLocalProvider(LocalLayoutTier provides tier) {
-      ShellForTier(
-        tier = tier,
-        state = state,
-        onSelectSection = onSelectSection,
-        onSelectAircraft = onSelectAircraft,
-        onEnterAircraft = onEnterAircraft,
-        onExitToFleet = onExitToFleet,
-        onOpenSettings = onOpenSettings,
-        onAddAircraft = onAddAircraft,
-        fleetLanding = fleetLanding,
-        content = content,
-      )
+      if (state.aircraft.isEmpty()) {
+        emptyFleetContent()
+      } else {
+        ShellForTier(
+          tier = tier,
+          state = state,
+          onSelectSection = onSelectSection,
+          onSelectAircraft = onSelectAircraft,
+          onOpenSettings = onOpenSettings,
+          onAddAircraft = onAddAircraft,
+          content = content,
+        )
+      }
     }
   }
 }
@@ -162,17 +153,11 @@ private fun ShellForTier(
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
   onSelectAircraft: (String) -> Unit,
-  onEnterAircraft: (String) -> Unit,
-  onExitToFleet: () -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
-  fleetLanding: @Composable (onAircraftClick: (String) -> Unit) -> Unit,
   content: @Composable () -> Unit,
 ) {
   when {
-    tier == LayoutTier.COMPACT && !state.entered ->
-      fleetLanding(onEnterAircraft)
-
     tier.hasFullSidebar ->
       SidebarShell(
         state = state,
@@ -190,7 +175,6 @@ private fun ShellForTier(
         onSelectSection = onSelectSection,
         onSelectAircraft = onSelectAircraft,
         onOpenSettings = onOpenSettings,
-        onExitToFleet = onExitToFleet,
         onAddAircraft = onAddAircraft,
         content = content,
       )
@@ -225,8 +209,6 @@ private fun SidebarShell(
     ) {
       ShellContent(
         state = state,
-        showBack = false,
-        onExitToFleet = {},
         showTopBarSwitcher = false,
         onSelectAircraft = onSelectAircraft,
         content = content,
@@ -374,7 +356,7 @@ private fun SidebarSwitcher(
 }
 
 /* ---------------------------------------------------------------------------------------------- */
-/* COMPACT entered (bottom bar) — NavigationSuiteScaffold                                         */
+/* COMPACT / MEDIUM — NavigationSuiteScaffold                                                     */
 /* ---------------------------------------------------------------------------------------------- */
 
 @Composable
@@ -384,7 +366,6 @@ private fun ScaffoldShell(
   onSelectSection: (ShellSection) -> Unit,
   onSelectAircraft: (String) -> Unit,
   onOpenSettings: () -> Unit,
-  onExitToFleet: () -> Unit,
   onAddAircraft: () -> Unit,
   content: @Composable () -> Unit,
 ) {
@@ -412,11 +393,9 @@ private fun ScaffoldShell(
   ) {
     ShellContent(
       state = state,
-      showBack = tier == LayoutTier.COMPACT && state.entered,
-      onExitToFleet = onExitToFleet,
       // The switcher lives in the top bar on both the rail (MEDIUM) and the bottom-bar (COMPACT)
       // tiers — neither has a sidebar to host it, and on COMPACT it's the only in-place way to
-      // switch aircraft without returning to the fleet landing.
+      // switch aircraft.
       showTopBarSwitcher = true,
       onSelectAircraft = onSelectAircraft,
       onAddAircraft = onAddAircraft,
@@ -434,8 +413,6 @@ private fun ScaffoldShell(
 @Composable
 private fun ShellContent(
   state: AdaptiveShellUiState,
-  showBack: Boolean,
-  onExitToFleet: () -> Unit,
   showTopBarSwitcher: Boolean,
   onSelectAircraft: (String) -> Unit,
   onAddAircraft: (() -> Unit)? = null,
@@ -451,16 +428,6 @@ private fun ShellContent(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
           )
-        },
-        navigationIcon = {
-          if (showBack) {
-            IconButton(onClick = onExitToFleet) {
-              Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back to fleet"
-              )
-            }
-          }
         },
         actions = {
           if (showTopBarSwitcher && state.section != ShellSection.SETTINGS) {

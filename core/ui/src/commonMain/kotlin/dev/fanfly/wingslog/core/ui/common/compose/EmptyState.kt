@@ -29,6 +29,32 @@ fun EmptyState(
   onActionClick: (() -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
+  EmptyState(
+    title = title,
+    description = description,
+    iconContent = {
+      Icon(
+        imageVector = icon,
+        contentDescription = null,
+        modifier = Modifier.size(80.dp),
+        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+      )
+    },
+    actionText = actionText,
+    onActionClick = onActionClick,
+    modifier = modifier,
+  )
+}
+
+@Composable
+fun EmptyState(
+  title: String,
+  description: String,
+  iconContent: @Composable () -> Unit,
+  actionText: String? = null,
+  onActionClick: (() -> Unit)? = null,
+  modifier: Modifier = Modifier,
+) {
   Column(
     modifier = modifier
       .fillMaxWidth()
@@ -36,12 +62,7 @@ fun EmptyState(
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.Center
   ) {
-    Icon(
-      imageVector = icon,
-      contentDescription = null,
-      modifier = Modifier.size(80.dp),
-      tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-    )
+    iconContent()
     Spacer(modifier = Modifier.height(Spacing.extraLarge))
     Text(
       text = title,

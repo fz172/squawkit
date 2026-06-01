@@ -30,7 +30,7 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
-import dev.fanfly.wingslog.feature.fleet.viewing.DashboardScreen
+import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
@@ -139,8 +139,6 @@ private fun NavGraphBuilder.shellGraph(navController: NavController) {
         state = state,
         onSelectSection = viewModel::selectSection,
         onSelectAircraft = viewModel::selectAircraft,
-        onEnterAircraft = viewModel::enterAircraft,
-        onExitToFleet = viewModel::exitToFleet,
         onOpenSettings = viewModel::openSettings,
         onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
         sectionContent = { section, aircraftId ->
@@ -155,11 +153,9 @@ private fun NavGraphBuilder.shellGraph(navController: NavController) {
             )
           }
         },
-        fleetLanding = { onAircraftClick ->
-          DashboardScreen(
-            onOpenSettings = viewModel::openSettings,
+        emptyFleetContent = {
+          FleetEmptyState(
             onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
-            onAircraftClick = onAircraftClick,
           )
         },
       )

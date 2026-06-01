@@ -5,12 +5,13 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
-import dev.fanfly.wingslog.core.ui.shell.ShellSection
+import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -22,6 +23,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AdaptiveShellViewModelTest {
 
   private val fleet = MutableStateFlow<List<Aircraft>>(emptyList())
@@ -78,7 +80,6 @@ class AdaptiveShellViewModelTest {
     assertThat(s.aircraft.first().name).isEqualTo("Cessna 172")
     assertThat(s.selectedAircraftId).isEqualTo("a1")
     assertThat(s.section).isEqualTo(ShellSection.DASHBOARD)
-    assertThat(s.entered).isFalse()
   }
 
   @Test
@@ -100,20 +101,19 @@ class AdaptiveShellViewModelTest {
   }
 
   @Test
-  fun enterAircraftSetsEnteredAndResetsToDashboard() = runTest {
-    fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+  fun selectsFirstAircraftWhenFleetArrivesAfterEmptyState() = runTest {
+    fleet.value = emptyList()
     val vm = viewModel()
     runCurrent()
-    vm.selectSection(ShellSection.LOGS)
 
-    vm.enterAircraft("a2")
+    assertThat(vm.uiState.value.selectedAircraftId).isNull()
+
+    fleet.value = listOf(aircraft("a1", "N1"))
+    runCurrent()
+
     val s = vm.uiState.value
-    assertThat(s.entered).isTrue()
-    assertThat(s.selectedAircraftId).isEqualTo("a2")
+    assertThat(s.selectedAircraftId).isEqualTo("a1")
     assertThat(s.section).isEqualTo(ShellSection.DASHBOARD)
-
-    vm.exitToFleet()
-    assertThat(vm.uiState.value.entered).isFalse()
   }
 
   @Test
@@ -132,8 +132,6 @@ class AdaptiveShellViewModelTest {
     vm.openSettings()
     val s = vm.uiState.value
     assertThat(s.section).isEqualTo(ShellSection.SETTINGS)
-    // entered so COMPACT shows the section view (with bottom bar) instead of the fleet landing.
-    assertThat(s.entered).isTrue()
   }
 
   @Test

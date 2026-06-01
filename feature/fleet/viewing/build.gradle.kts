@@ -40,8 +40,6 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
-      implementation(project(":core:ui:theme"))
-      implementation(project(":core:ui:widget:avataricon"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:auth"))
       implementation(libs.gitlive.firebase.auth)
@@ -49,17 +47,11 @@ kotlin {
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:fleet:sharedassets"))
-      implementation(project(":feature:tasks:model"))
-      implementation(project(":feature:tasks:datamanager"))
-      implementation(project(":feature:tasks:sharedassets"))
-      implementation(project(":feature:logs:datamanager"))
 
       // Compose
 
       // Navigation & Lifecycle
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
-      implementation(libs.jetbrains.lifecycle.runtime.compose)
-      implementation(libs.androidx.navigation.compose)
 
       // DI
       implementation(libs.koin.compose)
