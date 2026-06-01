@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.ui.common.navigation.Screen
 import dev.fanfly.wingslog.core.ui.shell.AdaptiveAppShell
+import dev.fanfly.wingslog.core.ui.shell.ShellSection
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.AircraftOverviewScreen
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
@@ -30,6 +31,7 @@ import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewMode
 import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
+import dev.fanfly.wingslog.feature.settings.SettingsContent
 import dev.fanfly.wingslog.feature.settings.SettingsScreen
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
@@ -91,20 +93,24 @@ fun WebApp() {
             onSelectAircraft = viewModel::selectAircraft,
             onEnterAircraft = viewModel::enterAircraft,
             onExitToFleet = viewModel::exitToFleet,
-            onOpenSettings = { navController.navigate(Screen.Settings.route) },
+            // Settings is a native section in the shell now (M6) — no standalone-route hop.
+            onOpenSettings = viewModel::openSettings,
             onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
             sectionContent = { section, aircraftId ->
-              ShellSectionBody(
-                section = section,
-                aircraftId = aircraftId,
-                navController = navController,
-                onNavigateToSection = viewModel::selectSection,
-                onOpenSettings = { navController.navigate(Screen.Settings.route) },
-              )
+              if (section == ShellSection.SETTINGS) {
+                SettingsContent(navController = navController)
+              } else {
+                ShellSectionBody(
+                  section = section,
+                  aircraftId = aircraftId,
+                  navController = navController,
+                  onNavigateToSection = viewModel::selectSection,
+                )
+              }
             },
             fleetLanding = { onAircraftClick ->
               DashboardScreen(
-                onOpenSettings = { navController.navigate(Screen.Settings.route) },
+                onOpenSettings = viewModel::openSettings,
                 onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
                 onAircraftClick = onAircraftClick,
               )
