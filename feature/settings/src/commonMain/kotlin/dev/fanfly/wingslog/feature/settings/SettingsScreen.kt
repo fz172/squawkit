@@ -149,67 +149,78 @@ fun SettingsContent(
         val guestCanUpgrade =
           user.isAnonymous && user.featureFlags.accountUpgradeEnabled
 
-        if (user.featureFlags.technicianEnabled) {
-          SettingsRow(
-            icon = Icons.Default.Engineering,
-            title = stringResource(TechnicianRes.string.manage_technicians),
-            subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
-            onClick = { navController.navigate(Screen.ManageTechnicians.route) },
-            settingsLevel = SettingsLevel.DEFAULT,
+        // The main navigation entries live in one grouped card with dividers between them; only the
+        // rows that apply to this user are added, so the dividers always land correctly.
+        val navRows = buildList<@Composable () -> Unit> {
+          if (user.featureFlags.technicianEnabled) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.Engineering,
+                title = stringResource(TechnicianRes.string.manage_technicians),
+                subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
+                onClick = { navController.navigate(Screen.ManageTechnicians.route) },
+              )
+            }
+          }
+          add {
+            SettingsRow(
+              icon = Icons.Default.CloudSync,
+              title = stringResource(SyncRes.string.feature_name_backup_and_sync),
+              subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
+              onClick = { navController.navigate(Screen.SyncSettings.route) },
+            )
+          }
+          if (onExportLogs != null) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.FileDownload,
+                title = stringResource(ExportRes.string.feature_name_export_logs),
+                subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
+                onClick = onExportLogs,
+              )
+            }
+          }
+          add {
+            SettingsRow(
+              icon = Icons.Default.Tune,
+              title = stringResource(SettingsRes.string.feature_lab),
+              subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
+              onClick = { navController.navigate(Screen.FeatureLab.route) },
+            )
+          }
+        }
+        SettingsRowGroup(rows = navRows)
+
+        SettingsCard {
+          AppearanceSettingRow(
+            mode = appearanceMode,
+            onModeChange = settingsViewModel::setAppearance,
           )
         }
-
-        SettingsRow(
-          icon = Icons.Default.CloudSync,
-          title = stringResource(SyncRes.string.feature_name_backup_and_sync),
-          subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
-          onClick = { navController.navigate(Screen.SyncSettings.route) },
-          settingsLevel = SettingsLevel.DEFAULT,
-        )
-
-        if (onExportLogs != null) {
-          SettingsRow(
-            icon = Icons.Default.FileDownload,
-            title = stringResource(ExportRes.string.feature_name_export_logs),
-            subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
-            onClick = onExportLogs,
-            settingsLevel = SettingsLevel.DEFAULT,
-          )
-        }
-
-        SettingsRow(
-          icon = Icons.Default.Tune,
-          title = stringResource(SettingsRes.string.feature_lab),
-          subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
-          onClick = { navController.navigate(Screen.FeatureLab.route) },
-          settingsLevel = SettingsLevel.DEFAULT,
-        )
-
-        AppearanceSettingRow(
-          mode = appearanceMode,
-          onModeChange = settingsViewModel::setAppearance,
-        )
 
         // Guest + flag on shows "Log in" (runs the upgrade); real accounts show "Log out". An
         // anonymous user without the upgrade flag has no sign-out action — logging out would
-        // erase their on-device data, so we don't offer it.
+        // erase their on-device data, so we omit the card entirely.
         if (guestCanUpgrade) {
-          SettingsRow(
-            icon = Icons.AutoMirrored.Filled.Login,
-            title = stringResource(SettingsRes.string.account_upgrade_login_cta),
-            subtitle =
-              stringResource(SettingsRes.string.account_upgrade_login_subtitle),
-            onClick = { accountUpgradeViewModel.startUpgrade() },
-            settingsLevel = SettingsLevel.DEFAULT
-          )
+          SettingsCard {
+            SettingsRow(
+              icon = Icons.AutoMirrored.Filled.Login,
+              title = stringResource(SettingsRes.string.account_upgrade_login_cta),
+              subtitle =
+                stringResource(SettingsRes.string.account_upgrade_login_subtitle),
+              onClick = { accountUpgradeViewModel.startUpgrade() },
+            )
+          }
         } else if (!user.isAnonymous) {
-          SettingsRow(
-            icon = Icons.AutoMirrored.Filled.Logout,
-            title = stringResource(SettingsRes.string.sign_out),
-            subtitle = stringResource(SettingsRes.string.settings_logout_subtitle),
-            onClick = { settingsViewModel.logOut() },
-            settingsLevel = SettingsLevel.DANGER,
-          )
+          SettingsCard {
+            SettingsRow(
+              icon = Icons.AutoMirrored.Filled.Logout,
+              title = stringResource(SettingsRes.string.sign_out),
+              subtitle = stringResource(SettingsRes.string.settings_logout_subtitle),
+              onClick = { settingsViewModel.logOut() },
+              settingsLevel = SettingsLevel.DANGER,
+            )
+          }
         }
       }
 

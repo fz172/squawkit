@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -34,12 +35,13 @@ fun CircularImage(
   contentDescription: String?,
   modifier: Modifier = Modifier,
   size: Dp = 100.dp,
-  fallbackRes: DrawableResource? = null
+  fallbackRes: DrawableResource? = null,
+  shape: Shape = CircleShape,
 ) {
   Box(
     modifier = modifier
       .size(size)
-      .clip(CircleShape),
+      .clip(shape),
     contentAlignment = Alignment.Center
   ) {
     val fallbackPainter = fallbackRes?.let { painterResource(it) }

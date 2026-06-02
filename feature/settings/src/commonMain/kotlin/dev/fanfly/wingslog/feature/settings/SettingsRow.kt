@@ -8,13 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -37,8 +35,15 @@ enum class SettingsLevel {
   DANGER
 }
 
+// The leading icon chip — 48dp square with a 13dp radius, matching the Settings design handoff.
+private val IconChipSize = 48.dp
+private val IconChipRadius = 13.dp
+private val IconSize = 22.dp
+
 /**
- * A single clickable row for a setting item.
+ * A single clickable navigation row inside a [SettingsCard]: a tinted icon chip, a title with an
+ * optional subtitle, and (for non-destructive rows) a trailing chevron. Rows fill the card width;
+ * the surrounding [SettingsCard] supplies the card surface and inter-row dividers.
  */
 @Composable
 fun SettingsRow(
@@ -48,60 +53,66 @@ fun SettingsRow(
   settingsLevel: SettingsLevel = DEFAULT,
   subtitle: String? = null,
 ) {
-  val tint =
-    if (settingsLevel == DEFAULT) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error
+  val danger = settingsLevel == SettingsLevel.DANGER
+  val titleColor =
+    if (danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+  val chipColor =
+    if (danger) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant
+  val iconTint =
+    if (danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+
   Row(
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
-      // M3 list item minimums: ~56dp single-line, ~72dp two-line (Settings-style summary rows).
-      .heightIn(min = if (subtitle != null) 72.dp else 56.dp)
-      .padding(horizontal = Spacing.small, vertical = Spacing.large),
-    verticalAlignment = Alignment.CenterVertically
+      .padding(Spacing.xLarge),
+    verticalAlignment = Alignment.CenterVertically,
   ) {
-    // --- Icon ---
+    // --- Leading icon chip ---
     Box(
       modifier = Modifier
-        .size(Spacing.huge)
-        .clip(RoundedCornerShape(Spacing.small))
-        .background(MaterialTheme.colorScheme.surfaceVariant),
-      contentAlignment = Alignment.Center
+        .size(IconChipSize)
+        .clip(RoundedCornerShape(IconChipRadius))
+        .background(chipColor),
+      contentAlignment = Alignment.Center,
     ) {
       Icon(
         imageVector = icon,
         contentDescription = title,
-        modifier = Modifier.size(Spacing.extraLarge),
-        tint = tint
+        modifier = Modifier.size(IconSize),
+        tint = iconTint,
       )
     }
 
     Spacer(modifier = Modifier.width(Spacing.large))
 
-    // --- Title (+ optional supporting text) ---
+    // --- Title (+ optional subtitle) ---
     Column(
       modifier = Modifier.weight(1f),
       verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
       Text(
         text = title,
-        style = MaterialTheme.typography.bodyLarge,
+        style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
-        color = tint,
+        color = titleColor,
       )
       if (subtitle != null) {
         Text(
           text = subtitle,
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.alpha(0.6f)
         )
       }
     }
-    if (settingsLevel != SettingsLevel.DANGER) {
+
+    // The destructive row drops the chevron — it's an action, not a navigation entry.
+    if (!danger) {
+      Spacer(modifier = Modifier.width(Spacing.large))
       Icon(
         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
         contentDescription = null,
-        tint = tint
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
   }
@@ -111,11 +122,13 @@ fun SettingsRow(
 @Composable
 fun SettingsRowPreview() {
   WingslogTheme {
-    SettingsRow(
-      icon = Icons.AutoMirrored.Filled.ArrowBack,
-      title = "Test",
-      subtitle = "Menu 1, item 2",
-      onClick = {},
-    )
+    SettingsCard {
+      SettingsRow(
+        icon = Icons.AutoMirrored.Filled.ArrowForward,
+        title = "Export logs",
+        subtitle = "Export and share your logbook",
+        onClick = {},
+      )
+    }
   }
 }

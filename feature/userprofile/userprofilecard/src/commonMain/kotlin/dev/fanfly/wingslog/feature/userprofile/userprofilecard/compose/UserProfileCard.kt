@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,12 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,9 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.CertExpireLimit
 import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
@@ -32,7 +30,8 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
-import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
+import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.CircularImage
+import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.toInitials
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.displayResId
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -45,71 +44,45 @@ import com.squareup.wire.Instant as WireInstant
 import wingslog.feature.userprofile.sharedassets.generated.resources.Res as SharedAssetsRes
 import wingslog.feature.userprofile.userprofilecard.generated.resources.Res as CardRes
 
-private val AvatarSize = Spacing.massive * 2
-private val AvatarRingWidth = Spacing.extraSmall
-
-// Spacer height = half avatar circle + ring, so card top edge cuts avatar at its center
-private val CardTopOffset = AvatarSize / 2 + AvatarRingWidth
-
-// Avatar left edge aligns with card's inner horizontal padding; ring extends 4dp to the left
-private val AvatarOffsetX = Spacing.large - AvatarRingWidth
+// Flat profile header from the Settings design handoff: a 60dp rounded-square avatar (initials or
+// photo) beside the name + certificate line, inside a bordered card.
+private val AvatarSize = 60.dp
+private val AvatarShape = RoundedCornerShape(18.dp)
+private val CardPadding = 22.dp
 
 @Composable
 fun UserProfileCard(
   self: Technician?,
   photoUri: String?,
+  modifier: Modifier = Modifier,
 ) {
-  Box(modifier = Modifier.fillMaxWidth()) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-      Spacer(modifier = Modifier.height(CardTopOffset))
-      val surfaceContainer = MaterialTheme.colorScheme.surfaceContainer
-      val background = MaterialTheme.colorScheme.background
-      Card(
-        shape = RoundedCornerShape(Spacing.large),
-        modifier = Modifier
-          .fillMaxWidth()
-          .background(
-            brush = Brush.verticalGradient(
-              0f to background,
-              0.7f to surfaceContainer,
-              1f to surfaceContainer,
-            ),
-            shape = RoundedCornerShape(Spacing.large),
-          ),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
+  Card(
+    shape = RoundedCornerShape(Spacing.large),
+    colors = CardDefaults.cardColors(
+      containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    ),
+    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
+    modifier = modifier.fillMaxWidth(),
+  ) {
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(CardPadding),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      ProfileAvatar(self = self, photoUri = photoUri)
+      Spacer(modifier = Modifier.width(Spacing.large))
+      Column(
+        modifier = Modifier.weight(1f),
+        verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
       ) {
-        Row(
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-              start = Spacing.large,
-              end = Spacing.large,
-              top = Spacing.large,
-              bottom = Spacing.xLarge,
-            ),
-          verticalAlignment = Alignment.Top,
-        ) {
-          // Reserve horizontal space for the overlapping avatar + gap to text
-          Spacer(modifier = Modifier.width(AvatarSize + Spacing.large))
-          Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-          ) {
-            ProfileNameAndCreds(self)
-          }
-        }
+        ProfileNameAndCreds(self)
       }
     }
-
-    // Avatar overflows the card's top edge by half its height
-    ProfileAvatar(
-      self = self,
-      photoUri = photoUri,
-      modifier = Modifier
-        .align(Alignment.TopStart)
-        .offset(x = AvatarOffsetX),
-    )
   }
 }
 
@@ -156,23 +129,33 @@ private fun ProfileAvatar(
   photoUri: String?,
   modifier: Modifier = Modifier,
 ) {
+  val initials = self?.name.toInitials()
+  val hasPhoto = !photoUri.isNullOrBlank()
   Box(
     modifier = modifier
-      .size(AvatarSize + AvatarRingWidth * 2)
-      .clip(CircleShape)
-      .background(MaterialTheme.colorScheme.background)
-      .padding(AvatarRingWidth)
-      .clip(CircleShape),
+      .size(AvatarSize)
+      .clip(AvatarShape)
+      .background(MaterialTheme.colorScheme.surfaceVariant),
     contentAlignment = Alignment.Center,
   ) {
-    AvatarIcon(
-      displayName = self?.name,
-      photoUri = photoUri,
-      size = AvatarSize,
-      contentDescription = stringResource(CardRes.string.profile_picture),
-      textStyle = MaterialTheme.typography.headlineSmall,
-      fallbackRes = SharedAssetsRes.drawable.ic_anonymous_user,
-    )
+    when {
+      // A photo or the anonymous fallback drawable fills the rounded square; initials sit on the
+      // neutral chip when only a name is known.
+      hasPhoto || initials == null -> CircularImage(
+        photoUri = photoUri,
+        contentDescription = stringResource(CardRes.string.profile_picture),
+        size = AvatarSize,
+        shape = AvatarShape,
+        fallbackRes = SharedAssetsRes.drawable.ic_anonymous_user,
+      )
+
+      else -> Text(
+        text = initials,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
   }
 }
 

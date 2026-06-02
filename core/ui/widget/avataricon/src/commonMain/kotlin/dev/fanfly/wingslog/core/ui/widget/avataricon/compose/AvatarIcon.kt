@@ -89,6 +89,7 @@ private fun AvatarFallback(
       size = size,
       fallbackRes = fallbackRes,
     )
+
     else -> InitialsCircle("?", modifier, size, textStyle)
   }
 }
@@ -116,7 +117,7 @@ private fun InitialsCircle(
   }
 }
 
-private fun String?.toInitials(): String? =
+fun String?.toInitials(): String? =
   this
     ?.split(" ")
     ?.filter { it.isNotBlank() }
