@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <string name="settings_title">Settings</string>
+  <string name="settings_subtitle">Account, appearance &amp; preferences</string>
   <string name="sign_out">Log out</string>
   <string name="settings_logout_subtitle">Sign out of your account on this device</string>
   <string name="settings_technicians_subtitle">Manage technician info who performs maintenance work</string>

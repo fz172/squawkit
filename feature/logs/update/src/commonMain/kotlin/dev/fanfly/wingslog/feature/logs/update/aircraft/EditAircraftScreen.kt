@@ -133,7 +133,7 @@ fun EditAircraftScreen(
   Scaffold(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
-      ConstrainedTopBar {
+      ConstrainedTopBar(ContentWidth.Form) {
         WingsLogTopAppBar(
           title = if (uiState.aircraft.id == "") stringResource(CoreRes.string.add_aircraft)
           else stringResource(MaintenanceRes.string.update_aircraft),

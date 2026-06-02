@@ -148,7 +148,7 @@ fun EditTaskScreen(
     containerColor = MaterialTheme.colorScheme.background,
     topBar = {
       Column {
-        ConstrainedTopBar {
+        ConstrainedTopBar(ContentWidth.Form) {
           TopAppBar(
             title = {
               Text(

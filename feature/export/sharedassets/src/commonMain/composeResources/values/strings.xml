@@ -26,6 +26,7 @@
   <string name="export_last_12_months">Last 12 months</string>
   <string name="export_last_n_months">Last %1$d months</string>
   <string name="export_custom">Custom</string>
+  <string name="export_custom_range_title">Custom range</string>
   <string name="export_custom_start_date">Start date</string>
   <string name="export_custom_end_date">End date</string>
   <string name="export_delivery_title">Export delivery email</string>

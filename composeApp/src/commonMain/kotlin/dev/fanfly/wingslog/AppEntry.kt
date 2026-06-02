@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,6 +27,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
@@ -104,8 +106,10 @@ fun AppEntry() {
         startDestination = GRAPH_AUTH
       ) {
         authGraph(navController)
-        shellGraph(navController)
+        shellGraph(navController, dogfoodExts)
         formDialogs(navController)
+        // Compact tiers (no sidebar) open settings detail pages as full-screen routes; the sidebar
+        // tier hosts its own nested copy of these inside the Settings section (see SettingsSection).
         secondaryRoutes(navController, dogfoodExts)
       }
     }
@@ -132,7 +136,10 @@ private fun NavGraphBuilder.authGraph(
   }
 }
 
-private fun NavGraphBuilder.shellGraph(navController: NavController) {
+private fun NavGraphBuilder.shellGraph(
+  navController: NavController,
+  dogfoodExts: DogfoodFeatureExtensions,
+) {
   navigation(
     startDestination = Screen.AdaptiveShell.route,
     route = GRAPH_SHELL
@@ -148,7 +155,10 @@ private fun NavGraphBuilder.shellGraph(navController: NavController) {
         onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
         sectionContent = { section, aircraftId ->
           if (section == ShellSection.SETTINGS) {
-            SettingsContent(navController = navController)
+            SettingsSection(
+              rootNavController = navController,
+              dogfoodExts = dogfoodExts
+            )
           } else {
             ShellSectionBody(
               section = section,
@@ -308,5 +318,38 @@ private fun NavGraphBuilder.secondaryRoutes(
       viewModel = koinViewModel(),
       onNavigateBack = { navController.popBackStack() },
     )
+  }
+}
+
+/** Nested route for the Settings list itself, hosted inside the content pane in sidebar mode. */
+private const val SETTINGS_ROOT_ROUTE = "settings_root"
+
+/**
+ * The Settings section body. In sidebar mode it hosts a nested NavHost so the list and its detail
+ * pages render in the content pane (the sidebar stays put); on compact tiers it renders the list
+ * directly and detail pages open as full-screen routes off [rootNavController] (via [secondaryRoutes]).
+ */
+@Composable
+private fun SettingsSection(
+  rootNavController: NavController,
+  dogfoodExts: DogfoodFeatureExtensions,
+) {
+  if (LocalLayoutTier.current.hasFullSidebar) {
+    val settingsNav: NavHostController = rememberNavController()
+    NavHost(
+      navController = settingsNav,
+      startDestination = SETTINGS_ROOT_ROUTE,
+      modifier = Modifier.fillMaxSize(),
+    ) {
+      composable(SETTINGS_ROOT_ROUTE) {
+        SettingsContent(
+          navController = rootNavController,
+          sectionNavController = settingsNav,
+        )
+      }
+      secondaryRoutes(settingsNav, dogfoodExts)
+    }
+  } else {
+    SettingsContent(navController = rootNavController)
   }
 }

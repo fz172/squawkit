@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +28,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
@@ -45,11 +45,6 @@ private val APPEARANCE_OPTIONS = listOf(
   AppearanceMode.SYSTEM,
   AppearanceMode.DARK,
 )
-
-// Leading icon chip — matches the navigation rows' chip in [SettingsRow].
-private val IconChipSize = 48.dp
-private val IconChipRadius = 13.dp
-private val IconSize = 22.dp
 
 // Segmented "pill" toggle measurements from the design handoff.
 private val TrackRadius = 10.dp
@@ -117,20 +112,10 @@ fun AppearanceSettingRow(
 
 @Composable
 private fun AppearanceLeadingIcon(icon: ImageVector) {
-  Box(
-    modifier = Modifier
-      .size(IconChipSize)
-      .clip(RoundedCornerShape(IconChipRadius))
-      .background(MaterialTheme.colorScheme.surfaceVariant),
-    contentAlignment = Alignment.Center,
-  ) {
-    Icon(
-      imageVector = icon,
-      contentDescription = stringResource(SettingsRes.string.appearance_title),
-      modifier = Modifier.size(IconSize),
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-  }
+  GroupedLeadingIconChip(
+    icon = icon,
+    contentDescription = stringResource(SettingsRes.string.appearance_title),
+  )
 }
 
 @Composable

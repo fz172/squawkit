@@ -17,6 +17,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,8 +29,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 
 data class IconLabelTabSpec(
   val icon: ImageVector,
@@ -48,8 +54,10 @@ fun IconLabelTabRow(
     val calculatedIconWidth = (maxWidth - MaxSelectedTabWidth) / unselectedCount
     val evenTabWidth = maxWidth / tabs.size
     val useEvenDistribution = calculatedIconWidth > MaxSelectedTabWidth
-    val iconTabWidth = if (useEvenDistribution) evenTabWidth else calculatedIconWidth
-    val selectedWidth = if (useEvenDistribution) evenTabWidth else MaxSelectedTabWidth
+    val iconTabWidth =
+      if (useEvenDistribution) evenTabWidth else calculatedIconWidth
+    val selectedWidth =
+      if (useEvenDistribution) evenTabWidth else MaxSelectedTabWidth
 
     val animatedWidths = tabs.indices.map { index ->
       animateDpAsState(
@@ -138,5 +146,21 @@ fun IconLabelTabRow(
         )
       }
     }
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun IconLabelTabRowPreview() {
+  WingslogTheme {
+    IconLabelTabRow(
+      tabs = listOf(
+        IconLabelTabSpec(icon = Icons.Default.Build, label = "Maintenance"),
+        IconLabelTabSpec(icon = Icons.Default.Schedule, label = "Schedule"),
+        IconLabelTabSpec(icon = Icons.Default.Link, label = "Records"),
+      ),
+      selectedIndex = 0,
+      onSelect = {}
+    )
   }
 }
