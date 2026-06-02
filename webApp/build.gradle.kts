@@ -37,6 +37,8 @@ kotlin {
             implementation(project(":feature:tasks:update"))
             implementation(project(":feature:squawk:datamanager"))
             implementation(project(":feature:squawk:update"))
+            implementation(project(":feature:export:datamanager"))
+            implementation(project(":feature:export:update"))
             implementation(project(":feature:settings"))
             implementation(project(":feature:sync:settings"))
             implementation(project(":feature:technician:manage"))

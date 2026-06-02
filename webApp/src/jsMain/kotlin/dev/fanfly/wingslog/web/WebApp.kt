@@ -34,6 +34,8 @@ import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.SettingsContent
+import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
+import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
@@ -224,6 +226,15 @@ fun WebApp() {
         }
         composable(Screen.SyncSettings.route) {
           SyncSettingsScreen(navController = navController)
+        }
+        composable(Screen.ExportLogs.route) {
+          ExportSelectionRoute(
+            navController = navController,
+            onNavigateToHistory = { navController.navigate(Screen.ExportHistory.route) },
+          )
+        }
+        composable(Screen.ExportHistory.route) {
+          ExportHistoryRoute(navController = navController)
         }
         composable(Screen.FeatureLab.route) {
           FeatureLabScreen(
