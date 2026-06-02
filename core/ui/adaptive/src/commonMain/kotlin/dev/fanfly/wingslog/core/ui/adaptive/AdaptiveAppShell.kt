@@ -210,6 +210,9 @@ private fun EmptyFleetShell(
           state = state,
           showAccountAction = false,
           onToggleSettings = toggleSettings,
+          // In sidebar mode the Settings section provides its own header (nested NavHost), so the
+          // scaffold's "Settings" bar would double up.
+          showSettingsTopBar = false,
           content = body,
         )
       }
@@ -235,12 +238,13 @@ private fun EmptyFleetScaffold(
   state: AdaptiveShellUiState,
   showAccountAction: Boolean,
   onToggleSettings: () -> Unit,
+  showSettingsTopBar: Boolean = true,
   content: @Composable () -> Unit,
 ) {
   val inSettings = state.section == ShellSection.SETTINGS
   Scaffold(
     topBar = {
-      if (showAccountAction || inSettings) {
+      if (showAccountAction || (inSettings && showSettingsTopBar)) {
         TopAppBar(
           title = {
             // No aircraft means no real section to name; only Settings gets a title here.
@@ -350,6 +354,9 @@ private fun SidebarShell(
         state = state,
         showTopBarSwitcher = false,
         onSelectAircraft = onSelectAircraft,
+        // Settings owns its chrome in sidebar mode: the section is a nested NavHost whose root and
+        // detail screens render their own headers, so the shell bar would just double up.
+        showTopBar = state.section != ShellSection.SETTINGS,
         content = content,
       )
     }
@@ -571,44 +578,49 @@ private fun ShellContent(
   // Non-sidebar tiers only: leaves the Settings section back to the tabbed views. Null in sidebar
   // mode, where the sidebar itself is the way out.
   onExitSettings: (() -> Unit)? = null,
+  // When false the section provides its own chrome (e.g. the sidebar-tier Settings section, whose
+  // nested screens carry their own top bars). The bar is omitted so content fills the pane.
+  showTopBar: Boolean = true,
   content: @Composable () -> Unit,
 ) {
   Scaffold(
     topBar = {
-      TopAppBar(
-        title = {
-          ActionBarTitle(state)
-        },
-        navigationIcon = {
-          if (onExitSettings != null && state.section == ShellSection.SETTINGS) {
-            IconButton(onClick = onExitSettings) {
-              Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(UiRes.string.back),
+      if (showTopBar) {
+        TopAppBar(
+          title = {
+            ActionBarTitle(state)
+          },
+          navigationIcon = {
+            if (onExitSettings != null && state.section == ShellSection.SETTINGS) {
+              IconButton(onClick = onExitSettings) {
+                Icon(
+                  Icons.AutoMirrored.Filled.ArrowBack,
+                  contentDescription = stringResource(UiRes.string.back),
+                )
+              }
+            }
+          },
+          actions = {
+            if (showTopBarSwitcher && state.section != ShellSection.SETTINGS) {
+              TopBarSwitcher(
+                state = state,
+                onSelectAircraft = onSelectAircraft,
+                onAddAircraft = onAddAircraft,
               )
             }
-          }
-        },
-        actions = {
-          if (showTopBarSwitcher && state.section != ShellSection.SETTINGS) {
-            TopBarSwitcher(
-              state = state,
-              onSelectAircraft = onSelectAircraft,
-              onAddAircraft = onAddAircraft,
-            )
-          }
-          if (onOpenSettings != null && state.section != ShellSection.SETTINGS) {
-            IconButton(onClick = onOpenSettings) {
-              AvatarIcon(
-                displayName = state.accountName,
-                photoUri = state.accountPhotoUrl,
-                size = Spacing.huge,
-                contentDescription = stringResource(UiRes.string.settings),
-              )
+            if (onOpenSettings != null && state.section != ShellSection.SETTINGS) {
+              IconButton(onClick = onOpenSettings) {
+                AvatarIcon(
+                  displayName = state.accountName,
+                  photoUri = state.accountPhotoUrl,
+                  size = Spacing.huge,
+                  contentDescription = stringResource(UiRes.string.settings),
+                )
+              }
             }
-          }
-        },
-      )
+          },
+        )
+      }
     },
   ) { padding ->
     Box(

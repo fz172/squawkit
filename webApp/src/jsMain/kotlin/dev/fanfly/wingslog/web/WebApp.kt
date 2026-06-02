@@ -13,6 +13,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.ExperimentalBrowserHistoryApi
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.bindToBrowserNavigation
 import androidx.navigation.compose.NavHost
@@ -24,18 +26,19 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
+import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
+import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.SettingsContent
-import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
-import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
@@ -106,7 +109,7 @@ fun WebApp() {
             onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
             sectionContent = { section, aircraftId ->
               if (section == ShellSection.SETTINGS) {
-                SettingsContent(navController = navController)
+                SettingsSection(rootNavController = navController)
               } else {
                 ShellSectionBody(
                   section = section,
@@ -224,48 +227,89 @@ fun WebApp() {
             )
           }
         }
-        composable(Screen.SyncSettings.route) {
-          SyncSettingsScreen(navController = navController)
-        }
-        composable(Screen.ExportLogs.route) {
-          ExportSelectionRoute(
-            navController = navController,
-            onNavigateToHistory = { navController.navigate(Screen.ExportHistory.route) },
-          )
-        }
-        composable(Screen.ExportHistory.route) {
-          ExportHistoryRoute(navController = navController)
-        }
-        composable(Screen.FeatureLab.route) {
-          FeatureLabScreen(
-            navController = navController,
-            dogfoodContent = { StressTestFeatureLabExtra(navController) },
-          )
-        }
-        registerStressTestRoutes(this, navController)
-        composable(Screen.ManageTechnicians.route) {
-          val viewModel = koinViewModel<TechnicianListViewModel>()
-          TechnicianListScreen(
-            viewModel = viewModel,
-            onNavigateBack = { navController.popBackStack() },
-            onNavigateToEdit = { id ->
-              navController.navigate(Screen.EditTechnician.createRoute(id))
-            },
-          )
-        }
-        composable(
-          route = Screen.EditTechnician.route,
-          arguments = listOf(navArgument(Screen.TECHNICIAN_ID) {
-            type = NavType.StringType
-            nullable = true
-          }),
-        ) {
-          EditTechnicianScreen(
-            viewModel = koinViewModel(),
-            onNavigateBack = { navController.popBackStack() },
-          )
-        }
+        // Compact tiers (no sidebar) open settings detail pages as full-screen routes.
+        settingsDetailRoutes(navController)
       }
     }
+  }
+}
+
+/**
+ * The Settings detail destinations. Registered once on the outer graph (compact full-screen +
+ * EditTechnician reachable from the maintenance-log form) and once per nested settings NavHost (so
+ * detail pages render in the content pane beside the sidebar). [navController] is whichever graph the
+ * caller is wiring.
+ */
+private fun NavGraphBuilder.settingsDetailRoutes(navController: NavHostController) {
+  composable(Screen.SyncSettings.route) {
+    SyncSettingsScreen(navController = navController)
+  }
+  composable(Screen.ExportLogs.route) {
+    ExportSelectionRoute(
+      navController = navController,
+      onNavigateToHistory = { navController.navigate(Screen.ExportHistory.route) },
+    )
+  }
+  composable(Screen.ExportHistory.route) {
+    ExportHistoryRoute(navController = navController)
+  }
+  composable(Screen.FeatureLab.route) {
+    FeatureLabScreen(
+      navController = navController,
+      dogfoodContent = { StressTestFeatureLabExtra(navController) },
+    )
+  }
+  registerStressTestRoutes(this, navController)
+  composable(Screen.ManageTechnicians.route) {
+    val viewModel = koinViewModel<TechnicianListViewModel>()
+    TechnicianListScreen(
+      viewModel = viewModel,
+      onNavigateBack = { navController.popBackStack() },
+      onNavigateToEdit = { id ->
+        navController.navigate(Screen.EditTechnician.createRoute(id))
+      },
+    )
+  }
+  composable(
+    route = Screen.EditTechnician.route,
+    arguments = listOf(navArgument(Screen.TECHNICIAN_ID) {
+      type = NavType.StringType
+      nullable = true
+    }),
+  ) {
+    EditTechnicianScreen(
+      viewModel = koinViewModel(),
+      onNavigateBack = { navController.popBackStack() },
+    )
+  }
+}
+
+/** Nested route for the Settings list itself, hosted inside the content pane in sidebar mode. */
+private const val SETTINGS_ROOT_ROUTE = "settings_root"
+
+/**
+ * The Settings section body. In sidebar mode it hosts a nested NavHost so the list and its detail
+ * pages render in the content pane (the sidebar stays put); on compact tiers it renders the list
+ * directly and detail pages open as full-screen routes off [rootNavController].
+ */
+@Composable
+private fun SettingsSection(rootNavController: NavHostController) {
+  if (LocalLayoutTier.current.hasFullSidebar) {
+    val settingsNav = rememberNavController()
+    NavHost(
+      navController = settingsNav,
+      startDestination = SETTINGS_ROOT_ROUTE,
+      modifier = Modifier.fillMaxSize(),
+    ) {
+      composable(SETTINGS_ROOT_ROUTE) {
+        SettingsContent(
+          navController = rootNavController,
+          sectionNavController = settingsNav,
+        )
+      }
+      settingsDetailRoutes(settingsNav)
+    }
+  } else {
+    SettingsContent(navController = rootNavController)
   }
 }

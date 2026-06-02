@@ -37,6 +37,7 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.appinfo.getAppVersion
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
@@ -57,8 +58,10 @@ import wingslog.feature.settings.generated.resources.feature_lab
 import wingslog.feature.settings.generated.resources.settings_export_subtitle
 import wingslog.feature.settings.generated.resources.settings_feature_lab_subtitle
 import wingslog.feature.settings.generated.resources.settings_logout_subtitle
+import wingslog.feature.settings.generated.resources.settings_subtitle
 import wingslog.feature.settings.generated.resources.settings_sync_subtitle
 import wingslog.feature.settings.generated.resources.settings_technicians_subtitle
+import wingslog.feature.settings.generated.resources.settings_title
 import wingslog.feature.settings.generated.resources.sign_out
 import wingslog.feature.sync.sharedassets.generated.resources.feature_name_backup_and_sync
 import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians
@@ -70,22 +73,31 @@ import wingslog.feature.technician.sharedassets.generated.resources.Res as Techn
 
 /**
  * The settings body — profile card, technician profiles, sync/cloud backup, Export entry point,
- * Feature Lab, account action, and app version — with no chrome of its own. The adaptive shell
- * renders it inside its Settings section. Secondary flows still navigate via [navController] to
- * their existing routes.
+ * Feature Lab, account action, and app version.
+ *
+ * Detail pages embed in the content pane next to the sidebar when one is present: in that case the
+ * caller passes a [sectionNavController] scoped to a nested NavHost, and the rows navigate it so the
+ * detail screen renders in place (the sidebar stays). On compact tiers (no sidebar) the rows fall
+ * back to [navController] and the detail pages open full-screen, as before. Login/logout always uses
+ * [navController] (the root graph owns the Login route).
  */
 @Composable
 fun SettingsContent(
   navController: NavController,
   modifier: Modifier = Modifier,
+  sectionNavController: NavController = navController,
   settingsViewModel: SettingsViewModel = koinViewModel(),
   accountUpgradeViewModel: AccountUpgradeViewModel = koinViewModel(),
-  onExportLogs: (() -> Unit)? = { navController.navigate(Screen.ExportLogs.route) },
 ) {
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
   val appearanceMode by settingsViewModel.appearanceMode.collectAsStateWithLifecycle()
   val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
+
+  // With a sidebar, detail pages embed via the nested controller; otherwise they open full-screen
+  // off the root controller.
+  val hasSidebar = LocalLayoutTier.current.hasFullSidebar
+  val detailNav = if (hasSidebar) sectionNavController else navController
 
   val upgradeSuccessMessage =
     stringResource(SettingsRes.string.account_upgrade_success)
@@ -139,6 +151,12 @@ fun SettingsContent(
           .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(Spacing.columnGap),
       ) {
+        // In sidebar mode the shell drops its "Settings" top bar (the section owns its chrome), so
+        // the page renders its own title/subtitle. Compact tiers still get the title from the shell.
+        if (hasSidebar) {
+          SettingsHeader()
+        }
+
         UserProfileCard(
           self = user.selfTechnician,
           photoUri = user.photoUri,
@@ -158,7 +176,7 @@ fun SettingsContent(
                 icon = Icons.Default.Engineering,
                 title = stringResource(TechnicianRes.string.manage_technicians),
                 subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
-                onClick = { navController.navigate(Screen.ManageTechnicians.route) },
+                onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
               )
             }
           }
@@ -167,25 +185,23 @@ fun SettingsContent(
               icon = Icons.Default.CloudSync,
               title = stringResource(SyncRes.string.feature_name_backup_and_sync),
               subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
-              onClick = { navController.navigate(Screen.SyncSettings.route) },
+              onClick = { detailNav.navigate(Screen.SyncSettings.route) },
             )
           }
-          if (onExportLogs != null) {
-            add {
-              SettingsRow(
-                icon = Icons.Default.FileDownload,
-                title = stringResource(ExportRes.string.feature_name_export_logs),
-                subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
-                onClick = onExportLogs,
-              )
-            }
+          add {
+            SettingsRow(
+              icon = Icons.Default.FileDownload,
+              title = stringResource(ExportRes.string.feature_name_export_logs),
+              subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
+              onClick = { detailNav.navigate(Screen.ExportLogs.route) },
+            )
           }
           add {
             SettingsRow(
               icon = Icons.Default.Tune,
               title = stringResource(SettingsRes.string.feature_lab),
               subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
-              onClick = { navController.navigate(Screen.FeatureLab.route) },
+              onClick = { detailNav.navigate(Screen.FeatureLab.route) },
             )
           }
         }
@@ -257,5 +273,25 @@ fun SettingsContent(
     )
 
     else -> Unit
+  }
+}
+
+/**
+ * Page title + subtitle shown only in sidebar mode, where the shell cedes its top bar to the
+ * Settings section. On compact tiers the shell's app bar supplies the title instead.
+ */
+@Composable
+private fun SettingsHeader() {
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+    Text(
+      text = stringResource(SettingsRes.string.settings_title),
+      style = MaterialTheme.typography.headlineSmall,
+      color = MaterialTheme.colorScheme.onSurface,
+    )
+    Text(
+      text = stringResource(SettingsRes.string.settings_subtitle),
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
   }
 }
