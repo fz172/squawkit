@@ -46,8 +46,8 @@ class ExportViewModel(
   private val squawkManager: SquawkManager,
   private val featureLabManager: FeatureLabManager,
   private val auth: FirebaseAuth,
-  private val clock: Clock = Clock.System,
-  private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
+  clock: Clock = Clock.System,
+  timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
 
   private val today = clock.now()
@@ -204,30 +204,19 @@ class ExportViewModel(
     }
 
   /**
-   * Updates the inclusive custom start date and keeps the custom range valid.
+   * Updates the inclusive custom range in one state transition.
    */
-  fun onCustomStartChange(date: LocalDate) = reduceConfiguring { current ->
-    val end = if (date > current.customEnd) date else current.customEnd
-    current.copy(
-      dateRange = DateRangeOption.Custom,
-      customStart = date,
-      customEnd = end,
-    )
-      .recomputeEstimates()
-  }
-
-  /**
-   * Updates the inclusive custom end date and keeps the custom range valid.
-   */
-  fun onCustomEndChange(date: LocalDate) = reduceConfiguring { current ->
-    val start = if (date < current.customStart) date else current.customStart
-    current.copy(
-      dateRange = DateRangeOption.Custom,
-      customStart = start,
-      customEnd = date,
-    )
-      .recomputeEstimates()
-  }
+  fun onCustomRangeChange(start: LocalDate, end: LocalDate) =
+    reduceConfiguring { current ->
+      val normalizedStart = if (start <= end) start else end
+      val normalizedEnd = if (start <= end) end else start
+      current.copy(
+        dateRange = DateRangeOption.Custom,
+        customStart = normalizedStart,
+        customEnd = normalizedEnd,
+      )
+        .recomputeEstimates()
+    }
 
   /**
    * Starts export generation using the current configuration.

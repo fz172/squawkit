@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 
 package dev.fanfly.wingslog.feature.export.update
 
@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -69,6 +71,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -76,6 +79,9 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedCheckboxRow
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -103,6 +109,9 @@ import wingslog.feature.export.sharedassets.generated.resources.export_all_time
 import wingslog.feature.export.sharedassets.generated.resources.export_back_to_setup
 import wingslog.feature.export.sharedassets.generated.resources.export_clear_all
 import wingslog.feature.export.sharedassets.generated.resources.export_custom
+import wingslog.feature.export.sharedassets.generated.resources.export_custom_end_date
+import wingslog.feature.export.sharedassets.generated.resources.export_custom_range_title
+import wingslog.feature.export.sharedassets.generated.resources.export_custom_start_date
 import wingslog.feature.export.sharedassets.generated.resources.export_date_range_section
 import wingslog.feature.export.sharedassets.generated.resources.export_email_action
 import wingslog.feature.export.sharedassets.generated.resources.export_email_body
@@ -168,8 +177,7 @@ fun ExportSelectionScreen(
   onClearAll: () -> Unit,
   onToggleFormat: (ExportFormat) -> Unit,
   onDateRangeChange: (DateRangeOption) -> Unit,
-  onCustomStartChange: (LocalDate) -> Unit,
-  onCustomEndChange: (LocalDate) -> Unit,
+  onCustomRangeChange: (LocalDate, LocalDate) -> Unit,
   onExport: () -> Unit,
   onCancel: () -> Unit,
   onShareExport: (String, String, String, String) -> Unit,
@@ -208,8 +216,7 @@ fun ExportSelectionScreen(
         onClearAll = onClearAll,
         onToggleFormat = onToggleFormat,
         onDateRangeChange = onDateRangeChange,
-        onCustomStartChange = onCustomStartChange,
-        onCustomEndChange = onCustomEndChange,
+        onCustomRangeChange = onCustomRangeChange,
         onNavigateToHistory = onNavigateToHistory,
         onExport = onExport,
       )
@@ -248,8 +255,7 @@ private fun ConfiguringContent(
   onClearAll: () -> Unit,
   onToggleFormat: (ExportFormat) -> Unit,
   onDateRangeChange: (DateRangeOption) -> Unit,
-  onCustomStartChange: (LocalDate) -> Unit,
-  onCustomEndChange: (LocalDate) -> Unit,
+  onCustomRangeChange: (LocalDate, LocalDate) -> Unit,
   onNavigateToHistory: () -> Unit,
   onExport: () -> Unit,
 ) {
@@ -262,6 +268,12 @@ private fun ConfiguringContent(
     modifier = modifier.fillMaxSize(),
     contentAlignment = Alignment.TopCenter,
   ) {
+    val bottomBarReservedHeight =
+      if (state.resolvedDeliveryInfo?.destinationEmail != null) {
+        ExportBottomBarWithEmailReservedHeight
+      } else {
+        ExportBottomBarReservedHeight
+      }
     ExportSetupList(
       state = state,
       onToggleAircraft = onToggleAircraft,
@@ -269,13 +281,12 @@ private fun ConfiguringContent(
       onClearAll = onClearAll,
       onToggleFormat = onToggleFormat,
       onDateRangeChange = onDateRangeChange,
-      onCustomStartChange = onCustomStartChange,
-      onCustomEndChange = onCustomEndChange,
+      onCustomRangeChange = onCustomRangeChange,
       modifier = Modifier
         .fillMaxHeight()
         .constrainedContentWidth(ContentWidth.Form)
         .padding(horizontal = Spacing.screenPadding),
-      bottomPadding = Spacing.buttonHeight + Spacing.huge,
+      bottomPadding = bottomBarReservedHeight,
     )
     if (state.aircraft.isNotEmpty()) {
       Box(
@@ -295,8 +306,7 @@ private fun ExportSetupList(
   onClearAll: () -> Unit,
   onToggleFormat: (ExportFormat) -> Unit,
   onDateRangeChange: (DateRangeOption) -> Unit,
-  onCustomStartChange: (LocalDate) -> Unit,
-  onCustomEndChange: (LocalDate) -> Unit,
+  onCustomRangeChange: (LocalDate, LocalDate) -> Unit,
   modifier: Modifier = Modifier,
   bottomPadding: Dp = Spacing.screenPadding,
 ) {
@@ -327,15 +337,17 @@ private fun ExportSetupList(
           null
         },
       ) {
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-          state.aircraft.forEach { aircraft ->
-            AircraftCard(
-              aircraft = aircraft,
-              selected = aircraft.aircraftId in state.selectedAircraftIds,
-              onClick = { onToggleAircraft(aircraft.aircraftId) },
-            )
+        GroupedRowGroup(
+          rows = state.aircraft.map { aircraft ->
+            {
+              AircraftOptionRow(
+                aircraft = aircraft,
+                selected = aircraft.aircraftId in state.selectedAircraftIds,
+                onClick = { onToggleAircraft(aircraft.aircraftId) },
+              )
+            }
           }
-        }
+        )
       }
     }
 
@@ -343,8 +355,7 @@ private fun ExportSetupList(
       DateRangeSection(
         state = state,
         onDateRangeChange = onDateRangeChange,
-        onCustomStartChange = onCustomStartChange,
-        onCustomEndChange = onCustomEndChange,
+        onCustomRangeChange = onCustomRangeChange,
       )
     }
 
@@ -380,23 +391,39 @@ private val FORMAT_CHOICES = listOf(
   ),
 )
 
+private val ExportBottomBarReservedHeight = 176.dp
+private val ExportBottomBarWithEmailReservedHeight = 200.dp
+
 @Composable
 private fun FormatSection(
   formats: Set<ExportFormat>,
   onToggleFormat: (ExportFormat) -> Unit,
 ) {
   Section(title = stringResource(Res.string.export_formats_section)) {
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-      FORMAT_CHOICES.forEach { choice ->
-        FormatChip(
-          modifier = Modifier.weight(1f),
-          choice = choice,
-          selected = choice.format in formats,
-          isLastSelected = choice.format in formats && formats.size == 1,
-          onClick = { onToggleFormat(choice.format) },
-        )
+    GroupedRowGroup(
+      rows = FORMAT_CHOICES.map { choice ->
+        {
+          val selected = choice.format in formats
+          val isLastSelected = selected && formats.size == 1
+          GroupedCheckboxRow(
+            title = choice.format.name,
+            subtitle = stringResource(choice.sub),
+            checked = selected,
+            onCheckedChange = {
+              if (!isLastSelected) {
+                onToggleFormat(choice.format)
+              }
+            },
+            leading = {
+              GroupedLeadingIconChip(
+                icon = choice.icon,
+                contentDescription = choice.format.name,
+              )
+            },
+          )
+        }
       }
-    }
+    )
     // The picker enforces at least one format; the advisory only surfaces in the edge case.
     if (formats.isEmpty()) {
       Spacer(Modifier.height(Spacing.small))
@@ -410,137 +437,23 @@ private fun FormatSection(
   }
 }
 
-@Composable
-private fun FormatChip(
-  modifier: Modifier,
-  choice: FormatChoice,
-  selected: Boolean,
-  isLastSelected: Boolean,
-  onClick: () -> Unit,
-) {
-  val accent = MaterialTheme.colorScheme.primary
-  Box(
-    modifier = modifier
-      .heightIn(min = 96.dp)
-      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .background(if (selected) accent.copy(alpha = 0.10f) else Color.Transparent)
-      .border(
-        width = 1.5.dp,
-        color = if (selected) accent else MaterialTheme.colorScheme.outlineVariant,
-        shape = RoundedCornerShape(Spacing.cardCornerRadius),
-      )
-      .clickable(enabled = !isLastSelected, onClick = onClick)
-      .padding(Spacing.medium),
-  ) {
-    SelectionIndicator(
-      selected = selected,
-      modifier = Modifier.align(Alignment.TopEnd),
-      size = 18.dp,
-    )
-    Column(
-      modifier = Modifier.align(Alignment.Center),
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-    ) {
-      Icon(
-        imageVector = choice.icon,
-        contentDescription = null,
-        tint = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(22.dp),
-      )
-      Text(
-        text = choice.format.name,
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = if (selected) accent else MaterialTheme.colorScheme.onSurface,
-      )
-      Text(
-        text = stringResource(choice.sub),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-  }
-}
-
 // ─── Setup · Aircraft ───────────────────────────────────────────────────────
 
 @Composable
-private fun AircraftCard(
+private fun AircraftOptionRow(
   aircraft: AircraftSelectionRow,
   selected: Boolean,
   onClick: () -> Unit,
 ) {
-  val accent = MaterialTheme.colorScheme.primary
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .background(
-        if (selected) accent.copy(alpha = 0.07f) else MaterialTheme.colorScheme.surfaceContainer
-      )
-      .border(
-        width = Spacing.hairline,
-        color = if (selected) accent.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant,
-        shape = RoundedCornerShape(Spacing.cardCornerRadius),
-      )
-      .clickable(onClick = onClick)
-      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(Spacing.large),
-  ) {
-    SelectionIndicator(selected = selected, size = 22.dp, rounded = true)
-    Column(modifier = Modifier.weight(1f)) {
-      Text(
-        text = aircraft.tailNumber.ifBlank { stringResource(Res.string.export_untitled_aircraft) },
-        style = WingslogTypography.dataLarge,
-        color = if (selected) accent else MaterialTheme.colorScheme.onSurface,
-      )
-      Text(
-        text = aircraft.makeModel.ifBlank {
-          stringResource(Res.string.export_aircraft_details_incomplete)
-        },
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-  }
-}
-
-/** Square (or rounded-square) check box used by format chips and aircraft cards. */
-@Composable
-private fun SelectionIndicator(
-  selected: Boolean,
-  modifier: Modifier = Modifier,
-  size: Dp = 22.dp,
-  rounded: Boolean = false,
-) {
-  val accent = MaterialTheme.colorScheme.primary
-  val shape = RoundedCornerShape(if (rounded) 6.dp else 5.dp)
-  Box(
-    modifier = modifier
-      .size(size)
-      .clip(shape)
-      .background(if (selected) accent else Color.Transparent)
-      .then(
-        if (selected) Modifier
-        else Modifier.border(
-          2.dp,
-          MaterialTheme.colorScheme.outlineVariant,
-          shape
-        )
-      ),
-    contentAlignment = Alignment.Center,
-  ) {
-    if (selected) {
-      Icon(
-        imageVector = Icons.Default.Check,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onPrimary,
-        modifier = Modifier.size(size * 0.7f),
-      )
-    }
-  }
+  GroupedCheckboxRow(
+    title = aircraft.tailNumber.ifBlank { stringResource(Res.string.export_untitled_aircraft) },
+    subtitle = aircraft.makeModel.ifBlank {
+      stringResource(Res.string.export_aircraft_details_incomplete)
+    },
+    titleStyle = WingslogTypography.dataLarge,
+    checked = selected,
+    onCheckedChange = { onClick() },
+  )
 }
 
 // ─── Setup · Date range ─────────────────────────────────────────────────────
@@ -549,8 +462,7 @@ private fun SelectionIndicator(
 private fun DateRangeSection(
   state: ExportUiState.Configuring,
   onDateRangeChange: (DateRangeOption) -> Unit,
-  onCustomStartChange: (LocalDate) -> Unit,
-  onCustomEndChange: (LocalDate) -> Unit,
+  onCustomRangeChange: (LocalDate, LocalDate) -> Unit,
 ) {
   Section(title = stringResource(Res.string.export_date_range_section)) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
@@ -575,10 +487,7 @@ private fun DateRangeSection(
       CombinedRangeField(
         start = state.customStart,
         end = state.customEnd,
-        onChange = { newStart, newEnd ->
-          onCustomStartChange(newStart)
-          onCustomEndChange(newEnd)
-        },
+        onChange = onCustomRangeChange,
       )
     }
   }
@@ -689,9 +598,93 @@ private fun CombinedRangeField(
     ) {
       DateRangePicker(
         state = pickerState,
-        modifier = Modifier.weight(1f),
+        modifier = Modifier
+          .fillMaxWidth()
+          .heightIn(max = 620.dp)
+          .weight(1f, fill = false),
+        title = {
+          Text(
+            text = stringResource(Res.string.export_custom_range_title),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(
+              start = Spacing.extraLarge,
+              end = Spacing.extraLarge,
+              top = Spacing.large,
+            ),
+          )
+        },
+        headline = {
+          DateRangePickerHeadline(
+            start = pickerState.selectedStartDateMillis?.toDatePickerLocalDate()
+              ?: start,
+            end = pickerState.selectedEndDateMillis?.toDatePickerLocalDate()
+              ?: end,
+          )
+        },
+        showModeToggle = true,
       )
     }
+  }
+}
+
+@Composable
+private fun DateRangePickerHeadline(
+  start: LocalDate,
+  end: LocalDate,
+) {
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(horizontal = Spacing.extraLarge)
+      .padding(top = Spacing.medium, bottom = Spacing.large),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+  ) {
+    DateRangePickerHeadlineCell(
+      label = stringResource(Res.string.export_custom_start_date),
+      value = start.toDisplayFormat(),
+      modifier = Modifier.weight(1f),
+    )
+    DateRangePickerHeadlineCell(
+      label = stringResource(Res.string.export_custom_end_date),
+      value = end.toDisplayFormat(),
+      modifier = Modifier.weight(1f),
+    )
+  }
+}
+
+@Composable
+private fun DateRangePickerHeadlineCell(
+  label: String,
+  value: String,
+  modifier: Modifier = Modifier,
+) {
+  Column(
+    modifier = modifier
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+      .background(MaterialTheme.colorScheme.surfaceContainer)
+      .border(
+        width = Spacing.hairline,
+        color = MaterialTheme.colorScheme.outlineVariant,
+        shape = RoundedCornerShape(Spacing.cardCornerRadius),
+      )
+      .padding(horizontal = Spacing.medium, vertical = Spacing.small),
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+  ) {
+    Text(
+      text = label.uppercase(),
+      style = MaterialTheme.typography.labelSmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+    )
+    Text(
+      text = value,
+      style = WingslogTypography.dataMedium,
+      color = MaterialTheme.colorScheme.onSurface,
+      maxLines = 1,
+      overflow = TextOverflow.Clip,
+    )
   }
 }
 
@@ -717,10 +710,9 @@ private fun ExportBottomBar(
         .padding(top = Spacing.medium, bottom = Spacing.large),
       verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-      // Single muted summary line: aircraft count, range, and estimated archive size.
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
+      FlowRow(
         horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+        verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
       ) {
         Icon(
           imageVector = Icons.Default.Flight,
@@ -735,12 +727,15 @@ private fun ExportBottomBar(
           ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurface,
+          maxLines = 1,
         )
         MetaDot()
         Text(
           text = rangeSummary(state),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
         )
         MetaDot()
         Text(
@@ -750,6 +745,7 @@ private fun ExportBottomBar(
           ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 1,
         )
       }
 

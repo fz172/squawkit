@@ -1,21 +1,14 @@
 package dev.fanfly.wingslog.feature.settings
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Engineering
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedCard
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 
 /**
@@ -28,20 +21,7 @@ fun SettingsCard(
   modifier: Modifier = Modifier,
   content: @Composable ColumnScope.() -> Unit,
 ) {
-  Card(
-    shape = RoundedCornerShape(Spacing.large),
-    colors = CardDefaults.cardColors(
-      containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ),
-    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
-    border = BorderStroke(
-      Spacing.hairline,
-      MaterialTheme.colorScheme.outlineVariant
-    ),
-    modifier = modifier.fillMaxWidth(),
-  ) {
-    Column(content = content)
-  }
+  GroupedCard(modifier = modifier, content = content)
 }
 
 /**
@@ -54,17 +34,7 @@ fun SettingsRowGroup(
   rows: List<@Composable () -> Unit>,
   modifier: Modifier = Modifier,
 ) {
-  SettingsCard(modifier = modifier) {
-    rows.forEachIndexed { index, row ->
-      row()
-      if (index < rows.lastIndex) {
-        HorizontalDivider(
-          thickness = Spacing.hairline,
-          color = MaterialTheme.colorScheme.outlineVariant,
-        )
-      }
-    }
-  }
+  GroupedRowGroup(rows = rows, modifier = modifier)
 }
 
 @Preview
