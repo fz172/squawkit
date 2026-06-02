@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
  */
 object ContentWidth {
 
-  /** Consistent width for header and footer. */
+  /** Wider chrome for screens whose content intentionally spans more than one reading column. */
   val HeaderFooter = 900.dp
 
   /** Repeated dashboard or browseable list cards that benefit from wider scan rows. */
@@ -46,18 +46,18 @@ fun Modifier.constrainedContentWidth(
  * Aligns app-bar content with a screen's bounded content column on large displays.
  *
  * The outer container keeps the scaffold slot full width, while the rendered bar is constrained
- * to [ContentWidth.HeaderFooter] so navigation and actions do not drift to opposite viewport
- * edges.
+ * to [maxWidth] so navigation and actions line up with the page's content column.
  */
 @Composable
 fun ConstrainedTopBar(
+  maxWidth: Dp = ContentWidth.Reading,
   content: @Composable () -> Unit,
 ) {
   Box(
     modifier = Modifier.fillMaxWidth(),
     contentAlignment = Alignment.TopCenter,
   ) {
-    Box(modifier = Modifier.constrainedContentWidth(ContentWidth.HeaderFooter)) {
+    Box(modifier = Modifier.constrainedContentWidth(maxWidth)) {
       content()
     }
   }

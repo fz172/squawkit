@@ -94,7 +94,7 @@ fun EditTechnicianScreen(
   Scaffold(
     modifier = modifier.imePadding(),
     topBar = {
-      ConstrainedTopBar {
+      ConstrainedTopBar(ContentWidth.Form) {
         TopAppBar(
           title = {
             Text(

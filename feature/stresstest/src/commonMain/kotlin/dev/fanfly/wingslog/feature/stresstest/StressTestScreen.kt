@@ -98,7 +98,7 @@ fun StressTestScreen(
 
   Scaffold(
     topBar = {
-      ConstrainedTopBar {
+      ConstrainedTopBar(ContentWidth.Form) {
         WingsLogTopAppBar(
           title = stringResource(Res.string.stress_test_title),
           onBackClick = { navController.popBackStack() },
