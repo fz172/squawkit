@@ -9,6 +9,9 @@ import dev.fanfly.wingslog.core.ui.theme.di.appearanceStoreModule
 import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
+import dev.fanfly.wingslog.feature.export.datamanager.di.exportDataManagerModule
+import dev.fanfly.wingslog.feature.export.datamanager.di.exportPlatformModule
+import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUiModule
 import dev.fanfly.wingslog.feature.featurelab.datamanager.di.featureLabModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
 import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
@@ -79,6 +82,9 @@ fun main() {
       squawkUiModule,
       aircraftDashboardModule,
       technicianManageModule,
+      exportDataManagerModule,
+      exportPlatformModule,
+      exportUiModule,
       settingsModule,
       syncSettingsModule,
       *stressTestKoinModules().toTypedArray(),
