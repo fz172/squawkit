@@ -75,34 +75,11 @@ fun ComponentSection(
     when (selectedComponentType) {
       ComponentType.COMPONENT_AIRFRAME -> {
         // Display aircraft serial (read-only)
-        val serial = aircraft?.serial ?: ""
-        Column(
-          modifier = Modifier
-            .fillMaxWidth()
-            .height(64.dp)
-            .border(
-              width = Spacing.hairline,
-              color = MaterialTheme.colorScheme.outlineVariant,
-              shape = RoundedCornerShape(Spacing.chipCornerRadius)
-            )
-            .background(
-              color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-              shape = RoundedCornerShape(Spacing.chipCornerRadius)
-            )
-            .padding(horizontal = Spacing.large),
-          verticalArrangement = Arrangement.Center
-        ) {
-          Text(
-            text = stringResource(Res.string.airframe_serial),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-          Text(
-            text = serial,
-            style = WingslogTypography.dataMedium,
-            color = MaterialTheme.colorScheme.onSurface
-          )
-        }
+        ReadOnlyComponentField(
+          label = stringResource(Res.string.airframe_serial),
+          value = aircraft?.serial ?: "",
+          modifier = Modifier.fillMaxWidth(),
+        )
       }
 
       ComponentType.COMPONENT_ENGINE -> {
@@ -114,29 +91,37 @@ fun ComponentSection(
           )
         } else {
           val engines = aircraft.engine
-          if (engines.isEmpty()) {
-            Text(
+          val options = engines.map { engine ->
+            val makeModel = listOf(engine.make, engine.model)
+              .filter { it.isNotBlank() }
+              .joinToString(" ")
+            val label = if (engine.serial.isNotEmpty()) {
+              stringResource(
+                Res.string.make_model_serial,
+                makeModel,
+                engine.serial
+              )
+            } else {
+              makeModel
+            }
+            label to engine.serial
+          }
+          when (options.size) {
+            0 -> Text(
               text = stringResource(Res.string.no_engines_found),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-          } else {
-            val options = engines.map { engine ->
-              val makeModel = listOf(engine.make, engine.model)
-                .filter { it.isNotBlank() }
-                .joinToString(" ")
-              val label = if (engine.serial.isNotEmpty()) {
-                stringResource(
-                  Res.string.make_model_serial,
-                  makeModel,
-                  engine.serial
-                )
-              } else {
-                makeModel
-              }
-              label to engine.serial
-            }
-            SubComponentDropdown(
+
+            // Single engine: nothing to choose, so mirror the airframe field with a read-only box.
+            // The ViewModel already auto-selects the sole engine's serial.
+            1 -> ReadOnlyComponentField(
+              label = stringResource(CoreRes.string.component_engine),
+              value = options.first().first,
+              modifier = Modifier.fillMaxWidth(),
+            )
+
+            else -> SubComponentDropdown(
               label = stringResource(CoreRes.string.component_engine),
               options = options,
               selectedSerial = selectedSubComponent,
@@ -210,5 +195,44 @@ fun ComponentSection(
         // UNKNOWN — no sub-component
       }
     }
+  }
+}
+
+/**
+ * Read-only labelled value box used when a component has no choice to make (the airframe, or an
+ * aircraft with a single engine). Styled like a disabled outlined field so it reads as informational
+ * rather than interactive.
+ */
+@Composable
+private fun ReadOnlyComponentField(
+  label: String,
+  value: String,
+  modifier: Modifier = Modifier,
+) {
+  Column(
+    modifier = modifier
+      .height(64.dp)
+      .border(
+        width = Spacing.hairline,
+        color = MaterialTheme.colorScheme.outlineVariant,
+        shape = RoundedCornerShape(Spacing.chipCornerRadius)
+      )
+      .background(
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        shape = RoundedCornerShape(Spacing.chipCornerRadius)
+      )
+      .padding(horizontal = Spacing.large),
+    verticalArrangement = Arrangement.Center
+  ) {
+    Text(
+      text = label,
+      style = MaterialTheme.typography.labelSmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Text(
+      text = value,
+      style = WingslogTypography.dataMedium,
+      color = MaterialTheme.colorScheme.onSurface
+    )
   }
 }
