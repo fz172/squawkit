@@ -2,7 +2,11 @@ package dev.fanfly.wingslog.feature.aircraft.dashboard
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,9 +33,16 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import wingslog.feature.logs.sharedassets.generated.resources.add_log
+import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
+import wingslog.feature.tasks.sharedassets.generated.resources.add_task
+import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
+import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
 /**
  * Host entry point for the adaptive shell's **per-aircraft** section bodies: maps a [dev.fanfly.wingslog.core.ui.adaptive.ShellSection]
@@ -66,6 +77,73 @@ fun ShellSectionBody(
       )
     }
   }
+}
+
+/**
+ * The per-section floating action button for the adaptive shell's `sectionFab` slot: Add Squawk /
+ * Task / Log for the matching section, navigating into the same add screens that
+ * [AircraftSectionContent]'s `onAction` uses. Dashboard has no primary add action and Settings is
+ * global, so neither shows a FAB. Returns nothing until an aircraft is selected — the add routes are
+ * all aircraft-scoped.
+ *
+ * Lives here (not in `core:ui`) because the shell cannot depend on the feature add-screen routes; it
+ * is rendered inside the shell's own Scaffold FAB slot so snackbars offset around it.
+ */
+@Composable
+fun ShellSectionFab(
+  section: ShellSection,
+  aircraftId: String?,
+  navController: NavController,
+) {
+  if (aircraftId == null) return
+  when (section) {
+    ShellSection.SQUAWKS ->
+      SectionAddFab(
+        label = stringResource(SquawkRes.string.add_squawk),
+        onClick = {
+          navController.navigate(
+            Screen.AddSquawk.createRoute(
+              aircraftId
+            )
+          )
+        },
+      )
+
+    ShellSection.TASKS ->
+      SectionAddFab(
+        label = stringResource(TasksRes.string.add_task),
+        onClick = {
+          navController.navigate(
+            Screen.AddMaintenanceTask.createRoute(
+              aircraftId
+            )
+          )
+        },
+      )
+
+    ShellSection.LOGS ->
+      SectionAddFab(
+        label = stringResource(LogsRes.string.add_log),
+        onClick = {
+          navController.navigate(
+            Screen.AddMaintenanceLog.createRoute(
+              aircraftId
+            )
+          )
+        },
+      )
+
+    ShellSection.DASHBOARD, ShellSection.SETTINGS -> Unit
+  }
+}
+
+@Composable
+private fun SectionAddFab(label: String, onClick: () -> Unit) {
+  ExtendedFloatingActionButton(
+    onClick = onClick,
+    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+    text = { Text(label) },
+  )
 }
 
 /**

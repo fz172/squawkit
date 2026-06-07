@@ -6,11 +6,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -142,13 +147,21 @@ fun SettingsContent(
         .fillMaxSize()
         .padding(Spacing.screenPadding),
     ) {
-      // The list scrolls so every row stays reachable on short screens; the version footer below
-      // stays pinned at the bottom.
+      // The whole page scrolls as one, version footer included, so every row stays reachable on
+      // short screens. On compact tiers the shell runs Settings edge-to-edge under the transparent
+      // system navigation bar, so the scroll content re-adds that bottom inset (after verticalScroll
+      // so it scrolls with the content) to keep the last row above the gesture bar.
       Column(
         modifier = Modifier
           .weight(1f)
           .fillMaxWidth()
-          .verticalScroll(rememberScrollState()),
+          .verticalScroll(rememberScrollState())
+          .then(
+            if (hasSidebar) Modifier
+            else Modifier.windowInsetsPadding(
+              WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)
+            )
+          ),
         verticalArrangement = Arrangement.spacedBy(Spacing.columnGap),
       ) {
         // In sidebar mode the shell drops its "Settings" top bar (the section owns its chrome), so
@@ -238,16 +251,19 @@ fun SettingsContent(
             )
           }
         }
+
+        Spacer(modifier = Modifier.height(Spacing.columnGap))
+
+        Text(
+          text = stringResource(
+            SettingsRes.string.app_version,
+            getAppVersion()
+          ),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.align(Alignment.CenterHorizontally),
+        )
       }
-
-      Spacer(modifier = Modifier.height(Spacing.columnGap))
-
-      Text(
-        text = stringResource(SettingsRes.string.app_version, getAppVersion()),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.align(Alignment.CenterHorizontally),
-      )
     }
 
     SnackbarHost(

@@ -50,6 +50,7 @@ kotlin {
       implementation(project(":core:ui:widget:avataricon"))
       implementation(project(":core:sharedassets"))
       api(libs.compose.ui)
+      api(libs.compose.ui.backhandler)
       api(libs.material3)
       api(libs.material3.adaptive.navigation.suite)
       api(libs.components.resources)

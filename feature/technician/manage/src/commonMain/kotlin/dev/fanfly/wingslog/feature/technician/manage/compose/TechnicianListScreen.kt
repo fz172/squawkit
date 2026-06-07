@@ -3,6 +3,8 @@ package dev.fanfly.wingslog.feature.technician.manage.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -24,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -86,17 +89,30 @@ fun TechnicianListScreen(
           .padding(paddingValues)
       )
     } else {
+      // Edge-to-edge: apply only the top/horizontal scaffold insets to the container and fold the
+      // bottom system-bar inset into the list's content padding, so the list scrolls under the
+      // transparent system navigation bar while the last card still clears the gesture bar.
+      val layoutDirection = LocalLayoutDirection.current
       Box(
         modifier = Modifier
           .fillMaxSize()
-          .padding(paddingValues),
+          .padding(
+            top = paddingValues.calculateTopPadding(),
+            start = paddingValues.calculateStartPadding(layoutDirection),
+            end = paddingValues.calculateEndPadding(layoutDirection),
+          ),
         contentAlignment = Alignment.TopCenter,
       ) {
         LazyColumn(
           modifier = Modifier
             .fillMaxHeight()
             .constrainedContentWidth(ContentWidth.Reading),
-          contentPadding = PaddingValues(Spacing.large),
+          contentPadding = PaddingValues(
+            start = Spacing.large,
+            end = Spacing.large,
+            top = Spacing.large,
+            bottom = Spacing.large + paddingValues.calculateBottomPadding(),
+          ),
           verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
           items(state.technicians, key = { it.id }) { technician ->

@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,6 +33,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,7 +48,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -129,11 +134,17 @@ fun AdaptiveAppShell(
   onAddAircraft: () -> Unit,
   sectionContent: @Composable (section: ShellSection, aircraftId: String?) -> Unit,
   emptyFleetContent: @Composable () -> Unit,
+  // Per-section floating action button (Add log / task / squawk). A host slot because the add
+  // actions navigate into feature screens that `core:ui` cannot depend on. Rendered in the shell's
+  // own Scaffold slot so snackbars offset around it automatically.
+  sectionFab: @Composable (section: ShellSection, aircraftId: String?) -> Unit = { _, _ -> },
 ) {
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
     val content: @Composable () -> Unit =
       { sectionContent(state.section, state.selectedAircraftId) }
+    val fab: @Composable () -> Unit =
+      { sectionFab(state.section, state.selectedAircraftId) }
     CompositionLocalProvider(LocalLayoutTier provides tier) {
       if (state.aircraft.isEmpty()) {
         EmptyFleetShell(
@@ -153,6 +164,7 @@ fun AdaptiveAppShell(
           onOpenSettings = onOpenSettings,
           onAddAircraft = onAddAircraft,
           content = content,
+          fab = fab,
         )
       }
     }
@@ -300,6 +312,7 @@ private fun ShellForTier(
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
   content: @Composable () -> Unit,
+  fab: @Composable () -> Unit,
 ) {
   when {
     tier.hasFullSidebar ->
@@ -310,6 +323,7 @@ private fun ShellForTier(
         onOpenSettings = onOpenSettings,
         onAddAircraft = onAddAircraft,
         content = content,
+        fab = fab,
       )
 
     else ->
@@ -320,6 +334,7 @@ private fun ShellForTier(
         onOpenSettings = onOpenSettings,
         onAddAircraft = onAddAircraft,
         content = content,
+        fab = fab,
       )
   }
 }
@@ -336,6 +351,7 @@ private fun SidebarShell(
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
   content: @Composable () -> Unit,
+  fab: @Composable () -> Unit,
 ) {
   Row(modifier = Modifier.fillMaxSize()) {
     WingsSidebar(
@@ -358,6 +374,7 @@ private fun SidebarShell(
         // detail screens render their own headers, so the shell bar would just double up.
         showTopBar = state.section != ShellSection.SETTINGS,
         content = content,
+        fab = fab,
       )
     }
   }
@@ -513,6 +530,7 @@ private fun SidebarSwitcher(
 /* COMPACT / MEDIUM — NavigationSuiteScaffold                                                     */
 /* ---------------------------------------------------------------------------------------------- */
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun ScaffoldShell(
   state: AdaptiveShellUiState,
@@ -521,9 +539,15 @@ private fun ScaffoldShell(
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
   content: @Composable () -> Unit,
+  fab: @Composable () -> Unit,
 ) {
   NavigationSuiteScaffold(
-    layoutType = NavigationSuiteType.NavigationBar,
+    // Settings has no nav-bar item, so showing the bar while it's open feels disconnected. Drop the
+    // nav container entirely there and let Settings run full-screen; the top-bar back arrow (wired
+    // via onExitSettings below) is the way out.
+    layoutType =
+      if (state.section == ShellSection.SETTINGS) NavigationSuiteType.None
+      else NavigationSuiteType.NavigationBar,
     navigationSuiteItems = {
       ShellSection.entries.filter { it != ShellSection.SETTINGS }
         .forEach { s ->
@@ -548,6 +572,13 @@ private fun ScaffoldShell(
     // tab. Remember the last tabbed section so the Settings back button returns where the user was.
     val backTarget = remember { mutableStateOf(ShellSection.DASHBOARD) }
     if (state.section != ShellSection.SETTINGS) backTarget.value = state.section
+    // Settings is shell state, not a nav destination, so the system back gesture would otherwise
+    // fall through and close the app. Catch it here and return to the last tab. (Settings detail
+    // pages open off the root nav controller, where this shell isn't composed, so they still pop
+    // back to the Settings root normally.)
+    BackHandler(enabled = state.section == ShellSection.SETTINGS) {
+      onSelectSection(backTarget.value)
+    }
     ShellContent(
       state = state,
       // The switcher lives in the top bar on both the rail (MEDIUM) and the bottom-bar (COMPACT)
@@ -559,6 +590,7 @@ private fun ScaffoldShell(
       onOpenSettings = onOpenSettings,
       onExitSettings = { onSelectSection(backTarget.value) },
       content = content,
+      fab = fab,
     )
   }
 }
@@ -582,8 +614,25 @@ private fun ShellContent(
   // nested screens carry their own top bars). The bar is omitted so content fills the pane.
   showTopBar: Boolean = true,
   content: @Composable () -> Unit,
+  // Per-section FAB; the host decides which sections show one. Settings never does.
+  fab: @Composable () -> Unit = {},
 ) {
+  // Full-screen Settings (compact) has no bottom nav bar to occupy the system navigation-bar area,
+  // so let its content run edge-to-edge under the transparent system bar instead of stopping above
+  // it (which leaves an opaque scrim). The settings list re-adds the bottom inset to its own scroll
+  // so the last row still clears the gesture bar.
+  val fullScreenSettings =
+    onExitSettings != null && state.section == ShellSection.SETTINGS
   Scaffold(
+    // Settings is full-screen and has no add action; suppress the FAB there.
+    floatingActionButton = { if (state.section != ShellSection.SETTINGS) fab() },
+    contentWindowInsets =
+      if (fullScreenSettings) {
+        ScaffoldDefaults.contentWindowInsets
+          .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
+      } else {
+        ScaffoldDefaults.contentWindowInsets
+      },
     topBar = {
       if (showTopBar) {
         TopAppBar(

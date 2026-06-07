@@ -31,6 +31,7 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
+import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
@@ -122,6 +123,13 @@ fun WebApp() {
             emptyFleetContent = {
               FleetEmptyState(
                 onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+              )
+            },
+            sectionFab = { section, aircraftId ->
+              ShellSectionFab(
+                section = section,
+                aircraftId = aircraftId,
+                navController = navController,
               )
             },
           )
