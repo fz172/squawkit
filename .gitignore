@@ -28,3 +28,4 @@ kotlin-js-store/
 # Design handoff bundles / stray archives (large binaries; do not commit)
 *.zip
 /.claude/settings.json
+/.firebase/hosting.*.cache
