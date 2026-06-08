@@ -4,6 +4,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+compose.resources {
+    publicResClass = true
+}
+
 kotlin {
     jvmToolchain(21)
 
@@ -42,7 +46,7 @@ kotlin {
             implementation(project(":feature:settings"))
             implementation(project(":feature:sync:settings"))
             implementation(project(":feature:technician:manage"))
-          implementation(project(":feature:stresstest:config"))
+            implementation(project(":feature:stresstest:config"))
             implementation(libs.compose.foundation)
             implementation(libs.androidx.navigation.compose)
 
@@ -51,6 +55,8 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+            implementation(libs.compose.runtime)
+            implementation(libs.components.resources)
         }
         jsMain.dependencies {
             // M7 durable storage: official SQLite WASM build, driven by the OPFS SAH-Pool worker

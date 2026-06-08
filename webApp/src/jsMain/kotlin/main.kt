@@ -31,6 +31,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
 import dev.fanfly.wingslog.feature.technician.manage.di.technicianManageModule
+import dev.fanfly.wingslog.web.EmojiFallbackProvider
 import dev.fanfly.wingslog.web.WebApp
 import dev.fanfly.wingslog.web.createSqliteWorker
 import dev.gitlive.firebase.Firebase
@@ -98,6 +99,8 @@ fun main() {
     .start()
 
   ComposeViewport(viewportContainerId = "ComposeTarget") {
-    WebApp()
+    EmojiFallbackProvider {
+      WebApp()
+    }
   }
 }
