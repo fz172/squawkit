@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Doc: Product Analytics (Firebase Analytics / GA4)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb; --surface: #ffffff; --surface-alt: #eef3f9;
+      --text: #122033; --muted: #53657d; --line: #d8e1ec;
+      --blue: #1f5fa8; --blue-soft: #dbe9fb;
+      --green: #156f4a; --green-soft: #d8f0e3;
+      --amber: #9a6200; --amber-soft: #fdeecb;
+      --red: #a33a32; --red-soft: #f7dedb;
+      --shadow: rgba(18, 32, 51, 0.08);
+      --mono: "SFMono-Regular", "JetBrains Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.55; }
+    main { max-width: 1240px; margin: 0 auto; padding: 32px 20px 56px; }
+    .page-shell { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 28px; align-items: start; }
+    .doc-body { min-width: 0; }
+    h1, h2, h3, h4 { line-height: 1.2; margin: 0 0 12px; }
+    h1 { font-size: 2rem; }
+    h2 { margin-top: 38px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 1.35rem; }
+    h3 { margin-top: 24px; font-size: 1.08rem; }
+    h4 { margin-top: 18px; font-size: 0.95rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-alt); padding: 1px 6px; border-radius: 6px; }
+    pre { background: #0f1c2e; color: #e6eef9; border-radius: 14px; padding: 16px 18px; overflow: auto; font-family: var(--mono); font-size: 0.84rem; line-height: 1.5; margin: 16px 0; }
+    pre .c { color: #7d96b5; }
+    pre .k { color: #7cc4ff; }
+    pre .s { color: #9be0b0; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 16px 0; box-shadow: 0 1px 2px rgba(18,32,51,0.04); }
+    .hero { background: linear-gradient(180deg, var(--surface), var(--surface-alt)); border: 1px solid var(--line); border-radius: 20px; padding: 26px; margin-bottom: 24px; }
+    .hero h1 { margin-bottom: 8px; }
+    .lede { font-size: 1.1rem; color: var(--muted); margin: 0; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 0.82rem; font-weight: 600; margin: 0 6px 6px 0; }
+    .pill.green { background: var(--green-soft); color: var(--green); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+    .pill.red { background: var(--red-soft); color: var(--red); }
+    .toc { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow: auto; background: rgba(255,255,255,0.9); backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px var(--shadow); }
+    .toc-title { margin: 0 0 10px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .toc ol { margin: 0; padding-left: 18px; }
+    .toc li { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92rem; }
+    th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+    th { background: var(--surface-alt); font-weight: 600; }
+    .callout { border-radius: 14px; padding: 14px 18px; margin: 16px 0; border: 1px solid var(--line); }
+    .callout.note { background: var(--blue-soft); border-color: #bcd6f5; }
+    .callout.win { background: var(--green-soft); border-color: #aee0c6; }
+    .callout.warn { background: var(--amber-soft); border-color: #f0d79a; }
+    .callout.risk { background: var(--red-soft); border-color: #efc4bf; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; font-family: var(--mono); font-size: 0.82rem; white-space: pre; overflow-x: auto; color: var(--text); line-height: 1.5; }
+    ol.steps { counter-reset: step; list-style: none; padding-left: 0; }
+    ol.steps > li { position: relative; padding-left: 40px; margin: 14px 0; }
+    ol.steps > li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; font-size: 0.85rem; display: grid; place-items: center; }
+    @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <div>
+      <span class="pill amber">Status: Proposed</span>
+      <span class="pill">Design Doc</span>
+      <span class="pill">core:analytics · composeApp · feature:sync · feature:export</span>
+    </div>
+    <h1>Product Analytics — Technical Design</h1>
+    <p class="lede">Instrument WingsLog (Hopply) across Android, iOS, and web with Firebase Analytics → GA4: automatic page-view tracking, manual-but-enforced button-click events, latency for attachment download &amp; export, and app-version / platform distribution. Built to scale as new pages are added.</p>
+  </div>
+
+  <div class="page-shell">
+  <div class="doc-body">
+
+  <h2 id="context">1. Context &amp; Goals</h2>
+  <p>WingsLog currently ships <strong>no product analytics</strong>. We want to understand real usage across the three targets without bolting on per-screen boilerplate. Concretely:</p>
+  <ul>
+    <li><strong>Page displays</strong> — every screen view, automatically, including future screens.</li>
+    <li><strong>Button clicks</strong> — taps on actionable controls, with a stable, readable id.</li>
+    <li><strong>Operation latency</strong> — attachment download speed and export generation time (with throughput/size context).</li>
+    <li><strong>Install distribution</strong> — app version and platform (Android / iOS / web) breakdowns.</li>
+    <li><strong>Login state</strong> — anonymous, Google, Apple, or other providers (future expansion), as a dimension on every event.</li>
+  </ul>
+  <div class="callout note">
+    <strong>Scalability requirement</strong>
+    New pages must be tracked with zero per-screen code. Page views are handled by one central navigation observer; only button clicks and latency call sites require explicit (but lightweight, enforced) instrumentation.
+  </div>
+
+  <h2 id="backend">2. Backend choice — Firebase Analytics → GA4</h2>
+  <p>"Google Analytics" for an app means <strong>Firebase Analytics</strong> feeding a <strong>GA4</strong> property. It is the natural fit here, with near-zero new infrastructure:</p>
+  <ul>
+    <li>The project is already a Firebase project (<code>wingslog-9ca4e</code>).</li>
+    <li>The iOS Xcode project already links the <code>FirebaseAnalytics</code> frameworks (<code>iosApp.xcodeproj/project.pbxproj</code>).</li>
+    <li>Android already uses the Firebase BOM; web already calls <code>Firebase.initialize(...)</code> in <code>webApp/.../main.kt</code>.</li>
+  </ul>
+  <p>Android / iOS / web register as three <strong>data streams</strong> in one GA4 property, which makes <strong>platform distribution and app-version dimensions essentially free</strong>: GA4 auto-collects <code>platform</code>, <code>app_version</code>, and <code>os_version</code> on mobile. Web sets <code>app_version</code> explicitly. No raw GA4 Measurement Protocol is needed.</p>
+  <div class="callout warn">
+    <strong>Why an abstraction is required</strong>
+    GitLive's KMP Firebase SDK (used for Auth / Firestore / Storage / Functions) does <em>not</em> wrap Analytics. So <code>core:analytics</code> is a thin <code>expect</code>/<code>actual</code> layer over each platform's native Analytics SDK.
+  </div>
+
+  <h2 id="architecture">3. Architecture — <code>core/analytics</code></h2>
+  <p>A new core module <code>core/analytics</code> (plus a sibling <code>core/analytics/lint</code>), registered in <code>settings.gradle.kts</code>, following the canonical core-module layout.</p>
+
+  <h3>3.1 commonMain API</h3>
+  <pre><span class="k">interface</span> AnalyticsManager {
+  <span class="k">fun</span> logScreenView(screenName: String, params: Map&lt;String, String&gt; = emptyMap())
+  <span class="k">fun</span> logClick(id: String, params: Map&lt;String, String&gt; = emptyMap())
+  <span class="k">fun</span> logTiming(operation: String, durationMs: Long, params: Map&lt;String, String&gt; = emptyMap())
+  <span class="k">fun</span> setUserProperty(name: String, value: String)
+}
+
+<span class="c">// Provided once at the Compose root, mirroring core/ui/adaptive's LocalLayoutTier.</span>
+<span class="k">val</span> LocalAnalytics: ProvidableCompositionLocal&lt;AnalyticsManager&gt;
+
+<span class="c">// Ergonomic, "normal onClick" helper — id is a required parameter.</span>
+@Composable
+<span class="k">fun</span> loggedClick(id: String, params: Map&lt;String, String&gt; = emptyMap(), onClick: () -&gt; Unit): () -&gt; Unit {
+  <span class="k">val</span> analytics = LocalAnalytics.current
+  <span class="k">return</span> { analytics.logClick(id, params); onClick() }
+}
+
+<span class="k">suspend inline fun</span> &lt;T&gt; AnalyticsManager.measureTiming(
+  operation: String, params: Map&lt;String, String&gt; = emptyMap(), block: () -&gt; T,
+): T {
+  <span class="k">val</span> start = TimeSource.Monotonic.markNow()
+  <span class="k">val</span> result = block()
+  logTiming(operation, start.elapsedNow().inWholeMilliseconds, params)
+  <span class="k">return</span> result
+}</pre>
+  <p>An <code>analyticsModule</code> Koin module exposes <code>single&lt;AnalyticsManager&gt;</code>.</p>
+
+  <h3>3.2 Platform actuals</h3>
+  <table>
+    <thead><tr><th>Target</th><th>Backing SDK</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>androidMain</td><td><code>FirebaseAnalytics.getInstance(context)</code> → <code>logEvent(name, Bundle)</code></td><td>Add <code>firebase-analytics</code> (from existing BOM) to <code>libs.versions.toml</code> + module deps.</td></tr>
+      <tr><td>iosMain</td><td><code>FIRAnalytics.logEventWithName:parameters:</code></td><td><code>FirebaseAnalytics</code> framework already linked in the Xcode project.</td></tr>
+      <tr><td>jsMain</td><td>Firebase JS <code>getAnalytics(app)</code> + <code>logEvent(...)</code></td><td>External declarations, same interop style as web Firebase init.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.3 App version &amp; platform</h3>
+  <ul>
+    <li>Platform distribution + mobile app version are <strong>auto-collected</strong> (three data streams).</li>
+    <li><strong>Web</strong> sets <code>app_version</code> explicitly at init from <code>core/appinfo</code> jsMain <code>GeneratedVersionInfo.kt</code> via <code>setUserProperty</code>.</li>
+    <li><code>core/appinfo.getAppVersion()</code> is <code>@Composable</code>; add a <strong>non-composable</strong> accessor (e.g. <code>appVersionString()</code>) so the version is readable at startup outside composition.</li>
+  </ul>
+
+  <h3 id="loginstate">3.4 Login-state user property</h3>
+  <p>Login state is set as the <code>login_state</code> user property, so it dimensions <strong>every</strong> event (page views, clicks, timing) without being attached per call. It is derived from the GitLive <code>FirebaseUser</code> that <code>AppEntry.kt</code> already observes via <code>firebaseAuth.authStateChanged</code>:</p>
+  <pre><span class="k">enum class</span> LoginState { ANONYMOUS, GOOGLE, APPLE, OTHER }
+
+<span class="k">fun</span> FirebaseUser?.toLoginState(): String = <span class="k">when</span> {
+  <span class="k">this</span> == null         -&gt; <span class="s">"logged_out"</span>
+  isAnonymous          -&gt; <span class="s">"anonymous"</span>
+  <span class="k">else</span> -&gt; <span class="k">when</span> (val id = providerData.firstOrNull {
+      it.providerId != <span class="s">"firebase"</span> }?.providerId) {
+    <span class="s">"google.com"</span> -&gt; <span class="s">"google"</span>
+    <span class="s">"apple.com"</span>  -&gt; <span class="s">"apple"</span>
+    null          -&gt; <span class="s">"other"</span>
+    <span class="k">else</span>          -&gt; id   <span class="c">// future providers logged by raw id, no code change</span>
+  }
+}</pre>
+  <p>The mapping helper lives in <code>core:analytics</code> (or <code>core:auth</code>) — no UI dependency. <code>AppEntry.kt</code> already runs <code>firebaseAuth.authStateChanged.collect { user -&gt; ... }</code> for navigation; the same observer calls <code>analytics.setUserProperty("login_state", user.toLoginState())</code>, so the property updates immediately on sign-in, sign-out, anonymous start, and account upgrade. It is also set once at startup from the current user.</p>
+  <div class="callout note">
+    <strong>Future expansion</strong>
+    Unknown providers fall through to their raw Firebase <code>providerId</code> (e.g. <code>microsoft.com</code>, <code>oidc.&lt;name&gt;</code>), so adding a new sign-in method needs no analytics change. Promote a raw id to a friendly label in the <code>when</code> only when you want a cleaner GA dimension value.
+  </div>
+
+  <h2 id="pageviews">4. Page-view tracking (hybrid, scalable)</h2>
+  <p>A single root-<code>NavController</code> observer is <strong>not</strong> sufficient, because the app has two kinds of "screen":</p>
+  <table>
+    <thead><tr><th>Surface</th><th>How it switches</th><th>Seen by root observer?</th></tr></thead>
+    <tbody>
+      <tr><td>Login, the shell container, secondary routes (SyncSettings, Export, FeatureLab, ManageTechnicians…)</td><td>Real <code>NavHost</code> routes (<code>composable(...)</code>)</td><td>✅ Yes</td></tr>
+      <tr><td>Add/Edit Aircraft · Task · Log · Squawk — rendered as full screens (compact) or <strong>dialogs</strong> (large)</td><td><code>dialog(...)</code> routes — still real back-stack entries, same <code>navigate()</code> call on both form factors</td><td>✅ Yes — dialogs emit on <code>currentBackStackEntryFlow</code></td></tr>
+      <tr><td><strong>Shell sections</strong> (Dashboard / Tasks / Squawks / Logs / Settings) and the <strong>active aircraft</strong></td><td>Ambient state — <code>AdaptiveShellViewModel.selectSection()</code> / <code>selectAircraft()</code> mutate <code>_uiState</code>; route stays <code>adaptive_shell</code></td><td>❌ <strong>No</strong> — all collapse into one <code>adaptive_shell</code> view</td></tr>
+      <tr><td><strong>Sidebar-tier Settings sub-pages</strong></td><td>A <em>separate</em> <code>settingsNav</code> <code>NavController</code> nested in <code>SettingsSection</code> (<code>AppEntry.kt</code>)</td><td>❌ <strong>No</strong> — different NavController</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn">
+    <strong>The actual gap is state-driven screens, not dialogs.</strong>
+    Dialogs are captured fine (they're back-stack destinations). The blind spot is the adaptive shell, which renders the app's <em>most-used</em> surfaces — the per-aircraft Dashboard/Tasks/Squawks/Logs and aircraft switching — as ViewModel state under one route.
+  </div>
+
+  <h3>4.1 Three feeders into one <code>logScreenView</code></h3>
+  <p>We keep one logging sink (<code>analytics.logScreenView(name)</code>) fed from three centralized places — no per-screen sprinkling:</p>
+  <ol class="steps">
+    <li><strong>Root NavController observer</strong> — in <code>AppEntry.kt</code>, covers Login, dialogs, and compact-tier secondary routes. The <code>adaptive_shell</code> container route is <strong>suppressed</strong> here (feeder 3 is the source of truth for in-shell screens), to avoid a meaningless duplicate.
+      <pre>LaunchedEffect(navController) {
+  navController.currentBackStackEntryFlow.collect { entry -&gt;
+    entry.destination.route
+      ?.takeIf { it != Screen.AdaptiveShell.route }
+      ?.let { analytics.logScreenView(it) }
+  }
+}</pre>
+    </li>
+    <li><strong>Shell section + aircraft observer</strong> — the single funnel point is <code>AdaptiveShellViewModel</code>. Inject <code>AnalyticsManager</code> and emit a screen view whenever the section (or selected-aircraft context) changes, plus once for the initial state. Because every section/aircraft switch already routes through <code>selectSection()</code> / <code>selectAircraft()</code>, a new <code>ShellSection</code> is tracked automatically (screen name e.g. <code>aircraft/tasks</code>, <code>aircraft/logs</code>).</li>
+    <li><strong>Nested Settings NavController observer</strong> — attach the same observer helper to <code>settingsNav</code> in <code>SettingsSection</code>, so sidebar-tier Settings sub-pages register identically to the compact tier.</li>
+  </ol>
+  <p>Factor the observer into a reusable helper (e.g. <code>fun NavController.trackScreenViews(analytics, suppress: Set&lt;String&gt; = emptySet())</code>) so feeders 1 and 3 share one implementation. Route templates come from <code>core/nav/Screen.kt</code>; the raw <code>route</code> is the screen name (optionally prettified via a small map later).</p>
+  <div class="callout note">
+    <strong>Scalability</strong>
+    New full routes → tracked by feeder 1 with zero code. New shell sections → tracked by feeder 2 because all section changes funnel through <code>selectSection()</code>. The only deliberate decision per new surface is whether it's a route or shell state — both paths are already wired.
+  </div>
+
+  <h2 id="clicks">5. Button-click tracking &amp; conformance</h2>
+  <p>Call sites stay "normal onClick", with a manual log via <code>loggedClick</code>:</p>
+  <pre>Button(onClick = loggedClick(<span class="s">"ExportLogs/start_export"</span>) { viewModel.startExport() }) { ... }</pre>
+  <p>Because <code>loggedClick</code> returns a plain <code>() -&gt; Unit</code>, the call site reads like an ordinary <code>onClick</code>, but the id is a <strong>required parameter</strong> — you cannot build the handler without one.</p>
+
+  <h3 id="lint">5.1 Conformance — custom Lint rule</h3>
+  <p>Nothing in the type system forces a bare <code>onClick = { }</code> to log. To enforce it, add a custom Android Lint rule in <code>core/analytics/lint</code> that plugs into the existing CI step (<code>./gradlew lint</code> — currently stock Android Lint, no baseline, no detekt/ktlint/spotless).</p>
+  <ul>
+    <li><code>lint</code>-type Gradle module (<code>com.android.tools.lint:lint-api</code> / <code>lint-checks</code>): an <code>IssueRegistry</code> + a <code>Detector.UastScanner</code>.</li>
+    <li>Flags clickable composables — <code>Button</code>, <code>IconButton</code>, <code>TextButton</code>, <code>FilledTonalButton</code>, <code>OutlinedButton</code>, <code>FloatingActionButton</code>, <code>Modifier.clickable</code>, <code>combinedClickable</code> — whose <code>onClick</code>/clickable lambda body contains <strong>no</strong> call to <code>logClick</code> / <code>loggedClick</code>.</li>
+    <li>Issue id <code>MissingClickAnalytics</code>, <code>Severity.ERROR</code>. Escape hatch: <code>@Suppress("MissingClickAnalytics")</code> for legitimate forwarding (<code>onClick = vm::save</code>, or passing <code>onClick</code> down to a child).</li>
+    <li>Wire with <code>lintChecks(project(":core:analytics:lint"))</code> on UI modules. Android Lint analyzes the Android variant, which compiles <code>commonMain</code>, so shared Compose code is covered.</li>
+  </ul>
+  <div class="callout warn">
+    <strong>Known limitation (documented in the rule)</strong>
+    The detector is a lexical heuristic — it cannot follow a method reference to see whether logging happens deeper in the call chain. It accepts some false negatives; that is the cost of bare <code>onClick</code> without a mandatory wrapper component. The <code>loggedClick</code> helper keeps compliance to a one-liner.
+  </div>
+
+  <h2 id="latency">6. Latency tracking</h2>
+  <table>
+    <thead><tr><th>Operation</th><th>Hook</th><th>Captured</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Attachment download speed</td>
+        <td><code>feature/sync/data/.../blob/BlobDownloadDriver.runOnce</code></td>
+        <td>Wrap the <code>getDownloadUrl()</code> + <code>httpClient.get(...).readRawBytes()</code> span with <code>measureTiming("attachment_download", params = {"bytes": …})</code>; log throughput = bytes / durationMs. Inject <code>AnalyticsManager</code> via <code>syncModule</code>.</td>
+      </tr>
+      <tr>
+        <td>Export speed</td>
+        <td><code>feature/export/datamanager/.../impl/ExportManagerImpl.exportLogs</code></td>
+        <td>Mark start when the cold flow begins; <code>logTiming("export", …)</code> on the terminal success event (params: format, aircraft count, archive size). Inject via <code>exportDataManagerModule</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="wiring">7. Wiring (DI + platform init)</h2>
+  <ol class="steps">
+    <li>Register <code>analyticsModule</code> in <code>composeApp/.../di/initKoin.kt</code> (Android + iOS) and <code>webApp/.../main.kt</code>.</li>
+    <li>Initialize the platform Analytics handle where Firebase already starts: Android <code>WingsLogApplication.onCreate</code> (after <code>FirebaseApp.initializeApp</code>); iOS <code>MainEntry.doInitKoin</code>/<code>doInitKoinDogfood</code>; web <code>main.kt</code> after <code>Firebase.initialize(...)</code> (also set <code>app_version</code> there).</li>
+    <li>Provide <code>LocalAnalytics</code> + add the nav observer in <code>AppEntry.kt</code>.</li>
+  </ol>
+
+  <h2 id="files">8. Files to create / modify</h2>
+  <h4>Create</h4>
+  <ul>
+    <li><code>core/analytics/build.gradle.kts</code> + <code>src/commonMain/.../{AnalyticsManager, LocalAnalytics, ClickLogging, Timing, di/AnalyticsModule}.kt</code></li>
+    <li><code>core/analytics/src/{androidMain,iosMain,jsMain}/.../AnalyticsManager.&lt;platform&gt;.kt</code></li>
+    <li><code>core/analytics/lint/build.gradle.kts</code>, <code>IssueRegistry.kt</code>, <code>MissingClickAnalyticsDetector.kt</code></li>
+  </ul>
+  <h4>Modify</h4>
+  <ul>
+    <li><code>settings.gradle.kts</code> — include the two new modules</li>
+    <li><code>gradle/libs.versions.toml</code> — <code>firebase-analytics</code>; <code>lint-api</code> / <code>lint-checks</code></li>
+    <li><code>composeApp/.../di/initKoin.kt</code>, <code>webApp/.../main.kt</code> — register <code>analyticsModule</code></li>
+    <li><code>composeApp/.../AppEntry.kt</code> — provide <code>LocalAnalytics</code>; attach the screen-view observer to the root NavController (suppressing <code>adaptive_shell</code>) and to the nested <code>settingsNav</code> in <code>SettingsSection</code>; set <code>login_state</code> in the existing <code>authStateChanged</code> observer</li>
+    <li><code>feature/fleet/viewing/.../AdaptiveShellViewModel.kt</code> — inject <code>AnalyticsManager</code>; log a screen view on initial state and on every <code>selectSection()</code> / <code>selectAircraft()</code> change (feeder 2). Webapp's shell wiring (<code>WebApp.kt</code>) shares this ViewModel, so web is covered too</li>
+    <li><code>core/analytics/src/commonMain/.../ScreenTracking.kt</code> — reusable <code>NavController.trackScreenViews(analytics, suppress)</code> helper shared by feeders 1 &amp; 3</li>
+    <li><code>core/analytics/src/commonMain/.../LoginState.kt</code> (or <code>core:auth</code>) — <code>FirebaseUser?.toLoginState()</code> mapping helper</li>
+    <li><code>app/.../WingsLogApplication.kt</code>, <code>composeApp/.../MainViewController.kt</code>, <code>webApp/.../main.kt</code> — init handle (+ web <code>app_version</code>)</li>
+    <li><code>core/appinfo/.../AppInfo.kt</code> (+ actuals) — non-composable version accessor</li>
+    <li><code>BlobDownloadDriver.kt</code> + <code>syncModule</code>; <code>ExportManagerImpl.kt</code> + <code>exportDataManagerModule</code> — timing</li>
+    <li>UI module <code>build.gradle.kts</code> files — add <code>lintChecks(...)</code></li>
+  </ul>
+
+  <h2 id="conventions">9. Conventions to honor</h2>
+  <ul>
+    <li>2-space Kotlin indentation; <code>kotlin.time</code> (never <code>kotlinx.datetime</code>); typed <code>get&lt;T&gt;()</code> in Koin modules.</li>
+    <li><code>core:storage</code> / <code>core:ui</code> already api-export shared deps — don't redeclare downstream.</li>
+    <li>Dependency rules: <code>datamanager</code> may depend on <code>core:analytics</code> (no UI). The <code>loggedClick</code> / <code>LocalAnalytics</code> Compose helpers live in the part of <code>core:analytics</code> that UI modules depend on (mirroring how <code>core:ui</code> exposes Compose utilities).</li>
+  </ul>
+
+  <h2 id="verification">10. Verification</h2>
+  <ol class="steps">
+    <li><code>./gradlew assembleDebug</code> — Android builds with the new module + analytics dep.</li>
+    <li><code>./gradlew lint</code> — the <code>MissingClickAnalytics</code> rule registers and fires on a deliberately un-logged <code>Button</code>, then passes once <code>loggedClick</code> is added.</li>
+    <li><code>./gradlew testDebugUnitTest</code> + <code>:core:analytics:lint</code> detector tests via Lint's <code>lintProject</code> harness.</li>
+    <li><code>./gradlew :webApp:jsBrowserDevelopmentWebpack</code> — web builds; check GA DebugView for <code>screen_view</code>, click, and timing events.</li>
+    <li>Android dogfood: <code>adb shell setprop debug.firebase.analytics.app dev.fanfly.wingslog</code>, watch <strong>Firebase DebugView</strong> — confirm switching shell sections (Dashboard → Tasks → Squawks → Logs) and aircraft each fire a distinct <code>screen_view</code> (not just one <code>adaptive_shell</code>), open an Edit dialog on a large-screen layout and verify it also fires, tap a tracked button (click), run an export + attachment download (timing), confirm <code>platform</code> + <code>app_version</code> + <code>login_state</code> populate (sign in with Google / Apple and re-check the property).</li>
+    <li>iOS: run the <strong>iosAppDogfood</strong> scheme with <code>-FIRDebugEnabled</code> and confirm the same in DebugView.</li>
+  </ol>
+
+  <h2 id="status">11. Implementation Status</h2>
+  <p class="muted">Proposed — not yet implemented. This doc is the design for review prior to any code changes.</p>
+
+  </div>
+
+  <nav class="toc">
+    <p class="toc-title">On this page</p>
+    <ol>
+      <li><a href="#context">Context &amp; Goals</a></li>
+      <li><a href="#backend">Backend choice</a></li>
+      <li><a href="#architecture">Architecture — core/analytics</a></li>
+      <li><a href="#pageviews">Page-view tracking</a></li>
+      <li><a href="#clicks">Button-click tracking</a></li>
+      <li><a href="#latency">Latency tracking</a></li>
+      <li><a href="#wiring">Wiring (DI + init)</a></li>
+      <li><a href="#files">Files</a></li>
+      <li><a href="#conventions">Conventions</a></li>
+      <li><a href="#verification">Verification</a></li>
+      <li><a href="#status">Implementation Status</a></li>
+    </ol>
+  </nav>
+  </div>
+</main>
+</body>
+</html>
