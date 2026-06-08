@@ -23,11 +23,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -35,6 +37,7 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
@@ -48,6 +51,7 @@ import dev.fanfly.wingslog.feature.squawk.update.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkBasicTab
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsTab
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.details
@@ -123,6 +127,15 @@ fun SquawkFormScreen(
   )
   val pagerState = rememberPagerState(pageCount = { tabs.size })
   val coroutineScope = rememberCoroutineScope()
+  val analytics = LocalAnalytics.current
+  // Log tab switches (tap or swipe) as page views; drop(1) skips the initial page on open.
+  LaunchedEffect(pagerState) {
+    snapshotFlow { pagerState.currentPage }
+      .drop(1)
+      .collect { page ->
+        analytics.logScreenView("squawk_form/${if (page == 0) "basics" else "details"}")
+      }
+  }
 
   Scaffold(
     modifier = modifier,

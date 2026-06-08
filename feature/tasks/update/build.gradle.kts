@@ -53,6 +53,7 @@ kotlin {
       implementation(project(":feature:tasks:viewing"))
       implementation(project(":core:nav"))
       implementation(project(":core:sharedassets"))
+      implementation(project(":core:analytics"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))

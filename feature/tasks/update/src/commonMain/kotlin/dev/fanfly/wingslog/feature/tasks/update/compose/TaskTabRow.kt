@@ -24,6 +24,9 @@ data class TaskTabSpec(
   val label: StringResource,
 )
 
+/** Stable, locale-independent analytics keys for the task-form tabs, in tab order. */
+val TASK_FORM_TAB_KEYS = listOf("basics", "details", "schedule", "adjustments")
+
 var BASIC_TAB = TaskTabSpec(Icons.Default.Edit, Res.string.basics)
 var DETAILS_TAB = TaskTabSpec(Icons.Default.Info, CoreRes.string.details)
 var SCHEDULE_TAB = TaskTabSpec(Icons.Default.DateRange, Res.string.schedule)

@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.di
 
 import dev.fanfly.wingslog.DogfoodFeatureExtensions
 import dev.fanfly.wingslog.NoOpDogfoodExtensions
+import dev.fanfly.wingslog.core.analytics.di.platformAnalyticsModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
@@ -42,6 +43,7 @@ fun initKoin(
   appDeclaration()
   val allModules = dogfoodExtensions.koinModules() + listOf(
     module { single<DogfoodFeatureExtensions> { dogfoodExtensions } },
+    platformAnalyticsModule,
     commonAuthModule,
     storageModule,
     platformStorageModule,

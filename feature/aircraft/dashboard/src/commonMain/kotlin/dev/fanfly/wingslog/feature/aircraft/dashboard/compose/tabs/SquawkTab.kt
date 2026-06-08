@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
@@ -53,6 +54,7 @@ fun SquawkTab(
   modifier: Modifier = Modifier,
 ) {
   var showClosed by rememberSaveable { mutableStateOf(false) }
+  val analytics = LocalAnalytics.current
 
   val openSquawks = state.squawks
     .filter { it.status == SquawkStatus.OPEN }
@@ -85,7 +87,10 @@ fun SquawkTab(
         closedSquawks.size
       ),
       selectedIndex = if (showClosed) 1 else 0,
-      onSelect = { showClosed = it == 1 },
+      onSelect = {
+        showClosed = it == 1
+        analytics.logScreenView("shell/squawks/${if (it == 1) "closed" else "open"}")
+      },
     )
 
     val displayList = if (showClosed) closedSquawks else openSquawks

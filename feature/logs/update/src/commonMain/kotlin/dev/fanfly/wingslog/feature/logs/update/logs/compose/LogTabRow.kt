@@ -25,6 +25,9 @@ val LOG_WORK_TAB = LogTabSpec(Icons.Default.Build, Res.string.log_tab_work)
 val LOG_HOURS_TAB = LogTabSpec(Icons.Default.Schedule, Res.string.log_tab_hours)
 val LOG_RECORDS_TAB = LogTabSpec(Icons.Default.Link, Res.string.log_tab_records)
 
+/** Stable, locale-independent analytics keys for the log-form tabs, in tab order. */
+val LOG_FORM_TAB_KEYS = listOf("work", "hours", "records")
+
 @Composable
 fun LogTabRow(
   tabs: List<LogTabSpec>,

@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -44,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
@@ -53,6 +55,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_FORM_TAB_KEYS
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_HOURS_TAB
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_RECORDS_TAB
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_WORK_TAB
@@ -65,6 +68,7 @@ import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogForm
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkPickerSheet
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskPickerSheet
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -107,6 +111,15 @@ fun MaintenanceLogFormScreen(
   val snackbarHostState = remember { SnackbarHostState() }
   val pagerState = rememberPagerState(pageCount = { 3 })
   val coroutineScope = rememberCoroutineScope()
+  val analytics = LocalAnalytics.current
+  // Log tab switches (tap or swipe) as page views; drop(1) skips the initial page on open.
+  LaunchedEffect(pagerState) {
+    snapshotFlow { pagerState.currentPage }
+      .drop(1)
+      .collect { page ->
+        analytics.logScreenView("log_form/${LOG_FORM_TAB_KEYS.getOrElse(page) { "$page" }}")
+      }
+  }
 
   val tryNavigateBack = {
     if (uiState.hasChanges) showUnsavedChangesDialog = true

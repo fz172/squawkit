@@ -46,6 +46,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:analytics"))
       implementation(project(":core:nav"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +23,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
@@ -67,6 +71,7 @@ fun WebApp() {
     ) {
       val navController = rememberNavController()
       val firebaseAuth: FirebaseAuth = koinInject()
+      val analytics: AnalyticsManager = koinInject()
       var browserNavigationBound by remember { mutableStateOf(false) }
 
       LaunchedEffect(Unit) {
@@ -85,6 +90,15 @@ fun WebApp() {
         }
       }
 
+      // Page-view feeder 1 (see AppEntry.kt): all routes except the shell container.
+      LaunchedEffect(navController) {
+        navController.trackScreenViews(
+          analytics,
+          suppress = setOf(Screen.AdaptiveShell.route),
+        )
+      }
+
+      CompositionLocalProvider(LocalAnalytics provides analytics) {
       NavHost(
         navController = navController,
         startDestination = Screen.Login.route,
@@ -102,6 +116,11 @@ fun WebApp() {
         composable(Screen.AdaptiveShell.route) {
           val viewModel = koinViewModel<AdaptiveShellViewModel>()
           val state by viewModel.uiState.collectAsState()
+          // Page-view feeder 2 (see AppEntry.kt): shell sections are ViewModel state, not routes.
+          val shellAnalytics = LocalAnalytics.current
+          LaunchedEffect(state.section, state.selectedAircraftId) {
+            shellAnalytics.logScreenView("shell/${state.section.name.lowercase()}")
+          }
           AdaptiveAppShell(
             state = state,
             onSelectSection = viewModel::selectSection,
@@ -238,6 +257,7 @@ fun WebApp() {
         // Compact tiers (no sidebar) open settings detail pages as full-screen routes.
         settingsDetailRoutes(navController)
       }
+      }
     }
   }
 }
@@ -304,6 +324,11 @@ private const val SETTINGS_ROOT_ROUTE = "settings_root"
 private fun SettingsSection(rootNavController: NavHostController) {
   if (LocalLayoutTier.current.hasFullSidebar) {
     val settingsNav = rememberNavController()
+    // Page-view feeder 3 (see AppEntry.kt): sidebar-tier settings sub-pages on a separate nav.
+    val analytics = LocalAnalytics.current
+    LaunchedEffect(settingsNav) {
+      settingsNav.trackScreenViews(analytics)
+    }
     NavHost(
       navController = settingsNav,
       startDestination = SETTINGS_ROOT_ROUTE,

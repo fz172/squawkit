@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.ComplianceSection
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
@@ -28,6 +29,7 @@ fun MaintenanceTasksTab(
 ) {
   val scrollState = rememberScrollState()
   var showComplied by rememberSaveable { mutableStateOf(false) }
+  val analytics = LocalAnalytics.current
 
   Column(
     modifier = modifier
@@ -42,7 +44,10 @@ fun MaintenanceTasksTab(
       activeTasks = state.activeTasks,
       completedTasks = state.completedTasks,
       showComplied = showComplied,
-      onToggleComplied = { showComplied = it },
+      onToggleComplied = {
+        showComplied = it
+        analytics.logScreenView("shell/tasks/${if (it) "complied" else "active"}")
+      },
       onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
       showHeader = showHeader,
     )

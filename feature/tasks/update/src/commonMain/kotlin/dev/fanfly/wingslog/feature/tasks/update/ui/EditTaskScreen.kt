@@ -25,11 +25,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -38,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -51,12 +54,14 @@ import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.SCHEDULE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
+import dev.fanfly.wingslog.feature.tasks.update.compose.TASK_FORM_TAB_KEYS
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskAdjustmentsTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskDetailTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.back
@@ -143,6 +148,15 @@ fun EditTaskScreen(
 
   val pagerState = rememberPagerState(pageCount = { 4 })
   val coroutineScope = rememberCoroutineScope()
+  val analytics = LocalAnalytics.current
+  // Log tab switches (tap or swipe) as page views; drop(1) skips the initial page on open.
+  LaunchedEffect(pagerState) {
+    snapshotFlow { pagerState.currentPage }
+      .drop(1)
+      .collect { page ->
+        analytics.logScreenView("task_form/${TASK_FORM_TAB_KEYS.getOrElse(page) { "$page" }}")
+      }
+  }
 
   Scaffold(
     containerColor = MaterialTheme.colorScheme.background,

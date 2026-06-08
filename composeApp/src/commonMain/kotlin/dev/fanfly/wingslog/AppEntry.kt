@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,6 +21,9 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
@@ -65,6 +69,7 @@ fun AppEntry() {
   val authManager: AuthManager = koinInject()
   val firebaseAuth: FirebaseAuth = koinInject()
   val dogfoodExts: DogfoodFeatureExtensions = koinInject()
+  val analytics: AnalyticsManager = koinInject()
   val appearanceController: AppearanceController = koinInject()
   val appearanceMode by appearanceController.mode.collectAsState()
   val darkTheme = appearanceMode.resolveDarkTheme()
@@ -102,16 +107,27 @@ fun AppEntry() {
         }
       }
 
-      NavHost(
-        navController,
-        startDestination = GRAPH_AUTH
-      ) {
-        authGraph(navController)
-        shellGraph(navController, dogfoodExts)
-        formDialogs(navController)
-        // Compact tiers (no sidebar) open settings detail pages as full-screen routes; the sidebar
-        // tier hosts its own nested copy of these inside the Settings section (see SettingsSection).
-        secondaryRoutes(navController, dogfoodExts)
+      // Page-view feeder 1: every route except the shell container (its in-shell sections are
+      // ViewModel state, not routes, so they're logged separately — see AdaptiveShell below).
+      LaunchedEffect(navController) {
+        navController.trackScreenViews(
+          analytics,
+          suppress = setOf(Screen.AdaptiveShell.route),
+        )
+      }
+
+      CompositionLocalProvider(LocalAnalytics provides analytics) {
+        NavHost(
+          navController,
+          startDestination = GRAPH_AUTH
+        ) {
+          authGraph(navController)
+          shellGraph(navController, dogfoodExts)
+          formDialogs(navController)
+          // Compact tiers (no sidebar) open settings detail pages as full-screen routes; the sidebar
+          // tier hosts its own nested copy of these inside the Settings section (see SettingsSection).
+          secondaryRoutes(navController, dogfoodExts)
+        }
       }
     }
   }
@@ -148,6 +164,12 @@ private fun NavGraphBuilder.shellGraph(
     composable(Screen.AdaptiveShell.route) {
       val viewModel = koinViewModel<AdaptiveShellViewModel>()
       val state by viewModel.uiState.collectAsState()
+      // Page-view feeder 2: the shell's sections (Dashboard/Tasks/Squawks/Logs/Settings) are
+      // ViewModel state under one route, so the root observer can't see them — log on change here.
+      val analytics = LocalAnalytics.current
+      LaunchedEffect(state.section, state.selectedAircraftId) {
+        analytics.logScreenView("shell/${state.section.name.lowercase()}")
+      }
       AdaptiveAppShell(
         state = state,
         onSelectSection = viewModel::selectSection,
@@ -344,6 +366,12 @@ private fun SettingsSection(
 ) {
   if (LocalLayoutTier.current.hasFullSidebar) {
     val settingsNav: NavHostController = rememberNavController()
+    // Page-view feeder 3: sidebar-tier settings sub-pages run on this separate NavController, which
+    // the root observer doesn't watch.
+    val analytics = LocalAnalytics.current
+    LaunchedEffect(settingsNav) {
+      settingsNav.trackScreenViews(analytics)
+    }
     NavHost(
       navController = settingsNav,
       startDestination = SETTINGS_ROOT_ROUTE,

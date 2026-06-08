@@ -1,5 +1,6 @@
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
+import dev.fanfly.wingslog.core.analytics.di.platformAnalyticsModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
@@ -34,31 +35,34 @@ import dev.fanfly.wingslog.feature.technician.manage.di.technicianManageModule
 import dev.fanfly.wingslog.web.EmojiFallbackProvider
 import dev.fanfly.wingslog.web.WebApp
 import dev.fanfly.wingslog.web.createSqliteWorker
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.FirebaseOptions
-import dev.gitlive.firebase.initialize
+import dev.fanfly.wingslog.web.initializeApp
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import org.w3c.dom.Worker
+import kotlin.js.json
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
-  // Firebase JS has no google-services plugin to auto-init, so configure it
-  // explicitly. Values are the project's public web-app client config.
-  Firebase.initialize(
-    context = null,
-    options = FirebaseOptions(
-      applicationId = "1:811416892017:web:6680df6dd37a69d1f961d0",
-      apiKey = "AIzaSyAo52Y7aQ4jhYGq4MioZK5mSffmmZES1qk",
-      projectId = "wingslog-9ca4e",
-      authDomain = "wingslog-9ca4e.firebaseapp.com",
-      storageBucket = "wingslog-9ca4e.firebasestorage.app",
-      gcmSenderId = "811416892017",
+  // Firebase JS has no google-services plugin to auto-init, so configure the default app
+  // explicitly. We call initializeApp directly (not GitLive's Firebase.initialize) so the config
+  // can carry measurementId — required for Firebase Analytics, but not exposed by GitLive's
+  // FirebaseOptions. GitLive's auth / firestore / storage resolve this same default app.
+  // Values are the project's public web-app client config.
+  initializeApp(
+    json(
+      "apiKey" to "AIzaSyAo52Y7aQ4jhYGq4MioZK5mSffmmZES1qk",
+      "authDomain" to "wingslog-9ca4e.firebaseapp.com",
+      "projectId" to "wingslog-9ca4e",
+      "storageBucket" to "wingslog-9ca4e.firebasestorage.app",
+      "messagingSenderId" to "811416892017",
+      "appId" to "1:811416892017:web:6680df6dd37a69d1f961d0",
+      "measurementId" to "G-VPNQ92VG8F",
     ),
   )
 
   val koinApplication = startKoin {
     modules(
+      platformAnalyticsModule,
       commonAuthModule,
       authModule,
       storageModule,
