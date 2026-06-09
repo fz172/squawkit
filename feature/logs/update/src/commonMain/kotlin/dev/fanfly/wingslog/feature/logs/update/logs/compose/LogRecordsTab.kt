@@ -14,14 +14,12 @@ import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.attachment.sharedassets.generated.resources.attachments
 import wingslog.feature.logs.update.generated.resources.Res
 import wingslog.feature.logs.update.generated.resources.performed_by_description
 import wingslog.feature.logs.update.generated.resources.squawks_section_header
 import wingslog.feature.logs.update.generated.resources.tasks_section_header
 import wingslog.feature.technician.sharedassets.generated.resources.performed_by
 import wingslog.feature.technician.sharedassets.generated.resources.select_technician
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachmentRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
 @Composable
@@ -89,9 +87,7 @@ fun LogRecordsTab(
     }
 
     if (attachmentUploadEnabled) {
-      LogSection(header = stringResource(AttachmentRes.string.attachments)) {
-        attachmentSection()
-      }
+      attachmentSection()
     }
   }
 }
