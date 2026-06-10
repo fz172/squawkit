@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hopply Promo Site — Design Document</title>
+  <style>
+    :root {
+      --aviation-blue: #1A5FAE;
+      --deep-navy: #001849;
+      --sky-container: #D5E3FF;
+      --panel-slate: #525E72;
+      --amber-glow: #FFBA4E;
+      --airworthy-green: #276B39;
+      --surface: #F8F9FC;
+      --surface-container: #EEF1F6;
+      --outline: #C5CAD6;
+    }
+    body {
+      font-family: system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      color: #1C1B1F;
+      background: var(--surface);
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 32px;
+    }
+    h1 { font-family: "Space Grotesk", system-ui, sans-serif; font-size: 2rem; font-weight: 900; color: var(--deep-navy); margin-bottom: 0.25em; }
+    h2 { font-family: "Space Grotesk", system-ui, sans-serif; font-size: 1.35rem; font-weight: 700; color: var(--aviation-blue); border-bottom: 2px solid var(--sky-container); padding-bottom: 6px; margin-top: 2.5rem; }
+    h3 { font-family: "Space Grotesk", system-ui, sans-serif; font-size: 1.05rem; font-weight: 600; color: var(--deep-navy); margin-top: 1.5rem; }
+    .status { display: inline-block; background: var(--sky-container); color: var(--aviation-blue); font-weight: 600; font-size: 0.8rem; padding: 3px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+    th { background: var(--sky-container); color: var(--deep-navy); text-align: left; padding: 8px 12px; font-weight: 600; }
+    td { padding: 8px 12px; border-bottom: 1px solid var(--outline); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    .asset-required { background: #FFF8E1; border-left: 3px solid var(--amber-glow); padding: 10px 14px; margin: 8px 0; border-radius: 0 4px 4px 0; font-size: 0.9rem; }
+    .asset-required strong { color: #7A5200; }
+    .section-mockup { background: var(--surface-container); border: 1px solid var(--outline); border-radius: 8px; padding: 20px 24px; margin: 12px 0; font-size: 0.88rem; font-family: monospace; color: var(--panel-slate); white-space: pre; line-height: 1.5; overflow-x: auto; }
+    .tag { display: inline-block; background: var(--surface-container); border: 1px solid var(--outline); border-radius: 4px; font-size: 0.75rem; font-family: monospace; padding: 1px 6px; margin: 1px; color: var(--panel-slate); }
+    .seo-row td:first-child { font-family: monospace; font-size: 0.82rem; color: var(--aviation-blue); }
+    ul { padding-left: 1.4em; }
+    li { margin-bottom: 0.3em; }
+    .note { background: #E8F5E9; border-left: 3px solid var(--airworthy-green); padding: 10px 14px; border-radius: 0 4px 4px 0; font-size: 0.88rem; margin: 12px 0; }
+    .warn { background: #FFF3E0; border-left: 3px solid var(--amber-glow); padding: 10px 14px; border-radius: 0 4px 4px 0; font-size: 0.88rem; margin: 12px 0; }
+    .checklist { list-style: none; padding-left: 0.5em; }
+    .checklist li::before { content: "☐ "; color: var(--panel-slate); }
+  </style>
+</head>
+<body>
+
+<h1>Hopply — Promo Site Design</h1>
+<span class="status">Status: Draft — not yet implemented</span>
+<p>
+  Single-page static marketing site hosted at <strong>hopply.dev</strong> (Firebase Hosting).
+  The Hopply web app lives at <strong>app.hopply.dev</strong> on a separate Firebase Hosting site.
+  This document covers page structure, visual design, SEO requirements, and the exact
+  content assets the author must provide before implementation begins.
+</p>
+<p><strong>Related docs:</strong>
+  <a href="web_target_expansion_plan.md">web_target_expansion_plan.md</a> ·
+  <a href="../product/PRD.md">PRD.md</a>
+</p>
+
+<!-- ============================================================ -->
+<h2>1. Goals</h2>
+<ul>
+  <li>Drive organic search traffic for queries like "aviation maintenance logbook app", "aircraft maintenance tracking app", "FAA maintenance log app".</li>
+  <li>Funnel visitors to the correct app store (iOS / Android) or the web app.</li>
+  <li>Load fast — no JavaScript required. Pure HTML + CSS, zero frameworks.</li>
+  <li>Render correctly on mobile (the primary discovery device for app searches).</li>
+  <li>Support social sharing previews (Open Graph, Twitter Card).</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2>2. Implementation Stack</h2>
+<ul>
+  <li><strong>HTML5 + Tailwind CSS via CDN</strong> — single <code>index.html</code>, no build step.</li>
+  <li><strong>Space Grotesk</strong> loaded from Google Fonts (display + headlines only).</li>
+  <li><strong>JetBrains Mono</strong> loaded from Google Fonts (tail number / technical data accents).</li>
+  <li>No JavaScript, no analytics scripts inline — analytics tag can be appended later.</li>
+  <li>Source location: <code>site/index.html</code> at the repo root, alongside <code>webApp/</code>.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2>3. Page Sections</h2>
+<p>Seven sections in vertical order. Each is described with layout intent and asset requirements.</p>
+
+<h3>3A. Hero</h3>
+<div class="section-mockup">
+┌──────────────────────────────────────────────────┐
+│  [App Icon 80px]   Hopply                        │  ← nav bar (logo + icon)
+├──────────────────────────────────────────────────┤
+│                                                  │
+│  The maintenance logbook                         │  ← display headline
+│  for serious aviators.                           │     Space Grotesk Black 48–64px
+│                                                  │
+│  Track inspections, squawks, and engine hours    │  ← subheadline, body 18px
+│  across your whole fleet — on any device.        │     system-ui, panel-slate
+│                                                  │
+│  [▶ App Store]  [▶ Google Play]  [→ Open Web App]│  ← CTA row (3 buttons)
+│                                                  │
+│  [Hero screenshot — device mockup]               │  ← right-side or centered
+│                                                  │
+└──────────────────────────────────────────────────┘
+</div>
+<div class="asset-required"><strong>Required assets:</strong>
+  <ul>
+    <li>App icon PNG, 512×512 minimum, no rounded corners (OS clips them).</li>
+    <li>Hero screenshot — one key screen (e.g. aircraft overview with due-soon status). Ideal: shown in a device frame (iPhone 15 Pro or Pixel 8 outline). PNG or WebP, at least 1080px tall. <em>This is the single most important visual for first impression.</em></li>
+    <li>App Store URL (<code>apps.apple.com/…</code>).</li>
+    <li>Google Play URL (<code>play.google.com/store/apps/…</code>).</li>
+  </ul>
+</div>
+
+<h3>3B. Feature Highlights (3-up grid)</h3>
+<div class="section-mockup">
+┌──────────────────────────────────────────────────┐
+│                                                  │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────┐ │
+│  │ [Icon]       │ │ [Icon]       │ │ [Icon]   │ │
+│  │ Inspection   │ │ Squawk       │ │ Works on │ │
+│  │ Tracking     │ │ Management   │ │ Every    │ │
+│  │              │ │              │ │ Device   │ │
+│  │ Know exactly │ │ Log issues,  │ │ iOS,     │ │
+│  │ when each    │ │ track        │ │ Android, │ │
+│  │ item is due. │ │ resolution.  │ │ and Web. │ │
+│  └──────────────┘ └──────────────┘ └──────────┘ │
+│                                                  │
+└──────────────────────────────────────────────────┘
+</div>
+<p>Three feature cards. Icons are inline SVG (no external request). Card background: <code>#EEF1F6</code>. Icon color: Aviation Blue <code>#1A5FAE</code>. No screenshots needed for this section.</p>
+<p>Suggested features to highlight:</p>
+<ol>
+  <li><strong>Inspection &amp; AD Tracking</strong> — time-based, engine-hour, and on-condition rules.</li>
+  <li><strong>Squawk Log</strong> — open issues with AOG priority surfaced first.</li>
+  <li><strong>Multi-device, Local-first</strong> — works offline, syncs in the background.</li>
+</ol>
+
+<h3>3C. Screenshots Carousel / Grid</h3>
+<div class="section-mockup">
+┌──────────────────────────────────────────────────┐
+│  See Hopply in action                            │  ← section heading
+│                                                  │
+│  [Screenshot 1]  [Screenshot 2]  [Screenshot 3] │  ← horizontal scroll on mobile
+│  Aircraft        Due-soon        Maintenance     │
+│  Overview        alert           Log entry       │
+└──────────────────────────────────────────────────┘
+</div>
+<div class="asset-required"><strong>Required assets — minimum 3, ideal 5 screenshots:</strong>
+  <ul>
+    <li><strong>Screen 1 — Fleet Dashboard</strong>: aircraft list with a DUE SOON chip visible. Shows the safety-critical status UX.</li>
+    <li><strong>Screen 2 — Aircraft Overview</strong>: hero tail number + maintenance summary stats + one critical alert. Shows the logbook depth.</li>
+    <li><strong>Screen 3 — Maintenance Log entry</strong>: edit log screen with work description filled in. Shows ease of entry.</li>
+    <li><strong>Screen 4 — Tasks list</strong> <em>(recommended)</em>: overdue and due-soon tasks with amber/red status chips.</li>
+    <li><strong>Screen 5 — Squawks list</strong> <em>(recommended)</em>: open squawks with AOG badge visible.</li>
+  </ul>
+  Screenshots should be <strong>real in-app screenshots</strong>, not design mockups — they carry more SEO weight as structured data evidence and convert better. Minimum 390px wide (iPhone SE viewport). PNG or WebP.
+</div>
+
+<h3>3D. Platform Availability</h3>
+<div class="section-mockup">
+┌──────────────────────────────────────────────────┐
+│  Available everywhere you fly                    │
+│                                                  │
+│  [iOS badge]   [Android badge]   [Web icon]      │
+│  App Store     Google Play       hopply.dev/app  │
+└──────────────────────────────────────────────────┘
+</div>
+<p>Static HTML with official App Store / Google Play badge SVGs (available free from Apple and Google's brand asset portals) and a plain text web link. No screenshots required.</p>
+
+<h3>3E. Trust / Social Proof  <em>(optional, add when available)</em></h3>
+<div class="section-mockup">
+┌──────────────────────────────────────────────────┐
+│  "Finally a logbook that works offline."         │
+│  ★★★★★  —  Pilot, Cessna 172 owner              │
+└──────────────────────────────────────────────────┘
+</div>
+<p>Even one or two real user quotes improve conversion. Can be omitted at launch and added later with no structural change.</p>
+
+<h3>3F. Final CTA Banner</h3>
+<div class="section-mockup">
+┌──────────────────────────────────────────────────┐
+│  Background: Deep Navy #001849                   │
+│                                                  │
+│  Start your free logbook today.                  │  ← headline
+│  [▶ App Store]  [▶ Google Play]  [→ Web App]    │  ← same 3 buttons as hero
+└──────────────────────────────────────────────────┘
+</div>
+<p>Repeats the hero CTA at the bottom for users who scroll the full page before deciding.</p>
+
+<h3>3G. Footer</h3>
+<div class="section-mockup">
+┌──────────────────────────────────────────────────┐
+│  Hopply  ·  Privacy Policy  ·  © 2026            │
+└──────────────────────────────────────────────────┘
+</div>
+<div class="asset-required"><strong>Required:</strong>
+  <ul>
+    <li>Privacy Policy URL (required for both App Store and Play Store listings, and for GDPR/CCPA compliance).</li>
+    <li>Contact email or support link (optional but recommended).</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2>4. Responsive Layout Spec</h2>
+<p>
+  The page is built <strong>mobile-first</strong> — base styles target phones, then Tailwind's
+  <code>sm:</code> / <code>lg:</code> prefixes enhance for larger screens. Mobile is the primary
+  form factor: most app-discovery searches happen on a phone. Three breakpoints, matching
+  Tailwind defaults:
+</p>
+
+<table>
+  <tr><th>Tier</th><th>Width</th><th>Tailwind prefix</th></tr>
+  <tr><td>Mobile</td><td>&lt; 640px</td><td><em>(base, no prefix)</em></td></tr>
+  <tr><td>Tablet</td><td>640–1023px</td><td><code>sm:</code></td></tr>
+  <tr><td>Desktop</td><td>≥ 1024px</td><td><code>lg:</code></td></tr>
+</table>
+
+<h3>4A. Per-Section Behavior</h3>
+<table>
+  <tr><th>Section</th><th>Mobile (&lt; 640px)</th><th>Tablet (640–1023px)</th><th>Desktop (≥ 1024px)</th></tr>
+  <tr>
+    <td><strong>Hero</strong></td>
+    <td>Single column: headline → subheadline → CTA buttons stacked full-width → hero screenshot below, centered</td>
+    <td>Single column, CTA buttons inline; screenshot beside text if space allows</td>
+    <td>Two-column: text + CTAs left (~55%), hero screenshot right (~45%)</td>
+  </tr>
+  <tr>
+    <td><strong>Feature grid</strong></td>
+    <td>1 column, cards stacked</td>
+    <td>2 columns (third card spans or wraps)</td>
+    <td>3 columns</td>
+  </tr>
+  <tr>
+    <td><strong>Screenshots</strong></td>
+    <td>Horizontal scroll strip (<code>overflow-x-auto</code> + scroll snap), ~1.5 cards visible to signal scrollability</td>
+    <td>Horizontal scroll, 2–3 cards visible</td>
+    <td>All screenshots in a single static row, no scroll</td>
+  </tr>
+  <tr>
+    <td><strong>Platform badges</strong></td>
+    <td>Stacked vertically, centered</td>
+    <td>Inline row, centered</td>
+    <td>Inline row, centered</td>
+  </tr>
+  <tr>
+    <td><strong>Final CTA banner</strong></td>
+    <td>Buttons stacked full-width</td>
+    <td>Buttons inline, centered</td>
+    <td>Buttons inline, centered</td>
+  </tr>
+  <tr>
+    <td><strong>Footer</strong></td>
+    <td>Links stacked or wrapped, centered</td>
+    <td>Single row</td>
+    <td>Single row</td>
+  </tr>
+</table>
+
+<h3>4B. Responsive Typography</h3>
+<table>
+  <tr><th>Element</th><th>Mobile</th><th>Tablet</th><th>Desktop</th></tr>
+  <tr><td>Display headline (h1)</td><td>32px</td><td>40px</td><td>56–64px</td></tr>
+  <tr><td>Section headings (h2)</td><td>24px</td><td>28px</td><td>32–36px</td></tr>
+  <tr><td>Subheadline / body</td><td>16px</td><td>17px</td><td>18px</td></tr>
+  <tr><td>Button labels</td><td>15px</td><td>15px</td><td>15px</td></tr>
+</table>
+
+<h3>4C. Layout Rules</h3>
+<ul>
+  <li>Content max-width: <strong>1152px</strong> (<code>max-w-6xl</code>), centered. No full-bleed text.</li>
+  <li>Horizontal padding: 24px mobile (<code>px-6</code>), 32px tablet, 48px desktop — echoes the app's screen-padding token.</li>
+  <li>Touch targets ≥ 44×44px everywhere (CTA buttons are 56px tall, matching the app's button height token).</li>
+  <li>Vertical section spacing: 64px mobile → 96px desktop.</li>
+  <li>No fixed pixel heights on text containers — sections grow with content (translation-safe, zoom-safe).</li>
+  <li>Screenshot scroll strip uses CSS scroll-snap; no JavaScript carousel.</li>
+  <li>Page must pass Google's mobile-friendly test and render correctly from 320px (iPhone SE) to ultrawide.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2>5. Visual Design Tokens</h2>
+<p>
+  The promo page uses the Hopply design system colors and typography directly,
+  mapped to CSS custom properties. No new colors are introduced.
+</p>
+
+<table>
+  <tr><th>Role</th><th>Value</th><th>Use on this page</th></tr>
+  <tr><td>Primary / CTA</td><td><code>#1A5FAE</code> Aviation Blue</td><td>Primary buttons, section accent lines, icons</td></tr>
+  <tr><td>On-primary text</td><td><code>#FFFFFF</code></td><td>Text on filled blue buttons</td></tr>
+  <tr><td>Deep Navy</td><td><code>#001849</code></td><td>Final CTA banner background, display headline text</td></tr>
+  <tr><td>Sky Container</td><td><code>#D5E3FF</code></td><td>Feature card backgrounds, subtle section fills</td></tr>
+  <tr><td>Panel Slate</td><td><code>#525E72</code></td><td>Body copy, subheadline</td></tr>
+  <tr><td>Page background</td><td><code>#F8F9FC</code></td><td>Base surface</td></tr>
+  <tr><td>Card background</td><td><code>#EEF1F6</code></td><td>Feature highlight cards</td></tr>
+  <tr><td>Amber accent</td><td><code>#FFBA4E</code></td><td>One-use decorative accent only — e.g. star ratings</td></tr>
+</table>
+
+<table>
+  <tr><th>Element</th><th>Font</th><th>Weight</th><th>Size</th></tr>
+  <tr><td>Display headline</td><td>Space Grotesk</td><td>900</td><td>48–64px</td></tr>
+  <tr><td>Section headings</td><td>Space Grotesk</td><td>700</td><td>28–36px</td></tr>
+  <tr><td>Feature card titles</td><td>Space Grotesk</td><td>600</td><td>18px</td></tr>
+  <tr><td>Body copy</td><td>system-ui</td><td>400</td><td>16–18px</td></tr>
+  <tr><td>Button labels</td><td>system-ui</td><td>600</td><td>15px, UPPERCASE</td></tr>
+  <tr><td>Tail number accent</td><td>JetBrains Mono</td><td>500</td><td>14px</td></tr>
+</table>
+
+<div class="note">Button corner radius is 16px, matching the app's <code>buttonCornerRadius</code> token. Card corner radius is 12px.</div>
+
+<!-- ============================================================ -->
+<h2>6. SEO Requirements</h2>
+<p>
+  All items below belong in the <code>&lt;head&gt;</code> of <code>site/index.html</code>
+  or as in-page structured data. They are the minimum required for effective indexing and
+  social sharing.
+</p>
+
+<h3>6A. Essential Head Tags</h3>
+<table class="seo-row">
+  <tr><th>Tag</th><th>Value to supply</th></tr>
+  <tr>
+    <td>&lt;title&gt;</td>
+    <td>~60 chars. Example: <em>"Hopply — Aviation Maintenance Logbook for Pilots &amp; Mechanics"</em></td>
+  </tr>
+  <tr>
+    <td>&lt;meta name="description"&gt;</td>
+    <td>~150 chars. One sentence covering the core value prop and target user. Example: <em>"Hopply keeps your aircraft airworthy — track inspections, ADs, squawks, and engine hours across your whole fleet on iOS, Android, and web."</em></td>
+  </tr>
+  <tr>
+    <td>&lt;link rel="canonical"&gt;</td>
+    <td><code>https://hopply.dev</code></td>
+  </tr>
+  <tr>
+    <td>&lt;meta name="robots"&gt;</td>
+    <td><code>index, follow</code></td>
+  </tr>
+</table>
+
+<h3>6B. Open Graph (social sharing)</h3>
+<table class="seo-row">
+  <tr><th>Property</th><th>Value</th></tr>
+  <tr><td>og:title</td><td>Same as <code>&lt;title&gt;</code></td></tr>
+  <tr><td>og:description</td><td>Same as meta description</td></tr>
+  <tr><td>og:url</td><td><code>https://hopply.dev</code></td></tr>
+  <tr><td>og:type</td><td><code>website</code></td></tr>
+  <tr><td>og:image</td><td>OG image URL — see asset requirement below</td></tr>
+  <tr><td>og:image:width / height</td><td>1200 / 630</td></tr>
+  <tr><td>og:site_name</td><td><code>Hopply</code></td></tr>
+</table>
+<div class="asset-required"><strong>Required asset — Open Graph image (1200×630 px):</strong><br>
+  The single highest-impact SEO asset after the page title. This image appears whenever the URL is shared on iMessage, Twitter/X, LinkedIn, Slack, etc.
+  <ul>
+    <li>Compose the image at exactly 1200×630px.</li>
+    <li>Contents: Hopply app icon left-anchored, display headline right, one hero screenshot cropped into a device frame, Deep Navy background with subtle aviation-blue gradient.</li>
+    <li>Text must remain legible at 600×315px (half size — how it renders on many platforms).</li>
+    <li>File: <code>site/og-image.png</code> or <code>.webp</code>.</li>
+  </ul>
+</div>
+
+<h3>6C. Twitter Card</h3>
+<table class="seo-row">
+  <tr><th>Property</th><th>Value</th></tr>
+  <tr><td>twitter:card</td><td><code>summary_large_image</code></td></tr>
+  <tr><td>twitter:title</td><td>Same as og:title</td></tr>
+  <tr><td>twitter:description</td><td>Same as og:description</td></tr>
+  <tr><td>twitter:image</td><td>Same OG image</td></tr>
+</table>
+
+<h3>6D. Structured Data (JSON-LD)</h3>
+<p>
+  Two JSON-LD blocks embedded in the page <code>&lt;head&gt;</code>.
+  These directly influence how Google presents the result (rich results, app install cards).
+</p>
+
+<p><strong>Block 1 — MobileApplication (one per platform):</strong></p>
+<pre style="background:#EEF1F6;padding:14px 18px;border-radius:8px;font-size:0.82rem;overflow-x:auto;">
+{
+  "@context": "https://schema.org",
+  "@type": "MobileApplication",
+  "name": "Hopply",
+  "description": "Aviation maintenance logbook for pilots and mechanics.",
+  "operatingSystem": "iOS",                 ← repeat block with "ANDROID" for Play
+  "applicationCategory": "UtilitiesApplication",
+  "url": "https://hopply.dev",
+  "downloadUrl": "https://apps.apple.com/…",    ← your App Store URL
+  "screenshot": [                               ← list your screenshot URLs here
+    "https://hopply.dev/screenshots/overview.png",
+    "https://hopply.dev/screenshots/tasks.png"
+  ],
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</pre>
+
+<p><strong>Block 2 — Organization:</strong></p>
+<pre style="background:#EEF1F6;padding:14px 18px;border-radius:8px;font-size:0.82rem;overflow-x:auto;">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Hopply",
+  "url": "https://hopply.dev",
+  "logo": "https://hopply.dev/icon.png",
+  "sameAs": [
+    "https://apps.apple.com/…",
+    "https://play.google.com/store/apps/…"
+  ]
+}
+</pre>
+
+<h3>6E. Favicon &amp; App Icons</h3>
+<div class="asset-required"><strong>Required assets:</strong>
+  <ul>
+    <li><code>site/favicon.ico</code> — 32×32 or multi-size ICO.</li>
+    <li><code>site/favicon-192.png</code> — 192×192 PNG (Android home screen shortcut).</li>
+    <li><code>site/apple-touch-icon.png</code> — 180×180 PNG (iOS "Add to Home Screen").</li>
+    <li><code>site/icon.png</code> — 512×512 PNG (used in structured data + OG fallback).</li>
+  </ul>
+  All four can be exported from the same master app icon artwork.
+</div>
+
+<h3>6F. On-Page SEO</h3>
+<ul>
+  <li>One <code>&lt;h1&gt;</code> per page — the display headline in the Hero section. Must include a primary keyword (e.g. "aviation maintenance logbook").</li>
+  <li>Section headings use <code>&lt;h2&gt;</code>. Feature card titles use <code>&lt;h3&gt;</code>.</li>
+  <li>Every <code>&lt;img&gt;</code> has a descriptive <code>alt</code> attribute (e.g. <code>alt="Hopply iOS app showing aircraft inspection due dates"</code>).</li>
+  <li>App Store and Play Store links use <code>rel="noopener"</code> and open in a new tab.</li>
+  <li>Page is fully readable with CSS disabled (crawler fallback).</li>
+</ul>
+
+<h3>6G. Performance (Core Web Vitals)</h3>
+<p>
+  Core Web Vitals are a direct Google ranking signal. The static HTML approach already wins here,
+  but a few specifics matter:
+</p>
+<ul>
+  <li>Serve screenshot images as <strong>WebP</strong> with a JPEG fallback (<code>&lt;picture&gt;</code> element). WebP is ~30% smaller.</li>
+  <li>Add <code>width</code> and <code>height</code> attributes to every <code>&lt;img&gt;</code> to prevent layout shift (CLS).</li>
+  <li>Add <code>loading="lazy"</code> to below-the-fold screenshots.</li>
+  <li>The hero screenshot (above the fold) should <em>not</em> be lazy-loaded — add <code>&lt;link rel="preload"&gt;</code> for it instead.</li>
+  <li>Google Fonts: use <code>display=swap</code> in the font URL and preconnect to <code>fonts.gstatic.com</code>.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2>7. Asset Checklist</h2>
+<p>Everything the author must produce before the page can be built.</p>
+<ul class="checklist">
+  <li>App icon — 512×512 PNG, no rounded corners</li>
+  <li>favicon.ico (32×32)</li>
+  <li>favicon-192.png (192×192)</li>
+  <li>apple-touch-icon.png (180×180)</li>
+  <li>Open Graph image — 1200×630 PNG or WebP (see §6B)</li>
+  <li>Hero screenshot with device frame — at least 1080px tall</li>
+  <li>In-app screenshot: Fleet Dashboard (aircraft list, DUE SOON chip visible)</li>
+  <li>In-app screenshot: Aircraft Overview (tail number + maintenance summary)</li>
+  <li>In-app screenshot: Maintenance Log entry</li>
+  <li>In-app screenshot: Tasks list <em>(recommended)</em></li>
+  <li>In-app screenshot: Squawks list <em>(recommended)</em></li>
+  <li>App Store URL</li>
+  <li>Google Play URL</li>
+  <li>Privacy Policy URL</li>
+  <li>Page title (~60 chars)</li>
+  <li>Meta description (~150 chars)</li>
+  <li>1–2 real user quotes for social proof section <em>(optional)</em></li>
+</ul>
+
+<div class="warn">
+  Screenshots are the highest-ROI investment on this checklist. Google indexes image content and
+  uses app screenshots in rich result cards. Poor screenshots (small, blurry, showing empty states
+  or placeholder data) will undermine the page even if every meta tag is perfect. Use a real device
+  or high-fidelity simulator with realistic fleet data populated.
+</div>
+
+<!-- ============================================================ -->
+<h2>8. File Layout</h2>
+<pre style="background:#EEF1F6;padding:14px 18px;border-radius:8px;font-size:0.82rem;">
+site/
+  index.html                ← the entire page
+  favicon.ico
+  favicon-192.png
+  apple-touch-icon.png
+  icon.png                  ← 512×512 for structured data
+  og-image.png              ← 1200×630 Open Graph image
+  screenshots/
+    hero.webp               ← hero device mockup (preloaded)
+    fleet-dashboard.webp
+    aircraft-overview.webp
+    maintenance-log.webp
+    tasks.webp              ← optional
+    squawks.webp            ← optional
+</pre>
+
+<p>
+  The Firebase Hosting rule for the promo site has no catch-all rewrite (unlike the web app),
+  so 404s fall through to Firebase's default error page. A custom <code>404.html</code>
+  can be added at any time.
+</p>
+
+<!-- ============================================================ -->
+<h2>9. Implementation Status</h2>
+<p>
+  <span class="status">Not started</span>
+  This document is approved design intent. Implementation begins once the asset checklist
+  in §7 is complete. The Firebase Hosting multi-site configuration in
+  <code>firebase.json</code> and <code>.firebaserc</code> must be set up before first deploy.
+</p>
+
+</body>
+</html>
