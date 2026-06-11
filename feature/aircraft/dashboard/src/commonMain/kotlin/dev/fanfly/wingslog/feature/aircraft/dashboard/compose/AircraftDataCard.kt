@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -173,7 +174,8 @@ fun ComponentCard(
   Surface(
     modifier = Modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    color = MaterialTheme.colorScheme.surfaceContainerLow
+    color = Color.Transparent,
+    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant)
   ) {
     Column(modifier = Modifier.padding(Spacing.large)) {
       Row(
