@@ -27,23 +27,26 @@ val storedDate: String = versionProps.getProperty(
   "buildDate",
   ""
 )
-val patch = if (storedDate == today) versionProps.getProperty(
-  "patch",
-  "0"
-).toInt() + 1 else 1
-val nextVersionCode = versionProps.getProperty(
-  "versionCode",
-  "0"
-).toInt() + 1
+val isReleaseBuild = gradle.startParameter.taskNames.any {
+  it.contains("Release", ignoreCase = true)
+}
 
-versionProps["buildDate"] = today
-versionProps["patch"] = patch.toString()
-versionProps["versionCode"] = nextVersionCode.toString()
-versionPropsFile.outputStream().use {
-  versionProps.store(
-    it,
-    null
-  )
+val storedPatch = versionProps.getProperty("patch", "0").toInt()
+val currentVersionCode = versionProps.getProperty("versionCode", "0").toInt()
+
+val patch: Int
+val nextVersionCode: Int
+
+if (isReleaseBuild) {
+  patch = if (storedDate == today) storedPatch + 1 else 1
+  nextVersionCode = currentVersionCode + 1
+  versionProps["buildDate"] = today
+  versionProps["patch"] = patch.toString()
+  versionProps["versionCode"] = nextVersionCode.toString()
+  versionPropsFile.outputStream().use { versionProps.store(it, null) }
+} else {
+  patch = storedPatch
+  nextVersionCode = currentVersionCode
 }
 
 val computedVersionName = "$major.$minor.$today.$patch"
