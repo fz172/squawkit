@@ -34,6 +34,8 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
+import kotlinx.browser.document
+import org.w3c.dom.HTMLElement
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
@@ -64,7 +66,9 @@ import org.koin.compose.viewmodel.koinViewModel
 fun WebApp() {
   val appearanceController: AppearanceController = koinInject()
   val appearanceMode by appearanceController.mode.collectAsState()
-  WingslogTheme(darkTheme = appearanceMode.resolveDarkTheme()) {
+  val isDark = appearanceMode.resolveDarkTheme()
+  LaunchedEffect(isDark) { updateBrowserGutterColor(isDark) }
+  WingslogTheme(darkTheme = isDark) {
     Surface(
       modifier = Modifier.fillMaxSize(),
       color = MaterialTheme.colorScheme.background,
@@ -345,4 +349,10 @@ private fun SettingsSection(rootNavController: NavHostController) {
   } else {
     SettingsContent(navController = rootNavController)
   }
+}
+
+private fun updateBrowserGutterColor(isDark: Boolean) {
+  val color = if (isDark) "#211F26" else "#F3EDF7"
+  (document.documentElement as? HTMLElement)?.style?.background = color
+  document.body?.style?.background = color
 }
