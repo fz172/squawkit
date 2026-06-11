@@ -19,6 +19,16 @@
     </style>
 </head>
 <body>
+    <script>
+    (function(){
+        var m=localStorage.getItem('appearance_mode');
+        if(m==='DARK'||m==='LIGHT'){
+            var c=m==='DARK'?'#211F26':'#F3EDF7';
+            document.documentElement.style.background=c;
+            document.body.style.background=c;
+        }
+    })();
+    </script>
     <div id="ComposeTarget"></div>
     <script src="webApp.js"></script>
 </body>
