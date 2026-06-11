@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.compose
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -36,7 +38,8 @@ fun BladeChipsOverview(blades: List<PropellerBlade>) {
     blades.forEachIndexed { index, blade ->
       Surface(
         shape = RoundedCornerShape(Spacing.badgeCornerRadius),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = Color.Transparent,
+        border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
       ) {
         Column(
           modifier = Modifier.padding(
