@@ -44,10 +44,10 @@ fun TaskDetailTab(
   onComplianceAuthorityChange: (String) -> Unit,
   complianceNotes: String,
   onComplianceNotesChange: (String) -> Unit,
-  taskId: String,
-  availableLogs: List<MaintenanceLog>,
-  onAddLog: () -> Unit,
-  onRemoveLog: (MaintenanceLog) -> Unit,
+  taskId: String = "",
+  availableLogs: List<MaintenanceLog> = emptyList(),
+  onAddLog: () -> Unit = {},
+  onRemoveLog: (MaintenanceLog) -> Unit = {},
   attachmentSection: @Composable () -> Unit,
 ) {
   DocumentationFields(
