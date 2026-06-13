@@ -33,6 +33,12 @@
   <string name="details">Details</string>
   <string name="make_model_template">%1$s %2$s</string>
     <string name="select_date">Select Date</string>
+    <!-- Shell navigation tabs -->
+    <string name="shell_tab_dashboard">Dashboard</string>
+    <string name="shell_tab_squawks">Squawks</string>
+    <string name="shell_tab_tasks">Maint.</string>
+    <string name="shell_tab_logs">Logs</string>
+    <string name="shell_title_tasks">Maintenance Task</string>
     <!-- Component names -->
     <string name="component_type">Component Type</string>
     <string name="component_airframe">Airframe</string>
