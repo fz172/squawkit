@@ -80,12 +80,12 @@ data class ShellAircraft(
 /**
  * Top-level sections of the adaptive shell. The first four are per-aircraft; [SETTINGS] is global.
  */
-enum class ShellSection(val label: String, val icon: ImageVector) {
+enum class ShellSection(val label: String, val icon: ImageVector, val title: String = label) {
   DASHBOARD("Dashboard", Icons.Filled.Dashboard), SQUAWKS(
     "Squawks",
     Icons.Filled.Warning
   ),
-  TASKS("Tasks", Icons.Filled.Checklist),
+  TASKS("Maint.", Icons.Filled.Checklist, "Maintenance Task"),
   LOGS("Logs", Icons.Filled.Description),
   SETTINGS("Settings", Icons.Filled.Settings),
 }
@@ -683,7 +683,7 @@ private fun ShellContent(
 
 @Composable
 private fun ActionBarTitle(state: AdaptiveShellUiState) = Text(
-  state.section.label,
+  state.section.title,
   maxLines = 1,
   overflow = TextOverflow.Ellipsis,
 )
