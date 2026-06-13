@@ -150,6 +150,7 @@
   <string name="adj_skip_title_inactive">Mark complete without logging</string>
   <string name="adj_skip_subtitle_active">Tap again to undo. The task will appear at the next interval.</string>
   <string name="adj_skip_subtitle_inactive">Snoozes one cycle. Useful when work was already done off-app.</string>
+  <string name="no_log_history">No maintenance logs recorded for this task.</string>
   <string name="task_updated">Task updated</string>
   <string name="task_deleted">Task deleted</string>
   <string name="task_added">Task added</string>

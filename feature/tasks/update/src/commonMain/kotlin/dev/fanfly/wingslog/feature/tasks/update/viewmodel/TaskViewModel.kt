@@ -19,6 +19,7 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
@@ -36,6 +37,7 @@ sealed interface TaskUiState {
   data class Success(
     val aircraftId: String,
     val allInspections: List<MaintenanceTask> = emptyList(),
+    val availableLogs: List<MaintenanceLog> = emptyList(),
     val currentEngineHours: Float,
     val naturalDueMetadata: DueMetadata? = null,
   ) : TaskUiState
@@ -67,6 +69,9 @@ class TaskViewModel(
 
   private val _isSaving = MutableStateFlow(false)
   val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+
+  private val _showLogPicker = MutableStateFlow(false)
+  val showLogPicker: StateFlow<Boolean> = _showLogPicker.asStateFlow()
 
   private val _attachmentUploadEnabled = MutableStateFlow(true)
   val attachmentUploadEnabled: StateFlow<Boolean> = _attachmentUploadEnabled.asStateFlow()
@@ -108,10 +113,11 @@ class TaskViewModel(
         }
         _uiState.update {
           TaskUiState.Success(
-            aircraftId,
-            cards,
-            engineHours,
-            naturalDue,
+            aircraftId = aircraftId,
+            allInspections = cards,
+            availableLogs = logs,
+            currentEngineHours = engineHours,
+            naturalDueMetadata = naturalDue,
           )
         }
         // Pre-load attachments when editing
@@ -132,6 +138,23 @@ class TaskViewModel(
 
   fun hideAttachmentPicker() {
     _showAttachmentPicker.value = false
+  }
+
+  fun showLogPicker() { _showLogPicker.value = true }
+  fun hideLogPicker() { _showLogPicker.value = false }
+
+  fun addLogToHistory(taskId: String, log: MaintenanceLog) {
+    if (taskId in log.inspection_ids) return
+    viewModelScope.launch {
+      maintenanceLogManager.updateLog(aircraftId, log.copy(inspection_ids = log.inspection_ids + taskId))
+      _showLogPicker.value = false
+    }
+  }
+
+  fun removeLogFromHistory(taskId: String, log: MaintenanceLog) {
+    viewModelScope.launch {
+      maintenanceLogManager.updateLog(aircraftId, log.copy(inspection_ids = log.inspection_ids - taskId))
+    }
   }
 
   fun addLocalFiles(files: List<PickedFile>) {

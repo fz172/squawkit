@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
@@ -24,6 +25,7 @@ fun EditTaskRoute(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
+  val showLogPicker by viewModel.showLogPicker.collectAsStateWithLifecycle()
   val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
   val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
   val successState = uiState as? TaskUiState.Success
@@ -38,9 +40,15 @@ fun EditTaskRoute(
     EditTaskScreen(
       card = card,
       availableInspections = successState.allInspections,
+      availableLogs = successState.availableLogs,
       currentEngineHours = successState.currentEngineHours,
       naturalDueMetadata = successState.naturalDueMetadata,
       isSaving = isSaving,
+      showLogPicker = showLogPicker,
+      onShowLogPicker = viewModel::showLogPicker,
+      onDismissLogPicker = viewModel::hideLogPicker,
+      onAddLog = { log -> viewModel.cardId?.let { viewModel.addLogToHistory(it, log) } },
+      onRemoveLog = { log -> viewModel.cardId?.let { viewModel.removeLogFromHistory(it, log) } },
       onCancel = { navController.popBackStack() },
       onSave = { updatedCard ->
         viewModel.saveEditedTask(

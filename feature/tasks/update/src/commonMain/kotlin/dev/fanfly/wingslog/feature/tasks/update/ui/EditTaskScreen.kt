@@ -39,6 +39,7 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
+import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.datetime.toWireInstant
@@ -49,6 +50,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.tasks.update.compose.ADJUSTMENT_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
@@ -79,12 +81,18 @@ import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTask
 fun EditTaskScreen(
   card: MaintenanceTask,
   availableInspections: List<MaintenanceTask>,
+  availableLogs: List<MaintenanceLog> = emptyList(),
   currentEngineHours: Float,
   naturalDueMetadata: DueMetadata?,
   onSave: (MaintenanceTask) -> Unit,
   onCancel: () -> Unit,
   onDeleteRequest: (String) -> Unit,
   isSaving: Boolean = false,
+  showLogPicker: Boolean = false,
+  onShowLogPicker: () -> Unit = {},
+  onDismissLogPicker: () -> Unit = {},
+  onAddLog: (MaintenanceLog) -> Unit = {},
+  onRemoveLog: (MaintenanceLog) -> Unit = {},
   attachmentSection: @Composable () -> Unit = {},
 ) {
   var title by remember { mutableStateOf(card.title) }
@@ -246,6 +254,10 @@ fun EditTaskScreen(
                 onComplianceAuthorityChange = { complianceAuthority = it },
                 complianceNotes = complianceNotes,
                 onComplianceNotesChange = { complianceNotes = it },
+                taskId = card.id,
+                availableLogs = availableLogs,
+                onAddLog = onShowLogPicker,
+                onRemoveLog = onRemoveLog,
                 attachmentSection = attachmentSection
               )
 
@@ -339,6 +351,17 @@ fun EditTaskScreen(
         onDeleteRequest(card.id)
       },
       onDismiss = { showDeleteConfirm = false })
+  }
+
+  if (showLogPicker) {
+    val linkedIds = remember(availableLogs, card.id) {
+      availableLogs.filter { card.id in it.inspection_ids }.map { it.id }.toSet()
+    }
+    LogPickerSheet(
+      logs = availableLogs.filter { it.id !in linkedIds },
+      onSelect = onAddLog,
+      onDismiss = onDismissLogPicker,
+    )
   }
 
   if (showDatePicker) {

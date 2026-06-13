@@ -40,6 +40,8 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:sharedassets"))
+      implementation(project(":core:ui"))
+      implementation(project(":core:datetime"))
       implementation(libs.components.resources)
       api(libs.compose.ui)
     }
