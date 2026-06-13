@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.update.compose
+package dev.fanfly.wingslog.feature.logs.sharedassets.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,8 +17,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectionMode
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.logs.sharedassets.generated.resources.Res
 import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
-import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +30,7 @@ fun LogPickerSheet(
   onDismiss = onDismiss,
   headerSlot = {
     Text(
-      text = stringResource(LogsRes.string.maintenance_history),
+      text = stringResource(Res.string.maintenance_history),
       style = MaterialTheme.typography.titleLarge,
       fontWeight = FontWeight.Bold,
     )

@@ -46,8 +46,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.squawk.update.compose.DismissSquawkDialog
-import dev.fanfly.wingslog.feature.squawk.update.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkBasicTab
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsTab
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
@@ -258,7 +258,7 @@ fun SquawkFormScreen(
   if (state.showLogPicker) {
     LogPickerSheet(
       logs = state.availableLogs,
-      onSelect = onSelectLog,
+      onSelect = { log -> onSelectLog(log.id) },
       onDismiss = onHideLogPicker,
     )
   }
