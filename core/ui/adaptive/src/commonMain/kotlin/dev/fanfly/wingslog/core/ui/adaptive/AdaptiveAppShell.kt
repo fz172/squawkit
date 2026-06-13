@@ -61,6 +61,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add_aircraft
@@ -68,6 +69,11 @@ import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.core.sharedassets.generated.resources.settings
+import wingslog.core.sharedassets.generated.resources.shell_tab_dashboard
+import wingslog.core.sharedassets.generated.resources.shell_tab_logs
+import wingslog.core.sharedassets.generated.resources.shell_tab_squawks
+import wingslog.core.sharedassets.generated.resources.shell_tab_tasks
+import wingslog.core.sharedassets.generated.resources.shell_title_tasks
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /** Lightweight aircraft projection used by the shell's switcher. */
@@ -80,14 +86,12 @@ data class ShellAircraft(
 /**
  * Top-level sections of the adaptive shell. The first four are per-aircraft; [SETTINGS] is global.
  */
-enum class ShellSection(val label: String, val icon: ImageVector, val title: String = label) {
-  DASHBOARD("Dashboard", Icons.Filled.Dashboard), SQUAWKS(
-    "Squawks",
-    Icons.Filled.Warning
-  ),
-  TASKS("Maint.", Icons.Filled.Checklist, "Maintenance Task"),
-  LOGS("Logs", Icons.Filled.Description),
-  SETTINGS("Settings", Icons.Filled.Settings),
+enum class ShellSection(val label: StringResource, val icon: ImageVector, val title: StringResource = label) {
+  DASHBOARD(UiRes.string.shell_tab_dashboard, Icons.Filled.Dashboard),
+  SQUAWKS(UiRes.string.shell_tab_squawks, Icons.Filled.Warning),
+  TASKS(UiRes.string.shell_tab_tasks, Icons.Filled.Checklist, UiRes.string.shell_title_tasks),
+  LOGS(UiRes.string.shell_tab_logs, Icons.Filled.Description),
+  SETTINGS(UiRes.string.settings, Icons.Filled.Settings),
 }
 
 private val PER_AIRCRAFT_SECTIONS =
@@ -261,7 +265,7 @@ private fun EmptyFleetScaffold(
           title = {
             // No aircraft means no real section to name; only Settings gets a title here.
             Text(
-              if (inSettings) state.section.label else "",
+              if (inSettings) stringResource(state.section.label) else "",
               maxLines = 1,
               overflow = TextOverflow.Ellipsis,
             )
@@ -467,7 +471,7 @@ private fun SidebarItem(
   enabled: Boolean = true,
 ) {
   NavigationDrawerItem(
-    label = { Text(section.label) },
+    label = { Text(stringResource(section.label)) },
     icon = { Icon(section.icon, contentDescription = null) },
     selected = selected,
     // NavigationDrawerItem has no `enabled` flag; when disabled we mute it and swallow the tap.
@@ -559,7 +563,7 @@ private fun ScaffoldShell(
             },
             label = {
               Text(
-                s.label,
+                stringResource(s.label),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
               )
@@ -683,7 +687,7 @@ private fun ShellContent(
 
 @Composable
 private fun ActionBarTitle(state: AdaptiveShellUiState) = Text(
-  state.section.title,
+  stringResource(state.section.title),
   maxLines = 1,
   overflow = TextOverflow.Ellipsis,
 )
