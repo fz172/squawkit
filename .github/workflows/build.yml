@@ -33,5 +33,24 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
 
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v5
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest --stacktrace
+
+      # Always upload reports, even when lint or tests fail, so failures are diagnosable.
+      - name: Upload lint & test reports
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: reports
+          path: |
+            **/build/reports/lint-results-*.html
+            **/build/reports/tests/
+            **/build/test-results/
+          if-no-files-found: warn
