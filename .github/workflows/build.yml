@@ -1,12 +1,11 @@
-name: CI
+name: Build, Lint & Test
 
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Build & Lint
+    name: Build, Lint & Test
     runs-on: ubuntu-latest
 
     steps:
