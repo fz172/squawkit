@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import com.squareup.wire.Instant as WireInstant
 
 /**
@@ -441,11 +442,11 @@ class LogbookExportArchiveBuilder(
         val lastLog = bundle.lastCompliedByTaskId[task.id]
         add(
           listOf(
-            task.title.orEmpty(),
+            task.title,
             task.component.label(),
             task.type.label(),
-            task.reference_number.orEmpty(),
-            task.compliance_authority.orEmpty(),
+            task.reference_number,
+            task.compliance_authority,
             task.rules.scheduleLabel(bundle),
             (lastLog?.timestamp).date(timeZone),
             lastLog?.componentHours(task.component)
@@ -454,8 +455,8 @@ class LogbookExportArchiveBuilder(
               .orEmpty(),
             (due?.nextDueEngine).formatHours(),
             if (task.is_one_time) "Yes" else "No",
-            task.notes.orEmpty(),
-            task.compliance_details.orEmpty(),
+            task.notes,
+            task.compliance_details,
           )
         )
       }
@@ -515,42 +516,6 @@ class LogbookExportArchiveBuilder(
             )
           )
         }
-    }
-
-  private fun fleetSummaryRows(bundles: List<AircraftBundle>): List<List<String>> =
-    buildList {
-      add(
-        listOf(
-          "Tail Number",
-          "Make",
-          "Model",
-          "Serial Number",
-          "Engines",
-          "Propellers",
-          "Log Entries (in export)",
-          "Open Squawks",
-          "Tasks",
-          "Folder",
-        )
-      )
-      bundles.forEach { bundle ->
-        add(
-          listOf(
-            bundle.aircraft.tail_number,
-            bundle.aircraft.make,
-            bundle.aircraft.model,
-            bundle.aircraft.serial,
-            bundle.aircraft.engine.size.toString(),
-            bundle.aircraft.engine.count { it.propeller != null }
-              .toString(),
-            bundle.logs.size.toString(),
-            bundle.squawks.count { it.statusLabel() == "Open" }
-              .toString(),
-            bundle.tasks.size.toString(),
-            bundle.aircraft.folderName(),
-          )
-        )
-      }
     }
 
   private fun readme(
@@ -939,7 +904,7 @@ class LogbookExportArchiveBuilder(
       year.toString()
         .padStart(4, '0')
     }${
-      monthNumber.toString()
+      month.number.toString()
         .padStart(2, '0')
     }${
       day.toString()
@@ -947,7 +912,7 @@ class LogbookExportArchiveBuilder(
     }"
 
   private fun LocalDateTime.exportTimestamp(timeZone: TimeZone): String =
-    "${date} ${
+    "$date ${
       hour.toString()
         .padStart(2, '0')
     }:${

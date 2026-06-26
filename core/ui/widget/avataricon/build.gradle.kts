@@ -7,7 +7,7 @@ plugins {
 
 android {
   namespace = "dev.fanfly.wingslog.core.ui.widget.avataricon"
-  compileSdk = 36
+  compileSdk = 37
 
   defaultConfig {
     minSdk = 33

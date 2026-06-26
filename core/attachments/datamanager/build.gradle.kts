@@ -5,7 +5,7 @@ plugins {
 
 android {
   namespace = "dev.fanfly.wingslog.core.attachments.datamanager"
-  compileSdk = 36
+  compileSdk = 37
   defaultConfig { minSdk = 33 }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_21

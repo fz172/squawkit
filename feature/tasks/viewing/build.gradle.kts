@@ -7,7 +7,7 @@ plugins {
 
 android {
   namespace = "dev.fanfly.wingslog.feature.tasks.viewing"
-  compileSdk = 36
+  compileSdk = 37
 
   defaultConfig {
     minSdk = 33

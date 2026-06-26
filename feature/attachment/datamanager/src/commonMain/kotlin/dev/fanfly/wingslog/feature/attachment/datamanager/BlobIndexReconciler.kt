@@ -51,7 +51,7 @@ class BlobIndexReconciler(
           contentType = att.mime_type.ifBlank { null },
           scope = scope,
         )
-        if (prefetch) uploadScheduler?.scheduleDownload(blobId)
+        if (prefetch) uploadScheduler.scheduleDownload(blobId)
       }
     }
   }

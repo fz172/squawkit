@@ -7,7 +7,7 @@ plugins {
 
 android {
   namespace = "dev.fanfly.wingslog.feature.attachment.viewing"
-  compileSdk = 36
+  compileSdk = 37
   defaultConfig { minSdk = 33 }
   buildFeatures { compose = true }
   compileOptions {

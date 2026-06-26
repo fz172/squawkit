@@ -69,7 +69,7 @@ class AttachmentOpenerAndroid(
               if (state is DownloadState.Failed) downloadError = state.error
             }
           if (downloadError != null) {
-            emit(OpenState.Failed(downloadError!!))
+            emit(OpenState.Failed(downloadError))
           } else {
             emitOpenLocalFile(attachment)
           }

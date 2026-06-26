@@ -58,13 +58,13 @@ kotlin {
 android {
   namespace = "dev.fanfly.wingslog"
   compileSdk {
-    version = release(36)
+    version = release(37)
   }
 
   defaultConfig {
     applicationId = "dev.fanfly.wingslog"
     minSdk = 33
-    targetSdk = 36
+    targetSdk = 37
     versionCode = nextVersionCode
     versionName = computedVersionName
 

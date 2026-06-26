@@ -6,7 +6,7 @@ plugins {
 
 android {
   namespace = "dev.fanfly.wingslog.core.storage"
-  compileSdk = 36
+  compileSdk = 37
 
   defaultConfig {
     minSdk = 33

@@ -72,7 +72,7 @@ fun String.toKotlinStringLiteral(): String =
 
 android {
   namespace = "dev.fanfly.wingslog.feature.export.datamanager"
-  compileSdk = 36
+  compileSdk = 37
 
   defaultConfig {
     minSdk = 33
