@@ -1,0 +1,40 @@
+name: Deploy Web App
+
+on:
+  workflow_dispatch:
+
+# Never run two deploys at once; cancel an in-progress run if a newer one starts.
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy to Firebase Hosting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Produces the production bundle in webApp/build/dist/js/productionExecutable,
+      # which is the "public" directory configured in firebase.json.
+      - name: Build production web bundle
+        run: ./gradlew :webApp:jsBrowserDistribution --stacktrace
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: wingslog-9ca4e
+          channelId: live
