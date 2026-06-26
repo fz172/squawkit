@@ -7,7 +7,7 @@ import androidx.compose.ui.unit.dp
 /**
  * Window-width tiers that drive the adaptive shell.
  *
- * The thresholds mirror the breakpoints in the `Hopply Web` design prototype (720 / 1040 / 1180 CSS
+ * The thresholds mirror the breakpoints in the `SquawkIt Web` design prototype (720 / 1040 / 1180 CSS
  * px), expressed here as dp. They are intentionally coarser than Material3's default
  * `WindowWidthSizeClass` buckets (600 / 840), which do not line up with where the prototype actually
  * switches its navigation container and dashboard rail. See

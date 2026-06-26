@@ -112,7 +112,7 @@ _(Done: a real Firebase web app is registered; its `appId` is wired into
 
 ## Goal & strategy
 
-Turn the standalone `webApp` login mock into a functioning Hopply web client that
+Turn the standalone `webApp` login mock into a functioning SquawkIt web client that
 reuses the existing KMM shared code rather than reimplementing it. The work is
 fundamentally **adding a `js(IR)` target to the shared module graph, bottom-up**, and
 filling the per-platform gaps (auth, storage driver, dispatchers, background work) as
@@ -191,7 +191,7 @@ Order matters — keep Android/iOS green at every step:
 1. **Create `feature/login`** (flat module, like `feature/settings`): move `LoginScreen`
    + `LoginViewModel`. Depends on `:core:auth` + `:core:ui`. Android + iOS targets first.
 2. **Resource placement** — shared asset → common lib; feature-only asset → the feature:
-   - `ic_launcher_foreground` (the Hopply brand mark) is used by `LoginScreen`,
+   - `ic_launcher_foreground` (the SquawkIt brand mark) is used by `LoginScreen`,
      `NameEntryScreen`, *and* `WelcomeScreen` → move it into **`core:ui`** and repoint all
      three. Same brand mark, single source (no generic-vector substitution).
    - `ic_google_rd_na` + the `google_logo`/login strings are login-only → move into

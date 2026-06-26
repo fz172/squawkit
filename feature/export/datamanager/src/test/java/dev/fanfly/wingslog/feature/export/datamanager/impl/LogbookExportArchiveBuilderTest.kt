@@ -41,7 +41,7 @@ class LogbookExportArchiveBuilderTest {
     )
 
     val entries = LogbookExportArchiveBuilder(
-      appVersion = "Hopply 1.0.260519.10 (364)",
+      appVersion = "SquawkIt 1.0.260519.10 (364)",
     ).buildEntries(
       request = ExportRequest(
         aircraftIds = listOf(bundle.aircraft.id),
@@ -75,9 +75,9 @@ class LogbookExportArchiveBuilderTest {
     assertThat(entries["README.txt"]?.bytes?.decodeToString())
       .contains("Attachment efgh5678 has no local blob record.")
     assertThat(entries["$aircraftFolder/csv/00_Aircraft_Info.csv"]?.bytes?.decodeToString())
-      .contains("Export App Version,Hopply 1.0.260519.10 (364)")
+      .contains("Export App Version,SquawkIt 1.0.260519.10 (364)")
     assertThat(entries["README.txt"]?.bytes?.decodeToString())
-      .contains("App:       Hopply 1.0.260519.10 (364)")
+      .contains("App:       SquawkIt 1.0.260519.10 (364)")
     assertThat(entries["$aircraftFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString())
       .doesNotContain("Log ID")
     assertThat(entries["$aircraftFolder/csv/10_Tasks.csv"]?.bytes?.decodeToString())
@@ -95,7 +95,7 @@ class LogbookExportArchiveBuilderTest {
     assertThat(entries["$aircraftFolder/csv/20_Technicians.csv"]?.bytes?.decodeToString())
       .doesNotContain("Sign-Offs in Export")
     val workbookEntries = readZipEntries(
-      requireNotNull(entries["$aircraftFolder/Hopply_Logs_N12345_20260519.xlsx"]?.bytes)
+      requireNotNull(entries["$aircraftFolder/SquawkIt_Logs_N12345_20260519.xlsx"]?.bytes)
     )
     assertThat(workbookEntries.keys).containsAtLeast(
       "[Content_Types].xml",
@@ -151,7 +151,7 @@ class LogbookExportArchiveBuilderTest {
     )
 
     val entries = LogbookExportArchiveBuilder(
-      appVersion = "Hopply 1.0.260520.1 (365)",
+      appVersion = "SquawkIt 1.0.260520.1 (365)",
     ).buildEntries(
       request = ExportRequest(
         aircraftIds = listOf(bundle.aircraft.id),
@@ -169,7 +169,7 @@ class LogbookExportArchiveBuilderTest {
     val engineCsv = requireNotNull(entries["$aircraftFolder/csv/02_Engine.csv"]?.bytes?.decodeToString())
     val propellerCsv = requireNotNull(entries["$aircraftFolder/csv/03_Propeller.csv"]?.bytes?.decodeToString())
     val workbookEntries = readZipEntries(
-      requireNotNull(entries["$aircraftFolder/Hopply_Logs_N12345_20260520.xlsx"]?.bytes)
+      requireNotNull(entries["$aircraftFolder/SquawkIt_Logs_N12345_20260520.xlsx"]?.bytes)
     )
     assertThat(entries["$aircraftFolder/N12345_Cessna_172.pdf"]?.bytes?.decodeToString()).startsWith("%PDF-1.4")
 
@@ -225,7 +225,7 @@ class LogbookExportArchiveBuilderTest {
     )
 
     val entries = LogbookExportArchiveBuilder(
-      appVersion = "Hopply 1.0.260520.2 (366)",
+      appVersion = "SquawkIt 1.0.260520.2 (366)",
     ).buildEntries(
       request = ExportRequest(
         aircraftIds = listOf(bundle.aircraft.id),
@@ -240,7 +240,7 @@ class LogbookExportArchiveBuilderTest {
 
     val squawkCsv = requireNotNull(entries["$aircraftFolder/csv/11_Squawks.csv"]?.bytes?.decodeToString())
     val workbookEntries = readZipEntries(
-      requireNotNull(entries["$aircraftFolder/Hopply_Logs_N12345_20260520.xlsx"]?.bytes)
+      requireNotNull(entries["$aircraftFolder/SquawkIt_Logs_N12345_20260520.xlsx"]?.bytes)
     )
     val workbookText = workbookEntries.values.joinToString(separator = "\n")
 
@@ -298,7 +298,7 @@ class LogbookExportArchiveBuilderTest {
     // CSV selected → CSV present; PDF and XLSX omitted.
     assertThat(entries.keys).contains("$aircraftFolder/csv/00_Aircraft_Info.csv")
     assertThat(entries.keys).doesNotContain("$aircraftFolder/N12345_Cessna_172.pdf")
-    assertThat(entries.keys).doesNotContain("$aircraftFolder/Hopply_Logs_N12345_20260520.xlsx")
+    assertThat(entries.keys).doesNotContain("$aircraftFolder/SquawkIt_Logs_N12345_20260520.xlsx")
     // Attachments and README ride along regardless of the format selection.
     assertThat(entries.keys).contains("$aircraftFolder/attachments/abcd_inspection_photo.jpg")
     assertThat(entries.keys).contains("README.txt")
@@ -347,13 +347,13 @@ class LogbookExportArchiveBuilderTest {
 
     assertThat(entries.keys).contains("README.txt")
     assertThat(entries.keys).contains("N12345_Cessna_172/csv/00_Aircraft_Info.csv")
-    assertThat(entries.keys).contains("N12345_Cessna_172/Hopply_Logs_N12345_20260520.xlsx")
+    assertThat(entries.keys).contains("N12345_Cessna_172/SquawkIt_Logs_N12345_20260520.xlsx")
     assertThat(entries.keys).contains("N12345_Cessna_172/N12345_Cessna_172.pdf")
     assertThat(entries.keys).contains("N54321_Beechcraft_Bonanza/csv/00_Aircraft_Info.csv")
-    assertThat(entries.keys).contains("N54321_Beechcraft_Bonanza/Hopply_Logs_N54321_20260520.xlsx")
+    assertThat(entries.keys).contains("N54321_Beechcraft_Bonanza/SquawkIt_Logs_N54321_20260520.xlsx")
     assertThat(entries.keys).contains("N54321_Beechcraft_Bonanza/N54321_Beechcraft_Bonanza.pdf")
     assertThat(entries.keys).doesNotContain("00_Fleet_Summary.csv")
-    assertThat(entries.keys).doesNotContain("Hopply_Logs_Fleet_20260520.xlsx")
+    assertThat(entries.keys).doesNotContain("SquawkIt_Logs_Fleet_20260520.xlsx")
   }
 
   private fun readZipEntries(bytes: ByteArray): Map<String, String> =

@@ -55,7 +55,7 @@ Use the Origin Private File System (OPFS) for attachment bytes, separate from th
 
 ```text
 OPFS root
-  hopply/
+  squawkit/
     blobs/
       {attachmentId}.bin
 ```
@@ -75,7 +75,7 @@ Implement `OpfsBlobFilesystem : BlobFilesystem` in
 - `delete(relativePath)` removes the file and tolerates missing files.
 - `exists(relativePath)` probes the file handle.
 - `uriFor(relativePath)` should return a diagnostic pseudo-URI such as
-  `opfs://hopply/blobs/{id}.bin`; web opening must not depend on this value because generating a
+  `opfs://squawkit/blobs/{id}.bin`; web opening must not depend on this value because generating a
   real `blob:` URL requires async file reads.
 
 The actual opener reads bytes through `BlobFilesystem.read(...)` and creates object URLs itself.

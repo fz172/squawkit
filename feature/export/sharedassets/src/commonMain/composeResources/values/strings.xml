@@ -65,10 +65,10 @@
   <string name="export_success_title">Export ready</string>
   <string name="export_success_sent_title">Export sent</string>
   <string name="export_success_emailed_subtitle">Secure download link emailed to</string>
-  <string name="export_stub_preview_file_name">Hopply_Logs_preview.zip</string>
+  <string name="export_stub_preview_file_name">SquawkIt_Logs_preview.zip</string>
   <string name="export_stub_preview_location">Saved to this device</string>
-  <string name="export_location_downloads_hopply">Saved to Downloads · Hopply</string>
-  <string name="export_location_files_hopply">Saved to Files · Hopply</string>
+  <string name="export_location_downloads_squawkit">Saved to Downloads · SquawkIt</string>
+  <string name="export_location_files_squawkit">Saved to Files · SquawkIt</string>
   <string name="export_success_delivery_failed_title">Delivery failed</string>
   <string name="export_success_delivery_failed">Automatic delivery failed. Use Share for now, then retry from export history later.</string>
   <string name="export_success_delivery_auth">Destination: signed-in account email %1$s</string>
@@ -83,14 +83,14 @@
   <string name="export_share">Share</string>
   <string name="export_view_exports">View exports</string>
   <string name="export_share_title">Share export</string>
-  <string name="export_email_subject">Hopply logbook export: %1$s</string>
+  <string name="export_email_subject">SquawkIt logbook export: %1$s</string>
   <string name="export_email_body">Hi,
 
-Your Hopply logbook export is attached.
+Your SquawkIt logbook export is attached.
 
 To use it, save the ZIP file and unzip it. The ZIP contains your selected report documents plus any available attachments, and a README.txt with import steps.
 
-Thank you for choosing Hopply.</string>
+Thank you for choosing SquawkIt.</string>
 
   <!-- Result: error -->
   <string name="export_error_title">Export failed</string>

@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.aircraft.dashboard
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
@@ -21,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.LogsTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.MaintenanceTasksTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.OverviewTab
@@ -143,6 +145,9 @@ private fun SectionAddFab(label: String, onClick: () -> Unit) {
     onClick = onClick,
     icon = { Icon(Icons.Default.Add, contentDescription = null) },
     text = { Text(label) },
+    // Nudge the FAB inward so it clears the wide-screen Logs table's right border. Applied to the
+    // shared FAB so the position stays identical across the Squawks/Tasks/Logs sections.
+    modifier = Modifier.padding(end = Spacing.medium),
   )
 }
 

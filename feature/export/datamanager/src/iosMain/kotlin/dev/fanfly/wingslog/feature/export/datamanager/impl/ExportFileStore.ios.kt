@@ -28,7 +28,7 @@ import platform.Foundation.writeToFile
 actual class ExportFileStore {
   private val exportDirectory: String
     get() = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
-      .first() as String + "/Hopply"
+      .first() as String + "/SquawkIt"
 
   // App-private metadata index. The leading dot keeps it out of the ".zip" archive listing and
   // tucked away from the Files app; the archives are the source of truth for existence, this is
@@ -44,7 +44,7 @@ actual class ExportFileStore {
       ExportedFile(
         filePath = path,
         fileName = fileName,
-        displayLocationKind = ExportDisplayLocation.FILES_HOPPLY,
+        displayLocationKind = ExportDisplayLocation.FILES_SQUAWKIT,
         sizeBytes = bytes.size.toLong(),
       )
     }
@@ -98,7 +98,7 @@ actual class ExportFileStore {
           fileName = name,
           sizeBytes = size,
           createdAtEpochMillis = (modified * 1_000).toLong(),
-          displayLocation = ExportDisplayLocation.FILES_HOPPLY,
+          displayLocation = ExportDisplayLocation.FILES_SQUAWKIT,
         )
       }
   }

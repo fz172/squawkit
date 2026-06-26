@@ -7,7 +7,7 @@ import kotlin.js.Promise
 
 /**
  * Browser [BlobFilesystem] backed by the Origin Private File System. Bytes live under
- * `OPFS/hopply/blobs/{id}.bin`, outside the SQLite OPFS file but under the same origin.
+ * `OPFS/squawkit/blobs/{id}.bin`, outside the SQLite OPFS file but under the same origin.
  *
  * **Important Kotlin/JS detail:** every navigation step (`getDirectory`, `getDirectoryHandle`,
  * `getFileHandle`, `createWritable`, `getFile`, `arrayBuffer`, `write`, `close`) is materialized
@@ -52,7 +52,7 @@ internal class OpfsBlobFilesystem : BlobFilesystem {
     }.getOrDefault(false)
 
   override fun uriFor(relativePath: String): String =
-    "opfs://hopply/$relativePath"
+    "opfs://squawkit/$relativePath"
 
   private suspend fun fileHandle(
     relativePath: String,
@@ -117,6 +117,6 @@ internal class OpfsBlobFilesystem : BlobFilesystem {
     }
 
   private companion object {
-    private const val APP_DIRECTORY = "hopply"
+    private const val APP_DIRECTORY = "squawkit"
   }
 }

@@ -5,6 +5,6 @@ package dev.fanfly.wingslog.feature.export.datamanager
  */
 enum class ExportDisplayLocation {
   UNKNOWN,
-  DOWNLOADS_HOPPLY,
-  FILES_HOPPLY,
+  DOWNLOADS_SQUAWKIT,
+  FILES_SQUAWKIT,
 }

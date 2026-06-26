@@ -24,9 +24,9 @@ val generateExportVersionKt by tasks.registering {
     val versionName = "${props["major"]}.${props["minor"]}.${props["buildDate"]}.${props["patch"]}"
     val versionCode = props["versionCode"]?.toString().orEmpty()
     val displayVersion = if (versionCode.isBlank()) {
-      "Hopply $versionName"
+      "SquawkIt $versionName"
     } else {
-      "Hopply $versionName ($versionCode)"
+      "SquawkIt $versionName ($versionCode)"
     }
     outputDir.get().asFile.also { it.mkdirs() }
       .resolve("GeneratedExportVersionInfo.kt")

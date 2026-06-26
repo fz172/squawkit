@@ -19,7 +19,7 @@
 
 ## 1. Overview
 
-Aircraft owners and mechanics are legally and operationally tied to **paper logbooks** — separate volumes for the airframe, each engine, and each propeller. Even owners who keep their primary records in Hopply still need an offline, portable, spreadsheet-friendly copy of every log entry, compliance event, and squawk for:
+Aircraft owners and mechanics are legally and operationally tied to **paper logbooks** — separate volumes for the airframe, each engine, and each propeller. Even owners who keep their primary records in SquawkIt still need an offline, portable, spreadsheet-friendly copy of every log entry, compliance event, and squawk for:
 
 - Annual / pre-buy inspection handoff to an A&P or IA who works off paper or Excel.
 - Backup against vendor outage or account loss (regulatory exposure if records vanish).
@@ -115,7 +115,7 @@ A pinned bottom button labeled **"Export"** with the resolved file size estimate
 
 When the user taps **Export**, the screen swaps its content area for a progress state — determinate progress bar, current step (`Writing Engine 1 of Cessna 172 (N12345)…`), and a **Cancel** action. The top app bar back arrow is replaced with a close button that triggers the same cancel.
 
-On completion, the screen swaps to a success state: large success icon, file size, saved location (`Saved to Files → Hopply` / `Saved to Downloads/Hopply`), and two actions — **Open** (opens the file in the OS default handler) and **Done** (pops back to Settings).
+On completion, the screen swaps to a success state: large success icon, file size, saved location (`Saved to Files → SquawkIt` / `Saved to Downloads/SquawkIt`), and two actions — **Open** (opens the file in the OS default handler) and **Done** (pops back to Settings).
 
 Cancellation discards the temp file and returns to the configuration state with prior selections preserved.
 
@@ -132,17 +132,17 @@ All CSV files are bundled under `csv/`. They are **UTF-8, RFC 4180–compliant**
 
 Filenames use the aircraft's tail number with non-alphanumeric characters replaced by `_`. The current date (local) is the export's date stamp.
 
-- Single-aircraft: `Hopply_Logs_<TAIL>_<YYYYMMDD>.zip`
-  - Example: `Hopply_Logs_N12345_20260518.zip`
-- Multi-aircraft (selected subset or all): `Hopply_Logs_Fleet_<YYYYMMDD>.zip`
-  - Example: `Hopply_Logs_Fleet_20260518.zip`
+- Single-aircraft: `SquawkIt_Logs_<TAIL>_<YYYYMMDD>.zip`
+  - Example: `SquawkIt_Logs_N12345_20260518.zip`
+- Multi-aircraft (selected subset or all): `SquawkIt_Logs_Fleet_<YYYYMMDD>.zip`
+  - Example: `SquawkIt_Logs_Fleet_20260518.zip`
   - The same name is used whether the user selected the entire fleet or a subset; the README and Fleet Summary tab disambiguate.
 
 ### 4.5 Zip layout — single-aircraft
 
 ```
-Hopply_Logs_N12345_20260518.zip
-├── Hopply_Logs_N12345_20260518.xlsx
+SquawkIt_Logs_N12345_20260518.zip
+├── SquawkIt_Logs_N12345_20260518.xlsx
 ├── csv/
 │   ├── 00_Aircraft_Info.csv
 │   ├── 01_Airframe.csv
@@ -165,8 +165,8 @@ Numeric prefixes (`00_`, `01_`, …) preserve logbook order when CSVs are import
 ### 4.6 Zip layout — multi-aircraft
 
 ```
-Hopply_Logs_Fleet_20260518.zip
-├── Hopply_Logs_Fleet_20260518.xlsx
+SquawkIt_Logs_Fleet_20260518.zip
+├── SquawkIt_Logs_Fleet_20260518.xlsx
 ├── README.txt
 ├── csv/
 │   ├── 00_Fleet_Summary.csv     ← reflects ONLY the aircraft selected, not the whole fleet
@@ -218,7 +218,7 @@ Two-column key-value sheet — the front matter of a logbook:
 | Open Squawks | `2` |
 | Export Generated | `2026-05-18 14:22 PDT` |
 | Export Period | `All time` or `2025-05-18 → 2026-05-18` |
-| Export App Version | `Hopply 1.4.0 (147)` |
+| Export App Version | `SquawkIt 1.4.0 (147)` |
 
 #### 4.7.2 `01_Airframe.csv`
 
@@ -359,17 +359,17 @@ One row per **selected** aircraft (not the whole fleet — unselected aircraft a
 Plaintext, opens in any viewer. Contents:
 
 ```
-Hopply Logbook Export
+SquawkIt Logbook Export
 
 Generated: 2026-05-18 14:22 PDT
 Scope:     Cessna 172 N12345
 Period:    All time
-App:       Hopply 1.4.0 (147)
+App:       SquawkIt 1.4.0 (147)
 
 How to import into Google Sheets
-1. Extract this ZIP and locate the included `Hopply_Logs_*.xlsx` workbook.
+1. Extract this ZIP and locate the included `SquawkIt_Logs_*.xlsx` workbook.
 2. Open https://sheets.google.com and create a new blank spreadsheet.
-3. File → Import → Upload → choose the `Hopply_Logs_*.xlsx` workbook.
+3. File → Import → Upload → choose the `SquawkIt_Logs_*.xlsx` workbook.
 4. Select "Replace spreadsheet" and click "Import data".
    The workbook already contains one tab for each exported table.
 
@@ -396,13 +396,13 @@ Notes
   "<name> → attachments/<file>" so you can locate each file after
   extracting the zip. Attachments are not embedded in the XLSX workbook.
   LINK-type attachments show the original URL.
-- This export is a snapshot. It does not update when logs change in Hopply.
+- This export is a snapshot. It does not update when logs change in SquawkIt.
 ```
 
 ### 4.8 Save destination
 
-- **iOS:** `~/Documents/` for the Hopply app, surfaced through the Files app under "On My iPhone → Hopply". No share sheet.
-- **Android:** `Downloads/Hopply/` via MediaStore (API 30+). Visible in Files app and Downloads.
+- **iOS:** `~/Documents/` for the SquawkIt app, surfaced through the Files app under "On My iPhone → SquawkIt". No share sheet.
+- **Android:** `Downloads/SquawkIt/` via MediaStore (API 30+). Visible in Files app and Downloads.
 - After save completes, the success state in the Export Sheet shows the resolved path and an **"Open"** action that hands the file to the OS default handler (Files / Downloads viewer). Re-export overwrites a same-named file from the same day; older dates are preserved.
 
 ### 4.9 Permissions
@@ -416,7 +416,7 @@ Every IMAGE / PDF / FILE attachment referenced by any exported log, task, or squ
 
 #### 4.10.1 Source of bytes
 
-Hopply's `AttachmentManager` already provides a `ensureLocal(attachment): Flow<DownloadState>` API that downloads a REMOTE_ONLY blob to the local store and emits `Downloading(progress) → Done` (or `Failed(error)`). The export reuses this contract:
+SquawkIt's `AttachmentManager` already provides a `ensureLocal(attachment): Flow<DownloadState>` API that downloads a REMOTE_ONLY blob to the local store and emits `Downloading(progress) → Done` (or `Failed(error)`). The export reuses this contract:
 
 - For each attachment in scope, call `ensureLocal()` and await `Done`.
 - Once local, read the file bytes from `LocalBlobStore.localUri(blobId)` and stream them into the zip entry.
@@ -506,9 +506,9 @@ Settings ─── "Export logs" row ──→ push navigation
                                          ▼
                        ┌────────────────────────────────────┐
                        │  Success                           │
-                       │  Hopply_Logs_Fleet_20260518.zip    │
+                       │  SquawkIt_Logs_Fleet_20260518.zip    │
                        │  1.18 MB · Saved to                │
-                       │  Files → Hopply                    │
+                       │  Files → SquawkIt                    │
                        │  [Open]   [Done]                   │
                        └────────────────────────────────────┘
 ```
@@ -603,7 +603,7 @@ feature/export/
                   # ExportViewModel, ExportUiState (sealed: Configuring | Running | Success | Error)
 ```
 
-The CSV + ZIP writer lives in `commonMain` using `kotlinx.io` primitives. Platform-specific `actual`s only for the file-destination resolver (Documents on iOS, `Downloads/Hopply/` via MediaStore on Android).
+The CSV + ZIP writer lives in `commonMain` using `kotlinx.io` primitives. Platform-specific `actual`s only for the file-destination resolver (Documents on iOS, `Downloads/SquawkIt/` via MediaStore on Android).
 
 ### Settings wiring
 

@@ -131,8 +131,8 @@ import wingslog.feature.export.sharedassets.generated.resources.export_formats_h
 import wingslog.feature.export.sharedassets.generated.resources.export_formats_section
 import wingslog.feature.export.sharedassets.generated.resources.export_history_action
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
-import wingslog.feature.export.sharedassets.generated.resources.export_location_downloads_hopply
-import wingslog.feature.export.sharedassets.generated.resources.export_location_files_hopply
+import wingslog.feature.export.sharedassets.generated.resources.export_location_downloads_squawkit
+import wingslog.feature.export.sharedassets.generated.resources.export_location_files_squawkit
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_body
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_title
 import wingslog.feature.export.sharedassets.generated.resources.export_primary_action
@@ -964,8 +964,8 @@ private fun SuccessResult(
     state.fileName.ifBlank { stringResource(Res.string.export_stub_preview_file_name) }
   val location = state.displayLocation.ifBlank {
     when (state.displayLocationKind) {
-      ExportDisplayLocation.DOWNLOADS_HOPPLY -> stringResource(Res.string.export_location_downloads_hopply)
-      ExportDisplayLocation.FILES_HOPPLY -> stringResource(Res.string.export_location_files_hopply)
+      ExportDisplayLocation.DOWNLOADS_SQUAWKIT -> stringResource(Res.string.export_location_downloads_squawkit)
+      ExportDisplayLocation.FILES_SQUAWKIT -> stringResource(Res.string.export_location_files_squawkit)
       ExportDisplayLocation.UNKNOWN -> stringResource(Res.string.export_stub_preview_location)
     }
   }

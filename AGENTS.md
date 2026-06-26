@@ -8,7 +8,7 @@ WingsLog is a **Kotlin Multiplatform** app for aviation logbook and fleet manage
 CRUD, maintenance logs, inspection compliance tracking, and due-status computation. Targets
 Android (minSdk 33), iOS, and web sharing Compose Multiplatform UI.
 
-The user-facing app is branded **Hopply**; codebase identifiers (`wingslog`, package `dev.fanfly.wingslog`, Gradle module names) still use the original WingsLog name.
+The user-facing app is branded **SquawkIt**; codebase identifiers (`wingslog`, package `dev.fanfly.wingslog`, Gradle module names) still use the original WingsLog name.
 
 The app uses a **local-first architecture** (R1 — shipped, default path): a SQLDelight entity store is the single source of truth for every read and write, and a Firestore sync engine pushes local changes and pulls remote ones in the background. There is **no Firestore in the UI read path** and **no rollout flag** — local-first is the only code path. Local-first **attachments** (R2) infrastructure has largely landed (local blob store + background upload/download), but the attachment UI is gated behind the `attachmentUploadEnabled` feature-lab flag. See `docs/storage/storage_r1_design.md` and `docs/storage/storage_r2_design.md`.
 

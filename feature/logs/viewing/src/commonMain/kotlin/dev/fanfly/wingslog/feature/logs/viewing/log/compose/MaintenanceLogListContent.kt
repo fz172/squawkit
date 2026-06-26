@@ -256,7 +256,10 @@ fun MaintenanceLogListContent(
                 technicianEnabled = uiState.technicianEnabled,
                 onLogClick = onLogClick,
                 modifier = Modifier
-                  .weight(1f)
+                  // fill = false so the bordered table wraps its content height when there are
+                  // few entries instead of stretching to fill the whole viewport; it still caps
+                  // at the available space and scrolls internally once there are enough rows.
+                  .weight(1f, fill = false)
                   .fillMaxWidth()
                   .padding(horizontal = Spacing.screenPadding),
               )

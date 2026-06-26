@@ -1,6 +1,6 @@
 # Firebase Backend
 
-This is the Firebase backend workspace for WingsLog/Hopply.
+This is the Firebase backend workspace for WingsLog/SquawkIt.
 
 Milestone 0 is intentionally small but production-shaped:
 

@@ -9,7 +9,7 @@
     <string name="continue_without_account">Continue Anonymously</string>
     <string name="sign_in_error">Sign-in failed. Check your connection and try again.</string>
     <string name="sign_in_anonymous_error">Could not continue anonymously. Please try again.</string>
-    <string name="legal_disclaimer">Hopply is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.</string>
+    <string name="legal_disclaimer">SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.</string>
 
     <!-- Onboarding: name entry -->
     <string name="onboarding_name_eyebrow">QUICK HELLO</string>

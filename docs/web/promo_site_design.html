@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hopply Promo Site — Design Document</title>
+  <title>SquawkIt Promo Site — Design Document</title>
   <style>
     :root {
       --aviation-blue: #1A5FAE;
@@ -49,11 +49,11 @@
 </head>
 <body>
 
-<h1>Hopply — Promo Site Design</h1>
+<h1>SquawkIt — Promo Site Design</h1>
 <span class="status">Status: Draft — not yet implemented</span>
 <p>
-  Single-page static marketing site hosted at <strong>hopply.dev</strong> (Firebase Hosting).
-  The Hopply web app lives at <strong>app.hopply.dev</strong> on a separate Firebase Hosting site.
+  Single-page static marketing site hosted at <strong>squawkit.dev</strong> (Firebase Hosting).
+  The SquawkIt web app lives at <strong>app.squawkit.dev</strong> on a separate Firebase Hosting site.
   This document covers page structure, visual design, SEO requirements, and the exact
   content assets the author must provide before implementation begins.
 </p>
@@ -89,7 +89,7 @@
 <h3>3A. Hero</h3>
 <div class="section-mockup">
 ┌──────────────────────────────────────────────────┐
-│  [App Icon 80px]   Hopply                        │  ← nav bar (logo + icon)
+│  [App Icon 80px]   SquawkIt                        │  ← nav bar (logo + icon)
 ├──────────────────────────────────────────────────┤
 │                                                  │
 │  The maintenance logbook                         │  ← display headline
@@ -140,7 +140,7 @@
 <h3>3C. Screenshots Carousel / Grid</h3>
 <div class="section-mockup">
 ┌──────────────────────────────────────────────────┐
-│  See Hopply in action                            │  ← section heading
+│  See SquawkIt in action                            │  ← section heading
 │                                                  │
 │  [Screenshot 1]  [Screenshot 2]  [Screenshot 3] │  ← horizontal scroll on mobile
 │  Aircraft        Due-soon        Maintenance     │
@@ -164,7 +164,7 @@
 │  Available everywhere you fly                    │
 │                                                  │
 │  [iOS badge]   [Android badge]   [Web icon]      │
-│  App Store     Google Play       hopply.dev/app  │
+│  App Store     Google Play       squawkit.dev/app  │
 └──────────────────────────────────────────────────┘
 </div>
 <p>Static HTML with official App Store / Google Play badge SVGs (available free from Apple and Google's brand asset portals) and a plain text web link. No screenshots required.</p>
@@ -192,7 +192,7 @@
 <h3>3G. Footer</h3>
 <div class="section-mockup">
 ┌──────────────────────────────────────────────────┐
-│  Hopply  ·  Privacy Policy  ·  © 2026            │
+│  SquawkIt  ·  Privacy Policy  ·  © 2026            │
 └──────────────────────────────────────────────────┘
 </div>
 <div class="asset-required"><strong>Required:</strong>
@@ -282,7 +282,7 @@
 <!-- ============================================================ -->
 <h2>5. Visual Design Tokens</h2>
 <p>
-  The promo page uses the Hopply design system colors and typography directly,
+  The promo page uses the SquawkIt design system colors and typography directly,
   mapped to CSS custom properties. No new colors are introduced.
 </p>
 
@@ -323,15 +323,15 @@
   <tr><th>Tag</th><th>Value to supply</th></tr>
   <tr>
     <td>&lt;title&gt;</td>
-    <td>~60 chars. Example: <em>"Hopply — Aviation Maintenance Logbook for Pilots &amp; Mechanics"</em></td>
+    <td>~60 chars. Example: <em>"SquawkIt — Aviation Maintenance Logbook for Pilots &amp; Mechanics"</em></td>
   </tr>
   <tr>
     <td>&lt;meta name="description"&gt;</td>
-    <td>~150 chars. One sentence covering the core value prop and target user. Example: <em>"Hopply keeps your aircraft airworthy — track inspections, ADs, squawks, and engine hours across your whole fleet on iOS, Android, and web."</em></td>
+    <td>~150 chars. One sentence covering the core value prop and target user. Example: <em>"SquawkIt keeps your aircraft airworthy — track inspections, ADs, squawks, and engine hours across your whole fleet on iOS, Android, and web."</em></td>
   </tr>
   <tr>
     <td>&lt;link rel="canonical"&gt;</td>
-    <td><code>https://hopply.dev</code></td>
+    <td><code>https://squawkit.dev</code></td>
   </tr>
   <tr>
     <td>&lt;meta name="robots"&gt;</td>
@@ -344,17 +344,17 @@
   <tr><th>Property</th><th>Value</th></tr>
   <tr><td>og:title</td><td>Same as <code>&lt;title&gt;</code></td></tr>
   <tr><td>og:description</td><td>Same as meta description</td></tr>
-  <tr><td>og:url</td><td><code>https://hopply.dev</code></td></tr>
+  <tr><td>og:url</td><td><code>https://squawkit.dev</code></td></tr>
   <tr><td>og:type</td><td><code>website</code></td></tr>
   <tr><td>og:image</td><td>OG image URL — see asset requirement below</td></tr>
   <tr><td>og:image:width / height</td><td>1200 / 630</td></tr>
-  <tr><td>og:site_name</td><td><code>Hopply</code></td></tr>
+  <tr><td>og:site_name</td><td><code>SquawkIt</code></td></tr>
 </table>
 <div class="asset-required"><strong>Required asset — Open Graph image (1200×630 px):</strong><br>
   The single highest-impact SEO asset after the page title. This image appears whenever the URL is shared on iMessage, Twitter/X, LinkedIn, Slack, etc.
   <ul>
     <li>Compose the image at exactly 1200×630px.</li>
-    <li>Contents: Hopply app icon left-anchored, display headline right, one hero screenshot cropped into a device frame, Deep Navy background with subtle aviation-blue gradient.</li>
+    <li>Contents: SquawkIt app icon left-anchored, display headline right, one hero screenshot cropped into a device frame, Deep Navy background with subtle aviation-blue gradient.</li>
     <li>Text must remain legible at 600×315px (half size — how it renders on many platforms).</li>
     <li>File: <code>site/og-image.png</code> or <code>.webp</code>.</li>
   </ul>
@@ -380,15 +380,15 @@
 {
   "@context": "https://schema.org",
   "@type": "MobileApplication",
-  "name": "Hopply",
+  "name": "SquawkIt",
   "description": "Aviation maintenance logbook for pilots and mechanics.",
   "operatingSystem": "iOS",                 ← repeat block with "ANDROID" for Play
   "applicationCategory": "UtilitiesApplication",
-  "url": "https://hopply.dev",
+  "url": "https://squawkit.dev",
   "downloadUrl": "https://apps.apple.com/…",    ← your App Store URL
   "screenshot": [                               ← list your screenshot URLs here
-    "https://hopply.dev/screenshots/overview.png",
-    "https://hopply.dev/screenshots/tasks.png"
+    "https://squawkit.dev/screenshots/overview.png",
+    "https://squawkit.dev/screenshots/tasks.png"
   ],
   "offers": {
     "@type": "Offer",
@@ -403,9 +403,9 @@
 {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "Hopply",
-  "url": "https://hopply.dev",
-  "logo": "https://hopply.dev/icon.png",
+  "name": "SquawkIt",
+  "url": "https://squawkit.dev",
+  "logo": "https://squawkit.dev/icon.png",
   "sameAs": [
     "https://apps.apple.com/…",
     "https://play.google.com/store/apps/…"
@@ -428,7 +428,7 @@
 <ul>
   <li>One <code>&lt;h1&gt;</code> per page — the display headline in the Hero section. Must include a primary keyword (e.g. "aviation maintenance logbook").</li>
   <li>Section headings use <code>&lt;h2&gt;</code>. Feature card titles use <code>&lt;h3&gt;</code>.</li>
-  <li>Every <code>&lt;img&gt;</code> has a descriptive <code>alt</code> attribute (e.g. <code>alt="Hopply iOS app showing aircraft inspection due dates"</code>).</li>
+  <li>Every <code>&lt;img&gt;</code> has a descriptive <code>alt</code> attribute (e.g. <code>alt="SquawkIt iOS app showing aircraft inspection due dates"</code>).</li>
   <li>App Store and Play Store links use <code>rel="noopener"</code> and open in a new tab.</li>
   <li>Page is fully readable with CSS disabled (crawler fallback).</li>
 </ul>

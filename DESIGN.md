@@ -1,5 +1,5 @@
 ---
-name: Hopply (Wingslog)
+name: SquawkIt (Wingslog)
 description: Aviation maintenance logbook for pilots and mechanics — safety-critical records, zero friction.
 colors:
   aviation-blue: "#1A5FAE"
@@ -90,13 +90,13 @@ components:
     padding: "{spacing.lg}"
 ---
 
-# Design System: Hopply
+# Design System: SquawkIt
 
 ## 1. Overview
 
 **Creative North Star: "The Logbook"**
 
-Every screen is a page in a regulation-compliant maintenance record. Nothing decorates; everything documents. The aviation blue is ink on vellum. Space Grotesk is the hand that signs the form. The interface does not hurry the user — it makes each entry feel considered and permanent. When a pilot opens Hopply after a cross-country or a mechanic logs a 100-hour inspection at the end of a long day, the interface meets them with calm authority, not engagement-driven friction.
+Every screen is a page in a regulation-compliant maintenance record. Nothing decorates; everything documents. The aviation blue is ink on vellum. Space Grotesk is the hand that signs the form. The interface does not hurry the user — it makes each entry feel considered and permanent. When a pilot opens SquawkIt after a cross-country or a mechanic logs a 100-hour inspection at the end of a long day, the interface meets them with calm authority, not engagement-driven friction.
 
 The light theme is not a safe default. It is the deliberate choice: a logbook is a paper artifact, and this screen extends that physical register. The palette is derived from glass cockpit references — the Garmin G1000 panel blue, advisory amber annunciators, the green-and-amber visual language of IFR compliance charts. These are not metaphors imported for flavor; they are the actual visual vocabulary of the domain.
 

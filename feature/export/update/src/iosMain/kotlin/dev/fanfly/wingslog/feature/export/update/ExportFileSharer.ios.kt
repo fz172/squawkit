@@ -31,7 +31,7 @@ private class IosExportFileSharer : ExportFileSharer {
       addAttachmentData(
         attachment = attachmentData,
         mimeType = "application/zip",
-        fileName = filePath.substringAfterLast('/').ifBlank { "Hopply_Logs.zip" },
+        fileName = filePath.substringAfterLast('/').ifBlank { "SquawkIt_Logs.zip" },
       )
     }
     rootViewController.presentViewController(

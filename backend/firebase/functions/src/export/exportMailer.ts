@@ -53,7 +53,7 @@ async function sendWithResend(
     body: JSON.stringify({
       from: fromEmail,
       to: [input.destinationEmail],
-      subject: `Your Hopply logbook export is ready`,
+      subject: `Your SquawkIt logbook export is ready`,
       html: buildExportReadyHtml(input),
       text: buildExportReadyText(input),
     }),
@@ -82,7 +82,7 @@ function buildExportReadyHtml(input: ExportMailerInput): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
-  <title>Your Hopply log export is ready</title>
+  <title>Your SquawkIt log export is ready</title>
   <style type="text/css">
     body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
@@ -117,7 +117,7 @@ function buildExportReadyHtml(input: ExportMailerInput): string {
                           ${headerIcon()}
                         </td>
                         <td valign="middle" style="font-family:'Space Grotesk', 'Avenir Next', 'Segoe UI', Arial, sans-serif; font-size:20px; line-height:32px; color:${BRAND_TEXT}; letter-spacing:-0.2px; font-weight:600;">
-                          Hopply
+                          SquawkIt
                         </td>
                       </tr>
                     </table>
@@ -148,7 +148,7 @@ function buildExportReadyHtml(input: ExportMailerInput): string {
                 <tr>
                   <td align="left" class="px-32" style="padding:16px 40px 24px 40px;">
                     <p style="margin:0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size:16px; line-height:24px; color:#3A4557;">
-                      We packaged your Hopply log data into a downloadable export file. Use the button below to save it directly to your device.
+                      We packaged your SquawkIt log data into a downloadable export file. Use the button below to save it directly to your device.
                     </p>
                   </td>
                 </tr>
@@ -208,10 +208,10 @@ function buildExportReadyHtml(input: ExportMailerInput): string {
           <tr>
             <td align="center" class="px-32" style="padding:28px 32px 8px 32px;">
               <p style="margin:0 0 6px 0; font-family:'Space Grotesk', 'Avenir Next', 'Segoe UI', Arial, sans-serif; font-size:13px; line-height:18px; color:${BRAND_MUTED}; letter-spacing:0.2px;">
-                Hopply
+                SquawkIt
               </p>
               <p style="margin:0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size:11px; line-height:16px; color:${BRAND_SUBTLE};">
-                You’re receiving this because you requested a log export from the Hopply app.
+                You’re receiving this because you requested a log export from the SquawkIt app.
               </p>
             </td>
           </tr>
@@ -225,7 +225,7 @@ function buildExportReadyHtml(input: ExportMailerInput): string {
 
 function buildExportReadyText(input: ExportMailerInput): string {
   return [
-    "Your Hopply logbook export is ready.",
+    "Your SquawkIt logbook export is ready.",
     "",
     `File: ${input.fileName}`,
     `Size: ${formatBytes(input.sizeBytes)}`,
@@ -249,7 +249,7 @@ function metaRow(label: string, value: string, bordered: boolean): string {
 }
 
 function headerIcon(): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="Hopply icon">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="SquawkIt icon">
     <rect width="32" height="32" rx="8" fill="${BRAND_BLUE}"/>
     <g transform="translate(4.4 5.2) scale(0.0217)">
       <path fill="${BRAND_AMBER_BG}" d="M635.3,642.7C616.3,605.9 597.6,569.5 578.7,533.1C573.5,523.2 573.4,523.4 563.5,528.5C543.5,538.9 523.3,548.7 502.2,556.6C495.7,559.1 495.6,559.3 497.7,566.1C505.3,590.2 512.9,614.3 520.4,638.5C524.6,652 522.5,664.3 511.9,674.2C496.5,688.6 472.8,687 459.1,670.2C444,651.6 429.6,632.4 414.8,613.4C413.5,611.7 412.2,610 410.9,608.3C405.1,600.6 399.2,594.4 388.6,591.8C370.2,587.3 360.9,569.7 364.4,551C365,547.7 364,545.4 361.7,543C346.8,527.8 332,512.5 317.2,497.1C312.9,492.6 308.7,488.1 304.9,483.2C292,466.6 297.9,435 325,429.2C331,427.9 337.3,427.9 343.3,430.1C362.3,437.2 380.5,446.4 399.3,454C403.5,455.7 407.6,457.5 411.7,459.3C414.4,460.5 416,460 417.8,457.3C433.7,433.1 450.5,409.5 469.7,387.7C473.1,383.8 472.6,382.1 467.5,379.4C445.7,367.8 423.9,356.2 402.2,344.6C375.4,330.3 348.7,316 322,301.6C307.6,293.8 297.2,282.7 295.3,265.9C292.8,245.3 303.5,222.6 331.5,219.7C337.5,219.1 342.9,221.5 348.3,223.7C385.3,239 422.2,254.2 459.1,269.5C488.6,281.8 518.1,294.2 547.5,306.8C552.2,308.8 554.7,308 557.9,304.1C580.2,277.2 604.2,252 631.7,230.4C650.7,215.5 671.8,204.8 696,201.1C748.6,193.1 801,223.4 813.7,276.2C821.9,310.3 812.7,341.1 791.3,368.4C775.4,388.6 754.7,403.3 733.5,417.3C713.3,430.8 691.9,442.4 670.4,453.8C665.7,456.2 664.9,458.8 666.4,463.6C682.7,514.3 698.8,565.1 714.9,615.8C719.8,631.2 723.9,646.9 729.4,662C735.4,678.6 724.5,699.3 705.6,705.2C687.2,711 668.6,704.4 658.7,687.3C650.3,672.9 643.2,657.8 635.3,642.7M749.7,254.8C737.8,248.7 725.3,246.1 712,247.3C700.2,248.4 693.2,256 693.3,267.6C693.5,276.6 696.9,284.5 701.2,292.1C712.1,311.1 727.4,324.8 749.1,330C759.1,332.5 766.8,328.4 771.1,319.1C773,315 773.6,310.5 774.1,306C776.6,286.3 769.8,265.2 749.7,254.8z"/>

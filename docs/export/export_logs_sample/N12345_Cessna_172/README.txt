@@ -1,13 +1,13 @@
-Hopply Logbook Export
+SquawkIt Logbook Export
 
 Generated: 2026-05-18 14:22 PDT
 Scope:     Cessna 172N N12345
 Period:    All time
-App:       Hopply 1.4.0 (147)
+App:       SquawkIt 1.4.0 (147)
 
 How to import into Google Sheets
 1. Open https://sheets.google.com and create a new blank spreadsheet.
-2. File -> Import -> Upload -> choose the included Hopply_Logs_*.xlsx workbook.
+2. File -> Import -> Upload -> choose the included SquawkIt_Logs_*.xlsx workbook.
 3. Select "Replace spreadsheet" and click "Import data".
    The workbook already contains one tab for each exported table.
 
@@ -37,4 +37,4 @@ Notes
   "<name> -> attachments/<file>" so you can locate each file after
   extracting the zip. Attachments are not embedded in the XLSX workbook.
   LINK-type attachments show the original URL.
-- This export is a snapshot. It does not update when logs change in Hopply.
+- This export is a snapshot. It does not update when logs change in SquawkIt.

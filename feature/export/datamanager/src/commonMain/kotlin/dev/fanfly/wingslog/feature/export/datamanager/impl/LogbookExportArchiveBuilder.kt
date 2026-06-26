@@ -25,7 +25,7 @@ import kotlinx.datetime.TimeZone
 import com.squareup.wire.Instant as WireInstant
 
 /**
- * Builds the CSV entries that make up a Hopply logbook export archive.
+ * Builds the CSV entries that make up a SquawkIt logbook export archive.
  */
 class LogbookExportArchiveBuilder(
   private val appVersion: String = GENERATED_EXPORT_APP_VERSION,
@@ -216,7 +216,7 @@ class LogbookExportArchiveBuilder(
     val stamp = date.compact()
     val subject =
       if (bundles.size == 1) bundles.first().aircraft.safeTailNumber() else "Fleet"
-    return "Hopply_Logs_${subject}_$stamp.zip"
+    return "SquawkIt_Logs_${subject}_$stamp.zip"
   }
 
   private fun workbookFileName(
@@ -598,7 +598,7 @@ class LogbookExportArchiveBuilder(
         .filter { it.isNotBlank() }
         .joinToString(separator = " ")
         .ifBlank { aircraft.id.ifBlank { "Aircraft Export" } },
-      subtitle = "Hopply logbook export PDF",
+      subtitle = "SquawkIt logbook export PDF",
       summarySections = buildList {
         add(
           PdfSummarySection(

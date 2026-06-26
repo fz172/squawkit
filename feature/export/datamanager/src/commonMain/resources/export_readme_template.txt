@@ -1,4 +1,4 @@
-Hopply Logbook Export
+SquawkIt Logbook Export
 
 Generated: {{generated_at}}
 Scope:     {{scope}}
@@ -11,12 +11,12 @@ Archive layout
   - `csv/` contains the per-table CSV files.
   - `*.pdf` is the aircraft PDF reference export.
   - `attachments/` contains bundled binary attachments when available.
-  - `Hopply_Logs_*.xlsx` contains that aircraft's workbook export.
+  - `SquawkIt_Logs_*.xlsx` contains that aircraft's workbook export.
 
 How to import into Google Sheets
 1. Extract this ZIP and open the aircraft folder you want to import.
 2. Open https://sheets.google.com and create a new blank spreadsheet.
-3. File -> Import -> Upload -> choose that folder's Hopply_Logs_*.xlsx workbook.
+3. File -> Import -> Upload -> choose that folder's SquawkIt_Logs_*.xlsx workbook.
 4. Select "Replace spreadsheet" and click "Import data".
    The workbook already contains one tab for each exported table for that aircraft.
 
@@ -47,5 +47,5 @@ Notes
 - Attachment binaries are bundled under each aircraft folder's `attachments/` directory when available.
   They are not embedded in the XLSX workbook.
   LINK-type attachments show the original URL.
-- This export is a snapshot. It does not update when logs change in Hopply.
+- This export is a snapshot. It does not update when logs change in SquawkIt.
 {{attachment_notes}}

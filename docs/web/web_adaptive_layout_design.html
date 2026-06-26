@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WingsLog / Hopply — Adaptive Layout Redesign (Web + Large-Screen Tablet)</title>
+<title>WingsLog / SquawkIt — Adaptive Layout Redesign (Web + Large-Screen Tablet)</title>
 <style>
   :root{
     --primary:#1A5FAE; --primary-soft:#EAF1FC; --accent:#A7C8FF;
@@ -77,18 +77,18 @@
 <div class="wrap">
 
 <header class="hero">
-  <div class="eyebrow">WingsLog · Hopply — Design / Implementation Plan</div>
+  <div class="eyebrow">WingsLog · SquawkIt — Design / Implementation Plan</div>
   <h1>Adaptive Layout Redesign<br>Web &amp; Large-Screen Tablet</h1>
   <p class="sub">Move WingsLog from a single-column, phone-shaped Compose UI to a genuinely adaptive shell —
   persistent sidebar on desktop, navigation rail on tablet, bottom bar on phone — driven by the
-  <em>Hopply&nbsp;Web</em> design handoff. This document covers what to <strong>reuse</strong>,
+  <em>SquawkIt&nbsp;Web</em> design handoff. This document covers what to <strong>reuse</strong>,
   <strong>refactor</strong>, and <strong>remove</strong> in the current layout system, and how to switch
     between compact and wide adaptive layouts at runtime.</p>
   <div class="meta">
     <span class="tag status">Status: M8 landed</span>
     <span class="tag">Target: web + tablet (iPad, Android tablets)</span>
     <span class="tag">Compose Multiplatform 1.11 · Material3 1.9</span>
-    <span class="tag">Source: Hopply Web.html handoff</span>
+    <span class="tag">Source: SquawkIt Web.html handoff</span>
   </div>
 </header>
 
@@ -99,7 +99,7 @@ already exists in <code>WingslogTheme</code> and the design handoff — the work
 
 <nav class="toc">
   <a href="#tldr">0 · TL;DR</a>
-  <a href="#source">1 · The source design (Hopply Web)</a>
+  <a href="#source">1 · The source design (SquawkIt Web)</a>
   <a href="#current">2 · Current layout system — audit</a>
   <a href="#gap">3 · Gap analysis</a>
   <a href="#target">4 · Target adaptive architecture</a>
@@ -138,13 +138,13 @@ already exists in <code>WingslogTheme</code> and the design handoff — the work
 </ul>
 
 <!-- ============================================================= -->
-<h2 id="source"><span class="n">1</span>The source design — <em>Hopply Web</em></h2>
+<h2 id="source"><span class="n">1</span>The source design — <em>SquawkIt Web</em></h2>
 <p>The handoff bundle (<code>wingslog-app/</code>) is a React/CSS prototype. The primary file is
-<code>project/Hopply Web.html</code>, which composes <code>web/theme.css</code> (the adaptive design
+<code>project/SquawkIt Web.html</code>, which composes <code>web/theme.css</code> (the adaptive design
 system) plus per-screen JSX. The chat transcript (<code>chats/chat5.md</code>) records the intent:</p>
 <blockquote class="callout"><span class="lbl">Design intent (verbatim)</span>
 <p style="margin:6px 0 0">“Every screen is a 390px iOS frame stretched to fill a desktop window — back-buttons,
-bottom sheets, and a FAB don't belong on web… a genuinely adaptive Hopply web app, demonstrated
+bottom sheets, and a FAB don't belong on web… a genuinely adaptive SquawkIt web app, demonstrated
 phone → tablet → desktop.”</p></blockquote>
 
 <h3>Shell anatomy</h3>
@@ -579,8 +579,8 @@ routes.</p>
 </table>
 
 <div class="foot">
-  WingsLog (Hopply) · Adaptive Layout Redesign plan · derived from the <em>Hopply Web</em> design handoff
-  (<code>Hopply Web.html</code>, <code>web/theme.css</code>, <code>chats/chat5.md</code>) and a current-state
+  WingsLog (SquawkIt) · Adaptive Layout Redesign plan · derived from the <em>SquawkIt Web</em> design handoff
+  (<code>SquawkIt Web.html</code>, <code>web/theme.css</code>, <code>chats/chat5.md</code>) and a current-state
   audit of <code>AppEntry.kt</code>, <code>Screen.kt</code>, and <code>core/ui/.../AdaptiveLayout.kt</code>.
   Status: <strong>M8 landed</strong>. Keep commit hashes and milestone status updated as the
   adaptive shell continues to land.

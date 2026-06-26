@@ -8,7 +8,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 data class ExportedFile(
   /** Shareable reference to the archive: a `content://` URI on Android, a file path on iOS. */
   val filePath: String,
-  /** Display name of the archive (e.g. `Hopply_Logs_N532SL_20260519.zip`). */
+  /** Display name of the archive (e.g. `SquawkIt_Logs_N532SL_20260519.zip`). */
   val fileName: String,
   val displayLocationKind: ExportDisplayLocation,
   val sizeBytes: Long,

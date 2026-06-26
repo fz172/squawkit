@@ -93,7 +93,7 @@
       </div>
 
       <h2 id="problem">1. Problem &amp; Background</h2>
-      <p>Hopply lets people start immediately as a <b>guest</b> ("Continue without account" on the login screen, backed by Firebase anonymous auth). Guests get the full local-first experience: aircraft, maintenance logs, tasks, squawks, and attachments are written to the on-device SQLDelight store. The catch is severe and invisible:</p>
+      <p>SquawkIt lets people start immediately as a <b>guest</b> ("Continue without account" on the login screen, backed by Firebase anonymous auth). Guests get the full local-first experience: aircraft, maintenance logs, tasks, squawks, and attachments are written to the on-device SQLDelight store. The catch is severe and invisible:</p>
       <ul>
         <li><b>Guest data is local-only and never synced to an account.</b> The sync engine is idle for anonymous users (<code>user == null || user.isAnonymous</code> → no hydration, no push). Nothing leaves the device.</li>
         <li><b>Logging out erases everything, permanently.</b> We just shipped a warning dialog for exactly this, but a warning is a tombstone, not a solution.</li>
@@ -107,7 +107,7 @@
         <li>A guest can convert to a permanent Google/Apple account <b>without re-entering or losing any data</b>.</li>
         <li>The upgrade is <b>zero-friction</b>: one provider tap, no data migration the user has to think about.</li>
         <li>After upgrade, all existing on-device records are <b>synced to the account</b> and available on the user's other devices.</li>
-        <li>If the chosen account already has Hopply data, the guest's on-device records are <b>merged in</b>, not dropped.</li>
+        <li>If the chosen account already has SquawkIt data, the guest's on-device records are <b>merged in</b>, not dropped.</li>
         <li>The flow <b>never destroys data</b> on cancel, error, or interruption.</li>
       </ul>
       <h4>Non-Goals</h4>
@@ -174,7 +174,7 @@
       <h3>Merge path (account already exists)</h3>
       <ol>
         <li>Steps 1–2 as above; linking detects the credential already belongs to an account.</li>
-        <li>Confirm dialog: "This Google account already has Hopply data. Sync this device's records into it? You may see duplicates if you logged the same aircraft in both places."</li>
+        <li>Confirm dialog: "This Google account already has SquawkIt data. Sync this device's records into it? You may see duplicates if you logged the same aircraft in both places."</li>
         <li>On <b>Merge</b>: progress ("Syncing your records…") → success ("Syncing complete.").</li>
         <li>On <b>Cancel</b>: return to guest, no account switch, data untouched.</li>
       </ol>

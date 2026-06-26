@@ -15,7 +15,7 @@ message ExportRecord {
   // Shareable reference to the archive: a `content://` URI on Android, a file path on iOS.
   // Stable across write and list, so it is the join key between the index and the on-disk archive.
   string file_path = 1;
-  // Display name of the archive (e.g. `Hopply_Logs_N532SL_20260519.zip`).
+  // Display name of the archive (e.g. `SquawkIt_Logs_N532SL_20260519.zip`).
   string file_name = 2;
   int64 size_bytes = 3;
   // Creation time in epoch milliseconds, used to sort and label the entry.

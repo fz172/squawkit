@@ -74,10 +74,10 @@ feature/export/
       di/ExportDataManagerModule.kt
     src/androidMain/kotlin/.../impl/
       ZipFileWriter.android.kt          # java.util.zip.ZipOutputStream
-      ExportDestination.android.kt      # MediaStore Downloads/Hopply/
+      ExportDestination.android.kt      # MediaStore Downloads/SquawkIt/
     src/iosMain/kotlin/.../impl/
       ZipFileWriter.ios.kt              # pure-Kotlin store/deflate writer
-      ExportDestination.ios.kt          # ~/Documents/Hopply/
+      ExportDestination.ios.kt          # ~/Documents/SquawkIt/
     src/test/kotlin/.../impl/
       CsvWriterTest.kt
       LogbookExportWriterTest.kt        # golden CSV tests
@@ -196,7 +196,7 @@ sealed interface ExportProgress {
 }
 ```
 
-`displayLocation` is human-readable (`"Files → Hopply"` / `"Downloads/Hopply"`), distinct from `filePath` which is the raw OS path used by `Open`.
+`displayLocation` is human-readable (`"Files → SquawkIt"` / `"Downloads/SquawkIt"`), distinct from `filePath` which is the raw OS path used by `Open`.
 
 ### 3.3 UI state (in `update/viewmodel/`)
 
@@ -694,7 +694,7 @@ expect suspend fun resolveExportDestination(filename: String): ExportDestination
 
 data class ExportDestination(
   val path: Path,            // OS path where we write
-  val displayLocation: String, // human-readable, e.g. "Files → Hopply"
+  val displayLocation: String, // human-readable, e.g. "Files → SquawkIt"
   val openUri: String,       // hand to platform open intent
 )
 ```
@@ -706,7 +706,7 @@ actual suspend fun resolveExportDestination(filename: String): ExportDestination
   val values = ContentValues().apply {
     put(MediaStore.Downloads.DISPLAY_NAME, filename)
     put(MediaStore.Downloads.MIME_TYPE, "application/zip")
-    put(MediaStore.Downloads.RELATIVE_PATH, "Download/Hopply/")
+    put(MediaStore.Downloads.RELATIVE_PATH, "Download/SquawkIt/")
     put(MediaStore.Downloads.IS_PENDING, 1)
   }
   val resolver = context.contentResolver
@@ -726,18 +726,18 @@ minSdk is 33, so MediaStore's scoped storage flow is always available — no leg
 actual suspend fun resolveExportDestination(filename: String): ExportDestination {
   val fm = NSFileManager.defaultManager
   val docs = fm.URLsForDirectory(NSDocumentDirectory, NSUserDomainMask).first() as NSURL
-  val hopplyDir = docs.URLByAppendingPathComponent("Hopply", isDirectory = true)!!
-  fm.createDirectoryAtURL(hopplyDir, withIntermediateDirectories = true, ...)
-  val target = hopplyDir.URLByAppendingPathComponent(filename)!!
+  val squawkitDir = docs.URLByAppendingPathComponent("SquawkIt", isDirectory = true)!!
+  fm.createDirectoryAtURL(squawkitDir, withIntermediateDirectories = true, ...)
+  val target = squawkitDir.URLByAppendingPathComponent(filename)!!
   return ExportDestination(
     path = target.path!!.toPath(),
-    displayLocation = "Files → Hopply",
+    displayLocation = "Files → SquawkIt",
     openUri = target.absoluteString!!,
   )
 }
 ```
 
-The app's `Info.plist` already needs `UISupportsDocumentBrowser = false` and `LSSupportsOpeningDocumentsInPlace = true` for the Hopply Documents folder to show up in the Files app. **Action item:** verify these keys exist in `iosApp/iosApp/Info.plist`; add them in the implementation PR if missing.
+The app's `Info.plist` already needs `UISupportsDocumentBrowser = false` and `LSSupportsOpeningDocumentsInPlace = true` for the SquawkIt Documents folder to show up in the Files app. **Action item:** verify these keys exist in `iosApp/iosApp/Info.plist`; add them in the implementation PR if missing.
 
 ---
 
@@ -820,8 +820,8 @@ private fun chooseFileName(request: ExportRequest, now: Instant): String {
   val date = now.toLocalDateTime(timeZone).date.format(YYYYMMDD)
   return if (request.aircraftIds.size == 1) {
     val tail = sanitize(aircraft.tail_number.ifBlank { "aircraft" })
-    "Hopply_Logs_${tail}_$date.zip"
-  } else "Hopply_Logs_Fleet_$date.zip"
+    "SquawkIt_Logs_${tail}_$date.zip"
+  } else "SquawkIt_Logs_Fleet_$date.zip"
 }
 
 private fun sanitize(s: String) = s.replace(Regex("[^A-Za-z0-9-]"), "_")

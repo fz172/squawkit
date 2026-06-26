@@ -15,12 +15,12 @@ import java.io.IOException
 
 actual class ExportFileStore(private val context: Context) {
   // App-private index of export metadata. Survives alongside the user-visible archives in
-  // Downloads/Hopply; the archives are the source of truth for existence, this is the source of
+  // Downloads/SquawkIt; the archives are the source of truth for existence, this is the source of
   // truth for the scope (formats / date range / aircraft) that can't be read back off the file.
   private fun indexFile(ownerUid: String): File =
     File(context.filesDir, "export_record_index_${ownerUid.toFileSegment()}.pb")
 
-  // Writes through MediaStore so the archive lands in the user-visible Downloads/Hopply
+  // Writes through MediaStore so the archive lands in the user-visible Downloads/SquawkIt
   // folder without requiring storage permissions on Android 10+ (scoped storage).
   actual suspend fun writeZip(fileName: String, bytes: ByteArray): ExportedFile =
     withContext(Dispatchers.IO) {
@@ -29,7 +29,7 @@ actual class ExportFileStore(private val context: Context) {
       val pendingValues = ContentValues().apply {
         put(MediaStore.Downloads.DISPLAY_NAME, fileName)
         put(MediaStore.Downloads.MIME_TYPE, "application/zip")
-        put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/Hopply")
+        put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/SquawkIt")
         put(MediaStore.Downloads.IS_PENDING, 1)
       }
       val uri = resolver.insert(collection, pendingValues)
@@ -47,7 +47,7 @@ actual class ExportFileStore(private val context: Context) {
       ExportedFile(
         filePath = uri.toString(),
         fileName = fileName,
-        displayLocationKind = ExportDisplayLocation.DOWNLOADS_HOPPLY,
+        displayLocationKind = ExportDisplayLocation.DOWNLOADS_SQUAWKIT,
         sizeBytes = bytes.size.toLong(),
       )
     }
@@ -89,7 +89,7 @@ actual class ExportFileStore(private val context: Context) {
       MediaStore.Downloads.DATE_ADDED,
     )
     val selection = "${MediaStore.Downloads.RELATIVE_PATH} LIKE ?"
-    val selectionArgs = arrayOf("%${Environment.DIRECTORY_DOWNLOADS}/Hopply/%")
+    val selectionArgs = arrayOf("%${Environment.DIRECTORY_DOWNLOADS}/SquawkIt/%")
     val sortOrder = "${MediaStore.Downloads.DATE_ADDED} DESC"
 
     val records = mutableListOf<LocalArchiveRecord>()
@@ -107,7 +107,7 @@ actual class ExportFileStore(private val context: Context) {
             sizeBytes = cursor.getLong(sizeColumn),
             // DATE_ADDED is stored in seconds since the epoch.
             createdAtEpochMillis = cursor.getLong(dateColumn) * 1_000L,
-            displayLocation = ExportDisplayLocation.DOWNLOADS_HOPPLY,
+            displayLocation = ExportDisplayLocation.DOWNLOADS_SQUAWKIT,
           )
         }
       }

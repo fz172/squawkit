@@ -34,8 +34,8 @@ val isReleaseBuild = gradle.startParameter.taskNames.any {
 val storedPatch = versionProps.getProperty("patch", "0").toInt()
 val currentVersionCode = versionProps.getProperty("versionCode", "0").toInt()
 
-val patch: Int
-val nextVersionCode: Int
+var patch: Int
+var nextVersionCode: Int
 
 if (isReleaseBuild) {
   patch = if (storedDate == today) storedPatch + 1 else 1

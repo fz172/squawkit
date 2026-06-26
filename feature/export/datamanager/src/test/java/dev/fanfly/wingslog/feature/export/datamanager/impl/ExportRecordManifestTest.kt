@@ -115,6 +115,6 @@ class ExportRecordManifestTest {
     fileName = fileName,
     sizeBytes = size,
     createdAtEpochMillis = createdAt,
-    displayLocation = dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation.DOWNLOADS_HOPPLY,
+    displayLocation = dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation.DOWNLOADS_SQUAWKIT,
   )
 }

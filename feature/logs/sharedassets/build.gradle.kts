@@ -41,6 +41,7 @@ kotlin {
       implementation(project(":core:model"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
+      implementation(project(":core:ui:theme"))
       implementation(project(":core:datetime"))
       implementation(libs.components.resources)
       api(libs.compose.ui)

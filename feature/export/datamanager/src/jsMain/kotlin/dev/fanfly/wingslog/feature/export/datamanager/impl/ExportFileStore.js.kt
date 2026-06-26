@@ -30,7 +30,7 @@ actual class ExportFileStore {
       // No durable, app-reachable path exists on the web; the file name is the only stable handle.
       filePath = fileName,
       fileName = fileName,
-      displayLocationKind = ExportDisplayLocation.DOWNLOADS_HOPPLY,
+      displayLocationKind = ExportDisplayLocation.DOWNLOADS_SQUAWKIT,
       sizeBytes = bytes.size.toLong(),
     )
   }
