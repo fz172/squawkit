@@ -22,7 +22,7 @@ val minor = versionProps.getProperty(
   "minor",
   "0"
 ).toInt()
-val today: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+val today: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"))
 val storedDate: String = versionProps.getProperty(
   "buildDate",
   ""
