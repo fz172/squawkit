@@ -44,7 +44,12 @@ jobs:
 
       # Produces the production bundle in webApp/build/dist/js/productionExecutable,
       # which is the "public" directory configured in firebase.json.
+      # Raise Node's heap: webpack bundling the large Compose/Skiko output exceeds Node's default
+      # ~2 GB cap and dies with ERR_WORKER_OUT_OF_MEMORY. NODE_OPTIONS propagates to the worker
+      # thread too. 4 GB for Node + the Gradle daemon stays within the 7 GB private-repo runner.
       - name: Build production web bundle
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
         run: ./gradlew :webApp:jsBrowserDistribution --stacktrace
 
       - name: Deploy to Firebase Hosting
