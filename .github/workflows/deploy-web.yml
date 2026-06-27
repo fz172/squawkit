@@ -22,7 +22,22 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+
+      # Caches dependencies, the Gradle build cache (task outputs incl. the Kotlin/JS compile),
+      # and the Kotlin-managed Node/Yarn toolchain under ~/.gradle, so only the non-cacheable
+      # webpack bundling re-runs on subsequent runs.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Cache Kotlin/JS node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/js
+            kotlin-js-store
+          key: kotlinjs-${{ runner.os }}-${{ hashFiles('kotlin-js-store/yarn.lock') }}
+          restore-keys: |
+            kotlinjs-${{ runner.os }}-
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
