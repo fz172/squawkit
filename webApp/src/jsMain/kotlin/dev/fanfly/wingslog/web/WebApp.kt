@@ -35,7 +35,11 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
 import kotlinx.browser.document
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.rememberResourceEnvironment
 import org.w3c.dom.HTMLElement
+import wingslog.core.sharedassets.generated.resources.Res as UiRes
+import wingslog.core.sharedassets.generated.resources.app_name
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
@@ -73,6 +77,19 @@ fun WebApp() {
       modifier = Modifier.fillMaxSize(),
       color = MaterialTheme.colorScheme.background,
     ) {
+      // Web fetches the compose-resources string tables lazily, so on first paint stringResource()
+      // can return "" — shell tabs and other labels render blank until a manual refresh warms the
+      // cache. Warm the shared table once up front (using the same ResourceEnvironment the UI reads
+      // from, so the cache key matches) and hold content until it's ready, so labels are populated
+      // on the first composition. The themed Surface stays as the background during this brief load.
+      val resourceEnvironment = rememberResourceEnvironment()
+      var resourcesReady by remember { mutableStateOf(false) }
+      LaunchedEffect(resourceEnvironment) {
+        runCatching { getString(resourceEnvironment, UiRes.string.app_name) }
+        resourcesReady = true
+      }
+      if (!resourcesReady) return@Surface
+
       val navController = rememberNavController()
       val firebaseAuth: FirebaseAuth = koinInject()
       val analytics: AnalyticsManager = koinInject()
