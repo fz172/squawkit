@@ -137,7 +137,7 @@ fun EngineSection(
       FormTextField(
         label = stringResource(Res.string.make),
         value = hub.make,
-
+        textStyle = MaterialTheme.typography.bodyMedium,
         isError = showValidationErrors && hub.make.isBlank()
       ) {
         viewModel.onPropellerHubMakeChanged(
@@ -150,6 +150,7 @@ fun EngineSection(
           label = stringResource(Res.string.model),
           value = hub.model,
           modifier = Modifier.weight(1f),
+          textStyle = MaterialTheme.typography.bodyMedium,
           isError = showValidationErrors && hub.model.isBlank()
         ) {
           viewModel.onPropellerHubModelChanged(
@@ -164,6 +165,7 @@ fun EngineSection(
           ),
           value = hub.serial,
           modifier = Modifier.weight(1f),
+          textStyle = MaterialTheme.typography.bodyMedium,
           isError = showValidationErrors && hub.serial.isBlank()
         ) {
           viewModel.onPropellerHubSerialChanged(
@@ -178,6 +180,7 @@ fun EngineSection(
       Text(
         stringResource(SharedRes.string.blade_serial_numbers),
         style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier.padding(top = Spacing.extraSmall),
       )
       val blades = engine.propeller?.blades ?: emptyList()
       // Chunked(2) allows us to create rows of 2 for that 50/50 look
@@ -191,6 +194,7 @@ fun EngineSection(
               ),
               value = blade.serial,
               modifier = Modifier.weight(1f),
+              textStyle = MaterialTheme.typography.bodyMedium,
               trailingIcon = {
                 IconButton(onClick = {
                   viewModel.onRemoveBlade(
