@@ -130,7 +130,8 @@ fun EngineSection(
       // Propeller Section
       Text(
         stringResource(SharedRes.string.propeller_hub),
-        style = MaterialTheme.typography.labelSmall
+        style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier.padding(top = Spacing.extraSmall),
       )
       val hub = engine.propeller?.hub ?: PropellerHub()
       FormTextField(
@@ -174,7 +175,10 @@ fun EngineSection(
 
 
       // Blade Serial Numbers - Dynamic List
-      Text(stringResource(SharedRes.string.blade_serial_numbers))
+      Text(
+        stringResource(SharedRes.string.blade_serial_numbers),
+        style = MaterialTheme.typography.labelSmall,
+      )
       val blades = engine.propeller?.blades ?: emptyList()
       // Chunked(2) allows us to create rows of 2 for that 50/50 look
       blades.withIndex().chunked(2).forEach { pair ->
