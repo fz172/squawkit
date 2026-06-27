@@ -47,13 +47,6 @@ jobs:
       - name: Build production web bundle
         run: ./gradlew :webApp:jsBrowserDistribution --stacktrace
 
-      - name: Upload web bundle
-        uses: actions/upload-artifact@v5
-        with:
-          name: web-bundle
-          path: webApp/build/dist/js/productionExecutable
-          if-no-files-found: error
-
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
