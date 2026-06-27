@@ -10,6 +10,8 @@ data class SettingsUiState(
   val featureFlags: FeatureFlags = FeatureFlags(),
   // Guest (anonymous) accounts keep all data on-device only; logging out erases it permanently.
   val isAnonymous: Boolean = false,
+  // Debug or dogfood build: gates developer-only entries like Feature Lab.
+  val isDeveloperBuild: Boolean = false,
 )
 
 enum class UserStatus {

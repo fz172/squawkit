@@ -209,13 +209,16 @@ fun SettingsContent(
               onClick = { detailNav.navigate(Screen.ExportLogs.route) },
             )
           }
-          add {
-            SettingsRow(
-              icon = Icons.Default.Tune,
-              title = stringResource(SettingsRes.string.feature_lab),
-              subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
-              onClick = { detailNav.navigate(Screen.FeatureLab.route) },
-            )
+          // Feature Lab is a developer surface: only on debug and dogfood builds, never in release.
+          if (user.isDeveloperBuild) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.Tune,
+                title = stringResource(SettingsRes.string.feature_lab),
+                subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
+                onClick = { detailNav.navigate(Screen.FeatureLab.route) },
+              )
+            }
           }
         }
         SettingsRowGroup(rows = navRows)

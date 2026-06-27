@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.settings.data
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.appinfo.BuildInfo
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
@@ -90,7 +91,8 @@ class SettingsViewModelTest {
       attachmentManager,
       dbChecker,
       featureLabManager,
-      appearanceController
+      appearanceController,
+      BuildInfo(isDeveloperBuild = false),
     )
 
     viewModel.logOut()
@@ -107,7 +109,8 @@ class SettingsViewModelTest {
       attachmentManager,
       dbChecker,
       featureLabManager,
-      appearanceController
+      appearanceController,
+      BuildInfo(isDeveloperBuild = false),
     )
 
     viewModel.logOut()
@@ -124,7 +127,8 @@ class SettingsViewModelTest {
       attachmentManager,
       dbChecker,
       featureLabManager,
-      appearanceController
+      appearanceController,
+      BuildInfo(isDeveloperBuild = false),
     )
 
     viewModel.logOut()
@@ -142,7 +146,8 @@ class SettingsViewModelTest {
       attachmentManager,
       dbChecker,
       featureLabManager,
-      appearanceController
+      appearanceController,
+      BuildInfo(isDeveloperBuild = false),
     )
 
     viewModel.logOut()
@@ -160,7 +165,8 @@ class SettingsViewModelTest {
       attachmentManager,
       dbChecker,
       featureLabManager,
-      appearanceController
+      appearanceController,
+      BuildInfo(isDeveloperBuild = false),
     )
 
     viewModel.logOut()

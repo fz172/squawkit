@@ -8,6 +8,9 @@ import dev.fanfly.wingslog.feature.stresstest.config.registerStressTestRoutes
 import dev.fanfly.wingslog.feature.stresstest.config.stressTestKoinModules
 import org.koin.core.module.Module
 
+/** This source set is only compiled into the dogfood flavor. */
+const val IS_DOGFOOD_BUILD = true
+
 fun createDogfoodExtensions(): DogfoodFeatureExtensions = StressTestDogfoodExtensions()
 
 private class StressTestDogfoodExtensions : DogfoodFeatureExtensions {

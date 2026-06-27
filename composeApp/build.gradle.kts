@@ -55,6 +55,7 @@ kotlin {
       implementation(project(":feature:export:update"))
       implementation(project(":core:auth"))
       implementation(project(":core:analytics"))
+      implementation(project(":core:appinfo"))
       implementation(project(":core:nav"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))

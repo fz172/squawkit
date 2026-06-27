@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.di
 
 import dev.fanfly.wingslog.DogfoodFeatureExtensions
 import dev.fanfly.wingslog.NoOpDogfoodExtensions
+import dev.fanfly.wingslog.core.appinfo.BuildInfo
 import dev.fanfly.wingslog.core.analytics.di.platformAnalyticsModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
@@ -38,11 +39,13 @@ import org.koin.dsl.module
 
 fun initKoin(
   dogfoodExtensions: DogfoodFeatureExtensions = NoOpDogfoodExtensions,
+  isDeveloperBuild: Boolean = false,
   appDeclaration: KoinAppDeclaration = {},
 ) = startKoin {
   appDeclaration()
   val allModules = dogfoodExtensions.koinModules() + listOf(
     module { single<DogfoodFeatureExtensions> { dogfoodExtensions } },
+    module { single { BuildInfo(isDeveloperBuild = isDeveloperBuild) } },
     platformAnalyticsModule,
     commonAuthModule,
     storageModule,

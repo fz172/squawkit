@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.settings.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.appinfo.BuildInfo
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
@@ -22,9 +23,10 @@ class SettingsViewModel(
   private val dbChecker: DatabaseIntegrityChecker,
   private val featureLabManager: FeatureLabManager,
   private val appearanceController: AppearanceController,
+  private val buildInfo: BuildInfo,
 ) : ViewModel() {
 
-  private val _user = MutableStateFlow(SettingsUiState())
+  private val _user = MutableStateFlow(SettingsUiState(isDeveloperBuild = buildInfo.isDeveloperBuild))
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
 
   /** Device-local light/dark/system preference, shared with the root theme. */
@@ -48,7 +50,10 @@ class SettingsViewModel(
   }
 
   private fun loadUserProfile() {
-    _user.value = SettingsUiState(userStatus = UserStatus.LOADING)
+    _user.value = SettingsUiState(
+      userStatus = UserStatus.LOADING,
+      isDeveloperBuild = buildInfo.isDeveloperBuild,
+    )
     observeSelfJob?.cancel()
     observeSelfJob = viewModelScope.launch {
       technicianManager.observeSelf().collect { self ->

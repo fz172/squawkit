@@ -9,6 +9,8 @@ import dev.fanfly.wingslog.feature.sync.data.blob.UrlSessionUploadScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.Platform
 import org.koin.mp.KoinPlatform
 import platform.UIKit.UIViewController
 
@@ -17,13 +19,15 @@ object MainEntry {
     AppEntry()
   }
 
+  @OptIn(ExperimentalNativeApi::class)
   fun doInitKoin() {
-    initKoin {}
+    // Prod scheme: developer build only when this is a debug binary.
+    initKoin(isDeveloperBuild = Platform.isDebugBinary) {}
     runTombstoneGc()
   }
 
   fun doInitKoinDogfood() {
-    initKoin(dogfoodExtensions = StressTestDogfoodExtensions()) {}
+    initKoin(dogfoodExtensions = StressTestDogfoodExtensions(), isDeveloperBuild = true) {}
     runTombstoneGc()
   }
 

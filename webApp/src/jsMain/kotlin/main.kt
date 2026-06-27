@@ -1,5 +1,6 @@
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
+import dev.fanfly.wingslog.core.appinfo.BuildInfo
 import dev.fanfly.wingslog.core.analytics.di.platformAnalyticsModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
@@ -96,6 +97,8 @@ fun main() {
       module {
         // The host app owns the bundled sqlite-wasm worker file (persists to OPFS).
         single<Worker> { createSqliteWorker() }
+        // Deployed web is a release build; Feature Lab stays hidden.
+        single { BuildInfo(isDeveloperBuild = false) }
       },
     )
   }
