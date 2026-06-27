@@ -2,15 +2,23 @@ name: Deploy Web App
 
 on:
   workflow_dispatch:
+    inputs:
+      variant:
+        description: "Which web build to deploy"
+        type: choice
+        options:
+          - release
+          - debug
+        default: release
 
-# Never run two deploys at once; cancel an in-progress run if a newer one starts.
+# One in-flight deploy per variant; release and debug don't cancel each other.
 concurrency:
-  group: deploy-web
+  group: deploy-web-${{ inputs.variant }}
   cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Build & Deploy to Firebase Hosting
+    name: Build & Deploy ${{ inputs.variant }} to Firebase Hosting
     runs-on: ubuntu-latest
 
     steps:
@@ -47,9 +55,12 @@ jobs:
       # Raise Node's heap: webpack bundling the large Compose/Skiko output exceeds Node's default
       # ~2 GB cap and dies with ERR_WORKER_OUT_OF_MEMORY. NODE_OPTIONS propagates to the worker
       # thread too. 4 GB for Node + the Gradle daemon stays within the 7 GB private-repo runner.
+      # WINGSLOG_WEB_DEBUG=true (debug variant) flips the webpack-injected __WINGSLOG_DEBUG__ flag,
+      # which turns on developer surfaces like Feature Lab; release leaves it off.
       - name: Build production web bundle
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          WINGSLOG_WEB_DEBUG: ${{ inputs.variant == 'debug' }}
         run: ./gradlew :webApp:jsBrowserDistribution --stacktrace
 
       # Deploy via firebase-tools directly rather than FirebaseExtended/action-hosting-deploy.
@@ -58,20 +69,22 @@ jobs:
       # active version" even though the first attempt already released it. The action treats that
       # as a failure (and auto-reruns with --debug, deploying again). Calling the CLI ourselves lets
       # us treat that specific precondition as success, because the channel is already updated.
-      - name: Deploy to Firebase Hosting (alpha channel)
+      # release -> 'alpha' channel, debug -> 'debug' channel (both on the wingslog-9ca4e site).
+      - name: Deploy to Firebase Hosting
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WINGSLOG_9CA4E }}
+          CHANNEL: ${{ inputs.variant == 'debug' && 'debug' || 'alpha' }}
         run: |
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
           set +e
-          out=$(npx firebase-tools@latest hosting:channel:deploy alpha \
+          out=$(npx firebase-tools@latest hosting:channel:deploy "$CHANNEL" \
             --expires 7d --project wingslog-9ca4e --non-interactive 2>&1)
           code=$?
           echo "$out"
           rm -f "$RUNNER_TEMP/firebase-sa.json"
           if [ "$code" -ne 0 ] && echo "$out" | grep -q "is the current active version"; then
-            echo "::notice::Channel 'alpha' already points to this version — deploy succeeded; ignoring the non-idempotent release-retry error."
+            echo "::notice::Channel '$CHANNEL' already points to this version — deploy succeeded; ignoring the non-idempotent release-retry error."
             exit 0
           fi
           exit "$code"

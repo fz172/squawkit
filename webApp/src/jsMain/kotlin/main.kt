@@ -42,6 +42,11 @@ import org.koin.dsl.module
 import org.w3c.dom.Worker
 import kotlin.js.json
 
+// Resolved from the webpack-injected __WINGSLOG_DEBUG__ constant; falls back to false (release)
+// when the define is absent, e.g. the plain dev server.
+private val isWebDebugBuild: Boolean =
+  js("(typeof __WINGSLOG_DEBUG__ !== 'undefined') ? __WINGSLOG_DEBUG__ : false") as Boolean
+
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
   // Firebase JS has no google-services plugin to auto-init, so configure the default app
@@ -97,8 +102,10 @@ fun main() {
       module {
         // The host app owns the bundled sqlite-wasm worker file (persists to OPFS).
         single<Worker> { createSqliteWorker() }
-        // Deployed web is a release build; Feature Lab stays hidden.
-        single { BuildInfo(isDeveloperBuild = false) }
+        // __WINGSLOG_DEBUG__ is injected at bundle time by webpack DefinePlugin
+        // (webpack.config.d/debug-flag.js); true only for the debug web build, which surfaces
+        // developer-only entries like Feature Lab. Guarded with typeof so it's safe if undefined.
+        single { BuildInfo(isDeveloperBuild = isWebDebugBuild) }
       },
     )
   }
