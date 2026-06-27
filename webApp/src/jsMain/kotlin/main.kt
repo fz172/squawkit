@@ -33,10 +33,13 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
 import dev.fanfly.wingslog.feature.technician.manage.di.technicianManageModule
+import dev.fanfly.wingslog.web.ActiveElsewhereScreen
 import dev.fanfly.wingslog.web.EmojiFallbackProvider
 import dev.fanfly.wingslog.web.WebApp
 import dev.fanfly.wingslog.web.createSqliteWorker
+import dev.fanfly.wingslog.web.gateSingleTab
 import dev.fanfly.wingslog.web.initializeApp
+import kotlinx.browser.window
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import org.w3c.dom.Worker
@@ -49,6 +52,21 @@ private val isWebDebugBuild: Boolean =
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+  // The local database lives in OPFS, which only one tab can open at a time. Gate startup on an
+  // exclusive Web Lock: the first tab runs the app and holds the lock for its lifetime; any other
+  // tab shows ActiveElsewhereScreen instead of crashing the SQLite worker on createSyncAccessHandle.
+  gateSingleTab(
+    onPrimary = ::startPrimaryTab,
+    onActiveElsewhere = {
+      ComposeViewport(viewportContainerId = "ComposeTarget") {
+        ActiveElsewhereScreen(onReload = { window.location.reload() })
+      }
+    },
+  )
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+private fun startPrimaryTab() {
   // Firebase JS has no google-services plugin to auto-init, so configure the default app
   // explicitly. We call initializeApp directly (not GitLive's Firebase.initialize) so the config
   // can carry measurementId — required for Firebase Analytics, but not exposed by GitLive's
