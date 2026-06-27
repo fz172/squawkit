@@ -52,9 +52,26 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
         run: ./gradlew :webApp:jsBrowserDistribution --stacktrace
 
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WINGSLOG_9CA4E }}
-          projectId: wingslog-9ca4e
-          channelId: alpha
+      # Deploy via firebase-tools directly rather than FirebaseExtended/action-hosting-deploy.
+      # On this runner every HTTPS request hits "premature close" and firebase-tools retries; the
+      # non-idempotent channel-release POST then fails the retry with "version … is the current
+      # active version" even though the first attempt already released it. The action treats that
+      # as a failure (and auto-reruns with --debug, deploying again). Calling the CLI ourselves lets
+      # us treat that specific precondition as success, because the channel is already updated.
+      - name: Deploy to Firebase Hosting (alpha channel)
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WINGSLOG_9CA4E }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          set +e
+          out=$(npx firebase-tools@latest hosting:channel:deploy alpha \
+            --expires 7d --project wingslog-9ca4e --non-interactive 2>&1)
+          code=$?
+          echo "$out"
+          rm -f "$RUNNER_TEMP/firebase-sa.json"
+          if [ "$code" -ne 0 ] && echo "$out" | grep -q "is the current active version"; then
+            echo "::notice::Channel 'alpha' already points to this version — deploy succeeded; ignoring the non-idempotent release-retry error."
+            exit 0
+          fi
+          exit "$code"
