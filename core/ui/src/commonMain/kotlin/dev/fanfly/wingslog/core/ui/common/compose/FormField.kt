@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -93,10 +95,20 @@ fun FormTextField(
     // M3 OutlinedTextField has no contentPadding knob, so build it from the decoration box to
     // tighten the vertical padding (8dp vs the default 16dp) and shave the field height.
     val interactionSource = remember { MutableInteractionSource() }
+    // The floating label rides the top border and overflows ~half a line above the field's content
+    // box; with the tightened padding that overflow collided with the element above. Reserve a
+    // vertical margin of ~0.75 character height around the field so the label (and supporting text)
+    // have room. Derived from the text size so it scales with the user's font setting.
+    val labelMargin = with(LocalDensity.current) {
+      val charSp = textStyle.fontSize.takeIf { it != TextUnit.Unspecified }?.value ?: 14f
+      (charSp * 0.75f).sp.toDp()
+    }
     BasicTextField(
       value = value,
       onValueChange = onValueChange,
-      modifier = modifier.fillMaxWidth(),
+      modifier = modifier
+        .padding(vertical = labelMargin)
+        .fillMaxWidth(),
       singleLine = singleLine,
       minLines = minLines,
       maxLines = maxLines,
