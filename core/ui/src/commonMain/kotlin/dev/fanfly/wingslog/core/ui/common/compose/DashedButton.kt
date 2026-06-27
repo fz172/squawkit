@@ -21,6 +21,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 @Composable
@@ -28,6 +29,7 @@ fun DashedButton(
   label: String,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
+  height: Dp = Spacing.buttonHeight,
 ) {
   val stroke = Stroke(
     width = 4f,
@@ -48,7 +50,7 @@ fun DashedButton(
 
   Box(
     modifier = modifier
-      .height(Spacing.buttonHeight)
+      .height(height)
       .drawWithContent {
         drawContent()
         drawRoundRect(

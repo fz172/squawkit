@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.ui.common.compose
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,22 +10,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -55,6 +60,8 @@ fun FormTextField(
   trailingIcon: (@Composable () -> Unit)? = null,
   textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
   shape: Shape = RoundedCornerShape(Spacing.chipCornerRadius),
+  // Compact variant: tightens vertical content padding so the field reads shorter than the default.
+  dense: Boolean = false,
   onValueChange: (String) -> Unit,
 ) {
   val errorText =
@@ -75,6 +82,62 @@ fun FormTextField(
     return
   }
 
+  val fieldColors = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.outline,
+  )
+
+  if (dense) {
+    // M3 OutlinedTextField has no contentPadding knob, so build it from the decoration box to
+    // tighten the vertical padding (8dp vs the default 16dp) and shave the field height.
+    val interactionSource = remember { MutableInteractionSource() }
+    BasicTextField(
+      value = value,
+      onValueChange = onValueChange,
+      modifier = modifier.fillMaxWidth(),
+      singleLine = singleLine,
+      minLines = minLines,
+      maxLines = maxLines,
+      keyboardOptions = keyboardOptions,
+      textStyle = textStyle.merge(TextStyle(color = MaterialTheme.colorScheme.onSurface)),
+      cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+      interactionSource = interactionSource,
+      decorationBox = { innerTextField ->
+        OutlinedTextFieldDefaults.DecorationBox(
+          value = value,
+          innerTextField = innerTextField,
+          enabled = true,
+          singleLine = singleLine,
+          visualTransformation = VisualTransformation.None,
+          interactionSource = interactionSource,
+          isError = isError,
+          label = { Text(label.uppercase()) },
+          placeholder = placeholder?.let { { Text(it) } },
+          leadingIcon = leadingIcon,
+          trailingIcon = trailingIcon,
+          supportingText = errorText?.let { { Text(it) } },
+          colors = fieldColors,
+          contentPadding = OutlinedTextFieldDefaults.contentPadding(
+            top = Spacing.small,
+            bottom = Spacing.small,
+          ),
+          container = {
+            OutlinedTextFieldDefaults.Container(
+              enabled = true,
+              isError = isError,
+              interactionSource = interactionSource,
+              colors = fieldColors,
+              shape = shape,
+            )
+          },
+        )
+      },
+    )
+    return
+  }
+
   OutlinedTextField(
     value = value,
     onValueChange = onValueChange,
@@ -91,12 +154,7 @@ fun FormTextField(
     supportingText = errorText?.let { { Text(it) } },
     keyboardOptions = keyboardOptions,
     textStyle = textStyle,
-    colors = OutlinedTextFieldDefaults.colors(
-      focusedBorderColor = MaterialTheme.colorScheme.primary,
-      unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-      focusedLabelColor = MaterialTheme.colorScheme.primary,
-      unfocusedLabelColor = MaterialTheme.colorScheme.outline,
-    ),
+    colors = fieldColors,
   )
 }
 

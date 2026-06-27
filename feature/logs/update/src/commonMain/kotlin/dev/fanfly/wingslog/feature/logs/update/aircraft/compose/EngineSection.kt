@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
@@ -138,6 +139,7 @@ fun EngineSection(
         label = stringResource(Res.string.make),
         value = hub.make,
         textStyle = MaterialTheme.typography.bodyMedium,
+        dense = true,
         isError = showValidationErrors && hub.make.isBlank()
       ) {
         viewModel.onPropellerHubMakeChanged(
@@ -151,6 +153,7 @@ fun EngineSection(
           value = hub.model,
           modifier = Modifier.weight(1f),
           textStyle = MaterialTheme.typography.bodyMedium,
+          dense = true,
           isError = showValidationErrors && hub.model.isBlank()
         ) {
           viewModel.onPropellerHubModelChanged(
@@ -166,6 +169,7 @@ fun EngineSection(
           value = hub.serial,
           modifier = Modifier.weight(1f),
           textStyle = MaterialTheme.typography.bodyMedium,
+          dense = true,
           isError = showValidationErrors && hub.serial.isBlank()
         ) {
           viewModel.onPropellerHubSerialChanged(
@@ -195,6 +199,7 @@ fun EngineSection(
               value = blade.serial,
               modifier = Modifier.weight(1f),
               textStyle = MaterialTheme.typography.bodyMedium,
+              dense = true,
               trailingIcon = {
                 IconButton(onClick = {
                   viewModel.onRemoveBlade(
@@ -227,7 +232,7 @@ fun EngineSection(
           modifier = Modifier
             .weight(1f)
             .padding(vertical = Spacing.small),
-
+          height = 44.dp,
           onClick = { viewModel.onAddBlade(engineIndex) })
         Spacer(Modifier.weight(1f))
       }
