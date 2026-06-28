@@ -1,7 +1,7 @@
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
-import dev.fanfly.wingslog.core.appinfo.BuildInfo
 import dev.fanfly.wingslog.core.analytics.di.platformAnalyticsModule
+import dev.fanfly.wingslog.core.appinfo.BuildInfo
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule

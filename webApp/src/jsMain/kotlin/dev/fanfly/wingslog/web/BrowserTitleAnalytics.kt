@@ -15,7 +15,7 @@ private const val BRAND = "SquawkIt"
  */
 fun webPageTitle(screenName: String): String {
   val page = when {
-    screenName == "login" -> "Sign in"
+    screenName == "login" -> ""
     screenName == "settings_root" || screenName == "shell/settings" -> "Settings"
     screenName == "shell/dashboard" -> "Dashboard"
     screenName.startsWith("shell/squawks") -> "Squawks"

@@ -135,6 +135,11 @@ fun WebApp() {
               }
               browserNavigationBound = true
             },
+            // Web swaps the shared LoginScreen for the SEO landing page; the onboarding tail
+            // (name entry + welcome) and Firebase auth wiring are reused unchanged.
+            loginContent = { onLoginSuccess ->
+              WebLoginLandingScreen(onLoginSuccess = onLoginSuccess)
+            },
           )
         }
         composable(Screen.AdaptiveShell.route) {

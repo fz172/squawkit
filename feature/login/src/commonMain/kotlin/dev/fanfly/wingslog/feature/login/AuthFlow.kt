@@ -30,6 +30,11 @@ private enum class AuthStep { Login, NameEntry, Welcome }
  *
  * Name persistence is delegated to [OnboardingActions]; the welcome flag goes
  * through [OnboardingPreferences] (local store).
+ *
+ * [loginContent] is the sign-in step's UI. It defaults to the shared [LoginScreen] used by Android
+ * and iOS; the web host overrides it with its SEO landing page (see WebLoginLandingScreen) while
+ * reusing the same onboarding tail. The slot receives the `onLoginSuccess` callback to invoke once
+ * the user is authenticated.
  */
 @Composable
 fun AuthFlow(
@@ -38,6 +43,12 @@ fun AuthFlow(
   firebaseAuth: FirebaseAuth = koinInject(),
   actions: OnboardingActions = koinInject(),
   onboardingPreferences: OnboardingPreferences = koinInject(),
+  loginContent: @Composable (onLoginSuccess: () -> Unit) -> Unit = { onLoginSuccess ->
+    LoginScreen(
+      loginViewModel = loginViewModel,
+      onLoginSuccess = onLoginSuccess,
+    )
+  },
 ) {
   val scope = rememberCoroutineScope()
   var step by remember { mutableStateOf(AuthStep.Login) }
@@ -45,10 +56,9 @@ fun AuthFlow(
     .collectAsState(null)
 
   when (step) {
-    AuthStep.Login -> LoginScreen(
-      loginViewModel = loginViewModel,
-      onLoginSuccess = {
-        // A returning user who already finished onboarding skips straight through.
+    AuthStep.Login -> loginContent(
+      // A returning user who already finished onboarding skips straight through.
+      {
         scope.launch {
           val accountName = firebaseAuth.currentUser?.displayName.orEmpty()
           val localSelfName = actions.observeSelfName()
