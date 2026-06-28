@@ -1,5 +1,5 @@
 ---
-name: SquawkIt (Wingslog)
+name: SquawkIt
 description: Aviation maintenance logbook for pilots and mechanics — safety-critical records, zero friction.
 colors:
   aviation-blue: "#1A5FAE"
@@ -391,7 +391,7 @@ The fleet list **is** the page. No hero metrics. Primary data is the list of air
 
 ```
 ┌───────────────────────────┐
-│ WingsLog    [AvatarIcon]  │ ← TopAppBar (ConstrainedTopBar)
+│ SquawkIt    [AvatarIcon]  │ ← TopAppBar (ConstrainedTopBar)
 │                           │
 │ ┌────────────────────┐    │
 │ │ Sling TSi        → │    │ ← AircraftDashboardCard

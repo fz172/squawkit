@@ -8,7 +8,7 @@ The canonical guidance for this repo lives in [AGENTS.md](AGENTS.md). Read it fi
 
 ## Quick orientation
 
-WingsLog (user-facing brand: **SquawkIt**) is a Kotlin Multiplatform aviation logbook / fleet management app targeting Android, iOS, and web with Compose Multiplatform. Package: `dev.fanfly.wingslog`.
+**SquawkIt** is a Kotlin Multiplatform aviation logbook / fleet management app targeting Android, iOS, and web with Compose Multiplatform. The codebase still uses the original **WingsLog** name for identifiers (package `dev.fanfly.wingslog`, Gradle module names); only the user-facing brand is SquawkIt.
 
 **Architecture in one line:** MVVM + StateFlow, Koin DI, local-first `EntityStore` (SQLDelight) as the single source of truth, with a background Firestore sync engine (`feature/sync`) as the *only* Firestore client. Feature managers never touch Firestore directly.
 

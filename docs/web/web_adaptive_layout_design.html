@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WingsLog / SquawkIt — Adaptive Layout Redesign (Web + Large-Screen Tablet)</title>
+<title>SquawkIt — Adaptive Layout Redesign (Web + Large-Screen Tablet)</title>
 <style>
   :root{
     --primary:#1A5FAE; --primary-soft:#EAF1FC; --accent:#A7C8FF;
@@ -77,9 +77,9 @@
 <div class="wrap">
 
 <header class="hero">
-  <div class="eyebrow">WingsLog · SquawkIt — Design / Implementation Plan</div>
+  <div class="eyebrow">SquawkIt — Design / Implementation Plan</div>
   <h1>Adaptive Layout Redesign<br>Web &amp; Large-Screen Tablet</h1>
-  <p class="sub">Move WingsLog from a single-column, phone-shaped Compose UI to a genuinely adaptive shell —
+  <p class="sub">Move SquawkIt from a single-column, phone-shaped Compose UI to a genuinely adaptive shell —
   persistent sidebar on desktop, navigation rail on tablet, bottom bar on phone — driven by the
   <em>SquawkIt&nbsp;Web</em> design handoff. This document covers what to <strong>reuse</strong>,
   <strong>refactor</strong>, and <strong>remove</strong> in the current layout system, and how to switch
@@ -263,7 +263,7 @@ build a custom shell is discussed in §4.3.</p>
 <h3>4.2 The window-width tier model</h3>
 <p>Material3’s default <code>WindowWidthSizeClass</code> buckets (Compact &lt;600, Medium 600–840,
 Expanded ≥840) are coarser than the prototype’s CSS breakpoints. Define a single source of truth that
-maps width to a WingsLog tier, approximating the design’s px thresholds as dp:</p>
+maps width to a SquawkIt tier, approximating the design’s px thresholds as dp:</p>
 <pre><span class="c">// core/ui/.../compose/LayoutTier.kt  (new)</span>
 enum class LayoutTier { COMPACT, MEDIUM, EXPANDED, LARGE }
 
@@ -579,7 +579,7 @@ routes.</p>
 </table>
 
 <div class="foot">
-  WingsLog (SquawkIt) · Adaptive Layout Redesign plan · derived from the <em>SquawkIt Web</em> design handoff
+  SquawkIt · Adaptive Layout Redesign plan · derived from the <em>SquawkIt Web</em> design handoff
   (<code>SquawkIt Web.html</code>, <code>web/theme.css</code>, <code>chats/chat5.md</code>) and a current-state
   audit of <code>AppEntry.kt</code>, <code>Screen.kt</code>, and <code>core/ui/.../AdaptiveLayout.kt</code>.
   Status: <strong>M8 landed</strong>. Keep commit hashes and milestone status updated as the

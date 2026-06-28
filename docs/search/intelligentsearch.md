@@ -1,11 +1,11 @@
-# Intelligent Search Implementation for WingsLog
+# Intelligent Search Implementation for SquawkIt
 
 > **Status — Not yet implemented (research only).** No FTS5 tables or embedding/vector code exist in the
 > codebase yet. This document remains forward-looking research; the local-first SQLDelight store
 > (`core/storage`) is the foundation a future implementation would build on.
 
 This document outlines the research and architectural strategy for implementing a tolerant,
-"smart" search algorithm within WingsLog — a Kotlin Multiplatform (KMP) maintenance log
+"smart" search algorithm within SquawkIt — a Kotlin Multiplatform (KMP) maintenance log
 application using SQLDelight.
 
 ---

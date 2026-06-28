@@ -18,7 +18,7 @@
 
 ### 1. Problem & Goals
 
-Today every WingsLog write goes directly to Firebase Firestore, and the UI's reactive flows are wired to Firestore snapshots. This means:
+Today every SquawkIt write goes directly to Firebase Firestore, and the UI's reactive flows are wired to Firestore snapshots. This means:
 
 - The app does not work meaningfully offline.
 - Anonymous users (Firebase anonymous auth principals — they have a real uid, but it is ephemeral and device-tied) have their writes flow to Firestore under an account they cannot recover, which is the wrong default for a "kicking the tires" experience.
@@ -37,7 +37,7 @@ Today every WingsLog write goes directly to Firebase Firestore, and the UI's rea
 
 #### Non-goals (this milestone)
 
-- Multi-device conflict resolution beyond last-writer-wins keyed on Firestore server timestamp. WingsLog is single-user-per-account; LWW is sufficient.
+- Multi-device conflict resolution beyond last-writer-wins keyed on Firestore server timestamp. SquawkIt is single-user-per-account; LWW is sufficient.
 - End-to-end encryption of the local store (OS sandbox is the trust boundary for v1).
 - Implementing digital signatures — only ensure the schema can absorb them later.
 - A migration tool for existing cloud-only users (covered in §9).

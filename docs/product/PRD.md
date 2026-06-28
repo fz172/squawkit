@@ -1,8 +1,8 @@
-# Product Requirements Document (PRD): WingsLog
+# Product Requirements Document (PRD): SquawkIt
 
 ## 1. Product Overview
 
-WingsLog is a digital logbook and fleet management application designed for aircraft owners and
+SquawkIt is a digital logbook and fleet management application designed for aircraft owners and
 mechanics. It serves as a central hub to track aircraft details, manage maintenance logs, ensure
 regulatory compliance/airworthiness, and perform essential flight planning calculations like
 Weight & Balance.

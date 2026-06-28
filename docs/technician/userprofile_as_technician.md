@@ -137,7 +137,7 @@ Stored at `users/{uid}/UserInfo/main` via a new `CollectionKind.UserInfo` entry 
 
 #### 4a. The hydration race condition
 
-A naive bootstrap that reads `UserInfo` from the local `EntityStore` has a critical flaw on restore and re-login. WingsLog wipes local data on logout; after the next sign-in, hydration (pulling data from Firestore into local storage) runs concurrently with the rest of app initialisation. If bootstrap checks the local store before hydration has pulled `UserInfo`, it sees an empty result, concludes no self-technician exists, and creates a duplicate. Hydration then pulls the old `UserInfo` (pointing to the original technician), leaving two conflicting writes in Firestore and an orphaned technician document. The user's backed-up credentials are silently lost.
+A naive bootstrap that reads `UserInfo` from the local `EntityStore` has a critical flaw on restore and re-login. SquawkIt wipes local data on logout; after the next sign-in, hydration (pulling data from Firestore into local storage) runs concurrently with the rest of app initialisation. If bootstrap checks the local store before hydration has pulled `UserInfo`, it sees an empty result, concludes no self-technician exists, and creates a duplicate. Hydration then pulls the old `UserInfo` (pointing to the original technician), leaving two conflicting writes in Firestore and an orphaned technician document. The user's backed-up credentials are silently lost.
 
 #### 4b. Fix: gate bootstrap on sync state
 

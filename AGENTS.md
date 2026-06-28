@@ -4,7 +4,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## What This Is
 
-WingsLog is a **Kotlin Multiplatform** app for aviation logbook and fleet management — aircraft
+SquawkIt is a **Kotlin Multiplatform** app for aviation logbook and fleet management — aircraft
 CRUD, maintenance logs, inspection compliance tracking, and due-status computation. Targets
 Android (minSdk 33), iOS, and web sharing Compose Multiplatform UI.
 

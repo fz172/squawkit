@@ -74,14 +74,14 @@
       <span class="pill">core:analytics · composeApp · feature:sync · feature:export</span>
     </div>
     <h1>Product Analytics — Technical Design</h1>
-    <p class="lede">Instrument WingsLog (SquawkIt) across Android, iOS, and web with Firebase Analytics → GA4: automatic page-view tracking, manual-but-enforced button-click events, latency for attachment download &amp; export, and app-version / platform distribution. Built to scale as new pages are added.</p>
+    <p class="lede">Instrument SquawkIt across Android, iOS, and web with Firebase Analytics → GA4: automatic page-view tracking, manual-but-enforced button-click events, latency for attachment download &amp; export, and app-version / platform distribution. Built to scale as new pages are added.</p>
   </div>
 
   <div class="page-shell">
   <div class="doc-body">
 
   <h2 id="context">1. Context &amp; Goals</h2>
-  <p>WingsLog currently ships <strong>no product analytics</strong>. We want to understand real usage across the three targets without bolting on per-screen boilerplate. Concretely:</p>
+  <p>SquawkIt currently ships <strong>no product analytics</strong>. We want to understand real usage across the three targets without bolting on per-screen boilerplate. Concretely:</p>
   <ul>
     <li><strong>Page displays</strong> — every screen view, automatically, including future screens.</li>
     <li><strong>Button clicks</strong> — taps on actionable controls, with a stable, readable id.</li>
