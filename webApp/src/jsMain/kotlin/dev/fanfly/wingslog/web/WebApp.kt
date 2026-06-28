@@ -92,7 +92,10 @@ fun WebApp() {
 
       val navController = rememberNavController()
       val firebaseAuth: FirebaseAuth = koinInject()
-      val analytics: AnalyticsManager = koinInject()
+      // Wrap the platform manager so every screen view also retitles the browser tab (and tags the
+      // event with page_title). Wrapping once + providing it to LocalAnalytics covers all call sites.
+      val baseAnalytics: AnalyticsManager = koinInject()
+      val analytics = remember(baseAnalytics) { BrowserTitleAnalytics(baseAnalytics) }
       var browserNavigationBound by remember { mutableStateOf(false) }
 
       LaunchedEffect(Unit) {
