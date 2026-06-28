@@ -286,3 +286,23 @@ Both wiring files are structurally identical — they implement `DogfoodFeatureE
 - **`technician/manage`**: This feature uses `manage/` instead of the canonical `viewing/` + `update/` split — both read and write screens coexist in one submodule. New features should prefer the canonical pattern unless the feature is inherently CRUD-only with no standalone viewing screen.
 - **Feature flags**: Controlled by `FeatureLabManager` (Firestore-backed; `attachmentUploadEnabled` gates the attachment UI). Check `FeatureFlags` before shipping experimental code paths.
 - **Transitive deps**: `core:storage` and `core:ui` api-export most shared deps; don't redeclare them in downstream modules.
+
+## Engineering Best Practices
+
+### Post-task cleanup pass (required)
+
+After finishing a large job — a sizable feature implementation, a big refactor, or any multi-file
+change — perform a cleanup pass over **all changed `.kt` files before the final commit**.
+
+**Why:** inline fully-qualified class paths, stray blank lines, and formatting inconsistencies
+accumulate during implementation. Catching them before commit keeps the diff clean and the history
+reviewable.
+
+**How to apply** — scan every changed file for:
+
+1. **Fully-qualified class references used inline** instead of being imported — e.g.
+   `kotlinx.coroutines.flow.flowOf(...)` should become an `import` plus the short name `flowOf(...)`.
+2. **Trailing blank lines** at the end of files.
+3. **Extra blank lines** — collapse double-or-more blank lines where a single blank line is expected.
+4. **Import ordering** — `kotlin.*` before `kotlinx.*`, alphabetical within each group.
+5. **Other formatting issues** — inconsistent indentation, and long lines that should wrap.
