@@ -306,3 +306,23 @@ reviewable.
 3. **Extra blank lines** — collapse double-or-more blank lines where a single blank line is expected.
 4. **Import ordering** — `kotlin.*` before `kotlinx.*`, alphabetical within each group.
 5. **Other formatting issues** — inconsistent indentation, and long lines that should wrap.
+
+### User-facing strings must live in `strings.xml` (required)
+
+Every user-facing string must be defined in a `strings.xml` resource and referenced via the
+generated `Res`/`stringResource` — never hardcoded inline in Compose or other UI code.
+
+**Where the resource goes** — placement follows actual usage:
+
+1. **Used by a single module** → put it in that module's own resource folder
+   (`src/commonMain/composeResources/values/strings.xml`).
+2. **Shared by another module that already depends on the owner** → keep it in the owning module;
+   the consumer reads it through the existing dependency.
+3. **Shared across modules with no existing dependency**, where adding one just for a resource
+   doesn't make sense → put it in a `sharedassets/` target (e.g. `feature/foobar/sharedassets`) and
+   depend on that from both sides. `sharedassets` carries no feature deps (see the dependency rules
+   above), so it's the right home for cross-feature resources.
+
+**Reuse before adding.** Share strings and other resources as much as possible. Before creating a
+new string, search for an existing one (`core/sharedassets`, the feature's `sharedassets`, and the
+relevant module) and reuse it rather than duplicating.
