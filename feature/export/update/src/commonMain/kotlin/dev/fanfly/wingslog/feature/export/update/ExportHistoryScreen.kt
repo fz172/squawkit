@@ -71,11 +71,11 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_all_time
 import wingslog.feature.export.sharedassets.generated.resources.export_email_body
 import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
-import wingslog.feature.export.sharedassets.generated.resources.export_history_delete
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body_cloud_only
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body_device_and_cloud
@@ -467,7 +467,7 @@ private fun ExportHistoryCard(
             onDelete()
           },
         ) {
-          Text(stringResource(Res.string.export_history_delete).uppercase())
+          Text(stringResource(CoreRes.string.delete).uppercase())
         }
       },
       dismissButton = {

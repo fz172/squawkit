@@ -39,9 +39,13 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import wingslog.core.sharedassets.generated.resources.empty_add_aircraft
+import wingslog.feature.aircraft.dashboard.generated.resources.aircraft_load_error
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.aircraft.dashboard.generated.resources.Res as DashboardRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
@@ -74,7 +78,7 @@ fun ShellSectionBody(
       contentAlignment = Alignment.Center
     ) {
       Text(
-        "Add an aircraft to get started",
+        stringResource(CoreRes.string.empty_add_aircraft),
         style = MaterialTheme.typography.bodyMedium
       )
     }
@@ -257,7 +261,7 @@ fun AircraftSectionContent(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
       ) {
-        Text("Couldn't load this aircraft")
+        Text(stringResource(DashboardRes.string.aircraft_load_error))
       }
 
     is AircraftOverviewUiState.Success -> {

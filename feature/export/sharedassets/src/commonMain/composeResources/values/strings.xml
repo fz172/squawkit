@@ -8,7 +8,6 @@
   <string name="export_format_csv_sub">Plain text</string>
   <string name="export_format_xlsx_sub">Spreadsheet</string>
   <string name="export_formats_helper">%1$s bundled in a ZIP with your attached files.</string>
-  <string name="export_formats_helper_empty">Pick at least one report format.</string>
   <string name="export_format_pick_one">Pick at least one format</string>
 
   <!-- Setup: aircraft -->
@@ -18,7 +17,6 @@
   <string name="export_untitled_aircraft">Untitled aircraft</string>
   <string name="export_aircraft_details_incomplete">Aircraft details incomplete</string>
   <string name="export_no_aircraft_title">No aircraft to export</string>
-  <string name="export_no_aircraft_body">Add an aircraft in Fleet to get started.</string>
 
   <!-- Setup: date range -->
   <string name="export_date_range_section">Date range</string>
@@ -96,7 +94,6 @@ Thank you for choosing SquawkIt.</string>
   <string name="export_error_title">Export failed</string>
   <string name="export_error_subtitle">Something went wrong while building the ZIP. Try again in a moment.</string>
   <string name="export_error_details">If this keeps happening, contact support@fanfly.dev so we can look into it.</string>
-  <string name="export_try_again">Try again</string>
   <string name="export_back_to_setup">Back to setup</string>
 
   <!-- History -->
@@ -124,7 +121,6 @@ Thank you for choosing SquawkIt.</string>
   <string name="export_history_status_device">On device</string>
   <string name="export_history_remote_expires_on">Cloud copy expires %1$s</string>
   <string name="export_history_remote_expired">Cloud copy expired %1$s</string>
-  <string name="export_history_delete">Delete</string>
   <string name="export_history_delete_confirm_title">Delete export?</string>
   <string name="export_history_delete_confirm_body">%1$s will be permanently removed from this device.</string>
   <string name="export_history_delete_confirm_body_device_and_cloud">%1$s will be permanently removed from this device and cloud.</string>

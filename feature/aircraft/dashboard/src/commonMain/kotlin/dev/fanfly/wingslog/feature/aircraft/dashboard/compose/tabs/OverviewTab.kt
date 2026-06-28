@@ -58,7 +58,19 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.CriticalAlertsSection
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.all
 import wingslog.core.sharedassets.generated.resources.make_model_template
+import wingslog.feature.aircraft.dashboard.generated.resources.Res
+import wingslog.feature.aircraft.dashboard.generated.resources.overview_all_logs
+import wingslog.feature.aircraft.dashboard.generated.resources.overview_next_due
+import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_logs_body
+import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_logs_title
+import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_squawks_body
+import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_squawks_title
+import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_tasks_body
+import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_tasks_title
+import wingslog.feature.aircraft.dashboard.generated.resources.overview_open_squawks
+import wingslog.feature.aircraft.dashboard.generated.resources.overview_recent_activity
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
@@ -265,16 +277,16 @@ private fun DashboardLowerGrid(
     horizontalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
     RailCard(
-      title = "Recent activity",
-      actionLabel = "All logs",
+      title = stringResource(Res.string.overview_recent_activity),
+      actionLabel = stringResource(Res.string.overview_all_logs),
       onActionClick = onLogsClick,
       modifier = Modifier.weight(1f),
     ) {
       if (state.recentLogs.isEmpty()) {
         EmptyRailState(
           icon = Icons.Default.Description,
-          title = "No logs yet",
-          body = "Add the first maintenance entry to start the aircraft record.",
+          title = stringResource(Res.string.overview_no_logs_title),
+          body = stringResource(Res.string.overview_no_logs_body),
         )
       } else {
         state.recentLogs.forEachIndexed { index, log ->
@@ -295,32 +307,32 @@ private fun DashboardLowerGrid(
       verticalArrangement = Arrangement.spacedBy(Spacing.large),
     ) {
       if (nextTask != null) {
-        RailCard(title = "Next due") {
+        RailCard(title = stringResource(Res.string.overview_next_due)) {
           TaskCardItem(
             cardWithStatus = nextTask,
             onClick = { onTaskClick(nextTask) },
           )
         }
       } else {
-        RailCard(title = "Next due") {
+        RailCard(title = stringResource(Res.string.overview_next_due)) {
           EmptyRailState(
             icon = Icons.Default.CheckCircle,
-            title = "No upcoming tasks",
-            body = "Scheduled maintenance is up to date.",
+            title = stringResource(Res.string.overview_no_tasks_title),
+            body = stringResource(Res.string.overview_no_tasks_body),
           )
         }
       }
 
       RailCard(
-        title = "Open squawks",
-        actionLabel = "All",
+        title = stringResource(Res.string.overview_open_squawks),
+        actionLabel = stringResource(CoreRes.string.all),
         onActionClick = onViewSquawksClick
       ) {
         if (openSquawks.isEmpty()) {
           EmptyRailState(
             icon = Icons.Default.CheckCircle,
-            title = "No open squawks",
-            body = "No active discrepancies for this aircraft.",
+            title = stringResource(Res.string.overview_no_squawks_title),
+            body = stringResource(Res.string.overview_no_squawks_body),
           )
         } else {
           val previewSquawks = openSquawks.take(3)

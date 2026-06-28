@@ -38,6 +38,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:sharedassets"))
       implementation(libs.compose.runtime)
       implementation(libs.compose.foundation)
       implementation(libs.material3)

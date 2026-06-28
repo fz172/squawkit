@@ -104,6 +104,8 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.done
+import wingslog.core.sharedassets.generated.resources.empty_add_aircraft
+import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_details_incomplete
 import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_section
@@ -126,14 +128,13 @@ import wingslog.feature.export.sharedassets.generated.resources.export_estimated
 import wingslog.feature.export.sharedassets.generated.resources.export_footer_aircraft_count
 import wingslog.feature.export.sharedassets.generated.resources.export_format_csv_sub
 import wingslog.feature.export.sharedassets.generated.resources.export_format_pdf_sub
+import wingslog.feature.export.sharedassets.generated.resources.export_format_pick_one
 import wingslog.feature.export.sharedassets.generated.resources.export_format_xlsx_sub
-import wingslog.feature.export.sharedassets.generated.resources.export_formats_helper_empty
 import wingslog.feature.export.sharedassets.generated.resources.export_formats_section
 import wingslog.feature.export.sharedassets.generated.resources.export_history_action
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_location_downloads_squawkit
 import wingslog.feature.export.sharedassets.generated.resources.export_location_files_squawkit
-import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_body
 import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_title
 import wingslog.feature.export.sharedassets.generated.resources.export_primary_action
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_building_archive
@@ -163,7 +164,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_success_d
 import wingslog.feature.export.sharedassets.generated.resources.export_success_emailed_subtitle
 import wingslog.feature.export.sharedassets.generated.resources.export_success_sent_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
-import wingslog.feature.export.sharedassets.generated.resources.export_try_again
 import wingslog.feature.export.sharedassets.generated.resources.export_untitled_aircraft
 import wingslog.feature.export.sharedassets.generated.resources.export_view_exports
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
@@ -439,7 +439,7 @@ private fun FormatSection(
     if (formats.isEmpty()) {
       Spacer(Modifier.height(Spacing.small))
       Text(
-        text = stringResource(Res.string.export_formats_helper_empty),
+        text = stringResource(Res.string.export_format_pick_one),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.statusColors.caution.accent,
         modifier = Modifier.padding(start = Spacing.extraSmall),
@@ -1279,7 +1279,7 @@ private fun ErrorResult(
     },
     actions = {
       ResultPrimaryButton(
-        label = stringResource(Res.string.export_try_again),
+        label = stringResource(CoreRes.string.retry),
         icon = null,
         onClick = onRetry,
       )
@@ -1442,7 +1442,7 @@ private fun EmptyAircraftContent(
     heroColor = MaterialTheme.colorScheme.primary,
     heroContainer = MaterialTheme.colorScheme.primary.copy(alpha = 0.13f),
     title = stringResource(Res.string.export_no_aircraft_title),
-    subtitle = stringResource(Res.string.export_no_aircraft_body),
+    subtitle = stringResource(CoreRes.string.empty_add_aircraft),
     body = {},
     actions = {
       ResultSecondaryButton(
