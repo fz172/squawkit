@@ -84,12 +84,16 @@ class SettingsViewModel(
     val uid = authManager.getCurrentUser()?.uid
     viewModelScope.launch {
       observeSelfJob?.cancel()
+      // Sign out first so authStateChanged(null) fires immediately, which causes the SyncEngine
+      // to cancel its userScope and release the DatabaseWriteLock. The wipe operations below
+      // need that lock — calling them before signOut would block forever on web (JS single-thread,
+      // SyncEngine holds the lock across suspend points during active hydration/push).
+      authManager.logOut()
+      _user.value = SettingsUiState(photoUri = null, userStatus = UserStatus.LOGGED_OUT)
       if (uid != null) {
         attachmentManager.wipeLocalData(uid)
         dbChecker.wipeDataForUser(uid)
       }
-      authManager.logOut()
-      _user.value = SettingsUiState(photoUri = null, userStatus = UserStatus.LOGGED_OUT)
     }
   }
 }
