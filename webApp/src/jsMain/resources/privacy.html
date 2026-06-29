@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Privacy Notice — SquawkIt</title>
+    <meta name="description" content="How SquawkIt stores your data, handles exports, and uses diagnostic logging.">
+    <link rel="canonical" href="https://squawkit.fanfly.dev/privacy.html">
+    <meta name="robots" content="index, follow">
+
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon-192.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <meta name="theme-color" content="#F3EDF7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#211F26" media="(prefers-color-scheme: dark)">
+
+    <style>
+        :root {
+            --bg: #F3EDF7;
+            --surface: #FFFFFF;
+            --border: #E2DCE9;
+            --text: #1B1B1F;
+            --muted: #5A5A66;
+            --accent: #1F4E79; /* Aviation Blue */
+            --accent-soft: #EAF0F6;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #211F26;
+                --surface: #2A2830;
+                --border: #3A3742;
+                --text: #E6E1E9;
+                --muted: #A9A4B0;
+                --accent: #8FB8E0;
+                --accent-soft: #2E3744;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.65;
+            font-size: 17px;
+        }
+
+        .wrap { max-width: 760px; margin: 0 auto; padding: 56px 24px 96px; }
+
+        header { margin-bottom: 40px; }
+        .eyebrow {
+            font-size: 13px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        h1 {
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            font-size: 34px;
+            line-height: 1.2;
+            letter-spacing: -0.01em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .updated { color: var(--muted); font-size: 15px; }
+
+        h2 {
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            font-size: 22px;
+            font-weight: 600;
+            margin: 44px 0 14px;
+            letter-spacing: -0.01em;
+        }
+        h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin: 24px 0 8px;
+        }
+        p { margin-bottom: 16px; color: var(--text); }
+        ul { margin: 0 0 16px 22px; }
+        li { margin-bottom: 8px; }
+        a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+        .lede {
+            font-size: 18px;
+            color: var(--muted);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 22px;
+            margin-bottom: 8px;
+        }
+
+        .note {
+            border-left: 3px solid var(--accent);
+            background: var(--accent-soft);
+            border-radius: 0 10px 10px 0;
+            padding: 14px 18px;
+            margin: 24px 0;
+            font-size: 15.5px;
+            color: var(--text);
+        }
+
+        footer {
+            margin-top: 56px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 14px;
+        }
+        footer a { color: var(--muted); }
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <header>
+            <div class="eyebrow">SquawkIt</div>
+            <h1>Privacy Notice</h1>
+            <p class="updated">Last updated: 28 June 2026</p>
+        </header>
+
+        <p class="lede">
+            SquawkIt is an aircraft maintenance logbook and fleet-management app for pilots,
+            owners, and mechanics. This notice explains what data we hold, how it is stored and
+            synced, what happens when you export your records, and how we use diagnostic logging
+            to keep the app reliable.
+        </p>
+
+        <h2>1. Data we hold</h2>
+        <p>The data associated with your account falls into three groups:</p>
+        <ul>
+            <li><strong>Account data.</strong> When you sign in with Google or Apple, we receive
+                a basic identity profile — typically your name, email address, and a unique account
+                identifier provided by that sign-in service. We do not receive or store your
+                Google/Apple password.</li>
+            <li><strong>Your content.</strong> The records you create in the app: aircraft and
+                fleet details, maintenance logs, inspections, service bulletins, airworthiness
+                directives, squawks, tasks, technician sign-offs, and any files, photos, or links
+                you attach to them.</li>
+            <li><strong>Diagnostic data.</strong> Technical information generated as the app runs —
+                described in section 4.</li>
+        </ul>
+
+        <h2>2. How your data is stored</h2>
+        <p>
+            SquawkIt is <strong>local-first</strong>. Your records are written to a database on
+            your own device first, so the app works fully offline and your data is always
+            available — even with no signal in the hangar.
+        </p>
+        <p>
+            When you are signed in and connected, a background sync process copies your records to
+            our cloud backend (Google Firebase — Cloud Firestore for record data and Firebase
+            Storage for attachment files) so they are backed up and kept consistent across every
+            device where you sign in. Data is encrypted in transit, and the backend stores it
+            under your account identifier.
+        </p>
+        <p>
+            Your data is associated with your account and is not sold. We do not share your
+            content with other users unless you deliberately share it — for example, by sending
+            someone an exported report (section 3). We use the cloud backend solely to provide,
+            back up, and sync the service.
+        </p>
+        <p>
+            If you sign out, the local copy of your data is removed from that device; your synced
+            records remain in the backend and reappear when you sign back in. If you delete your
+            account or ask us to delete your data, we remove your records and attachments from the
+            backend; please allow a reasonable period for deletion to propagate through backups.
+        </p>
+
+        <h2>3. Data exports</h2>
+        <p>
+            You can export your records on demand from <em>Settings → Export logs</em>, for a
+            single aircraft or your whole fleet, optionally filtered by date range. An export is a
+            point-in-time snapshot bundled as an archive containing spreadsheet files (CSV / XLSX),
+            a PDF report, and any attachment files referenced by the exported records.
+        </p>
+        <p>
+            The textual export is generated <strong>on your device</strong> from the local-first
+            store. If you choose to have an export <strong>emailed</strong>, the archive is uploaded
+            to our cloud storage and a time-limited download link is generated and sent to the
+            address you specify; the app keeps an export history so you can re-download, re-send,
+            or delete past exports.
+        </p>
+        <div class="note">
+            An export is a copy of your records. Once you download it or share a download link,
+            that copy is outside the app and outside our control — anyone who receives the file or
+            the link can read it. Share exports only with people you intend to, and delete exports
+            you no longer need from your export history.
+        </div>
+        <p>
+            Exports exist so you keep ownership of your records — for a pre-buy, an annual, a
+            handoff to an A&amp;P/IA, or simply a personal backup that survives any future
+            migration.
+        </p>
+
+        <h2>4. Diagnostic logging</h2>
+        <p>
+            To keep SquawkIt stable and to diagnose problems, the app records technical diagnostic
+            information such as crash reports, error traces, performance metrics, app version,
+            device and operating-system type, and basic event logs about how features are
+            performing. This data is used only to monitor reliability, fix bugs, and improve the
+            app.
+        </p>
+        <p>
+            We aim to keep diagnostic logs focused on technical detail rather than the contents of
+            your records. Diagnostic data is retained only as long as it is useful for
+            troubleshooting and quality monitoring, and is then discarded.
+        </p>
+
+        <h2>5. Service providers</h2>
+        <p>
+            We rely on Google Firebase for authentication, cloud database, file storage, server-side
+            export delivery, and diagnostics, and on Google and Apple for sign-in. These providers
+            process data on our behalf under their own terms and security practices. We do not use
+            your content to serve third-party advertising.
+        </p>
+
+        <h2>6. Your choices</h2>
+        <ul>
+            <li>Use the app offline; sync only happens when you are signed in and connected.</li>
+            <li>Export and download your records at any time.</li>
+            <li>Sign out to remove the local copy of your data from a device.</li>
+            <li>Request access to, correction of, or deletion of your account data.</li>
+        </ul>
+
+        <h2>7. A note on certified records</h2>
+        <p>
+            SquawkIt is a personal convenience tool. It does not replace the official aircraft
+            logbooks required by your aviation authority — keep your certified records as you
+            always have. Treat your exports as backups and snapshots, not as the legal source of
+            truth.
+        </p>
+
+        <h2>8. Changes to this notice</h2>
+        <p>
+            We may update this notice as the app evolves. When we make material changes, we will
+            revise the “Last updated” date above and, where appropriate, notify you in the app.
+        </p>
+
+        <h2>9. Contact</h2>
+        <p>
+            Questions about this notice or your data? Email
+            <a href="mailto:fanflysupport@gmail.com">fanflysupport@gmail.com</a>.
+        </p>
+
+        <footer>
+            <p>&copy; 2026 SquawkIt. &nbsp;<a href="/">Back to SquawkIt</a></p>
+        </footer>
+    </main>
+</body>
+</html>

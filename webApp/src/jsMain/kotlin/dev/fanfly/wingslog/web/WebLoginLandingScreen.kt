@@ -44,12 +44,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -58,7 +60,10 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.login.generated.resources.Res
+import wingslog.feature.login.generated.resources.privacy_notice
 import kotlin.math.roundToInt
 
 /**
@@ -1016,6 +1021,18 @@ private fun LandingFooter(colors: LandingColors) {
         Text(
           text = "© 2026 SquawkIt. A personal convenience tool — not a certified maintenance record system, and not a replacement for the official aircraft logbooks required by your aviation authority. Aircraft maintenance logbook app for pilots, owners, and mechanics.",
           style = TextStyle(fontSize = 12.5.sp, lineHeight = 19.sp, color = colors.footerCopy),
+        )
+        Spacer(Modifier.height(14.dp))
+        val uriHandler = LocalUriHandler.current
+        Text(
+          text = stringResource(Res.string.privacy_notice),
+          style = TextStyle(
+            fontSize = 12.5.sp,
+            lineHeight = 19.sp,
+            color = colors.blue,
+            textDecoration = TextDecoration.Underline,
+          ),
+          modifier = Modifier.clickable { uriHandler.openUri("/privacy.html") },
         )
       }
     }

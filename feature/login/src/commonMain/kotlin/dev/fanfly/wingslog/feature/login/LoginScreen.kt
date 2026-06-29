@@ -39,12 +39,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
@@ -72,6 +75,7 @@ import wingslog.feature.login.generated.resources.ic_google_rd_na
 import wingslog.feature.login.generated.resources.legal_disclaimer
 import wingslog.feature.login.generated.resources.login_prompt
 import wingslog.feature.login.generated.resources.mission_statement
+import wingslog.feature.login.generated.resources.privacy_notice
 import wingslog.feature.login.generated.resources.sign_in_anonymous_error
 import wingslog.feature.login.generated.resources.sign_in_error
 import wingslog.feature.login.generated.resources.sign_in_with_apple
@@ -104,6 +108,7 @@ fun LoginScreen(
   val signInAnonymousErrorMessage =
     stringResource(Res.string.sign_in_anonymous_error)
   val headlineFamily = rememberBrandHeadlineFamily()
+  val uriHandler = LocalUriHandler.current
 
   LaunchedEffect(Unit) {
     scope.launch {
@@ -369,6 +374,17 @@ fun LoginScreen(
         color = LoginOnBackgroundMuted.copy(alpha = 0.6f),
         style = LoginErrorStyle,
         modifier = Modifier.padding(horizontal = Spacing.extraSmall),
+      )
+
+      Spacer(Modifier.height(Spacing.medium))
+
+      Text(
+        text = stringResource(Res.string.privacy_notice),
+        color = LoginOnBackgroundMuted.copy(alpha = 0.85f),
+        style = LoginErrorStyle.copy(textDecoration = TextDecoration.Underline),
+        modifier = Modifier
+          .padding(horizontal = Spacing.extraSmall)
+          .clickable { uriHandler.openUri(privacyPolicyUrl) },
       )
 
       Spacer(Modifier.height(Spacing.large))
