@@ -20,6 +20,14 @@ jobs:
         run: |
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
-          npx firebase-tools@latest hosting:clone wingslog-9ca4e:alpha wingslog-9ca4e:live \
-            --project wingslog-9ca4e --non-interactive
+          set +e
+          out=$(npx firebase-tools@latest hosting:clone wingslog-9ca4e:alpha wingslog-9ca4e:live \
+            --project wingslog-9ca4e --non-interactive 2>&1)
+          code=$?
+          echo "$out"
           rm -f "$RUNNER_TEMP/firebase-sa.json"
+          if [ "$code" -ne 0 ] && echo "$out" | grep -q "is the current active version"; then
+            echo "::notice::alpha is already the current live version — nothing to promote."
+            exit 0
+          fi
+          exit "$code"
