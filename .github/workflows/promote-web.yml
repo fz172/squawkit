@@ -1,0 +1,25 @@
+name: Promote Web App to Live
+
+on:
+  workflow_dispatch:
+
+# Only one promotion at a time.
+concurrency:
+  group: promote-web-live
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Promote alpha → live on Firebase Hosting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Promote alpha channel to live
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WINGSLOG_9CA4E }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          npx firebase-tools@latest hosting:clone wingslog-9ca4e:alpha wingslog-9ca4e:live \
+            --project wingslog-9ca4e --non-interactive
+          rm -f "$RUNNER_TEMP/firebase-sa.json"
