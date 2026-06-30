@@ -52,7 +52,15 @@ struct iosApp: App {
         WindowGroup {
             ContentView()
                 .onOpenURL { url in
-                    _ = GIDSignIn.sharedInstance.handle(url)
+                    // Google sign-in first; otherwise try a passwordless email sign-in link.
+                    if GIDSignIn.sharedInstance.handle(url) { return }
+                    _ = MainEntry.shared.handleIncomingUrl(url: url.absoluteString)
+                }
+                .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+                    // Universal Links (apple-app-site-association for applinks:squawkit.fanfly.dev).
+                    if let url = activity.webpageURL {
+                        _ = MainEntry.shared.handleIncomingUrl(url: url.absoluteString)
+                    }
                 }
         }
     }

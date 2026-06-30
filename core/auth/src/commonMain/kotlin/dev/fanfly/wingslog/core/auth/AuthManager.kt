@@ -11,6 +11,21 @@ interface AuthManager {
   suspend fun logOut()
 
   /**
+   * Passwordless email-link sign-in, leg 1: emails a one-time sign-in link to [email]. See
+   * docs/account/email_link_signin_design.html.
+   */
+  suspend fun sendSignInLink(email: String): SendLinkResult
+
+  /** True when [link] is a Firebase email sign-in link, so deep-link hosts can ignore other URLs. */
+  fun isSignInWithEmailLink(link: String): Boolean
+
+  /**
+   * Passwordless email-link sign-in, leg 2: completes auth for the [email] the [link] was issued
+   * for. Returns null when [link] is not a sign-in link or completion fails.
+   */
+  suspend fun completeSignInLink(email: String, link: String): FirebaseUser?
+
+  /**
    * Links the platform's primary provider (Google on Android, Apple on iOS) to the current
    * anonymous user, preserving the UID so local-first data stays valid. Returns
    * [AccountUpgradeResult.CredentialInUse] when the chosen account already exists (caller then

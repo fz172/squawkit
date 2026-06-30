@@ -4,6 +4,7 @@ import androidx.compose.ui.window.ComposeUIViewController
 import dev.fanfly.wingslog.core.auth.IosGoogleSignInBridge
 import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.di.initKoin
+import dev.fanfly.wingslog.feature.login.EmailLinkDeepLinks
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.blob.UrlSessionUploadScheduler
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +38,19 @@ object MainEntry {
 
   fun completeGoogleSignIn(errorMessage: String?) {
     IosGoogleSignInBridge.complete(errorMessage)
+  }
+
+  /**
+   * Forwards an inbound URL (Universal Link / custom scheme from `onOpenURL`) into the shared auth
+   * flow so a passwordless email sign-in link completes. Returns true when the URL was an email
+   * sign-in link (so Swift can stop handing it to other handlers). See
+   * docs/account/email_link_signin_design.html.
+   */
+  fun handleIncomingUrl(url: String): Boolean {
+    val authManager = KoinPlatform.getKoin().get<dev.fanfly.wingslog.core.auth.AuthManager>()
+    if (!authManager.isSignInWithEmailLink(url)) return false
+    EmailLinkDeepLinks.deliver(url)
+    return true
   }
 
   fun startSyncEngine() {

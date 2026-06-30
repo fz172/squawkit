@@ -104,6 +104,13 @@ internal val IconCheck: ImageVector = strokeIcon(2f, "M20 6 9 17l-5-5")
 /** Chevron used by the FAQ disclosure rows. */
 internal val IconChevronDown: ImageVector = strokeIcon(2f, "m6 9 6 6 6-6")
 
+/** Envelope used by the "Log in with email" button. */
+internal val IconMail: ImageVector = strokeIcon(
+  2f,
+  "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z",
+  "m22 6-10 7L2 6",
+)
+
 /** Feature 1 — inspection & service-bulletin tracking (check inside an open card). */
 internal val IconInspection: ImageVector = strokeIcon(
   1.8f,

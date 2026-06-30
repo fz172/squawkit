@@ -11,7 +11,18 @@ class AuthManagerImpl(
   private val authProvider: FirebaseAuth,
 ) : AuthManager {
 
+  private val emailLink = EmailLinkAuthenticator(authProvider)
+
   override fun getCurrentUser(): FirebaseUser? = authProvider.currentUser
+
+  override suspend fun sendSignInLink(email: String): SendLinkResult =
+    emailLink.sendSignInLink(email)
+
+  override fun isSignInWithEmailLink(link: String): Boolean =
+    emailLink.isSignInWithEmailLink(link)
+
+  override suspend fun completeSignInLink(email: String, link: String): FirebaseUser? =
+    emailLink.completeSignInLink(email, link)
 
   /**
    * Tries to return the currently authenticated user without prompting.

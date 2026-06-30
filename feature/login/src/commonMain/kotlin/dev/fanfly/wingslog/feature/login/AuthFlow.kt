@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.login
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,7 +19,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
-private enum class AuthStep { Login, NameEntry, Welcome }
+private enum class AuthStep { Login, EmailSignIn, NameEntry, Welcome }
 
 /**
  * The full pre-app flow shared by every platform: sign-in → name entry → welcome.
@@ -33,8 +34,8 @@ private enum class AuthStep { Login, NameEntry, Welcome }
  *
  * [loginContent] is the sign-in step's UI. It defaults to the shared [LoginScreen] used by Android
  * and iOS; the web host overrides it with its SEO landing page (see WebLoginLandingScreen) while
- * reusing the same onboarding tail. The slot receives the `onLoginSuccess` callback to invoke once
- * the user is authenticated.
+ * reusing the same onboarding tail. The slot receives `onLoginSuccess` (invoke once the user is
+ * authenticated) and `onChooseEmail` (navigate to the shared [EmailSignInScreen]).
  */
 @Composable
 fun AuthFlow(
@@ -43,36 +44,59 @@ fun AuthFlow(
   firebaseAuth: FirebaseAuth = koinInject(),
   actions: OnboardingActions = koinInject(),
   onboardingPreferences: OnboardingPreferences = koinInject(),
-  loginContent: @Composable (onLoginSuccess: () -> Unit) -> Unit = { onLoginSuccess ->
-    LoginScreen(
-      loginViewModel = loginViewModel,
-      onLoginSuccess = onLoginSuccess,
-    )
-  },
+  loginContent: @Composable (onLoginSuccess: () -> Unit, onChooseEmail: () -> Unit) -> Unit =
+    { onLoginSuccess, onChooseEmail ->
+      LoginScreen(
+        loginViewModel = loginViewModel,
+        onLoginSuccess = onLoginSuccess,
+        onChooseEmail = onChooseEmail,
+      )
+    },
 ) {
   val scope = rememberCoroutineScope()
   var step by remember { mutableStateOf(AuthStep.Login) }
   val selfName by actions.observeSelfName()
     .collectAsState(null)
 
+  // A returning user who already finished onboarding skips straight through; otherwise route to
+  // name entry / welcome. Shared by every sign-in path (Google/Apple/email/anonymous).
+  val onLoginSuccess: () -> Unit = {
+    scope.launch {
+      val accountName = firebaseAuth.currentUser?.displayName.orEmpty()
+      val localSelfName = actions.observeSelfName()
+        .firstOrNull()
+        .orEmpty()
+      if (accountName.isBlank() && localSelfName.isBlank()) {
+        step = AuthStep.NameEntry
+      } else if (!onboardingPreferences.checkHasSeenWelcome()) {
+        step = AuthStep.Welcome
+      } else {
+        onComplete()
+      }
+    }
+    Unit
+  }
+
+  // An inbound email sign-in link (deep link / fresh web load) jumps straight to the email page,
+  // which completes leg 2. Works even if the user never tapped the email button on this device.
+  val pendingLink by EmailLinkDeepLinks.pendingLink.collectAsState()
+  LaunchedEffect(pendingLink) {
+    val link = pendingLink ?: return@LaunchedEffect
+    if (step == AuthStep.Login && loginViewModel.isEmailSignInLink(link)) {
+      step = AuthStep.EmailSignIn
+    }
+  }
+
   when (step) {
     AuthStep.Login -> loginContent(
-      // A returning user who already finished onboarding skips straight through.
-      {
-        scope.launch {
-          val accountName = firebaseAuth.currentUser?.displayName.orEmpty()
-          val localSelfName = actions.observeSelfName()
-            .firstOrNull()
-            .orEmpty()
-          if (accountName.isBlank() && localSelfName.isBlank()) {
-            step = AuthStep.NameEntry
-          } else if (!onboardingPreferences.checkHasSeenWelcome()) {
-            step = AuthStep.Welcome
-          } else {
-            onComplete()
-          }
-        }
-      },
+      onLoginSuccess,
+      { step = AuthStep.EmailSignIn },
+    )
+
+    AuthStep.EmailSignIn -> EmailSignInScreen(
+      loginViewModel = loginViewModel,
+      onBack = { step = AuthStep.Login },
+      onLoginSuccess = onLoginSuccess,
     )
 
     AuthStep.NameEntry -> NameEntryScreen(

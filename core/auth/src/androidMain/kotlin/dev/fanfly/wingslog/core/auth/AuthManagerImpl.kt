@@ -23,10 +23,20 @@ class AuthManagerImpl(
 ) : AuthManager {
   private val credentialManager: CredentialManager =
     CredentialManager.create(context = context)
+  private val emailLink = EmailLinkAuthenticator(authProvider)
 
   override fun getCurrentUser(): FirebaseUser? {
     return authProvider.currentUser
   }
+
+  override suspend fun sendSignInLink(email: String): SendLinkResult =
+    emailLink.sendSignInLink(email)
+
+  override fun isSignInWithEmailLink(link: String): Boolean =
+    emailLink.isSignInWithEmailLink(link)
+
+  override suspend fun completeSignInLink(email: String, link: String): FirebaseUser? =
+    emailLink.completeSignInLink(email, link)
 
   /**
    * Tries to sign in silently.

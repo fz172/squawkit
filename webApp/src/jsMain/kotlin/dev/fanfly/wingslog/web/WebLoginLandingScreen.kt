@@ -82,6 +82,7 @@ import kotlin.math.roundToInt
 @Composable
 internal fun WebLoginLandingScreen(
   onLoginSuccess: () -> Unit,
+  onChooseEmail: () -> Unit,
   loginViewModel: LoginViewModel = koinViewModel(),
 ) {
   // The landing page follows the OS light/dark setting (no in-page theme switcher).
@@ -167,6 +168,7 @@ internal fun WebLoginLandingScreen(
         isSigningIn = isSigningIn,
         error = error,
         onGoogle = signInWithGoogle,
+        onChooseEmail = onChooseEmail,
       )
 
       FeaturesSection(
@@ -295,6 +297,7 @@ private fun Hero(
   isSigningIn: Boolean,
   error: String?,
   onGoogle: () -> Unit,
+  onChooseEmail: () -> Unit,
 ) {
   Box(
     modifier = modifier
@@ -333,6 +336,7 @@ private fun Hero(
             isSigningIn = isSigningIn,
             error = error,
             onGoogle = onGoogle,
+            onChooseEmail = onChooseEmail,
           )
         }
       } else {
@@ -352,6 +356,7 @@ private fun Hero(
               isSigningIn = isSigningIn,
               error = error,
               onGoogle = onGoogle,
+              onChooseEmail = onChooseEmail,
             )
           }
         }
@@ -454,6 +459,7 @@ private fun LoginCard(
   isSigningIn: Boolean,
   error: String?,
   onGoogle: () -> Unit,
+  onChooseEmail: () -> Unit,
 ) {
   Column(
     modifier = modifier
@@ -496,6 +502,18 @@ private fun LoginCard(
       onClick = { /* TODO(apple-signin): wire AuthManager.signInWithApple() for web. */ },
       label = "Log in with Apple",
       leading = { Icon(imageVector = AppleLogo, contentDescription = null, modifier = Modifier.size(19.dp), tint = Color.White) },
+    )
+    Spacer(Modifier.height(12.dp))
+    // Passwordless email link — navigates to the shared EmailSignInScreen, leaving the promo page.
+    AuthButton(
+      container = colors.card,
+      contentColor = colors.heading,
+      border = colors.outline,
+      enabled = !isSigningIn,
+      loading = false,
+      onClick = onChooseEmail,
+      label = "Log in with email",
+      leading = { Icon(imageVector = IconMail, contentDescription = null, modifier = Modifier.size(19.dp), tint = colors.heading) },
     )
 
     if (error != null) {

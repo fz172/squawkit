@@ -131,6 +131,7 @@ dependencies {
 
   implementation(project(":composeApp"))
   implementation(project(":feature:sync:data"))
+  implementation(project(":feature:login"))
   "dogfoodImplementation"(project(":feature:stresstest:config"))
   "dogfoodImplementation"(project(":core:ui"))
   "dogfoodImplementation"(libs.compose.foundation)

@@ -24,11 +24,28 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.Wingslog">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Passwordless email-link sign-in (App Links). Requires a verified assetlinks.json at
+                 https://squawkit.fanfly.dev/.well-known/assetlinks.json with the app's signing
+                 fingerprints; until then the OS opens the link in the browser, which also completes
+                 sign-in. See docs/account/email_link_signin_design.html. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="squawkit.fanfly.dev"
+                    android:path="/finishSignIn" />
             </intent-filter>
         </activity>
 

@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.auth.SendLinkResult
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
@@ -50,6 +51,10 @@ class AdaptiveShellViewModelTest {
     override suspend fun signInWithGoogle(): FirebaseUser? = null
     override suspend fun signInAnonymously(): FirebaseUser? = null
     override suspend fun logOut() = Unit
+    override suspend fun sendSignInLink(email: String): SendLinkResult =
+      SendLinkResult.Failed("not used")
+    override fun isSignInWithEmailLink(link: String): Boolean = false
+    override suspend fun completeSignInLink(email: String, link: String): FirebaseUser? = null
     override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult =
       AccountUpgradeResult.Cancelled
     override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult =

@@ -35,6 +35,7 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
 import kotlinx.browser.document
+import kotlinx.browser.window
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.rememberResourceEnvironment
 import org.w3c.dom.HTMLElement
@@ -46,7 +47,9 @@ import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
+import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.login.AuthFlow
+import dev.fanfly.wingslog.feature.login.EmailLinkDeepLinks
 import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.SettingsContent
@@ -92,6 +95,7 @@ fun WebApp() {
 
       val navController = rememberNavController()
       val firebaseAuth: FirebaseAuth = koinInject()
+      val authManager: AuthManager = koinInject()
       // Wrap the platform manager so every screen view also retitles the browser tab (and tags the
       // event with page_title). Wrapping once + providing it to LocalAnalytics covers all call sites.
       val baseAnalytics: AnalyticsManager = koinInject()
@@ -105,6 +109,17 @@ fun WebApp() {
               popUpTo(0) { inclusive = true }
             }
           }
+        }
+      }
+
+      // Passwordless email-link completion: the tapped link is a navigation to our own Hosting
+      // domain, so the sign-in URL arrives as the current location. Hand it to the shared deep-link
+      // channel (AuthFlow completes leg 2) and strip the auth params so a reload doesn't re-trigger.
+      LaunchedEffect(Unit) {
+        val href = window.location.href
+        if (authManager.isSignInWithEmailLink(href)) {
+          EmailLinkDeepLinks.deliver(href)
+          window.history.replaceState(null, "", window.location.pathname)
         }
       }
 
@@ -137,8 +152,11 @@ fun WebApp() {
             },
             // Web swaps the shared LoginScreen for the SEO landing page; the onboarding tail
             // (name entry + welcome) and Firebase auth wiring are reused unchanged.
-            loginContent = { onLoginSuccess ->
-              WebLoginLandingScreen(onLoginSuccess = onLoginSuccess)
+            loginContent = { onLoginSuccess, onChooseEmail ->
+              WebLoginLandingScreen(
+                onLoginSuccess = onLoginSuccess,
+                onChooseEmail = onChooseEmail,
+              )
             },
           )
         }
