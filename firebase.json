@@ -6,6 +6,16 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "headers": [
+      {
+        "comment": "Compose Multiplatform reads packed string resources (.cvr) via HTTP Range requests by byte offset. Firebase Hosting serves them as text/plain and gzip-compresses them, which makes range reads land past the compressed length and return 416 → the web app crashes decoding string resources. Force a non-compressible content type and no-transform so ranges resolve against the raw bytes.",
+        "source": "**/*.cvr",
+        "headers": [
+          { "key": "Content-Type", "value": "application/octet-stream" },
+          { "key": "Cache-Control", "value": "public, max-age=3600, no-transform" }
+        ]
+      }
+    ],
     "rewrites": [
       {
         "source": "**",
