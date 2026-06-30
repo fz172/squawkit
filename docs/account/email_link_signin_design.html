@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Doc: Passwordless Email-Link Sign-In</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb; --surface: #ffffff; --surface-alt: #eef3f9;
+      --text: #122033; --muted: #53657d; --line: #d8e1ec;
+      --blue: #1f5fa8; --blue-soft: #dbe9fb;
+      --green: #156f4a; --green-soft: #d8f0e3;
+      --amber: #9a6200; --amber-soft: #fdeecb;
+      --red: #a33a32; --red-soft: #f7dedb;
+      --shadow: rgba(18, 32, 51, 0.08);
+      --mono: "SFMono-Regular", "JetBrains Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.55; }
+    main { max-width: 1240px; margin: 0 auto; padding: 32px 20px 56px; }
+    .page-shell { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 28px; align-items: start; }
+    .doc-body { min-width: 0; }
+    h1, h2, h3, h4 { line-height: 1.2; margin: 0 0 12px; }
+    h1 { font-size: 2rem; }
+    h2 { margin-top: 38px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 1.35rem; }
+    h3 { margin-top: 24px; font-size: 1.08rem; }
+    h4 { margin-top: 18px; font-size: 0.95rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-alt); padding: 1px 6px; border-radius: 6px; }
+    pre { background: #0f1c2e; color: #e6eef9; border-radius: 14px; padding: 16px 18px; overflow: auto; font-family: var(--mono); font-size: 0.84rem; line-height: 1.5; margin: 16px 0; }
+    pre .c { color: #7d96b5; }
+    pre .k { color: #7cc4ff; }
+    pre .s { color: #9be0b0; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 16px 0; box-shadow: 0 1px 2px rgba(18,32,51,0.04); }
+    .hero { background: linear-gradient(180deg, var(--surface), var(--surface-alt)); border: 1px solid var(--line); border-radius: 20px; padding: 26px; margin-bottom: 24px; }
+    .hero h1 { margin-bottom: 8px; }
+    .lede { font-size: 1.1rem; color: var(--muted); margin: 0; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 0.82rem; font-weight: 600; margin: 0 6px 6px 0; }
+    .pill.green { background: var(--green-soft); color: var(--green); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+    .pill.red { background: var(--red-soft); color: var(--red); }
+    .toc { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow: auto; background: rgba(255,255,255,0.9); backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px var(--shadow); }
+    .toc-title { margin: 0 0 10px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .toc ol { margin: 0; padding-left: 18px; }
+    .toc li { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92rem; }
+    th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+    th { background: var(--surface-alt); font-weight: 600; }
+    .callout { border-radius: 14px; padding: 14px 18px; margin: 16px 0; border: 1px solid var(--line); }
+    .callout.note { background: var(--blue-soft); border-color: #bcd6f5; }
+    .callout.win { background: var(--green-soft); border-color: #aee0c6; }
+    .callout.warn { background: var(--amber-soft); border-color: #f0d79a; }
+    .callout.risk { background: var(--red-soft); border-color: #efc4bf; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; font-family: var(--mono); font-size: 0.82rem; white-space: pre; overflow-x: auto; color: var(--text); line-height: 1.5; }
+    ol.steps { counter-reset: step; list-style: none; padding-left: 0; }
+    ol.steps > li { position: relative; padding-left: 40px; margin: 14px 0; }
+    ol.steps > li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; font-size: 0.85rem; display: grid; place-items: center; }
+    @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <div>
+      <span class="pill amber">Status: Proposed</span>
+      <span class="pill">Design Doc</span>
+      <span class="pill">core:auth · feature:login</span>
+      <span class="pill">Android · iOS · Web</span>
+    </div>
+    <h1>Passwordless Email-Link Sign-In — Technical Design</h1>
+    <p class="lede">A third sign-in option — <b>Log in with email</b> — that places an email-link (passwordless) button between <b>Log in with Apple</b> and <b>Continue Anonymously</b> on every platform. The user types an email, receives a one-time sign-in link, and taps it to complete authentication. This doc covers the shared <code>AuthManager</code> contract, the two-leg send/complete flow, and the per-platform link-handling that makes the tap land back in the app. Sibling to <a href="account_upgrade_design.html">the Guest → Account Upgrade design</a>.</p>
+  </div>
+
+  <div class="page-shell">
+    <div class="doc-body">
+
+      <h2 id="goal">1. Goal &amp; Scope</h2>
+      <p>Firebase's <b>Email/Password</b> provider with <b>Email link (passwordless sign-in)</b> is already enabled in the console. This design wires that provider into SquawkIt as a first-class sign-in method, ranked third in the login UI:</p>
+      <ol class="steps">
+        <li><b>Log in with Google</b> (existing)</li>
+        <li><b>Log in with Apple</b> (existing button; backend still stubbed)</li>
+        <li><b>Log in with email</b> — <span class="pill green" style="margin:0">this design</span></li>
+        <li><b>Continue Anonymously</b> (existing; hidden on web)</li>
+      </ol>
+      <p><b>In scope:</b> the send-link + complete-link flow on Android, iOS, and web; the shared <code>AuthManager</code> surface; UI for email entry and the "check your inbox" state; and a feature-flag gate. <b>Out of scope:</b> linking an email credential onto an existing anonymous guest (that belongs in the <a href="account_upgrade_design.html">account-upgrade flow</a> and is called out as a follow-up in <a href="#upgrade">§8</a>); custom email templates beyond the Firebase console defaults.</p>
+
+      <h2 id="how">2. How email-link sign-in works</h2>
+      <p>Unlike Google/Apple (a single synchronous popup/sheet that returns a credential), email-link is a <b>two-leg flow split across apps and possibly devices</b>:</p>
+      <div class="diagram">  LEG 1 — SEND                         LEG 2 — COMPLETE
+  ┌─────────────┐                      ┌──────────────────┐
+  │ Login screen│                      │ Email client     │
+  │ enter email │                      │ taps sign-in link│
+  └──────┬──────┘                      └────────┬─────────┘
+         │ sendSignInLinkToEmail(email, acs)    │ deep link / URL
+         ▼                                      ▼
+  ┌─────────────┐   persist email      ┌──────────────────┐
+  │ Firebase    │  ───────────────►    │ SquawkIt app     │
+  │ sends email │   (local store)      │ isSignInWithEmail│
+  └─────────────┘                      │ Link? → signIn   │
+                                       └────────┬─────────┘
+                                                │ FirebaseUser
+                                                ▼  → onLoginSuccess()</div>
+      <p>The four primitives, all available on GitLive <code>firebase-auth</code> 2.4.0 across Android / iOS / JS targets (verified in the published klibs):</p>
+      <table>
+        <thead><tr><th>Primitive</th><th>Leg</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>FirebaseAuth.sendSignInLinkToEmail(email, ActionCodeSettings)</code></td><td>Send</td><td>Emails a one-time link. <code>ActionCodeSettings.handleCodeInApp = true</code> is required for email-link.</td></tr>
+          <tr><td><code>FirebaseAuth.isSignInWithEmailLink(link)</code></td><td>Complete</td><td>Cheap check: is this inbound URL an email sign-in link?</td></tr>
+          <tr><td><code>FirebaseAuth.signInWithEmailLink(email, link)</code></td><td>Complete</td><td>Exchanges the link (+ the email we stashed) for a <code>FirebaseUser</code>.</td></tr>
+          <tr><td><code>EmailAuthProvider.credentialWithLink(email, link)</code></td><td>Upgrade</td><td>Builds an <code>AuthCredential</code> for <code>linkWithCredential</code> — used only by the future guest-upgrade path (<a href="#upgrade">§8</a>).</td></tr>
+        </tbody>
+      </table>
+      <div class="callout note">
+        <strong>Why we must persist the email locally</strong>
+        <code>signInWithEmailLink</code> needs the email address that the link was issued for. When the link is opened on the <i>same</i> device we read it back from local storage. When it's opened on a <i>different</i> device (or the store was cleared), we have no stored email and must prompt the user to re-enter it before completing — this is a required branch, not an edge case.
+      </div>
+
+      <h2 id="actioncodesettings">3. The continue URL (ActionCodeSettings)</h2>
+      <p>Every platform sends the link with the same hosted continue URL so the experience and the deep-link verification files are shared. We already own <code>squawkit.fanfly.dev</code> (the Firebase Auth <code>authDomain</code> and the Hosting target), so the link returns there:</p>
+      <pre><span class="c">// core:auth — shared ActionCodeSettings builder</span>
+<span class="k">val</span> actionCodeSettings = ActionCodeSettings(
+  url = <span class="s">"https://squawkit.fanfly.dev/finishSignIn"</span>,  <span class="c">// must be allow-listed in Auth → Settings → Authorized domains</span>
+  androidPackageName = AndroidPackageName(
+    packageName = <span class="s">"dev.fanfly.wingslog"</span>,
+    installIfNotAvailable = <span class="k">true</span>,
+    minimumVersion = <span class="k">null</span>,
+  ),
+  iOSBundleId = <span class="s">"dev.fanfly.wingslog"</span>,
+  canHandleCodeInApp = <span class="k">true</span>,            <span class="c">// REQUIRED for email-link</span>
+  dynamicLinkDomain = <span class="k">null</span>,             <span class="c">// see callout — we do NOT use Dynamic Links</span>
+)</pre>
+      <div class="callout warn">
+        <strong>Firebase Dynamic Links is shut down — use App Links / Universal Links</strong>
+        Dynamic Links reached end-of-life in 2025, so <code>dynamicLinkDomain</code> is left null. On mobile the continue URL is opened as a plain HTTPS link and routed into the app by <b>Android App Links</b> (verified <code>assetlinks.json</code>) and <b>iOS Universal Links</b> (an <code>apple-app-site-association</code> file). If verification is missing, the OS opens the URL in the browser instead of the app — which on web still completes sign-in, so the browser is the graceful fallback for mobile too. Both verification files are served from <code>squawkit.fanfly.dev</code> via Firebase Hosting (<a href="#infra">§7</a>).
+      </div>
+
+      <h2 id="contract">4. Shared contract: AuthManager &amp; LoginViewModel</h2>
+      <p>Two new suspend functions on the common <code>AuthManager</code> interface — one per leg. They join the existing <code>signInWithGoogle()</code> / <code>signInAnonymously()</code> family and keep the same "return the user or null" convention.</p>
+      <pre><span class="c">// core/auth/src/commonMain/.../AuthManager.kt</span>
+<span class="k">interface</span> AuthManager {
+  <span class="c">// …existing members…</span>
+
+  <span class="c">/** LEG 1 — emails a one-time sign-in link and stashes [email] for completion. */</span>
+  <span class="k">suspend fun</span> sendSignInLink(email: String): SendLinkResult
+
+  <span class="c">/**
+   * LEG 2 — if [link] is a sign-in link, completes auth using [fallbackEmail] when no
+   * email was stashed locally (cross-device case). Returns null when [link] is not a
+   * sign-in link, so callers can ignore unrelated deep links.
+   */</span>
+  <span class="k">suspend fun</span> completeSignInLink(link: String, fallbackEmail: String? = <span class="k">null</span>): FirebaseUser?
+}</pre>
+      <p><code>SendLinkResult</code> is a small sealed type (<code>Sent(email)</code> / <code>InvalidEmail</code> / <code>Failed(message)</code>) so the UI can distinguish a validation problem from a network failure. The stashed email lives in the same local key-value store the rest of <code>core:auth</code> / onboarding already uses (the implementation reads/writes a single <code>pending_signin_email</code> key).</p>
+      <p><code>LoginViewModel</code> gains thin pass-throughs, matching its existing style:</p>
+      <pre><span class="c">// feature/login/.../LoginViewModel.kt</span>
+<span class="k">suspend fun</span> sendEmailLink(email: String) = authManager.sendSignInLink(email)
+<span class="k">suspend fun</span> completeEmailLink(link: String, fallbackEmail: String? = <span class="k">null</span>) =
+    authManager.completeSignInLink(link, fallbackEmail)</pre>
+
+      <h2 id="ui">5. UI changes</h2>
+      <p>The email button is added to both sign-in surfaces (the native button column and the web promo card), but it does <b>not</b> reveal an inline form. Instead it <b>navigates to a single dedicated Email Sign-In page that is shared verbatim by Android, iOS, and web</b>. That page wears the same header as the native login screen (bobbing-plane mark + <code>SquawkIt.</code> wordmark + mission statement). On web this deliberately replaces the marketing landing — once the user commits to logging in, the promo content is gone and they see the same focused login UI as on mobile.</p>
+      <div class="callout note">
+        <strong>One screen, three platforms</strong>
+        The Email Sign-In page is a new shared composable, <code>EmailSignInScreen</code>, in <code>feature/login</code> <code>commonMain</code>. There is no web-specific variant and no web-specific view model — web reuses the same <code>EmailSignInScreen</code> and the same <code>LoginViewModel</code> as mobile. This is the simplification driver: the promo page and the login page are now cleanly separate concerns.
+      </div>
+
+      <h3>5.1 Entry points (the third button)</h3>
+      <p>On native (<code>LoginScreen.kt</code>) a third button is inserted directly after Apple and before the <code>if (isAnonymousLoginSupported)</code> block, so ranking is correct everywhere. Same 54&nbsp;dp height, <code>Spacing.buttonCornerRadius</code>, and disabled-while-signing-in treatment as the others; styled as an outlined/tonal button (not a brand color) with a mail glyph, reading as the "neutral third option" beneath the two branded providers.</p>
+      <pre>Button(Google)        <span class="c">// existing</span>
+Spacer(medium)
+Button(Apple)         <span class="c">// existing</span>
+Spacer(medium)
+Button(Email)         <span class="c">// NEW — onChooseEmail() → navigate to EmailSignInScreen</span>
+if (isAnonymousLoginSupported) {
+  Spacer(medium)
+  OutlinedButton(Anonymous)   <span class="c">// existing</span>
+}</pre>
+      <p>On web the promo card's <code>LoginCard</code> (in <code>WebLoginLandingScreen.kt</code>) gains the matching third <code>AuthButton</code> ("Log in with email") below Apple. Its <code>onClick</code> raises the same <code>onChooseEmail</code> — it does not render any in-card state.</p>
+
+      <h3 id="nav">5.2 Navigation: who hosts the shared page</h3>
+      <p>To make the page truly shared (and to let it replace the promo on web), the Options&nbsp;↔&nbsp;Email toggle is hoisted into <code>AuthFlow</code> rather than living inside each surface. The <code>loginContent</code> slot gains an <code>onChooseEmail</code> callback, and the <code>Login</code> step renders either the platform options view or the shared email page:</p>
+      <pre><span class="c">// feature/login/.../AuthFlow.kt — Login step becomes a 2-screen sub-flow</span>
+<span class="k">enum class</span> AuthStep { Login, EmailSignIn, NameEntry, Welcome }
+
+<span class="k">when</span> (step) {
+  Login -> loginContent(
+    onLoginSuccess = { /* existing post-login routing */ },
+    onChooseEmail  = { step = AuthStep.EmailSignIn },   <span class="c">// NEW</span>
+  )
+  EmailSignIn -> EmailSignInScreen(
+    onBack         = { step = AuthStep.Login },
+    onLoginSuccess = { /* same routing as Login */ },
+  )
+  NameEntry -> …
+  Welcome   -> …
+}</pre>
+      <p>So on native, tapping Email leaves <code>LoginScreen</code> for <code>EmailSignInScreen</code>; on web, tapping Email leaves <code>WebLoginLandingScreen</code> (promo) for the very same <code>EmailSignInScreen</code>. <code>onBack</code> returns to whichever options surface the platform supplied.</p>
+
+      <h3 id="emailscreen">5.3 The shared Email Sign-In page</h3>
+      <p>To guarantee an identical header, the existing header block in <code>LoginScreen</code> (the animated plane icon, the <code>SquawkIt.</code> wordmark with the blue dot, and the mission statement) is extracted into a small shared <code>LoginHeader</code> composable and reused by both <code>LoginScreen</code> and <code>EmailSignInScreen</code>. Below the header, <code>EmailSignInScreen</code> renders one of two states:</p>
+      <ul>
+        <li><b>Email entry:</b> a single <code>OutlinedTextField</code> (email keyboard + autofill hint), a primary <b>Send link</b> button, and a back affordance to the options screen. On <code>Sent</code> it advances to the "link sent" state; on <code>InvalidEmail</code> it shows inline field-error text; on <code>Failed</code> it shows an error line below the field.</li>
+        <li><b>Link sent ("check your inbox"):</b> confirmation copy naming the address, the <b>Resend</b> action with its 60-second countdown (<a href="#resend">§5.4</a>), and <b>Use a different email</b> to return to the entry state. The screen keeps observing auth state so that when the link is opened on the same device and the app resumes, <code>onLoginSuccess()</code> fires automatically.</li>
+      </ul>
+      <p>The legal disclaimer and privacy link from the login screen are kept at the bottom so the page is self-contained on every platform.</p>
+
+      <h3 id="resend">5.4 Resend cooldown (60-second countdown)</h3>
+      <p>After a link is sent, <b>Resend</b> is immediately disabled for 60&nbsp;seconds to prevent spamming the user's inbox and to stay under Firebase's send rate limits. The button greys out (its <code>enabled</code> flag is false, so it picks up the standard disabled container/content colors) and its label shows a live countdown; at zero it re-enables and reverts to the plain label.</p>
+      <pre><span class="c">// EmailSignInScreen — cooldown state</span>
+<span class="k">var</span> secondsLeft <span class="k">by</span> remember { mutableStateOf(0) }   <span class="c">// 0 == enabled</span>
+
+LaunchedEffect(secondsLeft) {
+  <span class="k">if</span> (secondsLeft > 0) { delay(1_000); secondsLeft-- }
+}
+
+<span class="k">fun</span> onSent() { secondsLeft = 60 }        <span class="c">// called after a successful send AND on first arrival</span>
+
+Button(
+  enabled = secondsLeft == 0 && !isSending,   <span class="c">// greyed out during cooldown</span>
+  onClick = { scope.launch { send(); onSent() } },
+) {
+  Text(<span class="k">if</span> (secondsLeft == 0) resendLabel       <span class="c">// "Resend link"</span>
+       <span class="k">else</span> resendInLabel(secondsLeft))            <span class="c">// "Resend in 0:47"</span>
+}</pre>
+      <div class="callout note">
+        <strong>The countdown starts on arrival, not only on tap</strong>
+        Entering the "link sent" state seeds <code>secondsLeft = 60</code>, because a link was just sent by the entry step. So the cooldown is in effect the moment the user lands on the confirmation screen, and each subsequent <b>Resend</b> restarts it. <b>Use a different email</b> clears it. The single <code>LaunchedEffect(secondsLeft)</code> re-launches each tick, giving a 1&nbsp;Hz countdown without a manual timer.
+      </div>
+
+      <h3>5.5 New string resources</h3>
+      <p>Added to <code>feature/login/.../values/strings.xml</code>: <code>sign_in_with_email</code> ("Log in with email"), <code>email_entry_title</code>, <code>email_entry_hint</code>, <code>email_send_link</code>, <code>email_link_sent_title</code>, <code>email_link_sent_body</code> (takes the address), <code>email_resend</code> ("Resend link"), <code>email_resend_in</code> (takes <code>m:ss</code>, e.g. "Resend in 0:47"), <code>email_use_different</code>, <code>email_invalid</code>, and <code>email_link_error</code>. The existing <code>login_prompt</code> copy is left as-is.</p>
+      <div class="callout note">
+        <strong>Web has no "Continue Anonymously," so email is the only non-OAuth path there</strong>
+        On web <code>isAnonymousLoginSupported == false</code>, so the email button is especially valuable: it's the route for users without (or unwilling to use) a Google or Apple account. It is the last option in the promo card, and choosing it takes them to the same shared page as mobile.
+      </div>
+
+      <h2 id="platform">6. Per-platform link handling</h2>
+      <p>Leg 1 (send) is identical everywhere — it's pure GitLive SDK. The platform differences are entirely in <b>Leg 2</b>: how the tapped link re-enters the app and reaches <code>completeSignInLink()</code>. The pattern mirrors how Google sign-in is already bridged per platform.</p>
+
+      <h3 id="android">6.1 Android</h3>
+      <p><code>AuthManagerImpl(android)</code> implements both legs directly against the injected <code>FirebaseAuth</code> (no Credential Manager needed — this is not a Google credential). Link delivery uses <b>App Links</b>:</p>
+      <ul>
+        <li>Add a verified <code>VIEW</code> intent-filter to <code>MainActivity</code> in <code>app/src/main/AndroidManifest.xml</code> for <code>https://squawkit.fanfly.dev/finishSignIn</code> with <code>android:autoVerify="true"</code>. (The current manifest has only the <code>LAUNCHER</code> filter; the <code>genericidp</code>/<code>recaptcha</code> filters seen in the merged manifest are injected by the Firebase Auth SDK and are unrelated.)</li>
+        <li><code>MainActivity</code> reads <code>intent?.data</code> on create and in <code>onNewIntent</code>, hands the URL to the shared flow, which calls <code>loginViewModel.completeEmailLink(url, fallbackEmail)</code>. A successful result drives the same <code>onLoginSuccess()</code> the buttons use.</li>
+        <li>Host <code>/.well-known/assetlinks.json</code> with the app's SHA-256 signing-cert fingerprints (debug, dogfood, release) so the OS opens the link in-app rather than the browser.</li>
+      </ul>
+
+      <h3 id="ios">6.2 iOS</h3>
+      <p>Mirrors the existing <code>IosGoogleSignInBridge</code> / <code>MainEntry</code> seam. <code>AuthManagerImpl(ios)</code> calls the GitLive SDK for both legs; the inbound URL is delivered from Swift:</p>
+      <ul>
+        <li>Add an <b>Associated Domains</b> entitlement (<code>applinks:squawkit.fanfly.dev</code>) and host <code>/.well-known/apple-app-site-association</code> for the app's Team ID + bundle <code>dev.fanfly.wingslog</code>.</li>
+        <li>Extend the existing <code>.onOpenURL { }</code> in <code>iosApp.swift</code> (and add the <code>continue userActivity</code> handler for Universal Links) to forward the URL: first give it to <code>GIDSignIn</code> (current behavior), and if that returns false, call a new <code>MainEntry.shared.handleIncomingUrl(url)</code> — symmetric to <code>installGoogleSignInHandler</code>/<code>completeGoogleSignIn</code>.</li>
+        <li><code>handleIncomingUrl</code> routes into shared Kotlin, which calls <code>completeSignInLink</code> and resumes the login flow.</li>
+      </ul>
+
+      <h3 id="web">6.3 Web</h3>
+      <p>Simplest case — the link <i>is</i> a navigation to our own Hosting domain, so the URL arrives as <code>window.location.href</code>. The <code>**</code>→<code>/index.html</code> rewrite already in <code>firebase.json</code> means <code>/finishSignIn?...</code> loads the SPA. On startup <code>WebApp</code> passes <code>window.location.href</code> to <code>completeSignInLink</code>; if <code>isSignInWithEmailLink</code> is true it completes sign-in, then strips the auth params from the URL (history <code>replaceState</code>) so a reload doesn't re-trigger. GitLive's JS target wraps the same modular SDK already used for <code>signInWithPopup</code>, so no extra external bindings are required.</p>
+
+      <h2 id="infra">7. Infrastructure &amp; configuration</h2>
+      <table>
+        <thead><tr><th>Item</th><th>Where</th><th>Change</th></tr></thead>
+        <tbody>
+          <tr><td>Authorized domain</td><td>Firebase console → Auth → Settings</td><td>Ensure <code>squawkit.fanfly.dev</code> is allow-listed (it already is the authDomain).</td></tr>
+          <tr><td><code>assetlinks.json</code></td><td>Hosting <code>/.well-known/</code></td><td>Android App Links verification (all signing fingerprints).</td></tr>
+          <tr><td><code>apple-app-site-association</code></td><td>Hosting <code>/.well-known/</code></td><td>iOS Universal Links verification. Note: the current <code>firebase.json</code> rewrites <code>**</code> to <code>index.html</code> — add explicit passthroughs/headers so the <code>.well-known</code> files are served as-is.</td></tr>
+          <tr><td>App Links intent-filter</td><td><code>app/src/main/AndroidManifest.xml</code></td><td>Verified <code>VIEW</code> filter on <code>MainActivity</code>.</td></tr>
+          <tr><td>Associated Domains</td><td>iOS entitlements + Xcode capability</td><td><code>applinks:squawkit.fanfly.dev</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="upgrade">8. Interaction with the guest-upgrade flow (follow-up)</h2>
+      <p>A signed-out user picking email gets a brand-new account — straightforward. The richer case is an <b>anonymous guest</b> choosing email to make their account permanent <i>without losing local data</i>. That reuses the UID-preserving machinery in the <a href="account_upgrade_design.html">account-upgrade design</a>: build the credential with <code>EmailAuthProvider.credentialWithLink(email, link)</code> and call <code>linkWithCredential</code> instead of <code>signInWithEmailLink</code>, with the same <code>CredentialInUse</code> → merge fallback. This is intentionally deferred: the upgrade flow today is Google-only and gated behind a Feature Lab flag, and adding the email credential there is a clean, separable follow-up.</p>
+
+      <h2 id="flag">9. Feature flag &amp; rollout</h2>
+      <p>Gate the email button behind a <code>FeatureFlags</code> entry (e.g. <code>emailLinkSignInEnabled</code>) via <code>FeatureLabManager</code>, matching how <code>attachmentUploadEnabled</code> and the upgrade flow are gated. This lets us ship the UI dark, validate the App-Links/Universal-Links verification in dogfood, and enable per-environment. The button simply isn't composed when the flag is off, so ranking degrades gracefully back to Google / Apple / Anonymous.</p>
+
+      <h2 id="risks">10. Risks &amp; edge cases</h2>
+      <table>
+        <thead><tr><th>Case</th><th>Handling</th></tr></thead>
+        <tbody>
+          <tr><td>Link opened on a different device</td><td>No stashed email → UI prompts for the address, passed as <code>fallbackEmail</code> to <code>completeSignInLink</code>.</td></tr>
+          <tr><td>App Links / Universal Links not yet verified</td><td>OS opens the URL in the browser; the web SPA completes sign-in. Verified files make it open in-app; both succeed.</td></tr>
+          <tr><td>Expired or already-used link</td><td>GitLive throws → surface <code>email_link_error</code> with a <b>Resend</b> action.</td></tr>
+          <tr><td>Reload after web completion</td><td><code>replaceState</code> strips auth params so the link isn't re-consumed.</td></tr>
+          <tr><td>Email enumeration / abuse</td><td>Firebase rate-limits link sends; the UI enforces a 60-second <b>Resend</b> cooldown (<a href="#resend">§5.4</a>). No "account exists" signal is shown.</td></tr>
+          <tr><td>Wrong email typed</td><td>Link still sends to that address; it just never arrives for the user. <b>Use a different email</b> lets them retry.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="checklist">11. Implementation checklist</h2>
+      <ol class="steps">
+        <li><code>core:auth</code> — add <code>sendSignInLink</code> / <code>completeSignInLink</code> + <code>SendLinkResult</code> to the interface; implement in all three <code>AuthManagerImpl</code>s; add the shared <code>ActionCodeSettings</code> builder and the <code>pending_signin_email</code> stash.</li>
+        <li><code>feature:login</code> — extract the shared <code>LoginHeader</code>; add the new shared <code>EmailSignInScreen</code> (entry + "sent" states, 60-second resend countdown); add the third button + <code>onChooseEmail</code> to <code>LoginScreen</code>; host the Options↔Email toggle in <code>AuthFlow</code> (new <code>EmailSignIn</code> step); pass-throughs in <code>LoginViewModel</code>; new strings; route inbound URLs into <code>AuthFlow</code>.</li>
+        <li>Web — third <code>AuthButton</code> in <code>WebLoginLandingScreen</code>'s <code>LoginCard</code> wired to <code>onChooseEmail</code> (navigates to the shared <code>EmailSignInScreen</code>, leaving the promo); complete-on-startup from <code>window.location.href</code> in <code>WebApp</code>.</li>
+        <li>Android — verified App Links intent-filter; <code>onNewIntent</code> wiring; <code>assetlinks.json</code>.</li>
+        <li>iOS — Associated Domains entitlement; <code>handleIncomingUrl</code> on <code>MainEntry</code>; <code>onOpenURL</code>/<code>userActivity</code> forwarding; <code>apple-app-site-association</code>.</li>
+        <li>Hosting/config — serve <code>.well-known</code> files; confirm authorized domain; <code>FeatureFlags.emailLinkSignInEnabled</code>.</li>
+        <li>Tests — <code>LoginViewModel</code> send/complete with mocked <code>AuthManager</code> (success, invalid email, network failure, cross-device fallback).</li>
+      </ol>
+
+    </div>
+
+    <nav class="toc" aria-label="Table of contents">
+      <p class="toc-title">On this page</p>
+      <ol>
+        <li><a href="#goal">Goal &amp; Scope</a></li>
+        <li><a href="#how">How email-link works</a></li>
+        <li><a href="#actioncodesettings">The continue URL</a></li>
+        <li><a href="#contract">Shared contract</a></li>
+        <li><a href="#ui">UI changes</a></li>
+        <li><a href="#platform">Per-platform handling</a></li>
+        <li><a href="#infra">Infrastructure</a></li>
+        <li><a href="#upgrade">Guest-upgrade follow-up</a></li>
+        <li><a href="#flag">Feature flag &amp; rollout</a></li>
+        <li><a href="#risks">Risks &amp; edge cases</a></li>
+        <li><a href="#checklist">Implementation checklist</a></li>
+      </ol>
+    </nav>
+  </div>
+</main>
+</body>
+</html>
