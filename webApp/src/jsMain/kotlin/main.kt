@@ -75,7 +75,11 @@ private fun startPrimaryTab() {
   initializeApp(
     json(
       "apiKey" to "AIzaSyAo52Y7aQ4jhYGq4MioZK5mSffmmZES1qk",
-      "authDomain" to "wingslog-9ca4e.firebaseapp.com",
+      // Custom auth domain so the Google sign-in chooser reads "continue to squawkit.fanfly.dev"
+      // instead of the default *.firebaseapp.com. The custom domain serves the /__/auth/handler
+      // endpoint via Firebase Hosting; it must be an Authorized domain (Firebase Auth) and an
+      // authorized redirect URI on the OAuth web client.
+      "authDomain" to "squawkit.fanfly.dev",
       "projectId" to "wingslog-9ca4e",
       "storageBucket" to "wingslog-9ca4e.firebasestorage.app",
       "messagingSenderId" to "811416892017",
