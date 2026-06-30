@@ -20,35 +20,42 @@ import wingslog.webapp.generated.resources.noto_color_emoji
  * absent from the bundled brand fonts (Space Grotesk / JetBrains Mono) — emoji, symbols — renders
  * as tofu. Android and iOS get this fallback from the OS for free; the web does not.
  *
- * We preload Noto Color Emoji and register it as a fallback in the active [FontFamily] resolver so
- * missing glyphs resolve, both in fixed UI (e.g. the onboarding wave) and in user-entered text.
+ * We register Noto Color Emoji as a fallback in the active [FontFamily] resolver so missing glyphs
+ * resolve, both in fixed UI (e.g. the onboarding wave) and in user-entered text.
  *
- * [content] is gated until the fallback is registered: registering it does not invalidate the
- * measurement of already-laid-out text, so composing afterward is the reliable way to guarantee no
- * tofu (re-keying the whole tree instead would reset navigation state). The wait shows the host
- * page's brand background (`#001849` in index.html) — no white flash — and the font is a
- * same-origin bundled asset that loads in parallel with the JS bundle, so the added delay is small
- * and the browser caches it for subsequent visits.
+ * The emoji font is ~10 MB, so we never block first paint on it: [content] (login included) renders
+ * immediately, and the font is loaded/registered lazily *after* the first composition. This keeps it
+ * off the initial critical path — it no longer competes with the JS bundle and the small brand fonts
+ * while the login screen is loading. The login screen has no emoji; any missing glyph laid out before
+ * the fallback registers resolves on its next layout pass, and the browser caches the font for
+ * subsequent visits.
  */
+@Composable
+fun EmojiFallbackProvider(content: @Composable () -> Unit) {
+  // Defer the heavy emoji-font download until after the app's first frame is composed, so it never
+  // delays the login screen from displaying.
+  var loadEmojiFallback by remember { mutableStateOf(false) }
+  LaunchedEffect(Unit) { loadEmojiFallback = true }
+
+  if (loadEmojiFallback) {
+    EmojiFallbackRegistrar()
+  }
+  content()
+}
+
 @OptIn(
   ExperimentalComposeUiApi::class,
   ExperimentalResourceApi::class,
   InternalComposeUiApi::class
 )
 @Composable
-fun EmojiFallbackProvider(content: @Composable () -> Unit) {
-  var fallbackReady by remember { mutableStateOf(false) }
+private fun EmojiFallbackRegistrar() {
   val fontFamilyResolver = LocalFontFamilyResolver.current
   val emojiFont = preloadFont(Res.font.noto_color_emoji).value
 
   LaunchedEffect(fontFamilyResolver, emojiFont) {
     if (emojiFont != null) {
       fontFamilyResolver.preload(FontFamily(listOf(emojiFont)))
-      fallbackReady = true
     }
-  }
-
-  if (fallbackReady) {
-    content()
   }
 }
