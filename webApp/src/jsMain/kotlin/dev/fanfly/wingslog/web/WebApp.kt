@@ -75,6 +75,9 @@ fun WebApp() {
   val appearanceMode by appearanceController.mode.collectAsState()
   val isDark = appearanceMode.resolveDarkTheme()
   LaunchedEffect(isDark) { updateBrowserGutterColor(isDark) }
+  // Read packed string resources via whole-file fetches instead of HTTP Range requests, which
+  // Firebase Hosting's gzip breaks. Must wrap the resource warm-up below. See WholeFileResourceReader.
+  ProvideWholeFileResourceReader {
   WingslogTheme(darkTheme = isDark) {
     Surface(
       modifier = Modifier.fillMaxSize(),
@@ -306,6 +309,7 @@ fun WebApp() {
       }
       }
     }
+  }
   }
 }
 
