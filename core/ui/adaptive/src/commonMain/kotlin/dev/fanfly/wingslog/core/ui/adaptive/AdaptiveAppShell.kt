@@ -181,9 +181,10 @@ fun AdaptiveAppShell(
 
 /**
  * Shell shown while the fleet is empty. There are no aircraft to drive the per-aircraft sections, so
- * the only live navigation is Settings (sign-out, sync, account upgrade). Per design:
- * - **full sidebar** — keep the sidebar but disable the switcher and the per-aircraft sections,
- *   leaving only the account/settings entry interactive.
+ * they carry no content of their own. Per design:
+ * - **full sidebar** — keep the sidebar but hide the switcher and mute the per-aircraft sections.
+ *   They stay tappable, though: tapping any of them returns to the add-aircraft prompt, so a user
+ *   who has opened Settings has an obvious way back (they read as "greyed out" but still respond).
  * - **narrower tiers** — drop the nav container entirely and surface Settings via the top-right
  *   account avatar button.
  *
@@ -214,7 +215,7 @@ private fun EmptyFleetShell(
         onSelectAircraft = {},
         onAddAircraft = {},
         onOpenAccount = toggleSettings,
-        sectionsEnabled = false,
+        sectionsMuted = true,
         showSwitcher = false,
       )
       VerticalDivider()
@@ -391,9 +392,10 @@ private fun WingsSidebar(
   onSelectAircraft: (String) -> Unit,
   onAddAircraft: () -> Unit,
   onOpenAccount: () -> Unit,
-  // When false (empty fleet) the switcher is hidden and the per-aircraft sections are disabled,
-  // leaving only the account/settings entry interactive.
-  sectionsEnabled: Boolean = true,
+  // When true (empty fleet) the switcher is hidden and the per-aircraft sections are muted — but
+  // still tappable, so tapping any of them leaves Settings and returns to the add-aircraft prompt.
+  // With no aircraft there's no per-aircraft content, so none of them appears selected.
+  sectionsMuted: Boolean = false,
   showSwitcher: Boolean = true,
 ) {
   Surface(
@@ -436,8 +438,8 @@ private fun WingsSidebar(
       PER_AIRCRAFT_SECTIONS.forEach { section ->
         SidebarItem(
           section,
-          selected = sectionsEnabled && state.section == section,
-          enabled = sectionsEnabled,
+          selected = !sectionsMuted && state.section == section,
+          muted = sectionsMuted,
           onClick = { onSelectSection(section) })
       }
 
@@ -468,16 +470,17 @@ private fun SidebarItem(
   section: ShellSection,
   selected: Boolean,
   onClick: () -> Unit,
-  enabled: Boolean = true,
+  // Muted (empty-fleet) items keep the greyed-out look but stay tappable, so they can route back to
+  // the add-aircraft prompt from Settings.
+  muted: Boolean = false,
 ) {
   NavigationDrawerItem(
     label = { Text(stringResource(section.label)) },
     icon = { Icon(section.icon, contentDescription = null) },
     selected = selected,
-    // NavigationDrawerItem has no `enabled` flag; when disabled we mute it and swallow the tap.
-    onClick = if (enabled) onClick else ({}),
+    onClick = onClick,
     modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
-      .then(if (enabled) Modifier else Modifier.alpha(DisabledSectionAlpha)),
+      .then(if (muted) Modifier.alpha(DisabledSectionAlpha) else Modifier),
   )
 }
 
