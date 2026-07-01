@@ -67,9 +67,6 @@ internal fun EmailLinkCompletionScreen(link: String) {
     PendingEmailCache.clear()
     // Strip the auth params so a manual reload doesn't retry a now-consumed link.
     window.history.replaceState(null, "", window.location.pathname)
-    // Best-effort auto-close; browsers only honor this for script-opened tabs, so it's usually a
-    // no-op and the Success screen tells the user they can close the tab themselves.
-    runCatching { window.close() }
     return true
   }
 
@@ -110,8 +107,9 @@ internal fun EmailLinkCompletionScreen(link: String) {
 
           CompletionState.Success -> EmptyState(
             title = "You're signed in",
-            description = "You can safely close this tab and return to SquawkIt. " +
-              "If SquawkIt isn't already open, use the button below.",
+            description = "Switch back to your original SquawkIt tab to pick up where you left " +
+              "off — it's already signing you in. You can safely close this tab. If SquawkIt " +
+              "isn't open anywhere else, use the button below.",
             icon = Icons.Outlined.CheckCircle,
             actionText = "Open SquawkIt",
             onActionClick = { window.location.assign("/") },
