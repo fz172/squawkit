@@ -39,33 +39,14 @@ class AuthManagerImpl(
     emailLink.completeSignInLink(email, link)
 
   /**
-   * Tries to sign in silently.
-   * Uses filterByAuthorizedAccounts(true) to check for existing sessions.
+   * Returns the already-signed-in user, or null. Only consults the persisted Firebase session — it
+   * deliberately does NOT invoke Credential Manager, because even
+   * `setFilterByAuthorizedAccounts(true)` surfaces the Google account-picker bottom sheet when
+   * authorized accounts exist. That made the picker pop up unprompted on the login screen; instead we
+   * let the user choose a sign-in method and only show Google's UI when they tap "Log in with Google"
+   * (see [signInWithGoogle]). Matches the iOS implementation, which also just returns `currentUser`.
    */
-  override suspend fun trySilentLogin(): FirebaseUser? {
-    if (authProvider.currentUser != null) {
-      return authProvider.currentUser
-    }
-    try {
-      val request = GetCredentialRequest.Builder()
-        .addCredentialOption(
-          GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(true)
-            .setServerClientId(WEB_CLIENT_ID)
-            .build()
-        )
-        .build()
-      val result = credentialManager.getCredential(context, request)
-      val googleIdTokenCredential = processCredential(result.credential)
-      if (googleIdTokenCredential != null) {
-        return signInToFirebase(googleIdTokenCredential)
-      }
-    } catch (e: Exception) {
-      // No saved credential
-      logger.d { "No silent credential found: " + e.message }
-    }
-    return null
-  }
+  override suspend fun trySilentLogin(): FirebaseUser? = authProvider.currentUser
 
   /**
    * Signs in anonymously using Firebase Authentication.
