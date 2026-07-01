@@ -58,23 +58,47 @@ fun AuthFlow(
   val selfName by actions.observeSelfName()
     .collectAsState(null)
 
+  // Guards against advancing past sign-in twice — a real risk once we also advance from
+  // authStateChanged (below), which can race the manual onLoginSuccess call. Reset whenever we
+  // return to the Login step so a user who backs out can sign in again.
+  var advanced by remember { mutableStateOf(false) }
+  LaunchedEffect(step) { if (step == AuthStep.Login) advanced = false }
+
   // A returning user who already finished onboarding skips straight through; otherwise route to
   // name entry / welcome. Shared by every sign-in path (Google/Apple/email/anonymous).
   val onLoginSuccess: () -> Unit = {
-    scope.launch {
-      val accountName = firebaseAuth.currentUser?.displayName.orEmpty()
-      val localSelfName = actions.observeSelfName()
-        .firstOrNull()
-        .orEmpty()
-      if (accountName.isBlank() && localSelfName.isBlank()) {
-        step = AuthStep.NameEntry
-      } else if (!onboardingPreferences.checkHasSeenWelcome()) {
-        step = AuthStep.Welcome
-      } else {
-        onComplete()
+    if (!advanced) {
+      advanced = true
+      scope.launch {
+        val accountName = firebaseAuth.currentUser?.displayName.orEmpty()
+        val localSelfName = actions.observeSelfName()
+          .firstOrNull()
+          .orEmpty()
+        if (accountName.isBlank() && localSelfName.isBlank()) {
+          step = AuthStep.NameEntry
+        } else if (!onboardingPreferences.checkHasSeenWelcome()) {
+          step = AuthStep.Welcome
+        } else {
+          onComplete()
+        }
       }
     }
-    Unit
+  }
+
+  // Advance when Firebase reports a sign-in that happened after we showed the login flow — including
+  // a sign-in completed in ANOTHER tab. On web an email link opens in a separate tab that completes
+  // leg 2 there (see webApp EmailLinkCompletionScreen); Firebase syncs the auth state across tabs, so
+  // this tab receives the user here and moves into onboarding/app. Only a null -> user transition
+  // triggers it, so a returning user resolved at startup still flows through silentLogin unchanged.
+  LaunchedEffect(Unit) {
+    var sawSignedOut = false
+    firebaseAuth.authStateChanged.collect { user ->
+      if (user == null) {
+        sawSignedOut = true
+      } else if (sawSignedOut) {
+        onLoginSuccess()
+      }
+    }
   }
 
   // An inbound email sign-in link (deep link / fresh web load) jumps straight to the email page,

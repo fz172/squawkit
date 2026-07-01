@@ -34,11 +34,14 @@ import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
 import dev.fanfly.wingslog.feature.technician.manage.di.technicianManageModule
 import dev.fanfly.wingslog.web.ActiveElsewhereScreen
+import dev.fanfly.wingslog.web.EmailLinkCompletionScreen
 import dev.fanfly.wingslog.web.EmojiFallbackProvider
 import dev.fanfly.wingslog.web.WebApp
 import dev.fanfly.wingslog.web.createSqliteWorker
 import dev.fanfly.wingslog.web.gateSingleTab
 import dev.fanfly.wingslog.web.initializeApp
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.auth
 import kotlinx.browser.window
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
@@ -52,6 +55,24 @@ private val isWebDebugBuild: Boolean =
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+  // Firebase must be initialized before anything (below) touches auth. Done once here so every
+  // startup path — the email-link completion tab and both single-tab-gate branches — shares the
+  // same default app.
+  initializeFirebase()
+
+  // A passwordless email link opens in a NEW tab while the original tab still holds the OPFS
+  // database lock, so this tab can't open the database. Complete leg 2 here without it: Firebase
+  // auth lives in IndexedDB (not OPFS) and syncs across tabs, so the original tab picks up the
+  // sign-in and advances. See EmailLinkCompletionScreen. This must run before the single-tab gate,
+  // which would otherwise strand this tab on ActiveElsewhereScreen.
+  val href = window.location.href
+  if (Firebase.auth.isSignInWithEmailLink(href)) {
+    ComposeViewport(viewportContainerId = "ComposeTarget") {
+      EmailLinkCompletionScreen(link = href)
+    }
+    return
+  }
+
   // The local database lives in OPFS, which only one tab can open at a time. Gate startup on an
   // exclusive Web Lock: the first tab runs the app and holds the lock for its lifetime; any other
   // tab shows ActiveElsewhereScreen instead of crashing the SQLite worker on createSyncAccessHandle.
@@ -65,13 +86,12 @@ fun main() {
   )
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
-private fun startPrimaryTab() {
-  // Firebase JS has no google-services plugin to auto-init, so configure the default app
-  // explicitly. We call initializeApp directly (not GitLive's Firebase.initialize) so the config
-  // can carry measurementId — required for Firebase Analytics, but not exposed by GitLive's
-  // FirebaseOptions. GitLive's auth / firestore / storage resolve this same default app.
-  // Values are the project's public web-app client config.
+// Firebase JS has no google-services plugin to auto-init, so configure the default app explicitly.
+// We call initializeApp directly (not GitLive's Firebase.initialize) so the config can carry
+// measurementId — required for Firebase Analytics, but not exposed by GitLive's FirebaseOptions.
+// GitLive's auth / firestore / storage resolve this same default app. Values are the project's
+// public web-app client config.
+private fun initializeFirebase() {
   initializeApp(
     json(
       "apiKey" to "AIzaSyAo52Y7aQ4jhYGq4MioZK5mSffmmZES1qk",
@@ -87,7 +107,10 @@ private fun startPrimaryTab() {
       "measurementId" to "G-VPNQ92VG8F",
     ),
   )
+}
 
+@OptIn(ExperimentalComposeUiApi::class)
+private fun startPrimaryTab() {
   val koinApplication = startKoin {
     modules(
       platformAnalyticsModule,

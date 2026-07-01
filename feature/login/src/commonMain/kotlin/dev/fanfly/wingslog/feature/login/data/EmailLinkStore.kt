@@ -21,8 +21,12 @@ class EmailLinkStore(
     db.schemaQueries.selectConfig(SCOPE, KEY_PENDING_EMAIL)
       .awaitAsOneOrNull()
       ?.takeIf { it.isNotBlank() }
+    // Fall back to the database-free cache (web localStorage) for a tab that can't open OPFS.
+      ?: PendingEmailCache.load()
 
   suspend fun savePendingEmail(email: String) {
+    // Mirror into the cross-tab cache first: on web the completing tab reads it without the database.
+    PendingEmailCache.save(email)
     writeLock.withLock {
       db.schemaQueries.upsertConfig(SCOPE, KEY_PENDING_EMAIL, email)
     }
@@ -30,6 +34,7 @@ class EmailLinkStore(
 
   /** Clears the stash after a successful sign-in (or when the user picks a different email). */
   suspend fun clear() {
+    PendingEmailCache.clear()
     writeLock.withLock {
       db.schemaQueries.upsertConfig(SCOPE, KEY_PENDING_EMAIL, "")
     }
