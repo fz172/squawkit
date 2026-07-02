@@ -50,6 +50,7 @@ firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debu
 firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 firebase-functions = { module = "com.google.firebase:firebase-functions" }
 
+gitlive-firebase-analytics = { group = "dev.gitlive", name = "firebase-analytics", version.ref = "gitlive" }
 gitlive-firebase-firestore = { group = "dev.gitlive", name = "firebase-firestore", version.ref = "gitlive" }
 gitlive-firebase-auth = { group = "dev.gitlive", name = "firebase-auth", version.ref = "gitlive" }
 gitlive-firebase-functions = { group = "dev.gitlive", name = "firebase-functions", version.ref = "gitlive" }

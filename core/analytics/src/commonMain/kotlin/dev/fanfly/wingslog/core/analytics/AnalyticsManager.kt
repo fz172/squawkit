@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.core.analytics
 
-import co.touchlab.kermit.Logger
-
 /**
  * Cross-platform product-analytics sink. Backed by Firebase Analytics (→ GA4) on each platform.
  *
@@ -20,16 +18,4 @@ interface AnalyticsManager {
 object NoOpAnalyticsManager : AnalyticsManager {
   override fun logScreenView(screenName: String, params: Map<String, String>) =
     Unit
-}
-
-/**
- * Logs events to Kermit instead of a real backend. Used by the iOS and web actuals until their
- * native Firebase Analytics bindings land, and useful everywhere for local verification.
- */
-class LoggingAnalyticsManager : AnalyticsManager {
-  private val log = Logger.withTag("Analytics")
-
-  override fun logScreenView(screenName: String, params: Map<String, String>) {
-    log.i { "screen_view: $screenName${if (params.isEmpty()) "" else " $params"}" }
-  }
 }

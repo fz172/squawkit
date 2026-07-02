@@ -47,6 +47,11 @@ kotlin {
       implementation(libs.firebase.analytics)
       implementation(libs.koin.android)
     }
+
+    iosMain.dependencies {
+      // Kotlin binding over the FirebaseAnalytics framework the Xcode project links via SPM.
+      implementation(libs.gitlive.firebase.analytics)
+    }
   }
 }
 
