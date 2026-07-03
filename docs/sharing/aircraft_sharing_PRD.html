@@ -89,7 +89,7 @@
 
       <div class="callout note">
         <strong>Decisions locked for this PRD</strong>
-        Roles: <b>Owner + Technician</b> (two roles only for v1; no read-only Viewer). Invitations: <b>invite link / QR code with an unguessable one-time token</b> — no email addresses involved, so it works identically across Google, Apple, and email-link sign-in. Data placement: <b>the aircraft's records stay under the hosting owner's account</b>; other members are granted access, nothing is copied or moved. Technician identity: a shared technician's license data <b>comes from their own SquawkIt profile</b>, read-only to everyone else. Availability: <b>signed-in (non-anonymous) users with Cloud Sync enabled only</b>. Rollout: gated behind a Feature Lab flag, off by default.
+        Roles: <b>Owner + Technician</b> (two roles only for v1; no read-only Viewer). Invitations: <b>invite link / QR code with an unguessable one-time token</b> — no email addresses involved, so it works identically across Google, Apple, and email-link sign-in. Data placement: <b>the aircraft's records stay under the hosting owner's account</b>; other members are granted access, nothing is copied or moved. Technician identity: <b>every member's</b> license data <b>comes from their own SquawkIt profile</b>, read-only to everyone else — role governs permissions only, so an owner who also wrenches on the plane appears in the technician picker the same way. Availability: <b>signed-in (non-anonymous) users with Cloud Sync enabled only</b>. Rollout: gated behind a Feature Lab flag, off by default.
       </div>
 
       <h2 id="problem">1. Problem &amp; Background</h2>
@@ -137,6 +137,7 @@
 
       <h2 id="roles">4. Roles &amp; Permissions</h2>
       <p>Two roles in v1. Every aircraft has at least one Owner — the account the aircraft was created under is the <b>hosting owner</b> and can never be removed (ownership transfer is a non-goal). Additional Owners are peers in every other respect.</p>
+      <p><b>Role is about permissions, not about who turns wrenches.</b> An owner who is also a mechanic (a partner with an A&amp;P, or an owner doing FAR 43 preventive maintenance) does not need a second role: Owner already includes every Technician capability, and <em>every</em> member — Owner or Technician — is selectable in the technician picker backed by their own profile's license data. Certificate fields may be empty for non-certificated owners; a name-only entry is still what belongs on the log.</p>
       <table>
         <thead>
           <tr><th>Capability</th><th>Owner</th><th>Technician</th></tr>
@@ -148,6 +149,7 @@
           <tr><td>Add / edit / complete maintenance tasks (inspection schedule)</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Add / address / dismiss squawks</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Update the maintenance overview (times, hours)</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Appear as a linked technician in the picker, license data from their own profile</td><td class="yes">✓</td><td class="yes">✓</td></tr>
           <tr><td>Edit the aircraft itself (registration, engine, propeller, details)</td><td class="yes">✓</td><td class="no">✕</td></tr>
           <tr><td>Open Manage Access; create invites; change roles; revoke members</td><td class="yes">✓</td><td class="no">✕ (sees the member list, read-only)</td></tr>
           <tr><td>Delete the aircraft</td><td class="yes">✓ hosting owner only</td><td class="no">✕</td></tr>
@@ -202,7 +204,7 @@
         <li>Mechanic (Technician role) opens the shared aircraft, reviews open squawks, performs the work.</li>
         <li>Creates a maintenance log. The "Performed by" picker offers <b>their own self-technician profile as the default</b> — name, certificate type, number, expiration, exactly as they maintain it in their own Settings → Manage Technicians. The log stores a snapshot, same as today.</li>
         <li>Marks the squawk addressed, completes the linked task, updates times. Every member sees the results on next sync.</li>
-        <li>On the <b>owner's</b> devices, the mechanic now also appears in the technician picker for this aircraft as a <b>linked technician</b> — a read-only entry labeled with a "Linked" badge, sourced live from the mechanic's own profile. The owner can select them on logs the owner writes, but cannot edit their name or certificate data. Manually-entered technicians keep working unchanged for shops that aren't on SquawkIt.</li>
+        <li>On the <b>other members'</b> devices, the mechanic now also appears in the technician picker for this aircraft as a <b>linked technician</b> — a read-only entry labeled with a "Linked" badge, sourced live from the mechanic's own profile. Members can select them on logs they write, but cannot edit their name or certificate data. This works identically for Owner-role members who do their own maintenance: any member with a profile is selectable by the others. Manually-entered technicians keep working unchanged for shops that aren't on SquawkIt.</li>
       </ol>
       <div class="callout win">
         <strong>Requirement met: license data is first-party</strong>
