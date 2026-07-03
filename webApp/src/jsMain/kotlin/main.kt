@@ -1,38 +1,9 @@
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
-import dev.fanfly.wingslog.core.analytics.di.platformAnalyticsModule
 import dev.fanfly.wingslog.core.appinfo.BuildInfo
-import dev.fanfly.wingslog.core.auth.di.authModule
-import dev.fanfly.wingslog.core.auth.di.commonAuthModule
-import dev.fanfly.wingslog.core.storage.di.platformStorageModule
-import dev.fanfly.wingslog.core.storage.di.storageModule
-import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
-import dev.fanfly.wingslog.core.ui.theme.di.appearanceStoreModule
-import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
-import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
-import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
-import dev.fanfly.wingslog.feature.export.datamanager.di.exportDataManagerModule
-import dev.fanfly.wingslog.feature.export.datamanager.di.exportPlatformModule
-import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUiModule
-import dev.fanfly.wingslog.feature.featurelab.datamanager.di.featureLabModule
-import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
-import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
-import dev.fanfly.wingslog.feature.login.di.loginModule
-import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
-import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
-import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
-import dev.fanfly.wingslog.feature.settings.di.settingsModule
-import dev.fanfly.wingslog.feature.squawk.datamanager.squawkModule
-import dev.fanfly.wingslog.feature.squawk.update.viewmodel.squawkUiModule
+import dev.fanfly.wingslog.core.di.commonAppModules
 import dev.fanfly.wingslog.feature.stresstest.config.stressTestKoinModules
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
-import dev.fanfly.wingslog.feature.sync.data.blob.di.blobSchedulerModule
-import dev.fanfly.wingslog.feature.sync.data.di.syncModule
-import dev.fanfly.wingslog.feature.sync.settings.di.syncSettingsModule
-import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
-import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
-import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
-import dev.fanfly.wingslog.feature.technician.manage.di.technicianManageModule
 import dev.fanfly.wingslog.web.ActiveElsewhereScreen
 import dev.fanfly.wingslog.web.EmailLinkCompletionScreen
 import dev.fanfly.wingslog.web.EmojiFallbackProvider
@@ -113,45 +84,16 @@ private fun initializeFirebase() {
 private fun startPrimaryTab() {
   val koinApplication = startKoin {
     modules(
-      platformAnalyticsModule,
-      commonAuthModule,
-      authModule,
-      storageModule,
-      platformStorageModule,
-      appearanceModule,
-      appearanceStoreModule,
-      loginModule,
-      syncModule,
-      blobSchedulerModule,
-      attachmentModule,
-      platformAttachmentModule,
-      featureLabModule,
-      technicianDataManagerModule,
-      fleetDataManagerModule,
-      fleetViewingModule,
-      maintenanceDataManagerModule,
-      maintenanceViewingModule,
-      maintenanceUpdateModule,
-      tasksModule,
-      tasksUiModule,
-      squawkModule,
-      squawkUiModule,
-      aircraftDashboardModule,
-      technicianManageModule,
-      exportDataManagerModule,
-      exportPlatformModule,
-      exportUiModule,
-      settingsModule,
-      syncSettingsModule,
-      *stressTestKoinModules().toTypedArray(),
-      module {
-        // The host app owns the bundled sqlite-wasm worker file (persists to OPFS).
-        single<Worker> { createSqliteWorker() }
-        // __WINGSLOG_DEBUG__ is injected at bundle time by webpack DefinePlugin
-        // (webpack.config.d/debug-flag.js); true only for the debug web build, which surfaces
-        // developer-only entries like Feature Lab. Guarded with typeof so it's safe if undefined.
-        single { BuildInfo(isDeveloperBuild = isWebDebugBuild) }
-      },
+      commonAppModules + stressTestKoinModules() + listOf(
+        module {
+          // The host app owns the bundled sqlite-wasm worker file (persists to OPFS).
+          single<Worker> { createSqliteWorker() }
+          // __WINGSLOG_DEBUG__ is injected at bundle time by webpack DefinePlugin
+          // (webpack.config.d/debug-flag.js); true only for the debug web build, which surfaces
+          // developer-only entries like Feature Lab. Guarded with typeof so it's safe if undefined.
+          single { BuildInfo(isDeveloperBuild = isWebDebugBuild) }
+        },
+      ),
     )
   }
   koinApplication.koin.get<SyncEngine>()
