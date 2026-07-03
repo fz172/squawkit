@@ -53,6 +53,7 @@ import wingslog.feature.login.generated.resources.email_resend
 import wingslog.feature.login.generated.resources.email_resend_in
 import wingslog.feature.login.generated.resources.email_send_link
 import wingslog.feature.login.generated.resources.email_use_different
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val ResendCooldownSeconds = 60
 
@@ -95,7 +96,7 @@ fun EmailSignInScreen(
   // 1 Hz resend cooldown: re-launches each time secondsLeft changes, ticking down to zero.
   LaunchedEffect(secondsLeft) {
     if (secondsLeft > 0) {
-      delay(1_000)
+      delay(1_000.milliseconds)
       secondsLeft--
     }
   }
