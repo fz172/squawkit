@@ -3,6 +3,8 @@ package dev.fanfly.wingslog.core.analytics.di
 import android.annotation.SuppressLint
 import com.google.firebase.analytics.FirebaseAnalytics
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceStore
+import dev.fanfly.wingslog.core.analytics.AndroidAnalyticsPreferenceStore
 import dev.fanfly.wingslog.core.analytics.FirebaseAnalyticsManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
@@ -16,4 +18,8 @@ actual val platformAnalyticsModule: Module = module {
   single<AnalyticsManager> {
     FirebaseAnalyticsManager(FirebaseAnalytics.getInstance(androidContext()))
   }
+}
+
+actual val analyticsPreferenceStoreModule: Module = module {
+  single<AnalyticsPreferenceStore> { AndroidAnalyticsPreferenceStore(androidContext()) }
 }

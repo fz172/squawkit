@@ -12,10 +12,18 @@ interface AnalyticsManager {
     screenName: String,
     params: Map<String, String> = emptyMap()
   )
+
+  /**
+   * Turns Firebase Analytics collection on or off at the SDK level. When disabled, no events
+   * (including screen views already queued) are sent. Backs the Settings "Firebase Logging" toggle.
+   */
+  fun setAnalyticsCollectionEnabled(enabled: Boolean)
 }
 
 /** No-op used as the [LocalAnalytics] default (e.g. previews) so composition never crashes. */
 object NoOpAnalyticsManager : AnalyticsManager {
   override fun logScreenView(screenName: String, params: Map<String, String>) =
     Unit
+
+  override fun setAnalyticsCollectionEnabled(enabled: Boolean) = Unit
 }

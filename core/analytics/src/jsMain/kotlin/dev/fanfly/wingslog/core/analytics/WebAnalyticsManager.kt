@@ -29,4 +29,14 @@ class WebAnalyticsManager : AnalyticsManager {
     }
     log.i { "screen_view: $screenName${if (params.isEmpty()) "" else " $params"}" }
   }
+
+  override fun setAnalyticsCollectionEnabled(enabled: Boolean) {
+    val instance = analytics ?: return
+    try {
+      setAnalyticsCollectionEnabled(instance, enabled)
+    } catch (e: Throwable) {
+      log.e(e) { "setAnalyticsCollectionEnabled($enabled) failed" }
+    }
+    log.i { "analytics collection enabled: $enabled" }
+  }
 }

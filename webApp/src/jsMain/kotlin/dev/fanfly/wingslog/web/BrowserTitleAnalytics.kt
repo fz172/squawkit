@@ -73,4 +73,7 @@ class BrowserTitleAnalytics(
     document.title = title
     delegate.logScreenView(screenName, params + ("page_title" to title))
   }
+
+  override fun setAnalyticsCollectionEnabled(enabled: Boolean) =
+    delegate.setAnalyticsCollectionEnabled(enabled)
 }

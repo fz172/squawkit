@@ -50,6 +50,7 @@ kotlin {
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
+      implementation(project(":core:analytics"))
       implementation(project(":core:appinfo"))
       implementation(project(":core:auth"))
       implementation(project(":feature:attachment:datamanager"))

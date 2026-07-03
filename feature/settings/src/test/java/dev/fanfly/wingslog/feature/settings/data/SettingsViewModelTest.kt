@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.settings.data
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
+import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceStore
 import dev.fanfly.wingslog.core.appinfo.BuildInfo
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
@@ -41,6 +43,7 @@ class SettingsViewModelTest {
   private lateinit var dbChecker: DatabaseIntegrityChecker
   private lateinit var featureLabManager: FeatureLabManager
   private lateinit var appearanceController: AppearanceController
+  private lateinit var analyticsPreferenceController: AnalyticsPreferenceController
   private lateinit var viewModel: SettingsViewModel
 
   /** In-memory [AppearanceStore] so the controller needs no platform backing in tests. */
@@ -49,6 +52,15 @@ class SettingsViewModelTest {
     override fun load() = mode
     override fun save(mode: AppearanceMode) {
       this.mode = mode
+    }
+  }
+
+  /** In-memory [AnalyticsPreferenceStore] so the controller needs no platform backing in tests. */
+  private class InMemoryAnalyticsPreferenceStore : AnalyticsPreferenceStore {
+    private var enabled = true
+    override fun load() = enabled
+    override fun save(enabled: Boolean) {
+      this.enabled = enabled
     }
   }
 
@@ -62,6 +74,10 @@ class SettingsViewModelTest {
     dbChecker = mockk(relaxed = true)
     featureLabManager = mockk(relaxed = true)
     appearanceController = AppearanceController(InMemoryAppearanceStore())
+    analyticsPreferenceController = AnalyticsPreferenceController(
+      InMemoryAnalyticsPreferenceStore(),
+      mockk(relaxed = true),
+    )
     every { featureLabManager.observe() } returns flowOf(FeatureFlags())
 
     val mockUser = mockk<FirebaseUser>()
@@ -92,6 +108,7 @@ class SettingsViewModelTest {
       dbChecker,
       featureLabManager,
       appearanceController,
+      analyticsPreferenceController,
       BuildInfo(isDeveloperBuild = false),
     )
 
@@ -110,6 +127,7 @@ class SettingsViewModelTest {
       dbChecker,
       featureLabManager,
       appearanceController,
+      analyticsPreferenceController,
       BuildInfo(isDeveloperBuild = false),
     )
 
@@ -128,6 +146,7 @@ class SettingsViewModelTest {
       dbChecker,
       featureLabManager,
       appearanceController,
+      analyticsPreferenceController,
       BuildInfo(isDeveloperBuild = false),
     )
 
@@ -147,6 +166,7 @@ class SettingsViewModelTest {
       dbChecker,
       featureLabManager,
       appearanceController,
+      analyticsPreferenceController,
       BuildInfo(isDeveloperBuild = false),
     )
 
@@ -166,6 +186,7 @@ class SettingsViewModelTest {
       dbChecker,
       featureLabManager,
       appearanceController,
+      analyticsPreferenceController,
       BuildInfo(isDeveloperBuild = false),
     )
 

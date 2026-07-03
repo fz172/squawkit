@@ -19,6 +19,8 @@
   <string name="appearance_light">Light</string>
   <string name="appearance_system">System</string>
   <string name="appearance_dark">Dark</string>
+  <string name="firebase_logging_title">Help Us Improve</string>
+  <string name="firebase_logging_subtitle">Share anonymous diagnostics and usage data to help us improve SquawkIt</string>
   <string name="remove_local_data">Remove this account from this device</string>
   <string name="feature_lab">Feature Lab</string>
   <string name="feature_lab_subtitle">Advanced controls. Changes sync across your devices.</string>

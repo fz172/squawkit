@@ -15,3 +15,8 @@ external fun logEvent(
   eventName: String,
   eventParams: dynamic = definedExternally,
 )
+
+external fun setAnalyticsCollectionEnabled(
+  analytics: dynamic,
+  enabled: Boolean,
+)

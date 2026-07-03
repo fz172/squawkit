@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.settings.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
 import dev.fanfly.wingslog.core.appinfo.BuildInfo
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
@@ -23,6 +24,7 @@ class SettingsViewModel(
   private val dbChecker: DatabaseIntegrityChecker,
   private val featureLabManager: FeatureLabManager,
   private val appearanceController: AppearanceController,
+  private val analyticsPreferenceController: AnalyticsPreferenceController,
   private val buildInfo: BuildInfo,
 ) : ViewModel() {
 
@@ -33,6 +35,12 @@ class SettingsViewModel(
   val appearanceMode: StateFlow<AppearanceMode> = appearanceController.mode
 
   fun setAppearance(mode: AppearanceMode) = appearanceController.setMode(mode)
+
+  /** Device-local Firebase Logging (analytics collection) preference, default on. */
+  val firebaseLoggingEnabled: StateFlow<Boolean> = analyticsPreferenceController.enabled
+
+  fun setFirebaseLoggingEnabled(enabled: Boolean) =
+    analyticsPreferenceController.setEnabled(enabled)
 
   private var observeSelfJob: Job? = null
 

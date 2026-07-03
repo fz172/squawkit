@@ -96,6 +96,7 @@ fun SettingsContent(
 ) {
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
   val appearanceMode by settingsViewModel.appearanceMode.collectAsStateWithLifecycle()
+  val firebaseLoggingEnabled by settingsViewModel.firebaseLoggingEnabled.collectAsStateWithLifecycle()
   val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
 
@@ -223,12 +224,22 @@ fun SettingsContent(
         }
         SettingsRowGroup(rows = navRows)
 
-        SettingsCard {
-          AppearanceSettingRow(
-            mode = appearanceMode,
-            onModeChange = settingsViewModel::setAppearance,
-          )
-        }
+        SettingsRowGroup(
+          rows = listOf(
+            {
+              AppearanceSettingRow(
+                mode = appearanceMode,
+                onModeChange = settingsViewModel::setAppearance,
+              )
+            },
+            {
+              FirebaseLoggingSettingRow(
+                enabled = firebaseLoggingEnabled,
+                onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
+              )
+            },
+          ),
+        )
 
         // Guest + flag on shows "Log in" (runs the upgrade); real accounts show "Log out". An
         // anonymous user without the upgrade flag has no sign-out action — logging out would
