@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design: Aircraft Sharing — Multi-User Access on the Local-First Store</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --surface-alt: #eef3f9;
+      --text: #122033;
+      --muted: #53657d;
+      --line: #d8e1ec;
+      --blue: #1f5fa8;
+      --blue-soft: #dbe9fb;
+      --green: #156f4a;
+      --green-soft: #d8f0e3;
+      --amber: #9a6200;
+      --amber-soft: #fdeecb;
+      --red: #a33a32;
+      --red-soft: #f7dedb;
+      --shadow: rgba(18, 32, 51, 0.08);
+      --mono: "SFMono-Regular", "JetBrains Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.55; }
+    main { max-width: 1240px; margin: 0 auto; padding: 32px 20px 56px; }
+    .page-shell { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 28px; align-items: start; }
+    .doc-body { min-width: 0; }
+    h1, h2, h3, h4 { line-height: 1.2; margin: 0 0 12px; }
+    h1 { font-size: 2rem; }
+    h2 { margin-top: 38px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 1.35rem; }
+    h3 { margin-top: 24px; font-size: 1.08rem; }
+    h4 { margin-top: 18px; font-size: 0.95rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-alt); padding: 1px 6px; border-radius: 6px; }
+    pre { font-family: var(--mono); font-size: 0.84rem; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; overflow-x: auto; line-height: 1.55; }
+    pre code { background: none; padding: 0; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 16px 0; box-shadow: 0 1px 2px rgba(18,32,51,0.04); }
+    .hero { background: linear-gradient(180deg, var(--surface), var(--surface-alt)); border: 1px solid var(--line); border-radius: 20px; padding: 26px; margin-bottom: 24px; }
+    .hero h1 { margin-bottom: 8px; }
+    .lede { font-size: 1.1rem; color: var(--muted); margin: 0; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 0.82rem; font-weight: 600; margin: 0 6px 6px 0; }
+    .pill.green { background: var(--green-soft); color: var(--green); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+    .pill.red { background: var(--red-soft); color: var(--red); }
+    .toc { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow: auto; background: rgba(255,255,255,0.9); backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px var(--shadow); }
+    .toc-title { margin: 0 0 10px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .toc ol { margin: 0; padding-left: 18px; }
+    .toc li { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92rem; }
+    th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+    th { background: var(--surface-alt); font-weight: 600; }
+    .callout { border-radius: 14px; padding: 14px 18px; margin: 16px 0; border: 1px solid var(--line); }
+    .callout.note { background: var(--blue-soft); border-color: #bcd6f5; }
+    .callout.win { background: var(--green-soft); border-color: #aee0c6; }
+    .callout.warn { background: var(--amber-soft); border-color: #f0d79a; }
+    .callout.risk { background: var(--red-soft); border-color: #efc4bf; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .yes { color: var(--green); font-weight: 700; }
+    .no { color: var(--red); font-weight: 700; }
+    @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <div>
+      <span class="pill amber">Status: Proposed — not implemented</span>
+      <span class="pill">Design Doc</span>
+      <span class="pill">Sharing · Sync · Security Rules · Cloud Functions</span>
+    </div>
+    <h1>Aircraft Sharing — Design</h1>
+    <p class="lede">How multiple accounts read and write the same aircraft on top of the R1 local-first store: access control, invites without email identity, sync-engine changes, and the technician-profile mirror. Companion to <a href="aircraft_sharing_PRD.html">the PRD</a>.</p>
+  </div>
+
+  <div class="page-shell">
+    <div class="doc-body">
+
+      <h2 id="constraints">1. Starting Point &amp; Constraints</h2>
+      <p>Everything this design touches is shaped by four facts about the shipped system (see <a href="../storage/storage_r1_design.md">R1 design</a>):</p>
+      <ol>
+        <li><b>All data is keyed by the owning user's UID</b>, identically in both stores. Firestore: <code>users/{uid}/aircraft/{acId}</code> for the aircraft doc and <code>users/{uid}/aircraft/{acId}/{maintenance_log|maintenance_task|maintenance_overview|squawk}/{id}</code> for nested kinds. Locally, the SQLDelight <code>entity</code> table is keyed by <code>(collection, scope_path, id)</code> where <code>scope_path</code> is the same path (<code>EntityScope</code>). <code>FirestoreRefs</code> maps mechanically between the two.</li>
+        <li><b>The sync engine is the only Firestore client.</b> Feature managers read/write the local <code>EntityStore</code> only. Sync is per <code>(CollectionKind, EntityScope)</code>: hydrate once, then pull-listen and push dirty rows. <code>PushWorker.run(uid)</code> currently filters the dirty queue to the <code>/users/{uid}/%</code> prefix.</li>
+        <li><b>Entity payloads are opaque to the backend.</b> Each synced doc is a <code>SyncDocWire</code>: Base64 proto bytes + <code>deleted</code> + <code>schema</code> + server timestamp. Security rules cannot inspect fields inside a payload — any data that rules must evaluate has to live in plain-field documents <em>outside</em> the entity path.</li>
+        <li><b>Identity:</b> Google / Apple / email-link / anonymous; anonymous users never sync. The self-technician convention already exists: <code>UserInfo.self_technician_id</code> points at the user's own <code>Technician</code> doc (see <a href="../technician/userprofile_as_technician.md">user-as-technician</a>).</li>
+      </ol>
+
+      <h3 id="alternatives">1.1 Data-placement decision</h3>
+      <table>
+        <thead><tr><th>Option</th><th>Sketch</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>A. Keep data under the hosting owner; grant access via an ACL</b></td>
+            <td>Records stay at <code>users/{hostUid}/aircraft/{acId}/…</code>. A plain-field share document authorizes other UIDs; members' sync engines read/write the host's subtree directly.</td>
+            <td class="yes">✓ Chosen. Zero migration for existing data, zero change to entity payloads or LWW, one new top-level collection. The local store already supports foreign scope paths (<code>scope_path</code> is just a string).</td>
+          </tr>
+          <tr>
+            <td>B. Move shared aircraft to a top-level <code>aircraft/{acId}</code> collection</td>
+            <td>Re-home docs on first share; all members point at the neutral location.</td>
+            <td class="no">✕ Requires migrating every doc (and its subcollections) at share time and un-migrating at unshare, dual-path sync during transition, and rewriting local scope paths. Buys cleaner ownership-transfer later, but that's a non-goal; revisit if/when transfer ships.</td>
+          </tr>
+          <tr>
+            <td>C. Copy/fan-out records into each member's tree</td>
+            <td>Cloud Function replicates writes N ways.</td>
+            <td class="no">✕ N-way replication of a store whose whole design is single-source-of-truth + LWW; conflict resolution across copies is strictly worse. Rejected.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="datamodel">2. Data Model</h2>
+
+      <h3 id="acl">2.1 The share tree (plain-field, rules-readable)</h3>
+      <p>One new top-level collection, keyed by aircraft id (aircraft ids are globally-unique random UUIDs, so no host prefix is needed):</p>
+      <pre><code>aircraft_shares/{acId}                      // root doc — the ACL, read by security rules
+  host_uid:      string                     // account whose tree physically holds the data
+  aircraft_id:   string                     // == {acId}, for collection-group queries
+  member_roles:  map&lt;uid, "owner"|"technician"&gt;   // includes host_uid → "owner"; denormalized for one-get rule checks
+  created_at:    timestamp
+
+aircraft_shares/{acId}/members/{uid}        // one per member — display + technician mirror
+  role:          "owner" | "technician"
+  display_name:  string                     // from Firebase Auth at redemption; member-updatable
+  photo_url:     string?
+  technician_mirror: {                      // §7 — maintained by the member's own client
+    name, certificate_type, cert_number,
+    cert_expiration, cert_expire_limit
+  }?
+  added_at:      timestamp
+  invited_by:    uid
+
+aircraft_shares/{acId}/invites/{tokenHash}  // pending invites; tokenHash = SHA-256(secret)
+  role:          "owner" | "technician"
+  created_by:    uid
+  created_at:    timestamp
+  expires_at:    timestamp                  // default now + 7d
+  max_uses:      int                        // default 1
+  use_count:     int
+  revoked:       bool</code></pre>
+      <ul>
+        <li>These are <b>plain-field docs, not <code>SyncDocWire</code></b>, because rules must read <code>member_roles</code> and functions must validate invites. They are deliberately outside the entity-sync path.</li>
+        <li><code>member_roles</code> on the root doc is the single <code>get()</code> security rules perform per request (§4). The <code>members</code> subcollection carries everything else so the root doc stays tiny and low-contention. The redeem/revoke Cloud Functions keep the two in step transactionally.</li>
+        <li>The root doc is created lazily by the owner's client on first invite. Spoof-proofing: rules only allow create when <code>host_uid == request.auth.uid</code> <em>and</em> <code>exists(/users/$(request.auth.uid)/aircraft/$(acId))</code> — you can only open a share for an aircraft that lives in your own tree.</li>
+      </ul>
+
+      <h3 id="ref">2.2 <code>SharedAircraftRef</code> — the member-side pointer (synced kind)</h3>
+      <p>A member's sync engine needs to know, at sign-in on any device, which foreign scopes to hydrate. That index lives in the member's own tree as a new <b>synced</b> entity kind, so it rides the existing hydrate/pull/push machinery and is available offline:</p>
+      <pre><code>// core/model/src/commonMain/proto/sharing/shared_aircraft_ref.proto
+syntax = "proto3";
+option java_package = "dev.fanfly.wingslog.core.model.sharing";
+option java_multiple_files = true;
+
+message SharedAircraftRef {
+  string aircraft_id = 1;
+  string host_uid    = 2;
+  ShareRole role     = 3;   // mirror of ACL role; UI hint only — enforcement is the ACL
+}
+
+enum ShareRole {
+  SHARE_ROLE_UNKNOWN    = 0;
+  SHARE_ROLE_OWNER      = 1;
+  SHARE_ROLE_TECHNICIAN = 2;
+}</code></pre>
+      <ul>
+        <li>New <code>CollectionKind.SharedAircraftRef</code> (<code>wireName = "shared_aircraft_ref"</code>, schema <code>sharing.SharedAircraftRef</code>), registered in <code>EntityCodecRegistry</code>; a 9th kind. Scope: <code>userRoot(uid)</code>, doc id = <code>aircraft_id</code>. Added to <code>SyncEngine.TOP_LEVEL_KINDS</code>.</li>
+        <li>Firestore path: <code>users/{memberUid}/shared_aircraft_ref/{acId}</code>, standard <code>SyncDocWire</code> format.</li>
+        <li><b>Written by the Cloud Functions, not the member's client</b> (created on redeem, tombstoned on revoke/leave/delete — §3). <code>SharedAircraftRef</code> is three scalar fields, so the TypeScript functions encode the proto with <code>protobufjs</code> against the checked-in <code>.proto</code>; a tombstone (<code>deleted: true</code>) doesn't even need a payload. Function-written docs are indistinguishable from client-pushed ones to the sync engine.</li>
+        <li>The role field is advisory (fast UI gating without a network read); the ACL is authoritative and rules never consult the ref.</li>
+      </ul>
+
+      <h3 id="local">2.3 Local storage: no schema change</h3>
+      <p>A member's device stores shared rows in the existing <code>entity</code> table under the <em>host's</em> scope path, e.g. <code>scope_path = "/users/{hostUid}/aircraft/{acId}/"</code> for the plane's logs. The primary key <code>(collection, scope_path, id)</code> already isolates them from the member's own data. Purge-on-revocation is one SQL delete by scope prefix. No new tables, no migrations.</p>
+
+      <h2 id="lifecycle">3. Invite &amp; Membership Lifecycle</h2>
+
+      <h3 id="create">3.1 Creating an invite (client-side, owner)</h3>
+      <ol>
+        <li>Owner's client generates a 128-bit random <code>secret</code>, computes <code>tokenHash = SHA-256(secret)</code>.</li>
+        <li>Ensures <code>aircraft_shares/{acId}</code> exists (lazy create, §2.1), then writes <code>invites/{tokenHash}</code> with role/expiry/max_uses. Rules allow this for owners only.</li>
+        <li>Renders the share URL — the web-app host, so a device without the app still lands on something that works:<br/>
+          <code>https://squawkit.web.app/share#{acId}.{base64url(secret)}</code><br/>
+          The token rides in the <b>URL fragment</b>, which browsers do not send to servers — it can't leak into hosting/CDN logs. Android App Links / iOS Universal Links route the same URL into the native apps. The QR code encodes the same URL.</li>
+      </ol>
+      <p>Only the hash is stored, so a read of the invites subcollection (or a backend leak) yields nothing redeemable; the secret exists only inside the link the owner chose to share. Cancelling an invite sets <code>revoked: true</code>.</p>
+
+      <h3 id="redeem">3.2 Redemption — callable function <code>redeemAircraftShareInvite</code></h3>
+      <p>Redemption must write into <em>two</em> account trees (the share's member list and the member's own <code>shared_aircraft_ref</code>) and enforce invite validity atomically — a job for a callable Cloud Function with the Admin SDK (precedent: <code>requestExportDelivery</code> in <code>backend/firebase/functions</code>), not for client writes + rules:</p>
+      <pre><code>redeemAircraftShareInvite({ aircraftId, secret })   // caller: any signed-in non-anonymous user
+  1. require auth != null &amp;&amp; !auth.token.firebase.sign_in_provider == "anonymous"
+  2. tokenHash = sha256(secret); tx.read aircraft_shares/{acId} + invites/{tokenHash}
+  3. validate: exists, !revoked, now &lt; expires_at, use_count &lt; max_uses
+  4. if caller already in member_roles → return { alreadyMember: true } (token NOT consumed)
+  5. tx.write:
+       invites/{tokenHash}.use_count += 1
+       member_roles[callerUid] = invite.role
+       members/{callerUid} = { role, display_name, photo_url, added_at, invited_by }
+       users/{callerUid}/shared_aircraft_ref/{acId} = SyncDocWire{ payload: SharedAircraftRef, … }
+  6. return { aircraftId, hostUid, role, registration? }</code></pre>
+      <p>The client then nudges <code>SyncEngine.resyncCurrentUser()</code>; the new ref doc arrives via the existing <code>shared_aircraft_ref</code> pull listener (or the resync's hydration), and the engine spins up the shared scopes (§5). Signed-out/guest redeemers park <code>{acId, secret}</code> in memory/prefs, complete sign-in or the <a href="../account/account_upgrade_design.html">guest upgrade</a>, then call the function.</p>
+
+      <h3 id="revoke">3.3 Revoke, leave, role change, delete</h3>
+      <table>
+        <thead><tr><th>Operation</th><th>Caller</th><th>Mechanism</th></tr></thead>
+        <tbody>
+          <tr><td><b>Revoke member</b></td><td>Any owner</td><td>Callable <code>revokeAircraftShare({acId, memberUid})</code>: transactionally remove from <code>member_roles</code>, delete <code>members/{uid}</code>, and write a <b>tombstone</b> <code>SyncDocWire</code> (<code>deleted: true</code>) to <code>users/{memberUid}/shared_aircraft_ref/{acId}</code>. The tombstone is what tells the ex-member's devices to purge (§5.4). Hosting owner cannot be revoked (function-enforced).</td></tr>
+          <tr><td><b>Leave</b></td><td>The member</td><td>Same function, <code>memberUid = caller</code>. Hosting owner cannot leave.</td></tr>
+          <tr><td><b>Change role</b></td><td>Any owner</td><td>Callable <code>updateAircraftShareRole({acId, memberUid, role})</code>: updates <code>member_roles</code> + member doc + rewrites the member's ref payload. (A function rather than a client write so the ref mirror stays consistent.)</td></tr>
+          <tr><td><b>Aircraft deleted</b></td><td>Hosting owner</td><td>Client tombstones the aircraft entity as today. A Firestore <b>trigger</b> on <code>users/{uid}/aircraft/{acId}</code> (<code>deleted == true</code>) tears down <code>aircraft_shares/{acId}</code> and tombstones every member's ref. Members' aircraft rows also die naturally via the normal pull of the aircraft tombstone.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout note">
+        <strong>Division of labor</strong>
+        Clients write only within their own rights (invite docs, their own member-doc mirror fields, entity data). Every operation that must touch two trees or enforce invite semantics is a Cloud Function transaction. Rules are the backstop; functions are the only cross-tree writers.
+      </div>
+
+      <h2 id="rules">4. Security Rules</h2>
+      <p>Sketch (paths abbreviated; <code>role()</code> does the single ACL <code>get()</code>):</p>
+      <pre><code>function role(acId) {
+  return get(/databases/$(db)/documents/aircraft_shares/$(acId))
+           .data.member_roles[request.auth.uid];        // null/absent → no access
+}
+function isOwner(acId)  { return role(acId) == "owner"; }
+function isMember(acId) { return role(acId) in ["owner", "technician"]; }
+
+match /users/{uid} {
+  // Own tree: unchanged — full access to your own data.
+  match /{document=**} { allow read, write: if request.auth.uid == uid; }
+
+  // Shared aircraft doc: members may GET (not LIST) it; only owners may write.
+  match /aircraft/{acId} {
+    allow get:   if request.auth.uid == uid || isMember(acId);
+    allow write: if request.auth.uid == uid || isOwner(acId);
+
+    // Nested maintenance data: any member may read and write.
+    match /{kind}/{docId} {
+      allow read, write: if request.auth.uid == uid || isMember(acId);
+    }
+  }
+}
+
+match /aircraft_shares/{acId} {
+  allow get: if isMember(acId) ||
+                exists(/…/users/$(request.auth.uid)/aircraft/$(acId));
+  allow create: if request.resource.data.host_uid == request.auth.uid
+                &amp;&amp; exists(/…/users/$(request.auth.uid)/aircraft/$(acId));
+  allow update, delete: if false;                        // functions only (member_roles is FN-managed)
+
+  match /members/{memberUid} {
+    allow read: if isMember(acId);
+    // Member maintains own display + technician mirror; role is immutable from clients.
+    allow update: if request.auth.uid == memberUid
+                  &amp;&amp; request.resource.data.role == resource.data.role;
+    allow create, delete: if false;                      // functions only
+  }
+  match /invites/{tokenHash} {
+    allow read, create: if isOwner(acId);
+    allow update: if isOwner(acId);                      // cancel (revoked=true)
+    allow delete: if false;
+  }
+}</code></pre>
+      <table>
+        <thead><tr><th>Path (under <code>users/{host}/aircraft/{acId}</code>)</th><th>Host</th><th>Owner member</th><th>Technician member</th></tr></thead>
+        <tbody>
+          <tr><td>aircraft doc itself</td><td>R/W</td><td>R/W (get only, no list)</td><td>R (get only)</td></tr>
+          <tr><td><code>maintenance_log</code>, <code>maintenance_task</code>, <code>maintenance_overview</code>, <code>squawk</code></td><td>R/W</td><td>R/W</td><td>R/W</td></tr>
+          <tr><td><code>aircraft_shares/{acId}</code> root + members</td><td colspan="2">R; writes via functions/owner-scoped invite ops</td><td>R (list visibility), no invite access</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warn">
+        <strong>Known limitations, accepted for v1</strong>
+        (1) <b>Record-type granularity only.</b> Payloads are opaque proto bytes, so rules can't check fields — a technician who can write logs can write any bytes into a log doc. Matches the PRD's coarse permission matrix. (2) <b>Members can only <code>get</code> the aircraft doc, not <code>list</code></b> the host's aircraft collection — this is what keeps the host's <em>other</em> aircraft private, and it forces a doc-level (not collection-level) sync path for the shared aircraft doc (§5.2). (3) Each shared-scope request costs one extra rules <code>get()</code> — billed as a read, cached per request; acceptable at GA share sizes. (4) Technicians can read the aircraft doc but not the host's <code>technician</code> collection or anything else user-level — privacy boundary is the aircraft subtree.
+      </div>
+
+      <h2 id="sync">5. Sync Engine Changes</h2>
+
+      <h3 id="scopes">5.1 Scope fan-out</h3>
+      <p>Today <code>SyncEngine.runForUser</code> hydrates <code>TOP_LEVEL_KINDS</code> at the user root, then watches the local aircraft list to spin per-aircraft scopes. Sharing adds a parallel branch driven by the refs store:</p>
+      <pre><code>runForUser(user):
+  … existing own-tree branches …
+  + hydrateAndListen(SharedAircraftRef, userRoot(uid))          // 9th top-level kind
+
+  + observe EntityStore&lt;SharedAircraftRef&gt;.observeAll(userRoot(uid))
+      .distinctUntilChanged { set of (hostUid, acId) }
+      .collectLatest { refs →
+        for (ref in refs) {
+          watchSharedAircraftDoc(ref)                            // §5.2 — doc-level
+          for (kind in PER_AIRCRAFT_KINDS)
+            hydrateAndListen(kind, EntityScope.aircraftChild(ref.hostUid, ref.acId))
+        }
+      }</code></pre>
+      <p><code>EntityScope.aircraftChild(hostUid, acId)</code> already expresses foreign scopes — it's just segments. <code>FirestoreRefs</code> needs no change. The per-aircraft nested kinds use the existing collection listeners, which are legal for members under §4 rules.</p>
+
+      <h3 id="docwatch">5.2 Doc-level pull for the shared aircraft doc</h3>
+      <p>The shared aircraft doc cannot be pulled with the existing collection-query listener: a member may <code>get</code> <code>users/{host}/aircraft/{acId}</code> but a query over <code>users/{host}/aircraft</code> is a <code>list</code> and is denied. Add a small <code>FirestoreDocPullSubscription</code> — a snapshot listener on a single <code>DocumentReference</code> — feeding the same <code>PullListener.apply(remote)</code> path (LWW, tombstones, cursor advance all unchanged). The row lands in the local store as kind <code>Aircraft</code> at scope <code>userRoot(hostUid)</code>, exactly where <code>FirestoreRefs</code> would put it.</p>
+
+      <h3 id="push">5.3 Push: widen the dirty-queue filter</h3>
+      <p><code>PushWorker.run(uid)</code> filters dirty rows to <code>/users/{uid}/%</code> (account isolation for signed-out queues). A member's edits to a shared plane are dirty rows under <code>/users/{hostUid}/…</code> and would never drain. Fix: the worker's prefix set becomes <code>{"/users/{uid}/%"} ∪ {"/users/{ref.hostUid}/aircraft/{ref.acId}/%" for each live ref}</code>, recomputed from the refs store (the observing flow re-collects when refs change). Ordering, batching, and LWW are untouched — a member's push writes to the host's docs, Firestore stamps the server time, every other member's listener picks it up. Multi-user conflicts resolve exactly like today's multi-device conflicts.</p>
+
+      <h3 id="teardown">5.4 Revocation teardown &amp; purge</h3>
+      <p>The revoke function's ref <b>tombstone</b> is the purge signal — it arrives on the ex-member's devices through the ordinary <code>shared_aircraft_ref</code> pull listener, works for every device of the member, and needs no extra channel:</p>
+      <ol>
+        <li>Ref tombstone applies → the refs flow emits without that aircraft → <code>collectLatest</code> cancels its listeners (already the pattern for the own-aircraft branch).</li>
+        <li>A <code>SharedScopeJanitor</code> compares live refs against local rows and deletes (hard SQL delete, not entity tombstones — these were never ours to tombstone) all rows and cursors with scope prefix <code>/users/{hostUid}/aircraft/{acId}/</code>, plus the aircraft row itself. Runs on refs-change and at engine start.</li>
+        <li>Queued dirty rows in the purged scope are dropped; if any existed, surface the "changes discarded" notice from the PRD.</li>
+        <li><b>Belt-and-braces:</b> if revocation raced the listener (member offline at tombstone delivery but listeners resumed first), shared-scope pulls/pushes fail <code>PERMISSION_DENIED</code>. The engine treats a permission failure on a shared scope as "revoked": tear down + purge locally (the ref row is stale; overwrite it with a local tombstone). This also covers a deleted share doc.</li>
+      </ol>
+
+      <h3 id="gating">5.5 Gating</h3>
+      <p>Shared-scope sync obeys the same master switches as everything else: signed-in, non-anonymous, <code>cloudSyncEnabled</code>. When sync is off, shared data is a frozen local copy; sharing management UI (which is online-only, §6.2) is disabled with explanatory copy.</p>
+
+      <h2 id="client">6. Client Changes</h2>
+
+      <h3 id="module">6.1 New feature module: <code>feature/sharing</code> (canonical layout)</h3>
+      <pre><code>feature/sharing/
+  model/          ShareRole, ShareMember, PendingInvite, AircraftShareState
+  datamanager/    SharingManager (interface + impl) + Koin module
+  sharedassets/   strings, role-chip colors, QR drawable bits
+  viewing/        MemberRow, RoleChip, SharedBadge (fleet-card + overview affordances)
+  update/         ManageAccessScreen, InviteSheet (QR + share-link), RedeemConfirmationSheet,
+                  ManageAccessViewModel, RedeemViewModel</code></pre>
+      <p>Register the Koin modules in <code>initKoin.kt</code> as usual. All UI is gated by <code>FeatureFlags.aircraftSharingEnabled</code> (new Feature Lab flag) and hidden for anonymous users.</p>
+
+      <h3 id="manager">6.2 <code>SharingManager</code> — a deliberate exception to "managers never touch Firestore"</h3>
+      <p>Share ACL docs are plain-field, rules-inspected, function-written — they can't ride the entity-sync path. <code>SharingManager</code> therefore talks to Firestore/Functions directly, an <b>online-only surface</b>, following the existing precedent of <code>ExportHistoryRemoteRepository</code>/<code>ExportDeliveryBackend</code> in <code>feature/export</code>. Sharing management inherently requires connectivity (you're granting cloud access); the shared <em>content</em> remains fully local-first.</p>
+      <pre><code>interface SharingManager {
+  fun observeShareState(acId: String): Flow&lt;AircraftShareState&gt;   // members + invites (Firestore snapshots)
+  fun observeMyRole(acId: String): Flow&lt;ShareRole&gt;                // local: refs store / own aircraft ⇒ instant, offline-correct
+  suspend fun createInvite(acId: String, role: ShareRole): Result&lt;InviteLink&gt;   // §3.1, client-side
+  suspend fun cancelInvite(acId: String, tokenHash: String): Result&lt;Unit&gt;
+  suspend fun redeemInvite(acId: String, secret: String): Result&lt;RedeemOutcome&gt; // callable fn + resync nudge
+  suspend fun revokeMember(acId: String, uid: String): Result&lt;Unit&gt;             // callable fn
+  suspend fun updateRole(acId: String, uid: String, role: ShareRole): Result&lt;Unit&gt;
+  suspend fun leave(acId: String): Result&lt;Unit&gt;
+  suspend fun publishTechnicianMirror(): Result&lt;Unit&gt;                           // §7
+}</code></pre>
+
+      <h3 id="fleet">6.3 Fleet &amp; aircraft UI</h3>
+      <ul>
+        <li><b><code>FleetManager.observeFleetDashboard()</code></b> becomes a combine of own aircraft (<code>observeAll(userRoot(myUid))</code>, unchanged) with shared ones: <code>flatMapLatest</code> over <code>EntityStore&lt;SharedAircraftRef&gt;</code>, observing each <code>Aircraft</code> row at <code>userRoot(ref.hostUid)</code> by id. Emits <code>FleetEntry(aircraft, shared: Boolean, role)</code>; the dashboard card shows a "Shared" badge + host display name (from the share doc, cached).</li>
+        <li><b>Per-aircraft managers need the right scope, not <code>requireUid()</code>.</b> Managers currently build scopes from the signed-in uid. Introduce an <code>AircraftScopeResolver</code> (in <code>core:storage</code> or <code>feature/sharing/model</code>): <code>resolve(acId): Flow&lt;EntityScope&gt;</code> — own aircraft → <code>aircraftChild(myUid, acId)</code>, shared → <code>aircraftChild(hostUid, acId)</code> via the refs store. <code>MaintenanceLogManager</code>, <code>TaskDataManager</code>, <code>SquawkManager</code> switch from uid-derived scopes to the resolver; their <code>EntityStore</code> code is otherwise unchanged. This is the widest-touch client change and the reason sharing is a multi-week project rather than a UI feature.</li>
+        <li><b>Role gating in UI:</b> <code>AircraftOverviewViewModel</code> exposes <code>myRole</code>; Technician role hides Edit Aircraft, Delete, and Manage Access mutations (screen itself is visible read-only). Server rules remain the enforcement.</li>
+      </ul>
+
+      <h3 id="redeem-ui">6.4 Deep link handling</h3>
+      <p><code>/share#{acId}.{secret}</code> is registered as an App Link (Android), Universal Link (iOS), and a web-app route. The handler parses the fragment locally (never sent to the server), shows <code>RedeemConfirmationSheet</code>, and drives the §3.2 flow, including the park-and-resume path through sign-in / guest upgrade. Follows the deep-link plumbing established for <a href="../account/email_link_signin_design.html">email-link sign-in</a>.</p>
+
+      <h2 id="technician">7. Technician Identity: the Profile Mirror</h2>
+      <p>Requirement: a shared member with the Technician role must appear in the aircraft's technician machinery backed by <em>their own</em> license data — never typed by the aircraft owner.</p>
+      <h3>7.1 Why a mirror (and who writes it)</h3>
+      <p>The member's self-technician record lives at <code>users/{memberUid}/technician/{selfId}</code> — private, opaque proto, and its "self-ness" is only known via that user's <code>UserInfo</code>. Letting other members read it would require exposing part of a user's private tree and decoding payloads they shouldn't see in bulk. Instead, the <b>member's own client publishes a small plain-field mirror</b> into the share:  <code>aircraft_shares/{acId}/members/{uid}.technician_mirror</code> (shape in §2.1). Rules already allow exactly this write (member updates own member doc). No proto decoding server-side, no privacy hole — the member is knowingly sharing precisely the fields that go on a signed log, per share.</p>
+      <h3>7.2 Mirror lifecycle</h3>
+      <ul>
+        <li><b>On redemption:</b> the redeem confirmation runs <code>publishTechnicianMirror()</code> — reads <code>TechnicianManager.observeSelf()</code> locally, writes the mirror to every share the user belongs to (here, the new one).</li>
+        <li><b>On profile edit:</b> <code>EditTechnicianScreen</code> save path for the self-record triggers <code>publishTechnicianMirror()</code> for all of the user's memberships (enumerated from the local refs store; queued/retried while offline via a lightweight outbox in <code>SharingManager</code>). Freshness is best-effort; log snapshots always capture whatever is current at signing time — same semantics as today's picker.</li>
+        <li><b>On revocation/leave:</b> member doc (and mirror) is deleted by the function. History inside logs is untouched — snapshots, as always.</li>
+      </ul>
+      <h3>7.3 Surfacing in the technician features</h3>
+      <ul>
+        <li><b>Picker (log form):</b> for a given aircraft, <code>TechnicianPickerSheet</code> shows — (1) the current user's self record first (unchanged); (2) <b>linked technicians</b>: share members with role Technician (and Owners with a published mirror), sourced from <code>SharingManager.observeShareState(acId)</code>, marked with a "Linked" badge; (3) the aircraft-relevant manual entries as today. Selecting a linked technician snapshots the mirror fields into the log's embedded <code>Technician</code> proto — the snapshot mechanism is untouched, only the source differs. The embedded proto gains an optional <code>source_uid</code> field so a log can later show "from linked profile".</li>
+        <li><b>Manage Technicians (Settings):</b> stays a personal list, but linked technicians from shares the user belongs to are shown in a separate read-only section ("Linked from shared aircraft"), no edit or delete — tapping explains the data is maintained by that person. The existing manual CRUD is unchanged for off-app mechanics.</li>
+        <li><b>A shared technician logging their own work</b> needs no mirror at all — their device has their real self-record locally; the picker defaults to it and snapshots it directly.</li>
+      </ul>
+
+      <h2 id="offline">8. Offline &amp; Conflict Semantics (unchanged by design)</h2>
+      <ul>
+        <li>All members get full offline read/write on shared maintenance data; writes queue as dirty rows and drain via §5.3. Conflicts between members are the same whole-record LWW-on-server-timestamp as multi-device today; dirty rows remain immune to remote overwrite until pushed.</li>
+        <li>The only sharing-specific data-loss window is <b>unsynced edits at revocation</b> (PRD §8) — accepted and surfaced in UX.</li>
+        <li>Share ACL state (Manage Access) is online-only; role for UI gating comes from the offline-correct local refs store.</li>
+      </ul>
+
+      <h2 id="attachments">9. Attachments (R2) — fast-follow, not v1</h2>
+      <p>Blob objects live in Firebase Storage under user-scoped paths with matching Storage rules and a per-scope transfer pipeline keyed to <code>/users/{uid}/%</code> (see <a href="../storage/storage_r2_design.md">R2 design</a>). Shared attachments need: Storage rules consulting <code>aircraft_shares</code> (Storage rules can't <code>get()</code> Firestore — likely custom-claims or a token-minting function), and widening the blob drivers' scope prefixes like §5.3. Since attachment UI is itself behind <code>attachmentUploadEnabled</code>, v1 ships proto-level sharing only; attachment rows on shared aircraft render as unavailable ("attachment not shared yet") rather than broken.</p>
+
+      <h2 id="testing">10. Testing</h2>
+      <ul>
+        <li><b>Security rules</b> (highest-value): Firestore emulator suite in <code>backend/firebase</code> — member/non-member/technician matrix over every path in §4, get-vs-list on the aircraft doc, share-doc create spoofing, member-doc role immutability, invite access.</li>
+        <li><b>Functions:</b> unit tests for redeem (expiry, reuse, revoked, already-member, anonymous caller), revoke (hosting-owner protection, tombstone emission), delete-trigger teardown.</li>
+        <li><b>Sync engine</b> (existing MockK/Truth harness per <code>kmm-test-writer</code>): refs-driven scope spin-up/teardown; push-prefix widening drains foreign-scope dirty rows; doc-level pull applies LWW; janitor purges on ref tombstone; PERMISSION_DENIED on a shared scope triggers teardown+purge, not the failure banner.</li>
+        <li><b>Managers/UI:</b> scope-resolver switching own vs. shared; fleet combine emits shared entries with badges; role gating hides owner-only actions; picker shows linked entries and snapshots mirror data.</li>
+        <li><b>End-to-end (manual, two accounts):</b> invite→QR→redeem→hydrate; concurrent edits; offline edit + revoke; aircraft delete propagation.</li>
+      </ul>
+
+      <h2 id="phases">11. Implementation Phases</h2>
+      <table>
+        <thead><tr><th>Phase</th><th>Scope</th><th>Ships independently?</th></tr></thead>
+        <tbody>
+          <tr><td><b>P1 — Foundations</b></td><td><code>SharedAircraftRef</code> proto + 9th <code>CollectionKind</code>; <code>aircraft_shares</code> schema; full security rules + emulator tests; scaffold <code>feature/sharing</code> (via the feature-module-scaffolder).</td><td>Yes — inert without UI.</td></tr>
+          <tr><td><b>P2 — Membership plumbing</b></td><td>Cloud Functions (redeem/revoke/updateRole + delete trigger, protobufjs wire encoding); <code>SharingManager</code>; deep-link route.</td><td>Yes — behind flag.</td></tr>
+          <tr><td><b>P3 — Sync engine</b></td><td>Refs-driven scope fan-out; <code>FirestoreDocPullSubscription</code>; push-prefix widening; <code>SharedScopeJanitor</code> + PERMISSION_DENIED handling.</td><td>Dogfood: manual Firestore-seeded share.</td></tr>
+          <tr><td><b>P4 — UI</b></td><td>Manage Access, Invite/QR sheet, redeem confirmation; fleet badges; scope resolver in per-aircraft managers; role gating.</td><td>Flag on for dogfood.</td></tr>
+          <tr><td><b>P5 — Technician linkage</b></td><td>Mirror publish/outbox; picker + Manage Technicians linked sections; <code>source_uid</code> on the embedded snapshot.</td><td>Flag on for dogfood.</td></tr>
+          <tr><td><b>P6 — Hardening &amp; rollout</b></td><td>Two-account E2E passes, revocation races, copy polish; staged Feature Lab rollout.</td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="open">12. Open Questions</h2>
+      <ol>
+        <li><b>Web QR scanning:</b> web app renders QR + link fine; scanning is camera-API work. Proposal: v1 web redeems via link only.</li>
+        <li><b>Display-name staleness</b> in member docs (auth display name changes aren't mirrored automatically). Proposal: refresh own member docs opportunistically at app start, same outbox as the technician mirror.</li>
+        <li><b>Should Owners auto-publish a technician mirror?</b> Owner-members who also wrench on the plane (very common in partnerships) benefit; proposal: publish for every member regardless of role, since the mirror is exactly the data they already stamp on logs.</li>
+        <li><b>Rules <code>get()</code> read cost</b> per shared-doc operation: measure in dogfood; if material, revisit custom claims (claims add invalidation complexity — deliberately not chosen for v1).</li>
+        <li><b>Hydration fan-out</b> for members of many shared aircraft hits the same N+1 as own aircraft (R1 open question 5); same collection-group-query optimization applies later if telemetry warrants.</li>
+      </ol>
+
+    </div>
+
+    <nav class="toc">
+      <p class="toc-title">Contents</p>
+      <ol>
+        <li><a href="#constraints">Starting Point &amp; Constraints</a></li>
+        <li><a href="#datamodel">Data Model</a></li>
+        <li><a href="#lifecycle">Invite &amp; Membership Lifecycle</a></li>
+        <li><a href="#rules">Security Rules</a></li>
+        <li><a href="#sync">Sync Engine Changes</a></li>
+        <li><a href="#client">Client Changes</a></li>
+        <li><a href="#technician">Technician Profile Mirror</a></li>
+        <li><a href="#offline">Offline &amp; Conflicts</a></li>
+        <li><a href="#attachments">Attachments (R2)</a></li>
+        <li><a href="#testing">Testing</a></li>
+        <li><a href="#phases">Implementation Phases</a></li>
+        <li><a href="#open">Open Questions</a></li>
+      </ol>
+    </nav>
+  </div>
+</main>
+</body>
+</html>
