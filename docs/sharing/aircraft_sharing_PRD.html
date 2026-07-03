@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRD: Aircraft Sharing — Multiple People Managing the Same Airplane</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --surface-alt: #eef3f9;
+      --text: #122033;
+      --muted: #53657d;
+      --line: #d8e1ec;
+      --blue: #1f5fa8;
+      --blue-soft: #dbe9fb;
+      --green: #156f4a;
+      --green-soft: #d8f0e3;
+      --amber: #9a6200;
+      --amber-soft: #fdeecb;
+      --red: #a33a32;
+      --red-soft: #f7dedb;
+      --shadow: rgba(18, 32, 51, 0.08);
+      --mono: "SFMono-Regular", "JetBrains Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.55; }
+    main { max-width: 1240px; margin: 0 auto; padding: 32px 20px 56px; }
+    .page-shell { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 28px; align-items: start; }
+    .doc-body { min-width: 0; }
+    h1, h2, h3, h4 { line-height: 1.2; margin: 0 0 12px; }
+    h1 { font-size: 2rem; }
+    h2 { margin-top: 38px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 1.35rem; }
+    h3 { margin-top: 24px; font-size: 1.08rem; }
+    h4 { margin-top: 18px; font-size: 0.95rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-alt); padding: 1px 6px; border-radius: 6px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 16px 0; box-shadow: 0 1px 2px rgba(18,32,51,0.04); }
+    .hero { background: linear-gradient(180deg, var(--surface), var(--surface-alt)); border: 1px solid var(--line); border-radius: 20px; padding: 26px; margin-bottom: 24px; }
+    .hero h1 { margin-bottom: 8px; }
+    .lede { font-size: 1.1rem; color: var(--muted); margin: 0; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 0.82rem; font-weight: 600; margin: 0 6px 6px 0; }
+    .pill.green { background: var(--green-soft); color: var(--green); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+    .pill.red { background: var(--red-soft); color: var(--red); }
+    .toc { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow: auto; background: rgba(255,255,255,0.9); backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px var(--shadow); }
+    .toc-title { margin: 0 0 10px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .toc ol { margin: 0; padding-left: 18px; }
+    .toc li { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92rem; }
+    th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+    th { background: var(--surface-alt); font-weight: 600; }
+    .callout { border-radius: 14px; padding: 14px 18px; margin: 16px 0; border: 1px solid var(--line); }
+    .callout.note { background: var(--blue-soft); border-color: #bcd6f5; }
+    .callout.win { background: var(--green-soft); border-color: #aee0c6; }
+    .callout.warn { background: var(--amber-soft); border-color: #f0d79a; }
+    .callout.risk { background: var(--red-soft); border-color: #efc4bf; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    ul.checks { list-style: none; padding-left: 0; }
+    ul.checks li { padding-left: 26px; position: relative; margin: 8px 0; }
+    ul.checks li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+    ul.nots li::before { content: "✕"; color: var(--red); }
+    .yes { color: var(--green); font-weight: 700; }
+    .no { color: var(--red); font-weight: 700; }
+    .flow { font-family: var(--mono); font-size: 0.85rem; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; overflow-x: auto; white-space: pre; line-height: 1.6; }
+    @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <div>
+      <span class="pill amber">Status: Proposed — not implemented</span>
+      <span class="pill">PRD</span>
+      <span class="pill">Sharing · Multi-user · Sync</span>
+    </div>
+    <h1>Aircraft Sharing</h1>
+    <p class="lede">Let multiple signed-in people — co-owners, and the mechanics who work on the airplane — manage the same aircraft: one shared logbook, role-appropriate permissions, and an access-management view. Companion to <a href="aircraft_sharing_design.html">the Design Doc</a>.</p>
+  </div>
+
+  <div class="page-shell">
+    <div class="doc-body">
+
+      <div class="callout note">
+        <strong>Decisions locked for this PRD</strong>
+        Roles: <b>Owner + Technician</b> (two roles only for v1; no read-only Viewer). Invitations: <b>invite link / QR code with an unguessable one-time token</b> — no email addresses involved, so it works identically across Google, Apple, and email-link sign-in. Data placement: <b>the aircraft's records stay under the hosting owner's account</b>; other members are granted access, nothing is copied or moved. Technician identity: <b>every member's</b> license data <b>comes from their own SquawkIt profile</b>, read-only to everyone else — role governs permissions only, so an owner who also wrenches on the plane appears in the technician picker the same way. Availability: <b>signed-in (non-anonymous) users with Cloud Sync enabled only</b>. Rollout: gated behind a Feature Lab flag, off by default.
+      </div>
+
+      <h2 id="problem">1. Problem &amp; Background</h2>
+      <p>SquawkIt today is strictly single-player. Every record — aircraft, maintenance logs, tasks, squawks, overview — lives under exactly one account (<code>users/{uid}/…</code> in Firestore, mirrored by the same scope path in the on-device store). There is no way for a second person to see or contribute to an aircraft's logbook. That mismatches how airplanes are actually owned and maintained:</p>
+      <ul>
+        <li><b>Partnerships and co-ownership are the norm, not the exception.</b> A large share of GA aircraft are owned by 2–4 partners or a flying club. Today one partner "owns" the SquawkIt data and the others fly blind — or worse, keep a parallel logbook that drifts.</li>
+        <li><b>Maintenance is done by someone else.</b> The owner squawks a problem; an A&amp;P or IA fixes it and signs the log. Today the owner transcribes the mechanic's work and hand-types the mechanic's certificate data into the Manage Technicians screen — data the owner is guessing at, on records where correctness matters.</li>
+        <li><b>The technician snapshot is only as good as the owner's typing.</b> Maintenance logs snapshot the technician's name/certificate at assignment time (see <a href="../technician/technician_design.md">technician design</a>). If the source entry is wrong, every signed log is wrong.</li>
+      </ul>
+      <p>The product's first principle is <b>Dependability First</b>. A logbook that only one stakeholder can see, with second-hand technician credentials, is not dependable. Sharing turns the aircraft record into the single source of truth for everyone who touches the airplane.</p>
+
+      <h2 id="goals">2. Goals &amp; Non-Goals</h2>
+      <h4>Goals</h4>
+      <ul class="checks">
+        <li>An aircraft can be shared with any number of additional members, each as an <b>Owner</b> or a <b>Technician</b>.</li>
+        <li>All members see the <b>same live data</b> — logs, tasks, squawks, due status — with the same local-first offline experience they get for their own aircraft.</li>
+        <li>Sharing works <b>without knowing the invitee's email address or sign-in provider</b>. A link or QR code is enough.</li>
+        <li>A <b>Manage Access</b> view shows who has access to the aircraft and lets owners change roles, revoke access, and create/cancel invites.</li>
+        <li>A shared member with the Technician role appears in the aircraft's technician picker <b>backed by their own profile's license data</b> — the owner cannot edit it, only the technician can (from their own account).</li>
+        <li>Access can be revoked at any time; a revoked member loses read and write access and their local copy is purged.</li>
+      </ul>
+      <h4>Non-Goals</h4>
+      <ul class="checks nots">
+        <li>Sharing for anonymous (guest) users — sharing requires a permanent account on both sides (data must live in the cloud to be shared).</li>
+        <li>A read-only <b>Viewer</b> role (prospective buyers, CFIs). Deliberately deferred; the model is designed so adding it later is cheap.</li>
+        <li>Ownership transfer / changing which account hosts the data (e.g. selling the airplane). Future work.</li>
+        <li>Field-level permissions (e.g. "technician can edit hours but not tach"). v1 permissions are per record type.</li>
+        <li>Attachments on shared aircraft (photos, documents). The attachment feature itself is still behind <code>attachmentUploadEnabled</code>; shared-aircraft attachment access is specced in the design doc as a fast-follow.</li>
+        <li>Real-time presence, comments, or notifications ("Bob added a squawk"). Valuable, separate feature.</li>
+      </ul>
+
+      <h2 id="personas">3. Who This Is For</h2>
+      <div class="card">
+        <h3 style="margin-top:0">The partnership</h3>
+        <p class="muted" style="margin:0">Three partners co-own a 182. Any of them may fly it, discover a squawk, or drop it off at the shop. All three need full control: edit the aircraft, log maintenance, manage who has access. <b>Role: all Owners.</b></p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Owner + independent mechanic</h3>
+        <p class="muted" style="margin:0">A sole owner uses a freelance A&amp;P/IA. The mechanic gets access scoped to doing work: see squawks, write logs, complete tasks, update times. The mechanic's certificate data flows from the mechanic's own profile into every log they sign. <b>Role: owner is Owner, mechanic is Technician.</b></p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">The flying club / small fleet</h3>
+        <p class="muted" style="margin:0">A club officer administers 4 aircraft; a staff mechanic maintains all of them; members are future Viewers (out of scope for v1). Sharing is per-aircraft, so the officer invites the mechanic to each aircraft once. <b>Role: officer is Owner, mechanic is Technician on each aircraft.</b></p>
+      </div>
+
+      <h2 id="roles">4. Roles &amp; Permissions</h2>
+      <p>Two roles in v1. Every aircraft has at least one Owner — the account the aircraft was created under is the <b>hosting owner</b> and can never be removed (ownership transfer is a non-goal). Additional Owners are peers in every other respect.</p>
+      <p><b>Role is about permissions, not about who turns wrenches.</b> An owner who is also a mechanic (a partner with an A&amp;P, or an owner doing FAR 43 preventive maintenance) does not need a second role: Owner already includes every Technician capability, and <em>every</em> member — Owner or Technician — is selectable in the technician picker backed by their own profile's license data. Certificate fields may be empty for non-certificated owners; a name-only entry is still what belongs on the log.</p>
+      <table>
+        <thead>
+          <tr><th>Capability</th><th>Owner</th><th>Technician</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>See the aircraft on their fleet dashboard (with a "Shared" badge)</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Read everything: aircraft details, logs, tasks, squawks, due status</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Add / edit / delete maintenance logs</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Add / edit / complete maintenance tasks (inspection schedule)</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Add / address / dismiss squawks</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Update the maintenance overview (times, hours)</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Appear as a linked technician in the picker, license data from their own profile</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td>Edit the aircraft itself (registration, engine, propeller, details)</td><td class="yes">✓</td><td class="no">✕</td></tr>
+          <tr><td>Open Manage Access; create invites; change roles; revoke members</td><td class="yes">✓</td><td class="no">✕ (sees the member list, read-only)</td></tr>
+          <tr><td>Delete the aircraft</td><td class="yes">✓ hosting owner only</td><td class="no">✕</td></tr>
+          <tr><td>Leave the share (remove their own access)</td><td class="yes">✓ (except hosting owner)</td><td class="yes">✓</td></tr>
+        </tbody>
+      </table>
+      <div class="callout note">
+        <strong>Why Technicians can edit tasks and times</strong>
+        A mechanic finishing an annual must be able to record the inspection as done (task completion) and set the current times — otherwise the owner has to re-do half the visit. The line for v1 is drawn at <em>maintenance data vs. the aircraft's identity and its access list</em>: technicians edit the former, never the latter. Enforcement is server-side per record type (see the <a href="aircraft_sharing_design.html#rules">design doc's security-rules section</a>).
+      </div>
+
+      <h2 id="invites">5. Sharing Without Email Addresses</h2>
+      <p>SquawkIt supports Google sign-in (Android), Apple sign-in (iOS), passwordless email-link, and guests. This rules out the classic "enter the invitee's email" flow:</p>
+      <ul>
+        <li><b>Apple sign-in commonly hides the real email</b> behind a private-relay address the user themselves doesn't know or share.</li>
+        <li>An email typed by the inviter may not match <em>any</em> address on the invitee's account, or may match the wrong person's. There is no lookup API by email that is reliable across providers, and pre-provisioning access to an unverified address is a security hole.</li>
+        <li>Two people standing in the same hangar shouldn't need email at all.</li>
+      </ul>
+      <p><b>Chosen mechanism: capability invites.</b> An owner mints an invite for a specific aircraft and role. The invite is an unguessable token rendered two ways — a <b>share link</b> (sent over any channel: text, WhatsApp, email, anything) and a <b>QR code</b> (scanned in person). Whoever redeems the token, signed in with <em>whatever provider they use</em>, becomes the member; membership binds to their Firebase <b>UID</b>, never to an email. The invite is single-use by default and expires in 7 days; the redeeming person's identity (display name + avatar) is shown to the owner in Manage Access after redemption, which is the moment to catch a link that reached the wrong hands — plus revoke, which fully un-does a redemption.</p>
+      <div class="callout win">
+        <strong>Why this is the reliable option</strong>
+        A token names <em>the permission</em>, not a guessed identity. It cannot mis-target someone by typo, works across all current and future sign-in providers, requires zero PII from the inviter, and the QR form makes the most common real-world case — owner and mechanic at the airplane — a 5-second interaction.
+      </div>
+
+      <h2 id="journeys">6. User Journeys</h2>
+
+      <h3 id="j-invite">6.1 Owner invites someone</h3>
+      <ol>
+        <li>Owner opens the aircraft → overflow menu → <b>Manage Access</b> (also reachable from the aircraft Overview tab).</li>
+        <li>Taps <b>Invite</b>, picks the role (<b>Owner</b> / <b>Technician</b>, defaults to Technician), sees the expiry (7 days) and single-use note.</li>
+        <li>Gets a screen with a QR code and a <b>Share link</b> button (system share sheet). The pending invite appears in Manage Access with role, creation time, and a <b>Cancel</b> action.</li>
+      </ol>
+
+      <h3 id="j-redeem">6.2 Invitee redeems</h3>
+      <ol>
+        <li>Invitee opens the link (or scans the QR with their camera → deep link into SquawkIt; the web app handles the same URL, so a phone without the app installed still lands somewhere useful).</li>
+        <li><b>Signed in, permanent account:</b> a confirmation sheet shows the aircraft registration/model, the inviting owner's display name, and the offered role → <b>Accept</b>. The aircraft appears on their fleet dashboard within seconds and hydrates for offline use.</li>
+        <li><b>Signed out or guest:</b> the redemption is parked, the user is routed through sign-in / the existing <a href="../account/account_upgrade_PRD.html">guest-upgrade flow</a>, and redemption resumes after a permanent account exists. Guests never redeem directly — membership must attach to a durable UID.</li>
+        <li><b>Expired / cancelled / already-used token:</b> a clear error state — "This invite is no longer valid. Ask the owner for a new one."</li>
+      </ol>
+
+      <h3 id="j-manage">6.3 Manage Access view</h3>
+      <p>One screen per aircraft, listing:</p>
+      <ul>
+        <li><b>Members</b> — avatar, display name, role chip (<span class="pill" style="margin:0">Owner</span> / <span class="pill green" style="margin:0">Technician</span>), "Host" badge on the hosting owner, "You" badge on self. Owners can tap a member to change their role or revoke access (with confirmation). Technicians see this list read-only — knowing who has access is part of trusting the logbook.</li>
+        <li><b>Pending invites</b> (owners only) — role, created date, expiry, Cancel.</li>
+        <li><b>Leave</b> — any non-hosting member can remove themselves.</li>
+      </ul>
+
+      <h3 id="j-tech">6.4 A shared technician does work</h3>
+      <ol>
+        <li>Mechanic (Technician role) opens the shared aircraft, reviews open squawks, performs the work.</li>
+        <li>Creates a maintenance log. The "Performed by" picker offers <b>their own self-technician profile as the default</b> — name, certificate type, number, expiration, exactly as they maintain it in their own Settings → Manage Technicians. The log stores a snapshot, same as today.</li>
+        <li>Marks the squawk addressed, completes the linked task, updates times. Every member sees the results on next sync.</li>
+        <li>On the <b>other members'</b> devices, the mechanic now also appears in the technician picker for this aircraft as a <b>linked technician</b> — a read-only entry labeled with a "Linked" badge, sourced live from the mechanic's own profile. Members can select them on logs they write, but cannot edit their name or certificate data. This works identically for Owner-role members who do their own maintenance: any member with a profile is selectable by the others. Manually-entered technicians keep working unchanged for shops that aren't on SquawkIt.</li>
+      </ol>
+      <div class="callout win">
+        <strong>Requirement met: license data is first-party</strong>
+        The person who holds the certificate is the only person who can state its type, number, and expiration. Owners stop transcribing; logs snapshot verified-by-the-holder data.
+      </div>
+
+      <h3 id="j-revoke">6.5 Revocation and leaving</h3>
+      <ol>
+        <li>Owner opens Manage Access → member → <b>Revoke access</b> → confirmation explains the member will immediately lose access and their device copies will be removed.</li>
+        <li>The member's cloud access ends at once (server-enforced). Their devices purge the aircraft's local data on next connection. Unsynced edits they made while offline are lost — the confirmation dialog warns the owner about this, and the member gets an informational notice.</li>
+        <li>Everything the member contributed while they had access — logs, squawk updates, technician snapshots inside logs — <b>remains in the logbook</b>. Revocation removes access, not history.</li>
+        <li><b>Leave</b> is the self-service variant of the same flow.</li>
+      </ol>
+
+      <h3 id="j-delete">6.6 Hosting owner deletes the aircraft</h3>
+      <p>Deletion follows today's tombstone flow and propagates to every member: the aircraft disappears from all fleets, and the share (membership + invites) is cleaned up. The confirmation dialog tells the hosting owner how many other members will lose access.</p>
+
+      <h2 id="requirements">7. Functional Requirements</h2>
+      <table>
+        <thead><tr><th>#</th><th>Requirement</th><th>Priority</th></tr></thead>
+        <tbody>
+          <tr><td>F1</td><td>All sharing entry points are hidden for anonymous users and shown only when Cloud Sync is enabled; a signed-out/guest invitee is routed through sign-in/upgrade before redemption.</td><td>P0</td></tr>
+          <tr><td>F2</td><td>An owner can create an invite for a chosen role, rendered as a share link and QR code; invites are single-use, expire after 7 days, and can be cancelled.</td><td>P0</td></tr>
+          <tr><td>F3</td><td>Redemption binds membership to the redeemer's UID regardless of sign-in provider; no email address is collected or displayed during invite creation.</td><td>P0</td></tr>
+          <tr><td>F4</td><td>A Manage Access screen lists members (with roles) and pending invites; owners can change roles, revoke members, and cancel invites; any non-hosting member can leave.</td><td>P0</td></tr>
+          <tr><td>F5</td><td>Members see the shared aircraft on their fleet dashboard with a "Shared" indicator and the hosting owner's name; all per-aircraft data is available offline like their own aircraft.</td><td>P0</td></tr>
+          <tr><td>F6</td><td>Permissions per the §4 matrix are enforced server-side (not just hidden in UI): technicians cannot modify the aircraft record or the access list.</td><td>P0</td></tr>
+          <tr><td>F7</td><td>A member's technician identity in the aircraft's picker is sourced from that member's own self-technician profile, read-only to others, updating when the member updates their profile; logs keep snapshot semantics.</td><td>P0</td></tr>
+          <tr><td>F8</td><td>Revocation takes effect server-side immediately and purges the ex-member's local copy on their next connection; contributed history is retained.</td><td>P0</td></tr>
+          <tr><td>F9</td><td>Aircraft deletion by the hosting owner propagates to all members and tears down the share.</td><td>P0</td></tr>
+          <tr><td>F10</td><td>Multi-use / longer-lived invites (e.g. club onboarding) as an invite option.</td><td>P1</td></tr>
+          <tr><td>F11</td><td>Feature Lab flag (<code>aircraftSharingEnabled</code>) gates all sharing UI; off by default.</td><td>P0</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="edge">8. Edge Cases &amp; Expected Behavior</h2>
+      <table>
+        <thead><tr><th>Situation</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>Invitee opens link while signed out / guest</td><td>Park the token, route through sign-in or guest-upgrade, resume redemption. Token parked locally only until used or expired.</td></tr>
+          <tr><td>Invitee is already a member</td><td>Friendly no-op: "You already have access to N12345." Token is not consumed.</td></tr>
+          <tr><td>Owner invites themselves / redeems their own invite</td><td>Same no-op as above.</td></tr>
+          <tr><td>Token expired, cancelled, or already used</td><td>Explicit error state; suggest asking the owner for a fresh invite.</td></tr>
+          <tr><td>Member is offline when revoked</td><td>Cloud access is already gone (server-enforced). On reconnect the client discovers the revocation, purges local data, and discards unsynced edits with a notice.</td></tr>
+          <tr><td>Technician edits a log offline, is revoked, reconnects</td><td>The queued write is rejected server-side and dropped locally. The revoke confirmation warns owners this can happen.</td></tr>
+          <tr><td>Two members edit the same record concurrently</td><td>Existing last-writer-wins on server timestamp — unchanged from single-user multi-device behavior (see <a href="../storage/storage_r1_design.md">R1 design</a>). Whole-record granularity, same as today.</td></tr>
+          <tr><td>Member disables Cloud Sync</td><td>Shared aircraft stop syncing (stale local copy remains readable, clearly marked "Sync off"); sharing UI actions require sync on. No writes are accepted while sync is off.</td></tr>
+          <tr><td>Hosting owner disables Cloud Sync</td><td>Their own new edits stop flowing to members (and vice versa) until re-enabled; members' access is unaffected because the cloud copy remains. Settings copy explains this for shared aircraft.</td></tr>
+          <tr><td>Last additional owner leaves</td><td>Fine — the hosting owner always remains. The hosting owner cannot leave; they delete the aircraft instead (or a future ownership-transfer feature).</td></tr>
+          <tr><td>Shared technician deletes their own self-profile data</td><td>Linked picker entry shows name-only; past log snapshots are untouched.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="metrics">9. Success Metrics</h2>
+      <ul>
+        <li><b>Adoption:</b> % of active aircraft with ≥2 members, 90 days after full rollout (directional target: 10%+, given co-ownership rates in GA).</li>
+        <li><b>Invite funnel:</b> invites created → redeemed → member active after 2 weeks; redemption rate target &gt; 60%.</li>
+        <li><b>Technician quality:</b> share of maintenance logs on shared aircraft whose technician snapshot came from a linked profile rather than manual entry.</li>
+        <li><b>Retention lever:</b> retention of accounts whose first aircraft is a <em>shared</em> one (mechanics invited in are a new acquisition channel).</li>
+        <li><b>Safety valves:</b> revocations per 100 shares; permission-denied write attempts (should be ~0 outside revocation races — anything above indicates a UI gating bug).</li>
+      </ul>
+
+      <h2 id="risks">10. Risks &amp; Mitigations</h2>
+      <table>
+        <thead><tr><th>Risk</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td>Invite link forwarded to or intercepted by the wrong person</td><td>Single-use + 7-day expiry by default; redeemer's identity surfaces in Manage Access immediately; one-tap revoke fully reverses a redemption; token is unguessable and carried in the URL fragment (not sent to servers in logs).</td></tr>
+          <tr><td>Offline edits lost on revocation</td><td>Inherent to revocation being server-enforced. Warn at revoke time; notify the ex-member; expected volume is very low.</td></tr>
+          <tr><td>Permission matrix too coarse (record-type granularity)</td><td>Accepted for v1 and called out in the design doc (payloads are opaque to the backend). Roles are chosen so the coarse matrix matches real workflows.</td></tr>
+          <tr><td>Sharing amplifies a data-corruption bug to N users</td><td>Feature Lab gate + dogfood-first rollout; LWW semantics already proven across devices; server-side rules tested with the Firestore emulator suite.</td></tr>
+          <tr><td>Cost: fan-out of reads/writes to all members' devices</td><td>Bounded — GA shares are small (2–5 people). Sync listeners are per-aircraft and already exist per device; incremental cost scales with member count, not data size.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="future">11. Future Work (explicitly out of v1)</h2>
+      <ul>
+        <li><b>Viewer role</b> — read-only access for club members, CFIs, prospective buyers.</li>
+        <li><b>Ownership transfer</b> — re-host the data under a different account (aircraft sale, partner buyout).</li>
+        <li><b>Shared attachments</b> — extend sharing to R2 blob storage once <code>attachmentUploadEnabled</code> ships.</li>
+        <li><b>Notifications</b> — "a squawk was added", "annual due in 30 days" fanned out to all members.</li>
+        <li><b>Org/fleet-level sharing</b> — share a whole fleet with one invite (clubs, flight schools).</li>
+      </ul>
+
+      <h2 id="flows">12. Appendix: Flow Inventory</h2>
+      <p class="muted">The complete set of sharing flows, grouped by phase. §6 narrates the primary journeys; this table is the exhaustive checklist for design review, implementation, and test planning.</p>
+
+      <h3 id="flows-invite">12.1 Invite creation (inviter side)</h3>
+      <table>
+        <thead><tr><th>#</th><th>Flow</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>A1</td><td>Owner invites a <b>co-owner</b></td><td>Manage Access → Invite → role = Owner → share link / QR. Redemption grants full peer rights (edit aircraft, manage access) — everything except hosting-owner privileges (delete aircraft).</td></tr>
+          <tr><td>A2</td><td>Owner invites a <b>technician</b></td><td>Same flow, role = Technician. Redemption grants maintenance-data read/write only (§4 matrix).</td></tr>
+          <tr><td>A3</td><td>Owner creates a <b>multi-use / longer-lived invite</b> (P1, F10 — club onboarding)</td><td><code>max_uses &gt; 1</code> and/or longer expiry; each redemption consumes one use.</td></tr>
+          <tr><td>A4</td><td>Owner <b>cancels a pending invite</b></td><td>Invite marked revoked; later redemption attempts land in C4.</td></tr>
+          <tr><td>A5</td><td><b>First-ever invite</b> on an aircraft</td><td>Lazily creates the share record and publishes the hosting owner's own technician mirror — the one member who never redeems an invite.</td></tr>
+          <tr><td>A6</td><td>A <b>technician tries to invite</b></td><td>Blocked: no UI affordance, and server rules deny invite writes for non-owners.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="flows-redeem">12.2 Redemption, by invitee account state</h3>
+      <table>
+        <thead><tr><th>#</th><th>Invitee state</th><th>Path</th></tr></thead>
+        <tbody>
+          <tr><td>B1</td><td><b>Signed in, permanent account, app installed</b></td><td>Opens link / scans QR → confirmation sheet (aircraft, inviter, role) → Accept → member immediately; aircraft appears on their fleet and hydrates for offline use. The happy path.</td></tr>
+          <tr><td>B2</td><td><b>Signed out</b>, has an account</td><td>Token parked → routed through sign-in (Google / Apple / email-link) → redemption resumes automatically.</td></tr>
+          <tr><td>B3</td><td><b>No account at all</b></td><td>Mechanically identical to B2 — the first sign-in <em>creates</em> the account, then redemption resumes; membership binds to the brand-new UID. Invites double as an acquisition channel (e.g. a mechanic invited by a customer).</td></tr>
+          <tr><td>B4</td><td><b>Guest (anonymous) user</b></td><td>Token parked → routed through the <a href="../account/account_upgrade_PRD.html">guest-upgrade flow</a> so their local data survives → redemption resumes on the now-permanent UID. Guests never redeem directly.</td></tr>
+          <tr><td>B5</td><td><b>No app installed</b></td><td>The link is a web-app URL, so it lands on SquawkIt web → sign in → redeem there; or install the app and re-open the link (App Links / Universal Links route it in). On web the <em>link</em> works everywhere; QR <em>scanning</em> is native-only in v1.</td></tr>
+          <tr><td>B6</td><td><b>In-person QR scan</b></td><td>Camera → deep link → whichever of B1–B4 matches their state. The hangar case.</td></tr>
+          <tr><td>B7</td><td><b>Cross-platform redemption</b></td><td>Invited from Android, redeems on iOS or web (or any combination) — works by construction, since membership binds to UID, not provider or platform.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="flows-edge">12.3 Redemption edge flows</h3>
+      <table>
+        <thead><tr><th>#</th><th>Flow</th><th>Outcome</th></tr></thead>
+        <tbody>
+          <tr><td>C1</td><td>Invitee is <b>already a member</b></td><td>Friendly no-op ("You already have access"); token <b>not</b> consumed.</td></tr>
+          <tr><td>C2</td><td>Owner <b>redeems their own invite</b></td><td>Same no-op as C1.</td></tr>
+          <tr><td>C3</td><td>Token <b>expired</b></td><td>Error state: "This invite is no longer valid. Ask the owner for a new one."</td></tr>
+          <tr><td>C4</td><td>Token <b>cancelled</b></td><td>Same error.</td></tr>
+          <tr><td>C5</td><td>Single-use token <b>already used</b> (e.g. a forwarded link)</td><td>Same error — the interception backstop.</td></tr>
+          <tr><td>C6</td><td><b>Malformed or guessed token</b></td><td>Lookup fails (only a hash of the secret is stored); same error.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="flows-lifecycle">12.4 Post-membership lifecycle</h3>
+      <table>
+        <thead><tr><th>#</th><th>Flow</th><th>Outcome</th></tr></thead>
+        <tbody>
+          <tr><td>D1</td><td>Owner <b>changes a member's role</b> (promote technician → owner, demote owner → technician)</td><td>Single server-side operation; access rights change on the member's next request.</td></tr>
+          <tr><td>D2</td><td>Owner <b>revokes a member</b> (member online)</td><td>Cloud access ends immediately; the member's devices purge their local copy; everything they contributed stays in the logbook.</td></tr>
+          <tr><td>D3</td><td>Owner revokes a member who is <b>offline with unsynced edits</b></td><td>Same as D2, plus on reconnect the queued edits are rejected and discarded with a notice — the one data-loss window, warned about in the revoke confirmation.</td></tr>
+          <tr><td>D4</td><td>Member <b>leaves</b> voluntarily</td><td>Self-service variant of D2.</td></tr>
+          <tr><td>D5</td><td><b>Hosting owner deletes the aircraft</b></td><td>Deletion propagates to every member; the share (membership + invites) is torn down; the confirmation states how many members lose access.</td></tr>
+          <tr><td>D6</td><td>Member <b>updates their technician profile</b></td><td>Their linked entry updates on all members' devices (queued while offline); existing log snapshots are untouched.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="flows-blocked">12.5 Blocked / degenerate states</h3>
+      <table>
+        <thead><tr><th>#</th><th>State</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>E1</td><td><b>Anonymous user</b></td><td>All sharing UI hidden — signed-in-only feature (F1).</td></tr>
+          <tr><td>E2</td><td><b>Cloud Sync disabled</b></td><td>Sharing management disabled with explanatory copy; shared data remains a readable frozen local copy (§8).</td></tr>
+          <tr><td>E3</td><td><b>Hosting owner</b> revoked or leaving</td><td>Not possible — they delete the aircraft instead (or a future ownership transfer).</td></tr>
+          <tr><td>E4</td><td><b>Last additional owner leaves</b></td><td>Fine — the hosting owner always remains.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <strong>Next step</strong>
+        The technical approach — data placement, invite/ACL model, security rules, sync-engine changes, and the technician-profile mirror — is specified in the companion <a href="aircraft_sharing_design.html">Aircraft Sharing Design Doc</a>.
+      </div>
+
+    </div>
+
+    <nav class="toc">
+      <p class="toc-title">Contents</p>
+      <ol>
+        <li><a href="#problem">Problem &amp; Background</a></li>
+        <li><a href="#goals">Goals &amp; Non-Goals</a></li>
+        <li><a href="#personas">Who This Is For</a></li>
+        <li><a href="#roles">Roles &amp; Permissions</a></li>
+        <li><a href="#invites">Sharing Without Email</a></li>
+        <li><a href="#journeys">User Journeys</a></li>
+        <li><a href="#requirements">Functional Requirements</a></li>
+        <li><a href="#edge">Edge Cases</a></li>
+        <li><a href="#metrics">Success Metrics</a></li>
+        <li><a href="#risks">Risks &amp; Mitigations</a></li>
+        <li><a href="#future">Future Work</a></li>
+        <li><a href="#flows">Appendix: Flow Inventory</a></li>
+      </ol>
+    </nav>
+  </div>
+</main>
+</body>
+</html>

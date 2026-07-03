@@ -223,6 +223,7 @@ Feature PRDs and architecture design docs live in `docs/`, organized into **per-
 - `docs/squawks/` — `user_squawking_prd.md`, `squawk_design.md`
 - `docs/export/` — `export_logs_PRD.md`, `export_logs_design.md`, `export_email_automation_design.html`, plus the `export_logs_sample/` reference bundle
 - `docs/technician/` — `technician_design.md`, `userprofile_as_technician.md`
+- `docs/sharing/` — `aircraft_sharing_PRD.html`, `aircraft_sharing_design.html` (multi-user aircraft access)
 - `docs/aircraft/` — `aircraft_overview_tabs.md`
 - `docs/search/` — `intelligentsearch.md`
 - `docs/account/` — `account_upgrade_PRD.html`, `account_upgrade_design.html`
