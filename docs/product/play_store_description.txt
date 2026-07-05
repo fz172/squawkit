@@ -1,0 +1,45 @@
+SquawkIt is an aircraft maintenance logbook and fleet-management app built for pilots, owners, and mechanics who need reliable, always-available records — in the hangar, on the ramp, or wherever the signal doesn't reach.
+
+Your maintenance data is written to your device first, so SquawkIt works fully offline. No spinner waiting on a connection before you can log a squawk after landing or check whether an annual is due before you preflight. When you're signed in and back online, your records sync automatically and stay backed up and consistent across every device you use.
+
+Track your whole fleet
+Manage multiple aircraft with full airframe, engine, and propeller details in one place, and switch between tail numbers without losing your place.
+
+Never miss an inspection
+Recurring maintenance tasks — 100-hour, annual, ADs, service bulletins — get automatic due-status tracking. OVERDUE and DUE SOON items surface at the top of every list, so compliance status is the first thing you see, not something you have to dig for.
+
+Log squawks the moment you spot them
+Record defects and discrepancies as OPEN, ADDRESSED, or DISMISSED, with aircraft-on-ground (AOG) alerts for anything that grounds the airplane. A squawk log simple enough that you'll actually keep it up to date.
+
+Keep a real maintenance history
+Every maintenance event is logged against the aircraft it belongs to, with a maintenance-overview summary so you can see the full history at a glance — useful for a pre-buy inspection, an annual, or handing the airplane to a new owner.
+
+Attribute work to the right technician
+Manage technician profiles and certificates, and attach sign-offs to the work they performed.
+
+Attach the paperwork
+Attach photos and documents — logbook pages, invoices, inspection reports — directly to the record they belong to, so the paper trail travels with the digital one.
+
+Export your logbook, anytime
+Generate a PDF, CSV, and XLSX export of your logs — for one aircraft or your whole fleet, optionally filtered by date range — bundled into a single download. Email a copy to yourself, your A&P, or a buyer whenever you need to hand off records.
+
+Built to feel like an instrument, not a spreadsheet
+SquawkIt's design borrows from the instrument panel: an aviation-blue palette, clear status colors, and monospaced technical data so tail numbers and tach times are always easy to scan. No clutter, no hunting through menus — just the information you need, when you need it.
+
+One app, every screen size
+The same interface adapts from phone to tablet to the web — a focused single-column view in your pocket, a full navigation rail and multi-pane layout on a bigger screen. Learn it once, use it anywhere.
+
+YOUR DATA, BACKED UP AND UNDER YOUR CONTROL
+
+Sign in with Google or Apple and your records are automatically backed up to the cloud and kept in sync across every device where you're signed in — phone, tablet, and the web. Prefer to work fully offline? SquawkIt keeps working; sync picks up the moment you're back online.
+
+Your logbook is yours. We don't sell your data or use it to serve ads, and you can export a complete copy of your records at any time — for a pre-buy, an annual, a handoff to an A&P, or simply a personal backup that survives any future migration.
+
+A NOTE ON CERTIFIED RECORDS
+
+SquawkIt is a personal convenience tool — it doesn't replace the official aircraft logbooks required by your aviation authority. Keep your certified records as you always have, and treat SquawkIt's exports as backups and snapshots, not the legal source of truth.
+
+WHO IT'S FOR
+
+Aircraft owners tracking their own airplane's maintenance and inspection status. Mechanics and A&Ps managing sign-offs and squawks across a shop's worth of aircraft. Flying clubs and small fleets that need one shared, reliable record of what's airworthy today.
+
