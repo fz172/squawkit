@@ -147,40 +147,43 @@ fun LoginScreen(
       }
     }
 
-    Spacer(Modifier.height(Spacing.medium))
+    // Continue with Apple — hidden on Android (see isAppleSignInSupported). Backend
+    // (signInWithApple) is not wired yet; tapping is a no-op until the Apple provider is
+    // implemented per platform.
+    if (isAppleSignInSupported) {
+      Spacer(Modifier.height(Spacing.medium))
 
-    // Continue with Apple — shown on every platform. Backend (signInWithApple) is not wired
-    // yet; tapping is a no-op until the Apple provider is implemented per platform.
-    Button(
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(54.dp),
-      enabled = !isSigningIn,
-      shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-      colors = ButtonDefaults.buttonColors(
-        containerColor = AppleButtonBackground,
-        contentColor = AppleButtonContent,
-        disabledContainerColor = AppleButtonBackground.copy(alpha = 0.4f),
-        disabledContentColor = AppleButtonContent.copy(alpha = 0.4f),
-      ),
-      onClick = {
-        // TODO(apple-signin): wire AuthManager.signInWithApple() per platform.
-      },
-    ) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+      Button(
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(54.dp),
+        enabled = !isSigningIn,
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+        colors = ButtonDefaults.buttonColors(
+          containerColor = AppleButtonBackground,
+          contentColor = AppleButtonContent,
+          disabledContainerColor = AppleButtonBackground.copy(alpha = 0.4f),
+          disabledContentColor = AppleButtonContent.copy(alpha = 0.4f),
+        ),
+        onClick = {
+          // TODO(apple-signin): wire AuthManager.signInWithApple() per platform.
+        },
       ) {
-        Icon(
-          painter = painterResource(Res.drawable.ic_apple),
-          contentDescription = stringResource(Res.string.apple_logo),
-          modifier = Modifier.size(Spacing.xLarge),
-          tint = AppleButtonContent,
-        )
-        Text(
-          text = stringResource(Res.string.sign_in_with_apple),
-          style = LoginButtonLabelStyle,
-        )
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+        ) {
+          Icon(
+            painter = painterResource(Res.drawable.ic_apple),
+            contentDescription = stringResource(Res.string.apple_logo),
+            modifier = Modifier.size(Spacing.xLarge),
+            tint = AppleButtonContent,
+          )
+          Text(
+            text = stringResource(Res.string.sign_in_with_apple),
+            style = LoginButtonLabelStyle,
+          )
+        }
       }
     }
 
