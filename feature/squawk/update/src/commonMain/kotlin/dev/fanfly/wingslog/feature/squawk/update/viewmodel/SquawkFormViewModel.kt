@@ -3,8 +3,6 @@ package dev.fanfly.wingslog.feature.squawk.update.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Squawk
@@ -16,15 +14,14 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -93,21 +90,18 @@ class SquawkFormViewModel(
   private val _events = Channel<SquawkFormEvent>()
   val events = _events.receiveAsFlow()
 
-  private val _pendingAttachments =
-    MutableStateFlow<List<PendingAttachment>>(emptyList())
+  private val attachmentForm =
+    AttachmentFormController(attachmentManager, aircraftId)
   val pendingAttachments: StateFlow<List<PendingAttachment>> =
-    _pendingAttachments.asStateFlow()
-
-  private val _showAttachmentPicker = MutableStateFlow(false)
-  val showAttachmentPicker: StateFlow<Boolean> =
-    _showAttachmentPicker.asStateFlow()
+    attachmentForm.pendingAttachments
+  val showAttachmentPicker: StateFlow<Boolean> = attachmentForm.showPicker
 
   private val _attachmentUploadEnabled = MutableStateFlow(false)
   val attachmentUploadEnabled: StateFlow<Boolean> =
     _attachmentUploadEnabled.asStateFlow()
 
   val isAnonymous: Boolean get() = auth.currentUser?.isAnonymous ?: true
-  val filesAtLimit: Boolean get() = _pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS
+  val filesAtLimit: Boolean get() = attachmentForm.filesAtLimit
 
   init {
     if (squawkId != null) {
@@ -150,10 +144,7 @@ class SquawkFormViewModel(
               initialAddressedByLogId = squawk.addressed_by_log_id,
             )
           }
-          if (_pendingAttachments.value.isEmpty()) {
-            _pendingAttachments.value =
-              squawk.attachments.map { PendingAttachment.Saved(it) }
-          }
+          attachmentForm.seedIfEmpty(squawk.attachments)
         }
     }
   }
@@ -187,11 +178,11 @@ class SquawkFormViewModel(
   fun clearLog() = _state.update { it.copy(addressedByLogId = "") }
 
   fun showAttachmentPicker() {
-    _showAttachmentPicker.value = true
+    attachmentForm.showPicker()
   }
 
   fun hideAttachmentPicker() {
-    _showAttachmentPicker.value = false
+    attachmentForm.hidePicker()
   }
 
   fun onFilePickError() {
@@ -202,19 +193,12 @@ class SquawkFormViewModel(
 
   fun addLocalFiles(files: List<PickedFile>) {
     viewModelScope.launch {
-      for (file in files) {
-        if (_pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS) break
-        if (file.sizeBytes > MAX_FILE_SIZE_BYTES) continue
-        try {
-          val attachment =
-            attachmentManager.addPickedFile(aircraftId, file, file.name)
-          _pendingAttachments.update { it + PendingAttachment.Local(attachment) }
-        } catch (e: CancellationException) {
-          throw e
-        } catch (e: Exception) {
+      attachmentForm.addLocalFiles(files) { error ->
+        // Oversized files are skipped silently on this form; only surface hard failures.
+        if (error is AttachmentFormController.AddFileError.Failed) {
           _state.update {
             it.copy(
-              error = e.message?.let { msg -> UiText.DynamicString(msg) }
+              error = error.message?.let { msg -> UiText.DynamicString(msg) }
                 ?: UiText.StringRes(AttachRes.string.add_file_failed)
             )
           }
@@ -224,27 +208,11 @@ class SquawkFormViewModel(
   }
 
   fun addLink(url: String, name: String) {
-    val displayName = name.ifBlank { url.take(40) }
-    val attachment = attachmentManager.makeLink(url, displayName)
-    _pendingAttachments.update { it + PendingAttachment.LocalLink(attachment) }
+    attachmentForm.addLink(url, name)
   }
 
   fun removeAttachment(id: String) {
-    _pendingAttachments.update { list ->
-      list.mapNotNull { pending ->
-        when {
-          pending.id != id -> pending
-          pending is PendingAttachment.Local -> null
-          pending is PendingAttachment.LocalLink -> null
-          pending is PendingAttachment.Saved && pending.attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK -> null
-          pending is PendingAttachment.Saved -> PendingAttachment.PendingDelete(
-            pending.attachment
-          )
-
-          else -> pending
-        }
-      }
-    }
+    attachmentForm.remove(id)
   }
 
   fun save(onSuccessMessage: String) {
@@ -256,7 +224,7 @@ class SquawkFormViewModel(
     _state.update { it.copy(isSaving = true) }
     viewModelScope.launch {
       val resolvedId = current.squawkId ?: generateRandomId()
-      val attachments = resolveAttachments(resolvedId)
+      val attachments = attachmentForm.resolveForSave()
       val squawk = Squawk(
         id = resolvedId,
         title = current.title.trim(),
@@ -314,25 +282,4 @@ class SquawkFormViewModel(
     viewModelScope.launch { _events.send(SquawkFormEvent.NavigateBack) }
   }
 
-  private suspend fun resolveAttachments(squawkId: String): List<Attachment> {
-    val pending = _pendingAttachments.value
-    pending.filterIsInstance<PendingAttachment.PendingDelete>()
-      .forEach { attachmentManager.delete(it.attachment) }
-    return buildList {
-      addAll(
-        pending.filterIsInstance<PendingAttachment.Saved>()
-          .map { it.attachment })
-      addAll(
-        pending.filterIsInstance<PendingAttachment.Local>()
-          .map { it.attachment })
-      addAll(
-        pending.filterIsInstance<PendingAttachment.LocalLink>()
-          .map { it.attachment })
-    }
-  }
-
-  companion object {
-    const val MAX_FILE_ATTACHMENTS = 3
-    const val MAX_FILE_SIZE_BYTES = 25L * 1024 * 1024
-  }
 }

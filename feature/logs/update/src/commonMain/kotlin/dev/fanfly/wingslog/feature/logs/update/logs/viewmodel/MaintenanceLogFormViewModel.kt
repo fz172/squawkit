@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Technician
@@ -11,8 +10,8 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -66,6 +65,8 @@ class MaintenanceLogFormViewModel(
   val isEditMode: Boolean get() = logId != null
 
   private var saveJob: Job? = null
+  private val attachmentForm =
+    AttachmentFormController(attachmentManager, aircraftId)
   private val _uiState = MutableStateFlow(
     MaintenanceLogFormUiState(
       maintenanceDate = Clock.System.now()
@@ -84,6 +85,11 @@ class MaintenanceLogFormViewModel(
     observeTechnicians()
     checkAuth()
     observeFeatureFlags()
+    // Mirror the shared attachment controller into UiState so the snapshot/dirty-check
+    // logic keeps working off a single state object.
+    attachmentForm.pendingAttachments
+      .onEach { list -> _uiState.update { it.copy(pendingAttachments = list) } }
+      .launchIn(viewModelScope)
     if (isEditMode) loadLog()
   }
 
@@ -177,8 +183,10 @@ class MaintenanceLogFormViewModel(
               .toLocalDateTime(TimeZone.currentSystemDefault()).date
           } else null
         }
-        val existingAttachments =
-          log.attachments.map { PendingAttachment.Saved(it) }
+        // Seed the controller, then copy its value into UiState synchronously so the
+        // initial snapshot below already includes the saved attachments.
+        attachmentForm.seedIfEmpty(log.attachments)
+        val existingAttachments = attachmentForm.pendingAttachments.value
         _uiState.update {
           it.copy(
             isLoading = false,
@@ -328,35 +336,18 @@ class MaintenanceLogFormViewModel(
 
   fun addLocalFiles(files: List<PickedFile>) {
     viewModelScope.launch {
-      var anyAdded = false
-      for (file in files) {
-        val state = _uiState.value
-        if (state.fileAttachmentCount >= MaintenanceLogFormUiState.MAX_FILE_ATTACHMENTS) break
-        if (file.sizeBytes > MaintenanceLogFormUiState.MAX_FILE_SIZE_BYTES) {
-          _uiState.update { it.copy(error = UiText.StringRes(AttachmentRes.string.file_too_large)) }
-          continue
-        }
-        try {
-          val attachment = attachmentManager.addPickedFile(
-            aircraftId,
-            file,
-            file.name
+      val anyAdded = attachmentForm.addLocalFiles(files) { error ->
+        _uiState.update {
+          it.copy(
+            error = when (error) {
+              is AttachmentFormController.AddFileError.FileTooLarge ->
+                UiText.StringRes(AttachmentRes.string.file_too_large)
+
+              is AttachmentFormController.AddFileError.Failed ->
+                error.message?.let { msg -> UiText.DynamicString(msg) }
+                  ?: UiText.StringRes(AttachmentRes.string.add_file_failed)
+            }
           )
-          _uiState.update { s ->
-            s.copy(
-              pendingAttachments = s.pendingAttachments + PendingAttachment.Local(
-                attachment
-              )
-            )
-          }
-          anyAdded = true
-        } catch (e: Exception) {
-          _uiState.update {
-            it.copy(
-              error = e.message?.let { msg -> UiText.DynamicString(msg) }
-                ?: UiText.StringRes(AttachmentRes.string.add_file_failed)
-            )
-          }
         }
       }
       if (anyAdded) _events.send(MaintenanceLogFormEvent.FileAdded)
@@ -367,38 +358,12 @@ class MaintenanceLogFormViewModel(
     url: String,
     name: String,
   ) {
-    val displayName = name.ifBlank { url.take(40) }
-    val attachment = attachmentManager.makeLink(
-      url,
-      displayName
-    )
-    _uiState.update { state ->
-      state.copy(
-        pendingAttachments = state.pendingAttachments + PendingAttachment.LocalLink(
-          attachment
-        )
-      )
-    }
+    attachmentForm.addLink(url, name)
     viewModelScope.launch { _events.send(MaintenanceLogFormEvent.LinkAdded) }
   }
 
   fun removeAttachment(id: String) {
-    _uiState.update { state ->
-      val updated = state.pendingAttachments.mapNotNull { pending ->
-        when {
-          pending.id != id -> pending
-          pending is PendingAttachment.Local -> null
-          pending is PendingAttachment.LocalLink -> null
-          pending is PendingAttachment.Saved && pending.attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK -> null
-          pending is PendingAttachment.Saved -> PendingAttachment.PendingDelete(
-            pending.attachment
-          )
-
-          else -> pending
-        }
-      }
-      state.copy(pendingAttachments = updated)
-    }
+    attachmentForm.remove(id)
   }
 
   // ── Save ────────────────────────────────────────────────────────────────────
@@ -419,26 +384,10 @@ class MaintenanceLogFormViewModel(
 
       val resolvedLogId = logId ?: generateRandomId()
 
-      // 1. Tombstone any deleted attachments (best-effort; BlobDeleteDriver finishes cleanup)
-      val toDelete =
-        state.pendingAttachments.filterIsInstance<PendingAttachment.PendingDelete>()
-      toDelete.forEach { attachmentManager.delete(it.attachment) }
+      // Tombstone deleted attachments and build the final list
+      val finalAttachments = attachmentForm.resolveForSave()
 
-      // 2. Build final attachment list — Local items already have fully-populated protos
-      //    (addPickedFile was called at pick time; no network wait here)
-      val finalAttachments = buildList {
-        addAll(
-          state.pendingAttachments.filterIsInstance<PendingAttachment.Saved>()
-            .map { it.attachment })
-        addAll(
-          state.pendingAttachments.filterIsInstance<PendingAttachment.Local>()
-            .map { it.attachment })
-        addAll(
-          state.pendingAttachments.filterIsInstance<PendingAttachment.LocalLink>()
-            .map { it.attachment })
-      }
-
-      // 4. Save log
+      // Save log
       val componentSerial = when (state.selectedComponentType) {
         ComponentType.COMPONENT_AIRFRAME -> state.aircraft?.serial ?: ""
         else -> state.selectedSubComponent ?: ""
@@ -517,10 +466,7 @@ class MaintenanceLogFormViewModel(
     val id = logId ?: return
     viewModelScope.launch {
       // Tombstone file attachments before removing the Firestore document
-      val fileAttachments = _uiState.value.pendingAttachments
-        .filterIsInstance<PendingAttachment.Saved>()
-        .filter { it.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK }
-      fileAttachments.forEach { attachmentManager.delete(it.attachment) }
+      attachmentForm.deleteSavedFiles()
       logManager.deleteLog(
         aircraftId,
         id
