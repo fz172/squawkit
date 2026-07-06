@@ -19,6 +19,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -49,8 +51,8 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.ADJUSTMENT_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
@@ -93,6 +95,7 @@ fun EditTaskScreen(
   onDismissLogPicker: () -> Unit = {},
   onAddLog: (MaintenanceLog) -> Unit = {},
   onRemoveLog: (MaintenanceLog) -> Unit = {},
+  snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
 ) {
   var title by remember { mutableStateOf(card.title) }
@@ -216,7 +219,9 @@ fun EditTaskScreen(
           )
         }
       }
-    }) { padding ->
+    },
+    snackbarHost = { SnackbarHost(snackbarHostState) },
+  ) { padding ->
     Column(
       modifier = Modifier.padding(padding)
         .fillMaxSize()
@@ -355,7 +360,9 @@ fun EditTaskScreen(
 
   if (showLogPicker) {
     val linkedIds = remember(availableLogs, card.id) {
-      availableLogs.filter { card.id in it.inspection_ids }.map { it.id }.toSet()
+      availableLogs.filter { card.id in it.inspection_ids }
+        .map { it.id }
+        .toSet()
     }
     LogPickerSheet(
       logs = availableLogs.filter { it.id !in linkedIds },

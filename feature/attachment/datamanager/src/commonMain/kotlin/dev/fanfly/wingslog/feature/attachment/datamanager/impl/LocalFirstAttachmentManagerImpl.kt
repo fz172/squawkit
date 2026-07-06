@@ -17,13 +17,16 @@ import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.transformWhile
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.ExperimentalTime
 
 /**
  * Local-first [AttachmentManager]. See docs/storage/storage_r2_design.md §6.2 + §6.3.
@@ -66,7 +69,10 @@ class LocalFirstAttachmentManagerImpl(
       id = id,
       name = displayName,
       type = picked.mimeType.toAttachmentType(),
-      storage_path = "${scope.toPath().trim('/')}/blobs/$id",
+      storage_path = "${
+        scope.toPath()
+          .trim('/')
+      }/blobs/$id",
       // Field 5 (download_url) stays empty in R2 — the opener consults LocalBlobStore /
       // re-fetches via Firebase Storage at open time. Reserved in PR 3b.
       download_url = "",
@@ -104,13 +110,15 @@ class LocalFirstAttachmentManagerImpl(
 
   override fun ensureLocal(attachment: Attachment): Flow<DownloadState> {
     val id = BlobId(attachment.id)
-    return blobs.observe(id)
+    val observed = blobs.observe(id)
       .distinctUntilChanged { a, b -> a?.remoteState == b?.remoteState }
       .onEach { ref ->
         // Schedule download only once the REMOTE_ONLY row actually exists in the DB.
         // Scheduling when the row is null races WorkManager against the reconciler and
         // the worker finds no row, treating it as terminal success and never retrying.
-        if (ref?.remoteState == RemoteState.RemoteOnly) uploadScheduler?.scheduleDownload(id)
+        if (ref?.remoteState == RemoteState.RemoteOnly) uploadScheduler?.scheduleDownload(
+          id
+        )
       }
       .map { ref ->
         when (ref?.remoteState) {
@@ -123,30 +131,53 @@ class LocalFirstAttachmentManagerImpl(
           // null: row not indexed yet (reconciler still running). If sha256 is known the file
           // exists on the server — stay in Downloading so the flow keeps observing until the
           // REMOTE_ONLY row appears and transitions to Synced.
-          null -> if (attachment.sha256.isBlank()) DownloadState.Done else DownloadState.Downloading(0f)
+          null -> if (attachment.sha256.isBlank()) DownloadState.Done else DownloadState.Downloading(
+            0f
+          )
         }
       }
       .transformWhile { state ->
         emit(state)
         state is DownloadState.Downloading
       }
+
+    // The states above only change when the blob_object row changes (reconciler indexing it,
+    // the download driver completing it). If that never happens — e.g. the row is never
+    // indexed, or the download driver keeps failing and retrying in the background — this flow
+    // would otherwise never terminate, leaving the caller's spinner stuck forever with no error.
+    // Bound the wait so a stuck download surfaces as a Failed state instead of hanging.
+    return flow {
+      val completed = withTimeoutOrNull(ENSURE_LOCAL_TIMEOUT_MS.milliseconds) {
+        observed.collect { emit(it) }
+        true
+      }
+      if (completed == null) {
+        emit(
+          DownloadState.Failed(
+            Exception("Timed out waiting for ${id.value} to download")
+          )
+        )
+      }
+    }
   }
 
   override fun observeStatus(attachmentId: String): Flow<AttachmentStatus> =
-    blobs.observe(BlobId(attachmentId)).map { ref ->
-      when (ref?.remoteState) {
-        null -> AttachmentStatus.RemoteOnly  // unknown id → treat as needing download
-        RemoteState.LocalOnly -> AttachmentStatus.LocalOnly
-        RemoteState.Uploading -> AttachmentStatus.Uploading(progress = 0f)
-        RemoteState.Synced -> AttachmentStatus.Synced
-        RemoteState.RemoteOnly -> AttachmentStatus.RemoteOnly
+    blobs.observe(BlobId(attachmentId))
+      .map { ref ->
+        when (ref?.remoteState) {
+          null -> AttachmentStatus.RemoteOnly  // unknown id → treat as needing download
+          RemoteState.LocalOnly -> AttachmentStatus.LocalOnly
+          RemoteState.Uploading -> AttachmentStatus.Uploading(progress = 0f)
+          RemoteState.Synced -> AttachmentStatus.Synced
+          RemoteState.RemoteOnly -> AttachmentStatus.RemoteOnly
+        }
       }
-    }
 
   override fun observeBlobStates(scopePath: String): Flow<Map<String, BlobSyncState>> =
-    blobs.observeForScope(scopePath).map { refs ->
-      refs.associate { ref -> ref.id.value to ref.toBlobSyncState() }
-    }
+    blobs.observeForScope(scopePath)
+      .map { refs ->
+        refs.associate { ref -> ref.id.value to ref.toBlobSyncState() }
+      }
 
   override suspend fun retryUpload(id: String) {
     blobs.resetUploadAttempts(BlobId(id))
@@ -169,5 +200,9 @@ class LocalFirstAttachmentManagerImpl(
     startsWith("image/") -> AttachmentType.ATTACHMENT_TYPE_IMAGE
     this == "application/pdf" -> AttachmentType.ATTACHMENT_TYPE_PDF
     else -> AttachmentType.ATTACHMENT_TYPE_FILE
+  }
+
+  companion object {
+    private const val ENSURE_LOCAL_TIMEOUT_MS = 30_000L
   }
 }

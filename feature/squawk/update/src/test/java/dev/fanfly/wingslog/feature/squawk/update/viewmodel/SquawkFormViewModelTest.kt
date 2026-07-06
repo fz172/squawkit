@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
@@ -242,6 +243,92 @@ class SquawkFormViewModelTest {
         TEST_SQUAWK_ID
       )
     }
+  }
+
+  // ---- addLocalFiles — error surfacing ----
+
+  @Test
+  fun addLocalFiles_whenAddPickedFileThrows_setsErrorOnState() =
+    runTest(testDispatcher) {
+      coEvery {
+        attachmentManager.addPickedFile(any(), any(), any())
+      } throws RuntimeException("disk full")
+      val viewModel = buildViewModelForNew()
+
+      viewModel.addLocalFiles(
+        listOf(
+          PickedFile(
+            "uri",
+            "photo.jpg",
+            "image/jpeg",
+            100L
+          )
+        )
+      )
+      advanceUntilIdle()
+
+      assertThat(viewModel.state.value.error).isNotNull()
+    }
+
+  @Test
+  fun addLocalFiles_whenAddPickedFileSucceeds_doesNotSetError() =
+    runTest(testDispatcher) {
+      coEvery {
+        attachmentManager.addPickedFile(any(), any(), any())
+      } returns mockk(relaxed = true)
+      val viewModel = buildViewModelForNew()
+
+      viewModel.addLocalFiles(
+        listOf(
+          PickedFile(
+            "uri",
+            "photo.jpg",
+            "image/jpeg",
+            100L
+          )
+        )
+      )
+      advanceUntilIdle()
+
+      assertThat(viewModel.state.value.error).isNull()
+    }
+
+  // ---- onFilePickError ----
+
+  @Test
+  fun onFilePickError_emitsPickErrorEvent() = runTest(testDispatcher) {
+    val viewModel = buildViewModelForNew()
+
+    viewModel.onFilePickError()
+    advanceUntilIdle()
+
+    val event = viewModel.events.first()
+    assertThat(event).isInstanceOf(SquawkFormEvent.PickError::class.java)
+  }
+
+  // ---- clearError ----
+
+  @Test
+  fun clearError_setsErrorToNull() = runTest(testDispatcher) {
+    coEvery {
+      attachmentManager.addPickedFile(any(), any(), any())
+    } throws RuntimeException("disk full")
+    val viewModel = buildViewModelForNew()
+    viewModel.addLocalFiles(
+      listOf(
+        PickedFile(
+          "uri",
+          "photo.jpg",
+          "image/jpeg",
+          100L
+        )
+      )
+    )
+    advanceUntilIdle()
+
+    viewModel.clearError()
+
+    assertThat(viewModel.state.value.error).isNull()
   }
 
   // ---- helpers ----

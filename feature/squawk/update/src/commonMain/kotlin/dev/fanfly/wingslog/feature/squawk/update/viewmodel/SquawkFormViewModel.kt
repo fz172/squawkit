@@ -15,6 +15,7 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
@@ -23,6 +24,7 @@ import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,7 +32,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import kotlin.time.Clock
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 data class SquawkFormState(
   val aircraftId: String = "",
@@ -56,11 +60,13 @@ data class SquawkFormState(
   val initialDescription: String = "",
   val initialPriority: SquawkPriority = SquawkPriority.SQUAWK_PRIORITY_LOW,
   val initialAddressedByLogId: String = "",
+  val error: UiText? = null,
 )
 
 sealed interface SquawkFormEvent {
   data object NavigateBack : SquawkFormEvent
   data class SaveSuccess(val message: String) : SquawkFormEvent
+  data object PickError : SquawkFormEvent
 }
 
 class SquawkFormViewModel(
@@ -110,54 +116,54 @@ class SquawkFormViewModel(
     }
     viewModelScope.launch {
       featureLabManager.observe()
-          .collect { flags ->
-            _attachmentUploadEnabled.value = flags.attachmentUploadEnabled
-          }
+        .collect { flags ->
+          _attachmentUploadEnabled.value = flags.attachmentUploadEnabled
+        }
     }
   }
 
   private fun loadExisting(id: String) {
     viewModelScope.launch {
       squawkManager.observeSquawks(aircraftId)
-          .collect { squawks ->
-            val squawk = squawks.find { it.id == id } ?: return@collect
-            _state.update {
-              it.copy(
-                title = squawk.title,
-                description = squawk.description,
-                priority = squawk.priority,
-                component = squawk.component_type,
-                isAddressedReadOnly = squawk.addressed_by_log_id.isNotEmpty(),
-                reportedDateFormatted = squawk.created_at?.toLocalDate()
-                    ?.toDisplayFormat() ?: "",
-                addressedByLogId = squawk.addressed_by_log_id,
-                dismissReason = squawk.dismiss_reason,
-                dismissedAtEpochSeconds = squawk.dismissed_at?.getEpochSecond()
-                  ?: 0L,
-                dismissedAtFormatted = squawk.dismissed_at
-                    ?.takeIf { it.getEpochSecond() > 0L }
-                    ?.toLocalDate()
-                    ?.toDisplayFormat() ?: "",
-                initialTitle = squawk.title,
-                initialDescription = squawk.description,
-                initialPriority = squawk.priority,
-                initialAddressedByLogId = squawk.addressed_by_log_id,
-              )
-            }
-            if (_pendingAttachments.value.isEmpty()) {
-              _pendingAttachments.value =
-                squawk.attachments.map { PendingAttachment.Saved(it) }
-            }
+        .collect { squawks ->
+          val squawk = squawks.find { it.id == id } ?: return@collect
+          _state.update {
+            it.copy(
+              title = squawk.title,
+              description = squawk.description,
+              priority = squawk.priority,
+              component = squawk.component_type,
+              isAddressedReadOnly = squawk.addressed_by_log_id.isNotEmpty(),
+              reportedDateFormatted = squawk.created_at?.toLocalDate()
+                ?.toDisplayFormat() ?: "",
+              addressedByLogId = squawk.addressed_by_log_id,
+              dismissReason = squawk.dismiss_reason,
+              dismissedAtEpochSeconds = squawk.dismissed_at?.getEpochSecond()
+                ?: 0L,
+              dismissedAtFormatted = squawk.dismissed_at
+                ?.takeIf { it.getEpochSecond() > 0L }
+                ?.toLocalDate()
+                ?.toDisplayFormat() ?: "",
+              initialTitle = squawk.title,
+              initialDescription = squawk.description,
+              initialPriority = squawk.priority,
+              initialAddressedByLogId = squawk.addressed_by_log_id,
+            )
           }
+          if (_pendingAttachments.value.isEmpty()) {
+            _pendingAttachments.value =
+              squawk.attachments.map { PendingAttachment.Saved(it) }
+          }
+        }
     }
   }
 
   private fun loadLogs() {
     viewModelScope.launch {
       logManager.observeLogs(aircraftId)
-          .collect { logs ->
-            _state.update { it.copy(availableLogs = logs) }
-          }
+        .collect { logs ->
+          _state.update { it.copy(availableLogs = logs) }
+        }
     }
   }
 
@@ -188,6 +194,12 @@ class SquawkFormViewModel(
     _showAttachmentPicker.value = false
   }
 
+  fun onFilePickError() {
+    viewModelScope.launch { _events.send(SquawkFormEvent.PickError) }
+  }
+
+  fun clearError() = _state.update { it.copy(error = null) }
+
   fun addLocalFiles(files: List<PickedFile>) {
     viewModelScope.launch {
       for (file in files) {
@@ -197,7 +209,15 @@ class SquawkFormViewModel(
           val attachment =
             attachmentManager.addPickedFile(aircraftId, file, file.name)
           _pendingAttachments.update { it + PendingAttachment.Local(attachment) }
-        } catch (_: Exception) {
+        } catch (e: CancellationException) {
+          throw e
+        } catch (e: Exception) {
+          _state.update {
+            it.copy(
+              error = e.message?.let { msg -> UiText.DynamicString(msg) }
+                ?: UiText.StringRes(AttachRes.string.add_file_failed)
+            )
+          }
         }
       }
     }
@@ -244,13 +264,13 @@ class SquawkFormViewModel(
         priority = current.priority,
         component_type = current.component,
         created_at = if (current.squawkId == null) Clock.System.now()
-            .toWireInstant() else null,
+          .toWireInstant() else null,
         attachments = attachments,
         addressed_by_log_id = current.addressedByLogId,
         dismiss_reason = current.dismissReason,
         dismissed_at = if (current.dismissedAtEpochSeconds > 0L)
           kotlin.time.Instant.fromEpochSeconds(current.dismissedAtEpochSeconds)
-              .toWireInstant()
+            .toWireInstant()
         else null,
       )
       val result = if (current.squawkId == null)
@@ -273,7 +293,7 @@ class SquawkFormViewModel(
     val squawkId = _state.value.squawkId ?: return
     viewModelScope.launch {
       squawkManager.reopenSquawk(aircraftId, squawkId)
-          .onSuccess { _events.send(SquawkFormEvent.SaveSuccess(onSuccessMessage)) }
+        .onSuccess { _events.send(SquawkFormEvent.SaveSuccess(onSuccessMessage)) }
     }
   }
 
@@ -285,7 +305,7 @@ class SquawkFormViewModel(
     _state.update { it.copy(showDismissDialog = false, isDismissing = true) }
     viewModelScope.launch {
       squawkManager.dismissSquawk(aircraftId, squawkId, reason)
-          .onSuccess { _events.send(SquawkFormEvent.SaveSuccess(onSuccessMessage)) }
+        .onSuccess { _events.send(SquawkFormEvent.SaveSuccess(onSuccessMessage)) }
       _state.update { it.copy(isDismissing = false) }
     }
   }
@@ -297,17 +317,17 @@ class SquawkFormViewModel(
   private suspend fun resolveAttachments(squawkId: String): List<Attachment> {
     val pending = _pendingAttachments.value
     pending.filterIsInstance<PendingAttachment.PendingDelete>()
-        .forEach { attachmentManager.delete(it.attachment) }
+      .forEach { attachmentManager.delete(it.attachment) }
     return buildList {
       addAll(
         pending.filterIsInstance<PendingAttachment.Saved>()
-            .map { it.attachment })
+          .map { it.attachment })
       addAll(
         pending.filterIsInstance<PendingAttachment.Local>()
-            .map { it.attachment })
+          .map { it.attachment })
       addAll(
         pending.filterIsInstance<PendingAttachment.LocalLink>()
-            .map { it.attachment })
+          .map { it.attachment })
     }
   }
 

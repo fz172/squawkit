@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="update_aircraft">Update Aircraft</string>
-  <string name="add_file_failed">Failed to add file</string>
     <string name="make">Make</string>
     <string name="model">Model</string>
     <string name="serial">Serial Number</string>

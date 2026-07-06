@@ -1,18 +1,24 @@
 package dev.fanfly.wingslog.feature.tasks.update.ui
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
+import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskFormEvent
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskUiState
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.task_added
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 @Composable
 fun AddTaskRoute(
@@ -28,11 +34,32 @@ fun AddTaskRoute(
   val successState = uiState as? TaskUiState.Success
 
   val successMessage = stringResource(Res.string.task_added)
+  val fileReadErrorMessage = stringResource(AttachRes.string.file_read_error)
+  val snackbarHostState = remember { SnackbarHostState() }
+
+  LaunchedEffect(Unit) {
+    viewModel.events.collect { event ->
+      when (event) {
+        is TaskFormEvent.PickError -> snackbarHostState.showSnackbar(
+          fileReadErrorMessage
+        )
+      }
+    }
+  }
+
+  val errorMessage = successState?.error?.asString()
+  LaunchedEffect(errorMessage) {
+    errorMessage?.let {
+      snackbarHostState.showSnackbar(it)
+      viewModel.clearError()
+    }
+  }
 
   if (successState != null) {
     AddTaskScreen(
       availableInspections = successState.allInspections,
       isSaving = isSaving,
+      snackbarHostState = snackbarHostState,
       onCancel = { navController.popBackStack() },
       onSave = { card ->
         viewModel.saveNewTask(
@@ -68,6 +95,7 @@ fun AddTaskRoute(
             onPickFiles = viewModel::addLocalFiles,
             onAddLink = viewModel::addLink,
             onDismissSheet = viewModel::hideAttachmentPicker,
+            onPickError = viewModel::onFilePickError,
           )
         }
       },

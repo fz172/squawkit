@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.squawk.update.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -28,6 +29,8 @@ import wingslog.feature.squawk.sharedassets.generated.resources.squawk_priority_
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_reported_on
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_title_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_title_required
+import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
+import wingslog.feature.squawk.update.generated.resources.squawk_basic_tab_note
 import kotlin.time.Clock
 
 @Composable
@@ -93,6 +96,13 @@ fun SquawkBasicTab(
             ) { Text(label) }
           }
         }
+      }
+      if (!readOnly) {
+        Text(
+          text = stringResource(UpdateRes.string.squawk_basic_tab_note),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
       }
     }
   }

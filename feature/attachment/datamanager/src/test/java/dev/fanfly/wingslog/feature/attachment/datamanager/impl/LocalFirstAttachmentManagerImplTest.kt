@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.BlobId
@@ -9,14 +11,17 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.BlobRef
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
 import dev.fanfly.wingslog.feature.attachment.datamanager.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
+import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -73,6 +78,19 @@ class LocalFirstAttachmentManagerImplTest {
     name = name,
     mimeType = mimeType,
     sizeBytes = sizeBytes
+  )
+
+  private fun buildAttachment(
+    id: String = "att-1",
+    sha256: String = TEST_SHA256,
+  ) = Attachment(
+    id = id,
+    name = "photo.jpg",
+    type = AttachmentType.ATTACHMENT_TYPE_IMAGE,
+    storage_path = "$id/path",
+    mime_type = "image/jpeg",
+    size_bytes = 1024L,
+    sha256 = sha256,
   )
 
   private fun buildBlobRef(
@@ -359,4 +377,49 @@ class LocalFirstAttachmentManagerImplTest {
 
     assertThat(status).isEqualTo(AttachmentStatus.RemoteOnly)
   }
+
+  // ---- ensureLocal ----
+
+  @Test
+  fun ensureLocal_syncedRow_emitsDoneOnly() = runTest {
+    val id = "att-synced"
+    every { blobs.observe(BlobId(id)) } returns flowOf(
+      buildBlobRef(remoteState = RemoteState.Synced)
+    )
+
+    val states = manager.ensureLocal(buildAttachment(id = id))
+      .toList()
+
+    assertThat(states).containsExactly(DownloadState.Done)
+  }
+
+  @Test
+  fun ensureLocal_remoteOnlyRowThatNeverResolves_emitsFailedAfterTimeout() =
+    runTest {
+      val id = "att-stuck"
+      // A hot flow that never completes and never emits again — mirrors the real DB-backed
+      // observe() when the download driver keeps failing/retrying without ever finishing.
+      every { blobs.observe(BlobId(id)) } returns MutableStateFlow(
+        buildBlobRef(remoteState = RemoteState.RemoteOnly)
+      )
+
+      val states = manager.ensureLocal(buildAttachment(id = id))
+        .toList()
+
+      assertThat(states.last()).isInstanceOf(DownloadState.Failed::class.java)
+    }
+
+  @Test
+  fun ensureLocal_missingRowThatNeverGetsIndexed_emitsFailedAfterTimeout() =
+    runTest {
+      val id = "att-missing"
+      // No blob_object row ever appears — e.g. a reconciler bug that skips this entity kind.
+      every { blobs.observe(BlobId(id)) } returns MutableStateFlow(null)
+
+      val states =
+        manager.ensureLocal(buildAttachment(id = id, sha256 = TEST_SHA256))
+          .toList()
+
+      assertThat(states.last()).isInstanceOf(DownloadState.Failed::class.java)
+    }
 }

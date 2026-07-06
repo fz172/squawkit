@@ -18,6 +18,7 @@
   <string name="file_added">File added</string>
   <string name="link_added">Link added</string>
   <string name="file_read_error">Could not read selected file</string>
+  <string name="add_file_failed">Failed to add file</string>
   <string name="upload_failed">Upload failed</string>
   <string name="retry_upload">Retry upload</string>
   <string name="upload_network_error">Upload failed. Check your connection.</string>

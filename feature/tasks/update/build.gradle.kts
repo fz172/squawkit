@@ -61,6 +61,7 @@ kotlin {
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:sharedassets"))
       implementation(project(":feature:attachment:model"))
+      implementation(project(":feature:attachment:sharedassets"))
       implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:attachment:viewing"))
 

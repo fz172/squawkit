@@ -10,27 +10,33 @@ import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.InspectionRule
+import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 sealed interface TaskUiState {
   data object Loading : TaskUiState
@@ -40,7 +46,12 @@ sealed interface TaskUiState {
     val availableLogs: List<MaintenanceLog> = emptyList(),
     val currentEngineHours: Float,
     val naturalDueMetadata: DueMetadata? = null,
+    val error: UiText? = null,
   ) : TaskUiState
+}
+
+sealed interface TaskFormEvent {
+  data object PickError : TaskFormEvent
 }
 
 class TaskViewModel(
@@ -53,19 +64,26 @@ class TaskViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  private val aircraftId: String = checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
+  private val aircraftId: String =
+    checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
   val cardId: String? = savedStateHandle[Screen.CARD_ID]
 
   private val _uiState = MutableStateFlow<TaskUiState>(TaskUiState.Loading)
   val uiState: StateFlow<TaskUiState> = _uiState.asStateFlow()
 
+  private val _events = Channel<TaskFormEvent>()
+  val events = _events.receiveAsFlow()
+
   // Attachment state is kept separate so it survives inspection list reloads.
   private var saveJob: Job? = null
-  private val _pendingAttachments = MutableStateFlow<List<PendingAttachment>>(emptyList())
-  val pendingAttachments: StateFlow<List<PendingAttachment>> = _pendingAttachments.asStateFlow()
+  private val _pendingAttachments =
+    MutableStateFlow<List<PendingAttachment>>(emptyList())
+  val pendingAttachments: StateFlow<List<PendingAttachment>> =
+    _pendingAttachments.asStateFlow()
 
   private val _showAttachmentPicker = MutableStateFlow(false)
-  val showAttachmentPicker: StateFlow<Boolean> = _showAttachmentPicker.asStateFlow()
+  val showAttachmentPicker: StateFlow<Boolean> =
+    _showAttachmentPicker.asStateFlow()
 
   private val _isSaving = MutableStateFlow(false)
   val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
@@ -74,7 +92,8 @@ class TaskViewModel(
   val showLogPicker: StateFlow<Boolean> = _showLogPicker.asStateFlow()
 
   private val _attachmentUploadEnabled = MutableStateFlow(true)
-  val attachmentUploadEnabled: StateFlow<Boolean> = _attachmentUploadEnabled.asStateFlow()
+  val attachmentUploadEnabled: StateFlow<Boolean> =
+    _attachmentUploadEnabled.asStateFlow()
 
   val isAnonymous: Boolean get() = auth.currentUser?.isAnonymous ?: true
   val filesAtLimit: Boolean get() = _pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS
@@ -82,9 +101,10 @@ class TaskViewModel(
   init {
     loadData()
     viewModelScope.launch {
-      featureLabManager.observe().collect { flags ->
-        _attachmentUploadEnabled.value = flags.attachmentUploadEnabled
-      }
+      featureLabManager.observe()
+        .collect { flags ->
+          _attachmentUploadEnabled.value = flags.attachmentUploadEnabled
+        }
     }
   }
 
@@ -102,29 +122,33 @@ class TaskViewModel(
         // adjustments preview banner can show what the schedule would say absent any
         // force-override or force-complied state.
         val naturalDue = cardId?.let { id ->
-          cards.firstOrNull { it.id == id }?.let { card ->
-            val stripped = card.copy(
-              force_complied_status = null,
-              force_due_date = null,
-              force_due_engine_hour = 0f,
-            )
-            taskDueManager.computeNextDue(stripped, logs, cards)
-          }
+          cards.firstOrNull { it.id == id }
+            ?.let { card ->
+              val stripped = card.copy(
+                force_complied_status = null,
+                force_due_date = null,
+                force_due_engine_hour = 0f,
+              )
+              taskDueManager.computeNextDue(stripped, logs, cards)
+            }
         }
-        _uiState.update {
+        _uiState.update { prev ->
           TaskUiState.Success(
             aircraftId = aircraftId,
             allInspections = cards,
             availableLogs = logs,
             currentEngineHours = engineHours,
             naturalDueMetadata = naturalDue,
+            error = (prev as? TaskUiState.Success)?.error,
           )
         }
         // Pre-load attachments when editing
         if (cardId != null && _pendingAttachments.value.isEmpty()) {
-          cards.firstOrNull { it.id == cardId }?.let { card ->
-            _pendingAttachments.value = card.attachments.map { PendingAttachment.Saved(it) }
-          }
+          cards.firstOrNull { it.id == cardId }
+            ?.let { card ->
+              _pendingAttachments.value =
+                card.attachments.map { PendingAttachment.Saved(it) }
+            }
         }
       }
     }
@@ -140,20 +164,43 @@ class TaskViewModel(
     _showAttachmentPicker.value = false
   }
 
-  fun showLogPicker() { _showLogPicker.value = true }
-  fun hideLogPicker() { _showLogPicker.value = false }
+  fun showLogPicker() {
+    _showLogPicker.value = true
+  }
+
+  fun hideLogPicker() {
+    _showLogPicker.value = false
+  }
+
+  fun onFilePickError() {
+    viewModelScope.launch { _events.send(TaskFormEvent.PickError) }
+  }
+
+  fun clearError() {
+    _uiState.update { state ->
+      if (state is TaskUiState.Success) state.copy(
+        error = null
+      ) else state
+    }
+  }
 
   fun addLogToHistory(taskId: String, log: MaintenanceLog) {
     if (taskId in log.inspection_ids) return
     viewModelScope.launch {
-      maintenanceLogManager.updateLog(aircraftId, log.copy(inspection_ids = log.inspection_ids + taskId))
+      maintenanceLogManager.updateLog(
+        aircraftId,
+        log.copy(inspection_ids = log.inspection_ids + taskId)
+      )
       _showLogPicker.value = false
     }
   }
 
   fun removeLogFromHistory(taskId: String, log: MaintenanceLog) {
     viewModelScope.launch {
-      maintenanceLogManager.updateLog(aircraftId, log.copy(inspection_ids = log.inspection_ids - taskId))
+      maintenanceLogManager.updateLog(
+        aircraftId,
+        log.copy(inspection_ids = log.inspection_ids - taskId)
+      )
     }
   }
 
@@ -169,8 +216,17 @@ class TaskViewModel(
             file.name
           )
           _pendingAttachments.update { it + PendingAttachment.Local(attachment) }
-        } catch (_: Exception) {
-          // Individual file errors are surfaced via per-attachment status; skip
+        } catch (e: CancellationException) {
+          throw e
+        } catch (e: Exception) {
+          _uiState.update { state ->
+            if (state is TaskUiState.Success) {
+              state.copy(
+                error = e.message?.let { msg -> UiText.DynamicString(msg) }
+                  ?: UiText.StringRes(AttachRes.string.add_file_failed)
+              )
+            } else state
+          }
         }
       }
     }
@@ -196,7 +252,10 @@ class TaskViewModel(
           pending is PendingAttachment.Local -> null
           pending is PendingAttachment.LocalLink -> null
           pending is PendingAttachment.Saved && pending.attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK -> null
-          pending is PendingAttachment.Saved -> PendingAttachment.PendingDelete(pending.attachment)
+          pending is PendingAttachment.Saved -> PendingAttachment.PendingDelete(
+            pending.attachment
+          )
+
           else -> pending
         }
       }
@@ -211,9 +270,15 @@ class TaskViewModel(
     pending.filterIsInstance<PendingAttachment.PendingDelete>()
       .forEach { attachmentManager.delete(it.attachment) }
     return buildList {
-      addAll(pending.filterIsInstance<PendingAttachment.Saved>().map { it.attachment })
-      addAll(pending.filterIsInstance<PendingAttachment.Local>().map { it.attachment })
-      addAll(pending.filterIsInstance<PendingAttachment.LocalLink>().map { it.attachment })
+      addAll(
+        pending.filterIsInstance<PendingAttachment.Saved>()
+          .map { it.attachment })
+      addAll(
+        pending.filterIsInstance<PendingAttachment.Local>()
+          .map { it.attachment })
+      addAll(
+        pending.filterIsInstance<PendingAttachment.LocalLink>()
+          .map { it.attachment })
     }
   }
 
@@ -257,7 +322,8 @@ class TaskViewModel(
         inspectionDataManager.addTask(
           aircraftId,
           card
-        ).onSuccess { onSuccess() }
+        )
+          .onSuccess { onSuccess() }
       } finally {
         _isSaving.value = false
       }
@@ -304,7 +370,8 @@ class TaskViewModel(
         inspectionDataManager.updateTask(
           aircraftId,
           updatedCard
-        ).onSuccess { onSuccess() }
+        )
+          .onSuccess { onSuccess() }
       } finally {
         _isSaving.value = false
       }
@@ -323,7 +390,8 @@ class TaskViewModel(
       inspectionDataManager.deleteTask(
         aircraftId,
         cardId
-      ).onSuccess { onSuccess() }
+      )
+        .onSuccess { onSuccess() }
     }
   }
 

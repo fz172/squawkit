@@ -39,8 +39,8 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.core.sharedassets.generated.resources.save_failed
+import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
-import wingslog.feature.logs.update.generated.resources.add_file_failed
 import wingslog.feature.logs.update.generated.resources.log_not_found
 import wingslog.feature.logs.update.generated.resources.work_description_required
 import kotlin.time.Clock
@@ -354,7 +354,7 @@ class MaintenanceLogFormViewModel(
           _uiState.update {
             it.copy(
               error = e.message?.let { msg -> UiText.DynamicString(msg) }
-                ?: UiText.StringRes(MaintenanceRes.string.add_file_failed)
+                ?: UiText.StringRes(AttachmentRes.string.add_file_failed)
             )
           }
         }

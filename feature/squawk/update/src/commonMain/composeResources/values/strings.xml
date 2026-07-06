@@ -5,4 +5,5 @@
     <string name="reopen_issue">Reopen Issue</string>
     <string name="dismiss_squawk_title">Dismiss Without Addressing?</string>
     <string name="dismiss_squawk_warning">This squawk will be closed without recording corrective action. To address the issue, add a maintenance log entry linking back to this squawk.</string>
+    <string name="squawk_basic_tab_note">Add a description, attachments, and more on the Details tab.</string>
 </resources>

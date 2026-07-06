@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.attachment.datamanager
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.PostWriteHook
@@ -27,12 +28,25 @@ class BlobIndexReconciler(
 
   private val log = Logger.withTag(TAG)
 
-  override fun onEntityWritten(kind: CollectionKind, scope: EntityScope, payload: ByteArray) {
+  override fun onEntityWritten(
+    kind: CollectionKind,
+    scope: EntityScope,
+    payload: ByteArray
+  ) {
     val attachments = try {
       when (kind) {
         CollectionKind.MaintenanceLog -> MaintenanceLog.ADAPTER.decode(payload).attachments
         CollectionKind.MaintenanceTask -> MaintenanceTask.ADAPTER.decode(payload).attachments
-        else -> return
+        CollectionKind.Squawk -> Squawk.ADAPTER.decode(payload).attachments
+        // No `attachments` field on these kinds today. Deliberately exhaustive (no `else`) so
+        // adding one to a proto in the future forces a decision here instead of silently
+        // skipping reconciliation, the way CollectionKind.Squawk was skipped before this fix.
+        CollectionKind.Aircraft,
+        CollectionKind.MaintenanceOverview,
+        CollectionKind.Technician,
+        CollectionKind.UserInfo,
+        CollectionKind.FeatureLab,
+          -> return
       }
     } catch (e: Exception) {
       log.e(e) { "failed to decode ${kind.wireName} payload for blob index reconciliation" }
