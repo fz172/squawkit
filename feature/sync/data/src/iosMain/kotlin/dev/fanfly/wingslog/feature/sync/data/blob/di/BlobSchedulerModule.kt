@@ -46,7 +46,6 @@ actual val blobSchedulerModule = module {
       auth = get(),
       storage = get(),
       db = get(),
-      syncPreferences = get(),
       httpClient = get(),
       downloadDriver = get(),
       deleteDriver = get(),
