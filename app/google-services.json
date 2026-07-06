@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "811416892017-inihvfdfv83l7dfctvpopn7f0jv1sht1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.fanfly.wingslog",
+            "certificate_hash": "c8634c4f4adfa37df10a48af88f47158e2e07b6b"
+          }
+        },
+        {
           "client_id": "811416892017-jgj0us110elk8q8t7bdp383jffe3033g.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
