@@ -16,6 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -28,11 +30,15 @@ import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
+import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.closed_with_count
 import wingslog.feature.squawk.sharedassets.generated.resources.no_closed_squawks
@@ -55,6 +61,9 @@ fun SquawkTab(
 ) {
   var showClosed by rememberSaveable { mutableStateOf(false) }
   val analytics = LocalAnalytics.current
+  val attachmentOpener: AttachmentOpener = koinInject()
+  val coroutineScope = rememberCoroutineScope()
+  var openError by remember { mutableStateOf<String?>(null) }
 
   val openSquawks = state.squawks
     .filter { it.status == SquawkStatus.OPEN }
@@ -131,7 +140,22 @@ fun SquawkTab(
     SquawkDetailSheet(
       item = selected,
       addressingLog = state.logForSelectedSquawk,
-      onDismiss = { onAction(AircraftOverviewAction.DismissSquawkDetail) },
+      onDismiss = {
+        openError = null
+        onAction(AircraftOverviewAction.DismissSquawkDetail)
+      },
+      onAttachmentTap = { attachment ->
+        openError = null
+        val openFlow = attachmentOpener.open(attachment)
+        coroutineScope.launch {
+          openFlow.collect { openState ->
+            if (openState is OpenState.Failed) openError = openState.error.message
+          }
+        }
+      },
+      syncStates = state.syncStates,
+      openError = openError,
+      attachmentEnabled = state.attachmentEnabled,
       onEditClick = onMutationAction?.let { mutate ->
         {
           onAction(AircraftOverviewAction.DismissSquawkDetail)

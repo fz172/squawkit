@@ -43,6 +43,8 @@ kotlin {
       implementation(project(":core:datetime"))
       implementation(project(":feature:squawk:model"))
       implementation(project(":feature:squawk:sharedassets"))
+      implementation(project(":feature:attachment:model"))
+      implementation(project(":feature:attachment:viewing"))
       implementation(libs.components.resources)
       implementation(libs.kermit)
     }

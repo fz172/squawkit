@@ -14,11 +14,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
@@ -37,6 +40,10 @@ fun SquawkDetailSheet(
   addressingLog: MaintenanceLog?,
   onDismiss: () -> Unit,
   onEditClick: (() -> Unit)?,
+  onAttachmentTap: (Attachment) -> Unit = {},
+  syncStates: Map<String, BlobSyncState> = emptyMap(),
+  openError: String? = null,
+  attachmentEnabled: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   val squawk = item.squawk
@@ -55,14 +62,15 @@ fun SquawkDetailSheet(
       PriorityBadge(item)
     },
   ) {
-      Text(
-        text = squawk.title,
-        style = MaterialTheme.typography.displaySmall,
-      )
+    Text(
+      text = squawk.title,
+      style = MaterialTheme.typography.displaySmall,
+    )
 
     // Reported date
     if ((squawk.created_at?.getEpochSecond() ?: 0L) > 0L) {
-      val dateStr = squawk.created_at!!.toLocalDate().toDisplayFormat()
+      val dateStr = squawk.created_at!!.toLocalDate()
+        .toDisplayFormat()
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
         Text(
           text = stringResource(Res.string.reported),
@@ -107,6 +115,16 @@ fun SquawkDetailSheet(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
+
+    if (attachmentEnabled) {
+      Spacer(Modifier.height(Spacing.large))
+      AttachmentSection(
+        attachments = squawk.attachments,
+        onAttachmentTap = onAttachmentTap,
+        syncStates = syncStates,
+        openError = openError,
+      )
+    }
   }
 }
 
@@ -120,7 +138,8 @@ private fun DismissedHistoryRow(item: SquawkWithStatus) {
     ?.toDisplayFormat()
 
   Column(
-    modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.extraSmall),
+    modifier = Modifier.fillMaxWidth()
+      .padding(vertical = Spacing.extraSmall),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
   ) {
     Text(
@@ -143,11 +162,13 @@ private fun DismissedHistoryRow(item: SquawkWithStatus) {
 @Composable
 private fun LogHistoryRow(log: MaintenanceLog) {
   val dateStr = if ((log.timestamp?.getEpochSecond() ?: 0L) > 0L)
-    log.timestamp!!.toLocalDate().toDisplayFormat()
+    log.timestamp!!.toLocalDate()
+      .toDisplayFormat()
   else ""
 
   Column(
-    modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.extraSmall),
+    modifier = Modifier.fillMaxWidth()
+      .padding(vertical = Spacing.extraSmall),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
   ) {
     if (dateStr.isNotEmpty()) {
