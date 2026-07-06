@@ -51,7 +51,6 @@ kotlin {
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:squawk:datamanager"))
-      implementation(project(":feature:sync:data"))
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))

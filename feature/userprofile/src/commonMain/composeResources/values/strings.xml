@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-  <string name="license_type">License Type</string>
-  <string name="license_number">License Number</string>
-  <string name="license_expiration_date">License Expiration Date</string>
-</resources>

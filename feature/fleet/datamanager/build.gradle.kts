@@ -32,7 +32,6 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":feature:fleet:model"))
       implementation(project(":core:storage"))
       implementation(libs.gitlive.firebase.auth)
 

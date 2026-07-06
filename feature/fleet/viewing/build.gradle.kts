@@ -43,7 +43,6 @@ kotlin {
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:auth"))
       implementation(libs.gitlive.firebase.auth)
-      implementation(project(":feature:fleet:model"))
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:fleet:sharedassets"))
