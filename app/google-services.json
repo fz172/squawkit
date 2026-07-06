@@ -12,7 +12,44 @@
           "package_name": "dev.fanfly.wingslog"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "811416892017-1487tsp2p8tdl4of0r06v3o71hjsq89h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.fanfly.wingslog",
+            "certificate_hash": "99113afb0b815fd3c6c0c10820f4218d7fb7e2e2"
+          }
+        },
+        {
+          "client_id": "811416892017-gvkfpvtok9kb8mo34kauh62hehjd6821.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.fanfly.wingslog",
+            "certificate_hash": "3ba1c55c8481959f2ae3215313fecfd072da6c92"
+          }
+        },
+        {
+          "client_id": "811416892017-jgj0us110elk8q8t7bdp383jffe3033g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.fanfly.wingslog",
+            "certificate_hash": "78e4ec821617f3a6cae788cca526a887f687637d"
+          }
+        },
+        {
+          "client_id": "811416892017-peq1g40ljb5hkduoupf8kihn4od1lp4u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.fanfly.wingslog",
+            "certificate_hash": "48ffe2dffc1b0a14eb9dc3b61e7cf3709aeaa564"
+          }
+        },
+        {
+          "client_id": "811416892017-uul0d8vup8hie1o1172chid0q65k7vdi.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAo52Y7aQ4jhYGq4MioZK5mSffmmZES1qk"
@@ -20,7 +57,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "811416892017-uul0d8vup8hie1o1172chid0q65k7vdi.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "811416892017-j692rbgf9tjnsavosrj62ahu70dkfn44.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "dev.fanfly.wingslog.iosApp"
+              }
+            }
+          ]
         }
       }
     }
