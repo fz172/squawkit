@@ -77,6 +77,8 @@ include(":feature:squawk:sharedassets")
 include(":feature:squawk:viewing")
 include(":feature:squawk:update")
 
+include(":feature:shell")
+
 include(":feature:stresstest")
 include(":feature:stresstest:config")
 include(":webApp")

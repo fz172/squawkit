@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.fleet.viewing.viewmodel
+package dev.fanfly.wingslog.feature.shell.viewmodel
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.Aircraft

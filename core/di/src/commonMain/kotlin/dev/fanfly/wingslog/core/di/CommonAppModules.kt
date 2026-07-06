@@ -17,12 +17,12 @@ import dev.fanfly.wingslog.feature.export.datamanager.di.exportPlatformModule
 import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUiModule
 import dev.fanfly.wingslog.feature.featurelab.datamanager.di.featureLabModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
-import dev.fanfly.wingslog.feature.fleet.viewing.di.fleetViewingModule
 import dev.fanfly.wingslog.feature.login.di.loginModule
 import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
 import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
+import dev.fanfly.wingslog.feature.shell.di.shellModule
 import dev.fanfly.wingslog.feature.squawk.datamanager.squawkModule
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.squawkUiModule
 import dev.fanfly.wingslog.feature.sync.data.blob.di.blobSchedulerModule
@@ -77,5 +77,5 @@ val commonAppModules: List<Module> = listOf(
   loginModule,
   settingsModule,
   syncSettingsModule,
-  fleetViewingModule,
+  shellModule,
 )

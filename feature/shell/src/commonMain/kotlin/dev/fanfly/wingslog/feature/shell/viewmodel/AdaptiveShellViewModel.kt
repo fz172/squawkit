@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.fleet.viewing.viewmodel
+package dev.fanfly.wingslog.feature.shell.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,8 +19,6 @@ import kotlinx.coroutines.launch
  *
  * Per the redesign, the selected aircraft is app-level state chosen from the switcher rather than a
  * navigation argument carried per destination — see `docs/web/web_adaptive_layout_design.html` §6.
- * Lives in fleet/viewing because both hosts (composeApp + webApp) already wire this module and it has
- * access to [FleetManager]; it may move to a dedicated shell module as the shell grows (M2/M3).
  */
 class AdaptiveShellViewModel(
   fleetManager: FleetManager,

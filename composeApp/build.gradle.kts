@@ -48,11 +48,8 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":feature:featurelab:datamanager"))
-      implementation(project(":feature:settings"))
-      implementation(project(":feature:login"))
-      implementation(project(":feature:export:datamanager"))
-      implementation(project(":feature:export:update"))
+      // The whole feature nav graph comes in via feature:shell (composables) + core:di (Koin
+      // modules); this host only declares what its own sources touch.
       implementation(project(":core:auth"))
       implementation(project(":core:analytics"))
       implementation(project(":core:di"))
@@ -60,28 +57,10 @@ kotlin {
       implementation(project(":core:nav"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))
-      implementation(project(":core:ui:adaptive"))
       implementation(project(":core:storage"))
+      implementation(project(":feature:login"))
+      implementation(project(":feature:shell"))
       implementation(project(":feature:sync:data"))
-      implementation(project(":feature:sync:settings"))
-      implementation(project(":feature:logs:datamanager"))
-      implementation(project(":feature:logs:viewing"))
-      implementation(project(":feature:logs:update"))
-      implementation(project(":feature:tasks:update"))
-      implementation(project(":feature:tasks:datamanager"))
-      implementation(project(":feature:squawk:datamanager"))
-      implementation(project(":feature:squawk:update"))
-      implementation(project(":feature:fleet:viewing"))
-      implementation(project(":feature:fleet:datamanager"))
-      implementation(project(":feature:aircraft:dashboard"))
-      implementation(project(":feature:technician:manage"))
-      implementation(project(":feature:technician:datamanager"))
-
-      implementation(project(":feature:attachment:model"))
-      implementation(project(":feature:attachment:datamanager"))
-      implementation(project(":feature:attachment:sharedassets"))
-      implementation(project(":feature:attachment:viewing"))
-
       implementation(project(":feature:stresstest:config"))
 
       implementation(libs.compose.ui)

@@ -1,13 +1,13 @@
-package dev.fanfly.wingslog.feature.fleet.viewing.di
+package dev.fanfly.wingslog.feature.shell.di
 
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
+import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val fleetViewingModule = module {
+val shellModule = module {
   viewModel {
     AdaptiveShellViewModel(
       fleetManager = get<FleetManager>(),

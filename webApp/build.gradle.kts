@@ -19,7 +19,9 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      // core:ui api-exports compose.ui, material3, and material-icons-extended.
+      // core:ui api-exports compose.ui, material3, and material-icons-extended. The whole
+      // feature nav graph comes in via feature:shell (composables) + core:di (Koin modules);
+      // this host only declares what its own sources touch.
       implementation(project(":core:analytics"))
       implementation(project(":core:di"))
       implementation(project(":core:appinfo"))
@@ -29,27 +31,9 @@ kotlin {
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:auth"))
-      implementation(project(":core:storage"))
       implementation(project(":feature:login"))
+      implementation(project(":feature:shell"))
       implementation(project(":feature:sync:data"))
-      implementation(project(":feature:technician:datamanager"))
-      implementation(project(":feature:attachment:datamanager"))
-      implementation(project(":feature:featurelab:datamanager"))
-      implementation(project(":feature:fleet:datamanager"))
-      implementation(project(":feature:fleet:viewing"))
-      implementation(project(":feature:aircraft:dashboard"))
-      implementation(project(":feature:logs:datamanager"))
-      implementation(project(":feature:logs:viewing"))
-      implementation(project(":feature:logs:update"))
-      implementation(project(":feature:tasks:datamanager"))
-      implementation(project(":feature:tasks:update"))
-      implementation(project(":feature:squawk:datamanager"))
-      implementation(project(":feature:squawk:update"))
-      implementation(project(":feature:export:datamanager"))
-      implementation(project(":feature:export:update"))
-      implementation(project(":feature:settings"))
-      implementation(project(":feature:sync:settings"))
-      implementation(project(":feature:technician:manage"))
       implementation(project(":feature:stresstest:config"))
       implementation(libs.compose.foundation)
       implementation(libs.androidx.navigation.compose)

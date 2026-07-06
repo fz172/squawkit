@@ -40,33 +40,11 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
-      implementation(project(":core:ui:adaptive"))
-      implementation(project(":core:auth"))
-      implementation(libs.gitlive.firebase.auth)
-      implementation(project(":feature:technician:datamanager"))
-      implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:fleet:sharedassets"))
-
-      // Compose
-
-      // Navigation & Lifecycle
-      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
-
-      // DI
-      implementation(libs.koin.compose)
-      implementation(libs.koin.compose.viewmodel)
-
-      // Logging
-      implementation(libs.kermit)
     }
   }
 }
 
 dependencies {
-  implementation(platform(libs.firebase.bom))
   implementation(platform(libs.androidx.compose.bom))
-
-  testImplementation(libs.junit)
-  testImplementation(libs.truth)
-  testImplementation(libs.kotlinx.coroutines.test)
 }

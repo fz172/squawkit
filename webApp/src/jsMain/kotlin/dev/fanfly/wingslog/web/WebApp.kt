@@ -12,59 +12,38 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.ExperimentalBrowserHistoryApi
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.bindToBrowserNavigation
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
-import dev.fanfly.wingslog.core.analytics.trackScreenViews
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
-import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
-import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
-import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
-import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
-import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
-import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
-import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
-import dev.fanfly.wingslog.feature.fleet.viewing.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.login.AuthFlow
-import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
-import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
-import dev.fanfly.wingslog.feature.settings.SettingsContent
-import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
-import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
-import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
-import dev.fanfly.wingslog.feature.stresstest.config.StressTestFeatureLabExtra
-import dev.fanfly.wingslog.feature.stresstest.config.registerStressTestRoutes
-import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
-import dev.fanfly.wingslog.feature.tasks.update.ui.AddTaskRoute
-import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
-import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
-import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
-import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
-import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute
+import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
+import dev.fanfly.wingslog.feature.shell.TrackRootScreenViews
+import dev.fanfly.wingslog.feature.shell.formDialogs
+import dev.fanfly.wingslog.feature.shell.settingsDetailRoutes
 import kotlinx.browser.document
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.rememberResourceEnvironment
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
 import org.w3c.dom.HTMLElement
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
+/**
+ * Web host entry. The navigation graph itself (shell route, form dialogs, settings detail
+ * pages) is shared with composeApp via `feature:shell`; this host adds the browser-history
+ * binding, the resource warm-up workaround, the SEO login landing page, the browser gutter
+ * color, and the tab-retitling analytics wrapper.
+ */
 @OptIn(ExperimentalBrowserHistoryApi::class)
 @Composable
 fun WebApp() {
@@ -94,7 +73,7 @@ fun WebApp() {
         if (!resourcesReady) return@Surface
 
         val navController = rememberNavController()
-        val firebaseAuth: FirebaseAuth = koinInject()
+        val appCapability: AppCapability = koinInject()
         // Wrap the platform manager so every screen view also retitles the browser tab (and tags the
         // event with page_title). Wrapping once + providing it to LocalAnalytics covers all call sites.
         val baseAnalytics: AnalyticsManager = koinInject()
@@ -102,15 +81,7 @@ fun WebApp() {
           remember(baseAnalytics) { BrowserTitleAnalytics(baseAnalytics) }
         var browserNavigationBound by remember { mutableStateOf(false) }
 
-        LaunchedEffect(Unit) {
-          firebaseAuth.authStateChanged.collect { user ->
-            if (user == null) {
-              navController.navigate(Screen.Login.route) {
-                popUpTo(0) { inclusive = true }
-              }
-            }
-          }
-        }
+        NavigateToLoginOnSignOut(navController)
 
         LaunchedEffect(browserNavigationBound) {
           if (browserNavigationBound) {
@@ -118,13 +89,7 @@ fun WebApp() {
           }
         }
 
-        // Page-view feeder 1 (see AppEntry.kt): all routes except the shell container.
-        LaunchedEffect(navController) {
-          navController.trackScreenViews(
-            analytics,
-            suppress = setOf(Screen.AdaptiveShell.route),
-          )
-        }
+        TrackRootScreenViews(navController, analytics)
 
         CompositionLocalProvider(LocalAnalytics provides analytics) {
           NavHost(
@@ -150,237 +115,21 @@ fun WebApp() {
               )
             }
             composable(Screen.AdaptiveShell.route) {
-              val viewModel = koinViewModel<AdaptiveShellViewModel>()
-              val state by viewModel.uiState.collectAsState()
-              // Page-view feeder 2 (see AppEntry.kt): shell sections are ViewModel state, not routes.
-              val shellAnalytics = LocalAnalytics.current
-              LaunchedEffect(state.section, state.selectedAircraftId) {
-                shellAnalytics.logScreenView("shell/${state.section.name.lowercase()}")
-              }
-              AdaptiveAppShell(
-                state = state,
-                onSelectSection = viewModel::selectSection,
-                onSelectAircraft = viewModel::selectAircraft,
-                onOpenSettings = viewModel::openSettings,
-                onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
-                sectionContent = { section, aircraftId ->
-                  if (section == ShellSection.SETTINGS) {
-                    SettingsSection(rootNavController = navController)
-                  } else {
-                    ShellSectionBody(
-                      section = section,
-                      aircraftId = aircraftId,
-                      navController = navController,
-                      onNavigateToSection = viewModel::selectSection,
-                    )
-                  }
-                },
-                emptyFleetContent = {
-                  FleetEmptyState(
-                    onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
-                  )
-                },
-                sectionFab = { section, aircraftId ->
-                  ShellSectionFab(
-                    section = section,
-                    aircraftId = aircraftId,
-                    navController = navController,
-                  )
-                },
+              AdaptiveShellRoute(
+                navController = navController,
+                isStressTestSupported = appCapability.isStressTestSupported,
               )
             }
-            dialog(
-              route = Screen.AddAircraft.route,
-              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-            ) {
-              AdaptiveFormDialogFrame {
-                EditAircraftScreen(navController = navController)
-              }
-            }
-            dialog(
-              route = Screen.EditAircraft.route,
-              arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-                type = NavType.StringType
-                nullable = true
-              }),
-              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-            ) {
-              AdaptiveFormDialogFrame {
-                EditAircraftScreen(navController = navController)
-              }
-            }
-            dialog(
-              route = Screen.AddMaintenanceTask.route,
-              arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-                type = NavType.StringType
-              }),
-              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-            ) {
-              AdaptiveFormDialogFrame {
-                AddTaskRoute(
-                  navController = navController,
-                )
-              }
-            }
-            dialog(
-              route = Screen.EditMaintenanceTask.route,
-              arguments = listOf(
-                navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
-                navArgument(Screen.CARD_ID) { type = NavType.StringType },
-              ),
-              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-            ) {
-              AdaptiveFormDialogFrame {
-                EditTaskRoute(
-                  navController = navController,
-                )
-              }
-            }
-            dialog(
-              route = Screen.AddMaintenanceLog.route,
-              arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-                type = NavType.StringType
-              }),
-              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-            ) {
-              AdaptiveFormDialogFrame {
-                MaintenanceLogFormScreen(
-                  navController = navController,
-                )
-              }
-            }
-            dialog(
-              route = Screen.EditMaintenanceLog.route,
-              arguments = listOf(
-                navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
-                navArgument(Screen.LOG_ID) { type = NavType.StringType },
-              ),
-              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-            ) {
-              AdaptiveFormDialogFrame {
-                MaintenanceLogFormScreen(
-                  navController = navController,
-                )
-              }
-            }
-            dialog(
-              route = Screen.AddSquawk.route,
-              arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-                type = NavType.StringType
-              }),
-              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-            ) {
-              AdaptiveFormDialogFrame {
-                AddSquawkRoute(
-                  navController = navController,
-                )
-              }
-            }
-            dialog(
-              route = Screen.EditSquawk.route,
-              arguments = listOf(
-                navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
-                navArgument(Screen.SQUAWK_ID) { type = NavType.StringType },
-              ),
-              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-            ) {
-              AdaptiveFormDialogFrame {
-                EditSquawkRoute(
-                  navController = navController,
-                )
-              }
-            }
+            formDialogs(navController)
             // Compact tiers (no sidebar) open settings detail pages as full-screen routes.
-            settingsDetailRoutes(navController)
+            settingsDetailRoutes(
+              navController,
+              appCapability.isStressTestSupported
+            )
           }
         }
       }
     }
-  }
-}
-
-/**
- * The Settings detail destinations. Registered once on the outer graph (compact full-screen +
- * EditTechnician reachable from the maintenance-log form) and once per nested settings NavHost (so
- * detail pages render in the content pane beside the sidebar). [navController] is whichever graph the
- * caller is wiring.
- */
-private fun NavGraphBuilder.settingsDetailRoutes(navController: NavHostController) {
-  composable(Screen.SyncSettings.route) {
-    SyncSettingsScreen(navController = navController)
-  }
-  composable(Screen.ExportLogs.route) {
-    ExportSelectionRoute(
-      navController = navController,
-      onNavigateToHistory = { navController.navigate(Screen.ExportHistory.route) },
-    )
-  }
-  composable(Screen.ExportHistory.route) {
-    ExportHistoryRoute(navController = navController)
-  }
-  composable(Screen.FeatureLab.route) {
-    FeatureLabScreen(
-      navController = navController,
-      dogfoodContent = { StressTestFeatureLabExtra(navController) },
-    )
-  }
-  registerStressTestRoutes(this, navController)
-  composable(Screen.ManageTechnicians.route) {
-    val viewModel = koinViewModel<TechnicianListViewModel>()
-    TechnicianListScreen(
-      viewModel = viewModel,
-      onNavigateBack = { navController.popBackStack() },
-      onNavigateToEdit = { id ->
-        navController.navigate(Screen.EditTechnician.createRoute(id))
-      },
-    )
-  }
-  composable(
-    route = Screen.EditTechnician.route,
-    arguments = listOf(navArgument(Screen.TECHNICIAN_ID) {
-      type = NavType.StringType
-      nullable = true
-    }),
-  ) {
-    EditTechnicianScreen(
-      viewModel = koinViewModel(),
-      onNavigateBack = { navController.popBackStack() },
-    )
-  }
-}
-
-/** Nested route for the Settings list itself, hosted inside the content pane in sidebar mode. */
-private const val SETTINGS_ROOT_ROUTE = "settings_root"
-
-/**
- * The Settings section body. In sidebar mode it hosts a nested NavHost so the list and its detail
- * pages render in the content pane (the sidebar stays put); on compact tiers it renders the list
- * directly and detail pages open as full-screen routes off [rootNavController].
- */
-@Composable
-private fun SettingsSection(rootNavController: NavHostController) {
-  if (LocalLayoutTier.current.hasFullSidebar) {
-    val settingsNav = rememberNavController()
-    // Page-view feeder 3 (see AppEntry.kt): sidebar-tier settings sub-pages on a separate nav.
-    val analytics = LocalAnalytics.current
-    LaunchedEffect(settingsNav) {
-      settingsNav.trackScreenViews(analytics)
-    }
-    NavHost(
-      navController = settingsNav,
-      startDestination = SETTINGS_ROOT_ROUTE,
-      modifier = Modifier.fillMaxSize(),
-    ) {
-      composable(SETTINGS_ROOT_ROUTE) {
-        SettingsContent(
-          navController = rootNavController,
-          sectionNavController = settingsNav,
-        )
-      }
-      settingsDetailRoutes(settingsNav)
-    }
-  } else {
-    SettingsContent(navController = rootNavController)
   }
 }
 
