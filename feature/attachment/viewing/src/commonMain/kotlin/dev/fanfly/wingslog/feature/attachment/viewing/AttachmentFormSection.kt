@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.fanfly.wingslog.aircraft.AttachmentType
@@ -61,6 +63,7 @@ import wingslog.feature.attachment.sharedassets.generated.resources.max_files_re
 import wingslog.feature.attachment.sharedassets.generated.resources.no_attachments
 import wingslog.feature.attachment.sharedassets.generated.resources.remove_attachment
 import wingslog.feature.attachment.sharedassets.generated.resources.sign_in_to_add_attachments
+import wingslog.feature.attachment.sharedassets.generated.resources.take_photo
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
@@ -88,6 +91,10 @@ fun AttachmentFormSection(
   val pickFiles = rememberFilePicker(
     onResult = { files -> onPickFiles(files) },
     onReadError = onPickError,
+  )
+  val takePhoto = rememberCameraCapture(
+    onResult = { files -> onPickFiles(files) },
+    onError = onPickError,
   )
 
   Column(
@@ -148,6 +155,7 @@ fun AttachmentFormSection(
     AttachmentPickerSheet(
       filesAtLimit = filesAtLimit,
       onChooseFile = { onDismissSheet(); pickFiles() },
+      onTakePhoto = { onDismissSheet(); takePhoto() },
       onAddLink = { url, name ->
         onAddLink(
           url,
@@ -239,11 +247,46 @@ private fun AttachmentType.toIcon() = when (this) {
   else -> Icons.AutoMirrored.Outlined.InsertDriveFile
 }
 
+@Composable
+private fun AttachmentPickerOption(
+  icon: ImageVector,
+  label: String,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+) {
+  OutlinedButton(
+    onClick = onClick,
+    enabled = enabled,
+    modifier = modifier,
+    contentPadding = PaddingValues(
+      vertical = Spacing.small,
+      horizontal = Spacing.extraSmall
+    ),
+  ) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+      Icon(
+        icon,
+        contentDescription = null,
+        modifier = Modifier.size(Spacing.large),
+      )
+      Spacer(Modifier.height(Spacing.extraSmall))
+      Text(
+        text = label,
+        style = MaterialTheme.typography.labelMedium,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
+    }
+  }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AttachmentPickerSheet(
   filesAtLimit: Boolean,
   onChooseFile: () -> Unit,
+  onTakePhoto: () -> Unit,
   onAddLink: (url: String, name: String) -> Unit,
   onDismiss: () -> Unit,
 ) {
@@ -268,31 +311,28 @@ private fun AttachmentPickerSheet(
           modifier = Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
-          OutlinedButton(
+          if (isCameraCaptureSupported) {
+            AttachmentPickerOption(
+              icon = Icons.Outlined.PhotoCamera,
+              label = stringResource(AttachRes.string.take_photo),
+              onClick = onTakePhoto,
+              enabled = !filesAtLimit,
+              modifier = Modifier.weight(1f),
+            )
+          }
+          AttachmentPickerOption(
+            icon = Icons.Default.Add,
+            label = stringResource(AttachRes.string.choose_file),
             onClick = onChooseFile,
             enabled = !filesAtLimit,
             modifier = Modifier.weight(1f),
-          ) {
-            Icon(
-              Icons.Default.Add,
-              contentDescription = null,
-              modifier = Modifier.size(Spacing.large)
-            )
-            Spacer(Modifier.width(Spacing.small))
-            Text(stringResource(AttachRes.string.choose_file))
-          }
-          OutlinedButton(
+          )
+          AttachmentPickerOption(
+            icon = Icons.Outlined.Link,
+            label = stringResource(AttachRes.string.add_link),
             onClick = { showLinkField = true },
             modifier = Modifier.weight(1f),
-          ) {
-            Icon(
-              Icons.Outlined.Link,
-              contentDescription = null,
-              modifier = Modifier.size(Spacing.large)
-            )
-            Spacer(Modifier.width(Spacing.small))
-            Text(stringResource(AttachRes.string.add_link))
-          }
+          )
         }
         Text(
           text = if (filesAtLimit) {

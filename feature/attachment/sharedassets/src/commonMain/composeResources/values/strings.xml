@@ -2,6 +2,7 @@
 <resources>
   <string name="attachments">Attachments</string>
   <string name="choose_file">Choose file</string>
+  <string name="take_photo">Take photo</string>
   <string name="add_link">Add link</string>
   <string name="link_url">URL</string>
   <string name="link_name">Name (optional)</string>

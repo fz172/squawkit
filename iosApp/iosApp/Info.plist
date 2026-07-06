@@ -21,6 +21,8 @@
 	<false/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>SquawkIt uses the camera to attach photos to logbook entries and squawks.</string>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
     <key>BGTaskSchedulerPermittedIdentifiers</key>

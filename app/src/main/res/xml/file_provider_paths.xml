@@ -2,4 +2,6 @@
 <paths>
     <!-- Exposes filesDir/blobs/ for sharing attachment files with external viewers. -->
     <files-path name="blobs" path="blobs/" />
+    <!-- Exposes cacheDir/camera_temp/ so the system camera app can write captured photos there. -->
+    <cache-path name="camera_temp" path="camera_temp/" />
 </paths>
