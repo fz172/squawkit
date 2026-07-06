@@ -85,6 +85,8 @@ kotlin {
       implementation(project(":feature:attachment:sharedassets"))
       implementation(project(":feature:attachment:viewing"))
 
+      implementation(project(":feature:stresstest:config"))
+
       implementation(libs.compose.ui)
       implementation(libs.material3)
       implementation(libs.components.resources)
@@ -107,7 +109,6 @@ kotlin {
       dependsOn(commonMain.get())
       dependencies {
         implementation(libs.ktor.client.darwin)
-        implementation(project(":feature:stresstest:config"))
       }
     }
 

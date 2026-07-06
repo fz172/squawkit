@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.settings.di
 
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
-import dev.fanfly.wingslog.core.appinfo.BuildInfo
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
@@ -24,7 +24,7 @@ val settingsModule = module {
       get(),
       get<AppearanceController>(),
       get<AnalyticsPreferenceController>(),
-      get<BuildInfo>(),
+      get<AppCapability>(),
     )
   }
   viewModel { FeatureLabViewModel(get()) }

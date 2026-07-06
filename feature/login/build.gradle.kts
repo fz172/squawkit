@@ -46,6 +46,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:appinfo"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:ui"))
@@ -62,6 +63,7 @@ kotlin {
       // Lifecycle & DI
       implementation(libs.jetbrains.lifecycle.runtime.compose)
       implementation(libs.koin.compose.viewmodel)
+      implementation(libs.koin.compose)
     }
   }
 }

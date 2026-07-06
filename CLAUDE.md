@@ -17,8 +17,9 @@ The canonical guidance for this repo lives in [AGENTS.md](AGENTS.md). Read it fi
 ## Common commands
 
 ```bash
-./gradlew assembleDebug                              # Build debug APK
-./gradlew assembleDogfoodDebug                       # Build dogfood APK (includes Fake Data Generator)
+./gradlew assembleDebug                              # Build debug APK (developer tooling on)
+./gradlew assembleRelease                            # Build release APK (developer tooling off)
+./gradlew assembleRelease -PdeveloperBuild=true       # "Dogfood-style" release APK (developer tooling on)
 ./gradlew lint
 ./gradlew testDebugUnitTest                          # All Android unit tests
 ./gradlew :feature:fleet:viewing:testDebugUnitTest   # Single-module tests
@@ -40,3 +41,4 @@ CI runs lint → `assembleDebug` → `testDebugUnitTest` and requires the `GOOGL
 - Feature managers read/write the local `EntityStore` only — never Firestore.
 - `core:storage` and `core:ui` api-export most shared deps; don't redeclare them downstream.
 - Feature flags are gated by `FeatureLabManager` / `FeatureFlags` (e.g. `attachmentUploadEnabled`).
+- Build-time/platform gates go through the injected `AppCapability` singleton (`core:appinfo`), not `isDeveloperBuild` checks or scattered `expect`/`actual` booleans.

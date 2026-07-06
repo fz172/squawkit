@@ -22,8 +22,6 @@ import platform.UIKit.UIImagePickerControllerSourceType
 import platform.UIKit.UINavigationControllerDelegateProtocol
 import platform.darwin.NSObject
 
-actual val isCameraCaptureSupported: Boolean = true
-
 private const val MAX_PHOTO_BYTES = 1_000_000L
 private const val MAX_DIMENSION = 2048.0
 

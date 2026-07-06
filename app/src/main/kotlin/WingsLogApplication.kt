@@ -23,12 +23,7 @@ class WingsLogApplication : Application() {
     initializeFirebaseAppCheck()
     logger.d { "WingsLogApplication started" }
 
-    // Developer build = any debuggable build (prodDebug / dogfoodDebug) or the dogfood flavor.
-    val isDebuggable = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
-    initKoin(
-      dogfoodExtensions = createDogfoodExtensions(),
-      isDeveloperBuild = isDebuggable || IS_DOGFOOD_BUILD,
-    ) {
+    initKoin(isDeveloperBuild = BuildConfig.DEVELOPER_BUILD) {
       androidContext(this@WingsLogApplication)
     }
     // Best-effort startup GC; runOnce() is now suspend (async-generated queries).

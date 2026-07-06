@@ -41,12 +41,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import dev.fanfly.wingslog.aircraft.AttachmentType
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.remove
@@ -307,11 +309,12 @@ private fun AttachmentPickerSheet(
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
       if (!showLinkField) {
+        val appCapability: AppCapability = koinInject()
         Row(
           modifier = Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
-          if (isCameraCaptureSupported) {
+          if (appCapability.isCameraCaptureSupported) {
             AttachmentPickerOption(
               icon = Icons.Outlined.PhotoCamera,
               label = stringResource(AttachRes.string.take_photo),

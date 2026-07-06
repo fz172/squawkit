@@ -31,11 +31,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.apple_logo
@@ -56,6 +58,7 @@ fun LoginScreen(
   onLoginSuccess: () -> Unit,
   onChooseEmail: () -> Unit,
 ) {
+  val appCapability: AppCapability = koinInject()
   val scope = rememberCoroutineScope()
   var error by remember { mutableStateOf<String?>(null) }
   var isSigningIn by remember { mutableStateOf(false) }
@@ -147,10 +150,10 @@ fun LoginScreen(
       }
     }
 
-    // Continue with Apple — hidden on Android (see isAppleSignInSupported). Backend
+    // Continue with Apple — hidden on Android (see AppCapability.isAppleSignInSupported). Backend
     // (signInWithApple) is not wired yet; tapping is a no-op until the Apple provider is
     // implemented per platform.
-    if (isAppleSignInSupported) {
+    if (appCapability.isAppleSignInSupported) {
       Spacer(Modifier.height(Spacing.medium))
 
       Button(
@@ -222,7 +225,7 @@ fun LoginScreen(
       }
     }
 
-    if (isAnonymousLoginSupported) {
+    if (appCapability.isAnonymousLoginSupported) {
       Spacer(Modifier.height(Spacing.medium))
 
       OutlinedButton(

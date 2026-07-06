@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.feature.settings.data
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceStore
-import dev.fanfly.wingslog.core.appinfo.BuildInfo
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
@@ -109,7 +109,13 @@ class SettingsViewModelTest {
       featureLabManager,
       appearanceController,
       analyticsPreferenceController,
-      BuildInfo(isDeveloperBuild = false),
+      AppCapability(
+        isFeatureLabSupported = false,
+        isStressTestSupported = false,
+        isCameraCaptureSupported = false,
+        isAnonymousLoginSupported = false,
+        isAppleSignInSupported = false,
+      ),
     )
 
     viewModel.logOut()
@@ -128,7 +134,13 @@ class SettingsViewModelTest {
       featureLabManager,
       appearanceController,
       analyticsPreferenceController,
-      BuildInfo(isDeveloperBuild = false),
+      AppCapability(
+        isFeatureLabSupported = false,
+        isStressTestSupported = false,
+        isCameraCaptureSupported = false,
+        isAnonymousLoginSupported = false,
+        isAppleSignInSupported = false,
+      ),
     )
 
     viewModel.logOut()
@@ -147,7 +159,13 @@ class SettingsViewModelTest {
       featureLabManager,
       appearanceController,
       analyticsPreferenceController,
-      BuildInfo(isDeveloperBuild = false),
+      AppCapability(
+        isFeatureLabSupported = false,
+        isStressTestSupported = false,
+        isCameraCaptureSupported = false,
+        isAnonymousLoginSupported = false,
+        isAppleSignInSupported = false,
+      ),
     )
 
     viewModel.logOut()
@@ -167,7 +185,13 @@ class SettingsViewModelTest {
       featureLabManager,
       appearanceController,
       analyticsPreferenceController,
-      BuildInfo(isDeveloperBuild = false),
+      AppCapability(
+        isFeatureLabSupported = false,
+        isStressTestSupported = false,
+        isCameraCaptureSupported = false,
+        isAnonymousLoginSupported = false,
+        isAppleSignInSupported = false,
+      ),
     )
 
     viewModel.logOut()
@@ -187,7 +211,13 @@ class SettingsViewModelTest {
       featureLabManager,
       appearanceController,
       analyticsPreferenceController,
-      BuildInfo(isDeveloperBuild = false),
+      AppCapability(
+        isFeatureLabSupported = false,
+        isStressTestSupported = false,
+        isCameraCaptureSupported = false,
+        isAnonymousLoginSupported = false,
+        isAppleSignInSupported = false,
+      ),
     )
 
     viewModel.logOut()

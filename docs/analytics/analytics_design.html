@@ -251,7 +251,7 @@
   <h2 id="wiring">7. Wiring (DI + platform init)</h2>
   <ol class="steps">
     <li>Register <code>analyticsModule</code> in <code>composeApp/.../di/initKoin.kt</code> (Android + iOS) and <code>webApp/.../main.kt</code>.</li>
-    <li>Initialize the platform Analytics handle where Firebase already starts: Android <code>WingsLogApplication.onCreate</code> (after <code>FirebaseApp.initializeApp</code>); iOS <code>MainEntry.doInitKoin</code>/<code>doInitKoinDogfood</code>; web <code>main.kt</code> after <code>Firebase.initialize(...)</code> (also set <code>app_version</code> there).</li>
+    <li>Initialize the platform Analytics handle where Firebase already starts: Android <code>WingsLogApplication.onCreate</code> (after <code>FirebaseApp.initializeApp</code>); iOS <code>MainEntry.doInitKoin</code>; web <code>main.kt</code> after <code>Firebase.initialize(...)</code> (also set <code>app_version</code> there).</li>
     <li>Provide <code>LocalAnalytics</code> + add the nav observer in <code>AppEntry.kt</code>.</li>
   </ol>
 

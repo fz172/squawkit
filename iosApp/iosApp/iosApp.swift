@@ -42,9 +42,9 @@ struct iosApp: App {
 
     init() {
         #if DOGFOOD
-        MainEntry.shared.doInitKoinDogfood()
+        MainEntry.shared.doInitKoin(forceDeveloperBuild: true)
         #else
-        MainEntry.shared.doInitKoin()
+        MainEntry.shared.doInitKoin(forceDeveloperBuild: false)
         #endif
     }
 

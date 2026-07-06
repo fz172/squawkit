@@ -33,6 +33,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:appinfo"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:sharedassets"))
@@ -40,6 +41,7 @@ kotlin {
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:attachment:sharedassets"))
       implementation(libs.compose.ui.backhandler)
+      implementation(libs.koin.compose)
     }
     androidMain.dependencies {
       implementation(libs.androidx.documentfile)

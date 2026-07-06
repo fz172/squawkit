@@ -24,6 +24,7 @@ import androidx.navigation.navigation
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
@@ -48,6 +49,8 @@ import dev.fanfly.wingslog.feature.settings.SettingsContent
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
+import dev.fanfly.wingslog.feature.stresstest.config.StressTestFeatureLabExtra
+import dev.fanfly.wingslog.feature.stresstest.config.registerStressTestRoutes
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
 import dev.fanfly.wingslog.feature.tasks.update.ui.AddTaskRoute
 import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
@@ -68,7 +71,7 @@ fun AppEntry() {
   val checker: DatabaseIntegrityChecker = koinInject()
   val authManager: AuthManager = koinInject()
   val firebaseAuth: FirebaseAuth = koinInject()
-  val dogfoodExts: DogfoodFeatureExtensions = koinInject()
+  val appCapability: AppCapability = koinInject()
   val analytics: AnalyticsManager = koinInject()
   val appearanceController: AppearanceController = koinInject()
   val appearanceMode by appearanceController.mode.collectAsState()
@@ -122,11 +125,11 @@ fun AppEntry() {
           startDestination = GRAPH_AUTH
         ) {
           authGraph(navController)
-          shellGraph(navController, dogfoodExts)
+          shellGraph(navController, appCapability.isStressTestSupported)
           formDialogs(navController)
           // Compact tiers (no sidebar) open settings detail pages as full-screen routes; the sidebar
           // tier hosts its own nested copy of these inside the Settings section (see SettingsSection).
-          secondaryRoutes(navController, dogfoodExts)
+          secondaryRoutes(navController, appCapability.isStressTestSupported)
         }
       }
     }
@@ -155,7 +158,7 @@ private fun NavGraphBuilder.authGraph(
 
 private fun NavGraphBuilder.shellGraph(
   navController: NavController,
-  dogfoodExts: DogfoodFeatureExtensions,
+  isStressTestSupported: Boolean,
 ) {
   navigation(
     startDestination = Screen.AdaptiveShell.route,
@@ -180,7 +183,7 @@ private fun NavGraphBuilder.shellGraph(
           if (section == ShellSection.SETTINGS) {
             SettingsSection(
               rootNavController = navController,
-              dogfoodExts = dogfoodExts
+              isStressTestSupported = isStressTestSupported
             )
           } else {
             ShellSectionBody(
@@ -302,7 +305,7 @@ private fun NavGraphBuilder.formDialogs(navController: NavController) {
 
 private fun NavGraphBuilder.secondaryRoutes(
   navController: NavController,
-  dogfoodExts: DogfoodFeatureExtensions
+  isStressTestSupported: Boolean,
 ) {
   composable(Screen.SyncSettings.route) {
     SyncSettingsScreen(navController = navController)
@@ -319,10 +322,16 @@ private fun NavGraphBuilder.secondaryRoutes(
   composable(Screen.FeatureLab.route) {
     FeatureLabScreen(
       navController = navController,
-      dogfoodContent = { dogfoodExts.FeatureLabExtra(navController) },
+      dogfoodContent = {
+        if (isStressTestSupported) StressTestFeatureLabExtra(
+          navController
+        )
+      },
     )
   }
-  dogfoodExts.registerRoutes(this, navController)
+  if (isStressTestSupported) {
+    registerStressTestRoutes(this, navController)
+  }
   composable(Screen.ManageTechnicians.route) {
     val viewModel = koinViewModel<TechnicianListViewModel>()
     TechnicianListScreen(
@@ -362,7 +371,7 @@ private const val SETTINGS_ROOT_ROUTE = "settings_root"
 @Composable
 private fun SettingsSection(
   rootNavController: NavController,
-  dogfoodExts: DogfoodFeatureExtensions,
+  isStressTestSupported: Boolean,
 ) {
   if (LocalLayoutTier.current.hasFullSidebar) {
     val settingsNav: NavHostController = rememberNavController()
@@ -383,7 +392,7 @@ private fun SettingsSection(
           sectionNavController = settingsNav,
         )
       }
-      secondaryRoutes(settingsNav, dogfoodExts)
+      secondaryRoutes(settingsNav, isStressTestSupported)
     }
   } else {
     SettingsContent(navController = rootNavController)

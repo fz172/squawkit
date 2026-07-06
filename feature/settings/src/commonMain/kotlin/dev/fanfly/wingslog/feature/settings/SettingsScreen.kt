@@ -210,8 +210,8 @@ fun SettingsContent(
               onClick = { detailNav.navigate(Screen.ExportLogs.route) },
             )
           }
-          // Feature Lab is a developer surface: only on debug and dogfood builds, never in release.
-          if (user.isDeveloperBuild) {
+          // Feature Lab is a developer surface: only on debug and dogfood-style builds, never in release.
+          if (user.isFeatureLabSupported) {
             add {
               SettingsRow(
                 icon = Icons.Default.Tune,

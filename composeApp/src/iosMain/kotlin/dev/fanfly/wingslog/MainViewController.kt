@@ -21,14 +21,8 @@ object MainEntry {
   }
 
   @OptIn(ExperimentalNativeApi::class)
-  fun doInitKoin() {
-    // Prod scheme: developer build only when this is a debug binary.
-    initKoin(isDeveloperBuild = Platform.isDebugBinary) {}
-    runTombstoneGc()
-  }
-
-  fun doInitKoinDogfood() {
-    initKoin(dogfoodExtensions = StressTestDogfoodExtensions(), isDeveloperBuild = true) {}
+  fun doInitKoin(forceDeveloperBuild: Boolean = false) {
+    initKoin(isDeveloperBuild = forceDeveloperBuild || Platform.isDebugBinary) {}
     runTombstoneGc()
   }
 

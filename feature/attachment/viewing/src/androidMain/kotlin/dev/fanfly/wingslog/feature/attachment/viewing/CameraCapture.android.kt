@@ -22,8 +22,6 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.UUID
 
-actual val isCameraCaptureSupported: Boolean = true
-
 private const val TAG = "CameraCapture"
 private const val MAX_PHOTO_BYTES = 1_000_000L
 private const val MAX_DIMENSION = 2048

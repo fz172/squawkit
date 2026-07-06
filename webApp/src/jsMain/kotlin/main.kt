@@ -1,6 +1,6 @@
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
-import dev.fanfly.wingslog.core.appinfo.BuildInfo
+import dev.fanfly.wingslog.core.appinfo.createAppCapability
 import dev.fanfly.wingslog.core.di.commonAppModules
 import dev.fanfly.wingslog.feature.stresstest.config.stressTestKoinModules
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
@@ -91,7 +91,7 @@ private fun startPrimaryTab() {
           // __WINGSLOG_DEBUG__ is injected at bundle time by webpack DefinePlugin
           // (webpack.config.d/debug-flag.js); true only for the debug web build, which surfaces
           // developer-only entries like Feature Lab. Guarded with typeof so it's safe if undefined.
-          single { BuildInfo(isDeveloperBuild = isWebDebugBuild) }
+          single { createAppCapability(isDeveloperBuild = isWebDebugBuild) }
         },
       ),
     )

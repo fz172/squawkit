@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.feature.settings.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
-import dev.fanfly.wingslog.core.appinfo.BuildInfo
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
@@ -25,10 +25,11 @@ class SettingsViewModel(
   private val featureLabManager: FeatureLabManager,
   private val appearanceController: AppearanceController,
   private val analyticsPreferenceController: AnalyticsPreferenceController,
-  private val buildInfo: BuildInfo,
+  private val appCapability: AppCapability,
 ) : ViewModel() {
 
-  private val _user = MutableStateFlow(SettingsUiState(isDeveloperBuild = buildInfo.isDeveloperBuild))
+  private val _user =
+    MutableStateFlow(SettingsUiState(isFeatureLabSupported = appCapability.isFeatureLabSupported))
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
 
   /** Device-local light/dark/system preference, shared with the root theme. */
@@ -37,7 +38,8 @@ class SettingsViewModel(
   fun setAppearance(mode: AppearanceMode) = appearanceController.setMode(mode)
 
   /** Device-local Firebase Logging (analytics collection) preference, default on. */
-  val firebaseLoggingEnabled: StateFlow<Boolean> = analyticsPreferenceController.enabled
+  val firebaseLoggingEnabled: StateFlow<Boolean> =
+    analyticsPreferenceController.enabled
 
   fun setFirebaseLoggingEnabled(enabled: Boolean) =
     analyticsPreferenceController.setEnabled(enabled)
@@ -51,27 +53,29 @@ class SettingsViewModel(
 
   private fun observeFeatureFlags() {
     viewModelScope.launch {
-      featureLabManager.observe().collect { flags ->
-        _user.value = _user.value.copy(featureFlags = flags)
-      }
+      featureLabManager.observe()
+        .collect { flags ->
+          _user.value = _user.value.copy(featureFlags = flags)
+        }
     }
   }
 
   private fun loadUserProfile() {
     _user.value = SettingsUiState(
       userStatus = UserStatus.LOADING,
-      isDeveloperBuild = buildInfo.isDeveloperBuild,
+      isFeatureLabSupported = appCapability.isFeatureLabSupported,
     )
     observeSelfJob?.cancel()
     observeSelfJob = viewModelScope.launch {
-      technicianManager.observeSelf().collect { self ->
-        _user.value = _user.value.copy(
-          photoUri = authManager.getCurrentUser()?.photoURL,
-          selfTechnician = self,
-          userStatus = UserStatus.LOGGED_IN,
-          isAnonymous = authManager.getCurrentUser()?.isAnonymous == true,
-        )
-      }
+      technicianManager.observeSelf()
+        .collect { self ->
+          _user.value = _user.value.copy(
+            photoUri = authManager.getCurrentUser()?.photoURL,
+            selfTechnician = self,
+            userStatus = UserStatus.LOGGED_IN,
+            isAnonymous = authManager.getCurrentUser()?.isAnonymous == true,
+          )
+        }
     }
   }
 
@@ -97,7 +101,8 @@ class SettingsViewModel(
       // need that lock — calling them before signOut would block forever on web (JS single-thread,
       // SyncEngine holds the lock across suspend points during active hydration/push).
       authManager.logOut()
-      _user.value = SettingsUiState(photoUri = null, userStatus = UserStatus.LOGGED_OUT)
+      _user.value =
+        SettingsUiState(photoUri = null, userStatus = UserStatus.LOGGED_OUT)
       if (uid != null) {
         attachmentManager.wipeLocalData(uid)
         dbChecker.wipeDataForUser(uid)

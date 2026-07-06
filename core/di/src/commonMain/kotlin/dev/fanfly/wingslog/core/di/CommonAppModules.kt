@@ -38,7 +38,7 @@ import org.koin.core.module.Module
  * Every Koin module shared by *all* host apps: auth, storage, sync, analytics, and every
  * feature's data/viewing/update layer. Both `composeApp` (Android/iOS, via `initKoin`) and
  * `webApp` (`main.kt`) build their Koin graph from this list plus their own host-only bootstrap
- * (BuildInfo construction, dogfood/stress-test extension modules, host-only singles like the web
+ * (`AppCapability` construction, `stressTestKoinModules()`, host-only singles like the web
  * SQLite worker).
  *
  * Kept as a single source of truth after this list drifted between the two hosts once already —

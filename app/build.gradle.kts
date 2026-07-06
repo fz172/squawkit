@@ -51,6 +51,10 @@ if (isReleaseBuild) {
 
 val computedVersionName = "$major.$minor.$today.$patch"
 
+// Set via `-PdeveloperBuild=true` to produce a signed, distributable "dogfood-style" release
+// build with developer tooling (Feature Lab, stress test) turned on. Debug builds always have it on.
+val developerBuild = (findProperty("developerBuild") as? String)?.toBoolean() ?: false
+
 kotlin {
   jvmToolchain(21)
 }
@@ -71,23 +75,17 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
-  flavorDimensions += "environment"
-  productFlavors {
-    create("dogfood") {
-      dimension = "environment"
-    }
-    create("prod") {
-      dimension = "environment"
-    }
-  }
-
   buildTypes {
+    debug {
+      buildConfigField("boolean", "DEVELOPER_BUILD", "true")
+    }
     release {
       isMinifyEnabled = false
       proguardFiles(
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro"
       )
+      buildConfigField("boolean", "DEVELOPER_BUILD", developerBuild.toString())
     }
   }
   compileOptions {
@@ -97,13 +95,18 @@ android {
 
   buildFeatures {
     compose = true
+    buildConfig = true
   }
 
 }
 
 androidComponents {
   onVariants { variant ->
-    val suffix = if (variant.flavorName == "dogfood") "dogfood" else (variant.buildType ?: "debug")
+    val suffix = when {
+      variant.buildType == "debug" -> "debug"
+      developerBuild -> "dogfood"
+      else -> "release"
+    }
     variant.outputs.forEach { output ->
       output.versionName.set("$computedVersionName.$suffix")
     }
@@ -132,12 +135,6 @@ dependencies {
   implementation(project(":composeApp"))
   implementation(project(":feature:sync:data"))
   implementation(project(":feature:login"))
-  "dogfoodImplementation"(project(":feature:stresstest:config"))
-  "dogfoodImplementation"(project(":core:ui"))
-  "dogfoodImplementation"(libs.compose.foundation)
-  "dogfoodImplementation"(libs.material3)
-  "dogfoodImplementation"(libs.material.icons.extended)
-  "dogfoodImplementation"(libs.androidx.navigation.compose)
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

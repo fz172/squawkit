@@ -15,8 +15,9 @@ The app uses a **local-first architecture** (R1 — shipped, default path): a SQ
 ## Build & CI Commands
 
 ```bash
-./gradlew assembleDebug                          # Build debug APK
-./gradlew assembleDogfoodDebug                   # Build dogfood APK (includes fake data generator)
+./gradlew assembleDebug                          # Build debug APK (developer tooling on)
+./gradlew assembleRelease                        # Build release APK (developer tooling off)
+./gradlew assembleRelease -PdeveloperBuild=true   # Build a "dogfood-style" release APK (developer tooling on)
 ./gradlew lint                                   # Lint checks
 ./gradlew testDebugUnitTest                      # Run all Android unit tests
 ./gradlew :feature:fleet:viewing:testDebugUnitTest  # Run tests for a single module
@@ -101,10 +102,12 @@ feature/
     database/           #   UserProfileManager (Firestore)
     sharedassets/       #   Strings, anonymous user icon
     userprofilecard/    #   Profile card composable
-  stresstest/           # Fake data generator for UI stress testing (dogfood only)
+  stresstest/           # Fake data generator for UI stress testing (compiled into every build,
+                        # gated at runtime by AppCapability.isStressTestSupported)
                         #   FakeDataGenerator, StressTestScreen, StressTestViewModel, StressTestModule
-    config/             #   StressTestPlugin — shared composable UI + route registration used by
-                        #   both platforms' thin wiring layers (see Dogfood Builds below)
+    config/             #   StressTestPlugin — shared composable UI + route registration, called
+                        #   directly and unconditionally from composeApp/AppEntry.kt and webApp
+                        #   (see Dogfood Builds below)
 backend/                # Firebase Cloud Functions (TypeScript, Functions v2, Node 22) — NOT a Gradle module
   firebase/functions/   #   health_probe; requestExportDelivery (export email delivery: signed URL + mailer + Firestore manifest)
 ```
@@ -240,43 +243,42 @@ with relative paths.
 
 ## Dogfood Builds
 
-The dogfood/debug tooling includes the **Fake Data Generator** (`feature/stresstest`) — a screen
-that populates fake aircraft, logs, squawks, and tasks for UI stress testing. Android and iOS gate
-it behind the `DogfoodFeatureExtensions` plugin interface defined in `composeApp/src/commonMain/`;
-the web host exposes the same reusable plugin directly from Feature Lab.
+There is no compiled-out "dogfood" variant anymore — the **Fake Data Generator**
+(`feature/stresstest`) is a normal, always-present dependency of `composeApp` and `webApp` on
+every platform, called directly from `AppEntry.kt` (Android/iOS) and `webApp/main.kt`. What used
+to be a build-time inclusion/exclusion is now a single runtime flag: `AppCapability.isStressTestSupported`
+(see `core/appinfo/AppCapability.kt`), gating both the Feature Lab "Debug Tools" entry and the
+route registration.
 
-### Architecture
-
-```
-feature/stresstest/config/StressTestPlugin.kt   ← shared composable UI + route registration (KMP commonMain)
-        │
-        ├── app/src/dogfood/DogfoodConfig.kt     ← Android thin wiring (dogfood flavor only)
-        └── composeApp/src/iosMain/
-              StressTestDogfoodExtensions.kt      ← iOS thin wiring (iosMain, all iOS builds)
-```
-
-Both wiring files are structurally identical — they implement `DogfoodFeatureExtensions` by delegating to the three functions in `StressTestPlugin.kt`. The split exists because Android uses product flavor source sets (`app/src/dogfood/`) while iOS has no equivalent; `composeApp/src/iosMain/` is the iOS entry-point layer.
+`AppCapability` also folds in the "developer build" gate for the Feature Lab settings row itself
+(`isFeatureLabSupported`) and three platform-capability constants (camera capture, anonymous
+login, Apple sign-in) — one injectable singleton, constructed once per host via
+`createAppCapability(isDeveloperBuild)` at Koin startup, instead of several unrelated flags.
 
 ### Android
 
-- Product flavor `dogfood` in `app/build.gradle.kts` (dimension `environment`; the other is `prod`)
-- `app/src/dogfood/` source set compiled only for dogfood variants; `app/src/prod/` returns `NoOpDogfoodExtensions`
-- `feature:stresstest:config` is `dogfoodImplementation` — excluded from prod binaries entirely
-- Build: `./gradlew assembleDogfoodDebug`
+- No product flavor — a single `app` variant dimension (`debug`/`release`).
+- `isDeveloperBuild` comes from the `BuildConfig.DEVELOPER_BUILD` field: hardcoded `true` for the
+  `debug` build type, and settable on `release` via the `-PdeveloperBuild=true` Gradle property
+  (see `app/build.gradle.kts`).
+- Build: `./gradlew assembleDebug` (developer tooling on) · `./gradlew assembleRelease` (tooling
+  off) · `./gradlew assembleRelease -PdeveloperBuild=true` (signed "dogfood-style" release, tooling on)
 
 ### iOS
 
-- `feature:stresstest:config` is in `composeApp`'s `iosMain` dependencies — compiled into all iOS builds but only activated via the dogfood entry point
-- `MainEntry.doInitKoinDogfood()` (`composeApp/src/iosMain/MainViewController.kt`) wires in `StressTestDogfoodExtensions`
-- `iosApp.swift` uses `#if DOGFOOD` to call `doInitKoinDogfood()` vs `doInitKoin()`
-- The **Dogfood** Xcode build configuration sets `SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG DOGFOOD"` and hardcodes `FRAMEWORK_SEARCH_PATHS` to the `Debug` KMP framework variant
-- The Compile Kotlin build phase remaps `CONFIGURATION=Dogfood → Debug` before invoking Gradle
-- Build: open `iosApp/iosApp.xcodeproj`, select the **iosAppDogfood** scheme, and run
+- `MainEntry.doInitKoin(forceDeveloperBuild:)` (`composeApp/src/iosMain/MainViewController.kt`) is
+  the single entry point; `isDeveloperBuild` is `forceDeveloperBuild || Platform.isDebugBinary`.
+- `iosApp.swift`'s `#if DOGFOOD` only decides the `forceDeveloperBuild` argument (Swift can't see
+  `Platform.isDebugBinary` itself) — there's no more separate dogfood Kotlin entry point or wiring class.
+- The **Dogfood** Xcode build configuration still exists for signing/distribution purposes (sets
+  `SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG DOGFOOD"`, remaps `CONFIGURATION=Dogfood → Debug`
+  for the Compile Kotlin phase).
+- Build: open `iosApp/iosApp.xcodeproj`, select the **iosAppDogfood** scheme, and run.
 
 ### Web
 
 - `webApp` depends on `feature:stresstest:config` and registers the plugin route and Koin module
-  directly.
+  directly, same as Android/iOS.
 - The Fake Data Generator is reachable through **Settings → Feature Lab → Debug Tools**.
 - Build: `./gradlew :webApp:jsBrowserDevelopmentWebpack`
 
@@ -286,6 +288,7 @@ Both wiring files are structurally identical — they implement `DogfoodFeatureE
 - **ViewModels in `fleet/`**: The ViewModel lives inside the `viewing/` submodule (no separate layer), since fleet has no editable screen at the feature level.
 - **`technician/manage`**: This feature uses `manage/` instead of the canonical `viewing/` + `update/` split — both read and write screens coexist in one submodule. New features should prefer the canonical pattern unless the feature is inherently CRUD-only with no standalone viewing screen.
 - **Feature flags**: Controlled by `FeatureLabManager` (Firestore-backed; `attachmentUploadEnabled` gates the attachment UI). Check `FeatureFlags` before shipping experimental code paths.
+- **Capabilities**: Build-time/platform gates (developer-only surfaces, per-platform support) go through the injected `AppCapability` singleton (`core:appinfo`), not ad-hoc `isDeveloperBuild` checks or `expect`/`actual` booleans scattered across feature modules.
 - **Transitive deps**: `core:storage` and `core:ui` api-export most shared deps; don't redeclare them in downstream modules.
 
 ## Engineering Best Practices
