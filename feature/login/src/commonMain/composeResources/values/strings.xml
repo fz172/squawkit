@@ -21,7 +21,6 @@
   <string name="email_resend">Resend link</string>
   <string name="email_resend_in">Resend in %1$s</string>
   <string name="email_use_different">Use a different email</string>
-  <string name="email_back">Back</string>
   <string name="email_finish_title">Finish signing in</string>
   <string name="email_finish_body">Confirm the email this link was sent to.</string>
   <string name="email_finish_cta">Continue</string>

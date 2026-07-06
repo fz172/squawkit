@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
+import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -36,9 +37,6 @@ import wingslog.feature.attachment.sharedassets.generated.resources.Res
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_type_image
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_type_pdf
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_type_text
-import wingslog.feature.attachment.sharedassets.generated.resources.file_size_bytes
-import wingslog.feature.attachment.sharedassets.generated.resources.file_size_kb
-import wingslog.feature.attachment.sharedassets.generated.resources.file_size_mb
 import wingslog.feature.attachment.sharedassets.generated.resources.subtitle_separator
 
 @Composable
@@ -162,20 +160,4 @@ private fun String.mimeLabel(): String = when {
   startsWith("text/") -> stringResource(Res.string.attachment_type_text)
   else -> substringAfterLast("/").uppercase()
     .take(8)
-}
-
-@Composable
-private fun Long.formatFileSize(): String = when {
-  this >= 1_048_576L -> {
-    val mb = this / 1_048_576.0
-    val rounded = (mb * 10).toInt() / 10.0
-    stringResource(Res.string.file_size_mb, rounded.toString())
-  }
-
-  this >= 1_024L -> stringResource(
-    Res.string.file_size_kb,
-    (this / 1024).toString()
-  )
-
-  else -> stringResource(Res.string.file_size_bytes, toString())
 }

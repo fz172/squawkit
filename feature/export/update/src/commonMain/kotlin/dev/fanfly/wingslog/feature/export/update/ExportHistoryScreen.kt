@@ -60,6 +60,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.export.ExportRecord
@@ -95,9 +96,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_history_t
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_last_n_months
 import wingslog.feature.export.sharedassets.generated.resources.export_share_title
-import wingslog.feature.export.sharedassets.generated.resources.export_size_kb
-import wingslog.feature.export.sharedassets.generated.resources.export_size_mb
-import wingslog.feature.export.sharedassets.generated.resources.export_size_zero_kb
 import kotlin.time.Instant
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
@@ -333,7 +331,7 @@ private fun ExportHistoryCard(
           text = stringResource(
             Res.string.export_history_item_meta,
             formatDate(record.created_at_epoch_millis),
-            readableBytes(record.size_bytes),
+            record.size_bytes.formatFileSize(),
           ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -559,20 +557,6 @@ private fun formatDate(epochMillis: Long): String =
     .toLocalDateTime(TimeZone.currentSystemDefault())
     .date
     .toDisplayFormat()
-
-@Composable
-private fun readableBytes(bytes: Long): String = when {
-  bytes <= 0L -> stringResource(Res.string.export_size_zero_kb)
-  bytes < 1_000_000L -> stringResource(
-    Res.string.export_size_kb,
-    ((bytes + 999L) / 1_000L).toString()
-  )
-
-  else -> stringResource(
-    Res.string.export_size_mb,
-    ((bytes / 100_000L) / 10.0).toString()
-  )
-}
 
 private data class StorageStatus(
   val icon: ImageVector,

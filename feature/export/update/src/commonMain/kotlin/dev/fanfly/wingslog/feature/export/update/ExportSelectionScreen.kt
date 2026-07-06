@@ -86,6 +86,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.GroupedCheckboxRow
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
+import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -153,9 +154,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_select_al
 import wingslog.feature.export.sharedassets.generated.resources.export_sent_to
 import wingslog.feature.export.sharedassets.generated.resources.export_share
 import wingslog.feature.export.sharedassets.generated.resources.export_share_title
-import wingslog.feature.export.sharedassets.generated.resources.export_size_kb
-import wingslog.feature.export.sharedassets.generated.resources.export_size_mb
-import wingslog.feature.export.sharedassets.generated.resources.export_size_zero_kb
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_file_name
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_location
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_auth
@@ -752,7 +750,7 @@ private fun ExportBottomBar(
         Text(
           text = stringResource(
             Res.string.export_estimated_size,
-            readableBytes(state.estimatedSizeBytes)
+            state.estimatedSizeBytes.formatFileSize()
           ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1021,7 +1019,7 @@ private fun SuccessResult(
     body = {
       ReceiptCard(
         fileName = fileName,
-        sizeText = readableBytes(state.sizeBytes),
+        sizeText = state.sizeBytes.formatFileSize(),
         formats = state.formats,
         aircraftSummary = aircraftSummary(state.selectedTailNumbers),
         rangeText = rangeSummary(
@@ -1533,20 +1531,6 @@ private fun rangeSummary(
     DateRangeOption.Last12Months -> stringResource(Res.string.export_last_12_months)
     DateRangeOption.Custom -> "${start.toDisplayFormat()} – ${end.toDisplayFormat()}"
   }
-
-@Composable
-private fun readableBytes(bytes: Long): String = when {
-  bytes <= 0L -> stringResource(Res.string.export_size_zero_kb)
-  bytes < 1_000_000L -> stringResource(
-    Res.string.export_size_kb,
-    ((bytes + 999L) / 1_000L).toString()
-  )
-
-  else -> stringResource(
-    Res.string.export_size_mb,
-    ((bytes / 100_000L) / 10.0).toString()
-  )
-}
 
 private fun LocalDate.toDatePickerMillis(): Long =
   LocalDateTime(year, month, day, 12, 0, 0)

@@ -38,8 +38,8 @@ import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.back
 import wingslog.feature.login.generated.resources.Res
-import wingslog.feature.login.generated.resources.email_back
 import wingslog.feature.login.generated.resources.email_entry_hint
 import wingslog.feature.login.generated.resources.email_entry_title
 import wingslog.feature.login.generated.resources.email_finish_body
@@ -54,6 +54,7 @@ import wingslog.feature.login.generated.resources.email_resend_in
 import wingslog.feature.login.generated.resources.email_send_link
 import wingslog.feature.login.generated.resources.email_use_different
 import kotlin.time.Duration.Companion.milliseconds
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 private const val ResendCooldownSeconds = 60
 
@@ -253,7 +254,7 @@ private fun EnterEmailContent(
   Spacer(Modifier.height(Spacing.small))
   TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
     Text(
-      stringResource(Res.string.email_back),
+      stringResource(CoreRes.string.back),
       color = LoginOnBackgroundMuted,
       style = LoginSecondaryLabelStyle
     )

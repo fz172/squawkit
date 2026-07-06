@@ -47,6 +47,7 @@ kotlin {
     commonMain.dependencies {
       implementation(libs.gitlive.firebase.auth)
       implementation(project(":core:nav"))
+      implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))

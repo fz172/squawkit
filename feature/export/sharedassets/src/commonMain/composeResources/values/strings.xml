@@ -37,11 +37,6 @@
   <string name="export_email_action">Email export</string>
   <string name="export_sent_to">Sent to %1$s</string>
 
-  <!-- Sizes -->
-  <string name="export_size_zero_kb">0 KB</string>
-  <string name="export_size_kb">%1$s KB</string>
-  <string name="export_size_mb">%1$s MB</string>
-
   <!-- Running -->
   <string name="export_running_title">Preparing export</string>
   <string name="export_running_progress_percent">%1$d% complete</string>

@@ -47,5 +47,9 @@
   <string name="component_propeller">Propeller</string>
   <!-- Units -->
   <string name="unit_hours">hrs</string>
+  <string name="file_size_zero_kb">0 KB</string>
+  <string name="file_size_bytes">%1$s B</string>
+  <string name="file_size_kb">%1$s KB</string>
+  <string name="file_size_mb">%1$s MB</string>
 
 </resources>

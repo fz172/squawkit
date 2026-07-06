@@ -64,12 +64,13 @@ import wingslog.feature.settings.generated.resources.settings_export_subtitle
 import wingslog.feature.settings.generated.resources.settings_feature_lab_subtitle
 import wingslog.feature.settings.generated.resources.settings_logout_subtitle
 import wingslog.feature.settings.generated.resources.settings_subtitle
+import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.feature.settings.generated.resources.settings_sync_subtitle
 import wingslog.feature.settings.generated.resources.settings_technicians_subtitle
-import wingslog.feature.settings.generated.resources.settings_title
 import wingslog.feature.settings.generated.resources.sign_out
 import wingslog.feature.sync.sharedassets.generated.resources.feature_name_backup_and_sync
 import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.export.sharedassets.generated.resources.Res as ExportRes
 import wingslog.feature.settings.generated.resources.Res as SettingsRes
 import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
@@ -314,7 +315,7 @@ fun SettingsContent(
 private fun SettingsHeader() {
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
     Text(
-      text = stringResource(SettingsRes.string.settings_title),
+      text = stringResource(CoreRes.string.settings),
       style = MaterialTheme.typography.headlineSmall,
       color = MaterialTheme.colorScheme.onSurface,
     )

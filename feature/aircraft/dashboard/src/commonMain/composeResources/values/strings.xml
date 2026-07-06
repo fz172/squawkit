@@ -14,6 +14,5 @@
   <string name="overview_no_tasks_title">No upcoming tasks</string>
   <string name="overview_no_tasks_body">Scheduled maintenance is up to date.</string>
   <string name="overview_open_squawks">Open squawks</string>
-  <string name="overview_no_squawks_title">No open squawks</string>
   <string name="overview_no_squawks_body">No active discrepancies for this aircraft.</string>
 </resources>

@@ -66,13 +66,14 @@ import wingslog.feature.aircraft.dashboard.generated.resources.overview_next_due
 import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_logs_body
 import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_logs_title
 import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_squawks_body
-import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_squawks_title
 import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_tasks_body
 import wingslog.feature.aircraft.dashboard.generated.resources.overview_no_tasks_title
 import wingslog.feature.aircraft.dashboard.generated.resources.overview_open_squawks
 import wingslog.feature.aircraft.dashboard.generated.resources.overview_recent_activity
+import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -331,7 +332,7 @@ private fun DashboardLowerGrid(
         if (openSquawks.isEmpty()) {
           EmptyRailState(
             icon = Icons.Default.CheckCircle,
-            title = stringResource(Res.string.overview_no_squawks_title),
+            title = stringResource(SquawkRes.string.no_open_squawks),
             body = stringResource(Res.string.overview_no_squawks_body),
           )
         } else {
