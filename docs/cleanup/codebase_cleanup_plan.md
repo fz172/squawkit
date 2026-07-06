@@ -1,6 +1,6 @@
 # Codebase Cleanup Plan
 
-> **Implementation Status:** Phase 1 complete (2026-07-06); Phases 2–5 not started. Each
+> **Implementation Status:** Phases 1–2 complete (2026-07-06); Phases 3–5 not started. Each
 > phase updates its checkbox table as work lands. Source: full-codebase audit (structure,
 > dependencies, duplication, logic ownership), 2026-07-06.
 
@@ -83,7 +83,7 @@ Verified by import cross-check (zero imports from the declared module):
 
 ---
 
-## Phase 2 — Consolidate duplicated logic and resources
+## Phase 2 — Consolidate duplicated logic and resources (completed)
 
 ### 2.1 Extract a shared attachment-form controller (highest-value consolidation)
 
@@ -121,6 +121,15 @@ add-link, `removeAttachment` (with Saved → PendingDelete transition), and
 **Risk:** medium — touches three save paths. Mitigate by converting one feature per commit and
 running that feature's module tests each time (`:feature:tasks:update:testDebugUnitTest`, …).
 
+**Outcome (2026-07-06):** `AttachmentFormController` landed in `feature/attachment/datamanager`
+with direct unit tests (`AttachmentFormControllerTest`); all three ViewModels now delegate.
+Implementation notes: picker visibility moved into the controller for tasks/squawk but stays in
+`MaintenanceLogFormUiState` for logs (the ViewModel mirrors the controller flow into the UiState,
+seeding synchronously before the initial dirty-check snapshot); the unused `resolveAttachments(id)`
+parameter was dropped (`resolveForSave()`); errors surface via a UI-free `AddFileError` sealed
+type — tasks/squawk keep silently skipping oversized files, logs keeps surfacing `file_too_large`;
+the controller rethrows `CancellationException`, fixing the logs copy's latent swallow.
+
 ### 2.2 Small code dedups
 
 - **`StatusBadge`** — private composable duplicated in
@@ -128,6 +137,9 @@ running that feature's module tests each time (`:feature:tasks:update:testDebugU
   `feature/squawk/viewing/.../SquawkCard.kt:112` (takes `SquawkStatus`). Add one generic badge
   primitive in `core:ui` (`StatusBadge(text, containerColor, contentColor)`); keep the
   domain-enum → color/text mapping in each feature.
+  **Resolved 2026-07-06 with no code change:** the generic primitive already exists —
+  `core:ui`'s `StatusChip(label, tier)` owns all rendering, and both private `StatusBadge`
+  functions are pure domain→(label, tier) mapping, which this plan keeps feature-local anyway.
 - **`TestClock`** — duplicated test fixture in `core/storage` and
   `feature/attachment/datamanager` tests. Options: (a) accept the duplication (it's tiny), or
   (b) add a small `core:storage` test-fixtures source set and share it. Prefer (a) unless a
@@ -151,6 +163,15 @@ Per the "reuse before adding" rule in AGENTS.md. Verified duplicates and their r
 | "Logs" / "Squawks"    | `core/sharedassets` shell-tab strings vs `aircraft/dashboard` `tab_logs` / `squawk/sharedassets` `squawks` | **keep separate** — tab labels and shell labels can legitimately diverge; do not merge                                                                   |
 
 Leave context-specific near-dupes (e.g. `%1$d / %2$d` progress counters) alone.
+
+**Outcome (2026-07-06):** all four merges landed as tabled. The size strings
+(`file_size_zero_kb` / `file_size_bytes` / `file_size_kb` / `file_size_mb`) now live in
+`core/sharedassets`, and the KB/MB *code* duplication — export's identical `readableBytes()`
+in two screens plus attachment's `formatFileSize()` — is unified as one
+`Long.formatFileSize()` in `core:ui` (`core/ui/common/compose/FormatFileSize.kt`). Unified
+semantics: decimal units, "0 KB" for empty, bytes below 1 KB, KB rounded up, MB to one
+decimal — this switched attachment rows from binary (1024-based) to decimal units.
+`feature/settings` gained a `core:sharedassets` dependency to read the core `settings` string.
 
 ---
 
@@ -326,10 +347,10 @@ the corrections below independently — they are wrong today regardless:
 | 2  | Delete `feature/fleet/model` + dep edges                              | 1.2   | none | ☑ 2026-07-06 |
 | 3  | Delete `feature/userprofile` root + `database`; prune composeApp deps | 1.3   | none | ☑ 2026-07-06 |
 | 4  | Drop unused `export:update → sync:data`                               | 1.4   | none | ☑ 2026-07-06 |
-| 5  | `AttachmentFormController` — tasks + squawk                           | 2.1   | med  | ☐            |
-| 6  | `AttachmentFormController` — logs form                                | 2.1   | med  | ☐            |
-| 7  | `StatusBadge` primitive in `core:ui`                                  | 2.2   | low  | ☐            |
-| 8  | String consolidation pass                                             | 2.3   | low  | ☐            |
+| 5  | `AttachmentFormController` — tasks + squawk                           | 2.1   | med  | ☑ 2026-07-06 |
+| 6  | `AttachmentFormController` — logs form                                | 2.1   | med  | ☑ 2026-07-06 |
+| 7  | `StatusBadge` primitive in `core:ui`                                  | 2.2   | low  | ☑ 2026-07-06 |
+| 8  | String consolidation pass                                             | 2.3   | low  | ☑ 2026-07-06 |
 | 9  | Shared shell/nav module; de-dup `AppEntry` / `WebApp`                 | 3     | high | ☐            |
 | 10 | Move `AdaptiveShellViewModel` out of `fleet:viewing`                  | 3     | med  | ☐            |
 | 11 | Technician manager: local-only reads, no sync dep                     | 4.1   | med  | ☐            |
