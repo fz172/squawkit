@@ -1,6 +1,6 @@
 # Codebase Cleanup Plan
 
-> **Implementation Status:** Phases 1–2 complete (2026-07-06); Phases 3–5 not started. Each
+> **Implementation Status:** Phases 1–3 complete (2026-07-06); Phases 4–5 not started. Each
 > phase updates its checkbox table as work lands. Source: full-codebase audit (structure,
 > dependencies, duplication, logic ownership), 2026-07-06.
 
@@ -175,7 +175,7 @@ decimal — this switched attachment rows from binary (1024-based) to decimal un
 
 ---
 
-## Phase 3 — Unify the host navigation graph
+## Phase 3 — Unify the host navigation graph (completed)
 
 **Problem:** `webApp/src/jsMain/.../WebApp.kt` (~130–384) is a near line-for-line copy of
 `composeApp/src/commonMain/.../AppEntry.kt` (~123–400): all eight form dialogs, the settings
@@ -218,6 +218,20 @@ comment records the incident).
 land as a stack of small PRs (helpers first, hosts converted one at a time); manually smoke-test
 Android + web (all form dialogs, settings sub-pages in both compact and sidebar tiers, login
 round-trip); keep the iOS dogfood scheme build in the loop since iOS shares composeApp.
+
+**Outcome (2026-07-06):** `feature:shell` created as planned. It owns `formDialogs`,
+`settingsDetailRoutes` (the reconciled name; stress-test registration and the FeatureLab debug
+entry gated on `isStressTestSupported` on every host — this *changes web behavior*: stress-test
+routes now appear only in developer builds, matching `AppCapability.js.kt`'s existing
+`isDeveloperBuild` gate), `AdaptiveShellRoute` (shell body + page-view feeder 2),
+`SettingsSection` (module-private), and the `NavigateToLoginOnSignOut` / `TrackRootScreenViews`
+helpers. `AdaptiveShellViewModel` (+ its test and Koin registration, now `shellModule`) moved
+here from `fleet:viewing`, which shrank to just `FleetEmptyState`; `core:di` and both hosts
+dropped their direct `fleet:viewing` edges. `AppEntry.kt` is now the DB-integrity gate + theme +
+auth/shell graph wrappers (~140 lines); `WebApp.kt` is the browser-specific delta (~145 lines).
+Both hosts' dependency lists shrank to what their own sources touch. Still owed before this is
+considered fully landed: the manual smoke-test pass above (form dialogs, settings tiers, login
+round-trip on Android + web).
 
 ---
 
@@ -351,8 +365,8 @@ the corrections below independently — they are wrong today regardless:
 | 6  | `AttachmentFormController` — logs form                                | 2.1   | med  | ☑ 2026-07-06 |
 | 7  | `StatusBadge` primitive in `core:ui`                                  | 2.2   | low  | ☑ 2026-07-06 |
 | 8  | String consolidation pass                                             | 2.3   | low  | ☑ 2026-07-06 |
-| 9  | Shared shell/nav module; de-dup `AppEntry` / `WebApp`                 | 3     | high | ☐            |
-| 10 | Move `AdaptiveShellViewModel` out of `fleet:viewing`                  | 3     | med  | ☐            |
+| 9  | Shared shell/nav module; de-dup `AppEntry` / `WebApp`                 | 3     | high | ☑ 2026-07-06 |
+| 10 | Move `AdaptiveShellViewModel` out of `fleet:viewing`                  | 3     | med  | ☑ 2026-07-06 |
 | 11 | Technician manager: local-only reads, no sync dep                     | 4.1   | med  | ☐            |
 | 12 | `LocalBlobStore` → `core:storage`; fix sync api-export                | 4.2   | med  | ☐            |
 | 13 | `feature/logs/update/aircraft/` → `feature/aircraft/update`           | 4.3   | low  | ☐            |
