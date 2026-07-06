@@ -53,10 +53,14 @@ fun SyncHeroIllustration(
   )
 
   Box(
-    modifier = modifier.fillMaxWidth().height(180.dp),
+    modifier = modifier.fillMaxWidth()
+      .height(180.dp),
     contentAlignment = Alignment.Center,
   ) {
-    Canvas(modifier = Modifier.fillMaxWidth().height(180.dp)) {
+    Canvas(
+      modifier = Modifier.fillMaxWidth()
+        .height(180.dp)
+    ) {
       val center = Offset(
         size.width / 2f,
         size.height / 2f
@@ -79,7 +83,8 @@ fun SyncHeroIllustration(
       imageVector = if (active) Icons.Default.CloudSync else Icons.Default.CloudOff,
       contentDescription = null,
       tint = tint,
-      modifier = Modifier.height(96.dp).fillMaxWidth(0.30f),
+      modifier = Modifier.height(96.dp)
+        .fillMaxWidth(0.30f),
     )
   }
 }

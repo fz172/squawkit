@@ -35,5 +35,6 @@ class DatabaseWriteLock {
   private val mutex = Mutex()
 
   /** Runs [block] with exclusive access to the database for the duration of the write-unit. */
-  suspend fun <T> withLock(block: suspend () -> T): T = mutex.withLock { block() }
+  suspend fun <T> withLock(block: suspend () -> T): T =
+    mutex.withLock { block() }
 }

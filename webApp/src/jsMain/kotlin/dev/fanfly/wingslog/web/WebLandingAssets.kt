@@ -87,7 +87,8 @@ private fun strokeIcon(
   )
   for (d in pathData) {
     builder.addPath(
-      pathData = PathParser().parsePathString(d).toNodes(),
+      pathData = PathParser().parsePathString(d)
+        .toNodes(),
       fill = null,
       stroke = SolidColor(Color.Black),
       strokeLineWidth = strokeWidth,
@@ -157,21 +158,24 @@ internal val BrandPlane: ImageVector = ImageVector.Builder(
   defaultHeight = 24.dp,
   viewportWidth = 429.215f,
   viewportHeight = 429.215f,
-).apply {
-  addGroup(
-    scaleX = 0.7115625f,
-    scaleY = 0.7115625f,
-    translationX = -155.6187f,
-    translationY = -117.1943f,
-  )
-  for (d in BrandPlanePaths) {
-    addPath(
-      pathData = PathParser().parsePathString(d).toNodes(),
-      fill = SolidColor(Color.Black),
+)
+  .apply {
+    addGroup(
+      scaleX = 0.7115625f,
+      scaleY = 0.7115625f,
+      translationX = -155.6187f,
+      translationY = -117.1943f,
     )
+    for (d in BrandPlanePaths) {
+      addPath(
+        pathData = PathParser().parsePathString(d)
+          .toNodes(),
+        fill = SolidColor(Color.Black),
+      )
+    }
+    clearGroup()
   }
-  clearGroup()
-}.build()
+  .build()
 
 /** The multi-color Google "G" mark (rendered with Image, not tinted). */
 internal val GoogleLogo: ImageVector = ImageVector.Builder(
@@ -179,32 +183,38 @@ internal val GoogleLogo: ImageVector = ImageVector.Builder(
   defaultHeight = 48.dp,
   viewportWidth = 48f,
   viewportHeight = 48f,
-).apply {
-  addPath(
-    PathParser().parsePathString(
-      "M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z",
-    ).toNodes(),
-    fill = SolidColor(Color(0xFFEA4335)),
-  )
-  addPath(
-    PathParser().parsePathString(
-      "M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z",
-    ).toNodes(),
-    fill = SolidColor(Color(0xFF4285F4)),
-  )
-  addPath(
-    PathParser().parsePathString(
-      "M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z",
-    ).toNodes(),
-    fill = SolidColor(Color(0xFFFBBC05)),
-  )
-  addPath(
-    PathParser().parsePathString(
-      "M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z",
-    ).toNodes(),
-    fill = SolidColor(Color(0xFF34A853)),
-  )
-}.build()
+)
+  .apply {
+    addPath(
+      PathParser().parsePathString(
+        "M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z",
+      )
+        .toNodes(),
+      fill = SolidColor(Color(0xFFEA4335)),
+    )
+    addPath(
+      PathParser().parsePathString(
+        "M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z",
+      )
+        .toNodes(),
+      fill = SolidColor(Color(0xFF4285F4)),
+    )
+    addPath(
+      PathParser().parsePathString(
+        "M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z",
+      )
+        .toNodes(),
+      fill = SolidColor(Color(0xFFFBBC05)),
+    )
+    addPath(
+      PathParser().parsePathString(
+        "M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z",
+      )
+        .toNodes(),
+      fill = SolidColor(Color(0xFF34A853)),
+    )
+  }
+  .build()
 
 /** The Apple mark (tinted to the button's content color via Icon). */
 internal val AppleLogo: ImageVector = ImageVector.Builder(
@@ -212,11 +222,14 @@ internal val AppleLogo: ImageVector = ImageVector.Builder(
   defaultHeight = 24.dp,
   viewportWidth = 24f,
   viewportHeight = 24f,
-).apply {
-  addPath(
-    PathParser().parsePathString(
-      "M17.05 12.04c-.03-2.8 2.29-4.15 2.39-4.21-1.3-1.9-3.32-2.16-4.04-2.19-1.72-.17-3.36 1.01-4.23 1.01-.87 0-2.21-.99-3.64-.96-1.87.03-3.6 1.09-4.56 2.76-1.95 3.38-.5 8.38 1.4 11.12.93 1.34 2.03 2.85 3.47 2.8 1.39-.06 1.92-.9 3.6-.9 1.68 0 2.16.9 3.64.87 1.5-.03 2.45-1.37 3.37-2.72 1.06-1.56 1.5-3.07 1.52-3.15-.03-.01-2.92-1.12-2.95-4.44zM14.28 3.7c.77-.93 1.29-2.22 1.15-3.5-1.11.04-2.46.74-3.25 1.67-.71.82-1.33 2.14-1.16 3.4 1.24.1 2.5-.63 3.26-1.57z",
-    ).toNodes(),
-    fill = SolidColor(Color.Black),
-  )
-}.build()
+)
+  .apply {
+    addPath(
+      PathParser().parsePathString(
+        "M17.05 12.04c-.03-2.8 2.29-4.15 2.39-4.21-1.3-1.9-3.32-2.16-4.04-2.19-1.72-.17-3.36 1.01-4.23 1.01-.87 0-2.21-.99-3.64-.96-1.87.03-3.6 1.09-4.56 2.76-1.95 3.38-.5 8.38 1.4 11.12.93 1.34 2.03 2.85 3.47 2.8 1.39-.06 1.92-.9 3.6-.9 1.68 0 2.16.9 3.64.87 1.5-.03 2.45-1.37 3.37-2.72 1.06-1.56 1.5-3.07 1.52-3.15-.03-.01-2.92-1.12-2.95-4.44zM14.28 3.7c.77-.93 1.29-2.22 1.15-3.5-1.11.04-2.46.74-3.25 1.67-.71.82-1.33 2.14-1.16 3.4 1.24.1 2.5-.63 3.26-1.57z",
+      )
+        .toNodes(),
+      fill = SolidColor(Color.Black),
+    )
+  }
+  .build()

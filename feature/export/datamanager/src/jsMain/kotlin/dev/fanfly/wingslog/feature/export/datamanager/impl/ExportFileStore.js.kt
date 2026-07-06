@@ -24,7 +24,10 @@ private const val OBJECT_URL_REVOKE_DELAY_MS = 60_000
 @OptIn(ExperimentalEncodingApi::class)
 actual class ExportFileStore {
 
-  actual suspend fun writeZip(fileName: String, bytes: ByteArray): ExportedFile {
+  actual suspend fun writeZip(
+    fileName: String,
+    bytes: ByteArray
+  ): ExportedFile {
     triggerDownload(fileName, bytes)
     return ExportedFile(
       // No durable, app-reachable path exists on the web; the file name is the only stable handle.
@@ -36,10 +39,14 @@ actual class ExportFileStore {
   }
 
   actual suspend fun saveRecord(ownerUid: String, record: ExportRecord) {
-    writeIndex(ownerUid, ExportRecordManifest.upsert(readIndex(ownerUid), record))
+    writeIndex(
+      ownerUid,
+      ExportRecordManifest.upsert(readIndex(ownerUid), record)
+    )
   }
 
-  actual suspend fun listExports(ownerUid: String): List<ExportRecord> = readIndex(ownerUid)
+  actual suspend fun listExports(ownerUid: String): List<ExportRecord> =
+    readIndex(ownerUid)
 
   actual suspend fun deleteExport(ownerUid: String, exportId: String): Boolean {
     val stored = readIndex(ownerUid)
@@ -51,26 +58,35 @@ actual class ExportFileStore {
   private fun triggerDownload(fileName: String, bytes: ByteArray) {
     val data = Uint8Array(bytes.toTypedArray())
     val type = "application/zip"
-    val url = js("URL.createObjectURL(new Blob([data], { type: type }))").unsafeCast<String>()
-    val anchor = document.createElement("a").asDynamic()
+    val url =
+      js("URL.createObjectURL(new Blob([data], { type: type }))").unsafeCast<String>()
+    val anchor = document.createElement("a")
+      .asDynamic()
     anchor.href = url
     anchor.download = fileName
     document.body?.appendChild(anchor.unsafeCast<Node>())
     anchor.click()
     document.body?.removeChild(anchor.unsafeCast<Node>())
-    window.setTimeout({ js("URL.revokeObjectURL(url)"); Unit }, OBJECT_URL_REVOKE_DELAY_MS)
+    window.setTimeout(
+      { js("URL.revokeObjectURL(url)"); Unit },
+      OBJECT_URL_REVOKE_DELAY_MS
+    )
   }
 
   private fun storageKey(ownerUid: String): String =
     "export_record_index_${ownerUid.replace(Regex("[^A-Za-z0-9._-]"), "_")}"
 
   private fun readIndex(ownerUid: String): List<ExportRecord> {
-    val encoded = localStorage.getItem(storageKey(ownerUid)) ?: return emptyList()
+    val encoded =
+      localStorage.getItem(storageKey(ownerUid)) ?: return emptyList()
     val bytes = runCatching { Base64.decode(encoded) }.getOrNull()
     return ExportRecordManifest.decode(bytes)
   }
 
   private fun writeIndex(ownerUid: String, records: List<ExportRecord>) {
-    localStorage.setItem(storageKey(ownerUid), Base64.encode(ExportRecordManifest.encode(records)))
+    localStorage.setItem(
+      storageKey(ownerUid),
+      Base64.encode(ExportRecordManifest.encode(records))
+    )
   }
 }

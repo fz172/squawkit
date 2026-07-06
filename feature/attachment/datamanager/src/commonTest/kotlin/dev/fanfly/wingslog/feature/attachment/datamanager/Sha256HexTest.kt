@@ -53,13 +53,23 @@ class Sha256HexTest {
   fun sha256Hex_output_is64LowercaseHexChars() {
     val result = sha256Hex("shape check".encodeToByteArray())
     assertEquals(64, result.length, "digest must be exactly 64 hex chars")
-    assertTrue(result.all { it in '0'..'9' || it in 'a'..'f' }, "digest must be lowercase hex, got: $result")
+    assertTrue(
+      result.all { it in '0'..'9' || it in 'a'..'f' },
+      "digest must be lowercase hex, got: $result"
+    )
   }
 
   @Test
   fun sha256Hex_emptyInput_output_is64LowercaseHexChars() {
     val result = sha256Hex(ByteArray(0))
-    assertEquals(64, result.length, "empty-input digest must be exactly 64 hex chars")
-    assertTrue(result.all { it in '0'..'9' || it in 'a'..'f' }, "empty-input digest must be lowercase hex")
+    assertEquals(
+      64,
+      result.length,
+      "empty-input digest must be exactly 64 hex chars"
+    )
+    assertTrue(
+      result.all { it in '0'..'9' || it in 'a'..'f' },
+      "empty-input digest must be lowercase hex"
+    )
   }
 }

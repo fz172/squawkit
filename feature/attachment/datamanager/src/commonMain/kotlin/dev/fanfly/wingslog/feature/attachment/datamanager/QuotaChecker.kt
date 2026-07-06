@@ -33,7 +33,10 @@ class QuotaChecker(
     val perUserUsedBytes: Long,
     val perUserCapBytes: Long,
   ) {
-    val perUserRemaining: Long get() = (perUserCapBytes - perUserUsedBytes).coerceAtLeast(0)
+    val perUserRemaining: Long
+      get() = (perUserCapBytes - perUserUsedBytes).coerceAtLeast(
+        0
+      )
   }
 
   /** Reactive view of per-user usage for the Settings → Storage progress bar. */
@@ -41,7 +44,12 @@ class QuotaChecker(
     db.schemaQueries.sumBlobSizeInScope(scope.toPath())
       .asFlow()
       .mapToOne(ioContext)
-      .map { used -> State(perUserUsedBytes = used, perUserCapBytes = perUserCapBytes) }
+      .map { used ->
+        State(
+          perUserUsedBytes = used,
+          perUserCapBytes = perUserCapBytes
+        )
+      }
 
   /**
    * Check whether [candidateBytes]-sized file with [candidateSha256] would be admissible on a
@@ -68,10 +76,14 @@ class QuotaChecker(
     // 2. Per-parent size.
     val wouldBe = pendingBytesOnParent + candidateBytes
     if (wouldBe > perParentCapBytes) {
-      return QuotaResult.PerParentExceeded(capBytes = perParentCapBytes, wouldBeBytes = wouldBe)
+      return QuotaResult.PerParentExceeded(
+        capBytes = perParentCapBytes,
+        wouldBeBytes = wouldBe
+      )
     }
     // 3. Per-user size — single SQL aggregate.
-    val used = db.schemaQueries.sumBlobSizeInScope(scope.toPath()).awaitAsOne()
+    val used = db.schemaQueries.sumBlobSizeInScope(scope.toPath())
+      .awaitAsOne()
     if (used + candidateBytes > perUserCapBytes) {
       return QuotaResult.PerUserExceeded(
         capBytes = perUserCapBytes,

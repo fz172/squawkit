@@ -35,7 +35,8 @@ val generateIosVersionKt by tasks.registering {
   inputs.file(versionPropsFile)
   doFirst {
     val props = Properties().apply {
-      if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
+      if (versionPropsFile.exists()) versionPropsFile.inputStream()
+        .use { load(it) }
     }
     val versionName = "${props["major"]}.${props["minor"]}" +
       ".${props["buildDate"]}.${props["patch"]}"
@@ -56,7 +57,8 @@ val generateJsVersionKt by tasks.registering {
   inputs.file(versionPropsFile)
   doFirst {
     val props = Properties().apply {
-      if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
+      if (versionPropsFile.exists()) versionPropsFile.inputStream()
+        .use { load(it) }
     }
     val versionName = "${props["major"]}.${props["minor"]}" +
       ".${props["buildDate"]}.${props["patch"]}"
@@ -80,14 +82,18 @@ kotlin {
   iosSimulatorArm64()
 
   sourceSets {
-    val iosMain = sourceSets.findByName("iosMain") ?: sourceSets.create("iosMain")
+    val iosMain =
+      sourceSets.findByName("iosMain") ?: sourceSets.create("iosMain")
     iosMain.apply {
       dependsOn(commonMain.get())
       kotlin.srcDir(layout.buildDirectory.dir("generated/iosMain/kotlin"))
     }
-    sourceSets.findByName("iosX64Main")?.dependsOn(iosMain)
-    sourceSets.findByName("iosArm64Main")?.dependsOn(iosMain)
-    sourceSets.findByName("iosSimulatorArm64Main")?.dependsOn(iosMain)
+    sourceSets.findByName("iosX64Main")
+      ?.dependsOn(iosMain)
+    sourceSets.findByName("iosArm64Main")
+      ?.dependsOn(iosMain)
+    sourceSets.findByName("iosSimulatorArm64Main")
+      ?.dependsOn(iosMain)
 
     jsMain {
       kotlin.srcDir(layout.buildDirectory.dir("generated/jsMain/kotlin"))

@@ -58,7 +58,10 @@ internal class AttachmentOpenerWeb(
 
     val popup: dynamic = window.open(BLANK_URL, "_blank")
     if (popup != null) {
-      try { popup.opener = null } catch (_: Throwable) { /* may throw in some sandboxes */ }
+      try {
+        popup.opener = null
+      } catch (_: Throwable) { /* may throw in some sandboxes */
+      }
     }
 
     return flow {
@@ -113,7 +116,10 @@ internal class AttachmentOpenerWeb(
     }
   }
 
-  private suspend fun navigatePopupToLocalBytes(popup: dynamic, attachment: Attachment) {
+  private suspend fun navigatePopupToLocalBytes(
+    popup: dynamic,
+    attachment: Attachment
+  ) {
     val bytes = fs.read(blobRelativePath(attachment.id))
     val mimeType = attachment.mime_type.ifBlank { "application/octet-stream" }
     val objectUrl = createObjectUrl(bytes, mimeType)
@@ -132,7 +138,8 @@ internal class AttachmentOpenerWeb(
   }
 
   private fun clickExternalLink(url: String) {
-    val anchor = window.document.createElement("a").asDynamic()
+    val anchor = window.document.createElement("a")
+      .asDynamic()
     anchor.href = url
     anchor.target = "_blank"
     anchor.rel = "noopener noreferrer"

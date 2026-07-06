@@ -25,7 +25,8 @@ fun SubComponentDropdown(
   modifier: Modifier = Modifier,
 ) {
   var expanded by remember { mutableStateOf(false) }
-  val selectedLabel = options.firstOrNull { it.second == selectedSerial }?.first ?: ""
+  val selectedLabel =
+    options.firstOrNull { it.second == selectedSerial }?.first ?: ""
 
   ExposedDropdownMenuBox(
     expanded = expanded,
@@ -40,7 +41,9 @@ fun SubComponentDropdown(
         .fillMaxWidth()
         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
     )
-    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+    ExposedDropdownMenu(
+      expanded = expanded,
+      onDismissRequest = { expanded = false }) {
       options.forEach { (displayLabel, serial) ->
         DropdownMenuItem(
           text = { Text(displayLabel) },

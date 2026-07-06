@@ -42,10 +42,12 @@ class BlobDownloadDriver(
     }
 
     val bytes = try {
-      val url = storage.reference(remotePath).getDownloadUrl()
+      val url = storage.reference(remotePath)
+        .getDownloadUrl()
       log.d { "Download url is $url" }
 
-      httpClient.get(url).readRawBytes()
+      httpClient.get(url)
+        .readRawBytes()
     } catch (e: Exception) {
       log.w(e) { "download transient failure for ${id.value}; will retry" }
       return false

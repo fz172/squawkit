@@ -15,7 +15,8 @@ import kotlin.io.encoding.ExperimentalEncodingApi
  * cache before the server stamps it) are skipped — there's no useful timestamp to record yet, and
  * the same row will be redelivered through the live snapshot listener once stamped.
  */
-class FirestoreRemoteFetcher(private val firestore: FirebaseFirestore) : RemoteFetcher {
+class FirestoreRemoteFetcher(private val firestore: FirebaseFirestore) :
+  RemoteFetcher {
 
   private val log = Logger.withTag(TAG)
 

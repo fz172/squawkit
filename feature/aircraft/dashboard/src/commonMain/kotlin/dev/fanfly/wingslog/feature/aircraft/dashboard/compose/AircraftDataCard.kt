@@ -75,11 +75,11 @@ fun AircraftDataCard(
     Column {
       Row(
         modifier = Modifier.fillMaxWidth()
-            .clickable { expanded = !expanded }
-            .padding(
-              horizontal = Spacing.large,
-              vertical = Spacing.large
-            ),
+          .clickable { expanded = !expanded }
+          .padding(
+            horizontal = Spacing.large,
+            vertical = Spacing.large
+          ),
         verticalAlignment = Alignment.CenterVertically) {
         Icon(
           imageVector = Icons.Default.Dataset,
@@ -91,8 +91,8 @@ fun AircraftDataCard(
         Text(
           text = stringResource(MaintenanceRes.string.aircraft_data),
           modifier = Modifier
-              .padding(start = Spacing.medium)
-              .weight(1f),
+            .padding(start = Spacing.medium)
+            .weight(1f),
 
           style = TextStyle(
             fontFamily = FontFamily.SansSerif,
@@ -109,7 +109,7 @@ fun AircraftDataCard(
             MaintenanceRes.string.expand_details
           ),
           modifier = Modifier.size(Spacing.extraLarge)
-              .rotate(rotationState),
+            .rotate(rotationState),
           tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
       }
@@ -175,7 +175,10 @@ fun ComponentCard(
     modifier = Modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     color = Color.Transparent,
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant)
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    )
   ) {
     Column(modifier = Modifier.padding(Spacing.large)) {
       Row(

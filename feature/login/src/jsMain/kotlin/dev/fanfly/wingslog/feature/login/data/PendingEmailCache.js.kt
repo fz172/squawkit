@@ -15,5 +15,6 @@ actual object PendingEmailCache {
     localStorage.removeItem(KEY)
   }
 
-  actual fun load(): String? = localStorage.getItem(KEY)?.takeIf { it.isNotBlank() }
+  actual fun load(): String? = localStorage.getItem(KEY)
+    ?.takeIf { it.isNotBlank() }
 }

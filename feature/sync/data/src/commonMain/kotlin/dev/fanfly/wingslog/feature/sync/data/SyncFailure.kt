@@ -25,7 +25,8 @@ sealed interface SyncFailure {
    * Auth-class push failure: token expired, permission denied, or unauthenticated. The user must
    * re-sign-in for sync to recover; transparent retries won't help.
    */
-  data class AuthExpired(override val message: String = "Authentication expired") : SyncFailure
+  data class AuthExpired(override val message: String = "Authentication expired") :
+    SyncFailure
 
   /**
    * Non-auth, non-transient push failure (validation, malformed doc, server error, etc.).
@@ -44,7 +45,8 @@ internal fun backoffMs(failedAttempts: Int): Long {
     failedAttempts,
     6
   )
-  val seconds = 30L shl exp.coerceAtMost(30) // shl past 30 would overflow; we're capped at 6 anyway
+  val seconds =
+    30L shl exp.coerceAtMost(30) // shl past 30 would overflow; we're capped at 6 anyway
   val cappedSeconds = minOf(
     seconds,
     30L * 60L

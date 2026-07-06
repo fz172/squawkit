@@ -33,8 +33,10 @@ private class PdfLayoutEngine(
   }
 
   private fun drawDocumentHeader() {
-    val titleLines = wrapText(document.title, CONTENT_WIDTH, TITLE_FONT_SIZE, bold = true)
-    val subtitleLines = wrapText(document.subtitle, CONTENT_WIDTH, BODY_FONT_SIZE, bold = false)
+    val titleLines =
+      wrapText(document.title, CONTENT_WIDTH, TITLE_FONT_SIZE, bold = true)
+    val subtitleLines =
+      wrapText(document.subtitle, CONTENT_WIDTH, BODY_FONT_SIZE, bold = false)
     val requiredHeight = titleLines.height(TITLE_FONT_SIZE) +
       subtitleLines.height(BODY_FONT_SIZE) +
       SECTION_GAP
@@ -87,25 +89,31 @@ private class PdfLayoutEngine(
       lineWidth = 0.8f,
     )
     var y = cursorY + CARD_PADDING
-    card.title?.takeIf { it.isNotBlank() }?.let { title ->
-      val lines = wrapText(title, CONTENT_WIDTH - CARD_PADDING * 2, BODY_FONT_SIZE, bold = true)
-      page.drawTextLines(
-        x = PAGE_MARGIN + CARD_PADDING,
-        top = y,
-        lines = lines,
-        font = PdfFont.BOLD,
-        fontSize = BODY_FONT_SIZE,
-      )
-      y += lines.height(BODY_FONT_SIZE) + 8f
-      page.drawLine(
-        startX = PAGE_MARGIN + CARD_PADDING,
-        startY = y - 3f,
-        endX = PAGE_MARGIN + CONTENT_WIDTH - CARD_PADDING,
-        endY = y - 3f,
-        color = PdfColor.BORDER,
-        lineWidth = 0.6f,
-      )
-    }
+    card.title?.takeIf { it.isNotBlank() }
+      ?.let { title ->
+        val lines = wrapText(
+          title,
+          CONTENT_WIDTH - CARD_PADDING * 2,
+          BODY_FONT_SIZE,
+          bold = true
+        )
+        page.drawTextLines(
+          x = PAGE_MARGIN + CARD_PADDING,
+          top = y,
+          lines = lines,
+          font = PdfFont.BOLD,
+          fontSize = BODY_FONT_SIZE,
+        )
+        y += lines.height(BODY_FONT_SIZE) + 8f
+        page.drawLine(
+          startX = PAGE_MARGIN + CARD_PADDING,
+          startY = y - 3f,
+          endX = PAGE_MARGIN + CONTENT_WIDTH - CARD_PADDING,
+          endY = y - 3f,
+          color = PdfColor.BORDER,
+          lineWidth = 0.6f,
+        )
+      }
     card.rows.forEachIndexed { index, row ->
       y += drawSummaryRow(y, row)
       if (index != card.rows.lastIndex) y += 6f
@@ -115,8 +123,14 @@ private class PdfLayoutEngine(
   private fun drawSummaryRow(top: Float, row: PdfSummaryRow): Float {
     val labelWidth = 152f
     val valueWidth = CONTENT_WIDTH - CARD_PADDING * 3 - labelWidth
-    val labelLines = wrapText(row.label, labelWidth, LABEL_FONT_SIZE, bold = true)
-    val valueLines = wrapText(row.value.ifBlank { " " }, valueWidth, BODY_FONT_SIZE, bold = false)
+    val labelLines =
+      wrapText(row.label, labelWidth, LABEL_FONT_SIZE, bold = true)
+    val valueLines = wrapText(
+      row.value.ifBlank { " " },
+      valueWidth,
+      BODY_FONT_SIZE,
+      bold = false
+    )
     val rowHeight = max(
       labelLines.height(LABEL_FONT_SIZE),
       valueLines.height(BODY_FONT_SIZE),
@@ -145,12 +159,14 @@ private class PdfLayoutEngine(
     val profile = tableProfile(section.title, section.rows.first())
     val header = profile.headerLabels
     val columnWidths = profile.columnWidths
-    val headerHeight = estimateTableRowHeight(header, columnWidths, profile.headerFontSize)
+    val headerHeight =
+      estimateTableRowHeight(header, columnWidths, profile.headerFontSize)
     ensureSpace(sectionTitleHeight(section.title) + headerHeight + ROW_GAP)
     drawSectionTitle(section.title)
     drawTableHeader(header, columnWidths, profile.headerFontSize)
     bodyRows.forEach { row ->
-      val rowHeight = estimateTableRowHeight(row, columnWidths, profile.bodyFontSize)
+      val rowHeight =
+        estimateTableRowHeight(row, columnWidths, profile.bodyFontSize)
       if (!hasSpace(rowHeight)) {
         startNewPage()
         drawSectionTitle("${section.title} (cont.)")
@@ -167,9 +183,19 @@ private class PdfLayoutEngine(
     cursorY += SECTION_GAP
   }
 
-  private fun drawTableHeader(header: List<String>, widths: List<Float>, fontSize: Float) {
+  private fun drawTableHeader(
+    header: List<String>,
+    widths: List<Float>,
+    fontSize: Float
+  ) {
     val height = estimateTableRowHeight(header, widths, fontSize)
-    page.fillRect(PAGE_MARGIN, cursorY, CONTENT_WIDTH, height, PdfColor.HEADER_FILL)
+    page.fillRect(
+      PAGE_MARGIN,
+      cursorY,
+      CONTENT_WIDTH,
+      height,
+      PdfColor.HEADER_FILL
+    )
     drawTableRow(header, widths, height, header = true, fontSize = fontSize)
   }
 
@@ -183,9 +209,17 @@ private class PdfLayoutEngine(
     ensureSpace(height)
     var x = PAGE_MARGIN
     widths.forEachIndexed { index, width ->
-      page.strokeRect(x, cursorY, width, height, PdfColor.BORDER, lineWidth = 0.55f)
+      page.strokeRect(
+        x,
+        cursorY,
+        width,
+        height,
+        PdfColor.BORDER,
+        lineWidth = 0.55f
+      )
       val lines = wrapText(
-        text = row.getOrElse(index) { "" }.ifBlank { " " },
+        text = row.getOrElse(index) { "" }
+          .ifBlank { " " },
         maxWidth = width - CELL_PADDING * 2,
         fontSize = fontSize,
         bold = header,
@@ -203,31 +237,128 @@ private class PdfLayoutEngine(
     cursorY += height + ROW_GAP
   }
 
-  private fun tableProfile(sectionTitle: String, header: List<String>): PdfTableProfile {
+  private fun tableProfile(
+    sectionTitle: String,
+    header: List<String>
+  ): PdfTableProfile {
     val title = sectionTitle.lowercase()
     val aliases = when {
       title.contains("tasks") || title.contains("compliance") -> listOf(
-        "Title", "Comp.", "Type", "Ref #", "Auth.", "Schedule",
-        "Last Date", "Last Hrs", "Next Date", "Next Hrs", "One-Time", "Notes", "Details"
+        "Title",
+        "Comp.",
+        "Type",
+        "Ref #",
+        "Auth.",
+        "Schedule",
+        "Last Date",
+        "Last Hrs",
+        "Next Date",
+        "Next Hrs",
+        "One-Time",
+        "Notes",
+        "Details"
       )
+
       title.contains("squawk") -> listOf(
-        "Created", "Title", "Description", "Priority", "Comp.", "Serial", "Status", "Action Date"
+        "Created",
+        "Title",
+        "Description",
+        "Priority",
+        "Comp.",
+        "Serial",
+        "Status",
+        "Action Date"
       )
+
       title.contains("airframe") || title.contains("engine") || title.contains("prop") -> listOf(
-        "Date", shortenTimeHeader(header.getOrElse(1) { "" }), shortenTimeHeader(header.getOrElse(2) { "" }), "Work Description",
-        "Inspections", "Ref #", header.getOrElse(6) { "" }, "Technician", "Cert", "Cert #", "Attachments"
+        "Date",
+        shortenTimeHeader(header.getOrElse(1) { "" }),
+        shortenTimeHeader(header.getOrElse(2) { "" }),
+        "Work Description",
+        "Inspections",
+        "Ref #",
+        header.getOrElse(6) { "" },
+        "Technician",
+        "Cert",
+        "Cert #",
+        "Attachments"
       ).take(header.size)
+
       else -> header.map { abbreviateHeader(it) }
     }
     val weights = when {
-      title.contains("tasks") || title.contains("compliance") -> listOf(2.0f, 1.2f, 1.2f, 1.3f, 1.0f, 1.8f, 1.1f, 1.0f, 1.1f, 1.0f, 0.8f, 1.8f, 2.4f)
-      title.contains("squawk") -> listOf(1.0f, 1.5f, 4.0f, 0.9f, 1.0f, 1.1f, 1.6f, 1.1f)
-      title.contains("airframe") -> listOf(0.9f, 0.82f, 0.82f, 3.9f, 1.55f, 1.05f, 1.35f, 1.25f, 0.75f, 0.9f, 2.45f)
-      title.contains("engine") -> listOf(0.9f, 0.82f, 0.82f, 3.9f, 1.55f, 1.05f, 1.35f, 1.25f, 0.75f, 0.9f, 2.45f)
-      title.contains("prop") -> listOf(0.9f, 0.82f, 0.82f, 4.05f, 1.55f, 1.05f, 1.25f, 0.75f, 0.9f, 2.55f)
+      title.contains("tasks") || title.contains("compliance") -> listOf(
+        2.0f,
+        1.2f,
+        1.2f,
+        1.3f,
+        1.0f,
+        1.8f,
+        1.1f,
+        1.0f,
+        1.1f,
+        1.0f,
+        0.8f,
+        1.8f,
+        2.4f
+      )
+
+      title.contains("squawk") -> listOf(
+        1.0f,
+        1.5f,
+        4.0f,
+        0.9f,
+        1.0f,
+        1.1f,
+        1.6f,
+        1.1f
+      )
+
+      title.contains("airframe") -> listOf(
+        0.9f,
+        0.82f,
+        0.82f,
+        3.9f,
+        1.55f,
+        1.05f,
+        1.35f,
+        1.25f,
+        0.75f,
+        0.9f,
+        2.45f
+      )
+
+      title.contains("engine") -> listOf(
+        0.9f,
+        0.82f,
+        0.82f,
+        3.9f,
+        1.55f,
+        1.05f,
+        1.35f,
+        1.25f,
+        0.75f,
+        0.9f,
+        2.45f
+      )
+
+      title.contains("prop") -> listOf(
+        0.9f,
+        0.82f,
+        0.82f,
+        4.05f,
+        1.55f,
+        1.05f,
+        1.25f,
+        0.75f,
+        0.9f,
+        2.55f
+      )
+
       else -> header.map(::defaultWeight)
     }.take(header.size)
-    val totalWeight = weights.sum().takeIf { it > 0f } ?: 1f
+    val totalWeight = weights.sum()
+      .takeIf { it > 0f } ?: 1f
     return PdfTableProfile(
       headerLabels = aliases.take(header.size),
       columnWidths = weights.map { CONTENT_WIDTH * (it / totalWeight) },
@@ -285,14 +416,26 @@ private class PdfLayoutEngine(
     val labelWidth = 134f
     val valueWidth = CONTENT_WIDTH - CARD_PADDING * 3 - labelWidth
     var height = CARD_PADDING * 2
-    card.title?.takeIf { it.isNotBlank() }?.let { title ->
-      height += wrapText(title, CONTENT_WIDTH - CARD_PADDING * 2, BODY_FONT_SIZE, bold = true)
-        .height(BODY_FONT_SIZE) + 8f
-    }
+    card.title?.takeIf { it.isNotBlank() }
+      ?.let { title ->
+        height += wrapText(
+          title,
+          CONTENT_WIDTH - CARD_PADDING * 2,
+          BODY_FONT_SIZE,
+          bold = true
+        )
+          .height(BODY_FONT_SIZE) + 8f
+      }
     card.rows.forEachIndexed { index, row ->
-      val labelHeight = wrapText(row.label, labelWidth, LABEL_FONT_SIZE, bold = true)
-        .height(LABEL_FONT_SIZE)
-      val valueHeight = wrapText(row.value.ifBlank { " " }, valueWidth, BODY_FONT_SIZE, bold = false)
+      val labelHeight =
+        wrapText(row.label, labelWidth, LABEL_FONT_SIZE, bold = true)
+          .height(LABEL_FONT_SIZE)
+      val valueHeight = wrapText(
+        row.value.ifBlank { " " },
+        valueWidth,
+        BODY_FONT_SIZE,
+        bold = false
+      )
         .height(BODY_FONT_SIZE)
       height += max(labelHeight, valueHeight)
       if (index != card.rows.lastIndex) height += 6f
@@ -306,9 +449,16 @@ private class PdfLayoutEngine(
     fontSize: Float,
   ): Float {
     val tallest = widths.mapIndexed { index, width ->
-      wrapText(row.getOrElse(index) { "" }.ifBlank { " " }, width - CELL_PADDING * 2, fontSize, bold = fontSize >= HEADER_FONT_SIZE)
+      wrapText(
+        row.getOrElse(index) { "" }
+          .ifBlank { " " },
+        width - CELL_PADDING * 2,
+        fontSize,
+        bold = fontSize >= HEADER_FONT_SIZE
+      )
         .height(fontSize)
-    }.maxOrNull() ?: fontSize
+    }
+      .maxOrNull() ?: fontSize
     return tallest + CELL_PADDING * 2
   }
 
@@ -327,7 +477,9 @@ private class PdfLayoutEngine(
   }
 
   private fun sectionTitleHeight(title: String): Float =
-    wrapText(title, CONTENT_WIDTH, SECTION_FONT_SIZE, bold = true).height(SECTION_FONT_SIZE) + 8f
+    wrapText(title, CONTENT_WIDTH, SECTION_FONT_SIZE, bold = true).height(
+      SECTION_FONT_SIZE
+    ) + 8f
 
   private fun startNewPage() {
     if (page.commands.isNotEmpty()) finishPage()
@@ -354,30 +506,32 @@ private class PdfLayoutEngine(
   ): List<String> {
     if (text.isBlank()) return listOf(" ")
     val lines = mutableListOf<String>()
-    text.split('\n').forEach { paragraph ->
-      if (paragraph.isBlank()) {
-        lines += " "
-        return@forEach
-      }
-      val words = paragraph.split(Regex("\\s+")).filter { it.isNotBlank() }
-      var current = ""
-      words.forEach { word ->
-        val candidate = if (current.isBlank()) word else "$current $word"
-        if (estimateTextWidth(candidate, fontSize, bold) <= maxWidth) {
-          current = candidate
-        } else if (current.isBlank()) {
-          breakWord(word, maxWidth, fontSize, bold).forEach(lines::add)
-        } else {
-          lines += current
-          current = word
-          if (estimateTextWidth(current, fontSize, bold) > maxWidth) {
-            breakWord(current, maxWidth, fontSize, bold).forEach(lines::add)
-            current = ""
+    text.split('\n')
+      .forEach { paragraph ->
+        if (paragraph.isBlank()) {
+          lines += " "
+          return@forEach
+        }
+        val words = paragraph.split(Regex("\\s+"))
+          .filter { it.isNotBlank() }
+        var current = ""
+        words.forEach { word ->
+          val candidate = if (current.isBlank()) word else "$current $word"
+          if (estimateTextWidth(candidate, fontSize, bold) <= maxWidth) {
+            current = candidate
+          } else if (current.isBlank()) {
+            breakWord(word, maxWidth, fontSize, bold).forEach(lines::add)
+          } else {
+            lines += current
+            current = word
+            if (estimateTextWidth(current, fontSize, bold) > maxWidth) {
+              breakWord(current, maxWidth, fontSize, bold).forEach(lines::add)
+              current = ""
+            }
           }
         }
+        if (current.isNotBlank()) lines += current
       }
-      if (current.isNotBlank()) lines += current
-    }
     return lines.ifEmpty { listOf(" ") }
   }
 
@@ -391,7 +545,12 @@ private class PdfLayoutEngine(
     var current = ""
     word.forEach { char ->
       val candidate = current + char
-      if (estimateTextWidth(candidate, fontSize, bold) <= maxWidth || current.isBlank()) {
+      if (estimateTextWidth(
+          candidate,
+          fontSize,
+          bold
+        ) <= maxWidth || current.isBlank()
+      ) {
         current = candidate
       } else {
         parts += current
@@ -402,9 +561,14 @@ private class PdfLayoutEngine(
     return parts
   }
 
-  private fun estimateTextWidth(text: String, fontSize: Float, bold: Boolean): Float {
+  private fun estimateTextWidth(
+    text: String,
+    fontSize: Float,
+    bold: Boolean
+  ): Float {
     val boldScale = if (bold) 1.03f else 1f
-    return text.sumOf { charWidth(it).toDouble() }.toFloat() * fontSize * boldScale
+    return text.sumOf { charWidth(it).toDouble() }
+      .toFloat() * fontSize * boldScale
   }
 
   private fun charWidth(char: Char): Float =
@@ -426,7 +590,11 @@ private object SimplePdfFileWriter {
     val objects = mutableListOf<ByteArray>()
     objects += "<< /Type /Catalog /Pages 2 0 R >>".encodeToByteArray()
     val pageObjectIds = pageContents.indices.map { index -> 5 + (index * 2) }
-    val kids = pageObjectIds.joinToString(separator = " ", prefix = "[ ", postfix = " ]") { "$it 0 R" }
+    val kids = pageObjectIds.joinToString(
+      separator = " ",
+      prefix = "[ ",
+      postfix = " ]"
+    ) { "$it 0 R" }
     objects += "<< /Type /Pages /Kids $kids /Count ${pageContents.size} >>".encodeToByteArray()
     objects += "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>".encodeToByteArray()
     objects += "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>".encodeToByteArray()
@@ -456,8 +624,10 @@ private object SimplePdfFileWriter {
   private fun serialize(objects: List<ByteArray>): ByteArray {
     val output = mutableListOf<Byte>()
     fun append(text: String) {
-      output += text.encodeToByteArray().toList()
+      output += text.encodeToByteArray()
+        .toList()
     }
+
     fun append(bytes: ByteArray) {
       output += bytes.toList()
     }
@@ -475,7 +645,10 @@ private object SimplePdfFileWriter {
     append("0 ${objects.size + 1}\n")
     append("0000000000 65535 f \n")
     offsets.forEach { offset ->
-      append(offset.toString().padStart(10, '0'))
+      append(
+        offset.toString()
+          .padStart(10, '0')
+      )
       append(" 00000 n \n")
     }
     append("trailer\n")
@@ -499,17 +672,36 @@ private class PdfPageCanvas {
     color: PdfColor = PdfColor.TEXT,
   ) {
     lines.forEachIndexed { index, line ->
-      val baselineY = PAGE_HEIGHT - (top + fontSize + (index * fontSize * LINE_HEIGHT_MULTIPLIER))
+      val baselineY =
+        PAGE_HEIGHT - (top + fontSize + (index * fontSize * LINE_HEIGHT_MULTIPLIER))
       commands.append("BT ")
       commands.append(font.colorCommand(color))
-      commands.append("/${font.resourceName} $fontSize Tf 1 0 0 1 ${format(x)} ${format(baselineY)} Tm ")
+      commands.append(
+        "/${font.resourceName} $fontSize Tf 1 0 0 1 ${format(x)} ${
+          format(
+            baselineY
+          )
+        } Tm "
+      )
       commands.append("(${escape(line)}) Tj ET\n")
     }
   }
 
-  fun fillRect(x: Float, top: Float, width: Float, height: Float, color: PdfColor) {
+  fun fillRect(
+    x: Float,
+    top: Float,
+    width: Float,
+    height: Float,
+    color: PdfColor
+  ) {
     val y = PAGE_HEIGHT - top - height
-    commands.append("q ${color.fillCommand()} ${format(x)} ${format(y)} ${format(width)} ${format(height)} re f Q\n")
+    commands.append(
+      "q ${color.fillCommand()} ${format(x)} ${format(y)} ${
+        format(
+          width
+        )
+      } ${format(height)} re f Q\n"
+    )
   }
 
   fun strokeRect(
@@ -521,7 +713,13 @@ private class PdfPageCanvas {
     lineWidth: Float,
   ) {
     val y = PAGE_HEIGHT - top - height
-    commands.append("q ${format(lineWidth)} w ${color.strokeCommand()} ${format(x)} ${format(y)} ${format(width)} ${format(height)} re S Q\n")
+    commands.append(
+      "q ${format(lineWidth)} w ${color.strokeCommand()} ${
+        format(
+          x
+        )
+      } ${format(y)} ${format(width)} ${format(height)} re S Q\n"
+    )
   }
 
   fun drawLine(
@@ -535,7 +733,11 @@ private class PdfPageCanvas {
     val pdfStartY = PAGE_HEIGHT - startY
     val pdfEndY = PAGE_HEIGHT - endY
     commands.append(
-      "q ${format(lineWidth)} w ${color.strokeCommand()} ${format(startX)} ${format(pdfStartY)} m " +
+      "q ${format(lineWidth)} w ${color.strokeCommand()} ${format(startX)} ${
+        format(
+          pdfStartY
+        )
+      } m " +
         "${format(endX)} ${format(pdfEndY)} l S Q\n"
     )
   }
@@ -547,7 +749,8 @@ private class PdfPageCanvas {
       .replace(")", "\\)")
 
   private fun format(value: Float): String =
-    value.toString().removeSuffix(".0")
+    value.toString()
+      .removeSuffix(".0")
 }
 
 private enum class PdfFont(val resourceName: String) {
@@ -563,11 +766,14 @@ private data class PdfColor(
   val green: Float,
   val blue: Float,
 ) {
-  fun fillCommand(): String = "${format(red)} ${format(green)} ${format(blue)} rg"
+  fun fillCommand(): String =
+    "${format(red)} ${format(green)} ${format(blue)} rg"
 
-  fun strokeCommand(): String = "${format(red)} ${format(green)} ${format(blue)} RG"
+  fun strokeCommand(): String =
+    "${format(red)} ${format(green)} ${format(blue)} RG"
 
-  private fun format(value: Float): String = value.toString().removeSuffix(".0")
+  private fun format(value: Float): String = value.toString()
+    .removeSuffix(".0")
 
   companion object {
     val TEXT = PdfColor(0.12f, 0.16f, 0.22f)

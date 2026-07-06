@@ -19,7 +19,8 @@ import org.junit.Test
 
 private const val TEST_USER_ID = "user-push-001"
 private const val TEST_AIRCRAFT_ID = "aircraft-push-001"
-private val TEST_SCOPE = EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+private val TEST_SCOPE =
+  EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
 private val TEST_KIND = CollectionKind.MaintenanceLog
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -34,7 +35,8 @@ class PushWorkerTest {
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.synchronous().create(driver)
+    WingsLogDatabase.Schema.synchronous()
+      .create(driver)
     db = createWingsLogDatabase(driver)
 
     writer = mockk()
@@ -57,7 +59,8 @@ class PushWorkerTest {
     job.cancel()
 
     coVerify(exactly = ids.size) { writer.push(any()) }
-    val remaining = db.schemaQueries.selectDirty(limit = 100L).executeAsList()
+    val remaining = db.schemaQueries.selectDirty(limit = 100L)
+      .executeAsList()
     assertThat(remaining).isEmpty()
   }
 
@@ -83,26 +86,29 @@ class PushWorkerTest {
     testScheduler.advanceUntilIdle()
     job.cancel()
 
-    val remaining = db.schemaQueries.selectDirty(limit = 100L).executeAsList()
+    val remaining = db.schemaQueries.selectDirty(limit = 100L)
+      .executeAsList()
     assertThat(remaining).hasSize(1)
     assertThat(remaining[0].id).isEqualTo("log-fail")
   }
 
   @Test
-  fun run_writerThrowsOnFirstRow_subsequentRowsNotPushed() = runTest(ioContext) {
-    // Insert two rows — the first fails; drain should stop, leaving both dirty.
-    insertDirtyRow("log-a", updatedAt = 1000L)
-    insertDirtyRow("log-b", updatedAt = 2000L)
-    coEvery { writer.push(any()) } throws RuntimeException("first push fails")
+  fun run_writerThrowsOnFirstRow_subsequentRowsNotPushed() =
+    runTest(ioContext) {
+      // Insert two rows — the first fails; drain should stop, leaving both dirty.
+      insertDirtyRow("log-a", updatedAt = 1000L)
+      insertDirtyRow("log-b", updatedAt = 2000L)
+      coEvery { writer.push(any()) } throws RuntimeException("first push fails")
 
-    val job = launch { worker.run(TEST_USER_ID) }
-    testScheduler.advanceUntilIdle()
-    job.cancel()
+      val job = launch { worker.run(TEST_USER_ID) }
+      testScheduler.advanceUntilIdle()
+      job.cancel()
 
-    // Both rows still dirty because drain stopped after first failure.
-    val remaining = db.schemaQueries.selectDirty(limit = 100L).executeAsList()
-    assertThat(remaining).hasSize(2)
-  }
+      // Both rows still dirty because drain stopped after first failure.
+      val remaining = db.schemaQueries.selectDirty(limit = 100L)
+        .executeAsList()
+      assertThat(remaining).hasSize(2)
+    }
 
   @Test
   fun run_writerSucceedsOnFirstRowFailsOnSecond_firstRowClearedSecondRemainsDirty() =
@@ -117,7 +123,8 @@ class PushWorkerTest {
       testScheduler.advanceUntilIdle()
       job.cancel()
 
-      val remaining = db.schemaQueries.selectDirty(limit = 100L).executeAsList()
+      val remaining = db.schemaQueries.selectDirty(limit = 100L)
+        .executeAsList()
       assertThat(remaining).hasSize(1)
       assertThat(remaining[0].id).isEqualTo("log-fail")
     }

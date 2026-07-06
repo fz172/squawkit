@@ -12,7 +12,8 @@ class EntityCodecRegistryTest {
     val codec = bytesCodec()
     registry.register(CollectionKind.Aircraft, codec)
 
-    val retrieved: EntityCodec<ByteArray> = registry.codecFor(CollectionKind.Aircraft)
+    val retrieved: EntityCodec<ByteArray> =
+      registry.codecFor(CollectionKind.Aircraft)
 
     assertThat(retrieved).isSameInstanceAs(codec)
   }
@@ -49,8 +50,9 @@ class EntityCodecRegistryTest {
     assertThat(registry.registeredKinds).doesNotContain(CollectionKind.Technician)
   }
 
-  private fun bytesCodec(): EntityCodec<ByteArray> = object : EntityCodec<ByteArray> {
-    override fun encode(value: ByteArray): ByteArray = value
-    override fun decode(bytes: ByteArray): ByteArray = bytes
-  }
+  private fun bytesCodec(): EntityCodec<ByteArray> =
+    object : EntityCodec<ByteArray> {
+      override fun encode(value: ByteArray): ByteArray = value
+      override fun decode(bytes: ByteArray): ByteArray = bytes
+    }
 }

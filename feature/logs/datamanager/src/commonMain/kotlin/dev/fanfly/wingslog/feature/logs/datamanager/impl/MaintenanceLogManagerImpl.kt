@@ -38,7 +38,8 @@ class MaintenanceLogManagerImpl(
       } else {
         logStore.observeAll(scope(user.uid, aircraftId))
           .map { rows ->
-            rows.map { it.value }.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
+            rows.map { it.value }
+              .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
           }
           .catch { e ->
             logger.w(e) { "Error observing logs for aircraft $aircraftId" }
@@ -62,16 +63,23 @@ class MaintenanceLogManagerImpl(
       }
     }
 
-  override suspend fun addLog(aircraftId: String, log: MaintenanceLog): Result<Boolean> =
+  override suspend fun addLog(
+    aircraftId: String,
+    log: MaintenanceLog
+  ): Result<Boolean> =
     runCatching {
       val uid = requireUid()
-      val withId = if (log.id.isEmpty()) log.copy(id = generateRandomId()) else log
+      val withId =
+        if (log.id.isEmpty()) log.copy(id = generateRandomId()) else log
       logStore.put(withId.id, withId, scope(uid, aircraftId))
       refreshOverview(uid, aircraftId)
       true
     }.onFailure { logger.w(it) { "Error adding log" } }
 
-  override suspend fun updateLog(aircraftId: String, log: MaintenanceLog): Result<Boolean> =
+  override suspend fun updateLog(
+    aircraftId: String,
+    log: MaintenanceLog
+  ): Result<Boolean> =
     runCatching {
       val uid = requireUid()
       logStore.put(log.id, log, scope(uid, aircraftId))
@@ -79,7 +87,10 @@ class MaintenanceLogManagerImpl(
       true
     }.onFailure { logger.w(it) { "Error updating log ${log.id}" } }
 
-  override suspend fun deleteLog(aircraftId: String, logId: String): Result<Boolean> =
+  override suspend fun deleteLog(
+    aircraftId: String,
+    logId: String
+  ): Result<Boolean> =
     runCatching {
       val uid = requireUid()
       logStore.delete(logId, scope(uid, aircraftId))
@@ -90,7 +101,9 @@ class MaintenanceLogManagerImpl(
   // Overview is recomputed from the logs after every mutation. With local SQLite this is cheap,
   // and keeping the doc on disk lets observers read it without holding a logs-flow subscription.
   private suspend fun refreshOverview(uid: String, aircraftId: String) {
-    val logs = logStore.observeAll(scope(uid, aircraftId)).first().map { it.value }
+    val logs = logStore.observeAll(scope(uid, aircraftId))
+      .first()
+      .map { it.value }
     val overview = MaintenanceOverview(
       aircraft_id = aircraftId,
       total_log_count = logs.size,
@@ -98,11 +111,14 @@ class MaintenanceLogManagerImpl(
       engine_log_count = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE },
       propeller_log_count = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER },
       current_airframe_time =
-        logs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time } ?: 0.0,
+        logs.filter { it.airframe_time > 0.0 }
+          .maxOfOrNull { it.airframe_time } ?: 0.0,
       current_engine_time =
-        logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour } ?: 0.0,
+        logs.filter { it.engine_hour > 0.0 }
+          .maxOfOrNull { it.engine_hour } ?: 0.0,
       current_propeller_time =
-        logs.filter { it.prop_time > 0.0 }.maxOfOrNull { it.prop_time } ?: 0.0,
+        logs.filter { it.prop_time > 0.0 }
+          .maxOfOrNull { it.prop_time } ?: 0.0,
     )
     overviewStore.put(OVERVIEW_ID, overview, scope(uid, aircraftId))
   }
@@ -111,10 +127,12 @@ class MaintenanceLogManagerImpl(
     EntityScope.aircraftChild(uid, aircraftId)
 
   private fun requireUid(): String =
-    firebaseAuth.currentUser?.uid ?: error("Cannot mutate logs when no user is signed in")
+    firebaseAuth.currentUser?.uid
+      ?: error("Cannot mutate logs when no user is signed in")
 
   companion object {
     private val logger = Logger.withTag("MaintenanceLogManagerImpl")
+
     // Single fixed id for the overview doc; the scope already includes the aircraft id so this
     // constant doesn't need to vary per aircraft.
     private const val OVERVIEW_ID = "main"

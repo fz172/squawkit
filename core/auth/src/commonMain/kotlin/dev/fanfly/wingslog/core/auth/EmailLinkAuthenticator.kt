@@ -85,7 +85,9 @@ class EmailLinkAuthenticator(
       val at = value.indexOf('@')
       if (at <= 0 || at != value.lastIndexOf('@')) return false
       val domain = value.substring(at + 1)
-      return domain.contains('.') && !domain.startsWith('.') && !domain.endsWith('.')
+      return domain.contains('.') && !domain.startsWith('.') && !domain.endsWith(
+        '.'
+      )
     }
   }
 }

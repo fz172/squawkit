@@ -52,9 +52,10 @@ class MaintenanceLogManagerImplTest {
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
     var emittedList: List<MaintenanceLog>? = null
-    manager.observeLogs(TEST_AIRCRAFT_ID).collect {
-      emittedList = it
-    }
+    manager.observeLogs(TEST_AIRCRAFT_ID)
+      .collect {
+        emittedList = it
+      }
 
     assertThat(emittedList).isEmpty()
   }
@@ -62,16 +63,27 @@ class MaintenanceLogManagerImplTest {
   @Test
   fun observeLogs_loggedIn_delegatesToStoreWithAircraftScope() = runTest {
     every {
-      logStore.observeAll(EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID))
+      logStore.observeAll(
+        EntityScope.aircraftChild(
+          TEST_USER_ID,
+          TEST_AIRCRAFT_ID
+        )
+      )
     } returns flowOf(emptyList())
 
     val result = mutableListOf<List<MaintenanceLog>>()
-    manager.observeLogs(TEST_AIRCRAFT_ID).collect { result += it }
+    manager.observeLogs(TEST_AIRCRAFT_ID)
+      .collect { result += it }
 
     assertThat(result).hasSize(1)
     assertThat(result.first()).isEmpty()
     io.mockk.verify {
-      logStore.observeAll(EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID))
+      logStore.observeAll(
+        EntityScope.aircraftChild(
+          TEST_USER_ID,
+          TEST_AIRCRAFT_ID
+        )
+      )
     }
   }
 }

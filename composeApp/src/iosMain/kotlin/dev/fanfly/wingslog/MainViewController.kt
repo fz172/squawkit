@@ -40,20 +40,25 @@ object MainEntry {
    * docs/account/email_link_signin_design.html.
    */
   fun handleIncomingUrl(url: String): Boolean {
-    val authManager = KoinPlatform.getKoin().get<dev.fanfly.wingslog.core.auth.AuthManager>()
+    val authManager = KoinPlatform.getKoin()
+      .get<dev.fanfly.wingslog.core.auth.AuthManager>()
     if (!authManager.isSignInWithEmailLink(url)) return false
     EmailLinkDeepLinks.deliver(url)
     return true
   }
 
   fun startSyncEngine() {
-    KoinPlatform.getKoin().get<SyncEngine>().start()
+    KoinPlatform.getKoin()
+      .get<SyncEngine>()
+      .start()
   }
 
   // Best-effort startup GC; runOnce() is now suspend (async-generated queries).
   private fun runTombstoneGc() {
     CoroutineScope(Dispatchers.Default).launch {
-      KoinPlatform.getKoin().get<TombstoneGc>().runOnce()
+      KoinPlatform.getKoin()
+        .get<TombstoneGc>()
+        .runOnce()
     }
   }
 
@@ -64,6 +69,8 @@ object MainEntry {
    * `BGTaskSchedulerPermittedIdentifiers`.
    */
   fun registerBgTasks() {
-    KoinPlatform.getKoin().get<UrlSessionUploadScheduler>().registerBgTasks()
+    KoinPlatform.getKoin()
+      .get<UrlSessionUploadScheduler>()
+      .registerBgTasks()
   }
 }

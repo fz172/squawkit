@@ -40,22 +40,32 @@ class TaskDataManagerImpl(
       }
     }
 
-  override suspend fun addTask(aircraftId: String, card: MaintenanceTask): Result<Boolean> =
+  override suspend fun addTask(
+    aircraftId: String,
+    card: MaintenanceTask
+  ): Result<Boolean> =
     runCatching {
       val uid = requireUid()
-      val withId = if (card.id.isEmpty()) card.copy(id = generateRandomId()) else card
+      val withId =
+        if (card.id.isEmpty()) card.copy(id = generateRandomId()) else card
       store.put(withId.id, withId, EntityScope.aircraftChild(uid, aircraftId))
       true
     }.onFailure { logger.w(it) { "Error adding task" } }
 
-  override suspend fun updateTask(aircraftId: String, card: MaintenanceTask): Result<Boolean> =
+  override suspend fun updateTask(
+    aircraftId: String,
+    card: MaintenanceTask
+  ): Result<Boolean> =
     runCatching {
       val uid = requireUid()
       store.put(card.id, card, EntityScope.aircraftChild(uid, aircraftId))
       true
     }.onFailure { logger.w(it) { "Error updating task ${card.id}" } }
 
-  override suspend fun deleteTask(aircraftId: String, cardId: String): Result<Boolean> =
+  override suspend fun deleteTask(
+    aircraftId: String,
+    cardId: String
+  ): Result<Boolean> =
     runCatching {
       val uid = requireUid()
       store.delete(cardId, EntityScope.aircraftChild(uid, aircraftId))
@@ -63,7 +73,8 @@ class TaskDataManagerImpl(
     }.onFailure { logger.w(it) { "Error deleting task $cardId" } }
 
   private fun requireUid(): String =
-    firebaseAuth.currentUser?.uid ?: error("Cannot mutate tasks when no user is signed in")
+    firebaseAuth.currentUser?.uid
+      ?: error("Cannot mutate tasks when no user is signed in")
 
   companion object {
     private val logger = Logger.withTag("TaskDataManagerImpl")

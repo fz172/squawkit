@@ -24,7 +24,11 @@ interface AttachmentManager {
    *
    * @throws IllegalStateException if no Firebase user (anonymous or permanent) is signed in.
    */
-  suspend fun addPickedFile(aircraftId: String, picked: PickedFile, displayName: String): Attachment
+  suspend fun addPickedFile(
+    aircraftId: String,
+    picked: PickedFile,
+    displayName: String
+  ): Attachment
 
   /** Build a LINK [Attachment] with no blob. */
   fun makeLink(url: String, displayName: String): Attachment

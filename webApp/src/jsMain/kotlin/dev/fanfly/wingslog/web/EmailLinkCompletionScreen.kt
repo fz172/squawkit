@@ -62,7 +62,8 @@ internal fun EmailLinkCompletionScreen(link: String) {
   var email by remember { mutableStateOf("") }
 
   suspend fun complete(withEmail: String): Boolean {
-    val user = EmailLinkAuthenticator(Firebase.auth).completeSignInLink(withEmail, link)
+    val user =
+      EmailLinkAuthenticator(Firebase.auth).completeSignInLink(withEmail, link)
     if (user == null) return false
     PendingEmailCache.clear()
     // Strip the auth params so a manual reload doesn't retry a now-consumed link.
@@ -73,7 +74,8 @@ internal fun EmailLinkCompletionScreen(link: String) {
   fun submit(withEmail: String) {
     scope.launch {
       state = CompletionState.Working
-      state = if (complete(withEmail)) CompletionState.Success else CompletionState.Failed
+      state =
+        if (complete(withEmail)) CompletionState.Success else CompletionState.Failed
     }
   }
 
@@ -81,7 +83,8 @@ internal fun EmailLinkCompletionScreen(link: String) {
   LaunchedEffect(Unit) {
     val stashed = PendingEmailCache.load()
     if (stashed != null) {
-      state = if (complete(stashed)) CompletionState.Success else CompletionState.Failed
+      state =
+        if (complete(stashed)) CompletionState.Success else CompletionState.Failed
     } else {
       state = CompletionState.NeedEmail
     }
@@ -153,7 +156,8 @@ private fun EmailPromptContent(
   onContinue: () -> Unit,
 ) {
   Column(
-    modifier = Modifier.widthIn(max = 420.dp).padding(24.dp),
+    modifier = Modifier.widthIn(max = 420.dp)
+      .padding(24.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
     Text(
@@ -186,7 +190,8 @@ private fun EmailPromptContent(
     Button(
       onClick = onContinue,
       enabled = email.isNotBlank(),
-      modifier = Modifier.fillMaxWidth().height(52.dp),
+      modifier = Modifier.fillMaxWidth()
+        .height(52.dp),
     ) {
       Text("Continue")
     }

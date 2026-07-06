@@ -28,7 +28,8 @@ class SyncPreferencesTest {
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.synchronous().create(driver)
+    WingsLogDatabase.Schema.synchronous()
+      .create(driver)
     db = createWingsLogDatabase(driver)
 
     auth = mockk(relaxed = true)
@@ -37,14 +38,19 @@ class SyncPreferencesTest {
 
   @Test
   fun initialValue_isTrue() = runTest {
-    val preferences = SyncPreferences(db, auth, ioContext = UnconfinedTestDispatcher(testScheduler))
+    val preferences = SyncPreferences(
+      db,
+      auth,
+      ioContext = UnconfinedTestDispatcher(testScheduler)
+    )
     assertThat(preferences.state.value.cloudSyncEnabled).isTrue()
   }
 
   @Test
   fun userSignedIn_persistedValueIsUsed() = runTest {
     val dispatcher = UnconfinedTestDispatcher(testScheduler)
-    val preferences = SyncPreferences(db, auth, ioContext = dispatcher, scope = backgroundScope)
+    val preferences =
+      SyncPreferences(db, auth, ioContext = dispatcher, scope = backgroundScope)
 
     val user1 = mockUser("user-1")
     every { auth.currentUser } returns user1
@@ -55,31 +61,35 @@ class SyncPreferencesTest {
 
     // Change to false
     preferences.setCloudSyncEnabled(false)
-    preferences.state.filter { !it.cloudSyncEnabled }.first()
+    preferences.state.filter { !it.cloudSyncEnabled }
+      .first()
     assertThat(preferences.state.value.cloudSyncEnabled).isFalse()
 
     // Switch to another user
     val user2 = mockUser("user-2")
     every { auth.currentUser } returns user2
     authState.value = user2
-    
+
     // Should be back to true for user2
-    preferences.state.filter { it.cloudSyncEnabled }.first()
+    preferences.state.filter { it.cloudSyncEnabled }
+      .first()
     assertThat(preferences.state.value.cloudSyncEnabled).isTrue()
 
     // Switch back to user 1
     every { auth.currentUser } returns user1
     authState.value = user1
-    
+
     // Should be false again for user1
-    preferences.state.filter { !it.cloudSyncEnabled }.first()
+    preferences.state.filter { !it.cloudSyncEnabled }
+      .first()
     assertThat(preferences.state.value.cloudSyncEnabled).isFalse()
   }
 
   @Test
   fun signedOut_usesDefault() = runTest {
     val dispatcher = UnconfinedTestDispatcher(testScheduler)
-    val preferences = SyncPreferences(db, auth, ioContext = dispatcher, scope = backgroundScope)
+    val preferences =
+      SyncPreferences(db, auth, ioContext = dispatcher, scope = backgroundScope)
     authState.value = null
     assertThat(preferences.state.value.cloudSyncEnabled).isTrue()
   }
@@ -87,7 +97,8 @@ class SyncPreferencesTest {
   @Test
   fun setCloudSyncEnabled_updatesDatabase() = runTest {
     val dispatcher = UnconfinedTestDispatcher(testScheduler)
-    val preferences = SyncPreferences(db, auth, ioContext = dispatcher, scope = backgroundScope)
+    val preferences =
+      SyncPreferences(db, auth, ioContext = dispatcher, scope = backgroundScope)
     val uid = "user-1"
     val user = mockUser(uid)
     authState.value = user
@@ -95,7 +106,8 @@ class SyncPreferencesTest {
 
     preferences.setCloudSyncEnabled(false)
 
-    val dbValue = db.schemaQueries.selectConfig(uid, "cloud_sync_enabled").executeAsOneOrNull()
+    val dbValue = db.schemaQueries.selectConfig(uid, "cloud_sync_enabled")
+      .executeAsOneOrNull()
     assertThat(dbValue).isEqualTo("false")
   }
 

@@ -129,7 +129,9 @@ class PushWorker(
 
 /** Reverse of [EntityScope.toPath]: `"/users/u1/aircraft/ac1/"` → `["users", "u1", "aircraft", "ac1"]`. */
 private fun parseScopePath(path: String): List<String> =
-  path.trim('/').split('/').filter { it.isNotEmpty() }
+  path.trim('/')
+    .split('/')
+    .filter { it.isNotEmpty() }
 
 private typealias DirtyRow = SelectDirtyInScope
 

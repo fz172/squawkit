@@ -44,7 +44,8 @@ class AircraftOverviewViewModel(
   private val aircraftId: String,
 ) : ViewModel() {
 
-  private val _uiState = MutableStateFlow<AircraftOverviewUiState>(AircraftOverviewUiState.Loading)
+  private val _uiState =
+    MutableStateFlow<AircraftOverviewUiState>(AircraftOverviewUiState.Loading)
   val uiState: StateFlow<AircraftOverviewUiState> = _uiState.asStateFlow()
 
   private val _events = Channel<AircraftOverviewEvent>()
@@ -55,13 +56,14 @@ class AircraftOverviewViewModel(
   init {
     loadAircraftAndStats()
     viewModelScope.launch {
-      featureLabManager.observe().collect { flags ->
-        _uiState.update { state ->
-          if (state is AircraftOverviewUiState.Success)
-            state.copy(attachmentEnabled = flags.attachmentUploadEnabled)
-          else state
+      featureLabManager.observe()
+        .collect { flags ->
+          _uiState.update { state ->
+            if (state is AircraftOverviewUiState.Success)
+              state.copy(attachmentEnabled = flags.attachmentUploadEnabled)
+            else state
+          }
         }
-      }
     }
   }
 
@@ -111,10 +113,13 @@ class AircraftOverviewViewModel(
             )
           } else {
             val currentEngineTime =
-              logs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }
+              logs.filter { it.engine_hour > 0.0 }
+                .maxOfOrNull { it.engine_hour }
             val currentAirframeTime =
-              logs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }
-            val currentPropTime = logs.filter { it.prop_time > 0.0 }.maxOfOrNull { it.prop_time }
+              logs.filter { it.airframe_time > 0.0 }
+                .maxOfOrNull { it.airframe_time }
+            val currentPropTime = logs.filter { it.prop_time > 0.0 }
+              .maxOfOrNull { it.prop_time }
             LogStats(
               total = logs.size.toLong(),
               airframe = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME }
@@ -138,7 +143,8 @@ class AircraftOverviewViewModel(
               ),
             )
           }
-          val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+          val today = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault()).date
           val currentEngineHours = stats.currentEngineTime ?: 0.0
           val active = cardsWithStatus
             .filter { it.dueStatus.status != DueStatus.COMPLIED }
@@ -154,7 +160,8 @@ class AircraftOverviewViewModel(
               }
               candidates.minOrNull() ?: Long.MAX_VALUE
             }
-          val complied = cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
+          val complied =
+            cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
 
           val current = _uiState.value as? AircraftOverviewUiState.Success
           val refreshedSelected = current?.selectedTask?.let { sel ->
@@ -177,7 +184,9 @@ class AircraftOverviewViewModel(
             logStats = stats,
             activeTasks = active,
             completedTasks = complied,
-            recentLogs = logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
+            recentLogs = logs.sortedByDescending {
+              it.timestamp?.getEpochSecond() ?: 0L
+            }
               .take(4),
             selectedTask = refreshedSelected,
             logsForSelectedTask = refreshedDetailLogs,
@@ -202,7 +211,13 @@ class AircraftOverviewViewModel(
       }
 
       is AircraftOverviewAction.EditClick -> {
-        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToEditAircraft(action.aircraftId)) }
+        viewModelScope.launch {
+          _events.send(
+            AircraftOverviewEvent.NavigateToEditAircraft(
+              action.aircraftId
+            )
+          )
+        }
       }
 
       AircraftOverviewAction.DeleteConfirm -> {
@@ -210,7 +225,13 @@ class AircraftOverviewViewModel(
       }
 
       is AircraftOverviewAction.AddLogClick -> {
-        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddLog(action.aircraftId)) }
+        viewModelScope.launch {
+          _events.send(
+            AircraftOverviewEvent.NavigateToAddLog(
+              action.aircraftId
+            )
+          )
+        }
       }
 
       is AircraftOverviewAction.EditLogClick -> {
@@ -225,7 +246,13 @@ class AircraftOverviewViewModel(
       }
 
       is AircraftOverviewAction.AddTaskClick -> {
-        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddTask(action.aircraftId)) }
+        viewModelScope.launch {
+          _events.send(
+            AircraftOverviewEvent.NavigateToAddTask(
+              action.aircraftId
+            )
+          )
+        }
       }
 
       is AircraftOverviewAction.TaskCardClick -> {
@@ -264,11 +291,18 @@ class AircraftOverviewViewModel(
       }
 
       is AircraftOverviewAction.AddSquawkClick -> {
-        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateToAddSquawk(action.aircraftId)) }
+        viewModelScope.launch {
+          _events.send(
+            AircraftOverviewEvent.NavigateToAddSquawk(
+              action.aircraftId
+            )
+          )
+        }
       }
 
       is AircraftOverviewAction.ShowSquawkDetail -> {
-        val log = cachedLogs.firstOrNull { it.id == action.squawk.squawk.addressed_by_log_id }
+        val log =
+          cachedLogs.firstOrNull { it.id == action.squawk.squawk.addressed_by_log_id }
         _uiState.update { state ->
           if (state is AircraftOverviewUiState.Success)
             state.copy(
@@ -304,8 +338,9 @@ class AircraftOverviewViewModel(
   }
 
   private fun showTaskDetails(cardWithStatus: MaintenanceTaskWithStatus) {
-    val relevantLogs = cachedLogs.filter { cardWithStatus.card.id in it.inspection_ids }
-      .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
+    val relevantLogs =
+      cachedLogs.filter { cardWithStatus.card.id in it.inspection_ids }
+        .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
     _uiState.update { state ->
       if (state is AircraftOverviewUiState.Success) {
         state.copy(
@@ -361,15 +396,17 @@ class AircraftOverviewViewModel(
 
   fun deleteAircraft() {
     viewModelScope.launch {
-      fleetManager.deleteAircraft(aircraftId).onSuccess {
-        _events.send(AircraftOverviewEvent.NavigateBack)
-      }.onFailure { error ->
-        _events.send(
-          AircraftOverviewEvent.ShowError(
-            error.message
+      fleetManager.deleteAircraft(aircraftId)
+        .onSuccess {
+          _events.send(AircraftOverviewEvent.NavigateBack)
+        }
+        .onFailure { error ->
+          _events.send(
+            AircraftOverviewEvent.ShowError(
+              error.message
+            )
           )
-        )
-      }
+        }
     }
   }
 }

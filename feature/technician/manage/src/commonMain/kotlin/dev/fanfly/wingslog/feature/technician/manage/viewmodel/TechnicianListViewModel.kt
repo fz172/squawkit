@@ -23,7 +23,8 @@ class TechnicianListViewModel(
     technicianManager.observeSelfId(),
   ) { technicians, selfId ->
     val self = technicians.find { it.id == selfId }
-    val others = technicians.filter { it.id != selfId }.sortedBy { it.name.lowercase() }
+    val others = technicians.filter { it.id != selfId }
+      .sortedBy { it.name.lowercase() }
     TechnicianListUiState(
       technicians = listOfNotNull(self) + others,
       selfId = selfId,

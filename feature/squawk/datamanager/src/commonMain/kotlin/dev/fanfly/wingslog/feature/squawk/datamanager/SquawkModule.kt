@@ -6,5 +6,10 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.dsl.module
 
 val squawkModule = module {
-  single<SquawkManager> { SquawkManagerImpl(get<FirebaseAuth>(), get<EntityStoreFactory>()) }
+  single<SquawkManager> {
+    SquawkManagerImpl(
+      get<FirebaseAuth>(),
+      get<EntityStoreFactory>()
+    )
+  }
 }

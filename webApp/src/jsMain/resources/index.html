@@ -2,104 +2,129 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
     <!-- ============ PRIMARY SEO ============ -->
     <title>SquawkIt — Aircraft Maintenance Logbook App for Pilots &amp; Owners</title>
-    <meta name="description" content="SquawkIt keeps your aircraft airworthy — track inspections, service bulletins, squawks, and engine hours across your whole fleet on the web. iOS and Android apps coming soon. Free to start.">
-    <link rel="canonical" href="https://squawkit.fanfly.dev/">
-    <meta name="robots" content="index, follow">
-    <meta name="author" content="SquawkIt">
-    <meta name="keywords" content="aircraft maintenance app, aviation maintenance logbook, squawk log, aircraft inspection tracking, service bulletin tracking, engine hour tracking, pilot logbook app">
+    <meta content="SquawkIt keeps your aircraft airworthy — track inspections, service bulletins, squawks, and engine hours across your whole fleet on the web. iOS and Android apps coming soon. Free to start."
+          name="description">
+    <link href="https://squawkit.fanfly.dev/" rel="canonical">
+    <meta content="index, follow" name="robots">
+    <meta content="SquawkIt" name="author">
+    <meta content="aircraft maintenance app, aviation maintenance logbook, squawk log, aircraft inspection tracking, service bulletin tracking, engine hour tracking, pilot logbook app"
+          name="keywords">
 
     <!-- ============ ICONS ============ -->
-    <link rel="icon" href="favicon.ico" sizes="32x32">
-    <link rel="icon" href="favicon-192.png" type="image/png" sizes="192x192">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="favicon.ico" rel="icon" sizes="32x32">
+    <link href="favicon-192.png" rel="icon" sizes="192x192" type="image/png">
+    <link href="apple-touch-icon.png" rel="apple-touch-icon">
 
     <!-- Browser chrome follows the resolved app theme (see updateBrowserGutterColor). -->
-    <meta name="theme-color" content="#F3EDF7" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#211F26" media="(prefers-color-scheme: dark)">
+    <meta content="#F3EDF7" media="(prefers-color-scheme: light)" name="theme-color">
+    <meta content="#211F26" media="(prefers-color-scheme: dark)" name="theme-color">
 
     <!-- ============ OPEN GRAPH ============ -->
-    <meta property="og:title" content="SquawkIt — Aircraft Maintenance Logbook App for Pilots &amp; Owners">
-    <meta property="og:description" content="Track inspections, service bulletins, squawks, and engine hours across your whole fleet — on the web, with iOS and Android coming soon.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://squawkit.fanfly.dev/">
-    <meta property="og:site_name" content="SquawkIt">
-    <meta property="og:image" content="https://squawkit.fanfly.dev/og-image.png">
-    <meta property="og:image:type" content="image/png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="SquawkIt — aircraft maintenance logbook">
+    <meta content="SquawkIt — Aircraft Maintenance Logbook App for Pilots &amp; Owners"
+          property="og:title">
+    <meta content="Track inspections, service bulletins, squawks, and engine hours across your whole fleet — on the web, with iOS and Android coming soon."
+          property="og:description">
+    <meta content="website" property="og:type">
+    <meta content="https://squawkit.fanfly.dev/" property="og:url">
+    <meta content="SquawkIt" property="og:site_name">
+    <meta content="https://squawkit.fanfly.dev/og-image.png" property="og:image">
+    <meta content="image/png" property="og:image:type">
+    <meta content="1200" property="og:image:width">
+    <meta content="630" property="og:image:height">
+    <meta content="SquawkIt — aircraft maintenance logbook" property="og:image:alt">
 
     <!-- ============ TWITTER CARD ============ -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="SquawkIt — Aircraft Maintenance Logbook App for Pilots &amp; Owners">
-    <meta name="twitter:description" content="Track inspections, service bulletins, squawks, and engine hours across your whole fleet — on the web, with iOS and Android coming soon.">
-    <meta name="twitter:image" content="https://squawkit.fanfly.dev/og-image.png">
-    <meta name="twitter:image:alt" content="SquawkIt — aircraft maintenance logbook">
+    <meta content="summary_large_image" name="twitter:card">
+    <meta content="SquawkIt — Aircraft Maintenance Logbook App for Pilots &amp; Owners"
+          name="twitter:title">
+    <meta content="Track inspections, service bulletins, squawks, and engine hours across your whole fleet — on the web, with iOS and Android coming soon."
+          name="twitter:description">
+    <meta content="https://squawkit.fanfly.dev/og-image.png" name="twitter:image">
+    <meta content="SquawkIt — aircraft maintenance logbook" name="twitter:image:alt">
 
     <!-- ============ STRUCTURED DATA ============ -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "SquawkIt",
-      "description": "Aircraft maintenance logbook for pilots and owners. Track inspections, service bulletins, squawks, and engine hours across your whole fleet.",
-      "url": "https://squawkit.fanfly.dev/",
-      "applicationCategory": "UtilitiesApplication",
-      "operatingSystem": "Web (iOS and Android coming soon)",
-      "browserRequirements": "Requires a modern browser. Sign in with Google or Apple.",
-      "image": "https://squawkit.fanfly.dev/og-image.png",
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
-    }
-    </script>
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "SquawkIt",
-      "url": "https://squawkit.fanfly.dev/",
-      "logo": "https://squawkit.fanfly.dev/favicon-192.png",
-      "sameAs": [
-        "https://apps.apple.com/app/squawkit",
-        "https://play.google.com/store/apps/details?id=dev.fanfly.wingslog"
-      ]
-    }
-    </script>
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
         {
-          "@type": "Question",
-          "name": "Is SquawkIt a certified maintenance record system?",
-          "acceptedAnswer": { "@type": "Answer", "text": "No. SquawkIt is a personal convenience tool. It does not replace the official aircraft logbooks required by your aviation authority — keep your certified records as you always have. Think of it as the heads-up layer that helps you stay ahead of them." }
-        },
-        {
-          "@type": "Question",
-          "name": "Does SquawkIt work offline?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Yes. SquawkIt is local-first, so your records are always available — even with no signal in the hangar. Changes sync automatically in the background once you reconnect." }
-        },
-        {
-          "@type": "Question",
-          "name": "How does exporting reports work?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Export any aircraft's records on demand — pick a date range and SquawkIt generates a clean PDF report covering inspections, service bulletins, squawks, and completed work, with current hours and due dates. Download it or share the link with a mechanic, buyer, or your A&P/IA for a pre-buy or annual. Your certified logbooks stay the source of truth; the export is a convenient, up-to-date snapshot." }
-        },
-        {
-          "@type": "Question",
-          "name": "What aircraft and maintenance items can I track?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Track a single airplane or a whole fleet — airframe, engine, and propeller. SquawkIt supports time-based, engine-hour, and on-condition inspections, service bulletins, and recurring tasks." }
-        },
-        {
-          "@type": "Question",
-          "name": "Which platforms is SquawkIt available on?",
-          "acceptedAnswer": { "@type": "Answer", "text": "SquawkIt runs on the web today, with native iOS and Android apps coming soon. Your fleet syncs across every device." }
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "SquawkIt",
+            "description": "Aircraft maintenance logbook for pilots and owners. Track inspections, service bulletins, squawks, and engine hours across your whole fleet.",
+            "url": "https://squawkit.fanfly.dev/",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Web (iOS and Android coming soon)",
+            "browserRequirements": "Requires a modern browser. Sign in with Google or Apple.",
+            "image": "https://squawkit.fanfly.dev/og-image.png",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+            }
         }
-      ]
-    }
+    </script>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "SquawkIt",
+            "url": "https://squawkit.fanfly.dev/",
+            "logo": "https://squawkit.fanfly.dev/favicon-192.png",
+            "sameAs": [
+                "https://apps.apple.com/app/squawkit",
+                "https://play.google.com/store/apps/details?id=dev.fanfly.wingslog"
+            ]
+        }
+    </script>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": "Is SquawkIt a certified maintenance record system?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "No. SquawkIt is a personal convenience tool. It does not replace the official aircraft logbooks required by your aviation authority — keep your certified records as you always have. Think of it as the heads-up layer that helps you stay ahead of them."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Does SquawkIt work offline?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes. SquawkIt is local-first, so your records are always available — even with no signal in the hangar. Changes sync automatically in the background once you reconnect."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "How does exporting reports work?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Export any aircraft's records on demand — pick a date range and SquawkIt generates a clean PDF report covering inspections, service bulletins, squawks, and completed work, with current hours and due dates. Download it or share the link with a mechanic, buyer, or your A&P/IA for a pre-buy or annual. Your certified logbooks stay the source of truth; the export is a convenient, up-to-date snapshot."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "What aircraft and maintenance items can I track?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Track a single airplane or a whole fleet — airframe, engine, and propeller. SquawkIt supports time-based, engine-hour, and on-condition inspections, service bulletins, and recurring tasks."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Which platforms is SquawkIt available on?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "SquawkIt runs on the web today, with native iOS and Android apps coming soon. Your fleet syncs across every device."
+                    }
+                }
+            ]
+        }
     </script>
 
     <style>
@@ -112,7 +137,7 @@
     </style>
 </head>
 <body>
-    <script>
+<script>
     (function(){
         var m=localStorage.getItem('appearance_mode');
         if(m==='DARK'||m==='LIGHT'){
@@ -121,26 +146,34 @@
             document.body.style.background=c;
         }
     })();
-    </script>
+</script>
 
-    <!-- Crawlable fallback for non-JS agents (the app UI renders to a canvas once the bundle loads). -->
-    <noscript>
-        <main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#0E1726;background:#F8F9FC;overflow:auto;height:auto">
-            <h1>SquawkIt — Aircraft maintenance logbook, simplified</h1>
-            <p>Track inspections, service bulletins, and squawks across your whole fleet, and share reports with others. SquawkIt is local-first, works offline, and syncs across every device. Free to start.</p>
-            <h2>What it does</h2>
-            <ul>
-                <li>Inspection &amp; service-bulletin tracking — time-based, engine-hour, or on-condition, counting down to every due date.</li>
-                <li>Squawk log — report defects and track each one to resolution; grounding and AOG items surface first.</li>
-                <li>On the web today, with native iOS and Android apps coming soon.</li>
-                <li>Export clean PDF reports on demand for a pre-buy or annual.</li>
-            </ul>
-            <p>SquawkIt requires JavaScript to sign in. Please enable JavaScript to use the app.</p>
-            <p><small>SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.</small></p>
-        </main>
-    </noscript>
+<!-- Crawlable fallback for non-JS agents (the app UI renders to a canvas once the bundle loads). -->
+<noscript>
+    <main style="max-width:760px;margin:0 auto;padding:48px 24px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#0E1726;background:#F8F9FC;overflow:auto;height:auto">
+        <h1>SquawkIt — Aircraft maintenance logbook, simplified</h1>
+        <p>Track inspections, service bulletins, and squawks across your whole fleet, and share
+            reports with others. SquawkIt is local-first, works offline, and syncs across every
+            device. Free to start.</p>
+        <h2>What it does</h2>
+        <ul>
+            <li>Inspection &amp; service-bulletin tracking — time-based, engine-hour, or
+                on-condition, counting down to every due date.
+            </li>
+            <li>Squawk log — report defects and track each one to resolution; grounding and AOG
+                items surface first.
+            </li>
+            <li>On the web today, with native iOS and Android apps coming soon.</li>
+            <li>Export clean PDF reports on demand for a pre-buy or annual.</li>
+        </ul>
+        <p>SquawkIt requires JavaScript to sign in. Please enable JavaScript to use the app.</p>
+        <p><small>SquawkIt is a personal convenience tool and is not a certified maintenance record
+            system. It does not replace the official aircraft logbooks required by your aviation
+            authority.</small></p>
+    </main>
+</noscript>
 
-    <div id="ComposeTarget"></div>
-    <script src="webApp.js"></script>
+<div id="ComposeTarget"></div>
+<script src="webApp.js"></script>
 </body>
 </html>

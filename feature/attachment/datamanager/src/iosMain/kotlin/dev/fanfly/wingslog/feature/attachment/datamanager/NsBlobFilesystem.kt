@@ -26,7 +26,11 @@ import platform.Foundation.writeToFile
 class NsBlobFilesystem : BlobFilesystem {
 
   private val rootPath: String = run {
-    val docs = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
+    val docs = NSSearchPathForDirectoriesInDomains(
+      NSDocumentDirectory,
+      NSUserDomainMask,
+      true
+    )
       .first() as String
     val root = "$docs/blobs"
     val fm = NSFileManager.defaultManager
@@ -43,7 +47,10 @@ class NsBlobFilesystem : BlobFilesystem {
       val abs = absolutePath(relativePath)
       ensureParent(abs)
       val nsData: NSData = bytes.usePinned { pinned ->
-        NSData.create(bytes = pinned.addressOf(0), length = bytes.size.toULong())
+        NSData.create(
+          bytes = pinned.addressOf(0),
+          length = bytes.size.toULong()
+        )
       }
       nsData.writeToFile(abs, atomically = true)
     }
@@ -65,7 +72,10 @@ class NsBlobFilesystem : BlobFilesystem {
 
   override suspend fun delete(relativePath: String) {
     withContext(Dispatchers.Default) {
-      NSFileManager.defaultManager.removeItemAtPath(absolutePath(relativePath), null)
+      NSFileManager.defaultManager.removeItemAtPath(
+        absolutePath(relativePath),
+        null
+      )
     }
   }
 
@@ -75,9 +85,11 @@ class NsBlobFilesystem : BlobFilesystem {
     }
 
   override fun uriFor(relativePath: String): String =
-    NSURL.fileURLWithPath(absolutePath(relativePath)).absoluteString ?: "file://${absolutePath(relativePath)}"
+    NSURL.fileURLWithPath(absolutePath(relativePath)).absoluteString
+      ?: "file://${absolutePath(relativePath)}"
 
-  private fun absolutePath(relativePath: String): String = "$rootPath/$relativePath"
+  private fun absolutePath(relativePath: String): String =
+    "$rootPath/$relativePath"
 
   private fun ensureParent(absolute: String) {
     val parent = absolute.substringBeforeLast('/', missingDelimiterValue = "")

@@ -99,7 +99,8 @@ fun SquawkCard(
 
       if ((squawk.created_at?.getEpochSecond() ?: 0L) > 0L) {
         Text(
-          text = squawk.created_at!!.toLocalDate().toDisplayFormat(),
+          text = squawk.created_at!!.toLocalDate()
+            .toDisplayFormat(),
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -115,10 +116,12 @@ private fun StatusBadge(status: SquawkStatus) {
       StatusTier.POSITIVE,
       stringResource(Res.string.squawk_status_addressed),
     )
+
     SquawkStatus.DISMISSED -> Pair(
       StatusTier.NEUTRAL,
       stringResource(Res.string.squawk_status_dismissed),
     )
+
     SquawkStatus.OPEN -> return
   }
   StatusChip(label = label, tier = tier)
@@ -129,10 +132,10 @@ internal fun PriorityBadge(item: SquawkWithStatus) {
   val priority = item.squawk.priority
   val tier = priority.statusTier()
   val label = when (priority) {
-    SquawkPriority.SQUAWK_PRIORITY_AOG    -> stringResource(Res.string.priority_aog)
-    SquawkPriority.SQUAWK_PRIORITY_HIGH   -> stringResource(Res.string.priority_high)
+    SquawkPriority.SQUAWK_PRIORITY_AOG -> stringResource(Res.string.priority_aog)
+    SquawkPriority.SQUAWK_PRIORITY_HIGH -> stringResource(Res.string.priority_high)
     SquawkPriority.SQUAWK_PRIORITY_MEDIUM -> stringResource(Res.string.priority_medium)
-    else                                   -> stringResource(Res.string.priority_low)
+    else -> stringResource(Res.string.priority_low)
   }
   StatusChip(label = label, tier = tier)
 }

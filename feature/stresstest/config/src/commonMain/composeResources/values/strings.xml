@@ -1,4 +1,4 @@
 <resources>
-    <string name="debug_tools_header">DEBUG TOOLS</string>
-    <string name="fake_data_generator_description">Populate fake aircraft, logs, squawks, and tasks for UI testing</string>
+  <string name="debug_tools_header">DEBUG TOOLS</string>
+  <string name="fake_data_generator_description">Populate fake aircraft, logs, squawks, and tasks for UI testing</string>
 </resources>

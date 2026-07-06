@@ -25,7 +25,8 @@ class TaskDueManagerImpl(
     card: MaintenanceTask,
     logs: List<MaintenanceLog>,
     allCards: List<MaintenanceTask>,
-  ): DueMetadata = computeNextDueRecursive(card, logs, logs, allCards, mutableSetOf())
+  ): DueMetadata =
+    computeNextDueRecursive(card, logs, logs, allCards, mutableSetOf())
 
   private fun computeNextDueRecursive(
     card: MaintenanceTask,
@@ -51,31 +52,41 @@ class TaskDueManagerImpl(
 
     // 1. Force overrides
     val forceDueDate = card.force_due_date
-    val hasForcedDate = forceDueDate != null && (forceDueDate.getEpochSecond() > 0L)
+    val hasForcedDate =
+      forceDueDate != null && (forceDueDate.getEpochSecond() > 0L)
     val hasForcedEngine = card.force_due_engine_hour > 0f
 
     // Determine which metric to track against based on component type
     // Airframe tracks airframe_time, others track engine_hour
     val currentMetricTime =
       if (card.component == ComponentType.COMPONENT_AIRFRAME) {
-        allLogs.filter { it.airframe_time > 0.0 }.maxOfOrNull { it.airframe_time }?.toFloat() ?: 0f
+        allLogs.filter { it.airframe_time > 0.0 }
+          .maxOfOrNull { it.airframe_time }
+          ?.toFloat() ?: 0f
       } else {
-        allLogs.filter { it.engine_hour > 0.0 }.maxOfOrNull { it.engine_hour }?.toFloat() ?: 0f
+        allLogs.filter { it.engine_hour > 0.0 }
+          .maxOfOrNull { it.engine_hour }
+          ?.toFloat() ?: 0f
       }
 
-    val currentDate = clock.now().toLocalDateTime(timeZone).date
+    val currentDate = clock.now()
+      .toLocalDateTime(timeZone).date
 
     if (hasForcedDate || hasForcedEngine) {
       val nextDueDate = if (hasForcedDate) {
         forceDueDate.toLocalDate(timeZone)
       } else null
-      val nextDueEngine = if (hasForcedEngine) card.force_due_engine_hour else null
+      val nextDueEngine =
+        if (hasForcedEngine) card.force_due_engine_hour else null
 
       val status = when {
         (nextDueDate != null && nextDueDate < currentDate) ||
           (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
 
-        (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
+        (nextDueDate != null && nextDueDate <= currentDate.plus(
+          1,
+          DateTimeUnit.MONTH
+        )) ||
           (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
 
         else -> DueStatus.NORMAL
@@ -117,12 +128,20 @@ class TaskDueManagerImpl(
             }
           }
           val calculated = when {
-            timeRule.interval_days > 0 -> baseDate.plus(timeRule.interval_days, DateTimeUnit.DAY)
-            timeRule.interval_years > 0 -> baseDate.plus(timeRule.interval_years, DateTimeUnit.YEAR)
+            timeRule.interval_days > 0 -> baseDate.plus(
+              timeRule.interval_days,
+              DateTimeUnit.DAY
+            )
+
+            timeRule.interval_years > 0 -> baseDate.plus(
+              timeRule.interval_years,
+              DateTimeUnit.YEAR
+            )
             // Month-based intervals snap to end-of-month so a task done mid-month
             // is due at the close of the calendar month it lands in
             // (e.g. logged 12/14/2025 + 12mo → due 12/31/2026).
-            else -> baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH).endOfMonth()
+            else -> baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH)
+              .endOfMonth()
           }
           if (nextDueDate == null || calculated < nextDueDate) {
             nextDueDate = calculated
@@ -151,7 +170,8 @@ class TaskDueManagerImpl(
         }
 
         linkedRule != null -> {
-          val parentCard = allCards.find { it.id == linkedRule.parent_inspection_id }
+          val parentCard =
+            allCards.find { it.id == linkedRule.parent_inspection_id }
           if (parentCard != null) {
             // Find when THIS card was last completed
             val latestLogEpoch = latestLog?.timestamp?.getEpochSecond() ?: 0L
@@ -162,11 +182,19 @@ class TaskDueManagerImpl(
             val parentLogs = if (latestLog == null) {
               emptyList()
             } else {
-              allLogs.filter { (it.timestamp?.getEpochSecond() ?: 0L) <= latestLogEpoch }
+              allLogs.filter {
+                (it.timestamp?.getEpochSecond() ?: 0L) <= latestLogEpoch
+              }
             }
 
             val parentMetadata =
-              computeNextDueRecursive(parentCard, parentLogs, allLogs, allCards, visited)
+              computeNextDueRecursive(
+                parentCard,
+                parentLogs,
+                allLogs,
+                allCards,
+                visited
+              )
 
             // Inherit due properties from parent
             val pNextDate = parentMetadata.nextDueDate
@@ -195,9 +223,20 @@ class TaskDueManagerImpl(
         for (rule in card.rules) {
           rule.time_rule?.let { timeRule ->
             fun LocalDate.advance(): LocalDate = when {
-              timeRule.interval_days > 0 -> plus(timeRule.interval_days, DateTimeUnit.DAY)
-              timeRule.interval_years > 0 -> plus(timeRule.interval_years, DateTimeUnit.YEAR)
-              else -> plus(timeRule.interval_months, DateTimeUnit.MONTH).endOfMonth()
+              timeRule.interval_days > 0 -> plus(
+                timeRule.interval_days,
+                DateTimeUnit.DAY
+              )
+
+              timeRule.interval_years > 0 -> plus(
+                timeRule.interval_years,
+                DateTimeUnit.YEAR
+              )
+
+              else -> plus(
+                timeRule.interval_months,
+                DateTimeUnit.MONTH
+              ).endOfMonth()
             }
             nextDueDate = nextDueDate?.let { d ->
               var advanced = d.advance()
@@ -223,7 +262,10 @@ class TaskDueManagerImpl(
       (nextDueDate != null && nextDueDate < currentDate) ||
         (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
 
-      (nextDueDate != null && nextDueDate <= currentDate.plus(1, DateTimeUnit.MONTH)) ||
+      (nextDueDate != null && nextDueDate <= currentDate.plus(
+        1,
+        DateTimeUnit.MONTH
+      )) ||
         (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
 
       else -> DueStatus.NORMAL

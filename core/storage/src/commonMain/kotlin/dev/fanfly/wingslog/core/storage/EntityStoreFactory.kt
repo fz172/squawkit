@@ -20,12 +20,13 @@ class EntityStoreFactory(
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   private val clock: Clock = Clock.System,
 ) {
-  fun <T : Any> create(kind: CollectionKind): EntityStore<T> = SqlDelightEntityStore(
-    kind = kind,
-    codec = codecs.codecFor(kind),
-    db = db,
-    ioContext = ioContext,
-    writeLock = writeLock,
-    clock = clock,
-  )
+  fun <T : Any> create(kind: CollectionKind): EntityStore<T> =
+    SqlDelightEntityStore(
+      kind = kind,
+      codec = codecs.codecFor(kind),
+      db = db,
+      ioContext = ioContext,
+      writeLock = writeLock,
+      clock = clock,
+    )
 }

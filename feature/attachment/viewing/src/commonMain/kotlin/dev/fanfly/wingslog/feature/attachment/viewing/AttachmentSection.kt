@@ -40,7 +40,7 @@ fun AttachmentSection(
       AttachmentRow(
         attachment = attachment,
         syncState = if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) null
-                    else syncStates[attachment.id],
+        else syncStates[attachment.id],
         onTap = onAttachmentTap,
       )
       HorizontalDivider()

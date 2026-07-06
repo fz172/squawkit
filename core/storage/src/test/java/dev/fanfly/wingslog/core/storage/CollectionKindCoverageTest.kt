@@ -80,8 +80,9 @@ class CollectionKindCoverageTest {
   }
 
   /** A minimal no-op codec used only to satisfy the registry — no serialization happens. */
-  private fun noOpCodec(): EntityCodec<ByteArray> = object : EntityCodec<ByteArray> {
-    override fun encode(value: ByteArray): ByteArray = value
-    override fun decode(bytes: ByteArray): ByteArray = bytes
-  }
+  private fun noOpCodec(): EntityCodec<ByteArray> =
+    object : EntityCodec<ByteArray> {
+      override fun encode(value: ByteArray): ByteArray = value
+      override fun decode(bytes: ByteArray): ByteArray = bytes
+    }
 }

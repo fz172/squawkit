@@ -20,7 +20,8 @@ interface EntityCodec<T : Any> {
  * which is what gives the storage layer its forward-compatibility guarantee
  * (see docs/storage/storage_r1_design.md §4.2.2).
  */
-class WireCodec<T : Message<T, *>>(private val adapter: ProtoAdapter<T>) : EntityCodec<T> {
+class WireCodec<T : Message<T, *>>(private val adapter: ProtoAdapter<T>) :
+  EntityCodec<T> {
   override fun encode(value: T): ByteArray = adapter.encode(value)
   override fun decode(bytes: ByteArray): T = adapter.decode(bytes)
 }

@@ -57,7 +57,10 @@ val syncModule: Module = module {
     )
   }
   single<SyncCursorStore> {
-    SyncCursorStore(get<WingsLogDatabase>(), writeLock = get<DatabaseWriteLock>())
+    SyncCursorStore(
+      get<WingsLogDatabase>(),
+      writeLock = get<DatabaseWriteLock>()
+    )
   }
   single<SyncWriter> { FirestoreSyncWriter(get<FirebaseFirestore>()) }
   single<RemoteFetcher> { FirestoreRemoteFetcher(get<FirebaseFirestore>()) }

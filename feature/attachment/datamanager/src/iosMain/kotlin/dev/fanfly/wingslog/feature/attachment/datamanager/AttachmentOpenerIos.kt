@@ -28,7 +28,8 @@ class AttachmentOpenerIos(
 ) : AttachmentOpener {
 
   private val _downloadingIds = MutableStateFlow<Set<String>>(emptySet())
-  override val downloadingIds: StateFlow<Set<String>> = _downloadingIds.asStateFlow()
+  override val downloadingIds: StateFlow<Set<String>> =
+    _downloadingIds.asStateFlow()
 
   override fun open(attachment: Attachment): Flow<OpenState> = flow {
     emit(OpenState.Downloading)
@@ -37,7 +38,8 @@ class AttachmentOpenerIos(
       val urlString = attachment.url.let {
         if (!it.startsWith("http://") && !it.startsWith("https://")) "https://$it" else it
       }
-      val url = NSURL.URLWithString(urlString) ?: throw Exception("Invalid URL: $urlString")
+      val url = NSURL.URLWithString(urlString)
+        ?: throw Exception("Invalid URL: $urlString")
       UIApplication.sharedApplication.openURL(url)
       emit(OpenState.Done)
       return@flow
@@ -49,16 +51,21 @@ class AttachmentOpenerIos(
     try {
       val ref = blobs.get(BlobId(attachment.id))
       when {
-        ref == null && attachment.sha256.isBlank() -> emit(OpenState.Failed(LegacyAttachment()))
+        ref == null && attachment.sha256.isBlank() -> emit(
+          OpenState.Failed(
+            LegacyAttachment()
+          )
+        )
 
         ref == null || ref.remoteState == RemoteState.RemoteOnly -> {
           // Row missing (reconciler not yet run) or row present but not downloaded yet — same path.
           var downloadError: Throwable? = null
-          attachmentManager.ensureLocal(attachment).collect { state ->
-            if (state is DownloadState.Failed) downloadError = state.error
-          }
+          attachmentManager.ensureLocal(attachment)
+            .collect { state ->
+              if (state is DownloadState.Failed) downloadError = state.error
+            }
           if (downloadError != null) {
-            emit(OpenState.Failed(downloadError!!))
+            emit(OpenState.Failed(downloadError))
           } else {
             emitOpenLocalFile(attachment)
           }
@@ -77,7 +84,8 @@ class AttachmentOpenerIos(
     attachment: Attachment,
   ) {
     val uriString = fs.uriFor(blobRelativePath(attachment.id))
-    val url = NSURL.URLWithString(uriString) ?: NSURL.fileURLWithPath(uriString.removePrefix("file://"))
+    val url = NSURL.URLWithString(uriString)
+      ?: NSURL.fileURLWithPath(uriString.removePrefix("file://"))
     UIApplication.sharedApplication.openURL(url)
     emit(OpenState.Done)
   }

@@ -107,7 +107,8 @@ internal fun WebLoginLandingScreen(
       error = null
       try {
         val credential = loginViewModel.login()
-        if (credential != null) onLoginSuccess() else error = "Sign-in failed. Please try again."
+        if (credential != null) onLoginSuccess() else error =
+          "Sign-in failed. Please try again."
       } catch (t: Throwable) {
         error = "Sign-in failed. Please try again."
       } finally {
@@ -126,7 +127,12 @@ internal fun WebLoginLandingScreen(
   var howY by remember { mutableStateOf(0f) }
   var faqY by remember { mutableStateOf(0f) }
   val scrollTo = { rawY: Float ->
-    scope.launch { scrollState.animateScrollTo((rawY - contentTopY).roundToInt().coerceAtLeast(0)) }
+    scope.launch {
+      scrollState.animateScrollTo(
+        (rawY - contentTopY).roundToInt()
+          .coerceAtLeast(0)
+      )
+    }
     Unit
   }
 
@@ -161,7 +167,9 @@ internal fun WebLoginLandingScreen(
       )
 
       Hero(
-        modifier = Modifier.onGloballyPositioned { heroY = it.positionInRoot().y },
+        modifier = Modifier.onGloballyPositioned {
+          heroY = it.positionInRoot().y
+        },
         colors = colors,
         headline = headline,
         stacked = heroStacked,
@@ -172,7 +180,9 @@ internal fun WebLoginLandingScreen(
       )
 
       FeaturesSection(
-        modifier = Modifier.onGloballyPositioned { featuresY = it.positionInRoot().y },
+        modifier = Modifier.onGloballyPositioned {
+          featuresY = it.positionInRoot().y
+        },
         colors = colors,
         headline = headline,
         columns = gridColumns,
@@ -180,7 +190,9 @@ internal fun WebLoginLandingScreen(
       )
 
       HowItWorksSection(
-        modifier = Modifier.onGloballyPositioned { howY = it.positionInRoot().y },
+        modifier = Modifier.onGloballyPositioned {
+          howY = it.positionInRoot().y
+        },
         colors = colors,
         headline = headline,
         columns = gridColumns,
@@ -188,7 +200,9 @@ internal fun WebLoginLandingScreen(
       )
 
       FaqSection(
-        modifier = Modifier.onGloballyPositioned { faqY = it.positionInRoot().y },
+        modifier = Modifier.onGloballyPositioned {
+          faqY = it.positionInRoot().y
+        },
         colors = colors,
         headline = headline,
         compact = heroStacked,
@@ -222,7 +236,11 @@ private fun BrandMark(size: Dp, colors: LandingColors) {
 
 /** "SquawkIt" wordmark with the blue trailing dot. */
 @Composable
-private fun BrandWordmark(colors: LandingColors, headline: FontFamily, fontSize: Int) {
+private fun BrandWordmark(
+  colors: LandingColors,
+  headline: FontFamily,
+  fontSize: Int
+) {
   Text(
     text = buildAnnotatedString {
       append("SquawkIt")
@@ -283,7 +301,11 @@ private fun LandingHeader(
 private fun NavLink(label: String, colors: LandingColors, onClick: () -> Unit) {
   Text(
     text = label,
-    style = TextStyle(fontSize = 14.5.sp, fontWeight = FontWeight.Medium, color = colors.slate),
+    style = TextStyle(
+      fontSize = 14.5.sp,
+      fontWeight = FontWeight.Medium,
+      color = colors.slate
+    ),
     modifier = Modifier.clickable { onClick() },
   )
 }
@@ -309,7 +331,10 @@ private fun Hero(
     Canvas(modifier = Modifier.matchParentSize()) {
       drawCircle(
         brush = Brush.radialGradient(
-          colors = listOf(colors.blueBright.copy(alpha = 0.22f), Color.Transparent),
+          colors = listOf(
+            colors.blueBright.copy(alpha = 0.22f),
+            Color.Transparent
+          ),
           center = Offset(size.width / 2f, size.height * 0.04f),
           radius = size.width * 0.6f,
         ),
@@ -328,7 +353,10 @@ private fun Hero(
       if (stacked) {
         HeroCopy(colors, headline, centered = true)
         Spacer(Modifier.height(40.dp))
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(
+          modifier = Modifier.fillMaxWidth(),
+          contentAlignment = Alignment.Center
+        ) {
           LoginCard(
             modifier = Modifier.widthIn(max = 460.dp),
             colors = colors,
@@ -366,7 +394,11 @@ private fun Hero(
 }
 
 @Composable
-private fun HeroCopy(colors: LandingColors, headline: FontFamily, centered: Boolean) {
+private fun HeroCopy(
+  colors: LandingColors,
+  headline: FontFamily,
+  centered: Boolean
+) {
   val align = if (centered) Alignment.CenterHorizontally else Alignment.Start
   val textAlign = if (centered) TextAlign.Center else TextAlign.Start
   Column(horizontalAlignment = align) {
@@ -429,7 +461,12 @@ private fun HeroCopy(colors: LandingColors, headline: FontFamily, centered: Bool
     Spacer(Modifier.height(30.dp))
     Text(
       text = "Built for everything from a non-powered glider to multiple engine fleets",
-      style = TextStyle(fontSize = 13.sp, lineHeight = 19.sp, color = colors.skyDim, textAlign = textAlign),
+      style = TextStyle(
+        fontSize = 13.sp,
+        lineHeight = 19.sp,
+        color = colors.skyDim,
+        textAlign = textAlign
+      ),
     )
   }
 }
@@ -472,12 +509,21 @@ private fun LoginCard(
     Spacer(Modifier.height(18.dp))
     Text(
       text = "Log in to SquawkIt",
-      style = TextStyle(fontFamily = headline, fontWeight = FontWeight.Bold, fontSize = 23.sp, color = colors.heading),
+      style = TextStyle(
+        fontFamily = headline,
+        fontWeight = FontWeight.Bold,
+        fontSize = 23.sp,
+        color = colors.heading
+      ),
     )
     Spacer(Modifier.height(8.dp))
     Text(
       text = "Log in to manage your aircraft maintenance records. Your fleet stays synced across every device.",
-      style = TextStyle(fontSize = 14.5.sp, lineHeight = 22.sp, color = colors.slate),
+      style = TextStyle(
+        fontSize = 14.5.sp,
+        lineHeight = 22.sp,
+        color = colors.slate
+      ),
     )
     Spacer(Modifier.height(26.dp))
 
@@ -489,7 +535,13 @@ private fun LoginCard(
       loading = isSigningIn,
       onClick = onGoogle,
       label = "Log in with Google",
-      leading = { Image(imageVector = GoogleLogo, contentDescription = null, modifier = Modifier.size(19.dp)) },
+      leading = {
+        Image(
+          imageVector = GoogleLogo,
+          contentDescription = null,
+          modifier = Modifier.size(19.dp)
+        )
+      },
     )
     Spacer(Modifier.height(12.dp))
     AuthButton(
@@ -501,7 +553,14 @@ private fun LoginCard(
       // Apple sign-in is shown on every platform but not yet wired (matches LoginScreen).
       onClick = { /* TODO(apple-signin): wire AuthManager.signInWithApple() for web. */ },
       label = "Log in with Apple",
-      leading = { Icon(imageVector = AppleLogo, contentDescription = null, modifier = Modifier.size(19.dp), tint = Color.White) },
+      leading = {
+        Icon(
+          imageVector = AppleLogo,
+          contentDescription = null,
+          modifier = Modifier.size(19.dp),
+          tint = Color.White
+        )
+      },
     )
     Spacer(Modifier.height(12.dp))
     // Passwordless email link — navigates to the shared EmailSignInScreen, leaving the promo page.
@@ -513,7 +572,14 @@ private fun LoginCard(
       loading = false,
       onClick = onChooseEmail,
       label = "Log in with email",
-      leading = { Icon(imageVector = IconMail, contentDescription = null, modifier = Modifier.size(19.dp), tint = colors.heading) },
+      leading = {
+        Icon(
+          imageVector = IconMail,
+          contentDescription = null,
+          modifier = Modifier.size(19.dp),
+          tint = colors.heading
+        )
+      },
     )
 
     if (error != null) {
@@ -534,7 +600,11 @@ private fun LoginCard(
     Spacer(Modifier.height(18.dp))
     Text(
       text = "SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.",
-      style = TextStyle(fontSize = 11.5.sp, lineHeight = 18.sp, color = colors.disclaimer),
+      style = TextStyle(
+        fontSize = 11.5.sp,
+        lineHeight = 18.sp,
+        color = colors.disclaimer
+      ),
     )
   }
 }
@@ -557,19 +627,33 @@ private fun AuthButton(
       .height(54.dp)
       .clip(shape)
       .background(container)
-      .then(if (border != null) Modifier.border(1.dp, border, shape) else Modifier)
+      .then(
+        if (border != null) Modifier.border(
+          1.dp,
+          border,
+          shape
+        ) else Modifier
+      )
       .clickable(enabled = enabled) { onClick() },
     horizontalArrangement = Arrangement.Center,
     verticalAlignment = Alignment.CenterVertically,
   ) {
     if (loading) {
-      CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp, color = contentColor)
+      CircularProgressIndicator(
+        modifier = Modifier.size(22.dp),
+        strokeWidth = 2.dp,
+        color = contentColor
+      )
     } else {
       leading()
       Spacer(Modifier.width(11.dp))
       Text(
         text = label,
-        style = TextStyle(fontSize = 15.5.sp, fontWeight = FontWeight.SemiBold, color = contentColor),
+        style = TextStyle(
+          fontSize = 15.5.sp,
+          fontWeight = FontWeight.SemiBold,
+          color = contentColor
+        ),
       )
     }
   }
@@ -591,7 +675,12 @@ private fun SectionHeading(
   ) {
     Text(
       text = kick.uppercase(),
-      style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, color = colors.blue),
+      style = TextStyle(
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 1.sp,
+        color = colors.blue
+      ),
     )
     Spacer(Modifier.height(12.dp))
     Text(
@@ -610,7 +699,12 @@ private fun SectionHeading(
       Spacer(Modifier.height(14.dp))
       Text(
         text = subtitle,
-        style = TextStyle(fontSize = 17.sp, lineHeight = 26.sp, color = colors.slate, textAlign = TextAlign.Center),
+        style = TextStyle(
+          fontSize = 17.sp,
+          lineHeight = 26.sp,
+          color = colors.slate,
+          textAlign = TextAlign.Center
+        ),
       )
     }
   }
@@ -620,19 +714,23 @@ private fun SectionHeading(
 @Composable
 private fun CardGrid(columns: Int, cells: List<@Composable () -> Unit>) {
   Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
-    cells.chunked(columns).forEach { rowCells ->
-      Row(
-        modifier = Modifier
-          .fillMaxWidth()
-          .height(IntrinsicSize.Max),
-        horizontalArrangement = Arrangement.spacedBy(22.dp),
-      ) {
-        rowCells.forEach { cell ->
-          Box(modifier = Modifier.weight(1f).fillMaxHeight()) { cell() }
+    cells.chunked(columns)
+      .forEach { rowCells ->
+        Row(
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Max),
+          horizontalArrangement = Arrangement.spacedBy(22.dp),
+        ) {
+          rowCells.forEach { cell ->
+            Box(
+              modifier = Modifier.weight(1f)
+                .fillMaxHeight()
+            ) { cell() }
+          }
+          repeat(columns - rowCells.size) { Spacer(Modifier.weight(1f)) }
         }
-        repeat(columns - rowCells.size) { Spacer(Modifier.weight(1f)) }
       }
-    }
   }
 }
 
@@ -644,7 +742,10 @@ private fun FeaturesSection(
   columns: Int,
   compact: Boolean,
 ) {
-  Box(modifier = modifier.fillMaxWidth().background(colors.surface), contentAlignment = Alignment.TopCenter) {
+  Box(
+    modifier = modifier.fillMaxWidth()
+      .background(colors.surface), contentAlignment = Alignment.TopCenter
+  ) {
     Column(
       modifier = Modifier
         .widthIn(max = ContentMaxWidth)
@@ -714,17 +815,31 @@ private fun FeatureCard(
         .border(1.dp, colors.outline, RoundedCornerShape(13.dp)),
       contentAlignment = Alignment.Center,
     ) {
-      Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(25.dp), tint = colors.blue)
+      Icon(
+        imageVector = icon,
+        contentDescription = null,
+        modifier = Modifier.size(25.dp),
+        tint = colors.blue
+      )
     }
     Spacer(Modifier.height(20.dp))
     Text(
       text = title,
-      style = TextStyle(fontFamily = headline, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, color = colors.heading),
+      style = TextStyle(
+        fontFamily = headline,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 19.sp,
+        color = colors.heading
+      ),
     )
     Spacer(Modifier.height(11.dp))
     Text(
       text = body,
-      style = TextStyle(fontSize = 15.sp, lineHeight = 24.sp, color = colors.slate),
+      style = TextStyle(
+        fontSize = 15.sp,
+        lineHeight = 24.sp,
+        color = colors.slate
+      ),
     )
   }
 }
@@ -737,7 +852,10 @@ private fun HowItWorksSection(
   columns: Int,
   compact: Boolean,
 ) {
-  Box(modifier = modifier.fillMaxWidth().background(colors.card), contentAlignment = Alignment.TopCenter) {
+  Box(
+    modifier = modifier.fillMaxWidth()
+      .background(colors.card), contentAlignment = Alignment.TopCenter
+  ) {
     Column(
       modifier = Modifier
         .widthIn(max = ContentMaxWidth)
@@ -804,18 +922,32 @@ private fun StepCard(
     ) {
       Text(
         text = number.toString(),
-        style = TextStyle(fontFamily = headline, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White),
+        style = TextStyle(
+          fontFamily = headline,
+          fontWeight = FontWeight.Bold,
+          fontSize = 15.sp,
+          color = Color.White
+        ),
       )
     }
     Spacer(Modifier.height(18.dp))
     Text(
       text = title,
-      style = TextStyle(fontFamily = headline, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, color = colors.heading),
+      style = TextStyle(
+        fontFamily = headline,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 18.sp,
+        color = colors.heading
+      ),
     )
     Spacer(Modifier.height(10.dp))
     Text(
       text = body,
-      style = TextStyle(fontSize = 14.5.sp, lineHeight = 23.sp, color = colors.slate),
+      style = TextStyle(
+        fontSize = 14.5.sp,
+        lineHeight = 23.sp,
+        color = colors.slate
+      ),
     )
   }
 }
@@ -827,7 +959,10 @@ private fun FaqSection(
   headline: FontFamily,
   compact: Boolean,
 ) {
-  Box(modifier = modifier.fillMaxWidth().background(colors.surface), contentAlignment = Alignment.TopCenter) {
+  Box(
+    modifier = modifier.fillMaxWidth()
+      .background(colors.surface), contentAlignment = Alignment.TopCenter
+  ) {
     Column(
       modifier = Modifier
         .widthIn(max = ContentMaxWidth)
@@ -843,7 +978,8 @@ private fun FaqSection(
       )
       Spacer(Modifier.height(if (compact) 40.dp else 52.dp))
       Column(
-        modifier = Modifier.widthIn(max = 780.dp).fillMaxWidth(),
+        modifier = Modifier.widthIn(max = 780.dp)
+          .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(14.dp),
       ) {
         FaqRow(
@@ -896,26 +1032,37 @@ private fun FaqRow(
       .padding(horizontal = 22.dp),
   ) {
     Row(
-      modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
+      modifier = Modifier.fillMaxWidth()
+        .padding(vertical = 18.dp),
       verticalAlignment = Alignment.CenterVertically,
     ) {
       Text(
         text = question,
-        style = TextStyle(fontFamily = headline, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, color = colors.heading),
+        style = TextStyle(
+          fontFamily = headline,
+          fontWeight = FontWeight.SemiBold,
+          fontSize = 17.sp,
+          color = colors.heading
+        ),
         modifier = Modifier.weight(1f),
       )
       Spacer(Modifier.width(16.dp))
       Icon(
         imageVector = IconChevronDown,
         contentDescription = null,
-        modifier = Modifier.size(20.dp).rotate(if (open) 180f else 0f),
+        modifier = Modifier.size(20.dp)
+          .rotate(if (open) 180f else 0f),
         tint = colors.blue,
       )
     }
     if (open) {
       Text(
         text = answer,
-        style = TextStyle(fontSize = 15.sp, lineHeight = 25.sp, color = colors.slate),
+        style = TextStyle(
+          fontSize = 15.sp,
+          lineHeight = 25.sp,
+          color = colors.slate
+        ),
         modifier = Modifier.padding(bottom = 20.dp),
       )
     }
@@ -931,13 +1078,17 @@ private fun FinalCta(
   onSeeFeatures: () -> Unit,
 ) {
   Box(
-    modifier = Modifier.fillMaxWidth().background(colors.navy),
+    modifier = Modifier.fillMaxWidth()
+      .background(colors.navy),
     contentAlignment = Alignment.TopCenter,
   ) {
     Canvas(modifier = Modifier.matchParentSize()) {
       drawCircle(
         brush = Brush.radialGradient(
-          colors = listOf(colors.blueBright.copy(alpha = 0.3f), Color.Transparent),
+          colors = listOf(
+            colors.blueBright.copy(alpha = 0.3f),
+            Color.Transparent
+          ),
           center = Offset(size.width / 2f, size.height * 1.1f),
           radius = size.width * 0.5f,
         ),
@@ -968,7 +1119,12 @@ private fun FinalCta(
       Spacer(Modifier.height(18.dp))
       Text(
         text = "Free to start. Sign in and add your first aircraft in under a minute.",
-        style = TextStyle(fontSize = 18.sp, lineHeight = 27.sp, color = colors.skyDim, textAlign = TextAlign.Center),
+        style = TextStyle(
+          fontSize = 18.sp,
+          lineHeight = 27.sp,
+          color = colors.skyDim,
+          textAlign = TextAlign.Center
+        ),
         modifier = Modifier.widthIn(max = 420.dp),
       )
       Spacer(Modifier.height(32.dp))
@@ -978,13 +1134,37 @@ private fun FinalCta(
           verticalArrangement = Arrangement.spacedBy(14.dp),
           horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-          PillButton("Log in to get started", primary = true, colors = colors, fillWidth = true, onClick = onGetStarted)
-          PillButton("See features", primary = false, colors = colors, fillWidth = true, onClick = onSeeFeatures)
+          PillButton(
+            "Log in to get started",
+            primary = true,
+            colors = colors,
+            fillWidth = true,
+            onClick = onGetStarted
+          )
+          PillButton(
+            "See features",
+            primary = false,
+            colors = colors,
+            fillWidth = true,
+            onClick = onSeeFeatures
+          )
         }
       } else {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-          PillButton("Log in to get started", primary = true, colors = colors, fillWidth = false, onClick = onGetStarted)
-          PillButton("See features", primary = false, colors = colors, fillWidth = false, onClick = onSeeFeatures)
+          PillButton(
+            "Log in to get started",
+            primary = true,
+            colors = colors,
+            fillWidth = false,
+            onClick = onGetStarted
+          )
+          PillButton(
+            "See features",
+            primary = false,
+            colors = colors,
+            fillWidth = false,
+            onClick = onSeeFeatures
+          )
         }
       }
     }
@@ -1005,7 +1185,15 @@ private fun PillButton(
     modifier = base
       .height(54.dp)
       .clip(shape)
-      .then(if (primary) Modifier.background(Color.White) else Modifier.border(1.dp, Color.White.copy(alpha = 0.28f), shape))
+      .then(
+        if (primary) Modifier.background(Color.White) else Modifier.border(
+          1.dp,
+          Color.White.copy(
+            alpha = 0.28f
+          ),
+          shape
+        )
+      )
       .clickable { onClick() }
       .padding(horizontal = 26.dp),
     contentAlignment = Alignment.Center,
@@ -1028,8 +1216,15 @@ private fun LandingFooter(colors: LandingColors) {
       .fillMaxWidth()
       .background(colors.panel),
   ) {
-    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.outline))
-    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+    Box(
+      modifier = Modifier.fillMaxWidth()
+        .height(1.dp)
+        .background(colors.outline)
+    )
+    Box(
+      modifier = Modifier.fillMaxWidth(),
+      contentAlignment = Alignment.TopCenter
+    ) {
       Column(
         modifier = Modifier
           .widthIn(max = ContentMaxWidth)
@@ -1038,7 +1233,11 @@ private fun LandingFooter(colors: LandingColors) {
       ) {
         Text(
           text = "© 2026 SquawkIt. A personal convenience tool — not a certified maintenance record system, and not a replacement for the official aircraft logbooks required by your aviation authority. Aircraft maintenance logbook app for pilots, owners, and mechanics.",
-          style = TextStyle(fontSize = 12.5.sp, lineHeight = 19.sp, color = colors.footerCopy),
+          style = TextStyle(
+            fontSize = 12.5.sp,
+            lineHeight = 19.sp,
+            color = colors.footerCopy
+          ),
         )
         Spacer(Modifier.height(14.dp))
         val uriHandler = LocalUriHandler.current

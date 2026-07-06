@@ -8,9 +8,13 @@ sealed interface AircraftOverviewAction {
   data class EditClick(val aircraftId: String) : AircraftOverviewAction
   data object DeleteConfirm : AircraftOverviewAction
   data class AddLogClick(val aircraftId: String) : AircraftOverviewAction
-  data class EditLogClick(val aircraftId: String, val logId: String) : AircraftOverviewAction
+  data class EditLogClick(val aircraftId: String, val logId: String) :
+    AircraftOverviewAction
+
   data class AddTaskClick(val aircraftId: String) : AircraftOverviewAction
-  data class TaskCardClick(val card: MaintenanceTaskWithStatus) : AircraftOverviewAction
+  data class TaskCardClick(val card: MaintenanceTaskWithStatus) :
+    AircraftOverviewAction
+
   data object DismissTaskDetail : AircraftOverviewAction
   data class EditTaskClick(val aircraftId: String, val cardId: String) :
     AircraftOverviewAction
@@ -19,7 +23,10 @@ sealed interface AircraftOverviewAction {
   data object ConfirmDeleteTask : AircraftOverviewAction
   data class TaskFromLogClick(val taskId: String) : AircraftOverviewAction
   data class AddSquawkClick(val aircraftId: String) : AircraftOverviewAction
-  data class ShowSquawkDetail(val squawk: SquawkWithStatus) : AircraftOverviewAction
+  data class ShowSquawkDetail(val squawk: SquawkWithStatus) :
+    AircraftOverviewAction
+
   data object DismissSquawkDetail : AircraftOverviewAction
-  data class EditSquawkClick(val aircraftId: String, val squawkId: String) : AircraftOverviewAction
+  data class EditSquawkClick(val aircraftId: String, val squawkId: String) :
+    AircraftOverviewAction
 }

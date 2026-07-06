@@ -129,7 +129,8 @@ private object Crc32 {
   fun compute(bytes: ByteArray): UInt {
     var crc = 0xffffffffu
     bytes.forEach { byte ->
-      val index = ((crc xor (byte and 0xff.toByte()).toUInt()) and 0xffu).toInt()
+      val index =
+        ((crc xor (byte and 0xff.toByte()).toUInt()) and 0xffu).toInt()
       crc = table[index] xor (crc shr 8)
     }
     return crc xor 0xffffffffu

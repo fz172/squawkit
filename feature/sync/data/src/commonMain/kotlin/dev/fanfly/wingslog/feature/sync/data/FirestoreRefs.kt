@@ -32,10 +32,12 @@ object FirestoreRefs {
     require(segments.size >= 2 && segments.size % 2 == 0) {
       "EntityScope must have an even number of segments (collection/doc pairs); got $segments"
     }
-    var doc: DocumentReference = firestore.collection(segments[0]).document(segments[1])
+    var doc: DocumentReference = firestore.collection(segments[0])
+      .document(segments[1])
     var i = 2
     while (i + 1 < segments.size) {
-      doc = doc.collection(segments[i]).document(segments[i + 1])
+      doc = doc.collection(segments[i])
+        .document(segments[i + 1])
       i += 2
     }
     return doc.collection(kind.wireName)

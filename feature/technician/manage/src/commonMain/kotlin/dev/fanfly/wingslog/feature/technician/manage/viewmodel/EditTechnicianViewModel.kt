@@ -36,9 +36,12 @@ class EditTechnicianViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  private val technicianId: String? = savedStateHandle.get<String>(Screen.TECHNICIAN_ID)?.takeIf { it != "new" }
+  private val technicianId: String? =
+    savedStateHandle.get<String>(Screen.TECHNICIAN_ID)
+      ?.takeIf { it != "new" }
 
-  private val _uiState = MutableStateFlow(EditTechnicianUiState(isLoading = technicianId != null))
+  private val _uiState =
+    MutableStateFlow(EditTechnicianUiState(isLoading = technicianId != null))
   val uiState = _uiState.asStateFlow()
 
   init {
@@ -50,22 +53,26 @@ class EditTechnicianViewModel(
 
   private fun observeSelfId(id: String) {
     viewModelScope.launch {
-      technicianManager.observeSelfId().collect { selfId ->
-        _uiState.update { it.copy(isSelf = selfId == id) }
-      }
+      technicianManager.observeSelfId()
+        .collect { selfId ->
+          _uiState.update { it.copy(isSelf = selfId == id) }
+        }
     }
   }
 
   private fun loadTechnician(id: String) {
     viewModelScope.launch {
-      val technician = technicianManager.loadTechnician(id).firstOrNull()
+      val technician = technicianManager.loadTechnician(id)
+        .firstOrNull()
       if (technician != null) {
         _uiState.update {
           val certType = when {
             technician.certificate_type != CertificateType.CERTIFICATE_TYPE_NONE ->
               technician.certificate_type
+
             technician.cert_type.isBlank() || technician.cert_type == "NONE" ->
               CertificateType.CERTIFICATE_TYPE_NONE
+
             else -> try {
               CertificateType.valueOf(technician.cert_type)
             } catch (_: Exception) {
@@ -76,8 +83,10 @@ class EditTechnicianViewModel(
           val expireLimit = when {
             technician.cert_expire_limit != CertExpireLimit.CERT_EXPIRE_LIMIT_UNKNOWN ->
               technician.cert_expire_limit
+
             technician.cert_expiration == null ->
               CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES
+
             else ->
               CertExpireLimit.CERT_EXPIRE_LIMIT_EXPIRES
           }
@@ -95,7 +104,12 @@ class EditTechnicianViewModel(
           )
         }
       } else {
-        _uiState.update { it.copy(isLoading = false, error = "Failed to load technician") }
+        _uiState.update {
+          it.copy(
+            isLoading = false,
+            error = "Failed to load technician"
+          )
+        }
       }
     }
   }
@@ -140,7 +154,10 @@ class EditTechnicianViewModel(
         _uiState.update { it.copy(deleteSuccess = true) }
       } else {
         _uiState.update {
-          it.copy(error = result.exceptionOrNull()?.message ?: "Failed to delete technician")
+          it.copy(
+            error = result.exceptionOrNull()?.message
+              ?: "Failed to delete technician"
+          )
         }
       }
     }
@@ -165,7 +182,12 @@ class EditTechnicianViewModel(
         cert_expiration = if (currentState.certExpireLimit == CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES) {
           null
         } else {
-          currentState.certExpiration?.let { toWireInstant(it.epochSeconds, it.nanosecondsOfSecond) }
+          currentState.certExpiration?.let {
+            toWireInstant(
+              it.epochSeconds,
+              it.nanosecondsOfSecond
+            )
+          }
         },
       )
 
@@ -174,7 +196,11 @@ class EditTechnicianViewModel(
         _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
       } else {
         _uiState.update {
-          it.copy(isSaving = false, error = result.exceptionOrNull()?.message ?: "Failed to save technician")
+          it.copy(
+            isSaving = false,
+            error = result.exceptionOrNull()?.message
+              ?: "Failed to save technician"
+          )
         }
       }
     }

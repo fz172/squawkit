@@ -34,7 +34,8 @@ import kotlin.time.ExperimentalTime
  * The platform [DriverFactory] is provided by
  * [platformStorageModule] in androidMain / iosMain.
  */
-@OptIn(ExperimentalTime::class) val storageModule: Module = module {
+@OptIn(ExperimentalTime::class)
+val storageModule: Module = module {
   single<SqlDriver> { get<DriverFactory>().createDriver() }
 
   single<WingsLogDatabase> { createWingsLogDatabase(get<SqlDriver>()) }
@@ -90,7 +91,12 @@ import kotlin.time.ExperimentalTime
     )
   }
 
-  single<TombstoneGc> { TombstoneGc(db = get(), writeLock = get<DatabaseWriteLock>()) }
+  single<TombstoneGc> {
+    TombstoneGc(
+      db = get(),
+      writeLock = get<DatabaseWriteLock>()
+    )
+  }
 
   single<DatabaseIntegrityChecker> {
     DatabaseIntegrityChecker(
@@ -101,7 +107,10 @@ import kotlin.time.ExperimentalTime
   }
 
   single<LocalAccountMigrator> {
-    LocalAccountMigratorImpl(db = get<WingsLogDatabase>(), writeLock = get<DatabaseWriteLock>())
+    LocalAccountMigratorImpl(
+      db = get<WingsLogDatabase>(),
+      writeLock = get<DatabaseWriteLock>()
+    )
   }
 
   single<DatabaseHealth> { DatabaseHealth(isCorrupted = !get<DatabaseIntegrityChecker>().checkIntegrity()) }

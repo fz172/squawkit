@@ -49,9 +49,20 @@ data class ScheduleState(
         } else {
           val n = calValue.toIntOrNull() ?: return emptyList()
           val rule = when (calUnit) {
-            ScheduleTimeUnit.DAYS -> TimeRule(interval_days = n, creation_date = creationDate)
-            ScheduleTimeUnit.MONTHS -> TimeRule(interval_months = n, creation_date = creationDate)
-            ScheduleTimeUnit.YEARS -> TimeRule(interval_years = n, creation_date = creationDate)
+            ScheduleTimeUnit.DAYS -> TimeRule(
+              interval_days = n,
+              creation_date = creationDate
+            )
+
+            ScheduleTimeUnit.MONTHS -> TimeRule(
+              interval_months = n,
+              creation_date = creationDate
+            )
+
+            ScheduleTimeUnit.YEARS -> TimeRule(
+              interval_years = n,
+              creation_date = creationDate
+            )
           }
           listOf(InspectionRule(time_rule = rule))
         }
@@ -107,14 +118,21 @@ data class ScheduleState(
         engineRule != null -> ScheduleState(
           mode = ScheduleMode.HOURS,
           recurrence = baseRecurrence,
-          hourValue = engineRule.interval_hours.takeIf { it > 0f }?.let {
-            if (it == it.toInt().toFloat()) it.toInt().toString() else it.toString()
-          } ?: "",
+          hourValue = engineRule.interval_hours.takeIf { it > 0f }
+            ?.let {
+              if (it == it.toInt()
+                  .toFloat()
+              ) it.toInt()
+                .toString() else it.toString()
+            } ?: "",
         )
 
         immediateRule != null -> {
           // Immediate without a time/hours/linked rule is rare; default to time mode for editing
-          ScheduleState(mode = ScheduleMode.TIME, recurrence = ScheduleRecurrence.ASAP)
+          ScheduleState(
+            mode = ScheduleMode.TIME,
+            recurrence = ScheduleRecurrence.ASAP
+          )
         }
 
         else -> ScheduleState()

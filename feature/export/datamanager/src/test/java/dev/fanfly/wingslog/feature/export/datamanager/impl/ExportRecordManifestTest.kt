@@ -16,19 +16,31 @@ class ExportRecordManifestTest {
   @Test
   fun encodeDecode_roundTripsRecords() {
     val records = listOf(
-      record("export-a", "content://a", "A.zip", formats = listOf("PDF", "CSV")),
+      record(
+        "export-a",
+        "content://a",
+        "A.zip",
+        formats = listOf("PDF", "CSV")
+      ),
       record("export-b", "content://b", "B.zip", formats = listOf("XLSX")),
     )
 
-    val decoded = ExportRecordManifest.decode(ExportRecordManifest.encode(records))
+    val decoded =
+      ExportRecordManifest.decode(ExportRecordManifest.encode(records))
 
     assertThat(decoded).isEqualTo(records)
   }
 
   @Test
   fun upsert_replacesByExportId() {
-    val original = record("export-a", "content://a", "A.zip", formats = listOf("PDF"))
-    val replacement = record("export-a", "content://b", "A.zip", formats = listOf("PDF", "XLSX"))
+    val original =
+      record("export-a", "content://a", "A.zip", formats = listOf("PDF"))
+    val replacement = record(
+      "export-a",
+      "content://b",
+      "A.zip",
+      formats = listOf("PDF", "XLSX")
+    )
 
     val result = ExportRecordManifest.upsert(listOf(original), replacement)
 
@@ -40,7 +52,12 @@ class ExportRecordManifestTest {
     val a = record("export-a", "content://a", "A.zip")
     val b = record("export-b", "content://b", "B.zip")
 
-    assertThat(ExportRecordManifest.remove(listOf(a, b), "export-a")).containsExactly(b)
+    assertThat(
+      ExportRecordManifest.remove(
+        listOf(a, b),
+        "export-a"
+      )
+    ).containsExactly(b)
   }
 
   @Test
@@ -52,7 +69,13 @@ class ExportRecordManifestTest {
       ),
     )
 
-    assertThat(ExportRecordManifest.decode(bytes)).containsExactly(record("export-a", "content://a", "A.zip"))
+    assertThat(ExportRecordManifest.decode(bytes)).containsExactly(
+      record(
+        "export-a",
+        "content://a",
+        "A.zip"
+      )
+    )
   }
 
   @Test
@@ -66,7 +89,12 @@ class ExportRecordManifestTest {
         size = 1L,
       ),
       // Manifest for an archive the user deleted outside the app — must not survive.
-      record("export-gone", "content://gone", "Gone.zip", formats = listOf("CSV")),
+      record(
+        "export-gone",
+        "content://gone",
+        "Gone.zip",
+        formats = listOf("CSV")
+      ),
     )
     val discovered = listOf(
       // Same archive, but disk reports the authoritative size/timestamp.
@@ -80,7 +108,8 @@ class ExportRecordManifestTest {
     assertThat(result.map { it.file_path }).containsExactly("content://a")
     val enriched = result.first { it.file_path == "content://a" }
     assertThat(enriched.export_id).isEqualTo("export-a")
-    assertThat(enriched.formats).containsExactly("PDF", "XLSX").inOrder()
+    assertThat(enriched.formats).containsExactly("PDF", "XLSX")
+      .inOrder()
     assertThat(enriched.date_range?.kind).isEqualTo("LAST_N_MONTHS")
     // Volatile facts come from disk.
     assertThat(enriched.size_bytes).isEqualTo(4_096L)

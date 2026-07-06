@@ -9,32 +9,32 @@ option java_multiple_files = true;
 
 enum SquawkPriority {
   SQUAWK_PRIORITY_UNKNOWN = 0;
-  SQUAWK_PRIORITY_LOW     = 1;
-  SQUAWK_PRIORITY_MEDIUM  = 2;
-  SQUAWK_PRIORITY_HIGH    = 3;
-  SQUAWK_PRIORITY_AOG     = 4;
+  SQUAWK_PRIORITY_LOW = 1;
+  SQUAWK_PRIORITY_MEDIUM = 2;
+  SQUAWK_PRIORITY_HIGH = 3;
+  SQUAWK_PRIORITY_AOG = 4;
 }
 
 enum SquawkDismissReason {
-  SQUAWK_DISMISS_REASON_UNKNOWN           = 0;
-  SQUAWK_DISMISS_REASON_OBSOLETE          = 1;
-  SQUAWK_DISMISS_REASON_NOT_REPRODUCIBLE  = 2;
-  SQUAWK_DISMISS_REASON_DUPLICATE         = 3;
+  SQUAWK_DISMISS_REASON_UNKNOWN = 0;
+  SQUAWK_DISMISS_REASON_OBSOLETE = 1;
+  SQUAWK_DISMISS_REASON_NOT_REPRODUCIBLE = 2;
+  SQUAWK_DISMISS_REASON_DUPLICATE = 3;
   SQUAWK_DISMISS_REASON_INTENDED_BEHAVIOR = 4;
 }
 
 message Squawk {
-  string id                            = 1;
-  string title                         = 2;
-  string description                   = 3;
-  SquawkPriority priority              = 4;
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  SquawkPriority priority = 4;
   google.protobuf.Timestamp created_at = 5;
-  ComponentType component_type         = 6;
-  string component_serial              = 7;
-  repeated Attachment attachments      = 8;
+  ComponentType component_type = 6;
+  string component_serial = 7;
+  repeated Attachment attachments = 8;
   // Empty = Open; populated = Addressed.
-  string addressed_by_log_id           = 9;
+  string addressed_by_log_id = 9;
   // Non-zero = Dismissed without corrective action.
-  SquawkDismissReason dismiss_reason        = 10;
-  google.protobuf.Timestamp dismissed_at    = 11;
+  SquawkDismissReason dismiss_reason = 10;
+  google.protobuf.Timestamp dismissed_at = 11;
 }

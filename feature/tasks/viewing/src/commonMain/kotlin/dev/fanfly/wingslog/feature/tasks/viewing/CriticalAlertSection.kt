@@ -47,7 +47,8 @@ fun CriticalAlertsSection(
 ) {
   val hasOverdue = overdueTasks.any { it.dueStatus.status == DueStatus.OVERDUE }
   val colors = MaterialTheme.statusColors
-  val titleColor = if (hasOverdue) colors.critical.accent else colors.caution.accent
+  val titleColor =
+    if (hasOverdue) colors.critical.accent else colors.caution.accent
 
   Card(
     modifier = modifier.fillMaxWidth(),
@@ -117,7 +118,8 @@ private fun CriticalAlertItem(
 ) {
   val isOverdue = cardWithStatus.dueStatus.status == DueStatus.OVERDUE
   val colors = MaterialTheme.statusColors
-  val dotColor = if (isOverdue) colors.critical.accent else colors.caution.accent
+  val dotColor =
+    if (isOverdue) colors.critical.accent else colors.caution.accent
 
   val dueDate = cardWithStatus.dueStatus.nextDueDate
   val dueEngine = cardWithStatus.dueStatus.nextDueEngine

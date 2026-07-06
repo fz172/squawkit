@@ -58,13 +58,17 @@ class AuthManagerImpl(
   override fun isSignInWithEmailLink(link: String): Boolean =
     emailLink.isSignInWithEmailLink(link)
 
-  override suspend fun completeSignInLink(email: String, link: String): FirebaseUser? =
+  override suspend fun completeSignInLink(
+    email: String,
+    link: String
+  ): FirebaseUser? =
     emailLink.completeSignInLink(email, link)
 
   /**
    * Tries to return the currently authenticated user without prompting.
    */
-  override suspend fun trySilentLogin(): FirebaseUser? = authProvider.currentUser
+  override suspend fun trySilentLogin(): FirebaseUser? =
+    authProvider.currentUser
 
   override suspend fun signInWithGoogle(): FirebaseUser? {
     val error = IosGoogleSignInBridge.signIn()
@@ -112,7 +116,7 @@ class AuthManagerImpl(
     return try {
       val result = authProvider.signInWithCredential(credential)
       val user = result.user ?: authProvider.currentUser
-        ?: return AccountUpgradeResult.Failed("Sign-in returned no user")
+      ?: return AccountUpgradeResult.Failed("Sign-in returned no user")
       AccountUpgradeResult.Linked(user)
     } catch (e: Exception) {
       logger.e(e) { "Sign-in to existing account failed" }

@@ -39,7 +39,10 @@ fun BladeChipsOverview(blades: List<PropellerBlade>) {
       Surface(
         shape = RoundedCornerShape(Spacing.badgeCornerRadius),
         color = Color.Transparent,
-        border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(
+          Spacing.hairline,
+          MaterialTheme.colorScheme.outlineVariant
+        ),
       ) {
         Column(
           modifier = Modifier.padding(

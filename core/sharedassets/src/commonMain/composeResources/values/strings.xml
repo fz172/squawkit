@@ -1,51 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">SquawkIt</string>
-    <string name="edit_profile">Edit Profile</string>
-    <string name="settings">Settings</string>
-    <!-- Generic action names -->
-    <string name="back">Back</string>
-    <string name="add">Add</string>
-    <string name="edit">Edit</string>
+  <string name="app_name">SquawkIt</string>
+  <string name="edit_profile">Edit Profile</string>
+  <string name="settings">Settings</string>
+  <!-- Generic action names -->
+  <string name="back">Back</string>
+  <string name="add">Add</string>
+  <string name="edit">Edit</string>
   <string name="add_aircraft">Add Aircraft</string>
   <string name="empty_add_aircraft">Add an aircraft to get started</string>
-    <string name="remove">Remove</string>
-    <string name="delete">Delete</string>
-    <string name="done">Done</string>
-    <string name="ok">OK</string>
-    <string name="cancel">Cancel</string>
-    <string name="save">Save</string>
-    <string name="save_changes">Save Changes</string>
-    <string name="retry">Try Again</string>
-    <!--Generate states -->
-    <string name="configuration">Configuration</string>
-    <string name="none">None</string>
-    <string name="unknown">Unknown</string>
-    <string name="required">Required</string>
-    <string name="all">All</string>
-    <string name="or">OR</string>
-    <string name="dash">—</string>
-    <string name="unsaved_changes">Unsaved Changes</string>
-    <string name="unsaved_changes_message">You have unsaved changes. Are you sure you want to leave?</string>
-    <string name="discard">Discard</string>
-    <string name="save_failed">Save failed</string>
-    <string name="delete_failed">Delete failed</string>
-    <string name="error_occurred">An error occurred</string>
+  <string name="remove">Remove</string>
+  <string name="delete">Delete</string>
+  <string name="done">Done</string>
+  <string name="ok">OK</string>
+  <string name="cancel">Cancel</string>
+  <string name="save">Save</string>
+  <string name="save_changes">Save Changes</string>
+  <string name="retry">Try Again</string>
+  <!--Generate states -->
+  <string name="configuration">Configuration</string>
+  <string name="none">None</string>
+  <string name="unknown">Unknown</string>
+  <string name="required">Required</string>
+  <string name="all">All</string>
+  <string name="or">OR</string>
+  <string name="dash">—</string>
+  <string name="unsaved_changes">Unsaved Changes</string>
+  <string name="unsaved_changes_message">You have unsaved changes. Are you sure you want to leave?</string>
+  <string name="discard">Discard</string>
+  <string name="save_failed">Save failed</string>
+  <string name="delete_failed">Delete failed</string>
+  <string name="error_occurred">An error occurred</string>
   <string name="details">Details</string>
   <string name="make_model_template">%1$s %2$s</string>
-    <string name="select_date">Select Date</string>
-    <!-- Shell navigation tabs -->
-    <string name="shell_tab_dashboard">Dashboard</string>
-    <string name="shell_tab_squawks">Squawks</string>
-    <string name="shell_tab_tasks">Maint.</string>
-    <string name="shell_tab_logs">Logs</string>
-    <string name="shell_title_tasks">Maintenance Task</string>
-    <!-- Component names -->
-    <string name="component_type">Component Type</string>
-    <string name="component_airframe">Airframe</string>
-    <string name="component_engine">Engine</string>
-    <string name="component_propeller">Propeller</string>
-    <!-- Units -->
-    <string name="unit_hours">hrs</string>
+  <string name="select_date">Select Date</string>
+  <!-- Shell navigation tabs -->
+  <string name="shell_tab_dashboard">Dashboard</string>
+  <string name="shell_tab_squawks">Squawks</string>
+  <string name="shell_tab_tasks">Maint.</string>
+  <string name="shell_tab_logs">Logs</string>
+  <string name="shell_title_tasks">Maintenance Task</string>
+  <!-- Component names -->
+  <string name="component_type">Component Type</string>
+  <string name="component_airframe">Airframe</string>
+  <string name="component_engine">Engine</string>
+  <string name="component_propeller">Propeller</string>
+  <!-- Units -->
+  <string name="unit_hours">hrs</string>
 
 </resources>

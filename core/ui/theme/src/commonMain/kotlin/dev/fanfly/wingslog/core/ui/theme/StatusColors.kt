@@ -55,7 +55,10 @@ fun StatusColors.toneFor(tier: StatusTier): StatusTone = when (tier) {
   StatusTier.NEUTRAL -> neutral
 }
 
-internal fun statusColorsFor(colorScheme: ColorScheme, darkTheme: Boolean): StatusColors {
+internal fun statusColorsFor(
+  colorScheme: ColorScheme,
+  darkTheme: Boolean
+): StatusColors {
   val blocking = if (darkTheme) {
     StatusTone(
       // Standalone AOG labels/icons render on dark surfaces, not on this container.

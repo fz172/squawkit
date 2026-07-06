@@ -27,7 +27,11 @@ import platform.posix.memcpy
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual class ExportFileStore {
   private val exportDirectory: String
-    get() = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
+    get() = NSSearchPathForDirectoriesInDomains(
+      NSDocumentDirectory,
+      NSUserDomainMask,
+      true
+    )
       .first() as String + "/SquawkIt"
 
   // App-private metadata index. The leading dot keeps it out of the ".zip" archive listing and
@@ -36,7 +40,10 @@ actual class ExportFileStore {
   private fun indexPath(ownerUid: String): String =
     "$exportDirectory/.export_record_index_${ownerUid.toFileSegment()}.pb"
 
-  actual suspend fun writeZip(fileName: String, bytes: ByteArray): ExportedFile =
+  actual suspend fun writeZip(
+    fileName: String,
+    bytes: ByteArray
+  ): ExportedFile =
     withContext(Dispatchers.Default) {
       ensureDirectory()
       val path = "$exportDirectory/$fileName"
@@ -54,13 +61,20 @@ actual class ExportFileStore {
       ensureDirectory()
       writeBytes(
         indexPath(ownerUid),
-        ExportRecordManifest.encode(ExportRecordManifest.upsert(readIndex(ownerUid), record))
+        ExportRecordManifest.encode(
+          ExportRecordManifest.upsert(
+            readIndex(
+              ownerUid
+            ), record
+          )
+        )
       )
     }
 
   actual suspend fun listExports(ownerUid: String): List<ExportRecord> =
     withContext(Dispatchers.Default) {
-      val reconciled = ExportRecordManifest.reconcile(readIndex(ownerUid), discoverArchives())
+      val reconciled =
+        ExportRecordManifest.reconcile(readIndex(ownerUid), discoverArchives())
       ensureDirectory()
       writeBytes(indexPath(ownerUid), ExportRecordManifest.encode(reconciled))
       reconciled
@@ -68,29 +82,41 @@ actual class ExportFileStore {
 
   actual suspend fun deleteExport(ownerUid: String, exportId: String): Boolean =
     withContext(Dispatchers.Default) {
-      val reconciled = ExportRecordManifest.reconcile(readIndex(ownerUid), discoverArchives())
+      val reconciled =
+        ExportRecordManifest.reconcile(readIndex(ownerUid), discoverArchives())
       val record = reconciled.firstOrNull { it.export_id == exportId }
       if (record == null) return@withContext false
 
-      val removed = record.file_path.takeIf { it.isNotBlank() }?.let { filePath ->
-        NSFileManager.defaultManager.removeItemAtPath(filePath, null)
-      } ?: true
+      val removed = record.file_path.takeIf { it.isNotBlank() }
+        ?.let { filePath ->
+          NSFileManager.defaultManager.removeItemAtPath(filePath, null)
+        } ?: true
 
       if (removed) {
-        writeBytes(indexPath(ownerUid), ExportRecordManifest.encode(ExportRecordManifest.remove(reconciled, exportId)))
+        writeBytes(
+          indexPath(ownerUid),
+          ExportRecordManifest.encode(
+            ExportRecordManifest.remove(
+              reconciled,
+              exportId
+            )
+          )
+        )
       }
       removed
     }
 
   private fun discoverArchives(): List<LocalArchiveRecord> {
     val fm = NSFileManager.defaultManager
-    val names = fm.contentsOfDirectoryAtPath(exportDirectory, null).orEmpty()
+    val names = fm.contentsOfDirectoryAtPath(exportDirectory, null)
+      .orEmpty()
     return names.filterIsInstance<String>()
       .filter { it.endsWith(".zip") }
       .map { name ->
         val path = "$exportDirectory/$name"
         val attributes = fm.attributesOfItemAtPath(path, null)
-        val size = (attributes?.get(NSFileSize) as? NSNumber)?.longLongValue ?: 0L
+        val size =
+          (attributes?.get(NSFileSize) as? NSNumber)?.longLongValue ?: 0L
         val modified = (attributes?.get(NSFileModificationDate) as? NSDate)
           ?.timeIntervalSince1970 ?: 0.0
         LocalArchiveRecord(
@@ -111,7 +137,10 @@ actual class ExportFileStore {
   }
 
   private fun readIndex(ownerUid: String): List<ExportRecord> =
-    ExportRecordManifest.decode(NSData.dataWithContentsOfFile(indexPath(ownerUid))?.toByteArray())
+    ExportRecordManifest.decode(
+      NSData.dataWithContentsOfFile(indexPath(ownerUid))
+        ?.toByteArray()
+    )
 
   private fun writeBytes(path: String, bytes: ByteArray) {
     val data: NSData = bytes.usePinned { pinned ->
@@ -124,7 +153,13 @@ actual class ExportFileStore {
     val size = length.toInt()
     if (size == 0) return ByteArray(0)
     val out = ByteArray(size)
-    out.usePinned { pinned -> memcpy(pinned.addressOf(0), bytes, length.convert()) }
+    out.usePinned { pinned ->
+      memcpy(
+        pinned.addressOf(0),
+        bytes,
+        length.convert()
+      )
+    }
     return out
   }
 

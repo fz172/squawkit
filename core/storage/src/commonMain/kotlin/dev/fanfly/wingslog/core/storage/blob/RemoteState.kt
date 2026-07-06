@@ -41,18 +41,23 @@ sealed interface RemoteState {
   }
 
   companion object {
-    val ALL: List<RemoteState> = listOf(LocalOnly, Uploading, Synced, RemoteOnly)
+    val ALL: List<RemoteState> =
+      listOf(LocalOnly, Uploading, Synced, RemoteOnly)
 
-    private val byWire: Map<String, RemoteState> = ALL.associateBy { it.wireName }
+    private val byWire: Map<String, RemoteState> =
+      ALL.associateBy { it.wireName }
 
     fun fromWire(wire: String): RemoteState =
-      byWire[wire] ?: error("Unknown remote_state '$wire' — register it in RemoteState")
+      byWire[wire]
+        ?: error("Unknown remote_state '$wire' — register it in RemoteState")
   }
 }
 
 /** SQLDelight `ColumnAdapter` that maps the `TEXT` `remote_state` column to [RemoteState]. */
 val remoteStateAdapter: ColumnAdapter<RemoteState, String> =
   object : ColumnAdapter<RemoteState, String> {
-    override fun decode(databaseValue: String): RemoteState = RemoteState.fromWire(databaseValue)
+    override fun decode(databaseValue: String): RemoteState =
+      RemoteState.fromWire(databaseValue)
+
     override fun encode(value: RemoteState): String = value.wireName
   }

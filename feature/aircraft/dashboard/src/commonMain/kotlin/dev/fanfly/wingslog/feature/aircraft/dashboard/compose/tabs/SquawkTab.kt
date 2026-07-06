@@ -149,7 +149,8 @@ fun SquawkTab(
         val openFlow = attachmentOpener.open(attachment)
         coroutineScope.launch {
           openFlow.collect { openState ->
-            if (openState is OpenState.Failed) openError = openState.error.message
+            if (openState is OpenState.Failed) openError =
+              openState.error.message
           }
         }
       },

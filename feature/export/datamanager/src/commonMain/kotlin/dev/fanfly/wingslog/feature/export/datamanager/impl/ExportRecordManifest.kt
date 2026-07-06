@@ -27,7 +27,10 @@ internal object ExportRecordManifest {
     ExportRecordIndex(records = records.filter(::hasExportId)).encode()
 
   /** Inserts or replaces [record] (keyed by `export_id`) in [stored]. */
-  fun upsert(stored: List<ExportRecord>, record: ExportRecord): List<ExportRecord> =
+  fun upsert(
+    stored: List<ExportRecord>,
+    record: ExportRecord
+  ): List<ExportRecord> =
     if (!hasExportId(record)) stored
     else stored.filterNot { it.export_id == record.export_id } + record
 
@@ -44,7 +47,8 @@ internal object ExportRecordManifest {
     stored: List<ExportRecord>,
     discovered: List<LocalArchiveRecord>,
   ): List<ExportRecord> {
-    val manifestByPath = stored.filter(::hasExportId).associateBy { it.file_path }
+    val manifestByPath = stored.filter(::hasExportId)
+      .associateBy { it.file_path }
     return discovered
       .mapNotNull { disk ->
         val manifest = manifestByPath[disk.filePath] ?: return@mapNotNull null
@@ -61,5 +65,6 @@ internal object ExportRecordManifest {
       .sortedByDescending { it.created_at_epoch_millis }
   }
 
-  private fun hasExportId(record: ExportRecord): Boolean = record.export_id.isNotBlank()
+  private fun hasExportId(record: ExportRecord): Boolean =
+    record.export_id.isNotBlank()
 }

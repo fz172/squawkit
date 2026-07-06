@@ -29,7 +29,8 @@ class SyncCursorStoreTest {
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.synchronous().create(driver)
+    WingsLogDatabase.Schema.synchronous()
+      .create(driver)
     db = createWingsLogDatabase(driver)
     store = SyncCursorStore(db)
   }

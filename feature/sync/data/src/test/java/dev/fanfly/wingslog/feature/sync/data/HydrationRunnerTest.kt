@@ -31,7 +31,8 @@ class HydrationRunnerTest {
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.synchronous().create(driver)
+    WingsLogDatabase.Schema.synchronous()
+      .create(driver)
     db = createWingsLogDatabase(driver)
 
     fetcher = mockk()
@@ -128,11 +129,18 @@ class HydrationRunnerTest {
       TEST_KIND,
       TEST_SCOPE.toPath(),
       "log-dirty"
-    ).executeAsOne()
+    )
+      .executeAsOne()
     assertThat(row.dirty).isTrue()
     assertThat(row.payload.asList()).containsExactly(0x11.toByte())
     assertThat(row.remote_updated_at).isNull()
-    assertThat(cursors.get(TEST_UID, TEST_KIND, TEST_SCOPE)!!.lastSeenRemote).isEqualTo(5000L)
+    assertThat(
+      cursors.get(
+        TEST_UID,
+        TEST_KIND,
+        TEST_SCOPE
+      )!!.lastSeenRemote
+    ).isEqualTo(5000L)
   }
 
   @Test
@@ -202,31 +210,32 @@ class HydrationRunnerTest {
   }
 
   @Test
-  fun runFor_emptyCollection_returnsTrueAndCursorHydratedWithNullLastSeen() = runTest {
-    coEvery {
-      fetcher.fetchAll(
+  fun runFor_emptyCollection_returnsTrueAndCursorHydratedWithNullLastSeen() =
+    runTest {
+      coEvery {
+        fetcher.fetchAll(
+          TEST_KIND,
+          TEST_SCOPE
+        )
+      } returns emptyList()
+
+      val result = runner.runFor(
+        TEST_UID,
         TEST_KIND,
         TEST_SCOPE
       )
-    } returns emptyList()
 
-    val result = runner.runFor(
-      TEST_UID,
-      TEST_KIND,
-      TEST_SCOPE
-    )
-
-    assertThat(result).isTrue()
-    val cursor = cursors.get(
-      TEST_UID,
-      TEST_KIND,
-      TEST_SCOPE
-    )
-    assertThat(cursor).isNotNull()
-    assertThat(cursor!!.hydrated).isTrue()
-    assertThat(cursor.lastSeenRemote).isNull()
-    assertThat(cursor.failedAttempts).isEqualTo(0)
-  }
+      assertThat(result).isTrue()
+      val cursor = cursors.get(
+        TEST_UID,
+        TEST_KIND,
+        TEST_SCOPE
+      )
+      assertThat(cursor).isNotNull()
+      assertThat(cursor!!.hydrated).isTrue()
+      assertThat(cursor.lastSeenRemote).isNull()
+      assertThat(cursor.failedAttempts).isEqualTo(0)
+    }
 
   // Failure: RemoteFetcher throws → failed_attempts++, last_attempt_at set, hydrated stays false.
 

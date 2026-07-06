@@ -8,7 +8,8 @@ import androidx.compose.ui.platform.LocalContext
 actual fun getAppVersion(): String {
   val context = LocalContext.current
   return try {
-    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    val packageInfo =
+      context.packageManager.getPackageInfo(context.packageName, 0)
     packageInfo.versionName ?: "Unknown"
   } catch (e: PackageManager.NameNotFoundException) {
     "Unknown"

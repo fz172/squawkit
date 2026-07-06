@@ -43,7 +43,9 @@ class SyncCursorStore(
       uid,
       kind,
       scope.toPath()
-    ).awaitAsOneOrNull()?.toCursor(scope)
+    )
+      .awaitAsOneOrNull()
+      ?.toCursor(scope)
 
   suspend fun markHydrated(
     uid: String,
@@ -59,7 +61,8 @@ class SyncCursorStore(
         hydrated = true,
         last_seen_remote = lastSeenRemote,
         failed_attempts = 0L,
-        last_attempt_at = Clock.System.now().toEpochMilliseconds(),
+        last_attempt_at = Clock.System.now()
+          .toEpochMilliseconds(),
       )
     }
   }
@@ -86,7 +89,8 @@ class SyncCursorStore(
         hydrated = current?.hydrated ?: false,
         last_seen_remote = remoteTs,
         failed_attempts = current?.failedAttempts?.toLong() ?: 0L,
-        last_attempt_at = current?.lastAttemptAt ?: Clock.System.now().toEpochMilliseconds(),
+        last_attempt_at = current?.lastAttemptAt ?: Clock.System.now()
+          .toEpochMilliseconds(),
       )
     }
   }
@@ -109,7 +113,8 @@ class SyncCursorStore(
         hydrated = current?.hydrated ?: false,
         last_seen_remote = current?.lastSeenRemote,
         failed_attempts = ((current?.failedAttempts ?: 0) + 1).toLong(),
-        last_attempt_at = Clock.System.now().toEpochMilliseconds(),
+        last_attempt_at = Clock.System.now()
+          .toEpochMilliseconds(),
       )
     }
   }

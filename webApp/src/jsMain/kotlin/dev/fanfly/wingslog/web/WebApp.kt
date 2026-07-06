@@ -75,226 +75,227 @@ fun WebApp() {
   // Read packed string resources via whole-file fetches instead of HTTP Range requests, which
   // Firebase Hosting's gzip breaks. Must wrap the resource warm-up below. See WholeFileResourceReader.
   ProvideWholeFileResourceReader {
-  WingslogTheme(darkTheme = isDark) {
-    Surface(
-      modifier = Modifier.fillMaxSize(),
-      color = MaterialTheme.colorScheme.background,
-    ) {
-      // Web fetches the compose-resources string tables lazily, so on first paint stringResource()
-      // can return "" — shell tabs and other labels render blank until a manual refresh warms the
-      // cache. Warm the shared table once up front (using the same ResourceEnvironment the UI reads
-      // from, so the cache key matches) and hold content until it's ready, so labels are populated
-      // on the first composition. The themed Surface stays as the background during this brief load.
-      val resourceEnvironment = rememberResourceEnvironment()
-      var resourcesReady by remember { mutableStateOf(false) }
-      LaunchedEffect(resourceEnvironment) {
-        runCatching { getString(resourceEnvironment, UiRes.string.app_name) }
-        resourcesReady = true
-      }
-      if (!resourcesReady) return@Surface
+    WingslogTheme(darkTheme = isDark) {
+      Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+      ) {
+        // Web fetches the compose-resources string tables lazily, so on first paint stringResource()
+        // can return "" — shell tabs and other labels render blank until a manual refresh warms the
+        // cache. Warm the shared table once up front (using the same ResourceEnvironment the UI reads
+        // from, so the cache key matches) and hold content until it's ready, so labels are populated
+        // on the first composition. The themed Surface stays as the background during this brief load.
+        val resourceEnvironment = rememberResourceEnvironment()
+        var resourcesReady by remember { mutableStateOf(false) }
+        LaunchedEffect(resourceEnvironment) {
+          runCatching { getString(resourceEnvironment, UiRes.string.app_name) }
+          resourcesReady = true
+        }
+        if (!resourcesReady) return@Surface
 
-      val navController = rememberNavController()
-      val firebaseAuth: FirebaseAuth = koinInject()
-      // Wrap the platform manager so every screen view also retitles the browser tab (and tags the
-      // event with page_title). Wrapping once + providing it to LocalAnalytics covers all call sites.
-      val baseAnalytics: AnalyticsManager = koinInject()
-      val analytics = remember(baseAnalytics) { BrowserTitleAnalytics(baseAnalytics) }
-      var browserNavigationBound by remember { mutableStateOf(false) }
+        val navController = rememberNavController()
+        val firebaseAuth: FirebaseAuth = koinInject()
+        // Wrap the platform manager so every screen view also retitles the browser tab (and tags the
+        // event with page_title). Wrapping once + providing it to LocalAnalytics covers all call sites.
+        val baseAnalytics: AnalyticsManager = koinInject()
+        val analytics =
+          remember(baseAnalytics) { BrowserTitleAnalytics(baseAnalytics) }
+        var browserNavigationBound by remember { mutableStateOf(false) }
 
-      LaunchedEffect(Unit) {
-        firebaseAuth.authStateChanged.collect { user ->
-          if (user == null) {
-            navController.navigate(Screen.Login.route) {
-              popUpTo(0) { inclusive = true }
+        LaunchedEffect(Unit) {
+          firebaseAuth.authStateChanged.collect { user ->
+            if (user == null) {
+              navController.navigate(Screen.Login.route) {
+                popUpTo(0) { inclusive = true }
+              }
             }
           }
         }
-      }
 
-      LaunchedEffect(browserNavigationBound) {
-        if (browserNavigationBound) {
-          navController.bindToBrowserNavigation()
+        LaunchedEffect(browserNavigationBound) {
+          if (browserNavigationBound) {
+            navController.bindToBrowserNavigation()
+          }
         }
-      }
 
-      // Page-view feeder 1 (see AppEntry.kt): all routes except the shell container.
-      LaunchedEffect(navController) {
-        navController.trackScreenViews(
-          analytics,
-          suppress = setOf(Screen.AdaptiveShell.route),
-        )
-      }
-
-      CompositionLocalProvider(LocalAnalytics provides analytics) {
-      NavHost(
-        navController = navController,
-        startDestination = Screen.Login.route,
-      ) {
-        composable(Screen.Login.route) {
-          AuthFlow(
-            onComplete = {
-              navController.navigate(Screen.AdaptiveShell.route) {
-                popUpTo(Screen.Login.route) { inclusive = true }
-              }
-              browserNavigationBound = true
-            },
-            // Web swaps the shared LoginScreen for the SEO landing page; the onboarding tail
-            // (name entry + welcome) and Firebase auth wiring are reused unchanged.
-            loginContent = { onLoginSuccess, onChooseEmail ->
-              WebLoginLandingScreen(
-                onLoginSuccess = onLoginSuccess,
-                onChooseEmail = onChooseEmail,
-              )
-            },
+        // Page-view feeder 1 (see AppEntry.kt): all routes except the shell container.
+        LaunchedEffect(navController) {
+          navController.trackScreenViews(
+            analytics,
+            suppress = setOf(Screen.AdaptiveShell.route),
           )
         }
-        composable(Screen.AdaptiveShell.route) {
-          val viewModel = koinViewModel<AdaptiveShellViewModel>()
-          val state by viewModel.uiState.collectAsState()
-          // Page-view feeder 2 (see AppEntry.kt): shell sections are ViewModel state, not routes.
-          val shellAnalytics = LocalAnalytics.current
-          LaunchedEffect(state.section, state.selectedAircraftId) {
-            shellAnalytics.logScreenView("shell/${state.section.name.lowercase()}")
-          }
-          AdaptiveAppShell(
-            state = state,
-            onSelectSection = viewModel::selectSection,
-            onSelectAircraft = viewModel::selectAircraft,
-            onOpenSettings = viewModel::openSettings,
-            onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
-            sectionContent = { section, aircraftId ->
-              if (section == ShellSection.SETTINGS) {
-                SettingsSection(rootNavController = navController)
-              } else {
-                ShellSectionBody(
-                  section = section,
-                  aircraftId = aircraftId,
+
+        CompositionLocalProvider(LocalAnalytics provides analytics) {
+          NavHost(
+            navController = navController,
+            startDestination = Screen.Login.route,
+          ) {
+            composable(Screen.Login.route) {
+              AuthFlow(
+                onComplete = {
+                  navController.navigate(Screen.AdaptiveShell.route) {
+                    popUpTo(Screen.Login.route) { inclusive = true }
+                  }
+                  browserNavigationBound = true
+                },
+                // Web swaps the shared LoginScreen for the SEO landing page; the onboarding tail
+                // (name entry + welcome) and Firebase auth wiring are reused unchanged.
+                loginContent = { onLoginSuccess, onChooseEmail ->
+                  WebLoginLandingScreen(
+                    onLoginSuccess = onLoginSuccess,
+                    onChooseEmail = onChooseEmail,
+                  )
+                },
+              )
+            }
+            composable(Screen.AdaptiveShell.route) {
+              val viewModel = koinViewModel<AdaptiveShellViewModel>()
+              val state by viewModel.uiState.collectAsState()
+              // Page-view feeder 2 (see AppEntry.kt): shell sections are ViewModel state, not routes.
+              val shellAnalytics = LocalAnalytics.current
+              LaunchedEffect(state.section, state.selectedAircraftId) {
+                shellAnalytics.logScreenView("shell/${state.section.name.lowercase()}")
+              }
+              AdaptiveAppShell(
+                state = state,
+                onSelectSection = viewModel::selectSection,
+                onSelectAircraft = viewModel::selectAircraft,
+                onOpenSettings = viewModel::openSettings,
+                onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+                sectionContent = { section, aircraftId ->
+                  if (section == ShellSection.SETTINGS) {
+                    SettingsSection(rootNavController = navController)
+                  } else {
+                    ShellSectionBody(
+                      section = section,
+                      aircraftId = aircraftId,
+                      navController = navController,
+                      onNavigateToSection = viewModel::selectSection,
+                    )
+                  }
+                },
+                emptyFleetContent = {
+                  FleetEmptyState(
+                    onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+                  )
+                },
+                sectionFab = { section, aircraftId ->
+                  ShellSectionFab(
+                    section = section,
+                    aircraftId = aircraftId,
+                    navController = navController,
+                  )
+                },
+              )
+            }
+            dialog(
+              route = Screen.AddAircraft.route,
+              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+              AdaptiveFormDialogFrame {
+                EditAircraftScreen(navController = navController)
+              }
+            }
+            dialog(
+              route = Screen.EditAircraft.route,
+              arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+                type = NavType.StringType
+                nullable = true
+              }),
+              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+              AdaptiveFormDialogFrame {
+                EditAircraftScreen(navController = navController)
+              }
+            }
+            dialog(
+              route = Screen.AddMaintenanceTask.route,
+              arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+                type = NavType.StringType
+              }),
+              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+              AdaptiveFormDialogFrame {
+                AddTaskRoute(
                   navController = navController,
-                  onNavigateToSection = viewModel::selectSection,
                 )
               }
-            },
-            emptyFleetContent = {
-              FleetEmptyState(
-                onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
-              )
-            },
-            sectionFab = { section, aircraftId ->
-              ShellSectionFab(
-                section = section,
-                aircraftId = aircraftId,
-                navController = navController,
-              )
-            },
-          )
-        }
-        dialog(
-          route = Screen.AddAircraft.route,
-          dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-          AdaptiveFormDialogFrame {
-            EditAircraftScreen(navController = navController)
+            }
+            dialog(
+              route = Screen.EditMaintenanceTask.route,
+              arguments = listOf(
+                navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+                navArgument(Screen.CARD_ID) { type = NavType.StringType },
+              ),
+              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+              AdaptiveFormDialogFrame {
+                EditTaskRoute(
+                  navController = navController,
+                )
+              }
+            }
+            dialog(
+              route = Screen.AddMaintenanceLog.route,
+              arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+                type = NavType.StringType
+              }),
+              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+              AdaptiveFormDialogFrame {
+                MaintenanceLogFormScreen(
+                  navController = navController,
+                )
+              }
+            }
+            dialog(
+              route = Screen.EditMaintenanceLog.route,
+              arguments = listOf(
+                navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+                navArgument(Screen.LOG_ID) { type = NavType.StringType },
+              ),
+              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+              AdaptiveFormDialogFrame {
+                MaintenanceLogFormScreen(
+                  navController = navController,
+                )
+              }
+            }
+            dialog(
+              route = Screen.AddSquawk.route,
+              arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+                type = NavType.StringType
+              }),
+              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+              AdaptiveFormDialogFrame {
+                AddSquawkRoute(
+                  navController = navController,
+                )
+              }
+            }
+            dialog(
+              route = Screen.EditSquawk.route,
+              arguments = listOf(
+                navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+                navArgument(Screen.SQUAWK_ID) { type = NavType.StringType },
+              ),
+              dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+              AdaptiveFormDialogFrame {
+                EditSquawkRoute(
+                  navController = navController,
+                )
+              }
+            }
+            // Compact tiers (no sidebar) open settings detail pages as full-screen routes.
+            settingsDetailRoutes(navController)
           }
         }
-        dialog(
-          route = Screen.EditAircraft.route,
-          arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-            type = NavType.StringType
-            nullable = true
-          }),
-          dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-          AdaptiveFormDialogFrame {
-            EditAircraftScreen(navController = navController)
-          }
-        }
-        dialog(
-          route = Screen.AddMaintenanceTask.route,
-          arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-            type = NavType.StringType
-          }),
-          dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-          AdaptiveFormDialogFrame {
-            AddTaskRoute(
-              navController = navController,
-            )
-          }
-        }
-        dialog(
-          route = Screen.EditMaintenanceTask.route,
-          arguments = listOf(
-            navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
-            navArgument(Screen.CARD_ID) { type = NavType.StringType },
-          ),
-          dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-          AdaptiveFormDialogFrame {
-            EditTaskRoute(
-              navController = navController,
-            )
-          }
-        }
-        dialog(
-          route = Screen.AddMaintenanceLog.route,
-          arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-            type = NavType.StringType
-          }),
-          dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-          AdaptiveFormDialogFrame {
-            MaintenanceLogFormScreen(
-              navController = navController,
-            )
-          }
-        }
-        dialog(
-          route = Screen.EditMaintenanceLog.route,
-          arguments = listOf(
-            navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
-            navArgument(Screen.LOG_ID) { type = NavType.StringType },
-          ),
-          dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-          AdaptiveFormDialogFrame {
-            MaintenanceLogFormScreen(
-              navController = navController,
-            )
-          }
-        }
-        dialog(
-          route = Screen.AddSquawk.route,
-          arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-            type = NavType.StringType
-          }),
-          dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-          AdaptiveFormDialogFrame {
-            AddSquawkRoute(
-              navController = navController,
-            )
-          }
-        }
-        dialog(
-          route = Screen.EditSquawk.route,
-          arguments = listOf(
-            navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
-            navArgument(Screen.SQUAWK_ID) { type = NavType.StringType },
-          ),
-          dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-          AdaptiveFormDialogFrame {
-            EditSquawkRoute(
-              navController = navController,
-            )
-          }
-        }
-        // Compact tiers (no sidebar) open settings detail pages as full-screen routes.
-        settingsDetailRoutes(navController)
-      }
       }
     }
-  }
   }
 }
 

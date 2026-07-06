@@ -51,7 +51,8 @@ class SqlDelightLocalBlobStore(
     val rel = blobRelativePath(id.value)
     fs.write(rel, bytes)
     val sha = sha256Hex(bytes)
-    val now = clock.now().toEpochMilliseconds()
+    val now = clock.now()
+      .toEpochMilliseconds()
     writeLock.withLock {
       db.schemaQueries.upsertBlob(
         id = id.value,
@@ -68,7 +69,8 @@ class SqlDelightLocalBlobStore(
         deleted = false,
       )
     }
-    return loadRef(id) ?: error("upsertBlob did not produce a row for id=${id.value}")
+    return loadRef(id)
+      ?: error("upsertBlob did not produce a row for id=${id.value}")
   }
 
   override suspend fun upsertRemoteOnly(
@@ -78,12 +80,14 @@ class SqlDelightLocalBlobStore(
     contentType: String?,
     scope: EntityScope,
   ) {
-    val existing = db.schemaQueries.selectBlobById(id.value).awaitAsOneOrNull()
+    val existing = db.schemaQueries.selectBlobById(id.value)
+      .awaitAsOneOrNull()
     if (existing != null) {
       // §6.1: idempotent — never overwrite a row that has progressed past REMOTE_ONLY.
       return
     }
-    val now = clock.now().toEpochMilliseconds()
+    val now = clock.now()
+      .toEpochMilliseconds()
     writeLock.withLock {
       db.schemaQueries.upsertBlob(
         id = id.value,
@@ -93,7 +97,10 @@ class SqlDelightLocalBlobStore(
         size_bytes = sizeBytes,
         sha256 = sha256,
         remote_state = RemoteState.RemoteOnly,
-        remote_path = "${scope.toPath().trim('/')}/blobs/${id.value}",
+        remote_path = "${
+          scope.toPath()
+            .trim('/')
+        }/blobs/${id.value}",
         upload_attempts = 0L,
         last_attempt_at = null,
         updated_at = now,
@@ -111,10 +118,12 @@ class SqlDelightLocalBlobStore(
   override suspend fun get(id: BlobId): BlobRef? = loadRef(id)
 
   override suspend fun localUri(id: BlobId): String? {
-    val row = db.schemaQueries.selectBlobById(id.value).awaitAsOneOrNull() ?: return null
+    val row = db.schemaQueries.selectBlobById(id.value)
+      .awaitAsOneOrNull() ?: return null
     return when (row.remote_state) {
       RemoteState.LocalOnly, RemoteState.Uploading, RemoteState.Synced ->
         if (fs.exists(row.relative_path)) fs.uriFor(row.relative_path) else null
+
       RemoteState.RemoteOnly -> null
     }
   }
@@ -128,7 +137,8 @@ class SqlDelightLocalBlobStore(
       db.schemaQueries.setBlobRemoteState(
         remote_state = RemoteState.Uploading,
         remote_path = row.remote_path,
-        last_attempt_at = clock.now().toEpochMilliseconds(),
+        last_attempt_at = clock.now()
+          .toEpochMilliseconds(),
         upload_attempts = row.upload_attempts,
         id = id.value,
       )
@@ -144,7 +154,8 @@ class SqlDelightLocalBlobStore(
       db.schemaQueries.setBlobRemoteState(
         remote_state = RemoteState.Synced,
         remote_path = remotePath,
-        last_attempt_at = clock.now().toEpochMilliseconds(),
+        last_attempt_at = clock.now()
+          .toEpochMilliseconds(),
         upload_attempts = 0L,
         id = id.value,
       )
@@ -160,7 +171,8 @@ class SqlDelightLocalBlobStore(
       db.schemaQueries.setBlobRemoteState(
         remote_state = RemoteState.LocalOnly,
         remote_path = row.remote_path,
-        last_attempt_at = clock.now().toEpochMilliseconds(),
+        last_attempt_at = clock.now()
+          .toEpochMilliseconds(),
         upload_attempts = row.upload_attempts + 1,
         id = id.value,
       )
@@ -177,7 +189,8 @@ class SqlDelightLocalBlobStore(
       db.schemaQueries.setBlobRemoteState(
         remote_state = RemoteState.LocalOnly,
         remote_path = row.remote_path,
-        last_attempt_at = clock.now().toEpochMilliseconds(),
+        last_attempt_at = clock.now()
+          .toEpochMilliseconds(),
         upload_attempts = row.upload_attempts + 1,
         id = id.value,
       )
@@ -195,14 +208,20 @@ class SqlDelightLocalBlobStore(
     }
     val actual = sha256Hex(bytes)
     if (!actual.equals(expectedSha256, ignoreCase = true)) {
-      return Result.failure(IntegrityError(expected = expectedSha256, actual = actual))
+      return Result.failure(
+        IntegrityError(
+          expected = expectedSha256,
+          actual = actual
+        )
+      )
     }
     fs.write(row.relative_path, bytes)
     writeLock.withLock {
       db.schemaQueries.setBlobRemoteState(
         remote_state = RemoteState.Synced,
         remote_path = row.remote_path,
-        last_attempt_at = clock.now().toEpochMilliseconds(),
+        last_attempt_at = clock.now()
+          .toEpochMilliseconds(),
         upload_attempts = 0L,
         id = id.value,
       )
@@ -211,22 +230,27 @@ class SqlDelightLocalBlobStore(
   }
 
   override suspend fun delete(id: BlobId) {
-    val row = db.schemaQueries.selectBlobById(id.value).awaitAsOneOrNull() ?: return
+    val row = db.schemaQueries.selectBlobById(id.value)
+      .awaitAsOneOrNull() ?: return
     fs.delete(row.relative_path)
     writeLock.withLock {
       db.schemaQueries.markBlobDeleted(
-        updated_at = clock.now().toEpochMilliseconds(),
+        updated_at = clock.now()
+          .toEpochMilliseconds(),
         id = id.value,
       )
     }
   }
 
   private suspend fun requireRow(id: BlobId): Blob_object =
-    db.schemaQueries.selectBlobById(id.value).awaitAsOneOrNull()
+    db.schemaQueries.selectBlobById(id.value)
+      .awaitAsOneOrNull()
       ?: error("blob_object row not found for id=${id.value}")
 
   private suspend fun loadRef(id: BlobId): BlobRef? =
-    db.schemaQueries.selectBlobById(id.value).awaitAsOneOrNull()?.toRef()
+    db.schemaQueries.selectBlobById(id.value)
+      .awaitAsOneOrNull()
+      ?.toRef()
 
   override fun observeForScope(scopePath: String): Flow<List<BlobRef>> =
     db.schemaQueries.selectBlobsForScope(scopePath)
@@ -240,16 +264,23 @@ class SqlDelightLocalBlobStore(
 
   override suspend fun wipeForUser(uid: String) {
     val prefix = "/users/$uid/%"
-    val rows = db.schemaQueries.selectBlobsForScopePrefix(prefix).awaitAsList()
+    val rows = db.schemaQueries.selectBlobsForScopePrefix(prefix)
+      .awaitAsList()
     for (row in rows) {
-      try { fs.delete(row.relative_path) } catch (_: Exception) {}
+      try {
+        fs.delete(row.relative_path)
+      } catch (_: Exception) {
+      }
     }
     writeLock.withLock { db.schemaQueries.deleteBlobsForUser(prefix) }
   }
 
   private fun Blob_object.toRef(): BlobRef = BlobRef(
     id = BlobId(id),
-    scope = EntityScope(scope_path.trim('/').split('/')),
+    scope = EntityScope(
+      scope_path.trim('/')
+        .split('/')
+    ),
     relativePath = relative_path,
     sizeBytes = size_bytes,
     sha256 = sha256,

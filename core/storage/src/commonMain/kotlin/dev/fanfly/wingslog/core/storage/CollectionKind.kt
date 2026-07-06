@@ -73,11 +73,13 @@ sealed interface CollectionKind {
       Squawk,
     )
 
-    private val byWire: Map<String, CollectionKind> = ALL.associateBy { it.wireName }
+    private val byWire: Map<String, CollectionKind> =
+      ALL.associateBy { it.wireName }
 
     /** @throws IllegalStateException if [wire] does not name a registered [CollectionKind]. */
     fun fromWire(wire: String): CollectionKind =
-      byWire[wire] ?: error("Unknown collection '$wire' — register it in CollectionKind")
+      byWire[wire]
+        ?: error("Unknown collection '$wire' — register it in CollectionKind")
   }
 }
 

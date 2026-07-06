@@ -31,19 +31,30 @@ class AdaptiveShellViewModelTest {
   private val self = MutableStateFlow<Technician?>(null)
   private val fleetManager = object : FleetManager {
     override fun observeFleetDashboard(): Flow<List<Aircraft>> = fleet
-    override suspend fun updateAircraft(aircraft: Aircraft) = Result.success(true)
-    override fun loadAircraft(id: String): Flow<Aircraft?> = MutableStateFlow(null)
+    override suspend fun updateAircraft(aircraft: Aircraft) =
+      Result.success(true)
+
+    override fun loadAircraft(id: String): Flow<Aircraft?> =
+      MutableStateFlow(null)
+
     override suspend fun deleteAircraft(id: String) = Result.success(true)
   }
   private val technicianManager = object : TechnicianManager {
-    override fun observeTechnicians(): Flow<List<Technician>> = MutableStateFlow(emptyList())
-    override fun loadTechnician(id: String): Flow<Technician?> = MutableStateFlow(null)
+    override fun observeTechnicians(): Flow<List<Technician>> =
+      MutableStateFlow(emptyList())
+
+    override fun loadTechnician(id: String): Flow<Technician?> =
+      MutableStateFlow(null)
+
     override fun observeSelf(): Flow<Technician?> = self
     override fun observeSelfId(): Flow<String?> = MutableStateFlow(null)
-    override suspend fun updateTechnician(technician: Technician) = Result.success(true)
+    override suspend fun updateTechnician(technician: Technician) =
+      Result.success(true)
+
     override suspend fun deleteTechnician(id: String) = Result.success(true)
     override suspend fun saveSelfName(name: String) = Result.success(Unit)
-    override suspend fun ensureSelfProfile(replaceExistingName: Boolean) = Result.success(Unit)
+    override suspend fun ensureSelfProfile(replaceExistingName: Boolean) =
+      Result.success(Unit)
   }
   private val authManager = object : AuthManager {
     override fun getCurrentUser(): FirebaseUser? = null
@@ -53,19 +64,32 @@ class AdaptiveShellViewModelTest {
     override suspend fun logOut() = Unit
     override suspend fun sendSignInLink(email: String): SendLinkResult =
       SendLinkResult.Failed("not used")
+
     override fun isSignInWithEmailLink(link: String): Boolean = false
-    override suspend fun completeSignInLink(email: String, link: String): FirebaseUser? = null
+    override suspend fun completeSignInLink(
+      email: String,
+      link: String
+    ): FirebaseUser? = null
+
     override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult =
       AccountUpgradeResult.Cancelled
+
     override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult =
       AccountUpgradeResult.Cancelled
   }
 
-  @Before fun setUp() = Dispatchers.setMain(StandardTestDispatcher())
+  @Before
+  fun setUp() = Dispatchers.setMain(StandardTestDispatcher())
 
-  @After fun tearDown() = Dispatchers.resetMain()
+  @After
+  fun tearDown() = Dispatchers.resetMain()
 
-  private fun aircraft(id: String, tail: String, make: String = "Cessna", model: String = "172") =
+  private fun aircraft(
+    id: String,
+    tail: String,
+    make: String = "Cessna",
+    model: String = "172"
+  ) =
     Aircraft(id = id, make = make, model = model, tail_number = tail)
 
   private fun viewModel() = AdaptiveShellViewModel(
@@ -81,7 +105,8 @@ class AdaptiveShellViewModelTest {
     runCurrent()
 
     val s = vm.uiState.value
-    assertThat(s.aircraft.map { it.tail }).containsExactly("N1", "N2").inOrder()
+    assertThat(s.aircraft.map { it.tail }).containsExactly("N1", "N2")
+      .inOrder()
     assertThat(s.aircraft.first().name).isEqualTo("Cessna 172")
     assertThat(s.selectedAircraftId).isEqualTo("a1")
     assertThat(s.section).isEqualTo(ShellSection.DASHBOARD)

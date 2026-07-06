@@ -52,24 +52,31 @@ class TaskDataManagerImplTest {
     every { firebaseAuth.currentUser } returns null
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
-    val result = manager.observeTasks(TEST_AIRCRAFT_ID).first()
+    val result = manager.observeTasks(TEST_AIRCRAFT_ID)
+      .first()
 
     assertThat(result).isEmpty()
   }
 
   @Test
-  fun observeTasks_loggedIn_delegatesToStoreWithAircraftChildScopeAndUnwrapsValues() = runTest {
-    val task = buildTestTask(id = TEST_TASK_ID)
-    val entity = StorageEntity(id = TEST_TASK_ID, value = task, updatedAt = Instant.DISTANT_PAST)
-    val scope = EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
-    every { store.observeAll(scope) } returns flowOf(listOf(entity))
+  fun observeTasks_loggedIn_delegatesToStoreWithAircraftChildScopeAndUnwrapsValues() =
+    runTest {
+      val task = buildTestTask(id = TEST_TASK_ID)
+      val entity = StorageEntity(
+        id = TEST_TASK_ID,
+        value = task,
+        updatedAt = Instant.DISTANT_PAST
+      )
+      val scope = EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+      every { store.observeAll(scope) } returns flowOf(listOf(entity))
 
-    val result = manager.observeTasks(TEST_AIRCRAFT_ID).first()
+      val result = manager.observeTasks(TEST_AIRCRAFT_ID)
+        .first()
 
-    assertThat(result).hasSize(1)
-    assertThat(result.first().id).isEqualTo(TEST_TASK_ID)
-    io.mockk.verify { store.observeAll(scope) }
-  }
+      assertThat(result).hasSize(1)
+      assertThat(result.first().id).isEqualTo(TEST_TASK_ID)
+      io.mockk.verify { store.observeAll(scope) }
+    }
 
   @Test
   fun addTask_withEmptyId_generatesIdAndCallsStorePut() = runTest {
@@ -95,7 +102,11 @@ class TaskDataManagerImplTest {
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
-      store.put(TEST_TASK_ID, task, EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID))
+      store.put(
+        TEST_TASK_ID,
+        task,
+        EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+      )
     }
   }
 
@@ -103,7 +114,8 @@ class TaskDataManagerImplTest {
   fun addTask_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
-    val result = manager.addTask(TEST_AIRCRAFT_ID, buildTestTask(id = TEST_TASK_ID))
+    val result =
+      manager.addTask(TEST_AIRCRAFT_ID, buildTestTask(id = TEST_TASK_ID))
 
     assertThat(result.isFailure).isTrue()
   }
@@ -116,7 +128,11 @@ class TaskDataManagerImplTest {
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
-      store.put(TEST_TASK_ID, task, EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID))
+      store.put(
+        TEST_TASK_ID,
+        task,
+        EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+      )
     }
   }
 
@@ -124,7 +140,8 @@ class TaskDataManagerImplTest {
   fun updateTask_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
-    val result = manager.updateTask(TEST_AIRCRAFT_ID, buildTestTask(id = TEST_TASK_ID))
+    val result =
+      manager.updateTask(TEST_AIRCRAFT_ID, buildTestTask(id = TEST_TASK_ID))
 
     assertThat(result.isFailure).isTrue()
   }
@@ -135,7 +152,10 @@ class TaskDataManagerImplTest {
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
-      store.delete(TEST_TASK_ID, EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID))
+      store.delete(
+        TEST_TASK_ID,
+        EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+      )
     }
   }
 

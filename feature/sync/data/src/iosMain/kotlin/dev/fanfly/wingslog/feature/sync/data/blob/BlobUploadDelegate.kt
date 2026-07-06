@@ -53,7 +53,8 @@ class BlobUploadDelegate(
     log.d { "background upload complete for ${blobId.value}: status=$statusCode error=${didCompleteWithError?.localizedDescription}" }
 
     scope.launch {
-      val row = db.schemaQueries.selectBlobById(blobId.value).executeAsOneOrNull()
+      val row = db.schemaQueries.selectBlobById(blobId.value)
+        .executeAsOneOrNull()
       if (row == null) {
         log.w { "no blob_object row for ${blobId.value} on completion; skipping" }
         return@launch
@@ -64,7 +65,8 @@ class BlobUploadDelegate(
         return@launch
       }
       if (success) {
-        val remotePath = row.remote_path ?: "${row.scope_path.trim('/')}/blobs/${blobId.value}"
+        val remotePath =
+          row.remote_path ?: "${row.scope_path.trim('/')}/blobs/${blobId.value}"
         blobs.markUploaded(blobId, remotePath)
         log.i { "background upload succeeded for ${blobId.value}" }
       } else {

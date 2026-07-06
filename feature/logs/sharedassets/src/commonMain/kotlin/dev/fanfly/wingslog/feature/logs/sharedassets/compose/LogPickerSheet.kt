@@ -40,7 +40,8 @@ fun LogPickerSheet(
   LazyColumn(verticalArrangement = Arrangement.spacedBy(Spacing.none)) {
     items(sorted, key = { it.id }) { log ->
       val dateStr = if ((log.timestamp?.getEpochSecond() ?: 0L) > 0L) {
-        log.timestamp!!.toLocalDate().toDisplayFormat()
+        log.timestamp!!.toLocalDate()
+          .toDisplayFormat()
       } else ""
       PickerSelectableRow(
         title = log.work_description.ifBlank { log.id },

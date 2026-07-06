@@ -86,10 +86,18 @@ data class ShellAircraft(
 /**
  * Top-level sections of the adaptive shell. The first four are per-aircraft; [SETTINGS] is global.
  */
-enum class ShellSection(val label: StringResource, val icon: ImageVector, val title: StringResource = label) {
+enum class ShellSection(
+  val label: StringResource,
+  val icon: ImageVector,
+  val title: StringResource = label
+) {
   DASHBOARD(UiRes.string.shell_tab_dashboard, Icons.Filled.Dashboard),
   SQUAWKS(UiRes.string.shell_tab_squawks, Icons.Filled.Warning),
-  TASKS(UiRes.string.shell_tab_tasks, Icons.Filled.Checklist, UiRes.string.shell_title_tasks),
+  TASKS(
+    UiRes.string.shell_tab_tasks,
+    Icons.Filled.Checklist,
+    UiRes.string.shell_title_tasks
+  ),
   LOGS(UiRes.string.shell_tab_logs, Icons.Filled.Description),
   SETTINGS(UiRes.string.settings, Icons.Filled.Settings),
 }

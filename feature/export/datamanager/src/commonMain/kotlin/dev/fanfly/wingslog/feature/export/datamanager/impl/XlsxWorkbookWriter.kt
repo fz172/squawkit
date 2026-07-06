@@ -17,10 +17,20 @@ class XlsxWorkbookWriter(
       add(xmlEntry("[Content_Types].xml", contentTypes(safeSheets.size)))
       add(xmlEntry("_rels/.rels", rootRelationships()))
       add(xmlEntry("xl/workbook.xml", workbook(safeSheets)))
-      add(xmlEntry("xl/_rels/workbook.xml.rels", workbookRelationships(safeSheets.size)))
+      add(
+        xmlEntry(
+          "xl/_rels/workbook.xml.rels",
+          workbookRelationships(safeSheets.size)
+        )
+      )
       add(xmlEntry("xl/styles.xml", styles()))
       safeSheets.forEachIndexed { index, sheet ->
-        add(xmlEntry("xl/worksheets/sheet${index + 1}.xml", worksheet(sheet.rows)))
+        add(
+          xmlEntry(
+            "xl/worksheets/sheet${index + 1}.xml",
+            worksheet(sheet.rows)
+          )
+        )
       }
     }
     return zipFileWriter.write(entries)
@@ -145,7 +155,8 @@ class XlsxWorkbookWriter(
       chars += ('A'.code + value % 26).toChar()
       value /= 26
     }
-    return chars.asReversed().joinToString("")
+    return chars.asReversed()
+      .joinToString("")
   }
 
   private companion object {

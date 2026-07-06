@@ -51,30 +51,40 @@ class FleetManagerImplTest {
     every { firebaseAuth.currentUser } returns null
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
-    val result = manager.observeFleetDashboard().first()
+    val result = manager.observeFleetDashboard()
+      .first()
 
     assertThat(result).isEmpty()
   }
 
   @Test
-  fun observeFleetDashboard_loggedIn_delegatesToStoreWithUserRootAndUnwrapsValues() = runTest {
-    val aircraft = buildTestAircraft(id = TEST_AIRCRAFT_ID)
-    val entity = StorageEntity(id = TEST_AIRCRAFT_ID, value = aircraft, updatedAt = Instant.DISTANT_PAST)
-    every { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(listOf(entity))
+  fun observeFleetDashboard_loggedIn_delegatesToStoreWithUserRootAndUnwrapsValues() =
+    runTest {
+      val aircraft = buildTestAircraft(id = TEST_AIRCRAFT_ID)
+      val entity = StorageEntity(
+        id = TEST_AIRCRAFT_ID,
+        value = aircraft,
+        updatedAt = Instant.DISTANT_PAST
+      )
+      every { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(
+        listOf(entity)
+      )
 
-    val result = manager.observeFleetDashboard().first()
+      val result = manager.observeFleetDashboard()
+        .first()
 
-    assertThat(result).hasSize(1)
-    assertThat(result.first().id).isEqualTo(TEST_AIRCRAFT_ID)
-    io.mockk.verify { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) }
-  }
+      assertThat(result).hasSize(1)
+      assertThat(result.first().id).isEqualTo(TEST_AIRCRAFT_ID)
+      io.mockk.verify { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) }
+    }
 
   @Test
   fun loadAircraft_withoutLoggedInUser_emitsNull() = runTest {
     every { firebaseAuth.currentUser } returns null
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
-    val result = manager.loadAircraft(TEST_AIRCRAFT_ID).first()
+    val result = manager.loadAircraft(TEST_AIRCRAFT_ID)
+      .first()
 
     assertThat(result).isNull()
   }
@@ -82,10 +92,20 @@ class FleetManagerImplTest {
   @Test
   fun loadAircraft_loggedIn_delegatesToStoreAndUnwrapsValue() = runTest {
     val aircraft = buildTestAircraft(id = TEST_AIRCRAFT_ID)
-    val entity = StorageEntity(id = TEST_AIRCRAFT_ID, value = aircraft, updatedAt = Instant.DISTANT_PAST)
-    every { store.observe(TEST_AIRCRAFT_ID, EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(entity)
+    val entity = StorageEntity(
+      id = TEST_AIRCRAFT_ID,
+      value = aircraft,
+      updatedAt = Instant.DISTANT_PAST
+    )
+    every {
+      store.observe(
+        TEST_AIRCRAFT_ID,
+        EntityScope.userRoot(TEST_USER_ID)
+      )
+    } returns flowOf(entity)
 
-    val result = manager.loadAircraft(TEST_AIRCRAFT_ID).first()
+    val result = manager.loadAircraft(TEST_AIRCRAFT_ID)
+      .first()
 
     assertThat(result).isEqualTo(aircraft)
   }
@@ -113,14 +133,21 @@ class FleetManagerImplTest {
     val result = manager.updateAircraft(aircraft)
 
     assertThat(result.isSuccess).isTrue()
-    coVerify { store.put(TEST_AIRCRAFT_ID, aircraft, EntityScope.userRoot(TEST_USER_ID)) }
+    coVerify {
+      store.put(
+        TEST_AIRCRAFT_ID,
+        aircraft,
+        EntityScope.userRoot(TEST_USER_ID)
+      )
+    }
   }
 
   @Test
   fun updateAircraft_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
-    val result = manager.updateAircraft(buildTestAircraft(id = TEST_AIRCRAFT_ID))
+    val result =
+      manager.updateAircraft(buildTestAircraft(id = TEST_AIRCRAFT_ID))
 
     assertThat(result.isFailure).isTrue()
   }
@@ -130,7 +157,12 @@ class FleetManagerImplTest {
     val result = manager.deleteAircraft(TEST_AIRCRAFT_ID)
 
     assertThat(result.isSuccess).isTrue()
-    coVerify { store.delete(TEST_AIRCRAFT_ID, EntityScope.userRoot(TEST_USER_ID)) }
+    coVerify {
+      store.delete(
+        TEST_AIRCRAFT_ID,
+        EntityScope.userRoot(TEST_USER_ID)
+      )
+    }
   }
 
   @Test

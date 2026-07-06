@@ -16,8 +16,12 @@ private const val LOCK_NAME = "wingslog-opfs-db"
  * If the Web Locks API is unavailable we fall back to [onPrimary] (the prior behavior) rather than
  * stranding the only tab.
  */
-internal fun gateSingleTab(onPrimary: () -> Unit, onActiveElsewhere: () -> Unit) {
-  val hasWebLocks = js("typeof navigator !== 'undefined' && !!(navigator.locks)") as Boolean
+internal fun gateSingleTab(
+  onPrimary: () -> Unit,
+  onActiveElsewhere: () -> Unit
+) {
+  val hasWebLocks =
+    js("typeof navigator !== 'undefined' && !!(navigator.locks)") as Boolean
   if (!hasWebLocks) {
     onPrimary()
     return

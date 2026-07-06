@@ -22,7 +22,8 @@ class DatabaseIntegrityCheckerTest {
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
     // Schema is async-generated; the sync JVM driver wraps it via .synchronous().
-    WingsLogDatabase.Schema.synchronous().create(driver)
+    WingsLogDatabase.Schema.synchronous()
+      .create(driver)
     db = createWingsLogDatabase(driver)
     checker = DatabaseIntegrityChecker(db, driver)
   }
@@ -59,14 +60,16 @@ class DatabaseIntegrityCheckerTest {
     val entitiesAfter = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/$TEST_UID/fleet",
-    ).awaitAsList()
+    )
+      .awaitAsList()
     assertThat(entitiesAfter).isEmpty()
 
     val cursorsAfter = db.schemaQueries.selectCursor(
       uid = TEST_UID,
       collection = CollectionKind.Aircraft,
       scope_path = "/users/$TEST_UID/fleet",
-    ).awaitAsOneOrNull()
+    )
+      .awaitAsOneOrNull()
     assertThat(cursorsAfter).isNull()
   }
 
@@ -101,7 +104,8 @@ class DatabaseIntegrityCheckerTest {
     val otherUserEntities = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/$OTHER_UID/fleet",
-    ).awaitAsList()
+    )
+      .awaitAsList()
     assertThat(otherUserEntities).hasSize(1)
     assertThat(otherUserEntities[0].id).isEqualTo("aircraft-other")
   }
@@ -133,7 +137,8 @@ class DatabaseIntegrityCheckerTest {
       uid = OTHER_UID,
       collection = CollectionKind.Aircraft,
       scope_path = "/users/$OTHER_UID/fleet",
-    ).awaitAsOneOrNull()
+    )
+      .awaitAsOneOrNull()
     assertThat(otherCursor).isNotNull()
   }
 
@@ -166,7 +171,8 @@ class DatabaseIntegrityCheckerTest {
     val remaining = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/$OTHER_UID/references/$TEST_UID/extra",
-    ).awaitAsList()
+    )
+      .awaitAsList()
     assertThat(remaining).hasSize(1)
   }
 }

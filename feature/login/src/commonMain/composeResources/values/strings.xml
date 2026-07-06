@@ -1,42 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="mission_statement">Track the important stuff for your airplane</string>
-    <string name="login_prompt">Log in or continue anonymously to manage your aircraft maintenance records.</string>
-    <string name="google_logo">Google Logo</string>
-    <string name="apple_logo">Apple Logo</string>
-    <string name="sign_in_with_google">Log in with Google</string>
-    <string name="sign_in_with_apple">Log in with Apple</string>
-    <string name="sign_in_with_email">Log in with email</string>
-    <string name="continue_without_account">Continue Anonymously</string>
-    <string name="sign_in_error">Sign-in failed. Check your connection and try again.</string>
-    <string name="sign_in_anonymous_error">Could not continue anonymously. Please try again.</string>
+  <string name="mission_statement">Track the important stuff for your airplane</string>
+  <string name="login_prompt">Log in or continue anonymously to manage your aircraft maintenance records.</string>
+  <string name="google_logo">Google Logo</string>
+  <string name="apple_logo">Apple Logo</string>
+  <string name="sign_in_with_google">Log in with Google</string>
+  <string name="sign_in_with_apple">Log in with Apple</string>
+  <string name="sign_in_with_email">Log in with email</string>
+  <string name="continue_without_account">Continue Anonymously</string>
+  <string name="sign_in_error">Sign-in failed. Check your connection and try again.</string>
+  <string name="sign_in_anonymous_error">Could not continue anonymously. Please try again.</string>
 
-    <!-- Passwordless email-link sign-in -->
-    <string name="email_entry_title">Log in with email</string>
-    <string name="email_entry_hint">you@example.com</string>
-    <string name="email_send_link">Send sign-in link</string>
-    <string name="email_invalid">Enter a valid email address.</string>
-    <string name="email_link_sent_title">Check your inbox</string>
-    <string name="email_link_sent_body">We sent a sign-in link to %1$s. Open it on this device to finish logging in.</string>
-    <string name="email_resend">Resend link</string>
-    <string name="email_resend_in">Resend in %1$s</string>
-    <string name="email_use_different">Use a different email</string>
-    <string name="email_back">Back</string>
-    <string name="email_finish_title">Finish signing in</string>
-    <string name="email_finish_body">Confirm the email this link was sent to.</string>
-    <string name="email_finish_cta">Continue</string>
-    <string name="email_link_error">That link didn't work. Request a new one.</string>
-    <string name="legal_disclaimer">SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.</string>
-    <string name="privacy_notice">Privacy Notice</string>
+  <!-- Passwordless email-link sign-in -->
+  <string name="email_entry_title">Log in with email</string>
+  <string name="email_entry_hint">you@example.com</string>
+  <string name="email_send_link">Send sign-in link</string>
+  <string name="email_invalid">Enter a valid email address.</string>
+  <string name="email_link_sent_title">Check your inbox</string>
+  <string name="email_link_sent_body">We sent a sign-in link to %1$s. Open it on this device to finish logging in.</string>
+  <string name="email_resend">Resend link</string>
+  <string name="email_resend_in">Resend in %1$s</string>
+  <string name="email_use_different">Use a different email</string>
+  <string name="email_back">Back</string>
+  <string name="email_finish_title">Finish signing in</string>
+  <string name="email_finish_body">Confirm the email this link was sent to.</string>
+  <string name="email_finish_cta">Continue</string>
+  <string name="email_link_error">That link didn't work. Request a new one.</string>
+  <string name="legal_disclaimer">SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.</string>
+  <string name="privacy_notice">Privacy Notice</string>
 
-    <!-- Onboarding: name entry -->
-    <string name="onboarding_name_eyebrow">QUICK HELLO</string>
-    <string name="onboarding_name_headline">What should we\ncall you?</string>
-    <string name="onboarding_name_body">Just so we know who's logging any maintenance work. You can change it anytime in Settings.</string>
-    <string name="onboarding_name_label">YOUR NAME</string>
-    <string name="onboarding_name_hint">e.g. Amelia Earhart</string>
-    <string name="onboarding_continue">Continue</string>
-    <!-- Onboarding: welcome -->
-    <string name="onboarding_welcome_aboard">Welcome aboard</string>
-    <string name="onboarding_welcome_tagline">Let's get your hangar set up.</string>
+  <!-- Onboarding: name entry -->
+  <string name="onboarding_name_eyebrow">QUICK HELLO</string>
+  <string name="onboarding_name_headline">What should we\ncall you?</string>
+  <string name="onboarding_name_body">Just so we know who's logging any maintenance work. You can change it anytime in Settings.</string>
+  <string name="onboarding_name_label">YOUR NAME</string>
+  <string name="onboarding_name_hint">e.g. Amelia Earhart</string>
+  <string name="onboarding_continue">Continue</string>
+  <!-- Onboarding: welcome -->
+  <string name="onboarding_welcome_aboard">Welcome aboard</string>
+  <string name="onboarding_welcome_tagline">Let's get your hangar set up.</string>
 </resources>

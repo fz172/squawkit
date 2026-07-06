@@ -27,13 +27,18 @@ import org.jetbrains.compose.resources.ResourceReader
  * unaffected and keep the default reader.
  */
 @OptIn(InternalResourceApi::class)
-private class WholeFileResourceReader(private val delegate: ResourceReader) : ResourceReader {
+private class WholeFileResourceReader(private val delegate: ResourceReader) :
+  ResourceReader {
   private val mutex = Mutex()
   private val cache = mutableMapOf<String, ByteArray>()
 
   override suspend fun read(path: String): ByteArray = delegate.read(path)
 
-  override suspend fun readPart(path: String, offset: Long, size: Long): ByteArray {
+  override suspend fun readPart(
+    path: String,
+    offset: Long,
+    size: Long
+  ): ByteArray {
     val whole = mutex.withLock {
       cache.getOrPut(path) { delegate.read(path) }
     }
@@ -53,5 +58,8 @@ private class WholeFileResourceReader(private val delegate: ResourceReader) : Re
 internal fun ProvideWholeFileResourceReader(content: @Composable () -> Unit) {
   val default = LocalResourceReader.current
   val reader = remember(default) { WholeFileResourceReader(default) }
-  CompositionLocalProvider(LocalResourceReader provides reader, content = content)
+  CompositionLocalProvider(
+    LocalResourceReader provides reader,
+    content = content
+  )
 }

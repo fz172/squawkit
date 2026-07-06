@@ -32,7 +32,8 @@ class FileBlobFilesystem(private val rootDir: File) : BlobFilesystem {
   override suspend fun exists(relativePath: String): Boolean =
     withContext(Dispatchers.IO) { file(relativePath).isFile }
 
-  override fun uriFor(relativePath: String): String = file(relativePath).toURI().toString()
+  override fun uriFor(relativePath: String): String = file(relativePath).toURI()
+    .toString()
 
   private fun file(relativePath: String): File = File(rootDir, relativePath)
 }

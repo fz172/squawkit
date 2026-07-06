@@ -12,7 +12,8 @@ package dev.fanfly.wingslog.core.storage
  * `segments` are isolated even if they share a prefix.
  */
 data class EntityScope(val segments: List<String>) {
-  fun toPath(): String = segments.joinToString(separator = "/", prefix = "/", postfix = "/")
+  fun toPath(): String =
+    segments.joinToString(separator = "/", prefix = "/", postfix = "/")
 
   companion object {
     fun userRoot(uid: String): EntityScope = EntityScope(listOf("users", uid))

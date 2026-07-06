@@ -3,7 +3,8 @@ package dev.fanfly.wingslog.feature.attachment.datamanager
 import java.security.MessageDigest
 
 actual fun sha256Hex(bytes: ByteArray): String {
-  val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
+  val digest = MessageDigest.getInstance("SHA-256")
+    .digest(bytes)
   val sb = StringBuilder(digest.size * 2)
   for (b in digest) {
     val v = b.toInt() and 0xff

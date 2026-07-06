@@ -8,5 +8,6 @@ import kotlinx.datetime.LocalDate
 sealed interface ExportDateRange {
   data object AllTime : ExportDateRange
   data class LastNMonths(val months: Int) : ExportDateRange
-  data class Custom(val start: LocalDate, val endInclusive: LocalDate) : ExportDateRange
+  data class Custom(val start: LocalDate, val endInclusive: LocalDate) :
+    ExportDateRange
 }

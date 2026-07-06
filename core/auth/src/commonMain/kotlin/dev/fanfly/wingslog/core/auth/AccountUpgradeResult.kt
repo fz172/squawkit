@@ -15,7 +15,8 @@ sealed interface AccountUpgradeResult {
   data class Linked(val user: FirebaseUser) : AccountUpgradeResult
 
   /** The provider credential already belongs to another account; offer to merge into it. */
-  data class CredentialInUse(val credential: AuthCredential) : AccountUpgradeResult
+  data class CredentialInUse(val credential: AuthCredential) :
+    AccountUpgradeResult
 
   /** The user dismissed the provider sheet. No change. */
   data object Cancelled : AccountUpgradeResult

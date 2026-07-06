@@ -84,7 +84,8 @@ class HydrationRunner(
             collection = kind,
             scope = scope.toPath(),
             id = doc.id,
-          ).awaitAsOneOrNull()
+          )
+            .awaitAsOneOrNull()
           if (local?.dirty != true) {
             db.schemaQueries.upsert(
               collection = kind,
@@ -107,7 +108,11 @@ class HydrationRunner(
     // index rows are created for attachments that arrived during the initial hydration bulk-pull.
     if (postWriteHook != null) {
       for (doc in writtenDocs) {
-        if (!doc.deleted) postWriteHook.onEntityWritten(kind, scope, doc.payload)
+        if (!doc.deleted) postWriteHook.onEntityWritten(
+          kind,
+          scope,
+          doc.payload
+        )
       }
     }
     return maxTs

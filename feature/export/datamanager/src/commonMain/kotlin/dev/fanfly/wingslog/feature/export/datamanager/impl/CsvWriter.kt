@@ -12,7 +12,8 @@ object CsvWriter {
     }
 
   private fun String.escapeCsvCell(): String {
-    val needsQuoting = any { it == ',' || it == '"' || it == '\r' || it == '\n' }
+    val needsQuoting =
+      any { it == ',' || it == '"' || it == '\r' || it == '\n' }
     if (!needsQuoting) return this
     return buildString {
       append('"')

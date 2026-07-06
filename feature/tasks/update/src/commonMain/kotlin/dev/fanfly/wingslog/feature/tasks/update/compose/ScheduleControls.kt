@@ -151,8 +151,9 @@ internal fun RecurrenceChoice(
       val isSelected = selected == rec
       val border = if (isSelected) MaterialTheme.colorScheme.primary
       else MaterialTheme.colorScheme.outlineVariant
-      val bg = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
-      else MaterialTheme.colorScheme.surfaceContainer
+      val bg =
+        if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
+        else MaterialTheme.colorScheme.surfaceContainer
       val labelColor = if (isSelected) MaterialTheme.colorScheme.primary
       else MaterialTheme.colorScheme.onSurface
 
@@ -384,7 +385,8 @@ internal fun AdvancedLinkedSection(
         Icons.Default.ExpandMore,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(Spacing.large).rotate(rotation),
+        modifier = Modifier.size(Spacing.large)
+          .rotate(rotation),
       )
     }
 
@@ -470,7 +472,8 @@ internal fun AdvancedLinkedSection(
               Icons.Default.Add,
               contentDescription = null,
               tint = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.size(Spacing.medium).padding(end = Spacing.none),
+              modifier = Modifier.size(Spacing.medium)
+                .padding(end = Spacing.none),
             )
             Spacer(Modifier.width(Spacing.small))
             Text(
@@ -490,7 +493,8 @@ internal fun AdvancedLinkedSection(
       availableCards = availableInspections,
       selectedIds = listOfNotNull(linkedTask?.id),
       onToggle = { id ->
-        availableInspections.firstOrNull { it.id == id }?.let { onPick(it) }
+        availableInspections.firstOrNull { it.id == id }
+          ?.let { onPick(it) }
         showPicker = false
       },
       onDismiss = { showPicker = false },

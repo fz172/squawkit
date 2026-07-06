@@ -10,7 +10,10 @@ class ZipFileWriterTest {
   fun write_createsReadableZipWithUtf8Names() {
     val bytes = ZipFileWriter().write(
       listOf(
-        ZipEntryPayload("N12345/airframe.csv", "date,work\r\n".encodeToByteArray()),
+        ZipEntryPayload(
+          "N12345/airframe.csv",
+          "date,work\r\n".encodeToByteArray()
+        ),
         ZipEntryPayload("N12345/cafe.csv", "ok".encodeToByteArray()),
       )
     )
@@ -22,7 +25,8 @@ class ZipFileWriterTest {
       "date,work\r\n",
       "N12345/cafe.csv",
       "ok",
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
@@ -38,7 +42,8 @@ class ZipFileWriterTest {
       while (true) {
         val entry = zip.nextEntry ?: break
         out += entry.name
-        out += zip.readBytes().decodeToString()
+        out += zip.readBytes()
+          .decodeToString()
       }
     }
     return out

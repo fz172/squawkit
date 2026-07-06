@@ -21,5 +21,9 @@ actual val platformAnalyticsModule: Module = module {
 }
 
 actual val analyticsPreferenceStoreModule: Module = module {
-  single<AnalyticsPreferenceStore> { AndroidAnalyticsPreferenceStore(androidContext()) }
+  single<AnalyticsPreferenceStore> {
+    AndroidAnalyticsPreferenceStore(
+      androidContext()
+    )
+  }
 }

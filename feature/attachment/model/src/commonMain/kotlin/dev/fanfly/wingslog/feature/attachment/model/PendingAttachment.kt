@@ -49,28 +49,6 @@ fun List<PendingAttachment>.fileCount(): Int = count { pending ->
   }
 }
 
-/** Sum of size_bytes for non-LINK, non-PendingDelete attachments — used by QuotaChecker. */
-fun List<PendingAttachment>.pendingFileBytes(): Long = sumOf { pending ->
-  when (pending) {
-    is PendingAttachment.Local -> pending.attachment.size_bytes
-    is PendingAttachment.Saved ->
-      if (pending.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK)
-        pending.attachment.size_bytes else 0L
-    else -> 0L
-  }
-}
-
-/** sha256s of non-LINK, non-PendingDelete attachments — used by QuotaChecker dedupe check. */
-fun List<PendingAttachment>.nonLinkSha256s(): Set<String> = mapNotNullTo(mutableSetOf()) { pending ->
-  when (pending) {
-    is PendingAttachment.Local -> pending.attachment.sha256.takeIf { it.isNotEmpty() }
-    is PendingAttachment.Saved ->
-      if (pending.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK)
-        pending.attachment.sha256.takeIf { it.isNotEmpty() } else null
-    else -> null
-  }
-}
-
-/** Visible items (excludes [PendingDelete]) for rendering. */
+/** Visible items (excludes [PendingAttachment.PendingDelete]) for rendering. */
 fun List<PendingAttachment>.visible(): List<PendingAttachment> =
   filter { it !is PendingAttachment.PendingDelete }

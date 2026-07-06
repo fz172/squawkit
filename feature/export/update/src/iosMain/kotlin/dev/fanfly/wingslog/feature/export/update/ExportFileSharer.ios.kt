@@ -17,11 +17,18 @@ actual fun rememberExportFileSharer(): ExportFileSharer = remember {
 }
 
 private class IosExportFileSharer : ExportFileSharer {
-  private val delegate: MFMailComposeViewControllerDelegateProtocol = MailComposeDelegate()
+  private val delegate: MFMailComposeViewControllerDelegateProtocol =
+    MailComposeDelegate()
 
-  override fun share(filePath: String, chooserTitle: String, subject: String, body: String): Boolean {
-    val rootViewController = UIApplication.sharedApplication.keyWindow?.rootViewController
-      ?: return false
+  override fun share(
+    filePath: String,
+    chooserTitle: String,
+    subject: String,
+    body: String
+  ): Boolean {
+    val rootViewController =
+      UIApplication.sharedApplication.keyWindow?.rootViewController
+        ?: return false
     if (!MFMailComposeViewController.canSendMail()) return false
     val attachmentData = NSData.dataWithContentsOfFile(filePath) ?: return false
     val mailController = MFMailComposeViewController().apply {
@@ -31,7 +38,8 @@ private class IosExportFileSharer : ExportFileSharer {
       addAttachmentData(
         attachment = attachmentData,
         mimeType = "application/zip",
-        fileName = filePath.substringAfterLast('/').ifBlank { "SquawkIt_Logs.zip" },
+        fileName = filePath.substringAfterLast('/')
+          .ifBlank { "SquawkIt_Logs.zip" },
       )
     }
     rootViewController.presentViewController(
@@ -43,7 +51,8 @@ private class IosExportFileSharer : ExportFileSharer {
   }
 }
 
-private class MailComposeDelegate : NSObject(), MFMailComposeViewControllerDelegateProtocol {
+private class MailComposeDelegate : NSObject(),
+  MFMailComposeViewControllerDelegateProtocol {
   override fun mailComposeController(
     controller: MFMailComposeViewController,
     didFinishWithResult: MFMailComposeResult,

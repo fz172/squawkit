@@ -47,7 +47,8 @@ class AttachmentExportResolver(
           return@forEach
         }
 
-        val bytes = runCatching { blobFilesystem.read(ref.relativePath) }.getOrNull()
+        val bytes =
+          runCatching { blobFilesystem.read(ref.relativePath) }.getOrNull()
         if (bytes == null) {
           notes += "Attachment ${attachment.id} local file could not be read."
           return@forEach
@@ -72,7 +73,8 @@ class AttachmentExportResolver(
       squawks.flatMap { it.attachments }
 
   private fun Attachment.exportRelativePath(): String {
-    val shortId = id.take(4).ifBlank { "file" }
+    val shortId = id.take(4)
+      .ifBlank { "file" }
     val fileName = name
       .ifBlank { "$shortId.${mime_type.extension()}" }
       .sanitizeAttachmentFileName()
@@ -89,5 +91,6 @@ class AttachmentExportResolver(
     }
 
   private fun String.sanitizeAttachmentFileName(): String =
-    replace(Regex("[^A-Za-z0-9._-]+"), "_").trim('_').ifBlank { "attachment.bin" }
+    replace(Regex("[^A-Za-z0-9._-]+"), "_").trim('_')
+      .ifBlank { "attachment.bin" }
 }

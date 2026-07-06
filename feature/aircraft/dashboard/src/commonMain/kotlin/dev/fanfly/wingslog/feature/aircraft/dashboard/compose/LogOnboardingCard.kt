@@ -72,7 +72,8 @@ fun LogOnboardingCard(
 
       Button(
         onClick = onAddLogClick,
-        modifier = Modifier.fillMaxWidth().height(Spacing.buttonHeight),
+        modifier = Modifier.fillMaxWidth()
+          .height(Spacing.buttonHeight),
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.buttonColors(
           containerColor = MaterialTheme.colorScheme.onPrimaryContainer,

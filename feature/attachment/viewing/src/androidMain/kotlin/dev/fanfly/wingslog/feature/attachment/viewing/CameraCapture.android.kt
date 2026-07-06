@@ -51,7 +51,10 @@ actual fun rememberCameraCapture(
       return@rememberLauncherForActivityResult
     }
     if (file.length() == 0L) {
-      Log.w(TAG, "Capture reported success but wrote an empty file — likely a permission issue")
+      Log.w(
+        TAG,
+        "Capture reported success but wrote an empty file — likely a permission issue"
+      )
       file.delete()
       onError()
       return@rememberLauncherForActivityResult

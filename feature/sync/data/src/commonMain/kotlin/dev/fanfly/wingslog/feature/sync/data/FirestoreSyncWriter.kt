@@ -10,7 +10,8 @@ import kotlin.io.encoding.ExperimentalEncodingApi
  * walks the kotlinx-serialization graph and delegates platform glue (server timestamp, primitives)
  * to GitLive. No expect/actual needed at this layer.
  */
-class FirestoreSyncWriter(private val firestore: FirebaseFirestore) : SyncWriter {
+class FirestoreSyncWriter(private val firestore: FirebaseFirestore) :
+  SyncWriter {
 
   @OptIn(ExperimentalEncodingApi::class)
   override suspend fun push(write: SyncWrite) {

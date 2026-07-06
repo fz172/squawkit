@@ -30,7 +30,8 @@ class SquawkManagerImplTest {
   private lateinit var store: EntityStore<Squawk>
   private lateinit var manager: SquawkManagerImpl
 
-  private val testScope = EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+  private val testScope =
+    EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
 
   @Before
   fun setUp() {
@@ -58,7 +59,13 @@ class SquawkManagerImplTest {
       dismissReason = SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN,
     )
     every { store.observeAll(testScope) } returns flowOf(
-      listOf(StorageEntity(TEST_SQUAWK_ID, existingSquawk, Instant.DISTANT_PAST))
+      listOf(
+        StorageEntity(
+          TEST_SQUAWK_ID,
+          existingSquawk,
+          Instant.DISTANT_PAST
+        )
+      )
     )
 
     val result = manager.dismissSquawk(
@@ -81,7 +88,13 @@ class SquawkManagerImplTest {
   fun dismissSquawk_setsDismissedAtToNonNull() = runTest {
     val existingSquawk = buildTestSquawk(id = TEST_SQUAWK_ID)
     every { store.observeAll(testScope) } returns flowOf(
-      listOf(StorageEntity(TEST_SQUAWK_ID, existingSquawk, Instant.DISTANT_PAST))
+      listOf(
+        StorageEntity(
+          TEST_SQUAWK_ID,
+          existingSquawk,
+          Instant.DISTANT_PAST
+        )
+      )
     )
 
     val result = manager.dismissSquawk(
@@ -120,7 +133,13 @@ class SquawkManagerImplTest {
   fun dismissSquawk_squawkIdMismatch_returnsFailure() = runTest {
     val otherSquawk = buildTestSquawk(id = "different-squawk-id")
     every { store.observeAll(testScope) } returns flowOf(
-      listOf(StorageEntity("different-squawk-id", otherSquawk, Instant.DISTANT_PAST))
+      listOf(
+        StorageEntity(
+          "different-squawk-id",
+          otherSquawk,
+          Instant.DISTANT_PAST
+        )
+      )
     )
 
     val result = manager.dismissSquawk(
@@ -156,7 +175,13 @@ class SquawkManagerImplTest {
       dismissReason = SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
     )
     every { store.observeAll(testScope) } returns flowOf(
-      listOf(StorageEntity(TEST_SQUAWK_ID, dismissedSquawk, Instant.DISTANT_PAST))
+      listOf(
+        StorageEntity(
+          TEST_SQUAWK_ID,
+          dismissedSquawk,
+          Instant.DISTANT_PAST
+        )
+      )
     )
 
     val result = manager.reopenSquawk(TEST_AIRCRAFT_ID, TEST_SQUAWK_ID)
@@ -178,7 +203,13 @@ class SquawkManagerImplTest {
       dismissReason = SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE,
     )
     every { store.observeAll(testScope) } returns flowOf(
-      listOf(StorageEntity(TEST_SQUAWK_ID, dismissedSquawk, Instant.DISTANT_PAST))
+      listOf(
+        StorageEntity(
+          TEST_SQUAWK_ID,
+          dismissedSquawk,
+          Instant.DISTANT_PAST
+        )
+      )
     )
 
     val result = manager.reopenSquawk(TEST_AIRCRAFT_ID, TEST_SQUAWK_ID)

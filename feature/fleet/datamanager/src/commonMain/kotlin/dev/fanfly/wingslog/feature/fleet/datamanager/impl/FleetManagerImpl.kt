@@ -29,7 +29,8 @@ class FleetManagerImpl(
 ) : FleetManager {
 
   private val logger = Logger.withTag("FleetManagerImpl")
-  private val store: EntityStore<Aircraft> = storeFactory.create(CollectionKind.Aircraft)
+  private val store: EntityStore<Aircraft> =
+    storeFactory.create(CollectionKind.Aircraft)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeFleetDashboard(): Flow<List<Aircraft>> =
@@ -63,20 +64,23 @@ class FleetManagerImpl(
       }
     }
 
-  override suspend fun updateAircraft(aircraft: Aircraft): Result<Boolean> = runCatching {
-    val uid = firebaseAuth.currentUser?.uid
-      ?: error("Cannot update aircraft when no user is signed in")
-    val withId = if (aircraft.id.isEmpty()) aircraft.copy(id = generateRandomId()) else aircraft
-    store.put(withId.id, withId, EntityScope.userRoot(uid))
-    logger.d { "Aircraft ${withId.id} written to local store" }
-    true
-  }.onFailure { logger.w(it) { "Error updating aircraft" } }
+  override suspend fun updateAircraft(aircraft: Aircraft): Result<Boolean> =
+    runCatching {
+      val uid = firebaseAuth.currentUser?.uid
+        ?: error("Cannot update aircraft when no user is signed in")
+      val withId =
+        if (aircraft.id.isEmpty()) aircraft.copy(id = generateRandomId()) else aircraft
+      store.put(withId.id, withId, EntityScope.userRoot(uid))
+      logger.d { "Aircraft ${withId.id} written to local store" }
+      true
+    }.onFailure { logger.w(it) { "Error updating aircraft" } }
 
-  override suspend fun deleteAircraft(id: String): Result<Boolean> = runCatching {
-    val uid = firebaseAuth.currentUser?.uid
-      ?: error("Cannot delete aircraft when no user is signed in")
-    store.delete(id, EntityScope.userRoot(uid))
-    logger.d { "Aircraft $id tombstoned in local store" }
-    true
-  }.onFailure { logger.w(it) { "Error deleting aircraft $id" } }
+  override suspend fun deleteAircraft(id: String): Result<Boolean> =
+    runCatching {
+      val uid = firebaseAuth.currentUser?.uid
+        ?: error("Cannot delete aircraft when no user is signed in")
+      store.delete(id, EntityScope.userRoot(uid))
+      logger.d { "Aircraft $id tombstoned in local store" }
+      true
+    }.onFailure { logger.w(it) { "Error deleting aircraft $id" } }
 }

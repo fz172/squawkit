@@ -8,7 +8,8 @@ plugins {
 }
 
 val versionPropsFile = rootProject.file("version.properties")
-val readmeTemplateFile = layout.projectDirectory.file("src/commonMain/resources/export_readme_template.txt")
+val readmeTemplateFile =
+  layout.projectDirectory.file("src/commonMain/resources/export_readme_template.txt")
 
 val generateExportVersionKt by tasks.registering {
   val outputDir = layout.buildDirectory.dir(
@@ -19,10 +20,13 @@ val generateExportVersionKt by tasks.registering {
 
   doFirst {
     val props = Properties().apply {
-      if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
+      if (versionPropsFile.exists()) versionPropsFile.inputStream()
+        .use { load(it) }
     }
-    val versionName = "${props["major"]}.${props["minor"]}.${props["buildDate"]}.${props["patch"]}"
-    val versionCode = props["versionCode"]?.toString().orEmpty()
+    val versionName =
+      "${props["major"]}.${props["minor"]}.${props["buildDate"]}.${props["patch"]}"
+    val versionCode = props["versionCode"]?.toString()
+      .orEmpty()
     val displayVersion = if (versionCode.isBlank()) {
       "SquawkIt $versionName"
     } else {
@@ -49,7 +53,10 @@ val generateExportReadmeTemplateKt by tasks.registering {
       .resolve("GeneratedExportReadmeTemplate.kt")
       .writeText(
         "package dev.fanfly.wingslog.feature.export.datamanager.impl\n\n" +
-          "const val GENERATED_EXPORT_README_TEMPLATE = ${readmeTemplateFile.asFile.readText().toKotlinStringLiteral()}\n"
+          "const val GENERATED_EXPORT_README_TEMPLATE = ${
+            readmeTemplateFile.asFile.readText()
+              .toKotlinStringLiteral()
+          }\n"
       )
   }
 }

@@ -8,7 +8,6 @@ import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.attachment.datamanager.BlobFilesystem
 import dev.fanfly.wingslog.feature.attachment.datamanager.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.datamanager.UploadScheduler
-import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.storage.FirebaseStorage
 import io.ktor.client.HttpClient
@@ -55,7 +54,6 @@ class UrlSessionUploadScheduler(
   private val auth: FirebaseAuth,
   private val storage: FirebaseStorage,
   private val db: WingsLogDatabase,
-  private val syncPreferences: SyncPreferences,
   private val httpClient: HttpClient,
   private val downloadDriver: BlobDownloadDriver,
   private val deleteDriver: BlobDeleteDriver,
@@ -137,7 +135,8 @@ class UrlSessionUploadScheduler(
   // --- Upload initiation ---
 
   private suspend fun initiateUpload(id: BlobId) {
-    val row = db.schemaQueries.selectBlobById(id.value).executeAsOneOrNull() ?: return
+    val row = db.schemaQueries.selectBlobById(id.value)
+      .executeAsOneOrNull() ?: return
     if (row.deleted) return
 
     when (row.remote_state) {
@@ -154,9 +153,14 @@ class UrlSessionUploadScheduler(
         // creating the URLSession task). Reset so we can start fresh.
         blobs.markFailedTransient(id)
       }
+
       RemoteState.LocalOnly -> {
         // Clear any stale resume_url left by a prior kill between setResumeUrl and markUploading.
-        if (row.resume_url != null) writeLock.withLock { db.schemaQueries.clearResumeUrl(id.value) }
+        if (row.resume_url != null) writeLock.withLock {
+          db.schemaQueries.clearResumeUrl(
+            id.value
+          )
+        }
       }
     }
 
@@ -173,7 +177,8 @@ class UrlSessionUploadScheduler(
       return
     }
 
-    val remotePath = row.remote_path ?: "${row.scope_path.trim('/')}/blobs/${id.value}"
+    val remotePath =
+      row.remote_path ?: "${row.scope_path.trim('/')}/blobs/${id.value}"
     val bucket = storage.reference.bucket
 
     val sessionUri = createResumableSession(
@@ -184,7 +189,12 @@ class UrlSessionUploadScheduler(
       sizeBytes = row.size_bytes,
     ) ?: return
 
-    writeLock.withLock { db.schemaQueries.setResumeUrl(resumeUrl = sessionUri, id = id.value) }
+    writeLock.withLock {
+      db.schemaQueries.setResumeUrl(
+        resumeUrl = sessionUri,
+        id = id.value
+      )
+    }
     blobs.markUploading(id)
     enqueueBackgroundUpload(
       id = id,
@@ -212,13 +222,19 @@ class UrlSessionUploadScheduler(
     }
     val request = NSMutableURLRequest.requestWithURL(sessionNsUrl)
     request.setHTTPMethod("PUT")
-    request.setValue(sizeBytes.toString(), forHTTPHeaderField = "Content-Length")
+    request.setValue(
+      sizeBytes.toString(),
+      forHTTPHeaderField = "Content-Length"
+    )
     request.setValue(
       contentType ?: "application/octet-stream",
       forHTTPHeaderField = "Content-Type",
     )
     // Firebase Storage GCS resumable upload — finalize in a single PUT.
-    request.setValue("upload, finalize", forHTTPHeaderField = "X-Goog-Upload-Command")
+    request.setValue(
+      "upload, finalize",
+      forHTTPHeaderField = "X-Goog-Upload-Command"
+    )
     request.setValue("0", forHTTPHeaderField = "X-Goog-Upload-Offset")
 
     @Suppress("UNCHECKED_CAST")
@@ -247,7 +263,10 @@ class UrlSessionUploadScheduler(
         header("Authorization", "Firebase $idToken")
         header("X-Goog-Upload-Protocol", "resumable")
         header("X-Goog-Upload-Command", "start")
-        header("X-Goog-Upload-Header-Content-Type", contentType ?: "application/octet-stream")
+        header(
+          "X-Goog-Upload-Header-Content-Type",
+          contentType ?: "application/octet-stream"
+        )
         header("X-Goog-Upload-Header-Content-Length", sizeBytes.toString())
         contentType(ContentType.Application.Json)
         setBody("{}")

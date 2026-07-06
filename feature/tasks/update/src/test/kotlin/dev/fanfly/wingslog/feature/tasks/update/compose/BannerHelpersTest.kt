@@ -118,7 +118,8 @@ class BannerHelpersTest {
   fun advanceDatePastToday_linkedMode_returnsNull() {
     val natural = LocalDate(2026, 4, 1)
     val today = LocalDate(2026, 5, 18)
-    val schedule = ScheduleState(mode = ScheduleMode.LINKED, linkedToId = "parent-id")
+    val schedule =
+      ScheduleState(mode = ScheduleMode.LINKED, linkedToId = "parent-id")
 
     val result = advanceDatePastToday(natural, schedule, today)
 
@@ -133,7 +134,11 @@ class BannerHelpersTest {
       calUnit = ScheduleTimeUnit.MONTHS,
     )
 
-    val result = advanceDatePastToday(LocalDate(2026, 4, 1), schedule, LocalDate(2026, 5, 18))
+    val result = advanceDatePastToday(
+      LocalDate(2026, 4, 1),
+      schedule,
+      LocalDate(2026, 5, 18)
+    )
 
     assertThat(result).isNull()
   }
@@ -146,7 +151,11 @@ class BannerHelpersTest {
       calUnit = ScheduleTimeUnit.MONTHS,
     )
 
-    val result = advanceDatePastToday(LocalDate(2026, 4, 1), schedule, LocalDate(2026, 5, 18))
+    val result = advanceDatePastToday(
+      LocalDate(2026, 4, 1),
+      schedule,
+      LocalDate(2026, 5, 18)
+    )
 
     assertThat(result).isNull()
   }

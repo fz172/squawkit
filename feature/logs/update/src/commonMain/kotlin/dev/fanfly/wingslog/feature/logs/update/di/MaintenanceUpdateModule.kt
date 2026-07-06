@@ -15,7 +15,12 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val maintenanceUpdateModule = module {
-  viewModel { EditAircraftViewModel(get<FleetManager>(), get<SavedStateHandle>()) }
+  viewModel {
+    EditAircraftViewModel(
+      get<FleetManager>(),
+      get<SavedStateHandle>()
+    )
+  }
   viewModel {
     MaintenanceLogFormViewModel(
       get<MaintenanceLogManager>(),

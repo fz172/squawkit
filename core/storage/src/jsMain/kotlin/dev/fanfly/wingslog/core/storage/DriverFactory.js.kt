@@ -37,7 +37,8 @@ actual class DriverFactory(private val worker: Worker) {
     val schema = WingsLogDatabase.Schema
     val target = schema.version
     val created = try {
-      schema.create(driver).await()
+      schema.create(driver)
+        .await()
       true
     } catch (e: Throwable) {
       // Expected on every launch after the first: the tables already exist.
@@ -51,7 +52,8 @@ actual class DriverFactory(private val worker: Worker) {
     val current = driver.userVersion()
     if (current in 1 until target) {
       log.i { "migrating local DB schema $current -> $target" }
-      schema.migrate(driver, current, target).await()
+      schema.migrate(driver, current, target)
+        .await()
       driver.setUserVersion(target)
     }
   }
@@ -61,13 +63,21 @@ actual class DriverFactory(private val worker: Worker) {
       identifier = null,
       sql = "PRAGMA user_version",
       mapper = { cursor ->
-        QueryResult.AsyncValue { if (cursor.next().await()) cursor.getLong(0) ?: 0L else 0L }
+        QueryResult.AsyncValue {
+          if (cursor.next()
+              .await()
+          ) cursor.getLong(0) ?: 0L else 0L
+        }
       },
       parameters = 0,
     ).await()
 
   private suspend fun SqlDriver.setUserVersion(version: Long) {
-    execute(identifier = null, sql = "PRAGMA user_version = $version", parameters = 0).await()
+    execute(
+      identifier = null,
+      sql = "PRAGMA user_version = $version",
+      parameters = 0
+    ).await()
   }
 
   private companion object {

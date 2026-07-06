@@ -14,7 +14,11 @@ actual fun sha256Hex(bytes: ByteArray): String {
       CC_SHA256(null, 0u, dPinned.addressOf(0))
     } else {
       bytes.usePinned { pinned ->
-        CC_SHA256(pinned.addressOf(0), bytes.size.toUInt(), dPinned.addressOf(0))
+        CC_SHA256(
+          pinned.addressOf(0),
+          bytes.size.toUInt(),
+          dPinned.addressOf(0)
+        )
       }
     }
   }

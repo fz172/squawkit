@@ -36,7 +36,11 @@ class WorkManagerUploadScheduler(
       .setConstraints(Constraints(requiredNetworkType = uploadNetworkType()))
       .addTag(TAG_BLOB)
       .build()
-    wm.enqueueUniqueWork("upload:${blobId.value}", ExistingWorkPolicy.KEEP, request)
+    wm.enqueueUniqueWork(
+      "upload:${blobId.value}",
+      ExistingWorkPolicy.KEEP,
+      request
+    )
   }
 
   override fun scheduleDownload(blobId: BlobId) {
@@ -45,7 +49,11 @@ class WorkManagerUploadScheduler(
       .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
       .addTag(TAG_BLOB)
       .build()
-    wm.enqueueUniqueWork("download:${blobId.value}", ExistingWorkPolicy.KEEP, request)
+    wm.enqueueUniqueWork(
+      "download:${blobId.value}",
+      ExistingWorkPolicy.KEEP,
+      request
+    )
   }
 
   override fun scheduleDelete(blobId: BlobId) {
@@ -54,7 +62,11 @@ class WorkManagerUploadScheduler(
       .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
       .addTag(TAG_BLOB)
       .build()
-    wm.enqueueUniqueWork("delete:${blobId.value}", ExistingWorkPolicy.KEEP, request)
+    wm.enqueueUniqueWork(
+      "delete:${blobId.value}",
+      ExistingWorkPolicy.KEEP,
+      request
+    )
   }
 
   override fun cancelAll() {

@@ -14,7 +14,8 @@ import org.junit.Test
 
 private const val TEST_USER_ID = "user-pull-001"
 private const val TEST_AIRCRAFT_ID = "aircraft-pull-001"
-private val TEST_SCOPE = EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+private val TEST_SCOPE =
+  EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
 private val TEST_KIND = CollectionKind.MaintenanceLog
 
 class PullListenerTest {
@@ -25,7 +26,8 @@ class PullListenerTest {
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.synchronous().create(driver)
+    WingsLogDatabase.Schema.synchronous()
+      .create(driver)
     db = createWingsLogDatabase(driver)
     listener = PullListener(kind = TEST_KIND, scope = TEST_SCOPE, db = db)
   }
@@ -38,8 +40,9 @@ class PullListenerTest {
 
     listener.apply(remote)
 
-    val row = db.schemaQueries.selectOneForSync(TEST_KIND, TEST_SCOPE.toPath(), "log-1")
-      .executeAsOneOrNull()
+    val row =
+      db.schemaQueries.selectOneForSync(TEST_KIND, TEST_SCOPE.toPath(), "log-1")
+        .executeAsOneOrNull()
     assertThat(row).isNotNull()
     assertThat(row!!.dirty).isFalse()
     assertThat(row.remote_updated_at).isEqualTo(5000L)
@@ -66,12 +69,17 @@ class PullListenerTest {
       remoteTsMs = null,
       dirty = true,
     )
-    val remote = buildRemoteEntity(id = "log-2", remoteTsMs = 9000L, payload = byteArrayOf(0xFF.toByte()))
+    val remote = buildRemoteEntity(
+      id = "log-2",
+      remoteTsMs = 9000L,
+      payload = byteArrayOf(0xFF.toByte())
+    )
 
     listener.apply(remote)
 
-    val row = db.schemaQueries.selectOneForSync(TEST_KIND, TEST_SCOPE.toPath(), "log-2")
-      .executeAsOneOrNull()
+    val row =
+      db.schemaQueries.selectOneForSync(TEST_KIND, TEST_SCOPE.toPath(), "log-2")
+        .executeAsOneOrNull()
     assertThat(row).isNotNull()
     assertThat(row!!.dirty).isTrue()
     assertThat(row.payload.contentEquals(originalPayload)).isTrue()
@@ -79,7 +87,12 @@ class PullListenerTest {
 
   @Test
   fun apply_localIsDirty_returnsRemoteTsEvenThoughDropped() = runTest {
-    insertEntityRow(id = "log-d", payload = byteArrayOf(0x01), remoteTsMs = null, dirty = true)
+    insertEntityRow(
+      id = "log-d",
+      payload = byteArrayOf(0x01),
+      remoteTsMs = null,
+      dirty = true
+    )
     val remote = buildRemoteEntity(id = "log-d", remoteTsMs = 7777L)
 
     val returned = listener.apply(remote)
@@ -94,13 +107,20 @@ class PullListenerTest {
   fun apply_remoteStrictlyNewer_overwritesLocalRow() = runTest {
     val oldPayload = byteArrayOf(0xAA.toByte())
     val newPayload = byteArrayOf(0xBB.toByte())
-    insertEntityRow(id = "log-3", payload = oldPayload, remoteTsMs = 1000L, dirty = false)
-    val remote = buildRemoteEntity(id = "log-3", remoteTsMs = 2000L, payload = newPayload)
+    insertEntityRow(
+      id = "log-3",
+      payload = oldPayload,
+      remoteTsMs = 1000L,
+      dirty = false
+    )
+    val remote =
+      buildRemoteEntity(id = "log-3", remoteTsMs = 2000L, payload = newPayload)
 
     listener.apply(remote)
 
-    val row = db.schemaQueries.selectOneForSync(TEST_KIND, TEST_SCOPE.toPath(), "log-3")
-      .executeAsOneOrNull()
+    val row =
+      db.schemaQueries.selectOneForSync(TEST_KIND, TEST_SCOPE.toPath(), "log-3")
+        .executeAsOneOrNull()
     assertThat(row).isNotNull()
     assertThat(row!!.remote_updated_at).isEqualTo(2000L)
     assertThat(row.dirty).isFalse()
@@ -113,13 +133,23 @@ class PullListenerTest {
   @Test
   fun apply_remoteIsStale_localUntouched() = runTest {
     val localPayload = byteArrayOf(0xCC.toByte())
-    insertEntityRow(id = "log-4", payload = localPayload, remoteTsMs = 2000L, dirty = false)
-    val remote = buildRemoteEntity(id = "log-4", remoteTsMs = 1500L, payload = byteArrayOf(0xDD.toByte()))
+    insertEntityRow(
+      id = "log-4",
+      payload = localPayload,
+      remoteTsMs = 2000L,
+      dirty = false
+    )
+    val remote = buildRemoteEntity(
+      id = "log-4",
+      remoteTsMs = 1500L,
+      payload = byteArrayOf(0xDD.toByte())
+    )
 
     listener.apply(remote)
 
-    val row = db.schemaQueries.selectOneForSync(TEST_KIND, TEST_SCOPE.toPath(), "log-4")
-      .executeAsOneOrNull()
+    val row =
+      db.schemaQueries.selectOneForSync(TEST_KIND, TEST_SCOPE.toPath(), "log-4")
+        .executeAsOneOrNull()
     assertThat(row).isNotNull()
     assertThat(row!!.remote_updated_at).isEqualTo(2000L)
     assertThat(row.payload.contentEquals(localPayload)).isTrue()
@@ -127,7 +157,12 @@ class PullListenerTest {
 
   @Test
   fun apply_remoteIsStale_returnsRemoteTsNotLocalTs() = runTest {
-    insertEntityRow(id = "log-s", payload = byteArrayOf(0x01), remoteTsMs = 2000L, dirty = false)
+    insertEntityRow(
+      id = "log-s",
+      payload = byteArrayOf(0x01),
+      remoteTsMs = 2000L,
+      dirty = false
+    )
     val remote = buildRemoteEntity(id = "log-s", remoteTsMs = 1500L)
 
     val returned = listener.apply(remote)

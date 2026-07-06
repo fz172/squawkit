@@ -7,10 +7,14 @@ package dev.fanfly.wingslog.feature.attachment.model
  */
 sealed class QuotaResult {
   data object Allowed : QuotaResult()
+
   /** A non-LINK attachment with the same sha256 is already on this parent. */
   data class DuplicateOnParent(val sha256: String) : QuotaResult()
+
   /** Adding this file would push the parent's total beyond the 25 MB cap. */
-  data class PerParentExceeded(val capBytes: Long, val wouldBeBytes: Long) : QuotaResult()
+  data class PerParentExceeded(val capBytes: Long, val wouldBeBytes: Long) :
+    QuotaResult()
+
   /** Adding this file would push the user's total beyond the 1 GB cap. */
   data class PerUserExceeded(
     val capBytes: Long,

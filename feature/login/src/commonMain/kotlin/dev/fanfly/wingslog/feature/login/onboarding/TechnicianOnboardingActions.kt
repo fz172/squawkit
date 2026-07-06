@@ -10,7 +10,8 @@ class TechnicianOnboardingActions(
 ) : OnboardingActions {
 
   override fun observeSelfName(): Flow<String?> =
-    technicianManager.observeSelf().map { it?.name }
+    technicianManager.observeSelf()
+      .map { it?.name }
 
   override suspend fun saveSelfName(name: String) {
     technicianManager.saveSelfName(name)

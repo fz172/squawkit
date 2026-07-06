@@ -32,10 +32,12 @@ class MaintenanceLogListViewModel(
   private val _events = Channel<MaintenanceLogListEvent>()
   val events = _events.receiveAsFlow()
 
-  private val _logsLoadState = MutableStateFlow<LogsLoadState>(LogsLoadState.Loading)
+  private val _logsLoadState =
+    MutableStateFlow<LogsLoadState>(LogsLoadState.Loading)
   private val _filter = MutableStateFlow(LogFilter())
   private val _selectedLog = MutableStateFlow<MaintenanceLog?>(null)
-  private val _availableCards = MutableStateFlow<List<MaintenanceTask>>(emptyList())
+  private val _availableCards =
+    MutableStateFlow<List<MaintenanceTask>>(emptyList())
   private val _technicianEnabled = MutableStateFlow(true)
   private val _attachmentEnabled = MutableStateFlow(true)
 
@@ -43,10 +45,11 @@ class MaintenanceLogListViewModel(
     observeLogs()
     observeTasks()
     viewModelScope.launch {
-      featureLabManager.observe().collect { flags ->
-        _technicianEnabled.value = flags.technicianEnabled
-        _attachmentEnabled.value = flags.attachmentUploadEnabled
-      }
+      featureLabManager.observe()
+        .collect { flags ->
+          _technicianEnabled.value = flags.technicianEnabled
+          _attachmentEnabled.value = flags.attachmentUploadEnabled
+        }
     }
     viewModelScope.launch {
       combine(
@@ -59,8 +62,10 @@ class MaintenanceLogListViewModel(
       ) { args ->
         val logsState = args[0] as LogsLoadState
         val filter = args[1] as LogFilter
+
         @Suppress("UNCHECKED_CAST")
         val selectedLog = args[2] as MaintenanceLog?
+
         @Suppress("UNCHECKED_CAST")
         val availableCards = args[3] as List<MaintenanceTask>
         val technicianEnabled = args[4] as Boolean
@@ -69,7 +74,9 @@ class MaintenanceLogListViewModel(
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
           LogsLoadState.Error -> MaintenanceLogListUiState.Error
           is LogsLoadState.Loaded -> {
-            val sorted = logsState.logs.sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
+            val sorted = logsState.logs.sortedByDescending {
+              it.timestamp?.getEpochSecond() ?: 0L
+            }
             val filtered = sorted.filter { log ->
               (filter.components.isEmpty() || log.component_type in filter.components) &&
                 (filter.query.isBlank() || log.work_description.contains(
@@ -157,6 +164,9 @@ class MaintenanceLogListViewModel(
 }
 
 sealed interface MaintenanceLogListEvent {
-  data class NavigateToCreateLog(val aircraftId: String) : MaintenanceLogListEvent
-  data class NavigateToEditLog(val aircraftId: String, val logId: String) : MaintenanceLogListEvent
+  data class NavigateToCreateLog(val aircraftId: String) :
+    MaintenanceLogListEvent
+
+  data class NavigateToEditLog(val aircraftId: String, val logId: String) :
+    MaintenanceLogListEvent
 }

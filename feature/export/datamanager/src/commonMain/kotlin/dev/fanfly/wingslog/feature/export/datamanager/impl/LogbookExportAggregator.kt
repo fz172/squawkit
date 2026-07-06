@@ -43,11 +43,26 @@ class LogbookExportAggregator(
    * The returned bundle is date-filtered for timestamped records and sorted oldest first for
    * paper-logbook order.
    */
-  suspend fun collect(request: ExportRequest, aircraftId: String): AircraftBundle = coroutineScope {
-    val aircraftDeferred = async { fleetManager.loadAircraft(aircraftId).first() }
-    val logsDeferred = async { logsManager.observeLogs(aircraftId).first() }
-    val tasksDeferred = async { tasksManager.observeTasks(aircraftId).first() }
-    val squawksDeferred = async { squawkManager.observeSquawks(aircraftId).first() }
+  suspend fun collect(
+    request: ExportRequest,
+    aircraftId: String
+  ): AircraftBundle = coroutineScope {
+    val aircraftDeferred = async {
+      fleetManager.loadAircraft(aircraftId)
+        .first()
+    }
+    val logsDeferred = async {
+      logsManager.observeLogs(aircraftId)
+        .first()
+    }
+    val tasksDeferred = async {
+      tasksManager.observeTasks(aircraftId)
+        .first()
+    }
+    val squawksDeferred = async {
+      squawkManager.observeSquawks(aircraftId)
+        .first()
+    }
 
     val aircraft = requireNotNull(aircraftDeferred.await())
     val allLogs = logsDeferred.await()
@@ -69,7 +84,8 @@ class LogbookExportAggregator(
     val tasksInRange = if (request.dateRange is ExportDateRange.AllTime) {
       allTasks
     } else {
-      val workedOnTaskIds = logsInRange.flatMap { it.inspection_ids }.toSet()
+      val workedOnTaskIds = logsInRange.flatMap { it.inspection_ids }
+        .toSet()
       allTasks.filter { it.id in workedOnTaskIds }
     }
     val techniciansById = resolveTechnicians(logsInRange)
@@ -81,8 +97,12 @@ class LogbookExportAggregator(
     val lastCompliedByTaskId = tasksInRange.associate { task ->
       task.id to logsInRange
         .filter { log -> task.id in log.inspection_ids }
-        .maxByOrNull { log -> log.timestamp?.getEpochSecond() ?: Long.MIN_VALUE }
-    }.filterValues { it != null }.mapValues { (_, log) -> log!! }
+        .maxByOrNull { log ->
+          log.timestamp?.getEpochSecond() ?: Long.MIN_VALUE
+        }
+    }
+      .filterValues { it != null }
+      .mapValues { (_, log) -> log!! }
 
     AircraftBundle(
       aircraft = aircraft,
@@ -106,7 +126,8 @@ class LogbookExportAggregator(
   }
 
   private fun ExportDateRange.bounds(): ClosedRange<LocalDate> {
-    val today = clock.now().toLocalDateTime(timeZone).date
+    val today = clock.now()
+      .toLocalDateTime(timeZone).date
     return when (this) {
       ExportDateRange.AllTime -> LocalDate(1, 1, 1)..LocalDate(9999, 12, 31)
       is ExportDateRange.LastNMonths -> today.minus(DatePeriod(months = months))..today
@@ -119,13 +140,18 @@ class LogbookExportAggregator(
       log.technician
         ?.takeIf { technician -> technician.id.isNotBlank() && technician.name.isNotBlank() }
         ?.let { technician -> technician.id to technician }
-    }.toMap()
+    }
+      .toMap()
     val missingIds = logs.mapNotNull { log ->
       log.technician_id.takeIf { id -> id.isNotBlank() }
-    }.toSet() - embedded.keys
+    }
+      .toSet() - embedded.keys
     val resolved = missingIds.mapNotNull { id ->
-      technicianManager.loadTechnician(id).first()?.let { technician -> id to technician }
-    }.toMap()
+      technicianManager.loadTechnician(id)
+        .first()
+        ?.let { technician -> id to technician }
+    }
+      .toMap()
     return embedded + resolved
   }
 

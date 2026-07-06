@@ -7,27 +7,27 @@ option java_multiple_files = true;
 
 enum AttachmentType {
   ATTACHMENT_TYPE_UNKNOWN = 0;
-  ATTACHMENT_TYPE_IMAGE   = 1;
-  ATTACHMENT_TYPE_PDF     = 2;
-  ATTACHMENT_TYPE_LINK    = 3;
-  ATTACHMENT_TYPE_FILE    = 4;
+  ATTACHMENT_TYPE_IMAGE = 1;
+  ATTACHMENT_TYPE_PDF = 2;
+  ATTACHMENT_TYPE_LINK = 3;
+  ATTACHMENT_TYPE_FILE = 4;
 }
 
 message Attachment {
-  string id           = 1;
-  string name         = 2;
+  string id = 1;
+  string name = 2;
   AttachmentType type = 3;
   string storage_path = 4;
   // Field 5 (download_url) is being phased out in R2 — see docs/storage_r2_design.md §3.
   // It will be marked `reserved` once core/attachments is deleted (PR 3). For now it stays
   // populated so the R1 opener continues to work alongside the new local-first paths.
   string download_url = 5;
-  string url          = 6;
-  string mime_type    = 7;
-  int64  size_bytes   = 8;
+  string url = 6;
+  string mime_type = 7;
+  int64  size_bytes = 8;
   google.protobuf.Timestamp created_at = 9;
   // R2: hex-encoded SHA-256 of the attachment bytes. Required for non-LINK attachments;
   // empty for LINK and for R1-era attachments (those become Failed(LegacyAttachment) in
   // the R2 opener — see design §10).
-  string sha256       = 10;
+  string sha256 = 10;
 }

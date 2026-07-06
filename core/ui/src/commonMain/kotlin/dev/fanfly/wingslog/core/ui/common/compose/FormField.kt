@@ -100,7 +100,8 @@ fun FormTextField(
     // vertical margin of ~0.75 character height around the field so the label (and supporting text)
     // have room. Derived from the text size so it scales with the user's font setting.
     val labelMargin = with(LocalDensity.current) {
-      val charSp = textStyle.fontSize.takeIf { it != TextUnit.Unspecified }?.value ?: 14f
+      val charSp =
+        textStyle.fontSize.takeIf { it != TextUnit.Unspecified }?.value ?: 14f
       (charSp * 0.75f).sp.toDp()
     }
     BasicTextField(

@@ -1,9 +1,11 @@
 package dev.fanfly.wingslog.core.analytics
 
 import android.content.Context
+import androidx.core.content.edit
 
 /** Device-local Firebase Logging preference backed by [android.content.SharedPreferences]. */
-class AndroidAnalyticsPreferenceStore(context: Context) : AnalyticsPreferenceStore {
+class AndroidAnalyticsPreferenceStore(context: Context) :
+  AnalyticsPreferenceStore {
   private val prefs =
     context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -11,9 +13,9 @@ class AndroidAnalyticsPreferenceStore(context: Context) : AnalyticsPreferenceSto
     prefs.getBoolean(KEY, true)
 
   override fun save(enabled: Boolean) {
-    prefs.edit()
-      .putBoolean(KEY, enabled)
-      .apply()
+    prefs.edit {
+      putBoolean(KEY, enabled)
+    }
   }
 
   private companion object {

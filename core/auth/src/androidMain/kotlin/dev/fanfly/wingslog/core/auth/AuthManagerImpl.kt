@@ -35,7 +35,10 @@ class AuthManagerImpl(
   override fun isSignInWithEmailLink(link: String): Boolean =
     emailLink.isSignInWithEmailLink(link)
 
-  override suspend fun completeSignInLink(email: String, link: String): FirebaseUser? =
+  override suspend fun completeSignInLink(
+    email: String,
+    link: String
+  ): FirebaseUser? =
     emailLink.completeSignInLink(email, link)
 
   /**
@@ -46,7 +49,8 @@ class AuthManagerImpl(
    * let the user choose a sign-in method and only show Google's UI when they tap "Log in with Google"
    * (see [signInWithGoogle]). Matches the iOS implementation, which also just returns `currentUser`.
    */
-  override suspend fun trySilentLogin(): FirebaseUser? = authProvider.currentUser
+  override suspend fun trySilentLogin(): FirebaseUser? =
+    authProvider.currentUser
 
   /**
    * Signs in anonymously using Firebase Authentication.

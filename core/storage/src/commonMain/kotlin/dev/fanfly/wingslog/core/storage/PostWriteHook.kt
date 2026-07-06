@@ -8,5 +8,9 @@ package dev.fanfly.wingslog.core.storage
  * The hook is NOT called for deleted entities (payload would be stale/empty).
  */
 fun interface PostWriteHook {
-  fun onEntityWritten(kind: CollectionKind, scope: EntityScope, payload: ByteArray)
+  fun onEntityWritten(
+    kind: CollectionKind,
+    scope: EntityScope,
+    payload: ByteArray
+  )
 }

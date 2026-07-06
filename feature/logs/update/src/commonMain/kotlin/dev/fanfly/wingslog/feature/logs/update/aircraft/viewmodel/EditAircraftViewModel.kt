@@ -42,20 +42,21 @@ class EditAircraftViewModel(
       // We need a way to get one aircraft. FleetManager.loadAircraft returns a Flow.
       // We can take the first emission.
       try {
-        fleetManager.loadAircraft(id).collect { aircraft ->
-          if (aircraft != null) {
-            _uiState.update {
-              it.copy(
-                aircraft = aircraft,
-                initialAircraft = it.initialAircraft ?: aircraft,
-                isLoading = false,
-              )
+        fleetManager.loadAircraft(id)
+          .collect { aircraft ->
+            if (aircraft != null) {
+              _uiState.update {
+                it.copy(
+                  aircraft = aircraft,
+                  initialAircraft = it.initialAircraft ?: aircraft,
+                  isLoading = false,
+                )
+              }
+            } else {
+              // Handle error or not found
+              _uiState.update { it.copy(isLoading = false) }
             }
-          } else {
-            // Handle error or not found
-            _uiState.update { it.copy(isLoading = false) }
           }
-        }
       } catch (e: CancellationException) {
         throw e
       } catch (e: Exception) {
@@ -151,7 +152,8 @@ class EditAircraftViewModel(
   fun onEngineSerialChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
       val newEngines = it.aircraft.engine.toMutableList()
-      newEngines[engineIndex] = newEngines[engineIndex].copy(serial = newValue.uppercase())
+      newEngines[engineIndex] =
+        newEngines[engineIndex].copy(serial = newValue.uppercase())
       it.copy(aircraft = it.aircraft.copy(engine = newEngines))
     }
   }
@@ -196,14 +198,19 @@ class EditAircraftViewModel(
     }
   }
 
-  fun onPropellerBladeSerialChanged(engineIndex: Int, bladeIndex: Int, newValue: String) {
+  fun onPropellerBladeSerialChanged(
+    engineIndex: Int,
+    bladeIndex: Int,
+    newValue: String
+  ) {
     _uiState.update {
       val newEngines = it.aircraft.engine.toMutableList()
       val engine = newEngines[engineIndex]
       val propeller = engine.propeller ?: Propeller()
       val newBlades = propeller.blades.toMutableList()
       if (bladeIndex < newBlades.size) {
-        newBlades[bladeIndex] = newBlades[bladeIndex].copy(serial = newValue.uppercase())
+        newBlades[bladeIndex] =
+          newBlades[bladeIndex].copy(serial = newValue.uppercase())
       }
       val newPropeller = propeller.copy(blades = newBlades)
       newEngines[engineIndex] = engine.copy(propeller = newPropeller)

@@ -55,16 +55,19 @@ private class AndroidExportFileSharer(
       emailApps.isEmpty() -> Intent.createChooser(baseIntent, chooserTitle)
       emailApps.size == 1 ->
         Intent(baseIntent).setPackage(emailApps.first().activityInfo.packageName)
+
       else -> {
         val targeted = emailApps.map { resolveInfo ->
           Intent(baseIntent).setPackage(resolveInfo.activityInfo.packageName)
         }
-        Intent.createChooser(targeted.first(), chooserTitle).apply {
-          putExtra(
-            Intent.EXTRA_INITIAL_INTENTS,
-            targeted.drop(1).toTypedArray(),
-          )
-        }
+        Intent.createChooser(targeted.first(), chooserTitle)
+          .apply {
+            putExtra(
+              Intent.EXTRA_INITIAL_INTENTS,
+              targeted.drop(1)
+                .toTypedArray(),
+            )
+          }
       }
     }.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
 

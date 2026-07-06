@@ -42,17 +42,22 @@ fun TechnicianCard(
     } catch (_: Exception) {
       CertificateType.CERTIFICATE_TYPE_NONE
     }
+
     else -> CertificateType.CERTIFICATE_TYPE_NONE
   }
   val certNumber = technician.cert_number.takeIf { it.isNotBlank() }
-  val expiration = technician.cert_expiration?.toLocalDate()?.toDisplayFormat()
+  val expiration = technician.cert_expiration?.toLocalDate()
+    ?.toDisplayFormat()
 
   Card(
     onClick = onClick,
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     modifier = modifier.fillMaxWidth(),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column(
@@ -75,7 +80,12 @@ fun TechnicianCard(
         if (isSelf) {
           SuggestionChip(
             onClick = {},
-            label = { Text(stringResource(Res.string.you_badge), style = MaterialTheme.typography.labelSmall) },
+            label = {
+              Text(
+                stringResource(Res.string.you_badge),
+                style = MaterialTheme.typography.labelSmall
+              )
+            },
             colors = SuggestionChipDefaults.suggestionChipColors(
               containerColor = MaterialTheme.colorScheme.primaryContainer,
               labelColor = MaterialTheme.colorScheme.onPrimaryContainer,

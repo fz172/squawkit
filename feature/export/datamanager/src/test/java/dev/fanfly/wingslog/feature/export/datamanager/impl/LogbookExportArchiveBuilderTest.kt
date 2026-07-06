@@ -27,7 +27,8 @@ class LogbookExportArchiveBuilderTest {
 
   @Test
   fun buildEntries_embedsAttachmentPayloadsAndLinksCsvRows() {
-    val availableAttachment = attachment(id = "abcd1234", name = "inspection photo.jpg")
+    val availableAttachment =
+      attachment(id = "abcd1234", name = "inspection photo.jpg")
     val missingAttachment = attachment(id = "efgh5678", name = "missing.pdf")
     val bundle = aircraftBundle(
       logs = listOf(
@@ -63,15 +64,18 @@ class LogbookExportArchiveBuilderTest {
       ),
       generatedAt = LocalDateTime(2026, 5, 19, 14, 45),
       timeZone = TimeZone.UTC,
-    ).associateBy { entry -> entry.path }
+    )
+      .associateBy { entry -> entry.path }
 
     assertThat(entries["$aircraftFolder/attachments/abcd_inspection_photo.jpg"]?.bytes?.decodeToString())
       .isEqualTo("photo-bytes")
     assertThat(entries["$aircraftFolder/N12345_Cessna_172.pdf"]?.bytes?.decodeToString())
       .startsWith("%PDF-1.4")
     assertThat(entries["$aircraftFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString())
-      .contains("inspection photo.jpg -> attachments/abcd_inspection_photo.jpg\n" +
-        "missing.pdf -> [attachment unavailable]")
+      .contains(
+        "inspection photo.jpg -> attachments/abcd_inspection_photo.jpg\n" +
+          "missing.pdf -> [attachment unavailable]"
+      )
     assertThat(entries["README.txt"]?.bytes?.decodeToString())
       .contains("Attachment efgh5678 has no local blob record.")
     assertThat(entries["$aircraftFolder/csv/00_Aircraft_Info.csv"]?.bytes?.decodeToString())
@@ -162,16 +166,23 @@ class LogbookExportArchiveBuilderTest {
       attachmentManifests = emptyMap(),
       generatedAt = LocalDateTime(2026, 5, 20, 9, 30),
       timeZone = TimeZone.UTC,
-    ).associateBy { entry -> entry.path }
+    )
+      .associateBy { entry -> entry.path }
 
-    val aircraftInfoCsv = requireNotNull(entries["$aircraftFolder/csv/00_Aircraft_Info.csv"]?.bytes?.decodeToString())
-    val airframeCsv = requireNotNull(entries["$aircraftFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString())
-    val engineCsv = requireNotNull(entries["$aircraftFolder/csv/02_Engine.csv"]?.bytes?.decodeToString())
-    val propellerCsv = requireNotNull(entries["$aircraftFolder/csv/03_Propeller.csv"]?.bytes?.decodeToString())
+    val aircraftInfoCsv =
+      requireNotNull(entries["$aircraftFolder/csv/00_Aircraft_Info.csv"]?.bytes?.decodeToString())
+    val airframeCsv =
+      requireNotNull(entries["$aircraftFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString())
+    val engineCsv =
+      requireNotNull(entries["$aircraftFolder/csv/02_Engine.csv"]?.bytes?.decodeToString())
+    val propellerCsv =
+      requireNotNull(entries["$aircraftFolder/csv/03_Propeller.csv"]?.bytes?.decodeToString())
     val workbookEntries = readZipEntries(
       requireNotNull(entries["$aircraftFolder/SquawkIt_Logs_N12345_20260520.xlsx"]?.bytes)
     )
-    assertThat(entries["$aircraftFolder/N12345_Cessna_172.pdf"]?.bytes?.decodeToString()).startsWith("%PDF-1.4")
+    assertThat(entries["$aircraftFolder/N12345_Cessna_172.pdf"]?.bytes?.decodeToString()).startsWith(
+      "%PDF-1.4"
+    )
 
     assertThat(entries.keys).contains("$aircraftFolder/csv/02_Engine.csv")
     assertThat(entries.keys).contains("$aircraftFolder/csv/03_Propeller.csv")
@@ -192,7 +203,9 @@ class LogbookExportArchiveBuilderTest {
     assertThat(workbookEntries.values.joinToString(separator = "\n")).contains("Current Engine Time")
     assertThat(workbookEntries.values.joinToString(separator = "\n")).contains("Current Propeller Time")
     assertThat(workbookEntries.values.joinToString(separator = "\n")).contains("Engine Time")
-    assertThat(workbookEntries.values.joinToString(separator = "\n")).doesNotContain("Engine 1 Time")
+    assertThat(workbookEntries.values.joinToString(separator = "\n")).doesNotContain(
+      "Engine 1 Time"
+    )
   }
 
   @Test
@@ -236,9 +249,11 @@ class LogbookExportArchiveBuilderTest {
       attachmentManifests = emptyMap(),
       generatedAt = LocalDateTime(2026, 5, 20, 10, 0),
       timeZone = TimeZone.UTC,
-    ).associateBy { entry -> entry.path }
+    )
+      .associateBy { entry -> entry.path }
 
-    val squawkCsv = requireNotNull(entries["$aircraftFolder/csv/11_Squawks.csv"]?.bytes?.decodeToString())
+    val squawkCsv =
+      requireNotNull(entries["$aircraftFolder/csv/11_Squawks.csv"]?.bytes?.decodeToString())
     val workbookEntries = readZipEntries(
       requireNotNull(entries["$aircraftFolder/SquawkIt_Logs_N12345_20260520.xlsx"]?.bytes)
     )
@@ -293,7 +308,8 @@ class LogbookExportArchiveBuilderTest {
       ),
       generatedAt = LocalDateTime(2026, 5, 20, 9, 30),
       timeZone = TimeZone.UTC,
-    ).associateBy { it.path }
+    )
+      .associateBy { it.path }
 
     // CSV selected → CSV present; PDF and XLSX omitted.
     assertThat(entries.keys).contains("$aircraftFolder/csv/00_Aircraft_Info.csv")
@@ -343,7 +359,8 @@ class LogbookExportArchiveBuilderTest {
       attachmentManifests = emptyMap(),
       generatedAt = LocalDateTime(2026, 5, 20, 11, 0),
       timeZone = TimeZone.UTC,
-    ).associateBy { it.path }
+    )
+      .associateBy { it.path }
 
     assertThat(entries.keys).contains("README.txt")
     assertThat(entries.keys).contains("N12345_Cessna_172/csv/00_Aircraft_Info.csv")
@@ -361,7 +378,11 @@ class LogbookExportArchiveBuilderTest {
       ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
         while (true) {
           val entry = zip.nextEntry ?: break
-          put(entry.name, zip.readBytes().decodeToString())
+          put(
+            entry.name,
+            zip.readBytes()
+              .decodeToString()
+          )
         }
       }
     }

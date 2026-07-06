@@ -26,8 +26,10 @@ import com.squareup.wire.Instant as WireInstant
 class LogbookExportAggregatorTest {
 
   private val aircraftId = "ac-1"
-  private val jan2020 = WireInstant.ofEpochSecond(1_577_836_800L) // 2020-01-01T00:00:00Z
-  private val jan2025 = WireInstant.ofEpochSecond(1_735_689_600L) // 2025-01-01T00:00:00Z
+  private val jan2020 =
+    WireInstant.ofEpochSecond(1_577_836_800L) // 2020-01-01T00:00:00Z
+  private val jan2025 =
+    WireInstant.ofEpochSecond(1_735_689_600L) // 2025-01-01T00:00:00Z
 
   private val log2020 = MaintenanceLog(
     id = "log-2020",
@@ -49,14 +51,25 @@ class LogbookExportAggregatorTest {
   private fun aggregator(): LogbookExportAggregator {
     val fleetManager = mockk<FleetManager> {
       every { loadAircraft(aircraftId) } returns flowOf(
-        Aircraft(id = aircraftId, make = "Cessna", model = "172", serial = "1", tail_number = "N12345"),
+        Aircraft(
+          id = aircraftId,
+          make = "Cessna",
+          model = "172",
+          serial = "1",
+          tail_number = "N12345"
+        ),
       )
     }
     val logsManager = mockk<MaintenanceLogManager> {
       every { observeLogs(aircraftId) } returns flowOf(listOf(log2020, log2025))
     }
     val tasksManager = mockk<TaskDataManager> {
-      every { observeTasks(aircraftId) } returns flowOf(listOf(taskOld, taskNew))
+      every { observeTasks(aircraftId) } returns flowOf(
+        listOf(
+          taskOld,
+          taskNew
+        )
+      )
     }
     val squawkManager = mockk<SquawkManager> {
       every { observeSquawks(aircraftId) } returns flowOf(emptyList<Squawk>())
@@ -77,7 +90,10 @@ class LogbookExportAggregatorTest {
     val bundle = aggregator().collect(
       request = ExportRequest(
         aircraftIds = listOf(aircraftId),
-        dateRange = ExportDateRange.Custom(LocalDate(2020, 1, 1), LocalDate(2020, 12, 31)),
+        dateRange = ExportDateRange.Custom(
+          LocalDate(2020, 1, 1),
+          LocalDate(2020, 12, 31)
+        ),
         includeOpenSquawks = true,
       ),
       aircraftId = aircraftId,
@@ -99,7 +115,13 @@ class LogbookExportAggregatorTest {
       aircraftId = aircraftId,
     )
 
-    assertThat(bundle.logs.map { it.id }).containsExactly("log-2020", "log-2025")
-    assertThat(bundle.tasks.map { it.id }).containsExactly("task-old", "task-new")
+    assertThat(bundle.logs.map { it.id }).containsExactly(
+      "log-2020",
+      "log-2025"
+    )
+    assertThat(bundle.tasks.map { it.id }).containsExactly(
+      "task-old",
+      "task-new"
+    )
   }
 }

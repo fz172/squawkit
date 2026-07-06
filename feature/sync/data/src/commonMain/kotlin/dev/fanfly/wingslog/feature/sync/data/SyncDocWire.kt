@@ -24,4 +24,6 @@ internal data class SyncDocWire(
   val lastUpdateTimestamp: BaseTimestamp,
 )
 
-internal fun BaseTimestamp.epochMsOrNull(): Long? = (this as? Timestamp)?.toMilliseconds()?.toLong()
+internal fun BaseTimestamp.epochMsOrNull(): Long? =
+  (this as? Timestamp)?.toMilliseconds()
+    ?.toLong()

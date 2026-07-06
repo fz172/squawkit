@@ -51,6 +51,7 @@ internal val StatusWarningLight = Color(0xFF8B5E00)          // Darker text/icon
 internal val StatusWarningContainerLight = Color(0xFFFFECB3) // Pale background
 
 // Dark Mode Colors
-internal val StatusWarningDark = Color(0xFFFFCA28)           // Bright amber text/icon
+internal val StatusWarningDark =
+  Color(0xFFFFCA28)           // Bright amber text/icon
 internal val StatusWarningContainerDark =
   Color(0xFF514500)  // Deep, dark gold background

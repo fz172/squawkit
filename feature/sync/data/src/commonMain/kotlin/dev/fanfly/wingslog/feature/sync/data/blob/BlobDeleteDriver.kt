@@ -40,7 +40,8 @@ class BlobDeleteDriver(
       val remotePath = ref.remotePath
       if (remotePath != null) {
         try {
-          storage.reference(remotePath).delete()
+          storage.reference(remotePath)
+            .delete()
           log.i { "deleted remote object $remotePath" }
         } catch (e: Exception) {
           if (isNotFound(e)) {
@@ -59,7 +60,10 @@ class BlobDeleteDriver(
   }
 
   private fun isNotFound(e: Exception): Boolean =
-    e.message?.contains("404") == true || e.message?.contains("not found", ignoreCase = true) == true
+    e.message?.contains("404") == true || e.message?.contains(
+      "not found",
+      ignoreCase = true
+    ) == true
 
   companion object {
     private const val TAG = "BlobDeleteDriver"

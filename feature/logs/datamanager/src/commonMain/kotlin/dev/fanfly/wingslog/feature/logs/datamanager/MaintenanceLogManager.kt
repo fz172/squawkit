@@ -23,7 +23,10 @@ interface MaintenanceLogManager {
   /**
    * Updates an existing maintenance log.
    */
-  suspend fun updateLog(aircraftId: String, log: MaintenanceLog): Result<Boolean>
+  suspend fun updateLog(
+    aircraftId: String,
+    log: MaintenanceLog
+  ): Result<Boolean>
 
   /**
    * Deletes a maintenance log.

@@ -43,7 +43,9 @@ fun LogsTab(
     viewModel.events.collect { event ->
       when (event) {
         is MaintenanceLogListEvent.NavigateToCreateLog -> onNavigateToAddLog?.invoke()
-        is MaintenanceLogListEvent.NavigateToEditLog -> onNavigateToEditLog?.invoke(event.logId)
+        is MaintenanceLogListEvent.NavigateToEditLog -> onNavigateToEditLog?.invoke(
+          event.logId
+        )
       }
     }
   }

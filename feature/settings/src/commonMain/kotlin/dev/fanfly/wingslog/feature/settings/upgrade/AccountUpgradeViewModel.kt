@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Orchestrates upgrading a guest (anonymous) session to a permanent account.
@@ -46,9 +47,13 @@ class AccountUpgradeViewModel(
           if (guestUid == null) {
             UpgradeUiState.Error("No signed-in user to merge")
           } else {
-            mergeExistingAccount(guestUid = guestUid, credential = result.credential)
+            mergeExistingAccount(
+              guestUid = guestUid,
+              credential = result.credential
+            )
           }
         }
+
         is AccountUpgradeResult.Cancelled -> UpgradeUiState.Idle
         is AccountUpgradeResult.Failed -> UpgradeUiState.Error(result.message)
       }
@@ -99,11 +104,11 @@ class AccountUpgradeViewModel(
   }
 
   private suspend fun awaitPermanentCurrentUser(expectedUid: String): Boolean =
-    withTimeoutOrNull(CURRENT_USER_SWITCH_TIMEOUT_MS) {
+    withTimeoutOrNull(CURRENT_USER_SWITCH_TIMEOUT_MS.milliseconds) {
       while (true) {
         val current = authManager.getCurrentUser()
         if (current?.uid == expectedUid && !current.isAnonymous) return@withTimeoutOrNull true
-        delay(CURRENT_USER_SWITCH_POLL_MS)
+        delay(CURRENT_USER_SWITCH_POLL_MS.milliseconds)
       }
     } == true
 

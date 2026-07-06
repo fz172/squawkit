@@ -231,7 +231,8 @@ class TaskDueManagerImplTest {
 
   @Test
   fun immediateRule_applied_overdue() {
-    val card = card(rules = listOf(InspectionRule(immediate_rule = ImmediateRule())))
+    val card =
+      card(rules = listOf(InspectionRule(immediate_rule = ImmediateRule())))
 
     val result = manager.computeNextDue(card, emptyList(), listOf(card))
 
@@ -249,7 +250,8 @@ class TaskDueManagerImplTest {
       ),
     )
 
-    val result = manager.computeNextDue(child, emptyList(), listOf(parent, child))
+    val result =
+      manager.computeNextDue(child, emptyList(), listOf(parent, child))
 
     assertThat(result.nextDueDate).isEqualTo(LocalDate(2027, 4, 30))
     assertThat(result.status).isEqualTo(DueStatus.NORMAL)
@@ -281,7 +283,10 @@ class TaskDueManagerImplTest {
   fun timeRule_noLogs_withCreationDate_usesCreationDateAsBase() {
     // No matching logs; creation_date set to 2024-01-01 with a 12-month interval.
     // Expected next due: 2025-01-31 (EOM), which is before CURRENT_INSTANT (2026-04-13) → OVERDUE.
-    val card = card(id = "c1", rules = listOf(timeRule(12, creationDate = iso("2024-01-01"))))
+    val card = card(
+      id = "c1",
+      rules = listOf(timeRule(12, creationDate = iso("2024-01-01")))
+    )
 
     val result = manager.computeNextDue(card, emptyList(), listOf(card))
 
@@ -295,11 +300,19 @@ class TaskDueManagerImplTest {
     // shift the due date of an unrelated time-rule inspection.
     // Before the fix the implementation used allLogs' earliest date as the base,
     // so adding any log would silently move the due date.
-    val card = card(id = "c1", rules = listOf(timeRule(12, creationDate = iso("2024-01-01"))))
+    val card = card(
+      id = "c1",
+      rules = listOf(timeRule(12, creationDate = iso("2024-01-01")))
+    )
     val unrelatedLog =
-      log(id = "log-unrelated", timestamp = iso("2024-06-01"), inspectionIds = emptyList())
+      log(
+        id = "log-unrelated",
+        timestamp = iso("2024-06-01"),
+        inspectionIds = emptyList()
+      )
 
-    val result = manager.computeNextDue(card, listOf(unrelatedLog), listOf(card))
+    val result =
+      manager.computeNextDue(card, listOf(unrelatedLog), listOf(card))
 
     // Due date must be anchored to creation_date (2024-01-01) + 12 months = 2025-01-31 (EOM),
     // NOT to the unrelated log date (2024-06-01) + 12 months = 2025-06-30.
@@ -310,9 +323,16 @@ class TaskDueManagerImplTest {
   fun timeRule_matchingLog_overridesCreationDate() {
     // When a matching log exists the implementation must use that log's date as the
     // base, regardless of what creation_date says.
-    val card = card(id = "c1", rules = listOf(timeRule(12, creationDate = iso("2024-01-01"))))
+    val card = card(
+      id = "c1",
+      rules = listOf(timeRule(12, creationDate = iso("2024-01-01")))
+    )
     val matchingLog =
-      log(id = "log-match", inspectionIds = listOf("c1"), timestamp = iso("2026-01-01"))
+      log(
+        id = "log-match",
+        inspectionIds = listOf("c1"),
+        timestamp = iso("2026-01-01")
+      )
 
     val result = manager.computeNextDue(card, listOf(matchingLog), listOf(card))
 
@@ -367,7 +387,11 @@ class TaskDueManagerImplTest {
     val complianceLog = log(inspectionIds = listOf("c1"), engineHour = 100.0)
     val currentHourLog = log(id = "log2", engineHour = 400.0)
 
-    val result = manager.computeNextDue(card, listOf(complianceLog, currentHourLog), listOf(card))
+    val result = manager.computeNextDue(
+      card,
+      listOf(complianceLog, currentHourLog),
+      listOf(card)
+    )
 
     assertThat(result.nextDueEngine).isEqualTo(450f)
     assertThat(result.status).isEqualTo(DueStatus.NORMAL)
@@ -419,8 +443,16 @@ class TaskDueManagerImplTest {
     inspection_ids = inspectionIds,
   )
 
-  private fun timeRule(months: Int, creationDate: WireInstant? = null): InspectionRule =
-    InspectionRule(time_rule = TimeRule(interval_months = months, creation_date = creationDate))
+  private fun timeRule(
+    months: Int,
+    creationDate: WireInstant? = null
+  ): InspectionRule =
+    InspectionRule(
+      time_rule = TimeRule(
+        interval_months = months,
+        creation_date = creationDate
+      )
+    )
 
   private fun engineRule(hours: Float): InspectionRule =
     InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = hours))

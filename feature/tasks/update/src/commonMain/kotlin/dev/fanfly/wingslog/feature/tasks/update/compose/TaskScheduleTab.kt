@@ -146,8 +146,9 @@ fun TaskScheduleTab(
     }
 
     // Step 3 — Interval (hidden if ASAP or no recurrence picked)
-    val showInterval = (state.mode == ScheduleMode.TIME || state.mode == ScheduleMode.HOURS) &&
-      state.recurrence != null && state.recurrence != ScheduleRecurrence.ASAP
+    val showInterval =
+      (state.mode == ScheduleMode.TIME || state.mode == ScheduleMode.HOURS) &&
+        state.recurrence != null && state.recurrence != ScheduleRecurrence.ASAP
     if (showInterval) {
       val intervalLabel = if (state.recurrence == ScheduleRecurrence.ONE_TIME) {
         Res.string.schedule_step_interval_in_how_long
@@ -163,7 +164,11 @@ fun TaskScheduleTab(
         complete = complete
       ) {
         when (state.mode) {
-          ScheduleMode.TIME -> Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+          ScheduleMode.TIME -> Column(
+            verticalArrangement = Arrangement.spacedBy(
+              Spacing.medium
+            )
+          ) {
             UnitPillSelect(
               selected = state.calUnit,
               onSelect = { onChange(state.copy(calUnit = it)) },

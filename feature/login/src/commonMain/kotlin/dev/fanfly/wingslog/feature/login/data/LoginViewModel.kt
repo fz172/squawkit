@@ -25,7 +25,8 @@ class LoginViewModel(
     return result
   }
 
-  fun isEmailSignInLink(link: String): Boolean = authManager.isSignInWithEmailLink(link)
+  fun isEmailSignInLink(link: String): Boolean =
+    authManager.isSignInWithEmailLink(link)
 
   /** The address a link was last sent to on this device, if any (null on a different device). */
   suspend fun pendingEmail(): String? = emailLinkStore.pendingEmail()
@@ -35,9 +36,13 @@ class LoginViewModel(
    * address was stashed on this device. Returns null when the link isn't a sign-in link, no email is
    * available, or completion fails. Clears the stash on success.
    */
-  suspend fun completeEmailLink(link: String, fallbackEmail: String? = null): FirebaseUser? {
+  suspend fun completeEmailLink(
+    link: String,
+    fallbackEmail: String? = null
+  ): FirebaseUser? {
     if (!authManager.isSignInWithEmailLink(link)) return null
-    val email = fallbackEmail?.takeIf { it.isNotBlank() } ?: pendingEmail() ?: return null
+    val email =
+      fallbackEmail?.takeIf { it.isNotBlank() } ?: pendingEmail() ?: return null
     val user = authManager.completeSignInLink(email, link)
     if (user != null) emailLinkStore.clear()
     return user

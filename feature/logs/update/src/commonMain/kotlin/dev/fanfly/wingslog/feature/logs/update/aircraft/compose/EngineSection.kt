@@ -188,44 +188,46 @@ fun EngineSection(
       )
       val blades = engine.propeller?.blades ?: emptyList()
       // Chunked(2) allows us to create rows of 2 for that 50/50 look
-      blades.withIndex().chunked(2).forEach { pair ->
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-          pair.forEach { (bladeIndex, blade) ->
-            FormTextField(
-              label = stringResource(
-                SharedRes.string.blade_with_index,
-                bladeIndex + 1
-              ),
-              value = blade.serial,
-              modifier = Modifier.weight(1f),
-              textStyle = MaterialTheme.typography.bodyMedium,
-              dense = true,
-              trailingIcon = {
-                IconButton(onClick = {
-                  viewModel.onRemoveBlade(
-                    engineIndex,
-                    bladeIndex
-                  )
-                }) {
-                  Icon(
-                    Icons.Default.Close,
-                    contentDescription = stringResource(Res.string.remove_blade)
-                  )
-                }
-              },
-              isError = showValidationErrors && blade.serial.isBlank(),
-              keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
-            ) {
-              viewModel.onPropellerBladeSerialChanged(
-                engineIndex,
-                bladeIndex,
-                it
-              )
+      blades.withIndex()
+        .chunked(2)
+        .forEach { pair ->
+          Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+            pair.forEach { (bladeIndex, blade) ->
+              FormTextField(
+                label = stringResource(
+                  SharedRes.string.blade_with_index,
+                  bladeIndex + 1
+                ),
+                value = blade.serial,
+                modifier = Modifier.weight(1f),
+                textStyle = MaterialTheme.typography.bodyMedium,
+                dense = true,
+                trailingIcon = {
+                  IconButton(onClick = {
+                    viewModel.onRemoveBlade(
+                      engineIndex,
+                      bladeIndex
+                    )
+                  }) {
+                    Icon(
+                      Icons.Default.Close,
+                      contentDescription = stringResource(Res.string.remove_blade)
+                    )
+                  }
+                },
+                isError = showValidationErrors && blade.serial.isBlank(),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
+              ) {
+                viewModel.onPropellerBladeSerialChanged(
+                  engineIndex,
+                  bladeIndex,
+                  it
+                )
+              }
             }
+            if (pair.size == 1) Spacer(Modifier.weight(1f))
           }
-          if (pair.size == 1) Spacer(Modifier.weight(1f))
         }
-      }
       Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
         DashedButton(
           label = stringResource(Res.string.add_blade),

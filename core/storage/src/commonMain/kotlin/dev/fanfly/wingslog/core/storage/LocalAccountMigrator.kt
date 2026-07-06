@@ -40,8 +40,16 @@ class LocalAccountMigratorImpl(
     withContext(storageIoContext) {
       writeLock.withLock {
         db.schemaQueries.transaction {
-          db.schemaQueries.reassignEntities(newPrefix, remainderStart, oldPrefixLike)
-          db.schemaQueries.reassignBlobs(newPrefix, remainderStart, oldPrefixLike)
+          db.schemaQueries.reassignEntities(
+            newPrefix,
+            remainderStart,
+            oldPrefixLike
+          )
+          db.schemaQueries.reassignBlobs(
+            newPrefix,
+            remainderStart,
+            oldPrefixLike
+          )
           // Drop both users' cursors so the destination account re-hydrates its existing cloud set.
           db.schemaQueries.deleteSyncCursorsForUser(fromUid)
           db.schemaQueries.deleteSyncCursorsForUser(toUid)

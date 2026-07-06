@@ -13,5 +13,6 @@ class ReadmeTemplateRenderer(
   fun render(valuesByKey: Map<String, String>): String =
     valuesByKey.entries.fold(template) { rendered, (key, value) ->
       rendered.replace("{{$key}}", value)
-    }.trimEnd() + "\n"
+    }
+      .trimEnd() + "\n"
 }

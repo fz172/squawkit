@@ -22,8 +22,10 @@ actual fun sha256Hex(bytes: ByteArray): String {
           (padded[offset + 3].toInt() and 0xff)
     }
     for (i in 16 until 64) {
-      val s0 = words[i - 15].rotateRight(7) xor words[i - 15].rotateRight(18) xor (words[i - 15] ushr 3)
-      val s1 = words[i - 2].rotateRight(17) xor words[i - 2].rotateRight(19) xor (words[i - 2] ushr 10)
+      val s0 =
+        words[i - 15].rotateRight(7) xor words[i - 15].rotateRight(18) xor (words[i - 15] ushr 3)
+      val s1 =
+        words[i - 2].rotateRight(17) xor words[i - 2].rotateRight(19) xor (words[i - 2] ushr 10)
       words[i] = words[i - 16] + s0 + words[i - 7] + s1
     }
 

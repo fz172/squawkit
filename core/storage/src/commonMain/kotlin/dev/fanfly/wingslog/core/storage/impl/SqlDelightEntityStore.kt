@@ -63,7 +63,8 @@ class SqlDelightEntityStore<T : Any>(
     value: T,
     scope: EntityScope,
   ) {
-    val now = clock.now().toEpochMilliseconds()
+    val now = clock.now()
+      .toEpochMilliseconds()
     writeLock.withLock {
       db.schemaQueries.upsert(
         collection = kind,
@@ -83,13 +84,15 @@ class SqlDelightEntityStore<T : Any>(
     id: String,
     scope: EntityScope,
   ) {
-    val now = clock.now().toEpochMilliseconds()
+    val now = clock.now()
+      .toEpochMilliseconds()
     writeLock.withLock {
       val existing = db.schemaQueries.selectOne(
         kind,
         scope.toPath(),
         id
-      ).awaitAsOneOrNull()
+      )
+        .awaitAsOneOrNull()
       val payloadBytes = existing?.payload ?: ByteArray(0)
       db.schemaQueries.upsert(
         collection = kind,

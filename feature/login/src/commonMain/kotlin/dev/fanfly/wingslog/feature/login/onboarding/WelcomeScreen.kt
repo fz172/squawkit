@@ -50,6 +50,7 @@ import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.onboarding_welcome_aboard
 import wingslog.feature.login.generated.resources.onboarding_welcome_tagline
+import kotlin.time.Duration.Companion.milliseconds
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 @Composable
@@ -61,9 +62,9 @@ fun WelcomeScreen(
   val headlineFamily = rememberBrandHeadlineFamily()
 
   LaunchedEffect(Unit) {
-    delay(800)
+    delay(800.milliseconds)
     showText = true
-    delay(2100)
+    delay(2100.milliseconds)
     onDone()
   }
 
@@ -129,7 +130,10 @@ fun WelcomeScreen(
     Canvas(modifier = Modifier.fillMaxSize()) {
       drawCircle(
         brush = Brush.radialGradient(
-          colors = listOf(Color(0xFF2A6BC9).copy(alpha = 0.20f), Color.Transparent),
+          colors = listOf(
+            Color(0xFF2A6BC9).copy(alpha = 0.20f),
+            Color.Transparent
+          ),
           center = Offset(size.width / 2f, size.height * 0.641f),
           radius = size.width * 0.70f,
         ),

@@ -23,12 +23,18 @@ class LocalAccountMigratorTest {
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
     // Schema is async-generated; the sync JVM driver wraps it via .synchronous().
-    WingsLogDatabase.Schema.synchronous().create(driver)
+    WingsLogDatabase.Schema.synchronous()
+      .create(driver)
     db = createWingsLogDatabase(driver)
     migrator = LocalAccountMigratorImpl(db)
   }
 
-  private suspend fun insertEntity(uid: String, id: String, dirty: Boolean, remoteUpdatedAt: Long?) {
+  private suspend fun insertEntity(
+    uid: String,
+    id: String,
+    dirty: Boolean,
+    remoteUpdatedAt: Long?
+  ) {
     db.schemaQueries.upsert(
       collection = CollectionKind.Aircraft,
       scope_path = "/users/$uid/fleet",
@@ -43,38 +49,47 @@ class LocalAccountMigratorTest {
   }
 
   @Test
-  fun reassign_movesEntityToNewScope_marksDirty_clearsRemoteTimestamp() = runTest {
-    insertEntity(FROM_UID, "ac-1", dirty = false, remoteUpdatedAt = 5_000L)
+  fun reassign_movesEntityToNewScope_marksDirty_clearsRemoteTimestamp() =
+    runTest {
+      insertEntity(FROM_UID, "ac-1", dirty = false, remoteUpdatedAt = 5_000L)
 
-    migrator.reassign(FROM_UID, TO_UID)
+      migrator.reassign(FROM_UID, TO_UID)
 
-    val oldScope = db.schemaQueries.selectAll(
-      collection = CollectionKind.Aircraft,
-      scope = "/users/$FROM_UID/fleet",
-    ).awaitAsList()
-    assertThat(oldScope).isEmpty()
+      val oldScope = db.schemaQueries.selectAll(
+        collection = CollectionKind.Aircraft,
+        scope = "/users/$FROM_UID/fleet",
+      )
+        .awaitAsList()
+      assertThat(oldScope).isEmpty()
 
-    val moved = db.schemaQueries.selectOneForSync(
-      collection = CollectionKind.Aircraft,
-      scope = "/users/$TO_UID/fleet",
-      id = "ac-1",
-    ).awaitAsOneOrNull()
-    assertThat(moved).isNotNull()
-    assertThat(moved!!.dirty).isTrue()
-    assertThat(moved.remote_updated_at).isNull()
-  }
+      val moved = db.schemaQueries.selectOneForSync(
+        collection = CollectionKind.Aircraft,
+        scope = "/users/$TO_UID/fleet",
+        id = "ac-1",
+      )
+        .awaitAsOneOrNull()
+      assertThat(moved).isNotNull()
+      assertThat(moved!!.dirty).isTrue()
+      assertThat(moved.remote_updated_at).isNull()
+    }
 
   @Test
   fun reassign_leavesOtherUsersDataUntouched() = runTest {
     insertEntity(FROM_UID, "ac-from", dirty = false, remoteUpdatedAt = null)
-    insertEntity("someone-else", "ac-other", dirty = false, remoteUpdatedAt = null)
+    insertEntity(
+      "someone-else",
+      "ac-other",
+      dirty = false,
+      remoteUpdatedAt = null
+    )
 
     migrator.reassign(FROM_UID, TO_UID)
 
     val other = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/someone-else/fleet",
-    ).awaitAsList()
+    )
+      .awaitAsList()
     assertThat(other).hasSize(1)
     assertThat(other[0].id).isEqualTo("ac-other")
   }
@@ -98,7 +113,8 @@ class LocalAccountMigratorTest {
 
     migrator.reassign(FROM_UID, TO_UID)
 
-    val blob = db.schemaQueries.selectBlobById("blob-1").awaitAsOneOrNull()
+    val blob = db.schemaQueries.selectBlobById("blob-1")
+      .awaitAsOneOrNull()
     assertThat(blob).isNotNull()
     assertThat(blob!!.scope_path).isEqualTo("/users/$TO_UID/fleet")
     assertThat(blob.remote_state).isEqualTo(RemoteState.LocalOnly)
@@ -127,7 +143,8 @@ class LocalAccountMigratorTest {
         uid = uid,
         collection = CollectionKind.Aircraft,
         scope_path = "/users/$uid/fleet",
-      ).awaitAsOneOrNull()
+      )
+        .awaitAsOneOrNull()
       assertThat(cursor).isNull()
     }
   }
@@ -142,7 +159,8 @@ class LocalAccountMigratorTest {
     val moved = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/$TO_UID/fleet",
-    ).awaitAsList()
+    )
+      .awaitAsList()
     assertThat(moved).hasSize(1)
   }
 
@@ -155,7 +173,8 @@ class LocalAccountMigratorTest {
     val stillThere = db.schemaQueries.selectAll(
       collection = CollectionKind.Aircraft,
       scope = "/users/$FROM_UID/fleet",
-    ).awaitAsList()
+    )
+      .awaitAsList()
     assertThat(stillThere).hasSize(1)
   }
 }

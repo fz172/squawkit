@@ -9,7 +9,12 @@ interface ExportFileSharer {
   /**
    * Returns true when the platform accepted the email draft request.
    */
-  fun share(filePath: String, chooserTitle: String, subject: String, body: String): Boolean
+  fun share(
+    filePath: String,
+    chooserTitle: String,
+    subject: String,
+    body: String
+  ): Boolean
 }
 
 /**
