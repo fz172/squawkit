@@ -14,11 +14,11 @@ import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
-import java.io.ByteArrayInputStream
-import java.util.zip.ZipInputStream
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.util.zip.ZipInputStream
 import com.squareup.wire.Instant as WireInstant
 
 class LogbookExportArchiveBuilderTest {

@@ -63,7 +63,10 @@ fun MaintenanceLogTable(
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     color = MaterialTheme.colorScheme.surfaceContainer,
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
   ) {
     Column(modifier = Modifier.fillMaxWidth()) {
       HeaderRow(technicianEnabled)
@@ -73,8 +76,15 @@ fun MaintenanceLogTable(
         contentPadding = PaddingValues(bottom = Spacing.large),
       ) {
         items(logs, key = { it.id }) { log ->
-          LogRow(log = log, technicianEnabled = technicianEnabled, onClick = { onLogClick(log) })
-          HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+          LogRow(
+            log = log,
+            technicianEnabled = technicianEnabled,
+            onClick = { onLogClick(log) })
+          HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant.copy(
+              alpha = 0.4f
+            )
+          )
         }
       }
     }
@@ -99,14 +109,19 @@ private fun HeaderRow(technicianEnabled: Boolean) {
 }
 
 @Composable
-private fun RowScope.HeaderCell(text: String, weight: Float, align: TextAlign = TextAlign.Start) {
+private fun RowScope.HeaderCell(
+  text: String,
+  weight: Float,
+  align: TextAlign = TextAlign.Start
+) {
   Text(
     text = text.uppercase(),
     style = MaterialTheme.typography.labelSmall,
     fontWeight = FontWeight.SemiBold,
     color = MaterialTheme.colorScheme.onSurfaceVariant,
     textAlign = align,
-    modifier = Modifier.weight(weight).padding(end = Spacing.medium),
+    modifier = Modifier.weight(weight)
+      .padding(end = Spacing.medium),
   )
 }
 
@@ -116,7 +131,8 @@ private fun LogRow(
   technicianEnabled: Boolean,
   onClick: () -> Unit,
 ) {
-  val dateStr = log.timestamp?.toLocalDate()?.toDisplayFormat()
+  val dateStr = log.timestamp?.toLocalDate()
+    ?.toDisplayFormat()
     ?: stringResource(SharedRes.string.unknown_date)
   val hours = log.primaryTableHours()
 
@@ -131,9 +147,13 @@ private fun LogRow(
       text = dateStr,
       style = WingslogTypography.dataSmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.weight(W_DATE).padding(end = Spacing.medium),
+      modifier = Modifier.weight(W_DATE)
+        .padding(end = Spacing.medium),
     )
-    Box(modifier = Modifier.weight(W_COMPONENT).padding(end = Spacing.medium)) {
+    Box(
+      modifier = Modifier.weight(W_COMPONENT)
+        .padding(end = Spacing.medium)
+    ) {
       ComponentTypeBadge(log.component_type)
     }
     Text(
@@ -142,18 +162,23 @@ private fun LogRow(
       color = MaterialTheme.colorScheme.onSurface,
       maxLines = 1,
       overflow = TextOverflow.Ellipsis,
-      modifier = Modifier.weight(W_DESC).padding(end = Spacing.medium),
+      modifier = Modifier.weight(W_DESC)
+        .padding(end = Spacing.medium),
     )
     Text(
       text = if (hours > 0.0) {
-        stringResource(MaintenanceRes.string.hours_abbr_value, hours.formatToOneDecimalPlace())
+        stringResource(
+          MaintenanceRes.string.hours_abbr_value,
+          hours.formatToOneDecimalPlace()
+        )
       } else {
         "—"
       },
       style = WingslogTypography.dataSmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       textAlign = TextAlign.End,
-      modifier = Modifier.weight(W_HOURS).padding(end = Spacing.medium),
+      modifier = Modifier.weight(W_HOURS)
+        .padding(end = Spacing.medium),
     )
     if (technicianEnabled) {
       Text(
@@ -162,7 +187,8 @@ private fun LogRow(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
-        modifier = Modifier.weight(W_TECH).padding(end = Spacing.medium),
+        modifier = Modifier.weight(W_TECH)
+          .padding(end = Spacing.medium),
       )
     }
     Icon(
@@ -178,5 +204,6 @@ private fun MaintenanceLog.primaryTableHours(): Double = when (component_type) {
   ComponentType.COMPONENT_ENGINE -> engine_hour
   ComponentType.COMPONENT_AIRFRAME -> airframe_time
   ComponentType.COMPONENT_PROPELLER -> prop_time
-  else -> engine_hour.takeIf { it > 0.0 } ?: airframe_time.takeIf { it > 0.0 } ?: prop_time
+  else -> engine_hour.takeIf { it > 0.0 } ?: airframe_time.takeIf { it > 0.0 }
+  ?: prop_time
 }

@@ -8,10 +8,10 @@ import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.db.SelectDirtyInScope
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Watches the `entity` table for `dirty=1` rows and pushes them to Firestore via [SyncWriter].

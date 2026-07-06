@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <!-- Exposes filesDir/blobs/ for sharing attachment files with external viewers. -->
-    <files-path name="blobs" path="blobs/" />
-    <!-- Exposes cacheDir/camera_temp/ so the system camera app can write captured photos there. -->
-    <cache-path name="camera_temp" path="camera_temp/" />
+  <!-- Exposes filesDir/blobs/ for sharing attachment files with external viewers. -->
+  <files-path
+    name="blobs"
+    path="blobs/" />
+  <!-- Exposes cacheDir/camera_temp/ so the system camera app can write captured photos there. -->
+  <cache-path
+    name="camera_temp"
+    path="camera_temp/" />
 </paths>

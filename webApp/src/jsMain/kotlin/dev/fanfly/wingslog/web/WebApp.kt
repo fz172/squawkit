@@ -34,12 +34,6 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
-import kotlinx.browser.document
-import org.jetbrains.compose.resources.getString
-import org.jetbrains.compose.resources.rememberResourceEnvironment
-import org.w3c.dom.HTMLElement
-import wingslog.core.sharedassets.generated.resources.Res as UiRes
-import wingslog.core.sharedassets.generated.resources.app_name
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
@@ -62,8 +56,14 @@ import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScree
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.browser.document
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.rememberResourceEnvironment
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import org.w3c.dom.HTMLElement
+import wingslog.core.sharedassets.generated.resources.app_name
+import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 @OptIn(ExperimentalBrowserHistoryApi::class)
 @Composable

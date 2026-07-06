@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.storage.di
 
+import app.cash.sqldelight.db.SqlDriver
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceOverview
@@ -8,7 +9,6 @@ import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.settings.FeatureLabSettings
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
-import app.cash.sqldelight.db.SqlDriver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
@@ -23,9 +23,9 @@ import dev.fanfly.wingslog.core.storage.WireCodec
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.core.storage.storageIoContext
-import kotlin.time.ExperimentalTime
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import kotlin.time.ExperimentalTime
 
 /**
  * Common storage Koin module. Provides the [WingsLogDatabase], the [EntityCodecRegistry] with

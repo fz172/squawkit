@@ -12,12 +12,12 @@ import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_AIRCRAFT_ID = "aircraft-456"

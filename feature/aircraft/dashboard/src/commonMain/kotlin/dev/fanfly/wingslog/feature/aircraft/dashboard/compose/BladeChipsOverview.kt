@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -21,10 +21,10 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.blade_with_index
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.s_n_empty
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 
 @OptIn(ExperimentalLayoutApi::class)

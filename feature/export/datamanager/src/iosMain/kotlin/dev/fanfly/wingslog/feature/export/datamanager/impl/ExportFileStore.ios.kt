@@ -9,7 +9,6 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import platform.posix.memcpy
 import platform.Foundation.NSData
 import platform.Foundation.NSDate
 import platform.Foundation.NSDocumentDirectory
@@ -23,6 +22,7 @@ import platform.Foundation.create
 import platform.Foundation.dataWithContentsOfFile
 import platform.Foundation.timeIntervalSince1970
 import platform.Foundation.writeToFile
+import platform.posix.memcpy
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual class ExportFileStore {

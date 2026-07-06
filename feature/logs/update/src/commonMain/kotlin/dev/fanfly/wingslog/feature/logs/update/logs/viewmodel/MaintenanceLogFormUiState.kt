@@ -5,10 +5,10 @@ import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.visible
-import dev.fanfly.wingslog.core.ui.common.UiText
 import kotlinx.datetime.LocalDate
 
 data class MaintenanceLogFormUiState(

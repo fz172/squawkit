@@ -10,10 +10,9 @@ import dev.fanfly.wingslog.feature.sync.data.blob.UrlSessionUploadScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.Platform
 import org.koin.mp.KoinPlatform
 import platform.UIKit.UIViewController
+import kotlin.experimental.ExperimentalNativeApi
 
 object MainEntry {
   fun mainViewController(): UIViewController = ComposeUIViewController {

@@ -29,9 +29,9 @@ import wingslog.feature.squawk.sharedassets.generated.resources.squawk_priority_
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_reported_on
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_title_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_title_required
-import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 import wingslog.feature.squawk.update.generated.resources.squawk_basic_tab_note
 import kotlin.time.Clock
+import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 
 @Composable
 fun SquawkBasicTab(

@@ -31,10 +31,10 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.remove
 import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
+import wingslog.feature.tasks.update.generated.resources.no_log_history
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.tasks.update.generated.resources.Res as TaskRes
-import wingslog.feature.tasks.update.generated.resources.no_log_history
 
 @Composable
 fun TaskDetailTab(

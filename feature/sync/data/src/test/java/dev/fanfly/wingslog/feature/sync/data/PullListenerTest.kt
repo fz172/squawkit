@@ -8,8 +8,8 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import org.junit.Before
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
 import org.junit.Test
 
 private const val TEST_USER_ID = "user-pull-001"

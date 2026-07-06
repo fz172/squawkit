@@ -11,12 +11,12 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.StorageEntity
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 /**
  * SQLDelight-backed [EntityStore]. One instance per [CollectionKind]; created via

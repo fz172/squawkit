@@ -11,18 +11,22 @@ plugins {
 
 val versionPropsFile = rootProject.file("version.properties")
 val versionProps = Properties().apply {
-  if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
+  if (versionPropsFile.exists()) versionPropsFile.inputStream()
+    .use { load(it) }
 }
 
 val major = versionProps.getProperty(
   "major",
   "1"
-).toInt()
+)
+  .toInt()
 val minor = versionProps.getProperty(
   "minor",
   "0"
-).toInt()
-val today: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"))
+)
+  .toInt()
+val today: String = LocalDate.now()
+  .format(DateTimeFormatter.ofPattern("yyMMdd"))
 val storedDate: String = versionProps.getProperty(
   "buildDate",
   ""
@@ -31,8 +35,10 @@ val isReleaseBuild = gradle.startParameter.taskNames.any {
   it.contains("Release", ignoreCase = true)
 }
 
-val storedPatch = versionProps.getProperty("patch", "0").toInt()
-val currentVersionCode = versionProps.getProperty("versionCode", "0").toInt()
+val storedPatch = versionProps.getProperty("patch", "0")
+  .toInt()
+val currentVersionCode = versionProps.getProperty("versionCode", "0")
+  .toInt()
 
 var patch: Int
 var nextVersionCode: Int
@@ -43,7 +49,8 @@ if (isReleaseBuild) {
   versionProps["buildDate"] = today
   versionProps["patch"] = patch.toString()
   versionProps["versionCode"] = nextVersionCode.toString()
-  versionPropsFile.outputStream().use { versionProps.store(it, null) }
+  versionPropsFile.outputStream()
+    .use { versionProps.store(it, null) }
 } else {
   patch = storedPatch
   nextVersionCode = currentVersionCode
@@ -53,7 +60,8 @@ val computedVersionName = "$major.$minor.$today.$patch"
 
 // Set via `-PdeveloperBuild=true` to produce a signed, distributable "dogfood-style" release
 // build with developer tooling (Feature Lab, stress test) turned on. Debug builds always have it on.
-val developerBuild = (findProperty("developerBuild") as? String)?.toBoolean() ?: false
+val developerBuild =
+  (findProperty("developerBuild") as? String)?.toBoolean() ?: false
 
 kotlin {
   jvmToolchain(21)

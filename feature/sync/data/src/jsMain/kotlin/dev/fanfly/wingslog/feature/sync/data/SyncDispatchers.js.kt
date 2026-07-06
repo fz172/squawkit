@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.data
 
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.CoroutineContext
 
 internal actual val syncIoContext: CoroutineContext = Dispatchers.Default

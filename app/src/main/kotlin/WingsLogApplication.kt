@@ -37,11 +37,13 @@ class WingsLogApplication : Application() {
 
   private fun initializeFirebaseAppCheck() {
     FirebaseApp.initializeApp(this)
-    val providerFactory = if ((applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
-      DebugAppCheckProviderFactory.getInstance()
-    } else {
-      PlayIntegrityAppCheckProviderFactory.getInstance()
-    }
-    FirebaseAppCheck.getInstance().installAppCheckProviderFactory(providerFactory)
+    val providerFactory =
+      if ((applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+        DebugAppCheckProviderFactory.getInstance()
+      } else {
+        PlayIntegrityAppCheckProviderFactory.getInstance()
+      }
+    FirebaseAppCheck.getInstance()
+      .installAppCheckProviderFactory(providerFactory)
   }
 }

@@ -18,7 +18,6 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlin.time.Clock
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +29,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 class AircraftOverviewViewModel(
   private val fleetManager: FleetManager,

@@ -8,10 +8,10 @@ import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.AuthCredential
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 

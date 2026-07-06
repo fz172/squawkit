@@ -10,8 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
-import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.viewing.log.compose.MaintenanceLogListContent
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListEvent
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListViewModel

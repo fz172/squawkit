@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
+import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.util.zip.ZipInputStream
-import org.junit.Test
 
 class ZipFileWriterTest {
   @Test

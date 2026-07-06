@@ -8,21 +8,21 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
-import dev.fanfly.wingslog.feature.sync.data.SyncPrefs
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
+import dev.fanfly.wingslog.feature.sync.data.SyncPrefs
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_TECHNICIAN_ID = "tech-789"

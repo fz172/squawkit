@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason

@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.OnConditionRule
+import dev.fanfly.wingslog.aircraft.Propeller
 import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.aircraft.Squawk
@@ -19,7 +20,6 @@ import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.aircraft.TimeRule
-import dev.fanfly.wingslog.aircraft.Propeller
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import kotlin.time.Clock

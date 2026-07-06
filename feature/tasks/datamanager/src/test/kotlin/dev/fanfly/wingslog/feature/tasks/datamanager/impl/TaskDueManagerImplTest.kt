@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import com.squareup.wire.Instant as WireInstant
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.EngineHourRule
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
@@ -15,12 +14,13 @@ import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Clock
+import kotlin.time.Instant
+import com.squareup.wire.Instant as WireInstant
 
 class TaskDueManagerImplTest {
 

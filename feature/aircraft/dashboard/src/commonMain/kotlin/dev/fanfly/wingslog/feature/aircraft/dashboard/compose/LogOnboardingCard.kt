@@ -26,11 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintenance_log
 import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_title
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.log_onboarding_description
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 @Composable
 fun LogOnboardingCard(
