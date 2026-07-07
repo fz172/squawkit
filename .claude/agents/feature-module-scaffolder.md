@@ -1,6 +1,6 @@
 ---
 name: feature-module-scaffolder
-description: Scaffolds a new WingsLog feature module with the canonical model/datamanager/sharedassets/viewing/update submodule layout. Use PROACTIVELY whenever the user asks to create, add, or start a new feature (e.g. "add an export feature", "create a new notifications module", "scaffold a feature for X"). Creates empty Gradle modules, Manager interface stubs, Koin modules, and wires everything into settings.gradle.kts and initKoin.kt. Does NOT implement business logic.
+description: Scaffolds a new WingsLog feature module with the canonical model/datamanager/sharedassets/viewing/update submodule layout. Use PROACTIVELY whenever the user asks to create, add, or start a new feature (e.g. "add an export feature", "create a new notifications module", "scaffold a feature for X"). Creates empty Gradle modules, Manager interface stubs, Koin modules, and wires everything into settings.gradle.kts and core/di/CommonAppModules.kt. Does NOT implement business logic.
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: sonnet
 ---
@@ -71,7 +71,7 @@ For a feature named `<name>` (lowercase, single word — e.g. `export`, `notific
 
 4. **Wire into `settings.gradle.kts`**: add `include(":feature:<name>:<submodule>")` lines, keeping them grouped with the other feature modules in file order.
 
-5. **Wire into `composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/di/initKoin.kt`**: add imports and add the new Koin modules to the `modules(...)` call. Follow the existing alphabetical-ish grouping.
+5. **Wire into `core/di/src/commonMain/kotlin/dev/fanfly/wingslog/core/di/CommonAppModules.kt`**: add imports and add the new Koin modules to the `commonAppModules` list (this single list is shared by every host — never register in just one host). Add the module as a dependency of `core/di/build.gradle.kts`. If the feature has routes, register them in `feature/shell`'s shared nav graph.
 
 ## Things you must NOT do
 
@@ -97,6 +97,6 @@ For a feature named `<name>` (lowercase, single word — e.g. `export`, `notific
    - If the failure is anything else, stop. Report the verbatim compile error, the exact gradle command you ran, and the submodule it came from. Let the user decide.
 6. **Report back** with:
    - Every file you created (grouped by submodule)
-   - Every file you modified (`settings.gradle.kts`, `composeApp/.../initKoin.kt`)
+   - Every file you modified (`settings.gradle.kts`, `core/di/CommonAppModules.kt`, `core/di/build.gradle.kts`)
    - A compile-status line per submodule: `✓ :feature:<name>:<submodule>:assembleDebug passed` or `✗ failed — see error above`
    - Only claim success when every scaffolded submodule compiles green.

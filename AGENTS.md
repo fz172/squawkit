@@ -33,33 +33,47 @@ CI (`.github/workflows/ci.yml`) runs lint → assembleDebug → testDebugUnitTes
 
 ```
 app/                    # Android entry point (MainActivity, WingsLogApplication)
-composeApp/             # Shared Compose UI — nested navigation sub-graphs rooted at AppEntry + central Koin init
-webApp/                 # Kotlin/JS web host — shared feature UI with OPFS SQLite storage and Firebase JS startup
+composeApp/             # Android/iOS host — DB-integrity gate, theme wrapper, auth/shell graph wrappers
+                        #   around the shared nav graph (feature/shell) + Koin init (initKoin.kt)
+webApp/                 # Kotlin/JS web host — browser delta (history binding, resource warm-up, SEO
+                        #   login landing, OPFS SQLite storage, Firebase JS startup) around the shared graph
 core/
   model/                # Wire-generated protobuf models (Aircraft, MaintenanceLog, Squawk, InspectionCard…)
-  ui/                   # Material 3 theme, color tokens, shared Compose components (incl. DualSegmentedFilter, AvatarIcon)
+  nav/                  # Screen route definitions (Screen sealed class, route args)
+  sharedassets/         # App-wide strings/drawables (brand name, generic actions, shell tab labels, file sizes)
+  analytics/            # AnalyticsManager, LocalAnalytics, trackScreenViews page-view feeder
+  di/                   # CommonAppModules.kt — the single list of Koin modules shared by all hosts
+  ui/                   # Material 3 theme, color tokens, shared Compose components (incl. DualSegmentedFilter, StatusChip, formatFileSize)
+    theme/              #   WingslogTheme, palette, Spacing, StatusColors, AppearanceController
+    adaptive/           #   AdaptiveAppShell, layout tiers, AdaptiveFormDialogFrame, ConstrainedTopBar
+    widget/avataricon/  #   AvatarIcon composable
   auth/                 # Firebase Auth with platform-specific implementations
   firebase/             # Centralized Firebase utilities — FirebaseDataExt (ByteArray↔Firebase Storage Data, expect/actual)
   storage/              # R1 local-first foundation — SQLDelight schema (entity, sync_cursor, sync_config, blob_object),
-                        #   EntityStore, CollectionKind (8 kinds), EntityCodecRegistry, blob RemoteState
+                        #   EntityStore, CollectionKind (8 kinds), EntityCodecRegistry, CloudSyncSetting;
+                        #   blob/ — LocalBlobStore + SqlDelightLocalBlobStore, BlobRef, BlobFilesystem,
+                        #   UploadScheduler, sha256Hex, BlobId, RemoteState
   datetime/             # Date/time utilities — WireInstantFactory, platform-specific formatters
-  appinfo/              # Cross-platform app version/build info (AppInfo expect/actual)
-  attachments/          # ORPHANED — superseded by feature/attachment; de-registered from settings.gradle.kts
-                        #   (stale build files remain, slated for deletion). Do NOT add to here.
+  appinfo/              # Cross-platform app version/build info + AppCapability (expect/actual)
 feature/
-  fleet/                # Fleet dashboard (canonical layout, no update — dashboard is read-only)
-    model/              #   Aircraft-related domain types
+  shell/                # Shared app nav graph — the composable/nav counterpart to core:di's Koin aggregator:
+                        #   formDialogs (8 add/edit dialogs), settingsDetailRoutes, AdaptiveShellRoute (+ nested
+                        #   sidebar-settings NavHost), NavigateToLoginOnSignOut / TrackRootScreenViews helpers,
+                        #   AdaptiveShellViewModel + shellModule
+  login/                # AuthFlow (sign-in + onboarding), email-link sign-in, LoginViewModel, deep links
+  fleet/                # Fleet data + empty state (no update — fleet has no editable screen)
     datamanager/        #   FleetManager: observes aircraft via EntityStore<Aircraft> Flow, CRUD
     sharedassets/       #   Strings, drawables shared across fleet UI
-    viewing/            #   DashboardScreen + AircraftDashboardCard + FleetDashboardViewModel
-  aircraft/             # Aircraft detail view (tab-based; not part of fleet/ module)
+    viewing/            #   FleetEmptyState (empty-fleet state rendered by the shell)
+  aircraft/             # Aircraft detail view + aircraft CRUD (not part of fleet/ module)
     dashboard/          #   AircraftOverviewScreen, 4 tab composables (Overview → Squawks → Tasks → Logs),
                         #   AircraftOverviewViewModel, AircraftDashboardModule, AircraftTab enum
+    update/             #   EditAircraftScreen (add/edit aircraft), EditAircraftViewModel, Engine/Airframe sections
   logs/                 # Maintenance log UI (canonical layout)
     datamanager/        #   MaintenanceLogManager: CRUD for logs and maintenance overview
-    sharedassets/       #   Strings, shared helpers
+    sharedassets/       #   Strings, shared helpers (LogPickerSheet, MaintenanceDisplayExtensions)
     viewing/            #   MaintenanceLogCard, MaintenanceLogDetailSheet, list ViewModel
-    update/             #   MaintenanceLogFormScreen, EditAircraftScreen, form ViewModels
+    update/             #   MaintenanceLogFormScreen, form ViewModels
   tasks/                # Maintenance task inspection compliance (canonical layout)
     model/              #   DueMetadata, MaintenanceTaskWithStatus, domain enums
     datamanager/        #   TaskDataManager + TaskDueManager (two interfaces), Koin module
@@ -71,14 +85,17 @@ feature/
     datamanager/        #   SquawkManager (CRUD + markAddressed + dismissSquawk/reopenSquawk) over EntityStore<Squawk>
     sharedassets/       #   Strings, priority colors, dismiss-reason labels
     viewing/            #   SquawkCard, SquawkDetailSheet, SquawkPickerSheet, AogAlertSection
-    update/             #   SquawkFormScreen (2-tab add/edit), LogPickerSheet, DismissSquawkDialog, SquawkFormViewModel
+    update/             #   SquawkFormScreen (2-tab add/edit), DismissSquawkDialog, SquawkFormViewModel
+                        #   (LogPickerSheet it uses lives in logs/sharedassets)
   technician/           # Technician management
     datamanager/        #   TechnicianManager
     manage/             #   Combined list + edit screens + ViewModels (TechnicianListScreen, EditTechnicianScreen)
     sharedassets/       #   CertificateInputFields, TechnicianPickerSheet, strings
   attachment/           # File/image attachment feature (R2 — substantially implemented; UI behind attachmentUploadEnabled flag)
     model/              #   AttachmentStatus, AttachmentWithState, BlobSyncState, PendingAttachment
-    datamanager/        #   AttachmentManager, LocalBlobStore (SQLDelight blob_object), AttachmentOpener, QuotaChecker
+    datamanager/        #   AttachmentManager, AttachmentFormController (shared form-side attachment state),
+                        #   AttachmentOpener, QuotaChecker, platform BlobFilesystem impls
+                        #   (the blob store itself lives in core:storage/blob)
     sharedassets/       #   Strings, type icons
     viewing/            #   AttachmentRow, AttachmentSection
   export/               # Logbook export (datamanager + sharedassets + update; no model/viewing)
@@ -89,7 +106,8 @@ feature/
     sharedassets/       #   Strings for selection / progress / history / delivery
     update/             #   ExportSelectionScreen, ExportHistoryScreen, ExportViewModel, ExportHistoryViewModel, ExportFileSharer
   sync/                 # Local-first sync engine (R1 implementation — the only Firestore client)
-    data/               #   SyncEngine, HydrationRunner, PullListener, PushWorker, SyncCursorStore, SyncPreferences,
+    data/               #   SyncEngine, HydrationRunner, PullListener, PushWorker, SyncCursorStore,
+                        #   SyncPreferences (implements core:storage's CloudSyncSetting),
                         #   FirestorePullSubscription, FirestoreRemoteFetcher, FirestoreSyncWriter, SyncDocWire, TombstoneGc,
                         #   blob/ — BlobUploadDriver, BlobDownloadDriver, BlobDeleteDriver,
                         #   Android WorkManager workers, iOS URLSessionUploadScheduler
@@ -98,16 +116,15 @@ feature/
   featurelab/           # Firestore-backed feature flags (FeatureLab CollectionKind, synced like other entities)
     datamanager/        #   FeatureLabManager, FeatureFlags, Koin module
   settings/             # App settings screen (flat module, no submodule structure); also hosts FeatureLab screen + Export logs row
-  userprofile/          # Profile edit UI + database (legacy; unification with Technician in progress)
-    database/           #   UserProfileManager (Firestore)
+  userprofile/          # Remnants of the legacy profile feature (unification with Technician in progress)
     sharedassets/       #   Strings, anonymous user icon
     userprofilecard/    #   Profile card composable
   stresstest/           # Fake data generator for UI stress testing (compiled into every build,
                         # gated at runtime by AppCapability.isStressTestSupported)
                         #   FakeDataGenerator, StressTestScreen, StressTestViewModel, StressTestModule
-    config/             #   StressTestPlugin — shared composable UI + route registration, called
-                        #   directly and unconditionally from composeApp/AppEntry.kt and webApp
-                        #   (see Dogfood Builds below)
+    config/             #   StressTestPlugin — shared composable UI + route registration; routes are
+                        #   registered by feature/shell's settingsDetailRoutes, gated on
+                        #   isStressTestSupported on every host (see Dogfood Builds below)
 backend/                # Firebase Cloud Functions (TypeScript, Functions v2, Node 22) — NOT a Gradle module
   firebase/functions/   #   health_probe; requestExportDelivery (export email delivery: signed URL + mailer + Firestore manifest)
 ```
@@ -153,14 +170,15 @@ update        →  :model, :datamanager, :viewing, :sharedassets, core:*
 - **`feature/technician/manage/`** — uses `manage/` instead of `viewing/` + `update/` split; both list and edit screens coexist in one submodule. New features should prefer canonical unless CRUD-only with no standalone view.
 - **`feature/settings/`** — flat module; single screen with no submodule structure.
 - **`feature/userprofile/`** — legacy structure; being unified with Technician (see `docs/technician/userprofile_as_technician.md`).
-- **`feature/aircraft/dashboard/`** — single submodule (no canonical split); owns its own ViewModel and DI module.
-- **`feature/fleet/`** — ViewModel lives inside `viewing/` (no separate update layer); fleet dashboard is read-only.
+- **`feature/aircraft/dashboard/`** — single submodule (no canonical split); owns its own ViewModel and DI module. Its sibling `aircraft/update` follows the canonical `update/` shape.
+- **`feature/fleet/`** — no `model` or `update`; `viewing/` holds only `FleetEmptyState`. When a feature has no `update` sibling, `viewing/` may host the list ViewModel (e.g. `logs:viewing`'s `MaintenanceLogListViewModel`).
+- **`feature/shell/`** — single module, no canonical split; it's an aggregator (shared nav graph + shell ViewModel), not a domain feature.
 - **`feature/export/`** — `datamanager` + `sharedassets` + `update` only (no `model` or `viewing`); export is a single user-driven flow with no standalone read surface.
 - **`feature/settings/featurelab/`** — `FeatureLabScreen` lives inside `feature/settings` while `feature/featurelab` has only a `datamanager`; a dedicated UI module for one screen isn't worth it.
 
 ### Koin modules
 
-Each submodule that provides injectable objects declares its own `*Module.kt`. All modules are aggregated in `composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/di/initKoin.kt`. Add new modules there when creating a new feature.
+Each submodule that provides injectable objects declares its own `*Module.kt`. All modules shared by the hosts are aggregated in **`core/di/CommonAppModules.kt`** — add new modules there when creating a new feature. `composeApp`'s `initKoin.kt` and `webApp`'s `main.kt` are thin wrappers that take that list and add host bootstrap only (`AppCapability` construction, stress-test Koin modules, host-only singles like the web SQLite worker). The list is kept in one place because it drifted between hosts once before — a module registered in one host but not the other fails at runtime (`NoDefinitionFoundException`), not at compile time.
 
 ## Architecture
 
@@ -187,7 +205,7 @@ Proto definitions live in `core/model/src/commonMain/proto/`. Feature managers *
 `core/storage` provides `EntityStore` (SQLDelight-backed), `CollectionKind` (8 kinds: Aircraft, MaintenanceTask, MaintenanceLog, MaintenanceOverview, Technician, UserInfo, FeatureLab, Squawk), `EntityCodecRegistry`, and Koin modules. Schema tables: `entity`, `sync_cursor`, `sync_config`, `blob_object`. `feature/sync/data` implements the sync engine: `SyncEngine` (gated on signed-in AND non-anonymous AND cloud-sync-enabled) orchestrates `HydrationRunner` (initial pull), `PullListener` / `FirestorePullSubscription` (real-time updates), and `PushWorker` (drains `dirty=1` rows via `FirestoreSyncWriter`). Top-level kinds (Aircraft, Technician, UserInfo) hydrate on sign-in; per-aircraft kinds (logs, tasks, overview, squawks) hydrate per aircraft. Conflict resolution is last-writer-wins on Firestore server timestamp; dirty rows are immune from remote overwrite (no local clock in the ordering logic). Anonymous users are fully offline (engine idle). Binary blob transfers (R2) use WorkManager (Android) and background URLSession (iOS). See `docs/storage/storage_r1_design.md`.
 
 ### Dependency Injection
-- Central aggregation: `composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/di/initKoin.kt`
+- Central aggregation: `core/di/CommonAppModules.kt` (one list shared by all hosts); `initKoin.kt` (composeApp) and `main.kt` (webApp) add host-only bootstrap on top
 - Each module has its own `di/*Module.kt`
 - Platform-specific bindings: `androidMain` / `iosMain` provide Firebase SDK instances and storage implementations
 
@@ -233,6 +251,7 @@ Feature PRDs and architecture design docs live in `docs/`, organized into **per-
 - `docs/search/` — `intelligentsearch.md`
 - `docs/account/` — `account_upgrade_PRD.html`, `account_upgrade_design.html`
 - `docs/web/` — `web_target_expansion_plan.md`, `web_attachments_design.md`, `web_adaptive_layout_design.html`
+- `docs/cleanup/` — `codebase_cleanup_plan.md` (the 2026-07 structure/dedup/layering cleanup; phases 1–5 executed, kept as the record of what moved where and why)
 
 Consult the relevant doc before making non-trivial changes to a feature area. Each design/PRD doc
 carries an **Implementation Status** note near the top reflecting what has actually shipped vs. the
@@ -246,11 +265,10 @@ with relative paths.
 ## Dogfood Builds
 
 There is no compiled-out "dogfood" variant anymore — the **Fake Data Generator**
-(`feature/stresstest`) is a normal, always-present dependency of `composeApp` and `webApp` on
-every platform, called directly from `AppEntry.kt` (Android/iOS) and `webApp/main.kt`. What used
-to be a build-time inclusion/exclusion is now a single runtime flag: `AppCapability.isStressTestSupported`
-(see `core/appinfo/AppCapability.kt`), gating both the Feature Lab "Debug Tools" entry and the
-route registration.
+(`feature/stresstest`) is a normal, always-present dependency compiled into every build; its
+routes and the Feature Lab "Debug Tools" entry are registered by the shared nav graph
+(`feature/shell`), gated on a single runtime flag: `AppCapability.isStressTestSupported`
+(see `core/appinfo/AppCapability.kt`) — the same gate on Android, iOS, and web.
 
 `AppCapability` also folds in the "developer build" gate for the Feature Lab settings row itself
 (`isFeatureLabSupported`) and three platform-capability constants (camera capture, anonymous
@@ -287,7 +305,7 @@ login, Apple sign-in) — one injectable singleton, constructed once per host vi
 ## Coding Conventions
 
 - **Instants**: Always use `kotlin.time.Instant`, never `kotlinx.datetime.Instant`.
-- **ViewModels in `fleet/`**: The ViewModel lives inside the `viewing/` submodule (no separate layer), since fleet has no editable screen at the feature level.
+- **ViewModels in `viewing/`**: When a feature has no `update` submodule, its list ViewModel may live inside `viewing/` (e.g. `logs:viewing`); the app-shell ViewModel lives in `feature/shell`.
 - **`technician/manage`**: This feature uses `manage/` instead of the canonical `viewing/` + `update/` split — both read and write screens coexist in one submodule. New features should prefer the canonical pattern unless the feature is inherently CRUD-only with no standalone viewing screen.
 - **Feature flags**: Controlled by `FeatureLabManager` (Firestore-backed; `attachmentUploadEnabled` gates the attachment UI). Check `FeatureFlags` before shipping experimental code paths.
 - **Capabilities**: Build-time/platform gates (developer-only surfaces, per-platform support) go through the injected `AppCapability` singleton (`core:appinfo`), not ad-hoc `isDeveloperBuild` checks or `expect`/`actual` booleans scattered across feature modules.

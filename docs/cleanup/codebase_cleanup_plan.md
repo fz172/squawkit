@@ -1,8 +1,8 @@
 # Codebase Cleanup Plan
 
-> **Implementation Status:** Phases 1–4 complete (2026-07-06); Phase 5 not started. Each
-> phase updates its checkbox table as work lands. Source: full-codebase audit (structure,
-> dependencies, duplication, logic ownership), 2026-07-06.
+> **Implementation Status:** All phases (1–5) complete, 2026-07-06. This document is now the
+> record of what moved where and why. Source: full-codebase audit (structure, dependencies,
+> duplication, logic ownership), 2026-07-06.
 
 This plan sequences the cleanup so that low-risk deletions land first (shrinking the surface
 everything else has to touch), consolidation second, and the riskiest structural moves last.
@@ -360,7 +360,7 @@ document the exception in AGENTS.md's "Non-canonical exceptions" list (Phase 5).
 
 ---
 
-## Phase 5 — Documentation refresh (AGENTS.md / CLAUDE.md)
+## Phase 5 — Documentation refresh (AGENTS.md / CLAUDE.md) (completed)
 
 Agents are told these files are authoritative; today they materially misdescribe the codebase.
 Do this phase **last** so it captures the post-cleanup state, but if earlier phases stall, ship
@@ -382,6 +382,16 @@ the corrections below independently — they are wrong today regardless:
 - **Non-canonical exceptions**: add FeatureLab screen hosted in `feature/settings` (4.6).
 - Add pointers to this plan from AGENTS.md if the cleanup is still in flight.
 
+**Outcome (2026-07-06):** AGENTS.md's module tree rewritten to the post-cleanup state (adds
+`core:nav`/`core:sharedassets`/`core:analytics`/`core:di`/`core:ui:*` nesting,
+`feature:login`/`feature:shell`/`feature:aircraft:update`; drops the deleted modules; reflects
+the `core.storage.blob` move and the hosts' thin-delta role). DI aggregation now correctly
+points at `core/di/CommonAppModules.kt` in AGENTS.md, CLAUDE.md, *and* the
+`feature-module-scaffolder` agent definition (which would otherwise wire new modules into one
+host only). Stale descriptions fixed (fleet, userprofile, LogPickerSheet placement, stress-test
+route registration); the fleet ViewModel convention rewritten around `logs:viewing`; this plan
+linked from AGENTS.md's Design Docs map as the cleanup record.
+
 ---
 
 ## Execution tracking
@@ -402,7 +412,7 @@ the corrections below independently — they are wrong today regardless:
 | 12 | `LocalBlobStore` → `core:storage`; fix sync api-export                | 4.2   | med  | ☑ 2026-07-06 |
 | 13 | `feature/logs/update/aircraft/` → `feature/aircraft/update`           | 4.3   | low  | ☑ 2026-07-06 |
 | 14 | `sharedassets` rule decision (recommend Option B)                     | 4.4   | low  | ☑ 2026-07-06 |
-| 15 | AGENTS.md / CLAUDE.md refresh                                         | 5     | none | ☐            |
+| 15 | AGENTS.md / CLAUDE.md refresh                                         | 5     | none | ☑ 2026-07-06 |
 
 Suggested landing order: 1–4 in one PR; 5–8 as one PR per item; 9–10 as a reviewed PR stack;
 11–13 individually; 14–15 alongside whichever phase settles them.
