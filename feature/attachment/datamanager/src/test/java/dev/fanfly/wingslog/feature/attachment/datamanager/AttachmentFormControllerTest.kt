@@ -69,7 +69,7 @@ class AttachmentFormControllerTest {
 
     val anyAdded = controller.addLocalFiles(
       listOf(
-        pickedFile(sizeBytes = AttachmentFormController.MAX_FILE_SIZE_BYTES + 1),
+        pickedFile(sizeBytes = QuotaChecker.MAX_FILE_SIZE_BYTES + 1),
         pickedFile(),
       )
     ) { errors.add(it) }
@@ -89,7 +89,7 @@ class AttachmentFormControllerTest {
     controller.addLocalFiles(List(5) { pickedFile() }) { }
 
     assertThat(controller.pendingAttachments.value)
-      .hasSize(AttachmentFormController.MAX_FILE_ATTACHMENTS)
+      .hasSize(QuotaChecker.MAX_FILE_ATTACHMENTS)
     assertThat(controller.filesAtLimit).isTrue()
   }
 

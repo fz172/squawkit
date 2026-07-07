@@ -2,7 +2,8 @@ package dev.fanfly.wingslog.feature.attachment.datamanager
 
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController.Companion.MAX_FILE_SIZE_BYTES
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_ATTACHMENTS
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
@@ -161,10 +162,5 @@ class AttachmentFormController(
       .filterIsInstance<PendingAttachment.Saved>()
       .filter { it.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK }
       .forEach { attachmentManager.delete(it.attachment) }
-  }
-
-  companion object {
-    const val MAX_FILE_ATTACHMENTS = 3
-    const val MAX_FILE_SIZE_BYTES = 25L * 1024 * 1024 // 25 MB
   }
 }

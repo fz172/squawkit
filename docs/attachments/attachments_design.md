@@ -229,7 +229,7 @@ sealed class PendingAttachment {
 
 - **Files**: maximum 3 per log/card (across `Local` + `Saved` items, excluding `PendingDelete`). The "Choose file" button is disabled and shows "Maximum 3 files reached" when the count is at 3.
 - **Links**: unlimited.
-- **Per-parent total size**: 25 MB summed across all file attachments on a single log/card (links don't count). Computed from `PickedFile.sizeBytes` (pending) + `Attachment.size_bytes` (saved) before adding. If a new file would push the parent over 25 MB, show an inline error: "Adding this file would exceed the 25 MB limit for this entry."
+- **Per-parent total size**: 15 MB summed across all file attachments on a single log/card (links don't count). Computed from `PickedFile.sizeBytes` (pending) + `Attachment.size_bytes` (saved) before adding. If a new file would push the parent over 15 MB, show an inline error: "Adding this file would exceed the 15 MB limit for this entry."
 - **Per-user total storage**: 1 GB summed across all of the user's attachments (every log + every inspection card combined). Computed from `blob_object.size_bytes` summed across the user's scope (counts both `LOCAL_ONLY` and `REMOTE_ONLY` rows so the cap is consistent regardless of which device the user is on). If exceeded, show an inline error: "You've reached the 1 GB attachment limit. Remove an attachment before adding more." See `../storage/storage_r2_design.md` §9b for enforcement details.
 - **Per-parent duplicate**: a file whose sha256 matches another non-LINK attachment already on the parent (`Local` or `Saved`, excluding `PendingDelete`) is rejected before it joins the pending list. Show an inline error: "This file is already attached to this entry." Sha256 is computed from the picked bytes — the same hash used for the integrity check on download. Renaming the file on disk does not bypass the check; matching the byte content does. Links are never deduplicated (two different display names pointing at the same URL are allowed).
 
@@ -492,14 +492,14 @@ fun AttachmentSection(
 | Stale `download_url` (403) | Download fails | On retry, call `getDownloadUrl(storagePath)` first; write refreshed URL back in background |
 | File already downloaded | `DownloadManager` downloads again to Downloads folder | Acceptable for V1 |
 
-**Large files (up to 25 MB limit):**
+**Large files (up to 5 MB limit):**
 - Progress is surfaced automatically by `DownloadManager` via system notification on Android.
 - On iOS, emit `OpenState.Downloading` while `URLSession` is in flight and show a loading indicator in the UI.
-- The 25 MB cap means worst-case ~3 min on a poor connection — acceptable since the user initiates the open deliberately.
+- The 5 MB cap means worst-case ~3 min on a poor connection — acceptable since the user initiates the open deliberately.
 
 ### Summary
 
-For a personal logbook app with a 25 MB file size cap, you get retry and resumability for free from the platform. The only thing to build is: progress indicators, an error state with a retry button, and stale-URL refresh on retry. Do not build a background upload service for V1.
+For a personal logbook app with a 5 MB file size cap, you get retry and resumability for free from the platform. The only thing to build is: progress indicators, an error state with a retry button, and stale-URL refresh on retry. Do not build a background upload service for V1.
 
 ---
 
@@ -552,7 +552,7 @@ feature/tasks/update          ← picker sheet lives here; adds dep on feature/a
 
 1. **Max attachment count per item.** Maximum **3 uploaded files** per log/card. Hyperlinks are unlimited. The picker disables the "Choose file" option and shows an inline message ("Maximum 3 files reached") once the file count hits 3; the "Add link" option remains available.
 
-2. **Per-parent size cap.** **25 MB total** across all file attachments on a single log/card. Enforced in the picker before adding a file to the pending list (sum pending + saved sizes; reject if the new file would exceed 25 MB).
+2. **Per-parent size cap.** **15 MB total** (3 files x 5 MB each) across all file attachments on a single log/card. Enforced in the picker before adding a file to the pending list (sum pending + saved sizes; reject if the new file would exceed 15 MB).
 
 3. **Per-user storage quota.** **1 GB** total across all of a user's attachments. Enforced client-side from the local `blob_object` table (summed across the user's scope). On the server side, document the cap; defense-in-depth via Firebase Storage rules is a future hardening — the PRD states this is a soft cap until storage rules can express it.
 

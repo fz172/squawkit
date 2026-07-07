@@ -10,7 +10,7 @@ Android (minSdk 33), iOS, and web sharing Compose Multiplatform UI.
 
 The user-facing app is branded **SquawkIt**; codebase identifiers (`wingslog`, package `dev.fanfly.wingslog`, Gradle module names) still use the original WingsLog name.
 
-The app uses a **local-first architecture** (R1 — shipped, default path): a SQLDelight entity store is the single source of truth for every read and write, and a Firestore sync engine pushes local changes and pulls remote ones in the background. There is **no Firestore in the UI read path** and **no rollout flag** — local-first is the only code path. Local-first **attachments** (R2) infrastructure has largely landed (local blob store + background upload/download), but the attachment UI is gated behind the `attachmentUploadEnabled` feature-lab flag. See `docs/storage/storage_r1_design.md` and `docs/storage/storage_r2_design.md`.
+The app uses a **local-first architecture** (R1 — shipped, default path): a SQLDelight entity store is the single source of truth for every read and write, and a Firestore sync engine pushes local changes and pulls remote ones in the background. There is **no Firestore in the UI read path** and **no rollout flag** — local-first is the only code path. Local-first **attachments** (R2) infrastructure has largely landed (local blob store + background upload/download), link attachments are always available, while file/photo uploads are gated behind the `attachmentUploadEnabled` feature-lab flag (default off). See `docs/storage/storage_r1_design.md` and `docs/storage/storage_r2_design.md`.
 
 ## Build & CI Commands
 
@@ -91,7 +91,7 @@ feature/
     datamanager/        #   TechnicianManager
     manage/             #   Combined list + edit screens + ViewModels (TechnicianListScreen, EditTechnicianScreen)
     sharedassets/       #   CertificateInputFields, TechnicianPickerSheet, strings
-  attachment/           # File/image attachment feature (R2 — substantially implemented; UI behind attachmentUploadEnabled flag)
+  attachment/           # File/image/link attachment feature (R2 — substantially implemented; file/photo upload behind attachmentUploadEnabled flag)
     model/              #   AttachmentStatus, AttachmentWithState, BlobSyncState, PendingAttachment
     datamanager/        #   AttachmentManager, AttachmentFormController (shared form-side attachment state),
                         #   AttachmentOpener, QuotaChecker, platform BlobFilesystem impls
@@ -307,7 +307,7 @@ login, Apple sign-in) — one injectable singleton, constructed once per host vi
 - **Instants**: Always use `kotlin.time.Instant`, never `kotlinx.datetime.Instant`.
 - **ViewModels in `viewing/`**: When a feature has no `update` submodule, its list ViewModel may live inside `viewing/` (e.g. `logs:viewing`); the app-shell ViewModel lives in `feature/shell`.
 - **`technician/manage`**: This feature uses `manage/` instead of the canonical `viewing/` + `update/` split — both read and write screens coexist in one submodule. New features should prefer the canonical pattern unless the feature is inherently CRUD-only with no standalone viewing screen.
-- **Feature flags**: Controlled by `FeatureLabManager` (Firestore-backed; `attachmentUploadEnabled` gates the attachment UI). Check `FeatureFlags` before shipping experimental code paths.
+- **Feature flags**: Controlled by `FeatureLabManager` (Firestore-backed; `attachmentUploadEnabled` gates file/photo upload buttons — links are always on). Check `FeatureFlags` before shipping experimental code paths.
 - **Capabilities**: Build-time/platform gates (developer-only surfaces, per-platform support) go through the injected `AppCapability` singleton (`core:appinfo`), not ad-hoc `isDeveloperBuild` checks or `expect`/`actual` booleans scattered across feature modules.
 - **Transitive deps**: `core:storage` and `core:ui` api-export most shared deps; don't redeclare them in downstream modules.
 

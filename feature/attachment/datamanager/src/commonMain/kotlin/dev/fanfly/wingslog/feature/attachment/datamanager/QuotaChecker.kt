@@ -7,9 +7,9 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.attachment.model.QuotaResult
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Enforces the three attachment caps from docs/storage/storage_r2_design.md §9b:
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.map
  * | Check | Value |
  * |---|---|
  * | Per-parent duplicate (sha256) | reject if already on this parent |
- * | Per-parent size | 25 MB summed across non-LINK attachments on that parent |
+ * | Per-parent size | 15 MB (3 files x 5 MB) summed across non-LINK attachments on that parent |
  * | Per-user size | 1 GB summed across the user's scope (incl. REMOTE_ONLY) |
  *
  * The picker calls [check] *after* it has read the candidate bytes and computed sha256 (the
@@ -96,7 +96,10 @@ class QuotaChecker(
   }
 
   companion object {
-    const val PARENT_CAP_BYTES: Long = 25L * 1024 * 1024  // 25 MB
+    const val MAX_FILE_ATTACHMENTS = 3
+    const val MAX_FILE_SIZE_BYTES = 5L * 1024 * 1024 // 5 MB
+    const val PARENT_CAP_BYTES: Long =
+      MAX_FILE_SIZE_BYTES * MAX_FILE_ATTACHMENTS
     const val USER_CAP_BYTES: Long = 1024L * 1024 * 1024  // 1 GB
   }
 }

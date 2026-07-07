@@ -196,7 +196,7 @@ behavior exactly.
 Keep all current R2 limits:
 
 - 3 files per parent entry.
-- 25 MB per parent entry.
+- 15 MB per parent entry (3 files x 5 MB each).
 - 1 GB per user.
 - duplicate rejection by sha256 on the same parent.
 

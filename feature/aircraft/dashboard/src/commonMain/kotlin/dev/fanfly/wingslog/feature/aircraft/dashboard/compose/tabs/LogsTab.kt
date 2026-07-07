@@ -27,7 +27,6 @@ fun LogsTab(
   onNavigateToAddLog: (() -> Unit)?,
   onNavigateToEditLog: ((logId: String) -> Unit)?,
   onTaskClick: (taskId: String) -> Unit,
-  attachmentsAvailable: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   // Key by aircraftId: in the adaptive shell the switcher swaps aircraft within the same
@@ -78,7 +77,6 @@ fun LogsTab(
     },
     openError = openError,
     onTaskClick = onTaskClick,
-    attachmentsAvailable = attachmentsAvailable,
     modifier = modifier,
   )
 }

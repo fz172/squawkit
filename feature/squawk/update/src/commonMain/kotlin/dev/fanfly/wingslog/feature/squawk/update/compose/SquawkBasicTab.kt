@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.squawk.update.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -12,10 +11,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
@@ -77,10 +75,7 @@ fun SquawkBasicTab(
       isError = titleError,
       supportingText = if (titleError) stringResource(Res.string.squawk_title_required) else null,
       modifier = Modifier.fillMaxWidth(),
-      keyboardOptions = KeyboardOptions(
-        capitalization = KeyboardCapitalization.Sentences, // Capitalizes the first character
-        imeAction = ImeAction.Done // Changes Enter key to a Done/Action button
-      ),
+      keyboardOptions = FormKeyboard.SentencesDone,
       editable = !readOnly,
     )
 

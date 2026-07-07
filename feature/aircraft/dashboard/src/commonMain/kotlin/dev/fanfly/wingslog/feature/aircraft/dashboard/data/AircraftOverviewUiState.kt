@@ -31,7 +31,6 @@ sealed interface AircraftOverviewUiState {
     val logsForSelectedTask: List<MaintenanceLog> = emptyList(),
     val deletingTaskId: String? = null,
     val syncStates: Map<String, BlobSyncState> = emptyMap(),
-    val attachmentEnabled: Boolean = true,
     val squawks: List<SquawkWithStatus> = emptyList(),
     val aogSquawks: List<Squawk> = emptyList(),
     val selectedSquawk: SquawkWithStatus? = null,

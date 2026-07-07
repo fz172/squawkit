@@ -102,7 +102,6 @@ import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 fun MaintenanceLogFormScreen(
   navController: NavController,
   viewModel: MaintenanceLogFormViewModel = koinViewModel(),
-  attachmentsAvailable: Boolean = true,
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   var showDeleteDialog by remember { mutableStateOf(false) }
@@ -295,7 +294,6 @@ fun MaintenanceLogFormScreen(
                   availableInspectionCards = uiState.availableInspectionCards,
                   onAddTaskClick = viewModel::showInspectionPicker,
                   onRemoveTask = viewModel::removeInspectionId,
-                  attachmentsAvailable = attachmentsAvailable,
                   attachmentSection = {
                     AttachmentFormSection(
                       visibleAttachments = uiState.visibleAttachments,

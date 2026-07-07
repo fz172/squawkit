@@ -70,7 +70,6 @@ fun TaskDetailSheet(
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
-  attachmentEnabled: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   val card = cardWithStatus.card
@@ -187,17 +186,15 @@ fun TaskDetailSheet(
 
     Spacer(Modifier.height(Spacing.large))
 
-    if (attachmentEnabled) {
-      AttachmentSection(
-        attachments = card.attachments,
-        onAttachmentTap = onAttachmentTap,
-        syncStates = syncStates,
-        openError = openError,
-      )
+    AttachmentSection(
+      attachments = card.attachments,
+      onAttachmentTap = onAttachmentTap,
+      syncStates = syncStates,
+      openError = openError,
+    )
 
-      if (card.attachments.isNotEmpty()) {
-        Spacer(modifier = Modifier.height(Spacing.large))
-      }
+    if (card.attachments.isNotEmpty()) {
+      Spacer(modifier = Modifier.height(Spacing.large))
     }
 
     Text(

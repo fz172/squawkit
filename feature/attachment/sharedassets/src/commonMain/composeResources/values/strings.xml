@@ -7,14 +7,14 @@
   <string name="link_url">URL</string>
   <string name="link_name">Name (optional)</string>
   <string name="max_files_reached">Maximum 3 files reached</string>
-  <string name="file_too_large">File exceeds 25 MB limit</string>
+  <string name="file_too_large">File exceeds 5 MB limit</string>
+  <string name="attachment_limits_hint">Up to 3 files · Max 5 MB each</string>
   <string name="sign_in_to_add_attachments">Sign in to add attachments</string>
   <string name="invalid_url">Enter a valid URL</string>
   <string name="opening_attachment">Opening…</string>
   <string name="open_failed">Could not open attachment. Try again.</string>
   <string name="remove_attachment">Remove attachment</string>
   <string name="no_attachments">No attachments yet</string>
-  <string name="attachment_limits_hint">Up to 3 files · Max 25 MB each</string>
   <string name="file_upload_coming_soon">File upload options coming soon</string>
   <string name="file_added">File added</string>
   <string name="link_added">Link added</string>

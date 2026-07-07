@@ -43,7 +43,6 @@ fun SquawkDetailSheet(
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
-  attachmentEnabled: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   val squawk = item.squawk
@@ -116,15 +115,13 @@ fun SquawkDetailSheet(
       )
     }
 
-    if (attachmentEnabled) {
-      Spacer(Modifier.height(Spacing.large))
-      AttachmentSection(
-        attachments = squawk.attachments,
-        onAttachmentTap = onAttachmentTap,
-        syncStates = syncStates,
-        openError = openError,
-      )
-    }
+    Spacer(Modifier.height(Spacing.large))
+    AttachmentSection(
+      attachments = squawk.attachments,
+      onAttachmentTap = onAttachmentTap,
+      syncStates = syncStates,
+      openError = openError,
+    )
   }
 }
 

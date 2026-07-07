@@ -8,7 +8,6 @@ import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -40,7 +39,6 @@ class AircraftOverviewViewModel(
   private val attachmentManager: AttachmentManager,
   private val squawkManager: SquawkManager,
   private val auth: FirebaseAuth,
-  private val featureLabManager: FeatureLabManager,
   private val aircraftId: String,
 ) : ViewModel() {
 
@@ -55,16 +53,6 @@ class AircraftOverviewViewModel(
 
   init {
     loadAircraftAndStats()
-    viewModelScope.launch {
-      featureLabManager.observe()
-        .collect { flags ->
-          _uiState.update { state ->
-            if (state is AircraftOverviewUiState.Success)
-              state.copy(attachmentEnabled = flags.attachmentUploadEnabled)
-            else state
-          }
-        }
-    }
   }
 
   private fun blobStatesFlow() =

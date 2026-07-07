@@ -67,7 +67,6 @@ fun MaintenanceLogDetailSheet(
   openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
   technicianEnabled: Boolean = true,
-  attachmentEnabled: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   val dateStr = log.timestamp?.toLocalDate()
@@ -115,14 +114,12 @@ fun MaintenanceLogDetailSheet(
     )
 
     // Attachments
-    if (attachmentEnabled) {
-      AttachmentSection(
-        attachments = log.attachments,
-        onAttachmentTap = onAttachmentTap,
-        syncStates = syncStates,
-        openError = openError,
-      )
-    }
+    AttachmentSection(
+      attachments = log.attachments,
+      onAttachmentTap = onAttachmentTap,
+      syncStates = syncStates,
+      openError = openError,
+    )
 
     // Footer: technician (if enabled) | date
     HorizontalDivider(

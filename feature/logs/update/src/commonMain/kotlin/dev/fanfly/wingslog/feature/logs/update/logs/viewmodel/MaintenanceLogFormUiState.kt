@@ -6,7 +6,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.ui.common.UiText
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.visible
@@ -50,7 +50,7 @@ data class MaintenanceLogFormUiState(
   val visibleAttachments: List<PendingAttachment> get() = pendingAttachments.visible()
   val fileAttachmentCount: Int get() = pendingAttachments.fileCount()
   val filesAtLimit: Boolean
-    get() = fileAttachmentCount >= AttachmentFormController.MAX_FILE_ATTACHMENTS
+    get() = fileAttachmentCount >= QuotaChecker.MAX_FILE_ATTACHMENTS
 
   fun currentSnapshot(): FormSnapshot = FormSnapshot(
     workDescription = workDescription,

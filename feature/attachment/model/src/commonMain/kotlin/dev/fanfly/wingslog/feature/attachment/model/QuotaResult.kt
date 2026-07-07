@@ -11,7 +11,7 @@ sealed class QuotaResult {
   /** A non-LINK attachment with the same sha256 is already on this parent. */
   data class DuplicateOnParent(val sha256: String) : QuotaResult()
 
-  /** Adding this file would push the parent's total beyond the 25 MB cap. */
+  /** Adding this file would push the parent's total beyond the per-parent cap ([capBytes]). */
   data class PerParentExceeded(val capBytes: Long, val wouldBeBytes: Long) :
     QuotaResult()
 

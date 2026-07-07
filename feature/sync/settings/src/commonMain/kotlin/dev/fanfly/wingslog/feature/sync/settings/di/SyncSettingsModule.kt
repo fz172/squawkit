@@ -10,7 +10,6 @@ val syncSettingsModule = module {
       auth = get(),
       syncPreferences = get(),
       syncEngine = get(),
-      featureLabManager = get(),
     )
   }
 }

@@ -96,11 +96,10 @@ enum class ShellSection(
   /** Short label for the space-constrained bottom bar tier. */
   val label: StringResource,
   val icon: ImageVector,
+  /** Full section name: the content top-bar title, also the wide (EXPANDED/LARGE) sidebar label. */
   val title: StringResource = label,
-  /** Label for the wide (EXPANDED/LARGE) sidebar, which fits the unabbreviated name. */
-  val sidebarLabel: StringResource = label,
-  /** Label for the narrower MEDIUM sidebar; may abbreviate where the wide label doesn't fit. */
-  val narrowSidebarLabel: StringResource = sidebarLabel,
+  /** Label for the narrower MEDIUM sidebar; may abbreviate where the full title doesn't fit. */
+  val narrowSidebarLabel: StringResource = title,
 ) {
   DASHBOARD(UiRes.string.shell_tab_dashboard, Icons.Filled.Dashboard),
   SQUAWKS(UiRes.string.shell_tab_squawks, Icons.Filled.Warning),
@@ -108,14 +107,12 @@ enum class ShellSection(
     UiRes.string.shell_tab_tasks,
     Icons.Filled.Checklist,
     UiRes.string.shell_title_tasks,
-    sidebarLabel = UiRes.string.shell_title_tasks,
     narrowSidebarLabel = UiRes.string.shell_nav_tasks_narrow,
   ),
   LOGS(
     UiRes.string.shell_tab_logs,
     Icons.Filled.Description,
     UiRes.string.shell_title_logs,
-    sidebarLabel = UiRes.string.shell_title_logs,
   ),
   SETTINGS(UiRes.string.settings, Icons.Filled.Settings),
 }
@@ -509,7 +506,7 @@ private fun SidebarItem(
   muted: Boolean = false,
 ) {
   val label =
-    if (LocalLayoutTier.current.hasWideSidebar) section.sidebarLabel
+    if (LocalLayoutTier.current.hasWideSidebar) section.title
     else section.narrowSidebarLabel
   NavigationDrawerItem(
     label = { Text(stringResource(label)) },

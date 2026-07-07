@@ -39,7 +39,6 @@ class MaintenanceLogListViewModel(
   private val _availableCards =
     MutableStateFlow<List<MaintenanceTask>>(emptyList())
   private val _technicianEnabled = MutableStateFlow(true)
-  private val _attachmentEnabled = MutableStateFlow(true)
 
   init {
     observeLogs()
@@ -48,7 +47,6 @@ class MaintenanceLogListViewModel(
       featureLabManager.observe()
         .collect { flags ->
           _technicianEnabled.value = flags.technicianEnabled
-          _attachmentEnabled.value = flags.attachmentUploadEnabled
         }
     }
     viewModelScope.launch {
@@ -58,18 +56,7 @@ class MaintenanceLogListViewModel(
         _selectedLog,
         _availableCards,
         _technicianEnabled,
-        _attachmentEnabled,
-      ) { args ->
-        val logsState = args[0] as LogsLoadState
-        val filter = args[1] as LogFilter
-
-        @Suppress("UNCHECKED_CAST")
-        val selectedLog = args[2] as MaintenanceLog?
-
-        @Suppress("UNCHECKED_CAST")
-        val availableCards = args[3] as List<MaintenanceTask>
-        val technicianEnabled = args[4] as Boolean
-        val attachmentEnabled = args[5] as Boolean
+      ) { logsState, filter, selectedLog, availableCards, technicianEnabled ->
         when (logsState) {
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
           LogsLoadState.Error -> MaintenanceLogListUiState.Error
@@ -91,7 +78,6 @@ class MaintenanceLogListViewModel(
               selectedLog = selectedLog,
               availableCards = availableCards,
               technicianEnabled = technicianEnabled,
-              attachmentEnabled = attachmentEnabled,
             )
           }
         }

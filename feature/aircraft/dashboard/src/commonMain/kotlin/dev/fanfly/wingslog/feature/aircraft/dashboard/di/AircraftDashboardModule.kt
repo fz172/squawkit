@@ -5,7 +5,6 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewViewModel
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -30,7 +29,6 @@ val aircraftDashboardModule = module {
       get<AttachmentManager>(),
       get<SquawkManager>(),
       get<FirebaseAuth>(),
-      get<FeatureLabManager>(),
       aircraftId,
     )
   }

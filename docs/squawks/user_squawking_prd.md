@@ -151,7 +151,7 @@ AOG (Aircraft on Ground) means the aircraft is grounded until the squawk is reso
 
 ## 9. Attachments
 
-Fully supported via `feature/attachment`. Squawks use the same attachment UX as maintenance logs: add-during-form, per-parent 25 MB cap, per-user 1 GB cap, background upload, lazy download on other devices, sync-state badge on each attachment row.
+Fully supported via `feature/attachment`. Squawks use the same attachment UX as maintenance logs: add-during-form, per-parent 15 MB cap, per-user 1 GB cap, background upload, lazy download on other devices, sync-state badge on each attachment row.
 
 ---
 

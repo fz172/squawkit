@@ -307,7 +307,6 @@ fun AircraftSectionContent(
             onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
             onNavigateToSection(ShellSection.TASKS)
           },
-          attachmentsAvailable = state.attachmentEnabled,
         )
 
         ShellSection.SETTINGS -> Unit
@@ -344,7 +343,6 @@ fun AircraftSectionContent(
           },
           syncStates = state.syncStates,
           openError = taskSheetOpenError,
-          attachmentEnabled = state.attachmentEnabled,
         )
       }
 

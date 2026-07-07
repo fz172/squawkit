@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -16,11 +15,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.aircraft.ComplianceType
 import dev.fanfly.wingslog.aircraft.ComponentType
+import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -66,10 +64,7 @@ fun TaskIdentityTab(
         value = title,
         onValueChange = onTitleChange,
         modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(
-          capitalization = KeyboardCapitalization.Sentences, // Capitalizes the first character
-          imeAction = ImeAction.Done // Changes Enter key to a Done/Action button
-        ),
+        keyboardOptions = FormKeyboard.SentencesDone,
         placeholder = stringResource(Res.string.task_description_placeholder),
       )
       Text(

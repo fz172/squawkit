@@ -24,7 +24,6 @@ import wingslog.feature.attachment.sharedassets.generated.resources.Res as Attac
 fun AddTaskRoute(
   navController: NavController,
   viewModel: TaskViewModel = koinViewModel(),
-  attachmentsAvailable: Boolean = true,
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
@@ -84,21 +83,19 @@ fun AddTaskRoute(
         )
       },
       attachmentSection = {
-        if (attachmentsAvailable) {
-          AttachmentFormSection(
-            visibleAttachments = pendingAttachments.visible(),
-            isAnonymous = viewModel.isAnonymous,
-            filesAtLimit = viewModel.filesAtLimit,
-            uploadEnabled = attachmentUploadEnabled,
-            showPickerSheet = showAttachmentPicker,
-            onAddClick = viewModel::showAttachmentPicker,
-            onRemove = viewModel::removeAttachment,
-            onPickFiles = viewModel::addLocalFiles,
-            onAddLink = viewModel::addLink,
-            onDismissSheet = viewModel::hideAttachmentPicker,
-            onPickError = viewModel::onFilePickError,
-          )
-        }
+        AttachmentFormSection(
+          visibleAttachments = pendingAttachments.visible(),
+          isAnonymous = viewModel.isAnonymous,
+          filesAtLimit = viewModel.filesAtLimit,
+          uploadEnabled = attachmentUploadEnabled,
+          showPickerSheet = showAttachmentPicker,
+          onAddClick = viewModel::showAttachmentPicker,
+          onRemove = viewModel::removeAttachment,
+          onPickFiles = viewModel::addLocalFiles,
+          onAddLink = viewModel::addLink,
+          onDismissSheet = viewModel::hideAttachmentPicker,
+          onPickError = viewModel::onFilePickError,
+        )
       },
     )
   }

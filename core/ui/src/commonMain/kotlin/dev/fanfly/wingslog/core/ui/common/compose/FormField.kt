@@ -30,6 +30,8 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -38,6 +40,30 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.Res
 import wingslog.core.sharedassets.generated.resources.required
+
+/**
+ * Shared [KeyboardOptions] presets for form fields, so IME behavior stays consistent across
+ * feature forms instead of each field hand-building its own options.
+ */
+object FormKeyboard {
+  /** Prose fields. Multiline-safe: leaves the Enter key inserting newlines. */
+  val Sentences = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+
+  /** Single-line prose field that advances focus to the next field. */
+  val SentencesNext = Sentences.copy(imeAction = ImeAction.Next)
+
+  /**
+   * Single-line prose field whose Enter key closes input. Never use on a multiline field — it
+   * replaces the Return key, so the user can no longer type line breaks.
+   */
+  val SentencesDone = Sentences.copy(imeAction = ImeAction.Done)
+
+  /** All-caps identifiers (reference numbers, tail numbers) that advance to the next field. */
+  val CharactersNext = KeyboardOptions(
+    capitalization = KeyboardCapitalization.Characters,
+    imeAction = ImeAction.Next,
+  )
+}
 
 /**
  * Text-entry field that switches to a non-input presentation when [editable] is false.

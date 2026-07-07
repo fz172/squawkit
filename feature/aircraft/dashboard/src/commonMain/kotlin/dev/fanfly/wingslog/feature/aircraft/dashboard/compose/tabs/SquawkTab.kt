@@ -156,7 +156,6 @@ fun SquawkTab(
       },
       syncStates = state.syncStates,
       openError = openError,
-      attachmentEnabled = state.attachmentEnabled,
       onEditClick = onMutationAction?.let { mutate ->
         {
           onAction(AircraftOverviewAction.DismissSquawkDetail)

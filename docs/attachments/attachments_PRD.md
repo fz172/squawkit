@@ -67,7 +67,7 @@ Users need to attach supporting documents and media to maintenance log entries a
 | F9 | Attachments persist across devices (cloud-backed). |
 | F10 | Deleting a maintenance log or maintenance task also deletes its uploaded files from storage. |
 | F11 | Each attachment has a user-visible display name that can be customised (defaults to filename or domain for links). |
-| F12 | Per-parent size cap: the sum of file attachment sizes on any one log or maintenance task must not exceed **25 MB**. The picker enforces this before adding a file. |
+| F12 | Per-parent size cap: the sum of file attachment sizes on any one log or maintenance task must not exceed **15 MB** (3 files x 5 MB each). The picker enforces this before adding a file. |
 | F13 | Per-user storage cap: the sum of all of a user's file attachments across every log and maintenance task must not exceed **1 GB**. The picker enforces this before adding a file. |
 | F14 | Per-parent duplicate prevention: the picker rejects a file whose content matches another file already attached (or pending) on the same log/card. Identity is by sha256 of the bytes; filename and display name don't count. |
 
@@ -80,7 +80,7 @@ Users need to attach supporting documents and media to maintenance log entries a
 | N3 | If an upload fails mid-save, already-uploaded files for that save attempt are cleaned up (best-effort). |
 | N4 | Attachment metadata is included in the same Firestore write as the parent document (atomic with respect to metadata). |
 | N5 | No change to existing log or task data that has no attachments. |
-| N6 | (R2) Quotas are enforced client-side in the picker. Server-side enforcement is best-effort — Firebase Storage rules should reject obviously-oversized objects (>25 MB single put), but per-user 1 GB is a client-side soft cap. |
+| N6 | (R2) Quotas are enforced client-side in the picker. Server-side enforcement is best-effort — Firebase Storage rules should reject obviously-oversized objects (>5 MB single put), but per-user 1 GB is a client-side soft cap. |
 
 ---
 

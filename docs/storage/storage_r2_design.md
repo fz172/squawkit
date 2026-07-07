@@ -36,7 +36,7 @@ though its stale build files still exist on disk and are slated for deletion.
 - Anonymous users can attach files. The R1 anonymous-blocked path is removed.
 - New devices for an existing account see attachment placeholders (`REMOTE_ONLY`) and download bytes lazily on first open.
 - A binary integrity check (`sha256`) on every download.
-- Per-parent size cap (25 MB), per-user storage cap (1 GB), and per-parent duplicate-file rejection — all enforced in the picker before a file is accepted.
+- Per-parent size cap (15 MB), per-user storage cap (1 GB), and per-parent duplicate-file rejection — all enforced in the picker before a file is accepted.
 
 **Out:**
 - Per-device attachment encryption (existing Firebase Storage rules suffice).
@@ -568,7 +568,7 @@ Three checks, all enforced **client-side in the picker**, before a `PendingAttac
 | Check | Value / rule | Source of truth |
 |---|---|---|
 | 1. Per-parent duplicate | Reject if `sha256(candidateBytes)` matches another non-LINK attachment on this parent (`Local` or `Saved`, excluding `PendingDelete`) | the form's own pending list — sha256s for `Local` items are already computed; for `Saved` items they're in the proto |
-| 2. Per-parent size | 25 MB summed across `Local` + `Saved` non-LINK attachments on that parent | the form's own pending list — no DB query needed |
+| 2. Per-parent size | 15 MB summed across `Local` + `Saved` non-LINK attachments on that parent | the form's own pending list — no DB query needed |
 | 3. Per-user size | 1 GB summed across the user's scope | `SELECT SUM(size_bytes) FROM blob_object WHERE scope_path LIKE :scopePrefix AND deleted = 0` |
 
 The dedupe check requires sha256, so the picker reads the candidate bytes and computes the hash *before* deciding whether to accept. That work is not wasted: if accepted, those same bytes (and that same hash) are handed straight to `LocalBlobStore.put` — see §6.3.
@@ -636,7 +636,7 @@ WHERE scope_path = :userScope AND deleted = 0;
 
 ### Server-side defense
 
-Per the PRD (N6), Firebase Storage rules can reject a single PUT > 25 MB:
+Per the PRD (N6), Firebase Storage rules can reject a single PUT > 5 MB:
 
 ```
 match /users/{uid}/aircraft/{aircraftId}/blobs/{blobId} {
@@ -751,7 +751,7 @@ R2 turns attachments into first-class local-first data:
 - Anonymous users can attach files; on link, their blobs upload under their now-permanent uid (zero migration).
 - New devices see lazy `REMOTE_ONLY` placeholders and download on demand, with sha256 integrity verification.
 - The proto gains `sha256` and reserves the old `download_url` field — clean break with R1; no migration shim, no fall-through.
-- Two caps + dedupe enforced client-side: 25 MB per parent, 1 GB per user, no duplicate sha256 on the same parent.
+- Two caps + dedupe enforced client-side: 15 MB per parent, 1 GB per user, no duplicate sha256 on the same parent.
 - WiFi-only uploads by default; "Allow upload on cellular" toggle in Settings → Backup & Sync.
 - "Remove this account from this device" wipes local blobs immediately; cloud copy intact.
 - iOS ships foreground-only initially; URLSession background lands in M7.

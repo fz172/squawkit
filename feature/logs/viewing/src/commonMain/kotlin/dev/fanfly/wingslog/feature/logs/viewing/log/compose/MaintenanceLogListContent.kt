@@ -90,7 +90,6 @@ fun MaintenanceLogListContent(
   onAttachmentTap: (Attachment) -> Unit,
   openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
-  attachmentsAvailable: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   Box(
@@ -302,7 +301,6 @@ fun MaintenanceLogListContent(
                 syncStates = syncStates,
                 openError = openError,
                 technicianEnabled = uiState.technicianEnabled,
-                attachmentEnabled = attachmentsAvailable && uiState.attachmentEnabled,
                 onTaskClick = onTaskClick?.let { cb ->
                   { taskId ->
                     onDismissDetail()
