@@ -56,8 +56,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
@@ -307,11 +311,19 @@ private fun EmptyFleetScaffold(
       }
     },
   ) { padding ->
+    // Same pane-width cap as ShellContent, so the empty-fleet prompt and Settings match the
+    // populated shell on wide windows.
     Box(
       modifier = Modifier.fillMaxSize()
-        .padding(padding)
+        .padding(padding),
+      contentAlignment = Alignment.TopCenter,
     ) {
-      content()
+      Box(
+        modifier = Modifier.constrainedContentWidth(ContentWidth.Pane)
+          .fillMaxHeight()
+      ) {
+        content()
+      }
     }
   }
 }
@@ -639,8 +651,13 @@ private fun ShellContent(
   val fullScreenSettings =
     onExitSettings != null && state.section == ShellSection.SETTINGS
   Scaffold(
-    // Settings is full-screen and has no add action; suppress the FAB there.
-    floatingActionButton = { if (state.section != ShellSection.SETTINGS) fab() },
+    // Settings is full-screen and has no add action; suppress the FAB there. The FAB rides the
+    // trailing edge of the same width-capped frame as the content so they stay aligned on LARGE.
+    floatingActionButton = {
+      if (state.section != ShellSection.SETTINGS) {
+        ConstrainedFloatingAction(ContentWidth.Pane) { fab() }
+      }
+    },
     contentWindowInsets =
       if (fullScreenSettings) {
         ScaffoldDefaults.contentWindowInsets
@@ -650,48 +667,61 @@ private fun ShellContent(
       },
     topBar = {
       if (showTopBar) {
-        TopAppBar(
-          title = {
-            ActionBarTitle(state)
-          },
-          navigationIcon = {
-            if (onExitSettings != null && state.section == ShellSection.SETTINGS) {
-              IconButton(onClick = onExitSettings) {
-                Icon(
-                  Icons.AutoMirrored.Filled.ArrowBack,
-                  contentDescription = stringResource(UiRes.string.back),
+        // The bar shares the content column's width cap so the title and actions line up with the
+        // content below on wide (LARGE) panes.
+        ConstrainedTopBar(ContentWidth.Pane) {
+          TopAppBar(
+            title = {
+              ActionBarTitle(state)
+            },
+            navigationIcon = {
+              if (onExitSettings != null && state.section == ShellSection.SETTINGS) {
+                IconButton(onClick = onExitSettings) {
+                  Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(UiRes.string.back),
+                  )
+                }
+              }
+            },
+            actions = {
+              if (showTopBarSwitcher && state.section != ShellSection.SETTINGS) {
+                TopBarSwitcher(
+                  state = state,
+                  onSelectAircraft = onSelectAircraft,
+                  onAddAircraft = onAddAircraft,
                 )
               }
-            }
-          },
-          actions = {
-            if (showTopBarSwitcher && state.section != ShellSection.SETTINGS) {
-              TopBarSwitcher(
-                state = state,
-                onSelectAircraft = onSelectAircraft,
-                onAddAircraft = onAddAircraft,
-              )
-            }
-            if (onOpenSettings != null && state.section != ShellSection.SETTINGS) {
-              IconButton(onClick = onOpenSettings) {
-                AvatarIcon(
-                  displayName = state.accountName,
-                  photoUri = state.accountPhotoUrl,
-                  size = Spacing.huge,
-                  contentDescription = stringResource(UiRes.string.settings),
-                )
+              if (onOpenSettings != null && state.section != ShellSection.SETTINGS) {
+                IconButton(onClick = onOpenSettings) {
+                  AvatarIcon(
+                    displayName = state.accountName,
+                    photoUri = state.accountPhotoUrl,
+                    size = Spacing.huge,
+                    contentDescription = stringResource(UiRes.string.settings),
+                  )
+                }
               }
-            }
-          },
-        )
+            },
+          )
+        }
       }
     },
   ) { padding ->
+    // Cap the section body at the pane width so content stays readable on very wide windows
+    // (github.com/fz172/squawkit/issues/101). Only LARGE panes are wide enough for the cap to bite;
+    // narrower tiers keep filling the window as before.
     Box(
       modifier = Modifier.fillMaxSize()
-        .padding(padding)
+        .padding(padding),
+      contentAlignment = Alignment.TopCenter,
     ) {
-      content()
+      Box(
+        modifier = Modifier.constrainedContentWidth(ContentWidth.Pane)
+          .fillMaxHeight()
+      ) {
+        content()
+      }
     }
   }
 }

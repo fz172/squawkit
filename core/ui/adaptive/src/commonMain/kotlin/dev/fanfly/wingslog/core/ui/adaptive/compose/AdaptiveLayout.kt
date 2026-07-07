@@ -18,6 +18,13 @@ import androidx.compose.ui.unit.dp
  */
 object ContentWidth {
 
+  /**
+   * The shell's whole content pane (everything right of the sidebar). Matches the web design's
+   * 1256 CSS px content cap; dp ≈ CSS px for layout (see web_adaptive_layout_design.html §11 D3).
+   * Screens may still cap themselves narrower inside the pane (e.g. [Form] editors).
+   */
+  val Pane = 1256.dp
+
   /** Wider chrome for screens whose content intentionally spans more than one reading column. */
   val HeaderFooter = 900.dp
 

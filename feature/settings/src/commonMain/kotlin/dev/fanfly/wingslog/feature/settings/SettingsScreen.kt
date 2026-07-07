@@ -145,7 +145,9 @@ fun SettingsContent(
   ) {
     Column(
       modifier = Modifier
-        .constrainedContentWidth(ContentWidth.Reading)
+        // Pane, not Reading: the settings root is top-level shell content, so it shares the shell's
+        // pane cap instead of the narrower reading column (issue #101 — consistent pane width).
+        .constrainedContentWidth(ContentWidth.Pane)
         .fillMaxSize()
         .padding(Spacing.screenPadding),
     ) {
