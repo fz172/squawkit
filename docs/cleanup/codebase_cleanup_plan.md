@@ -1,6 +1,6 @@
 # Codebase Cleanup Plan
 
-> **Implementation Status:** Phases 1–3 complete (2026-07-06); Phases 4–5 not started. Each
+> **Implementation Status:** Phases 1–4 complete (2026-07-06); Phase 5 not started. Each
 > phase updates its checkbox table as work lands. Source: full-codebase audit (structure,
 > dependencies, duplication, logic ownership), 2026-07-06.
 
@@ -229,13 +229,12 @@ helpers. `AdaptiveShellViewModel` (+ its test and Koin registration, now `shellM
 here from `fleet:viewing`, which shrank to just `FleetEmptyState`; `core:di` and both hosts
 dropped their direct `fleet:viewing` edges. `AppEntry.kt` is now the DB-integrity gate + theme +
 auth/shell graph wrappers (~140 lines); `WebApp.kt` is the browser-specific delta (~145 lines).
-Both hosts' dependency lists shrank to what their own sources touch. Still owed before this is
-considered fully landed: the manual smoke-test pass above (form dialogs, settings tiers, login
-round-trip on Android + web).
+Both hosts' dependency lists shrank to what their own sources touch. Manual smoke-test pass
+(form dialogs, settings tiers, login round-trip) completed 2026-07-06.
 
 ---
 
-## Phase 4 — Fix layering and ownership violations
+## Phase 4 — Fix layering and ownership violations (completed; 4.5 recorded-only)
 
 ### 4.1 `feature:technician:datamanager` must stop touching Firestore and the sync engine
 
@@ -264,6 +263,17 @@ Firestore — the sync engine is the only Firestore client"):
 **Risk:** medium — sign-in/onboarding self-record flow. Test: fresh-install sign-in (new and
 existing cloud accounts), anonymous flow, plus existing unit tests.
 
+**Outcome (2026-07-06):** `TechnicianManagerImpl` no longer touches Firestore or
+`feature:sync:data`. The Firestore fallback read became `awaitHydratedSelfId`: a
+5-second-bounded observe of the local `UserInfo` row, relying on sync hydration (which already
+pulls `UserInfo` on sign-in) to land the cloud's self id. The "cloud sync enabled" signal comes
+through a new narrow `CloudSyncSetting` fun-interface in `core:storage` (beside the
+`sync_config` table it reflects), implemented by `SyncPreferences` and bound in `syncModule`.
+Behavior note: a brand-new cloud account now waits the full 5 s before creating its self
+profile (the old code returned as soon as the direct Firestore read came back empty); existing
+accounts resolve as soon as hydration lands the row. Manual smoke test of both sign-in paths
+still owed.
+
 ### 4.2 Move `LocalBlobStore` to `core:storage`; drop sync's api-export of a feature module
 
 `feature:sync:data` api-exports `feature:attachment:datamanager` — infrastructure depending on
@@ -276,6 +286,14 @@ lives in `core:storage`.
   it still needs; if sync also uses attachment *domain* types, move those specific types to
   `core:storage`'s blob namespace (blob `RemoteState` is already there per AGENTS.md).
 
+**Outcome (2026-07-06):** moved to `core.storage.blob`: `LocalBlobStore` (+`IntegrityError`),
+`SqlDelightLocalBlobStore`, `BlobRef`, `BlobFilesystem` (+`blobRelativePath`, now public),
+`UploadScheduler`, and the `sha256Hex` expect/actuals — everything sync consumed from the
+attachment feature. `feature:sync:data` dropped the `api(feature:attachment:datamanager)` edge
+entirely; platform filesystem impls and the blob *tests* stayed in `attachment:datamanager`
+(tests exercising core classes from a consuming module is fine and avoids rebuilding the
+`FileBlobFilesystem` fixture in core).
+
 ### 4.3 Relocate aircraft editing out of `feature/logs`
 
 `feature/logs/update/aircraft/` (`EditAircraftScreen`, `EditAircraftViewModel`,
@@ -287,6 +305,13 @@ maintenance-logs feature. Aircraft data ownership is `fleet:datamanager` (`Fleet
 - Update route registration (one call site per host today; after Phase 3, one call site in the
   shared graph) and `core:di` imports.
 - This is a mechanical move; do it **after** Phase 3 so only the shared graph needs rewiring.
+
+**Outcome (2026-07-06):** `feature:aircraft:update` created with the five files (packages →
+`dev.fanfly.wingslog.feature.aircraft.update`), its own `strings.xml` (nine keys from
+`logs:update` plus `blade_serial_numbers` / `delete_aircraft` from `logs:sharedassets` — the
+other four shared keys stayed put and the new module reads them from `logs:sharedassets`), and
+a new `aircraftUpdateModule` Koin module registered in `commonAppModules`. `feature:shell` is
+the only route consumer and now imports from the new module.
 
 ### 4.4 Reconcile the `sharedassets` rule with reality
 
@@ -312,6 +337,12 @@ that ship code and UI deps: `technician/sharedassets` (`CertificateInputFields.k
 UI-module edges (the thing the hard rule most cares about); the code in question is small,
 leaf, and dependency-clean. Amend the doc, and add the constraint that `sharedassets` must
 never depend on a feature module.
+
+**Outcome (2026-07-06):** Option B adopted. AGENTS.md's dependency rules and "What lives where"
+table now permit leaf presentation helpers in `sharedassets` with `core:ui`/`core:model` deps
+and forbid feature-module deps; verified all three code-carrying sharedassets modules already
+comply (core-only deps). The 4.6 FeatureLab exception is also documented in AGENTS.md's
+non-canonical list.
 
 ### 4.5 Route `SyncEngine` access in settings through a manager (optional, low priority)
 
@@ -367,10 +398,10 @@ the corrections below independently — they are wrong today regardless:
 | 8  | String consolidation pass                                             | 2.3   | low  | ☑ 2026-07-06 |
 | 9  | Shared shell/nav module; de-dup `AppEntry` / `WebApp`                 | 3     | high | ☑ 2026-07-06 |
 | 10 | Move `AdaptiveShellViewModel` out of `fleet:viewing`                  | 3     | med  | ☑ 2026-07-06 |
-| 11 | Technician manager: local-only reads, no sync dep                     | 4.1   | med  | ☐            |
-| 12 | `LocalBlobStore` → `core:storage`; fix sync api-export                | 4.2   | med  | ☐            |
-| 13 | `feature/logs/update/aircraft/` → `feature/aircraft/update`           | 4.3   | low  | ☐            |
-| 14 | `sharedassets` rule decision (recommend Option B)                     | 4.4   | low  | ☐            |
+| 11 | Technician manager: local-only reads, no sync dep                     | 4.1   | med  | ☑ 2026-07-06 |
+| 12 | `LocalBlobStore` → `core:storage`; fix sync api-export                | 4.2   | med  | ☑ 2026-07-06 |
+| 13 | `feature/logs/update/aircraft/` → `feature/aircraft/update`           | 4.3   | low  | ☑ 2026-07-06 |
+| 14 | `sharedassets` rule decision (recommend Option B)                     | 4.4   | low  | ☑ 2026-07-06 |
 | 15 | AGENTS.md / CLAUDE.md refresh                                         | 5     | none | ☐            |
 
 Suggested landing order: 1–4 in one PR; 5–8 as one PR per item; 9–10 as a reviewed PR stack;

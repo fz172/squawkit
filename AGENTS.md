@@ -128,7 +128,8 @@ feature/foobar/
 ### Dependency rules (strictly enforced)
 
 ```
-sharedassets  →  Compose resources only (zero feature dependencies)
+sharedassets  →  Compose resources + leaf presentation helpers; may use core:ui / core:model,
+                 never another feature module
 model         →  core:model, kotlinx only
 datamanager   →  :model, core:storage, core:model, Firebase, Koin, Coroutines
 viewing       →  :model, :sharedassets, core:ui, core:model
@@ -143,7 +144,7 @@ update        →  :model, :datamanager, :viewing, :sharedassets, core:*
 |-------|--------|----------|
 | Domain | `model/` | Feature-specific data classes, enums (e.g. `DueStatus`, `DueMetadata`, `MaintenanceTaskWithStatus`) |
 | Data | `datamanager/` | Manager interface, `impl/` package with Firestore/storage logic, Koin `*Module.kt` |
-| Resources | `sharedassets/` | `strings.xml` (and drawables) referenced by both `viewing/` and `update/` |
+| Resources | `sharedassets/` | `strings.xml` (and drawables) referenced by both `viewing/` and `update/`; may also hold small leaf presentation helpers (e.g. label mappers, shared input fields) that other features consume without pulling in this feature's UI modules — such helpers may depend on `core:ui`/`core:model` but never on another feature |
 | Display | `viewing/` | Stateless composables — cards, list items, detail sheets, alert sections |
 | Edit | `update/` | Screens, routes, `viewmodel/` package with ViewModel + `UiState` sealed class, Koin ViewModel module, `compose/` package for form field components |
 
@@ -155,6 +156,7 @@ update        →  :model, :datamanager, :viewing, :sharedassets, core:*
 - **`feature/aircraft/dashboard/`** — single submodule (no canonical split); owns its own ViewModel and DI module.
 - **`feature/fleet/`** — ViewModel lives inside `viewing/` (no separate update layer); fleet dashboard is read-only.
 - **`feature/export/`** — `datamanager` + `sharedassets` + `update` only (no `model` or `viewing`); export is a single user-driven flow with no standalone read surface.
+- **`feature/settings/featurelab/`** — `FeatureLabScreen` lives inside `feature/settings` while `feature/featurelab` has only a `datamanager`; a dedicated UI module for one screen isn't worth it.
 
 ### Koin modules
 

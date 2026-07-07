@@ -13,7 +13,5 @@
   <string name="blade">Blade</string>
   <string name="this_action_cannot_be_undone">This action cannot be undone.</string>
   <string name="engine_with_index">Engine %1$d</string>
-  <string name="blade_serial_numbers">Blade Serial numbers</string>
   <string name="blade_with_index">Blade %1$d</string>
-  <string name="delete_aircraft">Delete Aircraft?</string>
 </resources>
