@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="update_aircraft">Update Aircraft</string>
+  <string name="make">Make</string>
+  <string name="model">Model</string>
+  <string name="serial">Serial Number</string>
+  <string name="tail_number">Tail Number</string>
+  <string name="add_engine">Add Engine</string>
+  <string name="add_blade">Add blade</string>
+  <string name="remove_engine">Remove Engine</string>
+  <string name="remove_blade">Remove Blade</string>
+  <string name="blade_serial_numbers">Blade Serial numbers</string>
+  <string name="delete_aircraft">Delete Aircraft?</string>
+</resources>

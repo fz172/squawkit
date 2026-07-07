@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.logs.update.aircraft.compose
+package dev.fanfly.wingslog.feature.aircraft.update.compose
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -17,13 +17,13 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.logs.update.aircraft.viewmodel.EditAircraftViewModel
+import dev.fanfly.wingslog.feature.aircraft.update.viewmodel.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.update.generated.resources.Res
-import wingslog.feature.logs.update.generated.resources.make
-import wingslog.feature.logs.update.generated.resources.model
-import wingslog.feature.logs.update.generated.resources.serial
-import wingslog.feature.logs.update.generated.resources.tail_number
+import wingslog.feature.aircraft.update.generated.resources.Res
+import wingslog.feature.aircraft.update.generated.resources.make
+import wingslog.feature.aircraft.update.generated.resources.model
+import wingslog.feature.aircraft.update.generated.resources.serial
+import wingslog.feature.aircraft.update.generated.resources.tail_number
 
 @Composable
 fun AirframeSection(

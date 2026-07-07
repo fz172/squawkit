@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.logs.update.aircraft
+package dev.fanfly.wingslog.feature.aircraft.update
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,9 +42,9 @@ import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.logs.update.aircraft.compose.AirframeSection
-import dev.fanfly.wingslog.feature.logs.update.aircraft.compose.EngineSection
-import dev.fanfly.wingslog.feature.logs.update.aircraft.viewmodel.EditAircraftViewModel
+import dev.fanfly.wingslog.feature.aircraft.update.compose.AirframeSection
+import dev.fanfly.wingslog.feature.aircraft.update.compose.EngineSection
+import dev.fanfly.wingslog.feature.aircraft.update.viewmodel.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.add_aircraft
@@ -52,13 +52,13 @@ import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.component_airframe
 import wingslog.core.sharedassets.generated.resources.component_engine
 import wingslog.core.sharedassets.generated.resources.delete
-import wingslog.feature.logs.sharedassets.generated.resources.delete_aircraft
+import wingslog.feature.aircraft.update.generated.resources.add_engine
+import wingslog.feature.aircraft.update.generated.resources.delete_aircraft
+import wingslog.feature.aircraft.update.generated.resources.update_aircraft
 import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.logs.update.generated.resources.add_engine
-import wingslog.feature.logs.update.generated.resources.update_aircraft
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.aircraft.update.generated.resources.Res as AircraftRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.logs.update.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -110,7 +110,7 @@ fun EditAircraftScreen(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(stringResource(SharedRes.string.delete_aircraft)) },
+      title = { Text(stringResource(AircraftRes.string.delete_aircraft)) },
       text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
       confirmButton = {
         TextButton(
@@ -136,7 +136,7 @@ fun EditAircraftScreen(
       ConstrainedTopBar(ContentWidth.Form) {
         WingsLogTopAppBar(
           title = if (uiState.aircraft.id == "") stringResource(CoreRes.string.add_aircraft)
-          else stringResource(MaintenanceRes.string.update_aircraft),
+          else stringResource(AircraftRes.string.update_aircraft),
           onBackClick = { tryNavigateBack() },
           scrollBehavior = scrollBehavior,
         )
@@ -185,7 +185,7 @@ fun EditAircraftScreen(
 
         DashedButton(
           label = stringResource(
-            MaintenanceRes.string.add_engine
+            AircraftRes.string.add_engine
           ),
           modifier = Modifier.fillMaxWidth(),
           onClick = { viewModel.onAddEngine() },
@@ -204,7 +204,7 @@ fun EditAircraftScreen(
         primaryLabel = if (uiState.aircraft.id == "")
           stringResource(CoreRes.string.add_aircraft)
         else
-          stringResource(MaintenanceRes.string.update_aircraft)
+          stringResource(AircraftRes.string.update_aircraft)
       )
     }
   }

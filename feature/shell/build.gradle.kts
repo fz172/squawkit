@@ -46,6 +46,7 @@ kotlin {
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":feature:aircraft:dashboard"))
+      implementation(project(":feature:aircraft:update"))
       implementation(project(":feature:export:update"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:fleet:viewing"))

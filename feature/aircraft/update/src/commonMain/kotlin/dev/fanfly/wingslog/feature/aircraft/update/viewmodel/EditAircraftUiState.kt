@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.logs.update.aircraft.viewmodel
+package dev.fanfly.wingslog.feature.aircraft.update.viewmodel
 
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.PropellerHub

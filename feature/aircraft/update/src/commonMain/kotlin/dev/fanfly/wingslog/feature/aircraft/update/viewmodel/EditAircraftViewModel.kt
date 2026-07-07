@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.logs.update.aircraft.viewmodel
+package dev.fanfly.wingslog.feature.aircraft.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel

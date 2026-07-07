@@ -5,7 +5,6 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.feature.logs.update.aircraft.viewmodel.EditAircraftViewModel
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -15,12 +14,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val maintenanceUpdateModule = module {
-  viewModel {
-    EditAircraftViewModel(
-      get<FleetManager>(),
-      get<SavedStateHandle>()
-    )
-  }
   viewModel {
     MaintenanceLogFormViewModel(
       get<MaintenanceLogManager>(),

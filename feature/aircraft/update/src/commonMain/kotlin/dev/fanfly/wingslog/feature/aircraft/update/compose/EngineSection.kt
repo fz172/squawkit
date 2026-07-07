@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.logs.update.aircraft.compose
+package dev.fanfly.wingslog.feature.aircraft.update.compose
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
@@ -30,19 +30,19 @@ import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.logs.update.aircraft.viewmodel.EditAircraftViewModel
+import dev.fanfly.wingslog.feature.aircraft.update.viewmodel.EditAircraftViewModel
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.sharedassets.generated.resources.blade_serial_numbers
+import wingslog.feature.aircraft.update.generated.resources.Res
+import wingslog.feature.aircraft.update.generated.resources.add_blade
+import wingslog.feature.aircraft.update.generated.resources.blade_serial_numbers
+import wingslog.feature.aircraft.update.generated.resources.make
+import wingslog.feature.aircraft.update.generated.resources.model
+import wingslog.feature.aircraft.update.generated.resources.remove_blade
+import wingslog.feature.aircraft.update.generated.resources.remove_engine
+import wingslog.feature.aircraft.update.generated.resources.serial
 import wingslog.feature.logs.sharedassets.generated.resources.blade_with_index
 import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
 import wingslog.feature.logs.sharedassets.generated.resources.propeller_hub
-import wingslog.feature.logs.update.generated.resources.Res
-import wingslog.feature.logs.update.generated.resources.add_blade
-import wingslog.feature.logs.update.generated.resources.make
-import wingslog.feature.logs.update.generated.resources.model
-import wingslog.feature.logs.update.generated.resources.remove_blade
-import wingslog.feature.logs.update.generated.resources.remove_engine
-import wingslog.feature.logs.update.generated.resources.serial
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 
 @Composable
@@ -182,7 +182,7 @@ fun EngineSection(
 
       // Blade Serial Numbers - Dynamic List
       Text(
-        stringResource(SharedRes.string.blade_serial_numbers),
+        stringResource(Res.string.blade_serial_numbers),
         style = MaterialTheme.typography.labelSmall,
         modifier = Modifier.padding(top = Spacing.extraSmall),
       )

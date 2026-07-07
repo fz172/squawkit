@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="update_aircraft">Update Aircraft</string>
-  <string name="make">Make</string>
-  <string name="model">Model</string>
-  <string name="serial">Serial Number</string>
-  <string name="tail_number">Tail Number</string>
-  <string name="add_engine">Add Engine</string>
-  <string name="add_blade">Add blade</string>
   <string name="work_description_required">Work Description *</string>
   <string name="engine_time_hours">Engine Time (hours)</string>
   <string name="airframe_serial">Airframe Serial</string>
@@ -19,8 +12,6 @@
   <string name="delete_log">Delete Log?</string>
   <string name="airframe_time_hours">Airframe Time (hours)</string>
   <string name="prop_time_hours">Prop Time (hours)</string>
-  <string name="remove_engine">Remove Engine</string>
-  <string name="remove_blade">Remove Blade</string>
   <string name="tap_to_change_date">Tap to change date</string>
   <string name="log_not_found">Log not found</string>
   <string name="log_updated">Log updated</string>

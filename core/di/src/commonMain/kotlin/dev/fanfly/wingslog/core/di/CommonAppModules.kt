@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.core.storage.di.storageModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceStoreModule
 import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
+import dev.fanfly.wingslog.feature.aircraft.update.di.aircraftUpdateModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportDataManagerModule
@@ -69,6 +70,7 @@ val commonAppModules: List<Module> = listOf(
   maintenanceViewingModule,
   maintenanceUpdateModule,
   aircraftDashboardModule,
+  aircraftUpdateModule,
   tasksModule,
   tasksUiModule,
   squawkModule,

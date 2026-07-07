@@ -9,9 +9,9 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
+import dev.fanfly.wingslog.feature.aircraft.update.EditAircraftScreen
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
-import dev.fanfly.wingslog.feature.logs.update.aircraft.EditAircraftScreen
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
