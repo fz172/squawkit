@@ -335,7 +335,7 @@ File is openable immediately from the local path — no waiting on network.
 loop:
   pick blob_object where remote_state in ('LOCAL_ONLY','UPLOADING')
   set remote_state='UPLOADING'
-  put bytes → gs://users/{uid}/blobs/{id}     (resumable)
+  put bytes → gs://users/{uid}/aircraft/{acId}/blobs/{id}     (resumable; aircraft-scoped as-built — see R2 design §3)
   on success:  remote_state='SYNCED', remote_path=…
   on transient error:  revert to 'LOCAL_ONLY', retry with backoff
   on permanent error:  surface to user
@@ -402,7 +402,7 @@ interface UploadScheduler {
 #### 6.4 Security & integrity
 
 - `sha256` stored at insert; verified on every download. Re-download on mismatch.
-- Firebase Storage rules scope `gs://users/{uid}/blobs/*` to the owning user.
+- Firebase Storage rules scope `gs://users/{uid}/aircraft/{acId}/blobs/*` to the owning user.
 - iOS: `NSURLIsExcludedFromBackupKey` on `blobs/` so iCloud doesn't double-back-up files we already sync to Firebase.
 
 #### 6.5 At a glance vs proto sync

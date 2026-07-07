@@ -17,6 +17,8 @@ The R2 architecture is built and wired:
   `BlobDeleteDriver` — with platform schedulers: `WorkManagerUploadScheduler` (Android) and
   `UrlSessionUploadScheduler` + `BGProcessingTask` (iOS), plus a foreground scheduler.
 - Attachments are consumed by logs, tasks, and squawks.
+- **Storage path change:** blobs upload to `users/{uid}/aircraft/{aircraftId}/blobs/{id}` (aircraft-scoped),
+  not the flat `users/{uid}/blobs/{id}` this doc originally specified — see the history note in §3.
 
 **Gating:** the attachment UI (and the *Sync on Cellular* toggle) is shown only when the `attachmentUploadEnabled`
 feature-lab flag is on — so the feature is present but not yet enabled for general use.
@@ -122,7 +124,7 @@ blob_object table (R2)              │
   id="att-7", relative_path="blobs/att-7.bin",
   sha256, size_bytes, content_type,
   remote_state=LOCAL_ONLY|UPLOADING|SYNCED|REMOTE_ONLY,
-  remote_path="users/{uid}/blobs/att-7", deleted=0
+  remote_path="users/{uid}/aircraft/{acId}/blobs/att-7", deleted=0
 ```
 
 `blob_object` is **device-local only** — it is never synced. The proto carries everything another device needs (id, sha256, size, mime, name) to recreate a `REMOTE_ONLY` row when it sees the proto.
@@ -142,7 +144,7 @@ message Attachment {
   string id            = 1;
   string name          = 2;
   AttachmentType type  = 3;
-  string storage_path  = 4;  // 'users/{uid}/blobs/{id}' for non-LINK; empty for LINK
+  string storage_path  = 4;  // 'users/{uid}/aircraft/{aircraftId}/blobs/{id}' for non-LINK; empty for LINK
   reserved             5;    // was download_url; removed in R2 (clean break)
   reserved "download_url";
   string url           = 6;  // populated for LINK only
@@ -155,7 +157,16 @@ message Attachment {
 
 Field 5 is reserved (Wire/protoc enforces no future reuse). R1 builds that try to decode an R2-written `Attachment` will see `download_url = ""` and a populated `sha256`; they have no path to open such a file (R1 opener requires `download_url`). This is the intentional break called out in §1.
 
-`storage_path` is normalised to `users/{uid}/blobs/{id}` (no per-aircraft subpath). This decouples attachment location from the owning entity, so an attachment's bytes don't move when the user later edits which log it's attached to.
+`storage_path` is `users/{uid}/aircraft/{aircraftId}/blobs/{id}` — derived from the owning entity's `EntityScope` with the shared formula `${scope.toPath().trim('/')}/blobs/{id}` (the same formula used by `SqlDelightLocalBlobStore.upsertRemoteOnly` and `BlobUploadDriver`).
+
+> **History — flat path superseded (PR #40).** This design originally normalised `storage_path` to a flat
+> `users/{uid}/blobs/{id}` (no per-aircraft subpath), and R2 PR 3 (#37) shipped that way. PR 5c/5d (#40)
+> re-scoped blobs to their aircraft to match the hierarchical entity model. Blobs uploaded by the interim
+> builds still sit at the flat path in Firebase Storage; they were **deliberately not migrated**. On a fresh
+> device the `BlobIndexReconciler` recomputes `remote_path` from the owning entity's scope (it ignores the
+> proto's `storage_path`), so flat-era blobs 404 on download anywhere but the uploading device. This is an
+> accepted break, same spirit as the R1 clean break in §10; the orphaned flat-path objects can be cleaned up
+> manually via the console.
 
 ### Why `sha256` in the proto and not just the `blob_object` row?
 
@@ -170,13 +181,13 @@ import dev.fanfly.wingslog.core.storage.blob.RemoteState;
 
 CREATE TABLE blob_object (
   id             TEXT    NOT NULL PRIMARY KEY,    -- attachment id; same as Attachment.id in proto
-  scope_path     TEXT    NOT NULL,                -- '/users/{uid}/' (uid that owns the blob)
+  scope_path     TEXT    NOT NULL,                -- owning entity's scope, '/users/{uid}/aircraft/{acId}/'
   relative_path  TEXT    NOT NULL,                -- 'blobs/{id}.bin' under filesDir
   content_type   TEXT,                            -- e.g. 'image/jpeg'; null acceptable
   size_bytes     INTEGER NOT NULL,
   sha256         TEXT    NOT NULL,                -- hex
   remote_state   TEXT    AS RemoteState NOT NULL,
-  remote_path    TEXT,                            -- 'users/{uid}/blobs/{id}' once SYNCED, null otherwise
+  remote_path    TEXT,                            -- '{scope_path}/blobs/{id}' once SYNCED, null otherwise
   upload_attempts  INTEGER NOT NULL DEFAULT 0,    -- consecutive transient failures
   last_attempt_at  INTEGER,                       -- epoch ms
   updated_at     INTEGER NOT NULL,                -- last local mutation (for GC ordering)
@@ -628,7 +639,7 @@ WHERE scope_path = :userScope AND deleted = 0;
 Per the PRD (N6), Firebase Storage rules can reject a single PUT > 25 MB:
 
 ```
-match /users/{uid}/blobs/{blobId} {
+match /users/{uid}/aircraft/{aircraftId}/blobs/{blobId} {
   allow write: if request.auth.uid == uid
             && request.resource.size < 25 * 1024 * 1024;
 }
