@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
+import dev.fanfly.wingslog.core.storage.blob.sha256Hex
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

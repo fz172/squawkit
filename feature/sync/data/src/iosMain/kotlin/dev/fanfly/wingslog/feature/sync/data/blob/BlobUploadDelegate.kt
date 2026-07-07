@@ -5,7 +5,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import dev.fanfly.wingslog.feature.attachment.datamanager.LocalBlobStore
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

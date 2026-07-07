@@ -7,9 +7,9 @@ import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
-import dev.fanfly.wingslog.feature.attachment.datamanager.BlobRef
+import dev.fanfly.wingslog.core.storage.blob.BlobRef
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
-import dev.fanfly.wingslog.feature.attachment.datamanager.LocalBlobStore
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile

@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.sync.data
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOneOrNull
+import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -37,7 +38,9 @@ class SyncPreferences(
   private val ioContext: CoroutineContext = syncIoContext,
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   scope: CoroutineScope = CoroutineScope(SupervisorJob() + ioContext),
-) {
+) : CloudSyncSetting {
+
+  override fun isCloudSyncEnabled(): Boolean = state.value.cloudSyncEnabled
 
   @OptIn(ExperimentalCoroutinesApi::class)
   val state: StateFlow<SyncPrefs> = auth.authStateChanged

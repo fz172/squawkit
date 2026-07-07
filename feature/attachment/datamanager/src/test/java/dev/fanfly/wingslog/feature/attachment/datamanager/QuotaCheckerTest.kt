@@ -7,7 +7,7 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import dev.fanfly.wingslog.feature.attachment.datamanager.impl.SqlDelightLocalBlobStore
+import dev.fanfly.wingslog.core.storage.blob.SqlDelightLocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.model.QuotaResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first

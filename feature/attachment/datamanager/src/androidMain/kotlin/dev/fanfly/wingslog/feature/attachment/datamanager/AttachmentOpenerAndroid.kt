@@ -7,8 +7,11 @@ import androidx.core.net.toUri
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.storage.blob.BlobId
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
+import dev.fanfly.wingslog.core.storage.blob.blobRelativePath
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
+import java.io.File
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
-import java.io.File
 
 /**
  * R2 [AttachmentOpener] for Android. Routes through [LocalBlobStore] instead of using the

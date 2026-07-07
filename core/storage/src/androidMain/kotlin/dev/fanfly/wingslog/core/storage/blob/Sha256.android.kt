@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.attachment.datamanager
+package dev.fanfly.wingslog.core.storage.blob
 
 import java.security.MessageDigest
 

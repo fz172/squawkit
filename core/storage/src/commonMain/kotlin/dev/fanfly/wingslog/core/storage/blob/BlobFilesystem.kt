@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.attachment.datamanager
+package dev.fanfly.wingslog.core.storage.blob
 
 /**
  * Platform-abstract handle on the per-app private directory where blob bytes live. The
@@ -33,5 +33,8 @@ interface BlobFilesystem {
   fun uriFor(relativePath: String): String
 }
 
-/** Canonical relative path for a blob id. Both the production code and tests must agree. */
-internal fun blobRelativePath(id: String): String = "blobs/$id.bin"
+/**
+ * Canonical relative path for a blob id. Public because attachment-feature platform code
+ * (openers, filesystem impls) resolves blob files by id; production code and tests must agree.
+ */
+fun blobRelativePath(id: String): String = "blobs/$id.bin"

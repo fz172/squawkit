@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.sync.data.blob
 
 import dev.fanfly.wingslog.core.storage.blob.BlobId
-import dev.fanfly.wingslog.feature.attachment.datamanager.UploadScheduler
+import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

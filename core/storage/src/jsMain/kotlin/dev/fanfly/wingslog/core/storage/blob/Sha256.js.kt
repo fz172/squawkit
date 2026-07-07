@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.attachment.datamanager
+package dev.fanfly.wingslog.core.storage.blob
 
 actual fun sha256Hex(bytes: ByteArray): String {
   val padded = bytes.sha256Padded()

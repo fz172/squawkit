@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.export.datamanager.di
 
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.attachment.datamanager.BlobFilesystem
-import dev.fanfly.wingslog.feature.attachment.datamanager.LocalBlobStore
+import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.impl.AttachmentExportResolver
 import dev.fanfly.wingslog.feature.export.datamanager.impl.ExportDeliveryBackend

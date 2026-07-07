@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
+import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf

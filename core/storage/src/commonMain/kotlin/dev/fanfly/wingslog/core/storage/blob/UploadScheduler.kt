@@ -1,14 +1,13 @@
-package dev.fanfly.wingslog.feature.attachment.datamanager
+package dev.fanfly.wingslog.core.storage.blob
 
-import dev.fanfly.wingslog.core.storage.blob.BlobId
 
 /**
  * Platform-specific scheduler for blob upload and download jobs. Platform implementations
  * enqueue work on WorkManager (Android) or run it immediately in a coroutine (iOS foreground).
  *
- * Defined here (in `feature/attachment/datamanager`) so [LocalBlobStore] callers can trigger
- * uploads without depending on `feature/sync/data`. Implementations live in
- * `feature/sync/data` (androidMain / iosMain) because they use sync-layer machinery.
+ * Defined here (in `core:storage`, beside [LocalBlobStore]) so callers can trigger uploads
+ * without depending on `feature/sync/data`. Implementations live in `feature/sync/data`
+ * (androidMain / iosMain) because they use sync-layer machinery.
  */
 interface UploadScheduler {
   /** Enqueue an upload job for a [BlobId] that is in LOCAL_ONLY state. */

@@ -8,7 +8,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import dev.fanfly.wingslog.core.storage.blob.BlobId
-import dev.fanfly.wingslog.feature.attachment.datamanager.UploadScheduler
+import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 
 /**

@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
 import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState

@@ -1,7 +1,6 @@
-package dev.fanfly.wingslog.feature.attachment.datamanager
+package dev.fanfly.wingslog.core.storage.blob
 
 import dev.fanfly.wingslog.core.storage.EntityScope
-import dev.fanfly.wingslog.core.storage.blob.BlobId
 import kotlinx.coroutines.flow.Flow
 
 /**

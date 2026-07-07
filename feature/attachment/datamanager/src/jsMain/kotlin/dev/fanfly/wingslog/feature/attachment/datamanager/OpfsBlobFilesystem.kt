@@ -1,9 +1,10 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
+import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
+import kotlin.js.Promise
 import kotlinx.coroutines.await
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Uint8Array
-import kotlin.js.Promise
 
 /**
  * Browser [BlobFilesystem] backed by the Origin Private File System. Bytes live under

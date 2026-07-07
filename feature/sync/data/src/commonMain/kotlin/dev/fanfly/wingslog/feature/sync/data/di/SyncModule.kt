@@ -1,12 +1,13 @@
 package dev.fanfly.wingslog.feature.sync.data.di
 
+import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import dev.fanfly.wingslog.feature.attachment.datamanager.UploadScheduler
+import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.feature.sync.data.FirestorePullSubscription
 import dev.fanfly.wingslog.feature.sync.data.FirestoreRemoteFetcher
 import dev.fanfly.wingslog.feature.sync.data.FirestoreSyncWriter
@@ -56,6 +57,9 @@ val syncModule: Module = module {
       writeLock = get<DatabaseWriteLock>(),
     )
   }
+  // Narrow core:storage view of the master toggle — lets datamanagers read the flag without
+  // depending on feature:sync:data.
+  single<CloudSyncSetting> { get<SyncPreferences>() }
   single<SyncCursorStore> {
     SyncCursorStore(
       get<WingsLogDatabase>(),

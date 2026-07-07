@@ -3,20 +3,17 @@ package dev.fanfly.wingslog.feature.technician.datamanager.impl
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
+import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
-import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
-import dev.fanfly.wingslog.feature.sync.data.SyncPrefs
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
-import dev.gitlive.firebase.firestore.FirebaseFirestore
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -30,8 +27,8 @@ private const val TEST_TECHNICIAN_ID = "tech-789"
 class TechnicianManagerImplTest {
 
   private lateinit var firebaseAuth: FirebaseAuth
-  private lateinit var firestore: FirebaseFirestore
-  private lateinit var syncPreferences: SyncPreferences
+  private var cloudSyncEnabled: Boolean = false
+  private val cloudSyncSetting = CloudSyncSetting { cloudSyncEnabled }
   private lateinit var storeFactory: EntityStoreFactory
   private lateinit var technicianStore: EntityStore<Technician>
   private lateinit var userInfoStore: EntityStore<UserInfo>
@@ -40,8 +37,7 @@ class TechnicianManagerImplTest {
   @Before
   fun setUp() {
     firebaseAuth = mockk(relaxed = true)
-    firestore = mockk(relaxed = true)
-    syncPreferences = mockk(relaxed = true)
+    cloudSyncEnabled = false
     technicianStore = mockk(relaxed = true)
     userInfoStore = mockk(relaxed = true)
     storeFactory = mockk(relaxed = true)
@@ -51,12 +47,6 @@ class TechnicianManagerImplTest {
 
     @Suppress("UNCHECKED_CAST")
     every { storeFactory.create<UserInfo>(CollectionKind.UserInfo) } returns userInfoStore
-
-    every { syncPreferences.state } returns MutableStateFlow(
-      SyncPrefs(
-        cloudSyncEnabled = false
-      )
-    )
 
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.uid } returns TEST_USER_ID
@@ -71,8 +61,7 @@ class TechnicianManagerImplTest {
 
     manager = TechnicianManagerImpl(
       firebaseAuth,
-      firestore,
-      syncPreferences,
+      cloudSyncSetting,
       storeFactory
     )
   }
