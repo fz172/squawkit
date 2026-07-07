@@ -295,12 +295,13 @@ fun MaintenanceLogFormScreen(
                   availableInspectionCards = uiState.availableInspectionCards,
                   onAddTaskClick = viewModel::showInspectionPicker,
                   onRemoveTask = viewModel::removeInspectionId,
-                  attachmentUploadEnabled = attachmentsAvailable && uiState.attachmentUploadEnabled,
+                  attachmentsAvailable = attachmentsAvailable,
                   attachmentSection = {
                     AttachmentFormSection(
                       visibleAttachments = uiState.visibleAttachments,
                       isAnonymous = uiState.isAnonymous,
                       filesAtLimit = uiState.filesAtLimit,
+                      uploadEnabled = uiState.attachmentUploadEnabled,
                       showPickerSheet = uiState.showAttachmentPicker,
                       onAddClick = viewModel::showAttachmentPicker,
                       onRemove = viewModel::removeAttachment,

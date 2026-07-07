@@ -85,7 +85,7 @@ class TaskViewModel(
   private val _showLogPicker = MutableStateFlow(false)
   val showLogPicker: StateFlow<Boolean> = _showLogPicker.asStateFlow()
 
-  private val _attachmentUploadEnabled = MutableStateFlow(true)
+  private val _attachmentUploadEnabled = MutableStateFlow(false)
   val attachmentUploadEnabled: StateFlow<Boolean> =
     _attachmentUploadEnabled.asStateFlow()
 

@@ -58,6 +58,7 @@ import wingslog.feature.attachment.sharedassets.generated.resources.attachments
 import wingslog.feature.attachment.sharedassets.generated.resources.choose_file
 import wingslog.feature.attachment.sharedassets.generated.resources.delete_saved_attachment_message
 import wingslog.feature.attachment.sharedassets.generated.resources.delete_saved_attachment_title
+import wingslog.feature.attachment.sharedassets.generated.resources.file_upload_coming_soon
 import wingslog.feature.attachment.sharedassets.generated.resources.invalid_url
 import wingslog.feature.attachment.sharedassets.generated.resources.link_name
 import wingslog.feature.attachment.sharedassets.generated.resources.link_url
@@ -81,6 +82,9 @@ fun AttachmentFormSection(
   visibleAttachments: List<PendingAttachment>,
   isAnonymous: Boolean,
   filesAtLimit: Boolean,
+  // Feature Lab `attachmentUploadEnabled`: gates only the file/photo picker options. Links are
+  // always available; when off the upload buttons render disabled with a "coming soon" note.
+  uploadEnabled: Boolean,
   showPickerSheet: Boolean,
   onAddClick: () -> Unit,
   onRemove: (String) -> Unit,
@@ -156,6 +160,7 @@ fun AttachmentFormSection(
   if (showPickerSheet) {
     AttachmentPickerSheet(
       filesAtLimit = filesAtLimit,
+      uploadEnabled = uploadEnabled,
       onChooseFile = { onDismissSheet(); pickFiles() },
       onTakePhoto = { onDismissSheet(); takePhoto() },
       onAddLink = { url, name ->
@@ -287,6 +292,7 @@ private fun AttachmentPickerOption(
 @Composable
 private fun AttachmentPickerSheet(
   filesAtLimit: Boolean,
+  uploadEnabled: Boolean,
   onChooseFile: () -> Unit,
   onTakePhoto: () -> Unit,
   onAddLink: (url: String, name: String) -> Unit,
@@ -319,7 +325,7 @@ private fun AttachmentPickerSheet(
               icon = Icons.Outlined.PhotoCamera,
               label = stringResource(AttachRes.string.take_photo),
               onClick = onTakePhoto,
-              enabled = !filesAtLimit,
+              enabled = uploadEnabled && !filesAtLimit,
               modifier = Modifier.weight(1f),
             )
           }
@@ -327,7 +333,7 @@ private fun AttachmentPickerSheet(
             icon = Icons.Default.Add,
             label = stringResource(AttachRes.string.choose_file),
             onClick = onChooseFile,
-            enabled = !filesAtLimit,
+            enabled = uploadEnabled && !filesAtLimit,
             modifier = Modifier.weight(1f),
           )
           AttachmentPickerOption(
@@ -338,10 +344,10 @@ private fun AttachmentPickerSheet(
           )
         }
         Text(
-          text = if (filesAtLimit) {
-            stringResource(AttachRes.string.max_files_reached)
-          } else {
-            stringResource(AttachRes.string.attachment_limits_hint)
+          text = when {
+            !uploadEnabled -> stringResource(AttachRes.string.file_upload_coming_soon)
+            filesAtLimit -> stringResource(AttachRes.string.max_files_reached)
+            else -> stringResource(AttachRes.string.attachment_limits_hint)
           },
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -44,7 +44,7 @@ fun LogRecordsTab(
   availableInspectionCards: List<MaintenanceTask>,
   onAddTaskClick: () -> Unit,
   onRemoveTask: (String) -> Unit,
-  attachmentUploadEnabled: Boolean,
+  attachmentsAvailable: Boolean,
   attachmentSection: @Composable () -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -99,7 +99,7 @@ fun LogRecordsTab(
       )
     }
 
-    if (attachmentUploadEnabled) {
+    if (attachmentsAvailable) {
       attachmentSection()
     }
   }

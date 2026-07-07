@@ -84,11 +84,12 @@ fun AddTaskRoute(
         )
       },
       attachmentSection = {
-        if (attachmentsAvailable && attachmentUploadEnabled) {
+        if (attachmentsAvailable) {
           AttachmentFormSection(
             visibleAttachments = pendingAttachments.visible(),
             isAnonymous = viewModel.isAnonymous,
             filesAtLimit = viewModel.filesAtLimit,
+            uploadEnabled = attachmentUploadEnabled,
             showPickerSheet = showAttachmentPicker,
             onAddClick = viewModel::showAttachmentPicker,
             onRemove = viewModel::removeAttachment,
