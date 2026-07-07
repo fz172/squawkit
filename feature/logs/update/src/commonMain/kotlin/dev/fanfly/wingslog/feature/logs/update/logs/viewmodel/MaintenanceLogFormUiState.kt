@@ -24,7 +24,7 @@ data class MaintenanceLogFormUiState(
   val selectedComponentType: ComponentType = ComponentType.COMPONENT_AIRFRAME,
   val selectedSubComponent: String? = null,
   val error: UiText? = null,
-  /** Open squawks for this aircraft — used by SquawkPickerSheet */
+  /** Open squawks for this aircraft, plus any already addressed by this log — used by SquawkPickerSheet and to resolve titles for selected squawk chips */
   val availableSquawks: List<Squawk> = emptyList(),
   val selectedSquawkIds: List<String> = emptyList(),
   val showSquawkPicker: Boolean = false,

@@ -144,7 +144,13 @@ class MaintenanceLogFormViewModel(
   private fun observeSquawks() {
     squawkManager.observeSquawks(aircraftId)
       .onEach { squawks ->
-        _uiState.update { it.copy(availableSquawks = squawks.filter { s -> s.addressed_by_log_id.isEmpty() }) }
+        _uiState.update {
+          it.copy(
+            availableSquawks = squawks.filter { s ->
+              s.addressed_by_log_id.isEmpty() || s.addressed_by_log_id == logId
+            }
+          )
+        }
       }
       .launchIn(viewModelScope)
   }
