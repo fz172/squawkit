@@ -4,8 +4,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -30,19 +33,28 @@ fun DocumentationFields(
 ) {
   Column(modifier = modifier) {
     FormTextField(
-      value = refNumber,
-      onValueChange = onRefNumberChange,
-      label = stringResource(TaskRes.string.reference_number),
-      placeholder = stringResource(TaskRes.string.reference_number_hint),
-      modifier = Modifier.fillMaxWidth(),
-    )
-    Spacer(modifier = Modifier.height(Spacing.medium))
-    FormTextField(
       value = complianceAuthority,
       onValueChange = onComplianceAuthorityChange,
       label = stringResource(Res.string.compliance_authority),
       placeholder = stringResource(TaskRes.string.compliance_authority_hint),
       modifier = Modifier.fillMaxWidth(),
+      keyboardOptions = KeyboardOptions(
+        capitalization = KeyboardCapitalization.Sentences,
+        imeAction = ImeAction.Next
+      ),
+    )
+    Spacer(modifier = Modifier.height(Spacing.medium))
+
+    FormTextField(
+      value = refNumber,
+      onValueChange = onRefNumberChange,
+      label = stringResource(TaskRes.string.reference_number),
+      placeholder = stringResource(TaskRes.string.reference_number_hint),
+      modifier = Modifier.fillMaxWidth(),
+      keyboardOptions = KeyboardOptions(
+        capitalization = KeyboardCapitalization.Characters,
+        imeAction = ImeAction.Next
+      ),
     )
     Spacer(modifier = Modifier.height(Spacing.medium))
 
@@ -52,6 +64,10 @@ fun DocumentationFields(
       label = stringResource(TaskRes.string.compliance_notes),
       placeholder = stringResource(TaskRes.string.compliance_notes_hint),
       modifier = Modifier.fillMaxWidth(),
+      keyboardOptions = KeyboardOptions(
+        capitalization = KeyboardCapitalization.Sentences,
+        imeAction = ImeAction.Done
+      ),
       singleLine = false,
       minLines = 3,
     )
