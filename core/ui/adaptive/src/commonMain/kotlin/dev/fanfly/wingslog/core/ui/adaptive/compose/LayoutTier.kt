@@ -40,7 +40,10 @@ enum class LayoutTier {
   /** Number of columns to use for browseable card grids (tasks, squawks, aircraft). */
   val cardColumns: Int get() = if (this == EXPANDED || this == LARGE) 2 else 1
 
-  val sidebarWidth: Dp get() = if (this == EXPANDED || this == LARGE) 264.dp else 224.dp
+  /** True when the sidebar is at its widest, with room for fully unabbreviated section labels. */
+  val hasWideSidebar: Boolean get() = this == EXPANDED || this == LARGE
+
+  val sidebarWidth: Dp get() = if (hasWideSidebar) 264.dp else 224.dp
 }
 
 /**

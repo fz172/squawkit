@@ -38,8 +38,10 @@
   <string name="shell_tab_dashboard">Dashboard</string>
   <string name="shell_tab_squawks">Squawks</string>
   <string name="shell_tab_tasks">Maint.</string>
+  <string name="shell_nav_tasks_narrow">Maint. Tasks</string>
   <string name="shell_tab_logs">Logs</string>
-  <string name="shell_title_tasks">Maintenance Task</string>
+  <string name="shell_title_tasks">Maintenance Tasks</string>
+  <string name="shell_title_logs">Work Logs</string>
   <!-- Component names -->
   <string name="component_type">Component Type</string>
   <string name="component_airframe">Airframe</string>

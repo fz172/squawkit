@@ -73,10 +73,12 @@ import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.core.sharedassets.generated.resources.settings
+import wingslog.core.sharedassets.generated.resources.shell_nav_tasks_narrow
 import wingslog.core.sharedassets.generated.resources.shell_tab_dashboard
 import wingslog.core.sharedassets.generated.resources.shell_tab_logs
 import wingslog.core.sharedassets.generated.resources.shell_tab_squawks
 import wingslog.core.sharedassets.generated.resources.shell_tab_tasks
+import wingslog.core.sharedassets.generated.resources.shell_title_logs
 import wingslog.core.sharedassets.generated.resources.shell_title_tasks
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
@@ -91,18 +93,30 @@ data class ShellAircraft(
  * Top-level sections of the adaptive shell. The first four are per-aircraft; [SETTINGS] is global.
  */
 enum class ShellSection(
+  /** Short label for the space-constrained bottom bar tier. */
   val label: StringResource,
   val icon: ImageVector,
-  val title: StringResource = label
+  val title: StringResource = label,
+  /** Label for the wide (EXPANDED/LARGE) sidebar, which fits the unabbreviated name. */
+  val sidebarLabel: StringResource = label,
+  /** Label for the narrower MEDIUM sidebar; may abbreviate where the wide label doesn't fit. */
+  val narrowSidebarLabel: StringResource = sidebarLabel,
 ) {
   DASHBOARD(UiRes.string.shell_tab_dashboard, Icons.Filled.Dashboard),
   SQUAWKS(UiRes.string.shell_tab_squawks, Icons.Filled.Warning),
   TASKS(
     UiRes.string.shell_tab_tasks,
     Icons.Filled.Checklist,
-    UiRes.string.shell_title_tasks
+    UiRes.string.shell_title_tasks,
+    sidebarLabel = UiRes.string.shell_title_tasks,
+    narrowSidebarLabel = UiRes.string.shell_nav_tasks_narrow,
   ),
-  LOGS(UiRes.string.shell_tab_logs, Icons.Filled.Description),
+  LOGS(
+    UiRes.string.shell_tab_logs,
+    Icons.Filled.Description,
+    UiRes.string.shell_title_logs,
+    sidebarLabel = UiRes.string.shell_title_logs,
+  ),
   SETTINGS(UiRes.string.settings, Icons.Filled.Settings),
 }
 
@@ -494,8 +508,11 @@ private fun SidebarItem(
   // the add-aircraft prompt from Settings.
   muted: Boolean = false,
 ) {
+  val label =
+    if (LocalLayoutTier.current.hasWideSidebar) section.sidebarLabel
+    else section.narrowSidebarLabel
   NavigationDrawerItem(
-    label = { Text(stringResource(section.label)) },
+    label = { Text(stringResource(label)) },
     icon = { Icon(section.icon, contentDescription = null) },
     selected = selected,
     onClick = onClick,

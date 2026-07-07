@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth.Form
 
 /**
  * Maximum widths for single-pane content on large displays.
@@ -20,22 +21,16 @@ object ContentWidth {
 
   /**
    * The shell's whole content pane (everything right of the sidebar). Matches the web design's
-   * 1256 CSS px content cap; dp ≈ CSS px for layout (see web_adaptive_layout_design.html §11 D3).
+   * 1200 CSS px content cap; dp ≈ CSS px for layout (see web_adaptive_layout_design.html §11 D3).
    * Screens may still cap themselves narrower inside the pane (e.g. [Form] editors).
    */
-  val Pane = 1256.dp
-
-  /** Wider chrome for screens whose content intentionally spans more than one reading column. */
-  val HeaderFooter = 900.dp
-
-  /** Repeated dashboard or browseable list cards that benefit from wider scan rows. */
-  val Feed = 840.dp
+  val Pane = 1200.dp
 
   /** Settings and secondary lists where readable line length matters more than density. */
-  val Reading = 720.dp
+  val Reading = 960.dp
 
   /** Editing workflows and focused detail surfaces with stacked fields or action controls. */
-  val Form = 680.dp
+  val Form = 720.dp
 
   /** Authentication and onboarding panels designed as short, focused single-column flows. */
   val Auth = 480.dp
