@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.outlined.AttachFile
@@ -37,8 +36,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.settings.generated.resources.Res
 import wingslog.feature.settings.generated.resources.feature_lab
-import wingslog.feature.settings.generated.resources.feature_lab_account_upgrade_subtitle
-import wingslog.feature.settings.generated.resources.feature_lab_account_upgrade_title
 import wingslog.feature.settings.generated.resources.feature_lab_attachments_subtitle
 import wingslog.feature.settings.generated.resources.feature_lab_attachments_title
 import wingslog.feature.settings.generated.resources.feature_lab_export_email_subtitle
@@ -115,17 +112,6 @@ fun FeatureLabScreen(
           checked = flags.exportEmailDeliveryEnabled,
           onCheckedChange = viewModel::setExportEmailDeliveryEnabled,
         )
-
-        HorizontalDivider()
-
-        FeatureToggleRow(
-          icon = Icons.Default.CloudUpload,
-          title = stringResource(Res.string.feature_lab_account_upgrade_title),
-          subtitle = stringResource(Res.string.feature_lab_account_upgrade_subtitle),
-          checked = flags.accountUpgradeEnabled,
-          onCheckedChange = viewModel::setAccountUpgradeEnabled,
-        )
-
         HorizontalDivider()
 
         dogfoodContent()

@@ -52,6 +52,7 @@ import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeUiState
 import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import wingslog.feature.settings.generated.resources.account_upgrade_error
 import wingslog.feature.settings.generated.resources.account_upgrade_login_cta
@@ -64,7 +65,6 @@ import wingslog.feature.settings.generated.resources.settings_export_subtitle
 import wingslog.feature.settings.generated.resources.settings_feature_lab_subtitle
 import wingslog.feature.settings.generated.resources.settings_logout_subtitle
 import wingslog.feature.settings.generated.resources.settings_subtitle
-import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.feature.settings.generated.resources.settings_sync_subtitle
 import wingslog.feature.settings.generated.resources.settings_technicians_subtitle
 import wingslog.feature.settings.generated.resources.sign_out
@@ -179,10 +179,9 @@ fun SettingsContent(
           photoUri = user.photoUri,
         )
 
-        // For a guest with the upgrade flag on, "Log in" connects their on-device records to a real
+        // For anonymous guest "Log in" connects their on-device records to a real
         // account (the upgrade flow). It replaces the destructive guest logout entirely.
-        val guestCanUpgrade =
-          user.isAnonymous && user.featureFlags.accountUpgradeEnabled
+        val guestCanUpgrade = user.isAnonymous
 
         // The main navigation entries live in one grouped card with dividers between them; only the
         // rows that apply to this user are added, so the dividers always land correctly.

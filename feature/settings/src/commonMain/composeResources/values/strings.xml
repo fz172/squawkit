@@ -29,6 +29,4 @@
   <string name="feature_lab_attachments_subtitle">Allow attaching files and links to maintenance records.</string>
   <string name="feature_lab_export_email_title">Email Export Delivery</string>
   <string name="feature_lab_export_email_subtitle">Upload exports to the cloud and email a download link. When off, exports stay on this device only.</string>
-  <string name="feature_lab_account_upgrade_title">Account Upgrade</string>
-  <string name="feature_lab_account_upgrade_subtitle">Let guest users create an account and sync their on-device records to it.</string>
 </resources>
