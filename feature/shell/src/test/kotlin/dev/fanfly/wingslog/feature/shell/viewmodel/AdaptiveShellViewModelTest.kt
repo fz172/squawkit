@@ -15,9 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -26,6 +25,8 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AdaptiveShellViewModelTest {
+
+  private val testDispatcher = UnconfinedTestDispatcher()
 
   private val fleet = MutableStateFlow<List<Aircraft>>(emptyList())
   private val self = MutableStateFlow<Technician?>(null)
@@ -79,7 +80,7 @@ class AdaptiveShellViewModelTest {
   }
 
   @Before
-  fun setUp() = Dispatchers.setMain(StandardTestDispatcher())
+  fun setUp() = Dispatchers.setMain(testDispatcher)
 
   @After
   fun tearDown() = Dispatchers.resetMain()
@@ -99,10 +100,9 @@ class AdaptiveShellViewModelTest {
   )
 
   @Test
-  fun mapsFleetAndSelectsFirstByDefault() = runTest {
+  fun mapsFleetAndSelectsFirstByDefault() = runTest(testDispatcher) {
     fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
     val vm = viewModel()
-    runCurrent()
 
     val s = vm.uiState.value
     assertThat(s.aircraft.map { it.tail }).containsExactly("N1", "N2")
@@ -113,33 +113,28 @@ class AdaptiveShellViewModelTest {
   }
 
   @Test
-  fun keepsSelectionAcrossReemissionWhenStillPresent() = runTest {
+  fun keepsSelectionAcrossReemissionWhenStillPresent() = runTest(testDispatcher) {
     fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
     val vm = viewModel()
-    runCurrent()
     vm.selectAircraft("a2")
 
     // Re-emit with the same aircraft; the explicit selection must survive.
     fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
-    runCurrent()
     assertThat(vm.uiState.value.selectedAircraftId).isEqualTo("a2")
 
     // Remove the selected one; selection falls back to the first remaining.
     fleet.value = listOf(aircraft("a1", "N1"))
-    runCurrent()
     assertThat(vm.uiState.value.selectedAircraftId).isEqualTo("a1")
   }
 
   @Test
-  fun selectsFirstAircraftWhenFleetArrivesAfterEmptyState() = runTest {
+  fun selectsFirstAircraftWhenFleetArrivesAfterEmptyState() = runTest(testDispatcher) {
     fleet.value = emptyList()
     val vm = viewModel()
-    runCurrent()
 
     assertThat(vm.uiState.value.selectedAircraftId).isNull()
 
     fleet.value = listOf(aircraft("a1", "N1"))
-    runCurrent()
 
     val s = vm.uiState.value
     assertThat(s.selectedAircraftId).isEqualTo("a1")
@@ -147,17 +142,15 @@ class AdaptiveShellViewModelTest {
   }
 
   @Test
-  fun selectSectionUpdatesSection() = runTest {
+  fun selectSectionUpdatesSection() = runTest(testDispatcher) {
     val vm = viewModel()
-    runCurrent()
     vm.selectSection(ShellSection.SQUAWKS)
     assertThat(vm.uiState.value.section).isEqualTo(ShellSection.SQUAWKS)
   }
 
   @Test
-  fun openSettingsSelectsSettingsAndEnters() = runTest {
+  fun openSettingsSelectsSettingsAndEnters() = runTest(testDispatcher) {
     val vm = viewModel()
-    runCurrent()
 
     vm.openSettings()
     val s = vm.uiState.value
@@ -165,12 +158,10 @@ class AdaptiveShellViewModelTest {
   }
 
   @Test
-  fun observesSelfProfileForSidebarAccountEntry() = runTest {
+  fun observesSelfProfileForSidebarAccountEntry() = runTest(testDispatcher) {
     val vm = viewModel()
-    runCurrent()
 
     self.value = Technician(id = "self", name = "Avery Park")
-    runCurrent()
 
     assertThat(vm.uiState.value.accountName).isEqualTo("Avery Park")
   }
