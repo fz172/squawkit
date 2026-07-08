@@ -55,6 +55,7 @@ fun LogWorkTab(
       FormValueField(
         value = dateText,
         label = stringResource(SharedRes.string.maintenance_date),
+        showLabel = false,
         onClick = onDateClick,
         accessibilityDescription = stringResource(SharedRes.string.maintenance_date),
         leadingIcon = {

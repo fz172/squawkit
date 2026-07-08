@@ -61,6 +61,7 @@ fun LogRecordsTab(
         FormValueField(
           value = displayText,
           label = stringResource(TechnicianRes.string.performed_by),
+          showLabel = false,
           onClick = onTechnicianClick,
           accessibilityDescription = stringResource(TechnicianRes.string.performed_by),
           leadingIcon = {
