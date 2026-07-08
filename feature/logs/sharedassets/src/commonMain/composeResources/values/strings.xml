@@ -1,6 +1,6 @@
 <resources>
-  <string name="add_log">Add Log</string>
-  <string name="edit_log">Edit Log</string>
+  <string name="add_log">Add Maintenance Log</string>
+  <string name="edit_log">Edit Maintenance Log</string>
   <string name="maintenance_history">Maintenance History</string>
   <string name="maintenance_date">Maintenance Date</string>
   <string name="engine_time_label">Engine Time</string>
