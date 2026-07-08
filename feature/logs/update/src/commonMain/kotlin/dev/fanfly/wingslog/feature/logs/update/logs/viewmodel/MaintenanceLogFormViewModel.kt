@@ -64,6 +64,16 @@ class MaintenanceLogFormViewModel(
   private val logId: String? = savedStateHandle[Screen.LOG_ID]
   val isEditMode: Boolean get() = logId != null
 
+  // Set when this screen is opened from the squawk edit screen's "Fixed" option, to preselect
+  // and prefill this squawk once it shows up in observeSquawks() below.
+  private val preselectedSquawkId: String? = savedStateHandle[Screen.SQUAWK_ID]
+  private var preselectedSquawkSeeded = false
+
+  // Both flags gate captureInitialSnapshot() below, so the unsaved-changes baseline isn't
+  // captured until the squawk-preselect flow has had a chance to seed selectedSquawkIds.
+  private var techniciansLoaded = false
+  private var squawksLoaded = false
+
   private var saveJob: Job? = null
   private val attachmentForm =
     AttachmentFormController(attachmentManager, aircraftId)
@@ -124,9 +134,21 @@ class MaintenanceLogFormViewModel(
             selectedTechnician = newSelected,
           )
         }
-        if (!isEditMode) captureInitialSnapshot()
+        techniciansLoaded = true
+        maybeCaptureInitialSnapshot()
       }
       .launchIn(viewModelScope)
+  }
+
+  private fun maybeCaptureInitialSnapshot() {
+    // Also wait for a pending squawk-title prefill to be consumed (see
+    // consumeResolveSquawkPrefill below), so the baseline includes the final prefilled
+    // workDescription too and doesn't read as an unsaved change the instant it lands.
+    if (!isEditMode && techniciansLoaded && squawksLoaded &&
+      _uiState.value.pendingResolveSquawkTitle == null
+    ) {
+      captureInitialSnapshot()
+    }
   }
 
   private fun captureInitialSnapshot() {
@@ -144,15 +166,45 @@ class MaintenanceLogFormViewModel(
   private fun observeSquawks() {
     squawkManager.observeSquawks(aircraftId)
       .onEach { squawks ->
-        _uiState.update {
-          it.copy(
-            availableSquawks = squawks.filter { s ->
-              s.addressed_by_log_id.isEmpty() || s.addressed_by_log_id == logId
-            }
-          )
+        val filtered = squawks.filter { s ->
+          s.addressed_by_log_id.isEmpty() || s.addressed_by_log_id == logId
         }
+        _uiState.update { state ->
+          var next = state.copy(availableSquawks = filtered)
+          if (!isEditMode && !preselectedSquawkSeeded && preselectedSquawkId != null) {
+            filtered.find { it.id == preselectedSquawkId }
+              ?.let { squawk ->
+                next = next.copy(
+                  selectedSquawkIds = (next.selectedSquawkIds + squawk.id).distinct(),
+                  pendingResolveSquawkTitle = squawk.title,
+                )
+                // Only latch once the squawk is actually found — an empty/transitional first
+                // emission (e.g. while auth is still resolving) must not permanently skip this;
+                // it should simply retry on the next emission.
+                preselectedSquawkSeeded = true
+              }
+          }
+          next
+        }
+        squawksLoaded = true
+        maybeCaptureInitialSnapshot()
       }
       .launchIn(viewModelScope)
+  }
+
+  /**
+   * Called by the screen once it has resolved [MaintenanceLogFormUiState.pendingResolveSquawkTitle]
+   * into a localized string, to seed the work description and clear the pending marker.
+   */
+  fun consumeResolveSquawkPrefill(workDescription: String) {
+    _uiState.update {
+      it.copy(
+        // Don't clobber text the user already typed while this was resolving asynchronously.
+        workDescription = if (it.workDescription.isBlank()) workDescription else it.workDescription,
+        pendingResolveSquawkTitle = null,
+      )
+    }
+    maybeCaptureInitialSnapshot()
   }
 
   private fun observeTasks() {

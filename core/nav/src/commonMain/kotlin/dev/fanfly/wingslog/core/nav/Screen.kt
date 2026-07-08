@@ -50,8 +50,11 @@ sealed class Screen(val route: String) {
   }
 
   data object AddMaintenanceLog :
-    Screen("maintenance_log_create/{$AIRCRAFT_ID}") {
-    fun createRoute(aircraftId: String) = "maintenance_log_create/$aircraftId"
+    Screen("maintenance_log_create/{$AIRCRAFT_ID}?$SQUAWK_ID={$SQUAWK_ID}") {
+    fun createRoute(aircraftId: String, squawkId: String? = null): String {
+      val base = "maintenance_log_create/$aircraftId"
+      return if (squawkId != null) "$base?$SQUAWK_ID=$squawkId" else base
+    }
   }
 
   data object EditMaintenanceLog :

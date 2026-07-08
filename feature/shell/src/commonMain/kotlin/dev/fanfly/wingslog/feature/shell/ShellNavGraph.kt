@@ -77,9 +77,14 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
   }
   dialog(
     route = Screen.AddMaintenanceLog.route,
-    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-      type = NavType.StringType
-    }),
+    arguments = listOf(
+      navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+      navArgument(Screen.SQUAWK_ID) {
+        type = NavType.StringType
+        nullable = true
+        defaultValue = null
+      },
+    ),
     dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
   ) {
     AdaptiveFormDialogFrame {

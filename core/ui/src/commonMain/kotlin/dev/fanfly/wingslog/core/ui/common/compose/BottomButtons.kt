@@ -46,6 +46,9 @@ fun BottomButtons(
   isPrimaryFunctionInProgress: Boolean = false,
   primaryLabel: String = stringResource(Res.string.save_changes),
   secondaryLabel: String = stringResource(Res.string.cancel),
+  // Rendered anchored to the danger button (e.g. a DropdownMenu with sub-options). No-op by
+  // default so other callers of this shared component are unaffected.
+  dangerMenuContent: @Composable () -> Unit = {},
 ) {
   Box(
     modifier = modifier.fillMaxWidth()
@@ -85,31 +88,34 @@ fun BottomButtons(
 
       // 2. Delete Button (Optional)
       if (onDangerClick != null) {
-        OutlinedButton(
-          onClick = onDangerClick,
-          enabled = !isPrimaryFunctionInProgress,
-          modifier = Modifier.weight(1f)
-            .height(Spacing.buttonHeight),
-          shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-          colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.error,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            disabledContentColor = MaterialTheme.colorScheme.outline
-          ),
-          border = BorderStroke(
-            Spacing.hairline,
-            if (!isPrimaryFunctionInProgress) MaterialTheme.colorScheme.error
-            else MaterialTheme.colorScheme.outline
-          )
-        ) {
-          Text(
-            text = dangerLabel.uppercase(),
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            textAlign = TextAlign.Center,
+        Box(modifier = Modifier.weight(1f)) {
+          OutlinedButton(
+            onClick = onDangerClick,
+            enabled = !isPrimaryFunctionInProgress,
             modifier = Modifier.fillMaxWidth()
-          )
+              .height(Spacing.buttonHeight),
+            shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+            colors = ButtonDefaults.outlinedButtonColors(
+              containerColor = MaterialTheme.colorScheme.surface,
+              contentColor = MaterialTheme.colorScheme.error,
+              disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+              disabledContentColor = MaterialTheme.colorScheme.outline
+            ),
+            border = BorderStroke(
+              Spacing.hairline,
+              if (!isPrimaryFunctionInProgress) MaterialTheme.colorScheme.error
+              else MaterialTheme.colorScheme.outline
+            )
+          ) {
+            Text(
+              text = dangerLabel.uppercase(),
+              fontWeight = FontWeight.Bold,
+              maxLines = 1,
+              textAlign = TextAlign.Center,
+              modifier = Modifier.fillMaxWidth()
+            )
+          }
+          dangerMenuContent()
         }
       }
 

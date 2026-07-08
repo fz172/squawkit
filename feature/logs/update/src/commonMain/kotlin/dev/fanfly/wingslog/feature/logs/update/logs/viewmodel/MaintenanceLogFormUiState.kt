@@ -46,6 +46,12 @@ data class MaintenanceLogFormUiState(
   val attachmentUploadEnabled: Boolean = false,
   /** Snapshot of the form taken once after initial load — used to detect unsaved changes. */
   val initialSnapshot: FormSnapshot? = null,
+  /**
+   * Title of a squawk this log was opened to resolve (via the squawk edit screen's "Fixed"
+   * option), pending resolution into a localized [workDescription] prefill by the screen. Null
+   * once consumed (or if this log wasn't opened via that flow).
+   */
+  val pendingResolveSquawkTitle: String? = null,
 ) {
   val visibleAttachments: List<PendingAttachment> get() = pendingAttachments.visible()
   val fileAttachmentCount: Int get() = pendingAttachments.fileCount()

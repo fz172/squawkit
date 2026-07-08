@@ -88,6 +88,7 @@ import wingslog.feature.logs.update.generated.resources.delete_log
 import wingslog.feature.logs.update.generated.resources.log_deleted
 import wingslog.feature.logs.update.generated.resources.log_saved
 import wingslog.feature.logs.update.generated.resources.log_updated
+import wingslog.feature.logs.update.generated.resources.resolve_squawk_work_description
 import kotlin.time.Instant
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
@@ -132,6 +133,15 @@ fun MaintenanceLogFormScreen(
   val logSavedMessage = stringResource(MaintenanceRes.string.log_saved)
   val logDeletedMessage = stringResource(MaintenanceRes.string.log_deleted)
   val fileReadErrorMessage = stringResource(AttachRes.string.file_read_error)
+
+  // Opened via the squawk edit screen's "Fixed" option: resolve the localized prefill once the
+  // squawk's title is known, then hand the plain string to the ViewModel to seed workDescription.
+  val resolveSquawkPrefill = uiState.pendingResolveSquawkTitle?.let { title ->
+    stringResource(MaintenanceRes.string.resolve_squawk_work_description, title)
+  }
+  LaunchedEffect(resolveSquawkPrefill) {
+    resolveSquawkPrefill?.let { viewModel.consumeResolveSquawkPrefill(it) }
+  }
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->

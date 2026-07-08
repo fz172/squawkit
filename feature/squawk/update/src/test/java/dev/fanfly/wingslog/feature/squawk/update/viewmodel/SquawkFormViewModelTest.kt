@@ -70,16 +70,27 @@ class SquawkFormViewModelTest {
     Dispatchers.resetMain()
   }
 
-  // ---- showDismissDialog ----
+  // ---- showResolveMenu / selectDismissNoWorkPlanned ----
 
   @Test
-  fun showDismissDialog_setsShowDismissDialogToTrue() =
+  fun selectDismissNoWorkPlanned_setsShowDismissDialogToTrue() =
     runTest(testDispatcher) {
       val viewModel = buildViewModelForEdit()
 
-      viewModel.showDismissDialog()
+      viewModel.selectDismissNoWorkPlanned()
 
       assertThat(viewModel.state.value.showDismissDialog).isTrue()
+    }
+
+  @Test
+  fun selectDismissNoWorkPlanned_hidesResolveMenu() =
+    runTest(testDispatcher) {
+      val viewModel = buildViewModelForEdit()
+      viewModel.showResolveMenu()
+
+      viewModel.selectDismissNoWorkPlanned()
+
+      assertThat(viewModel.state.value.showResolveMenu).isFalse()
     }
 
   // ---- hideDismissDialog ----
@@ -88,7 +99,7 @@ class SquawkFormViewModelTest {
   fun hideDismissDialog_setsShowDismissDialogToFalse() =
     runTest(testDispatcher) {
       val viewModel = buildViewModelForEdit()
-      viewModel.showDismissDialog()
+      viewModel.selectDismissNoWorkPlanned()
 
       viewModel.hideDismissDialog()
 
@@ -156,7 +167,7 @@ class SquawkFormViewModelTest {
         squawkManager.dismissSquawk(any(), any(), any())
       } returns Result.success(Unit)
       val viewModel = buildViewModelForEdit()
-      viewModel.showDismissDialog()
+      viewModel.selectDismissNoWorkPlanned()
 
       viewModel.confirmDismiss(
         SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE,
@@ -178,6 +189,60 @@ class SquawkFormViewModelTest {
       advanceUntilIdle()
 
       coVerify(exactly = 0) { squawkManager.dismissSquawk(any(), any(), any()) }
+    }
+
+  // ---- showResolveMenu / hideResolveMenu ----
+
+  @Test
+  fun showResolveMenu_setsShowResolveMenuToTrue() =
+    runTest(testDispatcher) {
+      val viewModel = buildViewModelForEdit()
+
+      viewModel.showResolveMenu()
+
+      assertThat(viewModel.state.value.showResolveMenu).isTrue()
+    }
+
+  @Test
+  fun hideResolveMenu_setsShowResolveMenuToFalse() =
+    runTest(testDispatcher) {
+      val viewModel = buildViewModelForEdit()
+      viewModel.showResolveMenu()
+
+      viewModel.hideResolveMenu()
+
+      assertThat(viewModel.state.value.showResolveMenu).isFalse()
+    }
+
+  // ---- selectFixed ----
+
+  @Test
+  fun selectFixed_hidesResolveMenuAndEmitsNavigateToCreateLog() =
+    runTest(testDispatcher) {
+      val viewModel = buildViewModelForEdit()
+      viewModel.showResolveMenu()
+
+      viewModel.selectFixed()
+      advanceUntilIdle()
+
+      assertThat(viewModel.state.value.showResolveMenu).isFalse()
+      val event = viewModel.events.first()
+      assertThat(event).isInstanceOf(SquawkFormEvent.NavigateToCreateLog::class.java)
+      val navigateEvent = event as SquawkFormEvent.NavigateToCreateLog
+      assertThat(navigateEvent.aircraftId).isEqualTo(TEST_AIRCRAFT_ID)
+      assertThat(navigateEvent.squawkId).isEqualTo(TEST_SQUAWK_ID)
+    }
+
+  @Test
+  fun selectFixed_withNoSquawkId_leavesResolveMenuStateUntouched() =
+    runTest(testDispatcher) {
+      val viewModel = buildViewModelForNew()
+
+      viewModel.selectFixed()
+      advanceUntilIdle()
+
+      // No squawkId means selectFixed returns early before hiding the menu or emitting.
+      assertThat(viewModel.state.value.showResolveMenu).isFalse()
     }
 
   // ---- reopen — success ----

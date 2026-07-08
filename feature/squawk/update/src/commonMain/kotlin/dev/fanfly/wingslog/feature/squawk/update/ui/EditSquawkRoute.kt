@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
@@ -46,6 +47,16 @@ fun EditSquawkRoute(
           navController.popBackStack()
         }
 
+        is SquawkFormEvent.NavigateToCreateLog -> {
+          navController.popBackStack()
+          navController.navigate(
+            Screen.AddMaintenanceLog.createRoute(
+              event.aircraftId,
+              event.squawkId
+            )
+          )
+        }
+
         is SquawkFormEvent.PickError -> snackbarHostState.showSnackbar(
           fileReadErrorMessage
         )
@@ -73,7 +84,10 @@ fun EditSquawkRoute(
     onClearLog = viewModel::clearLog,
     onSelectLog = viewModel::selectLog,
     onHideLogPicker = viewModel::hideLogPicker,
-    onDismissClick = viewModel::showDismissDialog,
+    onResolveClick = viewModel::showResolveMenu,
+    onResolveMenuDismiss = viewModel::hideResolveMenu,
+    onSelectDismissNoWorkPlanned = viewModel::selectDismissNoWorkPlanned,
+    onFixedClick = viewModel::selectFixed,
     onDismissDialogDismiss = viewModel::hideDismissDialog,
     onDismissConfirm = { reason ->
       viewModel.confirmDismiss(

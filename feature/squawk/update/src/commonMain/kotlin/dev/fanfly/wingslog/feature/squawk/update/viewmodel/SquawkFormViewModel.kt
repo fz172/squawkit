@@ -47,6 +47,7 @@ data class SquawkFormState(
   val addressedByLogId: String = "",
   val availableLogs: List<MaintenanceLog> = emptyList(),
   val showLogPicker: Boolean = false,
+  val showResolveMenu: Boolean = false,
   val showDismissDialog: Boolean = false,
   val isDismissing: Boolean = false,
   val dismissReason: SquawkDismissReason = SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN,
@@ -63,6 +64,7 @@ data class SquawkFormState(
 sealed interface SquawkFormEvent {
   data object NavigateBack : SquawkFormEvent
   data class SaveSuccess(val message: String) : SquawkFormEvent
+  data class NavigateToCreateLog(val aircraftId: String, val squawkId: String) : SquawkFormEvent
   data object PickError : SquawkFormEvent
 }
 
@@ -265,7 +267,15 @@ class SquawkFormViewModel(
     }
   }
 
-  fun showDismissDialog() = _state.update { it.copy(showDismissDialog = true) }
+  fun showResolveMenu() =
+    _state.update { it.copy(showResolveMenu = true) }
+
+  fun hideResolveMenu() =
+    _state.update { it.copy(showResolveMenu = false) }
+
+  fun selectDismissNoWorkPlanned() =
+    _state.update { it.copy(showResolveMenu = false, showDismissDialog = true) }
+
   fun hideDismissDialog() = _state.update { it.copy(showDismissDialog = false) }
 
   fun confirmDismiss(reason: SquawkDismissReason, onSuccessMessage: String) {
@@ -275,6 +285,18 @@ class SquawkFormViewModel(
       squawkManager.dismissSquawk(aircraftId, squawkId, reason)
         .onSuccess { _events.send(SquawkFormEvent.SaveSuccess(onSuccessMessage)) }
       _state.update { it.copy(isDismissing = false) }
+    }
+  }
+
+  fun selectFixed() {
+    val current = _state.value
+    val squawkId = current.squawkId ?: return
+    // Guards against a double-tap firing this twice before the menu's dismissal recomposes:
+    // the first call flips showResolveMenu synchronously, so a second call sees it already false.
+    if (!current.showResolveMenu) return
+    _state.update { it.copy(showResolveMenu = false) }
+    viewModelScope.launch {
+      _events.send(SquawkFormEvent.NavigateToCreateLog(aircraftId, squawkId))
     }
   }
 

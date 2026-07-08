@@ -34,6 +34,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -165,6 +167,9 @@ fun AdaptiveAppShell(
   // actions navigate into feature screens that `core:ui` cannot depend on. Rendered in the shell's
   // own Scaffold slot so snackbars offset around it automatically.
   sectionFab: @Composable (section: ShellSection, aircraftId: String?) -> Unit = { _, _ -> },
+  // Shared across every tier so a caller can drive snackbars (e.g. a cross-screen success message)
+  // from a single instance regardless of which shell layout is currently active.
+  snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
@@ -192,6 +197,7 @@ fun AdaptiveAppShell(
           onAddAircraft = onAddAircraft,
           content = content,
           fab = fab,
+          snackbarHostState = snackbarHostState,
         )
       }
     }
@@ -349,6 +355,7 @@ private fun ShellForTier(
   onAddAircraft: () -> Unit,
   content: @Composable () -> Unit,
   fab: @Composable () -> Unit,
+  snackbarHostState: SnackbarHostState,
 ) {
   when {
     tier.hasFullSidebar ->
@@ -360,6 +367,7 @@ private fun ShellForTier(
         onAddAircraft = onAddAircraft,
         content = content,
         fab = fab,
+        snackbarHostState = snackbarHostState,
       )
 
     else ->
@@ -371,6 +379,7 @@ private fun ShellForTier(
         onAddAircraft = onAddAircraft,
         content = content,
         fab = fab,
+        snackbarHostState = snackbarHostState,
       )
   }
 }
@@ -388,6 +397,7 @@ private fun SidebarShell(
   onAddAircraft: () -> Unit,
   content: @Composable () -> Unit,
   fab: @Composable () -> Unit,
+  snackbarHostState: SnackbarHostState,
 ) {
   Row(modifier = Modifier.fillMaxSize()) {
     WingsSidebar(
@@ -411,6 +421,7 @@ private fun SidebarShell(
         showTopBar = state.section != ShellSection.SETTINGS,
         content = content,
         fab = fab,
+        snackbarHostState = snackbarHostState,
       )
     }
   }
@@ -581,6 +592,7 @@ private fun ScaffoldShell(
   onAddAircraft: () -> Unit,
   content: @Composable () -> Unit,
   fab: @Composable () -> Unit,
+  snackbarHostState: SnackbarHostState,
 ) {
   NavigationSuiteScaffold(
     // Settings has no nav-bar item, so showing the bar while it's open feels disconnected. Drop the
@@ -632,6 +644,7 @@ private fun ScaffoldShell(
       onExitSettings = { onSelectSection(backTarget.value) },
       content = content,
       fab = fab,
+      snackbarHostState = snackbarHostState,
     )
   }
 }
@@ -657,6 +670,7 @@ private fun ShellContent(
   content: @Composable () -> Unit,
   // Per-section FAB; the host decides which sections show one. Settings never does.
   fab: @Composable () -> Unit = {},
+  snackbarHostState: SnackbarHostState,
 ) {
   // Full-screen Settings (compact) has no bottom nav bar to occupy the system navigation-bar area,
   // so let its content run edge-to-edge under the transparent system bar instead of stopping above
@@ -679,6 +693,7 @@ private fun ShellContent(
       } else {
         ScaffoldDefaults.contentWindowInsets
       },
+    snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
       if (showTopBar) {
         // The bar shares the content column's width cap so the title and actions line up with the

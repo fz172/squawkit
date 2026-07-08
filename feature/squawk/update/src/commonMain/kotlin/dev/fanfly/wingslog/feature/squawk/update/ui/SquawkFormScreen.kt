@@ -50,6 +50,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.squawk.update.compose.DismissSquawkDialog
+import dev.fanfly.wingslog.feature.squawk.update.compose.ResolveOptionsMenu
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkBasicTab
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsTab
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
@@ -60,8 +61,8 @@ import wingslog.core.sharedassets.generated.resources.details
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
-import wingslog.feature.squawk.update.generated.resources.dismiss_issue
 import wingslog.feature.squawk.update.generated.resources.reopen_issue
+import wingslog.feature.squawk.update.generated.resources.resolve_issue
 import wingslog.feature.squawk.update.generated.resources.tab_basic
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
@@ -79,7 +80,10 @@ fun SquawkFormScreen(
   onClearLog: () -> Unit,
   onSelectLog: (String) -> Unit,
   onHideLogPicker: () -> Unit,
-  onDismissClick: () -> Unit,
+  onResolveClick: () -> Unit,
+  onResolveMenuDismiss: () -> Unit,
+  onSelectDismissNoWorkPlanned: () -> Unit,
+  onFixedClick: () -> Unit,
   onDismissDialogDismiss: () -> Unit,
   onDismissConfirm: (SquawkDismissReason) -> Unit,
   onReopenClick: () -> Unit,
@@ -90,7 +94,7 @@ fun SquawkFormScreen(
   val isEdit = state.squawkId != null
   val isDismissed =
     state.dismissReason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN
-  val showDismissButton = isEdit && !state.isAddressedReadOnly && !isDismissed
+  val showResolveButton = isEdit && !state.isAddressedReadOnly && !isDismissed
   val screenTitle = if (isEdit) stringResource(Res.string.edit_squawk)
   else stringResource(Res.string.add_squawk)
 
@@ -247,13 +251,23 @@ fun SquawkFormScreen(
         primaryEnabled = !state.isSaving,
         isPrimaryFunctionInProgress = state.isSaving,
         onDangerClick = when {
-          showDismissButton -> onDismissClick
+          showResolveButton -> onResolveClick
           isDismissed -> onReopenClick
           else -> null
         },
         dangerLabel = when {
           isDismissed -> stringResource(UpdateRes.string.reopen_issue)
-          else -> stringResource(UpdateRes.string.dismiss_issue)
+          else -> stringResource(UpdateRes.string.resolve_issue)
+        },
+        dangerMenuContent = {
+          if (showResolveButton) {
+            ResolveOptionsMenu(
+              expanded = state.showResolveMenu,
+              onDismissRequest = onResolveMenuDismiss,
+              onDismissNoWorkPlanned = onSelectDismissNoWorkPlanned,
+              onFixedClick = onFixedClick,
+            )
+          }
         },
       )
     }

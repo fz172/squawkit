@@ -19,6 +19,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -34,6 +35,7 @@ private const val TEST_LOG_ID = "log-123"
 private const val ADDRESSED_SQUAWK_ID = "squawk-addressed-by-this-log"
 private const val OTHER_LOG_SQUAWK_ID = "squawk-addressed-by-other-log"
 private const val OPEN_SQUAWK_ID = "squawk-open"
+private const val PRESELECTED_SQUAWK_ID = "squawk-preselected"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MaintenanceLogFormViewModelTest {
@@ -69,7 +71,9 @@ class MaintenanceLogFormViewModelTest {
     // Prevent the init-block flows from suspending forever.
     every { featureLabManager.observe() } returns flowOf(FeatureFlags())
     every { fleetManager.loadAircraft(TEST_AIRCRAFT_ID) } returns flowOf(null)
-    every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(emptyList())
+    every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
+      emptyList()
+    )
     every { technicianManager.observeTechnicians() } returns flowOf(emptyList())
     every { technicianManager.observeSelfId() } returns flowOf(null)
     every { logManager.observeLogs(TEST_AIRCRAFT_ID) } returns flowOf(emptyList())
@@ -173,6 +177,135 @@ class MaintenanceLogFormViewModelTest {
       ).containsExactly(OPEN_SQUAWK_ID)
     }
 
+  // ---- squawk preselect (opened via squawk edit screen's "Fixed" option) ----
+
+  @Test
+  fun preselectedSquawkId_seedsSelectedSquawkIdsAndPendingTitle() =
+    runTest(testDispatcher) {
+      every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
+        )
+      )
+
+      val viewModel =
+        buildViewModelForNew(preselectedSquawkId = PRESELECTED_SQUAWK_ID)
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.selectedSquawkIds).containsExactly(
+        PRESELECTED_SQUAWK_ID
+      )
+      assertThat(viewModel.uiState.value.pendingResolveSquawkTitle).isEqualTo("Nose wheel shimmy")
+    }
+
+  @Test
+  fun preselectedSquawkId_whenEditingExistingLog_isIgnored() =
+    runTest(testDispatcher) {
+      every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
+        )
+      )
+
+      // Edit-mode routes never carry a squawkId nav arg, but guard the case anyway.
+      val viewModel = MaintenanceLogFormViewModel(
+        logManager = logManager,
+        fleetManager = fleetManager,
+        inspectionDataManager = inspectionDataManager,
+        squawkManager = squawkManager,
+        attachmentManager = attachmentManager,
+        technicianManager = technicianManager,
+        auth = auth,
+        featureLabManager = featureLabManager,
+        savedStateHandle = SavedStateHandle(
+          mapOf(
+            Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID,
+            Screen.LOG_ID to TEST_LOG_ID,
+            Screen.SQUAWK_ID to PRESELECTED_SQUAWK_ID,
+          )
+        ),
+      )
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.selectedSquawkIds).isEmpty()
+      assertThat(viewModel.uiState.value.pendingResolveSquawkTitle).isNull()
+    }
+
+  @Test
+  fun consumeResolveSquawkPrefill_setsWorkDescriptionAndClearsPendingTitle() =
+    runTest(testDispatcher) {
+      every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
+        )
+      )
+      val viewModel =
+        buildViewModelForNew(preselectedSquawkId = PRESELECTED_SQUAWK_ID)
+      advanceUntilIdle()
+
+      viewModel.consumeResolveSquawkPrefill("Resolve squawk \"Nose wheel shimmy\"")
+
+      assertThat(viewModel.uiState.value.workDescription)
+        .isEqualTo("Resolve squawk \"Nose wheel shimmy\"")
+      assertThat(viewModel.uiState.value.pendingResolveSquawkTitle).isNull()
+    }
+
+  @Test
+  fun consumeResolveSquawkPrefill_whenUserAlreadyTyped_doesNotOverwriteWorkDescription() =
+    runTest(testDispatcher) {
+      every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
+        )
+      )
+      val viewModel =
+        buildViewModelForNew(preselectedSquawkId = PRESELECTED_SQUAWK_ID)
+      advanceUntilIdle()
+      // User starts typing their own description before the prefill round-trip completes.
+      viewModel.onWorkDescriptionChange("Already replaced the bulb")
+
+      viewModel.consumeResolveSquawkPrefill("Resolve squawk \"Nose wheel shimmy\"")
+
+      assertThat(viewModel.uiState.value.workDescription).isEqualTo("Already replaced the bulb")
+      assertThat(viewModel.uiState.value.pendingResolveSquawkTitle).isNull()
+    }
+
+  @Test
+  fun preselectedSquawkId_notInFirstEmission_stillSeedsOnceItAppearsLater() =
+    runTest(testDispatcher) {
+      every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flow {
+        // Transitional/empty first emission (e.g. auth still resolving) must not
+        // permanently disable the preselect.
+        emit(emptyList())
+        emit(listOf(Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy")))
+      }
+
+      val viewModel = buildViewModelForNew(preselectedSquawkId = PRESELECTED_SQUAWK_ID)
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.selectedSquawkIds).containsExactly(PRESELECTED_SQUAWK_ID)
+      assertThat(viewModel.uiState.value.pendingResolveSquawkTitle).isEqualTo("Nose wheel shimmy")
+    }
+
+  @Test
+  fun preselectedSquawkId_hasChangesIsFalseOnceSeedingAndPrefillHaveSettled() =
+    runTest(testDispatcher) {
+      every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
+        )
+      )
+      val viewModel =
+        buildViewModelForNew(preselectedSquawkId = PRESELECTED_SQUAWK_ID)
+      advanceUntilIdle()
+
+      viewModel.consumeResolveSquawkPrefill("Resolve squawk \"Nose wheel shimmy\"")
+
+      // The auto-preselect + auto-prefill are the baseline, not user edits — hasChanges must
+      // stay false until the user actually changes something themselves.
+      assertThat(viewModel.uiState.value.hasChanges).isFalse()
+    }
+
   // ---- helpers ----
 
   private fun buildViewModelForEdit(): MaintenanceLogFormViewModel =
@@ -193,7 +326,7 @@ class MaintenanceLogFormViewModelTest {
       ),
     )
 
-  private fun buildViewModelForNew(): MaintenanceLogFormViewModel =
+  private fun buildViewModelForNew(preselectedSquawkId: String? = null): MaintenanceLogFormViewModel =
     MaintenanceLogFormViewModel(
       logManager = logManager,
       fleetManager = fleetManager,
@@ -204,7 +337,13 @@ class MaintenanceLogFormViewModelTest {
       auth = auth,
       featureLabManager = featureLabManager,
       savedStateHandle = SavedStateHandle(
-        mapOf(Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID)
+        buildMap {
+          put(Screen.AIRCRAFT_ID, TEST_AIRCRAFT_ID)
+          if (preselectedSquawkId != null) put(
+            Screen.SQUAWK_ID,
+            preselectedSquawkId
+          )
+        }
       ),
     )
 }

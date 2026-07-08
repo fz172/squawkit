@@ -1,10 +1,12 @@
 package dev.fanfly.wingslog.feature.shell
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -14,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
@@ -42,8 +45,27 @@ fun AdaptiveShellRoute(
   LaunchedEffect(state.section, state.selectedAircraftId) {
     analytics.logScreenView("shell/${state.section.name.lowercase()}")
   }
+
+  // The shell's own back-stack entry: dialog destinations (add/edit squawk, log, etc.) pushed on
+  // top of it write a pending success message here (via previousBackStackEntry) before popping, so
+  // this is where cross-screen snackbars land once the dialog closes.
+  val shellEntry = remember(navController) {
+    navController.getBackStackEntry(Screen.AdaptiveShell.route)
+  }
+  val successMessage by shellEntry.savedStateHandle
+    .getStateFlow<String?>(CROSS_SCREEN_SUCCESS_MESSAGE, null)
+    .collectAsState()
+  val snackbarHostState = remember { SnackbarHostState() }
+
+  LaunchedEffect(successMessage) {
+    val message = successMessage ?: return@LaunchedEffect
+    shellEntry.savedStateHandle[CROSS_SCREEN_SUCCESS_MESSAGE] = null
+    snackbarHostState.showSnackbar(message = message)
+  }
+
   AdaptiveAppShell(
     state = state,
+    snackbarHostState = snackbarHostState,
     onSelectSection = viewModel::selectSection,
     onSelectAircraft = viewModel::selectAircraft,
     onOpenSettings = viewModel::openSettings,
