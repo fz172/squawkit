@@ -186,15 +186,13 @@ fun SettingsContent(
         // The main navigation entries live in one grouped card with dividers between them; only the
         // rows that apply to this user are added, so the dividers always land correctly.
         val navRows = buildList<@Composable () -> Unit> {
-          if (user.featureFlags.technicianEnabled) {
-            add {
-              SettingsRow(
-                icon = Icons.Default.Engineering,
-                title = stringResource(TechnicianRes.string.manage_technicians),
-                subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
-                onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
-              )
-            }
+          add {
+            SettingsRow(
+              icon = Icons.Default.Engineering,
+              title = stringResource(TechnicianRes.string.manage_technicians),
+              subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
+              onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
+            )
           }
           add {
             SettingsRow(

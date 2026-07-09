@@ -55,7 +55,6 @@ private const val W_TECH = 1.1f
 @Composable
 fun MaintenanceLogTable(
   logs: List<MaintenanceLog>,
-  technicianEnabled: Boolean,
   onLogClick: (MaintenanceLog) -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -69,7 +68,7 @@ fun MaintenanceLogTable(
     ),
   ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-      HeaderRow(technicianEnabled)
+      HeaderRow()
       HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
       LazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -78,7 +77,6 @@ fun MaintenanceLogTable(
         items(logs, key = { it.id }) { log ->
           LogRow(
             log = log,
-            technicianEnabled = technicianEnabled,
             onClick = { onLogClick(log) })
           HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant.copy(
@@ -92,7 +90,7 @@ fun MaintenanceLogTable(
 }
 
 @Composable
-private fun HeaderRow(technicianEnabled: Boolean) {
+private fun HeaderRow() {
   Row(
     modifier = Modifier
       .fillMaxWidth()
@@ -103,7 +101,7 @@ private fun HeaderRow(technicianEnabled: Boolean) {
     HeaderCell("Component", W_COMPONENT)
     HeaderCell("Description", W_DESC)
     HeaderCell("Hours", W_HOURS, TextAlign.End)
-    if (technicianEnabled) HeaderCell("Technician", W_TECH)
+    HeaderCell("Technician", W_TECH)
     Box(modifier = Modifier.width(28.dp)) // chevron column
   }
 }
@@ -128,7 +126,6 @@ private fun RowScope.HeaderCell(
 @Composable
 private fun LogRow(
   log: MaintenanceLog,
-  technicianEnabled: Boolean,
   onClick: () -> Unit,
 ) {
   val dateStr = log.timestamp?.toLocalDate()
@@ -180,17 +177,15 @@ private fun LogRow(
       modifier = Modifier.weight(W_HOURS)
         .padding(end = Spacing.medium),
     )
-    if (technicianEnabled) {
-      Text(
-        text = log.technician?.name?.takeIf { it.isNotBlank() } ?: "—",
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier.weight(W_TECH)
-          .padding(end = Spacing.medium),
-      )
-    }
+    Text(
+      text = log.technician?.name?.takeIf { it.isNotBlank() } ?: "—",
+      style = MaterialTheme.typography.labelMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+      modifier = Modifier.weight(W_TECH)
+        .padding(end = Spacing.medium),
+    )
     Icon(
       imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
       contentDescription = null,

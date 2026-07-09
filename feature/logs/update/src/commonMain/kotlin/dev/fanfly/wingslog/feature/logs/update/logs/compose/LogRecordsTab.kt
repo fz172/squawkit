@@ -33,7 +33,6 @@ import wingslog.feature.technician.sharedassets.generated.resources.Res as Techn
 
 @Composable
 fun LogRecordsTab(
-  technicianEnabled: Boolean,
   selectedTechnician: Technician?,
   onTechnicianClick: () -> Unit,
   selectedSquawkIds: List<String>,
@@ -51,28 +50,26 @@ fun LogRecordsTab(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.massive),
   ) {
-    if (technicianEnabled) {
-      LogSection(
-        header = stringResource(TechnicianRes.string.performed_by),
-        description = stringResource(Res.string.performed_by_description),
-      ) {
-        val displayText = selectedTechnician?.name
-          ?: stringResource(TechnicianRes.string.select_technician)
-        FormValueField(
-          value = displayText,
-          label = stringResource(TechnicianRes.string.performed_by),
-          showLabel = false,
-          onClick = onTechnicianClick,
-          accessibilityDescription = stringResource(TechnicianRes.string.performed_by),
-          leadingIcon = {
-            Icon(
-              Icons.Default.Person,
-              contentDescription = null
-            )
-          },
-          modifier = Modifier.fillMaxWidth(),
-        )
-      }
+    LogSection(
+      header = stringResource(TechnicianRes.string.performed_by),
+      description = stringResource(Res.string.performed_by_description),
+    ) {
+      val displayText = selectedTechnician?.name
+        ?: stringResource(TechnicianRes.string.select_technician)
+      FormValueField(
+        value = displayText,
+        label = stringResource(TechnicianRes.string.performed_by),
+        showLabel = false,
+        onClick = onTechnicianClick,
+        accessibilityDescription = stringResource(TechnicianRes.string.performed_by),
+        leadingIcon = {
+          Icon(
+            Icons.Default.Person,
+            contentDescription = null
+          )
+        },
+        modifier = Modifier.fillMaxWidth(),
+      )
     }
 
     LogSection(

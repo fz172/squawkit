@@ -41,7 +41,6 @@ data class MaintenanceLogFormUiState(
   val showAttachmentPicker: Boolean = false,
   /** Whether the current user is anonymous (attachments disabled for anonymous users). */
   val isAnonymous: Boolean = false,
-  val technicianEnabled: Boolean = true,
   /** Whether file/photo attachment uploads are enabled via Feature Lab; links are always on. */
   val attachmentUploadEnabled: Boolean = false,
   /** Snapshot of the form taken once after initial load — used to detect unsaved changes. */

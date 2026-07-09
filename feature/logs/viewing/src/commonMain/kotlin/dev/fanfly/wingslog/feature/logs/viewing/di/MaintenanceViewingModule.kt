@@ -9,7 +9,6 @@ val maintenanceViewingModule = module {
     MaintenanceLogListViewModel(
       get(),
       get(),
-      get(),
       params.get()
     )
   }
