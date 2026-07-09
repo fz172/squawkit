@@ -222,6 +222,27 @@
       <h3 id="j-delete">6.6 Hosting owner deletes the aircraft</h3>
       <p>Deletion follows today's tombstone flow and propagates to every member: the aircraft disappears from all fleets, and the share (membership + invites) is cleaned up. The confirmation dialog tells the hosting owner how many other members will lose access.</p>
 
+      <h3 id="j-merge">6.7 Cleaning up duplicate technicians</h3>
+      <p>Before sharing, an owner usually hand-typed the mechanics who service the airplane into Manage Technicians. Once those same people join as members, each publishes their own first-party profile — so the picker would show the same person twice: the stale hand-typed entry and the live linked one. SquawkIt reconciles this instead of leaving both.</p>
+      <ol>
+        <li>When Manage Technicians detects likely duplicates, a <b>dismissible banner</b> appears at the top: "Some technicians look like the same person. Review &amp; merge."</li>
+        <li>Tapping it opens a review sheet that groups the suspected duplicates. Matching is by <b>certificate number</b> when present; name-only entries (e.g. an owner doing preventive maintenance with no certificate) are matched by name and <b>always require explicit confirmation</b>, since names collide.</li>
+        <li>Resolution: two hand-typed entries collapse into the most complete one. A hand-typed entry that matches a <b>linked member</b> defers to the member's first-party profile as the source of truth — the hand-typed copy is retired, but the person keeps appearing everywhere they did before. Two <b>different members</b> who happen to list the same certificate number are <b>never</b> merged (they are distinct people); the sheet flags it so the owner can check for a typo.</li>
+        <li>Merging only affects the <b>picker roster going forward</b>. Every existing log keeps its original technician snapshot byte-for-byte — merging never rewrites history.</li>
+      </ol>
+
+      <h3 id="j-authorship">6.8 Who signed the work</h3>
+      <p>On a shared logbook, any member can create a log and name any linked technician under "Performed by" — including naming someone else. Because that would let one member attribute work to another, every log carries a <b>tamper-evident record of which account actually wrote it</b>, stamped server-side and impossible to forge from the client.</p>
+      <ul>
+        <li>When the person writing the log is the technician on it, the log reads <b>"Logged and signed by {name}"</b> — a first-party, self-signed entry.</li>
+        <li>When one member logs work and names a different technician, the log reads <b>"Logged by {author} · technician {name} (assigned)"</b> — the attribution is honest and attributable, not passed off as a signature.</li>
+      </ul>
+      <p>This does not <em>prevent</em> third-party attribution — a shop assistant legitimately logging on the mechanic's behalf is a real workflow — but it makes it visible and impossible to disguise. A stronger model, where the named technician confirms from their own account before the entry counts as signed, is specified as fast-follow work (§11).</p>
+      <div class="callout win">
+        <strong>Dependability, extended to authorship</strong>
+        First-party <em>credentials</em> (§6.4) answer "whose license is this"; the authorship trail answers "who put it there." Together they close the gap the PRD opened with: a shared log is trustworthy about both the certificate and the hand that signed it.
+      </div>
+
       <h2 id="requirements">7. Functional Requirements</h2>
       <table>
         <thead><tr><th>#</th><th>Requirement</th><th>Priority</th></tr></thead>
@@ -237,6 +258,8 @@
           <tr><td>F9</td><td>Aircraft deletion by the hosting owner propagates to all members and tears down the share.</td><td>P0</td></tr>
           <tr><td>F10</td><td>Multi-use / longer-lived invites (e.g. club onboarding) as an invite option.</td><td>P1</td></tr>
           <tr><td>F11</td><td>Feature Lab flag (<code>aircraftSharingEnabled</code>) gates all sharing UI; off by default.</td><td>P0</td></tr>
+          <tr><td>F12</td><td>Manage Technicians detects duplicate technicians (by certificate number, or by name for name-only entries with explicit confirmation) and offers a merge that defers a hand-typed entry to a linked member's first-party profile; two distinct members are never merged, and merging never alters existing log snapshots.</td><td>P1</td></tr>
+          <tr><td>F13</td><td>Every maintenance log records a server-attested author (which account wrote the revision, un-forgeable from the client); the UI distinguishes a self-signed log from one where the author named a different technician.</td><td>P1</td></tr>
         </tbody>
       </table>
 
@@ -255,6 +278,10 @@
           <tr><td>Hosting owner disables Cloud Sync</td><td>Their own new edits stop flowing to members (and vice versa) until re-enabled; members' access is unaffected because the cloud copy remains. Settings copy explains this for shared aircraft.</td></tr>
           <tr><td>Last additional owner leaves</td><td>Fine — the hosting owner always remains. The hosting owner cannot leave; they delete the aircraft instead (or a future ownership-transfer feature).</td></tr>
           <tr><td>Shared technician deletes their own self-profile data</td><td>Linked picker entry shows name-only; past log snapshots are untouched.</td></tr>
+          <tr><td>Hand-typed technician matches a member who just joined</td><td>Manage Technicians surfaces a merge banner; accepting retires the hand-typed copy in favor of the member's first-party profile. Existing log snapshots are untouched (§6.7).</td></tr>
+          <tr><td>Two members list the same certificate number</td><td>Never auto-merged — they are distinct accounts. The merge sheet flags the collision so an owner can spot a typo (§6.7).</td></tr>
+          <tr><td>Duplicate technicians with no certificate number</td><td>Not auto-merged; matched by name and merged only on explicit confirmation, since names collide.</td></tr>
+          <tr><td>One member logs work naming another as the technician</td><td>Allowed, but the log is stamped "Logged by {author}" (server-attested), not self-signed (§6.8).</td></tr>
         </tbody>
       </table>
 
@@ -274,6 +301,7 @@
           <tr><td>Invite link forwarded to or intercepted by the wrong person</td><td>Single-use + 7-day expiry by default; redeemer's identity surfaces in Manage Access immediately; one-tap revoke fully reverses a redemption; token is unguessable and carried in the URL fragment (not sent to servers in logs).</td></tr>
           <tr><td>Offline edits lost on revocation</td><td>Inherent to revocation being server-enforced. Warn at revoke time; notify the ex-member; expected volume is very low.</td></tr>
           <tr><td>Permission matrix too coarse (record-type granularity)</td><td>Accepted for v1 and called out in the design doc (payloads are opaque to the backend). Roles are chosen so the coarse matrix matches real workflows.</td></tr>
+          <tr><td>One member attributes work to another without their involvement</td><td>Every log records a server-attested author; self-signed vs. assigned is shown in the UI (§6.8). Countersign (§11) upgrades attribution to a true signature as a fast-follow.</td></tr>
           <tr><td>Sharing amplifies a data-corruption bug to N users</td><td>Feature Lab gate + dogfood-first rollout; LWW semantics already proven across devices; server-side rules tested with the Firestore emulator suite.</td></tr>
           <tr><td>Cost: fan-out of reads/writes to all members' devices</td><td>Bounded — GA shares are small (2–5 people). Sync listeners are per-aircraft and already exist per device; incremental cost scales with member count, not data size.</td></tr>
         </tbody>
@@ -282,6 +310,7 @@
       <h2 id="future">11. Future Work (explicitly out of v1)</h2>
       <ul>
         <li><b>Viewer role</b> — read-only access for club members, CFIs, prospective buyers.</li>
+        <li><b>Countersigned logs</b> — when one member names another as the performing technician, let the named technician confirm from their own account so the entry counts as a first-party signature, upgrading the authorship trail (§6.8) from "attributed" to "signed."</li>
         <li><b>Ownership transfer</b> — re-host the data under a different account (aircraft sale, partner buyout).</li>
         <li><b>Shared attachments</b> — extend sharing to R2 blob storage once <code>attachmentUploadEnabled</code> ships.</li>
         <li><b>Notifications</b> — "a squawk was added", "annual due in 30 days" fanned out to all members.</li>
@@ -341,6 +370,8 @@
           <tr><td>D4</td><td>Member <b>leaves</b> voluntarily</td><td>Self-service variant of D2.</td></tr>
           <tr><td>D5</td><td><b>Hosting owner deletes the aircraft</b></td><td>Deletion propagates to every member; the share (membership + invites) is torn down; the confirmation states how many members lose access.</td></tr>
           <tr><td>D6</td><td>Member <b>updates their technician profile</b></td><td>Their linked entry updates on all members' devices (queued while offline); existing log snapshots are untouched.</td></tr>
+          <tr><td>D7</td><td>Member reconciles a <b>hand-typed technician</b> with a member who joined</td><td>Merge banner in Manage Technicians; the hand-typed copy defers to the member's first-party profile; log snapshots untouched (§6.7).</td></tr>
+          <tr><td>D8</td><td>Member logs work and <b>names another member</b> as the technician</td><td>Allowed; the log is stamped with the server-attested author and shown as "assigned," not self-signed (§6.8).</td></tr>
         </tbody>
       </table>
 

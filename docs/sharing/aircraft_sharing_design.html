@@ -275,7 +275,7 @@ match /aircraft_shares/{acId} {
       </table>
       <div class="callout warn">
         <strong>Known limitations, accepted for v1</strong>
-        (1) <b>Record-type granularity only.</b> Payloads are opaque proto bytes, so rules can't check fields — a technician who can write logs can write any bytes into a log doc. Matches the PRD's coarse permission matrix. (2) <b>Members can only <code>get</code> the aircraft doc, not <code>list</code></b> the host's aircraft collection — this is what keeps the host's <em>other</em> aircraft private, and it forces a doc-level (not collection-level) sync path for the shared aircraft doc (§5.2). (3) Each shared-scope request costs one extra rules <code>get()</code> — billed as a read, cached per request; acceptable at GA share sizes. (4) Technicians can read the aircraft doc but not the host's <code>technician</code> collection or anything else user-level — privacy boundary is the aircraft subtree.
+        (1) <b>Record-type granularity only.</b> Payloads are opaque proto bytes, so rules can't check fields — a technician who can write logs can write any bytes into a log doc. Matches the PRD's coarse permission matrix. (Authorship is still attested out-of-payload: §7.5 stamps a rules-enforced <code>writer_uid</code> on every write, so <em>who</em> wrote each revision is tamper-evident even though <em>what</em> they wrote isn't inspectable.) (2) <b>Members can only <code>get</code> the aircraft doc, not <code>list</code></b> the host's aircraft collection — this is what keeps the host's <em>other</em> aircraft private, and it forces a doc-level (not collection-level) sync path for the shared aircraft doc (§5.2). (3) Each shared-scope request costs one extra rules <code>get()</code> — billed as a read, cached per request; acceptable at GA share sizes. (4) Technicians can read the aircraft doc but not the host's <code>technician</code> collection or anything else user-level — privacy boundary is the aircraft subtree.
       </div>
 
       <h2 id="sync">5. Sync Engine Changes</h2>
@@ -367,10 +367,43 @@ match /aircraft_shares/{acId} {
       </ul>
       <h3>7.3 Surfacing in the technician features</h3>
       <ul>
-        <li><b>Picker (log form):</b> for a given aircraft, <code>TechnicianPickerSheet</code> shows — (1) the current user's self record first (unchanged); (2) <b>linked technicians</b>: every other share member with a published mirror — <em>membership-with-mirror, not role, is the listing criterion</em>, so Owner-mechanics appear too — sourced from <code>SharingManager.observeShareState(acId)</code>, marked with a "Linked" badge; (3) the aircraft-relevant manual entries as today. Selecting a linked technician snapshots the mirror fields into the log's embedded <code>Technician</code> proto — the snapshot mechanism is untouched, only the source differs. The embedded proto gains an optional <code>source_uid</code> field so a log can later show "from linked profile".</li>
+        <li><b>Picker (log form):</b> for a given aircraft, <code>TechnicianPickerSheet</code> shows — (1) the current user's self record first (unchanged); (2) <b>linked technicians</b>: every other share member with a published mirror — <em>membership-with-mirror, not role, is the listing criterion</em>, so Owner-mechanics appear too — sourced from <code>SharingManager.observeShareState(acId)</code>, marked with a "Linked" badge; (3) the aircraft-relevant manual entries as today. Selecting a linked technician snapshots the mirror fields into the log's embedded <code>Technician</code> proto — the snapshot mechanism is untouched, only the source differs. The embedded proto gains an optional <code>source_uid</code> — the owning uid of the picked first-party profile (the member's own self-record <em>or</em> another member's mirror; empty for manual entries) — so a log can show provenance ("from linked profile") and drive the self-signed check (§7.5).</li>
         <li><b>Manage Technicians (Settings):</b> stays a personal list, but linked technicians from shares the user belongs to are shown in a separate read-only section ("Linked from shared aircraft"), no edit or delete — tapping explains the data is maintained by that person. The existing manual CRUD is unchanged for off-app mechanics.</li>
         <li><b>A shared technician logging their own work</b> needs no mirror at all — their device has their real self-record locally; the picker defaults to it and snapshots it directly.</li>
       </ul>
+
+      <h3 id="merge">7.4 Reconciling manual entries with linked members</h3>
+      <p>A user who hand-typed mechanics into Manage Technicians before sharing will, once those people join as members, see each of them twice: the stale manual row (user-level, in their own <code>technician</code> collection) and the live linked mirror (per-aircraft, in the share). The picker must collapse these <em>without</em> rewriting the immutable log snapshots that already captured the manual copy.</p>
+      <h4>Matching &amp; precedence</h4>
+      <table>
+        <thead><tr><th>Pair</th><th>Match key</th><th>Resolution</th></tr></thead>
+        <tbody>
+          <tr><td>manual + manual</td><td>equal non-empty <code>cert_number</code></td><td>Auto-merge candidate: keep the most-complete / most-recently-edited row, tombstone the other. Safe — logs hold snapshots.</td></tr>
+          <tr><td>manual + manual, name-only</td><td>normalized <code>name</code> (+ <code>cert_type</code>)</td><td>Proposed, never auto-applied — names collide; requires explicit confirmation.</td></tr>
+          <tr><td>manual + linked mirror</td><td>equal non-empty <code>cert_number</code>, else name</td><td>Mirror is the source of truth. The manual row is <b>aliased, not deleted</b> (see below).</td></tr>
+          <tr><td>mirror + mirror</td><td>—</td><td><b>Never merged</b> — two members are two distinct people/UIDs. Equal <code>cert_number</code> across mirrors is surfaced as a warning (likely a typo), not a merge.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warn">
+        <strong>Empty <code>cert_number</code> is never a match key</strong>
+        The marquee case — an owner doing FAR 43 preventive maintenance with no certificate — is a name-only entry. Matching two blank certificate numbers would collapse every name-less technician into one. Name-only matches are always confirmation-gated.
+      </div>
+      <h4>Alias, not delete (the scope mismatch)</h4>
+      <p>Manual technicians are <b>user-global</b> (they show for every aircraft); mirrors are <b>per-aircraft</b> (a member may be linked on one of the user's shared aircraft but not another). Hard-deleting a manual row because it matched a mirror on aircraft X would make that person vanish from the picker on aircraft Y. So the manual↔mirror merge is a <b>soft alias</b>: the <code>Technician</code> proto gains an optional <code>superseded_by_uid</code>. Where that member's mirror is present for an aircraft, the picker hides the aliased manual row and shows the mirror; on aircraft with no mirror for that person, the manual row still appears (labeled "not linked here"). <code>superseded_by_uid</code> rides the normal sync path, so the alias is consistent across the user's devices. The field is meaningful only on roster rows; it is ignored in the embedded log snapshot.</p>
+      <h4>UI</h4>
+      <p>A dismissible promo on <code>TechnicianListScreen</code> ("some technicians look like the same person — review") opens a review sheet: auto-safe groups pre-checked, ambiguous groups (name-only, multi-mirror) require a pick. Nothing is applied silently — a merge tombstones or aliases roster entries. A persisted "reviewed" flag prevents nagging. <b>No log snapshot is ever touched</b> — merging changes only the go-forward picker roster.</p>
+
+      <h3 id="authorship">7.5 Authorship attestation (who wrote each record)</h3>
+      <p>Because the log payload is opaque proto bytes and every member may write any bytes, a member can create a log and stamp a <em>different</em> member as its technician. Snapshot data alone can't distinguish "B signed their own work" from "A attributed work to B." The fix is to attest <b>authorship</b> outside the opaque payload, where rules can enforce it — the same move the ACL uses to be rules-readable.</p>
+      <ul>
+        <li><b>Envelope field.</b> <code>SyncDocWire</code> gains a plain <code>writer_uid</code> field (alongside <code>deleted</code> / <code>schema</code> / server timestamp — <em>outside</em> the Base64 payload). <code>PushWorker</code> stamps it with the pushing account's uid on every write.</li>
+        <li><b>Rule enforcement.</b> On the shared aircraft subtree, <code>allow write</code> additionally requires <code>request.resource.data.writer_uid == request.auth.uid</code>. A client cannot forge <code>request.auth.uid</code>, so <code>writer_uid</code> is a tamper-evident, backend-attested record of who wrote each revision. No Cloud Function needed — rules alone enforce it.</li>
+        <li><b>Self-signed indicator.</b> The log surfaces "signed" vs "assigned" by comparing the revision's <code>writer_uid</code> against the embedded snapshot's <code>source_uid</code> (§7.3): equal ⇒ "Logged and signed by {name}"; different or absent ⇒ "Logged by {author} · technician {name} (assigned)". LWW, tombstones, cursors, and the pull path are unchanged — <code>writer_uid</code> is just another envelope field carried through.</li>
+      </ul>
+      <div class="callout note">
+        <strong>Limitation &amp; the countersign fast-follow</strong>
+        <code>writer_uid</code> reflects the <em>latest</em> revision's author, and attestation proves who <em>wrote the row</em>, not who <em>performed the work</em>. A durable per-log signature that survives later third-party edits — the named technician confirming from their own account before the entry counts as signed — is the <b>countersign</b> fast-follow (deferred with the Viewer role). v1 makes third-party attribution visible and unforgeable; countersign makes it a true signature.
+      </div>
 
       <h2 id="offline">8. Offline &amp; Conflict Semantics (unchanged by design)</h2>
       <ul>
@@ -384,10 +417,10 @@ match /aircraft_shares/{acId} {
 
       <h2 id="testing">10. Testing</h2>
       <ul>
-        <li><b>Security rules</b> (highest-value): Firestore emulator suite in <code>backend/firebase</code> — member/non-member/technician matrix over every path in §4, get-vs-list on the aircraft doc, share-doc create spoofing, member-doc role immutability, invite access.</li>
+        <li><b>Security rules</b> (highest-value): Firestore emulator suite in <code>backend/firebase</code> — member/non-member/technician matrix over every path in §4, get-vs-list on the aircraft doc, share-doc create spoofing, member-doc role immutability, invite access, and <code>writer_uid</code> attestation (a write whose <code>writer_uid ≠ request.auth.uid</code> is rejected — §7.5).</li>
         <li><b>Functions:</b> unit tests for redeem (expiry, reuse, revoked, already-member, anonymous caller), revoke (hosting-owner protection, tombstone emission), delete-trigger teardown.</li>
         <li><b>Sync engine</b> (existing MockK/Truth harness per <code>kmm-test-writer</code>): refs-driven scope spin-up/teardown; push-prefix widening drains foreign-scope dirty rows; doc-level pull applies LWW; janitor purges on ref tombstone; PERMISSION_DENIED on a shared scope triggers teardown+purge, not the failure banner.</li>
-        <li><b>Managers/UI:</b> scope-resolver switching own vs. shared; fleet combine emits shared entries with badges; role gating hides owner-only actions; picker shows linked entries and snapshots mirror data.</li>
+        <li><b>Managers/UI:</b> scope-resolver switching own vs. shared; fleet combine emits shared entries with badges; role gating hides owner-only actions; picker shows linked entries and snapshots mirror data; duplicate-merge precedence (manual↔manual collapse, manual↔mirror alias via <code>superseded_by_uid</code>, mirror↔mirror never merged, empty <code>cert_number</code> never a key); self-signed vs. assigned indicator derived from <code>writer_uid</code> vs. <code>source_uid</code>.</li>
         <li><b>End-to-end (manual, two accounts):</b> invite→QR→redeem→hydrate; concurrent edits; offline edit + revoke; aircraft delete propagation.</li>
       </ul>
 
@@ -395,11 +428,11 @@ match /aircraft_shares/{acId} {
       <table>
         <thead><tr><th>Phase</th><th>Scope</th><th>Ships independently?</th></tr></thead>
         <tbody>
-          <tr><td><b>P1 — Foundations</b></td><td><code>SharedAircraftRef</code> proto + 9th <code>CollectionKind</code>; <code>aircraft_shares</code> schema; full security rules + emulator tests; scaffold <code>feature/sharing</code> (via the feature-module-scaffolder).</td><td>Yes — inert without UI.</td></tr>
+          <tr><td><b>P1 — Foundations</b></td><td><code>SharedAircraftRef</code> proto + 9th <code>CollectionKind</code>; <code>aircraft_shares</code> schema; <code>SyncDocWire.writer_uid</code> envelope field + write rule (§7.5); full security rules + emulator tests; scaffold <code>feature/sharing</code> (via the feature-module-scaffolder).</td><td>Yes — inert without UI.</td></tr>
           <tr><td><b>P2 — Membership plumbing</b></td><td>Cloud Functions (redeem/revoke/updateRole + delete trigger, protobufjs wire encoding); <code>SharingManager</code>; deep-link route.</td><td>Yes — behind flag.</td></tr>
           <tr><td><b>P3 — Sync engine</b></td><td>Refs-driven scope fan-out; <code>FirestoreDocPullSubscription</code>; push-prefix widening; <code>SharedScopeJanitor</code> + PERMISSION_DENIED handling.</td><td>Dogfood: manual Firestore-seeded share.</td></tr>
           <tr><td><b>P4 — UI</b></td><td>Manage Access, Invite/QR sheet, redeem confirmation; fleet badges; scope resolver in per-aircraft managers; role gating.</td><td>Flag on for dogfood.</td></tr>
-          <tr><td><b>P5 — Technician linkage</b></td><td>Mirror publish/outbox; picker + Manage Technicians linked sections; <code>source_uid</code> on the embedded snapshot.</td><td>Flag on for dogfood.</td></tr>
+          <tr><td><b>P5 — Technician linkage</b></td><td>Mirror publish/outbox; picker + Manage Technicians linked sections; <code>source_uid</code> on the embedded snapshot; duplicate-merge promo + <code>superseded_by_uid</code> (§7.4); self-signed / assigned indicator on logs (§7.5).</td><td>Flag on for dogfood.</td></tr>
           <tr><td><b>P6 — Hardening &amp; rollout</b></td><td>Two-account E2E passes, revocation races, copy polish; staged Feature Lab rollout.</td><td>—</td></tr>
         </tbody>
       </table>
@@ -411,6 +444,7 @@ match /aircraft_shares/{acId} {
         <li><b>Should Owners auto-publish a technician mirror? — RESOLVED: yes, every member publishes one regardless of role.</b> Role (permissions) and technician identity (appearing in the picker with license data) are orthogonal axes: Owner already supersets Technician on permissions, and owner-members who wrench on the plane (very common in partnerships, and the FAR 43 preventive-maintenance case) must be selectable by other members. The mirror is exactly the fields already stamped on a signed log, so publishing it adds no privacy exposure; certificate fields may simply be empty for non-certificated owners (name-only entry). See §7.</li>
         <li><b>Rules <code>get()</code> read cost</b> per shared-doc operation: measure in dogfood; if material, revisit custom claims (claims add invalidation complexity — deliberately not chosen for v1).</li>
         <li><b>Hydration fan-out</b> for members of many shared aircraft hits the same N+1 as own aircraft (R1 open question 5); same collection-group-query optimization applies later if telemetry warrants.</li>
+        <li><b>Merge match precision</b> (§7.4): name-only matching risks false positives (two real "J. Smith"s). v1 requires explicit confirmation for every name-only merge and never auto-applies; tune thresholds from dogfood.</li>
       </ol>
 
     </div>
