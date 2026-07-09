@@ -294,7 +294,6 @@ fun MaintenanceLogFormScreen(
                 )
 
                 2 -> LogRecordsTab(
-                  technicianEnabled = uiState.technicianEnabled,
                   selectedTechnician = uiState.selectedTechnician,
                   onTechnicianClick = viewModel::showTechnicianPicker,
                   selectedSquawkIds = uiState.selectedSquawkIds,

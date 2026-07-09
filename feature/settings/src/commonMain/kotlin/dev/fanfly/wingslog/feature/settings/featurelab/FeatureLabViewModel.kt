@@ -23,12 +23,6 @@ class FeatureLabViewModel(
     }
   }
 
-  fun setTechnicianEnabled(enabled: Boolean) {
-    viewModelScope.launch {
-      featureLabManager.update(_flags.value.copy(technicianEnabled = enabled))
-    }
-  }
-
   fun setAttachmentUploadEnabled(enabled: Boolean) {
     viewModelScope.launch {
       featureLabManager.update(_flags.value.copy(attachmentUploadEnabled = enabled))

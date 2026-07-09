@@ -108,7 +108,6 @@ class MaintenanceLogFormViewModel(
       .onEach { flags ->
         _uiState.update {
           it.copy(
-            technicianEnabled = flags.technicianEnabled,
             attachmentUploadEnabled = flags.attachmentUploadEnabled,
           )
         }

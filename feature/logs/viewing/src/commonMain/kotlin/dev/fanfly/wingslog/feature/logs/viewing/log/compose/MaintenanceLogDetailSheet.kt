@@ -66,7 +66,6 @@ fun MaintenanceLogDetailSheet(
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
-  technicianEnabled: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
   val dateStr = log.timestamp?.toLocalDate()
@@ -134,17 +133,13 @@ fun MaintenanceLogDetailSheet(
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.CenterVertically,
     ) {
-      if (technicianEnabled) {
-        val techName = log.technician?.name?.takeIf { it.isNotBlank() }
-        if (techName != null) {
-          Text(
-            text = techName,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-          )
-        } else {
-          Spacer(Modifier.height(Spacing.none))
-        }
+      val techName = log.technician?.name?.takeIf { it.isNotBlank() }
+      if (techName != null) {
+        Text(
+          text = techName,
+          style = MaterialTheme.typography.bodyMedium,
+          fontWeight = FontWeight.Medium,
+        )
       } else {
         Spacer(Modifier.height(Spacing.none))
       }

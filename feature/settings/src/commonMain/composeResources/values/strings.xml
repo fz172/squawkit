@@ -23,8 +23,6 @@
   <string name="remove_local_data">Remove this account from this device</string>
   <string name="feature_lab">Feature Lab</string>
   <string name="feature_lab_subtitle">Advanced controls. Changes sync across your devices.</string>
-  <string name="feature_lab_technician_title">Technician Management</string>
-  <string name="feature_lab_technician_subtitle">Enable the technician roster and performed-by picker on maintenance logs.</string>
   <string name="feature_lab_attachments_title">Attachment Uploads</string>
   <string name="feature_lab_attachments_subtitle">Allow uploading files and photos to maintenance records. Link attachments are always available.</string>
   <string name="feature_lab_export_email_title">Email Export Delivery</string>

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,8 +40,6 @@ import wingslog.feature.settings.generated.resources.feature_lab_attachments_tit
 import wingslog.feature.settings.generated.resources.feature_lab_export_email_subtitle
 import wingslog.feature.settings.generated.resources.feature_lab_export_email_title
 import wingslog.feature.settings.generated.resources.feature_lab_subtitle
-import wingslog.feature.settings.generated.resources.feature_lab_technician_subtitle
-import wingslog.feature.settings.generated.resources.feature_lab_technician_title
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,16 +79,6 @@ fun FeatureLabScreen(
         )
 
         Spacer(Modifier.height(Spacing.large))
-
-        HorizontalDivider()
-
-        FeatureToggleRow(
-          icon = Icons.Default.Engineering,
-          title = stringResource(Res.string.feature_lab_technician_title),
-          subtitle = stringResource(Res.string.feature_lab_technician_subtitle),
-          checked = flags.technicianEnabled,
-          onCheckedChange = viewModel::setTechnicianEnabled,
-        )
 
         HorizontalDivider()
 

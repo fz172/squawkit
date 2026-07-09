@@ -252,7 +252,6 @@ fun MaintenanceLogListContent(
               // MEDIUM and wider: a real data table instead of cards.
               MaintenanceLogTable(
                 logs = uiState.logs,
-                technicianEnabled = uiState.technicianEnabled,
                 onLogClick = onLogClick,
                 modifier = Modifier
                   // fill = false so the bordered table wraps its content height when there are
@@ -280,7 +279,6 @@ fun MaintenanceLogListContent(
                   MaintenanceLogCard(
                     log = log,
                     onClick = { onLogClick(log) },
-                    technicianEnabled = uiState.technicianEnabled,
                   )
                 }
               }
@@ -300,7 +298,6 @@ fun MaintenanceLogListContent(
                 onAttachmentTap = onAttachmentTap,
                 syncStates = syncStates,
                 openError = openError,
-                technicianEnabled = uiState.technicianEnabled,
                 onTaskClick = onTaskClick?.let { cb ->
                   { taskId ->
                     onDismissDetail()
