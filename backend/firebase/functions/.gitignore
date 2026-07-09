@@ -2,3 +2,6 @@ lib/
 node_modules/
 .env.*
 !.env.example
+
+# Firebase emulator logs (emulators:exec runs from this dir during `npm test`)
+*-debug.log

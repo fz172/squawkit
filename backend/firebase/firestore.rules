@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// Source of truth for Firestore security rules. Deployed with
+// `firebase deploy --only firestore:rules` and tested via the emulator suite in
+// functions/test. Do NOT hand-edit in the Firebase console — a deploy overwrites it.
+//
+// This is the behaviour-neutral baseline (the previous console rules). Aircraft-sharing
+// rules — the aircraft_shares ACL and shared-subtree access — are layered on top in #111.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny. Every path must be explicitly allowed below.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // A signed-in user has full access to their own subtree, keyed by their UID.
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+  }
+}
