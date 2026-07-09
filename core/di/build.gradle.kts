@@ -45,6 +45,7 @@ kotlin {
       implementation(project(":feature:logs:viewing"))
       implementation(project(":feature:settings"))
       implementation(project(":feature:shell"))
+      implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:squawk:datamanager"))
       implementation(project(":feature:squawk:update"))
       implementation(project(":feature:sync:data"))

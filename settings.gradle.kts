@@ -52,6 +52,13 @@ include(":feature:tasks:viewing")
 include(":feature:tasks:sharedassets")
 
 include(":feature:tasks:datamanager")
+
+include(":feature:sharing:model")
+include(":feature:sharing:datamanager")
+include(":feature:sharing:sharedassets")
+include(":feature:sharing:viewing")
+include(":feature:sharing:update")
+
 include(":feature:fleet:datamanager")
 include(":feature:fleet:sharedassets")
 include(":feature:fleet:viewing")
