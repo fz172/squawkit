@@ -56,6 +56,16 @@ sealed interface CollectionKind {
     override val schemaName = "aircraft.Squawk"
   }
 
+  /**
+   * Member-side index of aircraft shared *into* this account. Lives at
+   * `users/{uid}/shared_aircraft_ref/{aircraftId}` and drives the sync engine's foreign-scope
+   * fan-out. See docs/sharing §2.2.
+   */
+  data object SharedAircraftRef : CollectionKind {
+    override val wireName = "shared_aircraft_ref"
+    override val schemaName = "sharing.SharedAircraftRef"
+  }
+
   companion object {
     /**
      * The complete, ordered list of [CollectionKind] subtypes. The CollectionKindCoverageTest in
@@ -71,6 +81,7 @@ sealed interface CollectionKind {
       UserInfo,
       FeatureLab,
       Squawk,
+      SharedAircraftRef,
     )
 
     private val byWire: Map<String, CollectionKind> =

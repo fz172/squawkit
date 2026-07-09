@@ -14,6 +14,7 @@ class CollectionKindCoverageTest {
     CollectionKind.UserInfo,
     CollectionKind.FeatureLab,
     CollectionKind.Squawk,
+    CollectionKind.SharedAircraftRef,
   )
 
   @Test

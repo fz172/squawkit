@@ -418,6 +418,7 @@ class SyncEngine(
       CollectionKind.Aircraft,
       CollectionKind.Technician,
       CollectionKind.UserInfo,
+      CollectionKind.SharedAircraftRef,
     )
 
     /** Collections nested under `users/{uid}/aircraft/{ac}/<wire>/...`. Hydrated per aircraft. */

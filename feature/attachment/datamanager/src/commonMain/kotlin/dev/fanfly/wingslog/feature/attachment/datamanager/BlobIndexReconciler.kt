@@ -48,6 +48,7 @@ class BlobIndexReconciler(
         CollectionKind.Technician,
         CollectionKind.UserInfo,
         CollectionKind.FeatureLab,
+        CollectionKind.SharedAircraftRef,
           -> return
       }
     } catch (e: Exception) {
