@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.settings.FeatureLabSettings
+import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
@@ -77,6 +78,10 @@ val storageModule: Module = module {
       register(
         CollectionKind.Squawk,
         WireCodec(Squawk.ADAPTER)
+      )
+      register(
+        CollectionKind.SharedAircraftRef,
+        WireCodec(SharedAircraftRef.ADAPTER)
       )
       verifyCoverage()
     }

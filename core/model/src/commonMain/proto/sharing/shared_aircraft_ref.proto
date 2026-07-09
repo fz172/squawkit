@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option java_package = "dev.fanfly.wingslog.core.model.sharing";
+option java_multiple_files = true;
+
+// A member-side pointer to a shared aircraft that physically lives under another
+// account's tree. Stored as a synced entity at users/{memberUid}/shared_aircraft_ref/{aircraftId}
+// so it rides the existing hydrate/pull/push machinery and is available offline.
+// Written by the sharing Cloud Functions, not the client. See docs/sharing §2.2.
+message SharedAircraftRef {
+  string aircraft_id = 1;
+  string host_uid = 2;
+  // Mirror of the ACL role — a UI hint only. Enforcement is the aircraft_shares ACL;
+  // security rules never consult this ref.
+  ShareRole role = 3;
+}
+
+enum ShareRole {
+  SHARE_ROLE_UNKNOWN = 0;
+  SHARE_ROLE_OWNER = 1;
+  SHARE_ROLE_TECHNICIAN = 2;
+}
