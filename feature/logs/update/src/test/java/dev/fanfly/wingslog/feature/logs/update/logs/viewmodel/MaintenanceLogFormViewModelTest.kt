@@ -251,7 +251,27 @@ class MaintenanceLogFormViewModelTest {
     }
 
   @Test
-  fun consumeResolveSquawkPrefill_whenUserAlreadyTyped_doesNotOverwriteWorkDescription() =
+  fun consumeResolveSquawkPrefill_ignoresBlankInput_doesNotClearPendingTitle() =
+    runTest(testDispatcher) {
+      // On web, stringResource resolves the format string asynchronously and composes with
+      // an empty default first — that transient "" must not permanently drop the real value.
+      every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          Squawk(id = PRESELECTED_SQUAWK_ID, title = "Nose wheel shimmy"),
+        )
+      )
+      val viewModel =
+        buildViewModelForNew(preselectedSquawkId = PRESELECTED_SQUAWK_ID)
+      advanceUntilIdle()
+
+      viewModel.consumeResolveSquawkPrefill("")
+
+      assertThat(viewModel.uiState.value.workDescription).isEmpty()
+      assertThat(viewModel.uiState.value.pendingResolveSquawkTitle).isEqualTo("Nose wheel shimmy")
+    }
+
+  @Test
+  fun consumeResolveSquawkPrefill_whenUserAlreadyTyped_prependsInsteadOfOverwriting() =
     runTest(testDispatcher) {
       every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
         listOf(
@@ -266,7 +286,8 @@ class MaintenanceLogFormViewModelTest {
 
       viewModel.consumeResolveSquawkPrefill("Resolve squawk \"Nose wheel shimmy\"")
 
-      assertThat(viewModel.uiState.value.workDescription).isEqualTo("Already replaced the bulb")
+      assertThat(viewModel.uiState.value.workDescription)
+        .isEqualTo("Resolve squawk \"Nose wheel shimmy\"\nAlready replaced the bulb")
       assertThat(viewModel.uiState.value.pendingResolveSquawkTitle).isNull()
     }
 

@@ -194,13 +194,20 @@ class MaintenanceLogFormViewModel(
 
   /**
    * Called by the screen once it has resolved [MaintenanceLogFormUiState.pendingResolveSquawkTitle]
-   * into a localized string, to seed the work description and clear the pending marker.
+   * into a localized string, to prepend it to the work description and clear the pending marker.
+   *
+   * Blank input is ignored rather than clearing the pending marker: on web, `stringResource`
+   * resolves the format string asynchronously and composes with an empty default first, so a
+   * transient "" must not permanently drop the real value that arrives moments later.
    */
   fun consumeResolveSquawkPrefill(workDescription: String) {
+    if (workDescription.isBlank()) return
     _uiState.update {
       it.copy(
-        // Don't clobber text the user already typed while this was resolving asynchronously.
-        workDescription = if (it.workDescription.isBlank()) workDescription else it.workDescription,
+        // Prepend rather than overwrite, so text the user already typed while this was
+        // resolving asynchronously isn't lost.
+        workDescription = if (it.workDescription.isBlank()) workDescription
+        else "$workDescription\n${it.workDescription}",
         pendingResolveSquawkTitle = null,
       )
     }
