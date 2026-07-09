@@ -1,0 +1,90 @@
+name: Deploy Firestore Rules
+
+# Firestore security rules are source-controlled in backend/firebase/firestore.rules.
+# On a PR touching the rules (or their tests) this runs the emulator rules suite as a gate;
+# on merge to main it re-runs the suite and then deploys the rules to wingslog-9ca4e.
+# The Firebase console is read-only — this workflow is the only publisher.
+on:
+  pull_request:
+    paths:
+      - backend/firebase/firestore.rules
+      - backend/firebase/firebase.json
+      - backend/firebase/functions/test/**
+      - backend/firebase/functions/package.json
+      - backend/firebase/functions/vitest.config.ts
+      - .github/workflows/deploy-firestore-rules.yml
+  push:
+    branches: [main]
+    paths:
+      - backend/firebase/firestore.rules
+      - backend/firebase/firebase.json
+      - backend/firebase/functions/test/**
+      - backend/firebase/functions/package.json
+      - backend/firebase/functions/vitest.config.ts
+      - .github/workflows/deploy-firestore-rules.yml
+  workflow_dispatch:
+
+# Never cancel an in-flight production deploy; serialize rule deploys.
+concurrency:
+  group: deploy-firestore-rules
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test rules (emulator)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/firebase/functions
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/firebase/functions/package-lock.json
+
+      # The Firestore emulator is a Java process.
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Install dependencies
+        run: npm ci
+
+      # `npm test` runs `firebase emulators:exec`, so the CLI must be on PATH as `firebase`.
+      - name: Install firebase-tools
+        run: npm i -g firebase-tools@latest
+
+      - name: Run rules tests against the Firestore emulator
+        run: npm test
+
+  deploy:
+    name: Deploy rules to wingslog-9ca4e
+    needs: test
+    # PRs only gate on the tests above; deploy runs on merge to main and manual dispatch.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/firebase
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # Mirrors the auth pattern in deploy-web.yml: write the service-account key to a temp file,
+      # point ADC at it, deploy, and remove the key even if the deploy fails.
+      - name: Deploy Firestore rules
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WINGSLOG_9CA4E }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          trap 'rm -f "$RUNNER_TEMP/firebase-sa.json"' EXIT
+          npx firebase-tools@latest deploy --only firestore:rules \
+            --project wingslog-9ca4e --non-interactive
