@@ -27,6 +27,8 @@ data class SyncWrite(
   val payload: ByteArray,
   val deleted: Boolean,
   val schema: String,
+  /** The uid whose queue is being drained; stamped onto the doc envelope for authorship attestation. */
+  val writerUid: String,
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -36,7 +38,8 @@ data class SyncWrite(
       id == other.id &&
       payload.contentEquals(other.payload) &&
       deleted == other.deleted &&
-      schema == other.schema
+      schema == other.schema &&
+      writerUid == other.writerUid
   }
 
   override fun hashCode(): Int {
@@ -46,6 +49,7 @@ data class SyncWrite(
     result = 31 * result + payload.contentHashCode()
     result = 31 * result + deleted.hashCode()
     result = 31 * result + schema.hashCode()
+    result = 31 * result + writerUid.hashCode()
     return result
   }
 }

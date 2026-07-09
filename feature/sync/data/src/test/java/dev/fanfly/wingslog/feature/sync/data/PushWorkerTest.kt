@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -62,6 +63,19 @@ class PushWorkerTest {
     val remaining = db.schemaQueries.selectDirty(limit = 100L)
       .executeAsList()
     assertThat(remaining).isEmpty()
+  }
+
+  @Test
+  fun run_stampsPushingUidAsWriterUid() = runTest(ioContext) {
+    insertDirtyRow("log-1")
+    val captured = slot<SyncWrite>()
+    coEvery { writer.push(capture(captured)) } returns Unit
+
+    val job = launch { worker.run(TEST_USER_ID) }
+    testScheduler.advanceUntilIdle()
+    job.cancel()
+
+    assertThat(captured.captured.writerUid).isEqualTo(TEST_USER_ID)
   }
 
   @Test

@@ -61,10 +61,10 @@ class PushWorker(
       .map { it > 0L }
       .distinctUntilChanged()
       .filter { it }
-      .collect { drain(prefix) }
+      .collect { drain(prefix, uid) }
   }
 
-  private suspend fun drain(scopePrefix: String) {
+  private suspend fun drain(scopePrefix: String, uid: String) {
     while (true) {
       val rows = db.schemaQueries
         .selectDirtyInScope(
@@ -74,7 +74,7 @@ class PushWorker(
         .awaitAsList()
       if (rows.isEmpty()) return
       for (row in rows) {
-        val ok = pushOne(row)
+        val ok = pushOne(row, uid)
         if (!ok) {
           // Stop draining this tick; the row stays dirty and the next countDirty>0 edge or
           // an external retry kicks the next attempt. Avoids hot-looping on a hard failure.
@@ -84,7 +84,7 @@ class PushWorker(
     }
   }
 
-  private suspend fun pushOne(row: DirtyRow): Boolean = runCatching {
+  private suspend fun pushOne(row: DirtyRow, uid: String): Boolean = runCatching {
     writer.push(
       SyncWrite(
         kind = row.collection,
@@ -93,6 +93,7 @@ class PushWorker(
         payload = row.payload,
         deleted = row.deleted,
         schema = row.collection.schemaName,
+        writerUid = uid,
       ),
     )
     writeLock.withLock {

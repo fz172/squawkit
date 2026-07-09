@@ -27,6 +27,7 @@ class FirestoreSyncWriter(private val firestore: FirebaseFirestore) :
         deleted = write.deleted,
         schema = write.schema,
         lastUpdateTimestamp = Timestamp.ServerTimestamp,
+        writerUid = write.writerUid,
       ),
     )
   }
