@@ -29,4 +29,20 @@
   <string name="invite_cancel">Cancel invite</string>
   <string name="invite_qr_desc">Invite QR code</string>
   <string name="invite_new">New invite</string>
+  <!-- Redeem confirmation -->
+  <string name="redeem_confirm_title">Aircraft invitation</string>
+  <string name="redeem_confirm_body">You\'ve been invited to share an aircraft. Accept to add it to your fleet.</string>
+  <string name="redeem_accept">Accept</string>
+  <string name="redeem_decline">Not now</string>
+  <string name="redeem_dismiss">OK</string>
+  <string name="redeem_needs_signin_title">Sign in to accept</string>
+  <string name="redeem_needs_signin_body">Sign in with your account to accept this invitation. It will still be here when you\'re signed in.</string>
+  <string name="redeem_success_title">You\'re in</string>
+  <string name="redeem_success_body">You now have access as %1$s. The aircraft will appear in your fleet shortly.</string>
+  <string name="redeem_already_member_title">Already a member</string>
+  <string name="redeem_already_member_body">You already have access to this aircraft.</string>
+  <string name="redeem_failed_title">Invite unavailable</string>
+  <string name="redeem_failed_body">This invite link is invalid, already used, or has expired.</string>
+  <string name="redeem_role_owner">an owner</string>
+  <string name="redeem_role_technician">a technician</string>
 </resources>

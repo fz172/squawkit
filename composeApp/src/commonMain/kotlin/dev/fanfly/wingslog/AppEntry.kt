@@ -26,6 +26,7 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
 import dev.fanfly.wingslog.feature.login.AuthFlow
+import dev.fanfly.wingslog.feature.sharing.update.RedeemHost
 import dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute
 import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
 import dev.fanfly.wingslog.feature.shell.TrackRootScreenViews
@@ -93,6 +94,8 @@ fun AppEntry() {
           // tier hosts its own nested copy of these inside the Settings section (see SettingsSection).
           settingsDetailRoutes(navController, appCapability.isStressTestSupported)
         }
+        // App-root overlay for inbound share deep links (parked invites), above the nav graph.
+        RedeemHost()
       }
     }
   }
