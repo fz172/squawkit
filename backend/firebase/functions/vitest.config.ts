@@ -9,5 +9,8 @@ export default defineConfig({
     environment: "node",
     testTimeout: 15000,
     hookTimeout: 30000,
+    // All suites share one emulator project namespace, so run files sequentially — otherwise
+    // one file's clearFirestore/wipe stomps another's seeded data mid-test.
+    fileParallelism: false,
   },
 });
