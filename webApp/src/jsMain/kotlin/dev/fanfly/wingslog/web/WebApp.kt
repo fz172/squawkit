@@ -30,6 +30,7 @@ import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
 import dev.fanfly.wingslog.feature.shell.TrackRootScreenViews
 import dev.fanfly.wingslog.feature.shell.formDialogs
 import dev.fanfly.wingslog.feature.shell.settingsDetailRoutes
+import dev.fanfly.wingslog.feature.shell.sharingRoutes
 import kotlinx.browser.document
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.rememberResourceEnvironment
@@ -121,6 +122,7 @@ fun WebApp() {
               )
             }
             formDialogs(navController)
+            sharingRoutes(navController)
             // Compact tiers (no sidebar) open settings detail pages as full-screen routes.
             settingsDetailRoutes(
               navController,
