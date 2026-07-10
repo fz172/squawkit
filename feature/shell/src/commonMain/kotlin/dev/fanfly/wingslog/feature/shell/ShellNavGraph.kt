@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
+import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
 import dev.fanfly.wingslog.feature.stresstest.config.StressTestFeatureLabExtra
@@ -137,6 +138,19 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
  * Stress-test routes and the FeatureLab debug entry are gated on [isStressTestSupported]
  * (`AppCapability.isStressTestSupported`) on every host.
  */
+/**
+ * Per-aircraft sharing destinations, registered once on the root graph so both hosts render them.
+ * Reached from an aircraft's context (the entry point + role-gated visibility land with #133).
+ */
+fun NavGraphBuilder.sharingRoutes(navController: NavController) {
+  composable(
+    route = Screen.ManageAccess.route,
+    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType }),
+  ) {
+    ManageAccessRoute(navController = navController)
+  }
+}
+
 fun NavGraphBuilder.settingsDetailRoutes(
   navController: NavController,
   isStressTestSupported: Boolean,

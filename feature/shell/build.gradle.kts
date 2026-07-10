@@ -52,6 +52,7 @@ kotlin {
       implementation(project(":feature:fleet:viewing"))
       implementation(project(":feature:logs:update"))
       implementation(project(":feature:settings"))
+      implementation(project(":feature:sharing:update"))
       implementation(project(":feature:squawk:update"))
       implementation(project(":feature:stresstest:config"))
       implementation(project(":feature:sync:settings"))

@@ -35,6 +35,10 @@ sealed class Screen(val route: String) {
     fun createRoute(aircraftId: String) = "edit_aircraft/$aircraftId"
   }
 
+  data object ManageAccess : Screen("manage_access/{$AIRCRAFT_ID}") {
+    fun createRoute(aircraftId: String) = "manage_access/$aircraftId"
+  }
+
   data object AddMaintenanceTask :
     Screen("maintenance_task_create/{$AIRCRAFT_ID}") {
     fun createRoute(aircraftId: String) = "maintenance_task_create/$aircraftId"

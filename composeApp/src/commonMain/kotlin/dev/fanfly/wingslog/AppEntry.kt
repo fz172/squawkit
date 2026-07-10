@@ -31,6 +31,7 @@ import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
 import dev.fanfly.wingslog.feature.shell.TrackRootScreenViews
 import dev.fanfly.wingslog.feature.shell.formDialogs
 import dev.fanfly.wingslog.feature.shell.settingsDetailRoutes
+import dev.fanfly.wingslog.feature.shell.sharingRoutes
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -87,6 +88,7 @@ fun AppEntry() {
           authGraph(navController)
           shellGraph(navController, appCapability.isStressTestSupported)
           formDialogs(navController)
+          sharingRoutes(navController)
           // Compact tiers (no sidebar) open settings detail pages as full-screen routes; the sidebar
           // tier hosts its own nested copy of these inside the Settings section (see SettingsSection).
           settingsDetailRoutes(navController, appCapability.isStressTestSupported)

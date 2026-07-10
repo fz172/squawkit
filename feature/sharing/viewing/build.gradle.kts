@@ -37,7 +37,10 @@ kotlin {
       implementation(libs.compose.runtime)
       implementation(libs.compose.foundation)
       implementation(libs.material3)
+      implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
+      implementation(project(":core:ui:adaptive"))
+      implementation(project(":core:ui:theme"))
       implementation(project(":feature:sharing:model"))
       implementation(project(":feature:sharing:sharedassets"))
     }

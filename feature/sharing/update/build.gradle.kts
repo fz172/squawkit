@@ -37,11 +37,21 @@ kotlin {
       implementation(libs.compose.runtime)
       implementation(libs.compose.foundation)
       implementation(libs.material3)
+      implementation(project(":core:nav"))
       implementation(project(":core:ui"))
       implementation(project(":feature:sharing:model"))
       implementation(project(":feature:sharing:sharedassets"))
       implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:sharing:viewing"))
+      implementation(libs.koin.compose.viewmodel)
+      implementation(libs.androidx.navigation.compose)
     }
   }
+}
+
+dependencies {
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
+  testImplementation(libs.mockk)
+  testImplementation(libs.kotlinx.coroutines.test)
 }

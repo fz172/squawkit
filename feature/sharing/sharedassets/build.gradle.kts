@@ -19,6 +19,11 @@ android {
   }
 }
 
+// Expose the generated `Res` class so the viewing/update modules can reference these strings.
+compose.resources {
+  publicResClass = true
+}
+
 kotlin {
   jvmToolchain(21)
 
@@ -37,6 +42,7 @@ kotlin {
       implementation(libs.compose.runtime)
       implementation(libs.compose.foundation)
       implementation(libs.material3)
+      implementation(libs.components.resources)
     }
   }
 }
