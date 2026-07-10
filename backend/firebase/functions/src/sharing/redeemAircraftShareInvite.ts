@@ -48,6 +48,8 @@ export const redeemAircraftShareInvite = onCall<RedeemRequest, Promise<RedeemRes
       const share = shareSnap.data() as AircraftShareDoc;
       const invite = inviteSnap.data() as ShareInviteDoc;
 
+      // `revoked` is set by owner action (cancelInvite) — a manual cancellation, distinct from the
+      // time-based `expiresAt` below. See docs/sharing §3.1/§3.3.
       if (invite.revoked) throw new HttpsError("failed-precondition", "This invite was cancelled.");
       if (invite.expiresAt.toMillis() <= Date.now()) {
         throw new HttpsError("failed-precondition", "This invite has expired.");
@@ -93,6 +95,10 @@ function sha256Hex(secret: string): string {
   return createHash("sha256").update(secret).digest("hex");
 }
 
+/**
+ * Expects `{ aircraftId: string, secret: string }` — the aircraft id and the invite secret parsed
+ * from the share URL fragment (`/share#{aircraftId}.{secret}`). Both required and non-empty.
+ */
 function parseRequest(data: unknown): RedeemRequest {
   const obj = (data ?? {}) as Record<string, unknown>;
   const aircraftId = typeof obj.aircraftId === "string" ? obj.aircraftId.trim() : "";

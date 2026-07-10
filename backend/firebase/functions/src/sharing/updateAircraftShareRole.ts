@@ -52,6 +52,10 @@ export const updateAircraftShareRole = onCall<UpdateRoleRequest, Promise<{ ok: t
   },
 );
 
+/**
+ * Expects `{ aircraftId: string, memberUid: string, role: 'owner' | 'technician' }` — the shared
+ * aircraft, the member whose role changes, and the new role. All required.
+ */
 function parseRequest(data: unknown): UpdateRoleRequest {
   const obj = (data ?? {}) as Record<string, unknown>;
   const aircraftId = typeof obj.aircraftId === "string" ? obj.aircraftId.trim() : "";

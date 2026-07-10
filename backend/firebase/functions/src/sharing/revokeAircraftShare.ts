@@ -53,6 +53,10 @@ export const revokeAircraftShare = onCall<RevokeRequest, Promise<{ ok: true }>>(
   },
 );
 
+/**
+ * Expects `{ aircraftId: string, memberUid: string }` — the shared aircraft and the member to
+ * remove (memberUid === caller for the "leave" case). Both required and non-empty.
+ */
 function parseRequest(data: unknown): RevokeRequest {
   const obj = (data ?? {}) as Record<string, unknown>;
   const aircraftId = typeof obj.aircraftId === "string" ? obj.aircraftId.trim() : "";

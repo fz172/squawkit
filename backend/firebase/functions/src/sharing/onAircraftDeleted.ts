@@ -6,14 +6,8 @@ import { adminDb } from "../config/firebaseAdmin.js";
 import { sharedAircraftRefTombstone } from "./sharedAircraftRefWire.js";
 import { aircraftShareDocPath, type AircraftShareDoc } from "./sharingModels.js";
 
-/** The synced per-aircraft kinds nested under users/{uid}/aircraft/{acId}. */
-const PER_AIRCRAFT_KINDS = [
-  "maintenance_log",
-  "maintenance_task",
-  "maintenance_overview",
-  "squawk",
-] as const;
-
+// Firestore caps a WriteBatch at 500 operations; we chunk child tombstones at 400 for headroom so
+// an aircraft with many logs/tasks/squawks tombstones in a few batched round-trips, not N writes.
 const BATCH_LIMIT = 400;
 
 /**
@@ -59,10 +53,16 @@ async function tearDownShare(acId: string): Promise<void> {
   await adminDb.recursiveDelete(shareRef);
 }
 
-/** Tombstone every child record (soft delete) so it propagates and can be GC'd — never hard-deleted here. */
+/**
+ * Tombstone every child record (soft delete) so it propagates and can be GC'd — never hard-deleted
+ * here. Child subcollections are discovered with listCollections() rather than a hardcoded kind
+ * list, so this stays correct as per-aircraft kinds change (e.g. attachments) with no code to keep
+ * in sync with the client's CollectionKind.
+ */
 async function tombstoneChildren(uid: string, acId: string): Promise<void> {
-  for (const kind of PER_AIRCRAFT_KINDS) {
-    const docs = await adminDb.collection(`users/${uid}/aircraft/${acId}/${kind}`).get();
+  const collections = await adminDb.doc(`users/${uid}/aircraft/${acId}`).listCollections();
+  for (const collection of collections) {
+    const docs = await collection.get();
     let batch = adminDb.batch();
     let pending = 0;
     for (const child of docs.docs) {
