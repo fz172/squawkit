@@ -8,6 +8,7 @@ on:
       - backend/firebase/functions/src/**
       - backend/firebase/functions/test/**
       - backend/firebase/functions/package.json
+      - backend/firebase/functions/.env
       - backend/firebase/functions/package-lock.json
       - backend/firebase/functions/tsconfig.json
       - backend/firebase/firebase.json
@@ -18,6 +19,7 @@ on:
       - backend/firebase/functions/src/**
       - backend/firebase/functions/test/**
       - backend/firebase/functions/package.json
+      - backend/firebase/functions/.env
       - backend/firebase/functions/package-lock.json
       - backend/firebase/functions/tsconfig.json
       - backend/firebase/firebase.json
