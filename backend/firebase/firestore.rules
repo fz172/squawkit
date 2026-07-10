@@ -61,8 +61,12 @@ service cloud.firestore {
       // forces the doc-level sync path (docs/sharing §5.2). Only owners may edit the aircraft.
       match /aircraft/{acId} {
         allow get: if request.auth.uid == userId || isShareMember(acId);
+        // Co-owners may edit the aircraft, but only the hosting owner may delete it — deleting an
+        // aircraft tears down the whole share (§3.3), so it must not be a peer-owner capability.
+        // The tombstone is a write with deleted=true; restricting that to the own-tree branch
+        // leaves deletion to the host. PRD §4: "Delete the aircraft — hosting owner only."
         allow write: if request.auth.uid == userId
-          || (isShareOwner(acId) && writerIsSelf());
+          || (isShareOwner(acId) && writerIsSelf() && request.resource.data.deleted != true);
 
         // Nested maintenance data: any member may read; any member may write the known kinds,
         // attested. (The host's own writes are already granted by the own-tree rule above.)
