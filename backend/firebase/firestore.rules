@@ -1,24 +1,103 @@
 rules_version = '2';
 
-// Source of truth for Firestore security rules. Deployed with
-// `firebase deploy --only firestore:rules` and tested via the emulator suite in
-// functions/test. Do NOT hand-edit in the Firebase console — a deploy overwrites it.
+// Source of truth for Firestore security rules. Deployed by the
+// "Deploy Firestore Rules" GitHub Action (or `firebase deploy --only firestore:rules`) and tested
+// via the emulator suite in functions/test. Do NOT hand-edit in the Firebase console — a deploy
+// overwrites it.
 //
-// This is the behaviour-neutral baseline (the previous console rules). Aircraft-sharing
-// rules — the aircraft_shares ACL and shared-subtree access — are layered on top in #111.
+// Aircraft sharing (docs/sharing): an aircraft and its records physically stay under the hosting
+// owner's tree (users/{host}/aircraft/{acId}/...). Other accounts are granted access by the
+// aircraft_shares/{acId} ACL, which these rules consult with a single get(). Field names are
+// camelCase to match the client envelope and the functions schema (sharingModels.ts).
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny. Every path must be explicitly allowed below.
+    // --- Sharing helpers -----------------------------------------------------------------------
+
+    // The caller's role on a shared aircraft, or null/error if they aren't in the ACL.
+    // A single get() per shared-scope request (billed as one read, cached per request).
+    function shareRole(acId) {
+      return get(/databases/$(database)/documents/aircraft_shares/$(acId))
+        .data.memberRoles[request.auth.uid];
+    }
+    function isShareOwner(acId) {
+      return shareRole(acId) == 'owner';
+    }
+    function isShareMember(acId) {
+      return shareRole(acId) in ['owner', 'technician'];
+    }
+
+    // Authorship attestation: a client write must stamp its own uid as writerUid (or omit it —
+    // legacy/unattested docs). Makes "who wrote this revision" tamper-evident. See docs/sharing §7.5.
+    function writerIsSelf() {
+      return !('writerUid' in request.resource.data)
+        || request.resource.data.writerUid == request.auth.uid;
+    }
+
+    // Only the four synced per-aircraft kinds may be written into a shared aircraft's subtree,
+    // so a member can't create arbitrary subcollections in the host's tree.
+    function isSharedAircraftKind(kind) {
+      return kind in ['maintenance_log', 'maintenance_task', 'maintenance_overview', 'squawk'];
+    }
+
+    // --- Default deny --------------------------------------------------------------------------
+
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // A signed-in user has full access to their own subtree, keyed by their UID.
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth.uid == userId;
+    // --- User trees ----------------------------------------------------------------------------
+
+    match /users/{userId} {
+
+      // Own tree: unchanged — a signed-in user has full access to their own subtree.
+      match /{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+
+      // Shared aircraft document. Members may GET it (they know the id from their ref) but not
+      // LIST the host's aircraft collection — that keeps the host's OTHER aircraft private and
+      // forces the doc-level sync path (docs/sharing §5.2). Only owners may edit the aircraft.
+      match /aircraft/{acId} {
+        allow get: if request.auth.uid == userId || isShareMember(acId);
+        allow write: if request.auth.uid == userId
+          || (isShareOwner(acId) && writerIsSelf());
+
+        // Nested maintenance data: any member may read; any member may write the known kinds,
+        // attested. (The host's own writes are already granted by the own-tree rule above.)
+        match /{kind}/{docId} {
+          allow read: if request.auth.uid == userId || isShareMember(acId);
+          allow write: if request.auth.uid == userId
+            || (isSharedAircraftKind(kind) && isShareMember(acId) && writerIsSelf());
+        }
+      }
     }
 
+    // --- Share ACL tree (plain-field, rules-readable) ------------------------------------------
+
+    match /aircraft_shares/{acId} {
+      // Members see the ACL; a host may read it for an aircraft in their own tree (e.g. before
+      // any member exists). memberRoles is function-managed, so no client update/delete.
+      allow get: if isShareMember(acId)
+        || exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId));
+      allow create: if request.resource.data.hostUid == request.auth.uid
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId));
+      allow update, delete: if false; // functions only
+
+      match /members/{memberUid} {
+        allow read: if isShareMember(acId);
+        // A member maintains their own display + technician mirror; role stays immutable from
+        // clients (function-managed). Create/delete are function-only.
+        allow update: if request.auth.uid == memberUid
+          && request.resource.data.role == resource.data.role;
+        allow create, delete: if false;
+      }
+
+      match /invites/{tokenHash} {
+        allow read, create, update: if isShareOwner(acId); // create/cancel invites
+        allow delete: if false;
+      }
+    }
   }
 }

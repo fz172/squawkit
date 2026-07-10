@@ -118,6 +118,10 @@
       <h2 id="datamodel">2. Data Model</h2>
 
       <h3 id="acl">2.1 The share tree (plain-field, rules-readable)</h3>
+      <div class="callout note">
+        <strong>Field names are camelCase in the implementation</strong>
+        The sketches below (and the rules in §4) use <code>snake_case</code> for readability, but the shipped documents use <b>camelCase</b> to match the client envelope and the functions schema — <code>host_uid</code>→<code>hostUid</code>, <code>member_roles</code>→<code>memberRoles</code>, <code>display_name</code>→<code>displayName</code>, <code>technician_mirror</code>→<code>technicianMirror</code>, <code>writer_uid</code>→<code>writerUid</code>, and so on. The canonical definitions live in <code>backend/firebase/functions/src/sharing/sharingModels.ts</code> and the deployed <code>backend/firebase/firestore.rules</code>.
+      </div>
       <p>One new top-level collection, keyed by aircraft id (aircraft ids are globally-unique random UUIDs, so no host prefix is needed):</p>
       <pre><code>aircraft_shares/{acId}                      // root doc — the ACL, read by security rules
   host_uid:      string                     // account whose tree physically holds the data

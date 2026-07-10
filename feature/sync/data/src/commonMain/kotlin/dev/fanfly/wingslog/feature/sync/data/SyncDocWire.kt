@@ -22,6 +22,13 @@ internal data class SyncDocWire(
   val deleted: Boolean,
   val schema: String,
   val lastUpdateTimestamp: BaseTimestamp,
+  /**
+   * Author of this revision — the uid whose [PushWorker] wrote it. Lives on the envelope (outside
+   * the opaque [payload]) so security rules can read it: on the shared aircraft subtree they require
+   * `request.resource.data.writerUid == request.auth.uid`, making authorship tamper-evident. Nullable
+   * with a default because pre-attestation docs and function-written refs omit it. See docs/sharing §7.5.
+   */
+  val writerUid: String? = null,
 )
 
 internal fun BaseTimestamp.epochMsOrNull(): Long? =
