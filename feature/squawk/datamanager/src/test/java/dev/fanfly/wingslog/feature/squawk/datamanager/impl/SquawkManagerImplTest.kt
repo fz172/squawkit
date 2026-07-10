@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.squawk.datamanager.impl
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
@@ -13,7 +14,9 @@ import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -47,7 +50,7 @@ class SquawkManagerImplTest {
     every { firebaseAuth.currentUser } returns mockUser
     every { firebaseAuth.authStateChanged } returns flowOf(mockUser)
 
-    manager = SquawkManagerImpl(firebaseAuth, storeFactory)
+    manager = SquawkManagerImpl(FakeScopeResolver(firebaseAuth), storeFactory)
   }
 
   // ---- dismissSquawk — happy path ----
@@ -259,4 +262,21 @@ class SquawkManagerImplTest {
     addressed_by_log_id = addressedByLogId,
     dismiss_reason = dismissReason,
   )
+}
+
+/**
+ * Own-aircraft resolver driven by the same mocked auth the tests already set up: signed in →
+ * `aircraftChild(uid, id)`, signed out → null / throw. Keeps these unit tests focused on the manager
+ * (the own-vs-shared logic is covered by AircraftScopeResolverImplTest).
+ */
+private class FakeScopeResolver(private val auth: FirebaseAuth) : AircraftScopeResolver {
+  override fun resolve(aircraftId: String): Flow<EntityScope?> =
+    auth.authStateChanged.map { user ->
+      user?.uid?.let { EntityScope.aircraftChild(it, aircraftId) }
+    }
+
+  override suspend fun resolveNow(aircraftId: String): EntityScope {
+    val uid = auth.currentUser?.uid ?: error("Not signed in")
+    return EntityScope.aircraftChild(uid, aircraftId)
+  }
 }
