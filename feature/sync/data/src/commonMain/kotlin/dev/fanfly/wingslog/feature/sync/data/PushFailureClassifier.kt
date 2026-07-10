@@ -44,3 +44,13 @@ internal fun classifyPushFailure(throwable: Throwable): SyncFailure? {
   }
   return SyncFailure.Push("Sync error: ${throwable.message ?: throwable::class.simpleName ?: "unknown"}")
 }
+
+/**
+ * True when [throwable] is a Firestore `PERMISSION_DENIED`. On a **shared** scope this is the
+ * reliable "the rules denied us because we were revoked" signal (rules don't flap — transient
+ * problems surface as `UNAVAILABLE`/`DEADLINE_EXCEEDED`/etc.), so the sync engine treats it as a
+ * revocation and reconciles locally rather than showing an auth banner. See docs/sharing §5.4.
+ */
+internal fun isPermissionDenied(throwable: Throwable): Boolean =
+  throwable is FirebaseFirestoreException &&
+    throwable.code == FirestoreExceptionCode.PERMISSION_DENIED

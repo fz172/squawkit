@@ -124,4 +124,35 @@ class PushFailureClassifierTest {
     assertThat(result).isInstanceOf(SyncFailure.Push::class.java)
     assertThat((result as SyncFailure.Push).message).isNotEmpty()
   }
+
+  // --- isPermissionDenied (shared-scope revocation signal, §5.4) ---
+
+  @Test
+  fun isPermissionDenied_firestorePermissionDenied_isTrue() {
+    val e = mockk<FirebaseFirestoreException>()
+    every { e.code } returns FirestoreExceptionCode.PERMISSION_DENIED
+
+    assertThat(isPermissionDenied(e)).isTrue()
+  }
+
+  @Test
+  fun isPermissionDenied_firestoreUnauthenticated_isFalse() {
+    val e = mockk<FirebaseFirestoreException>()
+    every { e.code } returns FirestoreExceptionCode.UNAUTHENTICATED
+
+    assertThat(isPermissionDenied(e)).isFalse()
+  }
+
+  @Test
+  fun isPermissionDenied_firestoreUnavailable_isFalse() {
+    val e = mockk<FirebaseFirestoreException>()
+    every { e.code } returns FirestoreExceptionCode.UNAVAILABLE
+
+    assertThat(isPermissionDenied(e)).isFalse()
+  }
+
+  @Test
+  fun isPermissionDenied_nonFirestoreThrowable_isFalse() {
+    assertThat(isPermissionDenied(IllegalStateException("boom"))).isFalse()
+  }
 }

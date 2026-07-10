@@ -5,6 +5,7 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
@@ -14,6 +15,7 @@ import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine.Companion.PUSH_FAILURE_KEY
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -62,6 +64,7 @@ class SyncEngine(
   private val db: WingsLogDatabase? = null,
   private val uploadScheduler: UploadScheduler? = null,
   private val sharedScopeJanitor: SharedScopeJanitor? = null,
+  private val writeLock: DatabaseWriteLock? = null,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -305,7 +308,9 @@ class SyncEngine(
           val subScope = CoroutineScope(subSupervisor + ioContext)
           for ((hostUid, aircraftId) in sharedScopes) {
             // The aircraft doc itself: doc-level (a list over the host's aircraft collection is denied).
-            subScope.launch {
+            // Each watcher is wrapped so a PERMISSION_DENIED — the rules denying us because we were
+            // revoked while the ref tombstone was still in flight — reconciles as a local revoke (§5.4).
+            subScope.launchSharedWatch(uid, aircraftId) {
               watchDocAndListen(
                 uid,
                 CollectionKind.Aircraft,
@@ -318,7 +323,7 @@ class SyncEngine(
               aircraftId
             )
             for (kind in PER_AIRCRAFT_KINDS) {
-              subScope.launch {
+              subScope.launchSharedWatch(uid, aircraftId) {
                 hydrateAndListen(
                   uid,
                   kind,
@@ -328,6 +333,53 @@ class SyncEngine(
             }
           }
         }
+    }
+  }
+
+  /**
+   * Launches one shared-scope watcher, translating a Firestore `PERMISSION_DENIED` into a local
+   * revoke. Belt-and-braces for the race in docs/sharing §5.4: if a member is revoked while offline
+   * and the listeners resume before the ref tombstone is delivered, the shared scope denies us. We
+   * treat that as "revoked" and reconcile locally (see [revokeSharedLocally]) instead of surfacing an
+   * auth banner. Any other failure propagates to the per-scope supervisor as before; cancellation
+   * (a ref-set change tearing this cycle down) is re-thrown untouched.
+   */
+  private fun CoroutineScope.launchSharedWatch(
+    memberUid: String,
+    aircraftId: String,
+    block: suspend () -> Unit,
+  ): Job = launch {
+    try {
+      block()
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: Throwable) {
+      if (isPermissionDenied(e)) {
+        log.i { "PERMISSION_DENIED on shared aircraft $aircraftId; treating as revoked (§5.4)" }
+        revokeSharedLocally(memberUid, aircraftId)
+      } else {
+        throw e
+      }
+    }
+  }
+
+  /**
+   * Hard-deletes the member's stale local ref for [aircraftId]. This drops the aircraft from the
+   * live-refs set the refs branch observes, which re-spins the cycle: [SharedScopeJanitor] purges
+   * the now-orphaned local data and this scope's watchers are torn down — the same teardown a
+   * normally-delivered ref tombstone would trigger. It is a **local** delete on purpose: no dirty
+   * tombstone is queued, so we never push a deletion that could clobber a still-live server ref; the
+   * revoke function's authoritative tombstone reconciles the ref server-side. See docs/sharing §5.4.
+   */
+  private suspend fun revokeSharedLocally(memberUid: String, aircraftId: String) {
+    val database = db ?: return
+    val lock = writeLock ?: return
+    lock.withLock {
+      database.schemaQueries.deleteEntity(
+        CollectionKind.SharedAircraftRef,
+        EntityScope.userRoot(memberUid).toPath(),
+        aircraftId,
+      )
     }
   }
 

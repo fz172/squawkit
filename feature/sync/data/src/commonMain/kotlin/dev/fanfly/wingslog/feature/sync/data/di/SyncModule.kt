@@ -115,6 +115,7 @@ val syncModule: Module = module {
       db = db,
       uploadScheduler = uploadScheduler,
       sharedScopeJanitor = SharedScopeJanitor(db, writeLock),
+      writeLock = writeLock,
     )
   }
 }
