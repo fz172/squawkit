@@ -3,12 +3,11 @@ package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
-import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -17,7 +16,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 class TaskDataManagerImpl(
-  private val firebaseAuth: FirebaseAuth,
+  private val scopeResolver: AircraftScopeResolver,
   storeFactory: EntityStoreFactory,
 ) : TaskDataManager {
 
@@ -26,12 +25,12 @@ class TaskDataManagerImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeTasks(aircraftId: String): Flow<List<MaintenanceTask>> =
-    firebaseAuth.authStateChanged.flatMapLatest { user ->
-      if (user == null) {
-        logger.d { "User logged out, stopping tasks observation for aircraft $aircraftId" }
+    scopeResolver.resolve(aircraftId).flatMapLatest { scope ->
+      if (scope == null) {
+        logger.d { "No signed-in user; stopping tasks observation for aircraft $aircraftId" }
         flowOf(emptyList())
       } else {
-        store.observeAll(EntityScope.aircraftChild(user.uid, aircraftId))
+        store.observeAll(scope)
           .map { rows -> rows.map { it.value } }
           .catch { e ->
             logger.w(e) { "Error observing tasks for aircraft $aircraftId" }
@@ -45,10 +44,10 @@ class TaskDataManagerImpl(
     card: MaintenanceTask
   ): Result<Boolean> =
     runCatching {
-      val uid = requireUid()
+      val scope = scopeResolver.resolveNow(aircraftId)
       val withId =
         if (card.id.isEmpty()) card.copy(id = generateRandomId()) else card
-      store.put(withId.id, withId, EntityScope.aircraftChild(uid, aircraftId))
+      store.put(withId.id, withId, scope)
       true
     }.onFailure { logger.w(it) { "Error adding task" } }
 
@@ -57,8 +56,8 @@ class TaskDataManagerImpl(
     card: MaintenanceTask
   ): Result<Boolean> =
     runCatching {
-      val uid = requireUid()
-      store.put(card.id, card, EntityScope.aircraftChild(uid, aircraftId))
+      val scope = scopeResolver.resolveNow(aircraftId)
+      store.put(card.id, card, scope)
       true
     }.onFailure { logger.w(it) { "Error updating task ${card.id}" } }
 
@@ -67,14 +66,10 @@ class TaskDataManagerImpl(
     cardId: String
   ): Result<Boolean> =
     runCatching {
-      val uid = requireUid()
-      store.delete(cardId, EntityScope.aircraftChild(uid, aircraftId))
+      val scope = scopeResolver.resolveNow(aircraftId)
+      store.delete(cardId, scope)
       true
     }.onFailure { logger.w(it) { "Error deleting task $cardId" } }
-
-  private fun requireUid(): String =
-    firebaseAuth.currentUser?.uid
-      ?: error("Cannot mutate tasks when no user is signed in")
 
   companion object {
     private val logger = Logger.withTag("TaskDataManagerImpl")

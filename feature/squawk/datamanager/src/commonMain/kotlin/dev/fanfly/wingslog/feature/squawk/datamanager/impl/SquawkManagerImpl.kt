@@ -5,12 +5,11 @@ import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
-import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
-import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -21,7 +20,7 @@ import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
 
 class SquawkManagerImpl(
-  private val firebaseAuth: FirebaseAuth,
+  private val scopeResolver: AircraftScopeResolver,
   storeFactory: EntityStoreFactory,
 ) : SquawkManager {
 
@@ -30,11 +29,11 @@ class SquawkManagerImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeSquawks(aircraftId: String): Flow<List<Squawk>> =
-    firebaseAuth.authStateChanged.flatMapLatest { user ->
-      if (user == null) {
+    scopeResolver.resolve(aircraftId).flatMapLatest { scope ->
+      if (scope == null) {
         flowOf(emptyList())
       } else {
-        store.observeAll(EntityScope.aircraftChild(user.uid, aircraftId))
+        store.observeAll(scope)
           .map { rows -> rows.map { it.value } }
           .catch { e ->
             logger.w(e) { "Error observing squawks for aircraft $aircraftId" }
@@ -48,10 +47,10 @@ class SquawkManagerImpl(
     squawk: Squawk
   ): Result<Boolean> =
     runCatching {
-      val uid = requireUid()
+      val scope = scopeResolver.resolveNow(aircraftId)
       val withId =
         if (squawk.id.isEmpty()) squawk.copy(id = generateRandomId()) else squawk
-      store.put(withId.id, withId, EntityScope.aircraftChild(uid, aircraftId))
+      store.put(withId.id, withId, scope)
       true
     }.onFailure { logger.w(it) { "Error adding squawk" } }
 
@@ -60,8 +59,8 @@ class SquawkManagerImpl(
     squawk: Squawk
   ): Result<Boolean> =
     runCatching {
-      val uid = requireUid()
-      store.put(squawk.id, squawk, EntityScope.aircraftChild(uid, aircraftId))
+      val scope = scopeResolver.resolveNow(aircraftId)
+      store.put(squawk.id, squawk, scope)
       true
     }.onFailure { logger.w(it) { "Error updating squawk ${squawk.id}" } }
 
@@ -70,8 +69,8 @@ class SquawkManagerImpl(
     squawkId: String
   ): Result<Boolean> =
     runCatching {
-      val uid = requireUid()
-      store.delete(squawkId, EntityScope.aircraftChild(uid, aircraftId))
+      val scope = scopeResolver.resolveNow(aircraftId)
+      store.delete(squawkId, scope)
       true
     }.onFailure { logger.w(it) { "Error deleting squawk $squawkId" } }
 
@@ -80,8 +79,7 @@ class SquawkManagerImpl(
     squawkIds: List<String>,
     logId: String,
   ): Result<Unit> = runCatching {
-    val uid = requireUid()
-    val scope = EntityScope.aircraftChild(uid, aircraftId)
+    val scope = scopeResolver.resolveNow(aircraftId)
     val allSquawks = store.observeAll(scope)
       .firstOrNull()
       ?.associateBy { it.id } ?: emptyMap()
@@ -96,8 +94,7 @@ class SquawkManagerImpl(
     squawkId: String,
     reason: SquawkDismissReason,
   ): Result<Unit> = runCatching {
-    val uid = requireUid()
-    val scope = EntityScope.aircraftChild(uid, aircraftId)
+    val scope = scopeResolver.resolveNow(aircraftId)
     val existing = store.observeAll(scope)
       .firstOrNull()
       ?.associateBy { it.id }
@@ -119,8 +116,7 @@ class SquawkManagerImpl(
     squawkId: String
   ): Result<Unit> =
     runCatching {
-      val uid = requireUid()
-      val scope = EntityScope.aircraftChild(uid, aircraftId)
+      val scope = scopeResolver.resolveNow(aircraftId)
       val existing = store.observeAll(scope)
         .firstOrNull()
         ?.associateBy { it.id }
@@ -135,10 +131,6 @@ class SquawkManagerImpl(
         scope,
       )
     }.onFailure { logger.w(it) { "Error reopening squawk $squawkId" } }
-
-  private fun requireUid(): String =
-    firebaseAuth.currentUser?.uid
-      ?: error("Cannot mutate squawks when no user is signed in")
 
   companion object {
     private val logger = Logger.withTag("SquawkManager")
