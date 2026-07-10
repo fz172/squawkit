@@ -39,6 +39,8 @@ kotlin {
       implementation(project(":core:storage"))
       implementation(project(":feature:sharing:model"))
       implementation(libs.gitlive.firebase.auth)
+      implementation(libs.gitlive.firebase.firestore)
+      implementation(libs.gitlive.firebase.functions)
       implementation(libs.kermit)
     }
   }
