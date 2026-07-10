@@ -4,13 +4,21 @@ import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToOne
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
+import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.db.SelectDirtyInScope
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -32,6 +40,9 @@ class PushWorker(
   private val writer: SyncWriter,
   private val ioContext: CoroutineContext,
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
+  // Optional so tests (and any own-tree-only caller) can omit it: without it only the user's own
+  // tree drains, preserving pre-sharing behavior. With it, shared aircraft scopes drain too.
+  private val storeFactory: EntityStoreFactory? = null,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -44,17 +55,45 @@ class PushWorker(
   var failureSink: (SyncFailure?) -> Unit = {}
 
   /**
-   * Suspends forever, draining `dirty=1` rows belonging to [uid] as they appear. Cancel the
-   * surrounding scope to stop. Suitable to launch from [SyncEngine].
+   * Suspends forever, draining `dirty=1` rows as they appear. Cancel the surrounding scope to stop.
+   * Suitable to launch from [SyncEngine].
    *
-   * **Why scoped to [uid]:** when account A's writes haven't drained before A signs out, those
-   * rows stay `dirty=1` in the local table. If account B then signs in on the same device,
-   * pushing A's rows under B's auth would `PERMISSION_DENIED` against `/users/A/...`. Filtering
-   * the dirty queue by the current user's `users/{uid}/` prefix keeps each account's pending
-   * writes durable and isolated until that account signs back in.
+   * **Scoped to a prefix set:** the user's own `users/{uid}/` subtree, plus every shared aircraft's
+   * nested-data subtree `users/{hostUid}/aircraft/{acId}/` from the live refs (docs/sharing §5.3).
+   * Own-tree scoping keeps account A's undrained writes from being pushed under account B's auth
+   * (`PERMISSION_DENIED`) after a device hand-off; the shared prefixes let a member's edits to a
+   * shared plane drain to the host's tree. The set is recomputed from the refs store, so a redeemed
+   * or revoked share respins the drain loops via [collectLatest].
    */
   suspend fun run(uid: String) {
-    val prefix = scopePrefixFor(uid)
+    scopePrefixes(uid)
+      .distinctUntilChanged()
+      .collectLatest { prefixes ->
+        coroutineScope {
+          for (prefix in prefixes) {
+            launch { drainLoopForPrefix(prefix, uid) }
+          }
+        }
+      }
+  }
+
+  /** Own tree ∪ each live shared aircraft's nested-data subtree. Own-tree only when no store factory. */
+  private fun scopePrefixes(uid: String): Flow<Set<String>> {
+    val own = scopePrefixFor(uid)
+    val refStore = storeFactory?.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
+      ?: return flowOf(setOf(own))
+    return refStore.observeAll(EntityScope.userRoot(uid))
+      .map { refs ->
+        buildSet {
+          add(own)
+          for (ref in refs) {
+            add(sharedAircraftScopePrefix(ref.value.host_uid, ref.value.aircraft_id))
+          }
+        }
+      }
+  }
+
+  private suspend fun drainLoopForPrefix(prefix: String, uid: String) {
     db.schemaQueries.countDirtyInScope(prefix)
       .asFlow()
       .mapToOne(ioContext)
@@ -138,3 +177,7 @@ private typealias DirtyRow = SelectDirtyInScope
 
 /** Builds the SQL `LIKE` prefix that matches every scope under `users/{uid}/`. */
 private fun scopePrefixFor(uid: String): String = "/users/$uid/%"
+
+/** `LIKE` prefix matching a shared aircraft's nested-data subtree in the host's tree. */
+private fun sharedAircraftScopePrefix(hostUid: String, aircraftId: String): String =
+  "/users/$hostUid/aircraft/$aircraftId/%"

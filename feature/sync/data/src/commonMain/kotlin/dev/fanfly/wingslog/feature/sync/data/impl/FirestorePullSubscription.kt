@@ -19,7 +19,8 @@ import kotlinx.coroutines.flow.map
  * still pending (our own un-acked writes echoed via the local cache) rather than passing them to
  * [PullListener].
  */
-class FirestorePullSubscription(private val firestore: FirebaseFirestore) : PullSubscription {
+class FirestorePullSubscription(private val firestore: FirebaseFirestore) :
+  PullSubscription {
 
   private val log = Logger.withTag(TAG)
 
