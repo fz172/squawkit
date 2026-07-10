@@ -17,11 +17,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,6 +57,7 @@ import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_b
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_badge_you
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_empty_desc
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_empty_title
+import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_invite
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_leave
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_make_owner
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_make_technician
@@ -88,6 +91,7 @@ fun ManageAccessScreen(
   onChangeRole: (uid: String, role: ShareRole) -> Unit,
   onRevoke: (uid: String) -> Unit,
   onLeave: () -> Unit,
+  onInvite: () -> Unit,
   onBack: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -105,6 +109,16 @@ fun ManageAccessScreen(
               )
             }
           },
+        )
+      }
+    },
+    floatingActionButton = {
+      // Only owners can invite; others see a read-only roster.
+      if (state.canManage) {
+        ExtendedFloatingActionButton(
+          onClick = onInvite,
+          icon = { Icon(Icons.Filled.PersonAdd, contentDescription = null) },
+          text = { Text(stringResource(Res.string.manage_access_invite)) },
         )
       }
     },
