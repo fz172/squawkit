@@ -48,8 +48,9 @@ import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import androidx.compose.material.icons.filled.Group
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.back
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.sharing.sharedassets.generated.resources.Res
-import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_back
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_badge_host
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_badge_you
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_empty_desc
@@ -100,7 +101,7 @@ fun ManageAccessScreen(
             IconButton(onClick = onBack) {
               Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.manage_access_back),
+                contentDescription = stringResource(CoreRes.string.back),
               )
             }
           },

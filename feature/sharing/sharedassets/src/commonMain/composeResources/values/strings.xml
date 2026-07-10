@@ -13,5 +13,4 @@
   <string name="manage_access_make_technician">Make technician</string>
   <string name="manage_access_revoke">Remove access</string>
   <string name="manage_access_leave">Leave shared aircraft</string>
-  <string name="manage_access_back">Back</string>
 </resources>
