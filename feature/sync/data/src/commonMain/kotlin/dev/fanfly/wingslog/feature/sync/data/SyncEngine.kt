@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.sync.data
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
@@ -279,10 +280,49 @@ class SyncEngine(
           }
         }
     }
+
+    // Shared aircraft: the refs store (hydrated as a TOP_LEVEL_KIND) names foreign scopes that live
+    // under each host's tree. Mirror the own-aircraft fan-out, but hydrate/listen the per-aircraft
+    // kinds at aircraftChild(hostUid, acId). The shared aircraft doc itself needs a doc-level pull
+    // (§5.2, #123); this branch covers the nested maintenance data. See docs/sharing §5.1.
+    val refStore: EntityStore<SharedAircraftRef> =
+      storeFactory.create(CollectionKind.SharedAircraftRef)
+    scope.launch {
+      refStore.observeAll(userRoot)
+        .map { rows ->
+          rows.map { it.value.host_uid to it.value.aircraft_id }
+            .toSet()
+        }
+        .distinctUntilChanged()
+        .collectLatest { sharedScopes ->
+          sharedSubScopeSupervisor.cancel()
+          val subSupervisor = SupervisorJob(scope.coroutineContext[Job])
+          sharedSubScopeSupervisor = subSupervisor
+          val subScope = CoroutineScope(subSupervisor + ioContext)
+          for ((hostUid, aircraftId) in sharedScopes) {
+            val acScope = EntityScope.aircraftChild(
+              hostUid,
+              aircraftId
+            )
+            for (kind in PER_AIRCRAFT_KINDS) {
+              subScope.launch {
+                hydrateAndListen(
+                  uid,
+                  kind,
+                  acScope
+                )
+              }
+            }
+          }
+        }
+    }
   }
 
   /** Per-cycle supervisor for the aircraft-child listeners; recreated each time the id-set changes. */
   private var aircraftSubScopeSupervisor: Job = Job().apply { complete() }
+
+  /** Per-cycle supervisor for the shared-aircraft (foreign-scope) listeners; recreated on ref changes. */
+  private var sharedSubScopeSupervisor: Job = Job().apply { complete() }
 
   /**
    * Retries hydration with exponential backoff sourced from [SyncCursorStore.recordFailure]'s
