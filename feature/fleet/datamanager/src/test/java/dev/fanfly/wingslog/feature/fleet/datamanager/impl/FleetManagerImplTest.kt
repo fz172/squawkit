@@ -48,6 +48,7 @@ class FleetManagerImplTest {
     } returns refStore
     // Default: no shared aircraft. Individual tests override.
     every { refStore.observeAll(any()) } returns flowOf(emptyList())
+    every { refStore.observe(any(), any()) } returns flowOf(null)
 
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.uid } returns TEST_USER_ID
@@ -167,6 +168,27 @@ class FleetManagerImplTest {
       .first()
 
     assertThat(result).isEqualTo(aircraft)
+  }
+
+  @Test
+  fun loadAircraft_sharedAircraft_readsFromHostRoot() = runTest {
+    val shared = buildTestAircraft(id = "shared-1", make = "Piper", model = "PA-28")
+    // A ref for this id names the host; the doc lives under the host's root.
+    every { refStore.observe("shared-1", EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(
+      StorageEntity(
+        "shared-1",
+        SharedAircraftRef(aircraft_id = "shared-1", host_uid = HOST_UID),
+        Instant.DISTANT_PAST,
+      )
+    )
+    every { store.observe("shared-1", EntityScope.userRoot(HOST_UID)) } returns flowOf(
+      StorageEntity("shared-1", shared, Instant.DISTANT_PAST)
+    )
+
+    val result = manager.loadAircraft("shared-1").first()
+
+    assertThat(result).isEqualTo(shared)
+    io.mockk.verify { store.observe("shared-1", EntityScope.userRoot(HOST_UID)) }
   }
 
   @Test
