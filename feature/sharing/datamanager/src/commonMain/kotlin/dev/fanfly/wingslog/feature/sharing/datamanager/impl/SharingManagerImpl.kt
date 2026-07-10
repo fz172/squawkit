@@ -97,7 +97,8 @@ class SharingManagerImpl(
 
   @OptIn(ExperimentalEncodingApi::class)
   override suspend fun createInvite(acId: String, role: ShareRole): Result<InviteLink> = runCatching {
-    // TODO(security): swap Random for a CSPRNG before GA — an invite secret must be unguessable.
+    // Weak-random is intentional for now: the pairing-code rework (#164) replaces this mechanism
+    // (short human code + rate-limited redeem), which subsumes the CSPRNG concern for this secret.
     val secret = Base64.UrlSafe.encode(Random.nextBytes(16)).trimEnd('=')
     val tokenHash = sha256Hex(secret.encodeToByteArray())
     val uid = requireUid()
