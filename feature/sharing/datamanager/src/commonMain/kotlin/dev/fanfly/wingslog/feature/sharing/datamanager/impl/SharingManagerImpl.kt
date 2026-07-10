@@ -103,6 +103,10 @@ class SharingManagerImpl(
     val tokenHash = sha256Hex(secret.encodeToByteArray())
     val uid = requireUid()
     val now = Timestamp.now()
+    // Lazy-create the ACL doc so the owner is in memberRoles before the invite write — the invite
+    // rule (isShareOwner) reads it. First share of an aircraft bootstraps this (docs/sharing §3.1);
+    // subsequent memberRoles changes are function-only. See §2.1.
+    ensureShareRoot(acId, uid)
     shareDoc(acId).collection(INVITES).document(tokenHash).set(
       InviteWire(
         role = role.wire(),
@@ -151,6 +155,22 @@ class SharingManagerImpl(
   private fun requireUid(): String =
     auth.currentUser?.uid ?: error("Sharing requires a signed-in user")
 
+  /**
+   * Bootstrap the `aircraft_shares/{acId}` ACL doc on first share (docs/sharing §2.1/§3.1): the
+   * owner writes themselves into `memberRoles` so the subsequent invite write passes `isShareOwner`.
+   * No-op once the doc exists (further `memberRoles` changes are function-only). Rules gate the
+   * create to the aircraft's own owner.
+   */
+  private suspend fun ensureShareRoot(acId: String, uid: String) {
+    if (shareDoc(acId).get().exists) return
+    shareDoc(acId).set(
+      ShareRootCreateWire(
+        hostUid = uid,
+        memberRoles = mapOf(uid to ShareRole.OWNER.wire()),
+      ),
+    )
+  }
+
   companion object {
     private const val FUNCTIONS_REGION = "us-central1"
     private const val SHARES = "aircraft_shares"
@@ -170,6 +190,11 @@ private fun ProtoShareRole.toModel(): ShareRole =
 private fun Timestamp.toMillisLong(): Long = toMilliseconds().toLong()
 
 @Serializable private data class RootWire(val hostUid: String = "")
+/** Owner-bootstrapped ACL doc: hostUid + the owner's own memberRoles entry (§3.1). */
+@Serializable private data class ShareRootCreateWire(
+  val hostUid: String,
+  val memberRoles: Map<String, String>,
+)
 @Serializable private data class MemberWire(val role: String = "technician", val displayName: String = "")
 @Serializable private data class InviteWire(
   val role: String = "technician",
