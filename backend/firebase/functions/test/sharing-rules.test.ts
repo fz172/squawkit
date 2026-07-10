@@ -86,9 +86,9 @@ describe("shared aircraft document", () => {
     await assertFails(getDocs(collection(as(TECH), `users/${HOST}/aircraft`)));
   });
 
-  it("co-owner may write the aircraft doc (attested)", async () => {
+  it("co-owner may edit the aircraft doc (attested, non-delete)", async () => {
     await assertSucceeds(
-      setDoc(doc(as(OWNER2), aircraftDoc), { registration: "N999", writerUid: OWNER2 }),
+      setDoc(doc(as(OWNER2), aircraftDoc), { registration: "N999", deleted: false, writerUid: OWNER2 }),
     );
   });
 
@@ -101,6 +101,18 @@ describe("shared aircraft document", () => {
   it("co-owner may NOT forge writerUid on the aircraft doc", async () => {
     await assertFails(
       setDoc(doc(as(OWNER2), aircraftDoc), { registration: "N999", writerUid: HOST }),
+    );
+  });
+
+  it("hosting owner may delete (tombstone) the aircraft", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(HOST), aircraftDoc), { registration: "N123", deleted: true, writerUid: HOST }),
+    );
+  });
+
+  it("co-owner may NOT delete (tombstone) the aircraft — hosting owner only", async () => {
+    await assertFails(
+      setDoc(doc(as(OWNER2), aircraftDoc), { registration: "N123", deleted: true, writerUid: OWNER2 }),
     );
   });
 });
