@@ -45,11 +45,14 @@ kotlin {
       implementation(project(":feature:sharing:viewing"))
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.androidx.navigation.compose)
+      implementation(libs.gitlive.firebase.auth)
     }
   }
 }
 
 dependencies {
+  // gitlive firebase-auth's Android artifact is versioned by the Firebase BOM.
+  implementation(platform(libs.firebase.bom))
   testImplementation(libs.junit)
   testImplementation(libs.truth)
   testImplementation(libs.mockk)

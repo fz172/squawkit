@@ -33,6 +33,7 @@ kotlin {
       implementation(project(":core:auth"))
       implementation(project(":feature:login"))
       implementation(project(":feature:sharing:datamanager"))
+      implementation(project(":feature:sharing:update"))
       implementation(project(":feature:shell"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:stresstest:config"))
