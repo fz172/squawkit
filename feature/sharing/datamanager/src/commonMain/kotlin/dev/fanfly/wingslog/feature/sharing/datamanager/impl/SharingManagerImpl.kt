@@ -156,7 +156,9 @@ class SharingManagerImpl(
     private const val SHARES = "aircraft_shares"
     private const val MEMBERS = "members"
     private const val INVITES = "invites"
-    private const val SHARE_URL_BASE = "https://squawkit.web.app/share"
+    // Matches the App Link / Universal Link host verified for deep linking (see AndroidManifest and
+    // AircraftShareDeepLinks) so the link opens the app; the web app serves the same URL as a fallback.
+    private const val SHARE_URL_BASE = "https://squawkit.fanfly.dev/share"
     private const val INVITE_TTL_SECONDS = 7L * 24 * 60 * 60
   }
 }
