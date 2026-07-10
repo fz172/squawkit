@@ -52,7 +52,7 @@ import kotlin.coroutines.CoroutineContext
 class SyncEngine(
   private val auth: FirebaseAuth,
   private val cursors: SyncCursorStore,
-  private val pullSubscription: FirestorePullSubscription,
+  private val pullSubscription: PullSubscription,
   private val hydrationRunner: HydrationRunner,
   private val pullListenerFactory: (CollectionKind, EntityScope) -> PullListener,
   private val pushWorker: PushWorker,
@@ -300,6 +300,15 @@ class SyncEngine(
           sharedSubScopeSupervisor = subSupervisor
           val subScope = CoroutineScope(subSupervisor + ioContext)
           for ((hostUid, aircraftId) in sharedScopes) {
+            // The aircraft doc itself: doc-level (a list over the host's aircraft collection is denied).
+            subScope.launch {
+              watchDocAndListen(
+                uid,
+                CollectionKind.Aircraft,
+                EntityScope.userRoot(hostUid),
+                aircraftId
+              )
+            }
             val acScope = EntityScope.aircraftChild(
               hostUid,
               aircraftId
@@ -399,11 +408,42 @@ class SyncEngine(
       kind,
       scope
     )
-    pullSubscription.observe(
+    pullSubscription.observeCollection(
       kind,
       scope,
       watermark
     )
+      .collect { remotes ->
+        if (remotes.isEmpty()) return@collect
+        var maxTs = Long.MIN_VALUE
+        for (remote in remotes) {
+          val applied = listener.apply(remote)
+          if (applied > maxTs) maxTs = applied
+        }
+        if (maxTs != Long.MIN_VALUE) {
+          cursors.advanceLastSeen(
+            uid,
+            kind,
+            scope,
+            maxTs
+          )
+        }
+      }
+  }
+
+  /**
+   * Doc-level pull for a scope a member may `get` but not `list` — the shared aircraft doc (§5.2).
+   * The snapshot listener delivers the current doc immediately, so there's no separate hydration
+   * step; each emission feeds the same [PullListener] path (LWW/tombstones) as the collection listen.
+   */
+  private suspend fun watchDocAndListen(
+    uid: String,
+    kind: CollectionKind,
+    scope: EntityScope,
+    id: String,
+  ) {
+    val listener = pullListenerFactory(kind, scope)
+    pullSubscription.observeSingleDoc(kind, scope, id)
       .collect { remotes ->
         if (remotes.isEmpty()) return@collect
         var maxTs = Long.MIN_VALUE

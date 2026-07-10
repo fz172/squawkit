@@ -1,8 +1,12 @@
-package dev.fanfly.wingslog.feature.sync.data
+package dev.fanfly.wingslog.feature.sync.data.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.feature.sync.data.RemoteEntity
+import dev.fanfly.wingslog.feature.sync.data.RemoteFetcher
+import dev.fanfly.wingslog.feature.sync.data.SyncDocWire
+import dev.fanfly.wingslog.feature.sync.data.epochMsOrNull
 import dev.gitlive.firebase.firestore.DocumentSnapshot
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlin.io.encoding.Base64

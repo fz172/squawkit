@@ -1,5 +1,8 @@
-package dev.fanfly.wingslog.feature.sync.data
+package dev.fanfly.wingslog.feature.sync.data.impl
 
+import dev.fanfly.wingslog.feature.sync.data.SyncDocWire
+import dev.fanfly.wingslog.feature.sync.data.SyncWrite
+import dev.fanfly.wingslog.feature.sync.data.SyncWriter
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
 import kotlin.io.encoding.Base64
