@@ -51,6 +51,11 @@
           android:host="squawkit.fanfly.dev"
           android:path="/finishSignIn"
           android:scheme="https" />
+        <!-- Aircraft-share invites: https://squawkit.fanfly.dev/share#{acId}.{secret} (docs/sharing §6.4). -->
+        <data
+          android:host="squawkit.fanfly.dev"
+          android:path="/share"
+          android:scheme="https" />
       </intent-filter>
     </activity>
 

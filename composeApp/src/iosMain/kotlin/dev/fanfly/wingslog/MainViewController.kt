@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.auth.IosGoogleSignInBridge
 import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.di.initKoin
 import dev.fanfly.wingslog.feature.login.EmailLinkDeepLinks
+import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.blob.UrlSessionUploadScheduler
 import kotlinx.coroutines.CoroutineScope
@@ -40,6 +41,8 @@ object MainEntry {
    * docs/account/email_link_signin_design.html.
    */
   fun handleIncomingUrl(url: String): Boolean {
+    // An aircraft-share invite is parked for the redeem flow; otherwise fall through to email sign-in.
+    if (AircraftShareDeepLinks.deliver(url)) return true
     val authManager = KoinPlatform.getKoin()
       .get<dev.fanfly.wingslog.core.auth.AuthManager>()
     if (!authManager.isSignInWithEmailLink(url)) return false

@@ -2,6 +2,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import dev.fanfly.wingslog.core.appinfo.createAppCapability
 import dev.fanfly.wingslog.core.di.commonAppModules
+import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.stresstest.config.stressTestKoinModules
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.web.ActiveElsewhereScreen
@@ -37,6 +38,9 @@ fun main() {
   // sign-in and advances. See EmailLinkCompletionScreen. This must run before the single-tab gate,
   // which would otherwise strand this tab on ActiveElsewhereScreen.
   val href = window.location.href
+  // Park an aircraft-share invite (/share#{acId}.{secret}) so the redeem flow (P4) picks it up once
+  // the app starts; a no-op for any other URL.
+  AircraftShareDeepLinks.deliver(href)
   if (Firebase.auth.isSignInWithEmailLink(href)) {
     ComposeViewport(viewportContainerId = "ComposeTarget") {
       EmailLinkCompletionScreen(link = href)

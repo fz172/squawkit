@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import dev.fanfly.wingslog.feature.login.EmailLinkDeepLinks
+import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 
 class MainActivity : ComponentActivity() {
 
@@ -28,6 +29,9 @@ class MainActivity : ComponentActivity() {
 
   private fun handleDeepLink(intent: Intent?) {
     val data = intent?.data?.toString() ?: return
-    EmailLinkDeepLinks.deliver(data)
+    // A share invite is parked for the redeem flow; anything else (email sign-in) goes to AuthFlow.
+    if (!AircraftShareDeepLinks.deliver(data)) {
+      EmailLinkDeepLinks.deliver(data)
+    }
   }
 }
