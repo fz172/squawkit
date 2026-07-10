@@ -1,5 +1,6 @@
 [versions]
 agp = "9.2.1"
+qrose = "1.0.1"
 coilCompose = "3.5.0"
 documentfile = "1.1.0"
 kotlinxCoroutines = "1.11.0"
@@ -38,6 +39,7 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCo
 coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coilCompose" }
 
 components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
+qrose = { module = "io.github.alexzhirkevich:qrose", version.ref = "qrose" }
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
 compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }

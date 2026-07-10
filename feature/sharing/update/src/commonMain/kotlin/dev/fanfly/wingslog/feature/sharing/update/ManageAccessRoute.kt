@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.sharing.viewing.ManageAccessScreen
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -24,6 +25,9 @@ fun ManageAccessRoute(navController: NavController) {
     onChangeRole = viewModel::changeRole,
     onRevoke = viewModel::revoke,
     onLeave = viewModel::leave,
+    onInvite = {
+      navController.navigate(Screen.InviteToAircraft.createRoute(viewModel.aircraftId))
+    },
     onBack = { navController.popBackStack() },
   )
 }

@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
+import dev.fanfly.wingslog.feature.sharing.update.InviteSheetRoute
 import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
@@ -148,6 +149,15 @@ fun NavGraphBuilder.sharingRoutes(navController: NavController) {
     arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType }),
   ) {
     ManageAccessRoute(navController = navController)
+  }
+  dialog(
+    route = Screen.InviteToAircraft.route,
+    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType }),
+    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+  ) {
+    AdaptiveFormDialogFrame {
+      InviteSheetRoute(navController = navController)
+    }
   }
 }
 

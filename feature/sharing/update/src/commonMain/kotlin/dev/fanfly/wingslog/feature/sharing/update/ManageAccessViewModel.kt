@@ -23,7 +23,7 @@ class ManageAccessViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  private val aircraftId: String = savedStateHandle.get<String>(Screen.AIRCRAFT_ID).orEmpty()
+  val aircraftId: String = savedStateHandle.get<String>(Screen.AIRCRAFT_ID).orEmpty()
 
   private val _uiState = MutableStateFlow(ManageAccessUiState())
   val uiState = _uiState.asStateFlow()
