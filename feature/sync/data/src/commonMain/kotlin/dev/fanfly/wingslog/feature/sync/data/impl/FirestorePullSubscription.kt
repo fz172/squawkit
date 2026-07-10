@@ -1,8 +1,10 @@
-package dev.fanfly.wingslog.feature.sync.data
+package dev.fanfly.wingslog.feature.sync.data.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.feature.sync.data.PullSubscription
+import dev.fanfly.wingslog.feature.sync.data.RemoteEntity
 import dev.gitlive.firebase.firestore.Direction
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
@@ -11,21 +13,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /**
- * Opens a Firestore snapshot subscription for `(kind, scope)` filtered to docs newer than the
- * caller's cursor watermark, decoded into [RemoteEntity] batches.
+ * Firestore implementation of [PullSubscription].
  *
- * The watermark is **inclusive of equality** at the query layer (`>`), so the cursor stored in
- * `sync_cursor.last_seen_remote` must be the highest `remoteTsMs` already applied — never one
- * less. Documents whose server timestamp is still pending (our own un-acked writes echoed via the
- * local cache) are dropped here rather than passed on to [PullListener].
- *
- * The returned flow is cold; collecting it opens the listener, cancelling collection detaches it.
+ * Both shapes decode via [decodeRemoteEntity], which drops documents whose server timestamp is
+ * still pending (our own un-acked writes echoed via the local cache) rather than passing them to
+ * [PullListener].
  */
-class FirestorePullSubscription(private val firestore: FirebaseFirestore) {
+class FirestorePullSubscription(private val firestore: FirebaseFirestore) : PullSubscription {
 
   private val log = Logger.withTag(TAG)
 
-  fun observe(
+  override fun observeCollection(
     kind: CollectionKind,
     scope: EntityScope,
     sinceRemoteTsMs: Long?,
@@ -58,6 +56,20 @@ class FirestorePullSubscription(private val firestore: FirebaseFirestore) {
       }
     }
   }
+
+  override fun observeSingleDoc(
+    kind: CollectionKind,
+    scope: EntityScope,
+    id: String,
+  ): Flow<List<RemoteEntity>> =
+    FirestoreRefs.document(firestore, kind, scope, id).snapshots.map { snap ->
+      if (!snap.exists) return@map emptyList()
+      val remote = runCatching { decodeRemoteEntity(snap) }.getOrElse { e ->
+        log.w(e) { "skipping malformed shared doc ${scope.toPath()}$id" }
+        null
+      }
+      if (remote != null) listOf(remote) else emptyList()
+    }
 
   companion object {
     private const val TAG = "FirestorePullSubscription"

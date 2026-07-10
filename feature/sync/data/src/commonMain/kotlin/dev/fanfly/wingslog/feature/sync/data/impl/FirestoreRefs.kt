@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.sync.data
+package dev.fanfly.wingslog.feature.sync.data.impl
 
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope

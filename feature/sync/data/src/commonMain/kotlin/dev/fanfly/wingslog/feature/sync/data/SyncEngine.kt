@@ -52,8 +52,7 @@ import kotlin.coroutines.CoroutineContext
 class SyncEngine(
   private val auth: FirebaseAuth,
   private val cursors: SyncCursorStore,
-  private val pullSubscription: FirestorePullSubscription,
-  private val docPullSubscription: FirestoreDocPullSubscription,
+  private val pullSubscription: PullSubscription,
   private val hydrationRunner: HydrationRunner,
   private val pullListenerFactory: (CollectionKind, EntityScope) -> PullListener,
   private val pushWorker: PushWorker,
@@ -409,7 +408,7 @@ class SyncEngine(
       kind,
       scope
     )
-    pullSubscription.observe(
+    pullSubscription.observeCollection(
       kind,
       scope,
       watermark
@@ -444,7 +443,7 @@ class SyncEngine(
     id: String,
   ) {
     val listener = pullListenerFactory(kind, scope)
-    docPullSubscription.observe(kind, scope, id)
+    pullSubscription.observeSingleDoc(kind, scope, id)
       .collect { remotes ->
         if (remotes.isEmpty()) return@collect
         var maxTs = Long.MIN_VALUE
