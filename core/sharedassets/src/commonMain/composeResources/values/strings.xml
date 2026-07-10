@@ -42,6 +42,8 @@
   <string name="shell_tab_logs">Logs</string>
   <string name="shell_title_tasks">Maintenance Tasks</string>
   <string name="shell_title_logs">Work Logs</string>
+  <!-- Aircraft sharing -->
+  <string name="aircraft_shared_badge">Shared</string>
   <!-- Component names -->
   <string name="component_type">Component Type</string>
   <string name="component_airframe">Airframe</string>

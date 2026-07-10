@@ -3,6 +3,8 @@ package dev.fanfly.wingslog.feature.shell.viewmodel
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.core.model.sharing.ShareRole
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.auth.SendLinkResult
@@ -28,10 +30,10 @@ class AdaptiveShellViewModelTest {
 
   private val testDispatcher = UnconfinedTestDispatcher()
 
-  private val fleet = MutableStateFlow<List<Aircraft>>(emptyList())
+  private val fleet = MutableStateFlow<List<FleetEntry>>(emptyList())
   private val self = MutableStateFlow<Technician?>(null)
   private val fleetManager = object : FleetManager {
-    override fun observeFleetDashboard(): Flow<List<Aircraft>> = fleet
+    override fun observeFleetDashboard(): Flow<List<FleetEntry>> = fleet
     override suspend fun updateAircraft(aircraft: Aircraft) =
       Result.success(true)
 
@@ -89,9 +91,14 @@ class AdaptiveShellViewModelTest {
     id: String,
     tail: String,
     make: String = "Cessna",
-    model: String = "172"
+    model: String = "172",
+    shared: Boolean = false,
   ) =
-    Aircraft(id = id, make = make, model = model, tail_number = tail)
+    FleetEntry(
+      aircraft = Aircraft(id = id, make = make, model = model, tail_number = tail),
+      shared = shared,
+      role = ShareRole.SHARE_ROLE_OWNER,
+    )
 
   private fun viewModel() = AdaptiveShellViewModel(
     fleetManager = fleetManager,

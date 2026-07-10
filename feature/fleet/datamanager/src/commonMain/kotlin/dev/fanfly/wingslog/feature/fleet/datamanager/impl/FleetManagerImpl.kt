@@ -3,15 +3,19 @@ package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.sharing.ShareRole
+import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -31,20 +35,52 @@ class FleetManagerImpl(
   private val logger = Logger.withTag("FleetManagerImpl")
   private val store: EntityStore<Aircraft> =
     storeFactory.create(CollectionKind.Aircraft)
+  private val refStore: EntityStore<SharedAircraftRef> =
+    storeFactory.create(CollectionKind.SharedAircraftRef)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeFleetDashboard(): Flow<List<Aircraft>> =
+  override fun observeFleetDashboard(): Flow<List<FleetEntry>> =
     firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) {
         logger.d { "User logged out, stopping fleet dashboard observation" }
         flowOf(emptyList())
       } else {
-        store.observeAll(EntityScope.userRoot(user.uid))
-          .map { rows -> rows.map { it.value } }
-          .catch { e ->
-            logger.w(e) { "Fleet observe failed" }
-            emit(emptyList())
+        combine(ownAircraft(user.uid), sharedAircraft(user.uid)) { own, shared ->
+          own + shared
+        }.catch { e ->
+          logger.w(e) { "Fleet observe failed" }
+          emit(emptyList())
+        }
+      }
+    }
+
+  /** The user's own aircraft under their root — always owner. */
+  private fun ownAircraft(uid: String): Flow<List<FleetEntry>> =
+    store.observeAll(EntityScope.userRoot(uid))
+      .map { rows ->
+        rows.map { FleetEntry(it.value, shared = false, role = ShareRole.SHARE_ROLE_OWNER) }
+      }
+
+  /**
+   * Aircraft shared into the user's fleet: each `SharedAircraftRef` points at an aircraft doc under
+   * its host's root. The refs are pointers, not copies — read the live doc in place (§6.3). A ref
+   * whose aircraft doc hasn't synced yet is skipped rather than shown as a blank card.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun sharedAircraft(uid: String): Flow<List<FleetEntry>> =
+    refStore.observeAll(EntityScope.userRoot(uid)).flatMapLatest { refRows ->
+      val refs = refRows.map { it.value }
+      if (refs.isEmpty()) {
+        flowOf(emptyList())
+      } else {
+        combine(
+          refs.map { ref ->
+            store.observe(ref.aircraft_id, EntityScope.userRoot(ref.host_uid))
+              .map { entity ->
+                entity?.value?.let { FleetEntry(it, shared = true, role = ref.role) }
+              }
           }
+        ) { entries -> entries.filterNotNull().toList() }
       }
     }
 

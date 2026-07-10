@@ -74,7 +74,10 @@ class ExportViewModel(
   private fun observeAircraft() {
     viewModelScope.launch {
       fleetManager.observeFleetDashboard()
-        .flatMapLatest { aircraft ->
+        .flatMapLatest { entries ->
+          // Export operates on the user's own logbook only; shared aircraft are read-through
+          // pointers into another account's tree and aren't exported here.
+          val aircraft = entries.filter { !it.shared }.map { it.aircraft }
           if (aircraft.isEmpty()) {
             flowOf(emptyList())
           } else {
