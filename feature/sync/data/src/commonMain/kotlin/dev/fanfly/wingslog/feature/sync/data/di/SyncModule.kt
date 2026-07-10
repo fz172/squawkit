@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
+import dev.fanfly.wingslog.feature.sync.data.FirestoreDocPullSubscription
 import dev.fanfly.wingslog.feature.sync.data.FirestorePullSubscription
 import dev.fanfly.wingslog.feature.sync.data.FirestoreRemoteFetcher
 import dev.fanfly.wingslog.feature.sync.data.FirestoreSyncWriter
@@ -69,6 +70,7 @@ val syncModule: Module = module {
   single<SyncWriter> { FirestoreSyncWriter(get<FirebaseFirestore>()) }
   single<RemoteFetcher> { FirestoreRemoteFetcher(get<FirebaseFirestore>()) }
   single<FirestorePullSubscription> { FirestorePullSubscription(get<FirebaseFirestore>()) }
+  single<FirestoreDocPullSubscription> { FirestoreDocPullSubscription(get<FirebaseFirestore>()) }
   single<HydrationRunner> {
     HydrationRunner(
       db = get<WingsLogDatabase>(),
@@ -95,6 +97,7 @@ val syncModule: Module = module {
       auth = get<FirebaseAuth>(),
       cursors = get<SyncCursorStore>(),
       pullSubscription = get<FirestorePullSubscription>(),
+      docPullSubscription = get<FirestoreDocPullSubscription>(),
       hydrationRunner = get<HydrationRunner>(),
       pullListenerFactory = { kind: CollectionKind, scope: EntityScope ->
         PullListener(
