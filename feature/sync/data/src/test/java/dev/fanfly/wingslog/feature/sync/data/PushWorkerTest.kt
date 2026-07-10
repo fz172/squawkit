@@ -3,8 +3,13 @@ package dev.fanfly.wingslog.feature.sync.data
 import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
+import dev.fanfly.wingslog.core.storage.EntityCodecRegistry
 import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.WireCodec
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import io.mockk.coEvery
@@ -23,6 +28,10 @@ private const val TEST_AIRCRAFT_ID = "aircraft-push-001"
 private val TEST_SCOPE =
   EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
 private val TEST_KIND = CollectionKind.MaintenanceLog
+
+private const val HOST_UID = "host-push-001"
+private const val SHARED_AC = "aircraft-shared-001"
+private val SHARED_SCOPE = EntityScope.aircraftChild(HOST_UID, SHARED_AC)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PushWorkerTest {
@@ -62,6 +71,46 @@ class PushWorkerTest {
     coVerify(exactly = ids.size) { writer.push(any()) }
     val remaining = db.schemaQueries.selectDirty(limit = 100L)
       .executeAsList()
+    assertThat(remaining).isEmpty()
+  }
+
+  @Test
+  fun run_drainsSharedAircraftScopeRows_whenARefExists() = runTest(ioContext) {
+    // A store factory so the worker can observe the refs store and add the shared prefix.
+    val codecs = EntityCodecRegistry().apply {
+      register(CollectionKind.SharedAircraftRef, WireCodec(SharedAircraftRef.ADAPTER))
+    }
+    val storeFactory = EntityStoreFactory(
+      db = db,
+      codecs = codecs,
+      ioContext = ioContext,
+      writeLock = DatabaseWriteLock(),
+    )
+    // A live share pointing at another account's aircraft.
+    storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
+      .put(
+        SHARED_AC,
+        SharedAircraftRef(aircraft_id = SHARED_AC, host_uid = HOST_UID),
+        EntityScope.userRoot(TEST_USER_ID),
+      )
+    // A dirty row under the shared aircraft's scope (the host's tree).
+    insertDirtyRow("shared-log-1", scope = SHARED_SCOPE)
+
+    val captured = slot<SyncWrite>()
+    coEvery { writer.push(capture(captured)) } returns Unit
+    val sharedWorker = PushWorker(
+      db = db,
+      writer = writer,
+      ioContext = ioContext,
+      storeFactory = storeFactory,
+    )
+
+    val job = launch { sharedWorker.run(TEST_USER_ID) }
+    testScheduler.advanceUntilIdle()
+    job.cancel()
+
+    assertThat(captured.captured.scope).isEqualTo(SHARED_SCOPE)
+    val remaining = db.schemaQueries.selectDirty(limit = 100L).executeAsList()
     assertThat(remaining).isEmpty()
   }
 
@@ -145,10 +194,14 @@ class PushWorkerTest {
 
   // --- helpers ---
 
-  private suspend fun insertDirtyRow(id: String, updatedAt: Long = 1000L) {
+  private suspend fun insertDirtyRow(
+    id: String,
+    updatedAt: Long = 1000L,
+    scope: EntityScope = TEST_SCOPE,
+  ) {
     db.schemaQueries.upsert(
       collection = TEST_KIND,
-      scope_path = TEST_SCOPE.toPath(),
+      scope_path = scope.toPath(),
       id = id,
       payload = byteArrayOf(0x01, 0x02),
       payload_schema = TEST_KIND.schemaName,

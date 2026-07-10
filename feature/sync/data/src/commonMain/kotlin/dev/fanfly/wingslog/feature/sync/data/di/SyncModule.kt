@@ -85,6 +85,7 @@ val syncModule: Module = module {
       writer = get<SyncWriter>(),
       ioContext = syncIoContext,
       writeLock = get<DatabaseWriteLock>(),
+      storeFactory = get<EntityStoreFactory>(),
     )
   }
   single<SyncEngine> {
