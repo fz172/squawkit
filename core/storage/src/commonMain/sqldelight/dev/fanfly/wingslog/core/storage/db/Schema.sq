@@ -109,6 +109,18 @@ gcTombstones:
 DELETE FROM entity
 WHERE deleted = 1 AND dirty = 0 AND updated_at < :cutoffMs;
 
+-- Shared-scope purge (revoked/left/deleted shares). Hard deletes, not tombstones — this is another
+-- account's data the member was only granted a view of, so it was never ours to tombstone.
+
+selectScopeAndIdForCollection:
+SELECT scope_path, id FROM entity WHERE collection = :collection;
+
+deleteEntitiesInScopePrefix:
+DELETE FROM entity WHERE scope_path LIKE :scopePrefix;
+
+deleteEntity:
+DELETE FROM entity WHERE collection = :collection AND scope_path = :scope AND id = :id;
+
 -- Sync cursor queries.
 
 selectCursor:
@@ -121,6 +133,9 @@ INSERT OR REPLACE INTO sync_cursor(
   failed_attempts, last_attempt_at
 )
 VALUES (?, ?, ?, ?, ?, ?, ?);
+
+deleteCursorsInScopePrefix:
+DELETE FROM sync_cursor WHERE scope_path LIKE :scopePrefix;
 
 -- Sync config queries.
 

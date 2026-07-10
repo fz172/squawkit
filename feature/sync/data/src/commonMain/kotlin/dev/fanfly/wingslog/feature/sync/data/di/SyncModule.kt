@@ -15,6 +15,7 @@ import dev.fanfly.wingslog.feature.sync.data.impl.FirestoreSyncWriter
 import dev.fanfly.wingslog.feature.sync.data.HydrationRunner
 import dev.fanfly.wingslog.feature.sync.data.PullListener
 import dev.fanfly.wingslog.feature.sync.data.PushWorker
+import dev.fanfly.wingslog.feature.sync.data.SharedScopeJanitor
 import dev.fanfly.wingslog.feature.sync.data.RemoteFetcher
 import dev.fanfly.wingslog.feature.sync.data.SyncCursorStore
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
@@ -113,6 +114,7 @@ val syncModule: Module = module {
       ioContext = syncIoContext,
       db = db,
       uploadScheduler = uploadScheduler,
+      sharedScopeJanitor = SharedScopeJanitor(db, writeLock),
     )
   }
 }
