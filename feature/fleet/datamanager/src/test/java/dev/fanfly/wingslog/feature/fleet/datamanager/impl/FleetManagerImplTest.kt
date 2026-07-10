@@ -2,6 +2,8 @@ package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.core.model.sharing.ShareRole
+import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
@@ -21,22 +23,32 @@ import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_AIRCRAFT_ID = "aircraft-456"
+private const val HOST_UID = "host-user-999"
 
 class FleetManagerImplTest {
 
   private lateinit var firebaseAuth: FirebaseAuth
   private lateinit var storeFactory: EntityStoreFactory
   private lateinit var store: EntityStore<Aircraft>
+  private lateinit var refStore: EntityStore<SharedAircraftRef>
   private lateinit var manager: FleetManagerImpl
 
   @Before
   fun setUp() {
     firebaseAuth = mockk(relaxed = true)
     store = mockk(relaxed = true)
+    refStore = mockk(relaxed = true)
     storeFactory = mockk(relaxed = true)
 
     @Suppress("UNCHECKED_CAST")
     every { storeFactory.create<Aircraft>(CollectionKind.Aircraft) } returns store
+    @Suppress("UNCHECKED_CAST")
+    every {
+      storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
+    } returns refStore
+    // Default: no shared aircraft. Individual tests override.
+    every { refStore.observeAll(any()) } returns flowOf(emptyList())
+    every { refStore.observe(any(), any()) } returns flowOf(null)
 
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.uid } returns TEST_USER_ID
@@ -74,9 +86,57 @@ class FleetManagerImplTest {
         .first()
 
       assertThat(result).hasSize(1)
-      assertThat(result.first().id).isEqualTo(TEST_AIRCRAFT_ID)
+      assertThat(result.first().aircraft.id).isEqualTo(TEST_AIRCRAFT_ID)
+      assertThat(result.first().shared).isFalse()
+      assertThat(result.first().role).isEqualTo(ShareRole.SHARE_ROLE_OWNER)
       io.mockk.verify { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) }
     }
+
+  @Test
+  fun observeFleetDashboard_withSharedRef_includesHostAircraftTaggedShared() = runTest {
+    val own = buildTestAircraft(id = "own-1")
+    val shared = buildTestAircraft(id = "shared-1", make = "Piper", model = "PA-28")
+    every { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(
+      listOf(StorageEntity("own-1", own, Instant.DISTANT_PAST))
+    )
+    // A ref pointing at the host's aircraft, plus the live doc under the host's root.
+    val ref = SharedAircraftRef(
+      aircraft_id = "shared-1",
+      host_uid = HOST_UID,
+      role = ShareRole.SHARE_ROLE_TECHNICIAN,
+    )
+    every { refStore.observeAll(EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(
+      listOf(StorageEntity("shared-1", ref, Instant.DISTANT_PAST))
+    )
+    every { store.observe("shared-1", EntityScope.userRoot(HOST_UID)) } returns flowOf(
+      StorageEntity("shared-1", shared, Instant.DISTANT_PAST)
+    )
+
+    val result = manager.observeFleetDashboard().first()
+
+    assertThat(result).hasSize(2)
+    val ownEntry = result.first { !it.shared }
+    val sharedEntry = result.first { it.shared }
+    assertThat(ownEntry.aircraft.id).isEqualTo("own-1")
+    assertThat(ownEntry.role).isEqualTo(ShareRole.SHARE_ROLE_OWNER)
+    assertThat(sharedEntry.aircraft.id).isEqualTo("shared-1")
+    assertThat(sharedEntry.role).isEqualTo(ShareRole.SHARE_ROLE_TECHNICIAN)
+  }
+
+  @Test
+  fun observeFleetDashboard_sharedRefWithUnsyncedDoc_isSkipped() = runTest {
+    every { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(emptyList())
+    val ref = SharedAircraftRef(aircraft_id = "shared-1", host_uid = HOST_UID)
+    every { refStore.observeAll(EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(
+      listOf(StorageEntity("shared-1", ref, Instant.DISTANT_PAST))
+    )
+    // Aircraft doc not synced yet → null.
+    every { store.observe("shared-1", EntityScope.userRoot(HOST_UID)) } returns flowOf(null)
+
+    val result = manager.observeFleetDashboard().first()
+
+    assertThat(result).isEmpty()
+  }
 
   @Test
   fun loadAircraft_withoutLoggedInUser_emitsNull() = runTest {
@@ -108,6 +168,27 @@ class FleetManagerImplTest {
       .first()
 
     assertThat(result).isEqualTo(aircraft)
+  }
+
+  @Test
+  fun loadAircraft_sharedAircraft_readsFromHostRoot() = runTest {
+    val shared = buildTestAircraft(id = "shared-1", make = "Piper", model = "PA-28")
+    // A ref for this id names the host; the doc lives under the host's root.
+    every { refStore.observe("shared-1", EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(
+      StorageEntity(
+        "shared-1",
+        SharedAircraftRef(aircraft_id = "shared-1", host_uid = HOST_UID),
+        Instant.DISTANT_PAST,
+      )
+    )
+    every { store.observe("shared-1", EntityScope.userRoot(HOST_UID)) } returns flowOf(
+      StorageEntity("shared-1", shared, Instant.DISTANT_PAST)
+    )
+
+    val result = manager.loadAircraft("shared-1").first()
+
+    assertThat(result).isEqualTo(shared)
+    io.mockk.verify { store.observe("shared-1", EntityScope.userRoot(HOST_UID)) }
   }
 
   @Test

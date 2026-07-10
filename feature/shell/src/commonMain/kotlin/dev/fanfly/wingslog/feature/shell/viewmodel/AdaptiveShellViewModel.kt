@@ -35,12 +35,14 @@ class AdaptiveShellViewModel(
       fleetManager.observeFleetDashboard()
         .collect { fleet ->
           _uiState.update { state ->
-            val mapped = fleet.map { ac ->
+            val mapped = fleet.map { entry ->
+              val ac = entry.aircraft
               ShellAircraft(
                 id = ac.id,
                 tail = ac.tail_number,
                 name = listOf(ac.make, ac.model).filter { it.isNotBlank() }
                   .joinToString(" "),
+                shared = entry.shared,
               )
             }
             // Keep the current selection if it still exists, otherwise fall back to the first aircraft.

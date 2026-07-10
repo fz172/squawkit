@@ -71,6 +71,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add_aircraft
+import wingslog.core.sharedassets.generated.resources.aircraft_shared_badge
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
@@ -89,6 +90,8 @@ data class ShellAircraft(
   val id: String,
   val tail: String,
   val name: String,
+  /** Shared into this user's fleet by another account; rendered with a "Shared" badge (§6.3). */
+  val shared: Boolean = false,
 )
 
 /**
@@ -805,7 +808,13 @@ private fun AircraftDropdown(
       DropdownMenuItem(
         text = {
           Column {
-            Text(ac.tail, style = MaterialTheme.typography.titleSmall)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+              Text(ac.tail, style = MaterialTheme.typography.titleSmall)
+              if (ac.shared) {
+                Spacer(Modifier.width(8.dp))
+                SharedBadge()
+              }
+            }
             if (ac.name.isNotBlank()) {
               Text(ac.name, style = MaterialTheme.typography.bodySmall)
             }
@@ -833,5 +842,21 @@ private fun AircraftDropdown(
         },
       )
     }
+  }
+}
+
+/** Small pill marking an aircraft shared into this fleet by another account (§6.3). */
+@Composable
+private fun SharedBadge() {
+  Surface(
+    color = MaterialTheme.colorScheme.secondaryContainer,
+    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    shape = RoundedCornerShape(4.dp),
+  ) {
+    Text(
+      text = stringResource(UiRes.string.aircraft_shared_badge),
+      style = MaterialTheme.typography.labelSmall,
+      modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+    )
   }
 }
