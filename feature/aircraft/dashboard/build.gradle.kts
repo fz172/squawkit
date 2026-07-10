@@ -57,6 +57,8 @@ kotlin {
       implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:fleet:datamanager"))
+      implementation(project(":feature:sharing:datamanager"))
+      implementation(project(":feature:sharing:model"))
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:model"))
       implementation(project(":feature:tasks:viewing"))
@@ -79,4 +81,9 @@ kotlin {
       implementation(libs.kermit)
     }
   }
+}
+
+dependencies {
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
 }

@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -38,6 +39,7 @@ class AircraftOverviewViewModel(
   private val attachmentOpener: AttachmentOpener,
   private val attachmentManager: AttachmentManager,
   private val squawkManager: SquawkManager,
+  private val sharingManager: SharingManager,
   private val auth: FirebaseAuth,
   private val aircraftId: String,
 ) : ViewModel() {
@@ -83,10 +85,13 @@ class AircraftOverviewViewModel(
                 )
               }
             }
-          }
-        ) { squawks, syncs -> squawks to syncs }
-      ) { aircraft, logs, taskCards, overview, squawksAndSyncs ->
-        val (squawkList, syncStates) = squawksAndSyncs
+          },
+          // The caller's role on this aircraft, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
+          // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
+          sharingManager.observeMyRole(aircraftId),
+        ) { squawks, syncs, myRole -> Triple(squawks, syncs, myRole) }
+      ) { aircraft, logs, taskCards, overview, squawksSyncsRole ->
+        val (squawkList, syncStates, myRole) = squawksSyncsRole
         cachedLogs = logs
         if (aircraft != null) {
           val stats = if (overview != null) {
@@ -182,6 +187,7 @@ class AircraftOverviewViewModel(
             syncStates = syncStates,
             squawks = squawksWithStatus,
             aogSquawks = aogSquawks,
+            myRole = myRole,
           )
         } else {
           AircraftOverviewUiState.Error
@@ -210,6 +216,16 @@ class AircraftOverviewViewModel(
 
       AircraftOverviewAction.DeleteConfirm -> {
         deleteAircraft()
+      }
+
+      is AircraftOverviewAction.ManageAccessClick -> {
+        viewModelScope.launch {
+          _events.send(
+            AircraftOverviewEvent.NavigateToManageAccess(
+              action.aircraftId
+            )
+          )
+        }
       }
 
       is AircraftOverviewAction.AddLogClick -> {

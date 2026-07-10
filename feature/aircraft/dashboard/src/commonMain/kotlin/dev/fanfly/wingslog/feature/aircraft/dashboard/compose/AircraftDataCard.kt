@@ -40,6 +40,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.component_airframe
 import wingslog.core.sharedassets.generated.resources.component_engine
 import wingslog.core.sharedassets.generated.resources.edit
+import wingslog.core.sharedassets.generated.resources.manage_access
 import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
 import wingslog.feature.logs.viewing.generated.resources.aircraft_data
@@ -56,6 +57,7 @@ fun AircraftDataCard(
   aircraft: Aircraft,
   initiallyExpanded: Boolean = true,
   onEditClick: (() -> Unit)? = null,
+  onManageAccessClick: (() -> Unit)? = null,
 ) {
   var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
   val rotationState by animateFloatAsState(
@@ -148,13 +150,20 @@ fun AircraftDataCard(
             )
           }
 
-          if (onEditClick != null) {
+          if (onEditClick != null || onManageAccessClick != null) {
             Row(
               modifier = Modifier.fillMaxWidth(),
               horizontalArrangement = Arrangement.End,
             ) {
-              TextButton(onClick = onEditClick) {
-                Text(text = stringResource(CoreRes.string.edit))
+              if (onManageAccessClick != null) {
+                TextButton(onClick = onManageAccessClick) {
+                  Text(text = stringResource(CoreRes.string.manage_access))
+                }
+              }
+              if (onEditClick != null) {
+                TextButton(onClick = onEditClick) {
+                  Text(text = stringResource(CoreRes.string.edit))
+                }
               }
             }
           }

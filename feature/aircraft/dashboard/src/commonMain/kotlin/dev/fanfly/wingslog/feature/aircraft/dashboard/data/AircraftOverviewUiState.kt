@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 
@@ -35,5 +36,13 @@ sealed interface AircraftOverviewUiState {
     val aogSquawks: List<Squawk> = emptyList(),
     val selectedSquawk: SquawkWithStatus? = null,
     val logForSelectedSquawk: MaintenanceLog? = null,
-  ) : AircraftOverviewUiState
+    /** Caller's role on this aircraft; drives owner-only gating. `null` while it resolves. */
+    val myRole: ShareRole? = null,
+  ) : AircraftOverviewUiState {
+    /**
+     * Owner-only affordances: Edit Aircraft, Delete, Manage Access. Technicians get a read-only
+     * screen (they can still add maintenance). Server rules are the real enforcement (§6.3).
+     */
+    val canManageAircraft: Boolean get() = myRole != ShareRole.TECHNICIAN
+  }
 }
