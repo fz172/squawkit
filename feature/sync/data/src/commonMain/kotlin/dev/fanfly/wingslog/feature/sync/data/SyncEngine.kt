@@ -61,6 +61,7 @@ class SyncEngine(
   private val ioContext: CoroutineContext,
   private val db: WingsLogDatabase? = null,
   private val uploadScheduler: UploadScheduler? = null,
+  private val sharedScopeJanitor: SharedScopeJanitor? = null,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -295,6 +296,9 @@ class SyncEngine(
         }
         .distinctUntilChanged()
         .collectLatest { sharedScopes ->
+          // Purge local data for shares that ended (revoke/leave/delete) before (re)spinning
+          // listeners for the ones that remain. Also reconciles at engine start. See §5.4.
+          sharedScopeJanitor?.purgeRevoked(uid, sharedScopes)
           sharedSubScopeSupervisor.cancel()
           val subSupervisor = SupervisorJob(scope.coroutineContext[Job])
           sharedSubScopeSupervisor = subSupervisor
