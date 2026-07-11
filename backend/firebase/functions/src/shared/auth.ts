@@ -3,6 +3,7 @@ import { HttpsError, type CallableRequest } from "firebase-functions/v2/https";
 const ALLOWED_APP_IDS = new Set([
   "1:811416892017:android:27fbaf1c76bb16a3f961d0",
   "1:811416892017:ios:e04bbe689405347df961d0",
+  "1:811416892017:web:6680df6dd37a69d1f961d0",
 ]);
 
 export type CallableIdentity = {
