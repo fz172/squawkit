@@ -11,7 +11,9 @@ import dev.fanfly.wingslog.web.EmojiFallbackProvider
 import dev.fanfly.wingslog.web.WebApp
 import dev.fanfly.wingslog.web.createSqliteWorker
 import dev.fanfly.wingslog.web.gateSingleTab
+import dev.fanfly.wingslog.web.ReCaptchaV3Provider
 import dev.fanfly.wingslog.web.initializeApp
+import dev.fanfly.wingslog.web.initializeAppCheck
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import kotlinx.browser.window
@@ -66,8 +68,13 @@ fun main() {
 // measurementId — required for Firebase Analytics, but not exposed by GitLive's FirebaseOptions.
 // GitLive's auth / firestore / storage resolve this same default app. Values are the project's
 // public web-app client config.
+// reCAPTCHA v3 site key for the web app's App Check (Firebase Console → App Check → register the web
+// app with reCAPTCHA v3). Public value, safe to commit — like apiKey. Empty leaves App Check OFF, in
+// which case enforceAppCheck callables (redeem/revoke/updateRole/export) are rejected on web.
+private const val APP_CHECK_SITE_KEY = ""
+
 private fun initializeFirebase() {
-  initializeApp(
+  val app = initializeApp(
     json(
       "apiKey" to "AIzaSyAo52Y7aQ4jhYGq4MioZK5mSffmmZES1qk",
       // Custom auth domain so the Google sign-in chooser reads "continue to squawkit.fanfly.dev"
@@ -80,6 +87,26 @@ private fun initializeFirebase() {
       "messagingSenderId" to "811416892017",
       "appId" to "1:811416892017:web:6680df6dd37a69d1f961d0",
       "measurementId" to "G-VPNQ92VG8F",
+    ),
+  )
+  initializeFirebaseAppCheck(app)
+}
+
+// Attest with App Check so callables that enforce it accept web requests. No-op until
+// [APP_CHECK_SITE_KEY] is set (registering the web app in Firebase App Check).
+private fun initializeFirebaseAppCheck(app: dynamic) {
+  if (APP_CHECK_SITE_KEY.isBlank()) return
+  val host = window.location.hostname
+  if (host == "localhost" || host == "127.0.0.1") {
+    // Emit an App Check debug token to the console (persisted in localStorage). Register it in the
+    // Firebase Console (App Check → the web app → Manage debug tokens) so localhost dev can attest.
+    js("self.FIREBASE_APPCHECK_DEBUG_TOKEN = true")
+  }
+  initializeAppCheck(
+    app,
+    json(
+      "provider" to ReCaptchaV3Provider(APP_CHECK_SITE_KEY),
+      "isTokenAutoRefreshEnabled" to true,
     ),
   )
 }
