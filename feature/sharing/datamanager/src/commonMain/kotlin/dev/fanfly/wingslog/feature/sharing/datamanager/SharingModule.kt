@@ -14,6 +14,8 @@ val sharingModule = module {
       auth = get<FirebaseAuth>(),
       firestore = get<FirebaseFirestore>(),
       storeFactory = get<EntityStoreFactory>(),
+      db = get(),
+      writeLock = get(),
     )
   }
   // Own-vs-shared scope resolution for the per-aircraft managers (logs/tasks/squawk). Lives here

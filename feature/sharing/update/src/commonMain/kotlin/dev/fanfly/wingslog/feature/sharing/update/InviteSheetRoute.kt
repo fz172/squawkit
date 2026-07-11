@@ -28,6 +28,7 @@ fun InviteSheetRoute(navController: NavController) {
     onShare = { url -> linkSharer.shareLink(url, chooserTitle) },
     onCopy = { url -> clipboard.setText(AnnotatedString(url)) },
     onCancelInvite = viewModel::cancelInvite,
+    onToggleExpand = viewModel::toggleExpand,
     onDismiss = { navController.popBackStack() },
   )
 }

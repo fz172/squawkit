@@ -1,12 +1,15 @@
 package dev.fanfly.wingslog.feature.sharing.datamanager.impl
 
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.blob.sha256Hex
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.InviteLink
@@ -38,6 +41,8 @@ class SharingManagerImpl(
   private val auth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
   storeFactory: EntityStoreFactory,
+  private val db: WingsLogDatabase,
+  private val writeLock: DatabaseWriteLock,
 ) : SharingManager {
 
   private val functions = Firebase.functions(FUNCTIONS_REGION)
@@ -77,6 +82,11 @@ class SharingManagerImpl(
           },
       )
     }
+      // Recover each invite's share URL from the device-local cache (the secret isn't in Firestore),
+      // so a returning owner can re-show the QR/link. map's transform is suspend, so the DB read fits.
+      .map { state ->
+        state.copy(invites = state.invites.map { it.copy(url = localInviteUrl(it.tokenHash)) })
+      }
   }
 
   override fun observeMyRole(acId: String): Flow<ShareRole?> {
@@ -118,7 +128,11 @@ class SharingManagerImpl(
         revoked = false,
       ),
     )
-    InviteLink(url = "$SHARE_URL_BASE#$acId.$secret", tokenHash = tokenHash)
+    val url = "$SHARE_URL_BASE#$acId.$secret"
+    // Cache the link device-locally so it can be re-shown later (the secret is never persisted
+    // server-side). Keyed by tokenHash — the only invite identifier the pending list carries.
+    writeLock.withLock { db.schemaQueries.upsertConfig(uid, inviteUrlKey(tokenHash), url) }
+    InviteLink(url = url, tokenHash = tokenHash)
   }
 
   override suspend fun cancelInvite(acId: String, tokenHash: String): Result<Unit> = runCatching {
@@ -152,6 +166,14 @@ class SharingManagerImpl(
   override suspend fun publishTechnicianMirror(): Result<Unit> =
     Result.success(Unit) // TODO(P5, #135): publish the self-technician mirror to each membership.
 
+  /** The device-local share URL for [tokenHash], if this device minted the invite; else null. */
+  private suspend fun localInviteUrl(tokenHash: String): String? {
+    val uid = auth.currentUser?.uid ?: return null
+    return db.schemaQueries.selectConfig(uid, inviteUrlKey(tokenHash)).awaitAsOneOrNull()
+  }
+
+  private fun inviteUrlKey(tokenHash: String) = "$INVITE_URL_KEY_PREFIX$tokenHash"
+
   private fun requireUid(): String =
     auth.currentUser?.uid ?: error("Sharing requires a signed-in user")
 
@@ -180,6 +202,7 @@ class SharingManagerImpl(
     // AircraftShareDeepLinks) so the link opens the app; the web app serves the same URL as a fallback.
     private const val SHARE_URL_BASE = "https://squawkit.fanfly.dev/share"
     private const val INVITE_TTL_SECONDS = 7L * 24 * 60 * 60
+    private const val INVITE_URL_KEY_PREFIX = "share_invite_url:"
   }
 }
 
