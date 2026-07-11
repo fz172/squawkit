@@ -137,6 +137,14 @@ fun InviteSheetScreen(
         )
       }
 
+      state.error?.let { message ->
+        Text(
+          message,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.error,
+        )
+      }
+
       Text(
         stringResource(Res.string.invite_note),
         style = MaterialTheme.typography.bodySmall,
