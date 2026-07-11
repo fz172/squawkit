@@ -83,8 +83,11 @@ service cloud.firestore {
     match /aircraft_shares/{acId} {
       // Members see the ACL; a host may read it for an aircraft in their own tree (e.g. before
       // any member exists). memberRoles is function-managed, so no client update/delete.
-      allow get: if isShareMember(acId)
-        || exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId));
+      // The own-aircraft existence check is evaluated FIRST: on a not-yet-shared aircraft the ACL
+      // doc doesn't exist, so isShareMember's get() would error and (as the left operand of ||) deny
+      // the whole rule before the fallback is reached — the owner could never read/bootstrap it.
+      allow get: if exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId))
+        || isShareMember(acId);
       allow create: if request.resource.data.hostUid == request.auth.uid
         && exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId));
       allow update, delete: if false; // functions only

@@ -201,6 +201,51 @@ describe("aircraft_shares ACL root", () => {
   });
 });
 
+// First share of an aircraft: no aircraft_shares doc exists yet. The owner must be able to GET the
+// missing ACL doc and bootstrap it before the first invite (docs/sharing §3.1). Regression guard for
+// the get-rule ordering: the own-aircraft existence check must be evaluated before isShareMember,
+// whose get() of the missing doc would otherwise error and deny the whole rule.
+describe("aircraft_shares ACL root — first share (no ACL doc yet)", () => {
+  const FRESH = "ac-fresh";
+  const freshShare = `aircraft_shares/${FRESH}`;
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `users/${HOST}/aircraft/${FRESH}`), {
+        registration: "N9",
+        writerUid: HOST,
+      });
+    });
+  });
+
+  it("owner may GET the not-yet-created ACL doc (so the client can bootstrap it)", async () => {
+    await assertSucceeds(getDoc(doc(as(HOST), freshShare)));
+  });
+
+  it("a stranger may NOT get the not-yet-created ACL doc", async () => {
+    await assertFails(getDoc(doc(as(STRANGER), freshShare)));
+  });
+
+  it("owner may bootstrap the ACL doc, then create the first invite", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(HOST), freshShare), {
+        hostUid: HOST,
+        aircraftId: FRESH,
+        memberRoles: { [HOST]: "owner" },
+      }),
+    );
+    await assertSucceeds(
+      setDoc(doc(as(HOST), `${freshShare}/invites/token-1`), {
+        role: "technician",
+        createdBy: HOST,
+        revoked: false,
+        maxUses: 1,
+        useCount: 0,
+      }),
+    );
+  });
+});
+
 describe("member documents", () => {
   it("member may read another member's doc", async () => {
     await assertSucceeds(getDoc(doc(as(OWNER2), `${shareDoc}/members/${TECH}`)));
