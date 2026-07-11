@@ -25,6 +25,12 @@ data class PendingInvite(
   val role: ShareRole,
   val createdAtEpochMs: Long,
   val expiresAtEpochMs: Long,
+  /**
+   * The share URL, recovered from a **device-local** cache. The secret is never stored server-side
+   * (only its hash), so this is non-null only for invites minted on this device — enough to re-show
+   * the QR/link. Null for an invite created elsewhere (or after a reinstall): cancel + re-create.
+   */
+  val url: String? = null,
 )
 
 /** Snapshot of a share's members and pending invites (Firestore-backed, online-only). */

@@ -106,13 +106,17 @@ class ManageAccessViewModelTest {
   }
 
   @Test
-  fun observeError_setsErrorAndStopsLoading() = runTest {
-    // A failing roster flow (e.g. offline) resolves to an error banner, not a spinner.
-    every { sharing.observeShareState(AC_ID) } returns flow { throw RuntimeException("offline") }
+  fun rosterUnavailable_stillResolvesRole_andCanManage() = runTest {
+    // A never-shared aircraft: the owner isn't in memberRoles yet, so the roster read is denied.
+    // Role is resolved locally and must still land (so the Invite action stays available); the
+    // roster failure is swallowed rather than surfaced or left spinning.
+    every { sharing.observeShareState(AC_ID) } returns flow { throw RuntimeException("denied") }
 
     val state = viewModel().uiState.value
 
     assertThat(state.isLoading).isFalse()
-    assertThat(state.error).isEqualTo("offline")
+    assertThat(state.error).isNull()
+    assertThat(state.myRole).isEqualTo(ShareRole.OWNER)
+    assertThat(state.canManage).isTrue()
   }
 }

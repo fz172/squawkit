@@ -1,12 +1,15 @@
 package dev.fanfly.wingslog.feature.sharing.datamanager.impl
 
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.blob.sha256Hex
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.InviteLink
@@ -38,6 +41,8 @@ class SharingManagerImpl(
   private val auth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
   storeFactory: EntityStoreFactory,
+  private val db: WingsLogDatabase,
+  private val writeLock: DatabaseWriteLock,
 ) : SharingManager {
 
   private val functions = Firebase.functions(FUNCTIONS_REGION)
@@ -77,6 +82,11 @@ class SharingManagerImpl(
           },
       )
     }
+      // Recover each invite's share URL from the device-local cache (the secret isn't in Firestore),
+      // so a returning owner can re-show the QR/link. map's transform is suspend, so the DB read fits.
+      .map { state ->
+        state.copy(invites = state.invites.map { it.copy(url = localInviteUrl(it.tokenHash)) })
+      }
   }
 
   override fun observeMyRole(acId: String): Flow<ShareRole?> {
@@ -103,6 +113,16 @@ class SharingManagerImpl(
     val tokenHash = sha256Hex(secret.encodeToByteArray())
     val uid = requireUid()
     val now = Timestamp.now()
+    val url = "$SHARE_URL_BASE#$acId.$secret"
+    // Cache the link locally BEFORE writing the invite doc: that write fires Firestore's optimistic
+    // snapshot, which makes observeShareState re-read the cache — so the URL must already be there,
+    // or the just-created invite would show as "created elsewhere". (The secret is never persisted
+    // server-side, §3.1; this local cache is the only way to re-show the QR/link.)
+    writeLock.withLock { db.schemaQueries.upsertConfig(uid, inviteUrlKey(tokenHash), url) }
+    // Lazy-create the ACL doc so the owner is in memberRoles before the invite write — the invite
+    // rule (isShareOwner) reads it. First share of an aircraft bootstraps this (docs/sharing §3.1);
+    // subsequent memberRoles changes are function-only. See §2.1.
+    ensureShareRoot(acId, uid)
     shareDoc(acId).collection(INVITES).document(tokenHash).set(
       InviteWire(
         role = role.wire(),
@@ -114,7 +134,7 @@ class SharingManagerImpl(
         revoked = false,
       ),
     )
-    InviteLink(url = "$SHARE_URL_BASE#$acId.$secret", tokenHash = tokenHash)
+    InviteLink(url = url, tokenHash = tokenHash)
   }
 
   override suspend fun cancelInvite(acId: String, tokenHash: String): Result<Unit> = runCatching {
@@ -148,8 +168,32 @@ class SharingManagerImpl(
   override suspend fun publishTechnicianMirror(): Result<Unit> =
     Result.success(Unit) // TODO(P5, #135): publish the self-technician mirror to each membership.
 
+  /** The device-local share URL for [tokenHash], if this device minted the invite; else null. */
+  private suspend fun localInviteUrl(tokenHash: String): String? {
+    val uid = auth.currentUser?.uid ?: return null
+    return db.schemaQueries.selectConfig(uid, inviteUrlKey(tokenHash)).awaitAsOneOrNull()
+  }
+
+  private fun inviteUrlKey(tokenHash: String) = "$INVITE_URL_KEY_PREFIX$tokenHash"
+
   private fun requireUid(): String =
     auth.currentUser?.uid ?: error("Sharing requires a signed-in user")
+
+  /**
+   * Bootstrap the `aircraft_shares/{acId}` ACL doc on first share (docs/sharing §2.1/§3.1): the
+   * owner writes themselves into `memberRoles` so the subsequent invite write passes `isShareOwner`.
+   * No-op once the doc exists (further `memberRoles` changes are function-only). Rules gate the
+   * create to the aircraft's own owner.
+   */
+  private suspend fun ensureShareRoot(acId: String, uid: String) {
+    if (shareDoc(acId).get().exists) return
+    shareDoc(acId).set(
+      ShareRootCreateWire(
+        hostUid = uid,
+        memberRoles = mapOf(uid to ShareRole.OWNER.wire()),
+      ),
+    )
+  }
 
   companion object {
     private const val FUNCTIONS_REGION = "us-central1"
@@ -160,6 +204,7 @@ class SharingManagerImpl(
     // AircraftShareDeepLinks) so the link opens the app; the web app serves the same URL as a fallback.
     private const val SHARE_URL_BASE = "https://squawkit.fanfly.dev/share"
     private const val INVITE_TTL_SECONDS = 7L * 24 * 60 * 60
+    private const val INVITE_URL_KEY_PREFIX = "share_invite_url:"
   }
 }
 
@@ -170,6 +215,11 @@ private fun ProtoShareRole.toModel(): ShareRole =
 private fun Timestamp.toMillisLong(): Long = toMilliseconds().toLong()
 
 @Serializable private data class RootWire(val hostUid: String = "")
+/** Owner-bootstrapped ACL doc: hostUid + the owner's own memberRoles entry (§3.1). */
+@Serializable private data class ShareRootCreateWire(
+  val hostUid: String,
+  val memberRoles: Map<String, String>,
+)
 @Serializable private data class MemberWire(val role: String = "technician", val displayName: String = "")
 @Serializable private data class InviteWire(
   val role: String = "technician",

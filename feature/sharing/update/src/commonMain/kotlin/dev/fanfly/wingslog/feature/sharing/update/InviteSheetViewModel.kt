@@ -48,8 +48,16 @@ class InviteSheetViewModel(
     _uiState.update { it.copy(creating = true, error = null) }
     viewModelScope.launch {
       sharingManager.createInvite(aircraftId, _uiState.value.selectedRole)
-        .onSuccess { link -> _uiState.update { it.copy(creating = false, createdLink = link.url) } }
+        // Auto-expand the new invite in the pending list once the roster flow delivers it.
+        .onSuccess { link -> _uiState.update { it.copy(creating = false, expandedToken = link.tokenHash) } }
         .onFailure { e -> _uiState.update { it.copy(creating = false, error = e.message) } }
+    }
+  }
+
+  /** Expand a pending invite's QR/link detail (collapse if it's already the expanded one). */
+  fun toggleExpand(tokenHash: String) {
+    _uiState.update {
+      it.copy(expandedToken = if (it.expandedToken == tokenHash) null else tokenHash)
     }
   }
 

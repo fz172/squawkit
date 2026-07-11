@@ -88,7 +88,9 @@ fun RedeemConfirmationSheet(
 
     is RedeemUiState.Failed -> InfoDialog(
       title = stringResource(Res.string.redeem_failed_title),
-      body = stringResource(Res.string.redeem_failed_body),
+      // Prefer the server's specific reason (e.g. "This invite has already been used") over the
+      // generic fallback, so a failed redeem is diagnosable rather than a catch-all.
+      body = state.message ?: stringResource(Res.string.redeem_failed_body),
       onDismiss = onDismiss,
     )
   }

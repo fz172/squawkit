@@ -240,6 +240,9 @@ fun AircraftSectionContent(
           is AircraftOverviewAction.EditClick ->
             navController.navigate(Screen.EditAircraft.createRoute(aircraftId))
 
+          is AircraftOverviewAction.ManageAccessClick ->
+            navController.navigate(Screen.ManageAccess.createRoute(aircraftId))
+
           AircraftOverviewAction.BackClick -> Unit
 
           else -> viewModel.onAction(action)

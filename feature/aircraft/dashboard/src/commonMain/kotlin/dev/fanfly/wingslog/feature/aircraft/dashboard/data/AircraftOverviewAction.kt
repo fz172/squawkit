@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 sealed interface AircraftOverviewAction {
   data object BackClick : AircraftOverviewAction
   data class EditClick(val aircraftId: String) : AircraftOverviewAction
+  data class ManageAccessClick(val aircraftId: String) : AircraftOverviewAction
   data object DeleteConfirm : AircraftOverviewAction
   data class AddLogClick(val aircraftId: String) : AircraftOverviewAction
   data class EditLogClick(val aircraftId: String, val logId: String) :

@@ -8,6 +8,9 @@ sealed interface AircraftOverviewEvent {
   data class NavigateToEditAircraft(val aircraftId: String) :
     AircraftOverviewEvent
 
+  data class NavigateToManageAccess(val aircraftId: String) :
+    AircraftOverviewEvent
+
   data class NavigateToAddLog(val aircraftId: String) : AircraftOverviewEvent
   data class NavigateToEditLog(val aircraftId: String, val logId: String) :
     AircraftOverviewEvent

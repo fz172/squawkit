@@ -46,6 +46,7 @@ kotlin {
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.androidx.navigation.compose)
       implementation(libs.gitlive.firebase.auth)
+      implementation(libs.kermit)
     }
   }
 }

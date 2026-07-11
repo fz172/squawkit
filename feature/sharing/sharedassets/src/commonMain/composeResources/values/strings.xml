@@ -29,6 +29,7 @@
   <string name="invite_cancel">Cancel invite</string>
   <string name="invite_qr_desc">Invite QR code</string>
   <string name="invite_new">New invite</string>
+  <string name="invite_link_unavailable">This link was created on another device, so it can't be shown here. Cancel it and create a new one to share again.</string>
   <!-- Redeem confirmation -->
   <string name="redeem_confirm_title">Aircraft invitation</string>
   <string name="redeem_confirm_body">You've been invited to share an aircraft. Accept to add it to your fleet.</string>

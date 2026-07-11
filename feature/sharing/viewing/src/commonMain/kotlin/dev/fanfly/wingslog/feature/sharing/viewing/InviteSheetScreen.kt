@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,12 +15,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +36,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -45,7 +50,7 @@ import wingslog.feature.sharing.sharedassets.generated.resources.Res
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_cancel
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_copy
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_create
-import wingslog.feature.sharing.sharedassets.generated.resources.invite_new
+import wingslog.feature.sharing.sharedassets.generated.resources.invite_link_unavailable
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_note
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_pending_title
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_qr_desc
@@ -60,9 +65,9 @@ import wingslog.feature.sharing.sharedassets.generated.resources.invite_title
 data class InviteSheetUiState(
   val selectedRole: ShareRole = ShareRole.TECHNICIAN,
   val creating: Boolean = false,
-  /** URL of the just-minted invite; when non-null the QR + share/copy actions replace the button. */
-  val createdLink: String? = null,
   val pendingInvites: List<PendingInvite> = emptyList(),
+  /** tokenHash of the pending invite whose QR/link detail is expanded (e.g. the one just created). */
+  val expandedToken: String? = null,
   val error: String? = null,
 )
 
@@ -75,6 +80,7 @@ fun InviteSheetScreen(
   onShare: (String) -> Unit,
   onCopy: (String) -> Unit,
   onCancelInvite: (tokenHash: String) -> Unit,
+  onToggleExpand: (tokenHash: String) -> Unit,
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -116,24 +122,23 @@ fun InviteSheetScreen(
         )
       }
 
-      if (state.createdLink == null) {
-        Button(
-          onClick = onCreate,
-          enabled = !state.creating,
-          modifier = Modifier.fillMaxWidth(),
-        ) {
-          if (state.creating) {
-            CircularProgressIndicator(Modifier.size(18.dp))
-          } else {
-            Text(stringResource(Res.string.invite_create))
-          }
+      Button(
+        onClick = onCreate,
+        enabled = !state.creating,
+        modifier = Modifier.fillMaxWidth(),
+      ) {
+        if (state.creating) {
+          CircularProgressIndicator(Modifier.size(18.dp))
+        } else {
+          Text(stringResource(Res.string.invite_create))
         }
-      } else {
-        InviteLinkBlock(
-          url = state.createdLink,
-          onShare = onShare,
-          onCopy = onCopy,
-          onNew = onCreate,
+      }
+
+      state.error?.let { message ->
+        Text(
+          message,
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.error,
         )
       }
 
@@ -150,7 +155,14 @@ fun InviteSheetScreen(
           modifier = Modifier.padding(top = Spacing.small),
         )
         state.pendingInvites.forEach { invite ->
-          PendingInviteRow(invite = invite, onCancel = { onCancelInvite(invite.tokenHash) })
+          PendingInviteCard(
+            invite = invite,
+            expanded = invite.tokenHash == state.expandedToken,
+            onToggle = { onToggleExpand(invite.tokenHash) },
+            onShare = onShare,
+            onCopy = onCopy,
+            onCancel = { onCancelInvite(invite.tokenHash) },
+          )
         }
       }
     }
@@ -162,74 +174,113 @@ private fun RoleChip(selected: Boolean, label: String, onClick: () -> Unit) {
   FilterChip(selected = selected, onClick = onClick, label = { Text(label) })
 }
 
+/** A pending invite; tapping the header reveals the QR / link / share / copy / cancel detail. */
 @Composable
-private fun InviteLinkBlock(
-  url: String,
+private fun PendingInviteCard(
+  invite: PendingInvite,
+  expanded: Boolean,
+  onToggle: () -> Unit,
   onShare: (String) -> Unit,
   onCopy: (String) -> Unit,
-  onNew: () -> Unit,
+  onCancel: () -> Unit,
 ) {
-  Column(
-    modifier = Modifier.fillMaxWidth(),
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
-  ) {
-    Surface(
-      color = androidx.compose.ui.graphics.Color.White,
-      modifier = Modifier.size(220.dp),
-    ) {
-      Image(
-        painter = rememberQrCodePainter(url),
-        contentDescription = stringResource(Res.string.invite_qr_desc),
-        modifier = Modifier.padding(Spacing.small),
-      )
-    }
-    Text(
-      stringResource(Res.string.invite_scan_hint),
-      style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Text(
-      url,
-      style = MaterialTheme.typography.bodySmall,
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis,
-      modifier = Modifier.fillMaxWidth(),
-    )
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-    ) {
-      Button(onClick = { onShare(url) }, modifier = Modifier.weight(1f)) {
-        Icon(Icons.Filled.Share, contentDescription = null)
-        Spacer(Modifier.width(Spacing.small))
-        Text(stringResource(Res.string.invite_share))
+  ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    Column {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .clickable(onClick = onToggle)
+          .padding(Spacing.medium),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Text(
+          roleLabel(invite.role),
+          style = MaterialTheme.typography.bodyMedium,
+          modifier = Modifier.weight(1f),
+        )
+        Icon(
+          if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+          contentDescription = null,
+        )
       }
-      OutlinedButton(onClick = { onCopy(url) }, modifier = Modifier.weight(1f)) {
-        Icon(Icons.Filled.ContentCopy, contentDescription = null)
-        Spacer(Modifier.width(Spacing.small))
-        Text(stringResource(Res.string.invite_copy))
+      if (expanded) {
+        HorizontalDivider()
+        InviteDetail(
+          url = invite.url,
+          onShare = onShare,
+          onCopy = onCopy,
+          onCancel = onCancel,
+        )
       }
     }
-    TextButton(onClick = onNew) { Text(stringResource(Res.string.invite_new)) }
   }
 }
 
 @Composable
-private fun PendingInviteRow(invite: PendingInvite, onCancel: () -> Unit) {
-  ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(Spacing.medium),
-      verticalAlignment = Alignment.CenterVertically,
+private fun InviteDetail(
+  url: String?,
+  onShare: (String) -> Unit,
+  onCopy: (String) -> Unit,
+  onCancel: () -> Unit,
+) {
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(Spacing.medium),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+  ) {
+    if (url != null) {
+      Surface(color = Color.White, modifier = Modifier.size(220.dp)) {
+        Image(
+          painter = rememberQrCodePainter(url),
+          contentDescription = stringResource(Res.string.invite_qr_desc),
+          modifier = Modifier.padding(Spacing.small),
+        )
+      }
+      Text(
+        stringResource(Res.string.invite_scan_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      Text(
+        url,
+        style = MaterialTheme.typography.bodySmall,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.fillMaxWidth(),
+      )
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+      ) {
+        Button(onClick = { onShare(url) }, modifier = Modifier.weight(1f)) {
+          Icon(Icons.Filled.Share, contentDescription = null)
+          Spacer(Modifier.width(Spacing.small))
+          Text(stringResource(Res.string.invite_share))
+        }
+        OutlinedButton(onClick = { onCopy(url) }, modifier = Modifier.weight(1f)) {
+          Icon(Icons.Filled.ContentCopy, contentDescription = null)
+          Spacer(Modifier.width(Spacing.small))
+          Text(stringResource(Res.string.invite_copy))
+        }
+      }
+    } else {
+      // The link can't be rebuilt on this device (secret isn't stored server-side, §3.1).
+      Text(
+        stringResource(Res.string.invite_link_unavailable),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+    TextButton(
+      onClick = onCancel,
+      modifier = Modifier.fillMaxWidth(),
     ) {
       Text(
-        roleLabel(invite.role),
-        style = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier.weight(1f),
+        stringResource(Res.string.invite_cancel),
+        color = MaterialTheme.colorScheme.error,
       )
-      TextButton(onClick = onCancel) { Text(stringResource(Res.string.invite_cancel)) }
     }
   }
 }

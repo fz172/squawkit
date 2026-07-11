@@ -118,8 +118,12 @@ fun OverviewTab(
       AircraftDataCard(
         state.aircraft,
         initiallyExpanded = overdueTasks.isEmpty(),
-        onEditClick = onMutationAction?.let { mutate ->
-          { mutate(AircraftOverviewAction.EditClick(state.aircraft.id)) }
+        // Edit + Manage Access are owner-only; technicians get a read-only aircraft card (§6.3).
+        onEditClick = manageAction(state, onMutationAction) {
+          AircraftOverviewAction.EditClick(state.aircraft.id)
+        },
+        onManageAccessClick = manageAction(state, onMutationAction) {
+          AircraftOverviewAction.ManageAccessClick(state.aircraft.id)
         },
       )
     }
@@ -188,8 +192,11 @@ private fun LargeOverviewTab(
     AircraftDataCard(
       state.aircraft,
       initiallyExpanded = overdueTasks.isEmpty(),
-      onEditClick = onMutationAction?.let { mutate ->
-        { mutate(AircraftOverviewAction.EditClick(state.aircraft.id)) }
+      onEditClick = manageAction(state, onMutationAction) {
+        AircraftOverviewAction.EditClick(state.aircraft.id)
+      },
+      onManageAccessClick = manageAction(state, onMutationAction) {
+        AircraftOverviewAction.ManageAccessClick(state.aircraft.id)
       },
     )
 
@@ -565,3 +572,19 @@ private fun EmptyRailState(
     )
   }
 }
+
+/**
+ * Wires an owner-only aircraft action: returns a click handler only when the caller may manage the
+ * aircraft (owner, not a technician) and mutations are enabled; otherwise null so the affordance is
+ * hidden. Server rules remain the enforcement (docs/sharing §6.3).
+ */
+private fun manageAction(
+  state: AircraftOverviewUiState.Success,
+  onMutationAction: ((AircraftOverviewAction) -> Unit)?,
+  action: () -> AircraftOverviewAction,
+): (() -> Unit)? =
+  if (state.canManageAircraft && onMutationAction != null) {
+    { onMutationAction(action()) }
+  } else {
+    null
+  }

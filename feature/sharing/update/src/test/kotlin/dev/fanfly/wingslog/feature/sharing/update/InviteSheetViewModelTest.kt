@@ -60,7 +60,7 @@ class InviteSheetViewModelTest {
   }
 
   @Test
-  fun createInvite_success_exposesLinkForSelectedRole() = runTest {
+  fun createInvite_success_autoExpandsNewInvite() = runTest {
     coEvery { sharing.createInvite(AC_ID, ShareRole.OWNER) } returns
       Result.success(InviteLink(url = "https://squawkit.fanfly.dev/share#ac.secret", tokenHash = "h"))
 
@@ -68,7 +68,7 @@ class InviteSheetViewModelTest {
     vm.selectRole(ShareRole.OWNER)
     vm.createInvite()
 
-    assertThat(vm.uiState.value.createdLink).contains("share#ac.secret")
+    assertThat(vm.uiState.value.expandedToken).isEqualTo("h")
     assertThat(vm.uiState.value.creating).isFalse()
     coVerify { sharing.createInvite(AC_ID, ShareRole.OWNER) }
   }
@@ -81,9 +81,18 @@ class InviteSheetViewModelTest {
     val vm = viewModel()
     vm.createInvite()
 
-    assertThat(vm.uiState.value.createdLink).isNull()
+    assertThat(vm.uiState.value.expandedToken).isNull()
     assertThat(vm.uiState.value.creating).isFalse()
     assertThat(vm.uiState.value.error).isEqualTo("no network")
+  }
+
+  @Test
+  fun toggleExpand_togglesExpandedToken() = runTest {
+    val vm = viewModel()
+    vm.toggleExpand("t1")
+    assertThat(vm.uiState.value.expandedToken).isEqualTo("t1")
+    vm.toggleExpand("t1")
+    assertThat(vm.uiState.value.expandedToken).isNull()
   }
 
   @Test
