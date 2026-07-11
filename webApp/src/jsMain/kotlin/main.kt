@@ -71,7 +71,7 @@ fun main() {
 // reCAPTCHA v3 site key for the web app's App Check (Firebase Console → App Check → register the web
 // app with reCAPTCHA v3). Public value, safe to commit — like apiKey. Empty leaves App Check OFF, in
 // which case enforceAppCheck callables (redeem/revoke/updateRole/export) are rejected on web.
-private const val APP_CHECK_SITE_KEY = ""
+private const val APP_CHECK_SITE_KEY = "6LcZmU0tAAAAAP_VR4YiIPgzwmQLztoaYRVg56dw"
 
 private fun initializeFirebase() {
   val app = initializeApp(
