@@ -113,6 +113,12 @@ class SharingManagerImpl(
     val tokenHash = sha256Hex(secret.encodeToByteArray())
     val uid = requireUid()
     val now = Timestamp.now()
+    val url = "$SHARE_URL_BASE#$acId.$secret"
+    // Cache the link locally BEFORE writing the invite doc: that write fires Firestore's optimistic
+    // snapshot, which makes observeShareState re-read the cache — so the URL must already be there,
+    // or the just-created invite would show as "created elsewhere". (The secret is never persisted
+    // server-side, §3.1; this local cache is the only way to re-show the QR/link.)
+    writeLock.withLock { db.schemaQueries.upsertConfig(uid, inviteUrlKey(tokenHash), url) }
     // Lazy-create the ACL doc so the owner is in memberRoles before the invite write — the invite
     // rule (isShareOwner) reads it. First share of an aircraft bootstraps this (docs/sharing §3.1);
     // subsequent memberRoles changes are function-only. See §2.1.
@@ -128,10 +134,6 @@ class SharingManagerImpl(
         revoked = false,
       ),
     )
-    val url = "$SHARE_URL_BASE#$acId.$secret"
-    // Cache the link device-locally so it can be re-shown later (the secret is never persisted
-    // server-side). Keyed by tokenHash — the only invite identifier the pending list carries.
-    writeLock.withLock { db.schemaQueries.upsertConfig(uid, inviteUrlKey(tokenHash), url) }
     InviteLink(url = url, tokenHash = tokenHash)
   }
 
