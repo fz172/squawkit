@@ -93,7 +93,11 @@ service cloud.firestore {
       allow update, delete: if false; // functions only
 
       match /members/{memberUid} {
-        allow read: if isShareMember(acId);
+        // Own-aircraft check first so the owner can read the (empty) roster before the first share
+        // bootstraps the ACL doc — otherwise isShareMember's get() of the missing doc errors and
+        // denies (Manage Access would PERMISSION_DENIED on a not-yet-shared aircraft).
+        allow read: if exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId))
+          || isShareMember(acId);
         // A member maintains their own display + technician mirror; role stays immutable from
         // clients (function-managed). Create/delete are function-only.
         allow update: if request.auth.uid == memberUid
@@ -102,7 +106,11 @@ service cloud.firestore {
       }
 
       match /invites/{tokenHash} {
-        allow read, create, update: if isShareOwner(acId); // create/cancel invites
+        // Owner reads the invite list (Manage Access); the own-aircraft check lets them read the
+        // empty list before the ACL doc exists (same reason as members above).
+        allow read: if exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId))
+          || isShareOwner(acId);
+        allow create, update: if isShareOwner(acId); // create/cancel invites
         allow delete: if false;
       }
     }

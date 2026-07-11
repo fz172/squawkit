@@ -244,6 +244,18 @@ describe("aircraft_shares ACL root — first share (no ACL doc yet)", () => {
       }),
     );
   });
+
+  // Manage Access reads members + invites on open; on a not-yet-shared aircraft the owner must be
+  // able to read the empty lists (rather than PERMISSION_DENIED before the first invite).
+  it("owner may read the empty members + invites lists before any share exists", async () => {
+    await assertSucceeds(getDocs(collection(as(HOST), `${freshShare}/members`)));
+    await assertSucceeds(getDocs(collection(as(HOST), `${freshShare}/invites`)));
+  });
+
+  it("a stranger may NOT read the members or invites lists", async () => {
+    await assertFails(getDocs(collection(as(STRANGER), `${freshShare}/members`)));
+    await assertFails(getDocs(collection(as(STRANGER), `${freshShare}/invites`)));
+  });
 });
 
 describe("member documents", () => {
