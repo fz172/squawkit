@@ -13,6 +13,11 @@ message Technician {
   google.protobuf.Timestamp cert_expiration = 5;
   CertExpireLimit cert_expire_limit = 6;
   CertificateType certificate_type = 7;
+
+  // Owning uid of the first-party profile this was snapshotted from — the member's own
+  // self-record, or another share member's published mirror. Empty for a manual entry typed by
+  // hand. Drives the provenance label and the self-signed check (design §7.3/§7.5).
+  string source_uid = 8;
 }
 
 enum CertificateType {

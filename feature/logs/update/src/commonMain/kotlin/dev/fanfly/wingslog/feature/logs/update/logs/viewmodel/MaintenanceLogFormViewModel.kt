@@ -120,7 +120,11 @@ class MaintenanceLogFormViewModel(
       technicianManager.observeTechnicians(),
       technicianManager.observeSelfId(),
     ) { technicians, selfId ->
+      // Stamp the self-record with its owning uid so picking it snapshots provenance into the log
+      // (§7.3). Manual entries carry no source_uid — they were typed by hand, not linked to an
+      // account. Linked members' mirrors get stamped the same way when the picker lists them (#138).
       val self = technicians.find { it.id == selfId }
+        ?.let { it.copy(source_uid = auth.currentUser?.uid.orEmpty()) }
       val others = technicians.filter { it.id != selfId }
         .sortedBy { it.name.lowercase() }
       Pair(self, listOfNotNull(self) + others)

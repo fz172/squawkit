@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Squawk
+import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
@@ -36,6 +37,8 @@ private const val ADDRESSED_SQUAWK_ID = "squawk-addressed-by-this-log"
 private const val OTHER_LOG_SQUAWK_ID = "squawk-addressed-by-other-log"
 private const val OPEN_SQUAWK_ID = "squawk-open"
 private const val PRESELECTED_SQUAWK_ID = "squawk-preselected"
+private const val SELF_TECH_ID = "tech-self"
+private const val TEST_UID = "uid-sponge"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MaintenanceLogFormViewModelTest {
@@ -66,6 +69,7 @@ class MaintenanceLogFormViewModelTest {
 
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.isAnonymous } returns false
+    every { mockUser.uid } returns TEST_UID
     every { auth.currentUser } returns mockUser
 
     // Prevent the init-block flows from suspending forever.
@@ -326,6 +330,38 @@ class MaintenanceLogFormViewModelTest {
       // stay false until the user actually changes something themselves.
       assertThat(viewModel.uiState.value.hasChanges).isFalse()
     }
+
+  // ---- source_uid provenance on the technician snapshot (design §7.3) ----
+
+  @Test
+  fun selfTechnician_isStampedWithSourceUid_andIsSelectedByDefault() =
+    runTest(testDispatcher) {
+      every { technicianManager.observeTechnicians() } returns flowOf(
+        listOf(Technician(id = SELF_TECH_ID, name = "Sponge Bob"))
+      )
+      every { technicianManager.observeSelfId() } returns flowOf(SELF_TECH_ID)
+
+      val state = buildViewModelForNew().uiState.value
+
+      assertThat(state.selectedTechnician?.source_uid).isEqualTo(TEST_UID)
+      assertThat(state.availableTechnicians.single().source_uid).isEqualTo(TEST_UID)
+    }
+
+  @Test
+  fun manualTechnician_carriesNoSourceUid() = runTest(testDispatcher) {
+    every { technicianManager.observeTechnicians() } returns flowOf(
+      listOf(
+        Technician(id = SELF_TECH_ID, name = "Sponge Bob"),
+        Technician(id = "manual-1", name = "Hand-typed Mechanic"),
+      )
+    )
+    every { technicianManager.observeSelfId() } returns flowOf(SELF_TECH_ID)
+
+    val available = buildViewModelForNew().uiState.value.availableTechnicians
+
+    // A manual entry was typed by hand, not linked to an account — provenance stays empty.
+    assertThat(available.single { it.id == "manual-1" }.source_uid).isEmpty()
+  }
 
   // ---- helpers ----
 
