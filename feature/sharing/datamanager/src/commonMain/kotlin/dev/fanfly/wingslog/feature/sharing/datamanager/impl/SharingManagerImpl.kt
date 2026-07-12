@@ -24,6 +24,7 @@ import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.toMilliseconds
 import dev.gitlive.firebase.functions.functions
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -55,8 +56,25 @@ class SharingManagerImpl(
     val myUid = auth.currentUser?.uid
     val root = shareDoc(acId).snapshots.map { it.takeIf { s -> s.exists }?.data<RootWire>() }
     val members = shareDoc(acId).collection(MEMBERS).snapshots
-    val invites = shareDoc(acId).collection(INVITES).snapshots
-    return combine(root, members, invites) { rootDoc, memberSnaps, inviteSnaps ->
+    // Invites are owner-only in the rules, so a technician's listener is denied. Degrade to "no
+    // pending invites" rather than letting that failure take down the combine — the roster IS
+    // readable by any member, and it's what backs their read-only view and the Leave action.
+    val invites: Flow<List<PendingInvite>> = shareDoc(acId).collection(INVITES).snapshots
+      .map { inviteSnaps ->
+        inviteSnaps.documents
+          .map { it.id to it.data<InviteWire>() }
+          .filter { (_, i) -> !i.revoked && i.useCount < i.maxUses }
+          .map { (tokenHash, i) ->
+            PendingInvite(
+              tokenHash = tokenHash,
+              role = i.role.toModel(),
+              createdAtEpochMs = i.createdAt.toMillisLong(),
+              expiresAtEpochMs = i.expiresAt.toMillisLong(),
+            )
+          }
+      }
+      .catch { emit(emptyList()) }
+    return combine(root, members, invites) { rootDoc, memberSnaps, pendingInvites ->
       val hostUid = rootDoc?.hostUid
       AircraftShareState(
         members = memberSnaps.documents.map { doc ->
@@ -69,17 +87,7 @@ class SharingManagerImpl(
             isSelf = doc.id == myUid,
           )
         },
-        invites = inviteSnaps.documents
-          .map { it.id to it.data<InviteWire>() }
-          .filter { (_, i) -> !i.revoked && i.useCount < i.maxUses }
-          .map { (tokenHash, i) ->
-            PendingInvite(
-              tokenHash = tokenHash,
-              role = i.role.toModel(),
-              createdAtEpochMs = i.createdAt.toMillisLong(),
-              expiresAtEpochMs = i.expiresAt.toMillisLong(),
-            )
-          },
+        invites = pendingInvites,
       )
     }
       // Recover each invite's share URL from the device-local cache (the secret isn't in Firestore),

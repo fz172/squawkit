@@ -263,6 +263,13 @@ describe("member documents", () => {
     await assertSucceeds(getDoc(doc(as(OWNER2), `${shareDoc}/members/${TECH}`)));
   });
 
+  // The Manage Access roster is a LIST of this collection, not a get — and it must work for a
+  // technician, since the roster is what shows them the owner and backs their Leave action.
+  // Invites stay owner-only (see the "invites" suite), so the client must not couple the two.
+  it("technician may LIST the members collection (backs their Manage Access roster)", async () => {
+    await assertSucceeds(getDocs(collection(as(TECH), `${shareDoc}/members`)));
+  });
+
   it("member may update their own display, keeping role unchanged", async () => {
     await assertSucceeds(
       updateDoc(doc(as(TECH), `${shareDoc}/members/${TECH}`), { displayName: "New Name" }),

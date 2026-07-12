@@ -122,7 +122,7 @@ fun OverviewTab(
         onEditClick = manageAction(state, onMutationAction) {
           AircraftOverviewAction.EditClick(state.aircraft.id)
         },
-        onManageAccessClick = manageAction(state, onMutationAction) {
+        onManageAccessClick = memberAction(onMutationAction) {
           AircraftOverviewAction.ManageAccessClick(state.aircraft.id)
         },
       )
@@ -195,7 +195,7 @@ private fun LargeOverviewTab(
       onEditClick = manageAction(state, onMutationAction) {
         AircraftOverviewAction.EditClick(state.aircraft.id)
       },
-      onManageAccessClick = manageAction(state, onMutationAction) {
+      onManageAccessClick = memberAction(onMutationAction) {
         AircraftOverviewAction.ManageAccessClick(state.aircraft.id)
       },
     )
@@ -584,6 +584,21 @@ private fun manageAction(
   action: () -> AircraftOverviewAction,
 ): (() -> Unit)? =
   if (state.canManageAircraft && onMutationAction != null) {
+    { onMutationAction(action()) }
+  } else {
+    null
+  }
+
+/**
+ * Wires an action open to every member of the share, regardless of role. Manage Access is the one
+ * such affordance: owners manage the roster there, while a technician sees it read-only and it is
+ * their only route to leaving the share.
+ */
+private fun memberAction(
+  onMutationAction: ((AircraftOverviewAction) -> Unit)?,
+  action: () -> AircraftOverviewAction,
+): (() -> Unit)? =
+  if (onMutationAction != null) {
     { onMutationAction(action()) }
   } else {
     null
