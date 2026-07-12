@@ -39,6 +39,8 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:storage"))
       implementation(project(":feature:sharing:model"))
+      // The mirror is published from the member's own self-technician record (design §7.1).
+      implementation(project(":feature:technician:datamanager"))
       implementation(libs.gitlive.firebase.auth)
       implementation(libs.gitlive.firebase.firestore)
       implementation(libs.gitlive.firebase.functions)

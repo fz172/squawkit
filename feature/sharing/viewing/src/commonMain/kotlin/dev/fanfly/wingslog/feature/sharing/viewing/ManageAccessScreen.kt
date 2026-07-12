@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -46,6 +44,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import androidx.compose.material.icons.filled.Group
@@ -186,7 +185,11 @@ private fun MemberCard(
         .padding(Spacing.medium),
       verticalAlignment = Alignment.CenterVertically,
     ) {
-      Avatar(member.displayName)
+      AvatarIcon(
+        displayName = member.displayName.ifBlank { member.uid },
+        photoUri = member.photoUrl,
+        size = 40.dp,
+      )
       Spacer(Modifier.width(Spacing.medium))
       androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -260,23 +263,6 @@ private fun MemberActions(
           expanded = false
           onRevoke(member.uid)
         },
-      )
-    }
-  }
-}
-
-@Composable
-private fun Avatar(name: String) {
-  Surface(
-    shape = CircleShape,
-    color = MaterialTheme.colorScheme.primaryContainer,
-    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    modifier = Modifier.size(40.dp),
-  ) {
-    Box(contentAlignment = Alignment.Center) {
-      Text(
-        name.trim().firstOrNull()?.uppercase() ?: "?",
-        style = MaterialTheme.typography.titleMedium,
       )
     }
   }

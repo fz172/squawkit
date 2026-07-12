@@ -10,8 +10,10 @@ import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.auth.SendLinkResult
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.AuthCredential
+import io.mockk.mockk
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -100,10 +102,15 @@ class AdaptiveShellViewModelTest {
       role = ShareRole.SHARE_ROLE_OWNER,
     )
 
+  // The shell republishes the technician mirror on app start (design §7.2); irrelevant to these
+  // assertions, so a relaxed mock keeps it out of the way.
+  private val sharingManager: SharingManager = mockk(relaxed = true)
+
   private fun viewModel() = AdaptiveShellViewModel(
     fleetManager = fleetManager,
     technicianManager = technicianManager,
     authManager = authManager,
+    sharingManager = sharingManager,
   )
 
   @Test

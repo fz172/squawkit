@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.feature.sharing.viewing.RedeemUiState
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +41,8 @@ class RedeemViewModelTest {
     sharing = mockk()
     auth = mockk()
     every { auth.authStateChanged } returns authState
+    // Every redeemer publishes their technician mirror into the share they just joined (§7.2).
+    coEvery { sharing.publishTechnicianMirror() } returns Result.success(Unit)
     AircraftShareDeepLinks.consume()
   }
 
@@ -91,6 +94,35 @@ class RedeemViewModelTest {
     vm.accept()
 
     assertThat(vm.uiState.value).isEqualTo(RedeemUiState.Success(ShareRole.TECHNICIAN))
+  }
+
+  @Test
+  fun accept_success_publishesTechnicianMirror() = runTest {
+    val signedIn = user(anonymous = false)
+    authState.value = signedIn
+    every { auth.currentUser } returns signedIn
+    AircraftShareDeepLinks.deliver(SHARE_URL)
+    coEvery { sharing.redeemInvite(AC_ID, SECRET) } returns Result.success(
+      RedeemOutcome(aircraftId = AC_ID, hostUid = "host", role = ShareRole.TECHNICIAN),
+    )
+
+    viewModel().accept()
+
+    coVerify { sharing.publishTechnicianMirror() }
+  }
+
+  @Test
+  fun accept_failure_doesNotPublishTechnicianMirror() = runTest {
+    val signedIn = user(anonymous = false)
+    authState.value = signedIn
+    every { auth.currentUser } returns signedIn
+    AircraftShareDeepLinks.deliver(SHARE_URL)
+    coEvery { sharing.redeemInvite(AC_ID, SECRET) } returns
+      Result.failure(RuntimeException("expired"))
+
+    viewModel().accept()
+
+    coVerify(exactly = 0) { sharing.publishTechnicianMirror() }
   }
 
   @Test

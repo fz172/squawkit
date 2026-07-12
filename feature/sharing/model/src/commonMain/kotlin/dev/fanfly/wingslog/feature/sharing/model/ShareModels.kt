@@ -15,6 +15,8 @@ data class ShareMember(
   val uid: String,
   val displayName: String,
   val role: ShareRole,
+  /** Account photo, published by the member's own client alongside the mirror. Null → initials. */
+  val photoUrl: String? = null,
   val isHost: Boolean = false,
   val isSelf: Boolean = false,
 )

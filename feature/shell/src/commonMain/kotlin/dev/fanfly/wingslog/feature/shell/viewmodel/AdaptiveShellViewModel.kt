@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.adaptive.ShellAircraft
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,7 @@ class AdaptiveShellViewModel(
   fleetManager: FleetManager,
   private val technicianManager: TechnicianManager,
   private val authManager: AuthManager,
+  private val sharingManager: SharingManager,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(AdaptiveShellUiState())
@@ -31,6 +33,9 @@ class AdaptiveShellViewModel(
 
   init {
     observeSelf()
+    // Republish on every app start: idempotent, and the only thing that heals a member doc whose
+    // name predates the mirror (or a publish that failed offline). See design §7.2.
+    viewModelScope.launch { sharingManager.publishTechnicianMirror() }
     viewModelScope.launch {
       fleetManager.observeFleetDashboard()
         .collect { fleet ->

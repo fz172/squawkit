@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.sharing.datamanager.impl
 
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
+import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -17,6 +19,7 @@ import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -26,6 +29,7 @@ import dev.gitlive.firebase.functions.functions
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -44,6 +48,7 @@ class SharingManagerImpl(
   storeFactory: EntityStoreFactory,
   private val db: WingsLogDatabase,
   private val writeLock: DatabaseWriteLock,
+  private val technicianManager: TechnicianManager,
 ) : SharingManager {
 
   private val functions = Firebase.functions(FUNCTIONS_REGION)
@@ -76,17 +81,27 @@ class SharingManagerImpl(
       .catch { emit(emptyList()) }
     return combine(root, members, invites) { rootDoc, memberSnaps, pendingInvites ->
       val hostUid = rootDoc?.hostUid
+      val memberRoles = rootDoc?.memberRoles.orEmpty()
+      val docs = memberSnaps.documents.associate { it.id to it.data<MemberWire>() }
+      // memberRoles on the ACL root is the authoritative membership list; the members subcollection
+      // only carries display detail. Drive the roster from the former so a member with no doc yet
+      // still appears — notably the hosting owner, who never redeems and so is never written by a
+      // function. Union with the docs so a doc that outlives its ACL entry isn't silently dropped.
       AircraftShareState(
-        members = memberSnaps.documents.map { doc ->
-          val m = doc.data<MemberWire>()
-          ShareMember(
-            uid = doc.id,
-            displayName = m.displayName,
-            role = m.role.toModel(),
-            isHost = doc.id == hostUid,
-            isSelf = doc.id == myUid,
-          )
-        },
+        members = (memberRoles.keys + docs.keys)
+          .map { uid ->
+            val m = docs[uid]
+            ShareMember(
+              uid = uid,
+              displayName = m?.displayName.orEmpty(),
+              role = (m?.role ?: memberRoles[uid]).orEmpty().toModel(),
+              photoUrl = m?.photoUrl,
+              isHost = uid == hostUid,
+              isSelf = uid == myUid,
+            )
+          }
+          // Host first, then everyone else — the owner is the anchor of the roster.
+          .sortedByDescending { it.isHost },
         invites = pendingInvites,
       )
     }
@@ -173,8 +188,76 @@ class SharingManagerImpl(
 
   override suspend fun leave(acId: String): Result<Unit> = revokeMember(acId, requireUid())
 
-  override suspend fun publishTechnicianMirror(): Result<Unit> =
-    Result.success(Unit) // TODO(P5, #135): publish the self-technician mirror to each membership.
+  /**
+   * Publishes the caller's display fields + self-technician mirror into their member doc on every
+   * share they belong to (design §7.1/§7.2). Every member publishes, Owner or Technician alike —
+   * the picker lists membership-with-mirror, not role.
+   *
+   * Idempotent, and cheap enough to run on every app start — which is what makes it the retry for a
+   * publish that couldn't land (offline, or killed mid-write) and the self-heal for a member doc
+   * still carrying a name from before this existed. Best-effort by design: freshness is eventual,
+   * and log snapshots capture whatever is current at signing time.
+   */
+  override suspend fun publishTechnicianMirror(): Result<Unit> = runCatching {
+    val user = auth.currentUser ?: return@runCatching
+    if (user.isAnonymous) return@runCatching
+    val uid = user.uid
+
+    val self = technicianManager.observeSelf().first()
+    // The in-app profile name wins over the Firebase Auth account name. The redeem function seeds
+    // displayName from the auth token because it has nothing else to go on, but the account name
+    // (e.g. from Google) is not what the user edits or expects to see — the self-technician record
+    // is. Same precedence the shell uses for the account row.
+    val update = MemberSelfUpdateWire(
+      displayName = self?.name?.takeIf { it.isNotBlank() }
+        ?: user.displayName?.takeIf { it.isNotBlank() }
+        ?: user.email.orEmpty(),
+      photoUrl = user.photoURL,
+      technicianMirror = self?.toMirrorWire(),
+    )
+
+    memberships(uid).forEach { acId ->
+      // The ACL decides whether we're a member at all, and with what role. An own aircraft that was
+      // never shared has no ACL doc — skip it rather than bootstrapping a share nobody asked for.
+      val myRole = shareDoc(acId).get()
+        .takeIf { it.exists }
+        ?.data<RootWire>()
+        ?.memberRoles
+        ?.get(uid)
+        ?: return@forEach
+
+      val memberDoc = shareDoc(acId).collection(MEMBERS).document(uid)
+      if (memberDoc.get().exists) {
+        memberDoc.set(update, merge = true)
+      } else {
+        // No doc yet: the hosting owner, who never redeems. Create it with the role the ACL already
+        // grants — rules pin it to exactly that, so this can't mint membership or escalate.
+        memberDoc.set(
+          MemberCreateWire(
+            role = myRole,
+            displayName = update.displayName,
+            photoUrl = update.photoUrl,
+            technicianMirror = update.technicianMirror,
+            addedAt = Timestamp.now(),
+            invitedBy = uid,
+          ),
+        )
+      }
+    }
+  }.onFailure { logger.w(it) { "Mirror publish failed; retries on next app start" } }
+
+  /**
+   * Every share the user is a member of: aircraft shared *with* them (the local refs store, per
+   * §7.2) plus their own aircraft, which are the shares they host. Own aircraft that were never
+   * shared simply have no member doc, and are skipped by the existence check at the call site.
+   */
+  private suspend fun memberships(uid: String): List<String> {
+    val scope = EntityScope.userRoot(uid)
+    val shared = refStore.observeAll(scope).first().map { it.id }
+    val own = aircraftStore.observeAll(scope).first().map { it.id }
+    return (shared + own).distinct()
+  }
+
 
   /** The device-local share URL for [tokenHash], if this device minted the invite; else null. */
   private suspend fun localInviteUrl(tokenHash: String): String? {
@@ -204,6 +287,7 @@ class SharingManagerImpl(
   }
 
   companion object {
+    private val logger = Logger.withTag("SharingManager")
     private const val FUNCTIONS_REGION = "us-central1"
     private const val SHARES = "aircraft_shares"
     private const val MEMBERS = "members"
@@ -216,19 +300,71 @@ class SharingManagerImpl(
   }
 }
 
+/**
+ * Flattens the self-technician proto into the plain-field mirror. Certificate fields are optional —
+ * an owner doing FAR 43 preventive maintenance with no A&P certificate still publishes a valid
+ * name-only mirror (design §7).
+ */
+private fun Technician.toMirrorWire(): TechnicianMirrorWire = TechnicianMirrorWire(
+  name = name,
+  certificateType = certificate_type.name,
+  certNumber = cert_number,
+  certExpiration = cert_expiration?.let { Timestamp(it.getEpochSecond(), 0) },
+  certExpireLimit = cert_expire_limit.name,
+)
+
 private fun ShareRole.wire(): String = if (this == ShareRole.OWNER) "owner" else "technician"
 private fun String.toModel(): ShareRole = if (this == "owner") ShareRole.OWNER else ShareRole.TECHNICIAN
 private fun ProtoShareRole.toModel(): ShareRole =
   if (this == ProtoShareRole.SHARE_ROLE_OWNER) ShareRole.OWNER else ShareRole.TECHNICIAN
 private fun Timestamp.toMillisLong(): Long = toMilliseconds().toLong()
 
-@Serializable private data class RootWire(val hostUid: String = "")
+@Serializable private data class RootWire(
+  val hostUid: String = "",
+  /** uid → role. Authoritative membership (includes the host); the members subcollection is detail. */
+  val memberRoles: Map<String, String> = emptyMap(),
+)
+
+/** Self-created member doc — role must match the ACL, which is what rules check. */
+@Serializable private data class MemberCreateWire(
+  val role: String,
+  val displayName: String,
+  val photoUrl: String?,
+  val technicianMirror: TechnicianMirrorWire?,
+  val addedAt: Timestamp,
+  val invitedBy: String,
+)
 /** Owner-bootstrapped ACL doc: hostUid + the owner's own memberRoles entry (§3.1). */
 @Serializable private data class ShareRootCreateWire(
   val hostUid: String,
   val memberRoles: Map<String, String>,
 )
-@Serializable private data class MemberWire(val role: String = "technician", val displayName: String = "")
+@Serializable private data class MemberWire(
+  val role: String = "technician",
+  val displayName: String = "",
+  val photoUrl: String? = null,
+  val technicianMirror: TechnicianMirrorWire? = null,
+)
+
+/**
+ * The member's self-technician record, flattened to plain fields so other members can read it
+ * without decoding protos out of a private tree (design §7.1, shape §2.1). Written only by the
+ * member's own client; certificate fields may be empty (a name-only mirror is still valid).
+ */
+@Serializable private data class TechnicianMirrorWire(
+  val name: String = "",
+  val certificateType: String = "",
+  val certNumber: String = "",
+  val certExpiration: Timestamp? = null,
+  val certExpireLimit: String = "",
+)
+
+/** Partial member-doc update: display fields + mirror. `role` is omitted so rules see it unchanged. */
+@Serializable private data class MemberSelfUpdateWire(
+  val displayName: String,
+  val photoUrl: String?,
+  val technicianMirror: TechnicianMirrorWire?,
+)
 @Serializable private data class InviteWire(
   val role: String = "technician",
   val createdBy: String = "",

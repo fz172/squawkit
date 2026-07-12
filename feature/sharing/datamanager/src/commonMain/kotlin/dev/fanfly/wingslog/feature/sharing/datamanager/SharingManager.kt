@@ -35,5 +35,11 @@ interface SharingManager {
 
   suspend fun leave(acId: String): Result<Unit>
 
+  /**
+   * Publishes the caller's display fields + self-technician mirror to every share they belong to
+   * (§7.1/§7.2). Call on redeem, on self-technician edit, and at app start — it is idempotent, so
+   * the app-start call doubles as the retry for a publish that failed offline. Best-effort: a
+   * failure is logged, not surfaced.
+   */
   suspend fun publishTechnicianMirror(): Result<Unit>
 }
