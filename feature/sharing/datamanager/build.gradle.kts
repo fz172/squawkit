@@ -38,6 +38,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:storage"))
+      // Mirror timestamps cross the Firestore ↔ proto boundary (cert expiration).
+      implementation(project(":core:datetime"))
       implementation(project(":feature:sharing:model"))
       // The mirror is published from the member's own self-technician record (design §7.1).
       implementation(project(":feature:technician:datamanager"))

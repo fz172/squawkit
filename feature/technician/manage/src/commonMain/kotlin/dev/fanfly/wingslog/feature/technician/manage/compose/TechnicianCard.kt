@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.displayResId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.Res
+import wingslog.feature.technician.sharedassets.generated.resources.linked_badge
 import wingslog.feature.technician.sharedassets.generated.resources.no_certificate
 import wingslog.feature.technician.sharedassets.generated.resources.you_badge
 
@@ -34,6 +35,8 @@ fun TechnicianCard(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
   isSelf: Boolean = false,
+  /** A profile mirrored from a share member: shown read-only, badged, and not editable (§7.3). */
+  isLinked: Boolean = false,
 ) {
   val certType = when {
     technician.certificate_type != CertificateType.CERTIFICATE_TYPE_NONE -> technician.certificate_type
@@ -77,18 +80,23 @@ fun TechnicianCard(
           fontWeight = FontWeight.SemiBold,
           modifier = Modifier.weight(1f),
         )
-        if (isSelf) {
+        val badge = when {
+          isSelf -> stringResource(Res.string.you_badge)
+          isLinked -> stringResource(Res.string.linked_badge)
+          else -> null
+        }
+        if (badge != null) {
           SuggestionChip(
             onClick = {},
             label = {
-              Text(
-                stringResource(Res.string.you_badge),
-                style = MaterialTheme.typography.labelSmall
-              )
+              Text(badge, style = MaterialTheme.typography.labelSmall)
             },
             colors = SuggestionChipDefaults.suggestionChipColors(
-              containerColor = MaterialTheme.colorScheme.primaryContainer,
-              labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+              // Linked profiles are someone else's data — a quieter tone than the primary "You".
+              containerColor = if (isLinked) MaterialTheme.colorScheme.secondaryContainer
+              else MaterialTheme.colorScheme.primaryContainer,
+              labelColor = if (isLinked) MaterialTheme.colorScheme.onSecondaryContainer
+              else MaterialTheme.colorScheme.onPrimaryContainer,
             ),
           )
         }
