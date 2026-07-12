@@ -16,6 +16,7 @@ val sharingModule = module {
       storeFactory = get<EntityStoreFactory>(),
       db = get(),
       writeLock = get(),
+      technicianManager = get(),
     )
   }
   // Own-vs-shared scope resolution for the per-aircraft managers (logs/tasks/squawk). Lives here

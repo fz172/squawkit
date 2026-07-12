@@ -52,6 +52,8 @@ kotlin {
       implementation(project(":core:sharedassets"))
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:technician:sharedassets"))
+      // Editing the self-record republishes the technician mirror to every share (design §7.2).
+      implementation(project(":feature:sharing:datamanager"))
 
       // Compose
 

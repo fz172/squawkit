@@ -276,6 +276,30 @@ describe("member documents", () => {
     );
   });
 
+  // The member's own client publishes the mirror (design §7.1) — no proto decoding server-side.
+  it("member may publish their own technician mirror", async () => {
+    await assertSucceeds(
+      updateDoc(doc(as(TECH), `${shareDoc}/members/${TECH}`), {
+        displayName: "Sponge Bob",
+        photoUrl: "https://example.com/p.jpg",
+        technicianMirror: {
+          name: "Sponge Bob",
+          certificateType: "CERTIFICATE_TYPE_AMT",
+          certNumber: "A&P-123",
+          certExpireLimit: "CERT_EXPIRE_LIMIT_NEVER_EXPIRES",
+        },
+      }),
+    );
+  });
+
+  it("member may NOT publish a mirror onto another member's doc", async () => {
+    await assertFails(
+      updateDoc(doc(as(TECH), `${shareDoc}/members/${HOST}`), {
+        technicianMirror: { name: "Impostor" },
+      }),
+    );
+  });
+
   it("member may NOT change their own role (immutable from clients)", async () => {
     await assertFails(
       updateDoc(doc(as(TECH), `${shareDoc}/members/${TECH}`), { role: "owner" }),
@@ -288,7 +312,45 @@ describe("member documents", () => {
     );
   });
 
-  it("no client may create or delete member docs (function-managed)", async () => {
+  // The hosting owner never redeems, so no function ever writes their member doc — they self-create
+  // it, which is what makes them appear in the roster at all (design §7.2).
+  it("host may create their OWN member doc at the role the ACL grants them", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await deleteDoc(doc(ctx.firestore(), `${shareDoc}/members/${HOST}`));
+    });
+    await assertSucceeds(
+      setDoc(doc(as(HOST), `${shareDoc}/members/${HOST}`), {
+        role: "owner",
+        displayName: "Sponge Bob",
+        photoUrl: "https://example.com/p.jpg",
+      }),
+    );
+  });
+
+  it("member may NOT self-create at a role the ACL does not grant them (escalation)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await deleteDoc(doc(ctx.firestore(), `${shareDoc}/members/${TECH}`));
+    });
+    await assertFails(
+      setDoc(doc(as(TECH), `${shareDoc}/members/${TECH}`), {
+        role: "owner",
+        displayName: "Sneaky",
+      }),
+    );
+  });
+
+  it("a stranger may NOT self-create a member doc (mint membership)", async () => {
+    await assertFails(
+      setDoc(doc(as(STRANGER), `${shareDoc}/members/${STRANGER}`), {
+        role: "technician",
+        displayName: "Nobody",
+      }),
+    );
+  });
+
+  // Self-create is allowed (above); creating a doc for SOMEONE ELSE, and any delete, stay
+  // function-only — that is what keeps membership itself function-managed.
+  it("no client may create a member doc for another uid, or delete one", async () => {
     await assertFails(
       setDoc(doc(as(HOST), `${shareDoc}/members/new-uid`), { role: "technician" }),
     );

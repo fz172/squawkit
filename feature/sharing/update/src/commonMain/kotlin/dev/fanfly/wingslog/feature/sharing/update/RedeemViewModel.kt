@@ -55,6 +55,10 @@ class RedeemViewModel(
     viewModelScope.launch {
       sharingManager.redeemInvite(invite.aircraftId, invite.secret)
         .onSuccess { outcome ->
+          // Every redeemer publishes their mirror into the share they just joined (§7.2) — Owner
+          // or Technician alike, since the picker lists membership-with-mirror, not role. Failure
+          // is queued in the outbox, so it must not gate the success state.
+          sharingManager.publishTechnicianMirror()
           _uiState.value =
             if (outcome.alreadyMember) RedeemUiState.AlreadyMember
             else RedeemUiState.Success(outcome.role)

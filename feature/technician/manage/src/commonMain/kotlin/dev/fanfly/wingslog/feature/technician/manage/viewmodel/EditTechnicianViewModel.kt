@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +34,7 @@ data class EditTechnicianUiState(
 
 class EditTechnicianViewModel(
   private val technicianManager: TechnicianManager,
+  private val sharingManager: SharingManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -193,6 +195,10 @@ class EditTechnicianViewModel(
 
       val result = technicianManager.updateTechnician(technician)
       if (result.isSuccess) {
+        // Editing the self-record changes how this member appears on a signed log everywhere they
+        // are a member, so republish the mirror to each share (§7.2). Best-effort: it queues in the
+        // outbox on failure, and must not block the save from reporting success.
+        if (currentState.isSelf) sharingManager.publishTechnicianMirror()
         _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
       } else {
         _uiState.update {

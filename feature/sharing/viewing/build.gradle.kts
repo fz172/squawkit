@@ -42,6 +42,8 @@ kotlin {
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
+      // Shared avatar (photo → initials → "?"), same widget the shell's account row uses.
+      implementation(project(":core:ui:widget:avataricon"))
       implementation(project(":feature:sharing:model"))
       implementation(project(":feature:sharing:sharedassets"))
     }

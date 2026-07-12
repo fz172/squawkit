@@ -53,6 +53,8 @@ kotlin {
       implementation(project(":feature:logs:update"))
       implementation(project(":feature:settings"))
       implementation(project(":feature:sharing:update"))
+      // App-start retry of an owed technician-mirror publish (design §7.2).
+      implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:squawk:update"))
       implementation(project(":feature:stresstest:config"))
       implementation(project(":feature:sync:settings"))
@@ -75,5 +77,6 @@ dependencies {
 
   testImplementation(libs.junit)
   testImplementation(libs.truth)
+  testImplementation(libs.mockk)
   testImplementation(libs.kotlinx.coroutines.test)
 }

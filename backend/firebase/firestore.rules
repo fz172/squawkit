@@ -99,10 +99,16 @@ service cloud.firestore {
         allow read: if exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId))
           || isShareMember(acId);
         // A member maintains their own display + technician mirror; role stays immutable from
-        // clients (function-managed). Create/delete are function-only.
+        // clients (function-managed). Delete is function-only.
         allow update: if request.auth.uid == memberUid
           && request.resource.data.role == resource.data.role;
-        allow create, delete: if false;
+        // A member may create their OWN member doc, but only with the role the ACL already grants
+        // them — so this cannot mint membership or escalate a role, it only backfills the display
+        // record. The hosting owner needs this: they never redeem, so no function ever writes their
+        // member doc, and without it they'd be absent from the roster (design §7.2).
+        allow create: if request.auth.uid == memberUid
+          && request.resource.data.role == shareRole(acId);
+        allow delete: if false;
       }
 
       match /invites/{tokenHash} {
