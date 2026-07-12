@@ -33,6 +33,10 @@ data class MaintenanceLogFormUiState(
   val showInspectionPicker: Boolean = false,
   val selectedTechnician: Technician? = null,
   val availableTechnicians: List<Technician> = emptyList(),
+  /** Members of this aircraft's share who published a mirror — selectable, badged "Linked" (§7.3). */
+  val linkedTechnicians: List<Technician> = emptyList(),
+  /** The caller's own technician record, listed first in the picker. */
+  val selfTechnicianId: String? = null,
   val showTechnicianPicker: Boolean = false,
   /** The maintenance date for this log entry (date only, no time). Null means "use current time". */
   val maintenanceDate: LocalDate? = null,

@@ -16,6 +16,7 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
@@ -55,6 +56,7 @@ class MaintenanceLogFormViewModel(
   private val squawkManager: SquawkManager,
   private val attachmentManager: AttachmentManager,
   private val technicianManager: TechnicianManager,
+  private val sharingManager: SharingManager,
   private val auth: FirebaseAuth,
   private val featureLabManager: FeatureLabManager,
   savedStateHandle: SavedStateHandle,
@@ -119,21 +121,26 @@ class MaintenanceLogFormViewModel(
     combine(
       technicianManager.observeTechnicians(),
       technicianManager.observeSelfId(),
-    ) { technicians, selfId ->
+      // Members of THIS aircraft's share who published a mirror. Scoped to the aircraft because a
+      // log is signed for one aircraft — only its members are selectable (§7.3).
+      sharingManager.observeLinkedTechnicians(aircraftId),
+    ) { technicians, selfId, linked ->
       // Stamp the self-record with its owning uid so picking it snapshots provenance into the log
       // (§7.3). Manual entries carry no source_uid — they were typed by hand, not linked to an
-      // account. Linked members' mirrors get stamped the same way when the picker lists them (#138).
+      // account. Linked mirrors arrive already stamped with their owner's uid.
       val self = technicians.find { it.id == selfId }
         ?.let { it.copy(source_uid = auth.currentUser?.uid.orEmpty()) }
       val others = technicians.filter { it.id != selfId }
         .sortedBy { it.name.lowercase() }
-      Pair(self, listOfNotNull(self) + others)
+      Triple(self, listOfNotNull(self) + others, linked)
     }
-      .onEach { (selfTech, available) ->
+      .onEach { (selfTech, available, linked) ->
         _uiState.update { state ->
           val newSelected = state.selectedTechnician ?: selfTech
           state.copy(
             availableTechnicians = available,
+            linkedTechnicians = linked,
+            selfTechnicianId = selfTech?.id,
             selectedTechnician = newSelected,
           )
         }

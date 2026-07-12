@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.aircraft.CertExpireLimit
 import dev.fanfly.wingslog.aircraft.CertificateType
+import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
@@ -58,6 +59,17 @@ fun CertificateType.displayResId(): StringResource {
     CertificateType.CERTIFICATE_TYPE_REPAIRMAN -> Res.string.certificate_type_repairman
     CertificateType.CERTIFICATE_TYPE_AMT -> Res.string.certificate_type_amt
   }
+}
+
+/**
+ * The technician's certificate type, preferring the enum field over the legacy `cert_type` string
+ * it replaced. Records written before the enum existed — and only those — still carry the string.
+ */
+fun Technician.resolvedCertificateType(): CertificateType = when {
+  certificate_type != CertificateType.CERTIFICATE_TYPE_NONE -> certificate_type
+  cert_type.isBlank() || cert_type == "NONE" -> CertificateType.CERTIFICATE_TYPE_NONE
+  else -> runCatching { CertificateType.valueOf(cert_type) }
+    .getOrDefault(CertificateType.CERTIFICATE_TYPE_NONE)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

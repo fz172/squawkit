@@ -21,6 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -116,6 +117,8 @@ fun PickerSelectableRow(
   titleOverflow: TextOverflow = TextOverflow.Clip,
   subtitleMaxLines: Int = Int.MAX_VALUE,
   subtitleOverflow: TextOverflow = TextOverflow.Clip,
+  /** Optional trailing chip, e.g. marking a row whose data comes from somewhere else. */
+  badge: String? = null,
 ) {
   val rowModifier = when (selectionMode) {
     PickerSelectionMode.CHECKBOX -> Modifier.toggleable(
@@ -160,6 +163,22 @@ fun PickerSelectableRow(
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           maxLines = subtitleMaxLines,
           overflow = subtitleOverflow,
+        )
+      }
+    }
+    if (badge != null) {
+      Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        shape = RoundedCornerShape(Spacing.smallCornerRadius),
+      ) {
+        Text(
+          text = badge,
+          style = MaterialTheme.typography.labelSmall,
+          modifier = Modifier.padding(
+            horizontal = Spacing.small,
+            vertical = Spacing.extraSmall,
+          ),
         )
       }
     }
