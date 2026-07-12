@@ -28,6 +28,9 @@ import wingslog.core.sharedassets.generated.resources.done
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
 import wingslog.feature.technician.sharedassets.generated.resources.linked_badge
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technicians_header
+import wingslog.feature.technician.sharedassets.generated.resources.my_profile
+import wingslog.feature.technician.sharedassets.generated.resources.my_technicians_header
+import wingslog.feature.technician.sharedassets.generated.resources.no_certificate
 import wingslog.feature.technician.sharedassets.generated.resources.select_technician
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
@@ -62,6 +65,9 @@ fun TechnicianPickerSheet(
     // Self first, then the linked members, then the manual entries — the order of §7.3.
     val self = availableTechnicians.filter { it.id == selfId }
     val manual = availableTechnicians.filter { it.id != selfId }
+    // Headers only earn their space once there's a linked section to separate from. Without them,
+    // the manual entries sit directly under the linked ones and read as part of that group.
+    val grouped = linkedTechnicians.isNotEmpty()
 
     Column(
       modifier = Modifier
@@ -69,8 +75,13 @@ fun TechnicianPickerSheet(
         .verticalScroll(rememberScrollState()),
       verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-      self.forEach { technician ->
-        TechnicianRow(technician, selectedId, onSelect)
+      if (self.isNotEmpty()) {
+        if (grouped) {
+          PickerSectionHeader(stringResource(TechnicianRes.string.my_profile))
+        }
+        self.forEach { technician ->
+          TechnicianRow(technician, selectedId, onSelect)
+        }
       }
 
       if (linkedTechnicians.isNotEmpty()) {
@@ -81,8 +92,13 @@ fun TechnicianPickerSheet(
         }
       }
 
-      manual.forEach { technician ->
-        TechnicianRow(technician, selectedId, onSelect)
+      if (manual.isNotEmpty()) {
+        if (grouped) {
+          PickerSectionHeader(stringResource(TechnicianRes.string.my_technicians_header))
+        }
+        manual.forEach { technician ->
+          TechnicianRow(technician, selectedId, onSelect)
+        }
       }
 
       PickerActionButton(
@@ -106,11 +122,16 @@ private fun TechnicianRow(
   badge: String? = null,
 ) {
   val certType = technician.resolvedCertificateType()
-  val certText = listOfNotNull(
-    if (certType == CertificateType.CERTIFICATE_TYPE_NONE) null
-    else stringResource(certType.displayResId()),
-    technician.cert_number.takeIf { it.isNotBlank() },
-  ).joinToString(" · ")
+  // Every row gets a subtitle, including the uncertificated ones. A blank line here made rows look
+  // like they belonged to whichever section had subtitles, rather than to their own.
+  val certText = if (certType == CertificateType.CERTIFICATE_TYPE_NONE) {
+    stringResource(TechnicianRes.string.no_certificate)
+  } else {
+    listOfNotNull(
+      stringResource(certType.displayResId()),
+      technician.cert_number.takeIf { it.isNotBlank() },
+    ).joinToString(" · ")
+  }
 
   PickerSelectableRow(
     title = technician.name,
