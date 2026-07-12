@@ -5,10 +5,15 @@ import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateResolution
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +23,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -31,9 +37,12 @@ class TechnicianManagerImpl(
   private val firebaseAuth: FirebaseAuth,
   private val cloudSyncSetting: CloudSyncSetting,
   storeFactory: EntityStoreFactory,
+  private val db: WingsLogDatabase,
+  private val writeLock: DatabaseWriteLock,
 ) : TechnicianManager {
 
   private val logger = Logger.withTag("TechnicianManagerImpl")
+
   private val technicianStore: EntityStore<Technician> =
     storeFactory.create(CollectionKind.Technician)
   private val userInfoStore: EntityStore<UserInfo> =
@@ -216,6 +225,59 @@ class TechnicianManagerImpl(
       true
     }.onFailure { logger.w(it) { "Error deleting technician $id" } }
 
+  override suspend fun applyDuplicateMerges(groups: List<DuplicateGroup>): Result<Unit> =
+    runCatching {
+      val uid = firebaseAuth.currentUser?.uid
+        ?: error("Cannot merge technicians when no user is signed in")
+      val userScope = EntityScope.userRoot(uid)
+
+      groups.forEach { group ->
+        when (group.resolution) {
+          // The duplicate rows are hand-typed and now redundant. Logs hold their own snapshots, so
+          // tombstoning the roster row loses nothing historical.
+          DuplicateResolution.MERGE_MANUAL ->
+            group.duplicates.forEach { technicianStore.delete(it.id, userScope) }
+
+          // Alias, never delete (§7.4): the manual row is user-global, the mirror is per-aircraft.
+          // Deleting it would erase this person from the picker on aircraft where the member has no
+          // mirror. `superseded_by_uid` rides the normal sync path, so the alias follows the user
+          // across devices.
+          DuplicateResolution.ALIAS_TO_MEMBER -> {
+            val memberUid = group.keep.source_uid
+            group.duplicates.forEach { duplicate ->
+              technicianStore.put(
+                duplicate.id,
+                duplicate.copy(superseded_by_uid = memberUid),
+                userScope,
+              )
+            }
+          }
+
+          // Two members are two accounts; this is a heads-up about a likely mistyped certificate,
+          // not something to apply.
+          DuplicateResolution.WARN_MIRROR_CONFLICT -> Unit
+        }
+      }
+      markDuplicatesReviewed().getOrThrow()
+    }.onFailure { logger.w(it) { "Error applying technician merges" } }
+
+  override fun observeDuplicatesReviewed(): Flow<Boolean> {
+    val uid = firebaseAuth.currentUser?.uid ?: return flowOf(true)
+    return flow {
+      emit(
+        db.schemaQueries.selectConfig(uid, DUPLICATES_REVIEWED_KEY)
+          .awaitAsOneOrNull() == "1"
+      )
+    }
+  }
+
+  override suspend fun markDuplicatesReviewed(): Result<Unit> = runCatching {
+    val uid = firebaseAuth.currentUser?.uid ?: return@runCatching
+    writeLock.withLock {
+      db.schemaQueries.upsertConfig(uid, DUPLICATES_REVIEWED_KEY, "1")
+    }
+  }
+
   override suspend fun saveSelfName(name: String): Result<Unit> = runCatching {
     val uid = firebaseAuth.currentUser?.uid
       ?: error("Cannot save name when no user is signed in")
@@ -244,5 +306,8 @@ class TechnicianManagerImpl(
 
   companion object {
     private val SELF_ID_HYDRATION_TIMEOUT = 5.seconds
+
+    /** Device-local: the review prompt is a nudge, not data worth syncing. */
+    private const val DUPLICATES_REVIEWED_KEY = "technician_duplicates_reviewed"
   }
 }

@@ -130,7 +130,13 @@ class MaintenanceLogFormViewModel(
       // account. Linked mirrors arrive already stamped with their owner's uid.
       val self = technicians.find { it.id == selfId }
         ?.let { it.copy(source_uid = auth.currentUser?.uid.orEmpty()) }
-      val others = technicians.filter { it.id != selfId }
+      // A manual row the user aliased to a member (§7.4) is hidden only where that member's mirror
+      // actually appears — manual rows are user-global, mirrors are per-aircraft, so on an aircraft
+      // this member isn't on, their hand-typed row is still the only way to pick them.
+      val linkedUids = linked.mapTo(mutableSetOf()) { it.source_uid }
+      val others = technicians
+        .filter { it.id != selfId }
+        .filterNot { it.superseded_by_uid.isNotBlank() && it.superseded_by_uid in linkedUids }
         .sortedBy { it.name.lowercase() }
       Triple(self, listOfNotNull(self) + others, linked)
     }

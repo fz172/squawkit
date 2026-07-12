@@ -9,7 +9,9 @@ val technicianDataManagerModule = module {
     TechnicianManagerImpl(
       get(),
       get(),
-      get()
+      get(),
+      get(),
+      get(),
     )
   }
 }

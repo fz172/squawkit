@@ -26,6 +26,19 @@
   <string name="linked_technician_info_body">This profile comes from an aircraft you share. It’s kept up to date by the person it belongs to, so you can’t edit or delete it here — but you can select them when logging maintenance.</string>
   <string name="linked_technician_info_dismiss">Got it</string>
 
+  <string name="duplicates_prompt_title">Some technicians look like the same person</string>
+  <string name="duplicates_prompt_action">Review</string>
+  <string name="duplicates_prompt_dismiss">Not duplicates</string>
+  <string name="duplicates_review_title">Review duplicates</string>
+  <string name="duplicates_review_body">Merging changes only who you can pick from here. Logs you have already signed keep the technician they recorded.</string>
+  <string name="duplicates_merge_manual">Merge into %1$s</string>
+  <string name="duplicates_alias_member">Use the shared profile for %1$s</string>
+  <string name="duplicates_warn_mirror">%1$s and %2$s have the same certificate number. Two members are two different people, so this is likely a typo — check with them.</string>
+  <string name="duplicates_replaces">Replaces: %1$s</string>
+  <string name="duplicates_needs_confirmation">Names only — confirm this is the same person</string>
+  <string name="duplicates_apply">Merge selected</string>
+  <string name="duplicates_no_selection">Nothing selected</string>
+
   <string name="no_certificate">No certificate provided</string>
   <string name="no_technicians">No technicians added yet.</string>
   <string name="empty_technicians_title">No Technicians</string>

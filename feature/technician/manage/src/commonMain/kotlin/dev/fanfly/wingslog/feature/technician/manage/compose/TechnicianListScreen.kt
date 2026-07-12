@@ -1,6 +1,9 @@
 package dev.fanfly.wingslog.feature.technician.manage.compose
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -15,6 +18,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -46,6 +51,9 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
 import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_desc
 import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_title
+import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_action
+import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_dismiss
+import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_title
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_body
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_dismiss
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_title
@@ -78,6 +86,14 @@ fun TechnicianListScreen(
           Text(stringResource(TechnicianRes.string.linked_technician_info_dismiss))
         }
       },
+    )
+  }
+
+  if (state.showDuplicateReview) {
+    DuplicateReviewSheet(
+      groups = state.duplicates,
+      onApply = { viewModel.applyMerges(it) },
+      onDismiss = { viewModel.hideDuplicateReview() },
     )
   }
 
@@ -145,6 +161,15 @@ fun TechnicianListScreen(
           ),
           verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
+          if (state.showDuplicatePrompt) {
+            item(key = "duplicate-prompt") {
+              DuplicatePrompt(
+                onReview = { viewModel.showDuplicateReview() },
+                onDismiss = { viewModel.dismissDuplicatePrompt() },
+              )
+            }
+          }
+
           // Only headline the personal list when there's a linked section to distinguish it from.
           if (state.linkedTechnicians.isNotEmpty() && state.technicians.isNotEmpty()) {
             item(key = "own-header") {
@@ -188,4 +213,40 @@ private fun SectionHeader(text: String) {
     color = MaterialTheme.colorScheme.onSurfaceVariant,
     modifier = Modifier.padding(top = Spacing.small, bottom = Spacing.extraSmall),
   )
+}
+
+/**
+ * Dismissible nudge that look-alike rows are worth reconciling (design §7.4). "Not duplicates" is a
+ * real answer — it records that the user has looked, so the prompt does not nag again.
+ */
+@Composable
+private fun DuplicatePrompt(
+  onReview: () -> Unit,
+  onDismiss: () -> Unit,
+) {
+  Card(
+    modifier = Modifier.fillMaxWidth(),
+    colors = CardDefaults.cardColors(
+      containerColor = MaterialTheme.colorScheme.secondaryContainer,
+      contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    ),
+  ) {
+    Column(
+      modifier = Modifier.padding(Spacing.medium),
+      verticalArrangement = Arrangement.spacedBy(Spacing.small),
+    ) {
+      Text(
+        text = stringResource(TechnicianRes.string.duplicates_prompt_title),
+        style = MaterialTheme.typography.bodyMedium,
+      )
+      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+        TextButton(onClick = onReview) {
+          Text(stringResource(TechnicianRes.string.duplicates_prompt_action))
+        }
+        TextButton(onClick = onDismiss) {
+          Text(stringResource(TechnicianRes.string.duplicates_prompt_dismiss))
+        }
+      }
+    }
+  }
 }
