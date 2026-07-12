@@ -313,30 +313,36 @@ class SharingManagerImpl(
       .distinctUntilChanged()
       .flatMapLatest { acIds ->
         if (acIds.isEmpty()) return@flatMapLatest flowOf(emptyList())
-        // One roster listener per share. An own aircraft that was never shared just yields an empty
-        // roster; a denied read degrades to empty rather than taking the whole list down.
-        combine(
-          acIds.map { acId ->
-            shareDoc(acId).collection(MEMBERS).snapshots
-              .map { snaps ->
-                snaps.documents.mapNotNull { doc ->
-                  if (doc.id == uid) return@mapNotNull null // self is listed separately
-                  doc.data<MemberWire>().technicianMirror?.toTechnician(doc.id)
-                }
-              }
-              .catch { emit(emptyList()) }
-          },
-        ) { perShare ->
+        combine(acIds.map { acId -> linkedTechniciansIn(acId, uid) }) { perShare ->
           perShare.toList()
             .flatten()
         }
       }
       // The same person can be in several of your shares — list them once.
-      .map { linked ->
-        linked.distinctBy { it.source_uid }
-          .sortedBy { it.name.lowercase() }
-      }
+      .map { linked -> linked.dedupedByOwner() }
   }
+
+  override fun observeLinkedTechnicians(acId: String): Flow<List<Technician>> {
+    val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
+    return linkedTechniciansIn(acId, uid).map { it.dedupedByOwner() }
+  }
+
+  /**
+   * The members of one share who have published a mirror, excluding [selfUid] — the caller's own
+   * record is listed separately and comes from their local store, not from a mirror.
+   *
+   * An aircraft that was never shared just yields an empty roster; a denied read degrades to empty
+   * rather than taking the caller's whole list down.
+   */
+  private fun linkedTechniciansIn(acId: String, selfUid: String): Flow<List<Technician>> =
+    shareDoc(acId).collection(MEMBERS).snapshots
+      .map { snaps ->
+        snaps.documents.mapNotNull { doc ->
+          if (doc.id == selfUid) return@mapNotNull null
+          doc.data<MemberWire>().technicianMirror?.toTechnician(doc.id)
+        }
+      }
+      .catch { emit(emptyList()) }
 
   /**
    * Every share the user is a member of: aircraft shared *with* them (the local refs store, per
@@ -444,6 +450,11 @@ private fun String.toCertificateTypeOrNone(): CertificateType =
 private fun String.toCertExpireLimitOrUnknown(): CertExpireLimit =
   runCatching { CertExpireLimit.valueOf(this) }
     .getOrDefault(CertExpireLimit.CERT_EXPIRE_LIMIT_UNKNOWN)
+
+/** One entry per owning account, name-ordered. */
+private fun List<Technician>.dedupedByOwner(): List<Technician> =
+  distinctBy { it.source_uid }
+    .sortedBy { it.name.lowercase() }
 
 private fun ShareRole.wire(): String =
   if (this == ShareRole.OWNER) "owner" else "technician"

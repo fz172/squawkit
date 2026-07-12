@@ -23,6 +23,7 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.displayResId
+import dev.fanfly.wingslog.feature.technician.sharedassets.compose.resolvedCertificateType
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.Res
 import wingslog.feature.technician.sharedassets.generated.resources.linked_badge
@@ -38,16 +39,7 @@ fun TechnicianCard(
   /** A profile mirrored from a share member: shown read-only, badged, and not editable (§7.3). */
   isLinked: Boolean = false,
 ) {
-  val certType = when {
-    technician.certificate_type != CertificateType.CERTIFICATE_TYPE_NONE -> technician.certificate_type
-    technician.cert_type.isNotBlank() && technician.cert_type != "NONE" -> try {
-      CertificateType.valueOf(technician.cert_type)
-    } catch (_: Exception) {
-      CertificateType.CERTIFICATE_TYPE_NONE
-    }
-
-    else -> CertificateType.CERTIFICATE_TYPE_NONE
-  }
+  val certType = technician.resolvedCertificateType()
   val certNumber = technician.cert_number.takeIf { it.isNotBlank() }
   val expiration = technician.cert_expiration?.toLocalDate()
     ?.toDisplayFormat()

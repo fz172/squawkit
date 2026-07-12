@@ -403,6 +403,8 @@ fun MaintenanceLogFormScreen(
   if (uiState.showTechnicianPicker) {
     TechnicianPickerSheet(
       availableTechnicians = uiState.availableTechnicians,
+      linkedTechnicians = uiState.linkedTechnicians,
+      selfId = uiState.selfTechnicianId,
       selectedId = uiState.selectedTechnician?.id,
       onSelect = { viewModel.onTechnicianSelect(it) },
       onAddClick = {

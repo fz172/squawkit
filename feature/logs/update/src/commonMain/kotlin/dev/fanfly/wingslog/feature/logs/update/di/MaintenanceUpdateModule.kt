@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import org.koin.dsl.module
 
 val maintenanceUpdateModule = module {
@@ -22,6 +23,7 @@ val maintenanceUpdateModule = module {
       get<SquawkManager>(),
       get<AttachmentManager>(),
       get<TechnicianManager>(),
+      get<SharingManager>(),
       get<FirebaseAuth>(),
       get<FeatureLabManager>(),
       get<SavedStateHandle>(),

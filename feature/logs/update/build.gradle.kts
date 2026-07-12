@@ -68,6 +68,8 @@ kotlin {
       implementation(project(":feature:squawk:sharedassets"))
       implementation(project(":feature:squawk:viewing"))
       implementation(project(":feature:technician:datamanager"))
+      // Linked technicians in the picker come from this aircraft's share members (design §7.3).
+      implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:technician:manage"))
       implementation(project(":feature:technician:sharedassets"))
       implementation(project(":feature:featurelab:datamanager"))

@@ -52,4 +52,11 @@ interface SharingManager {
    * Online-only, like the rest of the share surface: it degrades to an empty list, never an error.
    */
   fun observeLinkedTechnicians(): Flow<List<Technician>>
+
+  /**
+   * The same, scoped to one aircraft: the members of *this* share who have published a mirror. This
+   * is what the log-form picker lists — you sign a log for a specific aircraft, so only that
+   * aircraft's members are selectable (§7.3).
+   */
+  fun observeLinkedTechnicians(acId: String): Flow<List<Technician>>
 }

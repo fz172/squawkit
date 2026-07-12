@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
@@ -39,6 +40,7 @@ private const val OPEN_SQUAWK_ID = "squawk-open"
 private const val PRESELECTED_SQUAWK_ID = "squawk-preselected"
 private const val SELF_TECH_ID = "tech-self"
 private const val TEST_UID = "uid-sponge"
+private const val LINKED_UID = "uid-linked-mechanic"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MaintenanceLogFormViewModelTest {
@@ -51,6 +53,7 @@ class MaintenanceLogFormViewModelTest {
   private lateinit var squawkManager: SquawkManager
   private lateinit var attachmentManager: AttachmentManager
   private lateinit var technicianManager: TechnicianManager
+  private lateinit var sharingManager: SharingManager
   private lateinit var auth: FirebaseAuth
   private lateinit var featureLabManager: FeatureLabManager
 
@@ -64,6 +67,7 @@ class MaintenanceLogFormViewModelTest {
     squawkManager = mockk(relaxed = true)
     attachmentManager = mockk(relaxed = true)
     technicianManager = mockk(relaxed = true)
+    sharingManager = mockk(relaxed = true)
     auth = mockk(relaxed = true)
     featureLabManager = mockk(relaxed = true)
 
@@ -80,6 +84,7 @@ class MaintenanceLogFormViewModelTest {
     )
     every { technicianManager.observeTechnicians() } returns flowOf(emptyList())
     every { technicianManager.observeSelfId() } returns flowOf(null)
+    every { sharingManager.observeLinkedTechnicians(TEST_AIRCRAFT_ID) } returns flowOf(emptyList())
     every { logManager.observeLogs(TEST_AIRCRAFT_ID) } returns flowOf(emptyList())
   }
 
@@ -219,6 +224,7 @@ class MaintenanceLogFormViewModelTest {
         squawkManager = squawkManager,
         attachmentManager = attachmentManager,
         technicianManager = technicianManager,
+        sharingManager = sharingManager,
         auth = auth,
         featureLabManager = featureLabManager,
         savedStateHandle = SavedStateHandle(
@@ -363,6 +369,42 @@ class MaintenanceLogFormViewModelTest {
     assertThat(available.single { it.id == "manual-1" }.source_uid).isEmpty()
   }
 
+  @Test
+  fun linkedTechnicians_forThisAircraft_areSelectableAndKeepTheirSourceUid() =
+    runTest(testDispatcher) {
+      every { technicianManager.observeTechnicians() } returns flowOf(
+        listOf(Technician(id = SELF_TECH_ID, name = "Sponge Bob"))
+      )
+      every { technicianManager.observeSelfId() } returns flowOf(SELF_TECH_ID)
+      every { sharingManager.observeLinkedTechnicians(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          Technician(id = LINKED_UID, name = "Linked Mechanic", source_uid = LINKED_UID)
+        )
+      )
+
+      val state = buildViewModelForNew().uiState.value
+
+      // The linked member is offered separately from the personal list, and carries the provenance
+      // that a snapshot of them needs.
+      assertThat(state.availableTechnicians.map { it.id }).containsExactly(SELF_TECH_ID)
+      assertThat(state.linkedTechnicians.single().source_uid).isEqualTo(LINKED_UID)
+      assertThat(state.selfTechnicianId).isEqualTo(SELF_TECH_ID)
+    }
+
+  @Test
+  fun selectingALinkedTechnician_snapshotsTheirMirrorIntoTheLog() = runTest(testDispatcher) {
+    val linked = Technician(id = LINKED_UID, name = "Linked Mechanic", source_uid = LINKED_UID)
+    every { sharingManager.observeLinkedTechnicians(TEST_AIRCRAFT_ID) } returns flowOf(listOf(linked))
+    val viewModel = buildViewModelForNew()
+
+    viewModel.onTechnicianSelect(linked)
+
+    // Same snapshot mechanism as a local record — only the source differs (§7.3).
+    val selected = viewModel.uiState.value.selectedTechnician
+    assertThat(selected?.name).isEqualTo("Linked Mechanic")
+    assertThat(selected?.source_uid).isEqualTo(LINKED_UID)
+  }
+
   // ---- helpers ----
 
   private fun buildViewModelForEdit(): MaintenanceLogFormViewModel =
@@ -373,6 +415,7 @@ class MaintenanceLogFormViewModelTest {
       squawkManager = squawkManager,
       attachmentManager = attachmentManager,
       technicianManager = technicianManager,
+      sharingManager = sharingManager,
       auth = auth,
       featureLabManager = featureLabManager,
       savedStateHandle = SavedStateHandle(
@@ -391,6 +434,7 @@ class MaintenanceLogFormViewModelTest {
       squawkManager = squawkManager,
       attachmentManager = attachmentManager,
       technicianManager = technicianManager,
+      sharingManager = sharingManager,
       auth = auth,
       featureLabManager = featureLabManager,
       savedStateHandle = SavedStateHandle(
