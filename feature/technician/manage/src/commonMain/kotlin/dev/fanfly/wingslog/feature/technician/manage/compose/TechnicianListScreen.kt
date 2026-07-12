@@ -14,19 +14,27 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Engineering
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontWeight
+import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -38,7 +46,12 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
 import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_desc
 import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_title
+import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_body
+import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_dismiss
+import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_title
+import wingslog.feature.technician.sharedassets.generated.resources.linked_technicians_header
 import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians
+import wingslog.feature.technician.sharedassets.generated.resources.my_technicians_header
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,6 +63,23 @@ fun TechnicianListScreen(
   modifier: Modifier = Modifier,
 ) {
   val state by viewModel.uiState.collectAsState()
+
+  // Tapping a linked profile explains who maintains it, rather than opening an editor it can't edit.
+  var infoFor by remember { mutableStateOf<Technician?>(null) }
+  infoFor?.let { linked ->
+    AlertDialog(
+      onDismissRequest = { infoFor = null },
+      title = {
+        Text(stringResource(TechnicianRes.string.linked_technician_info_title, linked.name))
+      },
+      text = { Text(stringResource(TechnicianRes.string.linked_technician_info_body)) },
+      confirmButton = {
+        TextButton(onClick = { infoFor = null }) {
+          Text(stringResource(TechnicianRes.string.linked_technician_info_dismiss))
+        }
+      },
+    )
+  }
 
   Scaffold(
     modifier = modifier,
@@ -79,7 +109,7 @@ fun TechnicianListScreen(
       }
     }
   ) { paddingValues ->
-    if (state.technicians.isEmpty()) {
+    if (state.technicians.isEmpty() && state.linkedTechnicians.isEmpty()) {
       EmptyState(
         title = stringResource(TechnicianRes.string.empty_technicians_title),
         description = stringResource(TechnicianRes.string.empty_technicians_desc),
@@ -115,6 +145,12 @@ fun TechnicianListScreen(
           ),
           verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
+          // Only headline the personal list when there's a linked section to distinguish it from.
+          if (state.linkedTechnicians.isNotEmpty() && state.technicians.isNotEmpty()) {
+            item(key = "own-header") {
+              SectionHeader(stringResource(TechnicianRes.string.my_technicians_header))
+            }
+          }
           items(state.technicians, key = { it.id }) { technician ->
             TechnicianCard(
               technician = technician,
@@ -122,8 +158,34 @@ fun TechnicianListScreen(
               isSelf = technician.id == state.selfId,
             )
           }
+
+          if (state.linkedTechnicians.isNotEmpty()) {
+            item(key = "linked-header") {
+              SectionHeader(stringResource(TechnicianRes.string.linked_technicians_header))
+            }
+            // Keyed by source_uid: a linked profile is identified by the account that owns it, and
+            // that's what keeps it distinct from any manual entry of the same person.
+            items(state.linkedTechnicians, key = { "linked-${it.source_uid}" }) { linked ->
+              TechnicianCard(
+                technician = linked,
+                onClick = { infoFor = linked },
+                isLinked = true,
+              )
+            }
+          }
         }
       }
     }
   }
+}
+
+@Composable
+private fun SectionHeader(text: String) {
+  Text(
+    text = text,
+    style = MaterialTheme.typography.titleSmall,
+    fontWeight = FontWeight.SemiBold,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    modifier = Modifier.padding(top = Spacing.small, bottom = Spacing.extraSmall),
+  )
 }

@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sharing.datamanager
 
+import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.InviteLink
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
@@ -42,4 +43,13 @@ interface SharingManager {
    * failure is logged, not surfaced.
    */
   suspend fun publishTechnicianMirror(): Result<Unit>
+
+  /**
+   * Every *other* member, across all of the user's shares, who has published a technician mirror —
+   * as a [Technician] snapshot stamped with their uid in `source_uid`. Membership-with-mirror is the
+   * criterion, not role, so an owner-mechanic appears too (§7.3). Deduped across shares.
+   *
+   * Online-only, like the rest of the share surface: it degrades to an empty list, never an error.
+   */
+  fun observeLinkedTechnicians(): Flow<List<Technician>>
 }

@@ -19,6 +19,13 @@
   <string name="you_badge">You</string>
   <string name="my_profile">My Profile</string>
 
+  <string name="linked_badge">Linked</string>
+  <string name="linked_technicians_header">Linked from shared aircraft</string>
+  <string name="my_technicians_header">My technicians</string>
+  <string name="linked_technician_info_title">Maintained by %1$s</string>
+  <string name="linked_technician_info_body">This profile comes from an aircraft you share. It\'s kept up to date by the person it belongs to, so you can\'t edit or delete it here — but you can select them when logging maintenance.</string>
+  <string name="linked_technician_info_dismiss">Got it</string>
+
   <string name="no_certificate">No certificate provided</string>
   <string name="no_technicians">No technicians added yet.</string>
   <string name="empty_technicians_title">No Technicians</string>

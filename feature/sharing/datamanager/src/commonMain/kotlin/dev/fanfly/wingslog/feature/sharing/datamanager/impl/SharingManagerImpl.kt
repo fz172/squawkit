@@ -3,7 +3,10 @@ package dev.fanfly.wingslog.feature.sharing.datamanager.impl
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.aircraft.CertExpireLimit
+import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -26,10 +29,13 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.toMilliseconds
 import dev.gitlive.firebase.functions.functions
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -246,6 +252,39 @@ class SharingManagerImpl(
     }
   }.onFailure { logger.w(it) { "Mirror publish failed; retries on next app start" } }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override fun observeLinkedTechnicians(): Flow<List<Technician>> {
+    val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
+    val scope = EntityScope.userRoot(uid)
+    return combine(
+      refStore.observeAll(scope),
+      aircraftStore.observeAll(scope),
+    ) { refs, own -> (refs.map { it.id } + own.map { it.id }).distinct() }
+      .distinctUntilChanged()
+      .flatMapLatest { acIds ->
+        if (acIds.isEmpty()) return@flatMapLatest flowOf(emptyList())
+        // One roster listener per share. An own aircraft that was never shared just yields an empty
+        // roster; a denied read degrades to empty rather than taking the whole list down.
+        combine(
+          acIds.map { acId ->
+            shareDoc(acId).collection(MEMBERS).snapshots
+              .map { snaps ->
+                snaps.documents.mapNotNull { doc ->
+                  if (doc.id == uid) return@mapNotNull null // self is listed separately
+                  doc.data<MemberWire>().technicianMirror?.toTechnician(doc.id)
+                }
+              }
+              .catch { emit(emptyList()) }
+          },
+        ) { perShare -> perShare.toList().flatten() }
+      }
+      // The same person can be in several of your shares — list them once.
+      .map { linked ->
+        linked.distinctBy { it.source_uid }
+          .sortedBy { it.name.lowercase() }
+      }
+  }
+
   /**
    * Every share the user is a member of: aircraft shared *with* them (the local refs store, per
    * §7.2) plus their own aircraft, which are the shares they host. Own aircraft that were never
@@ -312,6 +351,32 @@ private fun Technician.toMirrorWire(): TechnicianMirrorWire = TechnicianMirrorWi
   certExpiration = cert_expiration?.let { Timestamp(it.getEpochSecond(), 0) },
   certExpireLimit = cert_expire_limit.name,
 )
+
+/**
+ * Rehydrates a published mirror into a [Technician] snapshot owned by [memberUid]. The uid is both
+ * the identity (there is no local record for someone else's profile) and the `source_uid`, which is
+ * what marks the entry as first-party rather than hand-typed (§7.3).
+ *
+ * Enum names are decoded leniently: an unknown value from a newer client degrades to NONE/UNKNOWN
+ * rather than throwing and taking out the whole roster.
+ */
+private fun TechnicianMirrorWire.toTechnician(memberUid: String): Technician = Technician(
+  id = memberUid,
+  name = name,
+  certificate_type = certificateType.toCertificateTypeOrNone(),
+  cert_number = certNumber,
+  cert_expiration = certExpiration?.let { toWireInstant(it.seconds, it.nanoseconds) },
+  cert_expire_limit = certExpireLimit.toCertExpireLimitOrUnknown(),
+  source_uid = memberUid,
+)
+
+private fun String.toCertificateTypeOrNone(): CertificateType =
+  runCatching { CertificateType.valueOf(this) }
+    .getOrDefault(CertificateType.CERTIFICATE_TYPE_NONE)
+
+private fun String.toCertExpireLimitOrUnknown(): CertExpireLimit =
+  runCatching { CertExpireLimit.valueOf(this) }
+    .getOrDefault(CertExpireLimit.CERT_EXPIRE_LIMIT_UNKNOWN)
 
 private fun ShareRole.wire(): String = if (this == ShareRole.OWNER) "owner" else "technician"
 private fun String.toModel(): ShareRole = if (this == "owner") ShareRole.OWNER else ShareRole.TECHNICIAN
