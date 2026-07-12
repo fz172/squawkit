@@ -2,7 +2,9 @@ package dev.fanfly.wingslog.feature.squawk.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
@@ -16,6 +18,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -28,6 +31,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Instant
 
 private const val TEST_AIRCRAFT_ID = "aircraft-456"
 private const val TEST_SQUAWK_ID = "squawk-789"
@@ -394,6 +398,72 @@ class SquawkFormViewModelTest {
     viewModel.clearError()
 
     assertThat(viewModel.state.value.error).isNull()
+  }
+
+  // ---- save — created_at preservation ----
+
+  @Test
+  fun save_onEdit_preservesOriginalCreatedAt() = runTest(testDispatcher) {
+    val originalCreatedAt = Instant.fromEpochSeconds(1_700_000_000L)
+    every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+      listOf(
+        Squawk(
+          id = TEST_SQUAWK_ID,
+          title = "Nose gear shimmy",
+          created_at = originalCreatedAt.toWireInstant(),
+        )
+      )
+    )
+    val saved = slot<Squawk>()
+    coEvery {
+      squawkManager.updateSquawk(any(), capture(saved))
+    } returns Result.success(true)
+    val viewModel = buildViewModelForEdit()
+
+    viewModel.onTitleChange("Nose gear shimmy (worse)")
+    viewModel.save("Saved")
+    advanceUntilIdle()
+
+    assertThat(saved.captured.created_at?.getEpochSecond())
+      .isEqualTo(originalCreatedAt.epochSeconds)
+  }
+
+  @Test
+  fun save_onEdit_whenCreatedAtMissing_backfillsIt() = runTest(testDispatcher) {
+    every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+      listOf(
+        Squawk(
+          id = TEST_SQUAWK_ID,
+          title = "Legacy squawk",
+          created_at = null,
+        )
+      )
+    )
+    val saved = slot<Squawk>()
+    coEvery {
+      squawkManager.updateSquawk(any(), capture(saved))
+    } returns Result.success(true)
+    val viewModel = buildViewModelForEdit()
+
+    viewModel.save("Saved")
+    advanceUntilIdle()
+
+    assertThat(saved.captured.created_at?.getEpochSecond() ?: 0L).isGreaterThan(0L)
+  }
+
+  @Test
+  fun save_onNew_setsCreatedAt() = runTest(testDispatcher) {
+    val saved = slot<Squawk>()
+    coEvery {
+      squawkManager.addSquawk(any(), capture(saved))
+    } returns Result.success(true)
+    val viewModel = buildViewModelForNew()
+
+    viewModel.onTitleChange("Radio static")
+    viewModel.save("Saved")
+    advanceUntilIdle()
+
+    assertThat(saved.captured.created_at?.getEpochSecond() ?: 0L).isGreaterThan(0L)
   }
 
   // ---- helpers ----

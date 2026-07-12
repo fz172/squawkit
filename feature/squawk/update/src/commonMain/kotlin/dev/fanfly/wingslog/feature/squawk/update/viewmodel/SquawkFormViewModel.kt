@@ -44,6 +44,7 @@ data class SquawkFormState(
   val isSaving: Boolean = false,
   val isAddressedReadOnly: Boolean = false,
   val reportedDateFormatted: String = "",
+  val createdAtEpochSeconds: Long = 0L,
   val addressedByLogId: String = "",
   val availableLogs: List<MaintenanceLog> = emptyList(),
   val showLogPicker: Boolean = false,
@@ -132,6 +133,7 @@ class SquawkFormViewModel(
               isAddressedReadOnly = squawk.addressed_by_log_id.isNotEmpty(),
               reportedDateFormatted = squawk.created_at?.toLocalDate()
                 ?.toDisplayFormat() ?: "",
+              createdAtEpochSeconds = squawk.created_at?.getEpochSecond() ?: 0L,
               addressedByLogId = squawk.addressed_by_log_id,
               dismissReason = squawk.dismiss_reason,
               dismissedAtEpochSeconds = squawk.dismissed_at?.getEpochSecond()
@@ -233,8 +235,12 @@ class SquawkFormViewModel(
         description = current.description.trim(),
         priority = current.priority,
         component_type = current.component,
-        created_at = if (current.squawkId == null) Clock.System.now()
-          .toWireInstant() else null,
+        // updateSquawk writes the whole record, so an edit must carry the
+        // original reported date forward or it is erased.
+        created_at = if (current.createdAtEpochSeconds > 0L)
+          kotlin.time.Instant.fromEpochSeconds(current.createdAtEpochSeconds)
+            .toWireInstant()
+        else Clock.System.now().toWireInstant(),
         attachments = attachments,
         addressed_by_log_id = current.addressedByLogId,
         dismiss_reason = current.dismissReason,
