@@ -38,9 +38,31 @@ class RedeemViewModel(
           _uiState.value.isHeld() -> Unit
           user == null -> _uiState.value = RedeemUiState.Hidden // still on the sign-in screen
           user.isAnonymous -> _uiState.value = RedeemUiState.NeedsSignIn
-          else -> _uiState.value = RedeemUiState.Confirm
+          else -> {
+            _uiState.value = RedeemUiState.Confirm()
+            loadPreview(invite.code)
+          }
         }
       }
+    }
+  }
+
+  /**
+   * Resolves the code to what the invitee needs to decide (#201). Best-effort: a failure leaves the
+   * sheet on its generic copy rather than blocking Accept — a lookup that exists to inform must not
+   * become a gate. It is NOT retried, and not called per keystroke: preview spends the same
+   * failed-attempt budget as redeem (#164), so hammering it would lock the user out of their own
+   * invite.
+   */
+  private fun loadPreview(code: String) {
+    viewModelScope.launch {
+      sharingManager.previewInvite(code)
+        .onSuccess { preview ->
+          val current = _uiState.value
+          if (current is RedeemUiState.Confirm) {
+            _uiState.value = RedeemUiState.Confirm(preview)
+          }
+        }
     }
   }
 
@@ -53,7 +75,7 @@ class RedeemViewModel(
     }
     _uiState.value = RedeemUiState.Redeeming
     viewModelScope.launch {
-      sharingManager.redeemInvite(invite.hostUid, invite.aircraftId, invite.secret)
+      sharingManager.redeemInvite(invite.code)
         .onSuccess { outcome ->
           // Every redeemer publishes their mirror into the share they just joined (§7.2) — Owner
           // or Technician alike, since the picker lists membership-with-mirror, not role. Failure

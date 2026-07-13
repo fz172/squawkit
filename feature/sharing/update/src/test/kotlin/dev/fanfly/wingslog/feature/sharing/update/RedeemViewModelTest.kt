@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.sharing.update
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.viewing.RedeemUiState
@@ -23,10 +24,9 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-private const val HOST_UID = "host-redeem-1"
 private const val AC_ID = "ac-redeem-1"
-private const val SECRET = "secret-redeem-1"
-private const val SHARE_URL = "https://squawkit.fanfly.dev/share#$HOST_UID.$AC_ID.$SECRET"
+private const val CODE = "EFA2GGTH"
+private const val SHARE_URL = "https://squawkit.fanfly.dev/share#$CODE"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RedeemViewModelTest {
@@ -44,6 +44,8 @@ class RedeemViewModelTest {
     every { auth.authStateChanged } returns authState
     // Every redeemer publishes their technician mirror into the share they just joined (§7.2).
     coEvery { sharing.publishTechnicianMirror(any()) } returns Result.success(Unit)
+    // The sheet previews what you are joining (#201); irrelevant to these assertions unless stated.
+    coEvery { sharing.previewInvite(any()) } returns Result.failure(RuntimeException("no preview"))
     AircraftShareDeepLinks.consume()
   }
 
@@ -70,7 +72,7 @@ class RedeemViewModelTest {
     every { auth.currentUser } returns authState.value
     AircraftShareDeepLinks.deliver(SHARE_URL)
 
-    assertThat(viewModel().uiState.value).isEqualTo(RedeemUiState.Confirm)
+    assertThat(viewModel().uiState.value).isInstanceOf(RedeemUiState.Confirm::class.java)
   }
 
   @Test
@@ -87,8 +89,8 @@ class RedeemViewModelTest {
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
     AircraftShareDeepLinks.deliver(SHARE_URL)
-    coEvery { sharing.redeemInvite(HOST_UID, AC_ID, SECRET) } returns Result.success(
-      RedeemOutcome(aircraftId = AC_ID, hostUid = HOST_UID, role = ShareRole.TECHNICIAN),
+    coEvery { sharing.redeemInvite(CODE) } returns Result.success(
+      RedeemOutcome(aircraftId = AC_ID, hostUid = "host-uid", role = ShareRole.TECHNICIAN),
     )
 
     val vm = viewModel()
@@ -103,8 +105,8 @@ class RedeemViewModelTest {
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
     AircraftShareDeepLinks.deliver(SHARE_URL)
-    coEvery { sharing.redeemInvite(HOST_UID, AC_ID, SECRET) } returns Result.success(
-      RedeemOutcome(aircraftId = AC_ID, hostUid = HOST_UID, role = ShareRole.TECHNICIAN),
+    coEvery { sharing.redeemInvite(CODE) } returns Result.success(
+      RedeemOutcome(aircraftId = AC_ID, hostUid = "host-uid", role = ShareRole.TECHNICIAN),
     )
 
     viewModel().accept()
@@ -120,7 +122,7 @@ class RedeemViewModelTest {
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
     AircraftShareDeepLinks.deliver(SHARE_URL)
-    coEvery { sharing.redeemInvite(HOST_UID, AC_ID, SECRET) } returns
+    coEvery { sharing.redeemInvite(CODE) } returns
       Result.failure(RuntimeException("expired"))
 
     viewModel().accept()
@@ -134,7 +136,7 @@ class RedeemViewModelTest {
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
     AircraftShareDeepLinks.deliver(SHARE_URL)
-    coEvery { sharing.redeemInvite(HOST_UID, AC_ID, SECRET) } returns Result.success(
+    coEvery { sharing.redeemInvite(CODE) } returns Result.success(
       RedeemOutcome(aircraftId = AC_ID, hostUid = "host", role = ShareRole.TECHNICIAN, alreadyMember = true),
     )
 
@@ -150,7 +152,7 @@ class RedeemViewModelTest {
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
     AircraftShareDeepLinks.deliver(SHARE_URL)
-    coEvery { sharing.redeemInvite(HOST_UID, AC_ID, SECRET) } returns
+    coEvery { sharing.redeemInvite(CODE) } returns
       Result.failure(RuntimeException("expired"))
 
     val vm = viewModel()
@@ -170,5 +172,45 @@ class RedeemViewModelTest {
 
     assertThat(vm.uiState.value).isEqualTo(RedeemUiState.Hidden)
     assertThat(AircraftShareDeepLinks.pendingInvite.value).isNull()
+  }
+
+  @Test
+  fun confirm_showsWhatYouAreJoining() = runTest {
+    // Until #164 this was impossible: the invitee held an aircraft id the rules must refuse to
+    // resolve for a non-member, so the sheet could only say "an aircraft" and accepting meant
+    // accepting blind.
+    val signedIn = user(anonymous = false)
+    authState.value = signedIn
+    every { auth.currentUser } returns signedIn
+    coEvery { sharing.previewInvite(CODE) } returns Result.success(
+      InvitePreview(
+        aircraftLabel = "N2037O · Cessna 172",
+        hostName = "Fan Zhang",
+        role = ShareRole.TECHNICIAN,
+      ),
+    )
+    AircraftShareDeepLinks.deliver(SHARE_URL)
+
+    val state = viewModel().uiState.value
+
+    assertThat(state).isInstanceOf(RedeemUiState.Confirm::class.java)
+    assertThat((state as RedeemUiState.Confirm).preview?.aircraftLabel)
+      .isEqualTo("N2037O · Cessna 172")
+    assertThat(state.preview?.hostName).isEqualTo("Fan Zhang")
+  }
+
+  @Test
+  fun confirm_stillAcceptable_whenThePreviewFails() = runTest {
+    // The preview exists to inform, not to gate. A failed lookup must not block Accept.
+    val signedIn = user(anonymous = false)
+    authState.value = signedIn
+    every { auth.currentUser } returns signedIn
+    coEvery { sharing.previewInvite(CODE) } returns Result.failure(RuntimeException("offline"))
+    AircraftShareDeepLinks.deliver(SHARE_URL)
+
+    val state = viewModel().uiState.value
+
+    assertThat(state).isInstanceOf(RedeemUiState.Confirm::class.java)
+    assertThat((state as RedeemUiState.Confirm).preview).isNull()
   }
 }

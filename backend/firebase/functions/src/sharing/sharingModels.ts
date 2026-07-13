@@ -108,3 +108,9 @@ export type ShareInviteDoc = {
 /** Invite defaults from the PRD: single-use, expires in 7 days. */
 export const INVITE_DEFAULT_MAX_USES = 1;
 export const INVITE_DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Pairing-code invite (#164). Defined in inviteCodes.ts, re-exported here so the share types have a
+ * single import site.
+ */
+export type { InviteCodeDoc } from "./inviteCodes.js";

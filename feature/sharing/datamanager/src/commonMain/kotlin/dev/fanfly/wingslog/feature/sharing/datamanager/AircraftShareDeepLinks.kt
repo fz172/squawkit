@@ -1,32 +1,21 @@
 package dev.fanfly.wingslog.feature.sharing.datamanager
 
+import dev.fanfly.wingslog.feature.sharing.model.normalizeInviteCode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** A parsed aircraft-share invite carried in a `/share#{hostUid}.{aircraftId}.{secret}` deep link. */
-data class ShareInvite(
-  /**
-   * The account whose tree the aircraft lives in. Carried because the ACL is keyed under the host
-   * (#204) and an invitee has no ref yet, so there is no other way to locate the share doc.
-   *
-   * It is **routing, not a capability**: creating a share under a uid requires *being* that uid
-   * (rules pin the path segment to the signed token), so knowing a host's uid grants nothing.
-   */
-  val hostUid: String,
-  val aircraftId: String,
-  val secret: String,
-)
-
 /**
- * Platform-agnostic channel for an inbound aircraft-share deep link, mirroring [EmailLinkDeepLinks].
+ * A pairing code carried in a `/share#{code}` deep link (#164).
  *
- * Each host pushes the URL that opened the app (Android `MainActivity`, iOS `MainEntry`, Web
- * `main.kt`); it dispatches share links here and email-link URLs to their own channel. The redeem
- * confirmation surface (P4, #132) observes [pendingInvite], drives [SharingManager.redeemInvite],
- * and calls [consume]. The secret rides in the URL **fragment** — never sent to servers — so it
- * can't leak into hosting/CDN logs. See docs/sharing §3.2/§6.4.
+ * Note what is NOT here: the aircraft id and the host uid. Older links carried both, and an aircraft
+ * id turned out to be a capability — anyone holding one could fabricate a same-id aircraft in their
+ * own tree and read the victim's ACL, roster, and technician certificate numbers (#202), or re-claim
+ * an abandoned share outright (#204). The code names nothing real. Only the server can dereference
+ * it, and it dies on first use.
  */
+data class ShareInvite(val code: String)
+
 object AircraftShareDeepLinks {
   private val _pendingInvite = MutableStateFlow<ShareInvite?>(null)
 
@@ -49,22 +38,18 @@ object AircraftShareDeepLinks {
   }
 
   /**
-   * Parse `https://host/share#{hostUid}.{aircraftId}.{secret}` → [ShareInvite], or null if [url]
-   * isn't a share link. The path must be `/share`. Firebase uids, aircraft ids and base64url secrets
-   * contain no `.`, so splitting on dots is unambiguous.
+   * Parse `https://host/share#{code}` → [ShareInvite], or null if [url] isn't a share link.
    *
-   * Links minted before #204 carried only `{aircraftId}.{secret}`; they no longer resolve, and are
-   * rejected rather than guessed at. The ACL they pointed to has moved.
+   * The code is normalized the way a typed one is, so a link and a hand-typed code go down exactly
+   * one path. Normalization is strict: a character outside the alphabet is a rejection, not a
+   * deletion — which is what makes legacy `{aircraftId}.{secret}` links fail cleanly instead of
+   * filtering down into a well-formed but meaningless code.
    */
   fun parse(url: String): ShareInvite? {
     val beforeFragment = url.substringBefore('#')
     if (beforeFragment == url) return null // no fragment
     if (!beforeFragment.substringBefore('?').trimEnd('/').endsWith("/share")) return null
-    val parts = url.substringAfter('#')
-      .split('.')
-    if (parts.size != 3) return null
-    val (hostUid, aircraftId, secret) = parts
-    if (hostUid.isBlank() || aircraftId.isBlank() || secret.isBlank()) return null
-    return ShareInvite(hostUid = hostUid, aircraftId = aircraftId, secret = secret)
+    val code = normalizeInviteCode(url.substringAfter('#'))
+    return if (code == null) null else ShareInvite(code)
   }
 }

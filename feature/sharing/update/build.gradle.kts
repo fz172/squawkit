@@ -40,6 +40,7 @@ kotlin {
       implementation(project(":core:nav"))
       implementation(project(":core:storage"))
       implementation(project(":core:ui"))
+      implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:sharing:model"))
       implementation(project(":feature:sharing:sharedassets"))
       implementation(project(":feature:sharing:datamanager"))

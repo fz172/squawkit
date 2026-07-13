@@ -17,6 +17,8 @@ import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.InviteLink
+import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
+import dev.fanfly.wingslog.feature.sharing.model.SHARE_URL_BASE
 import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
@@ -45,6 +47,7 @@ import kotlinx.serialization.Serializable
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.random.Random
+import kotlin.time.Clock
 import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
 
 /**
@@ -121,17 +124,21 @@ class SharingManagerImpl(
     val invites: Flow<List<PendingInvite>> =
       shareDoc(hostUid, acId).collection(INVITES).snapshots
         .map { inviteSnaps ->
+          // No `revoked` / `useCount` to filter on any more: cancelling and redeeming both DELETE the
+          // code, so a doc that still exists is a live invite (#164). Expired ones are filtered by
+          // time — the TTL sweep may not have reaped them yet.
+          val now = Clock.System.now().toEpochMilliseconds()
           inviteSnaps.documents
             .map { it.id to it.data<InviteWire>() }
-            .filter { (_, i) -> !i.revoked && i.useCount < i.maxUses }
-            .map { (tokenHash, i) ->
+            .map { (codeId, i) ->
               PendingInvite(
-                tokenHash = tokenHash,
+                codeId = codeId,
                 role = i.role.toModel(),
                 createdAtEpochMs = i.createdAt.toMillisLong(),
                 expiresAtEpochMs = i.expiresAt.toMillisLong(),
               )
             }
+            .filter { it.expiresAtEpochMs > now }
         }
         .catch { emit(emptyList()) }
     return combine(
@@ -169,7 +176,7 @@ class SharingManagerImpl(
       // Recover each invite's share URL from the device-local cache (the secret isn't in Firestore),
       // so a returning owner can re-show the QR/link. map's transform is suspend, so the DB read fits.
       .map { state ->
-        state.copy(invites = state.invites.map { it.copy(url = localInviteUrl(it.tokenHash)) })
+        state.copy(invites = state.invites.map { it.copy(code = localInviteCode(it.codeId)) })
       }
       // A revoked member's roster listener is denied the instant they leave `memberRoles` — well
       // before the ref tombstone reaches their device. Surface that as state rather than an error:
@@ -224,75 +231,69 @@ class SharingManagerImpl(
     }
   }
 
-  @OptIn(ExperimentalEncodingApi::class)
   override suspend fun createInvite(
     acId: String,
-    role: ShareRole
+    role: ShareRole,
+    aircraftLabel: String,
   ): Result<InviteLink> = runCatching {
-    // Weak-random is intentional for now: the pairing-code rework (#164) replaces this mechanism
-    // (short human code + rate-limited redeem), which subsumes the CSPRNG concern for this secret.
-    val secret = Base64.UrlSafe.encode(Random.nextBytes(16))
-      .trimEnd('=')
-    val tokenHash = sha256Hex(secret.encodeToByteArray())
-    val uid = requireUid()
-    val now = Timestamp.now()
-    val url = "$SHARE_URL_BASE#$uid.$acId.$secret" // host.aircraft.secret (#204)
-    // Cache the link locally BEFORE writing the invite doc: that write fires Firestore's optimistic
-    // snapshot, which makes observeShareState re-read the cache — so the URL must already be there,
-    // or the just-created invite would show as "created elsewhere". (The secret is never persisted
-    // server-side, §3.1; this local cache is the only way to re-show the QR/link.)
-    writeLock.withLock {
-      db.schemaQueries.upsertConfig(
-        uid,
-        inviteUrlKey(tokenHash),
-        url
-      )
-    }
-    // Lazy-create the ACL doc so the owner is in memberRoles before the invite write — the invite
-    // rule (isShareOwner) reads it. First share of an aircraft bootstraps this (docs/sharing §3.1);
-    // subsequent memberRoles changes are function-only. See §2.1.
-    ensureShareRoot(acId, uid)
-    shareDoc(uid, acId).collection(INVITES)
-      .document(tokenHash)
-      .set(
-        InviteWire(
+    val res = functions.httpsCallable("createAircraftShareInvite")
+      .invoke(
+        CreateInviteRequest(
+          aircraftId = acId,
           role = role.wire(),
-          createdBy = uid,
-          createdAt = now,
-          expiresAt = Timestamp(
-            now.seconds + INVITE_TTL_SECONDS,
-            now.nanoseconds
-          ),
-          maxUses = 1,
-          useCount = 0,
-          revoked = false,
+          aircraftLabel = aircraftLabel,
         ),
       )
-    InviteLink(url = url, tokenHash = tokenHash)
+      .data<CreateInviteResponse>()
+
+    // Cache the code on THIS device so the owner can re-show it. The server keeps only the hash, so
+    // if this cache is lost (reinstall, other device) the code is gone for good — cancel and mint a
+    // new one. That is the trade for a code nobody can look up (#164).
+    val uid = requireUid()
+    writeLock.withLock {
+      db.schemaQueries.upsertConfig(uid, inviteCodeKey(res.codeId), res.code)
+    }
+
+    InviteLink(
+      code = res.code,
+      formattedCode = res.formattedCode,
+      codeId = res.codeId,
+      url = "$SHARE_URL_BASE#${res.code}", // names no aircraft, no host — only the code
+      expiresAtEpochMs = res.expiresAtMs,
+    )
   }
 
   override suspend fun cancelInvite(
     acId: String,
-    tokenHash: String
+    codeId: String
   ): Result<Unit> = runCatching {
-    shareDoc(hostUidFor(acId), acId).collection(INVITES)
-      .document(tokenHash)
-      .update("revoked" to true)
+    functions.httpsCallable("cancelAircraftShareInvite")
+      .invoke(CancelInviteRequest(aircraftId = acId, codeId = codeId))
+    val uid = requireUid()
+    writeLock.withLock { db.schemaQueries.deleteConfig(uid, inviteCodeKey(codeId)) }
+    Unit
   }
 
-  override suspend fun redeemInvite(
-    hostUid: String,
-    acId: String,
-    secret: String
-  ): Result<RedeemOutcome> = runCatching {
+  override suspend fun redeemInvite(code: String): Result<RedeemOutcome> = runCatching {
     val res = functions.httpsCallable("redeemAircraftShareInvite")
-      .invoke(RedeemRequest(hostUid = hostUid, aircraftId = acId, secret = secret))
+      .invoke(RedeemRequest(code = code))
       .data<RedeemResponse>()
     RedeemOutcome(
       aircraftId = res.aircraftId,
       hostUid = res.hostUid,
       role = res.role.toModel(),
       alreadyMember = res.alreadyMember,
+    )
+  }
+
+  override suspend fun previewInvite(code: String): Result<InvitePreview> = runCatching {
+    val res = functions.httpsCallable("previewAircraftShareInvite")
+      .invoke(PreviewRequest(code = code))
+      .data<PreviewResponse>()
+    InvitePreview(
+      aircraftLabel = res.aircraftLabel,
+      hostName = res.hostName,
+      role = res.role.toModel(),
     )
   }
 
@@ -464,36 +465,22 @@ class SharingManagerImpl(
   }
 
 
-  /** The device-local share URL for [tokenHash], if this device minted the invite; else null. */
-  private suspend fun localInviteUrl(tokenHash: String): String? {
+  /**
+   * The code for [codeId], if this device minted it. The server stores only the hash, so this cache
+   * is the ONLY way to re-show a code — lose it (reinstall, another device) and the invite must be
+   * cancelled and re-minted. That is the price of a code nobody can look up (#164).
+   */
+  private suspend fun localInviteCode(codeId: String): String? {
     val uid = auth.currentUser?.uid ?: return null
-    return db.schemaQueries.selectConfig(uid, inviteUrlKey(tokenHash))
+    return db.schemaQueries.selectConfig(uid, inviteCodeKey(codeId))
       .awaitAsOneOrNull()
   }
 
-  private fun inviteUrlKey(tokenHash: String) =
-    "$INVITE_URL_KEY_PREFIX$tokenHash"
+  private fun inviteCodeKey(codeId: String) =
+    "$INVITE_URL_KEY_PREFIX$codeId"
 
   private fun requireUid(): String =
     auth.currentUser?.uid ?: error("Sharing requires a signed-in user")
-
-  /**
-   * Bootstrap the `aircraft_shares/{acId}` ACL doc on first share (docs/sharing §2.1/§3.1): the
-   * owner writes themselves into `memberRoles` so the subsequent invite write passes `isShareOwner`.
-   * No-op once the doc exists (further `memberRoles` changes are function-only). Rules gate the
-   * create to the aircraft's own owner.
-   */
-  private suspend fun ensureShareRoot(acId: String, uid: String) {
-    // Our own namespace, always: the rules pin the {hostUid} path segment to the caller's uid, so
-    // this is the only share doc we could create anyway (#204).
-    if (shareDoc(uid, acId).get().exists) return
-    shareDoc(uid, acId).set(
-      ShareRootCreateWire(
-        hostUid = uid,
-        memberRoles = mapOf(uid to ShareRole.OWNER.wire()),
-      ),
-    )
-  }
 
   companion object {
     private val logger = Logger.withTag("SharingManager")
@@ -505,7 +492,6 @@ class SharingManagerImpl(
 
     // Matches the App Link / Universal Link host verified for deep linking (see AndroidManifest and
     // AircraftShareDeepLinks) so the link opens the app; the web app serves the same URL as a fallback.
-    private const val SHARE_URL_BASE = "https://squawkit.fanfly.dev/share"
     private const val INVITE_TTL_SECONDS = 7L * 24 * 60 * 60
     private const val INVITE_URL_KEY_PREFIX = "share_invite_url:"
   }
@@ -628,23 +614,43 @@ private data class MemberSelfUpdateWire(
   val technicianMirror: TechnicianMirrorWire?,
 )
 
+/** The owner-visible pending-invite record. Deliberately holds no code — only its hash, as the id. */
 @Serializable
 private data class InviteWire(
   val role: String = "technician",
   val createdBy: String = "",
   val createdAt: Timestamp = Timestamp.now(),
   val expiresAt: Timestamp = Timestamp.now(),
-  val maxUses: Int = 1,
-  val useCount: Int = 0,
-  val revoked: Boolean = false,
 )
 
 @Serializable
-private data class RedeemRequest(
-  val hostUid: String,
+private data class CreateInviteRequest(
   val aircraftId: String,
-  val secret: String,
+  val role: String,
+  val aircraftLabel: String,
 )
+@Serializable
+private data class CreateInviteResponse(
+  val code: String = "",
+  val formattedCode: String = "",
+  val codeId: String = "",
+  val expiresAtMs: Long = 0L,
+)
+
+@Serializable
+private data class CancelInviteRequest(val aircraftId: String, val codeId: String)
+
+@Serializable
+private data class PreviewRequest(val code: String)
+@Serializable
+private data class PreviewResponse(
+  val aircraftLabel: String = "",
+  val hostName: String = "",
+  val role: String = "technician",
+)
+
+@Serializable
+private data class RedeemRequest(val code: String)
 @Serializable
 private data class RedeemResponse(
   val aircraftId: String = "",

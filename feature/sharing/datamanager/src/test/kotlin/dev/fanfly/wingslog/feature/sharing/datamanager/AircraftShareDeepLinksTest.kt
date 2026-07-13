@@ -4,9 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Test
 
-private const val HOST = "w202CfT3czaX1JOSZrV39S0VYS33"
-private const val AC = "af5d2572-bc2f-4802-8837-6e9b80f4e37c"
-private const val SECRET = "HteZKufQAFiQ3TmVGbof8g"
+private const val CODE = "EFA2GGTH"
 
 class AircraftShareDeepLinksTest {
 
@@ -14,51 +12,55 @@ class AircraftShareDeepLinksTest {
   fun tearDown() = AircraftShareDeepLinks.consume()
 
   @Test
-  fun parses_a_valid_share_link() {
-    val invite = AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#$HOST.$AC.$SECRET")
-
-    assertThat(invite).isEqualTo(ShareInvite(HOST, AC, SECRET))
+  fun parses_a_code_link() {
+    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#$CODE"))
+      .isEqualTo(ShareInvite(CODE))
   }
 
   @Test
-  fun uuid_hyphens_and_base64url_survive_the_split() {
-    // Uids, UUIDs and base64url secrets contain no dots, so splitting on them is unambiguous.
-    val invite = AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#$HOST.$AC.$SECRET")
+  fun a_link_names_no_aircraft_and_no_host() {
+    // The entire point of #164. An aircraft id in an invite is a capability: whoever holds one can
+    // fabricate a same-id aircraft and read the victim's ACL and technician certificate numbers
+    // (#202), or re-claim an abandoned share (#204). The code names nothing real.
+    val invite = AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#$CODE")
 
-    assertThat(invite?.hostUid).isEqualTo(HOST)
-    assertThat(invite?.aircraftId).isEqualTo(AC)
-    assertThat(invite?.secret).isEqualTo(SECRET)
+    assertThat(invite?.code).isEqualTo(CODE)
+    assertThat(ShareInvite::class.members.map { it.name }).doesNotContain("aircraftId")
+    assertThat(ShareInvite::class.members.map { it.name }).doesNotContain("hostUid")
+  }
+
+  @Test
+  fun accepts_the_displayed_grouping_and_lowercase() {
+    // A link and a hand-typed code go down exactly one path, so "EFA2-GGTH" pasted from a text
+    // message works as well as the raw code.
+    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#efa2-ggth"))
+      .isEqualTo(ShareInvite(CODE))
   }
 
   @Test
   fun tolerates_query_params_and_a_trailing_slash() {
-    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share?utm=x#h.ac.secret"))
-      .isEqualTo(ShareInvite("h", "ac", "secret"))
-    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share/#h.ac.secret"))
-      .isEqualTo(ShareInvite("h", "ac", "secret"))
+    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share?utm=x#$CODE"))
+      .isEqualTo(ShareInvite(CODE))
+    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share/#$CODE"))
+      .isEqualTo(ShareInvite(CODE))
   }
 
   @Test
-  fun rejects_a_legacy_link_that_names_no_host() {
-    // Pre-#204 links were `{aircraftId}.{secret}`. The ACL they pointed at has moved, and guessing a
-    // host would be worse than failing: it would build a path into whichever share matched the id.
-    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#$AC.$SECRET")).isNull()
+  fun rejects_legacy_links_rather_than_guessing_at_them() {
+    // Pre-#164 links carried {aircraftId}.{secret} or {hostUid}.{aircraftId}.{secret}. The mechanism
+    // they addressed is gone. Dots are not in the code alphabet, so they normalize to nothing.
+    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#ac-1.sEcReT")).isNull()
+    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#host.ac-1.sEcReT")).isNull()
   }
 
   @Test
-  fun rejects_non_share_links() {
+  fun rejects_non_share_links_and_malformed_codes() {
     assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/finishSignIn?apiKey=x")).isNull()
-    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/other#h.ac.secret")).isNull()
-  }
-
-  @Test
-  fun rejects_missing_or_blank_parts() {
+    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/other#$CODE")).isNull()
     assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share")).isNull()
     assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#")).isNull()
-    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#h.ac")).isNull()
-    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#.ac.secret")).isNull()
-    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#h..secret")).isNull()
-    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#h.ac.")).isNull()
+    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#SHORT")).isNull()
+    assertThat(AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#TOOLONGCODE")).isNull()
   }
 
   @Test
@@ -66,8 +68,8 @@ class AircraftShareDeepLinksTest {
     assertThat(AircraftShareDeepLinks.deliver("https://squawkit.fanfly.dev/finishSignIn")).isFalse()
     assertThat(AircraftShareDeepLinks.pendingInvite.value).isNull()
 
-    assertThat(AircraftShareDeepLinks.deliver("https://squawkit.fanfly.dev/share#h.ac.secret")).isTrue()
-    assertThat(AircraftShareDeepLinks.pendingInvite.value).isEqualTo(ShareInvite("h", "ac", "secret"))
+    assertThat(AircraftShareDeepLinks.deliver("https://squawkit.fanfly.dev/share#$CODE")).isTrue()
+    assertThat(AircraftShareDeepLinks.pendingInvite.value).isEqualTo(ShareInvite(CODE))
 
     AircraftShareDeepLinks.consume()
     assertThat(AircraftShareDeepLinks.pendingInvite.value).isNull()

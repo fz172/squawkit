@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.InviteLink
 import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -42,8 +43,12 @@ class InviteSheetViewModelTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
+  // Supplies the aircraft label carried on the invite for the invitee's preview (#201).
+  private val fleet: FleetManager = mockk(relaxed = true)
+
   private fun viewModel() = InviteSheetViewModel(
     sharingManager = sharing,
+    fleetManager = fleet,
     savedStateHandle = SavedStateHandle(mapOf(Screen.AIRCRAFT_ID to AC_ID)),
   )
 
@@ -61,8 +66,16 @@ class InviteSheetViewModelTest {
 
   @Test
   fun createInvite_success_autoExpandsNewInvite() = runTest {
-    coEvery { sharing.createInvite(AC_ID, ShareRole.OWNER) } returns
-      Result.success(InviteLink(url = "https://squawkit.fanfly.dev/share#ac.secret", tokenHash = "h"))
+    coEvery { sharing.createInvite(AC_ID, ShareRole.OWNER, any()) } returns
+      Result.success(
+        InviteLink(
+          code = "EFA2GGTH",
+          formattedCode = "EFA2-GGTH",
+          codeId = "h",
+          url = "https://squawkit.fanfly.dev/share#EFA2GGTH",
+          expiresAtEpochMs = 0L,
+        ),
+      )
 
     val vm = viewModel()
     vm.selectRole(ShareRole.OWNER)
@@ -70,12 +83,12 @@ class InviteSheetViewModelTest {
 
     assertThat(vm.uiState.value.expandedToken).isEqualTo("h")
     assertThat(vm.uiState.value.creating).isFalse()
-    coVerify { sharing.createInvite(AC_ID, ShareRole.OWNER) }
+    coVerify { sharing.createInvite(AC_ID, ShareRole.OWNER, any()) }
   }
 
   @Test
   fun createInvite_failure_surfacesErrorAndClearsCreating() = runTest {
-    coEvery { sharing.createInvite(AC_ID, ShareRole.TECHNICIAN) } returns
+    coEvery { sharing.createInvite(AC_ID, ShareRole.TECHNICIAN, any()) } returns
       Result.failure(RuntimeException("no network"))
 
     val vm = viewModel()
@@ -101,7 +114,7 @@ class InviteSheetViewModelTest {
     share.value = AircraftShareState(
       invites = listOf(
         PendingInvite(
-          tokenHash = "t1",
+          codeId = "t1",
           role = ShareRole.TECHNICIAN,
           createdAtEpochMs = 0L,
           expiresAtEpochMs = 1L,
@@ -110,7 +123,7 @@ class InviteSheetViewModelTest {
     )
 
     assertThat(vm.uiState.value.pendingInvites).hasSize(1)
-    assertThat(vm.uiState.value.pendingInvites.first().tokenHash).isEqualTo("t1")
+    assertThat(vm.uiState.value.pendingInvites.first().codeId).isEqualTo("t1")
   }
 
   @Test

@@ -89,6 +89,25 @@ service cloud.firestore {
       }
     }
 
+    // --- Pairing-code invites (#164) -----------------------------------------------------------
+
+    // The code IS the secret: the document holds the aircraft id, the host uid, and the role, keyed
+    // by the code itself. No client may read or write it — only the callables, as admin.
+    //
+    // That is the point of the whole mechanism. The invitee holds an opaque code instead of an
+    // aircraft id, so a non-member never learns an id to fabricate a same-id aircraft against
+    // (#202/#204). Granting clients so much as a read here would hand back exactly what the code was
+    // introduced to withhold.
+    match /invite_codes/{code} {
+      allow read, write: if false; // functions only
+    }
+
+    // Failed-attempt counters behind the rate limiter. A client that could read these would learn
+    // how much guessing budget it has left; one that could write them could reset it.
+    match /invite_attempts/{uid} {
+      allow read, write: if false; // functions only
+    }
+
     // --- Share ACL tree (plain-field, rules-readable) ------------------------------------------
 
     // Keyed by HOST, then aircraft (#204). The {hostUid} segment is pinned to the caller's own uid
@@ -102,27 +121,21 @@ service cloud.firestore {
     // removes its ACL while leaving the records behind, so an ex-member could re-claim the id and
     // read (and write) the deleted aircraft. See #204.
     match /aircraft_shares/{hostUid}/aircraft/{acId} {
-      // Members see the ACL. memberRoles is function-managed, so no client update/delete.
+      // Membership is the only key. Nothing else — no "I have an aircraft with this id", which is a
+      // claim anyone who knew the id could manufacture (#202), and which no longer buys even the
+      // bootstrap read now that createAircraftShareInvite bootstraps the ACL server-side (#164).
       //
-      // The own-aircraft check is fenced to `resource == null` — the case where the doc does not
-      // exist yet and there is NOTHING TO LEAK. It exists only so the owner can read the empty
-      // result and bootstrap the doc before the first invite (§3.1), and it must be the left
-      // operand: on a missing doc isShareMember's get() errors and would deny before the fallback
-      // ran. Once the doc exists, membership is the only key — the host is in memberRoles, so
-      // isShareMember covers them too. See #202.
-      allow get: if (resource == null
-          && hostUid == request.auth.uid
-          && exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId)))
-        || isShareMember(hostUid, acId);
+      // On a not-yet-shared aircraft there is no ACL, so this denies. Correct: there is nothing to
+      // read. Manage Access already treats the denial as "no members yet"
+      // (AircraftShareState.accessDenied) and still offers Invite, because the owner's role comes
+      // from the local refs rather than from this doc.
+      allow get: if isShareMember(hostUid, acId);
 
-      // The caller may only bootstrap a share in their OWN namespace, over an aircraft in their own
-      // tree. Planting a same-id aircraft still works — it is their tree — but the share it lets
-      // them create is `aircraft_shares/{them}/aircraft/{acId}`, which governs `users/{them}/...`.
-      // Their own data. Harmless.
-      allow create: if hostUid == request.auth.uid
-        && request.resource.data.hostUid == request.auth.uid
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId));
-      allow update, delete: if false; // functions only
+      // Function-only since #164: createAircraftShareInvite bootstraps the ACL as admin, so no client
+      // ever needs to. That retires the last forgeable check — the old rule leaned on "I have an
+      // aircraft with this id in my tree", which anyone could manufacture. #204 made that harmless by
+      // namespacing the key; this removes it outright.
+      allow create, update, delete: if false; // functions only
 
       match /members/{memberUid} {
         // Members only — these carry display names, photos, and technician mirrors (certificate
@@ -145,9 +158,11 @@ service cloud.firestore {
         // Owner reads the invite list (Manage Access). Denied before the ACL exists, which is fine:
         // there are no invites yet, and the client degrades to an empty list. Pending invites are
         // live credentials — no own-aircraft escape hatch (#202).
+        // Owner-visible record of a pending invite: role and expiry, NOT the code. Reading this
+        // list yields nothing redeemable (#164). Creation and cancellation are function-only now —
+        // both have to touch the invite_codes collection, which clients cannot see.
         allow read: if isShareOwner(hostUid, acId);
-        allow create, update: if isShareOwner(hostUid, acId); // create/cancel invites
-        allow delete: if false;
+        allow write: if false; // functions only
       }
     }
 

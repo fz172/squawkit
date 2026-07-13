@@ -159,11 +159,13 @@ describe("aircraft_shares ACL root", () => {
     await assertFails(getDoc(doc(as(STRANGER), shareDoc)));
   });
 
-  it("host may create a share for an aircraft in their own tree", async () => {
+  it("NOBODY creates a share from a client — the invite callable bootstraps it (#164)", async () => {
+    // Even the genuine host is denied: createAircraftShareInvite does this as admin. That retires
+    // the last forgeable check, which leaned on "I have an aircraft with this id in my tree".
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), `users/${HOST}/aircraft/ac-new`), { registration: "N2" });
     });
-    await assertSucceeds(
+    await assertFails(
       setDoc(doc(as(HOST), `aircraft_shares/${HOST}/aircraft/ac-new`), {
         hostUid: HOST,
         aircraftId: "ac-new",
@@ -246,6 +248,47 @@ describe("aircraft_shares — a fabricated same-id aircraft grants nothing (#202
 // #204: the ACL is keyed under the HOST, so a share a caller can create only ever governs the
 // caller's own tree. Planting a same-id aircraft still works — it is their tree — but the share it
 // buys them is over their own aircraft. Harmless.
+// #164: the code IS the secret. The doc holds the aircraft id, host uid and role, keyed by the code
+// — so a client that could read it would get back exactly what the pairing code exists to withhold.
+describe("invite_codes — clients cannot touch them (#164)", () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "invite_codes/ABCD2345"), {
+        hostUid: HOST,
+        aircraftId: AC,
+        role: "technician",
+      });
+      await setDoc(doc(ctx.firestore(), `invite_attempts/${TECH}`), { failures: 3 });
+    });
+  });
+
+  it("nobody may read a code — not a stranger, not a member, not the host who made it", async () => {
+    await assertFails(getDoc(doc(as(STRANGER), "invite_codes/ABCD2345")));
+    await assertFails(getDoc(doc(as(TECH), "invite_codes/ABCD2345")));
+    await assertFails(getDoc(doc(as(HOST), "invite_codes/ABCD2345")));
+  });
+
+  it("nobody may list them (no fishing for live codes)", async () => {
+    await assertFails(getDocs(collection(as(HOST), "invite_codes")));
+  });
+
+  it("nobody may forge one", async () => {
+    await assertFails(
+      setDoc(doc(as(STRANGER), "invite_codes/EVIL2345"), {
+        hostUid: HOST,
+        aircraftId: AC,
+        role: "owner",
+      }),
+    );
+  });
+
+  it("nobody may read or reset their rate-limit budget", async () => {
+    // Readable → the attacker learns how much guessing they have left. Writable → they reset it.
+    await assertFails(getDoc(doc(as(TECH), `invite_attempts/${TECH}`)));
+    await assertFails(setDoc(doc(as(TECH), `invite_attempts/${TECH}`), { failures: 0 }));
+  });
+});
+
 describe("aircraft_shares — namespaced by host (#204)", () => {
   beforeEach(async () => {
     // The attacker plants an aircraft carrying the victim's id in their OWN tree. Legal: own tree.
@@ -276,10 +319,10 @@ describe("aircraft_shares — namespaced by host (#204)", () => {
     );
   });
 
-  it("MAY create a share in their own namespace — and it grants nothing over the victim", async () => {
-    // This is the fabrication that used to be fatal. It now mints aircraft_shares/{stranger}/... ,
-    // which governs users/{stranger}/aircraft/{AC} — their own plane.
-    await assertSucceeds(
+  it("cannot create a share at all now — and still reaches nothing of the victim's", async () => {
+    // Since #164 client ACL creation is closed outright, so the fabrication buys not even a share
+    // over their own plane. Belt and braces on top of #204's namespacing.
+    await assertFails(
       setDoc(doc(as(STRANGER), `aircraft_shares/${STRANGER}/aircraft/${AC}`), {
         hostUid: STRANGER,
         aircraftId: AC,
@@ -333,50 +376,38 @@ describe("aircraft_shares ACL root — first share (no ACL doc yet)", () => {
     });
   });
 
-  it("owner may GET the not-yet-created ACL doc (so the client can bootstrap it)", async () => {
-    await assertSucceeds(getDoc(doc(as(HOST), freshShare)));
-  });
-
-  it("a stranger may NOT get the not-yet-created ACL doc", async () => {
+  // Before the first invite there is no ACL — and nothing about it is readable or writable from a
+  // client, by anyone, including the owner (#202 + #164). There is nothing to read: the roster is
+  // empty and the ACL does not exist. And there is nothing to write: createAircraftShareInvite
+  // bootstraps it server-side.
+  //
+  // Denying is safe because the client expects it. Manage Access maps the denial to
+  // AircraftShareState.accessDenied, shows an empty roster, and still offers Invite — the owner's
+  // role comes from the local refs, not from this doc. Covered by ManageAccessViewModelTest.
+  it("nobody reads the missing ACL doc — not even the owner (nothing to read)", async () => {
+    await assertFails(getDoc(doc(as(HOST), freshShare)));
     await assertFails(getDoc(doc(as(STRANGER), freshShare)));
   });
 
-  it("owner may bootstrap the ACL doc, then create the first invite", async () => {
-    await assertSucceeds(
+  it("nobody reads the roster or invite list before a share exists", async () => {
+    await assertFails(getDocs(collection(as(HOST), `${freshShare}/members`)));
+    await assertFails(getDocs(collection(as(HOST), `${freshShare}/invites`)));
+  });
+
+  it("nobody bootstraps the ACL or writes an invite from a client (#164)", async () => {
+    await assertFails(
       setDoc(doc(as(HOST), freshShare), {
         hostUid: HOST,
         aircraftId: FRESH,
         memberRoles: { [HOST]: "owner" },
       }),
     );
-    await assertSucceeds(
-      setDoc(doc(as(HOST), `${freshShare}/invites/token-1`), {
+    await assertFails(
+      setDoc(doc(as(HOST), `${freshShare}/invites/code-id-1`), {
         role: "technician",
         createdBy: HOST,
-        revoked: false,
-        maxUses: 1,
-        useCount: 0,
       }),
     );
-  });
-
-  // Before the first invite there is no ACL, so there is no roster and no invite list — and the
-  // rules now deny both, for everyone including the owner (#202: the own-aircraft escape hatch that
-  // used to allow this was forgeable by anyone who knew the aircraft id).
-  //
-  // Denying is safe because the client expects it: Manage Access maps the denial to
-  // AircraftShareState.accessDenied, shows an empty roster, and still offers Invite — the owner's
-  // role comes from the local refs, not from the roster. Covered by ManageAccessViewModelTest.
-  it("nobody reads the roster before a share exists — not even the owner (nothing to read)", async () => {
-    await assertFails(getDocs(collection(as(HOST), `${freshShare}/members`)));
-    await assertFails(getDocs(collection(as(HOST), `${freshShare}/invites`)));
-  });
-
-  // …but the owner MUST still be able to get the missing ACL doc itself, or they could never
-  // bootstrap it. Reading a doc that does not exist leaks nothing, which is exactly why the
-  // own-aircraft check survives here and nowhere else.
-  it("owner may still bootstrap: get the missing ACL doc, then create it and the first invite", async () => {
-    await assertSucceeds(getDoc(doc(as(HOST), freshShare)));
   });
 
   it("a stranger may NOT read the members or invites lists", async () => {
@@ -488,11 +519,15 @@ describe("member documents", () => {
 describe("invites", () => {
   const inviteDoc = `${shareDoc}/invites/token-hash-1`;
 
-  it("owner may create and read invites", async () => {
-    await assertSucceeds(
-      setDoc(doc(as(OWNER2), inviteDoc), { role: "technician", createdBy: OWNER2 }),
-    );
+  it("owner READS the pending-invite record, but cannot write one (#164)", async () => {
+    // The record carries role + expiry so the owner can list and cancel. The code itself is not in
+    // it, and creating/cancelling goes through the callables — both must touch invite_codes, which
+    // no client can see.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), inviteDoc), { role: "technician", createdBy: HOST });
+    });
     await assertSucceeds(getDoc(doc(as(OWNER2), inviteDoc)));
+    await assertFails(setDoc(doc(as(OWNER2), inviteDoc), { role: "owner", createdBy: OWNER2 }));
   });
 
   it("technician may NOT create or read invites", async () => {

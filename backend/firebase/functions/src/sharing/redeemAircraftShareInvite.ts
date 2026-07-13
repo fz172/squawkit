@@ -1,27 +1,22 @@
-import { createHash } from "node:crypto";
-
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
 
 import { FUNCTION_REGION } from "../config/env.js";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { requireAuthenticatedApp } from "../shared/auth.js";
+import { inviteCodeDocPath, inviteCodeId, normalizeInviteCode } from "./inviteCodes.js";
+import { recordFailedAttempt, requireAttemptsRemaining } from "./rateLimit.js";
 import { sharedAircraftRefWireDoc } from "./sharedAircraftRefWire.js";
 import {
   aircraftShareDocPath,
   shareInviteDocPath,
   shareMemberDocPath,
   type AircraftShareDoc,
-  type ShareInviteDoc,
+  type InviteCodeDoc,
   type ShareRole,
 } from "./sharingModels.js";
 
-/**
- * `hostUid` is routing only — it names WHICH share doc to open (#204). It is not authorization: the
- * caller's rights are still checked against the ACL found at that path, so passing someone else's
- * hostUid opens a share the caller is not in, and the checks below reject them.
- */
-type RedeemRequest = { hostUid: string; aircraftId: string; secret: string };
+type RedeemRequest = { code: string };
 type RedeemResponse = {
   aircraftId: string;
   hostUid: string;
@@ -30,47 +25,57 @@ type RedeemResponse = {
 };
 
 /**
- * Redeems a capability invite. Must write into two account trees (the share's member list and the
- * redeemer's own shared_aircraft_ref) and enforce invite validity atomically — hence a callable
- * with the Admin SDK, not client writes + rules. See docs/sharing §3.2.
+ * Redeems a pairing code (#164).
+ *
+ * The caller sends **only the code** — no aircraft id, no host uid. Those live in the code doc, which
+ * no client can read, so an invitee learns the aircraft only by joining it. That is what closes
+ * #202/#204 at the source: a non-member never holds an aircraft id to fabricate against.
+ *
+ * Single-use is total: the code doc is DELETED on success. "Already used" and "never existed" then
+ * collapse into one state — which is the same error the PRD wants for both (C3/C4/C5).
  */
 export const redeemAircraftShareInvite = onCall<RedeemRequest, Promise<RedeemResponse>>(
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request): Promise<RedeemResponse> => {
     const { uid } = requireAuthenticatedApp(request);
     requireNonAnonymous(request);
-    const { hostUid, aircraftId, secret } = parseRequest(request.data);
-    const tokenHash = sha256Hex(secret);
+    const code = parseRequest(request.data);
 
+    // Checked BEFORE dereferencing: a locked-out caller must learn nothing about whether the code
+    // exists. A ~39-bit code is only safe because guessing is metered.
+    await requireAttemptsRemaining(uid);
+
+    const codeRef = adminDb.doc(inviteCodeDocPath(code));
+    const codeSnap = await codeRef.get();
+    if (!codeSnap.exists) {
+      await recordFailedAttempt(uid);
+      throw new HttpsError("not-found", "This invite is no longer valid.");
+    }
+    const invite = codeSnap.data() as InviteCodeDoc;
+    if (invite.expiresAt.toMillis() <= Date.now()) {
+      await recordFailedAttempt(uid);
+      throw new HttpsError("not-found", "This invite is no longer valid.");
+    }
+
+    const { hostUid, aircraftId, role } = invite;
     const shareRef = adminDb.doc(aircraftShareDocPath(hostUid, aircraftId));
-    const inviteRef = adminDb.doc(shareInviteDocPath(hostUid, aircraftId, tokenHash));
 
     return adminDb.runTransaction(async (tx): Promise<RedeemResponse> => {
-      const [shareSnap, inviteSnap] = await Promise.all([tx.get(shareRef), tx.get(inviteRef)]);
-      if (!shareSnap.exists || !inviteSnap.exists) {
+      // Re-read the code inside the transaction: two devices racing the same code must not both win.
+      const [shareSnap, freshCode] = await Promise.all([tx.get(shareRef), tx.get(codeRef)]);
+      if (!freshCode.exists || !shareSnap.exists) {
         throw new HttpsError("not-found", "This invite is no longer valid.");
       }
+
       const share = shareSnap.data() as AircraftShareDoc;
-      const invite = inviteSnap.data() as ShareInviteDoc;
 
-      // `revoked` is set by owner action (cancelInvite) — a manual cancellation, distinct from the
-      // time-based `expiresAt` below. See docs/sharing §3.1/§3.3.
-      if (invite.revoked) throw new HttpsError("failed-precondition", "This invite was cancelled.");
-      if (invite.expiresAt.toMillis() <= Date.now()) {
-        throw new HttpsError("failed-precondition", "This invite has expired.");
-      }
-      if (invite.useCount >= invite.maxUses) {
-        throw new HttpsError("failed-precondition", "This invite has already been used.");
-      }
-
-      // Already a member → friendly no-op; the token is NOT consumed.
+      // Already a member → friendly no-op, and the code is NOT burned: the owner may still be waiting
+      // for the person they actually meant to invite.
       const existingRole = share.memberRoles[uid];
       if (existingRole != null) {
-        return { aircraftId, hostUid: share.hostUid, role: existingRole, alreadyMember: true };
+        return { aircraftId, hostUid, role: existingRole, alreadyMember: true };
       }
 
-      const role = invite.role;
-      tx.update(inviteRef, { useCount: invite.useCount + 1 });
       tx.update(shareRef, { [`memberRoles.${uid}`]: role });
       tx.set(adminDb.doc(shareMemberDocPath(hostUid, aircraftId, uid)), {
         role,
@@ -82,9 +87,14 @@ export const redeemAircraftShareInvite = onCall<RedeemRequest, Promise<RedeemRes
       });
       tx.set(
         adminDb.doc(`users/${uid}/shared_aircraft_ref/${aircraftId}`),
-        sharedAircraftRefWireDoc(aircraftId, share.hostUid, role),
+        sharedAircraftRefWireDoc(aircraftId, hostUid, role),
       );
-      return { aircraftId, hostUid: share.hostUid, role, alreadyMember: false };
+
+      // Burn it: the code doc and the owner's pending-invite record both go.
+      tx.delete(codeRef);
+      tx.delete(adminDb.doc(shareInviteDocPath(hostUid, aircraftId, inviteCodeId(code))));
+
+      return { aircraftId, hostUid, role, alreadyMember: false };
     });
   },
 );
@@ -95,25 +105,13 @@ function requireNonAnonymous(request: CallableRequest<unknown>): void {
   }
 }
 
-/** tokenHash = SHA-256 of the secret string carried in the invite URL fragment (hex). */
-function sha256Hex(secret: string): string {
-  return createHash("sha256").update(secret).digest("hex");
-}
-
-/**
- * Expects `{ aircraftId: string, secret: string }` — the aircraft id and the invite secret parsed
- * from the share URL fragment (`/share#{aircraftId}.{secret}`). Both required and non-empty.
- */
-function parseRequest(data: unknown): RedeemRequest {
+/** Accepts what a human types: lowercase, spaces, and the displayed `EFA1-GGTH` grouping. */
+function parseRequest(data: unknown): string {
   const obj = (data ?? {}) as Record<string, unknown>;
-  const hostUid = typeof obj.hostUid === "string" ? obj.hostUid.trim() : "";
-  const aircraftId = typeof obj.aircraftId === "string" ? obj.aircraftId.trim() : "";
-  const secret = typeof obj.secret === "string" ? obj.secret : "";
-  if (hostUid.length === 0) {
-    throw new HttpsError("invalid-argument", "hostUid is required.");
+  const raw = typeof obj.code === "string" ? obj.code : "";
+  const code = normalizeInviteCode(raw);
+  if (code.length === 0) {
+    throw new HttpsError("invalid-argument", "An invite code is required.");
   }
-  if (aircraftId.length === 0 || secret.length === 0) {
-    throw new HttpsError("invalid-argument", "redeemAircraftShareInvite requires aircraftId and secret.");
-  }
-  return { hostUid, aircraftId, secret };
+  return code;
 }

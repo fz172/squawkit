@@ -62,60 +62,8 @@ beforeEach(wipe);
 afterEach(wipe);
 afterAll(() => fft.cleanup());
 
-describe("redeemAircraftShareInvite", () => {
-  it("adds the member, writes the ref, consumes the token", async () => {
-    await seedShare();
-    const secret = await seedInvite();
-
-    const res = await wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }));
-    expect(res).toMatchObject({ aircraftId: AC, hostUid: HOST, role: "technician", alreadyMember: false });
-
-    const share = (await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).data();
-    expect(share?.memberRoles[TECH]).toBe("technician");
-    const member = await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/members/${TECH}`).get();
-    expect(member.exists).toBe(true);
-    const ref = await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get();
-    expect(ref.data()?.deleted).toBe(false);
-    const invite = await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/invites/${sha256(secret)}`).get();
-    expect(invite.data()?.useCount).toBe(1);
-  });
-
-  it("is a no-op for an existing member and does NOT consume the token", async () => {
-    await seedShare({ [HOST]: "owner", [TECH]: "technician" });
-    const secret = await seedInvite();
-
-    const res = await wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }));
-    expect(res).toMatchObject({ alreadyMember: true });
-    const invite = await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/invites/${sha256(secret)}`).get();
-    expect(invite.data()?.useCount).toBe(0);
-  });
-
-  it("rejects an expired invite", async () => {
-    await seedShare();
-    const secret = await seedInvite({ expiresAt: Timestamp.fromMillis(Date.now() - 1000) });
-    await expect(wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }))).rejects.toThrow();
-  });
-
-  it("rejects a revoked invite", async () => {
-    await seedShare();
-    const secret = await seedInvite({ revoked: true });
-    await expect(wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }))).rejects.toThrow();
-  });
-
-  it("rejects an already-used single-use invite", async () => {
-    await seedShare();
-    const secret = await seedInvite({ useCount: 1, maxUses: 1 });
-    await expect(wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }))).rejects.toThrow();
-  });
-
-  it("rejects an anonymous caller", async () => {
-    await seedShare();
-    const secret = await seedInvite();
-    await expect(
-      wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }, "anonymous")),
-    ).rejects.toThrow();
-  });
-});
+// redeemAircraftShareInvite is now pairing-code based (#164) — see invite-codes.test.ts. The old
+// secret-in-the-link mechanism it used to test is gone, along with the aircraft id it exposed.
 
 describe("revokeAircraftShare", () => {
   it("an owner removes a member: ACL cleared, member doc deleted, ref tombstoned", async () => {

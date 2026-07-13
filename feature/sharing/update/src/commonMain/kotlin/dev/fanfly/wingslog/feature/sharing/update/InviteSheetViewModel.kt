@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.viewing.InviteSheetUiState
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
  */
 class InviteSheetViewModel(
   private val sharingManager: SharingManager,
+  private val fleetManager: FleetManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -29,6 +31,27 @@ class InviteSheetViewModel(
 
   init {
     observeInvites()
+    observeAircraftLabel()
+  }
+
+  /**
+   * What the invitee is shown before accepting (#201). It has to be carried on the invite: the
+   * server cannot read it out of the aircraft record, which is opaque proto bytes.
+   */
+  private var aircraftLabel: String = ""
+
+  private fun observeAircraftLabel() {
+    viewModelScope.launch {
+      fleetManager.loadAircraft(aircraftId)
+        .catch { aircraftLabel = "" }
+        .collect { aircraft ->
+          aircraftLabel = aircraft?.let {
+            listOf(it.tail_number, listOf(it.make, it.model).filter(String::isNotBlank).joinToString(" "))
+              .filter(String::isNotBlank)
+              .joinToString(" · ")
+          }.orEmpty()
+        }
+    }
   }
 
   private fun observeInvites() {
@@ -47,23 +70,23 @@ class InviteSheetViewModel(
     if (_uiState.value.creating) return
     _uiState.update { it.copy(creating = true, error = null) }
     viewModelScope.launch {
-      sharingManager.createInvite(aircraftId, _uiState.value.selectedRole)
+      sharingManager.createInvite(aircraftId, _uiState.value.selectedRole, aircraftLabel)
         // Auto-expand the new invite in the pending list once the roster flow delivers it.
-        .onSuccess { link -> _uiState.update { it.copy(creating = false, expandedToken = link.tokenHash) } }
+        .onSuccess { link -> _uiState.update { it.copy(creating = false, expandedToken = link.codeId) } }
         .onFailure { e -> _uiState.update { it.copy(creating = false, error = e.message) } }
     }
   }
 
-  /** Expand a pending invite's QR/link detail (collapse if it's already the expanded one). */
-  fun toggleExpand(tokenHash: String) {
+  /** Expand a pending invite's code/QR detail (collapse if it's already the expanded one). */
+  fun toggleExpand(codeId: String) {
     _uiState.update {
-      it.copy(expandedToken = if (it.expandedToken == tokenHash) null else tokenHash)
+      it.copy(expandedToken = if (it.expandedToken == codeId) null else codeId)
     }
   }
 
-  fun cancelInvite(tokenHash: String) {
+  fun cancelInvite(codeId: String) {
     viewModelScope.launch {
-      sharingManager.cancelInvite(aircraftId, tokenHash)
+      sharingManager.cancelInvite(aircraftId, codeId)
         .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
   }
