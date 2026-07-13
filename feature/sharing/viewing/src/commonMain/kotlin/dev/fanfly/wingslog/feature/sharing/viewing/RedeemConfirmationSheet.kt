@@ -75,13 +75,13 @@ fun RedeemConfirmationSheet(
           when {
             preview == null -> stringResource(Res.string.redeem_confirm_body)
             preview.hostName.isBlank() || preview.aircraftLabel.isBlank() ->
-              stringResource(Res.string.redeem_confirm_body_role, roleLabel(preview.role))
+              stringResource(Res.string.redeem_confirm_body_role, redeemRoleLabel(preview.role))
 
             else -> stringResource(
               Res.string.redeem_confirm_body_full,
               preview.hostName,
               preview.aircraftLabel,
-              roleLabel(preview.role),
+              redeemRoleLabel(preview.role),
             )
           },
         )
@@ -103,11 +103,9 @@ fun RedeemConfirmationSheet(
       text = { CircularProgressIndicator(Modifier.padding(Spacing.small)) },
     )
 
-    is RedeemUiState.Success -> InfoDialog(
-      title = stringResource(Res.string.redeem_success_title),
-      body = stringResource(Res.string.redeem_success_body, roleLabel(state.role)),
-      onDismiss = onDismiss,
-    )
+    // Success is a snackbar, not a dialog (see RedeemHost). Joining worked and there is nothing to
+    // decide — a modal would make the user dismiss a box to get to the aircraft they just joined.
+    is RedeemUiState.Success -> Unit
 
     RedeemUiState.AlreadyMember -> InfoDialog(
       title = stringResource(Res.string.redeem_already_member_title),
@@ -135,8 +133,9 @@ private fun InfoDialog(title: String, body: String, onDismiss: () -> Unit) {
   )
 }
 
+/** "a technician" / "a co-owner" — reads inside a sentence, unlike the roster's bare role chips. */
 @Composable
-private fun roleLabel(role: ShareRole): String = when (role) {
+fun redeemRoleLabel(role: ShareRole): String = when (role) {
   ShareRole.OWNER -> stringResource(Res.string.redeem_role_owner)
   ShareRole.TECHNICIAN -> stringResource(Res.string.redeem_role_technician)
 }
