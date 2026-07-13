@@ -14,6 +14,8 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -33,6 +35,23 @@ class EditAircraftViewModel(
     } else {
       logger.i { "Loading aircraft $aircraftId" }
       loadAircraftById(aircraftId)
+      observeHostedByMe(aircraftId)
+    }
+  }
+
+  /**
+   * Whether this aircraft lives in *our* tree. `FleetEntry.shared` is exactly that question asked
+   * the other way round, and it is answered from the local refs, so it holds offline too.
+   *
+   * This is deliberately not read off [ShareRole]: a co-owner is `OWNER` as well, and the thing that
+   * separates them from the host is whose tree the aircraft is in — not what role they hold.
+   */
+  private fun observeHostedByMe(aircraftId: String) {
+    viewModelScope.launch {
+      fleetManager.observeFleetDashboard()
+        .map { fleet -> fleet.firstOrNull { it.aircraft.id == aircraftId }?.shared == false }
+        .distinctUntilChanged()
+        .collect { hosted -> _uiState.update { it.copy(hostedByMe = hosted) } }
     }
   }
 
