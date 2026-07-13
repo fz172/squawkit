@@ -29,18 +29,29 @@ export const onAircraftDeleted = onDocumentWritten(
 
     const { uid, acId } = event.params;
 
-    await tearDownShare(acId);
+    await tearDownShare(uid, acId);
     await tombstoneChildren(uid, acId);
   },
 );
 
-/** Tombstone every member's ref, then recursively delete the aircraft_shares tree. No-op if unshared. */
-async function tearDownShare(acId: string): Promise<void> {
+/**
+ * Tombstone every member's ref, then recursively delete the aircraft_shares tree. No-op if unshared.
+ *
+ * [deletedBy] must be the share's host. A share is keyed by aircraft id alone, but an aircraft id is
+ * only unique *within* a user's tree — so without this check, anyone who deletes an aircraft of
+ * theirs that happens to carry the same id destroys someone else's share: ACL, member docs, and
+ * every member's ref. That is not hypothetical. A member's client can end up holding a doc at
+ * `users/{them}/aircraft/{acId}` with the host's aircraft id, and deleting it would take the host's
+ * share down with it. The host's delete is the only one that means "this share is over" (§3.3).
+ */
+async function tearDownShare(deletedBy: string, acId: string): Promise<void> {
   const shareRef = adminDb.doc(aircraftShareDocPath(acId));
   const snap = await shareRef.get();
   if (!snap.exists) return;
 
   const share = snap.data() as AircraftShareDoc;
+  if (share.hostUid !== deletedBy) return; // someone else's aircraft that merely shares the id
+
   await Promise.all(
     Object.keys(share.memberRoles)
       .filter((memberUid) => memberUid !== share.hostUid) // the host owns the data directly, no ref

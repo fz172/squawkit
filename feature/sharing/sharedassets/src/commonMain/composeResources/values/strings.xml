@@ -10,6 +10,7 @@
   <string name="manage_access_role_co_owner">Co-owner</string>
   <string name="manage_access_role_technician">Technician</string>
   <string name="manage_access_badge_you">You</string>
+  <string name="manage_access_unnamed_member">Unnamed member</string>
   <string name="manage_access_member_actions">Member actions</string>
   <string name="manage_access_make_owner">Make co-owner</string>
   <string name="manage_access_make_technician">Make technician</string>

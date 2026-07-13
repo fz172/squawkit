@@ -32,6 +32,11 @@ class ManageAccessViewModel(
 
   init {
     observeShare()
+    // Self-heal a missing member doc. The roster's membership comes from the ACL, but names and
+    // photos come from the member docs — so a member whose doc is absent renders as a bare uid. This
+    // is idempotent and cheap, and it means opening the screen repairs the row rather than staring
+    // at the damage. (§7.2)
+    viewModelScope.launch { sharingManager.publishTechnicianMirror(alsoPublishTo = aircraftId) }
   }
 
   private fun observeShare() {

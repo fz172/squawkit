@@ -39,6 +39,8 @@ class ManageAccessViewModelTest {
     sharing = mockk()
     every { sharing.observeMyRole(AC_ID) } returns role
     every { sharing.observeShareState(AC_ID) } returns share
+    // Opening the screen republishes our own member doc, self-healing a missing one.
+    coEvery { sharing.publishTechnicianMirror(any()) } returns Result.success(Unit)
   }
 
   @After

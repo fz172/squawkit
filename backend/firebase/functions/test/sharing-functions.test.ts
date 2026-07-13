@@ -199,6 +199,45 @@ describe("onAircraftDeleted", () => {
     expect((await adminDb.doc(`${aircraftPath}/squawk/sq-1`).get()).data()?.deleted).toBe(true);
   });
 
+  it("does NOT tear down a share when a DIFFERENT user deletes an aircraft with the same id", async () => {
+    // A share is keyed by aircraft id, but an aircraft id is only unique within one user's tree. A
+    // member can hold a doc at users/{them}/aircraft/{acId} carrying the host's aircraft id — and
+    // deleting it must not destroy the host's share. Only the host's delete ends the share (§3.3).
+    await seedShare({ [HOST]: "owner", [TECH]: "technician" });
+    await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).set({ deleted: false });
+
+    const techPath = `users/${TECH}/aircraft/${AC}`;
+    const before = fft.firestore.makeDocumentSnapshot({ deleted: false }, techPath);
+    const after = fft.firestore.makeDocumentSnapshot({ deleted: true }, techPath);
+    await wrappedDeleted({
+      data: fft.makeChange(before, after),
+      params: { uid: TECH, acId: AC },
+    } as never);
+
+    // The host's share is untouched: ACL, member docs, and the member's ref all survive.
+    expect((await adminDb.doc(`aircraft_shares/${AC}`).get()).exists).toBe(true);
+    expect((await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get()).data()?.deleted)
+      .toBe(false);
+  });
+
+  it("still cascades that user's own children when they delete their own aircraft", async () => {
+    // The teardown is host-only, but the cascade is not — the deleter's own child records must
+    // still be tombstoned, or they orphan.
+    await seedShare({ [HOST]: "owner", [TECH]: "technician" });
+    const techPath = `users/${TECH}/aircraft/${AC}`;
+    await adminDb.doc(`${techPath}/maintenance_log/log-1`).set({ deleted: false });
+
+    const before = fft.firestore.makeDocumentSnapshot({ deleted: false }, techPath);
+    const after = fft.firestore.makeDocumentSnapshot({ deleted: true }, techPath);
+    await wrappedDeleted({
+      data: fft.makeChange(before, after),
+      params: { uid: TECH, acId: AC },
+    } as never);
+
+    expect((await adminDb.doc(`${techPath}/maintenance_log/log-1`).get()).data()?.deleted).toBe(true);
+    expect((await adminDb.doc(`aircraft_shares/${AC}`).get()).exists).toBe(true);
+  });
+
   it("ignores a non-delete write (deleted stays false)", async () => {
     await adminDb.doc(`${aircraftPath}/maintenance_log/log-1`).set({ deleted: false });
     await wrappedDeleted(change(false, false) as never);
