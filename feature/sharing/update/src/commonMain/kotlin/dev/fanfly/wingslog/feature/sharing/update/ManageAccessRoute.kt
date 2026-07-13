@@ -15,9 +15,11 @@ fun ManageAccessRoute(navController: NavController) {
   val viewModel = koinViewModel<ManageAccessViewModel>()
   val state by viewModel.uiState.collectAsState()
 
-  // Leaving removes this aircraft from the user's fleet — pop back once it succeeds.
-  LaunchedEffect(state.leaveSuccess) {
-    if (state.leaveSuccess) navController.popBackStack()
+  // Leaving removes this aircraft from the user's fleet — pop back once it succeeds. Being revoked
+  // while the screen is open is the same ending, arrived at from the other side: we are no longer a
+  // member, so the roster on screen is stale and must not stay up.
+  LaunchedEffect(state.leaveSuccess, state.accessRevoked) {
+    if (state.leaveSuccess || state.accessRevoked) navController.popBackStack()
   }
 
   ManageAccessScreen(

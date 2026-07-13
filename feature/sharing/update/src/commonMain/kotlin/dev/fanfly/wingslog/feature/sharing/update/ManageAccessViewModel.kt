@@ -51,9 +51,32 @@ class ManageAccessViewModel(
           // Roster unavailable (e.g. no share yet) — leave it empty, don't block inviting.
           logger.d { "share roster unavailable for $aircraftId: ${e.message}" }
         }
-        .collect { share -> _uiState.update { it.copy(members = share.members) } }
+        .collect { share ->
+          if (share.members.any { it.isSelf }) seenSelfInRoster = true
+
+          // A denial *after* we have seen ourselves on this roster is a revocation: the owner just
+          // removed us and the rules cut the listener off. Leaving the screen open would show a
+          // stale roster that still lists us as a member of a share we no longer belong to, so it
+          // closes — the same exit as leaving voluntarily. A denial *before* we ever appeared is
+          // just an owner whose aircraft has no share doc yet, and means nothing.
+          if (share.accessDenied) {
+            if (seenSelfInRoster) {
+              logger.i { "access to $aircraftId was revoked; closing Manage Access" }
+              _uiState.update { it.copy(accessRevoked = true) }
+            }
+            return@collect
+          }
+          _uiState.update { it.copy(members = share.members) }
+        }
     }
   }
+
+  /**
+   * Whether this user has ever appeared on this aircraft's roster. It is what makes a later denial
+   * legible: revocation and "no share exists yet" are the same PERMISSION_DENIED on the wire, and
+   * only having-been-a-member tells them apart.
+   */
+  private var seenSelfInRoster = false
 
   fun changeRole(uid: String, role: ShareRole) {
     viewModelScope.launch {

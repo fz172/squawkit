@@ -58,7 +58,11 @@ class RedeemViewModel(
           // Every redeemer publishes their mirror into the share they just joined (§7.2) — Owner
           // or Technician alike, since the picker lists membership-with-mirror, not role. Failure
           // is queued in the outbox, so it must not gate the success state.
-          sharingManager.publishTechnicianMirror()
+          //
+          // Name the aircraft explicitly: its SharedAircraftRef is still syncing down, so a publish
+          // that only consulted local membership would skip the very share we just joined, leaving
+          // the redeem function's auth-token name on the member doc for both accounts to see.
+          sharingManager.publishTechnicianMirror(alsoPublishTo = outcome.aircraftId)
           _uiState.value =
             if (outcome.alreadyMember) RedeemUiState.AlreadyMember
             else RedeemUiState.Success(outcome.role)

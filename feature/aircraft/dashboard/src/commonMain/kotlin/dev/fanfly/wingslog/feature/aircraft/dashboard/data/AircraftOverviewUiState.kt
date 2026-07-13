@@ -38,6 +38,11 @@ sealed interface AircraftOverviewUiState {
     val logForSelectedSquawk: MaintenanceLog? = null,
     /** Caller's role on this aircraft; drives owner-only gating. `null` while it resolves. */
     val myRole: ShareRole? = null,
+    /**
+     * True when this aircraft lives in another account's fleet and was shared into ours. Not the
+     * same as [myRole]: a co-owner of someone else's aircraft is `OWNER` *and* shared.
+     */
+    val shared: Boolean = false,
   ) : AircraftOverviewUiState {
     /**
      * Owner-only affordances: Edit Aircraft, Delete, Manage Access. Technicians get a read-only

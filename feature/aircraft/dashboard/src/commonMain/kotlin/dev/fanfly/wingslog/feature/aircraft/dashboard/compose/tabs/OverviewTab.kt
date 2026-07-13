@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.FolderShared
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -58,6 +60,7 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.CriticalAlertsSection
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.aircraft_shared_badge
 import wingslog.core.sharedassets.generated.resources.all
 import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.feature.aircraft.dashboard.generated.resources.Res
@@ -247,23 +250,54 @@ private fun OverviewHero(
   state: AircraftOverviewUiState.Success,
   modifier: Modifier = Modifier,
 ) {
-  FlowRow(
-    modifier = modifier,
-    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+  Column(modifier = modifier) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+      Text(
+        text = stringResource(
+          CoreRes.string.make_model_template,
+          state.aircraft.make.trim(),
+          state.aircraft.model.trim()
+        ),
+        style = WingslogTypography.heroDisplay,
+        color = MaterialTheme.colorScheme.onSurface
+      )
+      Text(
+        text = state.aircraft.tail_number,
+        style = WingslogTypography.heroDisplay,
+        color = MaterialTheme.colorScheme.primary
+      )
+    }
+    if (state.shared) {
+      SharedMarker()
+    }
+  }
+}
+
+/**
+ * Marks an aircraft that is part of a share (§6.3) — shown to *every* partner in it, the hosting
+ * owner and co-owners included, not just the accounts it was shared into. Everyone in the share
+ * needs to know that what they write here is visible to the others.
+ *
+ * It sits under the hero title rather than in the aircraft picker: the picker showed it once, in
+ * passing, while the dashboard is where you actually act on the aircraft.
+ */
+@Composable
+private fun SharedMarker() {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+    modifier = Modifier.padding(top = Spacing.extraSmall),
   ) {
-    Text(
-      text = stringResource(
-        CoreRes.string.make_model_template,
-        state.aircraft.make.trim(),
-        state.aircraft.model.trim()
-      ),
-      style = WingslogTypography.heroDisplay,
-      color = MaterialTheme.colorScheme.onSurface
+    Icon(
+      imageVector = Icons.Filled.FolderShared,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.secondary,
+      modifier = Modifier.size(Spacing.large),
     )
     Text(
-      text = state.aircraft.tail_number,
-      style = WingslogTypography.heroDisplay,
-      color = MaterialTheme.colorScheme.primary
+      text = stringResource(CoreRes.string.aircraft_shared_badge),
+      style = MaterialTheme.typography.labelLarge,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
   }
 }

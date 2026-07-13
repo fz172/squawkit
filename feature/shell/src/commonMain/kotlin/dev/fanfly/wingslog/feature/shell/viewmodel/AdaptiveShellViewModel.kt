@@ -47,7 +47,6 @@ class AdaptiveShellViewModel(
                 tail = ac.tail_number,
                 name = listOf(ac.make, ac.model).filter { it.isNotBlank() }
                   .joinToString(" "),
-                shared = entry.shared,
               )
             }
             // Keep the current selection if it still exists, otherwise fall back to the first aircraft.

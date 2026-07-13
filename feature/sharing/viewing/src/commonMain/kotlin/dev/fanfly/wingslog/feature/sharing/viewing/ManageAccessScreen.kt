@@ -52,7 +52,6 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.sharing.sharedassets.generated.resources.Res
-import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_badge_host
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_badge_you
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_empty_desc
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_empty_title
@@ -62,6 +61,7 @@ import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_m
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_make_technician
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_member_actions
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_revoke
+import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_role_co_owner
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_role_owner
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_role_technician
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_title
@@ -75,6 +75,11 @@ data class ManageAccessUiState(
   val error: String? = null,
   /** Set once the user has left the share, so the host can pop back to the fleet. */
   val leaveSuccess: Boolean = false,
+  /**
+   * Set when the owner revoked this user's access while they had the screen open. Same exit as
+   * [leaveSuccess] — they are no longer a member, so the roster in front of them is a lie.
+   */
+  val accessRevoked: Boolean = false,
 ) {
   /** Owners manage access; everyone else sees a read-only roster. */
   val canManage: Boolean get() = myRole == ShareRole.OWNER
@@ -200,17 +205,13 @@ private fun MemberCard(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false),
           )
-          if (member.isHost) {
-            Spacer(Modifier.width(Spacing.small))
-            Pill(stringResource(Res.string.manage_access_badge_host))
-          }
           if (member.isSelf) {
             Spacer(Modifier.width(Spacing.small))
             Pill(stringResource(Res.string.manage_access_badge_you))
           }
         }
         Text(
-          roleLabel(member.role),
+          roleLabel(member.role, member.isHost),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -283,8 +284,15 @@ private fun Pill(text: String) {
   }
 }
 
+/**
+ * The hosting owner is *the* owner; anyone else holding the owner role is a co-owner. Same wire
+ * role — the distinction is who the aircraft belongs to, and calling both "Owner" hid that.
+ */
 @Composable
-private fun roleLabel(role: ShareRole): String = when (role) {
-  ShareRole.OWNER -> stringResource(Res.string.manage_access_role_owner)
+private fun roleLabel(role: ShareRole, isHost: Boolean): String = when (role) {
+  ShareRole.OWNER ->
+    if (isHost) stringResource(Res.string.manage_access_role_owner)
+    else stringResource(Res.string.manage_access_role_co_owner)
+
   ShareRole.TECHNICIAN -> stringResource(Res.string.manage_access_role_technician)
 }

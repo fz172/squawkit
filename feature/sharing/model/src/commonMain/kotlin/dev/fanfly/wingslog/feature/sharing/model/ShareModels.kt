@@ -39,6 +39,13 @@ data class PendingInvite(
 data class AircraftShareState(
   val members: List<ShareMember> = emptyList(),
   val invites: List<PendingInvite> = emptyList(),
+  /**
+   * The rules refused us the roster. Two very different situations produce this, and only the caller
+   * can tell them apart: an owner whose aircraft has no share doc yet (normal — nothing to read),
+   * versus a member who was just revoked (their read is denied the moment they leave `memberRoles`).
+   * If you have already seen yourself in this roster, this is a revocation.
+   */
+  val accessDenied: Boolean = false,
 )
 
 /** A freshly minted invite: the share URL to hand off, plus the token hash for later cancellation. */

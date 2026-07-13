@@ -25,6 +25,9 @@ import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.gitlive.firebase.firestore.FirebaseFirestoreException
+import dev.gitlive.firebase.firestore.FirestoreExceptionCode
+import dev.gitlive.firebase.firestore.code
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.toMilliseconds
 import dev.gitlive.firebase.functions.functions
@@ -129,7 +132,18 @@ class SharingManagerImpl(
       .map { state ->
         state.copy(invites = state.invites.map { it.copy(url = localInviteUrl(it.tokenHash)) })
       }
+      // A revoked member's roster listener is denied the instant they leave `memberRoles` — well
+      // before the ref tombstone reaches their device. Surface that as state rather than an error:
+      // it is the earliest signal a member has that their access ended, and the screen watching this
+      // roster has to react to it. Rules don't flap, so a denial is a real answer, not a hiccup.
+      .catch { e ->
+        if (isPermissionDenied(e)) emit(AircraftShareState(accessDenied = true)) else throw e
+      }
   }
+
+  /** True for a Firestore `PERMISSION_DENIED`; every other failure is someone else's problem. */
+  private fun isPermissionDenied(e: Throwable): Boolean =
+    e is FirebaseFirestoreException && e.code == FirestoreExceptionCode.PERMISSION_DENIED
 
   override fun observeMyRole(acId: String): Flow<ShareRole?> {
     val uid = auth.currentUser?.uid ?: return flowOf(null)
@@ -252,7 +266,7 @@ class SharingManagerImpl(
    * still carrying a name from before this existed. Best-effort by design: freshness is eventual,
    * and log snapshots capture whatever is current at signing time.
    */
-  override suspend fun publishTechnicianMirror(): Result<Unit> = runCatching {
+  override suspend fun publishTechnicianMirror(alsoPublishTo: String?): Result<Unit> = runCatching {
     val user = auth.currentUser ?: return@runCatching
     if (user.isAnonymous) return@runCatching
     val uid = user.uid
@@ -271,7 +285,12 @@ class SharingManagerImpl(
       technicianMirror = self?.toMirrorWire(),
     )
 
-    memberships(uid).forEach { acId ->
+    // A just-redeemed aircraft isn't in the local stores yet — its ref is still syncing down — so it
+    // is named explicitly. The ACL check below is what keeps that safe: naming an aircraft we are
+    // not actually a member of publishes nothing.
+    val targets = (memberships(uid) + listOfNotNull(alsoPublishTo)).distinct()
+
+    targets.forEach { acId ->
       // The ACL decides whether we're a member at all, and with what role. An own aircraft that was
       // never shared has no ACL doc — skip it rather than bootstrapping a share nobody asked for.
       val myRole = shareDoc(acId).get()
