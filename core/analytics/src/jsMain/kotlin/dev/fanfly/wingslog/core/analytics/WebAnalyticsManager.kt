@@ -30,6 +30,18 @@ class WebAnalyticsManager : AnalyticsManager {
     log.i { "screen_view: $screenName${if (params.isEmpty()) "" else " $params"}" }
   }
 
+  override fun logEvent(name: String, params: Map<String, String>) {
+    val instance = analytics ?: return
+    val eventParams: dynamic = js("({})")
+    params.forEach { (key, value) -> eventParams[key] = value }
+    try {
+      logEvent(instance, name, eventParams)
+    } catch (e: Throwable) {
+      log.e(e) { "logEvent($name) failed" }
+    }
+    log.i { "$name${if (params.isEmpty()) "" else " $params"}" }
+  }
+
   override fun setAnalyticsCollectionEnabled(enabled: Boolean) {
     val instance = analytics ?: return
     try {

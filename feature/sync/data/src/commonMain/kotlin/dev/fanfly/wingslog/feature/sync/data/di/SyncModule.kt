@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.data.di
 
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -21,6 +22,8 @@ import dev.fanfly.wingslog.feature.sync.data.RemoteFetcher
 import dev.fanfly.wingslog.feature.sync.data.SyncCursorStore
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
+import dev.fanfly.wingslog.feature.sync.data.SyncTelemetry
+import dev.fanfly.wingslog.feature.sync.data.AnalyticsSyncTelemetry
 import dev.fanfly.wingslog.feature.sync.data.SyncWriter
 import dev.fanfly.wingslog.feature.sync.data.syncIoContext
 import dev.gitlive.firebase.Firebase
@@ -87,6 +90,7 @@ val syncModule: Module = module {
       postWriteHook = getOrNull(),
     )
   }
+  single<SyncTelemetry> { AnalyticsSyncTelemetry(get<AnalyticsManager>()) }
   single<PushWorker> {
     PushWorker(
       db = get<WingsLogDatabase>(),
@@ -94,6 +98,7 @@ val syncModule: Module = module {
       ioContext = syncIoContext,
       writeLock = get<DatabaseWriteLock>(),
       storeFactory = get<EntityStoreFactory>(),
+      telemetry = get<SyncTelemetry>(),
     )
   }
   single<SyncEngine> {
@@ -122,6 +127,7 @@ val syncModule: Module = module {
       db = db,
       uploadScheduler = uploadScheduler,
       sharedScopeJanitor = SharedScopeJanitor(db, writeLock),
+      telemetry = get<SyncTelemetry>(),
       writeLock = writeLock,
     )
   }

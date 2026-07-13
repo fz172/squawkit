@@ -1,0 +1,215 @@
+ 
+ PRD: Aircraft Sharing — Multiple People Managing the Same Airplane 
+ Status: Proposed — not implemented 
+ PRD 
+ Sharing · Multi-user · Sync 
+ Aircraft Sharing 
+ Let multiple signed-in people — co-owners, and the mechanics who work on the airplane — manage the same aircraft: one shared logbook, role-appropriate permissions, and an access-management view. Companion to the Design Doc . 
+ Decisions locked for this PRD 
+ Roles: Owner + Technician (two roles only for v1; no read-only Viewer). Invitations: invite link / QR code with an unguessable one-time token — no email addresses involved, so it works identically across Google, Apple, and email-link sign-in. Data placement: the aircraft's records stay under the hosting owner's account ; other members are granted access, nothing is copied or moved. Technician identity: every member's license data comes from their own SquawkIt profile , read-only to everyone else — role governs permissions only, so an owner who also wrenches on the plane appears in the technician picker the same way. Availability: signed-in (non-anonymous) users with Cloud Sync enabled only . Rollout: gated behind a Feature Lab flag, off by default.
+ 1. Problem & Background 
+ SquawkIt today is strictly single-player. Every record — aircraft, maintenance logs, tasks, squawks, overview — lives under exactly one account ( users/{uid}/… in Firestore, mirrored by the same scope path in the on-device store). There is no way for a second person to see or contribute to an aircraft's logbook. That mismatches how airplanes are actually owned and maintained: 
+ Partnerships and co-ownership are the norm, not the exception. A large share of GA aircraft are owned by 2–4 partners or a flying club. Today one partner "owns" the SquawkIt data and the others fly blind — or worse, keep a parallel logbook that drifts. 
+ Maintenance is done by someone else. The owner squawks a problem; an A&P or IA fixes it and signs the log. Today the owner transcribes the mechanic's work and hand-types the mechanic's certificate data into the Manage Technicians screen — data the owner is guessing at, on records where correctness matters. 
+ The technician snapshot is only as good as the owner's typing. Maintenance logs snapshot the technician's name/certificate at assignment time (see technician design ). If the source entry is wrong, every signed log is wrong. 
+ The product's first principle is Dependability First . A logbook that only one stakeholder can see, with second-hand technician credentials, is not dependable. Sharing turns the aircraft record into the single source of truth for everyone who touches the airplane. 
+ 2. Goals & Non-Goals 
+ Goals 
+ An aircraft can be shared with any number of additional members, each as an Owner or a Technician . 
+ All members see the same live data — logs, tasks, squawks, due status — with the same local-first offline experience they get for their own aircraft. 
+ Sharing works without knowing the invitee's email address or sign-in provider . A link or QR code is enough. 
+ A Manage Access view shows who has access to the aircraft and lets owners change roles, revoke access, and create/cancel invites. 
+ A shared member with the Technician role appears in the aircraft's technician picker backed by their own profile's license data — the owner cannot edit it, only the technician can (from their own account). 
+ Access can be revoked at any time; a revoked member loses read and write access and their local copy is purged. 
+ Non-Goals 
+ Sharing for anonymous (guest) users — sharing requires a permanent account on both sides (data must live in the cloud to be shared). 
+ A read-only Viewer role (prospective buyers, CFIs). Deliberately deferred; the model is designed so adding it later is cheap. 
+ Ownership transfer / changing which account hosts the data (e.g. selling the airplane). Future work. 
+ Field-level permissions (e.g. "technician can edit hours but not tach"). v1 permissions are per record type. 
+ Attachments on shared aircraft (photos, documents). The attachment feature itself is still behind attachmentUploadEnabled ; shared-aircraft attachment access is specced in the design doc as a fast-follow. 
+ Real-time presence, comments, or notifications ("Bob added a squawk"). Valuable, separate feature. 
+ 3. Who This Is For 
+ The partnership 
+ Three partners co-own a 182. Any of them may fly it, discover a squawk, or drop it off at the shop. All three need full control: edit the aircraft, log maintenance, manage who has access. Role: all Owners. 
+ Owner + independent mechanic 
+ A sole owner uses a freelance A&P/IA. The mechanic gets access scoped to doing work: see squawks, write logs, complete tasks, update times. The mechanic's certificate data flows from the mechanic's own profile into every log they sign. Role: owner is Owner, mechanic is Technician. 
+ The flying club / small fleet 
+ A club officer administers 4 aircraft; a staff mechanic maintains all of them; members are future Viewers (out of scope for v1). Sharing is per-aircraft, so the officer invites the mechanic to each aircraft once. Role: officer is Owner, mechanic is Technician on each aircraft. 
+ 4. Roles & Permissions 
+ Two roles in v1. Every aircraft has at least one Owner — the account the aircraft was created under is the hosting owner and can never be removed (ownership transfer is a non-goal). Additional Owners are peers in every other respect. 
+ Role is about permissions, not about who turns wrenches. An owner who is also a mechanic (a partner with an A&P, or an owner doing FAR 43 preventive maintenance) does not need a second role: Owner already includes every Technician capability, and every member — Owner or Technician — is selectable in the technician picker backed by their own profile's license data. Certificate fields may be empty for non-certificated owners; a name-only entry is still what belongs on the log. 
+ Capability Owner Technician 
+ See the aircraft on their fleet dashboard (with a "Shared" badge) ✓ ✓ 
+ Read everything: aircraft details, logs, tasks, squawks, due status ✓ ✓ 
+ Add / edit / delete maintenance logs ✓ ✓ 
+ Add / edit / complete maintenance tasks (inspection schedule) ✓ ✓ 
+ Add / address / dismiss squawks ✓ ✓ 
+ Update the maintenance overview (times, hours) ✓ ✓ 
+ Appear as a linked technician in the picker, license data from their own profile ✓ ✓ 
+ Edit the aircraft itself (registration, engine, propeller, details) ✓ ✕ 
+ Open Manage Access; create invites; change roles; revoke members ✓ ✕ (sees the member list, read-only) 
+ Delete the aircraft ✓ hosting owner only ✕ 
+ Leave the share (remove their own access) ✓ (except hosting owner) ✓ 
+ Why Technicians can edit tasks and times 
+ A mechanic finishing an annual must be able to record the inspection as done (task completion) and set the current times — otherwise the owner has to re-do half the visit. The line for v1 is drawn at maintenance data vs. the aircraft's identity and its access list : technicians edit the former, never the latter. Enforcement is server-side per record type (see the design doc's security-rules section ).
+ 5. Sharing Without Email Addresses 
+ SquawkIt supports Google sign-in (Android), Apple sign-in (iOS), passwordless email-link, and guests. This rules out the classic "enter the invitee's email" flow: 
+ Apple sign-in commonly hides the real email behind a private-relay address the user themselves doesn't know or share. 
+ An email typed by the inviter may not match any address on the invitee's account, or may match the wrong person's. There is no lookup API by email that is reliable across providers, and pre-provisioning access to an unverified address is a security hole. 
+ Two people standing in the same hangar shouldn't need email at all. 
+ Chosen mechanism: capability invites. An owner mints an invite for a specific aircraft and role. The invite is an unguessable token rendered two ways — a share link (sent over any channel: text, WhatsApp, email, anything) and a QR code (scanned in person). Whoever redeems the token, signed in with whatever provider they use , becomes the member; membership binds to their Firebase UID , never to an email. The invite is single-use by default and expires in 7 days; the redeeming person's identity (display name + avatar) is shown to the owner in Manage Access after redemption, which is the moment to catch a link that reached the wrong hands — plus revoke, which fully un-does a redemption. 
+ Why this is the reliable option 
+ A token names the permission , not a guessed identity. It cannot mis-target someone by typo, works across all current and future sign-in providers, requires zero PII from the inviter, and the QR form makes the most common real-world case — owner and mechanic at the airplane — a 5-second interaction.
+ 6. User Journeys 
+ 6.1 Owner invites someone 
+ Owner opens the aircraft → overflow menu → Manage Access (also reachable from the aircraft Overview tab). 
+ Taps Invite , picks the role ( Owner / Technician , defaults to Technician), sees the expiry (7 days) and single-use note. 
+ Gets a screen with a QR code and a Share link button (system share sheet). The pending invite appears in Manage Access with role, creation time, and a Cancel action. 
+ 6.2 Invitee redeems 
+ Invitee opens the link (or scans the QR with their camera → deep link into SquawkIt; the web app handles the same URL, so a phone without the app installed still lands somewhere useful). 
+ Signed in, permanent account: a confirmation sheet shows the aircraft registration/model, the inviting owner's display name, and the offered role → Accept . The aircraft appears on their fleet dashboard within seconds and hydrates for offline use. 
+ Signed out or guest: the redemption is parked, the user is routed through sign-in / the existing guest-upgrade flow , and redemption resumes after a permanent account exists. Guests never redeem directly — membership must attach to a durable UID. 
+ Expired / cancelled / already-used token: a clear error state — "This invite is no longer valid. Ask the owner for a new one." 
+ 6.3 Manage Access view 
+ One screen per aircraft, listing: 
+ Members — avatar, display name, role chip ( Owner / Technician ), "Host" badge on the hosting owner, "You" badge on self. Owners can tap a member to change their role or revoke access (with confirmation). Technicians see this list read-only — knowing who has access is part of trusting the logbook. 
+ Pending invites (owners only) — role, created date, expiry, Cancel. 
+ Leave — any non-hosting member can remove themselves. 
+ 6.4 A shared technician does work 
+ Mechanic (Technician role) opens the shared aircraft, reviews open squawks, performs the work. 
+ Creates a maintenance log. The "Performed by" picker offers their own self-technician profile as the default — name, certificate type, number, expiration, exactly as they maintain it in their own Settings → Manage Technicians. The log stores a snapshot, same as today. 
+ Marks the squawk addressed, completes the linked task, updates times. Every member sees the results on next sync. 
+ On the other members' devices, the mechanic now also appears in the technician picker for this aircraft as a linked technician — a read-only entry labeled with a "Linked" badge, sourced live from the mechanic's own profile. Members can select them on logs they write, but cannot edit their name or certificate data. This works identically for Owner-role members who do their own maintenance: any member with a profile is selectable by the others. Manually-entered technicians keep working unchanged for shops that aren't on SquawkIt. 
+ Requirement met: license data is first-party 
+ The person who holds the certificate is the only person who can state its type, number, and expiration. Owners stop transcribing; logs snapshot verified-by-the-holder data.
+ 6.5 Revocation and leaving 
+ Owner opens Manage Access → member → Revoke access → confirmation explains the member will immediately lose access and their device copies will be removed. 
+ The member's cloud access ends at once (server-enforced). Their devices purge the aircraft's local data on next connection. Unsynced edits they made while offline are lost — the confirmation dialog warns the owner about this, and the member gets an informational notice. 
+ Everything the member contributed while they had access — logs, squawk updates, technician snapshots inside logs — remains in the logbook . Revocation removes access, not history. 
+ Leave is the self-service variant of the same flow. 
+ 6.6 Hosting owner deletes the aircraft 
+ Deletion follows today's tombstone flow and propagates to every member: the aircraft disappears from all fleets, and the share (membership + invites) is cleaned up. The confirmation dialog tells the hosting owner how many other members will lose access. 
+ 6.7 Cleaning up duplicate technicians 
+ Before sharing, an owner usually hand-typed the mechanics who service the airplane into Manage Technicians. Once those same people join as members, each publishes their own first-party profile — so the picker would show the same person twice: the stale hand-typed entry and the live linked one. SquawkIt reconciles this instead of leaving both. 
+ When Manage Technicians detects likely duplicates, a dismissible banner appears at the top: "Some technicians look like the same person. Review & merge." 
+ Tapping it opens a review sheet that groups the suspected duplicates. Matching is by certificate number when present; name-only entries (e.g. an owner doing preventive maintenance with no certificate) are matched by name and always require explicit confirmation , since names collide. 
+ Resolution: two hand-typed entries collapse into the most complete one. A hand-typed entry that matches a linked member defers to the member's first-party profile as the source of truth — the hand-typed copy is retired, but the person keeps appearing everywhere they did before. Two different members who happen to list the same certificate number are never merged (they are distinct people); the sheet flags it so the owner can check for a typo. 
+ Merging only affects the picker roster going forward . Every existing log keeps its original technician snapshot byte-for-byte — merging never rewrites history. 
+ 6.8 Who signed the work 
+ On a shared logbook, any member can create a log and name any linked technician under "Performed by" — including naming someone else. Because that would let one member attribute work to another, every log carries a tamper-evident record of which account actually wrote it , stamped server-side and impossible to forge from the client. 
+ When the person writing the log is the technician on it, the log reads "Logged and signed by {name}" — a first-party, self-signed entry. 
+ When one member logs work and names a different technician, the log reads "Logged by {author} · technician {name} (assigned)" — the attribution is honest and attributable, not passed off as a signature. 
+ This does not prevent third-party attribution — a shop assistant legitimately logging on the mechanic's behalf is a real workflow — but it makes it visible and impossible to disguise. A stronger model, where the named technician confirms from their own account before the entry counts as signed, is specified as fast-follow work (§11). 
+ Dependability, extended to authorship 
+ First-party credentials (§6.4) answer "whose license is this"; the authorship trail answers "who put it there." Together they close the gap the PRD opened with: a shared log is trustworthy about both the certificate and the hand that signed it.
+ 7. Functional Requirements 
+ # Requirement Priority 
+ F1 All sharing entry points are hidden for anonymous users and shown only when Cloud Sync is enabled; a signed-out/guest invitee is routed through sign-in/upgrade before redemption. P0 
+ F2 An owner can create an invite for a chosen role, rendered as a share link and QR code; invites are single-use, expire after 7 days, and can be cancelled. P0 
+ F3 Redemption binds membership to the redeemer's UID regardless of sign-in provider; no email address is collected or displayed during invite creation. P0 
+ F4 A Manage Access screen lists members (with roles) and pending invites; owners can change roles, revoke members, and cancel invites; any non-hosting member can leave. P0 
+ F5 Members see the shared aircraft on their fleet dashboard with a "Shared" indicator and the hosting owner's name; all per-aircraft data is available offline like their own aircraft. P0 
+ F6 Permissions per the §4 matrix are enforced server-side (not just hidden in UI): technicians cannot modify the aircraft record or the access list. P0 
+ F7 A member's technician identity in the aircraft's picker is sourced from that member's own self-technician profile, read-only to others, updating when the member updates their profile; logs keep snapshot semantics. P0 
+ F8 Revocation takes effect server-side immediately and purges the ex-member's local copy on their next connection; contributed history is retained. P0 
+ F9 Aircraft deletion by the hosting owner propagates to all members and tears down the share. P0 
+ F10 Multi-use / longer-lived invites (e.g. club onboarding) as an invite option. P1 
+ F11 Feature Lab flag ( aircraftSharingEnabled ) gates all sharing UI; off by default. P0 
+ F12 Manage Technicians detects duplicate technicians (by certificate number, or by name for name-only entries with explicit confirmation) and offers a merge that defers a hand-typed entry to a linked member's first-party profile; two distinct members are never merged, and merging never alters existing log snapshots. P1 
+ F13 Every maintenance log records a server-attested author (which account wrote the revision, un-forgeable from the client); the UI distinguishes a self-signed log from one where the author named a different technician. P1 
+ 8. Edge Cases & Expected Behavior 
+ Situation Behavior 
+ Invitee opens link while signed out / guest Park the token, route through sign-in or guest-upgrade, resume redemption. Token parked locally only until used or expired. 
+ Invitee is already a member Friendly no-op: "You already have access to N12345." Token is not consumed. 
+ Owner invites themselves / redeems their own invite Same no-op as above. 
+ Token expired, cancelled, or already used Explicit error state; suggest asking the owner for a fresh invite. 
+ Member is offline when revoked Cloud access is already gone (server-enforced). On reconnect the client discovers the revocation, purges local data, and discards unsynced edits with a notice. 
+ Technician edits a log offline, is revoked, reconnects The queued write is rejected server-side and dropped locally. The revoke confirmation warns owners this can happen. 
+ Two members edit the same record concurrently Existing last-writer-wins on server timestamp — unchanged from single-user multi-device behavior (see R1 design ). Whole-record granularity, same as today. 
+ Member disables Cloud Sync Shared aircraft stop syncing (stale local copy remains readable, clearly marked "Sync off"); sharing UI actions require sync on. No writes are accepted while sync is off. 
+ Hosting owner disables Cloud Sync Their own new edits stop flowing to members (and vice versa) until re-enabled; members' access is unaffected because the cloud copy remains. Settings copy explains this for shared aircraft. 
+ Last additional owner leaves Fine — the hosting owner always remains. The hosting owner cannot leave; they delete the aircraft instead (or a future ownership-transfer feature). 
+ Shared technician deletes their own self-profile data Linked picker entry shows name-only; past log snapshots are untouched. 
+ Hand-typed technician matches a member who just joined Manage Technicians surfaces a merge banner; accepting retires the hand-typed copy in favor of the member's first-party profile. Existing log snapshots are untouched (§6.7). 
+ Two members list the same certificate number Never auto-merged — they are distinct accounts. The merge sheet flags the collision so an owner can spot a typo (§6.7). 
+ Duplicate technicians with no certificate number Not auto-merged; matched by name and merged only on explicit confirmation, since names collide. 
+ One member logs work naming another as the technician Allowed, but the log is stamped "Logged by {author}" (server-attested), not self-signed (§6.8). 
+ 9. Success Metrics 
+ Adoption: % of active aircraft with ≥2 members, 90 days after full rollout (directional target: 10%+, given co-ownership rates in GA). 
+ Invite funnel: invites created → redeemed → member active after 2 weeks; redemption rate target > 60%. 
+ Technician quality: share of maintenance logs on shared aircraft whose technician snapshot came from a linked profile rather than manual entry. 
+ Retention lever: retention of accounts whose first aircraft is a shared one (mechanics invited in are a new acquisition channel). 
+ Safety valves: revocations per 100 shares; permission-denied write attempts (should be ~0 outside revocation races — anything above indicates a UI gating bug). 
+ 10. Risks & Mitigations 
+ Risk Mitigation 
+ Invite link forwarded to or intercepted by the wrong person Single-use + 7-day expiry by default; redeemer's identity surfaces in Manage Access immediately; one-tap revoke fully reverses a redemption; token is unguessable and carried in the URL fragment (not sent to servers in logs). 
+ Offline edits lost on revocation Inherent to revocation being server-enforced. Warn at revoke time; notify the ex-member; expected volume is very low. 
+ Permission matrix too coarse (record-type granularity) Accepted for v1 and called out in the design doc (payloads are opaque to the backend). Roles are chosen so the coarse matrix matches real workflows. 
+ One member attributes work to another without their involvement Every log records a server-attested author; self-signed vs. assigned is shown in the UI (§6.8). Countersign (§11) upgrades attribution to a true signature as a fast-follow. 
+ Sharing amplifies a data-corruption bug to N users Feature Lab gate + dogfood-first rollout; LWW semantics already proven across devices; server-side rules tested with the Firestore emulator suite. 
+ Cost: fan-out of reads/writes to all members' devices Bounded — GA shares are small (2–5 people). Sync listeners are per-aircraft and already exist per device; incremental cost scales with member count, not data size. 
+ 11. Future Work (explicitly out of v1) 
+ Viewer role — read-only access for club members, CFIs, prospective buyers. 
+ Countersigned logs — when one member names another as the performing technician, let the named technician confirm from their own account so the entry counts as a first-party signature, upgrading the authorship trail (§6.8) from "attributed" to "signed." 
+ Ownership transfer — re-host the data under a different account (aircraft sale, partner buyout). 
+ Shared attachments — extend sharing to R2 blob storage once attachmentUploadEnabled ships. 
+ Notifications — "a squawk was added", "annual due in 30 days" fanned out to all members. 
+ Org/fleet-level sharing — share a whole fleet with one invite (clubs, flight schools). 
+ 12. Appendix: Flow Inventory 
+ The complete set of sharing flows, grouped by phase. §6 narrates the primary journeys; this table is the exhaustive checklist for design review, implementation, and test planning. 
+ 12.1 Invite creation (inviter side) 
+ # Flow Behavior 
+ A1 Owner invites a co-owner Manage Access → Invite → role = Owner → share link / QR. Redemption grants full peer rights (edit aircraft, manage access) — everything except hosting-owner privileges (delete aircraft). 
+ A2 Owner invites a technician Same flow, role = Technician. Redemption grants maintenance-data read/write only (§4 matrix). 
+ A3 Owner creates a multi-use / longer-lived invite (P1, F10 — club onboarding) max_uses > 1 and/or longer expiry; each redemption consumes one use. 
+ A4 Owner cancels a pending invite Invite marked revoked; later redemption attempts land in C4. 
+ A5 First-ever invite on an aircraft Lazily creates the share record and publishes the hosting owner's own technician mirror — the one member who never redeems an invite. 
+ A6 A technician tries to invite Blocked: no UI affordance, and server rules deny invite writes for non-owners. 
+ 12.2 Redemption, by invitee account state 
+ # Invitee state Path 
+ B1 Signed in, permanent account, app installed Opens link / scans QR → confirmation sheet (aircraft, inviter, role) → Accept → member immediately; aircraft appears on their fleet and hydrates for offline use. The happy path. 
+ B2 Signed out , has an account Token parked → routed through sign-in (Google / Apple / email-link) → redemption resumes automatically. 
+ B3 No account at all Mechanically identical to B2 — the first sign-in creates the account, then redemption resumes; membership binds to the brand-new UID. Invites double as an acquisition channel (e.g. a mechanic invited by a customer). 
+ B4 Guest (anonymous) user Token parked → routed through the guest-upgrade flow so their local data survives → redemption resumes on the now-permanent UID. Guests never redeem directly. 
+ B5 No app installed The link is a web-app URL, so it lands on SquawkIt web → sign in → redeem there; or install the app and re-open the link (App Links / Universal Links route it in). On web the link works everywhere; QR scanning is native-only in v1. 
+ B6 In-person QR scan Camera → deep link → whichever of B1–B4 matches their state. The hangar case. 
+ B7 Cross-platform redemption Invited from Android, redeems on iOS or web (or any combination) — works by construction, since membership binds to UID, not provider or platform. 
+ 12.3 Redemption edge flows 
+ # Flow Outcome 
+ C1 Invitee is already a member Friendly no-op ("You already have access"); token not consumed. 
+ C2 Owner redeems their own invite Same no-op as C1. 
+ C3 Token expired Error state: "This invite is no longer valid. Ask the owner for a new one." 
+ C4 Token cancelled Same error. 
+ C5 Single-use token already used (e.g. a forwarded link) Same error — the interception backstop. 
+ C6 Malformed or guessed token Lookup fails (only a hash of the secret is stored); same error. 
+ 12.4 Post-membership lifecycle 
+ # Flow Outcome 
+ D1 Owner changes a member's role (promote technician → owner, demote owner → technician) Single server-side operation; access rights change on the member's next request. 
+ D2 Owner revokes a member (member online) Cloud access ends immediately; the member's devices purge their local copy; everything they contributed stays in the logbook. 
+ D3 Owner revokes a member who is offline with unsynced edits Same as D2, plus on reconnect the queued edits are rejected and discarded with a notice — the one data-loss window, warned about in the revoke confirmation. 
+ D4 Member leaves voluntarily Self-service variant of D2. 
+ D5 Hosting owner deletes the aircraft Deletion propagates to every member; the share (membership + invites) is torn down; the confirmation states how many members lose access. 
+ D6 Member updates their technician profile Their linked entry updates on all members' devices (queued while offline); existing log snapshots are untouched. 
+ D7 Member reconciles a hand-typed technician with a member who joined Merge banner in Manage Technicians; the hand-typed copy defers to the member's first-party profile; log snapshots untouched (§6.7). 
+ D8 Member logs work and names another member as the technician Allowed; the log is stamped with the server-attested author and shown as "assigned," not self-signed (§6.8). 
+ 12.5 Blocked / degenerate states 
+ # State Behavior 
+ E1 Anonymous user All sharing UI hidden — signed-in-only feature (F1). 
+ E2 Cloud Sync disabled Sharing management disabled with explanatory copy; shared data remains a readable frozen local copy (§8). 
+ E3 Hosting owner revoked or leaving Not possible — they delete the aircraft instead (or a future ownership transfer). 
+ E4 Last additional owner leaves Fine — the hosting owner always remains. 
+ Next step 
+ The technical approach — data placement, invite/ACL model, security rules, sync-engine changes, and the technician-profile mirror — is specified in the companion Aircraft Sharing Design Doc .
+ Contents 
+ Problem & Background 
+ Goals & Non-Goals 
+ Who This Is For 
+ Roles & Permissions 
+ Sharing Without Email 
+ User Journeys 
+ Functional Requirements 
+ Edge Cases 
+ Success Metrics 
+ Risks & Mitigations 
+ Future Work 
+ Appendix: Flow Inventory 

@@ -43,6 +43,7 @@ kotlin {
     commonMain.dependencies {
       api(project(":core:storage"))
       api(project(":core:firebase"))
+      implementation(project(":core:analytics"))
       api(libs.gitlive.firebase.auth)
       api(libs.gitlive.firebase.firestore)
       api(libs.gitlive.firebase.storage)

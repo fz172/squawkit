@@ -22,6 +22,11 @@ class FirebaseAnalyticsManager(
     log.i { "screen_view: $screenName${if (params.isEmpty()) "" else " $params"}" }
   }
 
+  override fun logEvent(name: String, params: Map<String, String>) {
+    firebaseAnalytics.logEvent(name, params)
+    log.i { "$name${if (params.isEmpty()) "" else " $params"}" }
+  }
+
   override fun setAnalyticsCollectionEnabled(enabled: Boolean) {
     firebaseAnalytics.setAnalyticsCollectionEnabled(enabled)
     log.i { "analytics collection enabled: $enabled" }

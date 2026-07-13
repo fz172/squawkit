@@ -65,6 +65,7 @@ class SyncEngine(
   private val uploadScheduler: UploadScheduler? = null,
   private val sharedScopeJanitor: SharedScopeJanitor? = null,
   private val writeLock: DatabaseWriteLock? = null,
+  private val telemetry: SyncTelemetry = SyncTelemetry.NoOp,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -237,6 +238,12 @@ class SyncEngine(
         if (failure == null) it - PUSH_FAILURE_KEY else it + (PUSH_FAILURE_KEY to failure)
       }
     }
+    // A denied push into a host's tree means the same thing a denied read does — we were revoked —
+    // so it reconciles the same way (§5.4).
+    pushWorker.sharedScopeRevokedSink = { _, aircraftId ->
+      revokeSharedLocally(uid, aircraftId)
+      telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_WRITE)
+    }
     scope.launch { pushWorker.run(uid) }
 
     if (uploadScheduler != null && db != null) {
@@ -357,6 +364,7 @@ class SyncEngine(
       if (isPermissionDenied(e)) {
         log.i { "PERMISSION_DENIED on shared aircraft $aircraftId; treating as revoked (§5.4)" }
         revokeSharedLocally(memberUid, aircraftId)
+        telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_READ)
       } else {
         throw e
       }
