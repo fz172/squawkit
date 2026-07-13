@@ -150,6 +150,21 @@ fun findDuplicates(
 }
 
 /**
+ * Drops the manual rows the user has already aliased to a member whose mirror is present here.
+ *
+ * This is what makes a manual↔member merge *visible*: the alias only records the decision, and
+ * every surface that lists technicians has to honour it or the duplicate simply stays on screen.
+ *
+ * Scoped to the mirrors actually present, never global — that is the whole reason the merge aliases
+ * instead of deleting. Manual rows are user-global while mirrors are per-aircraft, so on an aircraft
+ * this member isn't on, their hand-typed row is still the only way to pick them (§7.4).
+ */
+fun List<Technician>.withoutAliasedTo(mirrors: List<Technician>): List<Technician> {
+  val present = mirrors.mapTo(mutableSetOf()) { it.source_uid }
+  return filterNot { it.superseded_by_uid.isNotBlank() && it.superseded_by_uid in present }
+}
+
+/**
  * A stable identity for *which* duplicates these are — not how many.
  *
  * Dismissing the review has to mean "I've seen these", not "never mention duplicates again". The

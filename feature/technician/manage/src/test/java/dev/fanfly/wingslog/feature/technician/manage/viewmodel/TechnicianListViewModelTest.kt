@@ -150,6 +150,42 @@ class TechnicianListViewModelTest {
     assertThat(state.showDuplicatePrompt).isTrue()
   }
 
+  @Test
+  fun anAliasedRow_disappearsFromTheListAndIsNotOfferedAgain() = runTest(testDispatcher) {
+    // After merging a hand-typed row into a member, the list must stop showing it — otherwise the
+    // duplicate the user just merged is still sitting there, and gets re-offered forever.
+    every { technicianManager.observeTechnicians() } returns flowOf(
+      listOf(
+        Technician(id = SELF_ID, name = "Me"),
+        Technician(id = "m1", name = "Sponge Bob", superseded_by_uid = LINKED_UID),
+      )
+    )
+    every { technicianManager.observeSelfId() } returns flowOf(SELF_ID)
+    every { sharingManager.observeLinkedTechnicians() } returns flowOf(
+      listOf(Technician(id = LINKED_UID, name = "Sponge Bob", source_uid = LINKED_UID))
+    )
+
+    val state = viewModel().uiState.first { it.linkedTechnicians.isNotEmpty() }
+
+    assertThat(state.technicians.map { it.id }).containsExactly(SELF_ID)
+    assertThat(state.duplicates).isEmpty()
+    assertThat(state.showDuplicatePrompt).isFalse()
+  }
+
+  @Test
+  fun anAliasedRow_stillShowsWhenThatMemberHasNoMirrorHere() = runTest(testDispatcher) {
+    // Alias, not delete: the member isn't linked on any of the user's shares right now, so their
+    // hand-typed row is the only way to reach them.
+    every { technicianManager.observeTechnicians() } returns flowOf(
+      listOf(Technician(id = "m1", name = "Sponge Bob", superseded_by_uid = LINKED_UID))
+    )
+    every { sharingManager.observeLinkedTechnicians() } returns flowOf(emptyList())
+
+    val state = viewModel().uiState.first { it.technicians.isNotEmpty() }
+
+    assertThat(state.technicians.map { it.id }).containsExactly("m1")
+  }
+
   /** A hand-typed "Sponge Bob" that duplicates a linked member of the same name and certificate. */
   private fun seedSpongeBobDuplicate() {
     every { technicianManager.observeTechnicians() } returns flowOf(
