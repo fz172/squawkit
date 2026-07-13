@@ -4,12 +4,15 @@
   <string name="manage_access_title">Manage Access</string>
   <string name="manage_access_empty_title">No shared access</string>
   <string name="manage_access_empty_desc">Invite a co-owner or technician to share this aircraft.</string>
+  <!-- "Owner" is only ever the hosting owner. Anyone you invite, promote, or who redeems an invite
+       is by definition not the host — you are — so every other owner-role label reads "co-owner". -->
   <string name="manage_access_role_owner">Owner</string>
   <string name="manage_access_role_co_owner">Co-owner</string>
   <string name="manage_access_role_technician">Technician</string>
   <string name="manage_access_badge_you">You</string>
+  <string name="manage_access_unnamed_member">Unnamed member</string>
   <string name="manage_access_member_actions">Member actions</string>
-  <string name="manage_access_make_owner">Make owner</string>
+  <string name="manage_access_make_owner">Make co-owner</string>
   <string name="manage_access_make_technician">Make technician</string>
   <string name="manage_access_revoke">Remove access</string>
   <string name="manage_access_leave">Leave shared aircraft</string>
@@ -17,7 +20,7 @@
   <!-- Invite sheet -->
   <string name="invite_title">Invite to aircraft</string>
   <string name="invite_role_label">Role</string>
-  <string name="invite_role_owner">Owner</string>
+  <string name="invite_role_owner">Co-owner</string>
   <string name="invite_role_technician">Technician</string>
   <string name="invite_create">Create invite link</string>
   <string name="invite_note">Single-use link, expires in 7 days.</string>
@@ -41,6 +44,6 @@
   <string name="redeem_already_member_body">You already have access to this aircraft.</string>
   <string name="redeem_failed_title">Invite unavailable</string>
   <string name="redeem_failed_body">This invite link is invalid, already used, or has expired.</string>
-  <string name="redeem_role_owner">an owner</string>
+  <string name="redeem_role_owner">a co-owner</string>
   <string name="redeem_role_technician">a technician</string>
 </resources>

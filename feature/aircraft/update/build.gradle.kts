@@ -76,4 +76,6 @@ kotlin {
 
 dependencies {
   implementation(platform(libs.androidx.compose.bom))
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
 }

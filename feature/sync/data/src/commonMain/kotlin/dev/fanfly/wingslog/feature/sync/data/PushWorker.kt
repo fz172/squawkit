@@ -103,6 +103,12 @@ class PushWorker(
                 ref.value.aircraft_id
               )
             )
+            // The aircraft *doc* sits at the host's root, not inside the per-aircraft subtree, so
+            // the prefix above misses it and a co-owner's edit to the aircraft itself would stay
+            // dirty forever. This exact-match scope (no trailing %) is the doc's own row. The only
+            // rows we ever hold at a host's root are the shared aircraft docs — we never hydrate a
+            // host's technicians or user info — so it grants no reach beyond them.
+            add(hostRootScope(ref.value.host_uid))
           }
         }
       }
@@ -162,7 +168,7 @@ class PushWorker(
       true
     }.getOrElse { e ->
       if (isPermissionDenied(e)) {
-        val shared = sharedAircraftIn(row.scope_path, uid)
+        val shared = sharedAircraftIn(row, uid)
         telemetry.permissionDeniedWrite(sharedScope = shared != null)
         if (shared != null) {
           // We were revoked while this edit sat in the queue, and the push beat the ref tombstone to
@@ -208,6 +214,12 @@ private typealias DirtyRow = SelectDirtyInScope
 /** Builds the SQL `LIKE` prefix that matches every scope under `users/{uid}/`. */
 private fun scopePrefixFor(uid: String): String = "/users/$uid/%"
 
+/**
+ * Exact `LIKE` scope (no wildcard) for a host's root, where the shared aircraft *doc* rows sit —
+ * `users/{hostUid}/` holds the doc; `users/{hostUid}/aircraft/{acId}/` holds its nested data.
+ */
+private fun hostRootScope(hostUid: String): String = "/users/$hostUid/"
+
 /** `LIKE` prefix matching a shared aircraft's nested-data subtree in the host's tree. */
 private fun sharedAircraftScopePrefix(
   hostUid: String,
@@ -216,15 +228,25 @@ private fun sharedAircraftScopePrefix(
   "/users/$hostUid/aircraft/$aircraftId/%"
 
 /**
- * `(hostUid, aircraftId)` when [scopePath] names an aircraft subtree in *someone else's* tree, else
- * null. A row under our own `/users/{uid}/...` is never a share, however deep it sits.
+ * `(hostUid, aircraftId)` when [row] belongs to a shared aircraft in *someone else's* tree, else
+ * null. Anything under our own `/users/{uid}/...` is never a share, however deep it sits.
+ *
+ * Two shapes qualify, because a shared aircraft straddles two scopes: its nested data lives at
+ * `/users/{host}/aircraft/{acId}/`, while the aircraft doc itself is a row *at* `/users/{host}/`,
+ * where the aircraft id is the row id rather than part of the path.
  */
 private fun sharedAircraftIn(
-  scopePath: String,
+  row: DirtyRow,
   uid: String
 ): Pair<String, String>? {
-  val parts = parseScopePath(scopePath)
-  if (parts.size < 4 || parts[0] != "users" || parts[2] != "aircraft") return null
+  val parts = parseScopePath(row.scope_path)
+  if (parts.size < 2 || parts[0] != "users") return null
   val hostUid = parts[1]
-  return if (hostUid == uid) null else hostUid to parts[3]
+  if (hostUid == uid) return null
+
+  return when {
+    parts.size >= 4 && parts[2] == "aircraft" -> hostUid to parts[3]
+    parts.size == 2 && row.collection == CollectionKind.Aircraft -> hostUid to row.id
+    else -> null
+  }
 }

@@ -16,6 +16,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -106,22 +107,51 @@ class FleetManagerImpl(
       }
     }
 
+  /**
+   * The root the aircraft doc actually lives under: the host's for a shared aircraft, ours
+   * otherwise. A ref keyed by this aircraft id is what names the host — the same lookup
+   * [loadAircraft] does, and writes have to agree with reads about where the row is.
+   *
+   * Writing to our own root unconditionally (as this used to) doesn't fail — it silently forks a
+   * *second* copy of the aircraft into our tree, which then reads back as an aircraft we own.
+   */
+  private suspend fun rootScopeOf(id: String, uid: String): EntityScope {
+    val hostUid = refStore.observe(id, EntityScope.userRoot(uid))
+      .first()
+      ?.value
+      ?.host_uid
+    return EntityScope.userRoot(hostUid ?: uid)
+  }
+
   override suspend fun updateAircraft(aircraft: Aircraft): Result<Boolean> =
     runCatching {
       val uid = firebaseAuth.currentUser?.uid
         ?: error("Cannot update aircraft when no user is signed in")
-      val withId =
-        if (aircraft.id.isEmpty()) aircraft.copy(id = generateRandomId()) else aircraft
-      store.put(withId.id, withId, EntityScope.userRoot(uid))
-      logger.d { "Aircraft ${withId.id} written to local store" }
+      // A brand-new aircraft has no id yet, so there is no ref to consult — it is ours by definition.
+      val isNew = aircraft.id.isEmpty()
+      val withId = if (isNew) aircraft.copy(id = generateRandomId()) else aircraft
+      val scope =
+        if (isNew) EntityScope.userRoot(uid) else rootScopeOf(withId.id, uid)
+      store.put(withId.id, withId, scope)
+      logger.d { "Aircraft ${withId.id} written to local store at ${scope.toPath()}" }
       true
     }.onFailure { logger.w(it) { "Error updating aircraft" } }
 
+  /**
+   * Deleting tears the whole share down for every member (§3.3), so it belongs to the hosting owner
+   * alone — a co-owner holds the same role but not the aircraft. The rules reject their tombstone
+   * anyway; refusing here means we never queue a write that can only come back denied, which (since
+   * #144) a member's client would read as *their own* revocation and purge the share over.
+   */
   override suspend fun deleteAircraft(id: String): Result<Boolean> =
     runCatching {
       val uid = firebaseAuth.currentUser?.uid
         ?: error("Cannot delete aircraft when no user is signed in")
-      store.delete(id, EntityScope.userRoot(uid))
+      val ownRoot = EntityScope.userRoot(uid)
+      require(rootScopeOf(id, uid) == ownRoot) {
+        "Only the hosting owner may delete aircraft $id"
+      }
+      store.delete(id, ownRoot)
       logger.d { "Aircraft $id tombstoned in local store" }
       true
     }.onFailure { logger.w(it) { "Error deleting aircraft $id" } }

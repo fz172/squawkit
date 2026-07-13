@@ -65,6 +65,7 @@ import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_r
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_role_owner
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_role_technician
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_title
+import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_unnamed_member
 
 /** Plain UI state for [ManageAccessScreen]; produced by the host-side ManageAccessViewModel. */
 data class ManageAccessUiState(
@@ -199,7 +200,9 @@ private fun MemberCard(
       androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
           Text(
-            member.displayName.ifBlank { member.uid },
+            // A uid is not a name. A member doc can be missing (never published, or lost), and
+            // showing the raw id reads like corruption — say what we actually know instead.
+            member.displayName.ifBlank { stringResource(Res.string.manage_access_unnamed_member) },
             style = MaterialTheme.typography.titleMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

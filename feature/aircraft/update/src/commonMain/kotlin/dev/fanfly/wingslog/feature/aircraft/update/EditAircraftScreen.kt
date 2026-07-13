@@ -198,7 +198,9 @@ fun EditAircraftScreen(
         primaryEnabled = !uiState.isLoading,
         onPrimaryClick = { viewModel.saveAircraft() },
         onSecondaryClick = { tryNavigateBack() },
-        onDangerClick = if (uiState.aircraft.id != "") {
+        // Delete is the hosting owner's alone — a co-owner holds the same OWNER role but deleting
+        // would tear the share down for everyone, and the rules reject their tombstone anyway.
+        onDangerClick = if (uiState.canDelete) {
           { showDeleteDialog = true }
         } else null,
         primaryLabel = if (uiState.aircraft.id == "")

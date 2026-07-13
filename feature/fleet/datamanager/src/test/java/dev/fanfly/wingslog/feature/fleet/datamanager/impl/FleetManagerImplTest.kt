@@ -260,4 +260,55 @@ class FleetManagerImplTest {
     make: String = "Cessna",
     model: String = "172",
   ): Aircraft = Aircraft(id = id, make = make, model = model)
+
+  // --- Writes must land in the tree the aircraft actually lives in (#143) ---
+
+  @Test
+  fun updateAircraft_shared_writesToTheHostsTree() = runTest {
+    // A co-owner editing a shared aircraft must write the *host's* row. Writing our own root would
+    // not fail — it would silently fork a second copy of the aircraft into our tree, so the edit
+    // vanishes (the read still resolves to the host's doc) and the fork reads back as ours.
+    every { refStore.observe("shared-1", EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(
+      StorageEntity(
+        "shared-1",
+        SharedAircraftRef(aircraft_id = "shared-1", host_uid = HOST_UID),
+        Instant.DISTANT_PAST,
+      )
+    )
+    val edited = Aircraft(id = "shared-1", make = "Cessna", model = "172", tail_number = "N999XX")
+
+    val result = manager.updateAircraft(edited)
+
+    assertThat(result.isSuccess).isTrue()
+    coVerify { store.put("shared-1", edited, EntityScope.userRoot(HOST_UID)) }
+    coVerify(exactly = 0) { store.put("shared-1", any(), EntityScope.userRoot(TEST_USER_ID)) }
+  }
+
+  @Test
+  fun updateAircraft_own_writesToOwnTree() = runTest {
+    val mine = Aircraft(id = "own-1", make = "Cessna", model = "172")
+
+    manager.updateAircraft(mine)
+
+    coVerify { store.put("own-1", mine, EntityScope.userRoot(TEST_USER_ID)) }
+  }
+
+  @Test
+  fun deleteAircraft_shared_isRefused() = runTest {
+    // Deleting tears the share down for everyone, so it is the hosting owner's alone. Queuing a
+    // tombstone we know the rules will deny is worse than refusing: since #144 the client reads a
+    // denied write into a host's tree as its own revocation, and would purge the share over it.
+    every { refStore.observe("shared-1", EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(
+      StorageEntity(
+        "shared-1",
+        SharedAircraftRef(aircraft_id = "shared-1", host_uid = HOST_UID),
+        Instant.DISTANT_PAST,
+      )
+    )
+
+    val result = manager.deleteAircraft("shared-1")
+
+    assertThat(result.isFailure).isTrue()
+    coVerify(exactly = 0) { store.delete(any(), any()) }
+  }
 }
