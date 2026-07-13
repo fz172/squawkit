@@ -41,8 +41,13 @@ interface SharingManager {
    * (§7.1/§7.2). Call on redeem, on self-technician edit, and at app start — it is idempotent, so
    * the app-start call doubles as the retry for a publish that failed offline. Best-effort: a
    * failure is logged, not surfaced.
+   *
+   * Membership is read from the *local* stores, so a share joined moments ago is not in it yet — its
+   * `SharedAircraftRef` is still in flight. Pass [alsoPublishTo] with that aircraft id (the redeem
+   * path does) to publish into it anyway; without it the member doc keeps the auth-token name the
+   * redeem function seeded until the next app start.
    */
-  suspend fun publishTechnicianMirror(): Result<Unit>
+  suspend fun publishTechnicianMirror(alsoPublishTo: String? = null): Result<Unit>
 
   /**
    * Every *other* member, across all of the user's shares, who has published a technician mirror —

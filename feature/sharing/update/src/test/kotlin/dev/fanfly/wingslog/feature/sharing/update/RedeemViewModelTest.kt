@@ -42,7 +42,7 @@ class RedeemViewModelTest {
     auth = mockk()
     every { auth.authStateChanged } returns authState
     // Every redeemer publishes their technician mirror into the share they just joined (§7.2).
-    coEvery { sharing.publishTechnicianMirror() } returns Result.success(Unit)
+    coEvery { sharing.publishTechnicianMirror(any()) } returns Result.success(Unit)
     AircraftShareDeepLinks.consume()
   }
 
@@ -108,7 +108,9 @@ class RedeemViewModelTest {
 
     viewModel().accept()
 
-    coVerify { sharing.publishTechnicianMirror() }
+    // Named explicitly, not left to local membership: the ref for the share we just joined is still
+    // syncing down, so a publish without it would skip this aircraft and leave the auth-token name.
+    coVerify { sharing.publishTechnicianMirror(alsoPublishTo = AC_ID) }
   }
 
   @Test
@@ -122,7 +124,7 @@ class RedeemViewModelTest {
 
     viewModel().accept()
 
-    coVerify(exactly = 0) { sharing.publishTechnicianMirror() }
+    coVerify(exactly = 0) { sharing.publishTechnicianMirror(any()) }
   }
 
   @Test

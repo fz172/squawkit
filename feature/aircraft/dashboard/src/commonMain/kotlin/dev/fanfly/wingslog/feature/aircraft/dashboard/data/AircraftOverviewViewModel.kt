@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
@@ -11,6 +12,7 @@ import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -22,14 +24,25 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
+
+/** The four share-related flows, combined so they fit in one slot of the outer [combine]. */
+private data class ShareContext(
+  val squawks: List<Squawk>,
+  val syncStates: Map<String, BlobSyncState>,
+  val myRole: ShareRole?,
+  val shared: Boolean,
+)
 
 class AircraftOverviewViewModel(
   private val fleetManager: FleetManager,
@@ -62,6 +75,15 @@ class AircraftOverviewViewModel(
       attachmentManager.observeBlobStates("/users/$uid/aircraft/$aircraftId/")
     } ?: flowOf(emptyMap())
 
+  /**
+   * Whether this aircraft was shared into our fleet by another account. The fleet is the only place
+   * that knows — it's the flow that unions our own aircraft with the shared refs.
+   */
+  private fun sharedFlow(): Flow<Boolean> =
+    fleetManager.observeFleetDashboard()
+      .map { fleet -> fleet.firstOrNull { it.aircraft.id == aircraftId }?.shared == true }
+      .distinctUntilChanged()
+
   private fun loadAircraftAndStats() {
     viewModelScope.launch {
       _uiState.update { AircraftOverviewUiState.Loading }
@@ -89,9 +111,10 @@ class AircraftOverviewViewModel(
           // The caller's role on this aircraft, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
           // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
           sharingManager.observeMyRole(aircraftId),
-        ) { squawks, syncs, myRole -> Triple(squawks, syncs, myRole) }
-      ) { aircraft, logs, taskCards, overview, squawksSyncsRole ->
-        val (squawkList, syncStates, myRole) = squawksSyncsRole
+          sharedFlow(),
+        ) { squawks, syncs, myRole, shared -> ShareContext(squawks, syncs, myRole, shared) }
+      ) { aircraft, logs, taskCards, overview, shareContext ->
+        val (squawkList, syncStates, myRole, isShared) = shareContext
         cachedLogs = logs
         if (aircraft != null) {
           val stats = if (overview != null) {
@@ -188,6 +211,7 @@ class AircraftOverviewViewModel(
             squawks = squawksWithStatus,
             aogSquawks = aogSquawks,
             myRole = myRole,
+            shared = isShared,
           )
         } else {
           AircraftOverviewUiState.Error

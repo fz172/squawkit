@@ -252,7 +252,7 @@ class SharingManagerImpl(
    * still carrying a name from before this existed. Best-effort by design: freshness is eventual,
    * and log snapshots capture whatever is current at signing time.
    */
-  override suspend fun publishTechnicianMirror(): Result<Unit> = runCatching {
+  override suspend fun publishTechnicianMirror(alsoPublishTo: String?): Result<Unit> = runCatching {
     val user = auth.currentUser ?: return@runCatching
     if (user.isAnonymous) return@runCatching
     val uid = user.uid
@@ -271,7 +271,12 @@ class SharingManagerImpl(
       technicianMirror = self?.toMirrorWire(),
     )
 
-    memberships(uid).forEach { acId ->
+    // A just-redeemed aircraft isn't in the local stores yet — its ref is still syncing down — so it
+    // is named explicitly. The ACL check below is what keeps that safe: naming an aircraft we are
+    // not actually a member of publishes nothing.
+    val targets = (memberships(uid) + listOfNotNull(alsoPublishTo)).distinct()
+
+    targets.forEach { acId ->
       // The ACL decides whether we're a member at all, and with what role. An own aircraft that was
       // never shared has no ACL doc — skip it rather than bootstrapping a share nobody asked for.
       val myRole = shareDoc(acId).get()
