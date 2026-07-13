@@ -20,6 +20,73 @@ class TechnicianDuplicatesTest {
   private fun mirror(uid: String, name: String, cert: String = "") =
     Technician(id = uid, name = name, cert_number = cert, source_uid = uid)
 
+  // ---- manual ↔ self ----
+
+  @Test
+  fun aHandTypedCopyOfYourself_isCaughtEvenWithNoCertificates() {
+    // You are "XYZ" and you also typed a technician "XYZ" in by hand before the app bootstrapped
+    // your profile. Neither has a certificate — the commonest shape of this duplicate.
+    val me = manual("self", "XYZ")
+    val handTyped = manual("m1", "XYZ")
+
+    val group = findDuplicates(manual = listOf(handTyped), mirrors = emptyList(), self = me)
+      .single()
+
+    assertThat(group.resolution).isEqualTo(DuplicateResolution.MERGE_MANUAL)
+    // Your real profile survives; the hand-typed copy is the one that goes.
+    assertThat(group.keep.id).isEqualTo("self")
+    assertThat(group.duplicates.map { it.id }).containsExactly("m1")
+    // Name-only, so it still needs confirming.
+    assertThat(group.autoSafe).isFalse()
+  }
+
+  @Test
+  fun aHandTypedCopyOfYourself_matchingByCertNumber_isAutoSafe() {
+    val me = manual("self", "XYZ", cert = "AP-123")
+    val handTyped = manual("m1", "X. Y. Zed", cert = "AP-123")
+
+    val group = findDuplicates(manual = listOf(handTyped), mirrors = emptyList(), self = me)
+      .single()
+
+    assertThat(group.keep.id).isEqualTo("self")
+    assertThat(group.autoSafe).isTrue()
+  }
+
+  @Test
+  fun theSelfRecord_isNeverAmongTheDuplicates() {
+    // Whatever else matches, your own profile must never be the row that gets tombstoned.
+    val me = manual("self", "XYZ")
+    val handTyped = manual("m1", "XYZ")
+    val member = mirror(MEMBER_UID, "XYZ")
+
+    val groups = findDuplicates(manual = listOf(handTyped), mirrors = listOf(member), self = me)
+
+    assertThat(groups.flatMap { it.duplicates }.map { it.id }).doesNotContain("self")
+  }
+
+  @Test
+  fun aRowMatchingBothYouAndAMember_collapsesIntoYou() {
+    // You are the authority on your own name — it should not be aliased away to a member who
+    // happens to share it.
+    val me = manual("self", "XYZ")
+    val handTyped = manual("m1", "XYZ")
+    val member = mirror(MEMBER_UID, "XYZ")
+
+    val groups = findDuplicates(manual = listOf(handTyped), mirrors = listOf(member), self = me)
+
+    assertThat(groups).hasSize(1)
+    assertThat(groups.single().resolution).isEqualTo(DuplicateResolution.MERGE_MANUAL)
+    assertThat(groups.single().keep.id).isEqualTo("self")
+  }
+
+  @Test
+  fun aDifferentlyNamedManualRow_isNotMergedIntoYou() {
+    val me = manual("self", "XYZ")
+    val other = manual("m1", "Someone Else")
+
+    assertThat(findDuplicates(manual = listOf(other), mirrors = emptyList(), self = me)).isEmpty()
+  }
+
   // ---- manual ↔ mirror: alias, never delete ----
 
   @Test
@@ -46,6 +113,50 @@ class TechnicianDuplicatesTest {
     assertThat(group.resolution).isEqualTo(DuplicateResolution.ALIAS_TO_MEMBER)
     // Names collide; a human has to confirm.
     assertThat(group.autoSafe).isFalse()
+  }
+
+  // ---- case and whitespace insensitivity ----
+
+  @Test
+  fun namesMatchRegardlessOfCaseOrSpacing() {
+    val me = manual("self", "XYZ Smith")
+    val handTyped = manual("m1", "  xyz   smith ")
+
+    val group = findDuplicates(manual = listOf(handTyped), mirrors = emptyList(), self = me)
+      .single()
+
+    assertThat(group.keep.id).isEqualTo("self")
+  }
+
+  @Test
+  fun certificateNumbersMatchRegardlessOfCaseOrSurroundingSpace() {
+    val a = manual("m1", "Alice", cert = "ap-123 ")
+    val b = manual("m2", "Alicia", cert = " AP-123")
+
+    val group = findDuplicates(listOf(a, b), emptyList()).single()
+
+    assertThat(group.resolution).isEqualTo(DuplicateResolution.MERGE_MANUAL)
+    assertThat(group.autoSafe).isTrue()
+  }
+
+  @Test
+  fun certificateTypesMatchRegardlessOfCaseOnLegacyRows() {
+    // Pre-enum rows carry the type as a free string; it must not fail to match on case alone.
+    val a = Technician(id = "m1", name = "Bob", cert_type = "certificate_type_amt")
+    val b = Technician(id = "m2", name = "Bob", cert_type = "CERTIFICATE_TYPE_AMT")
+
+    assertThat(findDuplicates(listOf(a, b), emptyList())).hasSize(1)
+  }
+
+  @Test
+  fun mirrorMatchesAHandTypedRowRegardlessOfCase() {
+    val hand = manual("m1", "sponge bob", cert = "ap-123")
+    val member = mirror(MEMBER_UID, "SPONGE BOB", cert = "AP-123")
+
+    val group = findDuplicates(listOf(hand), listOf(member)).single()
+
+    assertThat(group.resolution).isEqualTo(DuplicateResolution.ALIAS_TO_MEMBER)
+    assertThat(group.autoSafe).isTrue()
   }
 
   // ---- the blank-certificate trap ----

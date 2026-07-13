@@ -52,20 +52,40 @@ data class DuplicateGroup(
 )
 
 /**
- * Groups look-alike rows across the user's manual roster and the mirrors visible to them.
+ * Groups look-alike rows across the user's manual roster, their own self-record, and the mirrors
+ * visible to them.
  *
- * [manual] is the user's own technician collection minus their self-record; [mirrors] are the
- * published member profiles (each carrying its owner's uid in `source_uid`).
+ * [manual] is the user's technician collection *minus* their self-record; [self] is that record;
+ * [mirrors] are the published member profiles (each carrying its owner's uid in `source_uid`).
  */
 fun findDuplicates(
   manual: List<Technician>,
   mirrors: List<Technician>,
+  self: Technician? = null,
 ): List<DuplicateGroup> {
   val groups = mutableListOf<DuplicateGroup>()
   val claimed = mutableSetOf<String>()
 
-  // 1. Manual ↔ mirror. Run first: the mirror is the source of truth, so a manual row that matches
-  //    a member should alias to them rather than be merged into another manual row.
+  // 1. Manual ↔ SELF. Run first: you are the authority on your own name. A user who hand-typed
+  //    themselves as a technician before the app bootstrapped their self-record now has both, and
+  //    that copy should collapse into the real profile rather than be aliased to some member who
+  //    happens to share the name. The self-record is always the keeper — never tombstoned, never
+  //    aliased away.
+  if (self != null) {
+    val matches = manual.filter { it.id != self.id && it.matches(self) }
+    if (matches.isNotEmpty()) {
+      matches.forEach { claimed += it.id }
+      groups += DuplicateGroup(
+        resolution = DuplicateResolution.MERGE_MANUAL,
+        keep = self,
+        duplicates = matches,
+        autoSafe = matches.all { it.certKey() != null && it.certKey() == self.certKey() },
+      )
+    }
+  }
+
+  // 2. Manual ↔ mirror. The mirror is the source of truth for a member, so a manual row that
+  //    matches one should alias to them rather than be merged into another manual row.
   for (mirror in mirrors) {
     val matches = manual.filter { it.id !in claimed && it.matches(mirror) }
     if (matches.isEmpty()) continue
@@ -79,7 +99,7 @@ fun findDuplicates(
     )
   }
 
-  // 2. Manual ↔ manual, by certificate number. Auto-safe: a cert number identifies one person.
+  // 3. Manual ↔ manual, by certificate number. Auto-safe: a cert number identifies one person.
   val remaining = manual.filter { it.id !in claimed }
   remaining.groupBy { it.certKey() }
     .forEach { (certKey, rows) ->
@@ -94,7 +114,7 @@ fun findDuplicates(
       )
     }
 
-  // 3. Manual ↔ manual, by name. Proposed only — two people genuinely can share a name, so this
+  // 4. Manual ↔ manual, by name. Proposed only — two people genuinely can share a name, so this
   //    never pre-checks.
   manual.filter { it.id !in claimed }
     .groupBy { it.nameKey() to it.resolvedCertTypeKey() }
@@ -114,7 +134,7 @@ fun findDuplicates(
       )
     }
 
-  // 4. Mirror ↔ mirror sharing a certificate number. Never merged — two members are two people.
+  // 5. Mirror ↔ mirror sharing a certificate number. Never merged — two members are two people.
   mirrors.groupBy { it.certKey() }
     .forEach { (certKey, rows) ->
       if (certKey == null || rows.size < 2) return@forEach

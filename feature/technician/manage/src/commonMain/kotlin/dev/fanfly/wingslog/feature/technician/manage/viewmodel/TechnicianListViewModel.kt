@@ -56,8 +56,9 @@ class TechnicianListViewModel(
       technicians = listOfNotNull(self) + others,
       linkedTechnicians = linked,
       selfId = selfId,
-      // The self-record is excluded: it is the user, and can never be a duplicate of someone else.
-      duplicates = findDuplicates(manual = others, mirrors = linked),
+      // The self-record participates as a *keeper*, never as a duplicate: hand-typing yourself
+      // before the app bootstrapped your profile is one of the commonest duplicates there is.
+      duplicates = findDuplicates(manual = others, mirrors = linked, self = self),
       duplicatesReviewed = reviewed,
       showDuplicateReview = local.showDuplicateReview,
     )

@@ -147,9 +147,29 @@ class TechnicianListViewModelTest {
   }
 
   @Test
-  fun theSelfRecord_isNeverOfferedAsADuplicate() = runTest(testDispatcher) {
-    // The self-record is the user. It can look like a member (same name, same certificate) without
-    // being one, and merging it away would be destructive.
+  fun aHandTypedCopyOfYourself_isOfferedForMerge() = runTest(testDispatcher) {
+    // You are "XYZ" and also typed a technician "XYZ" in by hand. Neither has a certificate.
+    every { technicianManager.observeTechnicians() } returns flowOf(
+      listOf(
+        Technician(id = SELF_ID, name = "XYZ"),
+        Technician(id = "m1", name = "xyz"),
+      )
+    )
+    every { technicianManager.observeSelfId() } returns flowOf(SELF_ID)
+    every { technicianManager.observeDuplicatesReviewed() } returns flowOf(false)
+
+    val state = viewModel().uiState.first { it.duplicates.isNotEmpty() }
+
+    val group = state.duplicates.single()
+    assertThat(group.keep.id).isEqualTo(SELF_ID)
+    assertThat(group.duplicates.map { it.id }).containsExactly("m1")
+    assertThat(state.showDuplicatePrompt).isTrue()
+  }
+
+  @Test
+  fun theSelfRecord_isNeverTheRowThatGetsMergedAway() = runTest(testDispatcher) {
+    // Your own profile can look like a member's (same name, same certificate) without being them —
+    // tombstoning or aliasing it away would be destructive.
     every { technicianManager.observeTechnicians() } returns flowOf(
       listOf(Technician(id = SELF_ID, name = "Sponge Bob", cert_number = "AP-123"))
     )
@@ -168,8 +188,8 @@ class TechnicianListViewModelTest {
 
     val state = viewModel().uiState.first { it.technicians.isNotEmpty() }
 
-    assertThat(state.duplicates).isEmpty()
-    assertThat(state.showDuplicatePrompt).isFalse()
+    assertThat(state.duplicates.flatMap { it.duplicates }.map { it.id })
+      .doesNotContain(SELF_ID)
   }
 
   private fun viewModel() = TechnicianListViewModel(
