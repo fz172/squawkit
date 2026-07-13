@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.sync.data
+package dev.fanfly.wingslog.feature.sync.logging
 
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 
@@ -7,7 +7,7 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsManager
  *
  * A denial outside a revocation race means the UI let someone attempt a write their role forbids — a
  * gating bug, not a user error — and it is now *invisible* without a counter, because the sync
- * engine swallows the denial by design (see [PushWorker]). That is exactly why it has to be counted.
+ * engine's `PushWorker` swallows the denial by design. That is exactly why it has to be counted.
  *
  * [sharedScopeReconciled] is what makes the denial count readable: a denial paired with a reconcile
  * is the expected §5.4 race, and a denial without one is the bug. Only the two race triggers are

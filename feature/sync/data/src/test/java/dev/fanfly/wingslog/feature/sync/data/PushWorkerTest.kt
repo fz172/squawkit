@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.WireCodec
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
 import dev.gitlive.firebase.firestore.FirebaseFirestoreException
 import dev.gitlive.firebase.firestore.FirestoreExceptionCode
 import io.mockk.coEvery

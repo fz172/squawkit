@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.db.SelectDirtyInScope
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest

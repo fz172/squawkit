@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.sync.data.di
 
-import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -22,10 +21,9 @@ import dev.fanfly.wingslog.feature.sync.data.RemoteFetcher
 import dev.fanfly.wingslog.feature.sync.data.SyncCursorStore
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
-import dev.fanfly.wingslog.feature.sync.data.SyncTelemetry
-import dev.fanfly.wingslog.feature.sync.data.AnalyticsSyncTelemetry
 import dev.fanfly.wingslog.feature.sync.data.SyncWriter
 import dev.fanfly.wingslog.feature.sync.data.syncIoContext
+import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -90,7 +88,6 @@ val syncModule: Module = module {
       postWriteHook = getOrNull(),
     )
   }
-  single<SyncTelemetry> { AnalyticsSyncTelemetry(get<AnalyticsManager>()) }
   single<PushWorker> {
     PushWorker(
       db = get<WingsLogDatabase>(),
