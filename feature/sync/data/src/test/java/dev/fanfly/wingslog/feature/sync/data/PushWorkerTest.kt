@@ -12,8 +12,12 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.WireCodec
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
+import dev.gitlive.firebase.firestore.FirebaseFirestoreException
+import dev.gitlive.firebase.firestore.FirestoreExceptionCode
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -78,7 +82,10 @@ class PushWorkerTest {
   fun run_drainsSharedAircraftScopeRows_whenARefExists() = runTest(ioContext) {
     // A store factory so the worker can observe the refs store and add the shared prefix.
     val codecs = EntityCodecRegistry().apply {
-      register(CollectionKind.SharedAircraftRef, WireCodec(SharedAircraftRef.ADAPTER))
+      register(
+        CollectionKind.SharedAircraftRef,
+        WireCodec(SharedAircraftRef.ADAPTER)
+      )
     }
     val storeFactory = EntityStoreFactory(
       db = db,
@@ -110,7 +117,8 @@ class PushWorkerTest {
     job.cancel()
 
     assertThat(captured.captured.scope).isEqualTo(SHARED_SCOPE)
-    val remaining = db.schemaQueries.selectDirty(limit = 100L).executeAsList()
+    val remaining = db.schemaQueries.selectDirty(limit = 100L)
+      .executeAsList()
     assertThat(remaining).isEmpty()
   }
 
@@ -192,7 +200,120 @@ class PushWorkerTest {
       assertThat(remaining[0].id).isEqualTo("log-fail")
     }
 
+  // --- Revocation race: a denied push into a host's tree (docs/sharing §5.4) ---
+
+  @Test
+  fun run_permissionDeniedOnSharedScope_reconcilesAsRevokedAndShowsNoBanner() =
+    runTest(ioContext) {
+      // The member edited a shared aircraft offline, was revoked meanwhile, and the push lands
+      // before the ref tombstone does. That is a revocation, not an expired session.
+      val storeFactory = liveShareStoreFactory()
+      insertDirtyRow("shared-log-1", scope = SHARED_SCOPE)
+      // Only the host's subtree denies us — writes to our own tree (including the ref row the
+      // factory just wrote) still succeed, exactly as the rules behave after a revoke.
+      coEvery { writer.push(match { it.scope != SHARED_SCOPE }) } returns Unit
+      coEvery { writer.push(match { it.scope == SHARED_SCOPE }) } throws permissionDenied()
+
+      val failures = mutableListOf<SyncFailure?>()
+      val revoked = mutableListOf<Pair<String, String>>()
+      val telemetry = RecordingTelemetry()
+      val sharedWorker = PushWorker(
+        db = db,
+        writer = writer,
+        ioContext = ioContext,
+        storeFactory = storeFactory,
+        telemetry = telemetry,
+      ).apply {
+        failureSink = { failures += it }
+        sharedScopeRevokedSink = { host, ac -> revoked += host to ac }
+      }
+
+      val job = launch { sharedWorker.run(TEST_USER_ID) }
+      testScheduler.advanceUntilIdle()
+      job.cancel()
+
+      assertThat(revoked).containsExactly(HOST_UID to SHARED_AC)
+      // No auth banner: nothing is wrong with the session, the share simply ended. (Nulls are the
+      // successful own-tree pushes clearing the banner, which is not a failure.)
+      assertThat(failures.filterNotNull()).isEmpty()
+      assertThat(telemetry.deniedWrites).containsExactly(true)
+      // The rows stay dirty here — the janitor hard-deletes the scope once the ref goes away, which
+      // is what stops us retrying a write we will never be allowed to make.
+    }
+
+  @Test
+  fun run_permissionDeniedOnOwnScope_stillRaisesAuthBanner() =
+    runTest(ioContext) {
+      // Same denial in the member's *own* tree means an expired token or a rules regression. It must
+      // keep surfacing — swallowing it would hide a real breakage.
+      insertDirtyRow("own-log-1", scope = TEST_SCOPE)
+      coEvery { writer.push(any()) } throws permissionDenied()
+
+      val failures = mutableListOf<SyncFailure?>()
+      val revoked = mutableListOf<Pair<String, String>>()
+      val telemetry = RecordingTelemetry()
+      val ownWorker = PushWorker(
+        db = db,
+        writer = writer,
+        ioContext = ioContext,
+        telemetry = telemetry,
+      ).apply {
+        failureSink = { failures += it }
+        sharedScopeRevokedSink = { host, ac -> revoked += host to ac }
+      }
+
+      val job = launch { ownWorker.run(TEST_USER_ID) }
+      testScheduler.advanceUntilIdle()
+      job.cancel()
+
+      assertThat(revoked).isEmpty()
+      assertThat(failures.filterNotNull()).hasSize(1)
+      assertThat(
+        failures.filterNotNull()
+          .first()
+      ).isInstanceOf(SyncFailure.AuthExpired::class.java)
+      assertThat(telemetry.deniedWrites).containsExactly(false)
+    }
+
   // --- helpers ---
+
+  /** A store factory holding one live ref, so the worker drains the host's subtree too. */
+  private suspend fun liveShareStoreFactory(): EntityStoreFactory {
+    val codecs = EntityCodecRegistry().apply {
+      register(
+        CollectionKind.SharedAircraftRef,
+        WireCodec(SharedAircraftRef.ADAPTER)
+      )
+    }
+    val storeFactory = EntityStoreFactory(
+      db = db,
+      codecs = codecs,
+      ioContext = ioContext,
+      writeLock = DatabaseWriteLock(),
+    )
+    storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
+      .put(
+        SHARED_AC,
+        SharedAircraftRef(aircraft_id = SHARED_AC, host_uid = HOST_UID),
+        EntityScope.userRoot(TEST_USER_ID),
+      )
+    return storeFactory
+  }
+
+  private fun permissionDenied(): FirebaseFirestoreException =
+    mockk<FirebaseFirestoreException>(relaxed = true).also {
+      every { it.code } returns FirestoreExceptionCode.PERMISSION_DENIED
+    }
+
+  /** Records what the worker reported, so the safety-valve counters can be asserted (PRD §9). */
+  private class RecordingTelemetry : SyncTelemetry {
+    val deniedWrites = mutableListOf<Boolean>()
+    override fun permissionDeniedWrite(sharedScope: Boolean) {
+      deniedWrites += sharedScope
+    }
+
+    override fun sharedScopeReconciled(trigger: String) = Unit
+  }
 
   private suspend fun insertDirtyRow(
     id: String,

@@ -54,22 +54,34 @@ class SyncEngineTest {
   private lateinit var pull: FakePullSubscription
   private lateinit var engine: SyncEngine
 
-  private val sharedDocKey = CollectionKind.Aircraft to EntityScope.userRoot(HOST).toPath()
+  private val sharedDocKey =
+    CollectionKind.Aircraft to EntityScope.userRoot(HOST)
+      .toPath()
   private val sharedNestedKey =
-    CollectionKind.MaintenanceLog to EntityScope.aircraftChild(HOST, SHARED_AC).toPath()
+    CollectionKind.MaintenanceLog to EntityScope.aircraftChild(HOST, SHARED_AC)
+      .toPath()
 
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.synchronous().create(driver)
+    WingsLogDatabase.Schema.synchronous()
+      .create(driver)
     db = createWingsLogDatabase(driver)
     writeLock = DatabaseWriteLock()
     val codecs = EntityCodecRegistry().apply {
       register(CollectionKind.Aircraft, WireCodec(Aircraft.ADAPTER))
-      register(CollectionKind.SharedAircraftRef, WireCodec(SharedAircraftRef.ADAPTER))
+      register(
+        CollectionKind.SharedAircraftRef,
+        WireCodec(SharedAircraftRef.ADAPTER)
+      )
     }
     storeFactory =
-      EntityStoreFactory(db = db, codecs = codecs, ioContext = ioContext, writeLock = writeLock)
+      EntityStoreFactory(
+        db = db,
+        codecs = codecs,
+        ioContext = ioContext,
+        writeLock = writeLock
+      )
     pull = FakePullSubscription()
     engine = buildEngine()
   }
@@ -107,28 +119,47 @@ class SyncEngineTest {
   }
 
   @Test
-  fun permissionDeniedOnSharedDoc_revokesLocallyAndDoesNotBanner() = runTest(ioContext) {
-    seedRef()
-    // Local copy of the shared aircraft (doc + nested log) that must be purged once revoked.
-    seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(HOST), SHARED_AC)
-    seedEntity(CollectionKind.MaintenanceLog, EntityScope.aircraftChild(HOST, SHARED_AC), "log-1")
-    // Revocation raced the ref tombstone: the doc-level watch is denied.
-    pull.denyScopes += EntityScope.userRoot(HOST).toPath()
+  fun permissionDeniedOnSharedDoc_revokesLocallyAndDoesNotBanner() =
+    runTest(ioContext) {
+      seedRef()
+      // Local copy of the shared aircraft (doc + nested log) that must be purged once revoked.
+      seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(HOST), SHARED_AC)
+      seedEntity(
+        CollectionKind.MaintenanceLog,
+        EntityScope.aircraftChild(HOST, SHARED_AC),
+        "log-1"
+      )
+      // Revocation raced the ref tombstone: the doc-level watch is denied.
+      pull.denyScopes += EntityScope.userRoot(HOST)
+        .toPath()
 
-    val job = engine.start()
-    testScheduler.advanceUntilIdle()
+      val job = engine.start()
+      testScheduler.advanceUntilIdle()
 
-    // Stale ref hard-deleted → dropped from the store.
-    assertThat(refStore().observeAll(EntityScope.userRoot(MEMBER)).first()).isEmpty()
-    // Janitor purged the now-orphaned shared data (doc + nested).
-    assertThat(rowsAt(CollectionKind.Aircraft, EntityScope.userRoot(HOST))).isEmpty()
-    assertThat(rowsAt(CollectionKind.MaintenanceLog, EntityScope.aircraftChild(HOST, SHARED_AC)))
-      .isEmpty()
-    // PERMISSION_DENIED was reconciled as a revoke, not surfaced as an auth banner.
-    assertThat(engine.failureState.value).isNull()
+      // Stale ref hard-deleted → dropped from the store.
+      assertThat(
+        refStore().observeAll(EntityScope.userRoot(MEMBER))
+          .first()
+      ).isEmpty()
+      // Janitor purged the now-orphaned shared data (doc + nested).
+      assertThat(
+        rowsAt(
+          CollectionKind.Aircraft,
+          EntityScope.userRoot(HOST)
+        )
+      ).isEmpty()
+      assertThat(
+        rowsAt(
+          CollectionKind.MaintenanceLog,
+          EntityScope.aircraftChild(HOST, SHARED_AC)
+        )
+      )
+        .isEmpty()
+      // PERMISSION_DENIED was reconciled as a revoke, not surfaced as an auth banner.
+      assertThat(engine.failureState.value).isNull()
 
-    job.cancel()
-  }
+      job.cancel()
+    }
 
   // --- harness ---------------------------------------------------------------------------------
 
@@ -155,7 +186,14 @@ class SyncEngineTest {
       cursors = SyncCursorStore(db, writeLock),
       pullSubscription = pull,
       hydrationRunner = hydration,
-      pullListenerFactory = { kind, scope -> PullListener(kind, scope, db, writeLock) },
+      pullListenerFactory = { kind, scope ->
+        PullListener(
+          kind,
+          scope,
+          db,
+          writeLock
+        )
+      },
       pushWorker = pushWorker,
       storeFactory = storeFactory,
       syncPreferences = prefs,
@@ -166,7 +204,8 @@ class SyncEngineTest {
     )
   }
 
-  private fun refStore() = storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
+  private fun refStore() =
+    storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
 
   private suspend fun seedRef() {
     refStore().put(
@@ -176,7 +215,11 @@ class SyncEngineTest {
     )
   }
 
-  private suspend fun seedEntity(kind: CollectionKind, scope: EntityScope, id: String) {
+  private suspend fun seedEntity(
+    kind: CollectionKind,
+    scope: EntityScope,
+    id: String
+  ) {
     db.schemaQueries.upsert(
       collection = kind,
       scope_path = scope.toPath(),
@@ -192,7 +235,8 @@ class SyncEngineTest {
   }
 
   private fun rowsAt(kind: CollectionKind, scope: EntityScope) =
-    db.schemaQueries.selectAll(kind, scope.toPath()).executeAsList()
+    db.schemaQueries.selectAll(kind, scope.toPath())
+      .executeAsList()
 }
 
 /**
@@ -206,7 +250,10 @@ private class FakePullSubscription : PullSubscription {
   /** Scope paths whose subscription throws PERMISSION_DENIED on collect. */
   val denyScopes = mutableSetOf<String>()
 
-  private fun track(kind: CollectionKind, scopePath: String): Flow<List<RemoteEntity>> = flow {
+  private fun track(
+    kind: CollectionKind,
+    scopePath: String
+  ): Flow<List<RemoteEntity>> = flow {
     if (scopePath in denyScopes) throw permissionDenied()
     active.update { it + (kind to scopePath) }
     try {

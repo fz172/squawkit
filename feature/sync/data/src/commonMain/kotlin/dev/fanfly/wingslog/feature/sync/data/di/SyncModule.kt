@@ -1,28 +1,29 @@
 package dev.fanfly.wingslog.feature.sync.data.di
 
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
-import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.PostWriteHook
-import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
-import dev.fanfly.wingslog.feature.sync.data.impl.FirestorePullSubscription
-import dev.fanfly.wingslog.feature.sync.data.PullSubscription
-import dev.fanfly.wingslog.feature.sync.data.impl.FirestoreRemoteFetcher
-import dev.fanfly.wingslog.feature.sync.data.impl.FirestoreSyncWriter
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sync.data.HydrationRunner
 import dev.fanfly.wingslog.feature.sync.data.PullListener
+import dev.fanfly.wingslog.feature.sync.data.PullSubscription
 import dev.fanfly.wingslog.feature.sync.data.PushWorker
-import dev.fanfly.wingslog.feature.sync.data.SharedScopeJanitor
 import dev.fanfly.wingslog.feature.sync.data.RemoteFetcher
+import dev.fanfly.wingslog.feature.sync.data.SharedScopeJanitor
 import dev.fanfly.wingslog.feature.sync.data.SyncCursorStore
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 import dev.fanfly.wingslog.feature.sync.data.SyncWriter
+import dev.fanfly.wingslog.feature.sync.data.impl.FirestorePullSubscription
+import dev.fanfly.wingslog.feature.sync.data.impl.FirestoreRemoteFetcher
+import dev.fanfly.wingslog.feature.sync.data.impl.FirestoreSyncWriter
 import dev.fanfly.wingslog.feature.sync.data.syncIoContext
+import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -94,6 +95,7 @@ val syncModule: Module = module {
       ioContext = syncIoContext,
       writeLock = get<DatabaseWriteLock>(),
       storeFactory = get<EntityStoreFactory>(),
+      telemetry = get<SyncTelemetry>(),
     )
   }
   single<SyncEngine> {
@@ -122,6 +124,7 @@ val syncModule: Module = module {
       db = db,
       uploadScheduler = uploadScheduler,
       sharedScopeJanitor = SharedScopeJanitor(db, writeLock),
+      telemetry = get<SyncTelemetry>(),
       writeLock = writeLock,
     )
   }

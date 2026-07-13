@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine.Companion.PUSH_FAILURE_KEY
+import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.CancellationException
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Top-level orchestrator that wires Firestore sync to the local store for the signed-in user.
@@ -65,6 +67,7 @@ class SyncEngine(
   private val uploadScheduler: UploadScheduler? = null,
   private val sharedScopeJanitor: SharedScopeJanitor? = null,
   private val writeLock: DatabaseWriteLock? = null,
+  private val telemetry: SyncTelemetry = SyncTelemetry.NoOp,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -237,6 +240,12 @@ class SyncEngine(
         if (failure == null) it - PUSH_FAILURE_KEY else it + (PUSH_FAILURE_KEY to failure)
       }
     }
+    // A denied push into a host's tree means the same thing a denied read does — we were revoked —
+    // so it reconciles the same way (§5.4).
+    pushWorker.sharedScopeRevokedSink = { _, aircraftId ->
+      revokeSharedLocally(uid, aircraftId)
+      telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_WRITE)
+    }
     scope.launch { pushWorker.run(uid) }
 
     if (uploadScheduler != null && db != null) {
@@ -357,6 +366,7 @@ class SyncEngine(
       if (isPermissionDenied(e)) {
         log.i { "PERMISSION_DENIED on shared aircraft $aircraftId; treating as revoked (§5.4)" }
         revokeSharedLocally(memberUid, aircraftId)
+        telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_READ)
       } else {
         throw e
       }
@@ -371,13 +381,17 @@ class SyncEngine(
    * tombstone is queued, so we never push a deletion that could clobber a still-live server ref; the
    * revoke function's authoritative tombstone reconciles the ref server-side. See docs/sharing §5.4.
    */
-  private suspend fun revokeSharedLocally(memberUid: String, aircraftId: String) {
+  private suspend fun revokeSharedLocally(
+    memberUid: String,
+    aircraftId: String
+  ) {
     val database = db ?: return
     val lock = writeLock ?: return
     lock.withLock {
       database.schemaQueries.deleteEntity(
         CollectionKind.SharedAircraftRef,
-        EntityScope.userRoot(memberUid).toPath(),
+        EntityScope.userRoot(memberUid)
+          .toPath(),
         aircraftId,
       )
     }
@@ -408,7 +422,7 @@ class SyncEngine(
       val wait = backoffMs(attempts)
       if (wait > 0) {
         log.i { "hydration backoff ${kind.wireName} ${scope.toPath()}: ${wait}ms after $attempts attempts" }
-        delay(wait)
+        delay(wait.milliseconds)
       }
       val key: Any = kind to scope
       if (hydrationRunner.runFor(

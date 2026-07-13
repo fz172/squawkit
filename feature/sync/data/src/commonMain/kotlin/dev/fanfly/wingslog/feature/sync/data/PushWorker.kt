@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.db.SelectDirtyInScope
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -43,6 +44,7 @@ class PushWorker(
   // Optional so tests (and any own-tree-only caller) can omit it: without it only the user's own
   // tree drains, preserving pre-sharing behavior. With it, shared aircraft scopes drain too.
   private val storeFactory: EntityStoreFactory? = null,
+  private val telemetry: SyncTelemetry = SyncTelemetry.NoOp,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -53,6 +55,13 @@ class PushWorker(
    * [SyncEngine] during wiring.
    */
   var failureSink: (SyncFailure?) -> Unit = {}
+
+  /**
+   * Invoked with `(hostUid, aircraftId)` when a push into a shared aircraft's subtree is denied by
+   * the rules — i.e. we were revoked. [SyncEngine] wires this to the same local reconcile the read
+   * path uses. Defaults to no-op, which leaves the rows dirty (the pre-sharing behavior).
+   */
+  var sharedScopeRevokedSink: suspend (String, String) -> Unit = { _, _ -> }
 
   /**
    * Suspends forever, draining `dirty=1` rows as they appear. Cancel the surrounding scope to stop.
@@ -80,14 +89,20 @@ class PushWorker(
   /** Own tree ∪ each live shared aircraft's nested-data subtree. Own-tree only when no store factory. */
   private fun scopePrefixes(uid: String): Flow<Set<String>> {
     val own = scopePrefixFor(uid)
-    val refStore = storeFactory?.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
-      ?: return flowOf(setOf(own))
+    val refStore =
+      storeFactory?.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
+        ?: return flowOf(setOf(own))
     return refStore.observeAll(EntityScope.userRoot(uid))
       .map { refs ->
         buildSet {
           add(own)
           for (ref in refs) {
-            add(sharedAircraftScopePrefix(ref.value.host_uid, ref.value.aircraft_id))
+            add(
+              sharedAircraftScopePrefix(
+                ref.value.host_uid,
+                ref.value.aircraft_id
+              )
+            )
           }
         }
       }
@@ -123,37 +138,52 @@ class PushWorker(
     }
   }
 
-  private suspend fun pushOne(row: DirtyRow, uid: String): Boolean = runCatching {
-    writer.push(
-      SyncWrite(
-        kind = row.collection,
-        scope = EntityScope(parseScopePath(row.scope_path)),
-        id = row.id,
-        payload = row.payload,
-        deleted = row.deleted,
-        schema = row.collection.schemaName,
-        writerUid = uid,
-      ),
-    )
-    writeLock.withLock {
-      db.schemaQueries.clearDirty(
-        row.collection,
-        row.scope_path,
-        row.id
+  private suspend fun pushOne(row: DirtyRow, uid: String): Boolean =
+    runCatching {
+      writer.push(
+        SyncWrite(
+          kind = row.collection,
+          scope = EntityScope(parseScopePath(row.scope_path)),
+          id = row.id,
+          payload = row.payload,
+          deleted = row.deleted,
+          schema = row.collection.schemaName,
+          writerUid = uid,
+        ),
       )
+      writeLock.withLock {
+        db.schemaQueries.clearDirty(
+          row.collection,
+          row.scope_path,
+          row.id
+        )
+      }
+      failureSink(null) // success — clear any previously-surfaced push failure.
+      true
+    }.getOrElse { e ->
+      if (isPermissionDenied(e)) {
+        val shared = sharedAircraftIn(row.scope_path, uid)
+        telemetry.permissionDeniedWrite(sharedScope = shared != null)
+        if (shared != null) {
+          // We were revoked while this edit sat in the queue, and the push beat the ref tombstone to
+          // us. This is the write-side twin of the §5.4 read race: reconcile locally rather than
+          // accuse the user of an expired session, and let the janitor purge the scope — which drops
+          // these rows, so we don't retry a write we will never be allowed to make.
+          val (hostUid, aircraftId) = shared
+          log.i { "PERMISSION_DENIED pushing to shared aircraft $aircraftId; treating as revoked (§5.4)" }
+          sharedScopeRevokedSink(hostUid, aircraftId)
+          return@getOrElse false
+        }
+      }
+      val classified = classifyPushFailure(e)
+      if (classified != null) {
+        log.w(e) { "push failed for ${row.collection.wireName}/${row.id}: ${classified.message}" }
+      } else {
+        log.i { "push transient failure for ${row.collection.wireName}/${row.id}; will retry on next notification" }
+      }
+      failureSink(classified)
+      false
     }
-    failureSink(null) // success — clear any previously-surfaced push failure.
-    true
-  }.getOrElse { e ->
-    val classified = classifyPushFailure(e)
-    if (classified != null) {
-      log.w(e) { "push failed for ${row.collection.wireName}/${row.id}: ${classified.message}" }
-    } else {
-      log.i { "push transient failure for ${row.collection.wireName}/${row.id}; will retry on next notification" }
-    }
-    failureSink(classified)
-    false
-  }
 
   companion object {
     private const val TAG = "PushWorker"
@@ -179,5 +209,22 @@ private typealias DirtyRow = SelectDirtyInScope
 private fun scopePrefixFor(uid: String): String = "/users/$uid/%"
 
 /** `LIKE` prefix matching a shared aircraft's nested-data subtree in the host's tree. */
-private fun sharedAircraftScopePrefix(hostUid: String, aircraftId: String): String =
+private fun sharedAircraftScopePrefix(
+  hostUid: String,
+  aircraftId: String
+): String =
   "/users/$hostUid/aircraft/$aircraftId/%"
+
+/**
+ * `(hostUid, aircraftId)` when [scopePath] names an aircraft subtree in *someone else's* tree, else
+ * null. A row under our own `/users/{uid}/...` is never a share, however deep it sits.
+ */
+private fun sharedAircraftIn(
+  scopePath: String,
+  uid: String
+): Pair<String, String>? {
+  val parts = parseScopePath(scopePath)
+  if (parts.size < 4 || parts[0] != "users" || parts[2] != "aircraft") return null
+  val hostUid = parts[1]
+  return if (hostUid == uid) null else hostUid to parts[3]
+}

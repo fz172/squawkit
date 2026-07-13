@@ -74,6 +74,10 @@ class BrowserTitleAnalytics(
     delegate.logScreenView(screenName, params + ("page_title" to title))
   }
 
+  // Only screen views carry a page title; other events pass straight through.
+  override fun logEvent(name: String, params: Map<String, String>) =
+    delegate.logEvent(name, params)
+
   override fun setAnalyticsCollectionEnabled(enabled: Boolean) =
     delegate.setAnalyticsCollectionEnabled(enabled)
 }

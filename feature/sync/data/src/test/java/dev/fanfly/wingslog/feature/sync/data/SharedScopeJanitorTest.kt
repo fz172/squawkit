@@ -27,7 +27,8 @@ class SharedScopeJanitorTest {
   @Before
   fun setUp() {
     val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    WingsLogDatabase.Schema.synchronous().create(driver)
+    WingsLogDatabase.Schema.synchronous()
+      .create(driver)
     db = createWingsLogDatabase(driver)
     janitor = SharedScopeJanitor(db, DatabaseWriteLock())
   }
@@ -35,10 +36,15 @@ class SharedScopeJanitorTest {
   /** A shared aircraft in the host's tree (doc + nested log + cursor) plus the member's own aircraft. */
   private suspend fun seedFixture() {
     seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(HOST), SHARED_AC)
-    seedEntity(CollectionKind.MaintenanceLog, EntityScope.aircraftChild(HOST, SHARED_AC), "log-1")
+    seedEntity(
+      CollectionKind.MaintenanceLog,
+      EntityScope.aircraftChild(HOST, SHARED_AC),
+      "log-1"
+    )
     db.schemaQueries.upsertCursor(
       MEMBER, CollectionKind.MaintenanceLog,
-      EntityScope.aircraftChild(HOST, SHARED_AC).toPath(), false, null, 0, null,
+      EntityScope.aircraftChild(HOST, SHARED_AC)
+        .toPath(), false, null, 0, null,
     )
     seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(MEMBER), OWN_AC)
   }
@@ -65,7 +71,11 @@ class SharedScopeJanitorTest {
     assertThat(cursor(EntityScope.aircraftChild(HOST, SHARED_AC))).isNotNull()
   }
 
-  private suspend fun seedEntity(kind: CollectionKind, scope: EntityScope, id: String) {
+  private suspend fun seedEntity(
+    kind: CollectionKind,
+    scope: EntityScope,
+    id: String
+  ) {
     db.schemaQueries.upsert(
       collection = kind,
       scope_path = scope.toPath(),
@@ -81,12 +91,18 @@ class SharedScopeJanitorTest {
   }
 
   private fun aircraftAt(scope: EntityScope) =
-    db.schemaQueries.selectAll(CollectionKind.Aircraft, scope.toPath()).executeAsList()
+    db.schemaQueries.selectAll(CollectionKind.Aircraft, scope.toPath())
+      .executeAsList()
 
   private fun logsAt(scope: EntityScope) =
-    db.schemaQueries.selectAll(CollectionKind.MaintenanceLog, scope.toPath()).executeAsList()
+    db.schemaQueries.selectAll(CollectionKind.MaintenanceLog, scope.toPath())
+      .executeAsList()
 
   private fun cursor(scope: EntityScope) =
-    db.schemaQueries.selectCursor(MEMBER, CollectionKind.MaintenanceLog, scope.toPath())
+    db.schemaQueries.selectCursor(
+      MEMBER,
+      CollectionKind.MaintenanceLog,
+      scope.toPath()
+    )
       .executeAsOneOrNull()
 }
