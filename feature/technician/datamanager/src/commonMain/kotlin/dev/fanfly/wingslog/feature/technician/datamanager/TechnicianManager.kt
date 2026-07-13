@@ -28,14 +28,17 @@ interface TechnicianManager {
 
   /**
    * Ensures the signed-in (non-anonymous) user has a self-technician, seeding its name from the
-   * Firebase account's display name / email and backfilling a blank name. When
-   * [replaceExistingName] is true, the account name replaces the current local self name; this is
-   * used after guest account upgrade so the guest profile becomes the provider profile.
+   * Firebase account (display name / email) **only when there is no name yet**.
+   *
+   * The in-app name wins. It used to be the other way round: upgrading a guest replaced the name the
+   * user had typed with whatever Google called them — so someone who set themselves up as "Sponge
+   * Bob" was silently renamed on sign-in. The account name is a seed for an empty profile, not an
+   * authority over one the user has already filled in.
    *
    * Call this after an account upgrade: linking a provider does not fire `authStateChanged`, so the
-   * sign-in bootstrap would otherwise never run and the profile (name + photo) would stay stale.
+   * sign-in bootstrap would otherwise never run and a blank profile would stay blank.
    */
-  suspend fun ensureSelfProfile(replaceExistingName: Boolean = false): Result<Unit>
+  suspend fun ensureSelfProfile(): Result<Unit>
 
   /**
    * Applies the user's confirmed reconciliation of look-alike roster rows (design §7.4).

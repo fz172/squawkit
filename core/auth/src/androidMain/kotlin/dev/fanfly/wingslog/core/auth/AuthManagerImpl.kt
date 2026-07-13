@@ -190,6 +190,19 @@ class AuthManagerImpl(
     }
   }
 
+  override suspend fun updateDisplayName(name: String) {
+    val user = authProvider.currentUser ?: return
+    if (name.isBlank() || name == user.displayName) return
+    try {
+      user.updateProfile(displayName = name, photoUrl = user.photoURL)
+      user.reload()
+    } catch (e: Exception) {
+      // Best-effort: the in-app name is already correct everywhere the client reads it. This only
+      // keeps the token in step for the server-side reads.
+      logger.w(e) { "Could not push display name to the auth profile" }
+    }
+  }
+
   override suspend fun logOut() {
     try {
       authProvider.signOut()

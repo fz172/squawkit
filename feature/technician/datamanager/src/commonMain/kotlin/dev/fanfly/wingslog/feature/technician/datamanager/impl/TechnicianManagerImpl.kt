@@ -67,7 +67,7 @@ class TechnicianManagerImpl(
     }
   }
 
-  override suspend fun ensureSelfProfile(replaceExistingName: Boolean): Result<Unit> =
+  override suspend fun ensureSelfProfile(): Result<Unit> =
     runCatching {
       val user = firebaseAuth.currentUser ?: return@runCatching
       if (user.isAnonymous) return@runCatching
@@ -107,15 +107,14 @@ class TechnicianManagerImpl(
           userScope
         )
       }
-      // Backfill from the account. During guest upgrade, replace the guest-entered self name with
-      // the permanent provider name while preserving certificate fields on the existing record.
+      // Seed a BLANK name from the account — never overwrite one the user has set. The account name
+      // is a starting point for an empty profile, not an authority over a filled-in one.
       val existing = technicianStore.observe(selfId, userScope)
         .firstOrNull()?.value
       if (
         existing != null &&
         accountName.isNotBlank() &&
-        (existing.name.isBlank() || replaceExistingName) &&
-        existing.name != accountName
+        existing.name.isBlank()
       ) {
         technicianStore.put(
           selfId,
