@@ -5,8 +5,8 @@
   <string name="manage_access_empty_title">No shared access</string>
   <string name="manage_access_empty_desc">Invite a co-owner or technician to share this aircraft.</string>
   <string name="manage_access_role_owner">Owner</string>
+  <string name="manage_access_role_co_owner">Co-owner</string>
   <string name="manage_access_role_technician">Technician</string>
-  <string name="manage_access_badge_host">Host</string>
   <string name="manage_access_badge_you">You</string>
   <string name="manage_access_member_actions">Member actions</string>
   <string name="manage_access_make_owner">Make owner</string>

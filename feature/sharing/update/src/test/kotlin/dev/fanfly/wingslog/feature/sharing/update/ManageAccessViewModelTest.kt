@@ -119,4 +119,54 @@ class ManageAccessViewModelTest {
     assertThat(state.myRole).isEqualTo(ShareRole.OWNER)
     assertThat(state.canManage).isTrue()
   }
+
+  // --- Revocation while the screen is open (#143) ---
+
+  @Test
+  fun accessDeniedAfterAppearingInRoster_closesTheScreen() = runTest {
+    // B is on the roster, then A revokes them: the rules cut B's roster listener the moment B leaves
+    // memberRoles. Leaving the screen up would show B a roster that still lists B as a member.
+    share.value = AircraftShareState(
+      members = listOf(
+        ShareMember(uid = "host", displayName = "Host", role = ShareRole.OWNER, isHost = true),
+        ShareMember(uid = "me", displayName = "Me", role = ShareRole.TECHNICIAN, isSelf = true),
+      ),
+    )
+    val vm = viewModel()
+    assertThat(vm.uiState.value.accessRevoked).isFalse()
+
+    share.value = AircraftShareState(accessDenied = true)
+
+    assertThat(vm.uiState.value.accessRevoked).isTrue()
+  }
+
+  @Test
+  fun accessDeniedWithoutEverAppearingInRoster_doesNotCloseTheScreen() = runTest {
+    // The same PERMISSION_DENIED on the wire, but from an owner whose aircraft has no share doc yet.
+    // Nothing has been revoked — there is nothing to revoke — so the screen must stay put and let
+    // them invite.
+    role.value = ShareRole.OWNER
+    share.value = AircraftShareState(accessDenied = true)
+
+    val vm = viewModel()
+
+    assertThat(vm.uiState.value.accessRevoked).isFalse()
+  }
+
+  @Test
+  fun accessDenied_doesNotStrandTheStaleRoster() = runTest {
+    share.value = AircraftShareState(
+      members = listOf(
+        ShareMember(uid = "me", displayName = "Me", role = ShareRole.TECHNICIAN, isSelf = true),
+      ),
+    )
+    val vm = viewModel()
+
+    share.value = AircraftShareState(accessDenied = true)
+
+    // The roster we last saw is not overwritten with an empty one (that would flash an empty screen
+    // on the way out), but the screen is on its way out — that is what accessRevoked means.
+    assertThat(vm.uiState.value.accessRevoked).isTrue()
+    assertThat(vm.uiState.value.members).hasSize(1)
+  }
 }
