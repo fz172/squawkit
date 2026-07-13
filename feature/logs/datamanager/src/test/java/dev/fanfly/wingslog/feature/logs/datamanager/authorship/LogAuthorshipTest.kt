@@ -56,15 +56,26 @@ class LogAuthorshipTest {
   // ---- the cases that must stay silent ----
 
   @Test
-  fun aHandTypedTechnician_isUnknown_notAssigned() {
-    // No source_uid: the technician was typed in by hand and belongs to no account, so there is
-    // nothing to attest against. Reporting "assigned" here would accuse the author of something the
-    // data does not show.
+  fun aHandTypedTechnician_isUnverifiable_notAssigned() {
+    // No source_uid: the technician was typed in by hand and belongs to no account, so nothing can
+    // attest the name — anyone can type anything. That is worth saying. What it is NOT is
+    // "assigned": reporting that would accuse the author of something the data does not show.
     val manual = Technician(id = "m1", name = "Hand-typed Mechanic")
 
     val result = log(manual).authorship(writerUid = OWNER_UID, nameForUid = ::nameFor)
 
-    assertThat(result).isEqualTo(LogAuthorship.Unknown)
+    assertThat(result).isEqualTo(LogAuthorship.Unverifiable("Hand-typed Mechanic"))
+  }
+
+  @Test
+  fun aHandTypedTechnician_isUnverifiable_evenWhenTheyTypedItThemselves() {
+    // The writer being the only account in play changes nothing: a typed name is still just text,
+    // with no account behind it to check it against.
+    val manual = Technician(id = "m1", name = "Hand-typed Mechanic")
+
+    val result = log(manual).authorship(writerUid = TECH_UID, nameForUid = ::nameFor)
+
+    assertThat(result).isEqualTo(LogAuthorship.Unverifiable("Hand-typed Mechanic"))
   }
 
   @Test
