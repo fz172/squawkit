@@ -274,9 +274,12 @@ private fun OverviewHero(
 }
 
 /**
- * Marks an aircraft another account shared into this fleet (§6.3). It sits under the hero title
- * rather than in the aircraft picker: the picker showed it once, in passing, while the dashboard is
- * where you actually act on the aircraft and need to know whose it is.
+ * Marks an aircraft that is part of a share (§6.3) — shown to *every* partner in it, the hosting
+ * owner and co-owners included, not just the accounts it was shared into. Everyone in the share
+ * needs to know that what they write here is visible to the others.
+ *
+ * It sits under the hero title rather than in the aircraft picker: the picker showed it once, in
+ * passing, while the dashboard is where you actually act on the aircraft.
  */
 @Composable
 private fun SharedMarker() {
