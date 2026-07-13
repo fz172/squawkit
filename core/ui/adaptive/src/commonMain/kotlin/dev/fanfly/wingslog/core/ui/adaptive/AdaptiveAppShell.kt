@@ -186,6 +186,7 @@ fun AdaptiveAppShell(
           onOpenSettings = onOpenSettings,
           settingsContent = { sectionContent(ShellSection.SETTINGS, null) },
           emptyFleetContent = emptyFleetContent,
+          snackbarHostState = snackbarHostState,
         )
       } else {
         ShellForTier(
@@ -228,6 +229,7 @@ private fun EmptyFleetShell(
   onOpenSettings: () -> Unit,
   settingsContent: @Composable () -> Unit,
   emptyFleetContent: @Composable () -> Unit,
+  snackbarHostState: SnackbarHostState,
 ) {
   val toggleSettings: () -> Unit = {
     if (state.section == ShellSection.SETTINGS) onSelectSection(ShellSection.DASHBOARD)
@@ -259,6 +261,7 @@ private fun EmptyFleetShell(
           // In sidebar mode the Settings section provides its own header (nested NavHost), so the
           // scaffold's "Settings" bar would double up.
           showSettingsTopBar = false,
+          snackbarHostState = snackbarHostState,
           content = body,
         )
       }
@@ -268,6 +271,7 @@ private fun EmptyFleetShell(
       state = state,
       showAccountAction = true,
       onToggleSettings = toggleSettings,
+      snackbarHostState = snackbarHostState,
       content = body,
     )
   }
@@ -284,11 +288,16 @@ private fun EmptyFleetScaffold(
   state: AdaptiveShellUiState,
   showAccountAction: Boolean,
   onToggleSettings: () -> Unit,
+  snackbarHostState: SnackbarHostState,
   showSettingsTopBar: Boolean = true,
   content: @Composable () -> Unit,
 ) {
   val inSettings = state.section == ShellSection.SETTINGS
   Scaffold(
+    // An empty fleet is not a reason to have no snackbar host. It is the *most* likely moment to
+    // need one: losing access to a shared aircraft that was your only aircraft lands you here, and
+    // that is exactly when the "changes discarded" notice has to be seen (PRD D3).
+    snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
       if (showAccountAction || (inSettings && showSettingsTopBar)) {
         TopAppBar(
