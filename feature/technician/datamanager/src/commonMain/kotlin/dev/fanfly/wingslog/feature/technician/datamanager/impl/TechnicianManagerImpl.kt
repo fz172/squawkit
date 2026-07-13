@@ -230,7 +230,10 @@ class TechnicianManagerImpl(
       true
     }.onFailure { logger.w(it) { "Error deleting technician $id" } }
 
-  override suspend fun applyDuplicateMerges(groups: List<DuplicateGroup>): Result<Unit> =
+  override suspend fun applyDuplicateMerges(
+    groups: List<DuplicateGroup>,
+    reviewedSignature: String,
+  ): Result<Unit> =
     runCatching {
       val uid = firebaseAuth.currentUser?.uid
         ?: error("Cannot merge technicians when no user is signed in")
@@ -263,38 +266,36 @@ class TechnicianManagerImpl(
           DuplicateResolution.WARN_MIRROR_CONFLICT -> Unit
         }
       }
-      markDuplicatesReviewed().getOrThrow()
+      markDuplicatesReviewed(reviewedSignature).getOrThrow()
     }.onFailure { logger.w(it) { "Error applying technician merges" } }
 
   /**
    * Must hang off `authStateChanged`, like every other observe here — NOT off a one-shot read of
    * `currentUser`. Firebase restores the session asynchronously, so a ViewModel built before that
-   * lands would read a null user, fall through to "reviewed", and suppress the review prompt for
-   * its entire lifetime however many duplicates were sitting there.
+   * lands would read a null user and mis-report the review state for its entire lifetime.
    *
    * The trigger re-reads after [markDuplicatesReviewed], so dismissing takes effect immediately
    * rather than at the next screen recreation.
    */
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeDuplicatesReviewed(): Flow<Boolean> =
+  override fun observeReviewedDuplicatesSignature(): Flow<String?> =
     firebaseAuth.authStateChanged.flatMapLatest { user ->
-      // Signed out: nothing to review, and nobody to nag.
-      if (user == null) flowOf(true)
+      if (user == null) flowOf(null)
       else reviewedTrigger.map {
         db.schemaQueries.selectConfig(user.uid, DUPLICATES_REVIEWED_KEY)
-          .awaitAsOneOrNull() == REVIEWED
+          .awaitAsOneOrNull()
       }
     }.catch { e ->
-      // A failed read must not silently hide the prompt — surfacing it is recoverable, the user can
-      // dismiss; swallowing it loses the feature with no trace.
-      logger.w(e) { "Could not read duplicates-reviewed flag" }
-      emit(false)
+      // A failed read must not silently hide the prompt — showing one the user can dismiss is
+      // recoverable, swallowing the feature with no trace is not.
+      logger.w(e) { "Could not read reviewed-duplicates signature" }
+      emit(null)
     }
 
-  override suspend fun markDuplicatesReviewed(): Result<Unit> = runCatching {
+  override suspend fun markDuplicatesReviewed(signature: String): Result<Unit> = runCatching {
     val uid = firebaseAuth.currentUser?.uid ?: return@runCatching
     writeLock.withLock {
-      db.schemaQueries.upsertConfig(uid, DUPLICATES_REVIEWED_KEY, REVIEWED)
+      db.schemaQueries.upsertConfig(uid, DUPLICATES_REVIEWED_KEY, signature)
     }
     reviewedTrigger.update { it + 1 }
   }
@@ -328,10 +329,12 @@ class TechnicianManagerImpl(
   companion object {
     private val SELF_ID_HYDRATION_TIMEOUT = 5.seconds
 
-    /** Device-local: the review prompt is a nudge, not data worth syncing. */
+    /**
+     * Device-local: the review prompt is a nudge, not data worth syncing. Holds the *signature* of
+     * the duplicate set last reviewed — see [observeReviewedDuplicatesSignature]. A legacy "1" from
+     * the boolean version simply never matches a real signature, so it self-heals into a re-prompt.
+     */
     private const val DUPLICATES_REVIEWED_KEY = "technician_duplicates_reviewed"
 
-    /** sync_config stores TEXT, so the flag is a string rather than a boolean. */
-    private const val REVIEWED = "1"
   }
 }

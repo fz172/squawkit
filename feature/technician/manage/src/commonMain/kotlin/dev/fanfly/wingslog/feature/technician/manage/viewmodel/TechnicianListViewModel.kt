@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.findDuplicates
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.signature
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,12 +27,19 @@ data class TechnicianListUiState(
   val selfId: String? = null,
   /** Rows that look like the same person, for the review sheet (design §7.4). */
   val duplicates: List<DuplicateGroup> = emptyList(),
-  /** True once the user has reconciled or dismissed the duplicates, so the prompt stops nagging. */
-  val duplicatesReviewed: Boolean = true,
+  /** Identifies *these* duplicates; stored on dismiss so a NEW look-alike still prompts. */
+  val duplicatesSignature: String = "",
+  /** The signature the user last dismissed or merged, or null if they never have. */
+  val reviewedSignature: String? = null,
   val showDuplicateReview: Boolean = false,
 ) {
-  /** Prompt only when there is something to reconcile and the user hasn't already said no. */
-  val showDuplicatePrompt: Boolean get() = duplicates.isNotEmpty() && !duplicatesReviewed
+  /**
+   * Prompt when there is something to reconcile that the user has not already seen. Comparing
+   * signatures rather than a boolean is what stops a single dismissal from muting every future
+   * duplicate forever.
+   */
+  val showDuplicatePrompt: Boolean
+    get() = duplicates.isNotEmpty() && duplicatesSignature != reviewedSignature
 }
 
 class TechnicianListViewModel(
@@ -45,21 +53,24 @@ class TechnicianListViewModel(
     technicianManager.observeTechnicians(),
     technicianManager.observeSelfId(),
     sharingManager.observeLinkedTechnicians(),
-    technicianManager.observeDuplicatesReviewed(),
+    technicianManager.observeReviewedDuplicatesSignature(),
     localState,
-  ) { technicians, selfId, linked, reviewed, local ->
+  ) { technicians, selfId, linked, reviewedSignature, local ->
     val self = technicians.find { it.id == selfId }
     val others = technicians.filter { it.id != selfId }
       .sortedBy { it.name.lowercase() }
+
+    // The self-record participates as a *keeper*, never as a duplicate: hand-typing yourself before
+    // the app bootstrapped your profile is one of the commonest duplicates there is.
+    val duplicates = findDuplicates(manual = others, mirrors = linked, self = self)
 
     TechnicianListUiState(
       technicians = listOfNotNull(self) + others,
       linkedTechnicians = linked,
       selfId = selfId,
-      // The self-record participates as a *keeper*, never as a duplicate: hand-typing yourself
-      // before the app bootstrapped your profile is one of the commonest duplicates there is.
-      duplicates = findDuplicates(manual = others, mirrors = linked, self = self),
-      duplicatesReviewed = reviewed,
+      duplicates = duplicates,
+      duplicatesSignature = duplicates.signature(),
+      reviewedSignature = reviewedSignature,
       showDuplicateReview = local.showDuplicateReview,
     )
   }.stateIn(
@@ -72,10 +83,10 @@ class TechnicianListViewModel(
 
   fun hideDuplicateReview() = localState.update { it.copy(showDuplicateReview = false) }
 
-  /** "Not duplicates" — stop prompting, change nothing. */
+  /** "Not duplicates" — stop prompting about *these*, change nothing. A new one still prompts. */
   fun dismissDuplicatePrompt() {
     viewModelScope.launch {
-      technicianManager.markDuplicatesReviewed()
+      technicianManager.markDuplicatesReviewed(uiState.value.duplicatesSignature)
       localState.update { it.copy(showDuplicateReview = false) }
     }
   }
@@ -83,7 +94,7 @@ class TechnicianListViewModel(
   /** Applies only the groups the user checked. Nothing is ever merged silently (§7.4). */
   fun applyMerges(groups: List<DuplicateGroup>) {
     viewModelScope.launch {
-      technicianManager.applyDuplicateMerges(groups)
+      technicianManager.applyDuplicateMerges(groups, uiState.value.duplicatesSignature)
       localState.update { it.copy(showDuplicateReview = false) }
     }
   }

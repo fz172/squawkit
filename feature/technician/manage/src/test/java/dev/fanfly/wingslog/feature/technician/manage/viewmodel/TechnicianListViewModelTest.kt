@@ -39,8 +39,8 @@ class TechnicianListViewModelTest {
     every { technicianManager.observeSelfId() } returns flowOf(null)
     every { sharingManager.observeLinkedTechnicians() } returns flowOf(emptyList())
     // A relaxed mock hands back an EMPTY flow, and an empty source in a combine means the state
-    // never emits at all — stub it so the combine can produce.
-    every { technicianManager.observeDuplicatesReviewed() } returns flowOf(true)
+    // never emits at all — stub it so the combine can produce. Null = never reviewed.
+    every { technicianManager.observeReviewedDuplicatesSignature() } returns flowOf(null)
   }
 
   @After
@@ -115,7 +115,7 @@ class TechnicianListViewModelTest {
         )
       )
     )
-    every { technicianManager.observeDuplicatesReviewed() } returns flowOf(false)
+    every { technicianManager.observeReviewedDuplicatesSignature() } returns flowOf(null)
 
     val state = viewModel().uiState.first { it.duplicates.isNotEmpty() }
 
@@ -124,7 +124,34 @@ class TechnicianListViewModelTest {
   }
 
   @Test
-  fun onceReviewed_theUserIsNotPromptedAgain() = runTest(testDispatcher) {
+  fun onceTheseDuplicatesAreReviewed_thePromptStopsForThem() = runTest(testDispatcher) {
+    seedSpongeBobDuplicate()
+    // Whatever signature the current duplicates produce, having reviewed exactly that set silences
+    // the prompt.
+    val current = viewModel().uiState.first { it.duplicates.isNotEmpty() }.duplicatesSignature
+    every { technicianManager.observeReviewedDuplicatesSignature() } returns flowOf(current)
+
+    val state = viewModel().uiState.first { it.duplicates.isNotEmpty() }
+
+    // Still detected — the user just isn't nagged about the ones they've already seen.
+    assertThat(state.showDuplicatePrompt).isFalse()
+  }
+
+  @Test
+  fun aStaleReviewMarker_doesNotMuteADifferentDuplicate() = runTest(testDispatcher) {
+    // The bug this replaces: "reviewed" was a boolean, so one dismissal muted the prompt forever
+    // and every duplicate added afterwards was detected and then silently swallowed.
+    seedSpongeBobDuplicate()
+    every { technicianManager.observeReviewedDuplicatesSignature() } returns
+      flowOf("some-older-set-of-duplicates")
+
+    val state = viewModel().uiState.first { it.duplicates.isNotEmpty() }
+
+    assertThat(state.showDuplicatePrompt).isTrue()
+  }
+
+  /** A hand-typed "Sponge Bob" that duplicates a linked member of the same name and certificate. */
+  private fun seedSpongeBobDuplicate() {
     every { technicianManager.observeTechnicians() } returns flowOf(
       listOf(Technician(id = "m1", name = "Sponge Bob", cert_number = "AP-123"))
     )
@@ -138,12 +165,6 @@ class TechnicianListViewModelTest {
         )
       )
     )
-    every { technicianManager.observeDuplicatesReviewed() } returns flowOf(true)
-
-    val state = viewModel().uiState.first { it.duplicates.isNotEmpty() }
-
-    // The duplicates are still detected — the user just isn't nagged about them.
-    assertThat(state.showDuplicatePrompt).isFalse()
   }
 
   @Test
@@ -156,7 +177,7 @@ class TechnicianListViewModelTest {
       )
     )
     every { technicianManager.observeSelfId() } returns flowOf(SELF_ID)
-    every { technicianManager.observeDuplicatesReviewed() } returns flowOf(false)
+    every { technicianManager.observeReviewedDuplicatesSignature() } returns flowOf(null)
 
     val state = viewModel().uiState.first { it.duplicates.isNotEmpty() }
 
@@ -184,7 +205,7 @@ class TechnicianListViewModelTest {
         )
       )
     )
-    every { technicianManager.observeDuplicatesReviewed() } returns flowOf(false)
+    every { technicianManager.observeReviewedDuplicatesSignature() } returns flowOf(null)
 
     val state = viewModel().uiState.first { it.technicians.isNotEmpty() }
 

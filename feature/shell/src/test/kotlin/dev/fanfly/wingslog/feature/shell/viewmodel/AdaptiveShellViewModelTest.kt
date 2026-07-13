@@ -62,9 +62,13 @@ class AdaptiveShellViewModelTest {
     override suspend fun ensureSelfProfile(replaceExistingName: Boolean) =
       Result.success(Unit)
 
-    override suspend fun applyDuplicateMerges(groups: List<DuplicateGroup>) = Result.success(Unit)
-    override fun observeDuplicatesReviewed(): Flow<Boolean> = MutableStateFlow(true)
-    override suspend fun markDuplicatesReviewed() = Result.success(Unit)
+    override suspend fun applyDuplicateMerges(
+      groups: List<DuplicateGroup>,
+      reviewedSignature: String,
+    ) = Result.success(Unit)
+
+    override fun observeReviewedDuplicatesSignature(): Flow<String?> = MutableStateFlow(null)
+    override suspend fun markDuplicatesReviewed(signature: String) = Result.success(Unit)
   }
   private val authManager = object : AuthManager {
     override fun getCurrentUser(): FirebaseUser? = null

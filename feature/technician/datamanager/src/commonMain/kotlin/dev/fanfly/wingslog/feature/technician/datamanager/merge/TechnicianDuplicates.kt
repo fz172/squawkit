@@ -149,6 +149,22 @@ fun findDuplicates(
   return groups
 }
 
+/**
+ * A stable identity for *which* duplicates these are — not how many.
+ *
+ * Dismissing the review has to mean "I've seen these", not "never mention duplicates again". The
+ * signature is stored when the user dismisses, and compared against the current one: add a new
+ * look-alike later and the signature changes, so the prompt returns. Order-independent, so a
+ * reshuffled roster doesn't spuriously re-prompt.
+ */
+fun List<DuplicateGroup>.signature(): String =
+  map { group ->
+    (listOf(group.keep.id) + group.duplicates.map { it.id }).sorted()
+      .joinToString(",")
+  }
+    .sorted()
+    .joinToString("|")
+
 /** Certificate number match, else name. Callers decide how much confirmation each deserves. */
 private fun Technician.matches(other: Technician): Boolean {
   val cert = certKey()

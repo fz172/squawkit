@@ -47,10 +47,19 @@ interface TechnicianManager {
    *
    * Log snapshots are never touched: a merge changes only the go-forward roster.
    */
-  suspend fun applyDuplicateMerges(groups: List<DuplicateGroup>): Result<Unit>
+  suspend fun applyDuplicateMerges(
+    groups: List<DuplicateGroup>,
+    reviewedSignature: String,
+  ): Result<Unit>
 
-  /** True once the user has dealt with (or dismissed) the duplicate review, so it stops nagging. */
-  fun observeDuplicatesReviewed(): Flow<Boolean>
+  /**
+   * Signature of the duplicate set the user last reviewed, or null if they never have.
+   *
+   * Deliberately not a boolean: "reviewed" must mean *these* duplicates, not "never nag me again".
+   * A boolean here permanently mutes the prompt, so every look-alike added afterwards is detected
+   * and then silently swallowed.
+   */
+  fun observeReviewedDuplicatesSignature(): Flow<String?>
 
-  suspend fun markDuplicatesReviewed(): Result<Unit>
+  suspend fun markDuplicatesReviewed(signature: String): Result<Unit>
 }
