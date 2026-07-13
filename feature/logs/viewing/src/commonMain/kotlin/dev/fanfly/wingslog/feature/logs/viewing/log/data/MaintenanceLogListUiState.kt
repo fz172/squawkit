@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.logs.viewing.log.data
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 
 data class LogFilter(
   val query: String = "",
@@ -18,6 +19,8 @@ sealed interface MaintenanceLogListUiState {
     val totalCount: Int,
     val filter: LogFilter = LogFilter(),
     val selectedLog: MaintenanceLog? = null,
+    /** Whether the technician named on the selected log actually wrote it (design §7.5). */
+    val selectedAuthorship: LogAuthorship = LogAuthorship.Unknown,
     val availableCards: List<MaintenanceTask> = emptyList(),
   ) : MaintenanceLogListUiState
 

@@ -21,6 +21,9 @@ CREATE TABLE entity (
   remote_updated_at  INTEGER,
   dirty              INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
   deleted            INTEGER AS kotlin.Boolean NOT NULL DEFAULT 0,
+  -- Who wrote this revision (design §7.5). Stamped on our own writes, carried down from the sync
+  -- envelope on pull. Null for rows written before this existed.
+  writer_uid         TEXT,
   PRIMARY KEY (collection, scope_path, id)
 );
 
@@ -48,22 +51,22 @@ CREATE TABLE sync_config (
 -- Entity queries.
 
 selectAll:
-SELECT id, payload, updated_at
+SELECT id, payload, updated_at, writer_uid
 FROM entity
 WHERE collection = :collection AND scope_path = :scope AND deleted = 0
 ORDER BY updated_at DESC;
 
 selectOne:
-SELECT id, payload, updated_at
+SELECT id, payload, updated_at, writer_uid
 FROM entity
 WHERE collection = :collection AND scope_path = :scope AND id = :id AND deleted = 0;
 
 upsert:
 INSERT OR REPLACE INTO entity(
   collection, scope_path, id, payload, payload_schema,
-  updated_at, remote_updated_at, dirty, deleted
+  updated_at, remote_updated_at, dirty, deleted, writer_uid
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- Read the full sync state of one row. Used by the pull listener's comparator,
 -- which needs `dirty` and `remote_updated_at` to decide whether to apply a

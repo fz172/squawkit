@@ -45,6 +45,7 @@ class LocalAccountMigratorTest {
       remote_updated_at = remoteUpdatedAt,
       dirty = dirty,
       deleted = false,
+      writer_uid = null,
     )
   }
 

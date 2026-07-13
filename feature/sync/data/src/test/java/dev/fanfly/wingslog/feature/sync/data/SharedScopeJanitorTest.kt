@@ -76,6 +76,7 @@ class SharedScopeJanitorTest {
       remote_updated_at = null,
       dirty = false,
       deleted = false,
+      writer_uid = null,
     )
   }
 

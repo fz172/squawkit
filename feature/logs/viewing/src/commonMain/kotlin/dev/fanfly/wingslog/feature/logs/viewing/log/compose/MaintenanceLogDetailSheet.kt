@@ -35,6 +35,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
+import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -51,6 +52,9 @@ import wingslog.feature.logs.viewing.generated.resources.no_tasks_linked
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_task
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.logs.sharedassets.generated.resources.log_assigned_by
+import wingslog.feature.logs.sharedassets.generated.resources.log_assigned_by_unknown
+import wingslog.feature.logs.sharedassets.generated.resources.log_signed_by
 import wingslog.feature.logs.sharedassets.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
@@ -61,6 +65,7 @@ fun MaintenanceLogDetailSheet(
   log: MaintenanceLog,
   availableCards: List<MaintenanceTask>,
   onDismiss: () -> Unit,
+  authorship: LogAuthorship = LogAuthorship.Unknown,
   onEditClick: (() -> Unit)?,
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
@@ -135,11 +140,16 @@ fun MaintenanceLogDetailSheet(
     ) {
       val techName = log.technician?.name?.takeIf { it.isNotBlank() }
       if (techName != null) {
-        Text(
-          text = techName,
-          style = MaterialTheme.typography.bodyMedium,
-          fontWeight = FontWeight.Medium,
-        )
+        Column {
+          Text(
+            text = techName,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+          )
+          // On a shared aircraft, being named as the technician does not mean you wrote the entry.
+          // Say which it is — unforgeably, from the envelope's writer_uid (§7.5).
+          AuthorshipLine(authorship)
+        }
       } else {
         Spacer(Modifier.height(Spacing.none))
       }
@@ -290,4 +300,31 @@ private fun LinkedTaskRow(
       )
     }
   }
+}
+
+/**
+ * "Signed" vs "assigned". Silent when authorship is [LogAuthorship.Unknown] — a hand-typed
+ * technician or a pre-attestation revision proves nothing either way, and implying otherwise would
+ * be worse than saying nothing.
+ */
+@Composable
+private fun AuthorshipLine(authorship: LogAuthorship) {
+  val text = when (authorship) {
+    is LogAuthorship.SelfSigned ->
+      stringResource(MaintenanceRes.string.log_signed_by, authorship.technicianName)
+
+    is LogAuthorship.Assigned -> authorship.authorName?.let { author ->
+      stringResource(MaintenanceRes.string.log_assigned_by, author, authorship.technicianName)
+    } ?: stringResource(
+      MaintenanceRes.string.log_assigned_by_unknown,
+      authorship.technicianName,
+    )
+
+    LogAuthorship.Unknown -> return
+  }
+  Text(
+    text = text,
+    style = MaterialTheme.typography.labelSmall,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+  )
 }

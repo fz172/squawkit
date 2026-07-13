@@ -25,6 +25,8 @@ private const val TEST_AIRCRAFT_ID = "aircraft-test-001"
 private const val OTHER_USER_ID = "user-other-999"
 
 @OptIn(ExperimentalCoroutinesApi::class)
+private const val CURRENT_UID = "uid-writer"
+
 class SqlDelightEntityStoreTest {
 
   private lateinit var db: WingsLogDatabase
@@ -51,7 +53,40 @@ class SqlDelightEntityStoreTest {
       db = db,
       ioContext = ioContext,
       clock = testClock,
+      currentUid = { CURRENT_UID },
     )
+  }
+
+  // ---- authorship (design §7.5) ----
+
+  @Test
+  fun put_stamps_the_writing_account_as_author() = runTest(ioContext) {
+    val aircraft = buildTestAircraft(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
+
+    store.put(TEST_AIRCRAFT_ID, aircraft, scopeA)
+
+    // Who wrote this revision is what §7.5 attests: it is read back to tell a technician signing
+    // their own work apart from someone else attributing work to them.
+    val row = store.observe(TEST_AIRCRAFT_ID, scopeA).first()
+    assertThat(row?.writerUid).isEqualTo(CURRENT_UID)
+  }
+
+  @Test
+  fun signedOut_writes_carry_no_author() = runTest(ioContext) {
+    val anonymous = SqlDelightEntityStore(
+      kind = CollectionKind.Aircraft,
+      codec = codec,
+      db = db,
+      ioContext = ioContext,
+      clock = testClock,
+      currentUid = { null },
+    )
+    val aircraft = buildTestAircraft(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
+
+    anonymous.put(TEST_AIRCRAFT_ID, aircraft, scopeA)
+
+    // Null means "unknown", which the UI reports as neither signed nor assigned.
+    assertThat(anonymous.observe(TEST_AIRCRAFT_ID, scopeA).first()?.writerUid).isNull()
   }
 
   // ---- put + observeAll ----

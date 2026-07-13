@@ -289,6 +289,7 @@ fun MaintenanceLogListContent(
                 log = log,
                 availableCards = uiState.availableCards,
                 onDismiss = onDismissDetail,
+                authorship = uiState.selectedAuthorship,
                 onEditClick = onEditLog?.let { edit ->
                   {
                     onDismissDetail()

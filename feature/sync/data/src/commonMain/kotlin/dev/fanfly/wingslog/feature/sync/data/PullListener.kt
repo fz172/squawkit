@@ -95,6 +95,7 @@ class PullListener(
       remote_updated_at = remote.remoteTsMs,
       dirty = false,
       deleted = remote.deleted,
+      writer_uid = remote.writerUid,
     )
   }
 
@@ -116,6 +117,8 @@ data class RemoteEntity(
   val payload: ByteArray,
   val deleted: Boolean,
   val remoteTsMs: Long,
+  /** Envelope authorship, outside the opaque payload and rules-enforced (design §7.5). */
+  val writerUid: String? = null,
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -123,6 +126,7 @@ data class RemoteEntity(
     return id == other.id &&
       deleted == other.deleted &&
       remoteTsMs == other.remoteTsMs &&
+      writerUid == other.writerUid &&
       payload.contentEquals(other.payload)
   }
 
@@ -130,6 +134,7 @@ data class RemoteEntity(
     var result = id.hashCode()
     result = 31 * result + deleted.hashCode()
     result = 31 * result + remoteTsMs.hashCode()
+    result = 31 * result + writerUid.hashCode()
     result = 31 * result + payload.contentHashCode()
     return result
   }

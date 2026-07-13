@@ -73,7 +73,7 @@ sqldelight {
   databases {
     create("WingsLogDatabase") {
       packageName.set("dev.fanfly.wingslog.core.storage.db")
-      version = 3
+      version = 4
       // Required for the browser sql.js web-worker driver (async). Mobile sync drivers
       // wrap the async-generated schema via Schema.synchronous() in their DriverFactory.
       generateAsync.set(true)

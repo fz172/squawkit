@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.sync.data.di
 
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
+import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -62,6 +63,12 @@ val syncModule: Module = module {
   // Narrow core:storage view of the master toggle — lets datamanagers read the flag without
   // depending on feature:sync:data.
   single<CloudSyncSetting> { get<SyncPreferences>() }
+  // core:storage knows nothing about Firebase, so authorship is supplied from here — the store
+  // stamps it as writer_uid on every local write (design §7.5).
+  single<CurrentUidProvider> {
+    val auth = get<FirebaseAuth>()
+    CurrentUidProvider { auth.currentUser?.uid }
+  }
   single<SyncCursorStore> {
     SyncCursorStore(
       get<WingsLogDatabase>(),

@@ -19,6 +19,7 @@ class EntityStoreFactory(
   private val ioContext: CoroutineContext,
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   private val clock: Clock = Clock.System,
+  private val currentUid: CurrentUidProvider = CurrentUidProvider { null },
 ) {
   fun <T : Any> create(kind: CollectionKind): EntityStore<T> =
     SqlDelightEntityStore(
@@ -28,5 +29,6 @@ class EntityStoreFactory(
       ioContext = ioContext,
       writeLock = writeLock,
       clock = clock,
+      currentUid = currentUid,
     )
 }

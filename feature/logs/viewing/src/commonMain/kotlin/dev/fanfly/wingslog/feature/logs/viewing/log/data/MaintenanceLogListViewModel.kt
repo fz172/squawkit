@@ -6,6 +6,11 @@ import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
+import dev.fanfly.wingslog.feature.logs.datamanager.authorship.authorship
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +25,9 @@ import kotlinx.coroutines.launch
 class MaintenanceLogListViewModel(
   private val logManager: MaintenanceLogManager,
   private val inspectionDataManager: TaskDataManager,
+  private val sharingManager: SharingManager,
+  private val technicianManager: TechnicianManager,
+  private val auth: FirebaseAuth,
   val aircraftId: String,
 ) : ViewModel() {
 
@@ -37,16 +45,24 @@ class MaintenanceLogListViewModel(
   private val _availableCards =
     MutableStateFlow<List<MaintenanceTask>>(emptyList())
 
+  /** logId → uid of whoever wrote the latest revision. Envelope data, not payload (§7.5). */
+  private val _logAuthors = MutableStateFlow<Map<String, String?>>(emptyMap())
+
+  /** uid → display name, for naming the author of a log this member didn't write. */
+  private val _namesByUid = MutableStateFlow<Map<String, String>>(emptyMap())
+
   init {
     observeLogs()
     observeTasks()
+    observeAuthorship()
     viewModelScope.launch {
       combine(
         _logsLoadState,
         _filter,
         _selectedLog,
         _availableCards,
-      ) { logsState, filter, selectedLog, availableCards ->
+        combine(_logAuthors, _namesByUid) { authors, names -> authors to names },
+      ) { logsState, filter, selectedLog, availableCards, (authors, names) ->
         when (logsState) {
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
           LogsLoadState.Error -> MaintenanceLogListUiState.Error
@@ -66,6 +82,10 @@ class MaintenanceLogListViewModel(
               totalCount = logsState.logs.size,
               filter = filter,
               selectedLog = selectedLog,
+              selectedAuthorship = selectedLog?.authorship(
+                writerUid = authors[selectedLog.id],
+                nameForUid = { uid -> names[uid] },
+              ) ?: LogAuthorship.Unknown,
               availableCards = availableCards,
             )
           }
@@ -80,6 +100,34 @@ class MaintenanceLogListViewModel(
         .onStart { _logsLoadState.value = LogsLoadState.Loading }
         .catch { _logsLoadState.value = LogsLoadState.Error }
         .collect { logs -> _logsLoadState.value = LogsLoadState.Loaded(logs) }
+    }
+  }
+
+  /**
+   * Authorship, and the names to render it with. The roster of members who published a mirror gives
+   * us a name for anyone who might have written a log on this aircraft; the caller's own record
+   * covers the common case of their own writes.
+   */
+  private fun observeAuthorship() {
+    viewModelScope.launch {
+      logManager.observeLogAuthors(aircraftId)
+        .catch { _logAuthors.value = emptyMap() }
+        .collect { _logAuthors.value = it }
+    }
+    viewModelScope.launch {
+      combine(
+        sharingManager.observeLinkedTechnicians(aircraftId),
+        technicianManager.observeSelf(),
+      ) { linked, self ->
+        buildMap {
+          linked.forEach { put(it.source_uid, it.name) }
+          val myUid = auth.currentUser?.uid
+          val myName = self?.name?.takeIf { it.isNotBlank() }
+          if (myUid != null && myName != null) put(myUid, myName)
+        }
+      }
+        .catch { _namesByUid.value = emptyMap() }
+        .collect { _namesByUid.value = it }
     }
   }
 

@@ -5,6 +5,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityCodec
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -34,6 +35,8 @@ class SqlDelightEntityStore<T : Any>(
   private val ioContext: CoroutineContext,
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   private val clock: Clock = Clock.System,
+  /** Stamps authorship on our own writes (§7.5). Null when signed out, or in tests that ignore it. */
+  private val currentUid: CurrentUidProvider = CurrentUidProvider { null },
 ) : EntityStore<T> {
 
   override fun observeAll(scope: EntityScope): Flow<List<StorageEntity<T>>> =
@@ -76,6 +79,9 @@ class SqlDelightEntityStore<T : Any>(
         remote_updated_at = null,
         dirty = true,
         deleted = false,
+        // We are the author of this revision — that is exactly what §7.5 attests. PushWorker stamps
+        // the same uid onto the envelope, and rules reject a write whose writer_uid isn't the caller.
+        writer_uid = currentUid.currentUid(),
       )
     }
   }
@@ -104,6 +110,7 @@ class SqlDelightEntityStore<T : Any>(
         remote_updated_at = null,
         dirty = true,
         deleted = true,
+        writer_uid = currentUid.currentUid(),
       )
     }
   }
@@ -114,12 +121,14 @@ class SqlDelightEntityStore<T : Any>(
     id = id,
     value = codec.decode(payload),
     updatedAt = Instant.fromEpochMilliseconds(updated_at),
+    writerUid = writer_uid,
   )
 
   private fun SelectOneRow.toEntity(): StorageEntity<T> = StorageEntity(
     id = id,
     value = codec.decode(payload),
     updatedAt = Instant.fromEpochMilliseconds(updated_at),
+    writerUid = writer_uid,
   )
 }
 

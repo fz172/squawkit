@@ -16,4 +16,9 @@ data class StorageEntity<T : Any>(
   val id: String,
   val value: T,
   val updatedAt: Instant,
+  /**
+   * Uid of the account that wrote this revision (design §7.5). Null for rows written before the
+   * field existed, and for rows we have never seen a writer for — "unknown", not "someone else".
+   */
+  val writerUid: String? = null,
 )
