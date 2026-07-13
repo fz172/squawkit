@@ -3,7 +3,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { FUNCTION_REGION } from "../config/env.js";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { requireAuthenticatedApp } from "../shared/auth.js";
-import { INVITE_CODES_COLLECTION } from "./inviteCodes.js";
+import { INVITE_CODES_COLLECTION, type InviteCodeDoc } from "./inviteCodes.js";
 import {
   aircraftShareDocPath,
   shareInviteDocPath,
@@ -17,12 +17,12 @@ type CancelRequest = { aircraftId: string; codeId: string };
  * Cancels a pending invite (#164).
  *
  * Server-side because the code doc is in a collection no client may touch — and because cancelling
- * means *destroying the code*, not flagging it. There is no `revoked` field any more: the code is
+ * means *destroying* the code, not flagging it. There is no `revoked` field any more: the code is
  * gone, so a cancelled invite and a never-existed one are the same state, which is the same error
  * the PRD wants for both.
  *
- * The owner identifies the invite by `codeId` (SHA-256 of the code), which is what they can see —
- * they cannot see the code itself, and neither can anyone else.
+ * The owner identifies the invite by `codeId` (SHA-256 of the code) — what they can see. They cannot
+ * see the code itself, and neither can anyone else.
  */
 export const cancelAircraftShareInvite = onCall<CancelRequest, Promise<{ ok: true }>>(
   { region: FUNCTION_REGION, enforceAppCheck: true },
@@ -37,19 +37,21 @@ export const cancelAircraftShareInvite = onCall<CancelRequest, Promise<{ ok: tru
       throw new HttpsError("permission-denied", "Only owners can cancel invites.");
     }
 
-    // The owner's record holds the codeId, not the code, so the live code doc has to be found by
-    // matching on it. Cheap: pending invites per aircraft are a handful, and this collection is
-    // otherwise unqueryable by clients.
+    // ONE equality filter, served by the automatic single-field index. A compound query
+    // (hostUid + aircraftId) would need a composite index — and the emulator does not enforce
+    // indexes, so it would have passed here and failed in production with FAILED_PRECONDITION.
     const codes = await adminDb
       .collection(INVITE_CODES_COLLECTION)
-      .where("hostUid", "==", uid)
-      .where("aircraftId", "==", aircraftId)
+      .where("codeId", "==", codeId)
+      .limit(1)
       .get();
 
     const batch = adminDb.batch();
     for (const codeDoc of codes.docs) {
-      const { createHash } = await import("node:crypto");
-      if (createHash("sha256").update(codeDoc.id).digest("hex") === codeId) {
+      // A codeId is a hash, so a match is the invite — but check the owner anyway rather than trust
+      // the caller's word about which invite is theirs.
+      const invite = codeDoc.data() as InviteCodeDoc;
+      if (invite.hostUid === uid && invite.aircraftId === aircraftId) {
         batch.delete(codeDoc.ref);
       }
     }

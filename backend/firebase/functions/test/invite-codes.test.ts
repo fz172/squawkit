@@ -134,6 +134,16 @@ describe("previewAircraftShareInvite (#201)", () => {
     expect(JSON.stringify(res)).not.toContain(HOST);
   });
 
+  it("refuses an anonymous caller — otherwise the rate limit is free to bypass", async () => {
+    // The limiter meters by uid, and anonymous uids are free and unlimited: mint one, spend its 10
+    // guesses, mint another. A ~39-bit code only survives because guessing is metered, so a
+    // disposable identity defeats the entire design. Redeem always refused anonymous callers;
+    // preview must too, because it dereferences the same code.
+    const code = await mintCode();
+
+    await expect(wrappedPreview(req("anon-uid", { code }, "anonymous"))).rejects.toThrow();
+  });
+
   it("grants nothing — previewing does not make you a member", async () => {
     const code = await mintCode();
 
@@ -177,6 +187,17 @@ describe("rate limiting — the brute-force budget", () => {
 });
 
 describe("cancelAircraftShareInvite", () => {
+  it("finds the code by a single equality filter (no composite index needed)", async () => {
+    // The first cut filtered on (hostUid, aircraftId) and hash-matched the results — a compound
+    // query needing a composite index. The emulator does not enforce indexes, so it passed here and
+    // would have failed in production with FAILED_PRECONDITION. The code doc now carries codeId.
+    const code = await mintCode();
+    const stored = (await adminDb.doc(`invite_codes/${code}`).get()).data();
+
+    expect(stored?.codeId).toBe(sha256(code));
+  });
+
+
   it("destroys the code, so a cancelled invite and a never-existed one are the same", async () => {
     const code = await mintCode();
     const codeId = sha256(code);

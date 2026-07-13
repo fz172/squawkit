@@ -43,6 +43,13 @@ export type InviteCodeDoc = {
    */
   aircraftLabel: string;
   hostName: string;
+  /**
+   * SHA-256 of the code — the same id the owner sees in their pending list, denormalized here so a
+   * cancel can find this doc with ONE equality filter. Without it, cancel had to filter on
+   * (hostUid, aircraftId) and hash-match every candidate: a compound query needing a composite index
+   * that the emulator does not enforce, so it passed in tests and would have failed in production.
+   */
+  codeId: string;
 };
 
 /**

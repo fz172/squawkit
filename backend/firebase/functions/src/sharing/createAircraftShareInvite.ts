@@ -84,6 +84,7 @@ export const createAircraftShareInvite = onCall<CreateRequest, Promise<CreateRes
         // aircraft record — it is opaque proto bytes — so they are carried here.
         aircraftLabel,
         hostName: request.auth?.token?.name ?? "",
+        codeId, // lets cancel find this doc by a single equality filter — see inviteCodes.ts
       });
 
       // Owner-visible record: enough to list and cancel a pending invite, with the code itself

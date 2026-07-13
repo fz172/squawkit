@@ -50,7 +50,11 @@ The owner can invite you again.</string>
   <string name="invite_link_unavailable">This code was created on another device. Codes are never stored, so it cannot be shown again — cancel it and create a new one.</string>
   <!-- Redeem confirmation -->
   <string name="redeem_confirm_title">Aircraft invitation</string>
-  <string name="redeem_confirm_body">You've been invited to share an aircraft. Accept to add it to your fleet.</string>
+  <string name="redeem_confirm_body">You have been invited to share an aircraft. Accept to add it to your fleet.</string>
+  <!-- #201: name the aircraft and the inviter. Accepting blind is exactly the moment a user should
+       be able to check they are not being talked into a stranger's fleet. -->
+  <string name="redeem_confirm_body_full">%1$s is inviting you to %2$s as %3$s.\n\nAccept to add it to your fleet.</string>
+  <string name="redeem_confirm_body_role">You have been invited to share an aircraft as %1$s. Accept to add it to your fleet.</string>
   <string name="redeem_needs_signin_title">Sign in to accept</string>
   <string name="redeem_needs_signin_body">Sign in with your account to accept this invitation. It will still be here when you're signed in.</string>
   <string name="redeem_success_title">You're in</string>

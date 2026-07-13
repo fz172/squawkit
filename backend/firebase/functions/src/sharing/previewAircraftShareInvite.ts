@@ -1,4 +1,4 @@
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
 
 import { FUNCTION_REGION } from "../config/env.js";
 import { adminDb } from "../config/firebaseAdmin.js";
@@ -35,6 +35,12 @@ export const previewAircraftShareInvite = onCall<PreviewRequest, Promise<Preview
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request): Promise<PreviewResponse> => {
     const { uid } = requireAuthenticatedApp(request);
+    // Anonymous callers are refused, and that is a SECURITY control, not a UX one. The rate limiter
+    // meters by uid — and anonymous uids are free and unlimited, so an attacker could mint one,
+    // spend its 10 guesses, mint another, and walk a ~39-bit code at leisure. Metering is the only
+    // thing standing behind a short code, and it is worthless if identities are disposable.
+    // (Redeem already refuses anonymous callers; preview must too — it dereferences the same code.)
+    requireNonAnonymous(request);
     const code = parseRequest(request.data);
 
     await requireAttemptsRemaining(uid);
@@ -59,6 +65,12 @@ export const previewAircraftShareInvite = onCall<PreviewRequest, Promise<Preview
     };
   },
 );
+
+function requireNonAnonymous(request: CallableRequest<unknown>): void {
+  if (request.auth?.token?.firebase?.sign_in_provider === "anonymous") {
+    throw new HttpsError("permission-denied", "Sign in to view an invite.");
+  }
+}
 
 function parseRequest(data: unknown): string {
   const obj = (data ?? {}) as Record<string, unknown>;
