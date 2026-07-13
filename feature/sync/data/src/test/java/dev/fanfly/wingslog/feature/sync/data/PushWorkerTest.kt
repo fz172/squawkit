@@ -82,7 +82,10 @@ class PushWorkerTest {
   fun run_drainsSharedAircraftScopeRows_whenARefExists() = runTest(ioContext) {
     // A store factory so the worker can observe the refs store and add the shared prefix.
     val codecs = EntityCodecRegistry().apply {
-      register(CollectionKind.SharedAircraftRef, WireCodec(SharedAircraftRef.ADAPTER))
+      register(
+        CollectionKind.SharedAircraftRef,
+        WireCodec(SharedAircraftRef.ADAPTER)
+      )
     }
     val storeFactory = EntityStoreFactory(
       db = db,
@@ -114,7 +117,8 @@ class PushWorkerTest {
     job.cancel()
 
     assertThat(captured.captured.scope).isEqualTo(SHARED_SCOPE)
-    val remaining = db.schemaQueries.selectDirty(limit = 100L).executeAsList()
+    val remaining = db.schemaQueries.selectDirty(limit = 100L)
+      .executeAsList()
     assertThat(remaining).isEmpty()
   }
 
@@ -238,41 +242,48 @@ class PushWorkerTest {
     }
 
   @Test
-  fun run_permissionDeniedOnOwnScope_stillRaisesAuthBanner() = runTest(ioContext) {
-    // Same denial in the member's *own* tree means an expired token or a rules regression. It must
-    // keep surfacing — swallowing it would hide a real breakage.
-    insertDirtyRow("own-log-1", scope = TEST_SCOPE)
-    coEvery { writer.push(any()) } throws permissionDenied()
+  fun run_permissionDeniedOnOwnScope_stillRaisesAuthBanner() =
+    runTest(ioContext) {
+      // Same denial in the member's *own* tree means an expired token or a rules regression. It must
+      // keep surfacing — swallowing it would hide a real breakage.
+      insertDirtyRow("own-log-1", scope = TEST_SCOPE)
+      coEvery { writer.push(any()) } throws permissionDenied()
 
-    val failures = mutableListOf<SyncFailure?>()
-    val revoked = mutableListOf<Pair<String, String>>()
-    val telemetry = RecordingTelemetry()
-    val ownWorker = PushWorker(
-      db = db,
-      writer = writer,
-      ioContext = ioContext,
-      telemetry = telemetry,
-    ).apply {
-      failureSink = { failures += it }
-      sharedScopeRevokedSink = { host, ac -> revoked += host to ac }
+      val failures = mutableListOf<SyncFailure?>()
+      val revoked = mutableListOf<Pair<String, String>>()
+      val telemetry = RecordingTelemetry()
+      val ownWorker = PushWorker(
+        db = db,
+        writer = writer,
+        ioContext = ioContext,
+        telemetry = telemetry,
+      ).apply {
+        failureSink = { failures += it }
+        sharedScopeRevokedSink = { host, ac -> revoked += host to ac }
+      }
+
+      val job = launch { ownWorker.run(TEST_USER_ID) }
+      testScheduler.advanceUntilIdle()
+      job.cancel()
+
+      assertThat(revoked).isEmpty()
+      assertThat(failures.filterNotNull()).hasSize(1)
+      assertThat(
+        failures.filterNotNull()
+          .first()
+      ).isInstanceOf(SyncFailure.AuthExpired::class.java)
+      assertThat(telemetry.deniedWrites).containsExactly(false)
     }
-
-    val job = launch { ownWorker.run(TEST_USER_ID) }
-    testScheduler.advanceUntilIdle()
-    job.cancel()
-
-    assertThat(revoked).isEmpty()
-    assertThat(failures.filterNotNull()).hasSize(1)
-    assertThat(failures.filterNotNull().first()).isInstanceOf(SyncFailure.AuthExpired::class.java)
-    assertThat(telemetry.deniedWrites).containsExactly(false)
-  }
 
   // --- helpers ---
 
   /** A store factory holding one live ref, so the worker drains the host's subtree too. */
   private suspend fun liveShareStoreFactory(): EntityStoreFactory {
     val codecs = EntityCodecRegistry().apply {
-      register(CollectionKind.SharedAircraftRef, WireCodec(SharedAircraftRef.ADAPTER))
+      register(
+        CollectionKind.SharedAircraftRef,
+        WireCodec(SharedAircraftRef.ADAPTER)
+      )
     }
     val storeFactory = EntityStoreFactory(
       db = db,

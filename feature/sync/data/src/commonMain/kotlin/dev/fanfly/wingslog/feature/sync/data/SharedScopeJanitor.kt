@@ -28,8 +28,12 @@ class SharedScopeJanitor(
    * [liveShares] is the set of `(hostUid, aircraftId)` the member is still a member of (from the
    * refs store). Any shared aircraft present locally but absent from [liveShares] is purged.
    */
-  suspend fun purgeRevoked(memberUid: String, liveShares: Set<Pair<String, String>>) {
-    val ownRoot = EntityScope.userRoot(memberUid).toPath()
+  suspend fun purgeRevoked(
+    memberUid: String,
+    liveShares: Set<Pair<String, String>>
+  ) {
+    val ownRoot = EntityScope.userRoot(memberUid)
+      .toPath()
     val localShared = db.schemaQueries
       .selectScopeAndIdForCollection(CollectionKind.Aircraft)
       .awaitAsList()
@@ -48,7 +52,8 @@ class SharedScopeJanitor(
         db.schemaQueries.deleteEntitiesInScopePrefix(nestedPrefix) // logs/tasks/squawks/overview
         db.schemaQueries.deleteEntity(
           CollectionKind.Aircraft,
-          EntityScope.userRoot(hostUid).toPath(),
+          EntityScope.userRoot(hostUid)
+            .toPath(),
           aircraftId, // the aircraft doc itself
         )
         db.schemaQueries.deleteCursorsInScopePrefix(nestedPrefix)
@@ -64,6 +69,7 @@ class SharedScopeJanitor(
 
 /** `/users/{hostUid}/` → hostUid, or null if [scopePath] isn't a user-root path. */
 private fun hostUidFromRoot(scopePath: String): String? {
-  val segments = scopePath.trim('/').split('/')
+  val segments = scopePath.trim('/')
+    .split('/')
   return if (segments.size == 2 && segments[0] == "users") segments[1] else null
 }

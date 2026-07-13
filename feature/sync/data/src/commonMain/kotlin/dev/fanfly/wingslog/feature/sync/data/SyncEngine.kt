@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Top-level orchestrator that wires Firestore sync to the local store for the signed-in user.
@@ -380,13 +381,17 @@ class SyncEngine(
    * tombstone is queued, so we never push a deletion that could clobber a still-live server ref; the
    * revoke function's authoritative tombstone reconciles the ref server-side. See docs/sharing §5.4.
    */
-  private suspend fun revokeSharedLocally(memberUid: String, aircraftId: String) {
+  private suspend fun revokeSharedLocally(
+    memberUid: String,
+    aircraftId: String
+  ) {
     val database = db ?: return
     val lock = writeLock ?: return
     lock.withLock {
       database.schemaQueries.deleteEntity(
         CollectionKind.SharedAircraftRef,
-        EntityScope.userRoot(memberUid).toPath(),
+        EntityScope.userRoot(memberUid)
+          .toPath(),
         aircraftId,
       )
     }
@@ -417,7 +422,7 @@ class SyncEngine(
       val wait = backoffMs(attempts)
       if (wait > 0) {
         log.i { "hydration backoff ${kind.wireName} ${scope.toPath()}: ${wait}ms after $attempts attempts" }
-        delay(wait)
+        delay(wait.milliseconds)
       }
       val key: Any = kind to scope
       if (hydrationRunner.runFor(
