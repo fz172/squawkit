@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// Blob storage for attachments. Blobs are written at `{entityScope}/blobs/{blobId}`, so an
+// attachment on aircraft `acId` owned by `uid` lands at `users/{uid}/aircraft/{acId}/blobs/...`.
+//
+// **Strictly user-scoped, and deliberately so.** Unlike Firestore, these rules grant nothing across
+// accounts: sharing an aircraft does NOT share its attachment blobs. A member of a shared aircraft
+// can read the record data (Firestore, via the aircraft_shares ACL) but not the files hanging off
+// it — they are in the host's tree, and this rule denies them.
+//
+// That is the v1 position from design §9, not an oversight: giving members blob access needs Storage
+// rules that can consult the share ACL, and Storage rules cannot `get()` Firestore. Doing it
+// properly means custom claims or a token-minting function, which is the attachments-on-shared
+// fast-follow. Until then the client degrades honestly — a member sees the attachment exists and is
+// told it is not shared, rather than being handed a tap that silently fails.
+//
+// Consequence worth keeping in mind when changing this: a member's *upload* to a shared aircraft is
+// denied too, so the client must not offer to attach files there either.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
