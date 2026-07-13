@@ -23,10 +23,9 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-private const val HOST_UID = "host-redeem-1"
 private const val AC_ID = "ac-redeem-1"
-private const val SECRET = "secret-redeem-1"
-private const val SHARE_URL = "https://squawkit.fanfly.dev/share#$HOST_UID.$AC_ID.$SECRET"
+private const val CODE = "EFA2GGTH"
+private const val SHARE_URL = "https://squawkit.fanfly.dev/share#$CODE"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RedeemViewModelTest {
@@ -87,8 +86,8 @@ class RedeemViewModelTest {
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
     AircraftShareDeepLinks.deliver(SHARE_URL)
-    coEvery { sharing.redeemInvite(HOST_UID, AC_ID, SECRET) } returns Result.success(
-      RedeemOutcome(aircraftId = AC_ID, hostUid = HOST_UID, role = ShareRole.TECHNICIAN),
+    coEvery { sharing.redeemInvite(CODE) } returns Result.success(
+      RedeemOutcome(aircraftId = AC_ID, hostUid = "host-uid", role = ShareRole.TECHNICIAN),
     )
 
     val vm = viewModel()
@@ -103,8 +102,8 @@ class RedeemViewModelTest {
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
     AircraftShareDeepLinks.deliver(SHARE_URL)
-    coEvery { sharing.redeemInvite(HOST_UID, AC_ID, SECRET) } returns Result.success(
-      RedeemOutcome(aircraftId = AC_ID, hostUid = HOST_UID, role = ShareRole.TECHNICIAN),
+    coEvery { sharing.redeemInvite(CODE) } returns Result.success(
+      RedeemOutcome(aircraftId = AC_ID, hostUid = "host-uid", role = ShareRole.TECHNICIAN),
     )
 
     viewModel().accept()
@@ -120,7 +119,7 @@ class RedeemViewModelTest {
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
     AircraftShareDeepLinks.deliver(SHARE_URL)
-    coEvery { sharing.redeemInvite(HOST_UID, AC_ID, SECRET) } returns
+    coEvery { sharing.redeemInvite(CODE) } returns
       Result.failure(RuntimeException("expired"))
 
     viewModel().accept()
@@ -134,7 +133,7 @@ class RedeemViewModelTest {
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
     AircraftShareDeepLinks.deliver(SHARE_URL)
-    coEvery { sharing.redeemInvite(HOST_UID, AC_ID, SECRET) } returns Result.success(
+    coEvery { sharing.redeemInvite(CODE) } returns Result.success(
       RedeemOutcome(aircraftId = AC_ID, hostUid = "host", role = ShareRole.TECHNICIAN, alreadyMember = true),
     )
 
@@ -150,7 +149,7 @@ class RedeemViewModelTest {
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
     AircraftShareDeepLinks.deliver(SHARE_URL)
-    coEvery { sharing.redeemInvite(HOST_UID, AC_ID, SECRET) } returns
+    coEvery { sharing.redeemInvite(CODE) } returns
       Result.failure(RuntimeException("expired"))
 
     val vm = viewModel()

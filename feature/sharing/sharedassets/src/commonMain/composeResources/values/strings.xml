@@ -37,16 +37,17 @@ The owner can invite you again.</string>
   <string name="invite_role_owner">Co-owner</string>
   <string name="invite_role_technician">Technician</string>
   <string name="invite_create">Create invite link</string>
-  <string name="invite_note">Single-use link, expires in 7 days.</string>
-  <string name="invite_scan_hint">Scan this code, or share the link.</string>
+  <string name="invite_note">Single-use code, expires in 1 day.</string>
+  <string name="invite_code_hint">Read this out, or have them type it in. It works once, and expires in a day.</string>
+  <string name="invite_scan_hint">Or scan this, or send the link.</string>
   <string name="invite_share">Share link</string>
   <string name="invite_copy">Copy link</string>
-  <string name="invite_copied">Link copied</string>
+  <string name="invite_copied">Copied</string>
   <string name="invite_pending_title">Pending invites</string>
   <string name="invite_cancel">Cancel invite</string>
   <string name="invite_qr_desc">Invite QR code</string>
   <string name="invite_new">New invite</string>
-  <string name="invite_link_unavailable">This link was created on another device, so it can't be shown here. Cancel it and create a new one to share again.</string>
+  <string name="invite_link_unavailable">This code was created on another device. Codes are never stored, so it cannot be shown again — cancel it and create a new one.</string>
   <!-- Redeem confirmation -->
   <string name="redeem_confirm_title">Aircraft invitation</string>
   <string name="redeem_confirm_body">You've been invited to share an aircraft. Accept to add it to your fleet.</string>

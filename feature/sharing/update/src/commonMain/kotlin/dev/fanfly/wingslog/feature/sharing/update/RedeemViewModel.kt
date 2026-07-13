@@ -53,7 +53,7 @@ class RedeemViewModel(
     }
     _uiState.value = RedeemUiState.Redeeming
     viewModelScope.launch {
-      sharingManager.redeemInvite(invite.hostUid, invite.aircraftId, invite.secret)
+      sharingManager.redeemInvite(invite.code)
         .onSuccess { outcome ->
           // Every redeemer publishes their mirror into the share they just joined (§7.2) — Owner
           // or Technician alike, since the picker lists membership-with-mirror, not role. Failure

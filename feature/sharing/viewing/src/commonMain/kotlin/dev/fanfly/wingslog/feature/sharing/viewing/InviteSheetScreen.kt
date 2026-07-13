@@ -39,6 +39,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.feature.sharing.model.SHARE_URL_BASE
+import dev.fanfly.wingslog.feature.sharing.model.formatInviteCode
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
@@ -57,6 +62,7 @@ import wingslog.feature.sharing.sharedassets.generated.resources.invite_qr_desc
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_role_label
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_role_owner
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_role_technician
+import wingslog.feature.sharing.sharedassets.generated.resources.invite_code_hint
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_scan_hint
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_share
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_title
@@ -66,7 +72,7 @@ data class InviteSheetUiState(
   val selectedRole: ShareRole = ShareRole.TECHNICIAN,
   val creating: Boolean = false,
   val pendingInvites: List<PendingInvite> = emptyList(),
-  /** tokenHash of the pending invite whose QR/link detail is expanded (e.g. the one just created). */
+  /** codeId of the pending invite whose code/QR detail is expanded (e.g. the one just created). */
   val expandedToken: String? = null,
   val error: String? = null,
 )
@@ -157,11 +163,11 @@ fun InviteSheetScreen(
         state.pendingInvites.forEach { invite ->
           PendingInviteCard(
             invite = invite,
-            expanded = invite.tokenHash == state.expandedToken,
-            onToggle = { onToggleExpand(invite.tokenHash) },
+            expanded = invite.codeId == state.expandedToken,
+            onToggle = { onToggleExpand(invite.codeId) },
             onShare = onShare,
             onCopy = onCopy,
-            onCancel = { onCancelInvite(invite.tokenHash) },
+            onCancel = { onCancelInvite(invite.codeId) },
           )
         }
       }
@@ -206,7 +212,7 @@ private fun PendingInviteCard(
       if (expanded) {
         HorizontalDivider()
         InviteDetail(
-          url = invite.url,
+          code = invite.code,
           onShare = onShare,
           onCopy = onCopy,
           onCancel = onCancel,
@@ -218,7 +224,7 @@ private fun PendingInviteCard(
 
 @Composable
 private fun InviteDetail(
-  url: String?,
+  code: String?,
   onShare: (String) -> Unit,
   onCopy: (String) -> Unit,
   onCancel: () -> Unit,
@@ -230,7 +236,23 @@ private fun InviteDetail(
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    if (url != null) {
+    if (code != null) {
+      val url = "$SHARE_URL_BASE#$code"
+
+      // The code leads, because the hangar case is "read this to me" — the QR and link are for when
+      // you are not standing next to each other.
+      Text(
+        formatInviteCode(code),
+        style = MaterialTheme.typography.displaySmall,
+        fontFamily = FontFamily.Monospace,
+        letterSpacing = 4.sp,
+      )
+      Text(
+        stringResource(Res.string.invite_code_hint),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+      )
       Surface(color = Color.White, modifier = Modifier.size(220.dp)) {
         Image(
           painter = rememberQrCodePainter(url),
@@ -243,13 +265,6 @@ private fun InviteDetail(
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
-      Text(
-        url,
-        style = MaterialTheme.typography.bodySmall,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier.fillMaxWidth(),
-      )
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
@@ -259,14 +274,15 @@ private fun InviteDetail(
           Spacer(Modifier.width(Spacing.small))
           Text(stringResource(Res.string.invite_share))
         }
-        OutlinedButton(onClick = { onCopy(url) }, modifier = Modifier.weight(1f)) {
+        OutlinedButton(onClick = { onCopy(code) }, modifier = Modifier.weight(1f)) {
           Icon(Icons.Filled.ContentCopy, contentDescription = null)
           Spacer(Modifier.width(Spacing.small))
           Text(stringResource(Res.string.invite_copy))
         }
       }
     } else {
-      // The link can't be rebuilt on this device (secret isn't stored server-side, §3.1).
+      // The server keeps only the hash, so a code minted on another device cannot be recovered —
+      // by us or by anyone. Cancel and mint a new one.
       Text(
         stringResource(Res.string.invite_link_unavailable),
         style = MaterialTheme.typography.bodySmall,

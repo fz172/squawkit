@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.sharing.datamanager
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.InviteLink
+import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import kotlinx.coroutines.flow.Flow
@@ -52,16 +53,34 @@ interface SharingManager {
    */
   fun observeHostedByOther(acId: String): Flow<Boolean>
 
-  suspend fun createInvite(acId: String, role: ShareRole): Result<InviteLink>
+  /**
+   * Mints a pairing code (#164). Server-side: the code doc lives in a collection no client may read,
+   * which is what keeps an aircraft id out of the invitee's hands (#202/#204).
+   *
+   * [aircraftLabel] is display-only, shown to the invitee before they accept (#201) — the server
+   * cannot read it out of the aircraft record, which is opaque proto bytes.
+   */
+  suspend fun createInvite(
+    acId: String,
+    role: ShareRole,
+    aircraftLabel: String,
+  ): Result<InviteLink>
 
-  suspend fun cancelInvite(acId: String, tokenHash: String): Result<Unit>
+  /** Destroys the code. A cancelled invite and a never-existed one become the same state. */
+  suspend fun cancelInvite(acId: String, codeId: String): Result<Unit>
 
   /**
-   * [hostUid] comes from the invite link. It is routing, not authorization — the ACL is keyed under
-   * the host (#204) and an invitee holds no ref, so there is no other way to find the share doc. The
-   * function still checks the invite secret against whatever it finds there.
+   * Joins by code alone — no aircraft id, no host uid. The invitee never holds either, which is the
+   * whole point: those are what an attacker needed to fabricate a same-id aircraft (#202/#204).
    */
-  suspend fun redeemInvite(hostUid: String, acId: String, secret: String): Result<RedeemOutcome>
+  suspend fun redeemInvite(code: String): Result<RedeemOutcome>
+
+  /**
+   * Resolves a code to what the invitee needs to decide — aircraft label, inviting owner, role — and
+   * grants nothing (#201). Impossible before #164: an invitee held a real aircraft id, and the rules
+   * (correctly) refuse to resolve one for a non-member, so accepting an invite meant accepting blind.
+   */
+  suspend fun previewInvite(code: String): Result<InvitePreview>
 
   suspend fun revokeMember(acId: String, uid: String): Result<Unit>
 

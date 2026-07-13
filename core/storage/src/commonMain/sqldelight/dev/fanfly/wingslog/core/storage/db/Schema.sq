@@ -148,6 +148,9 @@ SELECT value FROM sync_config WHERE uid = ? AND key = ?;
 upsertConfig:
 INSERT OR REPLACE INTO sync_config(uid, key, value) VALUES (?, ?, ?);
 
+deleteConfig:
+DELETE FROM sync_config WHERE uid = ? AND key = ?;
+
 -- Attachment binary index. See docs/storage_r2_design.md §4.
 -- This table is device-local — never synced to Firestore. Each row mirrors an Attachment
 -- proto reference held in some entity payload. The proto itself is the cross-device source
