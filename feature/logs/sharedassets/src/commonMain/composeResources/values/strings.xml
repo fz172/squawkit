@@ -16,9 +16,9 @@
   <string name="blade_with_index">Blade %1$d</string>
   <string name="resolve_squawk_work_description">Resolve squawk "%1$s"</string>
 
-  <!-- Authorship (design §7.5): who wrote the log revision, vs who is named as its technician.
-       These render directly under the technician's name, so they never repeat it. -->
-  <string name="log_signed_by">Logged and signed by the technician</string>
+  <!-- Authorship (design §7.5). Shown only when the writer is NOT the technician named on the log;
+       a technician signing their own work is the unremarkable case and says nothing. These render
+       directly under the technician's name, so they never repeat it. -->
   <string name="log_assigned_by">Logged by %1$s</string>
   <string name="log_assigned_by_unknown">Logged by another member</string>
 </resources>

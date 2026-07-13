@@ -54,7 +54,6 @@ import wingslog.feature.tasks.sharedassets.generated.resources.unknown_task
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.log_assigned_by
 import wingslog.feature.logs.sharedassets.generated.resources.log_assigned_by_unknown
-import wingslog.feature.logs.sharedassets.generated.resources.log_signed_by
 import wingslog.feature.logs.sharedassets.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
@@ -306,23 +305,23 @@ private fun LinkedTaskRow(
 }
 
 /**
- * "Signed" vs "assigned". Silent when authorship is [LogAuthorship.Unknown] — a hand-typed
- * technician or a pre-attestation revision proves nothing either way, and implying otherwise would
- * be worse than saying nothing.
+ * Names the writer, and only when that is someone other than the technician on the log.
  *
- * The technician's name is the line directly above this one, so these lines name only the *writer*.
- * Repeating the technician made the footer wide enough to wrap the date next to it.
+ * The two silent cases are silent for different reasons. [LogAuthorship.SelfSigned] is the ordinary
+ * case — the technician wrote up their own work — and calling it out would make the exception look
+ * like the rule. [LogAuthorship.Unknown] is a hand-typed technician or a pre-attestation revision:
+ * it proves nothing either way, and implying otherwise would be worse than saying nothing.
+ *
+ * The technician's name is the line directly above this one, so it is never repeated here.
  */
 @Composable
 private fun AuthorshipLine(authorship: LogAuthorship) {
   val text = when (authorship) {
-    is LogAuthorship.SelfSigned -> stringResource(MaintenanceRes.string.log_signed_by)
-
     is LogAuthorship.Assigned -> authorship.authorName?.let { author ->
       stringResource(MaintenanceRes.string.log_assigned_by, author)
     } ?: stringResource(MaintenanceRes.string.log_assigned_by_unknown)
 
-    LogAuthorship.Unknown -> return
+    is LogAuthorship.SelfSigned, LogAuthorship.Unknown -> return
   }
   Text(
     text = text,
