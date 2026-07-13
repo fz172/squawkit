@@ -200,6 +200,80 @@ class PushWorkerTest {
       assertThat(remaining[0].id).isEqualTo("log-fail")
     }
 
+  // --- The aircraft doc itself lives at the host's root, not in the per-aircraft subtree ---
+
+  @Test
+  fun run_drainsTheSharedAircraftDocAtTheHostRoot() = runTest(ioContext) {
+    // A co-owner's edit to the aircraft *doc* is a row at /users/{host}/ — outside the
+    // /users/{host}/aircraft/{acId}/ subtree. Miss it and the edit stays dirty forever.
+    val storeFactory = liveShareStoreFactory()
+    db.schemaQueries.upsert(
+      collection = CollectionKind.Aircraft,
+      scope_path = EntityScope.userRoot(HOST_UID).toPath(),
+      id = SHARED_AC,
+      payload = byteArrayOf(0x07),
+      payload_schema = CollectionKind.Aircraft.schemaName,
+      updated_at = 1000L,
+      remote_updated_at = null,
+      dirty = true,
+      deleted = false,
+      writer_uid = null,
+    )
+    val captured = mutableListOf<SyncWrite>()
+    coEvery { writer.push(capture(captured)) } returns Unit
+    val worker = PushWorker(
+      db = db,
+      writer = writer,
+      ioContext = ioContext,
+      storeFactory = storeFactory,
+    )
+
+    val job = launch { worker.run(TEST_USER_ID) }
+    testScheduler.advanceUntilIdle()
+    job.cancel()
+
+    assertThat(captured.map { it.id }).contains(SHARED_AC)
+    val remaining = db.schemaQueries.selectDirty(limit = 100L).executeAsList()
+    assertThat(remaining).isEmpty()
+  }
+
+  @Test
+  fun run_permissionDeniedOnTheSharedAircraftDoc_reconcilesAsRevoked() = runTest(ioContext) {
+    // The doc row names its aircraft by row id, not in its scope path — the revocation check has to
+    // understand that shape too, or a denial here would be misread as an expired session.
+    val storeFactory = liveShareStoreFactory()
+    db.schemaQueries.upsert(
+      collection = CollectionKind.Aircraft,
+      scope_path = EntityScope.userRoot(HOST_UID).toPath(),
+      id = SHARED_AC,
+      payload = byteArrayOf(0x07),
+      payload_schema = CollectionKind.Aircraft.schemaName,
+      updated_at = 1000L,
+      remote_updated_at = null,
+      dirty = true,
+      deleted = false,
+      writer_uid = null,
+    )
+    coEvery { writer.push(match { it.scope == EntityScope.userRoot(TEST_USER_ID) }) } returns Unit
+    coEvery {
+      writer.push(match { it.scope == EntityScope.userRoot(HOST_UID) })
+    } throws permissionDenied()
+
+    val revoked = mutableListOf<Pair<String, String>>()
+    val worker = PushWorker(
+      db = db,
+      writer = writer,
+      ioContext = ioContext,
+      storeFactory = storeFactory,
+    ).apply { sharedScopeRevokedSink = { host, ac -> revoked += host to ac } }
+
+    val job = launch { worker.run(TEST_USER_ID) }
+    testScheduler.advanceUntilIdle()
+    job.cancel()
+
+    assertThat(revoked).containsExactly(HOST_UID to SHARED_AC)
+  }
+
   // --- Revocation race: a denied push into a host's tree (docs/sharing §5.4) ---
 
   @Test
