@@ -140,7 +140,9 @@ fun MaintenanceLogDetailSheet(
     ) {
       val techName = log.technician?.name?.takeIf { it.isNotBlank() }
       if (techName != null) {
-        Column {
+        // fill = false keeps the column at its natural width, but caps it: a long name wraps inside
+        // the column instead of pushing the date off the end of the row.
+        Column(modifier = Modifier.weight(1f, fill = false)) {
           Text(
             text = techName,
             style = MaterialTheme.typography.bodyMedium,
@@ -156,6 +158,7 @@ fun MaintenanceLogDetailSheet(
       Text(
         text = dateStr,
         style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.padding(start = Spacing.small),
       )
     }
   }
@@ -306,19 +309,18 @@ private fun LinkedTaskRow(
  * "Signed" vs "assigned". Silent when authorship is [LogAuthorship.Unknown] — a hand-typed
  * technician or a pre-attestation revision proves nothing either way, and implying otherwise would
  * be worse than saying nothing.
+ *
+ * The technician's name is the line directly above this one, so these lines name only the *writer*.
+ * Repeating the technician made the footer wide enough to wrap the date next to it.
  */
 @Composable
 private fun AuthorshipLine(authorship: LogAuthorship) {
   val text = when (authorship) {
-    is LogAuthorship.SelfSigned ->
-      stringResource(MaintenanceRes.string.log_signed_by, authorship.technicianName)
+    is LogAuthorship.SelfSigned -> stringResource(MaintenanceRes.string.log_signed_by)
 
     is LogAuthorship.Assigned -> authorship.authorName?.let { author ->
-      stringResource(MaintenanceRes.string.log_assigned_by, author, authorship.technicianName)
-    } ?: stringResource(
-      MaintenanceRes.string.log_assigned_by_unknown,
-      authorship.technicianName,
-    )
+      stringResource(MaintenanceRes.string.log_assigned_by, author)
+    } ?: stringResource(MaintenanceRes.string.log_assigned_by_unknown)
 
     LogAuthorship.Unknown -> return
   }
