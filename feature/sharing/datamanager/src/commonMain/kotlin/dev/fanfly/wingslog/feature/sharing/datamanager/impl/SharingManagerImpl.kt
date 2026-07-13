@@ -67,21 +67,59 @@ class SharingManagerImpl(
   private val aircraftStore =
     storeFactory.create<Aircraft>(CollectionKind.Aircraft)
 
-  private fun shareDoc(acId: String) = firestore.collection(SHARES)
+  /**
+   * The ACL for [acId] under [hostUid]. Keyed by host since #204: an aircraft id is unique only
+   * within a tree, so a globally-keyed ACL could be claimed by anyone who knew the id.
+   */
+  private fun shareDoc(hostUid: String, acId: String) = firestore.collection(SHARES)
+    .document(hostUid)
+    .collection(SHARE_AIRCRAFT)
     .document(acId)
 
-  override fun observeShareState(acId: String): Flow<AircraftShareState> {
+  /**
+   * Whose tree this aircraft lives in — ours if we own it, otherwise the host named on our ref.
+   * Answered from the local stores, so it is available offline and needs no round trip.
+   *
+   * Null when neither is present: we are not the owner and hold no ref, so we have no business
+   * building a path into anyone's share.
+   */
+  private fun observeHostUid(acId: String): Flow<String?> {
+    val uid = auth.currentUser?.uid ?: return flowOf(null)
+    val scope = EntityScope.userRoot(uid)
+    return combine(
+      aircraftStore.observe(acId, scope),
+      refStore.observe(acId, scope),
+    ) { own, ref ->
+      when {
+        own != null -> uid
+        ref != null -> ref.value.host_uid
+        else -> null
+      }
+    }.distinctUntilChanged()
+  }
+
+  /** One-shot [observeHostUid], for the suspend paths (invite create/cancel, callables). */
+  private suspend fun hostUidFor(acId: String): String =
+    observeHostUid(acId).first()
+      ?: error("Not a member of aircraft $acId; cannot resolve its share")
+
+  override fun observeShareState(acId: String): Flow<AircraftShareState> =
+    observeHostUid(acId).flatMapLatest { hostUid ->
+      if (hostUid == null) flowOf(AircraftShareState()) else shareStateIn(hostUid, acId)
+    }
+
+  private fun shareStateIn(hostUid: String, acId: String): Flow<AircraftShareState> {
     val myUid = auth.currentUser?.uid
-    val root = shareDoc(acId).snapshots.map {
+    val root = shareDoc(hostUid, acId).snapshots.map {
       it.takeIf { s -> s.exists }
         ?.data<RootWire>()
     }
-    val members = shareDoc(acId).collection(MEMBERS).snapshots
+    val members = shareDoc(hostUid, acId).collection(MEMBERS).snapshots
     // Invites are owner-only in the rules, so a technician's listener is denied. Degrade to "no
     // pending invites" rather than letting that failure take down the combine — the roster IS
     // readable by any member, and it's what backs their read-only view and the Leave action.
     val invites: Flow<List<PendingInvite>> =
-      shareDoc(acId).collection(INVITES).snapshots
+      shareDoc(hostUid, acId).collection(INVITES).snapshots
         .map { inviteSnaps ->
           inviteSnaps.documents
             .map { it.id to it.data<InviteWire>() }
@@ -198,7 +236,7 @@ class SharingManagerImpl(
     val tokenHash = sha256Hex(secret.encodeToByteArray())
     val uid = requireUid()
     val now = Timestamp.now()
-    val url = "$SHARE_URL_BASE#$acId.$secret"
+    val url = "$SHARE_URL_BASE#$uid.$acId.$secret" // host.aircraft.secret (#204)
     // Cache the link locally BEFORE writing the invite doc: that write fires Firestore's optimistic
     // snapshot, which makes observeShareState re-read the cache — so the URL must already be there,
     // or the just-created invite would show as "created elsewhere". (The secret is never persisted
@@ -214,7 +252,7 @@ class SharingManagerImpl(
     // rule (isShareOwner) reads it. First share of an aircraft bootstraps this (docs/sharing §3.1);
     // subsequent memberRoles changes are function-only. See §2.1.
     ensureShareRoot(acId, uid)
-    shareDoc(acId).collection(INVITES)
+    shareDoc(uid, acId).collection(INVITES)
       .document(tokenHash)
       .set(
         InviteWire(
@@ -237,17 +275,18 @@ class SharingManagerImpl(
     acId: String,
     tokenHash: String
   ): Result<Unit> = runCatching {
-    shareDoc(acId).collection(INVITES)
+    shareDoc(hostUidFor(acId), acId).collection(INVITES)
       .document(tokenHash)
       .update("revoked" to true)
   }
 
   override suspend fun redeemInvite(
+    hostUid: String,
     acId: String,
     secret: String
   ): Result<RedeemOutcome> = runCatching {
     val res = functions.httpsCallable("redeemAircraftShareInvite")
-      .invoke(RedeemRequest(aircraftId = acId, secret = secret))
+      .invoke(RedeemRequest(hostUid = hostUid, aircraftId = acId, secret = secret))
       .data<RedeemResponse>()
     RedeemOutcome(
       aircraftId = res.aircraftId,
@@ -260,7 +299,13 @@ class SharingManagerImpl(
   override suspend fun revokeMember(acId: String, uid: String): Result<Unit> =
     runCatching {
       functions.httpsCallable("revokeAircraftShare")
-        .invoke(RevokeRequest(aircraftId = acId, memberUid = uid))
+        .invoke(
+          RevokeRequest(
+            hostUid = hostUidFor(acId),
+            aircraftId = acId,
+            memberUid = uid,
+          ),
+        )
     }
 
   override suspend fun updateRole(
@@ -271,7 +316,8 @@ class SharingManagerImpl(
     functions.httpsCallable("updateAircraftShareRole")
       .invoke(
         UpdateRoleRequest(
-          aircraftId = acId,
+          hostUid = hostUidFor(acId),
+            aircraftId = acId,
           memberUid = uid,
           role = role.wire()
         )
@@ -316,16 +362,20 @@ class SharingManagerImpl(
     val targets = (memberships(uid) + listOfNotNull(alsoPublishTo)).distinct()
 
     targets.forEach { acId ->
+      // Each target sits in its host's namespace (#204): our own aircraft under us, a shared one
+      // under whoever hosts it. A target we can place in neither is not ours to publish into.
+      val hostUid = observeHostUid(acId).first() ?: return@forEach
+
       // The ACL decides whether we're a member at all, and with what role. An own aircraft that was
       // never shared has no ACL doc — skip it rather than bootstrapping a share nobody asked for.
-      val myRole = shareDoc(acId).get()
+      val myRole = shareDoc(hostUid, acId).get()
         .takeIf { it.exists }
         ?.data<RootWire>()
         ?.memberRoles
         ?.get(uid)
         ?: return@forEach
 
-      val memberDoc = shareDoc(acId).collection(MEMBERS)
+      val memberDoc = shareDoc(hostUid, acId).collection(MEMBERS)
         .document(uid)
       if (memberDoc.get().exists) {
         memberDoc.set(update, merge = true)
@@ -379,7 +429,16 @@ class SharingManagerImpl(
    * rather than taking the caller's whole list down.
    */
   private fun linkedTechniciansIn(acId: String, selfUid: String): Flow<List<Technician>> =
-    shareDoc(acId).collection(MEMBERS).snapshots
+    observeHostUid(acId).flatMapLatest { hostUid ->
+      if (hostUid == null) flowOf(emptyList()) else membersOf(hostUid, acId, selfUid)
+    }
+
+  private fun membersOf(
+    hostUid: String,
+    acId: String,
+    selfUid: String,
+  ): Flow<List<Technician>> =
+    shareDoc(hostUid, acId).collection(MEMBERS).snapshots
       .map { snaps ->
         snaps.documents.mapNotNull { doc ->
           if (doc.id == selfUid) return@mapNotNull null
@@ -425,8 +484,10 @@ class SharingManagerImpl(
    * create to the aircraft's own owner.
    */
   private suspend fun ensureShareRoot(acId: String, uid: String) {
-    if (shareDoc(acId).get().exists) return
-    shareDoc(acId).set(
+    // Our own namespace, always: the rules pin the {hostUid} path segment to the caller's uid, so
+    // this is the only share doc we could create anyway (#204).
+    if (shareDoc(uid, acId).get().exists) return
+    shareDoc(uid, acId).set(
       ShareRootCreateWire(
         hostUid = uid,
         memberRoles = mapOf(uid to ShareRole.OWNER.wire()),
@@ -438,6 +499,7 @@ class SharingManagerImpl(
     private val logger = Logger.withTag("SharingManager")
     private const val FUNCTIONS_REGION = "us-central1"
     private const val SHARES = "aircraft_shares"
+    private const val SHARE_AIRCRAFT = "aircraft"
     private const val MEMBERS = "members"
     private const val INVITES = "invites"
 
@@ -578,7 +640,11 @@ private data class InviteWire(
 )
 
 @Serializable
-private data class RedeemRequest(val aircraftId: String, val secret: String)
+private data class RedeemRequest(
+  val hostUid: String,
+  val aircraftId: String,
+  val secret: String,
+)
 @Serializable
 private data class RedeemResponse(
   val aircraftId: String = "",
@@ -588,9 +654,14 @@ private data class RedeemResponse(
 )
 
 @Serializable
-private data class RevokeRequest(val aircraftId: String, val memberUid: String)
+private data class RevokeRequest(
+  val hostUid: String,
+  val aircraftId: String,
+  val memberUid: String,
+)
 @Serializable
 private data class UpdateRoleRequest(
+  val hostUid: String,
   val aircraftId: String,
   val memberUid: String,
   val role: String,

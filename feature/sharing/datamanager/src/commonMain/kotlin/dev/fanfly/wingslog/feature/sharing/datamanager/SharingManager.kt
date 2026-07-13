@@ -56,7 +56,12 @@ interface SharingManager {
 
   suspend fun cancelInvite(acId: String, tokenHash: String): Result<Unit>
 
-  suspend fun redeemInvite(acId: String, secret: String): Result<RedeemOutcome>
+  /**
+   * [hostUid] comes from the invite link. It is routing, not authorization — the ACL is keyed under
+   * the host (#204) and an invitee holds no ref, so there is no other way to find the share doc. The
+   * function still checks the invite secret against whatever it finds there.
+   */
+  suspend fun redeemInvite(hostUid: String, acId: String, secret: String): Result<RedeemOutcome>
 
   suspend fun revokeMember(acId: String, uid: String): Result<Unit>
 

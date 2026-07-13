@@ -18,21 +18,34 @@ export const SHARE_ROLE = {
 
 export type ShareRole = (typeof SHARE_ROLE)[keyof typeof SHARE_ROLE];
 
-/** Collection and subcollection names under `aircraft_shares/{aircraftId}`. */
+/** Collection and subcollection names under `aircraft_shares/{hostUid}/aircraft/{aircraftId}`. */
 export const AIRCRAFT_SHARES_COLLECTION = "aircraft_shares";
+export const SHARE_AIRCRAFT_SUBCOLLECTION = "aircraft";
 export const SHARE_MEMBERS_SUBCOLLECTION = "members";
 export const SHARE_INVITES_SUBCOLLECTION = "invites";
 
-export function aircraftShareDocPath(aircraftId: string): string {
-  return `${AIRCRAFT_SHARES_COLLECTION}/${aircraftId}`;
+/**
+ * The ACL lives under the HOST, not at a global aircraft-id key (#204).
+ *
+ * An aircraft id is unique only within one user's tree. Keyed globally, anyone who knew an id could
+ * create the single slot for it — honestly naming themselves host — and the rules, looking the ACL up
+ * by aircraft id alone, would consult that doc to authorize access to someone else's aircraft.
+ * Under the host means a share a caller can create only ever governs the caller's own tree.
+ */
+export function aircraftShareDocPath(hostUid: string, aircraftId: string): string {
+  return `${AIRCRAFT_SHARES_COLLECTION}/${hostUid}/${SHARE_AIRCRAFT_SUBCOLLECTION}/${aircraftId}`;
 }
 
-export function shareMemberDocPath(aircraftId: string, uid: string): string {
-  return `${aircraftShareDocPath(aircraftId)}/${SHARE_MEMBERS_SUBCOLLECTION}/${uid}`;
+export function shareMemberDocPath(hostUid: string, aircraftId: string, uid: string): string {
+  return `${aircraftShareDocPath(hostUid, aircraftId)}/${SHARE_MEMBERS_SUBCOLLECTION}/${uid}`;
 }
 
-export function shareInviteDocPath(aircraftId: string, tokenHash: string): string {
-  return `${aircraftShareDocPath(aircraftId)}/${SHARE_INVITES_SUBCOLLECTION}/${tokenHash}`;
+export function shareInviteDocPath(
+  hostUid: string,
+  aircraftId: string,
+  tokenHash: string,
+): string {
+  return `${aircraftShareDocPath(hostUid, aircraftId)}/${SHARE_INVITES_SUBCOLLECTION}/${tokenHash}`;
 }
 
 /**

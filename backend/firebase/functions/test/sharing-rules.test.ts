@@ -30,7 +30,7 @@ const LOG = "log-1";
 
 const aircraftDoc = `users/${HOST}/aircraft/${AC}`;
 const logDoc = `${aircraftDoc}/maintenance_log/${LOG}`;
-const shareDoc = `aircraft_shares/${AC}`;
+const shareDoc = `aircraft_shares/${HOST}/aircraft/${AC}`;
 
 let testEnv: RulesTestEnvironment;
 
@@ -164,7 +164,7 @@ describe("aircraft_shares ACL root", () => {
       await setDoc(doc(ctx.firestore(), `users/${HOST}/aircraft/ac-new`), { registration: "N2" });
     });
     await assertSucceeds(
-      setDoc(doc(as(HOST), "aircraft_shares/ac-new"), {
+      setDoc(doc(as(HOST), `aircraft_shares/${HOST}/aircraft/ac-new`), {
         hostUid: HOST,
         aircraftId: "ac-new",
         memberRoles: { [HOST]: "owner" },
@@ -174,7 +174,7 @@ describe("aircraft_shares ACL root", () => {
 
   it("cannot create a share for an aircraft you don't own (spoof)", async () => {
     await assertFails(
-      setDoc(doc(as(STRANGER), "aircraft_shares/ac-new"), {
+      setDoc(doc(as(STRANGER), `aircraft_shares/${STRANGER}/aircraft/ac-new`), {
         hostUid: STRANGER,
         aircraftId: "ac-new",
         memberRoles: { [STRANGER]: "owner" },
@@ -187,7 +187,7 @@ describe("aircraft_shares ACL root", () => {
       await setDoc(doc(ctx.firestore(), `users/${STRANGER}/aircraft/ac-new`), { registration: "N2" });
     });
     await assertFails(
-      setDoc(doc(as(STRANGER), "aircraft_shares/ac-new"), {
+      setDoc(doc(as(STRANGER), `aircraft_shares/${STRANGER}/aircraft/ac-new`), {
         hostUid: HOST,
         aircraftId: "ac-new",
         memberRoles: { [STRANGER]: "owner" },
@@ -243,9 +243,86 @@ describe("aircraft_shares — a fabricated same-id aircraft grants nothing (#202
   });
 });
 
+// #204: the ACL is keyed under the HOST, so a share a caller can create only ever governs the
+// caller's own tree. Planting a same-id aircraft still works — it is their tree — but the share it
+// buys them is over their own aircraft. Harmless.
+describe("aircraft_shares — namespaced by host (#204)", () => {
+  beforeEach(async () => {
+    // The attacker plants an aircraft carrying the victim's id in their OWN tree. Legal: own tree.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `users/${STRANGER}/aircraft/${AC}`), { registration: "FAKE" });
+    });
+  });
+
+  it("may NOT create a share in the host's namespace, even holding a same-id aircraft", async () => {
+    // The direct question: can a malicious client just spoof the host segment? No — the rules pin it
+    // to request.auth.uid, which comes from a signed token.
+    await assertFails(
+      setDoc(doc(as(STRANGER), `aircraft_shares/${HOST}/aircraft/${AC}`), {
+        hostUid: STRANGER,
+        aircraftId: AC,
+        memberRoles: { [STRANGER]: "owner" },
+      }),
+    );
+  });
+
+  it("may NOT create it while also claiming to be the host", async () => {
+    await assertFails(
+      setDoc(doc(as(STRANGER), `aircraft_shares/${HOST}/aircraft/${AC}`), {
+        hostUid: HOST,
+        aircraftId: AC,
+        memberRoles: { [STRANGER]: "owner" },
+      }),
+    );
+  });
+
+  it("MAY create a share in their own namespace — and it grants nothing over the victim", async () => {
+    // This is the fabrication that used to be fatal. It now mints aircraft_shares/{stranger}/... ,
+    // which governs users/{stranger}/aircraft/{AC} — their own plane.
+    await assertSucceeds(
+      setDoc(doc(as(STRANGER), `aircraft_shares/${STRANGER}/aircraft/${AC}`), {
+        hostUid: STRANGER,
+        aircraftId: AC,
+        memberRoles: { [STRANGER]: "owner" },
+      }),
+    );
+
+    // The victim's aircraft and records remain out of reach: the rules resolve the ACL from the tree
+    // being READ (users/{HOST}/...), not from an id the attacker controls.
+    await assertFails(getDoc(doc(as(STRANGER), aircraftDoc)));
+    await assertFails(getDoc(doc(as(STRANGER), logDoc)));
+    await assertFails(getDoc(doc(as(STRANGER), shareDoc)));
+  });
+
+  it("an ex-member cannot re-claim a share whose ACL was torn down by a delete", async () => {
+    // The reachable path from #204: deleting a shared aircraft removes its ACL while leaving the
+    // records behind (tombstoned, payloads intact). An ex-member knows the id forever. Under a
+    // global key they could re-claim the abandoned slot and read the deleted aircraft.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await deleteDoc(doc(ctx.firestore(), shareDoc)); // the teardown the delete trigger performs
+    });
+
+    // TECH (revoked / ex-member) plants the same-id aircraft and tries to claim the empty slot.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `users/${TECH}/aircraft/${AC}`), { registration: "FAKE" });
+    });
+    await assertFails(
+      setDoc(doc(as(TECH), `aircraft_shares/${HOST}/aircraft/${AC}`), {
+        hostUid: TECH,
+        aircraftId: AC,
+        memberRoles: { [TECH]: "owner" },
+      }),
+    );
+
+    // And the victim's leftover records stay unreadable.
+    await assertFails(getDoc(doc(as(TECH), aircraftDoc)));
+    await assertFails(getDoc(doc(as(TECH), logDoc)));
+  });
+});
+
 describe("aircraft_shares ACL root — first share (no ACL doc yet)", () => {
   const FRESH = "ac-fresh";
-  const freshShare = `aircraft_shares/${FRESH}`;
+  const freshShare = `aircraft_shares/${HOST}/aircraft/${FRESH}`;
 
   beforeEach(async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {

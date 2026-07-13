@@ -12,7 +12,12 @@ import {
   type AircraftShareDoc,
 } from "./sharingModels.js";
 
-type RevokeRequest = { aircraftId: string; memberUid: string };
+/**
+ * `hostUid` is routing only — it names WHICH share doc to open (#204). It is not authorization: the
+ * caller's rights are still checked against the ACL found at that path, so passing someone else's
+ * hostUid opens a share the caller is not in, and the checks below reject them.
+ */
+type RevokeRequest = { hostUid: string; aircraftId: string; memberUid: string };
 
 /**
  * Removes a member from a share. Callable by any owner, or by the member themselves (leave). The
@@ -23,8 +28,8 @@ export const revokeAircraftShare = onCall<RevokeRequest, Promise<{ ok: true }>>(
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request) => {
     const { uid } = requireAuthenticatedApp(request);
-    const { aircraftId, memberUid } = parseRequest(request.data);
-    const shareRef = adminDb.doc(aircraftShareDocPath(aircraftId));
+    const { hostUid, aircraftId, memberUid } = parseRequest(request.data);
+    const shareRef = adminDb.doc(aircraftShareDocPath(hostUid, aircraftId));
 
     await adminDb.runTransaction(async (tx) => {
       const snap = await tx.get(shareRef);
@@ -42,7 +47,7 @@ export const revokeAircraftShare = onCall<RevokeRequest, Promise<{ ok: true }>>(
       if (share.memberRoles[memberUid] == null) return; // already not a member — no-op
 
       tx.update(shareRef, { [`memberRoles.${memberUid}`]: FieldValue.delete() });
-      tx.delete(adminDb.doc(shareMemberDocPath(aircraftId, memberUid)));
+      tx.delete(adminDb.doc(shareMemberDocPath(hostUid, aircraftId, memberUid)));
       tx.set(
         adminDb.doc(`users/${memberUid}/shared_aircraft_ref/${aircraftId}`),
         sharedAircraftRefTombstone(),
@@ -59,10 +64,14 @@ export const revokeAircraftShare = onCall<RevokeRequest, Promise<{ ok: true }>>(
  */
 function parseRequest(data: unknown): RevokeRequest {
   const obj = (data ?? {}) as Record<string, unknown>;
+  const hostUid = typeof obj.hostUid === "string" ? obj.hostUid.trim() : "";
   const aircraftId = typeof obj.aircraftId === "string" ? obj.aircraftId.trim() : "";
   const memberUid = typeof obj.memberUid === "string" ? obj.memberUid.trim() : "";
+  if (hostUid.length === 0) {
+    throw new HttpsError("invalid-argument", "hostUid is required.");
+  }
   if (aircraftId.length === 0 || memberUid.length === 0) {
     throw new HttpsError("invalid-argument", "revokeAircraftShare requires aircraftId and memberUid.");
   }
-  return { aircraftId, memberUid };
+  return { hostUid, aircraftId, memberUid };
 }
