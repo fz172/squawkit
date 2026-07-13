@@ -4,8 +4,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** A parsed aircraft-share invite carried in a `/share#{aircraftId}.{secret}` deep link. */
-data class ShareInvite(val aircraftId: String, val secret: String)
+/** A parsed aircraft-share invite carried in a `/share#{hostUid}.{aircraftId}.{secret}` deep link. */
+data class ShareInvite(
+  /**
+   * The account whose tree the aircraft lives in. Carried because the ACL is keyed under the host
+   * (#204) and an invitee has no ref yet, so there is no other way to locate the share doc.
+   *
+   * It is **routing, not a capability**: creating a share under a uid requires *being* that uid
+   * (rules pin the path segment to the signed token), so knowing a host's uid grants nothing.
+   */
+  val hostUid: String,
+  val aircraftId: String,
+  val secret: String,
+)
 
 /**
  * Platform-agnostic channel for an inbound aircraft-share deep link, mirroring [EmailLinkDeepLinks].
@@ -38,18 +49,22 @@ object AircraftShareDeepLinks {
   }
 
   /**
-   * Parse `https://host/share#{aircraftId}.{secret}` → [ShareInvite], or null if [url] isn't a
-   * share link. The path must be `/share` and the fragment `{aircraftId}.{secret}`. Aircraft ids are
-   * UUIDs and secrets are base64url — neither contains `.`, so a first-dot split is unambiguous.
+   * Parse `https://host/share#{hostUid}.{aircraftId}.{secret}` → [ShareInvite], or null if [url]
+   * isn't a share link. The path must be `/share`. Firebase uids, aircraft ids and base64url secrets
+   * contain no `.`, so splitting on dots is unambiguous.
+   *
+   * Links minted before #204 carried only `{aircraftId}.{secret}`; they no longer resolve, and are
+   * rejected rather than guessed at. The ACL they pointed to has moved.
    */
   fun parse(url: String): ShareInvite? {
     val beforeFragment = url.substringBefore('#')
     if (beforeFragment == url) return null // no fragment
     if (!beforeFragment.substringBefore('?').trimEnd('/').endsWith("/share")) return null
-    val fragment = url.substringAfter('#')
-    val aircraftId = fragment.substringBefore('.')
-    val secret = fragment.substringAfter('.', "")
-    if (aircraftId.isBlank() || secret.isBlank()) return null
-    return ShareInvite(aircraftId = aircraftId, secret = secret)
+    val parts = url.substringAfter('#')
+      .split('.')
+    if (parts.size != 3) return null
+    val (hostUid, aircraftId, secret) = parts
+    if (hostUid.isBlank() || aircraftId.isBlank() || secret.isBlank()) return null
+    return ShareInvite(hostUid = hostUid, aircraftId = aircraftId, secret = secret)
   }
 }

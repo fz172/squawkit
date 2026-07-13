@@ -37,15 +37,17 @@ export const onAircraftDeleted = onDocumentWritten(
 /**
  * Tombstone every member's ref, then recursively delete the aircraft_shares tree. No-op if unshared.
  *
- * [deletedBy] must be the share's host. A share is keyed by aircraft id alone, but an aircraft id is
- * only unique *within* a user's tree — so without this check, anyone who deletes an aircraft of
- * theirs that happens to carry the same id destroys someone else's share: ACL, member docs, and
- * every member's ref. That is not hypothetical. A member's client can end up holding a doc at
- * `users/{them}/aircraft/{acId}` with the host's aircraft id, and deleting it would take the host's
- * share down with it. The host's delete is the only one that means "this share is over" (§3.3).
+ * [deletedBy] names the tree the delete happened in, and since #204 the ACL is keyed under the host
+ * (`aircraft_shares/{hostUid}/aircraft/{acId}`), that IS the share this delete may tear down. A
+ * stray same-id aircraft in someone else's tree now resolves to *their* namespace and cannot touch
+ * this share — the property is structural rather than a check that must be remembered.
+ *
+ * The hostUid comparison below is kept as belt-and-braces: it costs nothing, and it is the exact
+ * invariant that failed in #192, when the key was global and any same-id delete tore down the
+ * victim's share.
  */
 async function tearDownShare(deletedBy: string, acId: string): Promise<void> {
-  const shareRef = adminDb.doc(aircraftShareDocPath(acId));
+  const shareRef = adminDb.doc(aircraftShareDocPath(deletedBy, acId));
   const snap = await shareRef.get();
   if (!snap.exists) return;
 

@@ -16,7 +16,12 @@ import {
   type ShareRole,
 } from "./sharingModels.js";
 
-type RedeemRequest = { aircraftId: string; secret: string };
+/**
+ * `hostUid` is routing only — it names WHICH share doc to open (#204). It is not authorization: the
+ * caller's rights are still checked against the ACL found at that path, so passing someone else's
+ * hostUid opens a share the caller is not in, and the checks below reject them.
+ */
+type RedeemRequest = { hostUid: string; aircraftId: string; secret: string };
 type RedeemResponse = {
   aircraftId: string;
   hostUid: string;
@@ -34,11 +39,11 @@ export const redeemAircraftShareInvite = onCall<RedeemRequest, Promise<RedeemRes
   async (request): Promise<RedeemResponse> => {
     const { uid } = requireAuthenticatedApp(request);
     requireNonAnonymous(request);
-    const { aircraftId, secret } = parseRequest(request.data);
+    const { hostUid, aircraftId, secret } = parseRequest(request.data);
     const tokenHash = sha256Hex(secret);
 
-    const shareRef = adminDb.doc(aircraftShareDocPath(aircraftId));
-    const inviteRef = adminDb.doc(shareInviteDocPath(aircraftId, tokenHash));
+    const shareRef = adminDb.doc(aircraftShareDocPath(hostUid, aircraftId));
+    const inviteRef = adminDb.doc(shareInviteDocPath(hostUid, aircraftId, tokenHash));
 
     return adminDb.runTransaction(async (tx): Promise<RedeemResponse> => {
       const [shareSnap, inviteSnap] = await Promise.all([tx.get(shareRef), tx.get(inviteRef)]);
@@ -67,7 +72,7 @@ export const redeemAircraftShareInvite = onCall<RedeemRequest, Promise<RedeemRes
       const role = invite.role;
       tx.update(inviteRef, { useCount: invite.useCount + 1 });
       tx.update(shareRef, { [`memberRoles.${uid}`]: role });
-      tx.set(adminDb.doc(shareMemberDocPath(aircraftId, uid)), {
+      tx.set(adminDb.doc(shareMemberDocPath(hostUid, aircraftId, uid)), {
         role,
         displayName: request.auth?.token?.name ?? "",
         photoUrl: request.auth?.token?.picture ?? null,
@@ -101,10 +106,14 @@ function sha256Hex(secret: string): string {
  */
 function parseRequest(data: unknown): RedeemRequest {
   const obj = (data ?? {}) as Record<string, unknown>;
+  const hostUid = typeof obj.hostUid === "string" ? obj.hostUid.trim() : "";
   const aircraftId = typeof obj.aircraftId === "string" ? obj.aircraftId.trim() : "";
   const secret = typeof obj.secret === "string" ? obj.secret : "";
+  if (hostUid.length === 0) {
+    throw new HttpsError("invalid-argument", "hostUid is required.");
+  }
   if (aircraftId.length === 0 || secret.length === 0) {
     throw new HttpsError("invalid-argument", "redeemAircraftShareInvite requires aircraftId and secret.");
   }
-  return { aircraftId, secret };
+  return { hostUid, aircraftId, secret };
 }

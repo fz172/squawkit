@@ -33,12 +33,12 @@ function req(uid: string, data: unknown, provider = "google.com") {
 }
 
 async function seedShare(memberRoles: Record<string, string> = { [HOST]: "owner" }) {
-  await adminDb.doc(`aircraft_shares/${AC}`).set({ hostUid: HOST, aircraftId: AC, memberRoles });
+  await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).set({ hostUid: HOST, aircraftId: AC, memberRoles });
 }
 
 async function seedInvite(overrides: Record<string, unknown> = {}) {
   const secret = "secret-xyz";
-  await adminDb.doc(`aircraft_shares/${AC}/invites/${sha256(secret)}`).set({
+  await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/invites/${sha256(secret)}`).set({
     role: "technician",
     createdBy: HOST,
     createdAt: Timestamp.now(),
@@ -52,7 +52,7 @@ async function seedInvite(overrides: Record<string, unknown> = {}) {
 }
 
 async function wipe() {
-  await adminDb.recursiveDelete(adminDb.doc(`aircraft_shares/${AC}`));
+  await adminDb.recursiveDelete(adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`));
   for (const u of [HOST, OWNER2, TECH]) {
     await adminDb.recursiveDelete(adminDb.doc(`users/${u}`));
   }
@@ -67,16 +67,16 @@ describe("redeemAircraftShareInvite", () => {
     await seedShare();
     const secret = await seedInvite();
 
-    const res = await wrappedRedeem(req(TECH, { aircraftId: AC, secret }));
+    const res = await wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }));
     expect(res).toMatchObject({ aircraftId: AC, hostUid: HOST, role: "technician", alreadyMember: false });
 
-    const share = (await adminDb.doc(`aircraft_shares/${AC}`).get()).data();
+    const share = (await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).data();
     expect(share?.memberRoles[TECH]).toBe("technician");
-    const member = await adminDb.doc(`aircraft_shares/${AC}/members/${TECH}`).get();
+    const member = await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/members/${TECH}`).get();
     expect(member.exists).toBe(true);
     const ref = await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get();
     expect(ref.data()?.deleted).toBe(false);
-    const invite = await adminDb.doc(`aircraft_shares/${AC}/invites/${sha256(secret)}`).get();
+    const invite = await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/invites/${sha256(secret)}`).get();
     expect(invite.data()?.useCount).toBe(1);
   });
 
@@ -84,35 +84,35 @@ describe("redeemAircraftShareInvite", () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
     const secret = await seedInvite();
 
-    const res = await wrappedRedeem(req(TECH, { aircraftId: AC, secret }));
+    const res = await wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }));
     expect(res).toMatchObject({ alreadyMember: true });
-    const invite = await adminDb.doc(`aircraft_shares/${AC}/invites/${sha256(secret)}`).get();
+    const invite = await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/invites/${sha256(secret)}`).get();
     expect(invite.data()?.useCount).toBe(0);
   });
 
   it("rejects an expired invite", async () => {
     await seedShare();
     const secret = await seedInvite({ expiresAt: Timestamp.fromMillis(Date.now() - 1000) });
-    await expect(wrappedRedeem(req(TECH, { aircraftId: AC, secret }))).rejects.toThrow();
+    await expect(wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }))).rejects.toThrow();
   });
 
   it("rejects a revoked invite", async () => {
     await seedShare();
     const secret = await seedInvite({ revoked: true });
-    await expect(wrappedRedeem(req(TECH, { aircraftId: AC, secret }))).rejects.toThrow();
+    await expect(wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }))).rejects.toThrow();
   });
 
   it("rejects an already-used single-use invite", async () => {
     await seedShare();
     const secret = await seedInvite({ useCount: 1, maxUses: 1 });
-    await expect(wrappedRedeem(req(TECH, { aircraftId: AC, secret }))).rejects.toThrow();
+    await expect(wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }))).rejects.toThrow();
   });
 
   it("rejects an anonymous caller", async () => {
     await seedShare();
     const secret = await seedInvite();
     await expect(
-      wrappedRedeem(req(TECH, { aircraftId: AC, secret }, "anonymous")),
+      wrappedRedeem(req(TECH, { hostUid: HOST, aircraftId: AC, secret }, "anonymous")),
     ).rejects.toThrow();
   });
 });
@@ -120,36 +120,36 @@ describe("redeemAircraftShareInvite", () => {
 describe("revokeAircraftShare", () => {
   it("an owner removes a member: ACL cleared, member doc deleted, ref tombstoned", async () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
-    await adminDb.doc(`aircraft_shares/${AC}/members/${TECH}`).set({ role: "technician" });
+    await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/members/${TECH}`).set({ role: "technician" });
     await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).set({ deleted: false });
 
-    await wrappedRevoke(req(HOST, { aircraftId: AC, memberUid: TECH }));
+    await wrappedRevoke(req(HOST, { hostUid: HOST, aircraftId: AC, memberUid: TECH }));
 
-    const share = (await adminDb.doc(`aircraft_shares/${AC}`).get()).data();
+    const share = (await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).data();
     expect(share?.memberRoles[TECH]).toBeUndefined();
-    expect((await adminDb.doc(`aircraft_shares/${AC}/members/${TECH}`).get()).exists).toBe(false);
+    expect((await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/members/${TECH}`).get()).exists).toBe(false);
     expect((await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get()).data()?.deleted).toBe(true);
   });
 
   it("cannot remove the hosting owner", async () => {
     await seedShare({ [HOST]: "owner", [OWNER2]: "owner" });
-    await expect(wrappedRevoke(req(OWNER2, { aircraftId: AC, memberUid: HOST }))).rejects.toThrow();
+    await expect(wrappedRevoke(req(OWNER2, { hostUid: HOST, aircraftId: AC, memberUid: HOST }))).rejects.toThrow();
   });
 
   it("a technician cannot remove another member", async () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician", [OWNER2]: "owner" });
-    await expect(wrappedRevoke(req(TECH, { aircraftId: AC, memberUid: OWNER2 }))).rejects.toThrow();
+    await expect(wrappedRevoke(req(TECH, { hostUid: HOST, aircraftId: AC, memberUid: OWNER2 }))).rejects.toThrow();
   });
 });
 
 describe("updateAircraftShareRole", () => {
   it("an owner promotes a technician to owner and rewrites the ref", async () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
-    await adminDb.doc(`aircraft_shares/${AC}/members/${TECH}`).set({ role: "technician" });
+    await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/members/${TECH}`).set({ role: "technician" });
 
-    await wrappedUpdateRole(req(HOST, { aircraftId: AC, memberUid: TECH, role: "owner" }));
+    await wrappedUpdateRole(req(HOST, { hostUid: HOST, aircraftId: AC, memberUid: TECH, role: "owner" }));
 
-    const share = (await adminDb.doc(`aircraft_shares/${AC}`).get()).data();
+    const share = (await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).data();
     expect(share?.memberRoles[TECH]).toBe("owner");
     const ref = await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get();
     expect(ref.exists).toBe(true);
@@ -158,14 +158,14 @@ describe("updateAircraftShareRole", () => {
   it("cannot change the hosting owner's role", async () => {
     await seedShare({ [HOST]: "owner", [OWNER2]: "owner" });
     await expect(
-      wrappedUpdateRole(req(OWNER2, { aircraftId: AC, memberUid: HOST, role: "technician" })),
+      wrappedUpdateRole(req(OWNER2, { hostUid: HOST, aircraftId: AC, memberUid: HOST, role: "technician" })),
     ).rejects.toThrow();
   });
 
   it("a technician cannot change roles", async () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
     await expect(
-      wrappedUpdateRole(req(TECH, { aircraftId: AC, memberUid: TECH, role: "owner" })),
+      wrappedUpdateRole(req(TECH, { hostUid: HOST, aircraftId: AC, memberUid: TECH, role: "owner" })),
     ).rejects.toThrow();
   });
 });
@@ -185,7 +185,7 @@ describe("onAircraftDeleted", () => {
 
     await wrappedDeleted(change(false, true) as never);
 
-    expect((await adminDb.doc(`aircraft_shares/${AC}`).get()).exists).toBe(false);
+    expect((await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).exists).toBe(false);
     expect((await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get()).data()?.deleted).toBe(true);
   });
 
@@ -215,7 +215,7 @@ describe("onAircraftDeleted", () => {
     } as never);
 
     // The host's share is untouched: ACL, member docs, and the member's ref all survive.
-    expect((await adminDb.doc(`aircraft_shares/${AC}`).get()).exists).toBe(true);
+    expect((await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).exists).toBe(true);
     expect((await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get()).data()?.deleted)
       .toBe(false);
   });
@@ -235,7 +235,7 @@ describe("onAircraftDeleted", () => {
     } as never);
 
     expect((await adminDb.doc(`${techPath}/maintenance_log/log-1`).get()).data()?.deleted).toBe(true);
-    expect((await adminDb.doc(`aircraft_shares/${AC}`).get()).exists).toBe(true);
+    expect((await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).exists).toBe(true);
   });
 
   it("ignores a non-delete write (deleted stays false)", async () => {

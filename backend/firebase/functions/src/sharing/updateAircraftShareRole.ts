@@ -12,7 +12,12 @@ import {
   type ShareRole,
 } from "./sharingModels.js";
 
-type UpdateRoleRequest = { aircraftId: string; memberUid: string; role: ShareRole };
+/**
+ * `hostUid` is routing only — it names WHICH share doc to open (#204). It is not authorization: the
+ * caller's rights are still checked against the ACL found at that path, so passing someone else's
+ * hostUid opens a share the caller is not in, and the checks below reject them.
+ */
+type UpdateRoleRequest = { hostUid: string; aircraftId: string; memberUid: string; role: ShareRole };
 
 /**
  * Changes a member's role. Owner-only. Updates the ACL, the member doc, and rewrites the member's
@@ -22,8 +27,8 @@ export const updateAircraftShareRole = onCall<UpdateRoleRequest, Promise<{ ok: t
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request) => {
     const { uid } = requireAuthenticatedApp(request);
-    const { aircraftId, memberUid, role } = parseRequest(request.data);
-    const shareRef = adminDb.doc(aircraftShareDocPath(aircraftId));
+    const { hostUid, aircraftId, memberUid, role } = parseRequest(request.data);
+    const shareRef = adminDb.doc(aircraftShareDocPath(hostUid, aircraftId));
 
     await adminDb.runTransaction(async (tx) => {
       const snap = await tx.get(shareRef);
@@ -41,7 +46,7 @@ export const updateAircraftShareRole = onCall<UpdateRoleRequest, Promise<{ ok: t
       }
 
       tx.update(shareRef, { [`memberRoles.${memberUid}`]: role });
-      tx.update(adminDb.doc(shareMemberDocPath(aircraftId, memberUid)), { role });
+      tx.update(adminDb.doc(shareMemberDocPath(hostUid, aircraftId, memberUid)), { role });
       tx.set(
         adminDb.doc(`users/${memberUid}/shared_aircraft_ref/${aircraftId}`),
         sharedAircraftRefWireDoc(aircraftId, share.hostUid, role),
@@ -58,14 +63,18 @@ export const updateAircraftShareRole = onCall<UpdateRoleRequest, Promise<{ ok: t
  */
 function parseRequest(data: unknown): UpdateRoleRequest {
   const obj = (data ?? {}) as Record<string, unknown>;
+  const hostUid = typeof obj.hostUid === "string" ? obj.hostUid.trim() : "";
   const aircraftId = typeof obj.aircraftId === "string" ? obj.aircraftId.trim() : "";
   const memberUid = typeof obj.memberUid === "string" ? obj.memberUid.trim() : "";
   const role = obj.role;
+  if (hostUid.length === 0) {
+    throw new HttpsError("invalid-argument", "hostUid is required.");
+  }
   if (aircraftId.length === 0 || memberUid.length === 0) {
     throw new HttpsError("invalid-argument", "updateAircraftShareRole requires aircraftId and memberUid.");
   }
   if (role !== SHARE_ROLE.OWNER && role !== SHARE_ROLE.TECHNICIAN) {
     throw new HttpsError("invalid-argument", "role must be 'owner' or 'technician'.");
   }
-  return { aircraftId, memberUid, role };
+  return { hostUid, aircraftId, memberUid, role };
 }
