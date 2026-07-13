@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.core.auth.SendLinkResult
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.gitlive.firebase.auth.AuthCredential
@@ -115,11 +116,15 @@ class AdaptiveShellViewModelTest {
   // assertions, so a relaxed mock keeps it out of the way.
   private val sharingManager: SharingManager = mockk(relaxed = true)
 
+  // The engine only feeds the discarded-changes notice here; irrelevant to these assertions.
+  private val syncEngine: SyncEngine = mockk(relaxed = true)
+
   private fun viewModel() = AdaptiveShellViewModel(
     fleetManager = fleetManager,
     technicianManager = technicianManager,
     authManager = authManager,
     sharingManager = sharingManager,
+    syncEngine = syncEngine,
   )
 
   @Test

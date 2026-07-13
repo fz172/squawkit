@@ -54,6 +54,7 @@ import wingslog.feature.tasks.sharedassets.generated.resources.unknown_task
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.log_assigned_by
 import wingslog.feature.logs.sharedassets.generated.resources.log_assigned_by_unknown
+import wingslog.feature.logs.sharedassets.generated.resources.log_unverified_technician
 import wingslog.feature.logs.sharedassets.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
@@ -305,12 +306,17 @@ private fun LinkedTaskRow(
 }
 
 /**
- * Names the writer, and only when that is someone other than the technician on the log.
+ * What we can and cannot say about the name above this line.
  *
- * The two silent cases are silent for different reasons. [LogAuthorship.SelfSigned] is the ordinary
- * case — the technician wrote up their own work — and calling it out would make the exception look
- * like the rule. [LogAuthorship.Unknown] is a hand-typed technician or a pre-attestation revision:
- * it proves nothing either way, and implying otherwise would be worse than saying nothing.
+ * It speaks up in two cases. [LogAuthorship.Assigned] — someone other than the named technician
+ * wrote the entry. [LogAuthorship.Unverifiable] — the name was typed by hand and belongs to no
+ * account, so nothing stands behind it; a typed name should not sit there looking as settled as a
+ * signed one.
+ *
+ * It stays silent in two. [LogAuthorship.SelfSigned] is the ordinary case — the technician wrote up
+ * their own work — and remarking on it would make the exception look like the rule.
+ * [LogAuthorship.Unknown] is a revision written before authorship was recorded: it proves nothing
+ * either way, and casting doubt on an old entry we simply have no data for would be a lie.
  *
  * The technician's name is the line directly above this one, so it is never repeated here.
  */
@@ -320,6 +326,9 @@ private fun AuthorshipLine(authorship: LogAuthorship) {
     is LogAuthorship.Assigned -> authorship.authorName?.let { author ->
       stringResource(MaintenanceRes.string.log_assigned_by, author)
     } ?: stringResource(MaintenanceRes.string.log_assigned_by_unknown)
+
+    is LogAuthorship.Unverifiable ->
+      stringResource(MaintenanceRes.string.log_unverified_technician)
 
     is LogAuthorship.SelfSigned, LogAuthorship.Unknown -> return
   }

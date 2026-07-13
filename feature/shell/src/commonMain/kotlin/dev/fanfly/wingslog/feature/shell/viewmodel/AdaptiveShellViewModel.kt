@@ -8,6 +8,8 @@ import dev.fanfly.wingslog.core.ui.adaptive.ShellAircraft
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.sync.data.SyncEngine
+import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +28,17 @@ class AdaptiveShellViewModel(
   private val technicianManager: TechnicianManager,
   private val authManager: AuthManager,
   private val sharingManager: SharingManager,
+  private val syncEngine: SyncEngine,
 ) : ViewModel() {
+
+  /**
+   * Work the sync engine had to throw away (PRD D3). Surfaced from the shell because it outlives
+   * whatever screen the user was on — the purge usually lands while they are somewhere else, or
+   * while the app is backgrounded entirely.
+   */
+  val notice: StateFlow<SyncNotice?> = syncEngine.notices
+
+  fun dismissNotice() = syncEngine.dismissNotice()
 
   private val _uiState = MutableStateFlow(AdaptiveShellUiState())
   val uiState: StateFlow<AdaptiveShellUiState> = _uiState.asStateFlow()

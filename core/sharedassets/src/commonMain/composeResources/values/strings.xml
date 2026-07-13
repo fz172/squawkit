@@ -31,6 +31,9 @@
   <string name="unsaved_changes">Unsaved Changes</string>
   <string name="unsaved_changes_message">You have unsaved changes. Are you sure you want to leave?</string>
   <string name="discard">Discard</string>
+  <string name="dismiss">Dismiss</string>
+  <!-- PRD D3: unsynced edits to a shared aircraft are lost when access is revoked. Never silent. -->
+  <string name="sync_changes_discarded">Unsaved changes to %1$s were discarded — your access was removed</string>
   <string name="save_failed">Save failed</string>
   <string name="delete_failed">Delete failed</string>
   <string name="error_occurred">An error occurred</string>

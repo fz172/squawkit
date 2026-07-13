@@ -1,10 +1,16 @@
 package dev.fanfly.wingslog.feature.shell
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import dev.fanfly.wingslog.feature.sync.data.SyncNotice
+import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.dismiss
+import wingslog.core.sharedassets.generated.resources.sync_changes_discarded
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -61,6 +67,26 @@ fun AdaptiveShellRoute(
     val message = successMessage ?: return@LaunchedEffect
     shellEntry.savedStateHandle[CROSS_SCREEN_SUCCESS_MESSAGE] = null
     snackbarHostState.showSnackbar(message = message)
+  }
+
+  // Work that was destroyed when a share ended (PRD D3 — the one data-loss window). Held open until
+  // the user dismisses it: the purge typically runs while they are on another screen or the app is
+  // backgrounded, and a message that times out unseen would leave them thinking the edit saved.
+  val notice by viewModel.notice.collectAsState()
+  val dismissLabel = stringResource(CoreRes.string.dismiss)
+  val discardedMessage = stringResource(
+    CoreRes.string.sync_changes_discarded,
+    (notice as? SyncNotice.ChangesDiscarded)?.aircraftLabel.orEmpty(),
+  )
+  LaunchedEffect(notice) {
+    val discarded = notice as? SyncNotice.ChangesDiscarded ?: return@LaunchedEffect
+    snackbarHostState.showSnackbar(
+      message = discardedMessage,
+      actionLabel = dismissLabel,
+      withDismissAction = true,
+      duration = SnackbarDuration.Indefinite,
+    )
+    viewModel.dismissNotice()
   }
 
   AdaptiveAppShell(

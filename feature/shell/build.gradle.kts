@@ -57,6 +57,8 @@ kotlin {
       implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:squawk:update"))
       implementation(project(":feature:stresstest:config"))
+      implementation(project(":core:sharedassets"))
+      implementation(project(":feature:sync:data"))
       implementation(project(":feature:sync:settings"))
       implementation(project(":feature:tasks:update"))
       implementation(project(":feature:technician:datamanager"))

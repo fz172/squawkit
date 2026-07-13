@@ -51,6 +51,14 @@ class MaintenanceLogListViewModel(
   /** uid → display name, for naming the author of a log this member didn't write. */
   private val _namesByUid = MutableStateFlow<Map<String, String>>(emptyMap())
 
+  /**
+   * Attestation is a statement about *other people*. On an unshared aircraft nobody else can write a
+   * log, so there is no one to attest against and nothing a reader could act on: the owner typed
+   * every name here and is answerable for all of it. Saying "not verified" on their own logbook
+   * would be noise dressed up as rigour, so authorship stays silent until the aircraft is shared.
+   */
+  private val _isShared = MutableStateFlow(false)
+
   init {
     observeLogs()
     observeTasks()
@@ -61,8 +69,10 @@ class MaintenanceLogListViewModel(
         _filter,
         _selectedLog,
         _availableCards,
-        combine(_logAuthors, _namesByUid) { authors, names -> authors to names },
-      ) { logsState, filter, selectedLog, availableCards, (authors, names) ->
+        combine(_logAuthors, _namesByUid, _isShared) { authors, names, isShared ->
+          Triple(authors, names, isShared)
+        },
+      ) { logsState, filter, selectedLog, availableCards, (authors, names, isShared) ->
         when (logsState) {
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
           LogsLoadState.Error -> MaintenanceLogListUiState.Error
@@ -82,10 +92,13 @@ class MaintenanceLogListViewModel(
               totalCount = logsState.logs.size,
               filter = filter,
               selectedLog = selectedLog,
-              selectedAuthorship = selectedLog?.authorship(
-                writerUid = authors[selectedLog.id],
-                nameForUid = { uid -> names[uid] },
-              ) ?: LogAuthorship.Unknown,
+              selectedAuthorship = selectedLog
+                ?.takeIf { isShared }
+                ?.authorship(
+                  writerUid = authors[selectedLog.id],
+                  nameForUid = { uid -> names[uid] },
+                )
+                ?: LogAuthorship.Unknown,
               availableCards = availableCards,
             )
           }
@@ -109,6 +122,11 @@ class MaintenanceLogListViewModel(
    * covers the common case of their own writes.
    */
   private fun observeAuthorship() {
+    viewModelScope.launch {
+      sharingManager.observeIsShared(aircraftId)
+        .catch { _isShared.value = false }
+        .collect { _isShared.value = it }
+    }
     viewModelScope.launch {
       logManager.observeLogAuthors(aircraftId)
         .catch { _logAuthors.value = emptyMap() }

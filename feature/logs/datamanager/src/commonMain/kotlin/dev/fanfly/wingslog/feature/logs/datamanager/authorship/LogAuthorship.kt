@@ -19,11 +19,18 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
  */
 sealed interface LogAuthorship {
   /**
-   * Nothing to attest. Either the log names no technician, or it carries no provenance — a manual
-   * hand-typed entry (no `source_uid`), or a revision written before authorship was recorded.
-   * Deliberately NOT reported as "assigned": absence of proof is not proof of third-party entry.
+   * Nothing to attest: the log names no technician, or the revision predates `writer_uid`. Silent in
+   * the UI — deliberately NOT reported as "assigned" or "unverified", because absence of proof is
+   * not proof of anything, and a row written before the field existed accuses nobody.
    */
   data object Unknown : LogAuthorship
+
+  /**
+   * The technician was typed in by hand and belongs to no account ([Technician.source_uid] is
+   * empty), so there is nothing to attest the name against — anyone can type any name. This is a
+   * real, reportable fact, and distinct from [Unknown]: we know *why* it can't be verified.
+   */
+  data class Unverifiable(val technicianName: String) : LogAuthorship
 
   /** The named technician wrote this revision themselves. */
   data class SelfSigned(val technicianName: String) : LogAuthorship
@@ -48,8 +55,11 @@ fun MaintenanceLog.authorship(
 ): LogAuthorship {
   val technicianName = technician?.name?.takeIf { it.isNotBlank() }
     ?: return LogAuthorship.Unknown
+  // Hand-typed: no account behind the name, so nothing can attest it — say so rather than let a
+  // typed name sit there looking as settled as a signed one. Checked before writer_uid, because it
+  // holds regardless of who wrote the row.
   val sourceUid = technician?.source_uid?.takeIf { it.isNotBlank() }
-    ?: return LogAuthorship.Unknown // hand-typed technician: no account to attest against
+    ?: return LogAuthorship.Unverifiable(technicianName)
   if (writerUid.isNullOrBlank()) return LogAuthorship.Unknown
 
   return if (writerUid == sourceUid) {
