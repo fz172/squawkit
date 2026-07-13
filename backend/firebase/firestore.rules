@@ -81,23 +81,38 @@ service cloud.firestore {
     // --- Share ACL tree (plain-field, rules-readable) ------------------------------------------
 
     match /aircraft_shares/{acId} {
-      // Members see the ACL; a host may read it for an aircraft in their own tree (e.g. before
-      // any member exists). memberRoles is function-managed, so no client update/delete.
-      // The own-aircraft existence check is evaluated FIRST: on a not-yet-shared aircraft the ACL
-      // doc doesn't exist, so isShareMember's get() would error and (as the left operand of ||) deny
-      // the whole rule before the fallback is reached — the owner could never read/bootstrap it.
-      allow get: if exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId))
+      // Members see the ACL. memberRoles is function-managed, so no client update/delete.
+      //
+      // The own-aircraft check is deliberately fenced to `resource == null` — the case where the ACL
+      // doc does not exist yet and there is therefore NOTHING TO LEAK. It exists only so the owner
+      // can read the empty result and bootstrap the doc before the first invite (§3.1); it must be
+      // the left operand, because on a missing doc isShareMember's get() errors and would deny the
+      // whole rule before the fallback ran.
+      //
+      // It must NOT guard a doc that exists. An aircraft id is only unique WITHIN a tree, and every
+      // user may write anything into their own tree — so "I have an aircraft with this id" is not a
+      // claim to be the host, it is a claim anyone who knows the id can manufacture. That id is in
+      // every invite link and is remembered by every ex-member. Guarding a live ACL with it handed
+      // them hostUid, the full membership list, and (via members/) certificate numbers. See #202.
+      //
+      // Once the doc exists, membership is the only key: the host is in memberRoles, so isShareMember
+      // covers them too.
+      allow get: if (resource == null
+          && exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId)))
         || isShareMember(acId);
       allow create: if request.resource.data.hostUid == request.auth.uid
         && exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId));
       allow update, delete: if false; // functions only
 
       match /members/{memberUid} {
-        // Own-aircraft check first so the owner can read the (empty) roster before the first share
-        // bootstraps the ACL doc — otherwise isShareMember's get() of the missing doc errors and
-        // denies (Manage Access would PERMISSION_DENIED on a not-yet-shared aircraft).
-        allow read: if exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId))
-          || isShareMember(acId);
+        // Members only. A not-yet-shared aircraft has no ACL, so this denies — and that is correct:
+        // there is no roster to read. Manage Access already treats the denial as "no members yet"
+        // (AircraftShareState.accessDenied) and still lets the owner invite.
+        //
+        // No own-aircraft escape hatch here (#202): these docs carry display names, photo URLs and
+        // technician mirrors — certificate numbers and expiry dates. Anyone who knew the aircraft id
+        // could mint a same-id aircraft in their own tree and read all of it, revoked or not.
+        allow read: if isShareMember(acId);
         // A member maintains their own display + technician mirror; role stays immutable from
         // clients (function-managed). Delete is function-only.
         allow update: if request.auth.uid == memberUid
@@ -112,10 +127,11 @@ service cloud.firestore {
       }
 
       match /invites/{tokenHash} {
-        // Owner reads the invite list (Manage Access); the own-aircraft check lets them read the
-        // empty list before the ACL doc exists (same reason as members above).
-        allow read: if exists(/databases/$(database)/documents/users/$(request.auth.uid)/aircraft/$(acId))
-          || isShareOwner(acId);
+        // Owner reads the invite list (Manage Access). Denied before the ACL exists, which is fine:
+        // there are no invites yet, and the client degrades to an empty list.
+        //
+        // No own-aircraft escape hatch (#202) — pending invites are live credentials.
+        allow read: if isShareOwner(acId);
         allow create, update: if isShareOwner(acId); // create/cancel invites
         allow delete: if false;
       }
