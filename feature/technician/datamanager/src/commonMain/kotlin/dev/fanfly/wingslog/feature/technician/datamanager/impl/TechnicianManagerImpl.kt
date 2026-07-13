@@ -262,11 +262,12 @@ class TechnicianManagerImpl(
     }.onFailure { logger.w(it) { "Error applying technician merges" } }
 
   override fun observeDuplicatesReviewed(): Flow<Boolean> {
+    // Signed out: nothing to review, and nobody to nag.
     val uid = firebaseAuth.currentUser?.uid ?: return flowOf(true)
     return flow {
       emit(
         db.schemaQueries.selectConfig(uid, DUPLICATES_REVIEWED_KEY)
-          .awaitAsOneOrNull() == "1"
+          .awaitAsOneOrNull() == REVIEWED
       )
     }
   }
@@ -274,7 +275,7 @@ class TechnicianManagerImpl(
   override suspend fun markDuplicatesReviewed(): Result<Unit> = runCatching {
     val uid = firebaseAuth.currentUser?.uid ?: return@runCatching
     writeLock.withLock {
-      db.schemaQueries.upsertConfig(uid, DUPLICATES_REVIEWED_KEY, "1")
+      db.schemaQueries.upsertConfig(uid, DUPLICATES_REVIEWED_KEY, REVIEWED)
     }
   }
 
@@ -309,5 +310,8 @@ class TechnicianManagerImpl(
 
     /** Device-local: the review prompt is a nudge, not data worth syncing. */
     private const val DUPLICATES_REVIEWED_KEY = "technician_duplicates_reviewed"
+
+    /** sync_config stores TEXT, so the flag is a string rather than a boolean. */
+    private const val REVIEWED = "1"
   }
 }
