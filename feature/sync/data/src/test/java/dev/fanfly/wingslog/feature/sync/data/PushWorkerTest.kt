@@ -209,6 +209,7 @@ class PushWorkerTest {
       remote_updated_at = null,
       dirty = true,
       deleted = false,
+      writer_uid = null,
     )
   }
 }

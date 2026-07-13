@@ -58,5 +58,6 @@ internal fun decodeRemoteEntity(doc: DocumentSnapshot): RemoteEntity? {
     payload = Base64.decode(wire.payload),
     deleted = wire.deleted,
     remoteTsMs = tsMs,
+    writerUid = wire.writerUid,
   )
 }

@@ -189,6 +189,7 @@ class PullListenerTest {
       remote_updated_at = remoteTsMs,
       dirty = dirty,
       deleted = false,
+      writer_uid = null,
     )
   }
 

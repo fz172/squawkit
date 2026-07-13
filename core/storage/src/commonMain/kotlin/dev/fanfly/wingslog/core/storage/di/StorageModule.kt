@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.core.model.userinfo.UserInfo
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
+import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.DriverFactory
 import dev.fanfly.wingslog.core.storage.EntityCodecRegistry
@@ -93,6 +94,10 @@ val storageModule: Module = module {
       codecs = get<EntityCodecRegistry>(),
       ioContext = storageIoContext,
       writeLock = get<DatabaseWriteLock>(),
+      // Bound by the sync module, which is where Firebase lives. Absent in hosts without sync, and
+      // then writes simply carry no author — "unknown", which the UI treats as neither signed nor
+      // assigned.
+      currentUid = getOrNull<CurrentUidProvider>() ?: CurrentUidProvider { null },
     )
   }
 

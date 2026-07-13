@@ -43,6 +43,7 @@ class DatabaseIntegrityCheckerTest {
       remote_updated_at = null,
       dirty = false,
       deleted = false,
+      writer_uid = null,
     )
     // Insert a sync_cursor row for the target user.
     db.schemaQueries.upsertCursor(
@@ -86,6 +87,7 @@ class DatabaseIntegrityCheckerTest {
       remote_updated_at = null,
       dirty = false,
       deleted = false,
+      writer_uid = null,
     )
     db.schemaQueries.upsert(
       collection = CollectionKind.Aircraft,
@@ -97,6 +99,7 @@ class DatabaseIntegrityCheckerTest {
       remote_updated_at = null,
       dirty = false,
       deleted = false,
+      writer_uid = null,
     )
 
     checker.wipeDataForUser(TEST_UID)
@@ -164,6 +167,7 @@ class DatabaseIntegrityCheckerTest {
       remote_updated_at = null,
       dirty = false,
       deleted = false,
+      writer_uid = null,
     )
 
     checker.wipeDataForUser(TEST_UID)

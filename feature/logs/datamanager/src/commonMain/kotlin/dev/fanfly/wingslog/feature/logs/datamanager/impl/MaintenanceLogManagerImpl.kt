@@ -30,6 +30,18 @@ class MaintenanceLogManagerImpl(
     storeFactory.create(CollectionKind.MaintenanceOverview)
 
   @OptIn(ExperimentalCoroutinesApi::class)
+  override fun observeLogAuthors(aircraftId: String): Flow<Map<String, String?>> =
+    scopeResolver.resolve(aircraftId).flatMapLatest { scope ->
+      if (scope == null) flowOf(emptyMap())
+      else logStore.observeAll(scope)
+        .map { rows -> rows.associate { it.id to it.writerUid } }
+        .catch { e ->
+          logger.w(e) { "Error observing log authorship for aircraft $aircraftId" }
+          emit(emptyMap())
+        }
+    }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeLogs(aircraftId: String): Flow<List<MaintenanceLog>> =
     scopeResolver.resolve(aircraftId).flatMapLatest { scope ->
       if (scope == null) {

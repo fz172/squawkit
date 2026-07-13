@@ -57,6 +57,9 @@ kotlin {
 
       implementation(project(":feature:featurelab:datamanager"))
       implementation(project(":feature:logs:datamanager"))
+      // Authorship needs the share roster to name whoever wrote a log (design §7.5).
+      implementation(project(":feature:sharing:datamanager"))
+      implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:logs:sharedassets"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:tasks:model"))

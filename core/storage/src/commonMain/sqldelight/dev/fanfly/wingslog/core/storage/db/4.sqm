@@ -1,0 +1,7 @@
+-- Migration from schema version 3 to 4.
+-- Adds writer_uid to entity: the uid of the account that wrote this revision (design §7.5).
+-- Stamped locally on our own writes and carried down from the sync envelope on pull, so a log can
+-- say whether the named technician signed their own work or was assigned it by someone else.
+-- Null on rows written before this existed — the UI treats that as "unknown", not "assigned".
+
+ALTER TABLE entity ADD COLUMN writer_uid TEXT;

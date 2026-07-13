@@ -97,6 +97,7 @@ class HydrationRunner(
               remote_updated_at = doc.remoteTsMs,
               dirty = false,
               deleted = doc.deleted,
+              writer_uid = doc.writerUid,
             )
             writtenDocs += doc
           }

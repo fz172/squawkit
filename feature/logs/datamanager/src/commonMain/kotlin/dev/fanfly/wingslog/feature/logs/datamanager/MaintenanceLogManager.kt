@@ -11,6 +11,15 @@ interface MaintenanceLogManager {
   fun observeLogs(aircraftId: String): Flow<List<MaintenanceLog>>
 
   /**
+   * Log id → uid of the account that wrote the latest revision (design §7.5).
+   *
+   * Kept separate from [observeLogs] because authorship lives in the sync envelope, not the proto
+   * payload — that is precisely what makes it unforgeable. Null for a log whose author we have never
+   * seen (written before the field existed).
+   */
+  fun observeLogAuthors(aircraftId: String): Flow<Map<String, String?>>
+
+  /**
    * Observes the maintenance overview (summary stats) for a specific aircraft.
    */
   fun observeMaintenanceOverview(aircraftId: String): Flow<MaintenanceOverview?>
