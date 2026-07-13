@@ -22,6 +22,14 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
+/** The share-derived facts the log list needs, combined so they fit one slot of the outer combine. */
+private data class AuthorshipContext(
+  val authors: Map<String, String?>,
+  val names: Map<String, String>,
+  val isShared: Boolean,
+  val hostedByOther: Boolean,
+)
+
 class MaintenanceLogListViewModel(
   private val logManager: MaintenanceLogManager,
   private val inspectionDataManager: TaskDataManager,
@@ -59,6 +67,9 @@ class MaintenanceLogListViewModel(
    */
   private val _isShared = MutableStateFlow(false)
 
+  /** Blobs live in the host's storage and are not shared in v1 (§9) — the rows say so. */
+  private val _hostedByOther = MutableStateFlow(false)
+
   init {
     observeLogs()
     observeTasks()
@@ -69,10 +80,16 @@ class MaintenanceLogListViewModel(
         _filter,
         _selectedLog,
         _availableCards,
-        combine(_logAuthors, _namesByUid, _isShared) { authors, names, isShared ->
-          Triple(authors, names, isShared)
+        combine(
+          _logAuthors,
+          _namesByUid,
+          _isShared,
+          _hostedByOther,
+        ) { authors, names, isShared, hostedByOther ->
+          AuthorshipContext(authors, names, isShared, hostedByOther)
         },
-      ) { logsState, filter, selectedLog, availableCards, (authors, names, isShared) ->
+      ) { logsState, filter, selectedLog, availableCards, ctx ->
+        val (authors, names, isShared, hostedByOther) = ctx
         when (logsState) {
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
           LogsLoadState.Error -> MaintenanceLogListUiState.Error
@@ -99,6 +116,7 @@ class MaintenanceLogListViewModel(
                   nameForUid = { uid -> names[uid] },
                 )
                 ?: LogAuthorship.Unknown,
+              attachmentsUnavailable = hostedByOther,
               availableCards = availableCards,
             )
           }
@@ -126,6 +144,11 @@ class MaintenanceLogListViewModel(
       sharingManager.observeIsShared(aircraftId)
         .catch { _isShared.value = false }
         .collect { _isShared.value = it }
+    }
+    viewModelScope.launch {
+      sharingManager.observeHostedByOther(aircraftId)
+        .catch { _hostedByOther.value = false }
+        .collect { _hostedByOther.value = it }
     }
     viewModelScope.launch {
       logManager.observeLogAuthors(aircraftId)

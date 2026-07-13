@@ -288,6 +288,7 @@ fun MaintenanceLogListContent(
               MaintenanceLogDetailSheet(
                 log = log,
                 availableCards = uiState.availableCards,
+                attachmentsUnavailable = uiState.attachmentsUnavailable,
                 onDismiss = onDismissDetail,
                 authorship = uiState.selectedAuthorship,
                 onEditClick = onEditLog?.let { edit ->

@@ -21,9 +21,11 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -75,6 +77,7 @@ class SquawkFormViewModel(
   private val logManager: MaintenanceLogManager,
   private val auth: FirebaseAuth,
   private val featureLabManager: FeatureLabManager,
+  private val sharingManager: SharingManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -112,10 +115,16 @@ class SquawkFormViewModel(
       loadLogs()
     }
     viewModelScope.launch {
-      featureLabManager.observe()
-        .collect { flags ->
-          _attachmentUploadEnabled.value = flags.attachmentUploadEnabled
-        }
+      combine(
+        featureLabManager.observe(),
+        sharingManager.observeHostedByOther(aircraftId),
+      ) { flags, hostedByOther ->
+        // Storage rules are user-scoped: a member cannot upload into the host's tree (design §9,
+        // storage.rules). Offering an attach button on someone else's aircraft would produce a file
+        // that silently never leaves the device.
+        flags.attachmentUploadEnabled && !hostedByOther
+      }
+        .collect { enabled -> _attachmentUploadEnabled.value = enabled }
     }
   }
 

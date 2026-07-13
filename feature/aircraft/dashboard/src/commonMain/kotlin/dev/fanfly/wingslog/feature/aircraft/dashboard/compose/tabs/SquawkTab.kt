@@ -138,6 +138,7 @@ fun SquawkTab(
 
   state.selectedSquawk?.let { selected ->
     SquawkDetailSheet(
+      attachmentsUnavailable = state.attachmentsUnavailable,
       item = selected,
       addressingLog = state.logForSelectedSquawk,
       onDismiss = {

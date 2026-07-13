@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -17,6 +18,7 @@ val squawkUiModule = module {
       get<MaintenanceLogManager>(),
       get<FirebaseAuth>(),
       get<FeatureLabManager>(),
+      get<SharingManager>(),
       get<SavedStateHandle>(),
     )
   }

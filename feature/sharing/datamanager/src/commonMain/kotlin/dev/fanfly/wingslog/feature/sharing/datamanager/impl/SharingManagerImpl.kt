@@ -146,6 +146,14 @@ class SharingManagerImpl(
   private fun isPermissionDenied(e: Throwable): Boolean =
     e is FirebaseFirestoreException && e.code == FirestoreExceptionCode.PERMISSION_DENIED
 
+  override fun observeHostedByOther(acId: String): Flow<Boolean> {
+    val uid = auth.currentUser?.uid ?: return flowOf(false)
+    // A ref exists only for an aircraft someone else hosts; our own aircraft never have one.
+    return refStore.observe(acId, EntityScope.userRoot(uid))
+      .map { it != null }
+      .distinctUntilChanged()
+  }
+
   override fun observeIsShared(acId: String): Flow<Boolean> {
     val uid = auth.currentUser?.uid ?: return flowOf(false)
     val sharedIntoMyFleet = refStore.observe(acId, EntityScope.userRoot(uid))

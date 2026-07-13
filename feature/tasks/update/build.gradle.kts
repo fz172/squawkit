@@ -58,6 +58,7 @@ kotlin {
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:datetime"))
+      implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:sharedassets"))
       implementation(project(":feature:attachment:model"))

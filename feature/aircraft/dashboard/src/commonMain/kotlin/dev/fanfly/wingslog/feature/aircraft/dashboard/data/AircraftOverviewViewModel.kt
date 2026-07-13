@@ -42,6 +42,7 @@ private data class ShareContext(
   val syncStates: Map<String, BlobSyncState>,
   val myRole: ShareRole?,
   val shared: Boolean,
+  val hostedByOther: Boolean,
 )
 
 class AircraftOverviewViewModel(
@@ -103,9 +104,12 @@ class AircraftOverviewViewModel(
           // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
           sharingManager.observeMyRole(aircraftId),
           sharingManager.observeIsShared(aircraftId),
-        ) { squawks, syncs, myRole, shared -> ShareContext(squawks, syncs, myRole, shared) }
+          sharingManager.observeHostedByOther(aircraftId),
+        ) { squawks, syncs, myRole, shared, hostedByOther ->
+          ShareContext(squawks, syncs, myRole, shared, hostedByOther)
+        }
       ) { aircraft, logs, taskCards, overview, shareContext ->
-        val (squawkList, syncStates, myRole, isShared) = shareContext
+        val (squawkList, syncStates, myRole, isShared, hostedByOther) = shareContext
         cachedLogs = logs
         if (aircraft != null) {
           val stats = if (overview != null) {
@@ -203,6 +207,7 @@ class AircraftOverviewViewModel(
             aogSquawks = aogSquawks,
             myRole = myRole,
             shared = isShared,
+            attachmentsUnavailable = hostedByOther,
           )
         } else {
           AircraftOverviewUiState.Error
