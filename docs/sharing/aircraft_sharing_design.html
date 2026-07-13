@@ -123,13 +123,14 @@
         The sketches below (and the rules in §4) use <code>snake_case</code> for readability, but the shipped documents use <b>camelCase</b> to match the client envelope and the functions schema — <code>host_uid</code>→<code>hostUid</code>, <code>member_roles</code>→<code>memberRoles</code>, <code>display_name</code>→<code>displayName</code>, <code>technician_mirror</code>→<code>technicianMirror</code>, <code>writer_uid</code>→<code>writerUid</code>, and so on. The canonical definitions live in <code>backend/firebase/functions/src/sharing/sharingModels.ts</code> and the deployed <code>backend/firebase/firestore.rules</code>.
       </div>
       <p>One new top-level collection, keyed by aircraft id (aircraft ids are globally-unique random UUIDs, so no host prefix is needed):</p>
-      <pre><code>aircraft_shares/{acId}                      // root doc — the ACL, read by security rules
+      <p><b>Keyed by host, then aircraft (#204).</b> An aircraft id is unique only <i>within</i> a user's tree. Keyed globally, the ACL had one slot per aircraft id — and anyone who knew an id could create that slot, honestly naming themselves <code>hostUid</code>, whereupon the rules (looking the ACL up by aircraft id alone) would consult <i>their</i> doc to authorize access to <i>someone else's</i> aircraft. Namespacing by host means the <code>{hostUid}</code> segment is pinned to <code>request.auth.uid</code> on create, so a share a caller can mint only ever governs the caller's own tree. The lookup side takes the host from the <b>path of the resource being read</b> (<code>users/{ownerUid}/aircraft/{acId}</code>) — never from a field, and never from anything the caller supplies.</p>
+      <pre><code>aircraft_shares/{hostUid}/aircraft/{acId}    // root doc — the ACL, read by security rules
   host_uid:      string                     // account whose tree physically holds the data
   aircraft_id:   string                     // == {acId}, for collection-group queries
   member_roles:  map&lt;uid, "owner"|"technician"&gt;   // includes host_uid → "owner"; denormalized for one-get rule checks
   created_at:    timestamp
 
-aircraft_shares/{acId}/members/{uid}        // one per member — display + technician mirror
+aircraft_shares/{hostUid}/aircraft/{acId}/members/{uid}   // one per member — display + technician mirror
   role:          "owner" | "technician"
   display_name:  string                     // from Firebase Auth at redemption; member-updatable
   photo_url:     string?
@@ -140,7 +141,7 @@ aircraft_shares/{acId}/members/{uid}        // one per member — display + tech
   added_at:      timestamp
   invited_by:    uid
 
-aircraft_shares/{acId}/invites/{tokenHash}  // pending invites; tokenHash = SHA-256(secret)
+aircraft_shares/{hostUid}/aircraft/{acId}/invites/{tokenHash}  // pending invites; tokenHash = SHA-256(secret)
   role:          "owner" | "technician"
   created_by:    uid
   created_at:    timestamp
@@ -187,7 +188,7 @@ enum ShareRole {
       <h3 id="create">3.1 Creating an invite (client-side, owner)</h3>
       <ol>
         <li>Owner's client generates a 128-bit random <code>secret</code>, computes <code>tokenHash = SHA-256(secret)</code>.</li>
-        <li>Ensures <code>aircraft_shares/{acId}</code> exists (lazy create, §2.1), then writes <code>invites/{tokenHash}</code> with role/expiry/max_uses. Rules allow this for owners only.</li>
+        <li>Ensures <code>aircraft_shares/{hostUid}/aircraft/{acId}</code> exists (lazy create, §2.1), then writes <code>invites/{tokenHash}</code> with role/expiry/max_uses. Rules allow this for owners only.</li>
         <li>Renders the share URL — the web-app host, so a device without the app still lands on something that works:<br/>
           <code>https://squawkit.web.app/share#{acId}.{base64url(secret)}</code><br/>
           The token rides in the <b>URL fragment</b>, which browsers do not send to servers — it can't leak into hosting/CDN logs. Android App Links / iOS Universal Links route the same URL into the native apps. The QR code encodes the same URL.</li>
@@ -198,7 +199,7 @@ enum ShareRole {
       <p>Redemption must write into <em>two</em> account trees (the share's member list and the member's own <code>shared_aircraft_ref</code>) and enforce invite validity atomically — a job for a callable Cloud Function with the Admin SDK (precedent: <code>requestExportDelivery</code> in <code>backend/firebase/functions</code>), not for client writes + rules:</p>
       <pre><code>redeemAircraftShareInvite({ aircraftId, secret })   // caller: any signed-in non-anonymous user
   1. require auth != null &amp;&amp; !auth.token.firebase.sign_in_provider == "anonymous"
-  2. tokenHash = sha256(secret); tx.read aircraft_shares/{acId} + invites/{tokenHash}
+  2. tokenHash = sha256(secret); tx.read aircraft_shares/{hostUid}/aircraft/{acId} + invites/{tokenHash}
   3. validate: exists, !revoked, now &lt; expires_at, use_count &lt; max_uses
   4. if caller already in member_roles → return { alreadyMember: true } (token NOT consumed)
   5. tx.write:
@@ -216,7 +217,7 @@ enum ShareRole {
           <tr><td><b>Revoke member</b></td><td>Any owner</td><td>Callable <code>revokeAircraftShare({acId, memberUid})</code>: transactionally remove from <code>member_roles</code>, delete <code>members/{uid}</code>, and write a <b>tombstone</b> <code>SyncDocWire</code> (<code>deleted: true</code>) to <code>users/{memberUid}/shared_aircraft_ref/{acId}</code>. The tombstone is what tells the ex-member's devices to purge (§5.4). Hosting owner cannot be revoked (function-enforced).</td></tr>
           <tr><td><b>Leave</b></td><td>The member</td><td>Same function, <code>memberUid = caller</code>. Hosting owner cannot leave.</td></tr>
           <tr><td><b>Change role</b></td><td>Any owner</td><td>Callable <code>updateAircraftShareRole({acId, memberUid, role})</code>: updates <code>member_roles</code> + member doc + rewrites the member's ref payload. (A function rather than a client write so the ref mirror stays consistent.)</td></tr>
-          <tr><td><b>Aircraft deleted</b></td><td>Hosting owner</td><td>Client tombstones the aircraft entity as today. A Firestore <b>trigger</b> on <code>users/{uid}/aircraft/{acId}</code> (<code>deleted == true</code>) tears down <code>aircraft_shares/{acId}</code> and tombstones every member's ref. Members' aircraft rows also die naturally via the normal pull of the aircraft tombstone.</td></tr>
+          <tr><td><b>Aircraft deleted</b></td><td>Hosting owner</td><td>Client tombstones the aircraft entity as today. A Firestore <b>trigger</b> on <code>users/{uid}/aircraft/{acId}</code> (<code>deleted == true</code>) tears down <code>aircraft_shares/{hostUid}/aircraft/{acId}</code> and tombstones every member's ref. Members' aircraft rows also die naturally via the normal pull of the aircraft tombstone.</td></tr>
         </tbody>
       </table>
       <div class="callout note">
@@ -274,7 +275,7 @@ match /aircraft_shares/{acId} {
         <tbody>
           <tr><td>aircraft doc itself</td><td>R/W</td><td>R/W (get only, no list)</td><td>R (get only)</td></tr>
           <tr><td><code>maintenance_log</code>, <code>maintenance_task</code>, <code>maintenance_overview</code>, <code>squawk</code></td><td>R/W</td><td>R/W</td><td>R/W</td></tr>
-          <tr><td><code>aircraft_shares/{acId}</code> root + members</td><td colspan="2">R; writes via functions/owner-scoped invite ops</td><td>R (list visibility), no invite access</td></tr>
+          <tr><td><code>aircraft_shares/{hostUid}/aircraft/{acId}</code> root + members</td><td colspan="2">R; writes via functions/owner-scoped invite ops</td><td>R (list visibility), no invite access</td></tr>
         </tbody>
       </table>
       <div class="callout warn">
