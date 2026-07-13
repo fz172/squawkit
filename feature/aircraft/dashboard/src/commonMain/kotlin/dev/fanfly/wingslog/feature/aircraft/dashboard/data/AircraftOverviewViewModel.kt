@@ -208,6 +208,7 @@ class AircraftOverviewViewModel(
             myRole = myRole,
             shared = isShared,
             attachmentsUnavailable = hostedByOther,
+            isAnonymous = auth.currentUser?.isAnonymous ?: true,
           )
         } else {
           AircraftOverviewUiState.Error

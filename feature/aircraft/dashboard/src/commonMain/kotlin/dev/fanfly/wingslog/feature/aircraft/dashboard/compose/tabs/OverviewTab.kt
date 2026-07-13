@@ -125,7 +125,7 @@ fun OverviewTab(
         onEditClick = manageAction(state, onMutationAction) {
           AircraftOverviewAction.EditClick(state.aircraft.id)
         },
-        onManageAccessClick = memberAction(onMutationAction) {
+        onManageAccessClick = memberAction(state, onMutationAction) {
           AircraftOverviewAction.ManageAccessClick(state.aircraft.id)
         },
       )
@@ -198,7 +198,7 @@ private fun LargeOverviewTab(
       onEditClick = manageAction(state, onMutationAction) {
         AircraftOverviewAction.EditClick(state.aircraft.id)
       },
-      onManageAccessClick = memberAction(onMutationAction) {
+      onManageAccessClick = memberAction(state, onMutationAction) {
         AircraftOverviewAction.ManageAccessClick(state.aircraft.id)
       },
     )
@@ -627,12 +627,17 @@ private fun manageAction(
  * Wires an action open to every member of the share, regardless of role. Manage Access is the one
  * such affordance: owners manage the roster there, while a technician sees it read-only and it is
  * their only route to leaving the share.
+ *
+ * Hidden from guests. Sharing needs a permanent account at both ends (PRD F1) — a share must attach
+ * to an identity that survives a reinstall — so for a guest this is a door that leads only to a
+ * sign-in prompt.
  */
 private fun memberAction(
+  state: AircraftOverviewUiState.Success,
   onMutationAction: ((AircraftOverviewAction) -> Unit)?,
   action: () -> AircraftOverviewAction,
 ): (() -> Unit)? =
-  if (onMutationAction != null) {
+  if (state.canOpenManageAccess && onMutationAction != null) {
     { onMutationAction(action()) }
   } else {
     null

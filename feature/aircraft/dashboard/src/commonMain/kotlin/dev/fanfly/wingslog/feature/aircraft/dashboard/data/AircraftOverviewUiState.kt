@@ -49,11 +49,20 @@ sealed interface AircraftOverviewUiState {
      * unavailable rather than offering a tap that silently fails.
      */
     val attachmentsUnavailable: Boolean = false,
+    /** Guest account. Sharing needs a permanent one, so its entry points are hidden entirely. */
+    val isAnonymous: Boolean = false,
   ) : AircraftOverviewUiState {
     /**
      * Owner-only affordances: Edit Aircraft, Delete, Manage Access. Technicians get a read-only
      * screen (they can still add maintenance). Server rules are the real enforcement (§6.3).
      */
     val canManageAircraft: Boolean get() = myRole != ShareRole.TECHNICIAN
+
+    /**
+     * Sharing is not available to a guest: redeeming and inviting both require a permanent account
+     * (PRD F1), and a share must attach to an identity that survives a reinstall. Showing Manage
+     * Access to a guest offers a door that only leads to a sign-in prompt.
+     */
+    val canOpenManageAccess: Boolean get() = !isAnonymous
   }
 }
