@@ -18,6 +18,10 @@ message Technician {
   // self-record, or another share member's published mirror. Empty for a manual entry typed by
   // hand. Drives the provenance label and the self-signed check (design §7.3/§7.5).
   string source_uid = 8;
+
+  // 9 was superseded_by_uid: a soft alias from a manual row to the share member that superseded it.
+  // Reconciling a duplicate now deletes the manual row outright, so nothing needs aliasing.
+  reserved 9;
 }
 
 enum CertificateType {

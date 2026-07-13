@@ -10,32 +10,38 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
+import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.gitlive.firebase.storage.FirebaseStorage
 
 actual val blobSchedulerModule = module {
   single { HttpClient(OkHttp) }
 
   single {
     BlobUploadDriver(
-      blobs = get(),
-      storage = get(),
-      auth = get(),
-      fs = get(),
+      blobs = get<LocalBlobStore>(),
+      storage = get<FirebaseStorage>(),
+      auth = get<FirebaseAuth>(),
+      fs = get<BlobFilesystem>(),
     )
   }
 
   single {
     BlobDownloadDriver(
-      blobs = get(),
-      storage = get(),
-      httpClient = get(),
+      blobs = get<LocalBlobStore>(),
+      storage = get<FirebaseStorage>(),
+      httpClient = get<HttpClient>(),
     )
   }
 
   single {
     BlobDeleteDriver(
-      blobs = get(),
-      storage = get(),
-      db = get(),
+      blobs = get<LocalBlobStore>(),
+      storage = get<FirebaseStorage>(),
+      db = get<WingsLogDatabase>(),
       writeLock = get<DatabaseWriteLock>(),
     )
   }
@@ -43,7 +49,7 @@ actual val blobSchedulerModule = module {
   single<UploadScheduler> {
     WorkManagerUploadScheduler(
       context = androidContext(),
-      syncPreferences = get()
+      syncPreferences = get<SyncPreferences>()
     )
   }
 }

@@ -6,6 +6,8 @@ import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabViewModel
 import dev.fanfly.wingslog.feature.settings.upgrade.AccountUpgradeViewModel
@@ -17,17 +19,17 @@ import org.koin.dsl.module
 val settingsModule = module {
   viewModel {
     SettingsViewModel(
-      get(),
-      get(),
-      get(),
+      get<AuthManager>(),
+      get<TechnicianManager>(),
+      get<AttachmentManager>(),
       get<DatabaseIntegrityChecker>(),
-      get(),
+      get<FeatureLabManager>(),
       get<AppearanceController>(),
       get<AnalyticsPreferenceController>(),
       get<AppCapability>(),
     )
   }
-  viewModel { FeatureLabViewModel(get()) }
+  viewModel { FeatureLabViewModel(get<FeatureLabManager>()) }
   viewModel {
     AccountUpgradeViewModel(
       authManager = get<AuthManager>(),

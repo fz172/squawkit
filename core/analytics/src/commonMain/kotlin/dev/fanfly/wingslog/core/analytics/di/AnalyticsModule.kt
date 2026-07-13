@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.core.analytics.di
 
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
+import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceStore
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -16,5 +18,10 @@ expect val analyticsPreferenceStoreModule: Module
  * Settings is opened.
  */
 val analyticsPreferenceModule = module {
-  single(createdAtStart = true) { AnalyticsPreferenceController(get(), get()) }
+  single(createdAtStart = true) {
+    AnalyticsPreferenceController(
+      get<AnalyticsPreferenceStore>(),
+      get<AnalyticsManager>()
+    )
+  }
 }

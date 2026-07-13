@@ -5,10 +5,15 @@ import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateResolution
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -16,13 +21,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.seconds
@@ -31,13 +39,19 @@ class TechnicianManagerImpl(
   private val firebaseAuth: FirebaseAuth,
   private val cloudSyncSetting: CloudSyncSetting,
   storeFactory: EntityStoreFactory,
+  private val db: WingsLogDatabase,
+  private val writeLock: DatabaseWriteLock,
 ) : TechnicianManager {
 
   private val logger = Logger.withTag("TechnicianManagerImpl")
+
   private val technicianStore: EntityStore<Technician> =
     storeFactory.create(CollectionKind.Technician)
   private val userInfoStore: EntityStore<UserInfo> =
     storeFactory.create(CollectionKind.UserInfo)
+
+  /** Bumped after the reviewed flag is written, so the observing flow re-reads it. */
+  private val reviewedTrigger = MutableStateFlow(0)
 
   // This scope coordinates auth events; EntityStore provides its own platform storage context.
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -216,6 +230,63 @@ class TechnicianManagerImpl(
       true
     }.onFailure { logger.w(it) { "Error deleting technician $id" } }
 
+  override suspend fun applyDuplicateMerges(
+    groups: List<DuplicateGroup>,
+    reviewedSignature: String,
+  ): Result<Unit> =
+    runCatching {
+      val uid = firebaseAuth.currentUser?.uid
+        ?: error("Cannot merge technicians when no user is signed in")
+      val userScope = EntityScope.userRoot(uid)
+
+      groups.forEach { group ->
+        when (group.resolution) {
+          // Both merges delete the duplicate rows. They are hand-typed and now redundant — the
+          // keeper is either a richer manual row or the member's live mirror. Logs hold their own
+          // snapshots, so already-signed work keeps the technician it recorded.
+          DuplicateResolution.MERGE_MANUAL,
+          DuplicateResolution.MERGE_INTO_MEMBER,
+          -> group.duplicates.forEach { technicianStore.delete(it.id, userScope) }
+
+          // Two members are two accounts; this is a heads-up about a likely mistyped certificate,
+          // not something to apply.
+          DuplicateResolution.WARN_MIRROR_CONFLICT -> Unit
+        }
+      }
+      markDuplicatesReviewed(reviewedSignature).getOrThrow()
+    }.onFailure { logger.w(it) { "Error applying technician merges" } }
+
+  /**
+   * Must hang off `authStateChanged`, like every other observe here — NOT off a one-shot read of
+   * `currentUser`. Firebase restores the session asynchronously, so a ViewModel built before that
+   * lands would read a null user and mis-report the review state for its entire lifetime.
+   *
+   * The trigger re-reads after [markDuplicatesReviewed], so dismissing takes effect immediately
+   * rather than at the next screen recreation.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override fun observeReviewedDuplicatesSignature(): Flow<String?> =
+    firebaseAuth.authStateChanged.flatMapLatest { user ->
+      if (user == null) flowOf(null)
+      else reviewedTrigger.map {
+        db.schemaQueries.selectConfig(user.uid, DUPLICATES_REVIEWED_KEY)
+          .awaitAsOneOrNull()
+      }
+    }.catch { e ->
+      // A failed read must not silently hide the prompt — showing one the user can dismiss is
+      // recoverable, swallowing the feature with no trace is not.
+      logger.w(e) { "Could not read reviewed-duplicates signature" }
+      emit(null)
+    }
+
+  override suspend fun markDuplicatesReviewed(signature: String): Result<Unit> = runCatching {
+    val uid = firebaseAuth.currentUser?.uid ?: return@runCatching
+    writeLock.withLock {
+      db.schemaQueries.upsertConfig(uid, DUPLICATES_REVIEWED_KEY, signature)
+    }
+    reviewedTrigger.update { it + 1 }
+  }
+
   override suspend fun saveSelfName(name: String): Result<Unit> = runCatching {
     val uid = firebaseAuth.currentUser?.uid
       ?: error("Cannot save name when no user is signed in")
@@ -244,5 +315,13 @@ class TechnicianManagerImpl(
 
   companion object {
     private val SELF_ID_HYDRATION_TIMEOUT = 5.seconds
+
+    /**
+     * Device-local: the review prompt is a nudge, not data worth syncing. Holds the *signature* of
+     * the duplicate set last reviewed — see [observeReviewedDuplicatesSignature]. A legacy "1" from
+     * the boolean version simply never matches a real signature, so it self-heals into a re-prompt.
+     */
+    private const val DUPLICATES_REVIEWED_KEY = "technician_duplicates_reviewed"
+
   }
 }

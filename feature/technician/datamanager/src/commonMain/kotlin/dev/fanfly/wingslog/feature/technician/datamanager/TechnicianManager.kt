@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.technician.datamanager
 
 import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import kotlinx.coroutines.flow.Flow
 
 interface TechnicianManager {
@@ -35,4 +36,29 @@ interface TechnicianManager {
    * sign-in bootstrap would otherwise never run and the profile (name + photo) would stay stale.
    */
   suspend fun ensureSelfProfile(replaceExistingName: Boolean = false): Result<Unit>
+
+  /**
+   * Applies the user's confirmed reconciliation of look-alike roster rows (design §7.4).
+   *
+   * A merge deletes the duplicate rows outright, whether the keeper is another manual row or a share
+   * member's mirror. Warnings are informational and apply nothing.
+   *
+   * Log snapshots are never touched: a merge changes only the go-forward roster, so already-signed
+   * work keeps whatever technician it recorded.
+   */
+  suspend fun applyDuplicateMerges(
+    groups: List<DuplicateGroup>,
+    reviewedSignature: String,
+  ): Result<Unit>
+
+  /**
+   * Signature of the duplicate set the user last reviewed, or null if they never have.
+   *
+   * Deliberately not a boolean: "reviewed" must mean *these* duplicates, not "never nag me again".
+   * A boolean here permanently mutes the prompt, so every look-alike added afterwards is detected
+   * and then silently swallowed.
+   */
+  fun observeReviewedDuplicatesSignature(): Flow<String?>
+
+  suspend fun markDuplicatesReviewed(signature: String): Result<Unit>
 }

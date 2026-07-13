@@ -62,7 +62,10 @@ class TechnicianManagerImplTest {
     manager = TechnicianManagerImpl(
       firebaseAuth,
       cloudSyncSetting,
-      storeFactory
+      storeFactory,
+      // Only the duplicate-review flag touches the DB; these tests don't exercise it.
+      mockk(relaxed = true),
+      mockk(relaxed = true),
     )
   }
 

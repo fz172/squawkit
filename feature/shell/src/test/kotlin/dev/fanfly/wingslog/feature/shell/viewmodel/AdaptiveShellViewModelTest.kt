@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.gitlive.firebase.auth.AuthCredential
 import io.mockk.mockk
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -60,6 +61,14 @@ class AdaptiveShellViewModelTest {
     override suspend fun saveSelfName(name: String) = Result.success(Unit)
     override suspend fun ensureSelfProfile(replaceExistingName: Boolean) =
       Result.success(Unit)
+
+    override suspend fun applyDuplicateMerges(
+      groups: List<DuplicateGroup>,
+      reviewedSignature: String,
+    ) = Result.success(Unit)
+
+    override fun observeReviewedDuplicatesSignature(): Flow<String?> = MutableStateFlow(null)
+    override suspend fun markDuplicatesReviewed(signature: String) = Result.success(Unit)
   }
   private val authManager = object : AuthManager {
     override fun getCurrentUser(): FirebaseUser? = null

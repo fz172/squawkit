@@ -130,8 +130,9 @@ class MaintenanceLogFormViewModel(
       // account. Linked mirrors arrive already stamped with their owner's uid.
       val self = technicians.find { it.id == selfId }
         ?.let { it.copy(source_uid = auth.currentUser?.uid.orEmpty()) }
-      val others = technicians.filter { it.id != selfId }
-        .sortedBy { it.name.lowercase() }
+      val others = technicians
+        .filter { it.id != selfId }
+          .sortedBy { it.name.lowercase() }
       Triple(self, listOfNotNull(self) + others, linked)
     }
       .onEach { (selfTech, available, linked) ->
