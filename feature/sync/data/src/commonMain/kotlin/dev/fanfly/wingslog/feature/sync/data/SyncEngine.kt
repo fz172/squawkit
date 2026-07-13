@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.sync.data
 
 import app.cash.sqldelight.async.coroutines.awaitAsList
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
@@ -243,8 +244,9 @@ class SyncEngine(
     // A denied push into a host's tree means the same thing a denied read does — we were revoked —
     // so it reconciles the same way (§5.4).
     pushWorker.sharedScopeRevokedSink = { _, aircraftId ->
-      revokeSharedLocally(uid, aircraftId)
-      telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_WRITE)
+      if (revokeSharedLocally(uid, aircraftId)) {
+        telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_WRITE)
+      }
     }
     scope.launch { pushWorker.run(uid) }
 
@@ -365,8 +367,12 @@ class SyncEngine(
     } catch (e: Throwable) {
       if (isPermissionDenied(e)) {
         log.i { "PERMISSION_DENIED on shared aircraft $aircraftId; treating as revoked (§5.4)" }
-        revokeSharedLocally(memberUid, aircraftId)
-        telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_READ)
+        // Every watcher on the scope is denied at once, so they all land here — but one revocation
+        // happened, not five. Only the watcher that actually removes the ref reports it, or the
+        // metric would count listeners instead of revocations.
+        if (revokeSharedLocally(memberUid, aircraftId)) {
+          telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_READ)
+        }
       } else {
         throw e
       }
@@ -384,16 +390,25 @@ class SyncEngine(
   private suspend fun revokeSharedLocally(
     memberUid: String,
     aircraftId: String
-  ) {
-    val database = db ?: return
-    val lock = writeLock ?: return
-    lock.withLock {
-      database.schemaQueries.deleteEntity(
-        CollectionKind.SharedAircraftRef,
-        EntityScope.userRoot(memberUid)
-          .toPath(),
-        aircraftId,
-      )
+  ): Boolean {
+    val database = db ?: return false
+    val lock = writeLock ?: return false
+    val scopePath = EntityScope.userRoot(memberUid)
+      .toPath()
+    // The lock serialises the racing watchers, so exactly one of them sees the ref still present and
+    // gets `true` — that one is the revocation; the rest are echoes of it.
+    return lock.withLock {
+      val present = database.schemaQueries
+        .selectOne(CollectionKind.SharedAircraftRef, scopePath, aircraftId)
+        .awaitAsOneOrNull() != null
+      if (present) {
+        database.schemaQueries.deleteEntity(
+          CollectionKind.SharedAircraftRef,
+          scopePath,
+          aircraftId,
+        )
+      }
+      present
     }
   }
 

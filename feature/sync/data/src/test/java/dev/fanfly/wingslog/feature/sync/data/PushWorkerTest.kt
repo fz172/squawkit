@@ -15,6 +15,7 @@ import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
 import dev.gitlive.firebase.firestore.FirebaseFirestoreException
 import dev.gitlive.firebase.firestore.FirestoreExceptionCode
+import kotlinx.coroutines.CancellationException
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -348,6 +349,26 @@ class PushWorkerTest {
       ).isInstanceOf(SyncFailure.AuthExpired::class.java)
       assertThat(telemetry.deniedWrites).containsExactly(false)
     }
+
+  @Test
+  fun run_pushCancelled_isNotReportedAsAFailure() = runTest(ioContext) {
+    // Tearing down a shared scope cancels the in-flight push. runCatching swallows everything,
+    // including CancellationException, and that got classified as SyncFailure.Push — putting a
+    // "Sync error" banner in front of the user for our own orderly shutdown. Cancellation must
+    // propagate, not be reported.
+    insertDirtyRow("log-cancelled")
+    coEvery { writer.push(any()) } throws CancellationException("scope torn down")
+
+    val failures = mutableListOf<SyncFailure?>()
+    val worker = PushWorker(db = db, writer = writer, ioContext = ioContext)
+      .apply { failureSink = { failures += it } }
+
+    val job = launch { worker.run(TEST_USER_ID) }
+    testScheduler.advanceUntilIdle()
+    job.cancel()
+
+    assertThat(failures.filterNotNull()).isEmpty()
+  }
 
   // --- helpers ---
 

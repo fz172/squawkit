@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.db.SelectDirtyInScope
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -167,6 +168,13 @@ class PushWorker(
       failureSink(null) // success — clear any previously-surfaced push failure.
       true
     }.getOrElse { e ->
+      // runCatching catches everything, cancellation included — and cancellation is not a failure.
+      // A shared scope being torn down (refs changed, collectLatest respinning the drain loops)
+      // cancels the in-flight push, and reporting that as a sync error put a "Sync error" banner in
+      // front of the user for our own orderly shutdown. Let it propagate, as structured concurrency
+      // requires.
+      if (e is CancellationException) throw e
+
       if (isPermissionDenied(e)) {
         val shared = sharedAircraftIn(row, uid)
         telemetry.permissionDeniedWrite(sharedScope = shared != null)
