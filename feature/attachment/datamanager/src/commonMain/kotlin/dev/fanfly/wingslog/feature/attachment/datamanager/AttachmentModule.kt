@@ -11,6 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 
 /**
  * Common Koin bindings for the local-first attachment stack. [BlobFilesystem] is provided per
@@ -19,29 +21,29 @@ import org.koin.dsl.module
 val attachmentModule = module {
   single<LocalBlobStore> {
     SqlDelightLocalBlobStore(
-      db = get(),
-      fs = get(),
+      db = get<WingsLogDatabase>(),
+      fs = get<BlobFilesystem>(),
       ioContext = Dispatchers.Default,
       writeLock = get<DatabaseWriteLock>(),
     )
   }
   single<AttachmentManager> {
     LocalFirstAttachmentManagerImpl(
-      blobs = get(),
-      auth = get(),
-      fileByteReader = get(),
+      blobs = get<LocalBlobStore>(),
+      auth = get<AuthManager>(),
+      fileByteReader = get<FileByteReader>(),
       uploadScheduler = getOrNull(),
     )
   }
   single {
     QuotaChecker(
-      db = get(),
+      db = get<WingsLogDatabase>(),
       ioContext = Dispatchers.Default,
     )
   }
   single<PostWriteHook> {
     BlobIndexReconciler(
-      blobs = get(),
+      blobs = get<LocalBlobStore>(),
       coroutineScope = CoroutineScope(SupervisorJob()),
       uploadScheduler = getOrNull(),
     )

@@ -89,8 +89,8 @@ val storageModule: Module = module {
 
   single<EntityStoreFactory> {
     EntityStoreFactory(
-      db = get(),
-      codecs = get(),
+      db = get<WingsLogDatabase>(),
+      codecs = get<EntityCodecRegistry>(),
       ioContext = storageIoContext,
       writeLock = get<DatabaseWriteLock>(),
     )
@@ -98,7 +98,7 @@ val storageModule: Module = module {
 
   single<TombstoneGc> {
     TombstoneGc(
-      db = get(),
+      db = get<WingsLogDatabase>(),
       writeLock = get<DatabaseWriteLock>()
     )
   }

@@ -7,6 +7,9 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.impl.SharingManagerImpl
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import org.koin.dsl.module
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 
 val sharingModule = module {
   single<SharingManager> {
@@ -14,9 +17,9 @@ val sharingModule = module {
       auth = get<FirebaseAuth>(),
       firestore = get<FirebaseFirestore>(),
       storeFactory = get<EntityStoreFactory>(),
-      db = get(),
-      writeLock = get(),
-      technicianManager = get(),
+      db = get<WingsLogDatabase>(),
+      writeLock = get<DatabaseWriteLock>(),
+      technicianManager = get<TechnicianManager>(),
     )
   }
   // Own-vs-shared scope resolution for the per-aircraft managers (logs/tasks/squawk). Lives here
