@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.serialization.Serializable
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -144,6 +145,22 @@ class SharingManagerImpl(
   /** True for a Firestore `PERMISSION_DENIED`; every other failure is someone else's problem. */
   private fun isPermissionDenied(e: Throwable): Boolean =
     e is FirebaseFirestoreException && e.code == FirestoreExceptionCode.PERMISSION_DENIED
+
+  override fun observeIsShared(acId: String): Flow<Boolean> {
+    val uid = auth.currentUser?.uid ?: return flowOf(false)
+    val sharedIntoMyFleet = refStore.observe(acId, EntityScope.userRoot(uid))
+      .map { it != null }
+    val hasPartners = observeShareState(acId)
+      .map { it.members.size > 1 }
+      // The roster is an online-only listener. Seed it so a combine of this flow produces a value
+      // immediately instead of hanging until Firestore answers — offline it never would, and the
+      // screen behind it would sit on a spinner forever.
+      .onStart { emit(false) }
+      .catch { emit(false) }
+    return combine(sharedIntoMyFleet, hasPartners) { intoMyFleet, partnered ->
+      intoMyFleet || partnered
+    }.distinctUntilChanged()
+  }
 
   override fun observeMyRole(acId: String): Flow<ShareRole?> {
     val uid = auth.currentUser?.uid ?: return flowOf(null)

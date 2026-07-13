@@ -99,4 +99,8 @@ kotlin {
 dependencies {
   implementation(platform(libs.firebase.bom))
   implementation(platform(libs.androidx.compose.bom))
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
+  testImplementation(libs.mockk)
+  testImplementation(libs.kotlinx.coroutines.test)
 }

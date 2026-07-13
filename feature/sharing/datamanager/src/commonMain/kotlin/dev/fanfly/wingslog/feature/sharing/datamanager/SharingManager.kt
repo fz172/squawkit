@@ -24,6 +24,21 @@ interface SharingManager {
   /** The caller's role on [acId], resolved locally (refs store / own aircraft) — instant, offline-correct. */
   fun observeMyRole(acId: String): Flow<ShareRole?>
 
+  /**
+   * Whether this aircraft is part of a share at all — true for *every* partner in it, the hosting
+   * owner included, false for an aircraft nobody else can see.
+   *
+   * This is what gates anything that only makes sense when more than one person can write: the
+   * shared marker, and the authorship attestations on logs. On an unshared aircraft the only author
+   * there has ever been is the user themselves, so attesting to it says nothing.
+   *
+   * Answered from two sources because neither covers everyone: a ref means it was shared *into* our
+   * fleet (false for the host, but local, so it holds offline), while a roster of more than one
+   * covers the host (but is an online-only listener, so it goes quiet offline — it starts `false`
+   * rather than stalling whatever combines it).
+   */
+  fun observeIsShared(acId: String): Flow<Boolean>
+
   suspend fun createInvite(acId: String, role: ShareRole): Result<InviteLink>
 
   suspend fun cancelInvite(acId: String, tokenHash: String): Result<Unit>

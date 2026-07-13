@@ -75,26 +75,6 @@ class AircraftOverviewViewModel(
       attachmentManager.observeBlobStates("/users/$uid/aircraft/$aircraftId/")
     } ?: flowOf(emptyMap())
 
-  /**
-   * Whether this aircraft is part of a share at all — true for *every* partner in it, the hosting
-   * owner and co-owners included, not only the accounts it was shared into.
-   *
-   * Two sources, because neither alone covers everyone. `FleetEntry.shared` is false for the host
-   * (it's their own aircraft), but it is derived from the local refs, so it survives offline. The
-   * roster covers the host, and a share is only a share once someone else is in it — a roster of one
-   * is an owner alone with nobody to share with — but it's a live Firestore listener, so it goes
-   * quiet offline. Either one is enough to mark the aircraft.
-   */
-  private fun sharedFlow(): Flow<Boolean> {
-    val sharedIntoMyFleet = fleetManager.observeFleetDashboard()
-      .map { fleet -> fleet.firstOrNull { it.aircraft.id == aircraftId }?.shared == true }
-    val hasPartners = sharingManager.observeShareState(aircraftId)
-      .map { it.members.size > 1 }
-    return combine(sharedIntoMyFleet, hasPartners) { intoMyFleet, partnered ->
-      intoMyFleet || partnered
-    }.distinctUntilChanged()
-  }
-
   private fun loadAircraftAndStats() {
     viewModelScope.launch {
       _uiState.update { AircraftOverviewUiState.Loading }
@@ -122,7 +102,7 @@ class AircraftOverviewViewModel(
           // The caller's role on this aircraft, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
           // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
           sharingManager.observeMyRole(aircraftId),
-          sharedFlow(),
+          sharingManager.observeIsShared(aircraftId),
         ) { squawks, syncs, myRole, shared -> ShareContext(squawks, syncs, myRole, shared) }
       ) { aircraft, logs, taskCards, overview, shareContext ->
         val (squawkList, syncStates, myRole, isShared) = shareContext
