@@ -134,6 +134,19 @@ class SyncEngine(
    */
   private val failures = MutableStateFlow<Map<Any, SyncFailure>>(emptyMap())
 
+  private val _notices = MutableStateFlow<SyncNotice?>(null)
+
+  /**
+   * The most recent thing the user needs told (currently: work discarded when a share ended).
+   * Unlike [failureState] this is not a health signal — it reports something that already happened,
+   * so it stays up until [dismissNotice] is called rather than clearing itself when sync recovers.
+   */
+  val notices: StateFlow<SyncNotice?> = _notices.asStateFlow()
+
+  fun dismissNotice() {
+    _notices.value = null
+  }
+
   /** `null` when sync is healthy. The most recent unresolved failure otherwise. */
   val failureState: StateFlow<SyncFailure?> =
     MutableStateFlow<SyncFailure?>(null).also { state ->
@@ -312,6 +325,7 @@ class SyncEngine(
         .collectLatest { sharedScopes ->
           // Purge local data for shares that ended (revoke/leave/delete) before (re)spinning
           // listeners for the ones that remain. Also reconciles at engine start. See §5.4.
+          sharedScopeJanitor?.noticeSink = { _notices.value = it }
           sharedScopeJanitor?.purgeRevoked(uid, sharedScopes)
           sharedSubScopeSupervisor.cancel()
           val subSupervisor = SupervisorJob(scope.coroutineContext[Job])

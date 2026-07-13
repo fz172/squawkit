@@ -123,7 +123,11 @@ val syncModule: Module = module {
       ioContext = syncIoContext,
       db = db,
       uploadScheduler = uploadScheduler,
-      sharedScopeJanitor = SharedScopeJanitor(db, writeLock),
+      sharedScopeJanitor = SharedScopeJanitor(
+        db = db,
+        writeLock = writeLock,
+        aircraftStore = get<EntityStoreFactory>().create(CollectionKind.Aircraft),
+      ),
       telemetry = get<SyncTelemetry>(),
       writeLock = writeLock,
     )

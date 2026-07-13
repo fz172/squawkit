@@ -74,7 +74,8 @@ class SharedScopeJanitorTest {
   private suspend fun seedEntity(
     kind: CollectionKind,
     scope: EntityScope,
-    id: String
+    id: String,
+    dirty: Boolean = false,
   ) {
     db.schemaQueries.upsert(
       collection = kind,
@@ -84,7 +85,7 @@ class SharedScopeJanitorTest {
       payload_schema = kind.schemaName,
       updated_at = 1000L,
       remote_updated_at = null,
-      dirty = false,
+      dirty = dirty,
       deleted = false,
       writer_uid = null,
     )
@@ -105,4 +106,56 @@ class SharedScopeJanitorTest {
       scope.toPath()
     )
       .executeAsOneOrNull()
+
+  // --- Discarded work must never be silent (PRD D3) ---
+
+  @Test
+  fun purge_withUnsyncedEdits_reportsWhatItDestroyed() = runTest {
+    // The member edited a shared log offline and was revoked before it synced. The write is lost —
+    // it was only ever valid inside a share they are no longer in, and the rules will not take it.
+    // Losing it is unavoidable; losing it in silence is not.
+    seedFixture()
+    seedEntity(
+      CollectionKind.MaintenanceLog,
+      EntityScope.aircraftChild(HOST, SHARED_AC),
+      "log-unsynced",
+      dirty = true,
+    )
+    val notices = mutableListOf<SyncNotice>()
+    janitor.noticeSink = { notices += it }
+
+    janitor.purgeRevoked(MEMBER, liveShares = emptySet())
+
+    assertThat(notices).hasSize(1)
+    val discarded = notices.first() as SyncNotice.ChangesDiscarded
+    assertThat(discarded.discardedCount).isEqualTo(1)
+  }
+
+  @Test
+  fun purge_withNothingUnsynced_saysNothing() = runTest {
+    // Everything had already synced, so nothing was lost. Warning about discarded work here would
+    // frighten the user about data that is safely on the server.
+    seedFixture()
+    val notices = mutableListOf<SyncNotice>()
+    janitor.noticeSink = { notices += it }
+
+    janitor.purgeRevoked(MEMBER, liveShares = emptySet())
+
+    assertThat(notices).isEmpty()
+  }
+
+  @Test
+  fun purge_countsADirtyAircraftDocToo() = runTest {
+    // A co-owner's unsynced edit to the aircraft itself is a row at the host's *root*, not in the
+    // nested subtree — counting only the subtree would under-report the loss.
+    seedFixture()
+    seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(HOST), SHARED_AC, dirty = true)
+    val notices = mutableListOf<SyncNotice>()
+    janitor.noticeSink = { notices += it }
+
+    janitor.purgeRevoked(MEMBER, liveShares = emptySet())
+
+    val discarded = notices.single() as SyncNotice.ChangesDiscarded
+    assertThat(discarded.discardedCount).isEqualTo(1)
+  }
 }
