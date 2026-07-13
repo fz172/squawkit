@@ -34,6 +34,7 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.attachment.sharedassets.generated.resources.Res
+import wingslog.feature.attachment.sharedassets.generated.resources.attachment_not_shared
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_type_image
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_type_pdf
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_type_text
@@ -45,8 +46,14 @@ fun AttachmentRow(
   syncState: BlobSyncState? = null,
   onTap: (Attachment) -> Unit,
   modifier: Modifier = Modifier,
+  /**
+   * The file lives in another account's storage and v1 does not share blobs (design §9), so it can
+   * never arrive on this device. The row stays visible — the attachment genuinely exists on the log —
+   * but it is inert and says so, rather than offering a tap that silently does nothing.
+   */
+  unavailable: Boolean = false,
 ) {
-  val enabled = when (syncState) {
+  val enabled = !unavailable && when (syncState) {
     null,
     BlobSyncState.Synced,
     BlobSyncState.RemoteOnly,
@@ -81,10 +88,20 @@ fun AttachmentRow(
         overflow = TextOverflow.Ellipsis,
       )
       Text(
-        text = attachment.subtitle(),
+        text = if (unavailable) stringResource(Res.string.attachment_not_shared)
+        else attachment.subtitle(),
         style = WingslogTypography.dataSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
+    }
+    if (unavailable) {
+      Icon(
+        imageVector = Icons.Filled.CloudOff,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+        modifier = Modifier.size(Spacing.large),
+      )
+      return@Row
     }
     when (syncState) {
       BlobSyncState.Uploading,

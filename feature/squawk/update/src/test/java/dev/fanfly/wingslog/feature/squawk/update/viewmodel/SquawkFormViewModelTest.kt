@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
@@ -47,6 +48,9 @@ class SquawkFormViewModelTest {
   private lateinit var auth: FirebaseAuth
   private lateinit var featureLabManager: FeatureLabManager
 
+  // Only gates the attach affordance on shared aircraft; irrelevant to these assertions.
+  private lateinit var sharingManager: SharingManager
+
   @Before
   fun setUp() {
     Dispatchers.setMain(testDispatcher)
@@ -56,6 +60,7 @@ class SquawkFormViewModelTest {
     logManager = mockk(relaxed = true)
     auth = mockk(relaxed = true)
     featureLabManager = mockk(relaxed = true)
+    sharingManager = mockk(relaxed = true)
 
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.isAnonymous } returns false
@@ -475,6 +480,7 @@ class SquawkFormViewModelTest {
       logManager = logManager,
       auth = auth,
       featureLabManager = featureLabManager,
+      sharingManager = sharingManager,
       savedStateHandle = SavedStateHandle(
         mapOf(
           Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID,
@@ -490,8 +496,49 @@ class SquawkFormViewModelTest {
       logManager = logManager,
       auth = auth,
       featureLabManager = featureLabManager,
+      sharingManager = sharingManager,
       savedStateHandle = SavedStateHandle(
         mapOf(Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID)
       ),
     )
+
+  // --- Attachments on a shared aircraft (design §9, #146) ---
+
+  @Test
+  fun attachUnavailable_onAnAircraftHostedByAnotherAccount() = runTest(testDispatcher) {
+    // storage.rules is uid-scoped for writes as well as reads, so a member's upload into the host's
+    // tree is denied. Offering the attach button anyway would produce a file that silently never
+    // leaves the device.
+    every { featureLabManager.observe() } returns flowOf(FeatureFlags(attachmentUploadEnabled = true))
+    every { sharingManager.observeHostedByOther(TEST_AIRCRAFT_ID) } returns flowOf(true)
+
+    val viewModel = buildViewModelForNew()
+    advanceUntilIdle()
+
+    assertThat(viewModel.attachmentUploadEnabled.value).isFalse()
+  }
+
+  @Test
+  fun attachAvailable_onOwnAircraft_whenTheFlagIsOn() = runTest(testDispatcher) {
+    every { featureLabManager.observe() } returns flowOf(FeatureFlags(attachmentUploadEnabled = true))
+    every { sharingManager.observeHostedByOther(TEST_AIRCRAFT_ID) } returns flowOf(false)
+
+    val viewModel = buildViewModelForNew()
+    advanceUntilIdle()
+
+    assertThat(viewModel.attachmentUploadEnabled.value).isTrue()
+  }
+
+  @Test
+  fun attachStaysOff_onOwnAircraft_whenTheFlagIsOff() = runTest(testDispatcher) {
+    // The share check widens the gate for nobody: the feature flag (and later, the paywall) still
+    // has the final say.
+    every { featureLabManager.observe() } returns flowOf(FeatureFlags(attachmentUploadEnabled = false))
+    every { sharingManager.observeHostedByOther(TEST_AIRCRAFT_ID) } returns flowOf(false)
+
+    val viewModel = buildViewModelForNew()
+    advanceUntilIdle()
+
+    assertThat(viewModel.attachmentUploadEnabled.value).isFalse()
+  }
 }

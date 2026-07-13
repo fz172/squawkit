@@ -21,6 +21,8 @@ sealed interface MaintenanceLogListUiState {
     val selectedLog: MaintenanceLog? = null,
     /** Whether the technician named on the selected log actually wrote it (design §7.5). */
     val selectedAuthorship: LogAuthorship = LogAuthorship.Unknown,
+    /** Hosted by another account: blobs are user-scoped, so v1 cannot fetch them (design §9). */
+    val attachmentsUnavailable: Boolean = false,
     val availableCards: List<MaintenanceTask> = emptyList(),
   ) : MaintenanceLogListUiState
 

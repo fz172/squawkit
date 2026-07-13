@@ -106,13 +106,17 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun observeFeatureFlags() {
-    featureLabManager.observe()
-      .onEach { flags ->
-        _uiState.update {
-          it.copy(
-            attachmentUploadEnabled = flags.attachmentUploadEnabled,
-          )
-        }
+    combine(
+      featureLabManager.observe(),
+      sharingManager.observeHostedByOther(aircraftId),
+    ) { flags, hostedByOther ->
+        // Storage rules are user-scoped: a member cannot upload into the host's tree (design §9,
+        // storage.rules). Offering an attach button on someone else's aircraft would produce a file
+        // that silently never leaves the device.
+      flags.attachmentUploadEnabled && !hostedByOther
+    }
+      .onEach { enabled ->
+        _uiState.update { it.copy(attachmentUploadEnabled = enabled) }
       }
       .launchIn(viewModelScope)
   }

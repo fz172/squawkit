@@ -43,6 +43,12 @@ sealed interface AircraftOverviewUiState {
      * same as [myRole]: a co-owner of someone else's aircraft is `OWNER` *and* shared.
      */
     val shared: Boolean = false,
+    /**
+     * This aircraft is hosted by another account, and blobs are user-scoped in Storage: v1 shares
+     * records, not files (design §9). Attachments here can never be fetched, so they render as
+     * unavailable rather than offering a tap that silently fails.
+     */
+    val attachmentsUnavailable: Boolean = false,
   ) : AircraftOverviewUiState {
     /**
      * Owner-only affordances: Edit Aircraft, Delete, Manage Access. Technicians get a read-only

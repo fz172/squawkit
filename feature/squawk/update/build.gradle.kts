@@ -49,6 +49,7 @@ kotlin {
       implementation(project(":core:ui"))
       implementation(project(":core:datetime"))
       implementation(project(":feature:squawk:model"))
+      implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:squawk:datamanager"))
       implementation(project(":feature:squawk:sharedassets"))
       implementation(project(":feature:squawk:viewing"))
