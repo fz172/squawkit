@@ -205,6 +205,44 @@ describe("aircraft_shares ACL root", () => {
 // missing ACL doc and bootstrap it before the first invite (docs/sharing §3.1). Regression guard for
 // the get-rule ordering: the own-aircraft existence check must be evaluated before isShareMember,
 // whose get() of the missing doc would otherwise error and deny the whole rule.
+// #202: the ACL read rule used `exists(users/{me}/aircraft/{acId})` to mean "I am the host". But an
+// aircraft id is only unique WITHIN a tree, and anyone may write anything into their own tree — so a
+// stranger who knows an acId (it is in every invite link, and every ex-member still remembers it)
+// could fabricate a same-id aircraft and read the victim's ACL, roster, and technician mirrors.
+describe("aircraft_shares — a fabricated same-id aircraft grants nothing (#202)", () => {
+  // The attacker knows AC (from an invite link, or from having once been a member) and plants an
+  // aircraft with that id in their OWN tree. That is a legal write: it is their tree.
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `users/${STRANGER}/aircraft/${AC}`), {
+        registration: "FAKE",
+      });
+    });
+  });
+
+  it("may NOT get the ACL root (hostUid + every member uid and role)", async () => {
+    await assertFails(getDoc(doc(as(STRANGER), shareDoc)));
+  });
+
+  it("may NOT read the member roster (names, photos, technician certificate numbers)", async () => {
+    await assertFails(getDoc(doc(as(STRANGER), `${shareDoc}/members/${TECH}`)));
+  });
+
+  it("may NOT list the member roster", async () => {
+    await assertFails(getDocs(collection(as(STRANGER), `${shareDoc}/members`)));
+  });
+
+  it("may NOT read pending invites", async () => {
+    await assertFails(getDocs(collection(as(STRANGER), `${shareDoc}/invites`)));
+  });
+
+  it("still may NOT read the victim's aircraft or its records", async () => {
+    // The escalation this protects against: fabricating the aircraft must not make you a member.
+    await assertFails(getDoc(doc(as(STRANGER), aircraftDoc)));
+    await assertFails(getDoc(doc(as(STRANGER), logDoc)));
+  });
+});
+
 describe("aircraft_shares ACL root — first share (no ACL doc yet)", () => {
   const FRESH = "ac-fresh";
   const freshShare = `aircraft_shares/${FRESH}`;
@@ -245,11 +283,23 @@ describe("aircraft_shares ACL root — first share (no ACL doc yet)", () => {
     );
   });
 
-  // Manage Access reads members + invites on open; on a not-yet-shared aircraft the owner must be
-  // able to read the empty lists (rather than PERMISSION_DENIED before the first invite).
-  it("owner may read the empty members + invites lists before any share exists", async () => {
-    await assertSucceeds(getDocs(collection(as(HOST), `${freshShare}/members`)));
-    await assertSucceeds(getDocs(collection(as(HOST), `${freshShare}/invites`)));
+  // Before the first invite there is no ACL, so there is no roster and no invite list — and the
+  // rules now deny both, for everyone including the owner (#202: the own-aircraft escape hatch that
+  // used to allow this was forgeable by anyone who knew the aircraft id).
+  //
+  // Denying is safe because the client expects it: Manage Access maps the denial to
+  // AircraftShareState.accessDenied, shows an empty roster, and still offers Invite — the owner's
+  // role comes from the local refs, not from the roster. Covered by ManageAccessViewModelTest.
+  it("nobody reads the roster before a share exists — not even the owner (nothing to read)", async () => {
+    await assertFails(getDocs(collection(as(HOST), `${freshShare}/members`)));
+    await assertFails(getDocs(collection(as(HOST), `${freshShare}/invites`)));
+  });
+
+  // …but the owner MUST still be able to get the missing ACL doc itself, or they could never
+  // bootstrap it. Reading a doc that does not exist leaks nothing, which is exactly why the
+  // own-aircraft check survives here and nowhere else.
+  it("owner may still bootstrap: get the missing ACL doc, then create it and the first invite", async () => {
+    await assertSucceeds(getDoc(doc(as(HOST), freshShare)));
   });
 
   it("a stranger may NOT read the members or invites lists", async () => {
