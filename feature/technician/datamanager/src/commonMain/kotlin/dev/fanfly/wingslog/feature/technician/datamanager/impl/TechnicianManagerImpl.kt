@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration.Companion.seconds
@@ -47,6 +49,9 @@ class TechnicianManagerImpl(
     storeFactory.create(CollectionKind.Technician)
   private val userInfoStore: EntityStore<UserInfo> =
     storeFactory.create(CollectionKind.UserInfo)
+
+  /** Bumped after the reviewed flag is written, so the observing flow re-reads it. */
+  private val reviewedTrigger = MutableStateFlow(0)
 
   // This scope coordinates auth events; EntityStore provides its own platform storage context.
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -261,22 +266,37 @@ class TechnicianManagerImpl(
       markDuplicatesReviewed().getOrThrow()
     }.onFailure { logger.w(it) { "Error applying technician merges" } }
 
-  override fun observeDuplicatesReviewed(): Flow<Boolean> {
-    // Signed out: nothing to review, and nobody to nag.
-    val uid = firebaseAuth.currentUser?.uid ?: return flowOf(true)
-    return flow {
-      emit(
-        db.schemaQueries.selectConfig(uid, DUPLICATES_REVIEWED_KEY)
+  /**
+   * Must hang off `authStateChanged`, like every other observe here — NOT off a one-shot read of
+   * `currentUser`. Firebase restores the session asynchronously, so a ViewModel built before that
+   * lands would read a null user, fall through to "reviewed", and suppress the review prompt for
+   * its entire lifetime however many duplicates were sitting there.
+   *
+   * The trigger re-reads after [markDuplicatesReviewed], so dismissing takes effect immediately
+   * rather than at the next screen recreation.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override fun observeDuplicatesReviewed(): Flow<Boolean> =
+    firebaseAuth.authStateChanged.flatMapLatest { user ->
+      // Signed out: nothing to review, and nobody to nag.
+      if (user == null) flowOf(true)
+      else reviewedTrigger.map {
+        db.schemaQueries.selectConfig(user.uid, DUPLICATES_REVIEWED_KEY)
           .awaitAsOneOrNull() == REVIEWED
-      )
+      }
+    }.catch { e ->
+      // A failed read must not silently hide the prompt — surfacing it is recoverable, the user can
+      // dismiss; swallowing it loses the feature with no trace.
+      logger.w(e) { "Could not read duplicates-reviewed flag" }
+      emit(false)
     }
-  }
 
   override suspend fun markDuplicatesReviewed(): Result<Unit> = runCatching {
     val uid = firebaseAuth.currentUser?.uid ?: return@runCatching
     writeLock.withLock {
       db.schemaQueries.upsertConfig(uid, DUPLICATES_REVIEWED_KEY, REVIEWED)
     }
+    reviewedTrigger.update { it + 1 }
   }
 
   override suspend fun saveSelfName(name: String): Result<Unit> = runCatching {
