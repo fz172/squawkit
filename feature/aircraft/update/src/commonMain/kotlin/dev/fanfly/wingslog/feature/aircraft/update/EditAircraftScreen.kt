@@ -54,6 +54,9 @@ import wingslog.core.sharedassets.generated.resources.component_engine
 import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.feature.aircraft.update.generated.resources.add_engine
 import wingslog.feature.aircraft.update.generated.resources.delete_aircraft
+import wingslog.feature.aircraft.update.generated.resources.delete_aircraft_member_plural
+import wingslog.feature.aircraft.update.generated.resources.delete_aircraft_member_singular
+import wingslog.feature.aircraft.update.generated.resources.delete_aircraft_shared_warning
 import wingslog.feature.aircraft.update.generated.resources.update_aircraft
 import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
@@ -111,7 +114,27 @@ fun EditAircraftScreen(
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
       title = { Text(stringResource(AircraftRes.string.delete_aircraft)) },
-      text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
+      text = {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+          Text(stringResource(SharedRes.string.this_action_cannot_be_undone))
+          // Deleting a shared aircraft takes it away from everyone on the share (PRD D5). Saying
+          // only "cannot be undone" hides that you are deleting other people's access too.
+          val others = uiState.otherMemberCount
+          if (others > 0) {
+            Text(
+              text = stringResource(
+                AircraftRes.string.delete_aircraft_shared_warning,
+                others,
+                stringResource(
+                  if (others == 1) AircraftRes.string.delete_aircraft_member_singular
+                  else AircraftRes.string.delete_aircraft_member_plural
+                ),
+              ),
+              color = MaterialTheme.colorScheme.error,
+            )
+          }
+        }
+      },
       confirmButton = {
         TextButton(
           onClick = {

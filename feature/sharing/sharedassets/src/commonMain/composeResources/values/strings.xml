@@ -17,6 +17,20 @@
   <string name="manage_access_revoke">Remove access</string>
   <string name="manage_access_leave">Leave shared aircraft</string>
   <string name="manage_access_invite">Invite</string>
+  <!-- Revoke confirmation (PRD D2/D3). Revoking is server-enforced and immediate, and it destroys
+       any edits the member made offline and had not yet synced — the one data-loss window in the
+       design. The owner is told that before they do it, not after. -->
+  <string name="revoke_confirm_title">Remove %1$s?</string>
+  <string name="revoke_confirm_body">They lose access to this aircraft immediately, and their copy of its records is removed from their devices.
+
+If they made changes while offline that have not synced yet, those changes are lost.</string>
+  <string name="revoke_confirm_action">Remove access</string>
+  <!-- Leave confirmation. Same data-loss caveat, from the member's own side. -->
+  <string name="leave_confirm_title">Leave this aircraft?</string>
+  <string name="leave_confirm_body">It is removed from your fleet and its records are deleted from your devices. Any changes you made offline that have not synced yet are lost.
+
+The owner can invite you again.</string>
+  <string name="leave_confirm_action">Leave</string>
   <!-- Invite sheet -->
   <string name="invite_title">Invite to aircraft</string>
   <string name="invite_role_label">Role</string>
@@ -43,7 +57,11 @@
   <string name="redeem_already_member_title">Already a member</string>
   <string name="redeem_already_member_body">You already have access to this aircraft.</string>
   <string name="redeem_failed_title">Invite unavailable</string>
-  <string name="redeem_failed_body">This invite link is invalid, already used, or has expired.</string>
+  <string name="redeem_failed_body">This invite is no longer valid. Ask the owner for a new one.</string>
   <string name="redeem_role_owner">a co-owner</string>
   <string name="redeem_role_technician">a technician</string>
+  <!-- PRD E2: sharing is a cloud feature. With Cloud Sync off there is nothing to share into and
+       nothing to receive from, so management is disabled and says why rather than failing on tap. -->
+  <string name="sharing_sync_off_title">Cloud Sync is off</string>
+  <string name="sharing_sync_off_body">Sharing needs Cloud Sync. Turn it on in Settings to invite people or manage access. Aircraft already shared with you stay readable, but will not update.</string>
 </resources>

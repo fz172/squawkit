@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.viewing.ManageAccessUiState
@@ -20,12 +21,15 @@ import kotlinx.coroutines.launch
  */
 class ManageAccessViewModel(
   private val sharingManager: SharingManager,
+  private val cloudSync: CloudSyncSetting,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val aircraftId: String = savedStateHandle.get<String>(Screen.AIRCRAFT_ID).orEmpty()
+  val aircraftId: String = savedStateHandle.get<String>(Screen.AIRCRAFT_ID)
+    .orEmpty()
 
-  private val _uiState = MutableStateFlow(ManageAccessUiState())
+  private val _uiState =
+    MutableStateFlow(ManageAccessUiState(syncEnabled = cloudSync.isCloudSyncEnabled()))
   val uiState = _uiState.asStateFlow()
 
   private val logger = Logger.withTag("ManageAccessViewModel")
@@ -43,9 +47,10 @@ class ManageAccessViewModel(
     // Role is resolved locally (own aircraft ⇒ owner, shared ⇒ ref) — always available, and what
     // gates the Invite action. Kept separate from the roster so it never depends on it.
     viewModelScope.launch {
-      sharingManager.observeMyRole(aircraftId).collect { role ->
-        _uiState.update { it.copy(isLoading = false, myRole = role) }
-      }
+      sharingManager.observeMyRole(aircraftId)
+        .collect { role ->
+          _uiState.update { it.copy(isLoading = false, myRole = role) }
+        }
     }
     // The roster is online-only and, for an aircraft that hasn't been shared yet, not readable at
     // all (the owner isn't in memberRoles until the first invite bootstraps the share doc). Treat a

@@ -11,4 +11,10 @@
   <string name="remove_blade">Remove Blade</string>
   <string name="blade_serial_numbers">Blade Serial numbers</string>
   <string name="delete_aircraft">Delete Aircraft?</string>
+  <!-- PRD D5: deleting a shared aircraft tears the share down for everyone on it. Say how many
+       people that is — "cannot be undone" does not convey that you are deleting someone else's
+       access to records they may depend on. -->
+  <string name="delete_aircraft_shared_warning">%1$d other %2$s lose access to this aircraft and its records.</string>
+  <string name="delete_aircraft_member_singular">person will</string>
+  <string name="delete_aircraft_member_plural">people will</string>
 </resources>
