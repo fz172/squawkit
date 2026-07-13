@@ -16,6 +16,11 @@ data class EditAircraftUiState(
    * the host. Defaults false: a screen that hasn't resolved ownership yet must not offer Delete.
    */
   val hostedByMe: Boolean = false,
+  /**
+   * How many *other* people lose this aircraft if it is deleted. Deleting tears the share down for
+   * all of them (PRD D5), so the confirmation says so rather than a generic "cannot be undone".
+   */
+  val otherMemberCount: Int = 0,
 ) {
   /** Deleting is the hosting owner's call alone; rules enforce it, this keeps the UI honest. */
   val canDelete: Boolean get() = hostedByMe && aircraft.id.isNotEmpty()

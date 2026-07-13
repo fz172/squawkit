@@ -43,6 +43,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
+      implementation(project(":feature:sharing:datamanager"))
+      implementation(project(":feature:sharing:model"))
       implementation(project(":core:nav"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))

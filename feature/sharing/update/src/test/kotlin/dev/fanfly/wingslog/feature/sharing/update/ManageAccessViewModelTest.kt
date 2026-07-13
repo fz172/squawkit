@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
+import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -30,6 +31,7 @@ class ManageAccessViewModelTest {
 
   private val dispatcher = UnconfinedTestDispatcher()
   private lateinit var sharing: SharingManager
+  private lateinit var cloudSync: CloudSyncSetting
   private val role = MutableStateFlow<ShareRole?>(ShareRole.OWNER)
   private val share = MutableStateFlow(AircraftShareState())
 
@@ -37,6 +39,8 @@ class ManageAccessViewModelTest {
   fun setUp() {
     Dispatchers.setMain(dispatcher)
     sharing = mockk()
+    // Sharing is a cloud feature (PRD E2); these tests are about the roster, so sync is on.
+    cloudSync = CloudSyncSetting { true }
     every { sharing.observeMyRole(AC_ID) } returns role
     every { sharing.observeShareState(AC_ID) } returns share
     // Opening the screen republishes our own member doc, self-healing a missing one.
@@ -48,6 +52,7 @@ class ManageAccessViewModelTest {
 
   private fun viewModel() = ManageAccessViewModel(
     sharingManager = sharing,
+    cloudSync = cloudSync,
     savedStateHandle = SavedStateHandle(mapOf(Screen.AIRCRAFT_ID to AC_ID)),
   )
 
@@ -170,5 +175,40 @@ class ManageAccessViewModelTest {
     // on the way out), but the screen is on its way out — that is what accessRevoked means.
     assertThat(vm.uiState.value.accessRevoked).isTrue()
     assertThat(vm.uiState.value.members).hasSize(1)
+  }
+
+  // --- Cloud Sync off (PRD E2) ---
+
+  @Test
+  fun syncOff_disablesManagementAndLeaving() = runTest {
+    // Sharing is a cloud feature end to end: with sync off there is nothing to share into and
+    // nothing to receive from. Offering Invite / Remove / Leave here would fail on tap.
+    cloudSync = CloudSyncSetting { false }
+    share.value = AircraftShareState(
+      members = listOf(
+        ShareMember(uid = "host", displayName = "Host", role = ShareRole.OWNER, isHost = true),
+        ShareMember(uid = "me", displayName = "Me", role = ShareRole.TECHNICIAN, isSelf = true),
+      ),
+    )
+
+    val state = viewModel().uiState.value
+
+    assertThat(state.syncEnabled).isFalse()
+    assertThat(state.canManage).isFalse()
+    assertThat(state.canLeave).isFalse()
+  }
+
+  @Test
+  fun syncOn_ownerCanManage() = runTest {
+    role.value = ShareRole.OWNER
+    share.value = AircraftShareState(
+      members = listOf(
+        ShareMember(uid = "host", displayName = "Host", role = ShareRole.OWNER, isHost = true, isSelf = true),
+      ),
+    )
+
+    val state = viewModel().uiState.value
+
+    assertThat(state.canManage).isTrue()
   }
 }

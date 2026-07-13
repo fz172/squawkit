@@ -11,16 +11,20 @@ import dev.fanfly.wingslog.aircraft.PropellerBlade
 import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class EditAircraftViewModel(
-  private val fleetManager: FleetManager, savedStateHandle: SavedStateHandle,
+  private val fleetManager: FleetManager,
+  private val sharingManager: SharingManager,
+  savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
   private val _uiState: MutableStateFlow<EditAircraftUiState> =
@@ -36,6 +40,7 @@ class EditAircraftViewModel(
       logger.i { "Loading aircraft $aircraftId" }
       loadAircraftById(aircraftId)
       observeHostedByMe(aircraftId)
+      observeOtherMembers(aircraftId)
     }
   }
 
@@ -46,6 +51,17 @@ class EditAircraftViewModel(
    * This is deliberately not read off [ShareRole]: a co-owner is `OWNER` as well, and the thing that
    * separates them from the host is whose tree the aircraft is in — not what role they hold.
    */
+  /** Everyone on the share except us — the people a delete would take the aircraft away from. */
+  private fun observeOtherMembers(aircraftId: String) {
+    viewModelScope.launch {
+      sharingManager.observeShareState(aircraftId)
+        .map { share -> share.members.count { !it.isSelf } }
+        .distinctUntilChanged()
+        .catch { emit(0) } // roster unreadable (unshared aircraft) — nobody else to warn about
+        .collect { count -> _uiState.update { it.copy(otherMemberCount = count) } }
+    }
+  }
+
   private fun observeHostedByMe(aircraftId: String) {
     viewModelScope.launch {
       fleetManager.observeFleetDashboard()
