@@ -55,8 +55,8 @@ The owner can invite you again.</string>
        be able to check they are not being talked into a stranger's fleet. -->
   <string name="redeem_confirm_body_full">%1$s is inviting you to %2$s as %3$s.\n\nAccept to add it to your fleet.</string>
   <string name="redeem_confirm_body_role">You have been invited to share an aircraft as %1$s. Accept to add it to your fleet.</string>
-  <string name="redeem_needs_signin_title">Sign in to accept</string>
-  <string name="redeem_needs_signin_body">Sign in with your account to accept this invitation. It will still be here when you're signed in.</string>
+  <string name="redeem_needs_signin_title">Sign in required</string>
+  <string name="redeem_needs_signin_body">Sign in with your account to accept this invitation.</string>
   <string name="redeem_success_title">You're in</string>
   <string name="redeem_success_body">You now have access as %1$s. The aircraft will appear in your fleet shortly.</string>
   <string name="redeem_already_member_title">Already a member</string>
