@@ -11,7 +11,7 @@
     "watch": "tsc --watch",
     "serve": "firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions",
-    "test": "firebase emulators:exec --only firestore --project demo-squawkit \"$(command -v node) node_modules/vitest/vitest.mjs run\""
+    "test": "firebase emulators:exec --only firestore,storage --project demo-squawkit \"$(command -v node) node_modules/vitest/vitest.mjs run\""
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.11.0",
