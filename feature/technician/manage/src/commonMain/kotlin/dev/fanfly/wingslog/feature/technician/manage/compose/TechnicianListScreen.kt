@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Engineering
+import androidx.compose.material.icons.filled.Merge
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -54,6 +55,7 @@ import wingslog.feature.technician.sharedassets.generated.resources.empty_techni
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_action
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_dismiss
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_title
+import wingslog.feature.technician.sharedassets.generated.resources.duplicates_review_title
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_body
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_dismiss
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_title
@@ -110,7 +112,19 @@ fun TechnicianListScreen(
                 contentDescription = null
               )
             }
-          }
+          },
+          actions = {
+            // The prompt is dismissible, so it can't be the only way in: once dismissed, a user who
+            // changes their mind would have no route back to the review while the duplicates remain.
+            if (state.duplicates.isNotEmpty()) {
+              IconButton(onClick = { viewModel.showDuplicateReview() }) {
+                Icon(
+                  Icons.Filled.Merge,
+                  contentDescription = stringResource(TechnicianRes.string.duplicates_review_title),
+                )
+              }
+            }
+          },
         )
       }
     },

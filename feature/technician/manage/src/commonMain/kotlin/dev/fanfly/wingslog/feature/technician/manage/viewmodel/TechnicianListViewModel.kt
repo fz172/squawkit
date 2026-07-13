@@ -8,7 +8,6 @@ import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.findDuplicates
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.signature
-import dev.fanfly.wingslog.feature.technician.datamanager.merge.withoutAliasedTo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -58,10 +57,7 @@ class TechnicianListViewModel(
     localState,
   ) { technicians, selfId, linked, reviewedSignature, local ->
     val self = technicians.find { it.id == selfId }
-    // A row already aliased to a member shown in the linked section is that member — listing both
-    // would leave the duplicate the user just merged sitting on screen, and re-offer it forever.
     val others = technicians.filter { it.id != selfId }
-      .withoutAliasedTo(linked)
       .sortedBy { it.name.lowercase() }
 
     // The self-record participates as a *keeper*, never as a duplicate: hand-typing yourself before

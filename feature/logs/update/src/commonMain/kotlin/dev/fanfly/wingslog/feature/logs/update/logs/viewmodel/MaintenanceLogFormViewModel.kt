@@ -17,7 +17,6 @@ import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.technician.datamanager.merge.withoutAliasedTo
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
@@ -131,12 +130,9 @@ class MaintenanceLogFormViewModel(
       // account. Linked mirrors arrive already stamped with their owner's uid.
       val self = technicians.find { it.id == selfId }
         ?.let { it.copy(source_uid = auth.currentUser?.uid.orEmpty()) }
-      // A manual row the user aliased to a member (§7.4) is hidden only where that member's mirror
-      // actually appears — same rule the technician list applies, so the two can't drift.
       val others = technicians
         .filter { it.id != selfId }
-        .withoutAliasedTo(linked)
-        .sortedBy { it.name.lowercase() }
+          .sortedBy { it.name.lowercase() }
       Triple(self, listOfNotNull(self) + others, linked)
     }
       .onEach { (selfTech, available, linked) ->

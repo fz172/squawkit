@@ -30,11 +30,11 @@
   <string name="duplicates_prompt_action">Review</string>
   <string name="duplicates_prompt_dismiss">Not duplicates</string>
   <string name="duplicates_review_title">Review duplicates</string>
-  <string name="duplicates_review_body">Merging changes only who you can pick from here. Logs you have already signed keep the technician they recorded.</string>
+  <string name="duplicates_review_body">Merging deletes the duplicate entries. It changes only who you can pick from here — logs you have already signed keep the technician they recorded.</string>
   <string name="duplicates_merge_manual">Merge into %1$s</string>
-  <string name="duplicates_alias_member">Use the shared profile for %1$s</string>
+  <string name="duplicates_merge_member">Use the shared profile for %1$s</string>
   <string name="duplicates_warn_mirror">%1$s and %2$s have the same certificate number. Two members are two different people, so this is likely a typo — check with them.</string>
-  <string name="duplicates_replaces">Replaces: %1$s</string>
+  <string name="duplicates_replaces">Deletes: %1$s</string>
   <string name="duplicates_needs_confirmation">Names only — confirm this is the same person</string>
   <string name="duplicates_apply">Merge selected</string>
   <string name="duplicates_no_selection">Nothing selected</string>

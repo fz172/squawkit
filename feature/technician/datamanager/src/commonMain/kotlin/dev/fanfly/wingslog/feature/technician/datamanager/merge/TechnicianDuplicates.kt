@@ -17,16 +17,17 @@ import dev.fanfly.wingslog.aircraft.Technician
 enum class DuplicateResolution {
   /**
    * Two manual rows sharing a non-empty certificate number. A certificate number is unique to a
-   * person, so this is safe to pre-check: keep the richer row, tombstone the other. Logs already
-   * hold snapshots, so nothing historical is lost.
+   * person, so this is safe to pre-check: keep the richer row, delete the other. Logs already hold
+   * snapshots, so nothing historical is lost.
    */
   MERGE_MANUAL,
 
   /**
-   * A manual row that looks like a share member. The mirror is the source of truth, but the manual
-   * row is *aliased*, never deleted — see [Technician.superseded_by_uid].
+   * A manual row that looks like a share member. The member's mirror is the source of truth and
+   * survives; the hand-typed copy is deleted. Logs hold their own snapshots, so the technician
+   * recorded on already-signed work is untouched.
    */
-  ALIAS_TO_MEMBER,
+  MERGE_INTO_MEMBER,
 
   /**
    * Two mirrors with the same certificate number. Two members are two distinct accounts, so this is
@@ -46,7 +47,7 @@ data class DuplicateGroup(
   val resolution: DuplicateResolution,
   /** The row to keep: the richer manual row, or the member's mirror. */
   val keep: Technician,
-  /** The rows superseded by [keep] — tombstoned or aliased depending on [resolution]. */
+  /** The rows superseded by [keep]. A merge deletes them; a warning applies nothing. */
   val duplicates: List<Technician>,
   val autoSafe: Boolean,
 )
@@ -68,9 +69,8 @@ fun findDuplicates(
 
   // 1. Manual ↔ SELF. Run first: you are the authority on your own name. A user who hand-typed
   //    themselves as a technician before the app bootstrapped their self-record now has both, and
-  //    that copy should collapse into the real profile rather than be aliased to some member who
-  //    happens to share the name. The self-record is always the keeper — never tombstoned, never
-  //    aliased away.
+  //    that copy should collapse into the real profile rather than be merged into some member who
+  //    happens to share the name. The self-record is always the keeper — never deleted.
   if (self != null) {
     val matches = manual.filter { it.id != self.id && it.matches(self) }
     if (matches.isNotEmpty()) {
@@ -84,14 +84,14 @@ fun findDuplicates(
     }
   }
 
-  // 2. Manual ↔ mirror. The mirror is the source of truth for a member, so a manual row that
-  //    matches one should alias to them rather than be merged into another manual row.
+  // 2. Manual ↔ mirror. The member's mirror is the source of truth, so a manual row that matches
+  //    one collapses into them rather than into another manual row.
   for (mirror in mirrors) {
     val matches = manual.filter { it.id !in claimed && it.matches(mirror) }
     if (matches.isEmpty()) continue
     matches.forEach { claimed += it.id }
     groups += DuplicateGroup(
-      resolution = DuplicateResolution.ALIAS_TO_MEMBER,
+      resolution = DuplicateResolution.MERGE_INTO_MEMBER,
       keep = mirror,
       duplicates = matches,
       // Only a certificate-number match is strong enough to pre-check.
@@ -147,21 +147,6 @@ fun findDuplicates(
     }
 
   return groups
-}
-
-/**
- * Drops the manual rows the user has already aliased to a member whose mirror is present here.
- *
- * This is what makes a manual↔member merge *visible*: the alias only records the decision, and
- * every surface that lists technicians has to honour it or the duplicate simply stays on screen.
- *
- * Scoped to the mirrors actually present, never global — that is the whole reason the merge aliases
- * instead of deleting. Manual rows are user-global while mirrors are per-aircraft, so on an aircraft
- * this member isn't on, their hand-typed row is still the only way to pick them (§7.4).
- */
-fun List<Technician>.withoutAliasedTo(mirrors: List<Technician>): List<Technician> {
-  val present = mirrors.mapTo(mutableSetOf()) { it.source_uid }
-  return filterNot { it.superseded_by_uid.isNotBlank() && it.superseded_by_uid in present }
 }
 
 /**

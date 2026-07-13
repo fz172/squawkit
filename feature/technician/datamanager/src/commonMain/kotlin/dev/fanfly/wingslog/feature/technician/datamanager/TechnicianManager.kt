@@ -40,12 +40,11 @@ interface TechnicianManager {
   /**
    * Applies the user's confirmed reconciliation of look-alike roster rows (design §7.4).
    *
-   * A manual↔manual merge tombstones the duplicate rows. A manual↔member merge only *aliases* them
-   * (`superseded_by_uid`) — manual rows are user-global while mirrors are per-aircraft, so deleting
-   * one because it matched a member on one aircraft would make that person vanish from the picker
-   * on another. Warnings are informational and apply nothing.
+   * A merge deletes the duplicate rows outright, whether the keeper is another manual row or a share
+   * member's mirror. Warnings are informational and apply nothing.
    *
-   * Log snapshots are never touched: a merge changes only the go-forward roster.
+   * Log snapshots are never touched: a merge changes only the go-forward roster, so already-signed
+   * work keeps whatever technician it recorded.
    */
   suspend fun applyDuplicateMerges(
     groups: List<DuplicateGroup>,

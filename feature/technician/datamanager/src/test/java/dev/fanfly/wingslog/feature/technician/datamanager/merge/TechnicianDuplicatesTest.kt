@@ -53,7 +53,7 @@ class TechnicianDuplicatesTest {
   }
 
   @Test
-  fun theSelfRecord_isNeverAmongTheDuplicates() {
+  fun theSelfRecord_isNeverAmongTheRowsToDelete() {
     // Whatever else matches, your own profile must never be the row that gets tombstoned.
     val me = manual("self", "XYZ")
     val handTyped = manual("m1", "XYZ")
@@ -87,16 +87,16 @@ class TechnicianDuplicatesTest {
     assertThat(findDuplicates(manual = listOf(other), mirrors = emptyList(), self = me)).isEmpty()
   }
 
-  // ---- manual ↔ mirror: alias, never delete ----
+  // ---- manual ↔ mirror: the member wins, the hand-typed copy is deleted ----
 
   @Test
-  fun manualMatchingMemberByCertNumber_aliasesToTheMember_andIsAutoSafe() {
+  fun manualMatchingMemberByCertNumber_mergesIntoTheMember_andIsAutoSafe() {
     val hand = manual("m1", "Bob Squarepants", cert = "AP-123")
     val member = mirror(MEMBER_UID, "Sponge Bob", cert = "AP-123")
 
     val group = findDuplicates(listOf(hand), listOf(member)).single()
 
-    assertThat(group.resolution).isEqualTo(DuplicateResolution.ALIAS_TO_MEMBER)
+    assertThat(group.resolution).isEqualTo(DuplicateResolution.MERGE_INTO_MEMBER)
     // The mirror is the source of truth — it is what survives.
     assertThat(group.keep.source_uid).isEqualTo(MEMBER_UID)
     assertThat(group.duplicates.map { it.id }).containsExactly("m1")
@@ -110,7 +110,7 @@ class TechnicianDuplicatesTest {
 
     val group = findDuplicates(listOf(hand), listOf(member)).single()
 
-    assertThat(group.resolution).isEqualTo(DuplicateResolution.ALIAS_TO_MEMBER)
+    assertThat(group.resolution).isEqualTo(DuplicateResolution.MERGE_INTO_MEMBER)
     // Names collide; a human has to confirm.
     assertThat(group.autoSafe).isFalse()
   }
@@ -155,7 +155,7 @@ class TechnicianDuplicatesTest {
 
     val group = findDuplicates(listOf(hand), listOf(member)).single()
 
-    assertThat(group.resolution).isEqualTo(DuplicateResolution.ALIAS_TO_MEMBER)
+    assertThat(group.resolution).isEqualTo(DuplicateResolution.MERGE_INTO_MEMBER)
     assertThat(group.autoSafe).isTrue()
   }
 
@@ -234,7 +234,7 @@ class TechnicianDuplicatesTest {
   // ---- precedence ----
 
   @Test
-  fun aManualRowMatchingBothAMemberAndAnotherManualRow_aliasesToTheMember() {
+  fun aManualRowMatchingBothAMemberAndAnotherManualRow_mergesIntoTheMember() {
     // The mirror is the source of truth, so the member claims the row before the manual↔manual
     // pass can merge it away.
     val hand1 = manual("m1", "Sponge Bob", cert = "AP-123")
@@ -244,7 +244,7 @@ class TechnicianDuplicatesTest {
     val groups = findDuplicates(listOf(hand1, hand2), listOf(member))
 
     assertThat(groups).hasSize(1)
-    assertThat(groups.single().resolution).isEqualTo(DuplicateResolution.ALIAS_TO_MEMBER)
+    assertThat(groups.single().resolution).isEqualTo(DuplicateResolution.MERGE_INTO_MEMBER)
     assertThat(groups.single().duplicates.map { it.id }).containsExactly("m1", "m2")
   }
 

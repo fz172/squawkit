@@ -19,12 +19,9 @@ message Technician {
   // hand. Drives the provenance label and the self-signed check (design §7.3/§7.5).
   string source_uid = 8;
 
-  // Set on a MANUAL roster row that the user has reconciled with a share member's mirror: the uid
-  // of the member who supersedes it (design §7.4). A soft alias, never a delete — manual rows are
-  // user-global while mirrors are per-aircraft, so on an aircraft where that member has no mirror
-  // the manual row must still appear. Meaningful only on roster rows; ignored in a log snapshot,
-  // which is immutable and must never be rewritten by a merge.
-  string superseded_by_uid = 9;
+  // 9 was superseded_by_uid: a soft alias from a manual row to the share member that superseded it.
+  // Reconciling a duplicate now deletes the manual row outright, so nothing needs aliasing.
+  reserved 9;
 }
 
 enum CertificateType {

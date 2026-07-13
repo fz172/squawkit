@@ -405,44 +405,6 @@ class MaintenanceLogFormViewModelTest {
     assertThat(selected?.source_uid).isEqualTo(LINKED_UID)
   }
 
-  // ---- aliased manual rows (design §7.4) ----
-
-  @Test
-  fun aliasedManualRow_isHiddenWhereThatMembersMirrorIsPresent() = runTest(testDispatcher) {
-    every { technicianManager.observeTechnicians() } returns flowOf(
-      listOf(
-        Technician(id = "m1", name = "Bob Squarepants", superseded_by_uid = LINKED_UID)
-      )
-    )
-    every { sharingManager.observeLinkedTechnicians(TEST_AIRCRAFT_ID) } returns flowOf(
-      listOf(Technician(id = LINKED_UID, name = "Sponge Bob", source_uid = LINKED_UID))
-    )
-
-    val state = buildViewModelForNew().uiState.value
-
-    // The live mirror stands in for the stale hand-typed row.
-    assertThat(state.availableTechnicians).isEmpty()
-    assertThat(state.linkedTechnicians.single().source_uid).isEqualTo(LINKED_UID)
-  }
-
-  @Test
-  fun aliasedManualRow_stillShowsOnAnAircraftWhereThatMemberIsNotLinked() =
-    runTest(testDispatcher) {
-      every { technicianManager.observeTechnicians() } returns flowOf(
-        listOf(
-          Technician(id = "m1", name = "Bob Squarepants", superseded_by_uid = LINKED_UID)
-        )
-      )
-      // Same user, different aircraft — this member has no mirror here.
-      every { sharingManager.observeLinkedTechnicians(TEST_AIRCRAFT_ID) } returns
-        flowOf(emptyList())
-
-      val state = buildViewModelForNew().uiState.value
-
-      // Alias, not delete: hiding it here would make the person unpickable on this aircraft.
-      assertThat(state.availableTechnicians.map { it.id }).containsExactly("m1")
-    }
-
   // ---- helpers ----
 
   private fun buildViewModelForEdit(): MaintenanceLogFormViewModel =

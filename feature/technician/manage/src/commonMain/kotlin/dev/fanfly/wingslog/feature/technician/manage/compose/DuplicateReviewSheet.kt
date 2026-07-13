@@ -29,7 +29,7 @@ import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateResolut
 import androidx.compose.foundation.layout.Row
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.Res
-import wingslog.feature.technician.sharedassets.generated.resources.duplicates_alias_member
+import wingslog.feature.technician.sharedassets.generated.resources.duplicates_merge_member
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_apply
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_merge_manual
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_needs_confirmation
@@ -42,10 +42,10 @@ import wingslog.feature.technician.sharedassets.generated.resources.duplicates_w
 /**
  * Lets the user reconcile look-alike roster rows (design §7.4).
  *
- * Nothing is applied silently. Certificate-number matches arrive pre-checked because a certificate
- * identifies one person; name-only matches start unchecked and say so, because names collide.
- * Mirror↔mirror conflicts are shown as a warning with no checkbox — two members are two accounts,
- * so there is nothing here to merge.
+ * Nothing is applied silently, and a merge deletes roster rows, so the checkboxes matter.
+ * Certificate-number matches arrive pre-checked because a certificate identifies one person;
+ * name-only matches start unchecked and say so, because names collide. Mirror↔mirror conflicts are
+ * shown as a warning with no checkbox — two members are two accounts, nothing to merge.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,8 +123,8 @@ private fun MergeRow(
   onCheckedChange: (Boolean) -> Unit,
 ) {
   val title = when (group.resolution) {
-    DuplicateResolution.ALIAS_TO_MEMBER ->
-      stringResource(Res.string.duplicates_alias_member, group.keep.name)
+    DuplicateResolution.MERGE_INTO_MEMBER ->
+      stringResource(Res.string.duplicates_merge_member, group.keep.name)
 
     else -> stringResource(Res.string.duplicates_merge_manual, group.keep.name)
   }

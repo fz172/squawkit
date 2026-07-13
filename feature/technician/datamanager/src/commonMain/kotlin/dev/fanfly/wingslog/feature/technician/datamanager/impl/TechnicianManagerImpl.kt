@@ -241,25 +241,12 @@ class TechnicianManagerImpl(
 
       groups.forEach { group ->
         when (group.resolution) {
-          // The duplicate rows are hand-typed and now redundant. Logs hold their own snapshots, so
-          // tombstoning the roster row loses nothing historical.
-          DuplicateResolution.MERGE_MANUAL ->
-            group.duplicates.forEach { technicianStore.delete(it.id, userScope) }
-
-          // Alias, never delete (§7.4): the manual row is user-global, the mirror is per-aircraft.
-          // Deleting it would erase this person from the picker on aircraft where the member has no
-          // mirror. `superseded_by_uid` rides the normal sync path, so the alias follows the user
-          // across devices.
-          DuplicateResolution.ALIAS_TO_MEMBER -> {
-            val memberUid = group.keep.source_uid
-            group.duplicates.forEach { duplicate ->
-              technicianStore.put(
-                duplicate.id,
-                duplicate.copy(superseded_by_uid = memberUid),
-                userScope,
-              )
-            }
-          }
+          // Both merges delete the duplicate rows. They are hand-typed and now redundant — the
+          // keeper is either a richer manual row or the member's live mirror. Logs hold their own
+          // snapshots, so already-signed work keeps the technician it recorded.
+          DuplicateResolution.MERGE_MANUAL,
+          DuplicateResolution.MERGE_INTO_MEMBER,
+          -> group.duplicates.forEach { technicianStore.delete(it.id, userScope) }
 
           // Two members are two accounts; this is a heads-up about a likely mistyped certificate,
           // not something to apply.
