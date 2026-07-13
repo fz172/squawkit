@@ -239,7 +239,10 @@ class TechnicianManagerImplTest {
   }
 
   @Test
-  fun ensureSelfProfile_whenReplacingName_usesAccountName() = runTest {
+  fun ensureSelfProfile_neverOverwritesTheNameTheUserChose() = runTest {
+    // Upgrading a guest used to replace this with the Google account name, so a user who set
+    // themselves up as "Guest Pilot" was silently renamed by signing in. The account name seeds an
+    // EMPTY profile; it is never an authority over one the user has filled in.
     val userScope = EntityScope.userRoot(TEST_USER_ID)
     val existing =
       buildTestTechnician(id = TEST_TECHNICIAN_ID, name = "Guest Pilot")
@@ -263,16 +266,11 @@ class TechnicianManagerImplTest {
       )
     )
 
-    val result = manager.ensureSelfProfile(replaceExistingName = true)
+    val result = manager.ensureSelfProfile()
 
     assertThat(result.isSuccess).isTrue()
-    coVerify {
-      technicianStore.put(
-        TEST_TECHNICIAN_ID,
-        existing.copy(name = "Test User"),
-        userScope,
-      )
-    }
+    // "Test User" is the Firebase account name in this harness; it must not land on the record.
+    coVerify(exactly = 0) { technicianStore.put(TEST_TECHNICIAN_ID, any(), userScope) }
   }
 
   private fun buildTestTechnician(

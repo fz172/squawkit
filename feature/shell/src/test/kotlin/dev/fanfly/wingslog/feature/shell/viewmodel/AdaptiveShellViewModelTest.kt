@@ -60,7 +60,7 @@ class AdaptiveShellViewModelTest {
 
     override suspend fun deleteTechnician(id: String) = Result.success(true)
     override suspend fun saveSelfName(name: String) = Result.success(Unit)
-    override suspend fun ensureSelfProfile(replaceExistingName: Boolean) =
+    override suspend fun ensureSelfProfile() =
       Result.success(Unit)
 
     override suspend fun applyDuplicateMerges(
@@ -76,6 +76,7 @@ class AdaptiveShellViewModelTest {
     override suspend fun trySilentLogin(): FirebaseUser? = null
     override suspend fun signInWithGoogle(): FirebaseUser? = null
     override suspend fun signInAnonymously(): FirebaseUser? = null
+    override suspend fun updateDisplayName(name: String) = Unit
     override suspend fun logOut() = Unit
     override suspend fun sendSignInLink(email: String): SendLinkResult =
       SendLinkResult.Failed("not used")
