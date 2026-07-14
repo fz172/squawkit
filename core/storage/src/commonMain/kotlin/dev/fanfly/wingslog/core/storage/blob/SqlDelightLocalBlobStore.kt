@@ -254,6 +254,35 @@ class SqlDelightLocalBlobStore(
     writeLock.withLock { db.schemaQueries.resetUploadAttempts(id.value) }
   }
 
+  override suspend fun idsInScopePrefix(scopePrefix: String): List<BlobId> =
+    db.schemaQueries.selectBlobsForScopePrefix(scopePrefix)
+      .awaitAsList()
+      .map { BlobId(it.id) }
+
+  override suspend fun purgeLocal(ids: Collection<BlobId>) {
+    val present = mutableListOf<BlobId>()
+    for (id in ids) {
+      val row = db.schemaQueries.selectBlobById(id.value)
+        .awaitAsOneOrNull() ?: continue
+      present += id
+      try {
+        fs.delete(row.relative_path)
+      } catch (e: Exception) {
+        // The bytes are already unreachable — the row that named them is going. A file we cannot
+        // delete is wasted disk, not a reason to keep the row and retry forever.
+        Logger.w(throwable = e) {
+          "Could not delete local file for blob ${id.value}; dropping the row anyway"
+        }
+      }
+    }
+    if (present.isEmpty()) return
+
+    // One lock for the batch: a purged aircraft can carry hundreds of blobs, and this runs on start.
+    writeLock.withLock {
+      for (id in present) db.schemaQueries.hardDeleteBlob(id.value)
+    }
+  }
+
   override suspend fun wipeForUser(uid: String) {
     val prefix = "/users/$uid/%"
     val rows = db.schemaQueries.selectBlobsForScopePrefix(prefix)

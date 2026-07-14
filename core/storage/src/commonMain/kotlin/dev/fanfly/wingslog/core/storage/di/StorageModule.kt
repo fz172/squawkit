@@ -11,9 +11,9 @@ import dev.fanfly.wingslog.core.model.settings.FeatureLabSettings
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
-import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.DriverFactory
 import dev.fanfly.wingslog.core.storage.EntityCodecRegistry
@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.core.storage.LocalAccountMigratorImpl
 import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.core.storage.WireCodec
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.core.storage.storageIoContext
@@ -97,14 +98,18 @@ val storageModule: Module = module {
       // Bound by the sync module, which is where Firebase lives. Absent in hosts without sync, and
       // then writes simply carry no author — "unknown", which the UI treats as neither signed nor
       // assigned.
-      currentUid = getOrNull<CurrentUidProvider>() ?: CurrentUidProvider { null },
+      currentUid = getOrNull<CurrentUidProvider>()
+        ?: CurrentUidProvider { null },
     )
   }
 
   single<TombstoneGc> {
     TombstoneGc(
       db = get<WingsLogDatabase>(),
-      writeLock = get<DatabaseWriteLock>()
+      writeLock = get<DatabaseWriteLock>(),
+      // Bound by the attachment module, which is where the filesystem lives. Absent in hosts
+      // without attachments — and then there are no local blobs to reclaim.
+      blobs = getOrNull<LocalBlobStore>(),
     )
   }
 

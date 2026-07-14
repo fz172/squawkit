@@ -108,6 +108,20 @@ WHERE collection = ? AND scope_path = ? AND id = ?;
 countDirty:
 SELECT COUNT(*) FROM entity WHERE dirty = 1;
 
+-- The rows gcTombstones is about to purge, read before they are gone. TombstoneGc decodes these
+-- payloads to find the blobs the dead records referenced — once the row is deleted, nothing on the
+-- device remembers that the blob belonged to it.
+selectPurgeableTombstones:
+SELECT collection, scope_path, id, payload FROM entity
+WHERE deleted = 1 AND dirty = 0 AND updated_at < :cutoffMs;
+
+-- Live rows under a scope prefix. TombstoneGc uses this to prove a blob is unreferenced before it
+-- drops it: two records can name the same attachment id (a duplicate/copy), and a blob a live
+-- record still shows must survive its sibling's purge.
+selectLivePayloadsInScopePrefix:
+SELECT collection, payload FROM entity
+WHERE scope_path LIKE :scopePrefix AND deleted = 0;
+
 gcTombstones:
 DELETE FROM entity
 WHERE deleted = 1 AND dirty = 0 AND updated_at < :cutoffMs;
