@@ -115,7 +115,7 @@ private fun ProfileNameAndCreds(self: Technician?) {
       && self.cert_expiration != null
   if (showExpiration) {
     Text(
-      text = self.cert_expiration!!.toLocalDate()
+      text = self.cert_expiration!!.toLocalDate(TimeZone.UTC)
         .toDisplayFormat(),
       style = MaterialTheme.typography.bodySmall,
       color = certExpiryColor(self.cert_expiration!!),
@@ -161,7 +161,9 @@ private fun ProfileAvatar(
 
 @Composable
 private fun certExpiryColor(expiration: WireInstant): Color {
-  val expiryDate = expiration.toLocalDate()
+  // The expiration is a picked wall date stored as UTC midnight; read it back in UTC so the
+  // comparison is date-vs-date rather than shifting a day off the device's offset.
+  val expiryDate = expiration.toLocalDate(TimeZone.UTC)
   val today = Clock.System.now()
     .toLocalDateTime(TimeZone.currentSystemDefault())
     .date
