@@ -33,7 +33,21 @@ export type SweepReport = {
   orphanBlobsCollected: number;
   /** Aircraft skipped because a live record would not decode — see [collectOrphanBlobs]. */
   aircraftSkipped: number;
+  /**
+   * WHAT it touched, not just how much.
+   *
+   * A dry run you cannot audit is not a rehearsal — it is a number you have to take on faith, and
+   * the thing on the other side of that faith is a user's photos. Capped at [SAMPLE_LIMIT] so a
+   * large sweep cannot blow up the log entry; the counts above are always exact.
+   */
+  orphanBlobPaths: string[];
+  purgedTombstonePaths: string[];
+  /** True when the lists above were truncated — the counts are still complete. */
+  truncated: boolean;
 };
+
+/** Enough to eyeball a real backlog, small enough that one log entry stays readable. */
+const SAMPLE_LIMIT = 200;
 
 type SyncDocWire = {
   payload?: Uint8Array | Buffer;
@@ -49,6 +63,9 @@ export async function runStorageSweep(options: SweepOptions): Promise<SweepRepor
     tombstonesPurged: 0,
     orphanBlobsCollected: 0,
     aircraftSkipped: 0,
+    orphanBlobPaths: [],
+    purgedTombstonePaths: [],
+    truncated: false,
   };
 
   const users = options.onlyUid
@@ -65,7 +82,21 @@ export async function runStorageSweep(options: SweepOptions): Promise<SweepRepor
     await purgeExpiredTombstones(uid, options, report);
   }
 
-  logger.info(options.dryRun ? "Storage sweep (DRY RUN)" : "Storage sweep", { ...report });
+  // Two entries on purpose: a summary that is easy to scan, and the itemised list that makes the
+  // summary checkable. Cloud Logging truncates a very large entry, hence the cap.
+  logger.info(options.dryRun ? "Storage sweep (DRY RUN)" : "Storage sweep", {
+    dryRun: report.dryRun,
+    usersScanned: report.usersScanned,
+    tombstonesPurged: report.tombstonesPurged,
+    orphanBlobsCollected: report.orphanBlobsCollected,
+    aircraftSkipped: report.aircraftSkipped,
+    truncated: report.truncated,
+  });
+  logger.info(options.dryRun ? "Storage sweep — what it WOULD delete" : "Storage sweep — deleted", {
+    orphanBlobPaths: report.orphanBlobPaths,
+    purgedTombstonePaths: report.purgedTombstonePaths,
+    truncated: report.truncated,
+  });
   return report;
 }
 
@@ -115,6 +146,7 @@ async function purgeIfExpired(
   if (stamped == null || stamped.toMillis() > cutoff.toMillis()) return;
 
   report.tombstonesPurged++;
+  record(report.purgedTombstonePaths, ref.path, report);
   if (!options.dryRun) await ref.delete();
 }
 
@@ -161,6 +193,7 @@ async function collectOrphanBlobs(
       if (Number.isFinite(createdMs) && createdMs > graceCutoffMs) continue; // too young to judge
 
       report.orphanBlobsCollected++;
+      record(report.orphanBlobPaths, file.name, report);
       if (!options.dryRun) await file.delete({ ignoreNotFound: true });
     }
   }
@@ -187,6 +220,12 @@ async function blobsReferencedByLiveRecords(
     }
   }
   return referenced;
+}
+
+/** Append a path to a sample list, marking the report truncated once it is full. */
+function record(into: string[], path: string, report: SweepReport): void {
+  if (into.length < SAMPLE_LIMIT) into.push(path);
+  else report.truncated = true;
 }
 
 function toBytes(payload: Uint8Array | Buffer): Uint8Array {

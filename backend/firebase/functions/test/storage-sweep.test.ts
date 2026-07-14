@@ -161,3 +161,20 @@ describe("dry run", () => {
     expect(await blobExists("orphan")).toBe(true);
   });
 });
+
+describe("the report says WHAT, not just how much", () => {
+  it("names the blobs and tombstones it would delete", async () => {
+    // A dry run you cannot audit is not a rehearsal — it is a number you take on faith, and what is
+    // on the other side of that faith is a user's photos.
+    await putBlob("orphan-1");
+    await putLog("old", { deleted: true, ageDays: 40 });
+
+    const report = await runStorageSweep({ ...DEFAULTS, dryRun: true, orphanGraceDays: 0 });
+
+    expect(report.orphanBlobPaths).toEqual([`users/${UID}/aircraft/${AC}/blobs/orphan-1`]);
+    expect(report.purgedTombstonePaths).toEqual([
+      `users/${UID}/aircraft/${AC}/maintenance_log/old`,
+    ]);
+    expect(report.truncated).toBe(false);
+  });
+});
