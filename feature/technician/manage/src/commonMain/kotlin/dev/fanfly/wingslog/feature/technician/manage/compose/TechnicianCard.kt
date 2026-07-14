@@ -24,6 +24,7 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.displayResId
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.resolvedCertificateType
+import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.Res
 import wingslog.feature.technician.sharedassets.generated.resources.linked_badge
@@ -41,7 +42,8 @@ fun TechnicianCard(
 ) {
   val certType = technician.resolvedCertificateType()
   val certNumber = technician.cert_number.takeIf { it.isNotBlank() }
-  val expiration = technician.cert_expiration?.toLocalDate()
+  // Picked wall date stored as UTC midnight — read it back in UTC, not the device zone.
+  val expiration = technician.cert_expiration?.toLocalDate(TimeZone.UTC)
     ?.toDisplayFormat()
 
   Card(

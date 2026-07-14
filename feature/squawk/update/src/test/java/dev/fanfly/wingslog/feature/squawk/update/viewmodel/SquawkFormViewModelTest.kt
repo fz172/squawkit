@@ -33,6 +33,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.time.Instant
+import java.util.TimeZone as JavaTimeZone
 
 private const val TEST_AIRCRAFT_ID = "aircraft-456"
 private const val TEST_SQUAWK_ID = "squawk-789"
@@ -471,7 +472,44 @@ class SquawkFormViewModelTest {
     assertThat(saved.captured.created_at?.getEpochSecond() ?: 0L).isGreaterThan(0L)
   }
 
+  // ---- reported date — timezone (#224) ----
+
+  @Test
+  fun loadExisting_showsTheReportedDateInTheDeviceZone_notUtc() =
+    runTest(testDispatcher) {
+      // 2026-07-13 23:00 PDT — the same instant is already 07/14 in UTC, so reading it back in
+      // UTC showed a squawk filed late on the 13th as reported on the 14th.
+      val createdAt = Instant.parse("2026-07-14T06:00:00Z")
+      every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          Squawk(
+            id = TEST_SQUAWK_ID,
+            title = "Nose gear shimmy",
+            created_at = createdAt.toWireInstant(),
+          )
+        )
+      )
+
+      val viewModel = withDefaultTimeZone("America/Los_Angeles") {
+        buildViewModelForEdit().also { advanceUntilIdle() }
+      }
+
+      assertThat(viewModel.state.value.reportedDateFormatted).isEqualTo("07/13/2026")
+    }
+
   // ---- helpers ----
+
+  /** Runs [block] with the JVM default zone set to [zoneId], which is what
+   *  `TimeZone.currentSystemDefault()` reads. */
+  private fun <T> withDefaultTimeZone(zoneId: String, block: () -> T): T {
+    val original = JavaTimeZone.getDefault()
+    JavaTimeZone.setDefault(JavaTimeZone.getTimeZone(zoneId))
+    try {
+      return block()
+    } finally {
+      JavaTimeZone.setDefault(original)
+    }
+  }
 
   private fun buildViewModelForEdit(): SquawkFormViewModel =
     SquawkFormViewModel(

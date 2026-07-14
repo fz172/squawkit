@@ -9,9 +9,16 @@ import kotlin.time.Instant
 import com.squareup.wire.Instant as WireInstant
 
 /**
- * Converts this WireInstant to a LocalDate in the given zone (UTC by default).
+ * Converts this WireInstant to the calendar date it falls on in [timeZone] — the device's zone
+ * by default, which is the date a user reading it on screen expects to see.
+ *
+ * Fields that encode a wall date as UTC midnight rather than a real instant — a Material date
+ * picker selection, such as a certificate expiration — must pass [TimeZone.UTC] to read that
+ * date back unshifted.
  */
-fun WireInstant.toLocalDate(timeZone: TimeZone = TimeZone.UTC): LocalDate {
+fun WireInstant.toLocalDate(
+  timeZone: TimeZone = TimeZone.currentSystemDefault(),
+): LocalDate {
   return toInstant().toLocalDateTime(timeZone).date
 }
 
