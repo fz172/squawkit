@@ -154,6 +154,13 @@ VALUES (?, ?, ?, ?, ?, ?, ?);
 deleteCursorsInScopePrefix:
 DELETE FROM sync_cursor WHERE scope_path LIKE :scopePrefix;
 
+-- "Did this uid ever sync this scope?" A cursor row is written the first time a scope hydrates, so
+-- its presence is proof the rows under that scope were pulled for this user — and its absence is
+-- proof they were not. Lets SharedScopeJanitor tell a foreign scope it pulled as a *share* from one
+-- it has never synced at all (e.g. a guest's own records, mid account-merge).
+countCursorsInScopePrefix:
+SELECT COUNT(*) FROM sync_cursor WHERE uid = :uid AND scope_path LIKE :scopePrefix;
+
 -- Sync config queries.
 
 selectConfig:
@@ -288,6 +295,26 @@ DELETE FROM sync_cursor WHERE uid = :uid;
 -- "/users/{uid}/" prefix. Entities are marked dirty with remote_updated_at cleared so the sync
 -- engine re-uploads them under the destination account; blobs are reset to LOCAL_ONLY so they
 -- re-upload. Callers also drop both uids' sync cursors so the destination re-hydrates.
+
+-- Entities whose destination key is already taken cannot be moved: (collection, scope_path, id) is
+-- the primary key, so the UPDATE would fail with a UNIQUE constraint violation. A same-id row in
+-- both scopes is the same record, and the destination's copy is the one the account already owns,
+-- so the source row is dropped and the destination's wins. Run this INSIDE the reassign transaction,
+-- BEFORE reassignEntities.
+deleteReassignConflicts:
+DELETE FROM entity
+WHERE scope_path LIKE :oldPrefixLike
+  AND EXISTS (
+    SELECT 1 FROM entity AS destination
+    WHERE destination.collection = entity.collection
+      AND destination.id = entity.id
+      AND destination.scope_path = :newPrefix || substr(entity.scope_path, :remainderStart)
+  );
+
+-- Drops one collection's rows from the source scope outright rather than moving them. Used for the
+-- per-user singletons (UserInfo) whose id is fixed, so the destination account always has its own.
+deleteCollectionInScopePrefix:
+DELETE FROM entity WHERE collection = :collection AND scope_path LIKE :scopePrefix;
 
 -- :remainderStart is the 1-based index just past the old "/users/{fromUid}/" prefix; substr returns
 -- the path tail, which is re-prefixed with :newPrefix. It is bound as text and SQLite coerces it to

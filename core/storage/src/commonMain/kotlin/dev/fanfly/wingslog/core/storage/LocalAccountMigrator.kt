@@ -17,6 +17,11 @@ interface LocalAccountMigrator {
    * account, resets blobs to re-upload, and drops both UIDs' sync cursors so the destination
    * re-hydrates its existing cloud set.
    *
+   * The merge is additive for *content* (both record sets survive, per design §5), but the
+   * destination account keeps its own *identity*: its [CollectionKind.UserInfo] singleton is left
+   * untouched and the guest's is dropped rather than moved. Guest records that would land on an id
+   * the destination already holds are dropped for the same reason — see [reassign]'s SQL.
+   *
    * Idempotent: once moved, no rows match [fromUid] anymore, so a re-run is a no-op. This makes the
    * merge crash-safe (a relaunch can re-run it). No-op when the UIDs are equal or blank.
    */
@@ -40,6 +45,21 @@ class LocalAccountMigratorImpl(
     withContext(storageIoContext) {
       writeLock.withLock {
         db.schemaQueries.transaction {
+          // The destination account's identity survives the merge, so the guest's UserInfo — a
+          // singleton at a fixed id, which every account has exactly one of — is dropped, not moved.
+          // Moving it would both collide on the primary key and re-point the account's self-profile
+          // at the guest's technician.
+          db.schemaQueries.deleteCollectionInScopePrefix(
+            CollectionKind.UserInfo,
+            oldPrefixLike
+          )
+          // Anything else already present at the destination id likewise stays as the destination
+          // has it; without this the UPDATE below trips the (collection, scope_path, id) primary key.
+          db.schemaQueries.deleteReassignConflicts(
+            oldPrefixLike,
+            newPrefix,
+            remainderStart
+          )
           db.schemaQueries.reassignEntities(
             newPrefix,
             remainderStart,

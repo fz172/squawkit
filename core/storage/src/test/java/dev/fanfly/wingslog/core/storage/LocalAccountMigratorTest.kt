@@ -165,6 +165,92 @@ class LocalAccountMigratorTest {
     assertThat(moved).hasSize(1)
   }
 
+  /** The per-user singleton: one row per account, always at the same id. */
+  private suspend fun insertUserInfo(uid: String, payload: Byte) {
+    db.schemaQueries.upsert(
+      collection = CollectionKind.UserInfo,
+      scope_path = "/users/$uid/",
+      id = "main",
+      payload = byteArrayOf(payload),
+      payload_schema = CollectionKind.UserInfo.schemaName,
+      updated_at = 1_000L,
+      remote_updated_at = null,
+      dirty = false,
+      deleted = false,
+      writer_uid = null,
+    )
+  }
+
+  @Test
+  fun reassign_dropsGuestUserInfo_keepingTheAccountsOwn() = runTest {
+    // Issue #222: both accounts have a UserInfo row, and both live at id "main" — so moving the
+    // guest's onto the account's scope hits the (collection, scope_path, id) primary key and the
+    // merge dies with a UNIQUE constraint failure. The account's identity is the one that survives.
+    insertUserInfo(FROM_UID, payload = 1)
+    insertUserInfo(TO_UID, payload = 2)
+
+    migrator.reassign(FROM_UID, TO_UID)
+
+    val kept = db.schemaQueries.selectOne(
+      collection = CollectionKind.UserInfo,
+      scope = "/users/$TO_UID/",
+      id = "main",
+    )
+      .awaitAsOneOrNull()
+    assertThat(kept).isNotNull()
+    assertThat(kept!!.payload).isEqualTo(byteArrayOf(2))
+    assertThat(
+      db.schemaQueries.selectAll(CollectionKind.UserInfo, "/users/$FROM_UID/")
+        .awaitAsList()
+    ).isEmpty()
+  }
+
+  @Test
+  fun reassign_dropsGuestUserInfo_evenWhenTheAccountHasNoneLocally() = runTest {
+    // The account's UserInfo may still be in the cloud rather than on this device. The guest's must
+    // not be promoted into its place: it points at the guest's self-technician, and hydration would
+    // never overwrite it (it arrives dirty), so the account would silently take on the guest's
+    // identity. ensureSelfProfile() re-seeds a missing one from the account itself.
+    insertUserInfo(FROM_UID, payload = 1)
+
+    migrator.reassign(FROM_UID, TO_UID)
+
+    assertThat(
+      db.schemaQueries.selectAll(CollectionKind.UserInfo, "/users/$TO_UID/")
+        .awaitAsList()
+    ).isEmpty()
+  }
+
+  @Test
+  fun reassign_dropsRecordsTheDestinationAlreadyHolds() = runTest {
+    // A same-id row in both scopes is the same record; the destination's copy is the one the account
+    // owns. Without this the UPDATE trips the primary key and the whole merge crashes.
+    insertEntity(FROM_UID, "ac-1", dirty = true, remoteUpdatedAt = null)
+    insertEntity(TO_UID, "ac-1", dirty = false, remoteUpdatedAt = 9_000L)
+    insertEntity(FROM_UID, "ac-2", dirty = true, remoteUpdatedAt = null)
+
+    migrator.reassign(FROM_UID, TO_UID)
+
+    val destination = db.schemaQueries.selectAll(
+      collection = CollectionKind.Aircraft,
+      scope = "/users/$TO_UID/fleet",
+    )
+      .awaitAsList()
+    // The conflicting row survives once — as the destination's copy — and the rest still moves.
+    assertThat(destination.map { it.id }).containsExactly("ac-1", "ac-2")
+    val kept = db.schemaQueries.selectOneForSync(
+      collection = CollectionKind.Aircraft,
+      scope = "/users/$TO_UID/fleet",
+      id = "ac-1",
+    )
+      .awaitAsOneOrNull()
+    assertThat(kept!!.remote_updated_at).isEqualTo(9_000L)
+    assertThat(
+      db.schemaQueries.selectAll(CollectionKind.Aircraft, "/users/$FROM_UID/fleet")
+        .awaitAsList()
+    ).isEmpty()
+  }
+
   @Test
   fun reassign_isNoopWhenUidsAreEqual() = runTest {
     insertEntity(FROM_UID, "ac-1", dirty = false, remoteUpdatedAt = null)
