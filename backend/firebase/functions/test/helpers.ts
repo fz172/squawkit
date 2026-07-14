@@ -2,12 +2,12 @@ import { createHash } from "node:crypto";
 
 import functionsTest from "firebase-functions-test";
 
-import { adminDb } from "../src/config/firebaseAdmin.js";
+import { adminDb, adminStorage } from "../src/config/firebaseAdmin.js";
 
 /** Shared callable-test harness: one firebase-functions-test instance, one request shape. */
 export const fft = functionsTest();
 
-export { adminDb };
+export { adminDb, adminStorage };
 
 const APP_ID = "1:811416892017:android:27fbaf1c76bb16a3f961d0";
 
