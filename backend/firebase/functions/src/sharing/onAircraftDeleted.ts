@@ -2,7 +2,9 @@ import { FieldValue } from "firebase-admin/firestore";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
 import { FUNCTION_REGION } from "../config/env.js";
-import { adminDb } from "../config/firebaseAdmin.js";
+import { logger } from "firebase-functions/v2";
+
+import { adminDb, adminStorage } from "../config/firebaseAdmin.js";
 import { sharedAircraftRefTombstone } from "./sharedAircraftRefWire.js";
 import { aircraftShareDocPath, type AircraftShareDoc } from "./sharingModels.js";
 
@@ -31,6 +33,7 @@ export const onAircraftDeleted = onDocumentWritten(
 
     await tearDownShare(uid, acId);
     await tombstoneChildren(uid, acId);
+    await deleteAircraftBlobs(uid, acId);
   },
 );
 
@@ -64,6 +67,25 @@ async function tearDownShare(deletedBy: string, acId: string): Promise<void> {
       ),
   );
   await adminDb.recursiveDelete(shareRef);
+}
+
+/**
+ * Delete every blob belonging to this aircraft (#158).
+ *
+ * No payload decoding needed here, unlike a single-record delete: blobs are **aircraft-scoped**
+ * (`users/{uid}/aircraft/{acId}/blobs/{blobId}`), so the whole prefix dies with the aircraft and the
+ * question "which record owned this?" never has to be asked.
+ *
+ * The per-record trigger will also fire for each child this cascade tombstones, and will find the
+ * bytes already gone. That is fine — deleting an absent object is a no-op.
+ */
+async function deleteAircraftBlobs(uid: string, acId: string): Promise<void> {
+  const prefix = `users/${uid}/aircraft/${acId}/blobs/`;
+  try {
+    await adminStorage.bucket().deleteFiles({ prefix });
+  } catch (e) {
+    logger.error("Aircraft blob sweep failed", { prefix, error: String(e) });
+  }
 }
 
 /**
