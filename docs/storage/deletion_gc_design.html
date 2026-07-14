@@ -26,8 +26,13 @@
 <p><b>Epic:</b> [P7] #155 · <b>This doc:</b> #156 · <b>Sub-issues:</b> #157 (cascade), #158 (blobs), #159 (sweep), #160 (local GC)</p>
 
 <div class="status">
-  <b>Implementation status — DESIGN ONLY.</b> Nothing here is built except the aircraft→children
-  cascade, which shipped as part of aircraft sharing (§2.4) and is reused rather than rewritten.
+  <b>Implementation status — SHIPPED.</b> The cascade (#157), blob cleanup on delete (#158), the
+  scheduled sweep (#159, armed — <code>STORAGE_SWEEP_DRY_RUN=false</code>) and the local
+  <code>TombstoneGc</code> (#160) are all in main. Retention agreement between the two ends is
+  enforced by <code>TombstoneRetentionAgreementTest</code>, which reads the sweep's own
+  <code>.env</code>. One deliberate omission: the client still reclaims a deleted record's local
+  blob at GC time, not the moment the record is deleted — the §5.1 "option B" optimisation, which
+  buys back disk sooner but changes nothing about what is or is not deleted.
 </div>
 
 <h2>1. The problem</h2>
@@ -175,8 +180,9 @@ rather than smuggled into this epic.</p>
       records, and deleting a blob a live record still shows is unrecoverable.</li>
   <li>A decode failure (unknown schema, corrupt bytes) <b>skips and alerts</b>. It never guesses, and
       it never deletes.</li>
-  <li>The client also drops its <b>local</b> blob copy so the device reclaims space immediately
-      (option B) — an optimisation, not the mechanism.</li>
+  <li>The client drops its <b>local</b> blob copy when the tombstone is purged (#160). Doing it the
+      moment the record is deleted, so the device reclaims space immediately (option B), remains an
+      optimisation — not the mechanism, and not built.</li>
 </ol>
 
 <h3>5.2 Aircraft delete → blobs</h3>
@@ -235,8 +241,13 @@ Storage.</p>
   <tr><td>#159</td><td>Scheduled sweep: purge expired tombstones (all users); orphan-blob collection
       (including the pre-existing backlog, which option A makes reachable) in <b>dry-run first</b>,
       with a reported count before it is armed.</td></tr>
-  <tr><td>#160</td><td>Verify the local <code>TombstoneGc</code> retention agrees with the server's,
-      and that it also drops the blob rows for purged records.</td></tr>
+  <tr><td>#160</td><td><b>Done.</b> The local <code>TombstoneGc</code> now reclaims the blobs a
+      purged tombstone referenced — decoding the payload before it deletes the row, since the
+      payload is the only record of which blobs were the record's. A purged <i>aircraft</i> takes
+      every blob under its scope, which also collects the ones no surviving payload names. It never
+      touches the remote object: those bytes are the server's to delete, and on a shared aircraft
+      they are the host's (§5.5). A blob a live record still names is kept. Retention agreement with
+      the server is a test, not a comment.</td></tr>
 </table>
 
 <h2>7. Open questions</h2>

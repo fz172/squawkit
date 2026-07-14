@@ -100,6 +100,24 @@ interface LocalBlobStore {
   /** Reset `upload_attempts` to 0 so the uploader will retry on its next pass. */
   suspend fun resetUploadAttempts(id: BlobId)
 
+  /** Ids of every live (non-tombstoned) blob under a scope path prefix, e.g. `/users/u1/aircraft/a1/`. */
+  suspend fun idsInScopePrefix(scopePrefix: String): List<BlobId>
+
+  /**
+   * Drop this device's copy of each blob — file and row — **without touching the remote object**.
+   *
+   * This is reclamation, not deletion. It is called by
+   * `dev.fanfly.wingslog.core.storage.TombstoneGc` on blobs whose record was deleted and whose
+   * tombstone has now aged out, long after the server's own cascade removed the canonical bytes.
+   * Deleting those bytes is the server's job and never the client's — on a shared aircraft they sit
+   * in the *host's* Storage, and a member reaching into it is exactly what the deletion design
+   * forbids ([docs/storage/deletion_gc_design.html] §5.5). Use [delete] for a user removing an
+   * attachment: that one is meant to take the remote object with it.
+   *
+   * Idempotent: ids with no row are skipped.
+   */
+  suspend fun purgeLocal(ids: Collection<BlobId>)
+
   /** Delete all local blob files and rows for a given user uid. Called on wipe/sign-out. */
   suspend fun wipeForUser(uid: String)
 }
