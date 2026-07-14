@@ -19,13 +19,25 @@ export const EXPORT_DELIVERY_RESEND_COOLDOWN_MS =
 
 // --- Storage sweep (#159) ---------------------------------------------------------------------
 //
-// Every value below is REQUIRED, with no code-side default. A silent fallback would let the deployed
-// sweep run with a retention window nobody chose — .env would say one thing and the function would do
-// another, and the first sign of the mismatch would be deleted data. A config this function cannot
-// read is a config it must not act on: these throw, the deploy fails loudly, and nothing is deleted.
+// Every value is REQUIRED, with no code-side default. A silent fallback would let the deployed sweep
+// run with a retention window nobody chose — .env saying one thing, the function doing another — and
+// the first sign of the mismatch would be data that is already gone. Config the sweep cannot read is
+// config it must not act on: these throw, the run fails, and nothing is deleted.
+//
+// They are read LAZILY, inside the handler, on purpose. The Firebase CLI runs its deploy-time
+// codebase analysis in a child process with a RESTRICTED environment: .env reaches the deployed
+// function at runtime but never the analysis, not even if you export it into the shell first. Read
+// any of this at module scope and every deploy dies with "missing variable" for a variable that is
+// plainly set. Which is also why the schedule below is a code constant and not a .env value.
 
-/** How often the sweep runs. Any App Engine cron or unix-cron expression. Read at deploy time. */
-export const STORAGE_SWEEP_SCHEDULE = requiredEnv("STORAGE_SWEEP_SCHEDULE");
+/**
+ * How often the sweep runs. App Engine cron or unix-cron syntax.
+ *
+ * A constant, not config: [onSchedule] needs it during the deploy-time analysis, where .env does not
+ * exist. Nothing is lost — re-provisioning the Cloud Scheduler job requires a redeploy regardless, so
+ * "configurable" here would only ever have meant "edit a file and redeploy" either way.
+ */
+export const STORAGE_SWEEP_SCHEDULE = "every 24 hours";
 
 /**
  * How long a tombstone survives before it is hard-deleted.
@@ -37,7 +49,9 @@ export const STORAGE_SWEEP_SCHEDULE = requiredEnv("STORAGE_SWEEP_SCHEDULE");
  *
  * Keep it in step with the client's local TombstoneGc so the two ends agree.
  */
-export const TOMBSTONE_RETENTION_DAYS = requiredNonNegativeIntEnv("TOMBSTONE_RETENTION_DAYS");
+export function tombstoneRetentionDays(): number {
+  return requiredNonNegativeIntEnv("TOMBSTONE_RETENTION_DAYS");
+}
 
 /**
  * How old an unreferenced blob must be before the sweep will collect it.
@@ -46,18 +60,22 @@ export const TOMBSTONE_RETENTION_DAYS = requiredNonNegativeIntEnv("TOMBSTONE_RET
  * that references it. Without this grace window the sweep would delete a photo the user just took,
  * moments before its log arrives.
  *
- * It never applies to a blob a live record references — those are not candidates at any age.
+ * It never applies to a blob a live record references — those are kept at any age.
  */
-export const ORPHAN_BLOB_GRACE_DAYS = requiredNonNegativeIntEnv("ORPHAN_BLOB_GRACE_DAYS");
+export function orphanBlobGraceDays(): number {
+  return requiredNonNegativeIntEnv("ORPHAN_BLOB_GRACE_DAYS");
+}
 
 /**
  * Dry run: report what WOULD be deleted, delete nothing.
  *
  * The failure mode of this function is destroying a user's photos and resurrecting their deleted
  * records, so arming it must be an explicit written act — "false", spelled out in .env. Anything
- * else, including a missing value, is rejected rather than guessed in either direction.
+ * else, including a missing value or a typo, is rejected rather than guessed in either direction.
  */
-export const STORAGE_SWEEP_DRY_RUN = requiredBooleanEnv("STORAGE_SWEEP_DRY_RUN");
+export function storageSweepDryRun(): boolean {
+  return requiredBooleanEnv("STORAGE_SWEEP_DRY_RUN");
+}
 
 export type ExportDeliveryConfig = {
   provider: string;
@@ -102,7 +120,10 @@ function requiredBooleanEnv(name: string): boolean {
 function requiredEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (value == null || value.length === 0) {
-    throw new Error(`Missing required environment variable ${name}.`);
+    throw new Error(
+      `Missing required environment variable ${name}. Set it in functions/.env; deploy with ` +
+        `"npm run deploy:functions", which sources .env (plain "firebase deploy" does not).`,
+    );
   }
   return value;
 }
