@@ -19,11 +19,13 @@ export const EXPORT_DELIVERY_RESEND_COOLDOWN_MS =
 
 // --- Storage sweep (#159) ---------------------------------------------------------------------
 //
-// All configurable from .env without touching code. The schedule string is read at deploy time, so
-// changing it re-provisions the Cloud Scheduler job.
+// Every value below is REQUIRED, with no code-side default. A silent fallback would let the deployed
+// sweep run with a retention window nobody chose — .env would say one thing and the function would do
+// another, and the first sign of the mismatch would be deleted data. A config this function cannot
+// read is a config it must not act on: these throw, the deploy fails loudly, and nothing is deleted.
 
-/** How often the sweep runs. Any App Engine cron or unix-cron expression. */
-export const STORAGE_SWEEP_SCHEDULE = process.env.STORAGE_SWEEP_SCHEDULE ?? "every 24 hours";
+/** How often the sweep runs. Any App Engine cron or unix-cron expression. Read at deploy time. */
+export const STORAGE_SWEEP_SCHEDULE = requiredEnv("STORAGE_SWEEP_SCHEDULE");
 
 /**
  * How long a tombstone survives before it is hard-deleted.
@@ -33,9 +35,9 @@ export const STORAGE_SWEEP_SCHEDULE = process.env.STORAGE_SWEEP_SCHEDULE ?? "eve
  * tombstone, and pushes it up again as a fresh write. The window must comfortably exceed the longest
  * plausible offline stretch — a pilot who flies a season without opening the app is not unusual.
  *
- * 30 days, matching the client's local TombstoneGc so the two ends agree.
+ * Keep it in step with the client's local TombstoneGc so the two ends agree.
  */
-export const TOMBSTONE_RETENTION_DAYS = readNonNegativeIntEnv("TOMBSTONE_RETENTION_DAYS", 30);
+export const TOMBSTONE_RETENTION_DAYS = requiredNonNegativeIntEnv("TOMBSTONE_RETENTION_DAYS");
 
 /**
  * How old an unreferenced blob must be before the sweep will collect it.
@@ -43,16 +45,19 @@ export const TOMBSTONE_RETENTION_DAYS = readNonNegativeIntEnv("TOMBSTONE_RETENTI
  * Records and blobs travel in SEPARATE queues, so a freshly uploaded blob can land before the record
  * that references it. Without this grace window the sweep would delete a photo the user just took,
  * moments before its log arrives.
+ *
+ * It never applies to a blob a live record references — those are not candidates at any age.
  */
-export const ORPHAN_BLOB_GRACE_DAYS = readNonNegativeIntEnv("ORPHAN_BLOB_GRACE_DAYS", 7);
+export const ORPHAN_BLOB_GRACE_DAYS = requiredNonNegativeIntEnv("ORPHAN_BLOB_GRACE_DAYS");
 
 /**
- * Dry run: report what WOULD be deleted, delete nothing. Defaults to ON.
+ * Dry run: report what WOULD be deleted, delete nothing.
  *
  * The failure mode of this function is destroying a user's photos and resurrecting their deleted
- * records. It stays in rehearsal until the numbers it reports have been looked at by a human.
+ * records, so arming it must be an explicit written act — "false", spelled out in .env. Anything
+ * else, including a missing value, is rejected rather than guessed in either direction.
  */
-export const STORAGE_SWEEP_DRY_RUN = process.env.STORAGE_SWEEP_DRY_RUN !== "false";
+export const STORAGE_SWEEP_DRY_RUN = requiredBooleanEnv("STORAGE_SWEEP_DRY_RUN");
 
 export type ExportDeliveryConfig = {
   provider: string;
@@ -73,6 +78,25 @@ function readNonNegativeIntEnv(name: string, fallback: number): number {
   if (raw == null || raw.length === 0) return fallback;
   const parsed = Number(raw);
   return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : fallback;
+}
+
+/** A non-negative integer that MUST be present and MUST parse. Junk is an error, not a fallback. */
+function requiredNonNegativeIntEnv(name: string): number {
+  const raw = requiredEnv(name);
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`Environment variable ${name} must be a non-negative number; got "${raw}".`);
+  }
+  return Math.floor(parsed);
+}
+
+/** Strictly "true" or "false". A typo must not quietly arm a destructive job — or quietly disarm it. */
+function requiredBooleanEnv(name: string): boolean {
+  const raw = requiredEnv(name);
+  if (raw !== "true" && raw !== "false") {
+    throw new Error(`Environment variable ${name} must be "true" or "false"; got "${raw}".`);
+  }
+  return raw === "true";
 }
 
 function requiredEnv(name: string): string {

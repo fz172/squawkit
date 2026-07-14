@@ -12,5 +12,13 @@ export default defineConfig({
     // All suites share one emulator project namespace, so run files sequentially — otherwise
     // one file's clearFirestore/wipe stomps another's seeded data mid-test.
     fileParallelism: false,
+    // The storage-sweep config is required with no code-side default, so importing its triggers
+    // throws unless it is set. Tests must therefore state it, exactly as a deploy must.
+    env: {
+      STORAGE_SWEEP_SCHEDULE: "every 24 hours",
+      TOMBSTONE_RETENTION_DAYS: "30",
+      ORPHAN_BLOB_GRACE_DAYS: "7",
+      STORAGE_SWEEP_DRY_RUN: "true",
+    },
   },
 });
