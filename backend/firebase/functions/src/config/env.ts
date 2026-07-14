@@ -54,12 +54,6 @@ export const ORPHAN_BLOB_GRACE_DAYS = readNonNegativeIntEnv("ORPHAN_BLOB_GRACE_D
  */
 export const STORAGE_SWEEP_DRY_RUN = process.env.STORAGE_SWEEP_DRY_RUN !== "false";
 
-/** uids allowed to invoke the sweep on demand. Comma-separated in .env. */
-export const STORAGE_SWEEP_ADMIN_UIDS = (process.env.STORAGE_SWEEP_ADMIN_UIDS ?? "")
-  .split(",")
-  .map((uid) => uid.trim())
-  .filter((uid) => uid.length > 0);
-
 export type ExportDeliveryConfig = {
   provider: string;
   fromEmail: string;
