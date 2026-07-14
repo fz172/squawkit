@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Deletion Cascade &amp; Storage GC — Design</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.6;
+           max-width: 900px; margin: 0 auto; padding: 2rem; color: #1a1a1a; }
+    h1, h2, h3 { line-height: 1.25; }
+    h2 { border-bottom: 1px solid #e5e5e5; padding-bottom: .3rem; margin-top: 2.5rem; }
+    code { background: #f4f4f4; padding: .1rem .3rem; border-radius: 3px; font-size: .9em; }
+    pre { background: #f7f7f7; padding: 1rem; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #ddd; padding: .5rem .7rem; text-align: left; vertical-align: top; }
+    th { background: #f7f7f7; }
+    .status { background: #fff8e1; border-left: 4px solid #f0a500; padding: .8rem 1rem; margin: 1rem 0; }
+    .danger { background: #fdecea; border-left: 4px solid #d93025; padding: .8rem 1rem; margin: 1rem 0; }
+    .ok { background: #e8f5e9; border-left: 4px solid #34a853; padding: .8rem 1rem; margin: 1rem 0; }
+  </style>
+</head>
+<body>
+
+<h1>Deletion Cascade &amp; Storage GC — Design</h1>
+
+<p><b>Epic:</b> [P7] #155 · <b>This doc:</b> #156 · <b>Sub-issues:</b> #157 (cascade), #158 (blobs), #159 (sweep), #160 (local GC)</p>
+
+<div class="status">
+  <b>Implementation status — DESIGN ONLY.</b> Nothing here is built except the aircraft→children
+  cascade, which shipped as part of aircraft sharing (§2.4) and is reused rather than rewritten.
+</div>
+
+<h2>1. The problem</h2>
+
+<p>Deleting something in SquawkIt does not delete it. It writes a <b>tombstone</b>
+(<code>deleted = true</code>) and <b>keeps the payload</b>. That is correct for sync — a tombstone
+is how the deletion reaches other devices, and last-write-wins needs it to outlive any offline
+client — but nothing ever finishes the job:</p>
+
+<ul>
+  <li><b>Firestore tombstones accumulate forever.</b> There is no server-side sweep. Every record
+      the user has ever deleted still sits in their tree, payload intact.</li>
+  <li><b>Storage blobs orphan.</b> Deleting a log, squawk, or task does <b>not</b> delete its
+      attachments. Deleting an <i>aircraft</i> does not delete its blobs either.</li>
+</ul>
+
+<p>Two costs. <b>Money</b> — bytes we pay for indefinitely, per user, growing monotonically. And
+<b>trust</b> — a user who deletes a photo of a damaged part has not deleted it; the bytes are still
+in Storage, retrievable by anyone who later gains read access to that path. "Delete" that does not
+delete is a promise we are not keeping.</p>
+
+<h2>2. What actually happens today</h2>
+
+<table>
+  <tr><th>Action</th><th>Records</th><th>Blobs</th></tr>
+  <tr>
+    <td>Remove one attachment in a form</td>
+    <td>—</td>
+    <td><span class="ok">✅ deleted</span> — <code>AttachmentManager.delete()</code> →
+        <code>blobs.delete()</code> → blob tombstone → <code>BlobDeleteDriver</code> removes the
+        Storage object.</td>
+  </tr>
+  <tr>
+    <td>Delete a <b>log / squawk / task</b></td>
+    <td>tombstoned</td>
+    <td><span class="danger">❌ orphaned forever.</span> <code>deleteLog()</code> tombstones the row
+        and nothing else. Its attachments are never unreferenced.</td>
+  </tr>
+  <tr>
+    <td>Delete an <b>aircraft</b></td>
+    <td><span class="ok">✅ children tombstoned</span> server-side by
+        <code>onAircraftDeleted</code> (shipped with sharing, §2.4)</td>
+    <td><span class="danger">❌ orphaned forever.</span> The trigger cascades records; it never
+        touches <code>blobs/</code>.</td>
+  </tr>
+  <tr>
+    <td>Time passes (30 days)</td>
+    <td>local tombstones purged by <code>TombstoneGc</code>; <b>Firestore keeps them forever</b></td>
+    <td>—</td>
+  </tr>
+</table>
+
+<h3>2.4 What already exists</h3>
+
+<p><code>onAircraftDeleted</code> already tombstones every child record on the
+<code>deleted: false → true</code> transition, discovering subcollections with
+<code>listCollections()</code> rather than a hardcoded kind list. It was written for the sharing
+teardown and it is exactly the cascade #157 asks for. <b>#157 is therefore mostly done</b> — what is
+missing is the blob half.</p>
+
+<h2>3. What the server can and cannot read</h2>
+
+<p>Blobs are <b>aircraft-scoped</b>. The path is built from the owning record's
+<code>EntityScope</code>, and every attachment-bearing record (log, task, squawk) sits at
+<code>aircraftChild(uid, acId)</code>, so every blob lands under its aircraft:</p>
+
+<pre><code>users/{uid}/aircraft/{acId}/blobs/{blobId}</code></pre>
+
+<p>Note what the path does <b>not</b> contain: <b>the id of the record the attachment belongs to</b>.
+It says which aircraft the blob is for, and nothing about which log or squawk owns it. That mapping
+lives inside the record's protobuf payload.</p>
+
+<p>It is tempting to call that a wall. It is not — and the distinction matters:</p>
+
+<table>
+  <tr><th></th><th>Can decode a payload?</th></tr>
+  <tr><td><b>Security rules</b></td><td><b>No.</b> Rules see opaque bytes. This is why the sharing
+      ACL exists as plain rules-readable fields at all.</td></tr>
+  <tr><td><b>Cloud Functions</b></td><td><b>Yes.</b> They already do — <code>generate:proto</code>
+      emits TS types from the same <code>.proto</code> files the client compiles, and two protos are
+      wired through it today.</td></tr>
+</table>
+
+<p>And the tombstone the client pushes carries everything a decoder needs:</p>
+
+<pre><code>SyncDocWire {
+  payload: &lt;bytes&gt;              // retained on delete — the record is still in there
+  schema:  "aircraft.MaintenanceLog"   // names the type, so a trigger can dispatch
+  deleted: true
+}</code></pre>
+
+<p>So when the client says "delete log XYZ", the server can read XYZ, decode it, and pull out the
+attachment ids. <b>Nothing blocks it.</b></p>
+
+<h2>4. Options considered</h2>
+
+<h3>A. Decode the payload server-side ✅ RECOMMENDED</h3>
+<p>A trigger on the <code>deleted: false → true</code> transition reads the tombstoned doc,
+dispatches on <code>schema</code>, decodes the payload, and deletes the Storage objects for the
+attachments it names.</p>
+<ul>
+  <li><b>No wire change.</b> Nothing to add to the envelope, nothing to migrate.</li>
+  <li><b>Works for records deleted by old clients.</b> The cleanup does not depend on the deleting
+      client being new enough to have cooperated.</li>
+  <li><b>Covers the existing backlog.</b> Every blob orphaned to date is still described by a
+      tombstone that is still in Firestore. The sweep can decode those and collect the bytes — which
+      no client-side scheme can do, because those clients are long gone.</li>
+  <li><b>One source of truth.</b> The payload <i>is</i> the reference list.</li>
+</ul>
+
+<h3>B. Client deletes its own blobs on record delete</h3>
+<p>The client can decode its own payload, so <code>deleteLog()</code> could delete each blob.</p>
+<p><b>Keep, but only as a local optimisation.</b> It reclaims device space immediately without a
+round trip. It cannot be the mechanism: the intent dies with the process. Delete a log, kill the app
+before the blob delete drains, and the bytes are orphaned with nothing left that knows they should
+go. Uninstall, and the intent is gone for good.</p>
+
+<h3>C. Client stamps <code>blobIds</code> onto the tombstone envelope</h3>
+<p>Add a plain field listing the record's blobs, so the server needs no decoder.</p>
+<p><b>Rejected.</b> An earlier draft of this doc recommended it, on the false premise that Cloud
+Functions could not decode payloads. They can. Once that is untrue, this is strictly worse: it needs
+a wire change, it does nothing for records deleted by clients that predate it, it cannot touch the
+existing backlog, and it introduces a <b>second source of truth</b> — a denormalized list that can
+drift from the payload it describes. A drifted list either leaks bytes or, worse, deletes a blob a
+live record still uses.</p>
+
+<h3>D. Re-path blobs under the record id</h3>
+<p><code>users/{uid}/aircraft/{acId}/blobs/{recordId}/{blobId}</code> would make the cascade a prefix
+delete needing no payload knowledge at all.</p>
+<p><b>Not now.</b> It is the cleaner shape and worth adopting for <i>new</i> blobs, but it does
+nothing for the bytes already written, so it does not remove the need for A. Filed as a follow-up
+rather than smuggled into this epic.</p>
+
+<h2>5. Design</h2>
+
+<h3>5.1 Record delete → blobs (#158)</h3>
+<ol>
+  <li>Client tombstones the record, as today. <b>No client change is required for correctness.</b></li>
+  <li>Trigger <code>onRecordDeleted</code> fires on <code>deleted: false → true</code> for
+      <code>users/{uid}/aircraft/{acId}/{kind}/{docId}</code>, dispatches on the envelope's
+      <code>schema</code>, decodes the payload, and deletes the Storage object for each attachment it
+      names.</li>
+  <li>Before deleting a blob, confirm no <b>other live record in the same aircraft</b> references it.
+      Attachment ids are per-attachment, but a copy/duplicate feature could put the same id on two
+      records, and deleting a blob a live record still shows is unrecoverable.</li>
+  <li>A decode failure (unknown schema, corrupt bytes) <b>skips and alerts</b>. It never guesses, and
+      it never deletes.</li>
+  <li>The client also drops its <b>local</b> blob copy so the device reclaims space immediately
+      (option B) — an optimisation, not the mechanism.</li>
+</ol>
+
+<h3>5.2 Aircraft delete → blobs</h3>
+<p>No decoding and no <code>blobIds</code> needed: blobs are <b>aircraft-scoped</b>, so the whole
+<code>users/{uid}/aircraft/{acId}/blobs/</code> prefix dies with the aircraft. Extend the existing
+<code>onAircraftDeleted</code> trigger with a prefix delete.</p>
+
+<h3>5.3 The scheduled sweep (#159)</h3>
+<p>A daily Cloud Function, over <b>every</b> user's tree. Two jobs:</p>
+<ul>
+  <li><b>Purge expired tombstones.</b> Hard-delete Firestore docs with <code>deleted = true</code>
+      older than the retention window. This is what stops unbounded growth.</li>
+  <li><b>Collect orphaned blobs.</b> A backstop for bytes whose intent was lost — uploads that
+      completed but were never referenced, and every blob orphaned before this epic ships (there
+      will be a backlog).</li>
+</ul>
+
+<div class="danger">
+  <b>Retention is a correctness constraint, not a cost knob.</b> Purge a tombstone before every
+  device has seen it and the record <b>comes back</b>: an offline client still holding the live row
+  syncs, finds no tombstone, and pushes it up again as a fresh write. The window must comfortably
+  exceed the longest plausible offline stretch. <b>30 days</b>, matching the local
+  <code>TombstoneGc</code>, so the two ends agree.
+</div>
+
+<h3>5.4 Safety</h3>
+<ul>
+  <li><b>Never delete a blob a live record still references.</b> "Unreferenced" is established by
+      decoding the live records in that aircraft — the payloads are the reference list, so the
+      question is answerable exactly rather than inferred. The sweep still <b>runs in dry-run
+      first</b> and reports what it <i>would</i> delete: the failure mode here is destroying a
+      user's photos, and no amount of confidence in the logic justifies skipping the rehearsal.</li>
+  <li><b>Idempotent and resumable.</b> Deleting an absent object is a no-op; the sweep is paged and
+      can be re-run.</li>
+  <li><b>Keyed by the tree it is sweeping.</b> The #204 lesson: an aircraft id is unique only
+      <i>within</i> a user's tree. Every path this touches is built from the uid it is sweeping,
+      never from an id supplied elsewhere.</li>
+</ul>
+
+<h3>5.5 Sharing interplay</h3>
+<p>A revoked member's client purges its <b>local</b> copy (<code>SharedScopeJanitor</code>) and must
+never delete host-owned bytes — it does not, and must not start. Deletion of the canonical data
+happens only in the host's tree, driven by the host's own delete. This matters more once blobs are
+shared ([P8] #196): the sweep must be written so that a member's action can never reach a host's
+Storage.</p>
+
+<h2>6. Phasing</h2>
+
+<table>
+  <tr><th>Issue</th><th>Work</th></tr>
+  <tr><td>#157</td><td><b>Mostly done.</b> Aircraft→children cascade already ships in
+      <code>onAircraftDeleted</code>. Verify coverage for every per-aircraft kind and add tests.</td></tr>
+  <tr><td>#158</td><td><code>onRecordDeleted</code> trigger: decode the tombstoned payload, delete
+      the blobs it names. Generate TS types for the attachment-bearing protos. Aircraft-delete prefix
+      sweep. No client change required.</td></tr>
+  <tr><td>#159</td><td>Scheduled sweep: purge expired tombstones (all users); orphan-blob collection
+      (including the pre-existing backlog, which option A makes reachable) in <b>dry-run first</b>,
+      with a reported count before it is armed.</td></tr>
+  <tr><td>#160</td><td>Verify the local <code>TombstoneGc</code> retention agrees with the server's,
+      and that it also drops the blob rows for purged records.</td></tr>
+</table>
+
+<h2>7. Open questions</h2>
+<ol>
+  <li><b>Is 30 days right?</b> It is the longest an offline device can be away before its deletions
+      (or its resurrections) go wrong. A pilot who flies for a season without opening the app is not
+      an unusual user.</li>
+  <li><s><b>The existing backlog.</b></s> <b>Answered by option A.</b> Every blob orphaned to date is
+      still described by a tombstone still sitting in Firestore, so the sweep can decode those and
+      collect the bytes. This was an open question only while the design assumed the server could not
+      read a payload.</li>
+  <li><b>Does deletion need to be provable?</b> If a user asks "is my photo really gone", the honest
+      answer today is "eventually, if a sweep runs". A hard-delete-on-request path (GDPR-shaped)
+      is a different feature, and worth naming as one.</li>
+</ol>
+
+</body>
+</html>
