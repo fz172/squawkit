@@ -111,6 +111,7 @@ class SettingsViewModelTest {
       analyticsPreferenceController,
       AppCapability(
         isFeatureLabSupported = false,
+        isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
@@ -136,6 +137,7 @@ class SettingsViewModelTest {
       analyticsPreferenceController,
       AppCapability(
         isFeatureLabSupported = false,
+        isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
@@ -161,6 +163,7 @@ class SettingsViewModelTest {
       analyticsPreferenceController,
       AppCapability(
         isFeatureLabSupported = false,
+        isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
@@ -187,6 +190,7 @@ class SettingsViewModelTest {
       analyticsPreferenceController,
       AppCapability(
         isFeatureLabSupported = false,
+        isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
@@ -213,6 +217,7 @@ class SettingsViewModelTest {
       analyticsPreferenceController,
       AppCapability(
         isFeatureLabSupported = false,
+        isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,

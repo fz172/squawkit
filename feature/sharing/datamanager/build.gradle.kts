@@ -37,6 +37,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:appinfo"))
       implementation(project(":core:storage"))
       // Mirror timestamps cross the Firestore ↔ proto boundary (cert expiration).
       implementation(project(":core:datetime"))

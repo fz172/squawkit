@@ -65,4 +65,18 @@ class AircraftOverviewGatingTest {
       ).canOpenManageAccess,
     ).isTrue()
   }
+
+  @Test
+  fun sharingGatedOffInTheBuild_hidesManageAccess_evenForASignedInOwner() {
+    // #134: the staged-rollout gate. Off in the shipping release until GA, so no sharing surface
+    // exists there at all — not for owners, not for anyone.
+    val state = AircraftOverviewUiState.Success(
+      aircraft = Aircraft(id = "ac-1"),
+      myRole = ShareRole.OWNER,
+      isAnonymous = false,
+      sharingSupported = false,
+    )
+
+    assertThat(state.canOpenManageAccess).isFalse()
+  }
 }
