@@ -18,9 +18,10 @@ interface LocalAccountMigrator {
    * re-hydrates its existing cloud set.
    *
    * The merge is additive for *content* (both record sets survive, per design §5), but the
-   * destination account keeps its own *identity*: its [CollectionKind.UserInfo] singleton is left
-   * untouched and the guest's is dropped rather than moved. Guest records that would land on an id
-   * the destination already holds are dropped for the same reason — see [reassign]'s SQL.
+   * destination account keeps its own *device/identity singletons* (UserInfo, FeatureLab): the
+   * guest's copies are dropped rather than moved (a guest's experimental flags are not inherited
+   * into a real account). Guest records that would land on an id the destination already holds are
+   * dropped for the same reason — see [reassign]'s SQL and [LocalAccountMigratorImpl.DROPPED_ON_MERGE].
    *
    * Idempotent: once moved, no rows match [fromUid] anymore, so a re-run is a no-op. This makes the
    * merge crash-safe (a relaunch can re-run it). No-op when the UIDs are equal or blank.
@@ -45,14 +46,14 @@ class LocalAccountMigratorImpl(
     withContext(storageIoContext) {
       writeLock.withLock {
         db.schemaQueries.transaction {
-          // The destination account's identity survives the merge, so the guest's UserInfo — a
-          // singleton at a fixed id, which every account has exactly one of — is dropped, not moved.
-          // Moving it would both collide on the primary key and re-point the account's self-profile
-          // at the guest's technician.
-          db.schemaQueries.deleteCollectionInScopePrefix(
-            CollectionKind.UserInfo,
-            oldPrefixLike
-          )
+          // Per-user singletons live at a fixed id under the user root, so the destination account
+          // already has its own — they are dropped from the guest scope, never moved. Moving one
+          // would collide on the primary key (both sit at the same id) AND override the account's
+          // own copy: its identity (UserInfo → self-technician) or its device toggles (FeatureLab).
+          // A guest's experimental flags are not something to inherit into a real account.
+          for (kind in DROPPED_ON_MERGE) {
+            db.schemaQueries.deleteCollectionInScopePrefix(kind, oldPrefixLike)
+          }
           // Anything else already present at the destination id likewise stays as the destination
           // has it; without this the UPDATE below trips the (collection, scope_path, id) primary key.
           db.schemaQueries.deleteReassignConflicts(
@@ -81,5 +82,19 @@ class LocalAccountMigratorImpl(
 
   companion object {
     private const val TAG = "LocalAccountMigrator"
+
+    /**
+     * Per-user singletons stored at a fixed id directly under the user root: the destination
+     * account keeps its own, and the guest's copy is dropped rather than moved. Any new collection
+     * of this shape (fixed id at `/users/{uid}/`) must be added here — otherwise the merge trips the
+     * (collection, scope_path, id) primary key when both accounts' copies are on the device, and
+     * silently overrides the account's copy when only the guest's is. [deleteReassignConflicts]
+     * covers the both-on-device case for these too, but not the guest-only case (nothing to conflict
+     * with), so identity/toggle collections must be listed explicitly.
+     */
+    private val DROPPED_ON_MERGE: List<CollectionKind> = listOf(
+      CollectionKind.UserInfo,
+      CollectionKind.FeatureLab,
+    )
   }
 }

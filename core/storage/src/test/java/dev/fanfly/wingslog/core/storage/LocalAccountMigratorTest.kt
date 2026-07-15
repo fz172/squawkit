@@ -206,6 +206,37 @@ class LocalAccountMigratorTest {
   }
 
   @Test
+  fun reassign_dropsGuestFeatureLab_notInheritedIntoTheAccount() = runTest {
+    // FeatureLab is a per-user singleton at the fixed id "main", like UserInfo. A guest's
+    // experimental toggles must not ride the merge into a real account: the guest's row is dropped,
+    // not moved (moving it would override the account's own device flags — and collide when the
+    // account already has a local copy).
+    db.schemaQueries.upsert(
+      collection = CollectionKind.FeatureLab,
+      scope_path = "/users/$FROM_UID/",
+      id = "main",
+      payload = byteArrayOf(1),
+      payload_schema = CollectionKind.FeatureLab.schemaName,
+      updated_at = 1_000L,
+      remote_updated_at = null,
+      dirty = false,
+      deleted = false,
+      writer_uid = null,
+    )
+
+    migrator.reassign(FROM_UID, TO_UID)
+
+    assertThat(
+      db.schemaQueries.selectAll(CollectionKind.FeatureLab, "/users/$FROM_UID/")
+        .awaitAsList()
+    ).isEmpty()
+    assertThat(
+      db.schemaQueries.selectAll(CollectionKind.FeatureLab, "/users/$TO_UID/")
+        .awaitAsList()
+    ).isEmpty()
+  }
+
+  @Test
   fun reassign_dropsGuestUserInfo_evenWhenTheAccountHasNoneLocally() = runTest {
     // The account's UserInfo may still be in the cloud rather than on this device. The guest's must
     // not be promoted into its place: it points at the guest's self-technician, and hydration would
