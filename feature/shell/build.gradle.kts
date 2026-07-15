@@ -49,6 +49,7 @@ kotlin {
       implementation(project(":feature:aircraft:update"))
       implementation(project(":feature:export:update"))
       implementation(project(":feature:fleet:datamanager"))
+      implementation(project(":feature:fleet:picker:data"))
       implementation(project(":feature:fleet:viewing"))
       implementation(project(":feature:logs:update"))
       implementation(project(":feature:settings"))

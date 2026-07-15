@@ -1,0 +1,39 @@
+plugins {
+  alias(libs.plugins.android.library)
+  alias(libs.plugins.kotlin.multiplatform)
+}
+
+android {
+  namespace = "dev.fanfly.wingslog.feature.fleet.picker.data"
+  compileSdk = 37
+
+  defaultConfig {
+    minSdk = 33
+  }
+
+  compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+  }
+}
+
+kotlin {
+  jvmToolchain(21)
+
+  androidTarget()
+  iosArm64()
+  iosSimulatorArm64()
+  js(IR) {
+    browser()
+  }
+
+  sourceSets {
+    commonMain.dependencies {
+      api(libs.koin.core)
+    }
+
+    androidMain.dependencies {
+      implementation(libs.koin.android)
+    }
+  }
+}

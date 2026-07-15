@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.adaptive.ShellAircraft
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedAircraftStore
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
@@ -29,7 +30,15 @@ class AdaptiveShellViewModel(
   private val authManager: AuthManager,
   private val sharingManager: SharingManager,
   private val syncEngine: SyncEngine,
+  private val selectedAircraftStore: SelectedAircraftStore,
 ) : ViewModel() {
+
+  /**
+   * The aircraft remembered from the last session, used as the initial selection so the app reopens
+   * on the same aircraft. Kept in sync with [SelectedAircraftStore] as the selection changes; falls
+   * back to the first aircraft when the remembered one no longer exists.
+   */
+  private var rememberedAircraftId: String? = selectedAircraftStore.load()
 
   /**
    * Work the sync engine had to throw away (PRD D3). Surfaced from the shell because it outlives
@@ -61,10 +70,17 @@ class AdaptiveShellViewModel(
                   .joinToString(" "),
               )
             }
-            // Keep the current selection if it still exists, otherwise fall back to the first aircraft.
+            // Prefer the live selection, then the one remembered from last session; fall back to the
+            // first aircraft when neither still exists. Persist whatever we land on so the memory
+            // tracks the effective selection (including the fallback after the remembered one is gone).
             val selected = state.selectedAircraftId
               ?.takeIf { id -> mapped.any { it.id == id } }
+              ?: rememberedAircraftId?.takeIf { id -> mapped.any { it.id == id } }
               ?: mapped.firstOrNull()?.id
+            if (selected != rememberedAircraftId) {
+              rememberedAircraftId = selected
+              selectedAircraftStore.save(selected)
+            }
             state.copy(aircraft = mapped, selectedAircraftId = selected)
           }
         }
@@ -89,9 +105,11 @@ class AdaptiveShellViewModel(
     }
   }
 
-  /** Switcher selection (above phone): swaps the ambient aircraft in place. */
+  /** Switcher selection (above phone): swaps the ambient aircraft in place and remembers it. */
   fun selectAircraft(id: String) {
     _uiState.update { it.copy(selectedAircraftId = id) }
+    rememberedAircraftId = id
+    selectedAircraftStore.save(id)
   }
 
   /** Switches the active top-level section. */
