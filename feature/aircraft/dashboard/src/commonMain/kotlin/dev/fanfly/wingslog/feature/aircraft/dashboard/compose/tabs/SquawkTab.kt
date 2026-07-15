@@ -56,6 +56,7 @@ fun SquawkTab(
   state: AircraftOverviewUiState.Success,
   onAction: (AircraftOverviewAction) -> Unit,
   onMutationAction: ((AircraftOverviewAction) -> Unit)? = onAction,
+  onLogClick: ((logId: String) -> Unit)? = null,
   showHeader: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
@@ -141,6 +142,7 @@ fun SquawkTab(
       attachmentsUnavailable = state.attachmentsUnavailable,
       item = selected,
       addressingLog = state.logForSelectedSquawk,
+      onLogClick = onLogClick,
       onDismiss = {
         openError = null
         onAction(AircraftOverviewAction.DismissSquawkDetail)

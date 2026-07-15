@@ -11,6 +11,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -182,6 +183,14 @@ fun AircraftSectionContent(
   val attachmentOpener: AttachmentOpener = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var taskSheetOpenError by remember(aircraftId) { mutableStateOf<String?>(null) }
+  // Set when the user taps a squawk's addressing log; consumed by the Logs section to scroll to it
+  // after [onNavigateToSection] switches sections. It is cleared only while the Logs tab is OFF
+  // screen (see below): toggling it back to null while LogsTab is mounted remounts that tab and drops
+  // its list ViewModel and scroll position, which would bounce the list back to the top.
+  var pendingLogScrollTarget by remember(aircraftId) { mutableStateOf<String?>(null) }
+  LaunchedEffect(section) {
+    if (section != ShellSection.LOGS) pendingLogScrollTarget = null
+  }
 
   // Single navigation entry point: intercept the navigation actions and drive the host navController
   // directly; delegate every other (state) action to the ViewModel. This keeps add/edit for tasks,
@@ -288,6 +297,11 @@ fun AircraftSectionContent(
           state = state,
           onAction = onAction,
           onMutationAction = onAction,
+          onLogClick = { logId ->
+            onAction(AircraftOverviewAction.DismissSquawkDetail)
+            pendingLogScrollTarget = logId
+            onNavigateToSection(ShellSection.LOGS)
+          },
           // The shell top bar already shows the section title; avoid duplicating it.
           showHeader = false,
         )
@@ -310,6 +324,7 @@ fun AircraftSectionContent(
             onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
             onNavigateToSection(ShellSection.TASKS)
           },
+          scrollToLogId = pendingLogScrollTarget,
         )
 
         ShellSection.SETTINGS -> Unit
