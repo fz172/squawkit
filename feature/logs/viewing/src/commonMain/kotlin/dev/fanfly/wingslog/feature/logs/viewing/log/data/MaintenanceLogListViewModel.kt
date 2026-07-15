@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.authorship
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -30,11 +32,18 @@ private data class AuthorshipContext(
   val hostedByOther: Boolean,
 )
 
+/** Task cards and squawks a log can link to, resolved for the detail sheet's link rows. */
+private data class LinkTargets(
+  val cards: List<MaintenanceTask>,
+  val squawks: List<Squawk>,
+)
+
 class MaintenanceLogListViewModel(
   private val logManager: MaintenanceLogManager,
   private val inspectionDataManager: TaskDataManager,
   private val sharingManager: SharingManager,
   private val technicianManager: TechnicianManager,
+  private val squawkManager: SquawkManager,
   private val auth: FirebaseAuth,
   val aircraftId: String,
 ) : ViewModel() {
@@ -52,6 +61,7 @@ class MaintenanceLogListViewModel(
   private val _selectedLog = MutableStateFlow<MaintenanceLog?>(null)
   private val _availableCards =
     MutableStateFlow<List<MaintenanceTask>>(emptyList())
+  private val _availableSquawks = MutableStateFlow<List<Squawk>>(emptyList())
 
   /** logId → uid of whoever wrote the latest revision. Envelope data, not payload (§7.5). */
   private val _logAuthors = MutableStateFlow<Map<String, String?>>(emptyMap())
@@ -73,13 +83,16 @@ class MaintenanceLogListViewModel(
   init {
     observeLogs()
     observeTasks()
+    observeSquawks()
     observeAuthorship()
     viewModelScope.launch {
       combine(
         _logsLoadState,
         _filter,
         _selectedLog,
-        _availableCards,
+        combine(_availableCards, _availableSquawks) { cards, squawks ->
+          LinkTargets(cards, squawks)
+        },
         combine(
           _logAuthors,
           _namesByUid,
@@ -88,7 +101,7 @@ class MaintenanceLogListViewModel(
         ) { authors, names, isShared, hostedByOther ->
           AuthorshipContext(authors, names, isShared, hostedByOther)
         },
-      ) { logsState, filter, selectedLog, availableCards, ctx ->
+      ) { logsState, filter, selectedLog, linkTargets, ctx ->
         val (authors, names, isShared, hostedByOther) = ctx
         when (logsState) {
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
@@ -117,7 +130,8 @@ class MaintenanceLogListViewModel(
                 )
                 ?: LogAuthorship.Unknown,
               attachmentsUnavailable = hostedByOther,
-              availableCards = availableCards,
+              availableCards = linkTargets.cards,
+              availableSquawks = linkTargets.squawks,
             )
           }
         }
@@ -180,6 +194,14 @@ class MaintenanceLogListViewModel(
     }
   }
 
+  private fun observeSquawks() {
+    viewModelScope.launch {
+      squawkManager.observeSquawks(aircraftId)
+        .catch { _availableSquawks.value = emptyList() }
+        .collect { _availableSquawks.value = it }
+    }
+  }
+
   fun onSearchQueryChange(query: String) {
     _filter.value = _filter.value.copy(query = query)
   }
@@ -198,6 +220,7 @@ class MaintenanceLogListViewModel(
   fun retryLoading() {
     observeLogs()
     observeTasks()
+    observeSquawks()
   }
 
   fun onLogClick(log: MaintenanceLog) {

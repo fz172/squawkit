@@ -361,6 +361,19 @@ class AircraftOverviewViewModel(
           )
         }
       }
+
+      is AircraftOverviewAction.SquawkFromLogClick -> {
+        val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
+        val squawk =
+          state.squawks.find { it.squawk.id == action.squawkId } ?: return
+        val log =
+          cachedLogs.firstOrNull { it.id == squawk.squawk.addressed_by_log_id }
+        _uiState.update { s ->
+          if (s is AircraftOverviewUiState.Success)
+            s.copy(selectedSquawk = squawk, logForSelectedSquawk = log)
+          else s
+        }
+      }
     }
   }
 

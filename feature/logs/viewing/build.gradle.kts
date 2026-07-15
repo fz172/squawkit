@@ -66,6 +66,7 @@ kotlin {
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:sharedassets"))
       implementation(project(":feature:tasks:viewing"))
+      implementation(project(":feature:squawk:datamanager"))
 
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:attachment:sharedassets"))

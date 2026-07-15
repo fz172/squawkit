@@ -324,6 +324,10 @@ fun AircraftSectionContent(
             onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
             onNavigateToSection(ShellSection.TASKS)
           },
+          onSquawkClick = { squawkId ->
+            onAction(AircraftOverviewAction.SquawkFromLogClick(squawkId))
+            onNavigateToSection(ShellSection.SQUAWKS)
+          },
           scrollToLogId = pendingLogScrollTarget,
         )
 

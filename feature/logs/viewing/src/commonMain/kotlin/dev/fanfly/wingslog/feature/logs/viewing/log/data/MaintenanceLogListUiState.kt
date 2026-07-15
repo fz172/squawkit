@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.logs.viewing.log.data
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 
 data class LogFilter(
@@ -24,6 +25,7 @@ sealed interface MaintenanceLogListUiState {
     /** Hosted by another account: blobs are user-scoped, so v1 cannot fetch them (design §9). */
     val attachmentsUnavailable: Boolean = false,
     val availableCards: List<MaintenanceTask> = emptyList(),
+    val availableSquawks: List<Squawk> = emptyList(),
   ) : MaintenanceLogListUiState
 
   data object Error : MaintenanceLogListUiState

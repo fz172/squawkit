@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -32,6 +33,7 @@ import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
@@ -49,6 +51,8 @@ import wingslog.feature.logs.sharedassets.generated.resources.engine_time_label
 import wingslog.feature.logs.sharedassets.generated.resources.prop_time_label
 import wingslog.feature.logs.viewing.generated.resources.affected_maintenance_tasks
 import wingslog.feature.logs.viewing.generated.resources.no_tasks_linked
+import wingslog.feature.logs.viewing.generated.resources.resolved_squawks
+import wingslog.feature.logs.viewing.generated.resources.unknown_squawk
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_task
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
@@ -71,6 +75,8 @@ fun MaintenanceLogDetailSheet(
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
+  availableSquawks: List<Squawk> = emptyList(),
+  onSquawkClick: ((String) -> Unit)? = null,
   /** Aircraft hosted by another account: blobs are user-scoped, so v1 cannot fetch them (§9). */
   attachmentsUnavailable: Boolean = false,
   modifier: Modifier = Modifier,
@@ -118,6 +124,15 @@ fun MaintenanceLogDetailSheet(
       availableCards = availableCards,
       onTaskClick = onTaskClick,
     )
+
+    // Resolved Squawks (only when this entry addressed some)
+    if (log.squawk_ids.isNotEmpty()) {
+      ResolvedSquawksSection(
+        log = log,
+        availableSquawks = availableSquawks,
+        onSquawkClick = onSquawkClick,
+      )
+    }
 
     // Attachments
     AttachmentSection(
@@ -249,8 +264,9 @@ private fun AffectedTasksSection(
           SharedTaskRes.string.unknown_task,
           cardId
         )
-        LinkedTaskRow(
+        LinkedEntityRow(
           title = title,
+          icon = Icons.Default.Build,
           onClick = onTaskClick?.let { cb -> { cb(cardId) } },
         )
       }
@@ -259,8 +275,35 @@ private fun AffectedTasksSection(
 }
 
 @Composable
-private fun LinkedTaskRow(
+private fun ResolvedSquawksSection(
+  log: MaintenanceLog,
+  availableSquawks: List<Squawk>,
+  onSquawkClick: ((String) -> Unit)?,
+) {
+  Text(
+    text = stringResource(ViewingRes.string.resolved_squawks),
+    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+    color = MaterialTheme.colorScheme.onSurface,
+  )
+
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+    log.squawk_ids.forEach { squawkId ->
+      val squawk = availableSquawks.find { it.id == squawkId }
+      val title = squawk?.title?.takeIf { it.isNotBlank() }
+        ?: stringResource(ViewingRes.string.unknown_squawk, squawkId)
+      LinkedEntityRow(
+        title = title,
+        icon = Icons.Default.Warning,
+        onClick = onSquawkClick?.let { cb -> { cb(squawkId) } },
+      )
+    }
+  }
+}
+
+@Composable
+private fun LinkedEntityRow(
   title: String,
+  icon: androidx.compose.ui.graphics.vector.ImageVector,
   onClick: (() -> Unit)?,
 ) {
   Surface(
@@ -285,7 +328,7 @@ private fun LinkedTaskRow(
       horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
       Icon(
-        imageVector = Icons.Default.Build,
+        imageVector = icon,
         contentDescription = null,
         modifier = Modifier.size(Spacing.large),
         tint = MaterialTheme.colorScheme.secondary
