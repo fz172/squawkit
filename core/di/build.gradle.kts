@@ -39,6 +39,7 @@ kotlin {
       implementation(project(":feature:export:update"))
       implementation(project(":feature:featurelab:datamanager"))
       implementation(project(":feature:fleet:datamanager"))
+      implementation(project(":feature:fleet:picker:data"))
       implementation(project(":feature:login"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:update"))

@@ -18,6 +18,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.di.exportPlatformModule
 import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUiModule
 import dev.fanfly.wingslog.feature.featurelab.datamanager.di.featureLabModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
+import dev.fanfly.wingslog.feature.fleet.picker.data.di.selectedAircraftStoreModule
 import dev.fanfly.wingslog.feature.login.di.loginModule
 import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
 import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
@@ -59,6 +60,7 @@ val commonAppModules: List<Module> = listOf(
   platformStorageModule,
   appearanceModule,
   appearanceStoreModule,
+  selectedAircraftStoreModule,
   syncModule,
   syncLoggingModule,
   blobSchedulerModule,

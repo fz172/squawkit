@@ -60,6 +60,7 @@ include(":feature:sharing:viewing")
 include(":feature:sharing:update")
 
 include(":feature:fleet:datamanager")
+include(":feature:fleet:picker:data")
 include(":feature:fleet:sharedassets")
 include(":feature:fleet:viewing")
 include(":feature:aircraft:dashboard")

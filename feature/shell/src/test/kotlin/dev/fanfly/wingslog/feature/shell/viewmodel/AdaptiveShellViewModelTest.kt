@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
+import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedAircraftStore
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.auth.SendLinkResult
@@ -120,12 +121,23 @@ class AdaptiveShellViewModelTest {
   // The engine only feeds the discarded-changes notice here; irrelevant to these assertions.
   private val syncEngine: SyncEngine = mockk(relaxed = true)
 
+  // In-memory device-local selection store; starts empty so tests behave like a fresh install
+  // unless they seed [selectedAircraftStore.saved].
+  private val selectedAircraftStore = object : SelectedAircraftStore {
+    var saved: String? = null
+    override fun load(): String? = saved
+    override fun save(aircraftId: String?) {
+      saved = aircraftId
+    }
+  }
+
   private fun viewModel() = AdaptiveShellViewModel(
     fleetManager = fleetManager,
     technicianManager = technicianManager,
     authManager = authManager,
     sharingManager = sharingManager,
     syncEngine = syncEngine,
+    selectedAircraftStore = selectedAircraftStore,
   )
 
   @Test
@@ -168,6 +180,38 @@ class AdaptiveShellViewModelTest {
     val s = vm.uiState.value
     assertThat(s.selectedAircraftId).isEqualTo("a1")
     assertThat(s.section).isEqualTo(ShellSection.DASHBOARD)
+  }
+
+  @Test
+  fun restoresRememberedAircraftFromStore() = runTest(testDispatcher) {
+    // Simulate a previous session that left "a2" selected on this device.
+    selectedAircraftStore.saved = "a2"
+    fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+    val vm = viewModel()
+
+    assertThat(vm.uiState.value.selectedAircraftId).isEqualTo("a2")
+  }
+
+  @Test
+  fun fallsBackToFirstWhenRememberedAircraftIsGone() = runTest(testDispatcher) {
+    // The remembered aircraft was deleted since last session.
+    selectedAircraftStore.saved = "deleted"
+    fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+    val vm = viewModel()
+
+    assertThat(vm.uiState.value.selectedAircraftId).isEqualTo("a1")
+    // The effective selection is written back so the stale id doesn't linger.
+    assertThat(selectedAircraftStore.saved).isEqualTo("a1")
+  }
+
+  @Test
+  fun selectAircraftPersistsChoice() = runTest(testDispatcher) {
+    fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+    val vm = viewModel()
+
+    vm.selectAircraft("a2")
+
+    assertThat(selectedAircraftStore.saved).isEqualTo("a2")
   }
 
   @Test
