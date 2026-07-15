@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -39,10 +41,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -57,6 +62,10 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.core.sharedassets.generated.resources.retry
@@ -90,8 +99,44 @@ fun MaintenanceLogListContent(
   onAttachmentTap: (Attachment) -> Unit,
   openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
+  /**
+   * When set, scroll the list to the log with this id (a jump from a squawk's work history). The
+   * caller must not toggle this back to null while the Logs tab is on screen — doing so remounts this
+   * tab and drops its scroll position; it should be cleared only once the section is left.
+   */
+  scrollToLogId: String? = null,
   modifier: Modifier = Modifier,
 ) {
+  // Hoisted above the when(uiState) so it is one stable instance across Loading→Success flips and is
+  // shared by both the compact card list and the wide table (only one is composed at a time). A jump
+  // from a squawk's work history can then scroll whichever layout is on screen.
+  val logListState = rememberLazyListState()
+
+  // Jump-to-log: pin the requested log and hold it through the tab's load churn. Right after the tab
+  // opens the logs list can re-emit empty for a frame (the auth state re-settles, briefly nulling the
+  // storage scope), which clamps the list to the top; re-asserting the scroll on every emission puts
+  // it back on the target. We hold until the user grabs the list (a real drag, never our own
+  // programmatic scroll) or an absolute cap elapses, then stop — we never clear the request here,
+  // because that has to happen at the section level while this tab is off screen.
+  val currentLogs by rememberUpdatedState(
+    (uiState as? MaintenanceLogListUiState.Success)?.logs.orEmpty()
+  )
+  LaunchedEffect(scrollToLogId) {
+    if (scrollToLogId == null) return@LaunchedEffect
+    coroutineScope {
+      val pinning = launch {
+        snapshotFlow { currentLogs }.collect { logs ->
+          val index = logs.indexOfFirst { it.id == scrollToLogId }
+          if (index >= 0) logListState.scrollToItem(index)
+        }
+      }
+      withTimeoutOrNull(8000) {
+        logListState.interactionSource.interactions.first { it is DragInteraction.Start }
+      }
+      pinning.cancel()
+    }
+  }
+
   Box(
     modifier = modifier.fillMaxSize(),
     contentAlignment = Alignment.Center
@@ -253,6 +298,7 @@ fun MaintenanceLogListContent(
               MaintenanceLogTable(
                 logs = uiState.logs,
                 onLogClick = onLogClick,
+                listState = logListState,
                 modifier = Modifier
                   // fill = false so the bordered table wraps its content height when there are
                   // few entries instead of stretching to fill the whole viewport; it still caps
@@ -263,6 +309,7 @@ fun MaintenanceLogListContent(
               )
             } else {
               LazyColumn(
+                state = logListState,
                 modifier = Modifier.weight(1f)
                   .fillMaxWidth(),
                 contentPadding = PaddingValues(

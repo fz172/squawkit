@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -56,6 +58,7 @@ private const val W_TECH = 1.1f
 fun MaintenanceLogTable(
   logs: List<MaintenanceLog>,
   onLogClick: (MaintenanceLog) -> Unit,
+  listState: LazyListState = rememberLazyListState(),
   modifier: Modifier = Modifier,
 ) {
   Surface(
@@ -71,6 +74,7 @@ fun MaintenanceLogTable(
       HeaderRow()
       HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
       LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(bottom = Spacing.large),
       ) {

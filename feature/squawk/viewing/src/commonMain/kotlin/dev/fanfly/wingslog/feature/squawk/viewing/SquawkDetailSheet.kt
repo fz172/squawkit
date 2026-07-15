@@ -1,17 +1,23 @@
 package dev.fanfly.wingslog.feature.squawk.viewing
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.aircraft.Attachment
@@ -40,6 +46,8 @@ fun SquawkDetailSheet(
   addressingLog: MaintenanceLog?,
   onDismiss: () -> Unit,
   onEditClick: (() -> Unit)?,
+  /** Jump to the addressing work log in the Logs tab. Null renders the log statically (no affordance). */
+  onLogClick: ((logId: String) -> Unit)? = null,
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
@@ -108,7 +116,10 @@ fun SquawkDetailSheet(
     Spacer(Modifier.height(Spacing.small))
 
     when {
-      addressingLog != null -> LogHistoryRow(addressingLog)
+      addressingLog != null -> LogHistoryRow(
+        log = addressingLog,
+        onClick = onLogClick?.let { jump -> { jump(addressingLog.id) } },
+      )
       item.status == SquawkStatus.DISMISSED -> DismissedHistoryRow(item)
       else -> Text(
         text = stringResource(Res.string.no_work_recorded),
@@ -160,28 +171,45 @@ private fun DismissedHistoryRow(item: SquawkWithStatus) {
 }
 
 @Composable
-private fun LogHistoryRow(log: MaintenanceLog) {
+private fun LogHistoryRow(
+  log: MaintenanceLog,
+  onClick: (() -> Unit)?,
+) {
   val dateStr = if ((log.timestamp?.getEpochSecond() ?: 0L) > 0L)
     log.timestamp!!.toLocalDate()
       .toDisplayFormat()
   else ""
 
-  Column(
+  Row(
     modifier = Modifier.fillMaxWidth()
-      .padding(vertical = Spacing.extraSmall),
-    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+      .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+      .padding(vertical = Spacing.small),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
-    if (dateStr.isNotEmpty()) {
+    Column(
+      modifier = Modifier.weight(1f),
+      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+    ) {
+      if (dateStr.isNotEmpty()) {
+        Text(
+          text = dateStr,
+          style = MaterialTheme.typography.bodyMedium,
+          fontWeight = FontWeight.Medium,
+        )
+      }
       Text(
-        text = dateStr,
+        text = log.work_description,
         style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.Medium,
       )
     }
-    Text(
-      text = log.work_description,
-      style = MaterialTheme.typography.bodyMedium,
-    )
+    if (onClick != null) {
+      Icon(
+        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
   }
   HorizontalDivider(modifier = Modifier.padding(top = Spacing.extraSmall))
 }
