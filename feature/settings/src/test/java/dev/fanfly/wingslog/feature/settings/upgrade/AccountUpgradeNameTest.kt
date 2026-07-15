@@ -111,4 +111,53 @@ class AccountUpgradeNameTest {
 
     coVerify(exactly = 0) { authManager.updateDisplayName(any()) }
   }
+
+  @Test
+  fun merge_carriesTheWelcomeScreenNameOntoTheExistingAccount() = runTest(dispatcher) {
+    // Collision path: the chosen provider already owns an account, so we sign IN to it and re-key the
+    // guest's data across. The name the user typed on the welcome screen must follow them, even
+    // though the account keeps its own identity — otherwise merging silently renames the user to
+    // whatever the existing account was called.
+    val guest: FirebaseUser = mockk {
+      every { uid } returns "guest-uid"
+      every { isAnonymous } returns true
+    }
+    // First call captures the guest UID; the rest satisfy awaitPermanentCurrentUser (now the account).
+    val currentUsers = ArrayDeque(listOf(guest, permanentUser))
+    every { authManager.getCurrentUser() } answers { currentUsers.removeFirstOrNull() ?: permanentUser }
+    coEvery { authManager.upgradeAnonymousAccount() } returns
+      AccountUpgradeResult.CredentialInUse(mockk())
+    coEvery { authManager.signInToExistingAccount(any()) } returns
+      AccountUpgradeResult.Linked(permanentUser)
+    coEvery { technicianManager.saveSelfName(any()) } returns Result.success(Unit)
+
+    viewModel().startUpgrade()
+    advanceUntilIdle()
+
+    coVerify { migrator.reassign(fromUid = "guest-uid", toUid = UID) }
+    // The welcome-screen name is stamped onto the account's self-technician and pushed to the token.
+    coVerify { technicianManager.saveSelfName(IN_APP_NAME) }
+    coVerify { authManager.updateDisplayName(IN_APP_NAME) }
+  }
+
+  @Test
+  fun merge_withNoWelcomeScreenName_leavesTheAccountNameAlone() = runTest(dispatcher) {
+    // A guest who never named themselves brings no name to carry, so the account keeps its own.
+    every { technicianManager.observeSelf() } returns flowOf(Technician(id = "self-1", name = ""))
+    val guest: FirebaseUser = mockk {
+      every { uid } returns "guest-uid"
+      every { isAnonymous } returns true
+    }
+    val currentUsers = ArrayDeque(listOf(guest, permanentUser))
+    every { authManager.getCurrentUser() } answers { currentUsers.removeFirstOrNull() ?: permanentUser }
+    coEvery { authManager.upgradeAnonymousAccount() } returns
+      AccountUpgradeResult.CredentialInUse(mockk())
+    coEvery { authManager.signInToExistingAccount(any()) } returns
+      AccountUpgradeResult.Linked(permanentUser)
+
+    viewModel().startUpgrade()
+    advanceUntilIdle()
+
+    coVerify(exactly = 0) { technicianManager.saveSelfName(any()) }
+  }
 }

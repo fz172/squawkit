@@ -42,6 +42,10 @@ class AccountUpgradeViewModel(
     val guestUid = authManager.getCurrentUser()?.uid
     _state.value = UpgradeUiState.Working
     viewModelScope.launch {
+      // The name the user typed on the welcome screen is their self-technician's name; read it while
+      // the guest is still the current user (before sign-in re-points the store) so the merge path
+      // can carry it onto the account.
+      val guestName = currentSelfName()
       _state.value = when (val result = authManager.upgradeAnonymousAccount()) {
         is AccountUpgradeResult.Linked -> finishLinkedAccount(result.user.uid)
         is AccountUpgradeResult.CredentialInUse -> {
@@ -50,6 +54,7 @@ class AccountUpgradeViewModel(
           } else {
             mergeExistingAccount(
               guestUid = guestUid,
+              guestName = guestName,
               credential = result.credential
             )
           }
@@ -60,6 +65,13 @@ class AccountUpgradeViewModel(
       }
     }
   }
+
+  /** The current user's self-technician name, or null if unset. Blank is treated as unset. */
+  private suspend fun currentSelfName(): String? =
+    technicianManager.observeSelf()
+      .firstOrNull()
+      ?.name
+      ?.takeIf { it.isNotBlank() }
 
   private suspend fun finishLinkedAccount(accountUid: String): UpgradeUiState {
     if (!awaitPermanentCurrentUser(accountUid)) {
@@ -85,16 +97,13 @@ class AccountUpgradeViewModel(
    * your Google name while everyone else in the app sees the name you chose.
    */
   private suspend fun pushSelfNameToAuthProfile() {
-    val name = technicianManager.observeSelf()
-      .firstOrNull()
-      ?.name
-      ?.takeIf { it.isNotBlank() }
-      ?: return
+    val name = currentSelfName() ?: return
     authManager.updateDisplayName(name)
   }
 
   private suspend fun mergeExistingAccount(
     guestUid: String,
+    guestName: String?,
     credential: AuthCredential,
   ): UpgradeUiState {
     return when (val result = authManager.signInToExistingAccount(credential)) {
@@ -105,9 +114,12 @@ class AccountUpgradeViewModel(
         } else {
           // Re-key this device's records into the existing account; the sync engine pushes them up.
           migrator.reassign(fromUid = guestUid, toUid = accountUid)
-          // Whatever self-profile the account already has wins here — this is a merge INTO an
-          // existing identity, not a promotion of the guest one. A blank one still gets seeded.
+          // The merge keeps the account's own identity (its self-technician, roster links, toggles),
+          // but the name the user chose on the welcome screen follows them across: ensureSelfProfile
+          // settles the account's self-technician, then we stamp the guest name onto it. Skipped when
+          // the guest never set one, so the account keeps its existing name.
           technicianManager.ensureSelfProfile()
+          if (guestName != null) technicianManager.saveSelfName(guestName)
           pushSelfNameToAuthProfile()
           // Sign-in fired authStateChanged, but re-keying happened after; hydrate and nudge sync
           // so local reads include the permanent account's aircraft before the UI leaves Working.
