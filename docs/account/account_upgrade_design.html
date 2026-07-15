@@ -156,6 +156,7 @@
         <li>On confirm, capture the guest UID <code>A = authManager.getCurrentUser().uid</code> <b>before</b> switching, then call <code>signInToExistingAccount(cred)</code> → signed in as <code>B</code>. (The anonymous user <code>A</code> becomes orphaned in Firebase Auth; its <b>local</b> rows still exist, keyed by <code>A</code>.)</li>
         <li>Run <code>LocalAccountMigrator.reassign(fromUid = A, toUid = B)</code> (see §6) — re-scope local entities &amp; blobs to <code>B</code>, mark them <code>dirty=1</code>, clear sync cursors so hydration re-runs for <code>B</code>.</li>
         <li><code>SyncEngine</code> (now user <code>B</code>, non-anonymous) hydrates <code>B</code>'s existing cloud set and pushes the reassigned dirty rows. The result is an additive <b>union</b> of both record sets.</li>
+        <li>Carry the guest's <b>display name</b> across: the name typed on the welcome screen (the guest's self-technician name, captured before sign-in) is stamped onto <code>B</code>'s self-technician after <code>ensureSelfProfile</code> settles it. The account keeps its own <i>identity</i> (its <code>self_technician_id</code> and roster links), but the user is never silently renamed to whatever <code>B</code> was called. Skipped when the guest never set a name.</li>
         <li>Success state: "Syncing complete." (Same copy as the clean path; the user is not shown a record count or a merge-specific message.)</li>
       </ol>
       <div class="callout warn">
@@ -178,6 +179,14 @@
         <li><code>blob_object</code> table: re-scope blob ownership to <code>toUid</code> and reset remote state so <code>BlobUploadDriver</code> re-uploads (it also gates on non-anonymous).</li>
       </ul>
       <p>Because reassignment is a single idempotent transaction keyed on scope, it is <b>resumable</b>: if it ran partially, re-running completes it; if it fully ran, re-running is a no-op (no rows match <code>fromUid</code> anymore).</p>
+      <div class="callout note">
+        <strong>The merge is additive for content, but not for identity</strong>
+        <code>entity</code>'s primary key is <code>(collection, scope_path, id)</code>, so a guest row cannot move onto an id the destination already holds — the <code>UPDATE</code> fails with a <code>UNIQUE</code> constraint violation and takes the whole upgrade down with it (issue #222). Two rules keep the move legal:
+        <ul>
+          <li><b>Per-user singletons are dropped, not moved.</b> <code>UserInfo</code> and <code>FeatureLab</code> both live at the fixed id <code>main</code> under the user root, so <i>every</i> account has exactly one and a collision is guaranteed whenever the destination's copy is on the device. The destination keeps its own: <code>UserInfo</code> is pure identity (it points at the account's self-technician, and this is a merge <i>into</i> an existing identity — note this is the <code>self_technician_id</code> linkage, not the display <i>name</i>, which follows the user across per §5), and <code>FeatureLab</code> is device-local experimental toggles that a guest session has no business handing to a real account. (Promoting the guest's <code>UserInfo</code> would not even self-correct: it arrives <code>dirty</code>, and hydration never overwrites a dirty row.) The list lives in <code>LocalAccountMigratorImpl.DROPPED_ON_MERGE</code>; any future fixed-id user-root singleton must be added there.</li>
+          <li><b>Any other id already present at the destination stays as the destination has it</b>, and the guest's row is dropped: a same-id row in both scopes is the same record, and the account's copy is the one it already owns.</li>
+        </ul>
+      </div>
 
       <h2 id="sync">7. Sync Integration</h2>
       <p>The upgrade flips the sync gating condition and performs one foreground hydration before returning control to the UI. Relevant behavior we rely on:</p>
@@ -188,7 +197,12 @@
         <tr><td><code>HydrationRunner</code> / <code>PullListener</code></td><td>Clean path: pushes the now-permanent local set. Merge path: foreground-hydrates account <code>B</code>'s existing set before the UI leaves the working state.</td></tr>
         <tr><td>Last-writer-wins + dirty immunity</td><td>On merge, reassigned local rows (dirty) are never clobbered by the remote pull before they upload.</td></tr>
         <tr><td><code>cloudSyncEnabled</code> master toggle</td><td>If a user has cloud sync off, upgrading still links the account; syncing begins when they enable sync. Surfaced in Backup &amp; Sync settings.</td></tr>
+        <tr><td><code>SharedScopeJanitor</code></td><td>Must <b>not</b> touch the guest's records. Signing in to <code>B</code> fires <code>authStateChanged</code>, so the engine starts for <code>B</code> while the guest's rows are still scoped to <code>A</code> — where they look exactly like a shared aircraft with no live ref. The janitor therefore purges only foreign-scoped aircraft it has a sync cursor for, i.e. ones it actually pulled as a share (issue #223).</td></tr>
       </table>
+      <div class="callout warn">
+        <strong>The engine starts for <code>B</code> before <code>reassign</code> runs</strong>
+        On the merge path there is no point at which the app is "signed in as <code>B</code> with <code>B</code>'s data": sign-in and re-keying are two steps, and the sync engine wakes between them. Anything that reasons about "data under a UID that is not the current user" — the janitor today, launch-time reconciliation (§9) tomorrow — has to treat that window as normal, not as garbage to collect.
+      </div>
 
       <h2 id="ui">8. UI (<code>feature:settings</code> + upgrade flow)</h2>
       <p>Entry point is the Settings profile area only, and is shown only when the Feature Lab flag is on <b>and</b> the current user is anonymous. The <code>UserProfileCard</code> gains a guest variant; a new upgrade flow (bottom sheet or dedicated screen) owns the steps. There is no benefits/promo screen: the CTA leads straight into the provider sign-in.</p>
@@ -254,7 +268,7 @@
 
       <div class="callout note">
         <strong>Implementation Status</strong>
-        Proposed. Not yet built. Update this note as the auth, storage, and sync pieces land.
+        Built and shipping: <code>AuthManager</code>'s upgrade API, <code>AccountUpgradeViewModel</code> (clean + merge paths), <code>LocalAccountMigrator</code>, and the Settings entry point. The <b>launch-time reconciliation of §9 is not implemented</b> — if the app dies between <code>signInToExistingAccount</code> and <code>reassign</code>, the guest's rows stay under the orphan UID and are invisible to the signed-in account until a reassign runs. They are no longer <i>destroyed</i> in that window (issue #223), but nothing yet brings them back.
       </div>
 
     </div>

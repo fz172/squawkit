@@ -17,6 +17,8 @@ private const val MEMBER = "member-jan-001"
 private const val HOST = "host-jan-001"
 private const val SHARED_AC = "ac-shared-jan"
 private const val OWN_AC = "ac-own-jan"
+private const val GUEST = "guest-jan-001"
+private const val GUEST_AC = "ac-guest-jan"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SharedScopeJanitorTest {
@@ -141,6 +143,29 @@ class SharedScopeJanitorTest {
 
     janitor.purgeRevoked(MEMBER, liveShares = emptySet())
 
+    assertThat(notices).isEmpty()
+  }
+
+  @Test
+  fun leaves_alone_foreign_scoped_data_this_member_never_synced() = runTest {
+    // Issue #223: mid account-merge, the guest's own records still sit under the guest's root while
+    // the sync engine has already started for the account they are merging into. They look exactly
+    // like a shared aircraft with no live ref — but they were never pulled as a share (no cursor),
+    // they are the very data the merge exists to carry over, and purging them destroys it.
+    seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(GUEST), GUEST_AC, dirty = true)
+    seedEntity(
+      CollectionKind.MaintenanceLog,
+      EntityScope.aircraftChild(GUEST, GUEST_AC),
+      "log-guest",
+      dirty = true,
+    )
+    val notices = mutableListOf<SyncNotice>()
+    janitor.noticeSink = { notices += it }
+
+    janitor.purgeRevoked(MEMBER, liveShares = emptySet())
+
+    assertThat(aircraftAt(EntityScope.userRoot(GUEST))).hasSize(1)
+    assertThat(logsAt(EntityScope.aircraftChild(GUEST, GUEST_AC))).hasSize(1)
     assertThat(notices).isEmpty()
   }
 

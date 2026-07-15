@@ -21,6 +21,9 @@ import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
  * push a deletion into the host's tree, which the member no longer has access to). The host-scoped
  * aircraft-doc cursor is left as-is: harmless, since the doc-level pull doesn't use a watermark.
  *
+ * Only aircraft this member actually pulled as a share are candidates (see [wasPulledAsShare]) —
+ * other data under a foreign root belongs to another local account, not to an ended share.
+ *
  * Runs on every refs change and at engine start (docs/sharing §5.4).
  */
 class SharedScopeJanitor(
@@ -56,7 +59,8 @@ class SharedScopeJanitor(
       }
       .toSet()
 
-    val toPurge = localShared - liveShares
+    val toPurge = (localShared - liveShares)
+      .filter { (hostUid, aircraftId) -> wasPulledAsShare(memberUid, hostUid, aircraftId) }
     if (toPurge.isEmpty()) return
 
     // What we are about to destroy has to be counted and named *before* it is gone, not after.
@@ -93,6 +97,32 @@ class SharedScopeJanitor(
   }
 
   private data class DiscardedWork(val label: String, val count: Int)
+
+  /**
+   * Is this foreign-scoped aircraft really a share this member pulled — or just another local
+   * account's data sitting on the same device?
+   *
+   * "Under someone else's root" is not on its own enough to purge: during a guest → existing-account
+   * merge the guest's own records are under the *guest's* root until [LocalAccountMigrator] re-keys
+   * them, and the sync engine starts for the new account the moment sign-in fires. Without this
+   * check the janitor sees the guest's aircraft as a revoked share and hard-deletes the very records
+   * the merge exists to carry over (#223).
+   *
+   * A sync cursor is written the first time a scope hydrates, so a cursor for `memberUid` over this
+   * aircraft's scope is proof we pulled it as a share. Data we never synced for this user is not
+   * ours to delete.
+   */
+  private suspend fun wasPulledAsShare(
+    memberUid: String,
+    hostUid: String,
+    aircraftId: String,
+  ): Boolean =
+    db.schemaQueries
+      .countCursorsInScopePrefix(
+        uid = memberUid,
+        scopePrefix = "/users/$hostUid/aircraft/$aircraftId/%",
+      )
+      .awaitAsOne() > 0
 
   /**
    * Unsynced rows in this aircraft's scopes. Both halves count: its nested records

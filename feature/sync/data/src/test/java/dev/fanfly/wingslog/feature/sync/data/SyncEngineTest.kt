@@ -129,6 +129,9 @@ class SyncEngineTest {
         EntityScope.aircraftChild(HOST, SHARED_AC),
         "log-1"
       )
+      // Hydration (mocked out here) is what writes this in production; it is the janitor's evidence
+      // that these foreign-scoped rows were pulled as a share and are therefore ours to purge.
+      seedSharedCursor()
       // Revocation raced the ref tombstone: the doc-level watch is denied.
       pull.denyScopes += EntityScope.userRoot(HOST)
         .toPath()
@@ -231,6 +234,19 @@ class SyncEngineTest {
       dirty = false,
       deleted = false,
       writer_uid = null,
+    )
+  }
+
+  private suspend fun seedSharedCursor() {
+    db.schemaQueries.upsertCursor(
+      uid = MEMBER,
+      collection = CollectionKind.MaintenanceLog,
+      scope_path = EntityScope.aircraftChild(HOST, SHARED_AC)
+        .toPath(),
+      hydrated = true,
+      last_seen_remote = null,
+      failed_attempts = 0L,
+      last_attempt_at = null,
     )
   }
 
