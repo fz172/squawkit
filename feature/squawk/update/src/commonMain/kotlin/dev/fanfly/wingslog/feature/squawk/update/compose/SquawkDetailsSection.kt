@@ -41,7 +41,7 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
 @Composable
-fun SquawkDetailsTab(
+fun SquawkDetailsSection(
   description: String,
   onDescriptionChange: (String) -> Unit,
   isEdit: Boolean,

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="tab_basic">Basic</string>
   <string name="dismiss_issue">Dismiss Issue</string>
   <string name="reopen_issue">Reopen Issue</string>
   <string name="resolve_issue">Resolve</string>
@@ -8,5 +7,4 @@
   <string name="fixed_option_label">Fixed</string>
   <string name="dismiss_squawk_title">Dismiss Without Addressing?</string>
   <string name="dismiss_squawk_warning">This squawk will be closed without recording corrective action. Please select a reason for dismissing this squawk.</string>
-  <string name="squawk_basic_tab_note">Add a description, attachments, and more on the Details tab.</string>
 </resources>
