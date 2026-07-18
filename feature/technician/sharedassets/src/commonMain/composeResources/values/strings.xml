@@ -1,7 +1,7 @@
 <resources>
   <string name="technician">Technician</string>
   <string name="add_technician">Add Technician</string>
-  <string name="edit_technician">Edit Technician</string>
+  <string name="edit_technician">Update Technician</string>
   <string name="manage_technicians">Technician Profiles</string>
   <string name="select_technician">Select Technician</string>
   <string name="performed_by">Performed By</string>

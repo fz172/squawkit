@@ -5,7 +5,7 @@
   <string name="model_and_sn">Model: %1$s %2$s\nS/N: %3$s\n</string>
   <string name="s_n_placeholder">S/N: %1$s</string>
   <string name="s_n_empty">No S/N</string>
-  <string name="edit_aircraft">Edit aircraft</string>
+  <string name="edit_aircraft">Update aircraft</string>
   <string name="maintenance_logs">Maintenance Logs</string>
   <string name="search_logs">Search logs…</string>
   <string name="showing_x_of_y">Showing %1$d of %2$d</string>

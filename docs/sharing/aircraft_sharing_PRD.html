@@ -168,7 +168,7 @@
         <li>An email typed by the inviter may not match <em>any</em> address on the invitee's account, or may match the wrong person's. There is no lookup API by email that is reliable across providers, and pre-provisioning access to an unverified address is a security hole.</li>
         <li>Two people standing in the same hangar shouldn't need email at all.</li>
       </ul>
-      <p><b>Chosen mechanism: capability invites.</b> An owner mints an invite for a specific aircraft and role. The invite is an unguessable token rendered two ways — a <b>share link</b> (sent over any channel: text, WhatsApp, email, anything) and a <b>QR code</b> (scanned in person). Whoever redeems the token, signed in with <em>whatever provider they use</em>, becomes the member; membership binds to their Firebase <b>UID</b>, never to an email. The invite is single-use by default and expires in 7 days; the redeeming person's identity (display name + avatar) is shown to the owner in Manage Access after redemption, which is the moment to catch a link that reached the wrong hands — plus revoke, which fully un-does a redemption.</p>
+      <p><b>Chosen mechanism: capability invites.</b> An owner mints an invite for a specific aircraft and role. The invite is an unguessable token rendered two ways — a <b>share link</b> (sent over any channel: text, WhatsApp, email, anything) and a <b>QR code</b> (scanned in person). Whoever redeems the token, signed in with <em>whatever provider they use</em>, becomes the member; membership binds to their Firebase <b>UID</b>, never to an email. The invite is single-use by default and expires in 1 day; the redeeming person's identity (display name + avatar) is shown to the owner in Manage Access after redemption, which is the moment to catch a link that reached the wrong hands — plus revoke, which fully un-does a redemption.</p>
       <div class="callout win">
         <strong>Why this is the reliable option</strong>
         A token names <em>the permission</em>, not a guessed identity. It cannot mis-target someone by typo, works across all current and future sign-in providers, requires zero PII from the inviter, and the QR form makes the most common real-world case — owner and mechanic at the airplane — a 5-second interaction.
@@ -179,7 +179,7 @@
       <h3 id="j-invite">6.1 Owner invites someone</h3>
       <ol>
         <li>Owner opens the aircraft → overflow menu → <b>Manage Access</b> (also reachable from the aircraft Overview tab).</li>
-        <li>Taps <b>Invite</b>, picks the role (<b>Owner</b> / <b>Technician</b>, defaults to Technician), sees the expiry (7 days) and single-use note.</li>
+        <li>Taps <b>Invite</b>, picks the role (<b>Owner</b> / <b>Technician</b>, defaults to Technician), sees the expiry (1 day) and single-use note.</li>
         <li>Gets a screen with a QR code and a <b>Share link</b> button (system share sheet). The pending invite appears in Manage Access with role, creation time, and a <b>Cancel</b> action.</li>
       </ol>
 
@@ -248,7 +248,7 @@
         <thead><tr><th>#</th><th>Requirement</th><th>Priority</th></tr></thead>
         <tbody>
           <tr><td>F1</td><td>All sharing entry points are hidden for anonymous users and shown only when Cloud Sync is enabled; a signed-out/guest invitee is routed through sign-in/upgrade before redemption.</td><td>P0</td></tr>
-          <tr><td>F2</td><td>An owner can create an invite for a chosen role, rendered as a share link and QR code; invites are single-use, expire after 7 days, and can be cancelled.</td><td>P0</td></tr>
+          <tr><td>F2</td><td>An owner can create an invite for a chosen role, rendered as a share link and QR code; invites are single-use, expire after 1 day, and can be cancelled.</td><td>P0</td></tr>
           <tr><td>F3</td><td>Redemption binds membership to the redeemer's UID regardless of sign-in provider; no email address is collected or displayed during invite creation.</td><td>P0</td></tr>
           <tr><td>F4</td><td>A Manage Access screen lists members (with roles) and pending invites; owners can change roles, revoke members, and cancel invites; any non-hosting member can leave.</td><td>P0</td></tr>
           <tr><td>F5</td><td>Members see the shared aircraft on their fleet dashboard with a "Shared" indicator and the hosting owner's name; all per-aircraft data is available offline like their own aircraft.</td><td>P0</td></tr>
