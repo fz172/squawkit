@@ -191,6 +191,17 @@ fun AircraftSectionContent(
   LaunchedEffect(section) {
     if (section != ShellSection.LOGS) pendingLogScrollTarget = null
   }
+  // Same pattern for jumping from a log's linked tasks/squawks to the item in its list: set on tap,
+  // consumed by the Tasks/Squawks section (which switches to the right sub-view and scrolls to it),
+  // cleared once that section is left.
+  var pendingTaskScrollTarget by remember(aircraftId) { mutableStateOf<String?>(null) }
+  LaunchedEffect(section) {
+    if (section != ShellSection.TASKS) pendingTaskScrollTarget = null
+  }
+  var pendingSquawkScrollTarget by remember(aircraftId) { mutableStateOf<String?>(null) }
+  LaunchedEffect(section) {
+    if (section != ShellSection.SQUAWKS) pendingSquawkScrollTarget = null
+  }
 
   // Single navigation entry point: intercept the navigation actions and drive the host navController
   // directly; delegate every other (state) action to the ViewModel. This keeps add/edit for tasks,
@@ -289,6 +300,7 @@ fun AircraftSectionContent(
         ShellSection.TASKS -> MaintenanceTasksTab(
           state = state,
           onAction = onAction,
+          scrollToTaskId = pendingTaskScrollTarget,
           // The shell top bar already shows the section title; avoid duplicating it.
           showHeader = false,
         )
@@ -302,6 +314,7 @@ fun AircraftSectionContent(
             pendingLogScrollTarget = logId
             onNavigateToSection(ShellSection.LOGS)
           },
+          scrollToSquawkId = pendingSquawkScrollTarget,
           // The shell top bar already shows the section title; avoid duplicating it.
           showHeader = false,
         )
@@ -321,11 +334,11 @@ fun AircraftSectionContent(
             onAction(AircraftOverviewAction.EditLogClick(aircraftId, logId))
           },
           onTaskClick = { taskId ->
-            onAction(AircraftOverviewAction.TaskFromLogClick(taskId))
+            pendingTaskScrollTarget = taskId
             onNavigateToSection(ShellSection.TASKS)
           },
           onSquawkClick = { squawkId ->
-            onAction(AircraftOverviewAction.SquawkFromLogClick(squawkId))
+            pendingSquawkScrollTarget = squawkId
             onNavigateToSection(ShellSection.SQUAWKS)
           },
           scrollToLogId = pendingLogScrollTarget,

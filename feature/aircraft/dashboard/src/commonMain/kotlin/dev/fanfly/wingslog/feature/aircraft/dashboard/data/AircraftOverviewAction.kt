@@ -22,7 +22,6 @@ sealed interface AircraftOverviewAction {
 
   data object CancelDeleteTask : AircraftOverviewAction
   data object ConfirmDeleteTask : AircraftOverviewAction
-  data class TaskFromLogClick(val taskId: String) : AircraftOverviewAction
   data class AddSquawkClick(val aircraftId: String) : AircraftOverviewAction
   data class ShowSquawkDetail(val squawk: SquawkWithStatus) :
     AircraftOverviewAction
@@ -30,6 +29,4 @@ sealed interface AircraftOverviewAction {
   data object DismissSquawkDetail : AircraftOverviewAction
   data class EditSquawkClick(val aircraftId: String, val squawkId: String) :
     AircraftOverviewAction
-
-  data class SquawkFromLogClick(val squawkId: String) : AircraftOverviewAction
 }
