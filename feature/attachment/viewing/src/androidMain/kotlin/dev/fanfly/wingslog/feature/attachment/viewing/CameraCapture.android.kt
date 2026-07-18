@@ -3,8 +3,6 @@ package dev.fanfly.wingslog.feature.attachment.viewing
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.ImageDecoder
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
@@ -18,14 +16,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.UUID
 
 private const val TAG = "CameraCapture"
-private const val MAX_PHOTO_BYTES = 1_000_000L
-private const val MAX_DIMENSION = 2048
-private const val MAX_DOWNSCALE_ATTEMPTS = 3
 
 @Composable
 actual fun rememberCameraCapture(
@@ -60,21 +54,21 @@ actual fun rememberCameraCapture(
       return@rememberLauncherForActivityResult
     }
     try {
+      // The camera writes a JPEG to `file`; hand it back raw. Compression happens downstream in
+      // AttachmentManager.addPickedFile, the single point shared with the file-picker flow.
       val uri = file.toFileProviderUri(context)
-      val compressed = compressPhoto(context, uri)
-      file.writeBytes(compressed)
       onResult(
         listOf(
           PickedFile(
             uri = uri.toString(),
             name = "IMG_${System.currentTimeMillis()}.jpg",
             mimeType = "image/jpeg",
-            sizeBytes = compressed.size.toLong(),
+            sizeBytes = file.length(),
           )
         )
       )
     } catch (e: Exception) {
-      Log.e(TAG, "Failed to decode/compress captured photo", e)
+      Log.e(TAG, "Failed to hand back captured photo", e)
       file.delete()
       onError()
     }
@@ -121,58 +115,4 @@ private fun Context.grantCameraUriPermission(uri: Uri) {
       Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION,
     )
   }
-}
-
-/** Decodes [uri] and re-encodes as JPEG under [maxBytes], downscaling further if needed. */
-private fun compressPhoto(
-  context: Context,
-  uri: Uri,
-  maxBytes: Long = MAX_PHOTO_BYTES
-): ByteArray {
-  var maxDimension = MAX_DIMENSION
-  var bytes: ByteArray
-  var attempt = 0
-  while (true) {
-    val bitmap = decodeBounded(context, uri, maxDimension)
-    bytes = try {
-      encodeJpeg(bitmap, maxBytes)
-    } finally {
-      bitmap.recycle()
-    }
-    if (bytes.size <= maxBytes || attempt >= MAX_DOWNSCALE_ATTEMPTS) break
-    maxDimension = (maxDimension * 0.7f).toInt()
-    attempt++
-  }
-  return bytes
-}
-
-/** Decodes with EXIF orientation already applied, downsampled to at most [maxDimension] on a side. */
-private fun decodeBounded(
-  context: Context,
-  uri: Uri,
-  maxDimension: Int
-): Bitmap {
-  val source = ImageDecoder.createSource(context.contentResolver, uri)
-  return ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
-    val longestSide = maxOf(info.size.width, info.size.height)
-    if (longestSide > maxDimension) {
-      decoder.setTargetSampleSize((longestSide / maxDimension).coerceAtLeast(1))
-    }
-    // ImageDecoder defaults to a hardware-backed Bitmap, which Bitmap.compress() cannot read —
-    // it throws IllegalStateException. Force software allocation so JPEG re-encoding works.
-    decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
-  }
-}
-
-private fun encodeJpeg(bitmap: Bitmap, maxBytes: Long): ByteArray {
-  var quality = 90
-  var bytes: ByteArray
-  while (true) {
-    val stream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream)
-    bytes = stream.toByteArray()
-    if (bytes.size <= maxBytes || quality <= 40) break
-    quality -= 15
-  }
-  return bytes
 }

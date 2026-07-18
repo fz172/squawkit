@@ -15,8 +15,8 @@ import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 
 /**
- * Common Koin bindings for the local-first attachment stack. [BlobFilesystem] is provided per
- * platform in [platformAttachmentModule] alongside the [FileByteReader] actual.
+ * Common Koin bindings for the local-first attachment stack. [BlobFilesystem], [FileByteReader],
+ * and [ImageCompressor] are provided per platform in [platformAttachmentModule].
  */
 val attachmentModule = module {
   single<LocalBlobStore> {
@@ -32,6 +32,7 @@ val attachmentModule = module {
       blobs = get<LocalBlobStore>(),
       auth = get<AuthManager>(),
       fileByteReader = get<FileByteReader>(),
+      imageCompressor = get<ImageCompressor>(),
       uploadScheduler = getOrNull(),
     )
   }

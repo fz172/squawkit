@@ -61,7 +61,8 @@ class AttachmentFormControllerTest {
   }
 
   @Test
-  fun addLocalFiles_oversizedFile_reportsFileTooLargeAndContinues() = runTest {
+  fun addLocalFiles_oversizedNonPhoto_reportsFileTooLargeAndContinues() = runTest {
+    // Non-photos are gated up front on their picked size, before we read them into memory.
     coEvery {
       attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
     } returns fileAttachment("new")
@@ -69,7 +70,11 @@ class AttachmentFormControllerTest {
 
     val anyAdded = controller.addLocalFiles(
       listOf(
-        pickedFile(sizeBytes = QuotaChecker.MAX_FILE_SIZE_BYTES + 1),
+        pickedFile(
+          sizeBytes = QuotaChecker.MAX_FILE_SIZE_BYTES + 1,
+          mimeType = "application/pdf",
+          name = "big.pdf",
+        ),
         pickedFile(),
       )
     ) { errors.add(it) }
@@ -77,6 +82,43 @@ class AttachmentFormControllerTest {
     assertThat(errors).containsExactly(AttachmentFormController.AddFileError.FileTooLarge)
     assertThat(anyAdded).isTrue()
     assertThat(controller.pendingAttachments.value).hasSize(1)
+    // The oversized non-photo is never handed to the manager.
+    coVerify(exactly = 1) { attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any()) }
+  }
+
+  @Test
+  fun addLocalFiles_oversizedPhoto_isDeferredToManagerNotPreRejected() = runTest {
+    // A photo over the cap is NOT pre-rejected — it goes to the manager, which compresses it and
+    // decides. Here the manager admits it (post-compression).
+    coEvery {
+      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+    } returns fileAttachment("compressed")
+    val errors = mutableListOf<AttachmentFormController.AddFileError>()
+
+    val anyAdded = controller.addLocalFiles(
+      listOf(pickedFile(sizeBytes = QuotaChecker.MAX_FILE_SIZE_BYTES + 1, mimeType = "image/jpeg"))
+    ) { errors.add(it) }
+
+    assertThat(errors).isEmpty()
+    assertThat(anyAdded).isTrue()
+    coVerify(exactly = 1) { attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any()) }
+  }
+
+  @Test
+  fun addLocalFiles_whenManagerThrowsFileTooLarge_reportsFileTooLarge() = runTest {
+    // Photo still over the cap after compression — the manager throws, the controller maps it.
+    coEvery {
+      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+    } throws FileTooLargeException(9_000_000L)
+    val errors = mutableListOf<AttachmentFormController.AddFileError>()
+
+    val anyAdded = controller.addLocalFiles(
+      listOf(pickedFile(sizeBytes = QuotaChecker.MAX_FILE_SIZE_BYTES + 1, mimeType = "image/jpeg"))
+    ) { errors.add(it) }
+
+    assertThat(anyAdded).isFalse()
+    assertThat(errors).containsExactly(AttachmentFormController.AddFileError.FileTooLarge)
+    assertThat(controller.pendingAttachments.value).isEmpty()
   }
 
   @Test
@@ -264,10 +306,14 @@ class AttachmentFormControllerTest {
     type = AttachmentType.ATTACHMENT_TYPE_LINK,
   )
 
-  private fun pickedFile(sizeBytes: Long = 100L) = PickedFile(
+  private fun pickedFile(
+    sizeBytes: Long = 100L,
+    mimeType: String = "image/jpeg",
+    name: String = "photo.jpg",
+  ) = PickedFile(
     uri = "uri",
-    name = "photo.jpg",
-    mimeType = "image/jpeg",
+    name = name,
+    mimeType = mimeType,
     sizeBytes = sizeBytes,
   )
 

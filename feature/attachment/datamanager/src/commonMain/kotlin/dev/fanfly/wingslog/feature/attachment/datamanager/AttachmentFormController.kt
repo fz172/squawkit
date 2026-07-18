@@ -76,7 +76,10 @@ class AttachmentFormController(
     var anyAdded = false
     for (file in files) {
       if (_pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS) break
-      if (file.sizeBytes > MAX_FILE_SIZE_BYTES) {
+      // Photos are size-checked *after* compression, inside addPickedFile, so a large image can
+      // be rescued by shrinking under the cap. Non-photos are rejected up front so we never read
+      // a huge file fully into memory just to fail it.
+      if (!isCompressiblePhotoMime(file.mimeType) && file.sizeBytes > MAX_FILE_SIZE_BYTES) {
         onError(AddFileError.FileTooLarge)
         continue
       }
@@ -90,6 +93,8 @@ class AttachmentFormController(
         anyAdded = true
       } catch (e: CancellationException) {
         throw e
+      } catch (e: FileTooLargeException) {
+        onError(AddFileError.FileTooLarge)
       } catch (e: Exception) {
         onError(AddFileError.Failed(e.message))
       }

@@ -11,6 +11,10 @@ import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
+import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
+import dev.fanfly.wingslog.feature.attachment.datamanager.ImageCompressor
+import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
+import dev.fanfly.wingslog.feature.attachment.datamanager.isCompressiblePhotoMime
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
@@ -39,6 +43,7 @@ class LocalFirstAttachmentManagerImpl(
   private val blobs: LocalBlobStore,
   private val auth: AuthManager,
   private val fileByteReader: FileByteReader,
+  private val imageCompressor: ImageCompressor,
   private val uploadScheduler: UploadScheduler? = null,
   private val clock: Clock = Clock.System,
 ) : AttachmentManager {
@@ -50,8 +55,24 @@ class LocalFirstAttachmentManagerImpl(
   ): Attachment {
     val uid = auth.getCurrentUser()?.uid
       ?: error("addPickedFile requires a signed-in user (anonymous or permanent)")
-    val bytes = fileByteReader.readBytes(picked.uri)
+    val rawBytes = fileByteReader.readBytes(picked.uri)
       ?: error("could not read picked file at ${picked.uri}")
+
+    // Single compression point for both the camera and file-picker flows: if this is a photo we
+    // re-encode, shrink it to JPEG. The compressor returns null when it declines (not a photo we
+    // touch, already small, or a decode failure), and we store the original bytes unchanged.
+    val compressed =
+      if (isCompressiblePhotoMime(picked.mimeType)) imageCompressor.compressToJpeg(rawBytes)
+      else null
+    val bytes = compressed ?: rawBytes
+    val mimeType = if (compressed != null) "image/jpeg" else picked.mimeType
+    val name = if (compressed != null) displayName.withJpegExtension() else displayName
+
+    // Enforce the per-file cap on the *stored* size. Non-photos were already gated on their
+    // picked size before we read them; photos are gated here so compression gets to rescue a
+    // large image before we reject it.
+    if (bytes.size > MAX_FILE_SIZE_BYTES) throw FileTooLargeException(bytes.size.toLong())
+
     val id = generateRandomId()
     val scope = EntityScope.aircraftChild(
       uid,
@@ -60,15 +81,15 @@ class LocalFirstAttachmentManagerImpl(
     val ref = blobs.put(
       BlobId(id),
       bytes,
-      contentType = picked.mimeType,
+      contentType = mimeType,
       scope = scope
     )
     uploadScheduler?.scheduleUpload(BlobId(id))
     val now = clock.now()
     return Attachment(
       id = id,
-      name = displayName,
-      type = picked.mimeType.toAttachmentType(),
+      name = name,
+      type = mimeType.toAttachmentType(),
       storage_path = "${
         scope.toPath()
           .trim('/')
@@ -76,11 +97,19 @@ class LocalFirstAttachmentManagerImpl(
       // Field 5 (download_url) stays empty in R2 — the opener consults LocalBlobStore /
       // re-fetches via Firebase Storage at open time. Reserved in PR 3b.
       download_url = "",
-      mime_type = picked.mimeType,
-      size_bytes = picked.sizeBytes,
+      mime_type = mimeType,
+      size_bytes = bytes.size.toLong(),
       created_at = now.toWireInstant(),
       sha256 = ref.sha256,
     )
+  }
+
+  /** Swap (or add) a `.jpg` extension so the stored name matches the re-encoded JPEG bytes. */
+  private fun String.withJpegExtension(): String {
+    if (endsWith(".jpg", ignoreCase = true) || endsWith(".jpeg", ignoreCase = true)) return this
+    val dot = lastIndexOf('.')
+    val base = if (dot > 0) substring(0, dot) else this
+    return "$base.jpg"
   }
 
   override fun makeLink(
