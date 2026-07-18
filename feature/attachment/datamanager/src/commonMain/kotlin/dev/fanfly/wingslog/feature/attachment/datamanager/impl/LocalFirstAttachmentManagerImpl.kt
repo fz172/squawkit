@@ -134,7 +134,12 @@ class LocalFirstAttachmentManagerImpl(
 
   override suspend fun delete(attachment: Attachment) {
     if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) return
-    blobs.delete(BlobId(attachment.id))
+    val id = BlobId(attachment.id)
+    blobs.delete(id)
+    // Kick the delete driver now, exactly as addPickedFile schedules the upload. Without this the
+    // tombstone just waits for the next SyncEngine.schedulePendingBlobs at startup, so an in-session
+    // delete would not reclaim the remote object until the app was restarted.
+    uploadScheduler?.scheduleDelete(id)
   }
 
   override fun ensureLocal(attachment: Attachment): Flow<DownloadState> {

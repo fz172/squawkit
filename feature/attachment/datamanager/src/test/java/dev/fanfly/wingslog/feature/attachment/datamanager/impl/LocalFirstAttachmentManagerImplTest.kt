@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.BlobId
+import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
@@ -20,6 +21,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -44,6 +46,7 @@ class LocalFirstAttachmentManagerImplTest {
   private lateinit var auth: AuthManager
   private lateinit var fileByteReader: FileByteReader
   private lateinit var imageCompressor: ImageCompressor
+  private lateinit var uploadScheduler: UploadScheduler
   private lateinit var clock: Clock
   private lateinit var manager: LocalFirstAttachmentManagerImpl
 
@@ -56,6 +59,7 @@ class LocalFirstAttachmentManagerImplTest {
     // that exercise compression stub compressToJpeg explicitly.
     imageCompressor = mockk(relaxed = true)
     every { imageCompressor.compressToJpeg(any()) } returns null
+    uploadScheduler = mockk(relaxed = true)
     clock = mockk(relaxed = true)
 
     val fixedNow = Instant.fromEpochSeconds(FIXED_EPOCH_SECONDS, 0)
@@ -70,6 +74,7 @@ class LocalFirstAttachmentManagerImplTest {
       auth,
       fileByteReader,
       imageCompressor,
+      uploadScheduler,
       clock = clock
     )
   }
@@ -401,6 +406,27 @@ class LocalFirstAttachmentManagerImplTest {
     manager.delete(picked)
 
     coVerify(exactly = 0) { blobs.delete(any()) }
+    verify(exactly = 0) { uploadScheduler.scheduleDelete(any()) }
+  }
+
+  @Test
+  fun delete_schedulesRemoteDeleteImmediately() = runTest {
+    // The tombstone alone waits for the next startup sweep; deleting in-session must kick the
+    // delete driver now so the remote object is reclaimed without an app restart.
+    val fakeBytes = byteArrayOf(1)
+    every { fileByteReader.readBytes(any()) } returns fakeBytes
+    coEvery {
+      blobs.put(any(), any(), contentType = any(), scope = any())
+    } returns buildBlobRef()
+    val attachment = manager.addPickedFile(
+      TEST_AIRCRAFT_ID,
+      buildPickedFile(),
+      displayName = "file"
+    )
+
+    manager.delete(attachment)
+
+    verify(exactly = 1) { uploadScheduler.scheduleDelete(BlobId(attachment.id)) }
   }
 
   @Test
