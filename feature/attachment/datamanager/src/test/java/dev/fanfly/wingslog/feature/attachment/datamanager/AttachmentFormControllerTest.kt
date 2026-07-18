@@ -178,7 +178,7 @@ class AttachmentFormControllerTest {
   // ---- filesAtLimit ----
 
   @Test
-  fun filesAtLimit_ignoresLinksAndPendingDeletes() {
+  fun filesAtLimit_ignoresLinksAndPendingDeletes() = runTest {
     controller.seedIfEmpty(
       listOf(
         fileAttachment("f1"),
@@ -222,7 +222,7 @@ class AttachmentFormControllerTest {
   // ---- remove ----
 
   @Test
-  fun remove_localAndLinkItems_disappear() {
+  fun remove_localAndLinkItems_disappear() = runTest {
     every { attachmentManager.makeLink(any(), any()) } returns linkAttachment("l1")
     controller.seedIfEmpty(listOf(linkAttachment("saved-link")))
     controller.addLink("https://example.com", "link")
@@ -231,16 +231,36 @@ class AttachmentFormControllerTest {
     controller.remove("saved-link")
 
     assertThat(controller.pendingAttachments.value).isEmpty()
+    // Links carry no blob — nothing to tombstone.
+    coVerify(exactly = 0) { attachmentManager.delete(any()) }
   }
 
   @Test
-  fun remove_savedFile_becomesPendingDelete() {
+  fun remove_savedFile_becomesPendingDelete() = runTest {
     controller.seedIfEmpty(listOf(fileAttachment("a1")))
 
     controller.remove("a1")
 
     assertThat(controller.pendingAttachments.value.single())
       .isInstanceOf(PendingAttachment.PendingDelete::class.java)
+    // Saved files are tombstoned at save time (resolveForSave), not on remove.
+    coVerify(exactly = 0) { attachmentManager.delete(any()) }
+  }
+
+  @Test
+  fun remove_freshlyAddedLocalFile_tombstonesItsBlob() = runTest {
+    // A picked file already has a blob on disk + a scheduled upload; removing it before save must
+    // tombstone that blob or it orphans (locally, and in gs:// once the upload lands).
+    val local = fileAttachment("local-1")
+    coEvery {
+      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+    } returns local
+    controller.addLocalFiles(listOf(pickedFile())) { }
+
+    controller.remove("local-1")
+
+    assertThat(controller.pendingAttachments.value).isEmpty()
+    coVerify(exactly = 1) { attachmentManager.delete(local) }
   }
 
   // ---- resolveForSave ----

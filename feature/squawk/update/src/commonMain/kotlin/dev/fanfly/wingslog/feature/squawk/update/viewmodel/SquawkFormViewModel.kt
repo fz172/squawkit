@@ -225,7 +225,7 @@ class SquawkFormViewModel(
   }
 
   fun removeAttachment(id: String) {
-    attachmentForm.remove(id)
+    viewModelScope.launch { attachmentForm.remove(id) }
   }
 
   fun save(onSuccessMessage: String) {

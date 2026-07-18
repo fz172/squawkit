@@ -229,7 +229,7 @@ class TaskViewModel(
   }
 
   fun removeAttachment(id: String) {
-    attachmentForm.remove(id)
+    viewModelScope.launch { attachmentForm.remove(id) }
   }
 
   // ── Public save/delete ───────────────────────────────────────────────────
