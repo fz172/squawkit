@@ -105,9 +105,12 @@ export type ShareInviteDoc = {
   revoked: boolean;
 };
 
-/** Invite defaults from the PRD: single-use, expires in 7 days. */
+/**
+ * Invite default from the PRD: single-use (the code doc is deleted on redeem). Expiry is not here —
+ * it lives with the code in inviteCodes.ts (INVITE_TTL_MS, 1 day), short on purpose since it stands
+ * in for the code's entropy.
+ */
 export const INVITE_DEFAULT_MAX_USES = 1;
-export const INVITE_DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * Pairing-code invite (#164). Defined in inviteCodes.ts, re-exported here so the share types have a
