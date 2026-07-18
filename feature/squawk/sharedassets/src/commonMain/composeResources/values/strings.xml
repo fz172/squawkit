@@ -2,7 +2,7 @@
 <resources>
   <string name="squawks">Squawks</string>
   <string name="add_squawk">New squawk</string>
-  <string name="edit_squawk">Edit squawk</string>
+  <string name="edit_squawk">Update squawk</string>
   <string name="open_with_count">OPEN (%1$d)</string>
   <string name="closed_with_count">CLOSED (%1$d)</string>
   <string name="no_open_squawks">No open squawks</string>
