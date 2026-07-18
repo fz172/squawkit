@@ -3,4 +3,7 @@
   <string name="no_fleet_title">Ready for Takeoff?</string>
   <string name="no_fleet_description">Keep your aircraft details, maintenance logs, and compliance records in one place.</string>
   <string name="add_first_aircraft">Add Your First Aircraft</string>
+  <!-- #209: a technician with no aircraft of their own lands here — give them the join-by-code path
+       next to the create-aircraft one. -->
+  <string name="have_invite_code">Have an invite code?</string>
 </resources>

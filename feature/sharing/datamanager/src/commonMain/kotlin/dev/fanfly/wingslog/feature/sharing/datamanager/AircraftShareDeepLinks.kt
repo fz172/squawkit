@@ -14,7 +14,13 @@ import kotlinx.coroutines.flow.asStateFlow
  * an abandoned share outright (#204). The code names nothing real. Only the server can dereference
  * it, and it dies on first use.
  */
-data class ShareInvite(val code: String)
+/**
+ * [autoAccept] is true when the user's own action already *was* the consent — typing a code in the
+ * manual-entry screen (#209). Such an invite skips the "you've been invited, accept?" confirmation
+ * and redeems straight away. A link stays false: tapping a link is not the same as choosing to join
+ * a named aircraft, so it still shows what's being joined (#201) and asks.
+ */
+data class ShareInvite(val code: String, val autoAccept: Boolean = false)
 
 object AircraftShareDeepLinks {
   private val _pendingInvite = MutableStateFlow<ShareInvite?>(null)
@@ -29,6 +35,18 @@ object AircraftShareDeepLinks {
   fun deliver(url: String): Boolean {
     val invite = parse(url) ?: return false
     _pendingInvite.value = invite
+    return true
+  }
+
+  /**
+   * Parks a hand-typed code (#209), sending it down the exact same redeem path a link takes — the
+   * manual-entry screen is just another way to fill this channel. [raw] is normalized the way a
+   * link's fragment is; a value that isn't a well-formed code is refused (returns false), so the
+   * caller can keep the screen open rather than parking nonsense that would surface an error sheet.
+   */
+  fun deliverCode(raw: String): Boolean {
+    val code = normalizeInviteCode(raw) ?: return false
+    _pendingInvite.value = ShareInvite(code, autoAccept = true)
     return true
   }
 
@@ -48,7 +66,10 @@ object AircraftShareDeepLinks {
   fun parse(url: String): ShareInvite? {
     val beforeFragment = url.substringBefore('#')
     if (beforeFragment == url) return null // no fragment
-    if (!beforeFragment.substringBefore('?').trimEnd('/').endsWith("/share")) return null
+    if (!beforeFragment.substringBefore('?')
+        .trimEnd('/')
+        .endsWith("/share")
+    ) return null
     val code = normalizeInviteCode(url.substringAfter('#'))
     return if (code == null) null else ShareInvite(code)
   }

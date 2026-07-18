@@ -6,11 +6,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import dev.fanfly.wingslog.feature.sync.data.SyncNotice
-import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.dismiss
-import wingslog.core.sharedassets.generated.resources.sync_changes_discarded
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -21,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
@@ -31,7 +27,13 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.settings.SettingsContent
 import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
+import dev.fanfly.wingslog.feature.sync.data.SyncNotice
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.core.sharedassets.generated.resources.dismiss
+import wingslog.core.sharedassets.generated.resources.sync_changes_discarded
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * The adaptive-shell destination body shared by every host: wires [AdaptiveShellViewModel]
@@ -45,6 +47,17 @@ fun AdaptiveShellRoute(
 ) {
   val viewModel = koinViewModel<AdaptiveShellViewModel>()
   val state by viewModel.uiState.collectAsState()
+
+  // Manual invite-code entry (#209). Offered only when aircraft sharing is built into this app —
+  // otherwise the affordance is dropped, not shown-and-broken. Reused by both the switcher (populated
+  // fleet) and the empty-fleet state (where a technician with no aircraft of their own lands).
+  val appCapability = koinInject<AppCapability>()
+  val onEnterInviteCode: (() -> Unit)? =
+    if (appCapability.isAircraftSharingSupported) {
+      { navController.navigate(Screen.EnterInviteCode.route) }
+    } else {
+      null
+    }
   // Page-view feeder 2: the shell's sections (Dashboard/Tasks/Squawks/Logs/Settings) are
   // ViewModel state under one route, so the root observer can't see them — log on change here.
   val analytics = LocalAnalytics.current
@@ -79,7 +92,8 @@ fun AdaptiveShellRoute(
     (notice as? SyncNotice.ChangesDiscarded)?.aircraftLabel.orEmpty(),
   )
   LaunchedEffect(notice) {
-    val discarded = notice as? SyncNotice.ChangesDiscarded ?: return@LaunchedEffect
+    val discarded =
+      notice as? SyncNotice.ChangesDiscarded ?: return@LaunchedEffect
     snackbarHostState.showSnackbar(
       message = discardedMessage,
       actionLabel = dismissLabel,
@@ -96,6 +110,7 @@ fun AdaptiveShellRoute(
     onSelectAircraft = viewModel::selectAircraft,
     onOpenSettings = viewModel::openSettings,
     onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+    onEnterInviteCode = onEnterInviteCode,
     sectionContent = { section, aircraftId ->
       if (section == ShellSection.SETTINGS) {
         SettingsSection(
@@ -114,6 +129,7 @@ fun AdaptiveShellRoute(
     emptyFleetContent = {
       FleetEmptyState(
         onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+        onEnterInviteCode = onEnterInviteCode,
       )
     },
     sectionFab = { section, aircraftId ->

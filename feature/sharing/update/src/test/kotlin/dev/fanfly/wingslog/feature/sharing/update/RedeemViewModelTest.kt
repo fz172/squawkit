@@ -50,6 +50,12 @@ class RedeemViewModelTest {
     coEvery { sharing.publishTechnicianMirror(any()) } returns Result.success(Unit)
     // The sheet previews what you are joining (#201); irrelevant to these assertions unless stated.
     coEvery { sharing.previewInvite(any()) } returns Result.failure(RuntimeException("no preview"))
+    // Default redeem answer. These tests share one global invite channel + auth flow, and a VM from
+    // a prior test is never cancelled, so parking an auto-accept code (#209) wakes those stale VMs
+    // too. A default keeps them harmless; a test's own specific stub (eq(CODE)) still wins.
+    coEvery { sharing.redeemInvite(any()) } returns Result.success(
+      RedeemOutcome(aircraftId = AC_ID, hostUid = "host-uid", role = ShareRole.TECHNICIAN),
+    )
     AircraftShareDeepLinks.consume()
   }
 
@@ -163,6 +169,41 @@ class RedeemViewModelTest {
     vm.accept()
 
     assertThat(vm.uiState.value).isInstanceOf(RedeemUiState.Failed::class.java)
+  }
+
+  @Test
+  fun typedCode_signedIn_redeemsWithoutAskingToConfirm() = runTest {
+    // #209: typing the code was the consent. A signed-in user who types one goes straight to the
+    // outcome — the "you've been invited, accept?" step is skipped, never shown.
+    val signedIn = user(anonymous = false)
+    authState.value = signedIn
+    every { auth.currentUser } returns signedIn
+    coEvery { sharing.redeemInvite(CODE) } returns Result.success(
+      RedeemOutcome(aircraftId = AC_ID, hostUid = "host-uid", role = ShareRole.TECHNICIAN),
+    )
+
+    AircraftShareDeepLinks.deliverCode(CODE)
+
+    assertThat(viewModel().uiState.value).isEqualTo(RedeemUiState.Success(ShareRole.TECHNICIAN))
+  }
+
+  @Test
+  fun typedCode_guest_signsInThenRedeems() = runTest {
+    // A guest who types a code is told to sign in; once they do, the parked auto-accept code redeems
+    // itself — same park-and-resume as a link, but with no confirm step on the far side.
+    authState.value = user(anonymous = true)
+    coEvery { sharing.redeemInvite(CODE) } returns Result.success(
+      RedeemOutcome(aircraftId = AC_ID, hostUid = "host-uid", role = ShareRole.TECHNICIAN),
+    )
+    AircraftShareDeepLinks.deliverCode(CODE)
+    val vm = viewModel()
+    assertThat(vm.uiState.value).isEqualTo(RedeemUiState.NeedsSignIn)
+
+    val signedIn = user(anonymous = false)
+    every { auth.currentUser } returns signedIn
+    authState.value = signedIn
+
+    assertThat(vm.uiState.value).isEqualTo(RedeemUiState.Success(ShareRole.TECHNICIAN))
   }
 
   @Test

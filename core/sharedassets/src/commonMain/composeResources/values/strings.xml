@@ -8,10 +8,12 @@
   <string name="add">Add</string>
   <string name="edit">Edit</string>
   <string name="add_aircraft">Add Aircraft</string>
+  <string name="enter_invite_code">Enter invite code</string>
   <string name="empty_add_aircraft">Add an aircraft to get started</string>
   <string name="remove">Remove</string>
   <string name="delete">Delete</string>
   <string name="done">Done</string>
+  <string name="continue_action">Continue</string>
   <string name="ok">OK</string>
   <string name="cancel">Cancel</string>
   <string name="accept">Accept</string>

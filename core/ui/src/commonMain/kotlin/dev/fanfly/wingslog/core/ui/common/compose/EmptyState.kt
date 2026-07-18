@@ -11,6 +11,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +28,8 @@ fun EmptyState(
   icon: ImageVector,
   actionText: String? = null,
   onActionClick: (() -> Unit)? = null,
+  secondaryActionText: String? = null,
+  onSecondaryActionClick: (() -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
   EmptyState(
@@ -42,6 +45,8 @@ fun EmptyState(
     },
     actionText = actionText,
     onActionClick = onActionClick,
+    secondaryActionText = secondaryActionText,
+    onSecondaryActionClick = onSecondaryActionClick,
     modifier = modifier,
   )
 }
@@ -53,6 +58,8 @@ fun EmptyState(
   iconContent: @Composable () -> Unit,
   actionText: String? = null,
   onActionClick: (() -> Unit)? = null,
+  secondaryActionText: String? = null,
+  onSecondaryActionClick: (() -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
   Column(
@@ -83,6 +90,13 @@ fun EmptyState(
       Spacer(modifier = Modifier.height(Spacing.huge))
       Button(onClick = onActionClick) {
         Text(text = actionText)
+      }
+    }
+
+    if (secondaryActionText != null && onSecondaryActionClick != null) {
+      Spacer(modifier = Modifier.height(Spacing.small))
+      TextButton(onClick = onSecondaryActionClick) {
+        Text(text = secondaryActionText)
       }
     }
   }
