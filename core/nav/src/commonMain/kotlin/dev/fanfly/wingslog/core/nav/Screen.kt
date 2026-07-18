@@ -21,6 +21,7 @@ sealed class Screen(val route: String) {
   data object ExportLogs : Screen("export_logs")
   data object ExportHistory : Screen("export_history")
   data object AddAircraft : Screen("add_aircraft")
+  data object EnterInviteCode : Screen("enter_invite_code")
 
   data object ManageTechnicians : Screen("manage_technicians")
 

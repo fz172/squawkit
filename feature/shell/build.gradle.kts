@@ -41,6 +41,7 @@ kotlin {
       // The shared app graph must reach every feature UI module it hosts — this module plays
       // the same aggregator role for composables/nav that core:di plays for Koin modules.
       implementation(project(":core:analytics"))
+      implementation(project(":core:appinfo"))
       implementation(project(":core:auth"))
       implementation(project(":core:nav"))
       implementation(project(":core:ui"))

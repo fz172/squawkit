@@ -32,6 +32,18 @@ object AircraftShareDeepLinks {
     return true
   }
 
+  /**
+   * Parks a hand-typed code (#209), sending it down the exact same redeem path a link takes — the
+   * manual-entry screen is just another way to fill this channel. [raw] is normalized the way a
+   * link's fragment is; a value that isn't a well-formed code is refused (returns false), so the
+   * caller can keep the screen open rather than parking nonsense that would surface an error sheet.
+   */
+  fun deliverCode(raw: String): Boolean {
+    val code = normalizeInviteCode(raw) ?: return false
+    _pendingInvite.value = ShareInvite(code)
+    return true
+  }
+
   /** Called once the parked invite has been handled so it isn't re-processed. */
   fun consume() {
     _pendingInvite.value = null
@@ -48,7 +60,10 @@ object AircraftShareDeepLinks {
   fun parse(url: String): ShareInvite? {
     val beforeFragment = url.substringBefore('#')
     if (beforeFragment == url) return null // no fragment
-    if (!beforeFragment.substringBefore('?').trimEnd('/').endsWith("/share")) return null
+    if (!beforeFragment.substringBefore('?')
+        .trimEnd('/')
+        .endsWith("/share")
+    ) return null
     val code = normalizeInviteCode(url.substringAfter('#'))
     return if (code == null) null else ShareInvite(code)
   }

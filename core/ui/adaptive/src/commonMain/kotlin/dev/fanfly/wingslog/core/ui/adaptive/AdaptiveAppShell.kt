@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.DropdownMenu
@@ -73,6 +74,7 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add_aircraft
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
+import wingslog.core.sharedassets.generated.resources.enter_invite_code
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.core.sharedassets.generated.resources.shell_nav_tasks_narrow
@@ -161,6 +163,9 @@ fun AdaptiveAppShell(
   onSelectAircraft: (String) -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
+  // #209: opens the manual invite-code entry surface. Null when aircraft sharing is gated off for
+  // the build, which removes the switcher affordance entirely.
+  onEnterInviteCode: (() -> Unit)? = null,
   sectionContent: @Composable (section: ShellSection, aircraftId: String?) -> Unit,
   emptyFleetContent: @Composable () -> Unit,
   // Per-section floating action button (Add log / task / squawk). A host slot because the add
@@ -196,6 +201,7 @@ fun AdaptiveAppShell(
           onSelectAircraft = onSelectAircraft,
           onOpenSettings = onOpenSettings,
           onAddAircraft = onAddAircraft,
+          onEnterInviteCode = onEnterInviteCode,
           content = content,
           fab = fab,
           snackbarHostState = snackbarHostState,
@@ -362,6 +368,7 @@ private fun ShellForTier(
   onSelectAircraft: (String) -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
+  onEnterInviteCode: (() -> Unit)?,
   content: @Composable () -> Unit,
   fab: @Composable () -> Unit,
   snackbarHostState: SnackbarHostState,
@@ -374,6 +381,7 @@ private fun ShellForTier(
         onSelectAircraft = onSelectAircraft,
         onOpenSettings = onOpenSettings,
         onAddAircraft = onAddAircraft,
+        onEnterInviteCode = onEnterInviteCode,
         content = content,
         fab = fab,
         snackbarHostState = snackbarHostState,
@@ -386,6 +394,7 @@ private fun ShellForTier(
         onSelectAircraft = onSelectAircraft,
         onOpenSettings = onOpenSettings,
         onAddAircraft = onAddAircraft,
+        onEnterInviteCode = onEnterInviteCode,
         content = content,
         fab = fab,
         snackbarHostState = snackbarHostState,
@@ -404,6 +413,7 @@ private fun SidebarShell(
   onSelectAircraft: (String) -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
+  onEnterInviteCode: (() -> Unit)?,
   content: @Composable () -> Unit,
   fab: @Composable () -> Unit,
   snackbarHostState: SnackbarHostState,
@@ -414,6 +424,7 @@ private fun SidebarShell(
       onSelectSection = onSelectSection,
       onSelectAircraft = onSelectAircraft,
       onAddAircraft = onAddAircraft,
+      onEnterInviteCode = onEnterInviteCode,
       onOpenAccount = onOpenSettings,
     )
     VerticalDivider()
@@ -442,6 +453,7 @@ private fun WingsSidebar(
   onSelectSection: (ShellSection) -> Unit,
   onSelectAircraft: (String) -> Unit,
   onAddAircraft: () -> Unit,
+  onEnterInviteCode: (() -> Unit)? = null,
   onOpenAccount: () -> Unit,
   // When true (empty fleet) the switcher is hidden and the per-aircraft sections are muted — but
   // still tappable, so tapping any of them leaves Settings and returns to the add-aircraft prompt.
@@ -482,6 +494,7 @@ private fun WingsSidebar(
           state = state,
           onSelectAircraft = onSelectAircraft,
           onAddAircraft = onAddAircraft,
+          onEnterInviteCode = onEnterInviteCode,
           modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
         )
       }
@@ -546,6 +559,7 @@ private fun SidebarSwitcher(
   state: AdaptiveShellUiState,
   onSelectAircraft: (String) -> Unit,
   onAddAircraft: () -> Unit,
+  onEnterInviteCode: (() -> Unit)?,
   modifier: Modifier = Modifier,
 ) {
   var open by remember { mutableStateOf(false) }
@@ -583,6 +597,7 @@ private fun SidebarSwitcher(
       state = state,
       onSelectAircraft = onSelectAircraft,
       onAddAircraft = onAddAircraft,
+      onEnterInviteCode = onEnterInviteCode,
     )
   }
 }
@@ -599,6 +614,7 @@ private fun ScaffoldShell(
   onSelectAircraft: (String) -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
+  onEnterInviteCode: (() -> Unit)?,
   content: @Composable () -> Unit,
   fab: @Composable () -> Unit,
   snackbarHostState: SnackbarHostState,
@@ -649,6 +665,7 @@ private fun ScaffoldShell(
       showTopBarSwitcher = true,
       onSelectAircraft = onSelectAircraft,
       onAddAircraft = onAddAircraft,
+      onEnterInviteCode = onEnterInviteCode,
       onOpenSettings = onOpenSettings,
       onExitSettings = { onSelectSection(backTarget.value) },
       content = content,
@@ -669,6 +686,7 @@ private fun ShellContent(
   showTopBarSwitcher: Boolean,
   onSelectAircraft: (String) -> Unit,
   onAddAircraft: (() -> Unit)? = null,
+  onEnterInviteCode: (() -> Unit)? = null,
   onOpenSettings: (() -> Unit)? = null,
   // Non-sidebar tiers only: leaves the Settings section back to the tabbed views. Null in sidebar
   // mode, where the sidebar itself is the way out.
@@ -728,6 +746,7 @@ private fun ShellContent(
                   state = state,
                   onSelectAircraft = onSelectAircraft,
                   onAddAircraft = onAddAircraft,
+                  onEnterInviteCode = onEnterInviteCode,
                 )
               }
               if (onOpenSettings != null && state.section != ShellSection.SETTINGS) {
@@ -784,6 +803,7 @@ private fun TopBarSwitcher(
   state: AdaptiveShellUiState,
   onSelectAircraft: (String) -> Unit,
   onAddAircraft: (() -> Unit)?,
+  onEnterInviteCode: (() -> Unit)?,
 ) {
   var open by remember { mutableStateOf(false) }
   Box {
@@ -797,6 +817,7 @@ private fun TopBarSwitcher(
       state = state,
       onSelectAircraft = onSelectAircraft,
       onAddAircraft = onAddAircraft,
+      onEnterInviteCode = onEnterInviteCode,
     )
   }
 }
@@ -808,6 +829,7 @@ private fun AircraftDropdown(
   state: AdaptiveShellUiState,
   onSelectAircraft: (String) -> Unit,
   onAddAircraft: (() -> Unit)?,
+  onEnterInviteCode: (() -> Unit)?,
 ) {
   DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
     state.aircraft.forEach { ac ->
@@ -831,13 +853,30 @@ private fun AircraftDropdown(
         },
       )
     }
-    if (onAddAircraft != null) {
+    if (onAddAircraft != null || onEnterInviteCode != null) {
       HorizontalDivider()
+    }
+    if (onAddAircraft != null) {
       DropdownMenuItem(
         text = { Text(stringResource(UiRes.string.add_aircraft)) },
         leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
         onClick = {
           onAddAircraft()
+          onDismiss()
+        },
+      )
+    }
+    if (onEnterInviteCode != null) {
+      DropdownMenuItem(
+        text = { Text(stringResource(UiRes.string.enter_invite_code)) },
+        leadingIcon = {
+          Icon(
+            Icons.Filled.Keyboard,
+            contentDescription = null
+          )
+        },
+        onClick = {
+          onEnterInviteCode()
           onDismiss()
         },
       )

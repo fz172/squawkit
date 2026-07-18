@@ -23,7 +23,6 @@
   <string name="email_use_different">Use a different email</string>
   <string name="email_finish_title">Finish signing in</string>
   <string name="email_finish_body">Confirm the email this link was sent to.</string>
-  <string name="email_finish_cta">Continue</string>
   <string name="email_link_error">That link didn't work. Request a new one.</string>
   <string name="legal_disclaimer">SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.</string>
   <string name="privacy_notice">Privacy Notice</string>
@@ -34,7 +33,6 @@
   <string name="onboarding_name_body">Just so we know who's logging any maintenance work. You can change it anytime in Settings.</string>
   <string name="onboarding_name_label">YOUR NAME</string>
   <string name="onboarding_name_hint">e.g. Amelia Earhart</string>
-  <string name="onboarding_continue">Continue</string>
   <!-- Onboarding: welcome -->
   <string name="onboarding_welcome_aboard">Welcome aboard</string>
   <string name="onboarding_welcome_tagline">Let's get your hangar set up.</string>

@@ -63,9 +63,9 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.continue_action
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.feature.login.generated.resources.Res
-import wingslog.feature.login.generated.resources.onboarding_continue
 import wingslog.feature.login.generated.resources.onboarding_name_body
 import wingslog.feature.login.generated.resources.onboarding_name_eyebrow
 import wingslog.feature.login.generated.resources.onboarding_name_headline
@@ -287,7 +287,7 @@ fun NameEntryScreen(
       ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
           Text(
-            text = stringResource(Res.string.onboarding_continue),
+            text = stringResource(UiRes.string.continue_action),
             style = TextStyle(
               fontFamily = headlineFamily,
               fontSize = 16.sp,

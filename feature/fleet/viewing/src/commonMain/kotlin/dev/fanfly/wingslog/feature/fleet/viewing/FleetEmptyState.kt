@@ -23,6 +23,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.feature.fleet.sharedassets.generated.resources.add_first_aircraft
+import wingslog.feature.fleet.sharedassets.generated.resources.have_invite_code
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_description
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_title
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
@@ -32,6 +33,9 @@ import wingslog.feature.fleet.sharedassets.generated.resources.Res as FleetRes
 fun FleetEmptyState(
   onAddAircraft: () -> Unit,
   modifier: Modifier = Modifier,
+  // #209: join-by-code, offered next to create-aircraft. Null when sharing is gated off for the
+  // build, which drops the affordance entirely rather than showing a door that does not open.
+  onEnterInviteCode: (() -> Unit)? = null,
 ) {
   val bobTransition = rememberInfiniteTransition(label = "emptyFleetBob")
   val bobY by bobTransition.animateFloat(
@@ -73,6 +77,8 @@ fun FleetEmptyState(
       },
       actionText = stringResource(FleetRes.string.add_first_aircraft),
       onActionClick = onAddAircraft,
+      secondaryActionText = onEnterInviteCode?.let { stringResource(FleetRes.string.have_invite_code) },
+      onSecondaryActionClick = onEnterInviteCode,
     )
   }
 }

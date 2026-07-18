@@ -39,11 +39,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.back
+import wingslog.core.sharedassets.generated.resources.continue_action
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.email_entry_hint
 import wingslog.feature.login.generated.resources.email_entry_title
 import wingslog.feature.login.generated.resources.email_finish_body
-import wingslog.feature.login.generated.resources.email_finish_cta
 import wingslog.feature.login.generated.resources.email_finish_title
 import wingslog.feature.login.generated.resources.email_invalid
 import wingslog.feature.login.generated.resources.email_link_error
@@ -328,7 +328,7 @@ private fun FinishContent(
   Spacer(Modifier.height(Spacing.large))
 
   PrimaryButton(
-    label = stringResource(Res.string.email_finish_cta),
+    label = stringResource(CoreRes.string.continue_action),
     enabled = !isWorking && email.isNotBlank(),
     loading = isWorking,
     onClick = onContinue,

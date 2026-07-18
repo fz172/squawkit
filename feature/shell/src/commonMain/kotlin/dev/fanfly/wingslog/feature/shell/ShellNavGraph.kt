@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
+import dev.fanfly.wingslog.feature.sharing.update.EnterInviteCodeRoute
 import dev.fanfly.wingslog.feature.sharing.update.InviteSheetRoute
 import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
@@ -40,6 +41,14 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
   ) {
     AdaptiveFormDialogFrame {
       EditAircraftScreen(navController = navController)
+    }
+  }
+  dialog(
+    route = Screen.EnterInviteCode.route,
+    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+  ) {
+    AdaptiveFormDialogFrame {
+      EnterInviteCodeRoute(navController = navController)
     }
   }
   dialog(
@@ -146,13 +155,17 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
 fun NavGraphBuilder.sharingRoutes(navController: NavController) {
   composable(
     route = Screen.ManageAccess.route,
-    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType }),
+    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+      type = NavType.StringType
+    }),
   ) {
     ManageAccessRoute(navController = navController)
   }
   dialog(
     route = Screen.InviteToAircraft.route,
-    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType }),
+    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+      type = NavType.StringType
+    }),
     dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
   ) {
     AdaptiveFormDialogFrame {
