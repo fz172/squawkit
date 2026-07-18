@@ -1,19 +1,16 @@
 package dev.fanfly.wingslog.feature.squawk.update.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,9 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -44,27 +39,20 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
-import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
-import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.squawk.update.compose.DismissSquawkDialog
 import dev.fanfly.wingslog.feature.squawk.update.compose.ResolveOptionsMenu
-import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkBasicTab
-import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsTab
+import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkBasicSection
+import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsSection
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.details
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
 import wingslog.feature.squawk.update.generated.resources.reopen_issue
 import wingslog.feature.squawk.update.generated.resources.resolve_issue
-import wingslog.feature.squawk.update.generated.resources.tab_basic
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -122,73 +110,35 @@ fun SquawkFormScreen(
     )
   }
 
-  val tabs = listOf(
-    IconLabelTabSpec(
-      Icons.Default.Edit,
-      stringResource(UpdateRes.string.tab_basic)
-    ),
-    IconLabelTabSpec(
-      Icons.Default.Info,
-      stringResource(CoreRes.string.details)
-    ),
-  )
-  val pagerState = rememberPagerState(pageCount = { tabs.size })
-  val coroutineScope = rememberCoroutineScope()
   val analytics = LocalAnalytics.current
-  // Log tab switches (tap or swipe) as page views; drop(1) skips the initial page on open.
-  LaunchedEffect(pagerState) {
-    snapshotFlow { pagerState.currentPage }
-      .drop(1)
-      .collect { page ->
-        analytics.logScreenView("squawk_form/${if (page == 0) "basics" else "details"}")
-      }
-  }
+  LaunchedEffect(Unit) { analytics.logScreenView("squawk_form") }
 
   Scaffold(
     modifier = modifier,
     containerColor = MaterialTheme.colorScheme.background,
     topBar = {
-      Column {
-        ConstrainedTopBar(ContentWidth.Form) {
-          TopAppBar(
-            title = {
-              Text(
-                text = screenTitle.uppercase(),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+      ConstrainedTopBar(ContentWidth.Form) {
+        TopAppBar(
+          title = {
+            Text(
+              text = screenTitle.uppercase(),
+              style = MaterialTheme.typography.titleLarge,
+              fontWeight = FontWeight.Bold,
+            )
+          },
+          navigationIcon = {
+            IconButton(onClick = { tryBack() }) {
+              Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = null
               )
-            },
-            navigationIcon = {
-              IconButton(onClick = { tryBack() }) {
-                Icon(
-                  Icons.AutoMirrored.Filled.ArrowBack,
-                  contentDescription = null
-                )
-              }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-              containerColor = Color.Transparent,
-              scrolledContainerColor = Color.Transparent,
-            ),
-          )
-        }
-        Box(
-          modifier = Modifier.fillMaxWidth(),
-          contentAlignment = Alignment.TopCenter
-        ) {
-          IconLabelTabRow(
-            tabs = tabs,
-            selectedIndex = pagerState.currentPage,
-            onSelect = {
-              coroutineScope.launch {
-                pagerState.animateScrollToPage(
-                  it
-                )
-              }
-            },
-            modifier = Modifier.constrainedContentWidth(ContentWidth.Form),
-          )
-        }
+            }
+          },
+          colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            scrolledContainerColor = Color.Transparent,
+          ),
+        )
       }
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -198,50 +148,43 @@ fun SquawkFormScreen(
         .padding(padding)
         .fillMaxSize(),
     ) {
-      HorizontalPager(
-        state = pagerState,
-        modifier = Modifier.weight(1f),
-        beyondViewportPageCount = 1,
-        verticalAlignment = Alignment.Top,
-      ) { page ->
-        Box(
+      Box(
+        modifier = Modifier
+          .weight(1f)
+          .fillMaxWidth(),
+        contentAlignment = Alignment.TopCenter,
+      ) {
+        Column(
           modifier = Modifier
-            .fillMaxSize(),
-          contentAlignment = Alignment.TopCenter,
+            .fillMaxHeight()
+            .constrainedContentWidth(ContentWidth.Form)
+            .verticalScroll(rememberScrollState())
+            .padding(Spacing.screenPadding),
+          verticalArrangement = Arrangement.spacedBy(Spacing.large),
         ) {
-          Column(
-            modifier = Modifier
-              .fillMaxHeight()
-              .constrainedContentWidth(ContentWidth.Form)
-              .verticalScroll(rememberScrollState())
-              .padding(Spacing.screenPadding),
-          ) {
-            when (page) {
-              0 -> SquawkBasicTab(
-                title = state.title,
-                onTitleChange = onTitleChange,
-                priority = state.priority,
-                onPriorityChange = onPriorityChange,
-                reportedDateFormatted = state.reportedDateFormatted,
-                readOnly = state.isAddressedReadOnly,
-                titleError = state.titleError,
-              )
+          SquawkBasicSection(
+            title = state.title,
+            onTitleChange = onTitleChange,
+            priority = state.priority,
+            onPriorityChange = onPriorityChange,
+            reportedDateFormatted = state.reportedDateFormatted,
+            readOnly = state.isAddressedReadOnly,
+            titleError = state.titleError,
+          )
 
-              1 -> SquawkDetailsTab(
-                description = state.description,
-                onDescriptionChange = onDescriptionChange,
-                isEdit = isEdit,
-                addressedByLogId = state.addressedByLogId,
-                availableLogs = state.availableLogs,
-                onAddLog = onAddLog,
-                onClearLog = onClearLog,
-                readOnly = state.isAddressedReadOnly,
-                dismissReason = state.dismissReason,
-                dismissedAtFormatted = state.dismissedAtFormatted,
-                attachmentSection = attachmentSection,
-              )
-            }
-          }
+          SquawkDetailsSection(
+            description = state.description,
+            onDescriptionChange = onDescriptionChange,
+            isEdit = isEdit,
+            addressedByLogId = state.addressedByLogId,
+            availableLogs = state.availableLogs,
+            onAddLog = onAddLog,
+            onClearLog = onClearLog,
+            readOnly = state.isAddressedReadOnly,
+            dismissReason = state.dismissReason,
+            dismissedAtFormatted = state.dismissedAtFormatted,
+            attachmentSection = attachmentSection,
+          )
         }
       }
 
