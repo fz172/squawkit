@@ -117,8 +117,14 @@ class AttachmentFormController(
   /**
    * Removes the attachment with [id]: session-local items and saved links disappear outright;
    * saved files become [PendingAttachment.PendingDelete] and are tombstoned on save.
+   *
+   * A [PendingAttachment.Local] is not just a list entry — `addPickedFile` already wrote its blob
+   * to the store and scheduled an upload. Dropping it from the UI would leave that blob orphaned
+   * (locally, and in gs:// once the upload lands), so we tombstone it here and let the delete
+   * driver reclaim both. Links carry no blob, so there is nothing to clean up.
    */
-  fun remove(id: String) {
+  suspend fun remove(id: String) {
+    val removed = _pendingAttachments.value.firstOrNull { it.id == id }
     _pendingAttachments.update { list ->
       list.mapNotNull { pending ->
         when {
@@ -133,6 +139,9 @@ class AttachmentFormController(
           else -> pending
         }
       }
+    }
+    if (removed is PendingAttachment.Local) {
+      attachmentManager.delete(removed.attachment)
     }
   }
 
