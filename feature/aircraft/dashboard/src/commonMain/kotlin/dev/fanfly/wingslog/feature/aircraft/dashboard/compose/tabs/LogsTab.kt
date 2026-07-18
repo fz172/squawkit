@@ -27,6 +27,7 @@ fun LogsTab(
   onNavigateToAddLog: (() -> Unit)?,
   onNavigateToEditLog: ((logId: String) -> Unit)?,
   onTaskClick: (taskId: String) -> Unit,
+  onSquawkClick: (squawkId: String) -> Unit,
   scrollToLogId: String? = null,
   modifier: Modifier = Modifier,
 ) {
@@ -78,6 +79,7 @@ fun LogsTab(
     },
     openError = openError,
     onTaskClick = onTaskClick,
+    onSquawkClick = onSquawkClick,
     scrollToLogId = scrollToLogId,
     modifier = modifier,
   )

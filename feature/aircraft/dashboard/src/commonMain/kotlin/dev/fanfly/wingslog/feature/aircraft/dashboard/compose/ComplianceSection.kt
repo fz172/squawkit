@@ -10,6 +10,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
@@ -34,6 +36,9 @@ fun ComplianceSection(
   showComplied: Boolean,
   onToggleComplied: (Boolean) -> Unit,
   onCardClick: (MaintenanceTaskWithStatus) -> Unit = {},
+  /** Task to report the on-screen position of, so the tab can scroll it into view. */
+  scrollTargetId: String? = null,
+  onTargetPositioned: (Float) -> Unit = {},
   showHeader: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
@@ -88,7 +93,14 @@ fun ComplianceSection(
         TaskCardItem(
           cardWithStatus = item,
           onClick = { onCardClick(item) },
-          modifier = Modifier.fillMaxWidth(),
+          modifier = Modifier.fillMaxWidth()
+            .then(
+              if (item.card.id == scrollTargetId) {
+                Modifier.onGloballyPositioned { onTargetPositioned(it.positionInRoot().y) }
+              } else {
+                Modifier
+              }
+            ),
         )
       }
     }

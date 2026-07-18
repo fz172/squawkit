@@ -38,6 +38,8 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.viewing.generated.resources.hours_abbr_value
+import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_one
+import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_plural
 import wingslog.feature.logs.viewing.generated.resources.log_task_count_one
 import wingslog.feature.logs.viewing.generated.resources.log_task_count_plural
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
@@ -126,6 +128,7 @@ fun MaintenanceLogCard(
         )
         Spacer(Modifier.weight(1f))
         val taskCount = log.inspection_ids.size
+        val squawkCount = log.squawk_ids.size
         if (taskCount > 0) {
           val taskLabel =
             if (taskCount == 1) stringResource(MaintenanceRes.string.log_task_count_one)
@@ -139,9 +142,23 @@ fun MaintenanceLogCard(
             color = MaterialTheme.colorScheme.primary,
           )
         }
+        if (squawkCount > 0) {
+          if (taskCount > 0) Spacer(Modifier.width(Spacing.medium))
+          val squawkLabel =
+            if (squawkCount == 1) stringResource(MaintenanceRes.string.log_squawk_count_one)
+            else stringResource(
+              MaintenanceRes.string.log_squawk_count_plural,
+              squawkCount
+            )
+          Text(
+            text = squawkLabel,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+          )
+        }
         val techName = log.technician?.name?.takeIf { it.isNotBlank() }
         if (techName != null) {
-          if (taskCount > 0) Spacer(Modifier.width(Spacing.medium))
+          if (taskCount > 0 || squawkCount > 0) Spacer(Modifier.width(Spacing.medium))
           Text(
             text = techName,
             style = MaterialTheme.typography.labelMedium,

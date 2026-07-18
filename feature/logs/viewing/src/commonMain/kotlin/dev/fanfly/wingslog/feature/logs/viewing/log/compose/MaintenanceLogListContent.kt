@@ -99,6 +99,7 @@ fun MaintenanceLogListContent(
   onAttachmentTap: (Attachment) -> Unit,
   openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
+  onSquawkClick: ((String) -> Unit)? = null,
   /**
    * When set, scroll the list to the log with this id (a jump from a squawk's work history). The
    * caller must not toggle this back to null while the Logs tab is on screen — doing so remounts this
@@ -335,6 +336,7 @@ fun MaintenanceLogListContent(
               MaintenanceLogDetailSheet(
                 log = log,
                 availableCards = uiState.availableCards,
+                availableSquawks = uiState.availableSquawks,
                 attachmentsUnavailable = uiState.attachmentsUnavailable,
                 onDismiss = onDismissDetail,
                 authorship = uiState.selectedAuthorship,
@@ -351,6 +353,12 @@ fun MaintenanceLogListContent(
                   { taskId ->
                     onDismissDetail()
                     cb(taskId)
+                  }
+                },
+                onSquawkClick = onSquawkClick?.let { cb ->
+                  { squawkId ->
+                    onDismissDetail()
+                    cb(squawkId)
                   }
                 },
               )

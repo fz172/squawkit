@@ -14,14 +14,21 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlin.math.roundToInt
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
@@ -57,6 +64,8 @@ fun SquawkTab(
   onAction: (AircraftOverviewAction) -> Unit,
   onMutationAction: ((AircraftOverviewAction) -> Unit)? = onAction,
   onLogClick: ((logId: String) -> Unit)? = null,
+  /** Jumped-to squawk (from a log's Resolved Squawks): switch to its sub-view and scroll to it. */
+  scrollToSquawkId: String? = null,
   showHeader: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
@@ -73,10 +82,29 @@ fun SquawkTab(
     .filter { it.status == SquawkStatus.ADDRESSED || it.status == SquawkStatus.DISMISSED }
     .sortedByDescending { it.squawk.created_at?.getEpochSecond() ?: 0L }
 
+  // Jump-to-squawk from a log: switch to the sub-view that holds the target, then scroll it to the
+  // top of the (non-lazy) list. Scroll offsets use root coordinates — the target card and the scroll
+  // container each report their top, and the difference plus the current scroll is the content
+  // offset to animate to.
+  val scrollState = rememberScrollState()
+  var contentTopY by remember { mutableStateOf(0f) }
+  var targetCardY by remember(scrollToSquawkId) { mutableStateOf<Float?>(null) }
+  LaunchedEffect(scrollToSquawkId) {
+    val id = scrollToSquawkId ?: return@LaunchedEffect
+    val target = state.squawks.find { it.squawk.id == id } ?: return@LaunchedEffect
+    showClosed = target.status != SquawkStatus.OPEN
+    // Wait until the target card lays out in the (possibly just-switched) sub-view, then scroll once.
+    val cardY = snapshotFlow { targetCardY }.filterNotNull().first()
+    scrollState.animateScrollTo(
+      (scrollState.value + (cardY - contentTopY)).roundToInt().coerceAtLeast(0)
+    )
+  }
+
   Column(
     modifier = modifier
       .fillMaxSize()
-      .verticalScroll(rememberScrollState())
+      .verticalScroll(scrollState)
+      .onGloballyPositioned { contentTopY = it.positionInRoot().y }
       .padding(horizontal = Spacing.screenPadding),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
@@ -129,7 +157,14 @@ fun SquawkTab(
         SquawkCard(
           item = item,
           onClick = { onAction(AircraftOverviewAction.ShowSquawkDetail(item)) },
-          modifier = Modifier.fillMaxWidth(),
+          modifier = Modifier.fillMaxWidth()
+            .then(
+              if (item.squawk.id == scrollToSquawkId) {
+                Modifier.onGloballyPositioned { targetCardY = it.positionInRoot().y }
+              } else {
+                Modifier
+              }
+            ),
         )
       }
     }

@@ -16,6 +16,8 @@
   <string name="log_count_n_entries">%1$d Entries</string>
   <string name="log_task_count_one">1 task</string>
   <string name="log_task_count_plural">%1$d tasks</string>
+  <string name="log_squawk_count_one">1 squawk</string>
+  <string name="log_squawk_count_plural">%1$d squawks</string>
   <string name="hours_abbr_value">%1$s hrs</string>
   <string name="failed_to_load_logs">Could not load maintenance logs</string>
   <string name="maintenance_summary">Maintenance Summary</string>
@@ -29,4 +31,6 @@
   <string name="expand_details">Expand details</string>
   <string name="affected_maintenance_tasks">Affected Maintenance Tasks</string>
   <string name="no_tasks_linked">No tasks linked to this entry</string>
+  <string name="resolved_squawks">Resolved Squawks</string>
+  <string name="unknown_squawk">Unknown squawk (%1$s)</string>
 </resources>

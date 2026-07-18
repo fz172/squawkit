@@ -310,13 +310,6 @@ class AircraftOverviewViewModel(
         confirmDeleteTask()
       }
 
-      is AircraftOverviewAction.TaskFromLogClick -> {
-        val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
-        val card = (state.activeTasks + state.completedTasks)
-          .find { it.card.id == action.taskId } ?: return
-        showTaskDetails(card)
-      }
-
       is AircraftOverviewAction.AddSquawkClick -> {
         viewModelScope.launch {
           _events.send(
@@ -361,6 +354,7 @@ class AircraftOverviewViewModel(
           )
         }
       }
+
     }
   }
 

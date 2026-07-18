@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -39,6 +40,7 @@ class LogAuthorshipGatingTest {
   private val tasks: TaskDataManager = mockk(relaxed = true)
   private val sharing: SharingManager = mockk(relaxed = true)
   private val technicians: TechnicianManager = mockk(relaxed = true)
+  private val squawks: SquawkManager = mockk(relaxed = true)
   private val auth: FirebaseAuth = mockk(relaxed = true)
 
   // Hand-typed technician (no source_uid) — the case that now reports "not verified" when shared.
@@ -56,6 +58,7 @@ class LogAuthorshipGatingTest {
     every { tasks.observeTasks(AC_ID) } returns flowOf(emptyList())
     every { sharing.observeLinkedTechnicians(AC_ID) } returns flowOf(emptyList())
     every { technicians.observeSelf() } returns flowOf(null)
+    every { squawks.observeSquawks(AC_ID) } returns flowOf(emptyList())
     every { auth.currentUser } returns null
   }
 
@@ -67,6 +70,7 @@ class LogAuthorshipGatingTest {
     inspectionDataManager = tasks,
     sharingManager = sharing,
     technicianManager = technicians,
+    squawkManager = squawks,
     auth = auth,
     aircraftId = AC_ID,
   )
