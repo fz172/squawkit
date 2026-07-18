@@ -9,6 +9,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -21,7 +23,12 @@ class AttachmentFormControllerTest {
   @Before
   fun setUp() {
     attachmentManager = mockk(relaxed = true)
-    controller = AttachmentFormController(attachmentManager, AIRCRAFT_ID)
+    // Unconfined scope so discardUnsavedLocalBlobs' fire-and-forget launch runs synchronously.
+    controller = AttachmentFormController(
+      attachmentManager,
+      AIRCRAFT_ID,
+      CoroutineScope(UnconfinedTestDispatcher()),
+    )
   }
 
   // ---- seedIfEmpty ----
@@ -296,6 +303,47 @@ class AttachmentFormControllerTest {
     assertThat(controller.resolveForSave())
       .containsExactly(saved, local, link)
       .inOrder()
+  }
+
+  // ---- discardUnsavedLocalBlobs ----
+
+  @Test
+  fun discardUnsavedLocalBlobs_whenNotSaved_tombstonesLocalFiles() = runTest {
+    val local = fileAttachment("local-1")
+    coEvery {
+      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+    } returns local
+    controller.addLocalFiles(listOf(pickedFile())) { }
+
+    controller.discardUnsavedLocalBlobs()
+
+    coVerify(exactly = 1) { attachmentManager.delete(local) }
+  }
+
+  @Test
+  fun discardUnsavedLocalBlobs_afterResolveForSave_isNoOp() = runTest {
+    // Once resolveForSave has run the Local blobs are owned by the saved record — abandoning
+    // afterwards (e.g. onCleared firing post-save) must not delete them.
+    val local = fileAttachment("local-1")
+    coEvery {
+      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+    } returns local
+    controller.addLocalFiles(listOf(pickedFile())) { }
+    controller.resolveForSave()
+
+    controller.discardUnsavedLocalBlobs()
+
+    coVerify(exactly = 0) { attachmentManager.delete(any()) }
+  }
+
+  @Test
+  fun discardUnsavedLocalBlobs_leavesSavedAttachmentsUntouched() = runTest {
+    // Editing an existing record: its already-saved attachments must survive an abandon.
+    controller.seedIfEmpty(listOf(fileAttachment("saved-1")))
+
+    controller.discardUnsavedLocalBlobs()
+
+    coVerify(exactly = 0) { attachmentManager.delete(any()) }
   }
 
   // ---- deleteSavedFiles ----

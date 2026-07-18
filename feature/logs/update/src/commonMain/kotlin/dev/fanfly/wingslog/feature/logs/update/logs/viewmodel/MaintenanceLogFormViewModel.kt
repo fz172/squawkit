@@ -446,6 +446,13 @@ class MaintenanceLogFormViewModel(
     viewModelScope.launch { attachmentForm.remove(id) }
   }
 
+  override fun onCleared() {
+    // If the form is closed without saving, reclaim any files that were added (and eagerly
+    // uploaded) but never committed to a record.
+    attachmentForm.discardUnsavedLocalBlobs()
+    super.onCleared()
+  }
+
   // ── Save ────────────────────────────────────────────────────────────────────
 
   fun save() {

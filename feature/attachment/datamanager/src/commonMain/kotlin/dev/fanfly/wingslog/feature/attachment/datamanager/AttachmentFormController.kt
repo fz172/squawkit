@@ -8,10 +8,14 @@ import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * Shared form-side attachment state machine used by the task, squawk, and maintenance-log
@@ -21,11 +25,20 @@ import kotlinx.coroutines.flow.update
  * Deliberately UI-free: errors surface through [AddFileError] and the owning ViewModel maps
  * them to its own user-facing strings. Suspend functions run in the caller's scope (typically
  * `viewModelScope`).
+ *
+ * [cleanupScope] outlives the owning ViewModel on purpose: [discardUnsavedLocalBlobs] is called
+ * from `onCleared`, where `viewModelScope` is already cancelled, so the abandon-cleanup must run
+ * somewhere that survives.
  */
 class AttachmentFormController(
   private val attachmentManager: AttachmentManager,
   private val aircraftId: String,
+  private val cleanupScope: CoroutineScope =
+    CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
+
+  /** Set once [resolveForSave] runs: the pending Local blobs are now owned by a saved record. */
+  private var committed = false
 
   /** Why a picked file could not be added. The owning ViewModel maps these to UiText. */
   sealed interface AddFileError {
@@ -151,6 +164,9 @@ class AttachmentFormController(
    * populated protos — addPickedFile ran at pick time, so there is no network wait here.
    */
   suspend fun resolveForSave(): List<Attachment> {
+    // The pending Local blobs are about to be embedded in the saved record, so they are no longer
+    // "unsaved" — mark committed so a later onCleared does not tombstone them.
+    committed = true
     val pending = _pendingAttachments.value
     pending.filterIsInstance<PendingAttachment.PendingDelete>()
       .forEach { attachmentManager.delete(it.attachment) }
@@ -164,6 +180,25 @@ class AttachmentFormController(
       addAll(
         pending.filterIsInstance<PendingAttachment.LocalLink>()
           .map { it.attachment })
+    }
+  }
+
+  /**
+   * The form was abandoned without saving — tombstone any still-pending [PendingAttachment.Local]
+   * blobs so they don't orphan (locally, and in gs:// once their pick-time upload lands). Call
+   * from the owning ViewModel's `onCleared`.
+   *
+   * No-op once [resolveForSave] has run: those Local blobs are owned by the saved record. Saved
+   * items and pending-deletes are left untouched — they belong to, or are removals of, the
+   * persisted record, and are only acted on at save time. Runs on [cleanupScope] because the
+   * caller cannot await suspend work during teardown.
+   */
+  fun discardUnsavedLocalBlobs() {
+    if (committed) return
+    val locals = _pendingAttachments.value.filterIsInstance<PendingAttachment.Local>()
+    if (locals.isEmpty()) return
+    cleanupScope.launch {
+      locals.forEach { attachmentManager.delete(it.attachment) }
     }
   }
 
