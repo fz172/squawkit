@@ -126,15 +126,17 @@ fun EnterInviteCodeScreen(
         )
         Spacer(Modifier.height(Spacing.large))
         OutlinedTextField(
-          // The field's value is the raw, undashed code — the EFA1-GGTH dash is display-only, applied
+          // The field's value is the raw, undashed code — the EFA2-GGTH dash is display-only, applied
           // by the visual transformation. Formatting the value string directly instead desyncs the
           // cursor from the text (the inserted dash shifts the caret back a slot as you type).
           value = code,
           onValueChange = { raw ->
-            // Keep only alphabet characters (uppercased), drop any stray input, and cap at the code
-            // length. normalizeInviteCode stays the single source of truth for what a code *is*;
-            // this just bounds what the field will hold as it's typed.
-            code = raw.uppercase().filter { it in INPUT_ALPHABET }.take(CODE_LENGTH)
+            // Accept the whole alphanumeric set (A-Z, 0-9), not just the code alphabet. A client-side
+            // allowlist that drifts from the server's rules would silently swallow a *valid* code —
+            // worse than letting a wrong keystroke through. normalizeInviteCode is the single source
+            // of truth and gates the button below; here we only drop what can't be code content
+            // (separators, symbols), uppercase for display, and cap at the code length.
+            code = raw.uppercase().filter { it in 'A'..'Z' || it in '0'..'9' }.take(CODE_LENGTH)
           },
           label = { Text(stringResource(Res.string.enter_code_field_label)) },
           singleLine = true,
@@ -162,11 +164,8 @@ fun EnterInviteCodeScreen(
   }
 }
 
-/** The code alphabet plus the visually-ambiguous characters we tolerate on input. */
-private const val INPUT_ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789"
-
 /**
- * Renders the EFA1-GGTH grouping as display-only, over a raw (undashed) field value. The dash is
+ * Renders the EFA2-GGTH grouping as display-only, over a raw (undashed) field value. The dash is
  * inserted after the 4th character once there's a 5th; the offset mapping shifts every caret
  * position past it by one so the cursor tracks the raw text instead of jumping when the dash appears.
  */

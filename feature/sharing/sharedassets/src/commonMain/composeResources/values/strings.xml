@@ -68,7 +68,7 @@ The owner can invite you again.</string>
   <!-- #209: manual invite-code entry — the case the pairing code was invented for (owner reads it
        out, mechanic types it in) with no link to travel. -->
   <string name="enter_code_title">Join a shared aircraft</string>
-  <string name="enter_code_instructions">Enter the invite code the aircraft owner gave you. It looks like EFA1-GGTH.</string>
+  <string name="enter_code_instructions">Enter the invite code the aircraft owner gave you. It looks like EFA2-GGTH.</string>
   <string name="enter_code_field_label">Invite code</string>
   <!-- PRD E2: sharing is a cloud feature. With Cloud Sync off there is nothing to share into and
        nothing to receive from, so management is disabled and says why rather than failing on tap. -->
