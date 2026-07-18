@@ -48,6 +48,10 @@ class RedeemViewModel(
           _uiState.value.isHeld() -> Unit
           user == null -> _uiState.value = RedeemUiState.Hidden // still on the sign-in screen
           user.isAnonymous -> _uiState.value = RedeemUiState.NeedsSignIn
+          // Typed the code themselves (#209): the typing was the consent, so don't ask again — go
+          // straight to redeeming. accept() sets Redeeming synchronously, which is held on the next
+          // emission, so this fires exactly once. A guest resumes here too: sign in, then redeem.
+          invite.autoAccept -> accept()
           else -> {
             _uiState.value = RedeemUiState.Confirm()
             loadPreview(invite.code)

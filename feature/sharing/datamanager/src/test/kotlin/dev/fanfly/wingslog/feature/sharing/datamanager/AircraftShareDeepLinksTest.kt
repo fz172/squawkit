@@ -78,9 +78,11 @@ class AircraftShareDeepLinksTest {
   @Test
   fun deliverCode_parks_a_typed_code_down_the_same_path() {
     // #209: a hand-typed code lands on the same channel a link fills, normalized the same way —
-    // grouping and case included, so what the field shows and what parks agree.
+    // grouping and case included, so what the field shows and what parks agree. It parks as
+    // auto-accept: typing the code was the consent, so the redeem flow skips the confirm dialog.
     assertThat(AircraftShareDeepLinks.deliverCode("efa2-ggth")).isTrue()
-    assertThat(AircraftShareDeepLinks.pendingInvite.value).isEqualTo(ShareInvite(CODE))
+    assertThat(AircraftShareDeepLinks.pendingInvite.value)
+      .isEqualTo(ShareInvite(CODE, autoAccept = true))
   }
 
   @Test

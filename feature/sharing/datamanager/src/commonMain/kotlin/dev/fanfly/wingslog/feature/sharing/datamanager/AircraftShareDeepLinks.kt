@@ -14,7 +14,13 @@ import kotlinx.coroutines.flow.asStateFlow
  * an abandoned share outright (#204). The code names nothing real. Only the server can dereference
  * it, and it dies on first use.
  */
-data class ShareInvite(val code: String)
+/**
+ * [autoAccept] is true when the user's own action already *was* the consent — typing a code in the
+ * manual-entry screen (#209). Such an invite skips the "you've been invited, accept?" confirmation
+ * and redeems straight away. A link stays false: tapping a link is not the same as choosing to join
+ * a named aircraft, so it still shows what's being joined (#201) and asks.
+ */
+data class ShareInvite(val code: String, val autoAccept: Boolean = false)
 
 object AircraftShareDeepLinks {
   private val _pendingInvite = MutableStateFlow<ShareInvite?>(null)
@@ -40,7 +46,7 @@ object AircraftShareDeepLinks {
    */
   fun deliverCode(raw: String): Boolean {
     val code = normalizeInviteCode(raw) ?: return false
-    _pendingInvite.value = ShareInvite(code)
+    _pendingInvite.value = ShareInvite(code, autoAccept = true)
     return true
   }
 

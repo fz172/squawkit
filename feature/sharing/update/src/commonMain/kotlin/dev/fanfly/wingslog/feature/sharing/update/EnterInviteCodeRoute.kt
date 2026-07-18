@@ -20,6 +20,6 @@ fun EnterInviteCodeRoute(navController: NavController) {
       // means dismissing/accepting the sheet leaves the user on the fleet, not back on this form.
       navController.popBackStack()
     },
-    onBack = { navController.popBackStack() },
+    onDismiss = { navController.popBackStack() },
   )
 }

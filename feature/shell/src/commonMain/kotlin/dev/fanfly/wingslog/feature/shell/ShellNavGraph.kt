@@ -43,13 +43,13 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       EditAircraftScreen(navController = navController)
     }
   }
+  // A real centered dialog (not the full-screen form frame): the screen renders its own card over
+  // the scrimmed fleet, so it looks the same on a phone and a wide window.
   dialog(
     route = Screen.EnterInviteCode.route,
     dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
   ) {
-    AdaptiveFormDialogFrame {
-      EnterInviteCodeRoute(navController = navController)
-    }
+    EnterInviteCodeRoute(navController = navController)
   }
   dialog(
     route = Screen.EditAircraft.route,
