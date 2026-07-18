@@ -34,12 +34,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.sharing.model.formatInviteCode
 import dev.fanfly.wingslog.feature.sharing.model.normalizeInviteCode
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
@@ -123,15 +126,19 @@ fun EnterInviteCodeScreen(
         )
         Spacer(Modifier.height(Spacing.large))
         OutlinedTextField(
-          value = formatInviteCode(code),
+          // The field's value is the raw, undashed code — the EFA1-GGTH dash is display-only, applied
+          // by the visual transformation. Formatting the value string directly instead desyncs the
+          // cursor from the text (the inserted dash shifts the caret back a slot as you type).
+          value = code,
           onValueChange = { raw ->
-            // Keep only alphabet characters (uppercased), drop the display dash and any stray input,
-            // and cap at the code length. normalizeInviteCode stays the single source of truth for
-            // what a code *is*; this just bounds what the field will hold as it's typed.
+            // Keep only alphabet characters (uppercased), drop any stray input, and cap at the code
+            // length. normalizeInviteCode stays the single source of truth for what a code *is*;
+            // this just bounds what the field will hold as it's typed.
             code = raw.uppercase().filter { it in INPUT_ALPHABET }.take(CODE_LENGTH)
           },
           label = { Text(stringResource(Res.string.enter_code_field_label)) },
           singleLine = true,
+          visualTransformation = InviteCodeGroupingTransformation,
           textStyle = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Monospace),
           keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
           keyboardActions = KeyboardActions(onDone = { submit() }),
@@ -157,3 +164,18 @@ fun EnterInviteCodeScreen(
 
 /** The code alphabet plus the visually-ambiguous characters we tolerate on input. */
 private const val INPUT_ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789"
+
+/**
+ * Renders the EFA1-GGTH grouping as display-only, over a raw (undashed) field value. The dash is
+ * inserted after the 4th character once there's a 5th; the offset mapping shifts every caret
+ * position past it by one so the cursor tracks the raw text instead of jumping when the dash appears.
+ */
+private val InviteCodeGroupingTransformation = VisualTransformation { text ->
+  val raw = text.text
+  val formatted = if (raw.length > 4) "${raw.take(4)}-${raw.drop(4)}" else raw
+  val mapping = object : OffsetMapping {
+    override fun originalToTransformed(offset: Int): Int = if (offset <= 4) offset else offset + 1
+    override fun transformedToOriginal(offset: Int): Int = if (offset <= 4) offset else offset - 1
+  }
+  TransformedText(AnnotatedString(formatted), mapping)
+}
