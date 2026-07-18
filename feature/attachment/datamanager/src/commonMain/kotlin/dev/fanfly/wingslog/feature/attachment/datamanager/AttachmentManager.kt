@@ -16,6 +16,16 @@ import kotlinx.coroutines.flow.Flow
  * on a network upload. Adding a file is an ms-scale local write; uploads happen out-of-band and
  * surface through [observeStatus].
  */
+/**
+ * Thrown by [AttachmentManager.addPickedFile] when the file exceeds the per-file cap. For photos
+ * this is judged on the *compressed* size, so a large photo that shrinks under the cap is
+ * admitted; only files still over the limit after compression (or non-photos over it outright)
+ * fail. [sizeBytes] is the size that tripped the cap.
+ */
+class FileTooLargeException(val sizeBytes: Long) : Exception(
+  "File is $sizeBytes bytes, over the per-file attachment cap"
+)
+
 interface AttachmentManager {
 
   /**
@@ -23,7 +33,11 @@ interface AttachmentManager {
    * [Attachment] proto ready to be embedded in the owning entity. Anonymous users are no longer
    * blocked — bytes are local and will sync after the user signs in / links their account.
    *
+   * Photos (see [isCompressiblePhotoMime]) are compressed to JPEG before they are stored; the
+   * returned attachment's `mime_type`, `name`, and `size_bytes` reflect the compressed file.
+   *
    * @throws IllegalStateException if no Firebase user (anonymous or permanent) is signed in.
+   * @throws FileTooLargeException if the file (post-compression, for photos) exceeds the cap.
    */
   suspend fun addPickedFile(
     aircraftId: String,

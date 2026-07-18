@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 
 actual val platformAttachmentModule: Module = module {
   single<FileByteReader> { FileByteReaderImpl() }
+  single<ImageCompressor> { ImageCompressorImpl() }
   single<BlobFilesystem> { NsBlobFilesystem() }
   single<AttachmentOpener> {
     AttachmentOpenerIos(

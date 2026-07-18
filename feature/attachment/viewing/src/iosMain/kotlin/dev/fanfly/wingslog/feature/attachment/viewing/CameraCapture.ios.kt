@@ -2,17 +2,10 @@ package dev.fanfly.wingslog.feature.attachment.viewing
 
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.useContents
-import platform.CoreGraphics.CGRectMake
-import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSUUID
 import platform.Foundation.writeToFile
 import platform.UIKit.UIApplication
-import platform.UIKit.UIGraphicsBeginImageContextWithOptions
-import platform.UIKit.UIGraphicsEndImageContext
-import platform.UIKit.UIGraphicsGetImageFromCurrentImageContext
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageJPEGRepresentation
 import platform.UIKit.UIImagePickerController
@@ -21,9 +14,6 @@ import platform.UIKit.UIImagePickerControllerOriginalImage
 import platform.UIKit.UIImagePickerControllerSourceType
 import platform.UIKit.UINavigationControllerDelegateProtocol
 import platform.darwin.NSObject
-
-private const val MAX_PHOTO_BYTES = 1_000_000L
-private const val MAX_DIMENSION = 2048.0
 
 // Kept alive for the duration of a capture — UIImagePickerController.delegate is a weak
 // reference, so nothing else holds this once rememberCameraCapture's lambda returns.
@@ -72,7 +62,6 @@ private class CameraPickerDelegate(
 ) : NSObject(), UIImagePickerControllerDelegateProtocol,
   UINavigationControllerDelegateProtocol {
 
-  @OptIn(ExperimentalForeignApi::class)
   override fun imagePickerController(
     picker: UIImagePickerController,
     didFinishPickingMediaWithInfo: Map<Any?, *>,
@@ -86,7 +75,14 @@ private class CameraPickerDelegate(
       return
     }
     try {
-      val data = compressToJpeg(image)
+      // Serialize the captured image to a JPEG file and hand it back raw. Downscaling/compression
+      // happens downstream in AttachmentManager.addPickedFile — the single point shared with the
+      // file-picker flow.
+      val data = UIImageJPEGRepresentation(image, 1.0)
+      if (data == null) {
+        onError()
+        return
+      }
       val path = NSTemporaryDirectory() + "capture_${NSUUID().UUIDString()}.jpg"
       if (!data.writeToFile(path, atomically = true)) {
         onError()
@@ -118,37 +114,5 @@ private class CameraPickerDelegate(
   private fun clearActive() {
     activePicker = null
     activeDelegate = null
-  }
-}
-
-@OptIn(ExperimentalForeignApi::class)
-private fun compressToJpeg(original: UIImage) = run {
-  var image = original.resizedIfNeeded(MAX_DIMENSION)
-  var quality = 0.9
-  var data = UIImageJPEGRepresentation(image, quality)
-  while ((data == null || data.length.toLong() > MAX_PHOTO_BYTES) && quality > 0.15) {
-    quality -= 0.15
-    data = UIImageJPEGRepresentation(image, quality)
-  }
-  if (data == null || data.length.toLong() > MAX_PHOTO_BYTES) {
-    image = image.resizedIfNeeded(MAX_DIMENSION * 0.6)
-    data = UIImageJPEGRepresentation(image, 0.6)
-  }
-  requireNotNull(data) { "could not JPEG-encode captured photo" }
-}
-
-@OptIn(ExperimentalForeignApi::class)
-private fun UIImage.resizedIfNeeded(maxDimension: Double): UIImage {
-  val (width, height) = size.useContents { width to height }
-  val longestSide = maxOf(width, height)
-  if (longestSide <= maxDimension) return this
-  val scale = maxDimension / longestSide
-  val newSize = CGSizeMake(width * scale, height * scale)
-  UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-  try {
-    drawInRect(CGRectMake(0.0, 0.0, width * scale, height * scale))
-    return UIGraphicsGetImageFromCurrentImageContext() ?: this
-  } finally {
-    UIGraphicsEndImageContext()
   }
 }

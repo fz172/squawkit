@@ -9,6 +9,8 @@ import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
+import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
+import dev.fanfly.wingslog.feature.attachment.datamanager.ImageCompressor
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
@@ -41,6 +43,7 @@ class LocalFirstAttachmentManagerImplTest {
   private lateinit var blobs: LocalBlobStore
   private lateinit var auth: AuthManager
   private lateinit var fileByteReader: FileByteReader
+  private lateinit var imageCompressor: ImageCompressor
   private lateinit var clock: Clock
   private lateinit var manager: LocalFirstAttachmentManagerImpl
 
@@ -49,6 +52,10 @@ class LocalFirstAttachmentManagerImplTest {
     blobs = mockk(relaxed = true)
     auth = mockk(relaxed = true)
     fileByteReader = mockk(relaxed = true)
+    // Default: the compressor declines (returns null), so bytes pass through untouched. Tests
+    // that exercise compression stub compressToJpeg explicitly.
+    imageCompressor = mockk(relaxed = true)
+    every { imageCompressor.compressToJpeg(any()) } returns null
     clock = mockk(relaxed = true)
 
     val fixedNow = Instant.fromEpochSeconds(FIXED_EPOCH_SECONDS, 0)
@@ -62,6 +69,7 @@ class LocalFirstAttachmentManagerImplTest {
       blobs,
       auth,
       fileByteReader,
+      imageCompressor,
       clock = clock
     )
   }
@@ -260,6 +268,104 @@ class LocalFirstAttachmentManagerImplTest {
       manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "notes.txt")
 
     assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_FILE")
+  }
+
+  // ---- addPickedFile — compression ----
+
+  @Test
+  fun addPickedFile_compressesPhoto_storesCompressedBytesAndRewritesMetadata() = runTest {
+    val picked = buildPickedFile(mimeType = "image/jpeg", sizeBytes = 4_000_000L)
+    val rawBytes = byteArrayOf(1, 2, 3, 4)
+    val compressedBytes = byteArrayOf(9, 9)
+    every { fileByteReader.readBytes(picked.uri) } returns rawBytes
+    every { imageCompressor.compressToJpeg(rawBytes) } returns compressedBytes
+    coEvery {
+      blobs.put(any(), compressedBytes, contentType = "image/jpeg", scope = any())
+    } returns buildBlobRef()
+
+    val result =
+      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "My Photo")
+
+    // Stored the compressed bytes with the JPEG content type…
+    coVerify(exactly = 1) {
+      blobs.put(any(), compressedBytes, contentType = "image/jpeg", scope = any())
+    }
+    // …and the returned proto reflects the compressed file, not the picked original.
+    assertThat(result.mime_type).isEqualTo("image/jpeg")
+    assertThat(result.size_bytes).isEqualTo(compressedBytes.size.toLong())
+    assertThat(result.name).isEqualTo("My Photo.jpg")
+    assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_IMAGE")
+  }
+
+  @Test
+  fun addPickedFile_photoCompressorDeclines_storesOriginalBytes() = runTest {
+    val picked = buildPickedFile(mimeType = "image/jpeg")
+    val rawBytes = byteArrayOf(1, 2, 3, 4)
+    every { fileByteReader.readBytes(picked.uri) } returns rawBytes
+    every { imageCompressor.compressToJpeg(rawBytes) } returns null
+    coEvery {
+      blobs.put(any(), rawBytes, contentType = "image/jpeg", scope = any())
+    } returns buildBlobRef()
+
+    val result =
+      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "photo.jpg")
+
+    coVerify(exactly = 1) {
+      blobs.put(any(), rawBytes, contentType = "image/jpeg", scope = any())
+    }
+    assertThat(result.name).isEqualTo("photo.jpg")
+    assertThat(result.size_bytes).isEqualTo(rawBytes.size.toLong())
+  }
+
+  @Test
+  fun addPickedFile_nonPhotoMime_neverCallsCompressor() = runTest {
+    val picked = buildPickedFile(mimeType = "application/pdf", name = "doc.pdf")
+    every { fileByteReader.readBytes(any()) } returns byteArrayOf(1, 2, 3)
+    coEvery {
+      blobs.put(any(), any(), contentType = any(), scope = any())
+    } returns buildBlobRef()
+
+    manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "doc.pdf")
+
+    io.mockk.verify(exactly = 0) { imageCompressor.compressToJpeg(any()) }
+  }
+
+  @Test
+  fun addPickedFile_pngIsNotCompressed_storedAsPng() = runTest {
+    // PNG is deliberately excluded from compression (alpha flattening), so it passes through.
+    val picked = buildPickedFile(mimeType = "image/png", name = "chart.png")
+    val rawBytes = byteArrayOf(1, 2, 3)
+    every { fileByteReader.readBytes(any()) } returns rawBytes
+    coEvery {
+      blobs.put(any(), rawBytes, contentType = "image/png", scope = any())
+    } returns buildBlobRef()
+
+    val result =
+      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "chart.png")
+
+    io.mockk.verify(exactly = 0) { imageCompressor.compressToJpeg(any()) }
+    assertThat(result.mime_type).isEqualTo("image/png")
+    assertThat(result.name).isEqualTo("chart.png")
+  }
+
+  @Test
+  fun addPickedFile_photoStillOverCapAfterCompression_throwsFileTooLarge() = runTest {
+    val picked = buildPickedFile(mimeType = "image/jpeg", sizeBytes = 9_000_000L)
+    val rawBytes = byteArrayOf(1, 2, 3)
+    // Compressor hands back something still over the per-file cap.
+    val stillHuge = ByteArray((5L * 1024 * 1024 + 1).toInt())
+    every { fileByteReader.readBytes(any()) } returns rawBytes
+    every { imageCompressor.compressToJpeg(rawBytes) } returns stillHuge
+
+    var caught: Throwable? = null
+    try {
+      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "big.jpg")
+    } catch (e: FileTooLargeException) {
+      caught = e
+    }
+
+    assertThat(caught).isNotNull()
+    coVerify(exactly = 0) { blobs.put(any(), any(), contentType = any(), scope = any()) }
   }
 
   // ---- makeLink ----
