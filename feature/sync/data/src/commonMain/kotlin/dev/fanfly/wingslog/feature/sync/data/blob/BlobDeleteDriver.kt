@@ -4,7 +4,6 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
-import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.gitlive.firebase.storage.FirebaseStorage
 
@@ -36,20 +35,23 @@ class BlobDeleteDriver(
       return true
     }
 
-    if (ref.remoteState == RemoteState.Synced || ref.remoteState == RemoteState.Uploading) {
-      val remotePath = ref.remotePath
-      if (remotePath != null) {
-        try {
-          storage.reference(remotePath)
-            .delete()
-          log.i { "deleted remote object $remotePath" }
-        } catch (e: Exception) {
-          if (isNotFound(e)) {
-            log.i { "remote object $remotePath already gone" }
-          } else {
-            log.w(e) { "transient failure deleting remote object $remotePath; will retry" }
-            return false
-          }
+    // Delete the remote object whenever one could exist. remotePath is populated for every state
+    // that has been (or is being) uploaded — Synced, Uploading, AND RemoteOnly. RemoteOnly is the
+    // easy one to miss: it's a blob known from a synced record whose bytes were never downloaded to
+    // this device (e.g. after a reinstall), so it very much exists in gs:// and must be removed.
+    // Only LocalOnly carries a null path, and it has nothing in Storage to delete.
+    val remotePath = ref.remotePath
+    if (remotePath != null) {
+      try {
+        storage.reference(remotePath)
+          .delete()
+        log.i { "deleted remote object $remotePath" }
+      } catch (e: Exception) {
+        if (isNotFound(e)) {
+          log.i { "remote object $remotePath already gone" }
+        } else {
+          log.w(e) { "transient failure deleting remote object $remotePath; will retry" }
+          return false
         }
       }
     }
