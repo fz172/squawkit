@@ -477,6 +477,11 @@ match /aircraft_shares/{acId} {
         </tbody>
       </table>
 
+      <div class="callout note">
+        <strong>Does a slow download fail at the TTL?</strong>
+        No — the TTL gates when a request may <i>begin</i>, not how long an accepted transfer runs. GCS validates the signed URL's expiry when it authorizes the start of the GET (same as S3 presigned URLs); once the response body is streaming it runs to completion, so a fetch that starts at 4:59 and takes another ten minutes still succeeds. The only thing the TTL kills is <b>re-initiation</b>: a dropped-and-retried connection, or a ranged/resumable read that opens a <i>fresh</i> request after expiry. <code>BlobDownloadDriver</code> is a one-shot GET that, on transient failure, re-fetches through the broker — so a retry simply mints a new URL (a cheap function hop), never a stuck download. Two things keep this off the hot path entirely: attachments are MB-scale (a few MB downloads well inside 5&nbsp;min even on a poor link), and <b>uploads don't use this mechanism at all</b> — resumable upload sessions are built for long, interruptible transfers (ACL checked once at session creation, ~week-long lifetime). If we ever host large blobs on slow links, the download TTL is just a knob: raise it and the residual-revocation window of §9.2.1 grows to match.
+      </div>
+
       <p><b>How many functions, and what are they?</b> The broker itself is <b>two callables</b>, kept separate because their inputs and return shapes differ:</p>
       <ul>
         <li><code>getBlobDownloadUrl(hostUid, acId, blobId)</code> → ACL check → short-lived signed <b>GET</b> URL.</li>
