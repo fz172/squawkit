@@ -10,7 +10,6 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
-import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +18,6 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
   private val authManager: AuthManager,
-  private val technicianManager: TechnicianManager,
   private val attachmentManager: AttachmentManager,
   private val dbChecker: DatabaseIntegrityChecker,
   private val featureLabManager: FeatureLabManager,
@@ -65,18 +63,6 @@ class SettingsViewModel(
       userStatus = UserStatus.LOADING,
       isFeatureLabSupported = appCapability.isFeatureLabSupported,
     )
-    observeSelfJob?.cancel()
-    observeSelfJob = viewModelScope.launch {
-      technicianManager.observeSelf()
-        .collect { self ->
-          _user.value = _user.value.copy(
-            photoUri = authManager.getCurrentUser()?.photoURL,
-            selfTechnician = self,
-            userStatus = UserStatus.LOGGED_IN,
-            isAnonymous = authManager.getCurrentUser()?.isAnonymous == true,
-          )
-        }
-    }
   }
 
   /**
@@ -87,7 +73,6 @@ class SettingsViewModel(
   fun refreshAccountState() {
     val current = authManager.getCurrentUser()
     _user.value = _user.value.copy(
-      photoUri = current?.photoURL,
       isAnonymous = current?.isAnonymous == true,
     )
   }
@@ -102,7 +87,7 @@ class SettingsViewModel(
       // SyncEngine holds the lock across suspend points during active hydration/push).
       authManager.logOut()
       _user.value =
-        SettingsUiState(photoUri = null, userStatus = UserStatus.LOGGED_OUT)
+        SettingsUiState(userStatus = UserStatus.LOGGED_OUT)
       if (uid != null) {
         attachmentManager.wipeLocalData(uid)
         dbChecker.wipeDataForUser(uid)

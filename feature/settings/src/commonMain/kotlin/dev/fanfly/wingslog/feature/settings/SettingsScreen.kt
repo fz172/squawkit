@@ -49,7 +49,6 @@ import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
 import dev.fanfly.wingslog.feature.settings.upgrade.AccountUpgradeViewModel
 import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeUiState
-import dev.fanfly.wingslog.feature.userprofile.userprofilecard.compose.UserProfileCard
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.settings
@@ -173,11 +172,6 @@ fun SettingsContent(
         if (hasSidebar) {
           SettingsHeader()
         }
-
-        UserProfileCard(
-          self = user.selfTechnician,
-          photoUri = user.photoUri,
-        )
 
         // For anonymous guest "Log in" connects their on-device records to a real
         // account (the upgrade flow). It replaces the destructive guest logout entirely.

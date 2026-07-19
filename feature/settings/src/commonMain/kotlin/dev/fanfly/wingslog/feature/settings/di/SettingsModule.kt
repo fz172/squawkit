@@ -20,7 +20,6 @@ val settingsModule = module {
   viewModel {
     SettingsViewModel(
       get<AuthManager>(),
-      get<TechnicianManager>(),
       get<AttachmentManager>(),
       get<DatabaseIntegrityChecker>(),
       get<FeatureLabManager>(),
