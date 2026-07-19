@@ -9,5 +9,18 @@
       "Content-Encoding"
     ],
     "maxAgeSeconds": 3600
+  },
+  {
+    "origin": ["*"],
+    "method": ["PUT", "POST"],
+    "responseHeader": [
+      "Content-Type",
+      "Content-Range",
+      "Range",
+      "Location",
+      "X-Goog-Upload-Status",
+      "X-Goog-Upload-Size-Received"
+    ],
+    "maxAgeSeconds": 3600
   }
 ]

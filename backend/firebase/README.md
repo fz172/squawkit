@@ -142,9 +142,20 @@ The web app (`webApp`) downloads attachment bytes by `fetch`ing the
 and the storage bucket ships with no CORS rules — so every download fails
 with `TypeError: Failed to fetch` until the bucket is configured.
 
-`storage_cors.json` in this directory is the minimal rule set: allow `GET`
-from any origin (the download URL contains a per-object access token, so
-the token is the auth — `*` is safe). Apply it once per environment with:
+`storage_cors.json` in this directory is the minimal rule set:
+
+- **`GET`** from any origin — for downloads. The download URL contains a
+  per-object access token, so the token is the auth (`*` is safe).
+- **`PUT` / `POST`** from any origin, exposing `Content-Range` — for
+  **brokered uploads to a shared aircraft** (design §9.2 / P8.4). The web
+  client PUTs bytes to the resumable-upload session that `getBlobUploadSession`
+  mints on the raw `storage.googleapis.com` endpoint, and the `Content-Range`
+  header makes that a preflighted cross-origin request. The session URL is a
+  pre-authorized capability, so `*` is safe here too. Without this rule the
+  bytes still land (the PUT reaches GCS) but the browser can't read the
+  response, so the client sees `TypeError: Failed to fetch` and retries forever.
+
+Apply it once per environment with:
 
 ```bash
 gcloud storage buckets update gs://wingslog-9ca4e.firebasestorage.app \
