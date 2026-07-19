@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.ui.adaptive
 
+import androidx.compose.animation.core.animate
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -45,9 +46,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -69,8 +73,8 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingNavItem
 import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingPillNavBarHeight
 import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingPillNavigationBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -643,8 +647,10 @@ private fun ScaffoldShell(
   // The pill is a bottom overlay, not a scaffold bar, so section content scrolls edge-to-edge
   // underneath it. Content clears it via LocalNavPillClearance = the live nav-bar inset plus the
   // pill's own height. Zero when the pill is hidden (Settings), so nothing over-pads there.
-  val navBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-  val pillClearance = if (showPill) navBarInset + FloatingPillNavBarHeight else 0.dp
+  val navBarInset = WindowInsets.navigationBars.asPaddingValues()
+    .calculateBottomPadding()
+  val pillClearance =
+    if (showPill) navBarInset + FloatingPillNavBarHeight else 0.dp
   ShellContent(
     state = state,
     // The switcher lives in the top bar on COMPACT — there is no sidebar to host it, so it is the
@@ -726,7 +732,23 @@ private fun ShellContent(
   // so the last row still clears the gesture bar.
   val fullScreenSettings =
     onExitSettings != null && state.section == ShellSection.SETTINGS
+  // The top action bar scrolls off with the section content and only returns once the content is back
+  // at the top (exitUntilCollapsed) — so it reads as part of the content rather than peeking back on
+  // any reverse flick. It's a single shell-level bar shared across every section, so switching sections
+  // leaves no scroll event to bring it back — reset the offset on each section change so the bar slides
+  // back down over the new (top-anchored) content instead of staying collapsed.
+  val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+  LaunchedEffect(state.section) {
+    scrollBehavior.state.contentOffset = 0f
+    animate(
+      initialValue = scrollBehavior.state.heightOffset,
+      targetValue = 0f,
+    ) { value, _ -> scrollBehavior.state.heightOffset = value }
+  }
   Scaffold(
+    // Let the section's scrolling list drive the top bar's collapse/expand.
+    modifier =
+      if (showTopBar) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else Modifier,
     // Settings is full-screen and has no add action; suppress the FAB there. The FAB rides the
     // trailing edge of the same width-capped frame as the content so they stay aligned on LARGE. On
     // COMPACT the FAB instead rides in the bottom overlay above the floating pill (see the caller's
@@ -790,6 +812,7 @@ private fun ShellContent(
                 }
               }
             },
+            scrollBehavior = scrollBehavior,
           )
         }
       }
@@ -798,7 +821,10 @@ private fun ShellContent(
     // Cap the section body at the pane width so content stays readable on very wide windows
     // (github.com/fz172/squawkit/issues/101). Only LARGE panes are wide enough for the cap to bite;
     // narrower tiers keep filling the window as before.
-    Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+    Box(
+      modifier = Modifier.fillMaxSize()
+        .padding(padding)
+    ) {
       Box(
         modifier = Modifier.constrainedContentWidth(ContentWidth.Pane)
           .fillMaxHeight()
