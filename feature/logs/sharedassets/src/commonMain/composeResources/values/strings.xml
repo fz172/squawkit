@@ -1,8 +1,8 @@
 <resources>
-  <string name="add_log">Add Maintenance Log</string>
-  <string name="edit_log">Update Maintenance Log</string>
+  <string name="add_log">Add Work Log</string>
+  <string name="edit_log">Update Work Log</string>
   <string name="maintenance_history">Maintenance History</string>
-  <string name="maintenance_date">Maintenance Date</string>
+  <string name="maintenance_date">Work Date</string>
   <string name="engine_time_label">Engine Time</string>
   <string name="airframe_time_label">Airframe Time</string>
   <string name="prop_time_label">Prop Time</string>
