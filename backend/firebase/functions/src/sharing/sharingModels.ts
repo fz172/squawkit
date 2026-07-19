@@ -61,6 +61,14 @@ export type AircraftShareDoc = {
   /** uid → role. Denormalized onto the root so a rule check is a single get(). Includes hostUid → "owner". */
   memberRoles: Record<string, ShareRole>;
   createdAt: Timestamp;
+  /**
+   * The host's attachment entitlement, projected onto the ACL root so a member can read it WITHOUT
+   * reading the host's billing (design §9.7, P8.7 #248). Maintained by a function when the host's
+   * subscription changes. Absent means "not yet projected" — treated as enabled while the projector
+   * is unbuilt (the P8.2 broker only refuses on an explicit `false`), so uploads work in dogfood
+   * before P8.7 lands and flip to enforcing once it does.
+   */
+  attachmentsEnabled?: boolean;
 };
 
 /**

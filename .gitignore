@@ -32,3 +32,6 @@ kotlin-js-store/
 /.claude/settings.json
 /.firebase/hosting.*.cache
 docs/product/screenshot_generator/_render_*.html
+
+# graphify knowledge graph — generated locally, not tracked
+/graphify-out/
