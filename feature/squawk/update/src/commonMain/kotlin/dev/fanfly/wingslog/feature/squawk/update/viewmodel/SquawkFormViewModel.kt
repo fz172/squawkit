@@ -25,7 +25,6 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -115,16 +114,10 @@ class SquawkFormViewModel(
       loadLogs()
     }
     viewModelScope.launch {
-      combine(
-        featureLabManager.observe(),
-        sharingManager.observeHostedByOther(aircraftId),
-      ) { flags, hostedByOther ->
-        // Storage rules are user-scoped: a member cannot upload into the host's tree (design §9,
-        // storage.rules). Offering an attach button on someone else's aircraft would produce a file
-        // that silently never leaves the device.
-        flags.attachmentUploadEnabled && !hostedByOther
-      }
-        .collect { enabled -> _attachmentUploadEnabled.value = enabled }
+      // A member's attachments on a shared aircraft now travel through the broker (P8.4 §9.2), so the
+      // gate is just the feature flag — owner-scoped entitlement gating lands with P8.7 (#248).
+      featureLabManager.observe()
+        .collect { flags -> _attachmentUploadEnabled.value = flags.attachmentUploadEnabled }
     }
   }
 

@@ -40,13 +40,12 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
-/** The four share-related flows, combined so they fit in one slot of the outer [combine]. */
+/** The share-related flows, combined so they fit in one slot of the outer [combine]. */
 private data class ShareContext(
   val squawks: List<Squawk>,
   val syncStates: Map<String, BlobSyncState>,
   val myRole: ShareRole?,
   val shared: Boolean,
-  val hostedByOther: Boolean,
 )
 
 class AircraftOverviewViewModel(
@@ -117,12 +116,11 @@ class AircraftOverviewViewModel(
           // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
           sharingManager.observeMyRole(aircraftId),
           sharingManager.observeIsShared(aircraftId),
-          sharingManager.observeHostedByOther(aircraftId),
-        ) { squawks, syncs, myRole, shared, hostedByOther ->
-          ShareContext(squawks, syncs, myRole, shared, hostedByOther)
+        ) { squawks, syncs, myRole, shared ->
+          ShareContext(squawks, syncs, myRole, shared)
         }
       ) { aircraft, logs, taskCards, overview, shareContext ->
-        val (squawkList, syncStates, myRole, isShared, hostedByOther) = shareContext
+        val (squawkList, syncStates, myRole, isShared) = shareContext
         cachedLogs = logs
         if (aircraft != null) {
           val stats = if (overview != null) {
@@ -220,7 +218,9 @@ class AircraftOverviewViewModel(
             aogSquawks = aogSquawks,
             myRole = myRole,
             shared = isShared,
-            attachmentsUnavailable = hostedByOther,
+            // Downloads on a shared aircraft now stream through the broker (P8.4 §9.2), so bytes are
+            // reachable. The flag stays in the UI for P8.7 (#248) to drive off owner entitlement.
+            attachmentsUnavailable = false,
             isAnonymous = auth.currentUser?.isAnonymous ?: true,
           )
         } else {

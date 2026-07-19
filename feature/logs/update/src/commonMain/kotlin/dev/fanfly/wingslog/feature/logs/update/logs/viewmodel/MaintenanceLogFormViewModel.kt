@@ -106,17 +106,11 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun observeFeatureFlags() {
-    combine(
-      featureLabManager.observe(),
-      sharingManager.observeHostedByOther(aircraftId),
-    ) { flags, hostedByOther ->
-        // Storage rules are user-scoped: a member cannot upload into the host's tree (design §9,
-        // storage.rules). Offering an attach button on someone else's aircraft would produce a file
-        // that silently never leaves the device.
-      flags.attachmentUploadEnabled && !hostedByOther
-    }
-      .onEach { enabled ->
-        _uiState.update { it.copy(attachmentUploadEnabled = enabled) }
+    // A member's attachments on a shared aircraft now travel through the broker (P8.4 §9.2), so the
+    // gate is just the feature flag — owner-scoped entitlement gating lands with P8.7 (#248).
+    featureLabManager.observe()
+      .onEach { flags ->
+        _uiState.update { it.copy(attachmentUploadEnabled = flags.attachmentUploadEnabled) }
       }
       .launchIn(viewModelScope)
   }

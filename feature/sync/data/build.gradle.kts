@@ -47,6 +47,7 @@ kotlin {
       api(libs.gitlive.firebase.auth)
       api(libs.gitlive.firebase.firestore)
       api(libs.gitlive.firebase.storage)
+      implementation(libs.gitlive.firebase.functions)
       api(libs.kotlinx.coroutines.core)
       api(libs.kotlinx.datetime)
       api(libs.koin.core)
@@ -57,6 +58,7 @@ kotlin {
       implementation(libs.koin.android)
       implementation(libs.ktor.client.okhttp)
       implementation(libs.work.runtime.ktx)
+      implementation(libs.firebase.appcheck)
     }
     iosMain.dependencies {
       implementation(libs.ktor.client.darwin)
