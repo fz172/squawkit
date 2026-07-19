@@ -42,6 +42,13 @@ export const getBlobUploadSession = onCall<
 
   const file = adminStorage.bucket().file(blobObjectPath(hostUid, aircraftId, blobId));
   const [uploadUrl] = await file.createResumableUpload({
+    // A resumable session created server-side has no browser origin bound to it, so GCS returns no
+    // Access-Control-Allow-Origin on the client's PUT and the browser blocks it ("Failed to fetch")
+    // — bucket CORS alone does NOT cover resumable session URLs. Binding the caller's Origin here is
+    // exactly what this option is for. Native clients send no Origin (undefined), which is fine —
+    // they don't do CORS. Origin is client-supplied but only governs which browser origins may read
+    // the response; App Check + membership above remain the real authorization (P8.4 #245).
+    origin: callerOrigin(request.rawRequest.headers.origin),
     metadata: {
       contentType: contentType ?? "application/octet-stream",
       // Authorship, attributable across accounts like `writer_uid` for records (§7.5).
@@ -51,6 +58,12 @@ export const getBlobUploadSession = onCall<
 
   return { uploadUrl };
 });
+
+/** The request's `Origin` header as a single string, or `undefined` for a non-browser caller. */
+function callerOrigin(origin: string | string[] | undefined): string | undefined {
+  if (Array.isArray(origin)) return origin[0];
+  return origin;
+}
 
 function parseRequest(data: unknown): UploadSessionRequest {
   const obj = (data ?? {}) as Record<string, unknown>;
