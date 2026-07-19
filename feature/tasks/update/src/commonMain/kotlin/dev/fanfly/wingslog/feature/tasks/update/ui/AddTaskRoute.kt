@@ -26,6 +26,7 @@ fun AddTaskRoute(
   viewModel: TaskViewModel = koinViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val formState by viewModel.formState.collectAsStateWithLifecycle()
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
   val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
@@ -56,7 +57,15 @@ fun AddTaskRoute(
 
   if (successState != null) {
     AddTaskScreen(
+      state = formState,
       availableInspections = successState.allInspections,
+      onTitleChange = viewModel::onTitleChange,
+      onComponentChange = viewModel::onComponentChange,
+      onTypeChange = viewModel::onTypeChange,
+      onScheduleChange = viewModel::onScheduleChange,
+      onRefNumberChange = viewModel::onRefNumberChange,
+      onComplianceAuthorityChange = viewModel::onComplianceAuthorityChange,
+      onComplianceNotesChange = viewModel::onComplianceNotesChange,
       isSaving = isSaving,
       snackbarHostState = snackbarHostState,
       onCancel = { navController.popBackStack() },

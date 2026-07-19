@@ -27,6 +27,7 @@ fun EditTaskRoute(
   viewModel: TaskViewModel = koinViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val formState by viewModel.formState.collectAsStateWithLifecycle()
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
   val showLogPicker by viewModel.showLogPicker.collectAsStateWithLifecycle()
@@ -63,10 +64,21 @@ fun EditTaskRoute(
   if (card != null) {
     EditTaskScreen(
       card = card,
+      state = formState,
       availableInspections = successState.allInspections,
       availableLogs = successState.availableLogs,
       currentEngineHours = successState.currentEngineHours,
       naturalDueMetadata = successState.naturalDueMetadata,
+      onTitleChange = viewModel::onTitleChange,
+      onScheduleChange = viewModel::onScheduleChange,
+      onRefNumberChange = viewModel::onRefNumberChange,
+      onComplianceAuthorityChange = viewModel::onComplianceAuthorityChange,
+      onComplianceNotesChange = viewModel::onComplianceNotesChange,
+      onForceOverrideEngineChange = viewModel::onForceOverrideEngineChange,
+      onForcedEngineHoursChange = viewModel::onForcedEngineHoursChange,
+      onForceOverrideDateChange = viewModel::onForceOverrideDateChange,
+      onForcedDateMillisChange = viewModel::onForcedDateMillisChange,
+      onForceCompliedStatusChange = viewModel::onForceCompliedStatusChange,
       isSaving = isSaving,
       snackbarHostState = snackbarHostState,
       showLogPicker = showLogPicker,

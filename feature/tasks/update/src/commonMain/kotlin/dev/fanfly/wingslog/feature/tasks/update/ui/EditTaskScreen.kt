@@ -64,6 +64,7 @@ import dev.fanfly.wingslog.feature.tasks.update.compose.TaskDetailTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
+import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskFormState
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -82,10 +83,21 @@ import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTask
 @Composable
 fun EditTaskScreen(
   card: MaintenanceTask,
+  state: TaskFormState,
   availableInspections: List<MaintenanceTask>,
   availableLogs: List<MaintenanceLog> = emptyList(),
   currentEngineHours: Float,
   naturalDueMetadata: DueMetadata?,
+  onTitleChange: (String) -> Unit,
+  onScheduleChange: (ScheduleState) -> Unit,
+  onRefNumberChange: (String) -> Unit,
+  onComplianceAuthorityChange: (String) -> Unit,
+  onComplianceNotesChange: (String) -> Unit,
+  onForceOverrideEngineChange: (Boolean) -> Unit,
+  onForcedEngineHoursChange: (String) -> Unit,
+  onForceOverrideDateChange: (Boolean) -> Unit,
+  onForcedDateMillisChange: (Long?) -> Unit,
+  onForceCompliedStatusChange: (ForceCompliedStatus?) -> Unit,
   onSave: (MaintenanceTask) -> Unit,
   onCancel: () -> Unit,
   onDeleteRequest: (String) -> Unit,
@@ -98,45 +110,11 @@ fun EditTaskScreen(
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
 ) {
-  var title by remember { mutableStateOf(card.title) }
-  val component = card.component
-  val type = card.type
-
-  val initialSchedule = remember(card) { ScheduleState.fromTask(card) }
-  var schedule by remember { mutableStateOf(initialSchedule) }
-  var refNumber by remember { mutableStateOf(card.reference_number) }
-  var complianceAuthority by remember { mutableStateOf(card.compliance_authority) }
-  var complianceNotes by remember { mutableStateOf(card.compliance_details) }
-  var forceCompliedStatus by remember { mutableStateOf(card.force_complied_status) }
-
-  // Force Override States
-  var forceOverrideEngine by remember { mutableStateOf(card.force_due_engine_hour > 0f) }
-  var forcedEngineHours by remember {
-    mutableStateOf(
-      if (card.force_due_engine_hour > 0f) card.force_due_engine_hour.toString() else ""
-    )
-  }
-  var forceOverrideDate by remember { mutableStateOf(card.force_due_date != null) }
-  var forcedDateMillis by remember {
-    mutableStateOf(card.force_due_date?.let { it.getEpochSecond() * 1000 })
-  }
-
   var showDatePicker by remember { mutableStateOf(false) }
   var showDeleteConfirm by remember { mutableStateOf(false) }
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
 
-  val hasChanges = title != card.title ||
-    schedule != initialSchedule ||
-    refNumber != card.reference_number ||
-    complianceAuthority != card.compliance_authority ||
-    complianceNotes != card.compliance_details ||
-    forceCompliedStatus != card.force_complied_status ||
-    forceOverrideEngine != (card.force_due_engine_hour > 0f) ||
-    (forceOverrideEngine && forcedEngineHours != (
-      if (card.force_due_engine_hour > 0f) card.force_due_engine_hour.toString() else ""
-      )) ||
-    forceOverrideDate != (card.force_due_date != null) ||
-    (forceOverrideDate && forcedDateMillis != card.force_due_date?.let { it.getEpochSecond() * 1000 })
+  val hasChanges = state.hasChanges
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()
@@ -244,21 +222,21 @@ fun EditTaskScreen(
           ) {
             when (page) {
               0 -> TaskIdentityTab(
-                title = title,
-                onTitleChange = { title = it },
-                component = component,
+                title = state.title,
+                onTitleChange = onTitleChange,
+                component = state.component,
                 onComponentChange = null,
-                complianceType = type,
+                complianceType = state.type,
                 onComplianceTypeChange = null,
               )
 
               1 -> TaskDetailTab(
-                refNumber = refNumber,
-                onRefNumberChange = { refNumber = it },
-                complianceAuthority = complianceAuthority,
-                onComplianceAuthorityChange = { complianceAuthority = it },
-                complianceNotes = complianceNotes,
-                onComplianceNotesChange = { complianceNotes = it },
+                refNumber = state.refNumber,
+                onRefNumberChange = onRefNumberChange,
+                complianceAuthority = state.complianceAuthority,
+                onComplianceAuthorityChange = onComplianceAuthorityChange,
+                complianceNotes = state.complianceNotes,
+                onComplianceNotesChange = onComplianceNotesChange,
                 taskId = card.id,
                 availableLogs = availableLogs,
                 onAddLog = onShowLogPicker,
@@ -267,30 +245,31 @@ fun EditTaskScreen(
               )
 
               2 -> TaskScheduleTab(
-                state = schedule,
-                onChange = { schedule = it },
+                state = state.schedule,
+                onChange = onScheduleChange,
                 availableInspections = availableInspections.filter { it.id != card.id },
               )
 
               3 -> TaskAdjustmentsTab(
-                schedule = schedule,
-                forceOverrideEngine = forceOverrideEngine,
-                onForceOverrideEngineChange = { forceOverrideEngine = it },
-                forcedEngineHours = forcedEngineHours,
-                onForcedEngineHoursChange = { forcedEngineHours = it },
-                forceOverrideDate = forceOverrideDate,
-                onForceOverrideDateChange = { forceOverrideDate = it },
-                forcedDateMillis = forcedDateMillis,
+                schedule = state.schedule,
+                forceOverrideEngine = state.forceOverrideEngine,
+                onForceOverrideEngineChange = onForceOverrideEngineChange,
+                forcedEngineHours = state.forcedEngineHours,
+                onForcedEngineHoursChange = onForcedEngineHoursChange,
+                forceOverrideDate = state.forceOverrideDate,
+                onForceOverrideDateChange = onForceOverrideDateChange,
+                forcedDateMillis = state.forcedDateMillis,
                 onDateClick = { showDatePicker = true },
-                isSkipping = forceCompliedStatus != null,
+                isSkipping = state.forceCompliedStatus != null,
                 onSkipToggle = {
-                  forceCompliedStatus =
-                    if (forceCompliedStatus != null) null else {
+                  onForceCompliedStatusChange(
+                    if (state.forceCompliedStatus != null) null else {
                       ForceCompliedStatus(
                         complied_date = toWireInstant(Clock.System.now().epochSeconds),
                         complied_engine_hours = currentEngineHours
                       )
                     }
+                  )
                 },
                 naturalDueDate = naturalDueMetadata?.nextDueDate,
                 naturalDueEngine = naturalDueMetadata?.nextDueEngine,
@@ -305,13 +284,13 @@ fun EditTaskScreen(
         onPrimaryClick = {
           val existingTimeRuleCreationDate =
             card.rules.firstNotNullOfOrNull { it.time_rule?.creation_date }
-          val ruleList = schedule.toRules(existingTimeRuleCreationDate)
+          val ruleList = state.schedule.toRules(existingTimeRuleCreationDate)
 
           val updatedForceDueEngine =
-            if (forceOverrideEngine) forcedEngineHours.toFloatOrNull()
+            if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull()
               ?: 0f else 0f
           val updatedForceDueDate =
-            if (forceOverrideDate) forcedDateMillis?.let {
+            if (state.forceOverrideDate) state.forcedDateMillis?.let {
               toWireInstant(
                 it / 1000,
                 0
@@ -319,30 +298,30 @@ fun EditTaskScreen(
             } else null
 
           val isScheduleChanged = ruleList != card.rules ||
-            schedule.isOneTime != card.is_one_time ||
+            state.schedule.isOneTime != card.is_one_time ||
             updatedForceDueEngine != card.force_due_engine_hour ||
             updatedForceDueDate != card.force_due_date
 
           val updated = card.copy(
-            title = title,
-            component = component,
-            type = type,
+            title = state.title,
+            component = state.component,
+            type = state.type,
             rules = ruleList,
-            is_one_time = schedule.isOneTime,
-            reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
-            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() }
+            is_one_time = state.schedule.isOneTime,
+            reference_number = state.refNumber.takeIf { it.isNotBlank() } ?: "",
+            compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() }
               ?: "",
-            compliance_details = complianceNotes.takeIf { it.isNotBlank() }
+            compliance_details = state.complianceNotes.takeIf { it.isNotBlank() }
               ?: "",
             force_due_engine_hour = updatedForceDueEngine,
             force_due_date = updatedForceDueDate,
-            force_complied_status = if (isScheduleChanged) null else forceCompliedStatus
+            force_complied_status = if (isScheduleChanged) null else state.forceCompliedStatus
           )
           onSave(updated)
         },
         onSecondaryClick = { tryCancel() },
         onDangerClick = { showDeleteConfirm = true },
-        primaryEnabled = title.isNotBlank(),
+        primaryEnabled = state.title.isNotBlank(),
         isPrimaryFunctionInProgress = isSaving
       )
     }
@@ -350,7 +329,7 @@ fun EditTaskScreen(
 
   if (showDeleteConfirm) {
     DeleteTaskConfirmDialog(
-      title = title,
+      title = state.title,
       onConfirm = {
         showDeleteConfirm = false
         onDeleteRequest(card.id)
@@ -377,7 +356,7 @@ fun EditTaskScreen(
       onDismissRequest = { showDatePicker = false },
       confirmButton = {
         TextButton(onClick = {
-          forcedDateMillis = datePickerState.selectedDateMillis
+          onForcedDateMillisChange(datePickerState.selectedDateMillis)
           showDatePicker = false
         }) { Text(stringResource(CoreRes.string.ok)) }
       }) {
