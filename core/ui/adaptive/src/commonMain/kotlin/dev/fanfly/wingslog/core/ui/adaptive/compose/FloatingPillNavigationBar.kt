@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.ui.adaptive.compose
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,11 +40,15 @@ data class FloatingNavItem(
  * A floating, pill-shaped bottom navigation bar for the COMPACT (phone) tier — the SquawkIt take on
  * the Google Photos redesign (github.com/fz172/squawkit/issues/187).
  *
- * The bar is a rounded [Surface] inset from the screen edges rather than a docked, full-width
+ * The visible bar is a rounded [Surface] inset from the screen edges rather than a docked, full-width
  * `NavigationBar`. The selected destination expands into a filled chip (icon + label) in the
- * primary-container tone; the rest stay as bare icons. It is meant to sit in a `Scaffold` `bottomBar`
+ * primary-container tone; the rest stay as plain text labels. It sits in a `Scaffold` `bottomBar`
  * slot, so the scaffold reserves its height for content above and lifts snackbars / the section FAB
  * over it automatically.
+ *
+ * The whole slot is backed by an opaque [surfaceColor] band that reaches down through the system
+ * navigation-bar inset (the hosts run edge-to-edge). Without it the app paints nothing behind the
+ * floating pill and the transparent gap reads as a black bar under the toolbar.
  *
  * The section add-FAB is intentionally left to the scaffold's own floating-action slot (it rides
  * above the pill) rather than being welded to the bar: not every section has an add action, and a
@@ -53,9 +59,13 @@ data class FloatingNavItem(
 fun FloatingPillNavigationBar(
   items: List<FloatingNavItem>,
   modifier: Modifier = Modifier,
+  // Matches the section content's background so the band reads as one continuous surface with the
+  // scrolling content above it, not as a distinct bar.
+  surfaceColor: Color = MaterialTheme.colorScheme.surface,
 ) {
   Box(
     modifier = modifier.fillMaxWidth()
+      .background(surfaceColor)
       // Clear the system gesture / navigation bar, then float above it with a small margin.
       .windowInsetsPadding(WindowInsets.navigationBars)
       .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp),
@@ -63,11 +73,11 @@ fun FloatingPillNavigationBar(
   ) {
     Surface(
       shape = CircleShape,
-      color = MaterialTheme.colorScheme.surfaceContainer,
-      tonalElevation = 2.dp,
-      // A floating element needs a cast shadow to lift off the scrolling content beneath it; tonal
+      color = MaterialTheme.colorScheme.surfaceContainerHighest,
+      tonalElevation = 3.dp,
+      // A floating element needs a cast shadow to lift off the surface band beneath it; tonal
       // elevation alone (the card convention) wouldn't separate it from same-tone surfaces.
-      shadowElevation = 3.dp,
+      shadowElevation = 6.dp,
     ) {
       Row(
         modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp),
@@ -113,16 +123,17 @@ private fun PillItem(item: FloatingNavItem) {
     }
   } else {
     Box(
-      // 48dp keeps a comfortable touch target even though only the icon shows.
-      modifier = base.size(48.dp),
+      // Text-only when collapsed; keep a comfortable touch target height.
+      modifier = base.heightIn(min = 40.dp)
+        .padding(horizontal = 12.dp),
       contentAlignment = Alignment.Center,
     ) {
-      Icon(
-        item.icon,
-        // Bare icons carry no visible label, so name them for screen readers.
-        contentDescription = item.label,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(24.dp),
+      Text(
+        item.label,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
       )
     }
   }
