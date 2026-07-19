@@ -67,6 +67,8 @@
     .yes { color: var(--green); font-weight: 700; }
     .no { color: var(--red); font-weight: 700; }
     @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
+    pre.mermaid { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; text-align: center; overflow-x: auto; line-height: normal; white-space: normal; box-shadow: 0 1px 2px rgba(18,32,51,0.04); }
+    .diagram-caption { font-size: 0.9rem; color: var(--muted); margin: 4px 0 0; }
   </style>
 </head>
 <body>
@@ -439,7 +441,7 @@ match /aircraft_shares/{acId} {
           <tr>
             <td><b>A. Signed-URL broker</b></td>
             <td>Callable verifies membership in <code>aircraft_shares/{acId}</code>, then returns a short-lived <b>signed download URL</b> (reads) or a <b>resumable-upload session URL</b> (writes) into the host's tree. Rules never change.</td>
-            <td><span class="yes">Chosen.</span> Revocation is immediate by construction — a revoked member simply stops being issued URLs. Cost: one function hop per open/upload.</td>
+            <td><span class="yes">Chosen.</span> Revocation cuts off <i>new</i> URLs at once — a revoked member stops being issued any; already-minted URLs lapse within the short TTL (§9.2.1). Cost: one function hop per open/upload.</td>
           </tr>
           <tr>
             <td>B. Custom claims</td>
@@ -449,6 +451,38 @@ match /aircraft_shares/{acId} {
         </tbody>
       </table>
       <p>The broker lives under <code>backend/firebase/functions/src/storage/</code> (alongside <code>blobRefs.ts</code>, <code>storageSweep.ts</code>) and reuses the ACL-check helper the existing sharing functions already use (<code>revokeAircraftShare</code>, <code>updateAircraftShareRole</code>, <code>onAircraftDeleted</code>).</p>
+
+      <h4>9.2.1 Broker specifics</h4>
+      <p>A signed URL is a <b>bearer credential</b>: the ACL is checked once, at mint time, and the URL then works for anyone who holds it until it expires. That shapes four answers (raised on #243).</p>
+
+      <table>
+        <thead><tr><th>Concern</th><th>Answer</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>How short is "short-lived"?</b></td>
+            <td><b>Downloads: 5 minutes.</b> Long enough to fetch one blob on a slow link, short enough to bound every risk below. The client fetches immediately and does not persist the URL. <b>Uploads:</b> the resumable session is minted per-upload and consumed at once; it is bounded to the single object it was issued for, not a standing grant.</td>
+          </tr>
+          <tr>
+            <td><b>Revoked right after the URL is minted?</b></td>
+            <td>The already-minted URL keeps working until it expires — a residual window of <b>≤ the TTL (5 min)</b>. This is the one place revocation is <i>not</i> instantaneous, and it is a deliberate, bounded trade: still an order of magnitude tighter than custom claims (up to an hour, §9.2) and far below Firestore's own revocation, which <i>is</i> immediate. A just-revoked member can, at worst, finish reading blobs they could already see, for up to five minutes. If we ever need hard-zero, the escalation is a streaming proxy (below).</td>
+          </tr>
+          <tr>
+            <td><b>URL leaked to someone without access?</b></td>
+            <td>Same bearer property: whoever holds it can read that <b>one blob</b> for <b>≤ 5 min</b>, then it is dead. Mitigations: short TTL; the URL is scoped to a single object, never a folder or a token that unlocks the tree; HTTPS only; the broker never logs full signed URLs. It is not a login and grants nothing beyond that one file for that short window.</td>
+          </tr>
+          <tr>
+            <td><b>Need hard-zero revocation / leak-resistance?</b></td>
+            <td><b>Escalation, not v1:</b> a <i>streaming proxy</i> — the function itself reads the object and pipes the bytes, re-checking the ACL on every request, so nothing bearer is ever handed out and revocation is instant. Cost: the function pays egress and holds the connection for the whole transfer, which is why v1 prefers signed URLs. Flagged for you as the lever to pull if the 5-minute window is unacceptable.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p><b>How many functions, and what are they?</b> The broker itself is <b>two callables</b>, kept separate because their inputs and return shapes differ:</p>
+      <ul>
+        <li><code>getBlobDownloadUrl(hostUid, acId, blobId)</code> → ACL check → short-lived signed <b>GET</b> URL.</li>
+        <li><code>getBlobUploadSession(hostUid, acId, blobId)</code> → ACL + entitlement check → resumable <b>upload session</b> URL, stamping <code>writer_uid</code>.</li>
+      </ul>
+      <p>Two more functions live in P8 but are <i>not</i> the broker: the <b>entitlement projector</b> that maintains <code>aircraft_shares.attachmentsEnabled</code> on subscription change (§9.7, P8.7), and the existing <b><code>storageSweep</code></b> that reclaims unreferenced/tombstoned bytes (§9.6, already shipped in P7). So: <b>two new broker callables</b>, one new projector, and one reused sweep — four functions touch attachments-on-shared, of which the broker is two.</p>
 
       <h3>9.3 One canonical blob, no mirrors</h3>
       <p>Requirement 2: <b>one canonical blob per attachment, in the host's tree.</b> Copying blobs per member is explicitly out of scope — it multiplies storage cost and creates divergent copies of the same file. Every member reads and writes the same object through the broker; only <i>local caches</i> are per-device.</p>
@@ -496,6 +530,87 @@ match /aircraft_shares/{acId} {
           <tr><td>P8.8</td><td>Two-account attachment E2E (extends §10)</td><td>P8.4–P8.7</td></tr>
         </tbody>
       </table>
+
+      <h3>9.9 Sequence diagrams</h3>
+      <p>Three flows a shared aircraft has to get right. Across all of them the record — and the <code>Attachment{id, sha256, mime, size}</code> it carries — already syncs cross-account through the P3 shared-scope fan-out, so <b>discovery is free</b>; only the <i>bytes</i> are gated, and the broker is the only door to them.</p>
+
+      <h4>Scenario 1 — technician views a worklog: discover, download, delete</h4>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T as Technician
+    participant BK as Broker
+    participant FS as Firestore
+    participant GCS as HostStorage
+    participant SW as StorageSweep
+    Note over T,FS: Discover - no bytes crossed yet
+    T->>FS: open worklog, pull record on shared scope
+    FS-->>T: record with Attachment id, sha256, mime, size
+    Note over T: BlobIndexReconciler registers blob_object REMOTE_ONLY<br>UI shows an attachment chip, badge says needs download
+    Note over T,GCS: Download, tap the chip
+    Note over T: BlobDownloadDriver sees a foreign host, uses the broker
+    T->>BK: getDownloadUrl for hostUid, acId, blobId
+    BK->>FS: read aircraft_shares acId, is caller a member?
+    FS-->>BK: yes
+    BK-->>T: short-lived signed GET url, else PERMISSION_DENIED
+    T->>GCS: HTTP GET the signed url
+    GCS-->>T: bytes
+    Note over T: installDownloaded verifies sha256, cache is SYNCED
+    Note over T,SW: Delete, remove the attachment, any member may
+    T->>T: edit record, drop Attachment from proto, offline ok
+    T->>FS: sync push, record doc with attachment gone
+    Note over T: TombstoneGc reclaims this member's cached bytes
+    FS->>SW: scheduled sweep, blob now unreferenced?
+    SW->>GCS: delete the canonical bytes in the host tree
+      </pre>
+      <p class="diagram-caption">The member never deletes host bytes directly — the edit un-references the blob and the server-side sweep (P7 #155) reclaims it, so the same path works whether the deleter is the host or a member.</p>
+
+      <h4>Scenario 2 — technician uploads a new attachment, and it reaches other members</h4>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T as Technician
+    participant BK as Broker
+    participant GCS as HostStorage
+    participant FS as Firestore
+    participant B as MemberB
+    Note over T: attach file to local cache, blob_object LOCAL_ONLY
+    T->>BK: getUploadSession for hostUid, acId, blobId
+    BK->>FS: ACL check and attachmentsEnabled for host?
+    FS-->>BK: ok
+    BK-->>T: resumable upload session url, stamps writer_uid
+    T->>GCS: PUT bytes into the host tree blobs
+    Note over T: blob_object SYNCED, add Attachment id, sha256 to record
+    T->>FS: sync push, record doc with new attachment ref
+    Note over FS,B: Fan-out to every other member
+    FS-->>B: pull record doc on shared scope
+    Note over B: AttachmentRefs sees new id, blob_object REMOTE_ONLY
+    B->>BK: getDownloadUrl, same broker path as Scenario 1
+    BK-->>B: signed GET url
+    Note over B: download and verify sha256, attachment now visible to B
+      </pre>
+      <p class="diagram-caption">One canonical blob in the host's tree (requirement 2): B does not receive a copy of the bytes from the uploader — it learns the ref through the record and fetches the same object through the broker.</p>
+
+      <h4>Scenario 3 — a member is removed: cleanup</h4>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant H as Host
+    participant RV as RevokeFn
+    participant FS as Firestore
+    participant B as MemberB
+    participant BK as Broker
+    H->>RV: revoke acId for member B
+    RV->>FS: drop B from aircraft_shares memberRoles
+    RV->>FS: delete B member doc, tombstone B shared_aircraft_ref
+    Note over FS,B: B's client reacts
+    FS-->>B: ref tombstone, or PERMISSION_DENIED on the shared scope
+    Note over B: SharedScopeJanitor tears the scope down
+    Note over B: purge local records and purgeLocal blob cache for the scope
+    Note over BK: B no longer in the ACL, broker refuses B any new url
+    Note over H,FS: host tree blobs untouched<br>host and remaining members keep full access
+      </pre>
+      <p class="diagram-caption">Revoke only ever deletes B's <i>local cache</i> (requirement 3). The canonical bytes stay in the host's tree, and immediacy comes for free — the broker simply stops issuing URLs the moment the ACL drops B, with no token-refresh window (§9.2).</p>
 
       <h2 id="testing">10. Testing</h2>
       <ul>
@@ -550,5 +665,9 @@ match /aircraft_shares/{acId} {
     </nav>
   </div>
 </main>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose", sequence: { useMaxWidth: true, mirrorActors: false } });
+</script>
 </body>
 </html>
