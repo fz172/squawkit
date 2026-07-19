@@ -15,7 +15,7 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
  *
  * Examples
  * - `Aircraft` at `userRoot("u1")` with id `ac1` → `/users/u1/aircraft/ac1`
- * - `MaintenanceLog` at `aircraftChild("u1", "ac1")` with id `l9` →
+ * - `MaintenanceLog` at `aircraftChildUnsafe("u1", "ac1")` with id `l9` →
  *   `/users/u1/aircraft/ac1/maintenance_log/l9`
  *
  * Keep this the **only** place that knows about Firestore paths, so renames or restructures in R2

@@ -118,7 +118,7 @@ class SyncEngine(
       .first()
       .map { it.id }
     for (aircraftId in aircraftIds) {
-      val aircraftScope = EntityScope.aircraftChild(uid, aircraftId)
+      val aircraftScope = EntityScope.aircraftChildUnsafe(uid, aircraftId)
       for (kind in PER_AIRCRAFT_KINDS) {
         success = hydrationRunner.runFor(uid, kind, aircraftScope) && success
       }
@@ -292,7 +292,7 @@ class SyncEngine(
           aircraftSubScopeSupervisor = subSupervisor
           val subScope = CoroutineScope(subSupervisor + ioContext)
           for (aircraftId in aircraftIds) {
-            val acScope = EntityScope.aircraftChild(
+            val acScope = EntityScope.aircraftChildUnsafe(
               uid,
               aircraftId
             )
@@ -311,7 +311,7 @@ class SyncEngine(
 
     // Shared aircraft: the refs store (hydrated as a TOP_LEVEL_KIND) names foreign scopes that live
     // under each host's tree. Mirror the own-aircraft fan-out, but hydrate/listen the per-aircraft
-    // kinds at aircraftChild(hostUid, acId). The shared aircraft doc itself needs a doc-level pull
+    // kinds at aircraftChildUnsafe(hostUid, acId). The shared aircraft doc itself needs a doc-level pull
     // (§5.2, #123); this branch covers the nested maintenance data. See docs/sharing §5.1.
     val refStore: EntityStore<SharedAircraftRef> =
       storeFactory.create(CollectionKind.SharedAircraftRef)
@@ -343,7 +343,7 @@ class SyncEngine(
                 aircraftId
               )
             }
-            val acScope = EntityScope.aircraftChild(
+            val acScope = EntityScope.aircraftChildUnsafe(
               hostUid,
               aircraftId
             )

@@ -61,7 +61,7 @@ class SyncEngineTest {
     CollectionKind.Aircraft to EntityScope.userRoot(HOST)
       .toPath()
   private val sharedNestedKey =
-    CollectionKind.MaintenanceLog to EntityScope.aircraftChild(HOST, SHARED_AC)
+    CollectionKind.MaintenanceLog to EntityScope.aircraftChildUnsafe(HOST, SHARED_AC)
       .toPath()
 
   @Before
@@ -129,7 +129,7 @@ class SyncEngineTest {
       seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(HOST), SHARED_AC)
       seedEntity(
         CollectionKind.MaintenanceLog,
-        EntityScope.aircraftChild(HOST, SHARED_AC),
+        EntityScope.aircraftChildUnsafe(HOST, SHARED_AC),
         "log-1"
       )
       // Hydration (mocked out here) is what writes this in production; it is the janitor's evidence
@@ -157,7 +157,7 @@ class SyncEngineTest {
       assertThat(
         rowsAt(
           CollectionKind.MaintenanceLog,
-          EntityScope.aircraftChild(HOST, SHARED_AC)
+          EntityScope.aircraftChildUnsafe(HOST, SHARED_AC)
         )
       )
         .isEmpty()
@@ -172,11 +172,11 @@ class SyncEngineTest {
     seedRef()
     // A member's own pending upload, and one on the shared aircraft (host's tree). The old
     // own-tree-only scan (`/users/{member}/%`) would have found the first and stranded the second.
-    seedPendingUpload(EntityScope.aircraftChild(MEMBER, "ac-own"), "blob-own")
-    seedPendingUpload(EntityScope.aircraftChild(HOST, SHARED_AC), "blob-shared")
+    seedPendingUpload(EntityScope.aircraftChildUnsafe(MEMBER, "ac-own"), "blob-own")
+    seedPendingUpload(EntityScope.aircraftChildUnsafe(HOST, SHARED_AC), "blob-shared")
     // A pending blob in an unrelated user's tree that is NOT a share of ours must stay untouched —
     // scanning it would push it under our auth (PERMISSION_DENIED). Guards against over-widening.
-    seedPendingUpload(EntityScope.aircraftChild("stranger-uid", "ac-x"), "blob-foreign")
+    seedPendingUpload(EntityScope.aircraftChildUnsafe("stranger-uid", "ac-x"), "blob-foreign")
     val scheduler = FakeUploadScheduler()
 
     engine = buildEngine(scheduler)
@@ -266,7 +266,7 @@ class SyncEngineTest {
     db.schemaQueries.upsertCursor(
       uid = MEMBER,
       collection = CollectionKind.MaintenanceLog,
-      scope_path = EntityScope.aircraftChild(HOST, SHARED_AC)
+      scope_path = EntityScope.aircraftChildUnsafe(HOST, SHARED_AC)
         .toPath(),
       hydrated = true,
       last_seen_remote = null,

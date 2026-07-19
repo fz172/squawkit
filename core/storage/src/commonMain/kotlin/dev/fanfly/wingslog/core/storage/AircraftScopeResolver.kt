@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.Flow
  * Resolves the [EntityScope] that holds an aircraft's nested maintenance data (logs, tasks,
  * squawks, overview). Per-aircraft managers must not derive scopes from the signed-in uid any more:
  *
- * - **Own aircraft** → `aircraftChild(myUid, aircraftId)` (unchanged).
- * - **Shared aircraft** → `aircraftChild(hostUid, aircraftId)`, where `hostUid` comes from the
+ * - **Own aircraft** → `aircraftChildUnsafe(myUid, aircraftId)` (unchanged).
+ * - **Shared aircraft** → `aircraftChildUnsafe(hostUid, aircraftId)`, where `hostUid` comes from the
  *   member's [dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef] for this id. Shared data
  *   lives in-place under the host's tree; refs are pointers, not copies (docs/sharing §6.3).
  *

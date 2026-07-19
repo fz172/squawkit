@@ -106,7 +106,7 @@ class AttachmentBrokerRoutingTest {
     remoteState: RemoteState = RemoteState.RemoteOnly,
   ) = BlobRef(
     id = BlobId(BLOB_ID),
-    scope = EntityScope.aircraftChild(ownerUid, "ac1"),
+    scope = EntityScope.aircraftChildUnsafe(ownerUid, "ac1"),
     relativePath = "blobs/$BLOB_ID.bin",
     sizeBytes = 3L,
     sha256 = "sha",

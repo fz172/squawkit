@@ -72,10 +72,10 @@ class LocalFirstAttachmentManagerImplTest {
     every { auth.getCurrentUser() } returns mockUser
 
     // Default: own aircraft — the resolver hands back the caller's own tree. A shared-aircraft case
-    // would return aircraftChild(hostUid, ...); the manager just uses whatever scope it is given.
+    // would return aircraftChildUnsafe(hostUid, ...); the manager just uses whatever scope it is given.
     aircraftScopeResolver = mockk(relaxed = true)
     coEvery { aircraftScopeResolver.resolveNow(any()) } answers {
-      EntityScope.aircraftChild(TEST_USER_ID, firstArg())
+      EntityScope.aircraftChildUnsafe(TEST_USER_ID, firstArg())
     }
 
     manager = LocalFirstAttachmentManagerImpl(
@@ -142,7 +142,7 @@ class LocalFirstAttachmentManagerImplTest {
     // also what makes the upload driver route it through the broker (P8.4).
     val hostUid = "host-eng-42"
     coEvery { aircraftScopeResolver.resolveNow(TEST_AIRCRAFT_ID) } returns
-      EntityScope.aircraftChild(hostUid, TEST_AIRCRAFT_ID)
+      EntityScope.aircraftChildUnsafe(hostUid, TEST_AIRCRAFT_ID)
     val picked = buildPickedFile(uri = "content://example/photo.jpg", mimeType = "image/jpeg")
     val fakeBytes = byteArrayOf(1, 2, 3)
     every { fileByteReader.readBytes(picked.uri) } returns fakeBytes
@@ -158,7 +158,7 @@ class LocalFirstAttachmentManagerImplTest {
         any(),
         fakeBytes,
         contentType = any(),
-        scope = EntityScope.aircraftChild(hostUid, TEST_AIRCRAFT_ID),
+        scope = EntityScope.aircraftChildUnsafe(hostUid, TEST_AIRCRAFT_ID),
       )
     }
   }

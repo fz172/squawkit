@@ -29,7 +29,7 @@ private val RECENTLY = NOW - 3.days
 
 private val USER_ROOT = EntityScope.userRoot(UID)
   .toPath()
-private val AIRCRAFT_SCOPE = EntityScope.aircraftChild(UID, AIRCRAFT_ID)
+private val AIRCRAFT_SCOPE = EntityScope.aircraftChildUnsafe(UID, AIRCRAFT_ID)
   .toPath()
 
 @OptIn(ExperimentalTime::class)
@@ -118,7 +118,7 @@ class TombstoneGcTest {
     // Same attachment id, different aircraft — a copy across the fleet. The live one wins.
     putEntity(
       kind = CollectionKind.MaintenanceLog,
-      scope = EntityScope.aircraftChild(UID, "ac-2")
+      scope = EntityScope.aircraftChildUnsafe(UID, "ac-2")
         .toPath(),
       id = "copy",
       payload = MaintenanceLog(
@@ -162,7 +162,7 @@ class TombstoneGcTest {
   fun purgedAircraftLeavesAnotherAircraftsBlobsAlone() = runTest {
     putAircraft(at = LONG_AGO, deleted = true)
     blobs.rows[BlobId("mine")] = AIRCRAFT_SCOPE
-    blobs.rows[BlobId("theirs")] = EntityScope.aircraftChild(UID, "ac-2")
+    blobs.rows[BlobId("theirs")] = EntityScope.aircraftChildUnsafe(UID, "ac-2")
       .toPath()
 
     gc.runOnce(NOW)
