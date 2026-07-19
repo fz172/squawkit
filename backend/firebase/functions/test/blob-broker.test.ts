@@ -71,6 +71,9 @@ describe("pipeBlob", () => {
     expect(res.status()).toBe(200);
     expect(res.header("Content-Type")).toBe("image/png");
     expect(res.header("Cache-Control")).toBe("private, no-store");
+    // Cross-account content must never be sniffed or rendered inline in this origin.
+    expect(res.header("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.header("Content-Disposition")).toBe("attachment");
     expect(res.body().toString()).toBe("hello-bytes");
   });
 
@@ -120,7 +123,9 @@ describe("getBlobUploadSession", () => {
 function mockRes() {
   const chunks: Buffer[] = [];
   const headers: Record<string, string> = {};
-  let statusCode = 200;
+  // Unset until pipeBlob assigns one, so a status assertion actually proves pipeBlob set it rather
+  // than reading a convenient default.
+  let statusCode: number | undefined;
   const sink = new Writable({
     write(chunk, _enc, cb) {
       chunks.push(Buffer.from(chunk));

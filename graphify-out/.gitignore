@@ -1,0 +1,5 @@
+# Transient graphify artifacts — regenerated on every `graphify update`.
+cache/
+cost.json
+# Dated curated-graph backups.
+20*/

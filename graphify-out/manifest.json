@@ -1,0 +1,3852 @@
+{
+  ".claude/hooks/no-bare-koin-get.sh": {
+    "mtime": 1783921597.0239289,
+    "ast_hash": "b7a5d89f6dabf454ae9b778420242d7b",
+    "semantic_hash": "b7a5d89f6dabf454ae9b778420242d7b"
+  },
+  ".claude/hooks/no-escape-chars.sh": {
+    "mtime": 1783894849.0930202,
+    "ast_hash": "ce886386a1139f211d79b6a2f74eeaf8",
+    "semantic_hash": "ce886386a1139f211d79b6a2f74eeaf8"
+  },
+  ".claude/settings.local.json": {
+    "mtime": 1782799127.2603116,
+    "ast_hash": "24a7c021a6020f4b0bb807257f53eba7",
+    "semantic_hash": "24a7c021a6020f4b0bb807257f53eba7"
+  },
+  ".impeccable/design.json": {
+    "mtime": 1782453160.0759952,
+    "ast_hash": "5382770519be2f0765c006e84150b3b0",
+    "semantic_hash": "5382770519be2f0765c006e84150b3b0"
+  },
+  "app/build.gradle.kts": {
+    "mtime": 1783666383.245987,
+    "ast_hash": "399aa8933caac7ea3dd4e0a2816d70e7",
+    "semantic_hash": "399aa8933caac7ea3dd4e0a2816d70e7"
+  },
+  "app/google-services.json": {
+    "mtime": 1783315895.5008605,
+    "ast_hash": "f172f12b1c8a7731264d2c495fcca8e8",
+    "semantic_hash": "f172f12b1c8a7731264d2c495fcca8e8"
+  },
+  "app/src/main/kotlin/WingsLogApplication.kt": {
+    "mtime": 1783361458.6770139,
+    "ast_hash": "e942808bd129debaacc349635e31417e",
+    "semantic_hash": "e942808bd129debaacc349635e31417e"
+  },
+  "app/src/main/kotlin/dev/fanfly/wingslog/MainActivity.kt": {
+    "mtime": 1783666383.2463512,
+    "ast_hash": "6084e13fc437b3ffde2a20b4a0111915",
+    "semantic_hash": "6084e13fc437b3ffde2a20b4a0111915"
+  },
+  "backend/firebase/.claude/settings.local.json": {
+    "mtime": 1779345267.005927,
+    "ast_hash": "b0709ac96f3951cb45d09ea3e2e5aed1",
+    "semantic_hash": "b0709ac96f3951cb45d09ea3e2e5aed1"
+  },
+  "backend/firebase/firebase.json": {
+    "mtime": 1783978922.346115,
+    "ast_hash": "851af9677954b0557db0b8fef9bcce4a",
+    "semantic_hash": "851af9677954b0557db0b8fef9bcce4a"
+  },
+  "backend/firebase/functions/package.json": {
+    "mtime": 1784001860.6863625,
+    "ast_hash": "d287136e1b990e2019e9f81c9d3ab96a",
+    "semantic_hash": "d287136e1b990e2019e9f81c9d3ab96a"
+  },
+  "backend/firebase/functions/src/config/env.ts": {
+    "mtime": 1784012800.532472,
+    "ast_hash": "80147cb86410ce91fd0553b84cf74264",
+    "semantic_hash": "80147cb86410ce91fd0553b84cf74264"
+  },
+  "backend/firebase/functions/src/config/firebaseAdmin.ts": {
+    "mtime": 1784444008.1239462,
+    "ast_hash": "91342c56c7a7d9f639e28997a7c151fe",
+    "semantic_hash": "91342c56c7a7d9f639e28997a7c151fe"
+  },
+  "backend/firebase/functions/src/export/exportDeliveryService.ts": {
+    "mtime": 1779590879.4070883,
+    "ast_hash": "9b2a15ec6f9e1a7d9da0a6e8bbcd84bb",
+    "semantic_hash": "9b2a15ec6f9e1a7d9da0a6e8bbcd84bb"
+  },
+  "backend/firebase/functions/src/export/exportMailer.ts": {
+    "mtime": 1782453159.999798,
+    "ast_hash": "47ac7393e30a460d8379327b46b96a2b",
+    "semantic_hash": "47ac7393e30a460d8379327b46b96a2b"
+  },
+  "backend/firebase/functions/src/export/exportManifestRepository.ts": {
+    "mtime": 1779590879.4039745,
+    "ast_hash": "d2f0fdaf7a56c8aec13231613f101d2f",
+    "semantic_hash": "d2f0fdaf7a56c8aec13231613f101d2f"
+  },
+  "backend/firebase/functions/src/export/exportModels.ts": {
+    "mtime": 1779590879.4005568,
+    "ast_hash": "27e0b64fd4d5774756d6faafc4b53f6e",
+    "semantic_hash": "27e0b64fd4d5774756d6faafc4b53f6e"
+  },
+  "backend/firebase/functions/src/export/exportStorage.ts": {
+    "mtime": 1779422485.9486563,
+    "ast_hash": "6e170c2c19bd40d784c4024cce47a44b",
+    "semantic_hash": "6e170c2c19bd40d784c4024cce47a44b"
+  },
+  "backend/firebase/functions/src/export/requestExportDelivery.ts": {
+    "mtime": 1779590879.4100735,
+    "ast_hash": "d4cf30c697608f364a58e731aa11d38f",
+    "semantic_hash": "d4cf30c697608f364a58e731aa11d38f"
+  },
+  "backend/firebase/functions/src/generated/proto/aircraft/attachment.ts": {
+    "mtime": 1784407742.408764,
+    "ast_hash": "6317cd6f1fd9e2da287ec63652724b06",
+    "semantic_hash": "6317cd6f1fd9e2da287ec63652724b06"
+  },
+  "backend/firebase/functions/src/generated/proto/aircraft/component_type.ts": {
+    "mtime": 1784407742.408887,
+    "ast_hash": "da3b4fbc6ecc0947cb881543f69e56f9",
+    "semantic_hash": "da3b4fbc6ecc0947cb881543f69e56f9"
+  },
+  "backend/firebase/functions/src/generated/proto/aircraft/maintenance_log.ts": {
+    "mtime": 1784407742.4089482,
+    "ast_hash": "3cfc5a82d356337bb7b8d4658b55a423",
+    "semantic_hash": "3cfc5a82d356337bb7b8d4658b55a423"
+  },
+  "backend/firebase/functions/src/generated/proto/aircraft/maintenance_task.ts": {
+    "mtime": 1784407742.4090505,
+    "ast_hash": "309853987c691839473287db5e082e5e",
+    "semantic_hash": "309853987c691839473287db5e082e5e"
+  },
+  "backend/firebase/functions/src/generated/proto/aircraft/squawk.ts": {
+    "mtime": 1784407742.4092047,
+    "ast_hash": "cd50dc62249d9534d3264b4eb084f863",
+    "semantic_hash": "cd50dc62249d9534d3264b4eb084f863"
+  },
+  "backend/firebase/functions/src/generated/proto/aircraft/technician.ts": {
+    "mtime": 1784407742.4093184,
+    "ast_hash": "ad6759181f756bf3c22cc063009ef5d5",
+    "semantic_hash": "ad6759181f756bf3c22cc063009ef5d5"
+  },
+  "backend/firebase/functions/src/generated/proto/google/protobuf/timestamp.ts": {
+    "mtime": 1784407742.4095206,
+    "ast_hash": "b2bca63d1a3cad5e728516d19844497b",
+    "semantic_hash": "b2bca63d1a3cad5e728516d19844497b"
+  },
+  "backend/firebase/functions/src/generated/proto/rpc/request_export_delivery/request_export_delivery.ts": {
+    "mtime": 1784407742.409618,
+    "ast_hash": "490cf46620d3eca59940f296991dca26",
+    "semantic_hash": "490cf46620d3eca59940f296991dca26"
+  },
+  "backend/firebase/functions/src/generated/proto/sharing/shared_aircraft_ref.ts": {
+    "mtime": 1784407742.4097114,
+    "ast_hash": "beb2c8db34c5a0ab4d8ccb8824046694",
+    "semantic_hash": "beb2c8db34c5a0ab4d8ccb8824046694"
+  },
+  "backend/firebase/functions/src/index.ts": {
+    "mtime": 1784444102.7354808,
+    "ast_hash": "bf6a7d4a487ad1d0023a865c5d17125e",
+    "semantic_hash": "bf6a7d4a487ad1d0023a865c5d17125e"
+  },
+  "backend/firebase/functions/src/shared/auth.ts": {
+    "mtime": 1783750344.7485483,
+    "ast_hash": "da4af7e91e461d87f4fa86bec46b9e07",
+    "semantic_hash": "da4af7e91e461d87f4fa86bec46b9e07"
+  },
+  "backend/firebase/functions/src/sharing/cancelAircraftShareInvite.ts": {
+    "mtime": 1783981143.1403742,
+    "ast_hash": "c695ff06e35062eefd02a7fbab7a5b83",
+    "semantic_hash": "c695ff06e35062eefd02a7fbab7a5b83"
+  },
+  "backend/firebase/functions/src/sharing/createAircraftShareInvite.ts": {
+    "mtime": 1783981143.1405056,
+    "ast_hash": "5a27dbab9a1b1eee5764b073c9e5722b",
+    "semantic_hash": "5a27dbab9a1b1eee5764b073c9e5722b"
+  },
+  "backend/firebase/functions/src/sharing/inviteCodes.ts": {
+    "mtime": 1783981143.140655,
+    "ast_hash": "62762297929d919fdb72c0019ae87579",
+    "semantic_hash": "62762297929d919fdb72c0019ae87579"
+  },
+  "backend/firebase/functions/src/sharing/onAircraftDeleted.ts": {
+    "mtime": 1783997493.6502266,
+    "ast_hash": "2ecbf39c973fe96081d1345d6b01f2c0",
+    "semantic_hash": "2ecbf39c973fe96081d1345d6b01f2c0"
+  },
+  "backend/firebase/functions/src/sharing/previewAircraftShareInvite.ts": {
+    "mtime": 1783981143.1407623,
+    "ast_hash": "ef532db5bf57c797f4c2e1f697378906",
+    "semantic_hash": "ef532db5bf57c797f4c2e1f697378906"
+  },
+  "backend/firebase/functions/src/sharing/rateLimit.ts": {
+    "mtime": 1783981143.1408489,
+    "ast_hash": "ba2b072e86e661adafa8813ab7e1283f",
+    "semantic_hash": "ba2b072e86e661adafa8813ab7e1283f"
+  },
+  "backend/firebase/functions/src/sharing/redeemAircraftShareInvite.ts": {
+    "mtime": 1783981143.1410012,
+    "ast_hash": "b3e43974ee5580aa44bb63559b8779f2",
+    "semantic_hash": "b3e43974ee5580aa44bb63559b8779f2"
+  },
+  "backend/firebase/functions/src/sharing/revokeAircraftShare.ts": {
+    "mtime": 1783978442.2103963,
+    "ast_hash": "8ef3195f525228bf7f8679b3111714a2",
+    "semantic_hash": "8ef3195f525228bf7f8679b3111714a2"
+  },
+  "backend/firebase/functions/src/sharing/sharedAircraftRefWire.ts": {
+    "mtime": 1783653376.7447605,
+    "ast_hash": "308b899940c087915a810c9b51cd28b4",
+    "semantic_hash": "308b899940c087915a810c9b51cd28b4"
+  },
+  "backend/firebase/functions/src/sharing/sharingModels.ts": {
+    "mtime": 1784444015.2785325,
+    "ast_hash": "96c534215943557cb654ad5ad42a04eb",
+    "semantic_hash": "96c534215943557cb654ad5ad42a04eb"
+  },
+  "backend/firebase/functions/src/sharing/updateAircraftShareRole.ts": {
+    "mtime": 1783978442.2106607,
+    "ast_hash": "1824ea8e6ed1f85bf9b071a6bf591836",
+    "semantic_hash": "1824ea8e6ed1f85bf9b071a6bf591836"
+  },
+  "backend/firebase/functions/src/storage/blobBroker.ts": {
+    "mtime": 1784444032.531412,
+    "ast_hash": "af1a79199d3b709fc66ca1bcba0cd9b8",
+    "semantic_hash": "af1a79199d3b709fc66ca1bcba0cd9b8"
+  },
+  "backend/firebase/functions/src/storage/blobRefs.ts": {
+    "mtime": 1783997493.6503496,
+    "ast_hash": "8b822db057503b1c458b88b974859d67",
+    "semantic_hash": "8b822db057503b1c458b88b974859d67"
+  },
+  "backend/firebase/functions/src/storage/getBlobUploadSession.ts": {
+    "mtime": 1784444094.264582,
+    "ast_hash": "fd17e8d0728394f8177c39f60f8208d4",
+    "semantic_hash": "fd17e8d0728394f8177c39f60f8208d4"
+  },
+  "backend/firebase/functions/src/storage/onRecordDeleted.ts": {
+    "mtime": 1783997493.6504467,
+    "ast_hash": "1e78ff9740cadfe19e6d8bfb25e20937",
+    "semantic_hash": "1e78ff9740cadfe19e6d8bfb25e20937"
+  },
+  "backend/firebase/functions/src/storage/storageSweep.ts": {
+    "mtime": 1784000673.3219993,
+    "ast_hash": "1e0743150648c5e0cdbf41fa5b4539ed",
+    "semantic_hash": "1e0743150648c5e0cdbf41fa5b4539ed"
+  },
+  "backend/firebase/functions/src/storage/storageSweepTriggers.ts": {
+    "mtime": 1784012800.532779,
+    "ast_hash": "ed44abeeb702445131e1d90ce9e89e6a",
+    "semantic_hash": "ed44abeeb702445131e1d90ce9e89e6a"
+  },
+  "backend/firebase/functions/src/storage/streamBlob.ts": {
+    "mtime": 1784487923.0795758,
+    "ast_hash": "83b744b942537e842e975d05bf54d6bd",
+    "semantic_hash": ""
+  },
+  "backend/firebase/functions/test/blob-broker.test.ts": {
+    "mtime": 1784487938.9008632,
+    "ast_hash": "7d5c8348bdee2dab2d4a1960687b1637",
+    "semantic_hash": ""
+  },
+  "backend/firebase/functions/test/blob-cleanup.test.ts": {
+    "mtime": 1783997493.6507754,
+    "ast_hash": "6a3af53b54a65925948d9acaefff0813",
+    "semantic_hash": "6a3af53b54a65925948d9acaefff0813"
+  },
+  "backend/firebase/functions/test/firestore-rules.test.ts": {
+    "mtime": 1783580220.7468095,
+    "ast_hash": "c4ce45fbcb7a749c9d4aa7e38d40c47b",
+    "semantic_hash": "c4ce45fbcb7a749c9d4aa7e38d40c47b"
+  },
+  "backend/firebase/functions/test/helpers.ts": {
+    "mtime": 1783997493.6508896,
+    "ast_hash": "330f2384365aa320221f7079cba7599d",
+    "semantic_hash": "330f2384365aa320221f7079cba7599d"
+  },
+  "backend/firebase/functions/test/invite-codes.test.ts": {
+    "mtime": 1783981143.1415386,
+    "ast_hash": "e6c65520fbcf7e448ee402d737340311",
+    "semantic_hash": "e6c65520fbcf7e448ee402d737340311"
+  },
+  "backend/firebase/functions/test/sharing-functions.test.ts": {
+    "mtime": 1783981143.1418118,
+    "ast_hash": "4cbae06b2486e7adb73aa4342171e6ef",
+    "semantic_hash": "4cbae06b2486e7adb73aa4342171e6ef"
+  },
+  "backend/firebase/functions/test/sharing-ref-wire.test.ts": {
+    "mtime": 1783653376.7451744,
+    "ast_hash": "2df98eb77f0433a063d55df927688d00",
+    "semantic_hash": "2df98eb77f0433a063d55df927688d00"
+  },
+  "backend/firebase/functions/test/sharing-rules.test.ts": {
+    "mtime": 1783981143.14194,
+    "ast_hash": "031100e3ba5450c55cc59d9cf0c805b4",
+    "semantic_hash": "031100e3ba5450c55cc59d9cf0c805b4"
+  },
+  "backend/firebase/functions/test/storage-rules.test.ts": {
+    "mtime": 1783978922.3463745,
+    "ast_hash": "22540acd4bf9cf1dc1214c5b4efc153b",
+    "semantic_hash": "22540acd4bf9cf1dc1214c5b4efc153b"
+  },
+  "backend/firebase/functions/test/storage-sweep.test.ts": {
+    "mtime": 1784000673.3222926,
+    "ast_hash": "48674c77dc1e772f1783db65b0f4f00e",
+    "semantic_hash": "48674c77dc1e772f1783db65b0f4f00e"
+  },
+  "backend/firebase/functions/test/sweep-config.test.ts": {
+    "mtime": 1784012800.5332391,
+    "ast_hash": "ce19994573d647a65564ac01715b7191",
+    "semantic_hash": "ce19994573d647a65564ac01715b7191"
+  },
+  "backend/firebase/functions/tsconfig.json": {
+    "mtime": 1779320470.3991055,
+    "ast_hash": "5c2a8afb2f8d4eae67ea9559b3afc61d",
+    "semantic_hash": "5c2a8afb2f8d4eae67ea9559b3afc61d"
+  },
+  "backend/firebase/functions/vitest.config.ts": {
+    "mtime": 1784001588.0697336,
+    "ast_hash": "1ecb59ba6cd648d34b7dcf2bf0efdcd0",
+    "semantic_hash": "1ecb59ba6cd648d34b7dcf2bf0efdcd0"
+  },
+  "backend/firebase/storage_cors.json": {
+    "mtime": 1780165260.2017708,
+    "ast_hash": "9bf2ec762df3bdbf46052d341d6b0d47",
+    "semantic_hash": "9bf2ec762df3bdbf46052d341d6b0d47"
+  },
+  "build.gradle.kts": {
+    "mtime": 1782456485.204691,
+    "ast_hash": "d7390967e4ad314262ad01019c28d6c6",
+    "semantic_hash": "d7390967e4ad314262ad01019c28d6c6"
+  },
+  "composeApp/build.gradle.kts": {
+    "mtime": 1783722779.480534,
+    "ast_hash": "8471df4a929ae79bd98ed50ab6a5868a",
+    "semantic_hash": "8471df4a929ae79bd98ed50ab6a5868a"
+  },
+  "composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/AppEntry.kt": {
+    "mtime": 1783722779.480941,
+    "ast_hash": "957abda1a99d8e2e1fbacdd05292e806",
+    "semantic_hash": "957abda1a99d8e2e1fbacdd05292e806"
+  },
+  "composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/IntegrityRecoveryDialog.kt": {
+    "mtime": 1779085578.4177823,
+    "ast_hash": "4e6d415bd536c895a3cd093ef47318b0",
+    "semantic_hash": "4e6d415bd536c895a3cd093ef47318b0"
+  },
+  "composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/di/initKoin.kt": {
+    "mtime": 1783356306.8546755,
+    "ast_hash": "777f5fcf656ff69fc3a13533db211903",
+    "semantic_hash": "777f5fcf656ff69fc3a13533db211903"
+  },
+  "composeApp/src/iosMain/kotlin/dev/fanfly/wingslog/MainViewController.kt": {
+    "mtime": 1783666383.2466753,
+    "ast_hash": "3b26ebe9c624d525a6ab9514d9f0abce",
+    "semantic_hash": "3b26ebe9c624d525a6ab9514d9f0abce"
+  },
+  "core/analytics/build.gradle.kts": {
+    "mtime": 1783028483.0116754,
+    "ast_hash": "3da02eaecd0c031f574d9c3e03aa714c",
+    "semantic_hash": "3da02eaecd0c031f574d9c3e03aa714c"
+  },
+  "core/analytics/src/androidMain/kotlin/dev/fanfly/wingslog/core/analytics/AnalyticsPreferenceStore.android.kt": {
+    "mtime": 1783362438.805084,
+    "ast_hash": "db3e022b932b347b9e6e3a3afaea08dc",
+    "semantic_hash": "db3e022b932b347b9e6e3a3afaea08dc"
+  },
+  "core/analytics/src/androidMain/kotlin/dev/fanfly/wingslog/core/analytics/FirebaseAnalyticsManager.kt": {
+    "mtime": 1783957852.6612327,
+    "ast_hash": "af8518733b05cf917e846d06f91978c9",
+    "semantic_hash": "af8518733b05cf917e846d06f91978c9"
+  },
+  "core/analytics/src/androidMain/kotlin/dev/fanfly/wingslog/core/analytics/di/AnalyticsModule.android.kt": {
+    "mtime": 1783361717.4163327,
+    "ast_hash": "235988711e176207ddde2a3526ff215c",
+    "semantic_hash": "235988711e176207ddde2a3526ff215c"
+  },
+  "core/analytics/src/commonMain/kotlin/dev/fanfly/wingslog/core/analytics/AnalyticsManager.kt": {
+    "mtime": 1783957852.6613479,
+    "ast_hash": "20c2adf84466aa4e55c12ad76ed28f3e",
+    "semantic_hash": "20c2adf84466aa4e55c12ad76ed28f3e"
+  },
+  "core/analytics/src/commonMain/kotlin/dev/fanfly/wingslog/core/analytics/AnalyticsPreference.kt": {
+    "mtime": 1783036188.7288368,
+    "ast_hash": "13d0fda5e55f3be588863b9e66330bbb",
+    "semantic_hash": "13d0fda5e55f3be588863b9e66330bbb"
+  },
+  "core/analytics/src/commonMain/kotlin/dev/fanfly/wingslog/core/analytics/LocalAnalytics.kt": {
+    "mtime": 1780883200.9842763,
+    "ast_hash": "f50bec4f9ced7f4ed48d56dceb3d712a",
+    "semantic_hash": "f50bec4f9ced7f4ed48d56dceb3d712a"
+  },
+  "core/analytics/src/commonMain/kotlin/dev/fanfly/wingslog/core/analytics/ScreenTracking.kt": {
+    "mtime": 1780883207.765209,
+    "ast_hash": "9930afe377144ea31a038ca3bc1f5a34",
+    "semantic_hash": "9930afe377144ea31a038ca3bc1f5a34"
+  },
+  "core/analytics/src/commonMain/kotlin/dev/fanfly/wingslog/core/analytics/di/AnalyticsModule.kt": {
+    "mtime": 1783921597.0242283,
+    "ast_hash": "11842693eedb652b88f9fdd4113c240c",
+    "semantic_hash": "11842693eedb652b88f9fdd4113c240c"
+  },
+  "core/analytics/src/iosMain/kotlin/dev/fanfly/wingslog/core/analytics/AnalyticsPreferenceStore.ios.kt": {
+    "mtime": 1783036196.090527,
+    "ast_hash": "f33b7520b79aac4603c8f6037db82b14",
+    "semantic_hash": "f33b7520b79aac4603c8f6037db82b14"
+  },
+  "core/analytics/src/iosMain/kotlin/dev/fanfly/wingslog/core/analytics/FirebaseAnalyticsManager.kt": {
+    "mtime": 1783957852.6614645,
+    "ast_hash": "60a679b11c94670a69667106ad50f168",
+    "semantic_hash": "60a679b11c94670a69667106ad50f168"
+  },
+  "core/analytics/src/iosMain/kotlin/dev/fanfly/wingslog/core/analytics/di/AnalyticsModule.ios.kt": {
+    "mtime": 1783036230.9121885,
+    "ast_hash": "111c779d5378b7f1188c43c4b20534e1",
+    "semantic_hash": "111c779d5378b7f1188c43c4b20534e1"
+  },
+  "core/analytics/src/jsMain/kotlin/dev/fanfly/wingslog/core/analytics/AnalyticsPreferenceStore.js.kt": {
+    "mtime": 1783361717.4565246,
+    "ast_hash": "834666160255869ab5768d288ea0ed89",
+    "semantic_hash": "834666160255869ab5768d288ea0ed89"
+  },
+  "core/analytics/src/jsMain/kotlin/dev/fanfly/wingslog/core/analytics/FirebaseAnalyticsJs.kt": {
+    "mtime": 1783036173.305664,
+    "ast_hash": "04dd71f69ed95054457c76788c2c6c8c",
+    "semantic_hash": "04dd71f69ed95054457c76788c2c6c8c"
+  },
+  "core/analytics/src/jsMain/kotlin/dev/fanfly/wingslog/core/analytics/WebAnalyticsManager.kt": {
+    "mtime": 1783957852.6615658,
+    "ast_hash": "09db5d33261d1b34588ad1fcaf87a565",
+    "semantic_hash": "09db5d33261d1b34588ad1fcaf87a565"
+  },
+  "core/analytics/src/jsMain/kotlin/dev/fanfly/wingslog/core/analytics/di/AnalyticsModule.js.kt": {
+    "mtime": 1783036237.3281136,
+    "ast_hash": "1a622a0c888eb83dec5675324baf0928",
+    "semantic_hash": "1a622a0c888eb83dec5675324baf0928"
+  },
+  "core/appinfo/build.gradle.kts": {
+    "mtime": 1784099468.5142288,
+    "ast_hash": "41de7bb5fdbf10b065681d4a4111302d",
+    "semantic_hash": "41de7bb5fdbf10b065681d4a4111302d"
+  },
+  "core/appinfo/src/androidMain/kotlin/dev/fanfly/wingslog/core/appinfo/AppCapability.android.kt": {
+    "mtime": 1783995713.7015507,
+    "ast_hash": "c6dc2e7894f0ff07176d11c919220972",
+    "semantic_hash": "c6dc2e7894f0ff07176d11c919220972"
+  },
+  "core/appinfo/src/androidMain/kotlin/dev/fanfly/wingslog/core/appinfo/AppInfo.android.kt": {
+    "mtime": 1783361717.0022972,
+    "ast_hash": "59ddd4fa3c17f9f4b9607fcd851fc55d",
+    "semantic_hash": "59ddd4fa3c17f9f4b9607fcd851fc55d"
+  },
+  "core/appinfo/src/commonMain/kotlin/dev/fanfly/wingslog/core/appinfo/AppCapability.kt": {
+    "mtime": 1783995713.7016995,
+    "ast_hash": "4c64fba29bd13ea7e9fb281948c1a2f1",
+    "semantic_hash": "4c64fba29bd13ea7e9fb281948c1a2f1"
+  },
+  "core/appinfo/src/commonMain/kotlin/dev/fanfly/wingslog/core/appinfo/AppInfo.kt": {
+    "mtime": 1779061310.00708,
+    "ast_hash": "37e19504b8d20b72606e2bee76b051a6",
+    "semantic_hash": "37e19504b8d20b72606e2bee76b051a6"
+  },
+  "core/appinfo/src/iosMain/kotlin/dev/fanfly/wingslog/core/appinfo/AppCapability.ios.kt": {
+    "mtime": 1783995713.7018008,
+    "ast_hash": "be02f5d1e26d3c1d16c9bd399ae9fad0",
+    "semantic_hash": "be02f5d1e26d3c1d16c9bd399ae9fad0"
+  },
+  "core/appinfo/src/iosMain/kotlin/dev/fanfly/wingslog/core/appinfo/AppInfo.ios.kt": {
+    "mtime": 1779061316.2116115,
+    "ast_hash": "431b73597a7116a53718bf2a08ba4187",
+    "semantic_hash": "431b73597a7116a53718bf2a08ba4187"
+  },
+  "core/appinfo/src/jsMain/kotlin/dev/fanfly/wingslog/core/appinfo/AppCapability.js.kt": {
+    "mtime": 1783995713.7019029,
+    "ast_hash": "ef8c881d4b5436a2a1136a04fb6e21ba",
+    "semantic_hash": "ef8c881d4b5436a2a1136a04fb6e21ba"
+  },
+  "core/appinfo/src/jsMain/kotlin/dev/fanfly/wingslog/core/appinfo/AppInfo.js.kt": {
+    "mtime": 1779744623.766616,
+    "ast_hash": "431b73597a7116a53718bf2a08ba4187",
+    "semantic_hash": "431b73597a7116a53718bf2a08ba4187"
+  },
+  "core/auth/build.gradle.kts": {
+    "mtime": 1782457036.543547,
+    "ast_hash": "8421d73d237118c548511642efad55a8",
+    "semantic_hash": "8421d73d237118c548511642efad55a8"
+  },
+  "core/auth/src/androidMain/kotlin/dev/fanfly/wingslog/core/auth/AuthManagerImpl.kt": {
+    "mtime": 1783983850.9046087,
+    "ast_hash": "a3a8824f582c59f13c89878af8fab5a6",
+    "semantic_hash": "a3a8824f582c59f13c89878af8fab5a6"
+  },
+  "core/auth/src/androidMain/kotlin/dev/fanfly/wingslog/core/auth/di/AuthModule.kt": {
+    "mtime": 1783921597.0243742,
+    "ast_hash": "698813e297a34fbb94e996c053cd500a",
+    "semantic_hash": "698813e297a34fbb94e996c053cd500a"
+  },
+  "core/auth/src/commonMain/kotlin/dev/fanfly/wingslog/core/auth/AccountUpgradeResult.kt": {
+    "mtime": 1783361717.1156569,
+    "ast_hash": "507eb3150f50911d35085d4e8191a604",
+    "semantic_hash": "507eb3150f50911d35085d4e8191a604"
+  },
+  "core/auth/src/commonMain/kotlin/dev/fanfly/wingslog/core/auth/AuthManager.kt": {
+    "mtime": 1783983850.9047966,
+    "ast_hash": "a26dba141c2385bcab846de25313e44a",
+    "semantic_hash": "a26dba141c2385bcab846de25313e44a"
+  },
+  "core/auth/src/commonMain/kotlin/dev/fanfly/wingslog/core/auth/EmailLinkAuthenticator.kt": {
+    "mtime": 1783361717.2201188,
+    "ast_hash": "32a4f93c92fb858734336cf40acf03c9",
+    "semantic_hash": "32a4f93c92fb858734336cf40acf03c9"
+  },
+  "core/auth/src/commonMain/kotlin/dev/fanfly/wingslog/core/auth/SendLinkResult.kt": {
+    "mtime": 1782801584.110299,
+    "ast_hash": "00f13933402cfd88ba04c342054fb678",
+    "semantic_hash": "00f13933402cfd88ba04c342054fb678"
+  },
+  "core/auth/src/commonMain/kotlin/dev/fanfly/wingslog/core/auth/di/CommonAuthModule.kt": {
+    "mtime": 1778729185.0139248,
+    "ast_hash": "e69860da6cd16cc314d5cbd54363ffca",
+    "semantic_hash": "e69860da6cd16cc314d5cbd54363ffca"
+  },
+  "core/auth/src/iosMain/kotlin/dev/fanfly/wingslog/core/auth/AuthManagerImpl.kt": {
+    "mtime": 1783983850.9049647,
+    "ast_hash": "691c5bd55c701bb88ffcd9a0dc4ac861",
+    "semantic_hash": "691c5bd55c701bb88ffcd9a0dc4ac861"
+  },
+  "core/auth/src/iosMain/kotlin/dev/fanfly/wingslog/core/auth/di/AuthModule.kt": {
+    "mtime": 1783921597.0246105,
+    "ast_hash": "0acb3ed2137b4e7053097ea662aab28c",
+    "semantic_hash": "0acb3ed2137b4e7053097ea662aab28c"
+  },
+  "core/auth/src/jsMain/kotlin/dev/fanfly/wingslog/core/auth/AuthManagerImpl.kt": {
+    "mtime": 1783983850.9051101,
+    "ast_hash": "e5e10ba948f2288f8ff1744cd5605400",
+    "semantic_hash": "e5e10ba948f2288f8ff1744cd5605400"
+  },
+  "core/auth/src/jsMain/kotlin/dev/fanfly/wingslog/core/auth/FirebaseAuthJs.kt": {
+    "mtime": 1779744623.7684774,
+    "ast_hash": "3df89e712838876c9b368841f00a286d",
+    "semantic_hash": "3df89e712838876c9b368841f00a286d"
+  },
+  "core/auth/src/jsMain/kotlin/dev/fanfly/wingslog/core/auth/di/AuthModule.kt": {
+    "mtime": 1783921597.0247424,
+    "ast_hash": "0acb3ed2137b4e7053097ea662aab28c",
+    "semantic_hash": "0acb3ed2137b4e7053097ea662aab28c"
+  },
+  "core/datetime/build.gradle.kts": {
+    "mtime": 1782457036.5245934,
+    "ast_hash": "3c4fd861b4d824d564908f421c59498e",
+    "semantic_hash": "3c4fd861b4d824d564908f421c59498e"
+  },
+  "core/datetime/src/androidMain/kotlin/dev/fanfly/wingslog/core/datetime/DateTimeUtils.android.kt": {
+    "mtime": 1778729185.0147429,
+    "ast_hash": "e9ef74105ebfa97168ec28391ed29e0b",
+    "semantic_hash": "e9ef74105ebfa97168ec28391ed29e0b"
+  },
+  "core/datetime/src/commonMain/kotlin/dev/fanfly/wingslog/core/datetime/DateTimeUtils.kt": {
+    "mtime": 1784014277.8753839,
+    "ast_hash": "566c7fd5cf951e31bace226315fc89b1",
+    "semantic_hash": "566c7fd5cf951e31bace226315fc89b1"
+  },
+  "core/datetime/src/iosMain/kotlin/dev/fanfly/wingslog/core/datetime/WireInstantFactory.ios.kt": {
+    "mtime": 1778729185.0152676,
+    "ast_hash": "b56e73a33ed1fe8c5dcdb8b8e1c2da8a",
+    "semantic_hash": "b56e73a33ed1fe8c5dcdb8b8e1c2da8a"
+  },
+  "core/datetime/src/jsMain/kotlin/dev/fanfly/wingslog/core/datetime/WireInstantFactory.js.kt": {
+    "mtime": 1779744623.7691412,
+    "ast_hash": "b56e73a33ed1fe8c5dcdb8b8e1c2da8a",
+    "semantic_hash": "b56e73a33ed1fe8c5dcdb8b8e1c2da8a"
+  },
+  "core/di/build.gradle.kts": {
+    "mtime": 1784100097.8836682,
+    "ast_hash": "5bd5436f02b924db456b8774634d404b",
+    "semantic_hash": "5bd5436f02b924db456b8774634d404b"
+  },
+  "core/di/src/commonMain/kotlin/dev/fanfly/wingslog/core/di/CommonAppModules.kt": {
+    "mtime": 1784100097.8838713,
+    "ast_hash": "14c49e8d4fe73e7f9381e325a86e9654",
+    "semantic_hash": "14c49e8d4fe73e7f9381e325a86e9654"
+  },
+  "core/firebase/build.gradle.kts": {
+    "mtime": 1782457036.5266316,
+    "ast_hash": "73f02283fb4d4cf40216d3d95b8b6161",
+    "semantic_hash": "73f02283fb4d4cf40216d3d95b8b6161"
+  },
+  "core/firebase/src/androidMain/kotlin/dev/fanfly/wingslog/core/firebase/data/FirebaseDataExt.kt": {
+    "mtime": 1779422485.9494417,
+    "ast_hash": "5984738f62d12947311f0525047c2272",
+    "semantic_hash": "5984738f62d12947311f0525047c2272"
+  },
+  "core/firebase/src/commonMain/kotlin/dev/fanfly/wingslog/core/firebase/data/FirebaseDataExt.kt": {
+    "mtime": 1779422485.9497545,
+    "ast_hash": "aafe6b83bada02ae747e09a2f31f60d4",
+    "semantic_hash": "aafe6b83bada02ae747e09a2f31f60d4"
+  },
+  "core/firebase/src/iosMain/kotlin/dev/fanfly/wingslog/core/firebase/data/FirebaseDataExt.kt": {
+    "mtime": 1779422485.9501538,
+    "ast_hash": "c9b8195f3dfca3c38c30fecfe87f55a3",
+    "semantic_hash": "c9b8195f3dfca3c38c30fecfe87f55a3"
+  },
+  "core/firebase/src/jsMain/kotlin/dev/fanfly/wingslog/core/firebase/data/FirebaseDataExt.kt": {
+    "mtime": 1783361717.5951817,
+    "ast_hash": "6a5fed359e0b30435592a46f05359650",
+    "semantic_hash": "6a5fed359e0b30435592a46f05359650"
+  },
+  "core/model/build.gradle.kts": {
+    "mtime": 1782457036.560828,
+    "ast_hash": "649ab01046c2cc56fccd73b5d98c10f7",
+    "semantic_hash": "649ab01046c2cc56fccd73b5d98c10f7"
+  },
+  "core/model/src/commonMain/kotlin/dev/fanfly/wingslog/core/model/id/IdGenerator.kt": {
+    "mtime": 1783361717.5139275,
+    "ast_hash": "72ef40f5731ff39babc574170ea4dfc6",
+    "semantic_hash": "72ef40f5731ff39babc574170ea4dfc6"
+  },
+  "core/nav/build.gradle.kts": {
+    "mtime": 1783570475.1824198,
+    "ast_hash": "92a2da349d5e1cd8f241826f6bc9d9d0",
+    "semantic_hash": "92a2da349d5e1cd8f241826f6bc9d9d0"
+  },
+  "core/nav/src/commonMain/kotlin/dev/fanfly/wingslog/core/nav/Screen.kt": {
+    "mtime": 1784407343.4130015,
+    "ast_hash": "83445f999884fbb1b996ac9bf9e75083",
+    "semantic_hash": "83445f999884fbb1b996ac9bf9e75083"
+  },
+  "core/sharedassets/build.gradle.kts": {
+    "mtime": 1782457036.5564537,
+    "ast_hash": "a0ca9bdb6d23981ea99091d51828d4ff",
+    "semantic_hash": "a0ca9bdb6d23981ea99091d51828d4ff"
+  },
+  "core/storage/build.gradle.kts": {
+    "mtime": 1783922744.2188745,
+    "ast_hash": "3b763f423410c2aa743d41ca073abea1",
+    "semantic_hash": "3b763f423410c2aa743d41ca073abea1"
+  },
+  "core/storage/src/androidMain/kotlin/dev/fanfly/wingslog/core/storage/DriverFactory.android.kt": {
+    "mtime": 1779744623.7701275,
+    "ast_hash": "290ddd0d367c52ffc453eb13e15c0478",
+    "semantic_hash": "290ddd0d367c52ffc453eb13e15c0478"
+  },
+  "core/storage/src/androidMain/kotlin/dev/fanfly/wingslog/core/storage/StorageDispatchers.android.kt": {
+    "mtime": 1783361362.3132792,
+    "ast_hash": "906f9f62af1d869399c3a30e69735c55",
+    "semantic_hash": "906f9f62af1d869399c3a30e69735c55"
+  },
+  "core/storage/src/androidMain/kotlin/dev/fanfly/wingslog/core/storage/blob/Sha256.android.kt": {
+    "mtime": 1783388349.094444,
+    "ast_hash": "7916a41af43b8d98923a3240b465562f",
+    "semantic_hash": "7916a41af43b8d98923a3240b465562f"
+  },
+  "core/storage/src/androidMain/kotlin/dev/fanfly/wingslog/core/storage/di/PlatformStorageModule.android.kt": {
+    "mtime": 1778729185.0167937,
+    "ast_hash": "21a37ecc3e5a22513a00601b2e3093dc",
+    "semantic_hash": "21a37ecc3e5a22513a00601b2e3093dc"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/AircraftScopeResolver.kt": {
+    "mtime": 1783719029.3666203,
+    "ast_hash": "c4414d5a5ce8a7fa761e0d0c16fc613b",
+    "semantic_hash": "c4414d5a5ce8a7fa761e0d0c16fc613b"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/CloudSyncSetting.kt": {
+    "mtime": 1783374440.8430774,
+    "ast_hash": "d1b5fe92d3470ad69ef174e43c9b4fcd",
+    "semantic_hash": "d1b5fe92d3470ad69ef174e43c9b4fcd"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/CollectionKind.kt": {
+    "mtime": 1783580220.7471979,
+    "ast_hash": "291e6fcd2c9c5105855ff4d10ae03cdd",
+    "semantic_hash": "291e6fcd2c9c5105855ff4d10ae03cdd"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/CurrentUidProvider.kt": {
+    "mtime": 1783922744.2189698,
+    "ast_hash": "892d48cecbc2198641010547b03be2be",
+    "semantic_hash": "892d48cecbc2198641010547b03be2be"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/DatabaseIntegrityChecker.kt": {
+    "mtime": 1779744623.7705839,
+    "ast_hash": "4fb22bfb859c83e81c35f1ad5134c6db",
+    "semantic_hash": "4fb22bfb859c83e81c35f1ad5134c6db"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/DatabaseWriteLock.kt": {
+    "mtime": 1783361717.21563,
+    "ast_hash": "fc2435dbd57f1324e0bd4957dc0bb6bf",
+    "semantic_hash": "fc2435dbd57f1324e0bd4957dc0bb6bf"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/DriverFactory.kt": {
+    "mtime": 1778729185.017146,
+    "ast_hash": "a32b19999e6996de1e8386f1e36211ca",
+    "semantic_hash": "a32b19999e6996de1e8386f1e36211ca"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/EntityCodec.kt": {
+    "mtime": 1783361717.466132,
+    "ast_hash": "66653a1609ff68de82b4910db072d694",
+    "semantic_hash": "66653a1609ff68de82b4910db072d694"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/EntityCodecRegistry.kt": {
+    "mtime": 1778729185.0172443,
+    "ast_hash": "b1358d7b882202dbee7e3ab733d018c2",
+    "semantic_hash": "b1358d7b882202dbee7e3ab733d018c2"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/EntityScope.kt": {
+    "mtime": 1783361717.0212543,
+    "ast_hash": "282f14b9704af7beec55cada7fe515b9",
+    "semantic_hash": "282f14b9704af7beec55cada7fe515b9"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/EntityStore.kt": {
+    "mtime": 1778729185.0173447,
+    "ast_hash": "11ff036730c45d040fba31a26033d3cd",
+    "semantic_hash": "11ff036730c45d040fba31a26033d3cd"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/EntityStoreFactory.kt": {
+    "mtime": 1783922744.2190626,
+    "ast_hash": "ad640e20d1cafe61360beac92149137c",
+    "semantic_hash": "ad640e20d1cafe61360beac92149137c"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/LocalAccountMigrator.kt": {
+    "mtime": 1784095406.8929007,
+    "ast_hash": "889e4a1272d247c44951ab12a0beb659",
+    "semantic_hash": "889e4a1272d247c44951ab12a0beb659"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/PostWriteHook.kt": {
+    "mtime": 1783361717.1139996,
+    "ast_hash": "11370c106f1d571959469706466aa88a",
+    "semantic_hash": "11370c106f1d571959469706466aa88a"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/StorageDispatchers.kt": {
+    "mtime": 1779744623.7712681,
+    "ast_hash": "b6c988f338cbea1294464c036bb888f9",
+    "semantic_hash": "b6c988f338cbea1294464c036bb888f9"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/StorageEntity.kt": {
+    "mtime": 1783922744.2191398,
+    "ast_hash": "b82a98349d548f8f040f7ea31b50c75b",
+    "semantic_hash": "b82a98349d548f8f040f7ea31b50c75b"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/TombstoneGc.kt": {
+    "mtime": 1784013817.4578757,
+    "ast_hash": "09ed442dcdc0ec72c3c005831679d687",
+    "semantic_hash": "09ed442dcdc0ec72c3c005831679d687"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/WingsLogDatabaseFactory.kt": {
+    "mtime": 1783361717.0889587,
+    "ast_hash": "7d19d2115cee91cd5e8eab0bac8a64eb",
+    "semantic_hash": "7d19d2115cee91cd5e8eab0bac8a64eb"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/blob/AttachmentRefs.kt": {
+    "mtime": 1784013817.4579747,
+    "ast_hash": "ca9babea6b23bff9cb596f5ea6b67620",
+    "semantic_hash": "ca9babea6b23bff9cb596f5ea6b67620"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/blob/BlobFilesystem.kt": {
+    "mtime": 1783388387.375164,
+    "ast_hash": "199eebf901ac0ce919174804946f6174",
+    "semantic_hash": "199eebf901ac0ce919174804946f6174"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/blob/BlobId.kt": {
+    "mtime": 1783388349.0936697,
+    "ast_hash": "2310fd6c2eb65d594559c2b105fe5425",
+    "semantic_hash": "2310fd6c2eb65d594559c2b105fe5425"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/blob/BlobRef.kt": {
+    "mtime": 1783388349.0933933,
+    "ast_hash": "44452ec4c617a114a4ea0293c2e80f26",
+    "semantic_hash": "44452ec4c617a114a4ea0293c2e80f26"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/blob/LocalBlobStore.kt": {
+    "mtime": 1784013817.4581027,
+    "ast_hash": "2fc74825f385bbe9e9c35a390f4542ca",
+    "semantic_hash": "2fc74825f385bbe9e9c35a390f4542ca"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/blob/RemoteState.kt": {
+    "mtime": 1783388349.0940235,
+    "ast_hash": "ee5ffb6fc78b3a32462153d840fbf0c1",
+    "semantic_hash": "ee5ffb6fc78b3a32462153d840fbf0c1"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/blob/Sha256.kt": {
+    "mtime": 1783388349.0942953,
+    "ast_hash": "863d259aa475b861408b9fc6e1ec572e",
+    "semantic_hash": "863d259aa475b861408b9fc6e1ec572e"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/blob/SqlDelightLocalBlobStore.kt": {
+    "mtime": 1784013817.458243,
+    "ast_hash": "9539ec0886edffc6fe7e8944275f2b91",
+    "semantic_hash": "9539ec0886edffc6fe7e8944275f2b91"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/blob/UploadScheduler.kt": {
+    "mtime": 1783388459.8341322,
+    "ast_hash": "346c3d0f229c7510903cc9328ee0aba9",
+    "semantic_hash": "346c3d0f229c7510903cc9328ee0aba9"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/di/PlatformStorageModule.kt": {
+    "mtime": 1778729185.017924,
+    "ast_hash": "73dd036fbd90f0046f7deddd8642f70c",
+    "semantic_hash": "73dd036fbd90f0046f7deddd8642f70c"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/di/StorageModule.kt": {
+    "mtime": 1784013817.4583938,
+    "ast_hash": "90eebb472d197617e60e6536c69104cf",
+    "semantic_hash": "90eebb472d197617e60e6536c69104cf"
+  },
+  "core/storage/src/commonMain/kotlin/dev/fanfly/wingslog/core/storage/impl/SqlDelightEntityStore.kt": {
+    "mtime": 1783922744.2193675,
+    "ast_hash": "26b3ec90e97513502cc0e62358c5d7dd",
+    "semantic_hash": "26b3ec90e97513502cc0e62358c5d7dd"
+  },
+  "core/storage/src/iosMain/kotlin/dev/fanfly/wingslog/core/storage/DriverFactory.ios.kt": {
+    "mtime": 1779744623.7723176,
+    "ast_hash": "3a387cc5ded10cb17e4a272a7d600e5e",
+    "semantic_hash": "3a387cc5ded10cb17e4a272a7d600e5e"
+  },
+  "core/storage/src/iosMain/kotlin/dev/fanfly/wingslog/core/storage/StorageDispatchers.ios.kt": {
+    "mtime": 1783361362.340308,
+    "ast_hash": "29d23853a9c948dc95a81529f460ad1f",
+    "semantic_hash": "29d23853a9c948dc95a81529f460ad1f"
+  },
+  "core/storage/src/iosMain/kotlin/dev/fanfly/wingslog/core/storage/blob/Sha256.ios.kt": {
+    "mtime": 1783388349.093303,
+    "ast_hash": "e7718f230c59184ea2e2e8bf86287330",
+    "semantic_hash": "e7718f230c59184ea2e2e8bf86287330"
+  },
+  "core/storage/src/iosMain/kotlin/dev/fanfly/wingslog/core/storage/di/PlatformStorageModule.ios.kt": {
+    "mtime": 1778729185.0190504,
+    "ast_hash": "2cffd1d7368e0b19f68901c22724ff88",
+    "semantic_hash": "2cffd1d7368e0b19f68901c22724ff88"
+  },
+  "core/storage/src/jsMain/kotlin/dev/fanfly/wingslog/core/storage/DriverFactory.js.kt": {
+    "mtime": 1783361717.0077865,
+    "ast_hash": "306019ec6461aca57dace03d2a98c32f",
+    "semantic_hash": "306019ec6461aca57dace03d2a98c32f"
+  },
+  "core/storage/src/jsMain/kotlin/dev/fanfly/wingslog/core/storage/StorageDispatchers.js.kt": {
+    "mtime": 1783361362.351087,
+    "ast_hash": "84cdec30748066396ad298f7ba6a34f7",
+    "semantic_hash": "84cdec30748066396ad298f7ba6a34f7"
+  },
+  "core/storage/src/jsMain/kotlin/dev/fanfly/wingslog/core/storage/blob/Sha256.js.kt": {
+    "mtime": 1783388349.0945194,
+    "ast_hash": "afb48caa5697bec625aa8b44f13bfef1",
+    "semantic_hash": "afb48caa5697bec625aa8b44f13bfef1"
+  },
+  "core/storage/src/jsMain/kotlin/dev/fanfly/wingslog/core/storage/di/PlatformStorageModule.js.kt": {
+    "mtime": 1783921597.0251677,
+    "ast_hash": "30e72942c7e35d2b478e2e7577e2bedc",
+    "semantic_hash": "30e72942c7e35d2b478e2e7577e2bedc"
+  },
+  "core/storage/src/test/java/dev/fanfly/wingslog/core/storage/CollectionKindCoverageTest.kt": {
+    "mtime": 1783580220.7474837,
+    "ast_hash": "bc43bab8f4386e7483ab24dba0fbd347",
+    "semantic_hash": "bc43bab8f4386e7483ab24dba0fbd347"
+  },
+  "core/storage/src/test/java/dev/fanfly/wingslog/core/storage/DatabaseIntegrityCheckerTest.kt": {
+    "mtime": 1783922744.2196863,
+    "ast_hash": "925a206fb874a1ccaedc5f42d5ec0b86",
+    "semantic_hash": "925a206fb874a1ccaedc5f42d5ec0b86"
+  },
+  "core/storage/src/test/java/dev/fanfly/wingslog/core/storage/EntityCodecRegistryTest.kt": {
+    "mtime": 1783361717.4714737,
+    "ast_hash": "0f65c8cf688683b465898cc6a156987b",
+    "semantic_hash": "0f65c8cf688683b465898cc6a156987b"
+  },
+  "core/storage/src/test/java/dev/fanfly/wingslog/core/storage/LocalAccountMigratorTest.kt": {
+    "mtime": 1784095406.893543,
+    "ast_hash": "5fc2d2abc2a933a11a3d6394908ce73e",
+    "semantic_hash": "5fc2d2abc2a933a11a3d6394908ce73e"
+  },
+  "core/storage/src/test/java/dev/fanfly/wingslog/core/storage/TombstoneGcTest.kt": {
+    "mtime": 1784013817.4587135,
+    "ast_hash": "387372b626dfb42ed34dc8261a3a3ea6",
+    "semantic_hash": "387372b626dfb42ed34dc8261a3a3ea6"
+  },
+  "core/storage/src/test/java/dev/fanfly/wingslog/core/storage/TombstoneRetentionAgreementTest.kt": {
+    "mtime": 1784013817.4588,
+    "ast_hash": "87f5048e38d92c06e9a8acbf888d9ee0",
+    "semantic_hash": "87f5048e38d92c06e9a8acbf888d9ee0"
+  },
+  "core/storage/src/test/java/dev/fanfly/wingslog/core/storage/blob/RemoteStateCoverageTest.kt": {
+    "mtime": 1778729185.019641,
+    "ast_hash": "ad09f2f65fa5b3e7c9cf1dd862375402",
+    "semantic_hash": "ad09f2f65fa5b3e7c9cf1dd862375402"
+  },
+  "core/storage/src/test/java/dev/fanfly/wingslog/core/storage/impl/SqlDelightEntityStoreTest.kt": {
+    "mtime": 1783922744.219887,
+    "ast_hash": "4148ebe01d8bfb8cbc3384af66c13490",
+    "semantic_hash": "4148ebe01d8bfb8cbc3384af66c13490"
+  },
+  "core/ui/adaptive/build.gradle.kts": {
+    "mtime": 1782457036.5533423,
+    "ast_hash": "cae69249791227a68025232aa686f38a",
+    "semantic_hash": "cae69249791227a68025232aa686f38a"
+  },
+  "core/ui/adaptive/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/adaptive/AdaptiveAppShell.kt": {
+    "mtime": 1784428539.8726988,
+    "ast_hash": "710d6477121de7bc62e32f08e59a02bc",
+    "semantic_hash": "710d6477121de7bc62e32f08e59a02bc"
+  },
+  "core/ui/adaptive/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/adaptive/compose/AdaptiveCardList.kt": {
+    "mtime": 1780293629.3773901,
+    "ast_hash": "f3a2324f34f95a9558fdd40d50bc69d7",
+    "semantic_hash": "f3a2324f34f95a9558fdd40d50bc69d7"
+  },
+  "core/ui/adaptive/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/adaptive/compose/AdaptiveFormDialogFrame.kt": {
+    "mtime": 1780293662.346484,
+    "ast_hash": "84b155acca3dcb3dc1e9782dfcef7b57",
+    "semantic_hash": "84b155acca3dcb3dc1e9782dfcef7b57"
+  },
+  "core/ui/adaptive/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/adaptive/compose/AdaptiveLayout.kt": {
+    "mtime": 1783466013.269233,
+    "ast_hash": "a03dadec0de5a0bdb36738aea8f179aa",
+    "semantic_hash": "a03dadec0de5a0bdb36738aea8f179aa"
+  },
+  "core/ui/adaptive/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/adaptive/compose/FloatingPillNavigationBar.kt": {
+    "mtime": 1784427919.7360072,
+    "ast_hash": "fa201d989de9c5f547e90b59dcb25f3f",
+    "semantic_hash": "fa201d989de9c5f547e90b59dcb25f3f"
+  },
+  "core/ui/adaptive/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/adaptive/compose/LayoutTier.kt": {
+    "mtime": 1783390789.373234,
+    "ast_hash": "764c9ff41abcdcbc332c7b0c70c9ad2c",
+    "semantic_hash": "764c9ff41abcdcbc332c7b0c70c9ad2c"
+  },
+  "core/ui/adaptive/src/test/kotlin/dev/fanfly/wingslog/core/ui/adaptive/compose/LayoutTierTest.kt": {
+    "mtime": 1780295852.0580423,
+    "ast_hash": "a19fa16408d8c8377e2056c6595543e5",
+    "semantic_hash": "a19fa16408d8c8377e2056c6595543e5"
+  },
+  "core/ui/build.gradle.kts": {
+    "mtime": 1782457036.561684,
+    "ast_hash": "b47b239ee89a54e9ed2c8bf11fb64cea",
+    "semantic_hash": "b47b239ee89a54e9ed2c8bf11fb64cea"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/FormatUtils.kt": {
+    "mtime": 1778729185.0232558,
+    "ast_hash": "5e265c6c1060ad338761b5e352a1225a",
+    "semantic_hash": "5e265c6c1060ad338761b5e352a1225a"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/UiText.kt": {
+    "mtime": 1778729185.0233188,
+    "ast_hash": "1179f0a85ac934d67ace75dd2d4a9f94",
+    "semantic_hash": "1179f0a85ac934d67ace75dd2d4a9f94"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/BottomButtons.kt": {
+    "mtime": 1783526805.5142157,
+    "ast_hash": "aa685efd69286a0e62f886e6ea830176",
+    "semantic_hash": "aa685efd69286a0e62f886e6ea830176"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/DashedButton.kt": {
+    "mtime": 1782541298.802876,
+    "ast_hash": "aa7de03e5db4ac6115419b8e755a9f51",
+    "semantic_hash": "aa7de03e5db4ac6115419b8e755a9f51"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/DetailSheet.kt": {
+    "mtime": 1780296202.6248598,
+    "ast_hash": "1f6f580c9ac40dc98c969831084eeaa1",
+    "semantic_hash": "1f6f580c9ac40dc98c969831084eeaa1"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/DualSegmentedFilter.kt": {
+    "mtime": 1778729185.0237966,
+    "ast_hash": "e96ba10cd9b21ef2cafcd61de2ca1541",
+    "semantic_hash": "e96ba10cd9b21ef2cafcd61de2ca1541"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/EmptyState.kt": {
+    "mtime": 1784407343.413353,
+    "ast_hash": "38945d1b7233134d9e9e8d9a9c3706f1",
+    "semantic_hash": "38945d1b7233134d9e9e8d9a9c3706f1"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/FormField.kt": {
+    "mtime": 1783465858.340188,
+    "ast_hash": "387b7664f451d59b3bb3c3909ff71722",
+    "semantic_hash": "387b7664f451d59b3bb3c3909ff71722"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/FormatFileSize.kt": {
+    "mtime": 1783371928.7315323,
+    "ast_hash": "7bca9f42268c2f0b6abbb1d51d83c978",
+    "semantic_hash": "7bca9f42268c2f0b6abbb1d51d83c978"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/GroupedRows.kt": {
+    "mtime": 1780416987.1104364,
+    "ast_hash": "278166f4f1c5299c43e95922876c4a30",
+    "semantic_hash": "278166f4f1c5299c43e95922876c4a30"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/IconLabelTabRow.kt": {
+    "mtime": 1780416987.1110058,
+    "ast_hash": "bae45f70a456f503b647d8711b93b212",
+    "semantic_hash": "bae45f70a456f503b647d8711b93b212"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/PickerSheet.kt": {
+    "mtime": 1783895608.6443102,
+    "ast_hash": "4a62c3bc0eaf25c442859cd02b443ae3",
+    "semantic_hash": "4a62c3bc0eaf25c442859cd02b443ae3"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/PreviewBanner.kt": {
+    "mtime": 1779747580.221343,
+    "ast_hash": "48424657c8bdab6f5f233ef190bc7758",
+    "semantic_hash": "48424657c8bdab6f5f233ef190bc7758"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/StatusChip.kt": {
+    "mtime": 1779748148.3868055,
+    "ast_hash": "59cb46cecab8ab430eac81ba0b001a42",
+    "semantic_hash": "59cb46cecab8ab430eac81ba0b001a42"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/UnsavedChangesDialog.kt": {
+    "mtime": 1780296174.1893659,
+    "ast_hash": "8d75946da5db15bc6987ce45d4897d48",
+    "semantic_hash": "8d75946da5db15bc6987ce45d4897d48"
+  },
+  "core/ui/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/common/compose/WingsLogTopAppBar.kt": {
+    "mtime": 1780296185.2968788,
+    "ast_hash": "134b0a0b3af9f23e1e26e3919f95c5d5",
+    "semantic_hash": "134b0a0b3af9f23e1e26e3919f95c5d5"
+  },
+  "core/ui/src/test/java/dev/fanfly/wingslog/core/ui/common/FormatUtilsTest.kt": {
+    "mtime": 1783371939.9435098,
+    "ast_hash": "9e0877e9fa7884ceba1e80e5b900c1bd",
+    "semantic_hash": "9e0877e9fa7884ceba1e80e5b900c1bd"
+  },
+  "core/ui/src/test/java/dev/fanfly/wingslog/core/ui/common/compose/FormatFileSizeTest.kt": {
+    "mtime": 1783371946.5738702,
+    "ast_hash": "f7ea991a3e9c785344466a7ef4532054",
+    "semantic_hash": "f7ea991a3e9c785344466a7ef4532054"
+  },
+  "core/ui/theme/build.gradle.kts": {
+    "mtime": 1782457036.538611,
+    "ast_hash": "489a53cfda9f85592c1f973f7d5a11aa",
+    "semantic_hash": "489a53cfda9f85592c1f973f7d5a11aa"
+  },
+  "core/ui/theme/src/androidMain/kotlin/dev/fanfly/wingslog/core/ui/theme/AppearanceStore.android.kt": {
+    "mtime": 1780346573.6401322,
+    "ast_hash": "b6f18f6476619a00a7e795f513198adb",
+    "semantic_hash": "b6f18f6476619a00a7e795f513198adb"
+  },
+  "core/ui/theme/src/androidMain/kotlin/dev/fanfly/wingslog/core/ui/theme/PlatformColorScheme.kt": {
+    "mtime": 1783362456.6544693,
+    "ast_hash": "d9f9cb91af9017aa3d7a6a3d0cffb4a3",
+    "semantic_hash": "d9f9cb91af9017aa3d7a6a3d0cffb4a3"
+  },
+  "core/ui/theme/src/androidMain/kotlin/dev/fanfly/wingslog/core/ui/theme/TypeAndroid.kt": {
+    "mtime": 1780294892.3102713,
+    "ast_hash": "d6f57fa153225bf7f4ff9cc13da75fcc",
+    "semantic_hash": "d6f57fa153225bf7f4ff9cc13da75fcc"
+  },
+  "core/ui/theme/src/androidMain/kotlin/dev/fanfly/wingslog/core/ui/theme/di/AppearanceModule.android.kt": {
+    "mtime": 1780345962.2106645,
+    "ast_hash": "a1dfa9502dba06c378bcbbd7d12da74e",
+    "semantic_hash": "a1dfa9502dba06c378bcbbd7d12da74e"
+  },
+  "core/ui/theme/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/theme/Appearance.kt": {
+    "mtime": 1780345945.1518037,
+    "ast_hash": "62af2720798e21d3e4ce9fe20ce03875",
+    "semantic_hash": "62af2720798e21d3e4ce9fe20ce03875"
+  },
+  "core/ui/theme/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/theme/Color.kt": {
+    "mtime": 1783361717.1900418,
+    "ast_hash": "238246defd11910fd9a652ddfa6aa8b1",
+    "semantic_hash": "238246defd11910fd9a652ddfa6aa8b1"
+  },
+  "core/ui/theme/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/theme/PlatformColorScheme.kt": {
+    "mtime": 1783361717.3586838,
+    "ast_hash": "9fcb4ea48e161eab122985fde4aa1f77",
+    "semantic_hash": "9fcb4ea48e161eab122985fde4aa1f77"
+  },
+  "core/ui/theme/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/theme/Spacing.kt": {
+    "mtime": 1779057439.1572912,
+    "ast_hash": "cfc1352babba34fa681194bbc9096042",
+    "semantic_hash": "cfc1352babba34fa681194bbc9096042"
+  },
+  "core/ui/theme/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/theme/StatusColors.kt": {
+    "mtime": 1783361717.0578766,
+    "ast_hash": "685dcab98d06fbb1793f5f75f4ae2ffc",
+    "semantic_hash": "685dcab98d06fbb1793f5f75f4ae2ffc"
+  },
+  "core/ui/theme/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/theme/Theme.kt": {
+    "mtime": 1779747497.194827,
+    "ast_hash": "159515a1937a215d39179a805e1b534b",
+    "semantic_hash": "159515a1937a215d39179a805e1b534b"
+  },
+  "core/ui/theme/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/theme/Type.kt": {
+    "mtime": 1780294208.142141,
+    "ast_hash": "c45e10f37da4bea387399344aaf1770b",
+    "semantic_hash": "c45e10f37da4bea387399344aaf1770b"
+  },
+  "core/ui/theme/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/theme/di/AppearanceModule.kt": {
+    "mtime": 1780345952.3561037,
+    "ast_hash": "b446d2194315e12a40644bbd430cac07",
+    "semantic_hash": "b446d2194315e12a40644bbd430cac07"
+  },
+  "core/ui/theme/src/iosMain/kotlin/dev/fanfly/wingslog/core/ui/theme/AppearanceStore.ios.kt": {
+    "mtime": 1780345967.3235705,
+    "ast_hash": "fdd6bc316b6ff17034c9fd244da09656",
+    "semantic_hash": "fdd6bc316b6ff17034c9fd244da09656"
+  },
+  "core/ui/theme/src/iosMain/kotlin/dev/fanfly/wingslog/core/ui/theme/PlatformColorScheme.kt": {
+    "mtime": 1783361717.124348,
+    "ast_hash": "f755006245fb4a178e8a4d8e7b4a1d07",
+    "semantic_hash": "f755006245fb4a178e8a4d8e7b4a1d07"
+  },
+  "core/ui/theme/src/iosMain/kotlin/dev/fanfly/wingslog/core/ui/theme/TypeIos.kt": {
+    "mtime": 1780294540.3467844,
+    "ast_hash": "d6f57fa153225bf7f4ff9cc13da75fcc",
+    "semantic_hash": "d6f57fa153225bf7f4ff9cc13da75fcc"
+  },
+  "core/ui/theme/src/iosMain/kotlin/dev/fanfly/wingslog/core/ui/theme/di/AppearanceModule.ios.kt": {
+    "mtime": 1780345977.4809337,
+    "ast_hash": "d0cc054e72e25f9222f3b81e185eeece",
+    "semantic_hash": "d0cc054e72e25f9222f3b81e185eeece"
+  },
+  "core/ui/theme/src/jsMain/kotlin/dev/fanfly/wingslog/core/ui/theme/AppearanceStore.js.kt": {
+    "mtime": 1780345982.942455,
+    "ast_hash": "82a422a25f4d88d0c4479b1cbce15c58",
+    "semantic_hash": "82a422a25f4d88d0c4479b1cbce15c58"
+  },
+  "core/ui/theme/src/jsMain/kotlin/dev/fanfly/wingslog/core/ui/theme/PlatformColorScheme.js.kt": {
+    "mtime": 1783361717.4992852,
+    "ast_hash": "8e751723e7b0ee28ecf360b0a0f2fc2c",
+    "semantic_hash": "8e751723e7b0ee28ecf360b0a0f2fc2c"
+  },
+  "core/ui/theme/src/jsMain/kotlin/dev/fanfly/wingslog/core/ui/theme/TypeJs.kt": {
+    "mtime": 1780294527.7013936,
+    "ast_hash": "1c8b7a71c91169893cfc128ae5d152cc",
+    "semantic_hash": "1c8b7a71c91169893cfc128ae5d152cc"
+  },
+  "core/ui/theme/src/jsMain/kotlin/dev/fanfly/wingslog/core/ui/theme/di/AppearanceModule.js.kt": {
+    "mtime": 1780345987.7648697,
+    "ast_hash": "6a7510d86cdd627e05cbd7dee3e980ed",
+    "semantic_hash": "6a7510d86cdd627e05cbd7dee3e980ed"
+  },
+  "core/ui/widget/avataricon/build.gradle.kts": {
+    "mtime": 1782457036.544258,
+    "ast_hash": "5e5eed8f4e2dce4b7046274db7f607ab",
+    "semantic_hash": "5e5eed8f4e2dce4b7046274db7f607ab"
+  },
+  "core/ui/widget/avataricon/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/widget/avataricon/compose/AvatarIcon.kt": {
+    "mtime": 1780360578.2075162,
+    "ast_hash": "2370297c189f964c386092244f0483ec",
+    "semantic_hash": "2370297c189f964c386092244f0483ec"
+  },
+  "core/ui/widget/avataricon/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/widget/avataricon/compose/CircularImage.kt": {
+    "mtime": 1780360210.1269484,
+    "ast_hash": "ef0a43463d1cf171de5cc4a72ba6c198",
+    "semantic_hash": "ef0a43463d1cf171de5cc4a72ba6c198"
+  },
+  "docs/product/screenshot_generator/generate.py": {
+    "mtime": 1783223668.0769002,
+    "ast_hash": "8265aa37eae9094e04d0683d448e0467",
+    "semantic_hash": "8265aa37eae9094e04d0683d448e0467"
+  },
+  "feature/aircraft/dashboard/build.gradle.kts": {
+    "mtime": 1783995713.701993,
+    "ast_hash": "9cdd38b0a2a3b8962a290715d574defc",
+    "semantic_hash": "9cdd38b0a2a3b8962a290715d574defc"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/AircraftSectionContent.kt": {
+    "mtime": 1784353286.0186884,
+    "ast_hash": "39b2a007333cf77154538e66b6594b04",
+    "semantic_hash": "39b2a007333cf77154538e66b6594b04"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/compose/AircraftDataCard.kt": {
+    "mtime": 1783750344.7493544,
+    "ast_hash": "277fea7b5391cb1e309460b933b06d0c",
+    "semantic_hash": "277fea7b5391cb1e309460b933b06d0c"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/compose/BladeChipsOverview.kt": {
+    "mtime": 1783361717.0229802,
+    "ast_hash": "e2368987ad20ba006d366a27707d0a6b",
+    "semantic_hash": "e2368987ad20ba006d366a27707d0a6b"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/compose/ComplianceSection.kt": {
+    "mtime": 1784353286.019222,
+    "ast_hash": "14a063d93423f33bab56ca60d9fff959",
+    "semantic_hash": "14a063d93423f33bab56ca60d9fff959"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/compose/EngineDetails.kt": {
+    "mtime": 1780296741.3759453,
+    "ast_hash": "89c5536c7fbcfe4324ce49c2e8168598",
+    "semantic_hash": "89c5536c7fbcfe4324ce49c2e8168598"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/compose/LogOnboardingCard.kt": {
+    "mtime": 1783361717.1547277,
+    "ast_hash": "bf7ebcbf1d886bbe91455ac9fb898936",
+    "semantic_hash": "bf7ebcbf1d886bbe91455ac9fb898936"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/compose/LogStatsSection.kt": {
+    "mtime": 1780332838.808479,
+    "ast_hash": "0ac13e3d3eb060eed630e444c3c327b5",
+    "semantic_hash": "0ac13e3d3eb060eed630e444c3c327b5"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/compose/tabs/LogsTab.kt": {
+    "mtime": 1784353286.019743,
+    "ast_hash": "741a41f1ecd5df54dc534bb2d4fac597",
+    "semantic_hash": "741a41f1ecd5df54dc534bb2d4fac597"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/compose/tabs/MaintenanceTasksTab.kt": {
+    "mtime": 1784427919.7361715,
+    "ast_hash": "6fe6a0fd8be67e1c5888bf34f0251e79",
+    "semantic_hash": "6fe6a0fd8be67e1c5888bf34f0251e79"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/compose/tabs/OverviewTab.kt": {
+    "mtime": 1784427919.7363138,
+    "ast_hash": "01e33becf655645125a32986ddd673e6",
+    "semantic_hash": "01e33becf655645125a32986ddd673e6"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/compose/tabs/SquawkTab.kt": {
+    "mtime": 1784427919.7365427,
+    "ast_hash": "04595bc070ac2cdf50fb2f16cec8bff2",
+    "semantic_hash": "04595bc070ac2cdf50fb2f16cec8bff2"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/data/AircraftOverviewAction.kt": {
+    "mtime": 1784353286.0206733,
+    "ast_hash": "dad5c11e1e6384788bebc9d26ce4e32e",
+    "semantic_hash": "dad5c11e1e6384788bebc9d26ce4e32e"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/data/AircraftOverviewEvent.kt": {
+    "mtime": 1783750344.7497802,
+    "ast_hash": "e0d8c14c4587a2eed381a5b6d6da912f",
+    "semantic_hash": "e0d8c14c4587a2eed381a5b6d6da912f"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/data/AircraftOverviewUiState.kt": {
+    "mtime": 1783995713.70212,
+    "ast_hash": "b8e66b456281047b523913af7fe92ed9",
+    "semantic_hash": "b8e66b456281047b523913af7fe92ed9"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/data/AircraftOverviewViewModel.kt": {
+    "mtime": 1784353286.0210044,
+    "ast_hash": "9388c91d3df2d631a48db6d3b326235e",
+    "semantic_hash": "9388c91d3df2d631a48db6d3b326235e"
+  },
+  "feature/aircraft/dashboard/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/di/AircraftDashboardModule.kt": {
+    "mtime": 1783995713.7023647,
+    "ast_hash": "74a55da52aa8edf17a2d7e3a153ade5f",
+    "semantic_hash": "74a55da52aa8edf17a2d7e3a153ade5f"
+  },
+  "feature/aircraft/dashboard/src/test/kotlin/dev/fanfly/wingslog/feature/aircraft/dashboard/data/AircraftOverviewGatingTest.kt": {
+    "mtime": 1783995713.7024899,
+    "ast_hash": "f09883286a29511894d4816534884b23",
+    "semantic_hash": "f09883286a29511894d4816534884b23"
+  },
+  "feature/aircraft/update/build.gradle.kts": {
+    "mtime": 1783976973.6942093,
+    "ast_hash": "ba9e71e8417a9706ba0281109c0a4be6",
+    "semantic_hash": "ba9e71e8417a9706ba0281109c0a4be6"
+  },
+  "feature/aircraft/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/update/EditAircraftScreen.kt": {
+    "mtime": 1783976973.6946044,
+    "ast_hash": "578deafb1c5ae0148d256ee2f5fa6269",
+    "semantic_hash": "578deafb1c5ae0148d256ee2f5fa6269"
+  },
+  "feature/aircraft/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/update/compose/AirframeSection.kt": {
+    "mtime": 1783388601.5495713,
+    "ast_hash": "a69c76ad5cd7d81ed6e5014303404b08",
+    "semantic_hash": "a69c76ad5cd7d81ed6e5014303404b08"
+  },
+  "feature/aircraft/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/update/compose/EngineSection.kt": {
+    "mtime": 1783388601.5494747,
+    "ast_hash": "89fc8f59cdae251bccb5a7d635af8cfd",
+    "semantic_hash": "89fc8f59cdae251bccb5a7d635af8cfd"
+  },
+  "feature/aircraft/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/update/di/AircraftUpdateModule.kt": {
+    "mtime": 1783976973.6947393,
+    "ast_hash": "4e08a43821456b912af9a1da7db7445d",
+    "semantic_hash": "4e08a43821456b912af9a1da7db7445d"
+  },
+  "feature/aircraft/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/update/viewmodel/EditAircraftUiState.kt": {
+    "mtime": 1783976973.6948664,
+    "ast_hash": "1dad57924d3a7cbccbf5fde49df927b2",
+    "semantic_hash": "1dad57924d3a7cbccbf5fde49df927b2"
+  },
+  "feature/aircraft/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/aircraft/update/viewmodel/EditAircraftViewModel.kt": {
+    "mtime": 1783976973.6950858,
+    "ast_hash": "a5efa14cd124180f47a45c8309d13ea8",
+    "semantic_hash": "a5efa14cd124180f47a45c8309d13ea8"
+  },
+  "feature/aircraft/update/src/test/kotlin/dev/fanfly/wingslog/feature/aircraft/update/viewmodel/EditAircraftDeleteGatingTest.kt": {
+    "mtime": 1783961543.3664246,
+    "ast_hash": "58bc107c4388d49b19920554de8f6c3b",
+    "semantic_hash": "58bc107c4388d49b19920554de8f6c3b"
+  },
+  "feature/attachment/datamanager/build.gradle.kts": {
+    "mtime": 1782457036.522128,
+    "ast_hash": "953931c71a7f2011f4c602bf6754e4c9",
+    "semantic_hash": "953931c71a7f2011f4c602bf6754e4c9"
+  },
+  "feature/attachment/datamanager/src/androidMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/AttachmentModule.android.kt": {
+    "mtime": 1784409878.2392302,
+    "ast_hash": "9ad4367387a38036b652e1cb7da0450e",
+    "semantic_hash": "9ad4367387a38036b652e1cb7da0450e"
+  },
+  "feature/attachment/datamanager/src/androidMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/AttachmentOpenerAndroid.kt": {
+    "mtime": 1783388424.7392688,
+    "ast_hash": "f32000de0b26ead0780ef93efa0a4b87",
+    "semantic_hash": "f32000de0b26ead0780ef93efa0a4b87"
+  },
+  "feature/attachment/datamanager/src/androidMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/FileBlobFilesystem.kt": {
+    "mtime": 1783388424.7387488,
+    "ast_hash": "bf4f3c6490c4cfcec0d6d4a028a6b27a",
+    "semantic_hash": "bf4f3c6490c4cfcec0d6d4a028a6b27a"
+  },
+  "feature/attachment/datamanager/src/androidMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/FileByteReaderImpl.kt": {
+    "mtime": 1783361717.0544345,
+    "ast_hash": "51824fcc5962a9d6cb5885772595fdc5",
+    "semantic_hash": "51824fcc5962a9d6cb5885772595fdc5"
+  },
+  "feature/attachment/datamanager/src/androidMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/ImageCompressorImpl.kt": {
+    "mtime": 1784430390.248015,
+    "ast_hash": "b9f2360267a4deef229e43e267f34df7",
+    "semantic_hash": "b9f2360267a4deef229e43e267f34df7"
+  },
+  "feature/attachment/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/AttachmentFormController.kt": {
+    "mtime": 1784412811.6469572,
+    "ast_hash": "2529b8954dc1b9e4300df8582b942f83",
+    "semantic_hash": "2529b8954dc1b9e4300df8582b942f83"
+  },
+  "feature/attachment/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/AttachmentManager.kt": {
+    "mtime": 1784409878.2396393,
+    "ast_hash": "a856091f9be219ced594c86e46ffab99",
+    "semantic_hash": "a856091f9be219ced594c86e46ffab99"
+  },
+  "feature/attachment/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/AttachmentModule.kt": {
+    "mtime": 1784409878.2397711,
+    "ast_hash": "f6dc4a6b0f8216fd3eafd7ec610b20e5",
+    "semantic_hash": "f6dc4a6b0f8216fd3eafd7ec610b20e5"
+  },
+  "feature/attachment/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/AttachmentOpener.kt": {
+    "mtime": 1778729185.0292323,
+    "ast_hash": "e52852259bf46bbd1386c8550ab6c6ae",
+    "semantic_hash": "e52852259bf46bbd1386c8550ab6c6ae"
+  },
+  "feature/attachment/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/BlobIndexReconciler.kt": {
+    "mtime": 1784013817.4590955,
+    "ast_hash": "a91526692f4e0cd8ce3c322cb23f1e74",
+    "semantic_hash": "a91526692f4e0cd8ce3c322cb23f1e74"
+  },
+  "feature/attachment/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/FileByteReader.kt": {
+    "mtime": 1778729185.02949,
+    "ast_hash": "3a78304beb88083d8bb9b263a99a86c8",
+    "semantic_hash": "3a78304beb88083d8bb9b263a99a86c8"
+  },
+  "feature/attachment/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/ImageCompressor.kt": {
+    "mtime": 1784430390.2481809,
+    "ast_hash": "a21b5db011ff9b419b45869f67f2fa45",
+    "semantic_hash": "a21b5db011ff9b419b45869f67f2fa45"
+  },
+  "feature/attachment/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/OpenState.kt": {
+    "mtime": 1783361717.5728347,
+    "ast_hash": "9ca0df900e93aa23c53f783bdc30d097",
+    "semantic_hash": "9ca0df900e93aa23c53f783bdc30d097"
+  },
+  "feature/attachment/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/QuotaChecker.kt": {
+    "mtime": 1783466804.6859426,
+    "ast_hash": "cdd0afbacdce8f9a1e8cee8e943ecbc6",
+    "semantic_hash": "cdd0afbacdce8f9a1e8cee8e943ecbc6"
+  },
+  "feature/attachment/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/impl/LocalFirstAttachmentManagerImpl.kt": {
+    "mtime": 1784412240.261067,
+    "ast_hash": "5ff75f9f353bd9c88bba1845e14a7cc4",
+    "semantic_hash": "5ff75f9f353bd9c88bba1845e14a7cc4"
+  },
+  "feature/attachment/datamanager/src/commonTest/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/Sha256HexTest.kt": {
+    "mtime": 1783388424.7383502,
+    "ast_hash": "9628e86c8f585dc4600f820a205d7bef",
+    "semantic_hash": "9628e86c8f585dc4600f820a205d7bef"
+  },
+  "feature/attachment/datamanager/src/iosMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/AttachmentModule.ios.kt": {
+    "mtime": 1784409878.2402139,
+    "ast_hash": "48b1cf73142ab21e843ace4b8f3c6eba",
+    "semantic_hash": "48b1cf73142ab21e843ace4b8f3c6eba"
+  },
+  "feature/attachment/datamanager/src/iosMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/AttachmentOpenerIos.kt": {
+    "mtime": 1783388424.735345,
+    "ast_hash": "8c1eee4b9246cc5ac36518ac8b5b0c2d",
+    "semantic_hash": "8c1eee4b9246cc5ac36518ac8b5b0c2d"
+  },
+  "feature/attachment/datamanager/src/iosMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/FileByteReaderImpl.kt": {
+    "mtime": 1783316499.1257055,
+    "ast_hash": "83d5ca7f14566a401f281ddfff5f797d",
+    "semantic_hash": "83d5ca7f14566a401f281ddfff5f797d"
+  },
+  "feature/attachment/datamanager/src/iosMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/ImageCompressorImpl.kt": {
+    "mtime": 1784430390.2483304,
+    "ast_hash": "90d73caeeccd323c8fa9cf56464f6ab1",
+    "semantic_hash": "90d73caeeccd323c8fa9cf56464f6ab1"
+  },
+  "feature/attachment/datamanager/src/iosMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/NsBlobFilesystem.kt": {
+    "mtime": 1783388424.7348218,
+    "ast_hash": "b1f7dbc41f41dd0f9dd6d73e3b2f0829",
+    "semantic_hash": "b1f7dbc41f41dd0f9dd6d73e3b2f0829"
+  },
+  "feature/attachment/datamanager/src/jsMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/AttachmentModule.js.kt": {
+    "mtime": 1784409878.2404566,
+    "ast_hash": "b574aef0c39692c971ec8224ceb7bf0e",
+    "semantic_hash": "b574aef0c39692c971ec8224ceb7bf0e"
+  },
+  "feature/attachment/datamanager/src/jsMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/AttachmentOpenerWeb.kt": {
+    "mtime": 1783388424.7408984,
+    "ast_hash": "edfbb1784a84e0c39a90e58fad91ca09",
+    "semantic_hash": "edfbb1784a84e0c39a90e58fad91ca09"
+  },
+  "feature/attachment/datamanager/src/jsMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/ImageCompressorImpl.kt": {
+    "mtime": 1784430390.248503,
+    "ast_hash": "394fb3b04b74cd237750bc4acf0ac92d",
+    "semantic_hash": "394fb3b04b74cd237750bc4acf0ac92d"
+  },
+  "feature/attachment/datamanager/src/jsMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/OpfsBlobFilesystem.kt": {
+    "mtime": 1783388424.7399144,
+    "ast_hash": "d0fa96a1b9c462b36905e8f1a0250014",
+    "semantic_hash": "d0fa96a1b9c462b36905e8f1a0250014"
+  },
+  "feature/attachment/datamanager/src/jsMain/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/WebFileByteReader.kt": {
+    "mtime": 1780165260.204944,
+    "ast_hash": "e1f57246982bba2be0ef2d9a4858d912",
+    "semantic_hash": "e1f57246982bba2be0ef2d9a4858d912"
+  },
+  "feature/attachment/datamanager/src/jsTest/kotlin/dev/fanfly/wingslog/feature/attachment/datamanager/WebPickedFileRegistryTest.kt": {
+    "mtime": 1780165260.2054462,
+    "ast_hash": "1f82d68e7d80954739d1257a9e885733",
+    "semantic_hash": "1f82d68e7d80954739d1257a9e885733"
+  },
+  "feature/attachment/datamanager/src/test/java/dev/fanfly/wingslog/feature/attachment/datamanager/AttachmentFormControllerTest.kt": {
+    "mtime": 1784412811.6471803,
+    "ast_hash": "029ef00e712c0894b95aa631d66cbed7",
+    "semantic_hash": "029ef00e712c0894b95aa631d66cbed7"
+  },
+  "feature/attachment/datamanager/src/test/java/dev/fanfly/wingslog/feature/attachment/datamanager/BlobIndexReconcilerTest.kt": {
+    "mtime": 1783388424.731075,
+    "ast_hash": "ca8a541b42a93acc0b7e46444fffa879",
+    "semantic_hash": "ca8a541b42a93acc0b7e46444fffa879"
+  },
+  "feature/attachment/datamanager/src/test/java/dev/fanfly/wingslog/feature/attachment/datamanager/QuotaCheckerTest.kt": {
+    "mtime": 1783388350.450529,
+    "ast_hash": "9648010ebed92da957ea27ae8428ea15",
+    "semantic_hash": "9648010ebed92da957ea27ae8428ea15"
+  },
+  "feature/attachment/datamanager/src/test/java/dev/fanfly/wingslog/feature/attachment/datamanager/Sha256HexTest.kt": {
+    "mtime": 1783388424.7314267,
+    "ast_hash": "70a4b391d7be5b9704b32f8f70e26a43",
+    "semantic_hash": "70a4b391d7be5b9704b32f8f70e26a43"
+  },
+  "feature/attachment/datamanager/src/test/java/dev/fanfly/wingslog/feature/attachment/datamanager/impl/LocalFirstAttachmentManagerImplTest.kt": {
+    "mtime": 1784430390.2486973,
+    "ast_hash": "76227e920573331a17bae2766f1ffde8",
+    "semantic_hash": "76227e920573331a17bae2766f1ffde8"
+  },
+  "feature/attachment/datamanager/src/test/java/dev/fanfly/wingslog/feature/attachment/datamanager/impl/SqlDelightLocalBlobStoreTest.kt": {
+    "mtime": 1783388424.7330315,
+    "ast_hash": "223cbf918790705839c3d9456478dbbb",
+    "semantic_hash": "223cbf918790705839c3d9456478dbbb"
+  },
+  "feature/attachment/model/build.gradle.kts": {
+    "mtime": 1782457036.5524602,
+    "ast_hash": "2eb24db03f90ccdb8725804671f92625",
+    "semantic_hash": "2eb24db03f90ccdb8725804671f92625"
+  },
+  "feature/attachment/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/model/AttachmentStatus.kt": {
+    "mtime": 1780167394.7968192,
+    "ast_hash": "84d5c90e8982ecc003b06a1aa9f89c80",
+    "semantic_hash": "84d5c90e8982ecc003b06a1aa9f89c80"
+  },
+  "feature/attachment/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/model/AttachmentWithState.kt": {
+    "mtime": 1778729185.032182,
+    "ast_hash": "c4f200c15c738dad52ba896ba744004e",
+    "semantic_hash": "c4f200c15c738dad52ba896ba744004e"
+  },
+  "feature/attachment/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/model/BlobSyncState.kt": {
+    "mtime": 1783361717.516098,
+    "ast_hash": "5d632b5395cbf059d1c9bf32d593e036",
+    "semantic_hash": "5d632b5395cbf059d1c9bf32d593e036"
+  },
+  "feature/attachment/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/model/DownloadState.kt": {
+    "mtime": 1780167394.7969313,
+    "ast_hash": "9274774b5bd1c263e8c3e87958be4808",
+    "semantic_hash": "9274774b5bd1c263e8c3e87958be4808"
+  },
+  "feature/attachment/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/model/PendingAttachment.kt": {
+    "mtime": 1783362392.236632,
+    "ast_hash": "ff81b2af41e647ad4f8f585acce43203",
+    "semantic_hash": "ff81b2af41e647ad4f8f585acce43203"
+  },
+  "feature/attachment/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/model/PickedFile.kt": {
+    "mtime": 1778729185.0324233,
+    "ast_hash": "23fde80b06fe960e5c4d88509d80c5bd",
+    "semantic_hash": "23fde80b06fe960e5c4d88509d80c5bd"
+  },
+  "feature/attachment/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/model/QuotaResult.kt": {
+    "mtime": 1783466804.6858509,
+    "ast_hash": "e0db53860a624e2c9a034c967b6186ed",
+    "semantic_hash": "e0db53860a624e2c9a034c967b6186ed"
+  },
+  "feature/attachment/model/src/jsMain/kotlin/dev/fanfly/wingslog/feature/attachment/model/WebPickedFileRegistry.kt": {
+    "mtime": 1780165260.2067583,
+    "ast_hash": "d8ec43c3e0ecb3ec55c6b2090fb6c14c",
+    "semantic_hash": "d8ec43c3e0ecb3ec55c6b2090fb6c14c"
+  },
+  "feature/attachment/sharedassets/build.gradle.kts": {
+    "mtime": 1782457036.5510476,
+    "ast_hash": "e4af008f3a8678b50349756df4076cfa",
+    "semantic_hash": "e4af008f3a8678b50349756df4076cfa"
+  },
+  "feature/attachment/viewing/build.gradle.kts": {
+    "mtime": 1783356240.701627,
+    "ast_hash": "1cd21a0510045fc1654fb534cbd333ab",
+    "semantic_hash": "1cd21a0510045fc1654fb534cbd333ab"
+  },
+  "feature/attachment/viewing/src/androidMain/kotlin/dev/fanfly/wingslog/feature/attachment/viewing/CameraCapture.android.kt": {
+    "mtime": 1784409878.2410731,
+    "ast_hash": "2232871c5c2ff4e64e997f91f79ff681",
+    "semantic_hash": "2232871c5c2ff4e64e997f91f79ff681"
+  },
+  "feature/attachment/viewing/src/androidMain/kotlin/dev/fanfly/wingslog/feature/attachment/viewing/FilePicker.kt": {
+    "mtime": 1778729185.0332859,
+    "ast_hash": "5d12556301aef6d4c02d6d9ee88a5533",
+    "semantic_hash": "5d12556301aef6d4c02d6d9ee88a5533"
+  },
+  "feature/attachment/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/viewing/AttachmentFormSection.kt": {
+    "mtime": 1783529630.7900405,
+    "ast_hash": "bf34e9f4a5a7476b0148787b0ce8a539",
+    "semantic_hash": "bf34e9f4a5a7476b0148787b0ce8a539"
+  },
+  "feature/attachment/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/viewing/AttachmentRow.kt": {
+    "mtime": 1783975061.7905128,
+    "ast_hash": "c13a53f82e5de7a82b42a80bccabbc50",
+    "semantic_hash": "c13a53f82e5de7a82b42a80bccabbc50"
+  },
+  "feature/attachment/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/viewing/AttachmentSection.kt": {
+    "mtime": 1783975061.7906415,
+    "ast_hash": "c6efa0dde7678fad217b07c6946ca9c6",
+    "semantic_hash": "c6efa0dde7678fad217b07c6946ca9c6"
+  },
+  "feature/attachment/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/viewing/CameraCapture.kt": {
+    "mtime": 1784409878.2412295,
+    "ast_hash": "58849f7776648efda36b8cb67c1133fb",
+    "semantic_hash": "58849f7776648efda36b8cb67c1133fb"
+  },
+  "feature/attachment/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/attachment/viewing/FilePicker.kt": {
+    "mtime": 1778729185.0338027,
+    "ast_hash": "d9225252a6a9ebb7b0d0e25f3860f8d6",
+    "semantic_hash": "d9225252a6a9ebb7b0d0e25f3860f8d6"
+  },
+  "feature/attachment/viewing/src/iosMain/kotlin/dev/fanfly/wingslog/feature/attachment/viewing/CameraCapture.ios.kt": {
+    "mtime": 1784409878.2413802,
+    "ast_hash": "5ddcf178bc27c53cb13b3985821252be",
+    "semantic_hash": "5ddcf178bc27c53cb13b3985821252be"
+  },
+  "feature/attachment/viewing/src/iosMain/kotlin/dev/fanfly/wingslog/feature/attachment/viewing/FilePicker.kt": {
+    "mtime": 1778729185.034094,
+    "ast_hash": "154c16da5c70b522776ca3d5750f6a96",
+    "semantic_hash": "154c16da5c70b522776ca3d5750f6a96"
+  },
+  "feature/attachment/viewing/src/jsMain/kotlin/dev/fanfly/wingslog/feature/attachment/viewing/CameraCapture.js.kt": {
+    "mtime": 1783356215.026934,
+    "ast_hash": "e6ffc69557784257aeb3c2fe288deb5c",
+    "semantic_hash": "e6ffc69557784257aeb3c2fe288deb5c"
+  },
+  "feature/attachment/viewing/src/jsMain/kotlin/dev/fanfly/wingslog/feature/attachment/viewing/FilePicker.kt": {
+    "mtime": 1780165260.2071407,
+    "ast_hash": "5ed478c3111d98ddb1a37f34f481dadd",
+    "semantic_hash": "5ed478c3111d98ddb1a37f34f481dadd"
+  },
+  "feature/export/datamanager/build.gradle.kts": {
+    "mtime": 1783361717.5091083,
+    "ast_hash": "8d087b56bc651615482cc48ff9042f42",
+    "semantic_hash": "8d087b56bc651615482cc48ff9042f42"
+  },
+  "feature/export/datamanager/src/androidMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/di/ExportPlatformModule.android.kt": {
+    "mtime": 1779316105.1680055,
+    "ast_hash": "990915dd030f1714700c3e5a7a63eafb",
+    "semantic_hash": "990915dd030f1714700c3e5a7a63eafb"
+  },
+  "feature/export/datamanager/src/androidMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportFileStore.android.kt": {
+    "mtime": 1783361717.2582233,
+    "ast_hash": "fe02d150dd573f4548d3ce94be608108",
+    "semantic_hash": "fe02d150dd573f4548d3ce94be608108"
+  },
+  "feature/export/datamanager/src/androidMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ZipFileWriter.android.kt": {
+    "mtime": 1779316105.168511,
+    "ast_hash": "1c52a2056571d1b97938c4ef951be6fd",
+    "semantic_hash": "1c52a2056571d1b97938c4ef951be6fd"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/ExportDateRange.kt": {
+    "mtime": 1783361717.3662493,
+    "ast_hash": "8db06d4cc3f5028d77c391232de8fa1e",
+    "semantic_hash": "8db06d4cc3f5028d77c391232de8fa1e"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/ExportDeliveryInfo.kt": {
+    "mtime": 1779341958.5484524,
+    "ast_hash": "a922933b0d3e780f7aecfdfc1c03942b",
+    "semantic_hash": "a922933b0d3e780f7aecfdfc1c03942b"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/ExportDeliveryOutcome.kt": {
+    "mtime": 1779589975.451562,
+    "ast_hash": "186608156fe791855192dda591b7792d",
+    "semantic_hash": "186608156fe791855192dda591b7792d"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/ExportDisplayLocation.kt": {
+    "mtime": 1782453160.0578897,
+    "ast_hash": "73becca722f5fa2219f27059f9cf0a76",
+    "semantic_hash": "73becca722f5fa2219f27059f9cf0a76"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/ExportFormat.kt": {
+    "mtime": 1779316105.169389,
+    "ast_hash": "b91fc3cb79074ff0d5a2a3fd3d997483",
+    "semantic_hash": "b91fc3cb79074ff0d5a2a3fd3d997483"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/ExportManager.kt": {
+    "mtime": 1779589619.9792516,
+    "ast_hash": "014020e4af10e56be434015e3fab9feb",
+    "semantic_hash": "014020e4af10e56be434015e3fab9feb"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/ExportProgress.kt": {
+    "mtime": 1783361717.1986213,
+    "ast_hash": "1d49b7849e45590b3ec7fc0de11a8770",
+    "semantic_hash": "1d49b7849e45590b3ec7fc0de11a8770"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/ExportProgressStep.kt": {
+    "mtime": 1779429872.8512836,
+    "ast_hash": "309751f63c9c6fe177807b6e430fb2dd",
+    "semantic_hash": "309751f63c9c6fe177807b6e430fb2dd"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/ExportRequest.kt": {
+    "mtime": 1779422485.9514782,
+    "ast_hash": "17ec3bfccee8fb5d645046a68e6f7e97",
+    "semantic_hash": "17ec3bfccee8fb5d645046a68e6f7e97"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/di/ExportDataManagerModule.kt": {
+    "mtime": 1783388350.4585438,
+    "ast_hash": "e43b78ac1f1658d331c600d1b51de8d8",
+    "semantic_hash": "e43b78ac1f1658d331c600d1b51de8d8"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/di/ExportPlatformModule.kt": {
+    "mtime": 1779316105.1703851,
+    "ast_hash": "5a2e52574f367a24b927c57b857a89ad",
+    "semantic_hash": "5a2e52574f367a24b927c57b857a89ad"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/AircraftBundle.kt": {
+    "mtime": 1779316105.1706524,
+    "ast_hash": "c509afbd2b353fe6c9e8da7a0483eb5e",
+    "semantic_hash": "c509afbd2b353fe6c9e8da7a0483eb5e"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/AircraftPdfDocument.kt": {
+    "mtime": 1779316105.1707673,
+    "ast_hash": "cc849ef8e868476b8eaed4add80711e6",
+    "semantic_hash": "cc849ef8e868476b8eaed4add80711e6"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/AircraftPdfWriter.kt": {
+    "mtime": 1779316105.1708858,
+    "ast_hash": "4a13a5c7d87854590bb0cb60f17f5d6a",
+    "semantic_hash": "4a13a5c7d87854590bb0cb60f17f5d6a"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/AttachmentExportManifest.kt": {
+    "mtime": 1779316105.171104,
+    "ast_hash": "4011214d564ee0dc03fc6638f75f8cc3",
+    "semantic_hash": "4011214d564ee0dc03fc6638f75f8cc3"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/AttachmentExportPayload.kt": {
+    "mtime": 1779316105.171299,
+    "ast_hash": "9e01936247bcd4c498432f1738754657",
+    "semantic_hash": "9e01936247bcd4c498432f1738754657"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/AttachmentExportResolver.kt": {
+    "mtime": 1783388350.4579775,
+    "ast_hash": "f6723f7436aad88d2831011522ab51cc",
+    "semantic_hash": "f6723f7436aad88d2831011522ab51cc"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/CsvWriter.kt": {
+    "mtime": 1783361717.5218215,
+    "ast_hash": "15a1ff119d51c97cd8a4466c90a452e3",
+    "semantic_hash": "15a1ff119d51c97cd8a4466c90a452e3"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportDeliveryBackend.kt": {
+    "mtime": 1779590938.8715584,
+    "ast_hash": "941aab465c4a4b0e0006e4e79e9aa2e7",
+    "semantic_hash": "941aab465c4a4b0e0006e4e79e9aa2e7"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportDeliveryStates.kt": {
+    "mtime": 1779422485.951924,
+    "ast_hash": "c53826beae60ff12e0369c1d84b11b4a",
+    "semantic_hash": "c53826beae60ff12e0369c1d84b11b4a"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportFileStore.kt": {
+    "mtime": 1779744623.7791734,
+    "ast_hash": "58462c607ec605d732f9c5313429fa25",
+    "semantic_hash": "58462c607ec605d732f9c5313429fa25"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportHistoryRemoteRepository.kt": {
+    "mtime": 1779591319.6004539,
+    "ast_hash": "6e28e0bf0190dfe10c04c75916b130a8",
+    "semantic_hash": "6e28e0bf0190dfe10c04c75916b130a8"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportManagerImpl.kt": {
+    "mtime": 1783361717.589505,
+    "ast_hash": "734e1eade8829903c66f18285083c35f",
+    "semantic_hash": "734e1eade8829903c66f18285083c35f"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportRecordManifest.kt": {
+    "mtime": 1783361717.247895,
+    "ast_hash": "391a76e4ff86548c59d8867552162b56",
+    "semantic_hash": "391a76e4ff86548c59d8867552162b56"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportRecordMerge.kt": {
+    "mtime": 1783361717.5908844,
+    "ast_hash": "2560f2d902acbe83a26dec5d0f38c876",
+    "semantic_hash": "2560f2d902acbe83a26dec5d0f38c876"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportRequestOutcomes.kt": {
+    "mtime": 1779590980.7371225,
+    "ast_hash": "9f956c2b24fcd6fa543794d0591691aa",
+    "semantic_hash": "9f956c2b24fcd6fa543794d0591691aa"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportedFile.kt": {
+    "mtime": 1782453160.0602493,
+    "ast_hash": "547ebc67a42efe69c7f64b1712251756",
+    "semantic_hash": "547ebc67a42efe69c7f64b1712251756"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/LocalArchiveRecord.kt": {
+    "mtime": 1779341958.548993,
+    "ast_hash": "065d5520cd0a7b6ac7de6e0a5fa3d9a7",
+    "semantic_hash": "065d5520cd0a7b6ac7de6e0a5fa3d9a7"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/LogbookExportAggregator.kt": {
+    "mtime": 1783361717.1111324,
+    "ast_hash": "a29252e8619e7348719fdddf898f2358",
+    "semantic_hash": "a29252e8619e7348719fdddf898f2358"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/LogbookExportArchiveBuilder.kt": {
+    "mtime": 1782457457.3970003,
+    "ast_hash": "126f81ad47aa66c6db3e03057c55901f",
+    "semantic_hash": "126f81ad47aa66c6db3e03057c55901f"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/LogbookExportTable.kt": {
+    "mtime": 1779316105.1728399,
+    "ast_hash": "33ca535b67b39aad12d4dd28a9a26543",
+    "semantic_hash": "33ca535b67b39aad12d4dd28a9a26543"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/PdfExportWriter.kt": {
+    "mtime": 1783361717.232788,
+    "ast_hash": "c285a0a9b25ca91c8031915c1e7baf87",
+    "semantic_hash": "c285a0a9b25ca91c8031915c1e7baf87"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ReadmeTemplateRenderer.kt": {
+    "mtime": 1783361717.5877552,
+    "ast_hash": "6973d3efbebf4904907efefea867df42",
+    "semantic_hash": "6973d3efbebf4904907efefea867df42"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/StoredZipArchive.kt": {
+    "mtime": 1783361717.0627527,
+    "ast_hash": "7a64addd07ba5984f0fb3ab2c3a04273",
+    "semantic_hash": "7a64addd07ba5984f0fb3ab2c3a04273"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/XlsxSheet.kt": {
+    "mtime": 1779316105.1733863,
+    "ast_hash": "343723ba236e1bf9ea12090d45a6e3a2",
+    "semantic_hash": "343723ba236e1bf9ea12090d45a6e3a2"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/XlsxWorkbookWriter.kt": {
+    "mtime": 1783361717.1092477,
+    "ast_hash": "2ee5fd1b5184d88eb36cded72d93c568",
+    "semantic_hash": "2ee5fd1b5184d88eb36cded72d93c568"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ZipEntryPayload.kt": {
+    "mtime": 1779316105.1737301,
+    "ast_hash": "8740b771fd51b829b3d5ab7f212379bc",
+    "semantic_hash": "8740b771fd51b829b3d5ab7f212379bc"
+  },
+  "feature/export/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ZipFileWriter.kt": {
+    "mtime": 1779316105.1739388,
+    "ast_hash": "e2b8fa12c71f073c9bcdf0208c3b8430",
+    "semantic_hash": "e2b8fa12c71f073c9bcdf0208c3b8430"
+  },
+  "feature/export/datamanager/src/iosMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/di/ExportPlatformModule.ios.kt": {
+    "mtime": 1779316105.1745799,
+    "ast_hash": "620d9d2f8002168d0b3ca83341b19500",
+    "semantic_hash": "620d9d2f8002168d0b3ca83341b19500"
+  },
+  "feature/export/datamanager/src/iosMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportFileStore.ios.kt": {
+    "mtime": 1783361717.3324301,
+    "ast_hash": "e0b29e2250b71b6880215fa8844f6c84",
+    "semantic_hash": "e0b29e2250b71b6880215fa8844f6c84"
+  },
+  "feature/export/datamanager/src/iosMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ZipFileWriter.ios.kt": {
+    "mtime": 1783361717.3120463,
+    "ast_hash": "8f58efa1d70f7e7242114f70c2e34f44",
+    "semantic_hash": "8f58efa1d70f7e7242114f70c2e34f44"
+  },
+  "feature/export/datamanager/src/jsMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/di/ExportPlatformModule.js.kt": {
+    "mtime": 1780370119.0735052,
+    "ast_hash": "620d9d2f8002168d0b3ca83341b19500",
+    "semantic_hash": "620d9d2f8002168d0b3ca83341b19500"
+  },
+  "feature/export/datamanager/src/jsMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportFileStore.js.kt": {
+    "mtime": 1783361717.5327508,
+    "ast_hash": "f47b615042076fa87ef7ef7bee6bbf76",
+    "semantic_hash": "f47b615042076fa87ef7ef7bee6bbf76"
+  },
+  "feature/export/datamanager/src/jsMain/kotlin/dev/fanfly/wingslog/feature/export/datamanager/impl/ZipFileWriter.js.kt": {
+    "mtime": 1783361717.1225073,
+    "ast_hash": "8f58efa1d70f7e7242114f70c2e34f44",
+    "semantic_hash": "8f58efa1d70f7e7242114f70c2e34f44"
+  },
+  "feature/export/datamanager/src/test/java/dev/fanfly/wingslog/feature/export/datamanager/impl/CsvWriterTest.kt": {
+    "mtime": 1779316105.1755803,
+    "ast_hash": "8a197d3b07fc98614ce261b7aa44bb82",
+    "semantic_hash": "8a197d3b07fc98614ce261b7aa44bb82"
+  },
+  "feature/export/datamanager/src/test/java/dev/fanfly/wingslog/feature/export/datamanager/impl/ExportRecordManifestTest.kt": {
+    "mtime": 1783361717.3077145,
+    "ast_hash": "a5b0c59e809e51365008d5ac19b0008e",
+    "semantic_hash": "a5b0c59e809e51365008d5ac19b0008e"
+  },
+  "feature/export/datamanager/src/test/java/dev/fanfly/wingslog/feature/export/datamanager/impl/LogbookExportAggregatorTest.kt": {
+    "mtime": 1783361717.2276702,
+    "ast_hash": "c9fb82d0a6304f2ab54d16f033232780",
+    "semantic_hash": "c9fb82d0a6304f2ab54d16f033232780"
+  },
+  "feature/export/datamanager/src/test/java/dev/fanfly/wingslog/feature/export/datamanager/impl/LogbookExportArchiveBuilderTest.kt": {
+    "mtime": 1783361717.1581142,
+    "ast_hash": "df84fb70a08a4c7ff648b6852c62966f",
+    "semantic_hash": "df84fb70a08a4c7ff648b6852c62966f"
+  },
+  "feature/export/datamanager/src/test/java/dev/fanfly/wingslog/feature/export/datamanager/impl/ZipFileWriterTest.kt": {
+    "mtime": 1783361717.2182803,
+    "ast_hash": "0c1dbc9b0f7a796c2121a517fd5d175f",
+    "semantic_hash": "0c1dbc9b0f7a796c2121a517fd5d175f"
+  },
+  "feature/export/sharedassets/build.gradle.kts": {
+    "mtime": 1782689647.8668494,
+    "ast_hash": "cd1159cd34dc053bbddbb9c264684778",
+    "semantic_hash": "cd1159cd34dc053bbddbb9c264684778"
+  },
+  "feature/export/update/build.gradle.kts": {
+    "mtime": 1783358259.044896,
+    "ast_hash": "890fd32437822b8c0351491ce8175266",
+    "semantic_hash": "890fd32437822b8c0351491ce8175266"
+  },
+  "feature/export/update/src/androidMain/kotlin/dev/fanfly/wingslog/feature/export/update/ExportFileSharer.android.kt": {
+    "mtime": 1783361716.981582,
+    "ast_hash": "fc6c90712664aeaf1b08e9d6cff5587e",
+    "semantic_hash": "fc6c90712664aeaf1b08e9d6cff5587e"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/ExportFileSharer.kt": {
+    "mtime": 1783361717.2568834,
+    "ast_hash": "4bc8cc474f1819545e47259580bce7d8",
+    "semantic_hash": "4bc8cc474f1819545e47259580bce7d8"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/ExportHistoryRoute.kt": {
+    "mtime": 1779591319.582576,
+    "ast_hash": "448b90c9f16a1399a21802fa9708b1e6",
+    "semantic_hash": "448b90c9f16a1399a21802fa9708b1e6"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/ExportHistoryScreen.kt": {
+    "mtime": 1783371782.5784917,
+    "ast_hash": "a488ad35a27019208017058c19b46c5f",
+    "semantic_hash": "a488ad35a27019208017058c19b46c5f"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/ExportSelectionRoute.kt": {
+    "mtime": 1780416987.11222,
+    "ast_hash": "aee37ea63beddea6249177769c96bf38",
+    "semantic_hash": "aee37ea63beddea6249177769c96bf38"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/ExportSelectionScreen.kt": {
+    "mtime": 1783371788.228486,
+    "ast_hash": "f22ede9c59879ac6f27e5b33f5b559f0",
+    "semantic_hash": "f22ede9c59879ac6f27e5b33f5b559f0"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/viewmodel/AircraftSelectionRow.kt": {
+    "mtime": 1779316105.1785214,
+    "ast_hash": "e062f63d820401e54c8d0d7a28d2159d",
+    "semantic_hash": "e062f63d820401e54c8d0d7a28d2159d"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/viewmodel/DateRangeOption.kt": {
+    "mtime": 1779316105.178796,
+    "ast_hash": "f9e4ddbd9c2e09b7e55582a456d08850",
+    "semantic_hash": "f9e4ddbd9c2e09b7e55582a456d08850"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/viewmodel/ExportHistoryUiState.kt": {
+    "mtime": 1779431175.6659842,
+    "ast_hash": "ae3026ea5f0c16055dbe4f8e68d11cd8",
+    "semantic_hash": "ae3026ea5f0c16055dbe4f8e68d11cd8"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/viewmodel/ExportHistoryViewModel.kt": {
+    "mtime": 1779744623.7802737,
+    "ast_hash": "cc4162465c0a7c022184cb0556a8e2ca",
+    "semantic_hash": "cc4162465c0a7c022184cb0556a8e2ca"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/viewmodel/ExportUiModule.kt": {
+    "mtime": 1779577490.8349602,
+    "ast_hash": "eb6e940fee1ab6cc0b029b6eed8465c4",
+    "semantic_hash": "eb6e940fee1ab6cc0b029b6eed8465c4"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/viewmodel/ExportUiState.kt": {
+    "mtime": 1783361271.5385332,
+    "ast_hash": "dfd8eb3b285155a8e611d032f03bd275",
+    "semantic_hash": "dfd8eb3b285155a8e611d032f03bd275"
+  },
+  "feature/export/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/export/update/viewmodel/ExportViewModel.kt": {
+    "mtime": 1783719991.0721397,
+    "ast_hash": "dd47e3a23c1144aeb21123674a2d8e69",
+    "semantic_hash": "dd47e3a23c1144aeb21123674a2d8e69"
+  },
+  "feature/export/update/src/iosMain/kotlin/dev/fanfly/wingslog/feature/export/update/ExportFileSharer.ios.kt": {
+    "mtime": 1783361717.436066,
+    "ast_hash": "94a1276f649442ea02a59abac0d99e1b",
+    "semantic_hash": "94a1276f649442ea02a59abac0d99e1b"
+  },
+  "feature/export/update/src/jsMain/kotlin/dev/fanfly/wingslog/feature/export/update/ExportFileSharer.js.kt": {
+    "mtime": 1783361717.462658,
+    "ast_hash": "093b1e027ea8eb1ae6e0b831e2c4269b",
+    "semantic_hash": "093b1e027ea8eb1ae6e0b831e2c4269b"
+  },
+  "feature/featurelab/datamanager/build.gradle.kts": {
+    "mtime": 1782457036.5291646,
+    "ast_hash": "307aa1c06d78b729c59ca127c65ec3c0",
+    "semantic_hash": "307aa1c06d78b729c59ca127c65ec3c0"
+  },
+  "feature/featurelab/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/featurelab/datamanager/FeatureFlags.kt": {
+    "mtime": 1783994882.6092088,
+    "ast_hash": "32cf2b6f054b7b32c23e2d00ed07ea38",
+    "semantic_hash": "32cf2b6f054b7b32c23e2d00ed07ea38"
+  },
+  "feature/featurelab/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/featurelab/datamanager/FeatureLabManager.kt": {
+    "mtime": 1778729185.0345972,
+    "ast_hash": "ca7ac28fa8ae80756fb956888fa55585",
+    "semantic_hash": "ca7ac28fa8ae80756fb956888fa55585"
+  },
+  "feature/featurelab/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/featurelab/datamanager/di/FeatureLabModule.kt": {
+    "mtime": 1783921597.0257401,
+    "ast_hash": "152d5499b7a5524cd4488496be962a62",
+    "semantic_hash": "152d5499b7a5524cd4488496be962a62"
+  },
+  "feature/featurelab/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/featurelab/datamanager/impl/FeatureLabManagerImpl.kt": {
+    "mtime": 1783994882.6094334,
+    "ast_hash": "4b4d7d6f5cde5084811a3d3421fe3be0",
+    "semantic_hash": "4b4d7d6f5cde5084811a3d3421fe3be0"
+  },
+  "feature/fleet/datamanager/build.gradle.kts": {
+    "mtime": 1783358259.039836,
+    "ast_hash": "efc20a2c481a53a0591e291d9abdcfd2",
+    "semantic_hash": "efc20a2c481a53a0591e291d9abdcfd2"
+  },
+  "feature/fleet/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/fleet/datamanager/FleetManager.kt": {
+    "mtime": 1783719991.0723155,
+    "ast_hash": "86a57de2f5c1fc885e6fabb0bbbbc500",
+    "semantic_hash": "86a57de2f5c1fc885e6fabb0bbbbc500"
+  },
+  "feature/fleet/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/fleet/datamanager/di/FleetDataManagerModule.kt": {
+    "mtime": 1783921597.0258937,
+    "ast_hash": "b9397ac1e24290f36b204526e1c2e1cd",
+    "semantic_hash": "b9397ac1e24290f36b204526e1c2e1cd"
+  },
+  "feature/fleet/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/fleet/datamanager/impl/FleetManagerImpl.kt": {
+    "mtime": 1783961543.3666337,
+    "ast_hash": "e4f19e80678a5c0298f077650da11fc3",
+    "semantic_hash": "e4f19e80678a5c0298f077650da11fc3"
+  },
+  "feature/fleet/datamanager/src/test/java/dev/fanfly/wingslog/feature/fleet/datamanager/impl/FleetManagerImplTest.kt": {
+    "mtime": 1783961543.3668163,
+    "ast_hash": "fd8868b926f17a20a2c76369894e86d9",
+    "semantic_hash": "fd8868b926f17a20a2c76369894e86d9"
+  },
+  "feature/fleet/picker/data/build.gradle.kts": {
+    "mtime": 1784100097.8844888,
+    "ast_hash": "0056bbe44b3900ebfd1440c61614164f",
+    "semantic_hash": "0056bbe44b3900ebfd1440c61614164f"
+  },
+  "feature/fleet/picker/data/src/androidMain/kotlin/dev/fanfly/wingslog/feature/fleet/picker/data/SelectedAircraftStore.android.kt": {
+    "mtime": 1784100097.8849144,
+    "ast_hash": "cd0158972d7ca61dfe978c95a6858a56",
+    "semantic_hash": "cd0158972d7ca61dfe978c95a6858a56"
+  },
+  "feature/fleet/picker/data/src/androidMain/kotlin/dev/fanfly/wingslog/feature/fleet/picker/data/di/SelectedAircraftStoreModule.android.kt": {
+    "mtime": 1784100097.8850563,
+    "ast_hash": "8778fca6470628c56b23f5780c8738fc",
+    "semantic_hash": "8778fca6470628c56b23f5780c8738fc"
+  },
+  "feature/fleet/picker/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/fleet/picker/data/SelectedAircraftStore.kt": {
+    "mtime": 1784100097.8854475,
+    "ast_hash": "66ef4759e148812b154f6097d61b5339",
+    "semantic_hash": "66ef4759e148812b154f6097d61b5339"
+  },
+  "feature/fleet/picker/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/fleet/picker/data/di/SelectedAircraftStoreModule.kt": {
+    "mtime": 1784100097.885593,
+    "ast_hash": "426128b2ac7c5e0d12a4d80f933339e6",
+    "semantic_hash": "426128b2ac7c5e0d12a4d80f933339e6"
+  },
+  "feature/fleet/picker/data/src/iosMain/kotlin/dev/fanfly/wingslog/feature/fleet/picker/data/SelectedAircraftStore.ios.kt": {
+    "mtime": 1784100097.8859737,
+    "ast_hash": "7eb0290f7f2e67c498746d31034ecf78",
+    "semantic_hash": "7eb0290f7f2e67c498746d31034ecf78"
+  },
+  "feature/fleet/picker/data/src/iosMain/kotlin/dev/fanfly/wingslog/feature/fleet/picker/data/di/SelectedAircraftStoreModule.ios.kt": {
+    "mtime": 1784100097.8860965,
+    "ast_hash": "53b6fd31edf3da4f668c13d8138d6960",
+    "semantic_hash": "53b6fd31edf3da4f668c13d8138d6960"
+  },
+  "feature/fleet/picker/data/src/jsMain/kotlin/dev/fanfly/wingslog/feature/fleet/picker/data/SelectedAircraftStore.js.kt": {
+    "mtime": 1784100097.886655,
+    "ast_hash": "43bf0e13cc4c7d01149971857935702a",
+    "semantic_hash": "43bf0e13cc4c7d01149971857935702a"
+  },
+  "feature/fleet/picker/data/src/jsMain/kotlin/dev/fanfly/wingslog/feature/fleet/picker/data/di/SelectedAircraftStoreModule.js.kt": {
+    "mtime": 1784100097.8867888,
+    "ast_hash": "6f2d07f968f1e0ffa2a74640bee79148",
+    "semantic_hash": "6f2d07f968f1e0ffa2a74640bee79148"
+  },
+  "feature/fleet/sharedassets/build.gradle.kts": {
+    "mtime": 1782457036.5489225,
+    "ast_hash": "7c127fada4eb4b29de386ea0c149c7ce",
+    "semantic_hash": "7c127fada4eb4b29de386ea0c149c7ce"
+  },
+  "feature/fleet/viewing/build.gradle.kts": {
+    "mtime": 1783372618.4837236,
+    "ast_hash": "3111d2d46429038de7881fbb286622f2",
+    "semantic_hash": "3111d2d46429038de7881fbb286622f2"
+  },
+  "feature/fleet/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/fleet/viewing/FleetEmptyState.kt": {
+    "mtime": 1784407343.4135478,
+    "ast_hash": "ebe1868c2106000184474094964e1b05",
+    "semantic_hash": "ebe1868c2106000184474094964e1b05"
+  },
+  "feature/login/build.gradle.kts": {
+    "mtime": 1783356284.1356697,
+    "ast_hash": "ce44284a362aee3d861ea5c874c718a1",
+    "semantic_hash": "ce44284a362aee3d861ea5c874c718a1"
+  },
+  "feature/login/src/androidMain/kotlin/dev/fanfly/wingslog/feature/login/LoginPlatform.android.kt": {
+    "mtime": 1783361717.5837474,
+    "ast_hash": "fbc8dcf27be0d1de8bce6c8029af436c",
+    "semantic_hash": "fbc8dcf27be0d1de8bce6c8029af436c"
+  },
+  "feature/login/src/androidMain/kotlin/dev/fanfly/wingslog/feature/login/data/PendingEmailCache.android.kt": {
+    "mtime": 1782888241.2690718,
+    "ast_hash": "23ecae739093732611c415beaaebc295",
+    "semantic_hash": "23ecae739093732611c415beaaebc295"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/AuthFlow.kt": {
+    "mtime": 1782888590.266919,
+    "ast_hash": "9726d7d3690488253d3c417a69d71cd4",
+    "semantic_hash": "9726d7d3690488253d3c417a69d71cd4"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/EmailLinkDeepLinks.kt": {
+    "mtime": 1783361271.53533,
+    "ast_hash": "80f5e434da0910b525cc2b985f454c61",
+    "semantic_hash": "80f5e434da0910b525cc2b985f454c61"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/EmailSignInScreen.kt": {
+    "mtime": 1784407343.4137776,
+    "ast_hash": "c8a15d18e2dc8c7c8a6dadffc042e9c8",
+    "semantic_hash": "c8a15d18e2dc8c7c8a6dadffc042e9c8"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/LoginCommon.kt": {
+    "mtime": 1782801802.1607451,
+    "ast_hash": "150b6d4e0edc1297e60a11b8ead7a770",
+    "semantic_hash": "150b6d4e0edc1297e60a11b8ead7a770"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/LoginPlatform.kt": {
+    "mtime": 1783356274.081724,
+    "ast_hash": "1fcfd65146b5b0422a6ba2fe55e540f5",
+    "semantic_hash": "1fcfd65146b5b0422a6ba2fe55e540f5"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/LoginScreen.kt": {
+    "mtime": 1783356267.7975636,
+    "ast_hash": "b6290c37d545d8865f690571decca18f",
+    "semantic_hash": "b6290c37d545d8865f690571decca18f"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/data/EmailLinkStore.kt": {
+    "mtime": 1782888256.3130536,
+    "ast_hash": "c921d06812ad9d8accd6dd3927e77994",
+    "semantic_hash": "c921d06812ad9d8accd6dd3927e77994"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/data/LoginViewModel.kt": {
+    "mtime": 1783361717.1707087,
+    "ast_hash": "31d6a9de3ed2eae85b4f0e70e9a893c2",
+    "semantic_hash": "31d6a9de3ed2eae85b4f0e70e9a893c2"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/data/PendingEmailCache.kt": {
+    "mtime": 1782888239.3195627,
+    "ast_hash": "b089dc3d4400f4f87429449655152db9",
+    "semantic_hash": "b089dc3d4400f4f87429449655152db9"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/di/LoginModule.kt": {
+    "mtime": 1782801758.109686,
+    "ast_hash": "03dc943a3d5ce878af025f05effe7ccf",
+    "semantic_hash": "03dc943a3d5ce878af025f05effe7ccf"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/onboarding/NameEntryScreen.kt": {
+    "mtime": 1784407343.4138863,
+    "ast_hash": "b96df27ea5884b5cc8f4f4f63573c6c0",
+    "semantic_hash": "b96df27ea5884b5cc8f4f4f63573c6c0"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/onboarding/OnboardingActions.kt": {
+    "mtime": 1779744623.7837877,
+    "ast_hash": "463ab74e32ee3ed397f1cde90e51408c",
+    "semantic_hash": "463ab74e32ee3ed397f1cde90e51408c"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/onboarding/OnboardingPreferences.kt": {
+    "mtime": 1779744623.7839575,
+    "ast_hash": "752fd568495d70571b1b46a7b1176b40",
+    "semantic_hash": "752fd568495d70571b1b46a7b1176b40"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/onboarding/TechnicianOnboardingActions.kt": {
+    "mtime": 1783361717.1325467,
+    "ast_hash": "836b5519421d2bcc92156020f62819b4",
+    "semantic_hash": "836b5519421d2bcc92156020f62819b4"
+  },
+  "feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/onboarding/WelcomeScreen.kt": {
+    "mtime": 1783362638.1120186,
+    "ast_hash": "037fa49eb0607b88be3668fae5dafdc0",
+    "semantic_hash": "037fa49eb0607b88be3668fae5dafdc0"
+  },
+  "feature/login/src/iosMain/kotlin/dev/fanfly/wingslog/feature/login/LoginPlatform.ios.kt": {
+    "mtime": 1783361717.1517653,
+    "ast_hash": "fbc8dcf27be0d1de8bce6c8029af436c",
+    "semantic_hash": "fbc8dcf27be0d1de8bce6c8029af436c"
+  },
+  "feature/login/src/iosMain/kotlin/dev/fanfly/wingslog/feature/login/data/PendingEmailCache.ios.kt": {
+    "mtime": 1782888243.1987205,
+    "ast_hash": "f33ff5cc5c0c2f2ffec256fc3e555b71",
+    "semantic_hash": "f33ff5cc5c0c2f2ffec256fc3e555b71"
+  },
+  "feature/login/src/jsMain/kotlin/dev/fanfly/wingslog/feature/login/LoginPlatform.js.kt": {
+    "mtime": 1783356295.1584756,
+    "ast_hash": "81ff4898391ac996d7c7827f38d2d45c",
+    "semantic_hash": "81ff4898391ac996d7c7827f38d2d45c"
+  },
+  "feature/login/src/jsMain/kotlin/dev/fanfly/wingslog/feature/login/data/PendingEmailCache.js.kt": {
+    "mtime": 1783361717.019355,
+    "ast_hash": "33193155ef32cd6b5b45a9a1c0e5f72c",
+    "semantic_hash": "33193155ef32cd6b5b45a9a1c0e5f72c"
+  },
+  "feature/logs/datamanager/build.gradle.kts": {
+    "mtime": 1782457036.5362105,
+    "ast_hash": "b1faf24676866256c4ef9eed21e9de81",
+    "semantic_hash": "b1faf24676866256c4ef9eed21e9de81"
+  },
+  "feature/logs/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/datamanager/MaintenanceLogManager.kt": {
+    "mtime": 1783922744.2199943,
+    "ast_hash": "9190052a0a224c5d6ccb65250794690b",
+    "semantic_hash": "9190052a0a224c5d6ccb65250794690b"
+  },
+  "feature/logs/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/datamanager/authorship/LogAuthorship.kt": {
+    "mtime": 1783964069.3174686,
+    "ast_hash": "439c18d491cc15e055a0f7c0e32c8a96",
+    "semantic_hash": "439c18d491cc15e055a0f7c0e32c8a96"
+  },
+  "feature/logs/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/datamanager/impl/MaintenanceDataManagerModule.kt": {
+    "mtime": 1783921597.026033,
+    "ast_hash": "308956cbd9d67987e3354fb6aa8b3ea2",
+    "semantic_hash": "308956cbd9d67987e3354fb6aa8b3ea2"
+  },
+  "feature/logs/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/datamanager/impl/MaintenanceLogManagerImpl.kt": {
+    "mtime": 1783922744.2201788,
+    "ast_hash": "10aa9d42ee2c909d6e7f138cbb033e03",
+    "semantic_hash": "10aa9d42ee2c909d6e7f138cbb033e03"
+  },
+  "feature/logs/datamanager/src/test/java/dev/fanfly/wingslog/feature/logs/datamanager/authorship/LogAuthorshipTest.kt": {
+    "mtime": 1783964069.3175628,
+    "ast_hash": "451acbbf06cca7febcb5d5c09f1316c0",
+    "semantic_hash": "451acbbf06cca7febcb5d5c09f1316c0"
+  },
+  "feature/logs/datamanager/src/test/java/dev/fanfly/wingslog/feature/logs/datamanager/impl/MaintenanceLogManagerImplTest.kt": {
+    "mtime": 1783719029.3671176,
+    "ast_hash": "4b875877b61a6b6e1712498d3bf6d981",
+    "semantic_hash": "4b875877b61a6b6e1712498d3bf6d981"
+  },
+  "feature/logs/sharedassets/build.gradle.kts": {
+    "mtime": 1782457036.5582845,
+    "ast_hash": "82e893e2a48f9a5aba23c4b08d8f8c55",
+    "semantic_hash": "82e893e2a48f9a5aba23c4b08d8f8c55"
+  },
+  "feature/logs/sharedassets/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/sharedassets/compose/LogPickerSheet.kt": {
+    "mtime": 1783361717.414686,
+    "ast_hash": "a05cb0598fc2b33d24d4e3a7e4969e28",
+    "semantic_hash": "a05cb0598fc2b33d24d4e3a7e4969e28"
+  },
+  "feature/logs/sharedassets/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/sharedassets/util/MaintenanceDisplayExtensions.kt": {
+    "mtime": 1780296321.3379061,
+    "ast_hash": "0c5aed29fe97425d99ce5c9816f9f15e",
+    "semantic_hash": "0c5aed29fe97425d99ce5c9816f9f15e"
+  },
+  "feature/logs/update/build.gradle.kts": {
+    "mtime": 1783895608.64448,
+    "ast_hash": "a21bda153acb2a0bc9168fd1ea418932",
+    "semantic_hash": "a21bda153acb2a0bc9168fd1ea418932"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/di/MaintenanceUpdateModule.kt": {
+    "mtime": 1783895608.644632,
+    "ast_hash": "ec01f55e6483e60f399782b3c7da58c1",
+    "semantic_hash": "ec01f55e6483e60f399782b3c7da58c1"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/MaintenanceLogFormScreen.kt": {
+    "mtime": 1783895608.6447952,
+    "ast_hash": "44e9cbf0e46c75b48e9e5671e638e094",
+    "semantic_hash": "44e9cbf0e46c75b48e9e5671e638e094"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/compose/ComponentSection.kt": {
+    "mtime": 1780790628.405738,
+    "ast_hash": "14466a9f7e10a036f1aec97f8d8b9804",
+    "semantic_hash": "14466a9f7e10a036f1aec97f8d8b9804"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/compose/LogFormSection.kt": {
+    "mtime": 1782539310.6187298,
+    "ast_hash": "98a905e09a3d3ee8348e002665570332",
+    "semantic_hash": "98a905e09a3d3ee8348e002665570332"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/compose/LogRecordsTab.kt": {
+    "mtime": 1783576421.39108,
+    "ast_hash": "2ab58da0d4085fc42007f98e1b90aa48",
+    "semantic_hash": "2ab58da0d4085fc42007f98e1b90aa48"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/compose/LogTabRow.kt": {
+    "mtime": 1780886846.5977483,
+    "ast_hash": "b506ca6e714332a048f93811c336d9bb",
+    "semantic_hash": "b506ca6e714332a048f93811c336d9bb"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/compose/LogTimeTab.kt": {
+    "mtime": 1779769171.9969628,
+    "ast_hash": "b5a3f52aca16ecfbc0f30b6785278ef2",
+    "semantic_hash": "b5a3f52aca16ecfbc0f30b6785278ef2"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/compose/LogWorkTab.kt": {
+    "mtime": 1783529536.2412467,
+    "ast_hash": "9c25874463a191c0b5a2b02b0ed10aa2",
+    "semantic_hash": "9c25874463a191c0b5a2b02b0ed10aa2"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/compose/SquawkWorkSection.kt": {
+    "mtime": 1783529616.831017,
+    "ast_hash": "82498f3df678bc0af5fa63c1b4cd091b",
+    "semantic_hash": "82498f3df678bc0af5fa63c1b4cd091b"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/compose/SubComponentDropdown.kt": {
+    "mtime": 1783361717.4046783,
+    "ast_hash": "b339e0fbcf47a034a6e185f3f5b2bc89",
+    "semantic_hash": "b339e0fbcf47a034a6e185f3f5b2bc89"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/compose/TaskWorkSection.kt": {
+    "mtime": 1783529622.7533677,
+    "ast_hash": "c01a02a0d1ab863a5802b8564f08adac",
+    "semantic_hash": "c01a02a0d1ab863a5802b8564f08adac"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/viewmodel/MaintenanceLogFormEvent.kt": {
+    "mtime": 1778729185.039675,
+    "ast_hash": "33330447591166eeaf3af9bddd498dda",
+    "semantic_hash": "33330447591166eeaf3af9bddd498dda"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/viewmodel/MaintenanceLogFormUiState.kt": {
+    "mtime": 1783895608.6450012,
+    "ast_hash": "9e851aae445300fb6f7e29af6a9fe20f",
+    "semantic_hash": "9e851aae445300fb6f7e29af6a9fe20f"
+  },
+  "feature/logs/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/update/logs/viewmodel/MaintenanceLogFormViewModel.kt": {
+    "mtime": 1784412811.6473732,
+    "ast_hash": "72fcd60d32c5cbff304c5e807499950a",
+    "semantic_hash": "72fcd60d32c5cbff304c5e807499950a"
+  },
+  "feature/logs/update/src/test/java/dev/fanfly/wingslog/feature/logs/update/logs/viewmodel/MaintenanceLogFormViewModelTest.kt": {
+    "mtime": 1783921257.0310695,
+    "ast_hash": "482dc34d581950f365415dc72d871ccb",
+    "semantic_hash": "482dc34d581950f365415dc72d871ccb"
+  },
+  "feature/logs/viewing/build.gradle.kts": {
+    "mtime": 1784353286.0213609,
+    "ast_hash": "c85f37fc8faebb0574f930ff61bcd6b4",
+    "semantic_hash": "c85f37fc8faebb0574f930ff61bcd6b4"
+  },
+  "feature/logs/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/viewing/di/MaintenanceViewingModule.kt": {
+    "mtime": 1784353286.02206,
+    "ast_hash": "79b0309b7f74b4ec7235bc396d5ae6a3",
+    "semantic_hash": "79b0309b7f74b4ec7235bc396d5ae6a3"
+  },
+  "feature/logs/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/viewing/log/compose/MaintenanceLogCard.kt": {
+    "mtime": 1784353286.0224361,
+    "ast_hash": "40d4abacce709b5913ed87a59112f10e",
+    "semantic_hash": "40d4abacce709b5913ed87a59112f10e"
+  },
+  "feature/logs/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/viewing/log/compose/MaintenanceLogDetailSheet.kt": {
+    "mtime": 1784353286.0230033,
+    "ast_hash": "4191c16b593704959606f5a37e63e59a",
+    "semantic_hash": "4191c16b593704959606f5a37e63e59a"
+  },
+  "feature/logs/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/viewing/log/compose/MaintenanceLogListContent.kt": {
+    "mtime": 1784427919.736955,
+    "ast_hash": "671c80cab695dd36f8fe72b4b9fde021",
+    "semantic_hash": "671c80cab695dd36f8fe72b4b9fde021"
+  },
+  "feature/logs/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/viewing/log/compose/MaintenanceLogTable.kt": {
+    "mtime": 1784100097.887169,
+    "ast_hash": "b5e56bd20d020938bf2b184e260f1c8b",
+    "semantic_hash": "b5e56bd20d020938bf2b184e260f1c8b"
+  },
+  "feature/logs/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/viewing/log/data/MaintenanceLogListUiState.kt": {
+    "mtime": 1784353286.0237362,
+    "ast_hash": "4cb15f3d8e51a81bed5ceda881de9784",
+    "semantic_hash": "4cb15f3d8e51a81bed5ceda881de9784"
+  },
+  "feature/logs/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/logs/viewing/log/data/MaintenanceLogListViewModel.kt": {
+    "mtime": 1784353286.0241292,
+    "ast_hash": "5a666ac2ca054692fe23fcca13197860",
+    "semantic_hash": "5a666ac2ca054692fe23fcca13197860"
+  },
+  "feature/logs/viewing/src/test/kotlin/dev/fanfly/wingslog/feature/logs/viewing/log/data/LogAuthorshipGatingTest.kt": {
+    "mtime": 1784353286.0245035,
+    "ast_hash": "7932052d3636659a28f380fc024458da",
+    "semantic_hash": "7932052d3636659a28f380fc024458da"
+  },
+  "feature/settings/build.gradle.kts": {
+    "mtime": 1784442676.0754187,
+    "ast_hash": "8fb930c010f041b7cf579a155733089b",
+    "semantic_hash": "8fb930c010f041b7cf579a155733089b"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/AppearanceSettingRow.kt": {
+    "mtime": 1780416987.1146896,
+    "ast_hash": "ad6a00c228815dea1931b4e088cd182a",
+    "semantic_hash": "ad6a00c228815dea1931b4e088cd182a"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/FirebaseLoggingSettingRow.kt": {
+    "mtime": 1783036321.0416646,
+    "ast_hash": "ea96ea3dca872c373324996f3d5aa664",
+    "semantic_hash": "ea96ea3dca872c373324996f3d5aa664"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/SettingsCard.kt": {
+    "mtime": 1780416987.1149151,
+    "ast_hash": "1f6ec99e419d022c362738bcca32e26e",
+    "semantic_hash": "1f6ec99e419d022c362738bcca32e26e"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/SettingsRow.kt": {
+    "mtime": 1780416987.115135,
+    "ast_hash": "c6dd673be58b5ce4c71b1209c9c24c72",
+    "semantic_hash": "c6dd673be58b5ce4c71b1209c9c24c72"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/SettingsScreen.kt": {
+    "mtime": 1784442676.0756843,
+    "ast_hash": "7caddd35b5dca40f57456854f2e15c7b",
+    "semantic_hash": "7caddd35b5dca40f57456854f2e15c7b"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/data/SettingsUiState.kt": {
+    "mtime": 1784442676.0758193,
+    "ast_hash": "09fcd400f1a80cd615861d166f09a94f",
+    "semantic_hash": "09fcd400f1a80cd615861d166f09a94f"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/data/SettingsViewModel.kt": {
+    "mtime": 1784442676.0759437,
+    "ast_hash": "c285cd19542c7587ef1b6cb3f7e19821",
+    "semantic_hash": "c285cd19542c7587ef1b6cb3f7e19821"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/di/SettingsModule.kt": {
+    "mtime": 1784442676.0760555,
+    "ast_hash": "bd2785defd8f66c47c06aad726ee4e6b",
+    "semantic_hash": "bd2785defd8f66c47c06aad726ee4e6b"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/featurelab/FeatureLabScreen.kt": {
+    "mtime": 1783576421.393824,
+    "ast_hash": "efa7c21bd44cd9d90ed3e2f10e6b7d47",
+    "semantic_hash": "efa7c21bd44cd9d90ed3e2f10e6b7d47"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/featurelab/FeatureLabViewModel.kt": {
+    "mtime": 1783576421.394063,
+    "ast_hash": "805c09a025f50a945c27710d7e130be7",
+    "semantic_hash": "805c09a025f50a945c27710d7e130be7"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/upgrade/AccountUpgradeViewModel.kt": {
+    "mtime": 1784095406.8939395,
+    "ast_hash": "dbc4ef44efb0e1c31a16fd01653a880c",
+    "semantic_hash": "dbc4ef44efb0e1c31a16fd01653a880c"
+  },
+  "feature/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/settings/upgrade/UpgradeUiState.kt": {
+    "mtime": 1780167394.7972116,
+    "ast_hash": "e66a4f0e5e2ec9ab5ba9c7f20855824f",
+    "semantic_hash": "e66a4f0e5e2ec9ab5ba9c7f20855824f"
+  },
+  "feature/settings/src/test/java/dev/fanfly/wingslog/feature/settings/data/SettingsViewModelTest.kt": {
+    "mtime": 1783995713.7026057,
+    "ast_hash": "e4d5535eeb75605dfcba8a3bdc45db9d",
+    "semantic_hash": "e4d5535eeb75605dfcba8a3bdc45db9d"
+  },
+  "feature/settings/src/test/java/dev/fanfly/wingslog/feature/settings/upgrade/AccountUpgradeNameTest.kt": {
+    "mtime": 1784095406.8941145,
+    "ast_hash": "04a90454ce874b01f88ad832e7939f8c",
+    "semantic_hash": "04a90454ce874b01f88ad832e7939f8c"
+  },
+  "feature/sharing/datamanager/build.gradle.kts": {
+    "mtime": 1783995713.7027185,
+    "ast_hash": "05c9c2c2682b3f8b1553e6beab3e16fc",
+    "semantic_hash": "05c9c2c2682b3f8b1553e6beab3e16fc"
+  },
+  "feature/sharing/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/datamanager/AircraftShareDeepLinks.kt": {
+    "mtime": 1784407343.4139996,
+    "ast_hash": "557eb0f25a97cb0a27253d24c01e6499",
+    "semantic_hash": "557eb0f25a97cb0a27253d24c01e6499"
+  },
+  "feature/sharing/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/datamanager/SharingManager.kt": {
+    "mtime": 1783981143.1424835,
+    "ast_hash": "d4df708d17c6d4bd51e7d98c9d5f27ef",
+    "semantic_hash": "d4df708d17c6d4bd51e7d98c9d5f27ef"
+  },
+  "feature/sharing/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/datamanager/SharingModule.kt": {
+    "mtime": 1783995713.702839,
+    "ast_hash": "9613725679c8f2b424d8247720f5a6a3",
+    "semantic_hash": "9613725679c8f2b424d8247720f5a6a3"
+  },
+  "feature/sharing/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/datamanager/impl/AircraftScopeResolverImpl.kt": {
+    "mtime": 1783719029.3674302,
+    "ast_hash": "efb73d624079c31cd8bfaaa42ef705b3",
+    "semantic_hash": "efb73d624079c31cd8bfaaa42ef705b3"
+  },
+  "feature/sharing/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/datamanager/impl/SharingManagerImpl.kt": {
+    "mtime": 1783995713.7029803,
+    "ast_hash": "60f9680f49108d177df5f06d58640101",
+    "semantic_hash": "60f9680f49108d177df5f06d58640101"
+  },
+  "feature/sharing/datamanager/src/test/kotlin/dev/fanfly/wingslog/feature/sharing/datamanager/AircraftShareDeepLinksTest.kt": {
+    "mtime": 1784407343.4141343,
+    "ast_hash": "1cc3d63d50d3780c4bb51f0bf09c0b9e",
+    "semantic_hash": "1cc3d63d50d3780c4bb51f0bf09c0b9e"
+  },
+  "feature/sharing/datamanager/src/test/kotlin/dev/fanfly/wingslog/feature/sharing/datamanager/impl/AircraftScopeResolverImplTest.kt": {
+    "mtime": 1783719029.3675966,
+    "ast_hash": "25ff0fd7ef3ba28918fa77d9b43d1db2",
+    "semantic_hash": "25ff0fd7ef3ba28918fa77d9b43d1db2"
+  },
+  "feature/sharing/model/build.gradle.kts": {
+    "mtime": 1783648961.3318717,
+    "ast_hash": "40288fa31b6f74c54790c88a80695396",
+    "semantic_hash": "40288fa31b6f74c54790c88a80695396"
+  },
+  "feature/sharing/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/model/InviteCode.kt": {
+    "mtime": 1783981143.1429749,
+    "ast_hash": "a4afbad909ce909df5f6e383a2966297",
+    "semantic_hash": "a4afbad909ce909df5f6e383a2966297"
+  },
+  "feature/sharing/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/model/ShareModels.kt": {
+    "mtime": 1783981143.1431024,
+    "ast_hash": "3d49e6b2d866e5d1edecf6aeba8e03e2",
+    "semantic_hash": "3d49e6b2d866e5d1edecf6aeba8e03e2"
+  },
+  "feature/sharing/sharedassets/build.gradle.kts": {
+    "mtime": 1783721097.035587,
+    "ast_hash": "fe39641bae9f3bf93f8c4ae58d9c0617",
+    "semantic_hash": "fe39641bae9f3bf93f8c4ae58d9c0617"
+  },
+  "feature/sharing/sharedassets/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/sharedassets/Placeholder.kt": {
+    "mtime": 1783648961.3327882,
+    "ast_hash": "6a9505fa15978ed04d2c7be9f64f2f8a",
+    "semantic_hash": "6a9505fa15978ed04d2c7be9f64f2f8a"
+  },
+  "feature/sharing/update/build.gradle.kts": {
+    "mtime": 1783995713.7030892,
+    "ast_hash": "5ef4ad72eeb53a14b6a43ebdec33eed4",
+    "semantic_hash": "5ef4ad72eeb53a14b6a43ebdec33eed4"
+  },
+  "feature/sharing/update/src/androidMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/LinkSharer.android.kt": {
+    "mtime": 1783721875.3744893,
+    "ast_hash": "1f40dee8d2c8e1679c61068a6361f142",
+    "semantic_hash": "1f40dee8d2c8e1679c61068a6361f142"
+  },
+  "feature/sharing/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/EnterInviteCodeRoute.kt": {
+    "mtime": 1784407343.4143083,
+    "ast_hash": "4307671d1302bbc17be95a9b99cb0d7a",
+    "semantic_hash": "4307671d1302bbc17be95a9b99cb0d7a"
+  },
+  "feature/sharing/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/InviteSheetRoute.kt": {
+    "mtime": 1783750344.751761,
+    "ast_hash": "40420f8cc720994c0f79778f7153248a",
+    "semantic_hash": "40420f8cc720994c0f79778f7153248a"
+  },
+  "feature/sharing/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/InviteSheetViewModel.kt": {
+    "mtime": 1783981143.143653,
+    "ast_hash": "d4ebe16e4b4bdad8c058fbc4fff5c402",
+    "semantic_hash": "d4ebe16e4b4bdad8c058fbc4fff5c402"
+  },
+  "feature/sharing/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/LinkSharer.kt": {
+    "mtime": 1783721875.3748932,
+    "ast_hash": "54969ab530088dde5d691854b46ede43",
+    "semantic_hash": "54969ab530088dde5d691854b46ede43"
+  },
+  "feature/sharing/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/ManageAccessRoute.kt": {
+    "mtime": 1783959696.3571498,
+    "ast_hash": "33f0590f67079ec8551a76f77f46b33c",
+    "semantic_hash": "33f0590f67079ec8551a76f77f46b33c"
+  },
+  "feature/sharing/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/ManageAccessViewModel.kt": {
+    "mtime": 1783976973.6958287,
+    "ast_hash": "32601284e967039c4856262638f03fb1",
+    "semantic_hash": "32601284e967039c4856262638f03fb1"
+  },
+  "feature/sharing/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/Placeholder.kt": {
+    "mtime": 1783648961.3332756,
+    "ast_hash": "0ea49f7b932e3184c2c4a0732dcaa243",
+    "semantic_hash": "0ea49f7b932e3184c2c4a0732dcaa243"
+  },
+  "feature/sharing/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/RedeemHost.kt": {
+    "mtime": 1783981953.4449384,
+    "ast_hash": "fa76c6ff3566b8a7ffb4a46e3fb00b43",
+    "semantic_hash": "fa76c6ff3566b8a7ffb4a46e3fb00b43"
+  },
+  "feature/sharing/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/RedeemViewModel.kt": {
+    "mtime": 1784407343.4144013,
+    "ast_hash": "375885e8e52ae18981c5abb8f8c7fd0a",
+    "semantic_hash": "375885e8e52ae18981c5abb8f8c7fd0a"
+  },
+  "feature/sharing/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/di/SharingUiModule.kt": {
+    "mtime": 1783995713.7033832,
+    "ast_hash": "f540a40c62aab0deeb14922abb43318a",
+    "semantic_hash": "f540a40c62aab0deeb14922abb43318a"
+  },
+  "feature/sharing/update/src/iosMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/LinkSharer.ios.kt": {
+    "mtime": 1783721875.3757179,
+    "ast_hash": "04993cb11bdfd917eacd2964c564880c",
+    "semantic_hash": "04993cb11bdfd917eacd2964c564880c"
+  },
+  "feature/sharing/update/src/jsMain/kotlin/dev/fanfly/wingslog/feature/sharing/update/LinkSharer.js.kt": {
+    "mtime": 1783721875.3761535,
+    "ast_hash": "3d2dc6ab7384776ac29d0758ece7c698",
+    "semantic_hash": "3d2dc6ab7384776ac29d0758ece7c698"
+  },
+  "feature/sharing/update/src/test/kotlin/dev/fanfly/wingslog/feature/sharing/update/InviteSheetViewModelTest.kt": {
+    "mtime": 1783981143.1442823,
+    "ast_hash": "24cd0d45e8ab50b071fcb64132159dc3",
+    "semantic_hash": "24cd0d45e8ab50b071fcb64132159dc3"
+  },
+  "feature/sharing/update/src/test/kotlin/dev/fanfly/wingslog/feature/sharing/update/ManageAccessViewModelTest.kt": {
+    "mtime": 1783976973.6962624,
+    "ast_hash": "5ffb7171a7b61b8e0c00ac00ace7a551",
+    "semantic_hash": "5ffb7171a7b61b8e0c00ac00ace7a551"
+  },
+  "feature/sharing/update/src/test/kotlin/dev/fanfly/wingslog/feature/sharing/update/RedeemViewModelTest.kt": {
+    "mtime": 1784407343.4145217,
+    "ast_hash": "29ef55bacba0e5ccb1d511e5255c4c2e",
+    "semantic_hash": "29ef55bacba0e5ccb1d511e5255c4c2e"
+  },
+  "feature/sharing/viewing/build.gradle.kts": {
+    "mtime": 1783837055.1467528,
+    "ast_hash": "2199c9196c5301ff818e452391627d69",
+    "semantic_hash": "2199c9196c5301ff818e452391627d69"
+  },
+  "feature/sharing/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/viewing/EnterInviteCodeScreen.kt": {
+    "mtime": 1784407343.4146307,
+    "ast_hash": "88fb4e4787b8b2dd78f0fd6bb154e14d",
+    "semantic_hash": "88fb4e4787b8b2dd78f0fd6bb154e14d"
+  },
+  "feature/sharing/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/viewing/InviteSheetScreen.kt": {
+    "mtime": 1783981143.144732,
+    "ast_hash": "bf7fd67364f0eed9e02d0ac56ecd03ea",
+    "semantic_hash": "bf7fd67364f0eed9e02d0ac56ecd03ea"
+  },
+  "feature/sharing/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/viewing/ManageAccessScreen.kt": {
+    "mtime": 1783976973.6964998,
+    "ast_hash": "e0fd728807585d8ce6bd70c36cb9a564",
+    "semantic_hash": "e0fd728807585d8ce6bd70c36cb9a564"
+  },
+  "feature/sharing/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/viewing/Placeholder.kt": {
+    "mtime": 1783648961.3337502,
+    "ast_hash": "948469d65de83e2a85b756c5c9ac0e92",
+    "semantic_hash": "948469d65de83e2a85b756c5c9ac0e92"
+  },
+  "feature/sharing/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sharing/viewing/RedeemConfirmationSheet.kt": {
+    "mtime": 1783981953.4451997,
+    "ast_hash": "c1cc1a3e8614d2b1c1637815764cc62e",
+    "semantic_hash": "c1cc1a3e8614d2b1c1637815764cc62e"
+  },
+  "feature/shell/build.gradle.kts": {
+    "mtime": 1784407343.414708,
+    "ast_hash": "c4e3cd054efe035ecf71285f6e37a7fd",
+    "semantic_hash": "c4e3cd054efe035ecf71285f6e37a7fd"
+  },
+  "feature/shell/src/commonMain/kotlin/dev/fanfly/wingslog/feature/shell/AdaptiveShellRoute.kt": {
+    "mtime": 1784407343.4148102,
+    "ast_hash": "d034d8ba2e594dea220459ec1ba1c5f4",
+    "semantic_hash": "d034d8ba2e594dea220459ec1ba1c5f4"
+  },
+  "feature/shell/src/commonMain/kotlin/dev/fanfly/wingslog/feature/shell/AppNavHelpers.kt": {
+    "mtime": 1783372535.7053642,
+    "ast_hash": "536ec93859c3cb7ad3c55a8572f0f6af",
+    "semantic_hash": "536ec93859c3cb7ad3c55a8572f0f6af"
+  },
+  "feature/shell/src/commonMain/kotlin/dev/fanfly/wingslog/feature/shell/ShellNavGraph.kt": {
+    "mtime": 1784407343.4148965,
+    "ast_hash": "8d7b46bd03dba178d7b1df8e22c6194d",
+    "semantic_hash": "8d7b46bd03dba178d7b1df8e22c6194d"
+  },
+  "feature/shell/src/commonMain/kotlin/dev/fanfly/wingslog/feature/shell/di/ShellModule.kt": {
+    "mtime": 1784100097.887446,
+    "ast_hash": "c6ecf795ab6c05e3affcb602dfd2c942",
+    "semantic_hash": "c6ecf795ab6c05e3affcb602dfd2c942"
+  },
+  "feature/shell/src/commonMain/kotlin/dev/fanfly/wingslog/feature/shell/viewmodel/AdaptiveShellViewModel.kt": {
+    "mtime": 1784100097.8876255,
+    "ast_hash": "c3fdb9fcae49af54aa58dc687709a482",
+    "semantic_hash": "c3fdb9fcae49af54aa58dc687709a482"
+  },
+  "feature/shell/src/test/kotlin/dev/fanfly/wingslog/feature/shell/viewmodel/AdaptiveShellViewModelTest.kt": {
+    "mtime": 1784100097.887775,
+    "ast_hash": "d24a1b8b40249cb5990509dc564a5da6",
+    "semantic_hash": "d24a1b8b40249cb5990509dc564a5da6"
+  },
+  "feature/squawk/datamanager/build.gradle.kts": {
+    "mtime": 1782457036.5587804,
+    "ast_hash": "2b51c364b1519550bf44a872ef6ce9ea",
+    "semantic_hash": "2b51c364b1519550bf44a872ef6ce9ea"
+  },
+  "feature/squawk/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/datamanager/SquawkManager.kt": {
+    "mtime": 1783361717.181012,
+    "ast_hash": "a9dbfb78a29bd3278b2ec5cef5ed1dbd",
+    "semantic_hash": "a9dbfb78a29bd3278b2ec5cef5ed1dbd"
+  },
+  "feature/squawk/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/datamanager/SquawkModule.kt": {
+    "mtime": 1783719029.3677595,
+    "ast_hash": "e83daf102e3b1481a7853f233bf47cc7",
+    "semantic_hash": "e83daf102e3b1481a7853f233bf47cc7"
+  },
+  "feature/squawk/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/datamanager/impl/SquawkManagerImpl.kt": {
+    "mtime": 1783719029.3679507,
+    "ast_hash": "563f7c01a02cb49ad496144e6f989638",
+    "semantic_hash": "563f7c01a02cb49ad496144e6f989638"
+  },
+  "feature/squawk/datamanager/src/test/java/dev/fanfly/wingslog/feature/squawk/datamanager/impl/SquawkManagerImplTest.kt": {
+    "mtime": 1783719029.3681896,
+    "ast_hash": "8997b749fce7850accaee249486de77c",
+    "semantic_hash": "8997b749fce7850accaee249486de77c"
+  },
+  "feature/squawk/model/build.gradle.kts": {
+    "mtime": 1782457036.5197887,
+    "ast_hash": "257e037dde64f15de62f9a02823e70f0",
+    "semantic_hash": "257e037dde64f15de62f9a02823e70f0"
+  },
+  "feature/squawk/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/model/SquawkStatus.kt": {
+    "mtime": 1778997189.0067375,
+    "ast_hash": "c742b3494925d312f4b8bb9c327b450e",
+    "semantic_hash": "c742b3494925d312f4b8bb9c327b450e"
+  },
+  "feature/squawk/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/model/SquawkWithStatus.kt": {
+    "mtime": 1778997189.0068402,
+    "ast_hash": "195e214b22a3c841893c6fd0253d84cb",
+    "semantic_hash": "195e214b22a3c841893c6fd0253d84cb"
+  },
+  "feature/squawk/model/src/test/java/dev/fanfly/wingslog/feature/squawk/model/SquawkWithStatusTest.kt": {
+    "mtime": 1778997189.007152,
+    "ast_hash": "38bf649a8f2107a548670682ddc76470",
+    "semantic_hash": "38bf649a8f2107a548670682ddc76470"
+  },
+  "feature/squawk/sharedassets/build.gradle.kts": {
+    "mtime": 1782457036.533492,
+    "ast_hash": "3c2e0b03beddcfe4a1c3125f73da1bd6",
+    "semantic_hash": "3c2e0b03beddcfe4a1c3125f73da1bd6"
+  },
+  "feature/squawk/sharedassets/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/sharedassets/SquawkDismissReasonLabel.kt": {
+    "mtime": 1779060370.2925503,
+    "ast_hash": "ec0a74d388652abe2657e198382f7144",
+    "semantic_hash": "ec0a74d388652abe2657e198382f7144"
+  },
+  "feature/squawk/update/build.gradle.kts": {
+    "mtime": 1783975061.792258,
+    "ast_hash": "7433400c7ba42f7c311cab6e128d79aa",
+    "semantic_hash": "7433400c7ba42f7c311cab6e128d79aa"
+  },
+  "feature/squawk/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/update/compose/DismissSquawkDialog.kt": {
+    "mtime": 1783532775.210752,
+    "ast_hash": "5e5ed668203d551dbfe3e1587d0d4bda",
+    "semantic_hash": "5e5ed668203d551dbfe3e1587d0d4bda"
+  },
+  "feature/squawk/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/update/compose/ResolveOptionsMenu.kt": {
+    "mtime": 1783530778.5276356,
+    "ast_hash": "51fe336bb115367e34b0ecd8f91ece81",
+    "semantic_hash": "51fe336bb115367e34b0ecd8f91ece81"
+  },
+  "feature/squawk/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/update/compose/SquawkBasicSection.kt": {
+    "mtime": 1784414582.1327379,
+    "ast_hash": "f182aa943bc3c479e32adfb2f9b81952",
+    "semantic_hash": "f182aa943bc3c479e32adfb2f9b81952"
+  },
+  "feature/squawk/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/update/compose/SquawkDetailsSection.kt": {
+    "mtime": 1784414582.1329124,
+    "ast_hash": "31e8365a4915694b64e0d7226bcf27bd",
+    "semantic_hash": "31e8365a4915694b64e0d7226bcf27bd"
+  },
+  "feature/squawk/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/update/ui/AddSquawkRoute.kt": {
+    "mtime": 1783526900.2470603,
+    "ast_hash": "e00a002146ab63b6068e03bb5d53f90b",
+    "semantic_hash": "e00a002146ab63b6068e03bb5d53f90b"
+  },
+  "feature/squawk/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/update/ui/EditSquawkRoute.kt": {
+    "mtime": 1783570493.9194338,
+    "ast_hash": "57b156b85fdf0cae21d6db1da1e4d209",
+    "semantic_hash": "57b156b85fdf0cae21d6db1da1e4d209"
+  },
+  "feature/squawk/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/update/ui/SquawkFormScreen.kt": {
+    "mtime": 1784414582.133164,
+    "ast_hash": "81f07400602bdb87f202ee9bf99b019e",
+    "semantic_hash": "81f07400602bdb87f202ee9bf99b019e"
+  },
+  "feature/squawk/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/update/viewmodel/SquawkFormViewModel.kt": {
+    "mtime": 1784412811.647565,
+    "ast_hash": "72894575b25fd9f1350ad823820c5892",
+    "semantic_hash": "72894575b25fd9f1350ad823820c5892"
+  },
+  "feature/squawk/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/update/viewmodel/SquawkUiModule.kt": {
+    "mtime": 1783975061.79271,
+    "ast_hash": "3a57f53ef2839f65990a45c330767923",
+    "semantic_hash": "3a57f53ef2839f65990a45c330767923"
+  },
+  "feature/squawk/update/src/test/java/dev/fanfly/wingslog/feature/squawk/update/viewmodel/SquawkFormViewModelTest.kt": {
+    "mtime": 1784014277.8755915,
+    "ast_hash": "01fb03617b3b21585a82dc77942a9482",
+    "semantic_hash": "01fb03617b3b21585a82dc77942a9482"
+  },
+  "feature/squawk/viewing/build.gradle.kts": {
+    "mtime": 1783318744.273629,
+    "ast_hash": "da16842ff26f4d02a3ebe6e9adfb96ca",
+    "semantic_hash": "da16842ff26f4d02a3ebe6e9adfb96ca"
+  },
+  "feature/squawk/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/viewing/AogAlertSection.kt": {
+    "mtime": 1779747556.841298,
+    "ast_hash": "2711a1df58382534f06dda186a6a275a",
+    "semantic_hash": "2711a1df58382534f06dda186a6a275a"
+  },
+  "feature/squawk/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/viewing/SquawkCard.kt": {
+    "mtime": 1783361717.0815537,
+    "ast_hash": "32e01025ca3f3148159840aa69e6b64d",
+    "semantic_hash": "32e01025ca3f3148159840aa69e6b64d"
+  },
+  "feature/squawk/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/viewing/SquawkDetailSheet.kt": {
+    "mtime": 1784100097.8879724,
+    "ast_hash": "902c156ccabc91d8a7fbde89926f3d6f",
+    "semantic_hash": "902c156ccabc91d8a7fbde89926f3d6f"
+  },
+  "feature/squawk/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/squawk/viewing/SquawkPickerSheet.kt": {
+    "mtime": 1780416987.1161885,
+    "ast_hash": "e856edcf87cf8a118c5e216085df9f35",
+    "semantic_hash": "e856edcf87cf8a118c5e216085df9f35"
+  },
+  "feature/stresstest/build.gradle.kts": {
+    "mtime": 1782457036.525662,
+    "ast_hash": "465709ebb7f2e2fa72ec01c08083d798",
+    "semantic_hash": "465709ebb7f2e2fa72ec01c08083d798"
+  },
+  "feature/stresstest/config/build.gradle.kts": {
+    "mtime": 1782457036.5449514,
+    "ast_hash": "fb59756b5ead478bbd6a39af14eea67a",
+    "semantic_hash": "fb59756b5ead478bbd6a39af14eea67a"
+  },
+  "feature/stresstest/config/src/commonMain/kotlin/dev/fanfly/wingslog/feature/stresstest/config/StressTestPlugin.kt": {
+    "mtime": 1779128666.9400868,
+    "ast_hash": "0ccd976db5ca831981facf15fd7b540c",
+    "semantic_hash": "0ccd976db5ca831981facf15fd7b540c"
+  },
+  "feature/stresstest/src/commonMain/kotlin/dev/fanfly/wingslog/feature/stresstest/FakeDataGenerator.kt": {
+    "mtime": 1783362723.1246912,
+    "ast_hash": "e525949011db70cd31a659d12cdb006d",
+    "semantic_hash": "e525949011db70cd31a659d12cdb006d"
+  },
+  "feature/stresstest/src/commonMain/kotlin/dev/fanfly/wingslog/feature/stresstest/StressTestConfig.kt": {
+    "mtime": 1783361717.2398677,
+    "ast_hash": "91eca8c064de55b8074ab190755a3c2d",
+    "semantic_hash": "91eca8c064de55b8074ab190755a3c2d"
+  },
+  "feature/stresstest/src/commonMain/kotlin/dev/fanfly/wingslog/feature/stresstest/StressTestScreen.kt": {
+    "mtime": 1780416987.1164467,
+    "ast_hash": "76bfc5081fe4cbdbd4f1da26f57089b0",
+    "semantic_hash": "76bfc5081fe4cbdbd4f1da26f57089b0"
+  },
+  "feature/stresstest/src/commonMain/kotlin/dev/fanfly/wingslog/feature/stresstest/StressTestViewModel.kt": {
+    "mtime": 1779128683.6562908,
+    "ast_hash": "a5ac6954bdb2804b3eac5d161351d186",
+    "semantic_hash": "a5ac6954bdb2804b3eac5d161351d186"
+  },
+  "feature/stresstest/src/commonMain/kotlin/dev/fanfly/wingslog/feature/stresstest/di/StressTestModule.kt": {
+    "mtime": 1783921597.0270932,
+    "ast_hash": "dcaf4dae3dc0728f17272d528981b8e3",
+    "semantic_hash": "dcaf4dae3dc0728f17272d528981b8e3"
+  },
+  "feature/sync/data/build.gradle.kts": {
+    "mtime": 1783957852.6619902,
+    "ast_hash": "d06b7a2bba2c17a100285aebabcf96c6",
+    "semantic_hash": "d06b7a2bba2c17a100285aebabcf96c6"
+  },
+  "feature/sync/data/src/androidMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SyncDispatchers.android.kt": {
+    "mtime": 1783361271.6866004,
+    "ast_hash": "9a3b58fa9bd20e18daa3285ede3f2aaa",
+    "semantic_hash": "9a3b58fa9bd20e18daa3285ede3f2aaa"
+  },
+  "feature/sync/data/src/androidMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/BlobDeleteWorker.kt": {
+    "mtime": 1778729185.046173,
+    "ast_hash": "c39a4c4f9dcaa07d4af372877dfad823",
+    "semantic_hash": "c39a4c4f9dcaa07d4af372877dfad823"
+  },
+  "feature/sync/data/src/androidMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/BlobDownloadWorker.kt": {
+    "mtime": 1778729185.0462239,
+    "ast_hash": "d88455b0b77a5218b173d154da4b1781",
+    "semantic_hash": "d88455b0b77a5218b173d154da4b1781"
+  },
+  "feature/sync/data/src/androidMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/BlobUploadWorker.kt": {
+    "mtime": 1778729185.046277,
+    "ast_hash": "5b0f7f29491b8578bd7d4836c0360f4b",
+    "semantic_hash": "5b0f7f29491b8578bd7d4836c0360f4b"
+  },
+  "feature/sync/data/src/androidMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/WorkManagerUploadScheduler.kt": {
+    "mtime": 1783388350.4562542,
+    "ast_hash": "65eb0823150011e10fe9e6bc6de62d1e",
+    "semantic_hash": "65eb0823150011e10fe9e6bc6de62d1e"
+  },
+  "feature/sync/data/src/androidMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/di/BlobSchedulerModule.kt": {
+    "mtime": 1783957852.6620815,
+    "ast_hash": "875618e85f55e6fb4f8a1419d0b88a9e",
+    "semantic_hash": "875618e85f55e6fb4f8a1419d0b88a9e"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/HydrationRunner.kt": {
+    "mtime": 1783922744.221073,
+    "ast_hash": "9bdafd0bfbc068980c4b465b3c9a4b0e",
+    "semantic_hash": "9bdafd0bfbc068980c4b465b3c9a4b0e"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/HydrationState.kt": {
+    "mtime": 1778729185.0469606,
+    "ast_hash": "32d52fcdeb92187f3159100930b322da",
+    "semantic_hash": "32d52fcdeb92187f3159100930b322da"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/PullListener.kt": {
+    "mtime": 1783922744.221198,
+    "ast_hash": "5c3550877c92f1fbf282a6b18e20b0b3",
+    "semantic_hash": "5c3550877c92f1fbf282a6b18e20b0b3"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/PullSubscription.kt": {
+    "mtime": 1783699918.9530606,
+    "ast_hash": "9d1fb5c47882ad60c2d049ee75fe47f2",
+    "semantic_hash": "9d1fb5c47882ad60c2d049ee75fe47f2"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/PushFailureClassifier.kt": {
+    "mtime": 1783702428.0755775,
+    "ast_hash": "b057d8f2a3c1f28ffb7e212175a5a533",
+    "semantic_hash": "b057d8f2a3c1f28ffb7e212175a5a533"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/PushWorker.kt": {
+    "mtime": 1783964069.319461,
+    "ast_hash": "f9bec3d29d40ac8d787245955eaab509",
+    "semantic_hash": "f9bec3d29d40ac8d787245955eaab509"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/RemoteFetcher.kt": {
+    "mtime": 1778729185.0472112,
+    "ast_hash": "a1472e5b26ae3fd95212cd0b0dc3077f",
+    "semantic_hash": "a1472e5b26ae3fd95212cd0b0dc3077f"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SharedScopeJanitor.kt": {
+    "mtime": 1784095406.8943894,
+    "ast_hash": "91fc83b2d54006b983742c7bc15d3d0b",
+    "semantic_hash": "91fc83b2d54006b983742c7bc15d3d0b"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SyncCursorStore.kt": {
+    "mtime": 1783361717.6049006,
+    "ast_hash": "3ac557d9d081b5080b1d6aadc9c5bc19",
+    "semantic_hash": "3ac557d9d081b5080b1d6aadc9c5bc19"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SyncDispatchers.kt": {
+    "mtime": 1779744623.7907472,
+    "ast_hash": "5265c8ddc9fa7858e364b81c0ba5191d",
+    "semantic_hash": "5265c8ddc9fa7858e364b81c0ba5191d"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SyncDocWire.kt": {
+    "mtime": 1783648961.3344736,
+    "ast_hash": "b35524846fe16b7bbe3b29496c2d1f31",
+    "semantic_hash": "b35524846fe16b7bbe3b29496c2d1f31"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SyncEngine.kt": {
+    "mtime": 1783964069.3197267,
+    "ast_hash": "6a577cd7e34f4ec8f121f070c187e9d7",
+    "semantic_hash": "6a577cd7e34f4ec8f121f070c187e9d7"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SyncFailure.kt": {
+    "mtime": 1783361717.238326,
+    "ast_hash": "d2bf2896b1f8b0e16897328b3b32c51b",
+    "semantic_hash": "d2bf2896b1f8b0e16897328b3b32c51b"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SyncNotice.kt": {
+    "mtime": 1783964069.3198025,
+    "ast_hash": "318f1c9ef8d0780d3951fdd03bc3c3ab",
+    "semantic_hash": "318f1c9ef8d0780d3951fdd03bc3c3ab"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SyncPreferences.kt": {
+    "mtime": 1783374478.6837509,
+    "ast_hash": "6fef6b7235df3eb83c1c6598535702d5",
+    "semantic_hash": "6fef6b7235df3eb83c1c6598535702d5"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SyncWriter.kt": {
+    "mtime": 1783648961.3346033,
+    "ast_hash": "8e2936fca455072c74854dba91e83940",
+    "semantic_hash": "8e2936fca455072c74854dba91e83940"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/BlobDeleteDriver.kt": {
+    "mtime": 1784410965.616824,
+    "ast_hash": "19bdc08bf03302c45ef3a0ec961d7961",
+    "semantic_hash": "19bdc08bf03302c45ef3a0ec961d7961"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/BlobDownloadDriver.kt": {
+    "mtime": 1783957852.6626174,
+    "ast_hash": "e6f585d14e2014c88e79a3d13eee4d1b",
+    "semantic_hash": "e6f585d14e2014c88e79a3d13eee4d1b"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/BlobUploadDriver.kt": {
+    "mtime": 1783957852.6628017,
+    "ast_hash": "56a356d22332c6905a204cc0fa4cc177",
+    "semantic_hash": "56a356d22332c6905a204cc0fa4cc177"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/di/BlobSchedulerModule.kt": {
+    "mtime": 1783388350.4558525,
+    "ast_hash": "22a0c75d7aba3c934cd6da3476990870",
+    "semantic_hash": "22a0c75d7aba3c934cd6da3476990870"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/di/SyncModule.kt": {
+    "mtime": 1783964069.3199189,
+    "ast_hash": "1fb108339d16221a895bab7d80c79cce",
+    "semantic_hash": "1fb108339d16221a895bab7d80c79cce"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/impl/FirestorePullSubscription.kt": {
+    "mtime": 1783700927.5915997,
+    "ast_hash": "6d8daeaf5a30be79b4f1cc06c1259c7c",
+    "semantic_hash": "6d8daeaf5a30be79b4f1cc06c1259c7c"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/impl/FirestoreRefs.kt": {
+    "mtime": 1783699918.9537451,
+    "ast_hash": "a5d3ecc9837ff5580bf85c18df1d280b",
+    "semantic_hash": "a5d3ecc9837ff5580bf85c18df1d280b"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/impl/FirestoreRemoteFetcher.kt": {
+    "mtime": 1783922744.2214172,
+    "ast_hash": "1da217ace6dc958479af25595fa84fe2",
+    "semantic_hash": "1da217ace6dc958479af25595fa84fe2"
+  },
+  "feature/sync/data/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/data/impl/FirestoreSyncWriter.kt": {
+    "mtime": 1783699918.9539793,
+    "ast_hash": "0b4658fc44d9c1bac1b51dc5421c669c",
+    "semantic_hash": "0b4658fc44d9c1bac1b51dc5421c669c"
+  },
+  "feature/sync/data/src/iosMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SyncDispatchers.ios.kt": {
+    "mtime": 1783361271.569062,
+    "ast_hash": "21a5a5d582e6eeb23a385caa28e8020d",
+    "semantic_hash": "21a5a5d582e6eeb23a385caa28e8020d"
+  },
+  "feature/sync/data/src/iosMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/BlobUploadDelegate.kt": {
+    "mtime": 1783957852.6630094,
+    "ast_hash": "4ead46600c9bcf20e0f23859c3e0cbf3",
+    "semantic_hash": "4ead46600c9bcf20e0f23859c3e0cbf3"
+  },
+  "feature/sync/data/src/iosMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/ForegroundUploadScheduler.kt": {
+    "mtime": 1783388350.4540706,
+    "ast_hash": "0bed355b6e76529676d03b8713e6983e",
+    "semantic_hash": "0bed355b6e76529676d03b8713e6983e"
+  },
+  "feature/sync/data/src/iosMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/UrlSessionUploadScheduler.kt": {
+    "mtime": 1783957852.6631222,
+    "ast_hash": "3c4450a774adf9814867e8cf4d1ac86a",
+    "semantic_hash": "3c4450a774adf9814867e8cf4d1ac86a"
+  },
+  "feature/sync/data/src/iosMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/di/BlobSchedulerModule.kt": {
+    "mtime": 1783957852.66321,
+    "ast_hash": "ce9ef9b7c02c6faa168b011725a7d8ac",
+    "semantic_hash": "ce9ef9b7c02c6faa168b011725a7d8ac"
+  },
+  "feature/sync/data/src/jsMain/kotlin/dev/fanfly/wingslog/feature/sync/data/SyncDispatchers.js.kt": {
+    "mtime": 1783361271.3645146,
+    "ast_hash": "b67d5d505d5169f173126f24136e94e7",
+    "semantic_hash": "b67d5d505d5169f173126f24136e94e7"
+  },
+  "feature/sync/data/src/jsMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/ForegroundWebBlobScheduler.kt": {
+    "mtime": 1783388350.4564412,
+    "ast_hash": "cb1eb1de678b7498364d5368ba89ae3c",
+    "semantic_hash": "cb1eb1de678b7498364d5368ba89ae3c"
+  },
+  "feature/sync/data/src/jsMain/kotlin/dev/fanfly/wingslog/feature/sync/data/blob/di/BlobSchedulerModule.js.kt": {
+    "mtime": 1783957852.663311,
+    "ast_hash": "eddd6ecc61c7bca0cf9ba95a882e4332",
+    "semantic_hash": "eddd6ecc61c7bca0cf9ba95a882e4332"
+  },
+  "feature/sync/data/src/test/java/dev/fanfly/wingslog/feature/sync/data/BackoffMsTest.kt": {
+    "mtime": 1778729185.0486267,
+    "ast_hash": "ef85aa6c8079471ea70d96aaadbdc08f",
+    "semantic_hash": "ef85aa6c8079471ea70d96aaadbdc08f"
+  },
+  "feature/sync/data/src/test/java/dev/fanfly/wingslog/feature/sync/data/HydrationRunnerTest.kt": {
+    "mtime": 1783922744.2215276,
+    "ast_hash": "6578942db2ecd88ffa2cc803907dd38b",
+    "semantic_hash": "6578942db2ecd88ffa2cc803907dd38b"
+  },
+  "feature/sync/data/src/test/java/dev/fanfly/wingslog/feature/sync/data/HydrationStateTest.kt": {
+    "mtime": 1778729185.0487313,
+    "ast_hash": "b2fac3c527b0b3e7ea0d24557bd05862",
+    "semantic_hash": "b2fac3c527b0b3e7ea0d24557bd05862"
+  },
+  "feature/sync/data/src/test/java/dev/fanfly/wingslog/feature/sync/data/PullListenerTest.kt": {
+    "mtime": 1783922744.2216265,
+    "ast_hash": "9baa7507d7012eed328890eb804df27a",
+    "semantic_hash": "9baa7507d7012eed328890eb804df27a"
+  },
+  "feature/sync/data/src/test/java/dev/fanfly/wingslog/feature/sync/data/PushFailureClassifierTest.kt": {
+    "mtime": 1783702428.0760632,
+    "ast_hash": "949c3adf5ed56b424cf97542c33e110a",
+    "semantic_hash": "949c3adf5ed56b424cf97542c33e110a"
+  },
+  "feature/sync/data/src/test/java/dev/fanfly/wingslog/feature/sync/data/PushWorkerTest.kt": {
+    "mtime": 1783964069.320105,
+    "ast_hash": "9f27c6789a391724e62dd2251ad079e0",
+    "semantic_hash": "9f27c6789a391724e62dd2251ad079e0"
+  },
+  "feature/sync/data/src/test/java/dev/fanfly/wingslog/feature/sync/data/SharedScopeJanitorTest.kt": {
+    "mtime": 1784095406.8946133,
+    "ast_hash": "c824b36b92b306d05adca2b45ac3324b",
+    "semantic_hash": "c824b36b92b306d05adca2b45ac3324b"
+  },
+  "feature/sync/data/src/test/java/dev/fanfly/wingslog/feature/sync/data/SyncCursorStoreTest.kt": {
+    "mtime": 1783361717.2953339,
+    "ast_hash": "cf88c38f7c025c6d11fd7cf457e5355b",
+    "semantic_hash": "cf88c38f7c025c6d11fd7cf457e5355b"
+  },
+  "feature/sync/data/src/test/java/dev/fanfly/wingslog/feature/sync/data/SyncEngineTest.kt": {
+    "mtime": 1784095406.8949091,
+    "ast_hash": "336786ae06ccbc2a60a64c64ef7f14d2",
+    "semantic_hash": "336786ae06ccbc2a60a64c64ef7f14d2"
+  },
+  "feature/sync/data/src/test/java/dev/fanfly/wingslog/feature/sync/data/SyncPreferencesTest.kt": {
+    "mtime": 1783361717.0299084,
+    "ast_hash": "de22b8e9ce9a509d7d86e2891d3b2ee4",
+    "semantic_hash": "de22b8e9ce9a509d7d86e2891d3b2ee4"
+  },
+  "feature/sync/data/src/test/java/dev/fanfly/wingslog/feature/sync/data/blob/BlobDeleteDriverTest.kt": {
+    "mtime": 1784410965.6169753,
+    "ast_hash": "b47bbb4610726e14ae40248a862cefc0",
+    "semantic_hash": "b47bbb4610726e14ae40248a862cefc0"
+  },
+  "feature/sync/logging/build.gradle.kts": {
+    "mtime": 1783957852.663695,
+    "ast_hash": "d0eb401a5c277be81fa8b6773975f7bd",
+    "semantic_hash": "d0eb401a5c277be81fa8b6773975f7bd"
+  },
+  "feature/sync/logging/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/logging/SyncTelemetry.kt": {
+    "mtime": 1783957852.6640003,
+    "ast_hash": "1591f7e469693f89c894f1e773a0495d",
+    "semantic_hash": "1591f7e469693f89c894f1e773a0495d"
+  },
+  "feature/sync/logging/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/logging/di/SyncLoggingModule.kt": {
+    "mtime": 1783957852.6640768,
+    "ast_hash": "3be94dfae807810e2e5126c3bc1be46a",
+    "semantic_hash": "3be94dfae807810e2e5126c3bc1be46a"
+  },
+  "feature/sync/settings/build.gradle.kts": {
+    "mtime": 1783466273.6309423,
+    "ast_hash": "ecbee6053d9092fd0de687e02d7164c0",
+    "semantic_hash": "ecbee6053d9092fd0de687e02d7164c0"
+  },
+  "feature/sync/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/settings/SyncSettingsScreen.kt": {
+    "mtime": 1783466224.0796955,
+    "ast_hash": "06a9fd1962381c7140c83145c8cf5ea9",
+    "semantic_hash": "06a9fd1962381c7140c83145c8cf5ea9"
+  },
+  "feature/sync/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/settings/SyncSettingsViewModel.kt": {
+    "mtime": 1783466241.1147707,
+    "ast_hash": "4aa7447909626075b469c95ce5120410",
+    "semantic_hash": "4aa7447909626075b469c95ce5120410"
+  },
+  "feature/sync/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/settings/compose/SyncHeroIllustration.kt": {
+    "mtime": 1783361717.5405812,
+    "ast_hash": "e1647fac48f8661d667ad524522330b5",
+    "semantic_hash": "e1647fac48f8661d667ad524522330b5"
+  },
+  "feature/sync/settings/src/commonMain/kotlin/dev/fanfly/wingslog/feature/sync/settings/di/SyncSettingsModule.kt": {
+    "mtime": 1783921597.0278723,
+    "ast_hash": "a389882206df961c25f670b90728166d",
+    "semantic_hash": "a389882206df961c25f670b90728166d"
+  },
+  "feature/sync/sharedassets/build.gradle.kts": {
+    "mtime": 1782457036.556993,
+    "ast_hash": "8007c64d48e75411544f01d641262fee",
+    "semantic_hash": "8007c64d48e75411544f01d641262fee"
+  },
+  "feature/tasks/datamanager/build.gradle.kts": {
+    "mtime": 1782457036.5460324,
+    "ast_hash": "2f15147963a3b1efefb40d7f61c2cb02",
+    "semantic_hash": "2f15147963a3b1efefb40d7f61c2cb02"
+  },
+  "feature/tasks/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/TaskDataManager.kt": {
+    "mtime": 1778729185.050459,
+    "ast_hash": "711eb92cd7767e4c7f45be7b842a3d42",
+    "semantic_hash": "711eb92cd7767e4c7f45be7b842a3d42"
+  },
+  "feature/tasks/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/TaskDueManager.kt": {
+    "mtime": 1778729185.0505066,
+    "ast_hash": "9b03913ced634479fe3bdc4de47f303e",
+    "semantic_hash": "9b03913ced634479fe3bdc4de47f303e"
+  },
+  "feature/tasks/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/TaskModule.kt": {
+    "mtime": 1783921597.0280294,
+    "ast_hash": "4652fbb6f226061a014bb09195627ba3",
+    "semantic_hash": "4652fbb6f226061a014bb09195627ba3"
+  },
+  "feature/tasks/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/impl/TaskDataManagerImpl.kt": {
+    "mtime": 1783719029.3683825,
+    "ast_hash": "aadf521abad53f2bfc0313ce7686137d",
+    "semantic_hash": "aadf521abad53f2bfc0313ce7686137d"
+  },
+  "feature/tasks/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/impl/TaskDueManagerImpl.kt": {
+    "mtime": 1783361717.5048072,
+    "ast_hash": "b220c93b1c2444a2acf6d774d57c176c",
+    "semantic_hash": "b220c93b1c2444a2acf6d774d57c176c"
+  },
+  "feature/tasks/datamanager/src/test/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/impl/TaskDataManagerImplTest.kt": {
+    "mtime": 1783719029.3686054,
+    "ast_hash": "d0e23a1e5bebcb0e2e5d638431da07f6",
+    "semantic_hash": "d0e23a1e5bebcb0e2e5d638431da07f6"
+  },
+  "feature/tasks/datamanager/src/test/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/impl/TaskDueManagerImplTest.kt": {
+    "mtime": 1783361717.2991374,
+    "ast_hash": "317740c19cdc7ffe010976387fffff5c",
+    "semantic_hash": "317740c19cdc7ffe010976387fffff5c"
+  },
+  "feature/tasks/model/build.gradle.kts": {
+    "mtime": 1782457036.5601344,
+    "ast_hash": "e4a1721ed07bf0b2f1ecf46236477dcc",
+    "semantic_hash": "e4a1721ed07bf0b2f1ecf46236477dcc"
+  },
+  "feature/tasks/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/model/DueMetadata.kt": {
+    "mtime": 1778729185.0515952,
+    "ast_hash": "192141c2be8b287a6a3ac50b0f1927dd",
+    "semantic_hash": "192141c2be8b287a6a3ac50b0f1927dd"
+  },
+  "feature/tasks/model/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/model/MaintenanceTaskWithStatus.kt": {
+    "mtime": 1778729185.0516517,
+    "ast_hash": "3007d4b6624bd6776ce8849658b4c7ac",
+    "semantic_hash": "3007d4b6624bd6776ce8849658b4c7ac"
+  },
+  "feature/tasks/sharedassets/build.gradle.kts": {
+    "mtime": 1782457036.5410526,
+    "ast_hash": "8edd84777e7c0b7d04d3dcf990251edc",
+    "semantic_hash": "8edd84777e7c0b7d04d3dcf990251edc"
+  },
+  "feature/tasks/update/build.gradle.kts": {
+    "mtime": 1783975061.79321,
+    "ast_hash": "957c1853896bd750e13144f63975a1db",
+    "semantic_hash": "957c1853896bd750e13144f63975a1db"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/compose/DocumentationFields.kt": {
+    "mtime": 1783465892.6614969,
+    "ast_hash": "bb1170ab1843644f27852c2ad728561d",
+    "semantic_hash": "bb1170ab1843644f27852c2ad728561d"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/compose/ScheduleControls.kt": {
+    "mtime": 1783361717.2021282,
+    "ast_hash": "cb7c1950a8c1d3de4f7e945e2db6f637",
+    "semantic_hash": "cb7c1950a8c1d3de4f7e945e2db6f637"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/compose/ScheduleState.kt": {
+    "mtime": 1783361717.0969667,
+    "ast_hash": "4a4959290fe869e588d22ce0ae139a12",
+    "semantic_hash": "4a4959290fe869e588d22ce0ae139a12"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/compose/TaskAdjustmentsTab.kt": {
+    "mtime": 1780331673.9882963,
+    "ast_hash": "91e1c8788302651bf84e0e69809a37ff",
+    "semantic_hash": "91e1c8788302651bf84e0e69809a37ff"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/compose/TaskDetailTab.kt": {
+    "mtime": 1783361271.3765666,
+    "ast_hash": "cbfc3d1a58405464eab0276235cbbafc",
+    "semantic_hash": "cbfc3d1a58405464eab0276235cbbafc"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/compose/TaskIdentityTab.kt": {
+    "mtime": 1783465892.6613898,
+    "ast_hash": "6945ef049667425ef6a367ea9b09a02f",
+    "semantic_hash": "6945ef049667425ef6a367ea9b09a02f"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/compose/TaskPickerSheet.kt": {
+    "mtime": 1780416987.1167734,
+    "ast_hash": "35834cb1044c4ea0deda6e608d81ad99",
+    "semantic_hash": "35834cb1044c4ea0deda6e608d81ad99"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/compose/TaskScheduleTab.kt": {
+    "mtime": 1783361717.5436435,
+    "ast_hash": "6b78a7d3afda492c9653f738b038d7d6",
+    "semantic_hash": "6b78a7d3afda492c9653f738b038d7d6"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/compose/TaskTabRow.kt": {
+    "mtime": 1780886723.3986936,
+    "ast_hash": "4d07cf6fce602197d0a3eb629d5cd603",
+    "semantic_hash": "4d07cf6fce602197d0a3eb629d5cd603"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/ui/AddTaskRoute.kt": {
+    "mtime": 1783466040.6523144,
+    "ast_hash": "e252ca596f53b9de72542d4d7f57fd8a",
+    "semantic_hash": "e252ca596f53b9de72542d4d7f57fd8a"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/ui/AddTaskScreen.kt": {
+    "mtime": 1783402295.562751,
+    "ast_hash": "2969adb655b282fbcfcaacce9d77e1fe",
+    "semantic_hash": "2969adb655b282fbcfcaacce9d77e1fe"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/ui/EditTaskRoute.kt": {
+    "mtime": 1783466040.6524932,
+    "ast_hash": "ae54a750e6b96038a5b3edc890c6b120",
+    "semantic_hash": "ae54a750e6b96038a5b3edc890c6b120"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/ui/EditTaskScreen.kt": {
+    "mtime": 1783402302.6388507,
+    "ast_hash": "2775e353836dcfa9ef98ed2cc7fae679",
+    "semantic_hash": "2775e353836dcfa9ef98ed2cc7fae679"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/viewmodel/TaskUiModule.kt": {
+    "mtime": 1783975061.7933898,
+    "ast_hash": "3e16a07d7ef73853a457188e46bace5c",
+    "semantic_hash": "3e16a07d7ef73853a457188e46bace5c"
+  },
+  "feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/viewmodel/TaskViewModel.kt": {
+    "mtime": 1784412811.647808,
+    "ast_hash": "efafd97cfd68bb73aeeb4ca476e3c292",
+    "semantic_hash": "efafd97cfd68bb73aeeb4ca476e3c292"
+  },
+  "feature/tasks/update/src/test/kotlin/dev/fanfly/wingslog/feature/tasks/update/compose/BannerHelpersTest.kt": {
+    "mtime": 1783361717.040553,
+    "ast_hash": "ecdba594af439ac0c1cd15b202eb45c6",
+    "semantic_hash": "ecdba594af439ac0c1cd15b202eb45c6"
+  },
+  "feature/tasks/viewing/build.gradle.kts": {
+    "mtime": 1782457036.5377357,
+    "ast_hash": "9a324af3fba9316b24db1086cacd4ec6",
+    "semantic_hash": "9a324af3fba9316b24db1086cacd4ec6"
+  },
+  "feature/tasks/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/viewing/CriticalAlertSection.kt": {
+    "mtime": 1783361717.2928715,
+    "ast_hash": "5819073689cf645a9bf1ec1293f643c9",
+    "semantic_hash": "5819073689cf645a9bf1ec1293f643c9"
+  },
+  "feature/tasks/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/viewing/DeleteTaskConfirmDialog.kt": {
+    "mtime": 1780331269.9387028,
+    "ast_hash": "420d6da5a845d17e934caf76494e7acf",
+    "semantic_hash": "420d6da5a845d17e934caf76494e7acf"
+  },
+  "feature/tasks/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/viewing/TaskCard.kt": {
+    "mtime": 1779748134.4581478,
+    "ast_hash": "97d60c3b62ed3eba9cb11de0ad36aa93",
+    "semantic_hash": "97d60c3b62ed3eba9cb11de0ad36aa93"
+  },
+  "feature/tasks/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/viewing/TaskCardItem.kt": {
+    "mtime": 1780330698.0345325,
+    "ast_hash": "c8426d11a0c3bcc9c4899f173b3e040d",
+    "semantic_hash": "c8426d11a0c3bcc9c4899f173b3e040d"
+  },
+  "feature/tasks/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/viewing/TaskDetailSheet.kt": {
+    "mtime": 1783975061.7938528,
+    "ast_hash": "576021873490bab9acdaedff1ad07315",
+    "semantic_hash": "576021873490bab9acdaedff1ad07315"
+  },
+  "feature/technician/datamanager/build.gradle.kts": {
+    "mtime": 1783374534.9237957,
+    "ast_hash": "be663318f5eaca1885353937c6dde8ea",
+    "semantic_hash": "be663318f5eaca1885353937c6dde8ea"
+  },
+  "feature/technician/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/datamanager/TechnicianManager.kt": {
+    "mtime": 1783983850.9059126,
+    "ast_hash": "21093b3989b1e15472e2c48338424724",
+    "semantic_hash": "21093b3989b1e15472e2c48338424724"
+  },
+  "feature/technician/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/datamanager/di/TechnicianDataManagerModule.kt": {
+    "mtime": 1783921597.0283196,
+    "ast_hash": "8aad7f1e4f1b1d9749e02b850d949ffb",
+    "semantic_hash": "8aad7f1e4f1b1d9749e02b850d949ffb"
+  },
+  "feature/technician/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/datamanager/impl/TechnicianManagerImpl.kt": {
+    "mtime": 1783983850.9062057,
+    "ast_hash": "4279e634f599c9ea7cadfe4c2d5c37f2",
+    "semantic_hash": "4279e634f599c9ea7cadfe4c2d5c37f2"
+  },
+  "feature/technician/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/datamanager/merge/TechnicianDuplicates.kt": {
+    "mtime": 1783921597.0286987,
+    "ast_hash": "fa8318984b21edcafc3bb1826d941df3",
+    "semantic_hash": "fa8318984b21edcafc3bb1826d941df3"
+  },
+  "feature/technician/datamanager/src/test/java/dev/fanfly/wingslog/feature/technician/datamanager/impl/TechnicianManagerImplTest.kt": {
+    "mtime": 1783983850.9063792,
+    "ast_hash": "6233195d8da903acb4e20f251cc11c62",
+    "semantic_hash": "6233195d8da903acb4e20f251cc11c62"
+  },
+  "feature/technician/datamanager/src/test/java/dev/fanfly/wingslog/feature/technician/datamanager/merge/TechnicianDuplicatesTest.kt": {
+    "mtime": 1783921597.029098,
+    "ast_hash": "2a9003936318f7caa93ad90604ee104a",
+    "semantic_hash": "2a9003936318f7caa93ad90604ee104a"
+  },
+  "feature/technician/manage/build.gradle.kts": {
+    "mtime": 1783894849.0936265,
+    "ast_hash": "1ff897302cc15949385c5839a68f9b68",
+    "semantic_hash": "1ff897302cc15949385c5839a68f9b68"
+  },
+  "feature/technician/manage/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/manage/compose/DuplicateReviewSheet.kt": {
+    "mtime": 1783921597.0292587,
+    "ast_hash": "c0c41f28614c16255631ea482bb4c99f",
+    "semantic_hash": "c0c41f28614c16255631ea482bb4c99f"
+  },
+  "feature/technician/manage/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/manage/compose/EditTechnicianScreen.kt": {
+    "mtime": 1780416987.117795,
+    "ast_hash": "40fbe61cb66b3e2f697a14a8cbfad324",
+    "semantic_hash": "40fbe61cb66b3e2f697a14a8cbfad324"
+  },
+  "feature/technician/manage/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/manage/compose/TechnicianCard.kt": {
+    "mtime": 1784014277.8758202,
+    "ast_hash": "a53db7e425f0753b0ebf744229926613",
+    "semantic_hash": "a53db7e425f0753b0ebf744229926613"
+  },
+  "feature/technician/manage/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/manage/compose/TechnicianListScreen.kt": {
+    "mtime": 1783921597.029409,
+    "ast_hash": "8ab9a76aac3690cef4b3de5c8e1d2159",
+    "semantic_hash": "8ab9a76aac3690cef4b3de5c8e1d2159"
+  },
+  "feature/technician/manage/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/manage/compose/TechnicianPickerSheet.kt": {
+    "mtime": 1783895608.6461754,
+    "ast_hash": "ca112f3593a3b709172d637c0e5da908",
+    "semantic_hash": "ca112f3593a3b709172d637c0e5da908"
+  },
+  "feature/technician/manage/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/manage/di/TechnicianManageModule.kt": {
+    "mtime": 1778729185.0562398,
+    "ast_hash": "ec19b69857b6dd45797669aa080972fd",
+    "semantic_hash": "ec19b69857b6dd45797669aa080972fd"
+  },
+  "feature/technician/manage/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/manage/viewmodel/EditTechnicianViewModel.kt": {
+    "mtime": 1783837055.1475184,
+    "ast_hash": "85d85eaa1480ea0699f585ab72b4aea8",
+    "semantic_hash": "85d85eaa1480ea0699f585ab72b4aea8"
+  },
+  "feature/technician/manage/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/manage/viewmodel/TechnicianListViewModel.kt": {
+    "mtime": 1783921597.0295517,
+    "ast_hash": "4ef096c4292695ebd654c3b1973d9801",
+    "semantic_hash": "4ef096c4292695ebd654c3b1973d9801"
+  },
+  "feature/technician/manage/src/test/java/dev/fanfly/wingslog/feature/technician/manage/viewmodel/TechnicianListViewModelTest.kt": {
+    "mtime": 1783921597.029741,
+    "ast_hash": "c0fbd001665b8664561b6bc2e5a575bb",
+    "semantic_hash": "c0fbd001665b8664561b6bc2e5a575bb"
+  },
+  "feature/technician/sharedassets/build.gradle.kts": {
+    "mtime": 1782457036.5466745,
+    "ast_hash": "51b38d661bfbbdd2af910ac1df976b91",
+    "semantic_hash": "51b38d661bfbbdd2af910ac1df976b91"
+  },
+  "feature/technician/sharedassets/src/commonMain/kotlin/dev/fanfly/wingslog/feature/technician/sharedassets/compose/CertificateInputFields.kt": {
+    "mtime": 1783895608.6463702,
+    "ast_hash": "1c484e5b6ad0731e222aab2f1f2f5035",
+    "semantic_hash": "1c484e5b6ad0731e222aab2f1f2f5035"
+  },
+  "feature/userprofile/sharedassets/build.gradle.kts": {
+    "mtime": 1782457036.550338,
+    "ast_hash": "e485f5a66eae3741811fba507993726c",
+    "semantic_hash": "e485f5a66eae3741811fba507993726c"
+  },
+  "firebase.json": {
+    "mtime": 1782806738.3135312,
+    "ast_hash": "69e3e9c266ec5eb7cc9cab18f8917523",
+    "semantic_hash": "69e3e9c266ec5eb7cc9cab18f8917523"
+  },
+  "gradlew": {
+    "mtime": 1783576421.3947446,
+    "ast_hash": "a43be8432bac3ffd05b3769aa42fe996",
+    "semantic_hash": "a43be8432bac3ffd05b3769aa42fe996"
+  },
+  "iosApp/iosApp/Assets.xcassets/AccentColor.colorset/Contents.json": {
+    "mtime": 1778729185.0594592,
+    "ast_hash": "00fb402cee946d8fb8e3a0786ff9d18d",
+    "semantic_hash": "00fb402cee946d8fb8e3a0786ff9d18d"
+  },
+  "iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/Contents.json": {
+    "mtime": 1779066376.314659,
+    "ast_hash": "12cabf25d5c15f2ad6e730926f359b0b",
+    "semantic_hash": "12cabf25d5c15f2ad6e730926f359b0b"
+  },
+  "iosApp/iosApp/Assets.xcassets/Color.colorset/Contents.json": {
+    "mtime": 1779066039.691563,
+    "ast_hash": "af6c54383f9eb65c92de4b82b8e06e7a",
+    "semantic_hash": "af6c54383f9eb65c92de4b82b8e06e7a"
+  },
+  "iosApp/iosApp/Assets.xcassets/Contents.json": {
+    "mtime": 1779066035.516338,
+    "ast_hash": "9deb2ada1cc834bbebf8bbad9c8978a1",
+    "semantic_hash": "9deb2ada1cc834bbebf8bbad9c8978a1"
+  },
+  "iosApp/iosApp/ContentView.swift": {
+    "mtime": 1778729185.0596108,
+    "ast_hash": "3e2d59248f05bb7c13b79a3f82894677",
+    "semantic_hash": "3e2d59248f05bb7c13b79a3f82894677"
+  },
+  "iosApp/iosApp/NativeGoogleSignInProvider.swift": {
+    "mtime": 1779744623.7982621,
+    "ast_hash": "5ae8056fee02557944df15f034bb56e2",
+    "semantic_hash": "5ae8056fee02557944df15f034bb56e2"
+  },
+  "iosApp/iosApp/iosApp.swift": {
+    "mtime": 1783356331.8548017,
+    "ast_hash": "1e9293cd3cbd675b183044a848dfb145",
+    "semantic_hash": "1e9293cd3cbd675b183044a848dfb145"
+  },
+  "iosApp_src/iosApp/ContentView.swift": {
+    "mtime": 1783361951.3180041,
+    "ast_hash": "9ccfca955f2506310c7aee583b9b8b91",
+    "semantic_hash": "9ccfca955f2506310c7aee583b9b8b91"
+  },
+  "iosApp_src/iosApp/iosApp.swift": {
+    "mtime": 1783361951.3153217,
+    "ast_hash": "4053777b7f51f94b37c55fa763ee2407",
+    "semantic_hash": "4053777b7f51f94b37c55fa763ee2407"
+  },
+  "settings.gradle.kts": {
+    "mtime": 1784442676.0762153,
+    "ast_hash": "bb2866b04d102fad9929fc279ca8dd8c",
+    "semantic_hash": "bb2866b04d102fad9929fc279ca8dd8c"
+  },
+  "skills-lock.json": {
+    "mtime": 1779776997.9235117,
+    "ast_hash": "c0855a0789ef4add2db5523cb387c355",
+    "semantic_hash": "c0855a0789ef4add2db5523cb387c355"
+  },
+  "webApp/build.gradle.kts": {
+    "mtime": 1783722779.4827468,
+    "ast_hash": "b9526347f7eafb1ac00db7598b232a70",
+    "semantic_hash": "b9526347f7eafb1ac00db7598b232a70"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/ActiveElsewhereScreen.kt": {
+    "mtime": 1782540065.6347415,
+    "ast_hash": "c020b6b57b507b8ba93ee8033a73b009",
+    "semantic_hash": "c020b6b57b507b8ba93ee8033a73b009"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/BrowserTitleAnalytics.kt": {
+    "mtime": 1783957852.664402,
+    "ast_hash": "277ae67442bf275c4a7e5d6ccfc240c5",
+    "semantic_hash": "277ae67442bf275c4a7e5d6ccfc240c5"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/EmailLinkCompletionScreen.kt": {
+    "mtime": 1783361953.1324599,
+    "ast_hash": "ce8a0389790c36338083c9559bc29fbc",
+    "semantic_hash": "ce8a0389790c36338083c9559bc29fbc"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/EmojiFallback.kt": {
+    "mtime": 1782797823.6190693,
+    "ast_hash": "0735507dcefea9aa146da714cb9d6cc2",
+    "semantic_hash": "0735507dcefea9aa146da714cb9d6cc2"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/FirebaseAppCheckJs.kt": {
+    "mtime": 1783750344.752807,
+    "ast_hash": "0d99d3bdb48d19e5a5a33e9c672ac482",
+    "semantic_hash": "0d99d3bdb48d19e5a5a33e9c672ac482"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/FirebaseAppJs.kt": {
+    "mtime": 1780884327.6958885,
+    "ast_hash": "09f4a58d66fc248c308496819b37acf0",
+    "semantic_hash": "09f4a58d66fc248c308496819b37acf0"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/SingleTabGate.kt": {
+    "mtime": 1783750344.7529378,
+    "ast_hash": "8b79abc5f3422c6487df8b6e3d913ed6",
+    "semantic_hash": "8b79abc5f3422c6487df8b6e3d913ed6"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/SqliteWorker.kt": {
+    "mtime": 1779776439.911212,
+    "ast_hash": "8c9ac0163b7717b1e040404b8501b088",
+    "semantic_hash": "8c9ac0163b7717b1e040404b8501b088"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/WebApp.kt": {
+    "mtime": 1783722779.4829462,
+    "ast_hash": "a19933c23ffb5d0597b41e01468163fd",
+    "semantic_hash": "a19933c23ffb5d0597b41e01468163fd"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/WebLandingAssets.kt": {
+    "mtime": 1783361953.1386228,
+    "ast_hash": "8161f37c2d2ee037dfc5a79d66d43b2b",
+    "semantic_hash": "8161f37c2d2ee037dfc5a79d66d43b2b"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/WebLoginLandingScreen.kt": {
+    "mtime": 1783361953.1290007,
+    "ast_hash": "0c50a4c6b37b683cd30210fa312bbe03",
+    "semantic_hash": "0c50a4c6b37b683cd30210fa312bbe03"
+  },
+  "webApp/src/jsMain/kotlin/dev/fanfly/wingslog/web/WholeFileResourceReader.kt": {
+    "mtime": 1783361953.1212597,
+    "ast_hash": "034141ba155af79520ea17d2f398f760",
+    "semantic_hash": "034141ba155af79520ea17d2f398f760"
+  },
+  "webApp/src/jsMain/kotlin/main.kt": {
+    "mtime": 1783750344.753081,
+    "ast_hash": "d31c68e636a6b60e8313f69c9e60d61b",
+    "semantic_hash": "d31c68e636a6b60e8313f69c9e60d61b"
+  },
+  "webApp/src/jsMain/resources/sqlite-wasm-opfs.worker.js": {
+    "mtime": 1779744623.8005104,
+    "ast_hash": "44f94d8fe4d3bc2674accd9fb0dee1da",
+    "semantic_hash": "44f94d8fe4d3bc2674accd9fb0dee1da"
+  },
+  "webApp/webpack.config.d/debug-flag.js": {
+    "mtime": 1783995610.7136858,
+    "ast_hash": "0aa671d69c9bca1a8c92b2ed83c3f037",
+    "semantic_hash": "0aa671d69c9bca1a8c92b2ed83c3f037"
+  },
+  "webApp/webpack.config.d/node-fallbacks.js": {
+    "mtime": 1779744623.8007205,
+    "ast_hash": "11a429b6eb0020efe38492490c8c7f9e",
+    "semantic_hash": "11a429b6eb0020efe38492490c8c7f9e"
+  },
+  "webApp/webpack.config.d/production-perf.js": {
+    "mtime": 1782521929.2763019,
+    "ast_hash": "366ce0caa559386cecd0cde2624eb293",
+    "semantic_hash": "366ce0caa559386cecd0cde2624eb293"
+  },
+  "webApp/webpack.config.d/spa-fallback.js": {
+    "mtime": 1783750344.753172,
+    "ast_hash": "e9a6b8b4417ab120907164837d9da23b",
+    "semantic_hash": "e9a6b8b4417ab120907164837d9da23b"
+  },
+  "webApp/webpack.config.d/sqlite-wasm-copy.js": {
+    "mtime": 1779744623.8008897,
+    "ast_hash": "8d3a494fbbc5d674945065fde54a91c7",
+    "semantic_hash": "8d3a494fbbc5d674945065fde54a91c7"
+  },
+  ".claude/CLAUDE.md": {
+    "mtime": 1784476184.3120434,
+    "ast_hash": "9b31786b637be3c13978bec4c2330752",
+    "semantic_hash": "9b31786b637be3c13978bec4c2330752"
+  },
+  ".claude/agents/feature-module-scaffolder.md": {
+    "mtime": 1783389259.6583993,
+    "ast_hash": "d7c5dfde479fe85b36253fd533a54cc4",
+    "semantic_hash": "d7c5dfde479fe85b36253fd533a54cc4"
+  },
+  ".claude/agents/kmm-test-writer.md": {
+    "mtime": 1778729185.009079,
+    "ast_hash": "0d12c97e7d1694b8357ea78d8bb2be18",
+    "semantic_hash": "0d12c97e7d1694b8357ea78d8bb2be18"
+  },
+  ".github/workflows/build.yml": {
+    "mtime": 1782520623.2528913,
+    "ast_hash": "355f81c95a42f5894ff99e77f5f8581a",
+    "semantic_hash": "355f81c95a42f5894ff99e77f5f8581a"
+  },
+  ".github/workflows/deploy-firestore-rules.yml": {
+    "mtime": 1783635033.9848487,
+    "ast_hash": "61939a10f2ebd3ffef1ee67f7e1c8638",
+    "semantic_hash": "61939a10f2ebd3ffef1ee67f7e1c8638"
+  },
+  ".github/workflows/deploy-functions.yml": {
+    "mtime": 1783665841.6546304,
+    "ast_hash": "de8d548f0d6adb498dee2957f7b9bbcd",
+    "semantic_hash": "de8d548f0d6adb498dee2957f7b9bbcd"
+  },
+  ".github/workflows/deploy-storage-rules.yml": {
+    "mtime": 1783978922.3459482,
+    "ast_hash": "8f4cea31432bf7cb4e3a4ffb632216db",
+    "semantic_hash": "8f4cea31432bf7cb4e3a4ffb632216db"
+  },
+  ".github/workflows/deploy-web.yml": {
+    "mtime": 1782537444.2827227,
+    "ast_hash": "fea406720e5ed562f46d6d85599e782a",
+    "semantic_hash": "fea406720e5ed562f46d6d85599e782a"
+  },
+  ".github/workflows/promote-web.yml": {
+    "mtime": 1782713465.9610808,
+    "ast_hash": "7349833a592cb533d23e6da8614b3c6e",
+    "semantic_hash": "7349833a592cb533d23e6da8614b3c6e"
+  },
+  "AGENTS.md": {
+    "mtime": 1783466059.368317,
+    "ast_hash": "2f4544faffb46bbbe83a2b79389e0eab",
+    "semantic_hash": "2f4544faffb46bbbe83a2b79389e0eab"
+  },
+  "CLAUDE.md": {
+    "mtime": 1784476184.312678,
+    "ast_hash": "e7cf8df1186f0776a5aa8983a86602e1",
+    "semantic_hash": "e7cf8df1186f0776a5aa8983a86602e1"
+  },
+  "DESIGN.md": {
+    "mtime": 1782687462.014171,
+    "ast_hash": "9b7a8d348431970adda11d0b11fdfc6d",
+    "semantic_hash": "9b7a8d348431970adda11d0b11fdfc6d"
+  },
+  "PRODUCT.md": {
+    "mtime": 1778729185.0094395,
+    "ast_hash": "e4ff36ae36d646d38388ddfcae1cb729",
+    "semantic_hash": "e4ff36ae36d646d38388ddfcae1cb729"
+  },
+  "README.md": {
+    "mtime": 1782687462.0143824,
+    "ast_hash": "5a07857a6d0a2702faf97284e457f997",
+    "semantic_hash": "5a07857a6d0a2702faf97284e457f997"
+  },
+  "backend/firebase/README.md": {
+    "mtime": 1782453159.9970431,
+    "ast_hash": "8bd195f29dac14012abee4e579aeaa72",
+    "semantic_hash": "8bd195f29dac14012abee4e579aeaa72"
+  },
+  "core/ui/theme/src/commonMain/composeResources/font/README.md": {
+    "mtime": 1778729185.0207062,
+    "ast_hash": "defc2a54f640541ba75e0657026eefaf",
+    "semantic_hash": "defc2a54f640541ba75e0657026eefaf"
+  },
+  "docs/account/account_upgrade_PRD.html": {
+    "mtime": 1782453160.0252013,
+    "ast_hash": "008bdec93beda6ada4ff031248a057a9",
+    "semantic_hash": "008bdec93beda6ada4ff031248a057a9"
+  },
+  "docs/account/account_upgrade_design.html": {
+    "mtime": 1784095406.8937054,
+    "ast_hash": "16caae7d759dbb49f8bcb2e36d44363e",
+    "semantic_hash": "16caae7d759dbb49f8bcb2e36d44363e"
+  },
+  "docs/account/email_link_signin_design.html": {
+    "mtime": 1782889977.7848334,
+    "ast_hash": "37bdaaaa1486a9622247eee8f4f33c3f",
+    "semantic_hash": "37bdaaaa1486a9622247eee8f4f33c3f"
+  },
+  "docs/aircraft/aircraft_overview_tabs.md": {
+    "mtime": 1780167394.7927299,
+    "ast_hash": "9e169120800765f129d817232be470eb",
+    "semantic_hash": "9e169120800765f129d817232be470eb"
+  },
+  "docs/analytics/analytics_design.html": {
+    "mtime": 1783356731.556999,
+    "ast_hash": "103e9f518cb4a4668068e22a07b3aa0e",
+    "semantic_hash": "103e9f518cb4a4668068e22a07b3aa0e"
+  },
+  "docs/attachments/attachments_PRD.md": {
+    "mtime": 1783466829.30824,
+    "ast_hash": "076ba078de8690c492c8e06bfdc2ca3d",
+    "semantic_hash": "076ba078de8690c492c8e06bfdc2ca3d"
+  },
+  "docs/attachments/attachments_design.md": {
+    "mtime": 1783466829.3085926,
+    "ast_hash": "042685eb7ef6efdf0588724a869d1d5b",
+    "semantic_hash": "042685eb7ef6efdf0588724a869d1d5b"
+  },
+  "docs/cleanup/codebase_cleanup_plan.md": {
+    "mtime": 1783389288.0629613,
+    "ast_hash": "8a2fa78706093bf344babc773b3ccf81",
+    "semantic_hash": "8a2fa78706093bf344babc773b3ccf81"
+  },
+  "docs/export/export_email_automation_design.html": {
+    "mtime": 1780167394.7932274,
+    "ast_hash": "31e23e3a18ffe805473bff43d1fde08f",
+    "semantic_hash": "31e23e3a18ffe805473bff43d1fde08f"
+  },
+  "docs/export/export_logs_PRD.md": {
+    "mtime": 1782453160.0149093,
+    "ast_hash": "a19d8b2cd16b54d5e9b52f42bb25380a",
+    "semantic_hash": "a19d8b2cd16b54d5e9b52f42bb25380a"
+  },
+  "docs/export/export_logs_design.md": {
+    "mtime": 1782453160.0175822,
+    "ast_hash": "9d3c5e5b372a8e9b98130c42a0b0f621",
+    "semantic_hash": "9d3c5e5b372a8e9b98130c42a0b0f621"
+  },
+  "docs/export/export_logs_sample/N12345_Cessna_172/README.txt": {
+    "mtime": 1782453160.0201185,
+    "ast_hash": "a95b652bd05d33c65d76138f67824476",
+    "semantic_hash": "a95b652bd05d33c65d76138f67824476"
+  },
+  "docs/export/export_logs_sample/N12345_Cessna_172/attachments/_README.txt": {
+    "mtime": 1780167394.7937274,
+    "ast_hash": "37a1bc52817af66517db7f59cf46f405",
+    "semantic_hash": "37a1bc52817af66517db7f59cf46f405"
+  },
+  "docs/product/PRD.md": {
+    "mtime": 1782687462.0147805,
+    "ast_hash": "e900132c565f0a6358e91e568828b0cc",
+    "semantic_hash": "e900132c565f0a6358e91e568828b0cc"
+  },
+  "docs/product/platform_feature_parity.html": {
+    "mtime": 1782453160.012421,
+    "ast_hash": "f84593ba094d0c3f7e7a5bb528ea321a",
+    "semantic_hash": "f84593ba094d0c3f7e7a5bb528ea321a"
+  },
+  "docs/product/play_store_description.txt": {
+    "mtime": 1783223668.0761335,
+    "ast_hash": "9601cb89e24ccccdcbeaf0543b6a6345",
+    "semantic_hash": "9601cb89e24ccccdcbeaf0543b6a6345"
+  },
+  "docs/product/screenshot_generator/README.md": {
+    "mtime": 1783223668.0766463,
+    "ast_hash": "d52b748612352f25735f586566eb882d",
+    "semantic_hash": "d52b748612352f25735f586566eb882d"
+  },
+  "docs/product/screenshot_generator/export_template.html": {
+    "mtime": 1783223668.0767589,
+    "ast_hash": "c7bfcac960fae29871430134516af0ac",
+    "semantic_hash": "c7bfcac960fae29871430134516af0ac"
+  },
+  "docs/search/intelligentsearch.md": {
+    "mtime": 1782687462.014977,
+    "ast_hash": "659e15ab52874c6d8916fc2b7dc7c8d6",
+    "semantic_hash": "659e15ab52874c6d8916fc2b7dc7c8d6"
+  },
+  "docs/sharing/aircraft_sharing_PRD.html": {
+    "mtime": 1784408041.9929996,
+    "ast_hash": "9672e8709c6fadb5a4aae451c2f11573",
+    "semantic_hash": "9672e8709c6fadb5a4aae451c2f11573"
+  },
+  "docs/sharing/aircraft_sharing_design.html": {
+    "mtime": 1784443779.0882146,
+    "ast_hash": "a9958c08fa3c3eae2dd09d1d5705fffe",
+    "semantic_hash": "a9958c08fa3c3eae2dd09d1d5705fffe"
+  },
+  "docs/squawks/squawk_design.md": {
+    "mtime": 1780167394.7946196,
+    "ast_hash": "b86da73c5ccbea45b218f5ca67112f71",
+    "semantic_hash": "b86da73c5ccbea45b218f5ca67112f71"
+  },
+  "docs/squawks/user_squawking_prd.md": {
+    "mtime": 1783466829.3081045,
+    "ast_hash": "e7c885473e558adae5c32d4ee4f6fc18",
+    "semantic_hash": "e7c885473e558adae5c32d4ee4f6fc18"
+  },
+  "docs/storage/deletion_gc_design.html": {
+    "mtime": 1784013817.4589221,
+    "ast_hash": "05de048f18539e677785c9b658950a3f",
+    "semantic_hash": "05de048f18539e677785c9b658950a3f"
+  },
+  "docs/storage/storage_mode_PRD.md": {
+    "mtime": 1783390449.0311527,
+    "ast_hash": "5e28440e62c75ec76155e8fe523e1f4d",
+    "semantic_hash": "5e28440e62c75ec76155e8fe523e1f4d"
+  },
+  "docs/storage/storage_r1_design.md": {
+    "mtime": 1780167394.7949047,
+    "ast_hash": "52ca7c1e7b68e4d1faa66a1e8122dfc6",
+    "semantic_hash": "52ca7c1e7b68e4d1faa66a1e8122dfc6"
+  },
+  "docs/storage/storage_r2_design.md": {
+    "mtime": 1783466829.3084435,
+    "ast_hash": "c2cc974d48784152bd222703c6d3ede0",
+    "semantic_hash": "c2cc974d48784152bd222703c6d3ede0"
+  },
+  "docs/technician/technician_design.md": {
+    "mtime": 1780167394.7952154,
+    "ast_hash": "d757a1b490898125f70a1311841dda21",
+    "semantic_hash": "d757a1b490898125f70a1311841dda21"
+  },
+  "docs/technician/userprofile_as_technician.md": {
+    "mtime": 1782687462.0153396,
+    "ast_hash": "9da90cebe7570864468fa820c07d9097",
+    "semantic_hash": "9da90cebe7570864468fa820c07d9097"
+  },
+  "docs/web/promo_site_design.html": {
+    "mtime": 1782453160.0073647,
+    "ast_hash": "91f6c00f7a62fd583e2699328448c1e7",
+    "semantic_hash": "91f6c00f7a62fd583e2699328448c1e7"
+  },
+  "docs/web/web_adaptive_layout_design.html": {
+    "mtime": 1782687462.0155551,
+    "ast_hash": "9989706acedb8f3159d41738d23ee7a5",
+    "semantic_hash": "9989706acedb8f3159d41738d23ee7a5"
+  },
+  "docs/web/web_attachments_design.md": {
+    "mtime": 1783466829.307739,
+    "ast_hash": "0f67a6138bf81d26b7aaca1f470f2251",
+    "semantic_hash": "0f67a6138bf81d26b7aaca1f470f2251"
+  },
+  "docs/web/web_target_expansion_plan.md": {
+    "mtime": 1782453160.0022507,
+    "ast_hash": "2fc62f882fd2d8cc0a834b53c7b294e6",
+    "semantic_hash": "2fc62f882fd2d8cc0a834b53c7b294e6"
+  },
+  "feature/export/datamanager/src/commonMain/resources/export_readme_template.txt": {
+    "mtime": 1782453160.0553179,
+    "ast_hash": "4af28eee1cbaa4d329f1e19cc1c51be5",
+    "semantic_hash": "4af28eee1cbaa4d329f1e19cc1c51be5"
+  },
+  "webApp/src/jsMain/resources/account_delete_request.html": {
+    "mtime": 1783361953.135214,
+    "ast_hash": "fa69351d9a21fe6538ca6d57b8ea3f71",
+    "semantic_hash": "fa69351d9a21fe6538ca6d57b8ea3f71"
+  },
+  "webApp/src/jsMain/resources/index.html": {
+    "mtime": 1783361953.1245322,
+    "ast_hash": "ab7679b54c142a24cd713cb44b90c58e",
+    "semantic_hash": "ab7679b54c142a24cd713cb44b90c58e"
+  },
+  "webApp/src/jsMain/resources/privacy.html": {
+    "mtime": 1783362249.8049855,
+    "ast_hash": "34d4a45a5cf2a0bceadc65f9b2969b17",
+    "semantic_hash": "34d4a45a5cf2a0bceadc65f9b2969b17"
+  },
+  "docs/branding/cloud-console-app-icon-120.png": {
+    "mtime": 1782796965.728512,
+    "ast_hash": "3319a68f539a6b3d4fbae3bebc6d278a",
+    "semantic_hash": "3319a68f539a6b3d4fbae3bebc6d278a"
+  },
+  "docs/branding/cloud-console-app-icon-120.svg": {
+    "mtime": 1782796965.7287378,
+    "ast_hash": "d3e3ad40921bf6d3c5a988c8a96698b1",
+    "semantic_hash": "d3e3ad40921bf6d3c5a988c8a96698b1"
+  },
+  "docs/product/play_store_icon_512.png": {
+    "mtime": 1783223668.0764043,
+    "ast_hash": "3b20b51b64e156e8d1c647a7fc376aac",
+    "semantic_hash": "3b20b51b64e156e8d1c647a7fc376aac"
+  },
+  "docs/product/screenshots/airplane_overview.png": {
+    "mtime": 1783223668.0773757,
+    "ast_hash": "29a496d4f7c2b854a1ca7ea0e70922e8",
+    "semantic_hash": "29a496d4f7c2b854a1ca7ea0e70922e8"
+  },
+  "docs/product/screenshots/export_data.png": {
+    "mtime": 1783223668.077768,
+    "ast_hash": "920d1bcd2f2c9f1fd9f1097bfa3c9d93",
+    "semantic_hash": "920d1bcd2f2c9f1fd9f1097bfa3c9d93"
+  },
+  "docs/product/screenshots/logs.png": {
+    "mtime": 1783223668.0791197,
+    "ast_hash": "0a87d8b25fdc88a36fc77fa27381efaf",
+    "semantic_hash": "0a87d8b25fdc88a36fc77fa27381efaf"
+  },
+  "docs/product/screenshots/maintenance_tasks.png": {
+    "mtime": 1783223668.079592,
+    "ast_hash": "471765d5131a20e2746294d012736006",
+    "semantic_hash": "471765d5131a20e2746294d012736006"
+  },
+  "docs/product/screenshots/squawks.png": {
+    "mtime": 1783223668.0800233,
+    "ast_hash": "e75bd82fa1f292758487141ba98435f8",
+    "semantic_hash": "e75bd82fa1f292758487141ba98435f8"
+  },
+  "docs/product/screenshots/work_logs.png": {
+    "mtime": 1783223668.080611,
+    "ast_hash": "bb4ed42b230d8df69d9254a96a47977d",
+    "semantic_hash": "bb4ed42b230d8df69d9254a96a47977d"
+  },
+  "docs/product/store_assets/play_store_screenshot_01_overview.png": {
+    "mtime": 1783223668.0819132,
+    "ast_hash": "61cefcdab106d20dd2bab44666a77bd5",
+    "semantic_hash": "61cefcdab106d20dd2bab44666a77bd5"
+  },
+  "docs/product/store_assets/play_store_screenshot_02_maintenance_tasks.png": {
+    "mtime": 1783223668.0832875,
+    "ast_hash": "b7fee8c44224041030bef261545d30f8",
+    "semantic_hash": "b7fee8c44224041030bef261545d30f8"
+  },
+  "docs/product/store_assets/play_store_screenshot_03_squawks.png": {
+    "mtime": 1783223668.0849974,
+    "ast_hash": "768b86139c791a42932a268ced5c31c9",
+    "semantic_hash": "768b86139c791a42932a268ced5c31c9"
+  },
+  "docs/product/store_assets/play_store_screenshot_04_logs.png": {
+    "mtime": 1783223668.0867636,
+    "ast_hash": "3d6367e47bcb98168820bdc43e90f10f",
+    "semantic_hash": "3d6367e47bcb98168820bdc43e90f10f"
+  },
+  "docs/product/store_assets/play_store_screenshot_05_work_logs.png": {
+    "mtime": 1783223668.0888398,
+    "ast_hash": "0e5a54603c59e9a466c38f53351809a6",
+    "semantic_hash": "0e5a54603c59e9a466c38f53351809a6"
+  },
+  "docs/product/store_assets/play_store_screenshot_06_export.png": {
+    "mtime": 1783223668.0901337,
+    "ast_hash": "b9df116b2ec4d87d7ff68525b2b7529c",
+    "semantic_hash": "b9df116b2ec4d87d7ff68525b2b7529c"
+  },
+  "iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/gemini-svg (8).png": {
+    "mtime": 1779066376.314465,
+    "ast_hash": "7e88e0fa9d9fb3249ee8231167a2595e",
+    "semantic_hash": "7e88e0fa9d9fb3249ee8231167a2595e"
+  },
+  "webApp/src/jsMain/resources/apple-touch-icon.png": {
+    "mtime": 1782451625.49963,
+    "ast_hash": "d630a1996a0db09547f58562f2557968",
+    "semantic_hash": "d630a1996a0db09547f58562f2557968"
+  },
+  "webApp/src/jsMain/resources/favicon-192.png": {
+    "mtime": 1782451625.4997795,
+    "ast_hash": "6a22e1355523702224932444d931b306",
+    "semantic_hash": "6a22e1355523702224932444d931b306"
+  },
+  "webApp/src/jsMain/resources/og-image.png": {
+    "mtime": 1782627442.6235197,
+    "ast_hash": "08fd87d6a79eafc27e939ea3938dd405",
+    "semantic_hash": "08fd87d6a79eafc27e939ea3938dd405"
+  }
+}

@@ -1,4 +1,5 @@
 import { getAppCheck } from "firebase-admin/app-check";
+import { logger } from "firebase-functions/v2";
 import { onRequest, type Request } from "firebase-functions/v2/https";
 
 import { FUNCTION_REGION } from "../config/env.js";
@@ -58,6 +59,7 @@ export const streamBlob = onRequest(
 export type BlobResponse = NodeJS.WritableStream & {
   setHeader(name: string, value: string | number): void;
   status(code: number): BlobResponse;
+  destroy(error?: Error): void;
 };
 
 /**
@@ -87,16 +89,30 @@ export async function pipeBlob(
 
   res.setHeader("Content-Type", contentType);
   if (size != null) res.setHeader("Content-Length", String(size));
+  // The bytes are member-controlled (any uploader picks the content type), so never let a browser
+  // sniff them into something executable or render them inline in this origin: force a download and
+  // pin the declared type. This is the cross-account content boundary — treat every blob as hostile.
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Content-Disposition", "attachment");
   // Private bytes with immediate revocation — never let a shared cache serve them after a revoke.
   res.setHeader("Cache-Control", "private, no-store");
+  res.status(200);
 
-  await new Promise<void>((resolve, reject) => {
+  await new Promise<void>((resolve) => {
+    // A source error can strike after the head is flushed, so there is no clean status left to send —
+    // `.pipe` also won't tear down the destination on its own. Log it, destroy the response so the
+    // request fails loudly instead of hanging, and resolve so the handler never rejects unhandled.
+    const onError = (err: Error) => {
+      logger.error("streamBlob failed mid-stream", { hostUid, acId, blobId, err });
+      res.destroy(err);
+      resolve();
+    };
     file
       .createReadStream()
-      .on("error", reject)
+      .on("error", onError)
       .pipe(res)
       .on("finish", resolve)
-      .on("error", reject);
+      .on("error", onError);
   });
 }
 
