@@ -6,7 +6,9 @@ import { cancelAircraftShareInvite } from "./sharing/cancelAircraftShareInvite.j
 import { createAircraftShareInvite } from "./sharing/createAircraftShareInvite.js";
 import { onAircraftDeleted } from "./sharing/onAircraftDeleted.js";
 import { previewAircraftShareInvite } from "./sharing/previewAircraftShareInvite.js";
+import { getBlobUploadSession } from "./storage/getBlobUploadSession.js";
 import { onRecordDeleted } from "./storage/onRecordDeleted.js";
+import { streamBlob } from "./storage/streamBlob.js";
 import { scheduledStorageSweep } from "./storage/storageSweepTriggers.js";
 import { redeemAircraftShareInvite } from "./sharing/redeemAircraftShareInvite.js";
 import { revokeAircraftShare } from "./sharing/revokeAircraftShare.js";
@@ -45,3 +47,5 @@ export { onAircraftDeleted };
 export { createAircraftShareInvite, previewAircraftShareInvite, cancelAircraftShareInvite };
 export { onRecordDeleted };
 export { scheduledStorageSweep };
+export { streamBlob };
+export { getBlobUploadSession };
