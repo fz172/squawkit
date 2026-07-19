@@ -147,12 +147,21 @@ class TaskViewModelTest {
     advanceUntilIdle()
 
     viewModel.onTitleChange("Oil change (edited)")
-    // Upstream re-emits (e.g. an attachment write updates the record) with the original title.
-    tasksFlow.value =
-      listOf(MaintenanceTask(id = TEST_CARD_ID, title = "Oil change"))
+    // Upstream re-emits with a genuinely different record (e.g. an attachment write bumps
+    // reference_number). The list must differ structurally or StateFlow would conflate it and the
+    // collect — and the formSeeded guard — would never run again.
+    tasksFlow.value = listOf(
+      MaintenanceTask(
+        id = TEST_CARD_ID,
+        title = "Oil change",
+        reference_number = "REF-remote",
+      )
+    )
     advanceUntilIdle()
 
+    // The in-flight title edit survives, and the re-emission does not reseed other fields.
     assertThat(viewModel.formState.value.title).isEqualTo("Oil change (edited)")
+    assertThat(viewModel.formState.value.refNumber).isEmpty()
   }
 
   // ---- helpers ----
