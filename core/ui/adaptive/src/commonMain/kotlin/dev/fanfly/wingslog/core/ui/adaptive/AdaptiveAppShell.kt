@@ -42,8 +42,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -62,6 +60,8 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingNavItem
+import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingPillNavigationBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
@@ -603,7 +603,7 @@ private fun SidebarSwitcher(
 }
 
 /* ---------------------------------------------------------------------------------------------- */
-/* COMPACT / MEDIUM — NavigationSuiteScaffold                                                     */
+/* COMPACT — floating pill bottom nav                                                              */
 /* ---------------------------------------------------------------------------------------------- */
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -619,60 +619,47 @@ private fun ScaffoldShell(
   fab: @Composable () -> Unit,
   snackbarHostState: SnackbarHostState,
 ) {
-  NavigationSuiteScaffold(
-    // Settings has no nav-bar item, so showing the bar while it's open feels disconnected. Drop the
-    // nav container entirely there and let Settings run full-screen; the top-bar back arrow (wired
-    // via onExitSettings below) is the way out.
-    layoutType =
-      if (state.section == ShellSection.SETTINGS) NavigationSuiteType.None
-      else NavigationSuiteType.NavigationBar,
-    navigationSuiteItems = {
-      ShellSection.entries.filter { it != ShellSection.SETTINGS }
-        .forEach { s ->
-          item(
-            selected = s == state.section,
-            onClick = { onSelectSection(s) },
-            icon = {
-              Icon(s.icon, contentDescription = null)
-            },
-            label = {
-              Text(
-                stringResource(s.label),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-              )
-            },
-          )
-        }
-    },
-  ) {
-    // Settings has no entry in the bottom/rail nav, so without this the only way out is to tap a
-    // tab. Remember the last tabbed section so the Settings back button returns where the user was.
-    val backTarget = remember { mutableStateOf(ShellSection.DASHBOARD) }
-    if (state.section != ShellSection.SETTINGS) backTarget.value = state.section
-    // Settings is shell state, not a nav destination, so the system back gesture would otherwise
-    // fall through and close the app. Catch it here and return to the last tab. (Settings detail
-    // pages open off the root nav controller, where this shell isn't composed, so they still pop
-    // back to the Settings root normally.)
-    BackHandler(enabled = state.section == ShellSection.SETTINGS) {
-      onSelectSection(backTarget.value)
-    }
-    ShellContent(
-      state = state,
-      // The switcher lives in the top bar on both the rail (MEDIUM) and the bottom-bar (COMPACT)
-      // tiers — neither has a sidebar to host it, and on COMPACT it's the only in-place way to
-      // switch aircraft.
-      showTopBarSwitcher = true,
-      onSelectAircraft = onSelectAircraft,
-      onAddAircraft = onAddAircraft,
-      onEnterInviteCode = onEnterInviteCode,
-      onOpenSettings = onOpenSettings,
-      onExitSettings = { onSelectSection(backTarget.value) },
-      content = content,
-      fab = fab,
-      snackbarHostState = snackbarHostState,
-    )
+  // Settings has no entry in the nav, so without this the only way out is to tap a tab. Remember the
+  // last tabbed section so the Settings back button returns where the user was.
+  val backTarget = remember { mutableStateOf(ShellSection.DASHBOARD) }
+  if (state.section != ShellSection.SETTINGS) backTarget.value = state.section
+  // Settings is shell state, not a nav destination, so the system back gesture would otherwise fall
+  // through and close the app. Catch it here and return to the last tab. (Settings detail pages open
+  // off the root nav controller, where this shell isn't composed, so they still pop back to the
+  // Settings root normally.)
+  BackHandler(enabled = state.section == ShellSection.SETTINGS) {
+    onSelectSection(backTarget.value)
   }
+  ShellContent(
+    state = state,
+    // The switcher lives in the top bar on COMPACT — there is no sidebar to host it, so it is the
+    // only in-place way to switch aircraft.
+    showTopBarSwitcher = true,
+    onSelectAircraft = onSelectAircraft,
+    onAddAircraft = onAddAircraft,
+    onEnterInviteCode = onEnterInviteCode,
+    onOpenSettings = onOpenSettings,
+    onExitSettings = { onSelectSection(backTarget.value) },
+    content = content,
+    fab = fab,
+    bottomBar = {
+      // Settings runs full-screen with no nav container, so hide the pill there; the top-bar back
+      // arrow (wired via onExitSettings) is the way out.
+      if (state.section != ShellSection.SETTINGS) {
+        FloatingPillNavigationBar(
+          items = PER_AIRCRAFT_SECTIONS.map { s ->
+            FloatingNavItem(
+              label = stringResource(s.label),
+              icon = s.icon,
+              selected = s == state.section,
+              onClick = { onSelectSection(s) },
+            )
+          },
+        )
+      }
+    },
+    snackbarHostState = snackbarHostState,
+  )
 }
 
 /* ---------------------------------------------------------------------------------------------- */
@@ -697,6 +684,10 @@ private fun ShellContent(
   content: @Composable () -> Unit,
   // Per-section FAB; the host decides which sections show one. Settings never does.
   fab: @Composable () -> Unit = {},
+  // Bottom nav container. Empty on sidebar tiers (the sidebar is the nav); on COMPACT it carries the
+  // floating pill. As a real scaffold bottomBar it reserves height for content above and lifts the
+  // FAB / snackbars over it.
+  bottomBar: @Composable () -> Unit = {},
   snackbarHostState: SnackbarHostState,
 ) {
   // Full-screen Settings (compact) has no bottom nav bar to occupy the system navigation-bar area,
@@ -721,6 +712,7 @@ private fun ShellContent(
         ScaffoldDefaults.contentWindowInsets
       },
     snackbarHost = { SnackbarHost(snackbarHostState) },
+    bottomBar = bottomBar,
     topBar = {
       if (showTopBar) {
         // The bar shares the content column's width cap so the title and actions line up with the
