@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -21,6 +22,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -55,6 +58,7 @@ class AircraftOverviewViewModel(
   private val attachmentManager: AttachmentManager,
   private val squawkManager: SquawkManager,
   private val sharingManager: SharingManager,
+  private val aircraftScopeResolver: AircraftScopeResolver,
   private val auth: FirebaseAuth,
   private val appCapability: AppCapability,
   private val aircraftId: String,
@@ -73,10 +77,17 @@ class AircraftOverviewViewModel(
     loadAircraftAndStats()
   }
 
-  private fun blobStatesFlow() =
-    auth.currentUser?.uid?.let { uid ->
-      attachmentManager.observeBlobStates("/users/$uid/aircraft/$aircraftId/")
-    } ?: flowOf(emptyMap())
+  // Blob sync state must be observed at the scope that actually holds this aircraft's data: the
+  // caller's own tree for an owned plane, or the host's tree for a shared one. Deriving the path
+  // from the uid alone (the old `/users/$uid/aircraft/...`) missed a member's shared aircraft
+  // entirely, so sync state never resolved. Drive it off [AircraftScopeResolver] instead, which
+  // re-emits when the aircraft flips own ↔ shared. See docs/sharing §6.3 and P8.3 (#244).
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun blobStatesFlow(): Flow<Map<String, BlobSyncState>> =
+    aircraftScopeResolver.resolve(aircraftId).flatMapLatest { scope ->
+      if (scope == null) flowOf(emptyMap())
+      else attachmentManager.observeBlobStates(scope.toPath())
+    }
 
   private fun loadAircraftAndStats() {
     viewModelScope.launch {
