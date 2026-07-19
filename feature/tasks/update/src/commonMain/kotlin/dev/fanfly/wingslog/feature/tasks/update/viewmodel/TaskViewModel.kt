@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
@@ -52,6 +53,90 @@ sealed interface TaskFormEvent {
   data object PickError : TaskFormEvent
 }
 
+/**
+ * WIP values for the add/edit task form. Held in the ViewModel (not composable `remember`) so the
+ * fields survive the form composables being torn down and re-created when the OS file picker
+ * returns — see #254. The `initialX` baselines are captured on seed (edit) or construction (add)
+ * to drive unsaved-changes detection.
+ */
+data class TaskFormState(
+  val title: String = "",
+  val component: ComponentType = ComponentType.COMPONENT_AIRFRAME,
+  val type: ComplianceType = ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+  val schedule: ScheduleState = ScheduleState(),
+  val refNumber: String = "",
+  val complianceAuthority: String = "",
+  val complianceNotes: String = "",
+  val forceCompliedStatus: ForceCompliedStatus? = null,
+  val forceOverrideEngine: Boolean = false,
+  val forcedEngineHours: String = "",
+  val forceOverrideDate: Boolean = false,
+  val forcedDateMillis: Long? = null,
+  val initialTitle: String = "",
+  val initialComponent: ComponentType = ComponentType.COMPONENT_AIRFRAME,
+  val initialType: ComplianceType = ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+  val initialSchedule: ScheduleState = ScheduleState(),
+  val initialRefNumber: String = "",
+  val initialComplianceAuthority: String = "",
+  val initialComplianceNotes: String = "",
+  val initialForceCompliedStatus: ForceCompliedStatus? = null,
+  val initialForceOverrideEngine: Boolean = false,
+  val initialForcedEngineHours: String = "",
+  val initialForceOverrideDate: Boolean = false,
+  val initialForcedDateMillis: Long? = null,
+) {
+  val hasChanges: Boolean
+    get() = title != initialTitle ||
+      component != initialComponent ||
+      type != initialType ||
+      schedule != initialSchedule ||
+      refNumber != initialRefNumber ||
+      complianceAuthority != initialComplianceAuthority ||
+      complianceNotes != initialComplianceNotes ||
+      forceCompliedStatus != initialForceCompliedStatus ||
+      forceOverrideEngine != initialForceOverrideEngine ||
+      (forceOverrideEngine && forcedEngineHours != initialForcedEngineHours) ||
+      forceOverrideDate != initialForceOverrideDate ||
+      (forceOverrideDate && forcedDateMillis != initialForcedDateMillis)
+
+  companion object {
+    fun fromTask(card: MaintenanceTask): TaskFormState {
+      val schedule = ScheduleState.fromTask(card)
+      val forceOverrideEngine = card.force_due_engine_hour > 0f
+      val forcedEngineHours =
+        if (forceOverrideEngine) card.force_due_engine_hour.toString() else ""
+      val forceOverrideDate = card.force_due_date != null
+      val forcedDateMillis = card.force_due_date?.let { it.getEpochSecond() * 1000 }
+      return TaskFormState(
+        title = card.title,
+        component = card.component,
+        type = card.type,
+        schedule = schedule,
+        refNumber = card.reference_number,
+        complianceAuthority = card.compliance_authority,
+        complianceNotes = card.compliance_details,
+        forceCompliedStatus = card.force_complied_status,
+        forceOverrideEngine = forceOverrideEngine,
+        forcedEngineHours = forcedEngineHours,
+        forceOverrideDate = forceOverrideDate,
+        forcedDateMillis = forcedDateMillis,
+        initialTitle = card.title,
+        initialComponent = card.component,
+        initialType = card.type,
+        initialSchedule = schedule,
+        initialRefNumber = card.reference_number,
+        initialComplianceAuthority = card.compliance_authority,
+        initialComplianceNotes = card.compliance_details,
+        initialForceCompliedStatus = card.force_complied_status,
+        initialForceOverrideEngine = forceOverrideEngine,
+        initialForcedEngineHours = forcedEngineHours,
+        initialForceOverrideDate = forceOverrideDate,
+        initialForcedDateMillis = forcedDateMillis,
+      )
+    }
+  }
+}
+
 class TaskViewModel(
   private val inspectionDataManager: TaskDataManager,
   private val attachmentManager: AttachmentManager,
@@ -69,6 +154,13 @@ class TaskViewModel(
 
   private val _uiState = MutableStateFlow<TaskUiState>(TaskUiState.Loading)
   val uiState: StateFlow<TaskUiState> = _uiState.asStateFlow()
+
+  // WIP form values live here (not in composable `remember`) so they survive the form composables
+  // being torn down and re-created when the OS file picker returns — see #254. `formSeeded` guards
+  // the one-time seed from the loaded card so later task re-emissions don't clobber in-flight edits.
+  private val _formState = MutableStateFlow(TaskFormState())
+  val formState: StateFlow<TaskFormState> = _formState.asStateFlow()
+  private var formSeeded = false
 
   private val _events = Channel<TaskFormEvent>()
   val events = _events.receiveAsFlow()
@@ -144,14 +236,54 @@ class TaskViewModel(
             error = (prev as? TaskUiState.Success)?.error,
           )
         }
-        // Pre-load attachments when editing
+        // Pre-load attachments and seed the form once when editing.
         if (cardId != null) {
-          cards.firstOrNull { it.id == cardId }
-            ?.let { card -> attachmentForm.seedIfEmpty(card.attachments) }
+          cards.firstOrNull { it.id == cardId }?.let { card ->
+            attachmentForm.seedIfEmpty(card.attachments)
+            if (!formSeeded) {
+              formSeeded = true
+              _formState.value = TaskFormState.fromTask(card)
+            }
+          }
         }
       }
     }
   }
+
+  // ── Form field changes ───────────────────────────────────────────────────
+
+  fun onTitleChange(value: String) = _formState.update { it.copy(title = value) }
+
+  fun onComponentChange(value: ComponentType) =
+    _formState.update { it.copy(component = value) }
+
+  fun onTypeChange(value: ComplianceType) = _formState.update { it.copy(type = value) }
+
+  fun onScheduleChange(value: ScheduleState) =
+    _formState.update { it.copy(schedule = value) }
+
+  fun onRefNumberChange(value: String) = _formState.update { it.copy(refNumber = value) }
+
+  fun onComplianceAuthorityChange(value: String) =
+    _formState.update { it.copy(complianceAuthority = value) }
+
+  fun onComplianceNotesChange(value: String) =
+    _formState.update { it.copy(complianceNotes = value) }
+
+  fun onForceOverrideEngineChange(value: Boolean) =
+    _formState.update { it.copy(forceOverrideEngine = value) }
+
+  fun onForcedEngineHoursChange(value: String) =
+    _formState.update { it.copy(forcedEngineHours = value) }
+
+  fun onForceOverrideDateChange(value: Boolean) =
+    _formState.update { it.copy(forceOverrideDate = value) }
+
+  fun onForcedDateMillisChange(value: Long?) =
+    _formState.update { it.copy(forcedDateMillis = value) }
+
+  fun onForceCompliedStatusChange(value: ForceCompliedStatus?) =
+    _formState.update { it.copy(forceCompliedStatus = value) }
 
   // ── Attachment management ────────────────────────────────────────────────
 

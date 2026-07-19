@@ -55,6 +55,7 @@ import dev.fanfly.wingslog.feature.tasks.update.compose.TaskDetailTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
+import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskFormState
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -69,29 +70,24 @@ import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTask
 )
 @Composable
 fun AddTaskScreen(
+  state: TaskFormState,
   availableInspections: List<MaintenanceTask>,
+  onTitleChange: (String) -> Unit,
+  onComponentChange: (ComponentType) -> Unit,
+  onTypeChange: (ComplianceType) -> Unit,
+  onScheduleChange: (ScheduleState) -> Unit,
+  onRefNumberChange: (String) -> Unit,
+  onComplianceAuthorityChange: (String) -> Unit,
+  onComplianceNotesChange: (String) -> Unit,
   onSave: (MaintenanceTask) -> Unit,
   onCancel: () -> Unit,
   isSaving: Boolean = false,
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
 ) {
-  var title by remember { mutableStateOf("") }
-  var component by remember { mutableStateOf(ComponentType.COMPONENT_AIRFRAME) }
-  var type by remember { mutableStateOf(ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION) }
-  var schedule by remember { mutableStateOf(ScheduleState()) }
-  var refNumber by remember { mutableStateOf("") }
-  var complianceAuthority by remember { mutableStateOf("") }
-  var complianceNotes by remember { mutableStateOf("") }
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
 
-  val hasChanges = title.isNotEmpty() ||
-    component != ComponentType.COMPONENT_AIRFRAME ||
-    type != ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION ||
-    schedule != ScheduleState() ||
-    refNumber.isNotEmpty() ||
-    complianceAuthority.isNotEmpty() ||
-    complianceNotes.isNotEmpty()
+  val hasChanges = state.hasChanges
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()
@@ -198,27 +194,27 @@ fun AddTaskScreen(
           ) {
             when (page) {
               0 -> TaskIdentityTab(
-                title = title,
-                onTitleChange = { title = it },
-                component = component,
-                onComponentChange = { component = it },
-                complianceType = type,
-                onComplianceTypeChange = { type = it },
+                title = state.title,
+                onTitleChange = onTitleChange,
+                component = state.component,
+                onComponentChange = onComponentChange,
+                complianceType = state.type,
+                onComplianceTypeChange = onTypeChange,
               )
 
               1 -> TaskDetailTab(
-                refNumber = refNumber,
-                onRefNumberChange = { refNumber = it },
-                complianceAuthority = complianceAuthority,
-                onComplianceAuthorityChange = { complianceAuthority = it },
-                complianceNotes = complianceNotes,
-                onComplianceNotesChange = { complianceNotes = it },
+                refNumber = state.refNumber,
+                onRefNumberChange = onRefNumberChange,
+                complianceAuthority = state.complianceAuthority,
+                onComplianceAuthorityChange = onComplianceAuthorityChange,
+                complianceNotes = state.complianceNotes,
+                onComplianceNotesChange = onComplianceNotesChange,
                 attachmentSection = attachmentSection
               )
 
               2 -> TaskScheduleTab(
-                state = schedule,
-                onChange = { schedule = it },
+                state = state.schedule,
+                onChange = onScheduleChange,
                 availableInspections = availableInspections,
               )
             }
@@ -230,16 +226,16 @@ fun AddTaskScreen(
         onPrimaryClick = {
           val card = MaintenanceTask(
             id = "",
-            title = title,
-            component = component,
-            type = type,
-            rules = schedule.toRules(),
-            reference_number = refNumber.takeIf { it.isNotBlank() } ?: "",
-            compliance_authority = complianceAuthority.takeIf { it.isNotBlank() }
+            title = state.title,
+            component = state.component,
+            type = state.type,
+            rules = state.schedule.toRules(),
+            reference_number = state.refNumber.takeIf { it.isNotBlank() } ?: "",
+            compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() }
               ?: "",
-            compliance_details = complianceNotes.takeIf { it.isNotBlank() }
+            compliance_details = state.complianceNotes.takeIf { it.isNotBlank() }
               ?: "",
-            is_one_time = schedule.isOneTime,
+            is_one_time = state.schedule.isOneTime,
             force_due_engine_hour = 0f,
             force_due_date = null,
             notes = "",
@@ -247,7 +243,7 @@ fun AddTaskScreen(
           onSave(card)
         },
         onSecondaryClick = { tryCancel() },
-        primaryEnabled = title.isNotBlank(),
+        primaryEnabled = state.title.isNotBlank(),
         isPrimaryFunctionInProgress = isSaving
       )
     }
