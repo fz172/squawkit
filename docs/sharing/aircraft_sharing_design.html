@@ -433,61 +433,48 @@ match /aircraft_shares/{acId} {
       <h3>9.1 The blocker is structural</h3>
       <p><code>storage.rules</code> is strictly <code>request.auth.uid == userId</code> for <b>read and write</b>, so a member can neither fetch a host's attachment nor upload one. This is not a missing <code>if</code>: <b>Storage rules cannot <code>get()</code> Firestore</b>, so they cannot consult the <code>aircraft_shares</code> ACL to authorize a cross-tree read. Crossing the boundary needs either a server-side broker or custom claims.</p>
 
-      <h3>9.2 Chosen approach — signed-URL broker</h3>
-      <p>A Cloud Function is the <b>only</b> path across trees. A callable checks the <code>aircraft_shares</code> ACL and mints short-lived URLs; <code>storage.rules</code> stay uid-scoped and closed.</p>
+      <h3>9.2 Chosen approach — authorizing broker</h3>
+      <p><b>Hard requirement (decided):</b> content must not leak by any means, and revocation of read access must be <b>instant</b> — the ACL is checked immediately before every download begins. That requirement, not cost, picks the mechanism.</p>
+      <p>A Cloud Function is the <b>only</b> path across trees. For <b>reads</b> it is an <b>authorizing proxy</b>: on every request it re-checks the <code>aircraft_shares</code> ACL and, only if the caller is still a member, streams the object's bytes through itself — nothing revocable-only-by-expiry is ever handed to the client. For <b>writes</b> it mints a resumable upload session. <code>storage.rules</code> stay uid-scoped and closed.</p>
       <table>
         <thead><tr><th>Approach</th><th>How</th><th>Verdict</th></tr></thead>
         <tbody>
           <tr>
-            <td><b>A. Signed-URL broker</b></td>
-            <td>Callable verifies membership in <code>aircraft_shares/{acId}</code>, then returns a short-lived <b>signed download URL</b> (reads) or a <b>resumable-upload session URL</b> (writes) into the host's tree. Rules never change.</td>
-            <td><span class="yes">Chosen.</span> Revocation cuts off <i>new</i> URLs at once — a revoked member stops being issued any; already-minted URLs lapse within the short TTL (§9.2.1). Cost: one function hop per open/upload.</td>
+            <td><b>A. Authorizing broker</b></td>
+            <td><b>Reads:</b> the function checks membership in <code>aircraft_shares/{acId}</code> at request time and <b>streams the object through itself</b> — no URL handed out. <b>Writes:</b> it mints a resumable-upload session into the host's tree. Rules never change.</td>
+            <td><span class="yes">Chosen.</span> Reads are authorized right before each stream begins, so revocation is <b>instant</b> and there is <b>no bearer URL to leak</b> (§9.2.1). Cost: download bytes flow through the function (egress + a held connection).</td>
           </tr>
           <tr>
-            <td>B. Custom claims</td>
+            <td>B. Signed download URLs</td>
+            <td>Callable checks the ACL once, then returns a short-lived <b>signed URL</b> the client fetches directly from Storage.</td>
+            <td><span class="no">Rejected.</span> A signed URL is a <b>bearer credential</b> — checked only at mint time, then usable by anyone holding it until it expires. That is a leak (§9.2.1) and revocation is not instant. Disqualified by the requirement above.</td>
+          </tr>
+          <tr>
+            <td>C. Custom claims</td>
             <td>Put shared aircraft ids in the auth token so Storage rules check them directly.</td>
-            <td><span class="no">Rejected</span> (same as sharing v1): claims have a size cap, and <b>revocation does not take effect until the token refreshes</b> — an ex-member keeps blob access for up to an hour. A security regression relative to Firestore, where revocation is immediate.</td>
+            <td><span class="no">Rejected</span> (same as sharing v1): claims have a size cap, and <b>revocation does not take effect until the token refreshes</b> — an ex-member keeps blob access for up to an hour.</td>
           </tr>
         </tbody>
       </table>
       <p>The broker lives under <code>backend/firebase/functions/src/storage/</code> (alongside <code>blobRefs.ts</code>, <code>storageSweep.ts</code>) and reuses the ACL-check helper the existing sharing functions already use (<code>revokeAircraftShare</code>, <code>updateAircraftShareRole</code>, <code>onAircraftDeleted</code>).</p>
 
-      <h4>9.2.1 Broker specifics</h4>
-      <p>A signed URL is a <b>bearer credential</b>: the ACL is checked once, at mint time, and the URL then works for anyone who holds it until it expires. That shapes four answers (raised on #243).</p>
-
-      <table>
-        <thead><tr><th>Concern</th><th>Answer</th></tr></thead>
-        <tbody>
-          <tr>
-            <td><b>How short is "short-lived"?</b></td>
-            <td><b>Downloads: 5 minutes.</b> Long enough to fetch one blob on a slow link, short enough to bound every risk below. The client fetches immediately and does not persist the URL. <b>Uploads:</b> the resumable session is minted per-upload and consumed at once; it is bounded to the single object it was issued for, not a standing grant.</td>
-          </tr>
-          <tr>
-            <td><b>Revoked right after the URL is minted?</b></td>
-            <td>The already-minted URL keeps working until it expires — a residual window of <b>≤ the TTL (5 min)</b>. This is the one place revocation is <i>not</i> instantaneous, and it is a deliberate, bounded trade: still an order of magnitude tighter than custom claims (up to an hour, §9.2) and far below Firestore's own revocation, which <i>is</i> immediate. A just-revoked member can, at worst, finish reading blobs they could already see, for up to five minutes. If we ever need hard-zero, the escalation is a streaming proxy (below).</td>
-          </tr>
-          <tr>
-            <td><b>URL leaked to someone without access?</b></td>
-            <td>Same bearer property: whoever holds it can read that <b>one blob</b> for <b>≤ 5 min</b>, then it is dead. Mitigations: short TTL; the URL is scoped to a single object, never a folder or a token that unlocks the tree; HTTPS only; the broker never logs full signed URLs. It is not a login and grants nothing beyond that one file for that short window.</td>
-          </tr>
-          <tr>
-            <td><b>Need hard-zero revocation / leak-resistance?</b></td>
-            <td><b>Escalation, not v1:</b> a <i>streaming proxy</i> — the function itself reads the object and pipes the bytes, re-checking the ACL on every request, so nothing bearer is ever handed out and revocation is instant. Cost: the function pays egress and holds the connection for the whole transfer, which is why v1 prefers signed URLs. Flagged for you as the lever to pull if the 5-minute window is unacceptable.</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="callout note">
-        <strong>Does a slow download fail at the TTL?</strong>
-        No — the TTL gates when a request may <i>begin</i>, not how long an accepted transfer runs. GCS validates the signed URL's expiry when it authorizes the start of the GET (same as S3 presigned URLs); once the response body is streaming it runs to completion, so a fetch that starts at 4:59 and takes another ten minutes still succeeds. The only thing the TTL kills is <b>re-initiation</b>: a dropped-and-retried connection, or a ranged/resumable read that opens a <i>fresh</i> request after expiry. <code>BlobDownloadDriver</code> is a one-shot GET that, on transient failure, re-fetches through the broker — so a retry simply mints a new URL (a cheap function hop), never a stuck download. Two things keep this off the hot path entirely: attachments are MB-scale (a few MB downloads well inside 5&nbsp;min even on a poor link), and <b>uploads don't use this mechanism at all</b> — resumable upload sessions are built for long, interruptible transfers (ACL checked once at session creation, ~week-long lifetime). If we ever host large blobs on slow links, the download TTL is just a knob: raise it and the residual-revocation window of §9.2.1 grows to match.
-      </div>
-
-      <p><b>How many functions, and what are they?</b> The broker itself is <b>two callables</b>, kept separate because their inputs and return shapes differ:</p>
+      <h4>9.2.1 Reads go through an authorizing proxy, not a signed URL</h4>
+      <p>A signed URL cannot meet the requirement: it is a <b>bearer credential</b> whose ACL is checked once, at mint time, and then works for anyone who holds it until it expires. That leaves two gaps the requirement forbids — a member revoked just after minting keeps reading until the TTL lapses, and a leaked URL is usable by <i>anyone</i> for that same window. Shrinking the TTL narrows both but never closes them, so signed URLs are out for downloads.</p>
+      <p>The download path is therefore an <b>authorizing streaming proxy</b>: an authenticated HTTPS function (the caller presents their Firebase ID token) that, on <i>every</i> request, re-reads <code>aircraft_shares/{acId}</code> and only if the caller is still a member reads the object from the host tree and pipes the bytes back. Because nothing bearer is ever handed to the client:</p>
       <ul>
-        <li><code>getBlobDownloadUrl(hostUid, acId, blobId)</code> → ACL check → short-lived signed <b>GET</b> URL.</li>
-        <li><code>getBlobUploadSession(hostUid, acId, blobId)</code> → ACL + entitlement check → resumable <b>upload session</b> URL, stamping <code>writer_uid</code>.</li>
+        <li><b>Revocation is instant.</b> The first request after the ACL drops the member is refused — no residual window.</li>
+        <li><b>Nothing leaks.</b> There is no URL to share; the endpoint is useless without the caller's own auth token, which the function verifies server-side on every request.</li>
+        <li><b>The check is at begin-time,</b> exactly as required. A transfer already streaming was authorized when it started; a member revoked mid-stream simply cannot begin the next one. (If even in-flight cut-off is ever wanted, the proxy can abort the stream on a live ACL change — not needed for v1.)</li>
       </ul>
-      <p>Two more functions live in P8 but are <i>not</i> the broker: the <b>entitlement projector</b> that maintains <code>aircraft_shares.attachmentsEnabled</code> on subscription change (§9.7, P8.7), and the existing <b><code>storageSweep</code></b> that reclaims unreferenced/tombstoned bytes (§9.6, already shipped in P7). So: <b>two new broker callables</b>, one new projector, and one reused sweep — four functions touch attachments-on-shared, of which the broker is two.</p>
+      <p>Cost is the deliberate trade: download bytes flow through the function (egress, plus the connection is held for the transfer) rather than direct from Storage. Attachments are MB-scale and the functions run on <b>Gen2 (Cloud Run)</b> with streamed responses and long timeouts, so a slow download just holds its connection until done — there is no TTL to trip. A pathologically large blob on a slow link becomes a function-timeout tuning question, not a security one.</p>
+      <p><b>Uploads keep a resumable session</b>, and that is safe without a proxy. An upload is not a content leak — it adds bytes, it does not exfiltrate them — and a write by a just-revoked member is inert: the object lands <i>unreferenced</i>, because the only way to make it visible is a Firestore record write, which the ACL denies <b>instantly</b>; the orphan is then reclaimed by the sweep (§9.6). The ACL is still checked at session creation, so a non-member gets no session at all. (Streaming large uploads through a function would also collide with request-size limits — resumable sessions exist precisely to avoid that.)</p>
+
+      <p><b>The functions.</b> The broker is two:</p>
+      <ul>
+        <li><code>streamBlob(hostUid, acId, blobId)</code> — authenticated HTTPS function; <b>ACL check per request</b> → streams the object's bytes (reads).</li>
+        <li><code>getBlobUploadSession(hostUid, acId, blobId)</code> — ACL + entitlement check → resumable <b>upload session</b>, stamping <code>writer_uid</code> (writes).</li>
+      </ul>
+      <p>Two more touch P8 but are <i>not</i> the broker: the <b>entitlement projector</b> maintaining <code>aircraft_shares.attachmentsEnabled</code> (§9.7, P8.7) and the reused <b><code>storageSweep</code></b> (§9.6, P7). Four functions touch attachments-on-shared; two are the broker.</p>
 
       <h3>9.3 One canonical blob, no mirrors</h3>
       <p>Requirement 2: <b>one canonical blob per attachment, in the host's tree.</b> Copying blobs per member is explicitly out of scope — it multiplies storage cost and creates divergent copies of the same file. Every member reads and writes the same object through the broker; only <i>local caches</i> are per-device.</p>
@@ -554,12 +541,12 @@ sequenceDiagram
     Note over T: BlobIndexReconciler registers blob_object REMOTE_ONLY<br>UI shows an attachment chip, badge says needs download
     Note over T,GCS: Download, tap the chip
     Note over T: BlobDownloadDriver sees a foreign host, uses the broker
-    T->>BK: getDownloadUrl for hostUid, acId, blobId
-    BK->>FS: read aircraft_shares acId, is caller a member?
+    T->>BK: streamBlob for hostUid, acId, blobId, with auth token
+    BK->>FS: read aircraft_shares acId, is caller still a member?
     FS-->>BK: yes
-    BK-->>T: short-lived signed GET url, else PERMISSION_DENIED
-    T->>GCS: HTTP GET the signed url
-    GCS-->>T: bytes
+    BK->>GCS: read object from the host tree
+    GCS-->>BK: bytes
+    BK-->>T: streamed bytes, else PERMISSION_DENIED, no url handed out
     Note over T: installDownloaded verifies sha256, cache is SYNCED
     Note over T,SW: Delete, remove the attachment, any member may
     T->>T: edit record, drop Attachment from proto, offline ok
@@ -590,9 +577,9 @@ sequenceDiagram
     Note over FS,B: Fan-out to every other member
     FS-->>B: pull record doc on shared scope
     Note over B: AttachmentRefs sees new id, blob_object REMOTE_ONLY
-    B->>BK: getDownloadUrl, same broker path as Scenario 1
-    BK-->>B: signed GET url
-    Note over B: download and verify sha256, attachment now visible to B
+    B->>BK: streamBlob, same broker path as Scenario 1
+    BK-->>B: streamed bytes, ACL re-checked before this stream
+    Note over B: verify sha256, attachment now visible to B
       </pre>
       <p class="diagram-caption">One canonical blob in the host's tree (requirement 2): B does not receive a copy of the bytes from the uploader — it learns the ref through the record and fetches the same object through the broker.</p>
 
@@ -612,10 +599,10 @@ sequenceDiagram
     FS-->>B: ref tombstone, or PERMISSION_DENIED on the shared scope
     Note over B: SharedScopeJanitor tears the scope down
     Note over B: purge local records and purgeLocal blob cache for the scope
-    Note over BK: B no longer in the ACL, broker refuses B any new url
+    Note over BK: next streamBlob from B re-checks the ACL, B is gone, refused
     Note over H,FS: host tree blobs untouched<br>host and remaining members keep full access
       </pre>
-      <p class="diagram-caption">Revoke only ever deletes B's <i>local cache</i> (requirement 3). The canonical bytes stay in the host's tree, and immediacy comes for free — the broker simply stops issuing URLs the moment the ACL drops B, with no token-refresh window (§9.2).</p>
+      <p class="diagram-caption">Revoke only ever deletes B's <i>local cache</i> (requirement 3). The canonical bytes stay in the host's tree, and read access dies instantly — the proxy re-checks the ACL on <i>every</i> request, so the first stream B attempts after revocation is refused, with no bearer URL left alive anywhere (§9.2.1).</p>
 
       <h2 id="testing">10. Testing</h2>
       <ul>
