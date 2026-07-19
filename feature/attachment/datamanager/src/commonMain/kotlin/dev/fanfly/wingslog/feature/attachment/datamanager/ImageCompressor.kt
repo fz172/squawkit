@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.attachment.datamanager
 
 /**
  * Re-encodes photo bytes to a smaller JPEG. One implementation per platform (Android `Bitmap`,
- * iOS `UIImage`); web has none yet and binds a no-op.
+ * iOS `UIImage`, web `OffscreenCanvas`).
  *
  * Both the camera-capture and file-picker flows funnel through
  * [AttachmentManager.addPickedFile], so that manager is the single place attachment photos are
@@ -17,8 +17,12 @@ interface ImageCompressor {
    * image is already within budget, or the result would not be smaller — and the caller keeps
    * the original bytes. Never throws for a decode/encode failure; a photo we cannot process is
    * simply stored as-is.
+   *
+   * `suspend` because the browser has no synchronous image encoder: web decodes via
+   * `createImageBitmap` and encodes via `OffscreenCanvas.convertToBlob`, both async. Android and
+   * iOS implement it as ordinary CPU-bound work with no suspension point.
    */
-  fun compressToJpeg(bytes: ByteArray): ByteArray?
+  suspend fun compressToJpeg(bytes: ByteArray): ByteArray?
 }
 
 /** ~1 MB target and 2048 px longest side — the limits the camera capture path used to enforce. */
