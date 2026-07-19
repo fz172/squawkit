@@ -5,7 +5,7 @@ import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
@@ -44,6 +44,7 @@ class LocalFirstAttachmentManagerImpl(
   private val auth: AuthManager,
   private val fileByteReader: FileByteReader,
   private val imageCompressor: ImageCompressor,
+  private val aircraftScopeResolver: AircraftScopeResolver,
   private val uploadScheduler: UploadScheduler? = null,
   private val clock: Clock = Clock.System,
 ) : AttachmentManager {
@@ -53,8 +54,9 @@ class LocalFirstAttachmentManagerImpl(
     picked: PickedFile,
     displayName: String,
   ): Attachment {
-    val uid = auth.getCurrentUser()?.uid
-      ?: error("addPickedFile requires a signed-in user (anonymous or permanent)")
+    checkNotNull(auth.getCurrentUser()) {
+      "addPickedFile requires a signed-in user (anonymous or permanent)"
+    }
     val rawBytes = fileByteReader.readBytes(picked.uri)
       ?: error("could not read picked file at ${picked.uri}")
 
@@ -74,10 +76,11 @@ class LocalFirstAttachmentManagerImpl(
     if (bytes.size > MAX_FILE_SIZE_BYTES) throw FileTooLargeException(bytes.size.toLong())
 
     val id = generateRandomId()
-    val scope = EntityScope.aircraftChild(
-      uid,
-      aircraftId
-    )
+    // Resolve WHERE the bytes live: own aircraft → the caller's tree; shared aircraft → the host's
+    // tree (design §9). Scoping by the caller's own uid was the bug that stranded a technician's
+    // upload in their own tree, invisible to the host — and it also decides own-vs-broker routing in
+    // the upload driver, which keys off the blob's owning uid (P8.4 #245).
+    val scope = aircraftScopeResolver.resolveNow(aircraftId)
     val ref = blobs.put(
       BlobId(id),
       bytes,
