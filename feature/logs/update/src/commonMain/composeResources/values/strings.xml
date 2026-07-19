@@ -20,9 +20,9 @@
   <string name="log_tab_work">Work</string>
   <string name="log_tab_hours">Hours</string>
   <string name="log_tab_records">Records</string>
-  <string name="date_section_description">When this maintenance was performed</string>
+  <string name="date_section_description">When this work was performed</string>
   <string name="component_section_description">Which part of the aircraft was serviced</string>
-  <string name="hours_section_description">Fill the fields that apply to this maintenance event</string>
+  <string name="hours_section_description">Fill the fields that apply to this work event</string>
   <string name="performed_by_description">The technician who performed this work</string>
   <string name="squawks_section_header">Squawks Addressed</string>
   <string name="tasks_section_header">Maintenance Tasks Completed</string>

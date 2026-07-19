@@ -43,6 +43,7 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -105,7 +106,9 @@ fun OverviewTab(
   Column(
     modifier = modifier
       .fillMaxSize()
-      .verticalScroll(rememberScrollState()),
+      .verticalScroll(rememberScrollState())
+      // Clear the floating pill this content now scrolls beneath (0 on non-compact tiers).
+      .padding(bottom = LocalNavPillClearance.current),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
   ) {
     val overdueTasks =

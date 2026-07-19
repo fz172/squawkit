@@ -32,6 +32,7 @@ import kotlin.math.roundToInt
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -105,7 +106,9 @@ fun SquawkTab(
       .fillMaxSize()
       .verticalScroll(scrollState)
       .onGloballyPositioned { contentTopY = it.positionInRoot().y }
-      .padding(horizontal = Spacing.screenPadding),
+      .padding(horizontal = Spacing.screenPadding)
+      // Clear the floating pill this content now scrolls beneath (0 on non-compact tiers).
+      .padding(bottom = LocalNavPillClearance.current),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
     Spacer(Modifier.height(Spacing.medium))
