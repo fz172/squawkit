@@ -58,7 +58,7 @@ class LocalFirstAttachmentManagerImplTest {
     // Default: the compressor declines (returns null), so bytes pass through untouched. Tests
     // that exercise compression stub compressToJpeg explicitly.
     imageCompressor = mockk(relaxed = true)
-    every { imageCompressor.compressToJpeg(any()) } returns null
+    coEvery { imageCompressor.compressToJpeg(any()) } returns null
     uploadScheduler = mockk(relaxed = true)
     clock = mockk(relaxed = true)
 
@@ -283,7 +283,7 @@ class LocalFirstAttachmentManagerImplTest {
     val rawBytes = byteArrayOf(1, 2, 3, 4)
     val compressedBytes = byteArrayOf(9, 9)
     every { fileByteReader.readBytes(picked.uri) } returns rawBytes
-    every { imageCompressor.compressToJpeg(rawBytes) } returns compressedBytes
+    coEvery { imageCompressor.compressToJpeg(rawBytes) } returns compressedBytes
     coEvery {
       blobs.put(any(), compressedBytes, contentType = "image/jpeg", scope = any())
     } returns buildBlobRef()
@@ -307,7 +307,7 @@ class LocalFirstAttachmentManagerImplTest {
     val picked = buildPickedFile(mimeType = "image/jpeg")
     val rawBytes = byteArrayOf(1, 2, 3, 4)
     every { fileByteReader.readBytes(picked.uri) } returns rawBytes
-    every { imageCompressor.compressToJpeg(rawBytes) } returns null
+    coEvery { imageCompressor.compressToJpeg(rawBytes) } returns null
     coEvery {
       blobs.put(any(), rawBytes, contentType = "image/jpeg", scope = any())
     } returns buildBlobRef()
@@ -332,7 +332,7 @@ class LocalFirstAttachmentManagerImplTest {
 
     manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "doc.pdf")
 
-    io.mockk.verify(exactly = 0) { imageCompressor.compressToJpeg(any()) }
+    coVerify(exactly = 0) { imageCompressor.compressToJpeg(any()) }
   }
 
   @Test
@@ -348,7 +348,7 @@ class LocalFirstAttachmentManagerImplTest {
     val result =
       manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "chart.png")
 
-    io.mockk.verify(exactly = 0) { imageCompressor.compressToJpeg(any()) }
+    coVerify(exactly = 0) { imageCompressor.compressToJpeg(any()) }
     assertThat(result.mime_type).isEqualTo("image/png")
     assertThat(result.name).isEqualTo("chart.png")
   }
@@ -360,7 +360,7 @@ class LocalFirstAttachmentManagerImplTest {
     // Compressor hands back something still over the per-file cap.
     val stillHuge = ByteArray((5L * 1024 * 1024 + 1).toInt())
     every { fileByteReader.readBytes(any()) } returns rawBytes
-    every { imageCompressor.compressToJpeg(rawBytes) } returns stillHuge
+    coEvery { imageCompressor.compressToJpeg(rawBytes) } returns stillHuge
 
     var caught: Throwable? = null
     try {

@@ -16,7 +16,7 @@ private const val MAX_DOWNSCALE_ATTEMPTS = 3
  */
 class ImageCompressorImpl : ImageCompressor {
 
-  override fun compressToJpeg(bytes: ByteArray): ByteArray? {
+  override suspend fun compressToJpeg(bytes: ByteArray): ByteArray? {
     // Cheap early out: already within budget, so re-encoding could only lose quality for no
     // size win. Also skips the camera's already-small photos on the rare path they reach here.
     if (bytes.size <= MAX_IMAGE_BYTES) return null

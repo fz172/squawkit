@@ -23,7 +23,7 @@ import platform.posix.memcpy
 class ImageCompressorImpl : ImageCompressor {
 
   @OptIn(ExperimentalForeignApi::class)
-  override fun compressToJpeg(bytes: ByteArray): ByteArray? {
+  override suspend fun compressToJpeg(bytes: ByteArray): ByteArray? {
     if (bytes.size <= MAX_IMAGE_BYTES) return null
     val image = UIImage(data = bytes.toNSData()) ?: return null
     val data = compress(image) ?: return null
