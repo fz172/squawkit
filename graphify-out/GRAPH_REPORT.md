@@ -5,12 +5,12 @@
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4848 nodes · 8206 edges · 495 communities (406 shown, 89 thin omitted)
+- 4848 nodes · 8189 edges · 481 communities (398 shown, 83 thin omitted)
 - Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 850 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e1d09417`
+- Built from commit: `2afa69f6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -272,29 +272,20 @@
 - Community 254
 - Community 255
 - Community 256
-- Community 257
 - Community 258
 - Community 259
 - Community 260
-- Community 261
-- Community 262
-- Community 263
 - Community 264
-- Community 265
-- Community 266
 - Community 267
 - Community 268
 - Community 269
 - Community 270
 - Community 271
-- Community 272
 - Community 273
-- Community 274
 - Community 275
 - Community 276
 - Community 277
 - Community 278
-- Community 279
 - Community 280
 - Community 281
 - Community 282
@@ -315,9 +306,6 @@
 - Community 298
 - Community 299
 - Community 300
-- Community 301
-- Community 302
-- Community 303
 - Community 304
 - Community 305
 - Community 306
@@ -351,8 +339,6 @@
 - Community 347
 - Community 390
 - Community 391
-- SyncSettingsViewModel
-- .setUp
 
 ## God Nodes (most connected - your core abstractions)
 1. `BlobId` - 135 edges
@@ -373,10 +359,10 @@
   docs/product/play_store_icon_512.png → iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/gemini-svg (8).png
 - `AppEntry()` --calls--> `WingslogTheme()`  [INFERRED]
   composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/AppEntry.kt → core/ui/theme/src/commonMain/kotlin/dev/fanfly/wingslog/core/ui/theme/Theme.kt
-- `AppEntry()` --calls--> `formDialogs()`  [INFERRED]
-  composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/AppEntry.kt → feature/shell/src/commonMain/kotlin/dev/fanfly/wingslog/feature/shell/ShellNavGraph.kt
-- `AppEntry()` --calls--> `settingsDetailRoutes()`  [INFERRED]
-  composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/AppEntry.kt → feature/shell/src/commonMain/kotlin/dev/fanfly/wingslog/feature/shell/ShellNavGraph.kt
+- `authGraph()` --calls--> `AuthFlow()`  [INFERRED]
+  composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/AppEntry.kt → feature/login/src/commonMain/kotlin/dev/fanfly/wingslog/feature/login/AuthFlow.kt
+- `shellGraph()` --calls--> `AdaptiveShellRoute()`  [INFERRED]
+  composeApp/src/commonMain/kotlin/dev/fanfly/wingslog/AppEntry.kt → feature/shell/src/commonMain/kotlin/dev/fanfly/wingslog/feature/shell/AdaptiveShellRoute.kt
 
 ## Import Cycles
 - None detected.
@@ -395,11 +381,11 @@
 - **SquawkIt Core App Navigation (Dashboard, Squawks, Maint., Logs)** — docs_product_screenshots_airplane_overview_aircraft_dashboard, docs_product_screenshots_squawks_squawks, docs_product_screenshots_maintenance_tasks_maintenance_tasks, docs_product_screenshots_logs_logs_screen [INFERRED 0.85]
 - **SquawkIt Play Store listing screenshot set** — docs_product_store_assets_play_store_screenshot_01_overview_fleet_overview_promo, docs_product_store_assets_play_store_screenshot_02_maintenance_tasks_maintenance_tasks_promo, docs_product_store_assets_play_store_screenshot_03_squawks_squawks_promo, docs_product_store_assets_play_store_screenshot_04_logs_maintenance_logs_promo, docs_product_store_assets_play_store_screenshot_05_work_logs_work_logs_promo, docs_product_store_assets_play_store_screenshot_06_export_export_logs_promo [INFERRED 0.75]
 
-## Communities (495 total, 89 thin omitted)
+## Communities (481 total, 83 thin omitted)
 
 ### Community 0 - "Cloud Functions Auth & Callables"
 Cohesion: 0.08
-Nodes (41): adminDb, health_probe, HealthProbeResponse, ALLOWED_APP_IDS, CallableIdentity, requireAuthenticatedApp(), cancelAircraftShareInvite, CancelRequest (+33 more)
+Nodes (41): adminDb, SharedAircraftRef, ShareRole, ALLOWED_APP_IDS, CallableIdentity, requireAuthenticatedApp(), CancelRequest, CreateRequest (+33 more)
 
 ### Community 1 - "Export File Sharing & History UI"
 Cohesion: 0.05
@@ -410,12 +396,12 @@ Cohesion: 0.09
 Nodes (17): AircraftPdfDocument, PdfSummaryCard, PdfSummaryRow, PdfSummarySection, PdfTableSection, AircraftPdfWriter, ByteArray, ByteArray (+9 more)
 
 ### Community 3 - "Auth / Login Flow"
-Cohesion: 0.05
-Nodes (33): AuthFlow(), AuthStep, EmailSignIn, Login, NameEntry, Welcome, FirebaseUser, ViewModel (+25 more)
+Cohesion: 0.11
+Nodes (21): FirebaseUser, ViewModel, LoginViewModel, EmailField(), EmailSignInScreen(), EmailStep, Enter, Finish (+13 more)
 
 ### Community 4 - "Logbook Export Archive Builder"
-Cohesion: 0.11
-Nodes (10): AircraftBundle, AttachmentExportManifest, AircraftExport, Engine, MaintenanceLog, Technician, TimeZone, LogbookExportArchiveBuilder (+2 more)
+Cohesion: 0.21
+Nodes (6): AircraftBundle, AttachmentExportManifest, Engine, MaintenanceLog, Technician, TimeZone
 
 ### Community 5 - "Maintenance Task Due Computation"
 Cohesion: 0.11
@@ -426,8 +412,8 @@ Cohesion: 0.08
 Nodes (21): certKey(), DuplicateGroup, DuplicateResolution, MERGE_INTO_MEMBER, MERGE_MANUAL, WARN_MIRROR_CONFLICT, findDuplicates(), Technician (+13 more)
 
 ### Community 7 - "Maintenance Log Proto Codec"
-Cohesion: 0.07
-Nodes (30): Attachment, ComponentType, componentTypeFromJSON(), componentTypeToJSON(), Builtin, DeepPartial, Exact, fromJsonTimestamp() (+22 more)
+Cohesion: 0.05
+Nodes (31): Attachment, ComponentType, componentTypeFromJSON(), componentTypeToJSON(), Builtin, DeepPartial, Exact, fromJsonTimestamp() (+23 more)
 
 ### Community 8 - "Squawk Form UI"
 Cohesion: 0.05
@@ -438,16 +424,16 @@ Cohesion: 0.07
 Nodes (26): Bitmap, Blob, Data, toFirebaseData(), ImageCompressorImpl, ByteArray, ImageCompressor, isCompressiblePhotoMime() (+18 more)
 
 ### Community 10 - "Attachment Form Controller"
-Cohesion: 0.08
-Nodes (8): AddFileError, AttachmentFormController, Failed, FileTooLarge, StateFlow, FileTooLargeException, Exception, AttachmentFormControllerTest
+Cohesion: 0.05
+Nodes (17): AttachmentManager, FileTooLargeException, Exception, Flow, Flow, LocalFirstAttachmentManagerImpl, AttachmentFormControllerTest, AttachmentStatus (+9 more)
 
 ### Community 11 - "Maintenance Log Form ViewModel"
 Cohesion: 0.05
 Nodes (7): FormSnapshot, MaintenanceLogFormUiState, Job, StateFlow, Technician, ViewModel, MaintenanceLogFormViewModel
 
 ### Community 12 - "Adaptive App Shell"
-Cohesion: 0.09
-Nodes (34): AdaptiveAppShell(), AdaptiveShellUiState, EmptyFleetScaffold(), EmptyFleetShell(), Modifier, SnackbarHostState, ShellAircraft, ShellForTier() (+26 more)
+Cohesion: 0.17
+Nodes (9): Dp, LayoutBreakpoints, LayoutTier, COMPACT, EXPANDED, LARGE, MEDIUM, layoutTierFor() (+1 more)
 
 ### Community 13 - "Export Delivery Email Service"
 Cohesion: 0.10
@@ -462,8 +448,8 @@ Cohesion: 0.07
 Nodes (38): feature-module-scaffolder agent, Canonical feature module layout, Feature module dependency rules, feature/inspection scaffolding reference, kmm-test-writer agent, Canonical Firestore mock chain, KMM unit test stack (MockK/Truth/JUnit4/coroutines-test), graphify skill trigger (+30 more)
 
 ### Community 16 - "Sync Push Worker"
-Cohesion: 0.11
-Nodes (12): DirtyRow, hostRootScope(), Flow, parseScopePath(), PushWorker, scopePrefixFor(), sharedAircraftIn(), sharedAircraftScopePrefix() (+4 more)
+Cohesion: 0.16
+Nodes (5): PushWorker, FirebaseFirestoreException, WingsLogDatabase, PushWorkerTest, RecordingTelemetry
 
 ### Community 17 - "Export Manager"
 Cohesion: 0.09
@@ -474,40 +460,40 @@ Cohesion: 0.09
 Nodes (28): ImageVector, Modifier, SheetState, TextStyle, PickerActionButton(), PickerDoneButton(), PickerSectionHeader(), PickerSelectableRow() (+20 more)
 
 ### Community 19 - "Sharing Manager"
-Cohesion: 0.14
-Nodes (12): dedupedByOwner(), Flow, Result, ShareRole, Technician, PreviewRequest, RedeemRequest, SharingManagerImpl (+4 more)
+Cohesion: 0.13
+Nodes (13): dedupedByOwner(), Flow, Result, ShareRole, Technician, PreviewRequest, RedeemRequest, RevokeRequest (+5 more)
 
 ### Community 20 - "Task Detail Tabs UI"
-Cohesion: 0.08
-Nodes (23): BottomButtons(), BottomButtonsPreview(), Modifier, DocumentationFields(), Modifier, MaintenanceLog, TaskDetailTab(), IdentityRadioItem() (+15 more)
+Cohesion: 0.11
+Nodes (16): UnsavedChangesDialog(), DocumentationFields(), Modifier, MaintenanceLog, TaskDetailTab(), IdentityRadioItem(), IdentitySection(), Modifier (+8 more)
 
 ### Community 21 - "Maintenance Task Proto"
 Cohesion: 0.06
 Nodes (13): Builtin, ComplianceType, DeepPartial, EngineHourRule, Exact, fromJsonTimestamp(), fromTimestamp(), ImmediateRule (+5 more)
 
 ### Community 22 - "Blob Store (SQLDelight/Sha256)"
-Cohesion: 0.11
-Nodes (8): Blob_object, IntegrityError, Exception, ByteArray, sha256Hex(), ByteArray, Result, SqlDelightLocalBlobStore
+Cohesion: 0.08
+Nodes (10): Blob_object, IntegrityError, Exception, ByteArray, sha256Hex(), ByteArray, Result, SqlDelightLocalBlobStore (+2 more)
 
 ### Community 23 - "Aircraft Scope Resolver"
-Cohesion: 0.10
-Nodes (14): CollectionReference, AircraftScopeResolver, Flow, aircraftChild(), EntityScope, userRoot(), DocumentReference, AircraftScopeResolverImpl (+6 more)
+Cohesion: 0.12
+Nodes (12): aircraftChild(), EntityScope, userRoot(), EntityStore, Flow, T, T, Flow (+4 more)
 
 ### Community 24 - "Blob GC / Record Deletion"
-Cohesion: 0.11
-Nodes (27): AttachmentType, Timestamp, blobIds(), blobIdsInPayload(), schemaCanOwnBlobs(), blobsReferencedByLiveRecords(), LiveRefs, onRecordDeleted (+19 more)
+Cohesion: 0.16
+Nodes (19): Timestamp, blobIds(), blobIdsInPayload(), schemaCanOwnBlobs(), blobsReferencedByLiveRecords(), LiveRefs, onRecordDeleted, SyncDocWire (+11 more)
 
 ### Community 25 - "Navigation Screen Routes"
 Cohesion: 0.11
 Nodes (20): AdaptiveShell, AddAircraft, AddMaintenanceLog, AddMaintenanceTask, AddSquawk, EditAircraft, EditMaintenanceLog, EditMaintenanceTask (+12 more)
 
 ### Community 27 - "Firestore Pull Subscription"
-Cohesion: 0.11
-Nodes (13): DocumentSnapshot, FirestorePullSubscription, Flow, decodeRemoteEntity(), FirestoreRemoteFetcher, RemoteEntity, Flow, PullSubscription (+5 more)
+Cohesion: 0.10
+Nodes (14): DocumentSnapshot, FirestorePullSubscription, Flow, decodeRemoteEntity(), FirestoreRemoteFetcher, PullListener, RemoteEntity, Flow (+6 more)
 
 ### Community 28 - "Export ViewModel"
-Cohesion: 0.10
-Nodes (12): ExportDeliveryEmailSource, AUTH_FALLBACK, EXPLICIT, ExportDeliveryInfo, AircraftOptionRow(), DateRangeSection(), RangePill(), AircraftSelectionRow (+4 more)
+Cohesion: 0.17
+Nodes (5): ExportDeliveryInfo, ExportViewModel, Job, StateFlow, ViewModel
 
 ### Community 29 - "Web Landing Page"
 Cohesion: 0.18
@@ -522,8 +508,8 @@ Cohesion: 0.14
 Nodes (6): BlobRef, Flow, ByteArray, Flow, Result, RecordingBlobStore
 
 ### Community 32 - "Task Form ViewModel"
-Cohesion: 0.09
-Nodes (11): MaintenanceTask, Job, MaintenanceLog, StateFlow, ViewModel, Loading, PickError, Success (+3 more)
+Cohesion: 0.11
+Nodes (6): MaintenanceTask, Job, MaintenanceLog, StateFlow, ViewModel, TaskViewModel
 
 ### Community 33 - "Tombstone GC"
 Cohesion: 0.16
@@ -542,8 +528,8 @@ Cohesion: 0.10
 Nodes (4): EditAircraftViewModel, ViewModel, Propeller, PropellerBlade
 
 ### Community 37 - "Shared Aircraft Ref Proto"
-Cohesion: 0.11
-Nodes (11): Builtin, DeepPartial, Exact, KeysOfUnion, MessageFns, SharedAircraftRef, ShareRole, encodeSharedAircraftRef() (+3 more)
+Cohesion: 0.12
+Nodes (5): Builtin, DeepPartial, Exact, KeysOfUnion, MessageFns
 
 ### Community 38 - "iOS Blob Upload (URLSession)"
 Cohesion: 0.11
@@ -557,13 +543,9 @@ Nodes (7): CloudSyncSetting, AircraftShareState, ShareMember, ShareRole, OWNER, 
 Cohesion: 0.12
 Nodes (10): AndroidAppearanceStore, AppearanceController, AppearanceMode, DARK, LIGHT, SYSTEM, AppearanceStore, StateFlow (+2 more)
 
-### Community 41 - "Database Factory & Write Lock"
-Cohesion: 0.13
-Nodes (8): DatabaseWriteLock, T, EntityStoreFactory, createWingsLogDatabase(), SqlDriver, WingsLogDatabase, WingsLogDatabase, SyncEngineTest
-
 ### Community 42 - "Status Chip & Due Metadata"
-Cohesion: 0.11
-Nodes (20): Modifier, StatusChip(), DueStatus, COMPLIED, DUE_SOON, NORMAL, OVERDUE, Color (+12 more)
+Cohesion: 0.18
+Nodes (10): DueStatus, COMPLIED, DUE_SOON, NORMAL, OVERDUE, Color, ImageVector, Modifier (+2 more)
 
 ### Community 43 - "Overview / Dashboard Tab"
 Cohesion: 0.18
@@ -574,8 +556,8 @@ Cohesion: 0.11
 Nodes (9): BlobDeleteWorker, CoroutineWorker, KoinComponent, Result, BlobDeleteDriver, BlobDeleteDriverTest, WingsLogDatabase, FirebaseStorage (+1 more)
 
 ### Community 45 - "Firebase Admin & Blob Broker"
-Cohesion: 0.15
-Nodes (12): adminAuth, adminStorage, attachmentsEnabled(), authorizeBlobRead(), blobObjectPath(), isShareMember(), loadShare(), BlobResponse (+4 more)
+Cohesion: 0.21
+Nodes (5): BlobResponse, pipeBlob(), streamBlob, fft, wrappedUploadSession
 
 ### Community 46 - "Technician Proto"
 Cohesion: 0.09
@@ -586,24 +568,24 @@ Cohesion: 0.16
 Nodes (12): generateRandomId(), AircraftSpec, FakeDataGenerator, MaintenanceLog, MaintenanceTask, Squawk, Technician, LogTemplate (+4 more)
 
 ### Community 48 - "Attachment Refs & CollectionKind"
-Cohesion: 0.14
-Nodes (12): AttachmentRefs, ByteArray, CollectionKind, decode(), encode(), FeatureLab, fromWire(), MaintenanceLog (+4 more)
+Cohesion: 0.13
+Nodes (15): CollectionReference, AttachmentRefs, ByteArray, CollectionKind, decode(), encode(), FeatureLab, fromWire() (+7 more)
 
 ### Community 49 - "Maintenance Log Manager"
 Cohesion: 0.14
 Nodes (9): MaintenanceOverview, Flow, MaintenanceLog, Result, MaintenanceLogManagerImpl, FakeScopeResolver, Flow, MaintenanceLog (+1 more)
 
 ### Community 50 - "Entity Codec"
-Cohesion: 0.13
-Nodes (8): EntityCodec, ByteArray, T, WireCodec, EntityCodecRegistry, T, CollectionKindCoverageTest, ByteArray
+Cohesion: 0.17
+Nodes (9): DatabaseWriteLock, T, EntityCodec, ByteArray, T, WireCodec, EntityCodecRegistry, T (+1 more)
 
 ### Community 51 - "Storage Quota Checker"
-Cohesion: 0.11
-Nodes (7): Flow, QuotaChecker, State, FixedClock, Clock, WingsLogDatabase, QuotaCheckerTest
+Cohesion: 0.13
+Nodes (4): FixedClock, Clock, WingsLogDatabase, QuotaCheckerTest
 
 ### Community 52 - "Pending Attachment Model"
-Cohesion: 0.14
-Nodes (17): Local, LocalLink, PendingAttachment, PendingDelete, Saved, visible(), AttachmentFormSection(), AttachmentPickerOption() (+9 more)
+Cohesion: 0.21
+Nodes (11): AttachmentFormSection(), AttachmentPickerOption(), AttachmentPickerSheet(), extractDomain(), ImageVector, Modifier, PendingAttachmentRow(), toIcon() (+3 more)
 
 ### Community 53 - "Redeem Invite ViewModel"
 Cohesion: 0.22
@@ -618,12 +600,12 @@ Cohesion: 0.19
 Nodes (7): ExportRequest, AttachmentExportPayload, LogbookExportAggregatorTest, ByteArray, MaintenanceLog, Squawk, LogbookExportArchiveBuilderTest
 
 ### Community 56 - "Community 56"
-Cohesion: 0.15
-Nodes (8): FleetEntry, FleetManager, Flow, Result, FleetManagerImpl, Flow, Result, SharedAircraftRef
+Cohesion: 0.10
+Nodes (9): FleetEntry, FleetManager, Flow, Result, FleetManagerImpl, Flow, Result, SharedAircraftRef (+1 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.10
-Nodes (17): Composable, Modifier, LogSection(), MaintenanceTask, Modifier, Squawk, Technician, LogRecordsTab() (+9 more)
+Cohesion: 0.14
+Nodes (12): MaintenanceTask, Modifier, Squawk, Technician, LogRecordsTab(), LogSectionAddButton(), Modifier, Squawk (+4 more)
 
 ### Community 59 - "Community 59"
 Cohesion: 0.10
@@ -638,51 +620,51 @@ Cohesion: 0.14
 Nodes (4): LocalAccountMigrator, LocalAccountMigratorImpl, WingsLogDatabase, LocalAccountMigratorTest
 
 ### Community 63 - "Community 63"
-Cohesion: 0.18
-Nodes (3): StorageEntity, FleetManagerImplTest, SharedAircraftRef
+Cohesion: 0.11
+Nodes (5): StorageEntity, FleetManagerImplTest, SharedAircraftRef, Squawk, SquawkManagerImplTest
 
 ### Community 64 - "Community 64"
 Cohesion: 0.16
 Nodes (5): Clock, TestClock, WingsLogDatabase, SqlDelightEntityStoreTest, TestClock
 
 ### Community 65 - "Community 65"
-Cohesion: 0.12
-Nodes (18): CancelInviteRequest, CreateInviteRequest, CreateInviteResponse, InviteWire, MemberCreateWire, MemberSelfUpdateWire, MemberWire, PreviewResponse (+10 more)
+Cohesion: 0.13
+Nodes (17): CancelInviteRequest, CreateInviteRequest, CreateInviteResponse, InviteWire, MemberCreateWire, MemberSelfUpdateWire, MemberWire, PreviewResponse (+9 more)
 
 ### Community 66 - "Community 66"
-Cohesion: 0.14
-Nodes (17): SquawkStatus, ADDRESSED, DISMISSED, OPEN, SquawkWithStatus, toWithStatus(), Modifier, PriorityBadge() (+9 more)
+Cohesion: 0.19
+Nodes (11): Modifier, StatusChip(), SquawkStatus, ADDRESSED, DISMISSED, OPEN, Modifier, PriorityBadge() (+3 more)
 
 ### Community 67 - "Community 67"
 Cohesion: 0.17
 Nodes (3): classifyPushFailure(), isPermissionDenied(), PushFailureClassifierTest
 
 ### Community 68 - "Community 68"
-Cohesion: 0.11
-Nodes (7): Builtin, DeepPartial, Exact, fromJsonTimestamp(), fromTimestamp(), KeysOfUnion, MessageFns
+Cohesion: 0.08
+Nodes (15): AttachmentType, Builtin, DeepPartial, Exact, fromJsonTimestamp(), fromTimestamp(), KeysOfUnion, MessageFns (+7 more)
 
 ### Community 69 - "Community 69"
 Cohesion: 0.17
 Nodes (6): AuthManagerImpl, AuthCredential, FirebaseUser, Credential, CredentialManager, GoogleIdTokenCredential
 
 ### Community 70 - "Community 70"
-Cohesion: 0.15
-Nodes (9): Modifier, LogStatsSection(), StatCell(), LogStats, AircraftOverviewViewModel, MaintenanceLog, StateFlow, ViewModel (+1 more)
+Cohesion: 0.19
+Nodes (6): LogStats, AircraftOverviewViewModel, MaintenanceLog, StateFlow, ViewModel, ShareContext
 
 ### Community 71 - "Community 71"
 Cohesion: 0.11
 Nodes (9): FileByteReaderImpl, ByteArray, FileByteReader, ByteArray, FileByteReaderImpl, ByteArray, ByteArray, WebFileByteReader (+1 more)
 
 ### Community 72 - "Community 72"
-Cohesion: 0.16
-Nodes (17): AdvancedLinkedSection(), IntervalNumberInput(), ImageVector, MaintenanceTask, Modifier, StringResource, RecurrenceChoice(), TrackingModeButton() (+9 more)
+Cohesion: 0.15
+Nodes (18): AdvancedLinkedSection(), IntervalNumberInput(), ImageVector, MaintenanceTask, Modifier, StringResource, RecurrenceChoice(), TrackingModeButton() (+10 more)
 
 ### Community 73 - "Community 73"
 Cohesion: 0.11
 Nodes (6): AndroidAnalyticsPreferenceStore, AnalyticsPreferenceController, AnalyticsPreferenceStore, StateFlow, IosAnalyticsPreferenceStore, JsAnalyticsPreferenceStore
 
 ### Community 74 - "Community 74"
-Cohesion: 0.17
+Cohesion: 0.16
 Nodes (7): CoroutineScope, HydrationCounters, FirebaseUser, Job, StateFlow, WingsLogDatabase, SyncEngine
 
 ### Community 75 - "Community 75"
@@ -690,8 +672,8 @@ Cohesion: 0.11
 Nodes (19): Authorizing broker vs signed URL, getBlobUploadSession broker, streamBlob authorizing proxy, onAircraftDeleted cascade trigger, Scheduled storageSweep, blob_object table, UploadScheduler (expect/actual), AttachmentManager (+11 more)
 
 ### Community 76 - "Community 76"
-Cohesion: 0.17
-Nodes (12): AuthorshipContext, Error, StateFlow, ViewModel, LinkTargets, Loaded, Loading, LogsLoadState (+4 more)
+Cohesion: 0.05
+Nodes (43): logId, Modifier, LogsTab(), BadgeScheme, badgeSchemeFor(), ComponentTypeBadge(), MaintenanceLog, Modifier (+35 more)
 
 ### Community 77 - "Community 77"
 Cohesion: 0.18
@@ -733,40 +715,36 @@ Nodes (10): ExportHistoryRemoteRepository, ExportRecordAircraftWire, ExportRecor
 Cohesion: 0.24
 Nodes (3): XlsxSheet, ByteArray, XlsxWorkbookWriter
 
-### Community 87 - "Community 87"
-Cohesion: 0.22
-Nodes (17): aircraftSummary(), CombinedRangeField(), DateRangePickerHeadline(), DateRangePickerHeadlineCell(), DeliveryFailure, DeliveryFailureSection(), EmailedSubtitle(), ExportBottomBar() (+9 more)
-
 ### Community 88 - "Community 88"
-Cohesion: 0.16
-Nodes (4): FakeScopeResolver, Flow, Squawk, SquawkManagerImplTest
+Cohesion: 0.18
+Nodes (4): AircraftScopeResolver, Flow, FakeScopeResolver, Flow
 
 ### Community 89 - "Community 89"
-Cohesion: 0.21
-Nodes (4): PullListener, ByteArray, WingsLogDatabase, PullListenerTest
+Cohesion: 0.32
+Nodes (3): ByteArray, WingsLogDatabase, PullListenerTest
 
 ### Community 90 - "Community 90"
-Cohesion: 0.29
-Nodes (10): displayText(), HeroCaption(), Color, ImageVector, NavController, StatusRow(), StatusSection(), SyncSettingsScreen() (+2 more)
+Cohesion: 0.17
+Nodes (14): displayText(), HeroCaption(), Color, ImageVector, NavController, StatusRow(), StatusSection(), SyncSettingsScreen() (+6 more)
 
 ### Community 91 - "Community 91"
-Cohesion: 0.16
-Nodes (14): ShellSection, DASHBOARD, LOGS, SETTINGS, SQUAWKS, TASKS, AircraftSectionContent(), NavController (+6 more)
+Cohesion: 0.19
+Nodes (12): ShellSection, DASHBOARD, LOGS, SETTINGS, SQUAWKS, TASKS, AircraftSectionContent(), NavController (+4 more)
 
 ### Community 92 - "Community 92"
-Cohesion: 0.13
-Nodes (11): DashedButton(), Dp, Modifier, UnsavedChangesDialog(), AirframeSection(), EngineSection(), Engine, EditAircraftScreen() (+3 more)
+Cohesion: 0.12
+Nodes (13): BottomButtons(), BottomButtonsPreview(), Modifier, DashedButton(), Dp, Modifier, AirframeSection(), EngineSection() (+5 more)
 
 ### Community 93 - "Community 93"
-Cohesion: 0.15
-Nodes (6): Flow, StateFlow, SyncPreferences, FirebaseUser, WingsLogDatabase, SyncPreferencesTest
+Cohesion: 0.13
+Nodes (7): Flow, StateFlow, SyncPreferences, SyncPrefs, FirebaseUser, WingsLogDatabase, SyncPreferencesTest
 
 ### Community 94 - "Community 94"
 Cohesion: 0.21
 Nodes (12): AdjSectionLabel(), formatEngineHours(), AnnotatedString, Modifier, monoOn(), relativeDaysAgoPhrase(), relativeDaysPhrase(), relativeEngineAgoPhrase() (+4 more)
 
 ### Community 95 - "Community 95"
-Cohesion: 0.22
+Cohesion: 0.24
 Nodes (12): EXPORT_DELIVERY_API_KEY, EXPORT_DELIVERY_RESEND_COOLDOWN_SECONDS, ExportDeliveryConfig, orphanBlobGraceDays(), requiredBooleanEnv(), requiredEnv(), requiredNonNegativeIntEnv(), requiredSecretValue() (+4 more)
 
 ### Community 96 - "Community 96"
@@ -774,24 +752,24 @@ Cohesion: 0.12
 Nodes (6): Builtin, DeepPartial, Exact, KeysOfUnion, MessageFns, RFC-3339
 
 ### Community 97 - "Community 97"
-Cohesion: 0.14
-Nodes (4): FirebaseAnalyticsManager, AnalyticsManager, NoOpAnalyticsManager, trackScreenViews()
+Cohesion: 0.07
+Nodes (9): FirebaseAnalyticsManager, AnalyticsManager, NoOpAnalyticsManager, trackScreenViews(), FirebaseAnalyticsManager, WebAnalyticsManager, BrowserTitleAnalytics, prettifyScreenName() (+1 more)
 
 ### Community 98 - "Community 98"
 Cohesion: 0.21
 Nodes (3): UserInfo, Technician, TechnicianManagerImplTest
 
 ### Community 99 - "Community 99"
-Cohesion: 0.22
-Nodes (10): AdaptiveFormDialogFrame(), Modifier, formDialogs(), NavController, settingsDetailRoutes(), sharingRoutes(), NavController, registerStressTestRoutes() (+2 more)
+Cohesion: 0.16
+Nodes (5): AddFileError, AttachmentFormController, Failed, FileTooLarge, StateFlow
 
 ### Community 100 - "Community 100"
 Cohesion: 0.18
 Nodes (13): constrainedContentWidth(), ConstrainedFloatingAction(), ConstrainedTopBar(), ContentWidth, Dp, Modifier, Modifier, Technician (+5 more)
 
 ### Community 101 - "Community 101"
-Cohesion: 0.16
-Nodes (10): DynamicString, StringRes, UiText, ComponentSection(), Modifier, ReadOnlyComponentField(), Modifier, LogWorkTab() (+2 more)
+Cohesion: 0.15
+Nodes (10): DynamicString, StringRes, UiText, Composable, Modifier, LogSection(), Modifier, LogTimeTab() (+2 more)
 
 ### Community 102 - "Community 102"
 Cohesion: 0.12
@@ -799,7 +777,7 @@ Nodes (4): AndroidSelectedAircraftStore, SelectedAircraftStore, IosSelectedAircr
 
 ### Community 103 - "Community 103"
 Cohesion: 0.12
-Nodes (16): UnitPillSelect(), fromTask(), MaintenanceTask, ScheduleMode, HOURS, LINKED, TIME, ScheduleRecurrence (+8 more)
+Nodes (15): fromTask(), MaintenanceTask, ScheduleMode, HOURS, LINKED, TIME, ScheduleRecurrence, ASAP (+7 more)
 
 ### Community 104 - "Community 104"
 Cohesion: 0.29
@@ -822,12 +800,20 @@ Cohesion: 0.14
 Nodes (4): DatabaseHealth, DatabaseIntegrityChecker, DatabaseIntegrityCheckerTest, WingsLogDatabase
 
 ### Community 110 - "Community 110"
-Cohesion: 0.27
-Nodes (13): GroupedCard(), GroupedCheckboxRow(), GroupedLeadingIconChip(), GroupedRow(), GroupedRowGroup(), GroupedRowGroupPreview(), Color, Composable (+5 more)
+Cohesion: 0.20
+Nodes (16): GroupedCard(), GroupedCheckboxRow(), GroupedLeadingIconChip(), GroupedRow(), GroupedRowGroup(), GroupedRowGroupPreview(), Color, Composable (+8 more)
+
+### Community 111 - "Community 111"
+Cohesion: 0.24
+Nodes (8): adminAuth, adminStorage, attachmentsEnabled(), authorizeBlobRead(), blobObjectPath(), isShareMember(), loadShare(), UploadSessionRequest
 
 ### Community 112 - "Community 112"
-Cohesion: 0.25
-Nodes (15): ConfiguringContent(), EmptyAircraftContent(), ErrorResult(), ExportSelectionScreen(), ExportSetupList(), Color, Dp, ImageVector (+7 more)
+Cohesion: 0.14
+Nodes (34): aircraftSummary(), CombinedRangeField(), ConfiguringContent(), DateRangePickerHeadline(), DateRangePickerHeadlineCell(), DateRangeSection(), DeliveryFailure, DeliveryFailureSection() (+26 more)
+
+### Community 113 - "Community 113"
+Cohesion: 0.14
+Nodes (8): AuthFlow(), AuthStep, EmailSignIn, Login, NameEntry, Welcome, OnboardingPreferences, WelcomeScreen()
 
 ### Community 115 - "Community 115"
 Cohesion: 0.30
@@ -838,8 +824,8 @@ Cohesion: 0.16
 Nodes (10): EmojiFallbackProvider(), EmojiFallbackRegistrar(), initializeAppCheck(), ReCaptchaV3Provider, initializeApp(), createSqliteWorker(), initializeFirebase(), initializeFirebaseAppCheck() (+2 more)
 
 ### Community 117 - "Community 117"
-Cohesion: 0.20
-Nodes (7): MainActivity, Bundle, ComponentActivity, AttachmentOpenerAndroid, Flow, StateFlow, Intent
+Cohesion: 0.06
+Nodes (29): MainActivity, Bundle, ComponentActivity, blobRelativePath(), AttachmentOpenerAndroid, Flow, StateFlow, AttachmentOpener (+21 more)
 
 ### Community 118 - "Community 118"
 Cohesion: 0.29
@@ -850,8 +836,8 @@ Cohesion: 0.14
 Nodes (13): compileOnSave, compilerOptions, esModuleInterop, module, moduleResolution, outDir, rootDir, skipLibCheck (+5 more)
 
 ### Community 120 - "Community 120"
-Cohesion: 0.18
-Nodes (3): AuthManagerImpl, AuthCredential, FirebaseUser
+Cohesion: 0.15
+Nodes (6): AuthManagerImpl, FirebaseUser, getAuth(), GoogleAuthProvider, Promise, signInWithPopup()
 
 ### Community 121 - "Community 121"
 Cohesion: 0.23
@@ -866,24 +852,24 @@ Cohesion: 0.22
 Nodes (3): InviteLink, PendingInvite, InviteSheetViewModelTest
 
 ### Community 126 - "Community 126"
-Cohesion: 0.20
-Nodes (3): HydrationRunnerTest, ByteArray, WingsLogDatabase
+Cohesion: 0.15
+Nodes (4): HydrationRunner, HydrationRunnerTest, ByteArray, WingsLogDatabase
 
 ### Community 128 - "Community 128"
 Cohesion: 0.15
 Nodes (12): engines, node, main, name, private, scripts, build, deploy (+4 more)
 
 ### Community 129 - "Community 129"
-Cohesion: 0.22
-Nodes (10): createAircraftShareInvite, redeemAircraftShareInvite, fft, req(), sha256(), mintCode(), wrappedCancel, wrappedCreate (+2 more)
+Cohesion: 0.08
+Nodes (23): health_probe, HealthProbeResponse, cancelAircraftShareInvite, createAircraftShareInvite, redeemAircraftShareInvite, revokeAircraftShare, updateAircraftShareRole, getBlobUploadSession (+15 more)
 
 ### Community 130 - "Community 130"
-Cohesion: 0.17
-Nodes (8): revokeAircraftShare, fft, seedInvite(), sha256(), wrappedDeleted, wrappedRedeem, wrappedRevoke, wrappedUpdateRole
+Cohesion: 0.41
+Nodes (12): AdaptiveAppShell(), AdaptiveShellUiState, EmptyFleetScaffold(), EmptyFleetShell(), Modifier, SnackbarHostState, ShellAircraft, ShellForTier() (+4 more)
 
 ### Community 131 - "Community 131"
-Cohesion: 0.19
-Nodes (11): AppEntry(), authGraph(), NavController, shellGraph(), IntegrityRecoveryDialog(), RedeemHost(), NavController, NavigateToLoginOnSignOut() (+3 more)
+Cohesion: 0.11
+Nodes (21): AppEntry(), authGraph(), NavController, shellGraph(), IntegrityRecoveryDialog(), AdaptiveFormDialogFrame(), Modifier, RedeemHost() (+13 more)
 
 ### Community 133 - "Community 133"
 Cohesion: 0.24
@@ -893,17 +879,17 @@ Nodes (10): IconLabelTabRow(), IconLabelTabRowPreview(), IconLabelTabSpec, Modif
 Cohesion: 0.15
 Nodes (13): Technician profile mirror, Duplicate technician merge/reconcile, CollectionKind.Squawk, CollectionKind sealed type, Technician Feature Design Doc, TechnicianPickerSheet, Technician snapshot into log, Technician entity (+5 more)
 
-### Community 135 - "Community 135"
-Cohesion: 0.22
-Nodes (9): Done, Downloading, Failed, Exception, LegacyAttachment, OpenState, AttachmentOpenerIos, Flow (+1 more)
-
 ### Community 136 - "Community 136"
-Cohesion: 0.27
-Nodes (4): AttachmentOpenerWeb, ByteArray, Flow, StateFlow
+Cohesion: 0.31
+Nodes (7): DirtyRow, hostRootScope(), Flow, parseScopePath(), scopePrefixFor(), sharedAircraftIn(), sharedAircraftScopePrefix()
+
+### Community 137 - "Community 137"
+Cohesion: 0.17
+Nodes (4): FeatureFlags, FeatureLabManager, Flow, Result
 
 ### Community 138 - "Community 138"
-Cohesion: 0.26
-Nodes (4): AccountUpgradeViewModel, AuthCredential, StateFlow, ViewModel
+Cohesion: 0.19
+Nodes (9): AccountUpgradeViewModel, AuthCredential, StateFlow, ViewModel, Error, Idle, Success, UpgradeUiState (+1 more)
 
 ### Community 139 - "Community 139"
 Cohesion: 0.23
@@ -931,7 +917,7 @@ Nodes (6): AppDelegate, NativeGoogleSignInProvider, String, UIViewController, NS
 
 ### Community 145 - "Community 145"
 Cohesion: 0.29
-Nodes (3): PostWriteHook, BlobIndexReconciler, BlobIndexReconcilerTest
+Nodes (3): BlobIndexReconciler, ByteArray, BlobIndexReconcilerTest
 
 ### Community 146 - "Community 146"
 Cohesion: 0.23
@@ -982,8 +968,8 @@ Cohesion: 0.20
 Nodes (4): FirestoreSyncWriter, SyncDocWire, SyncWrite, SyncWriter
 
 ### Community 158 - "Community 158"
-Cohesion: 0.26
-Nodes (4): DiscardedWork, hostUidFromRoot(), SharedScopeJanitor, SyncPrefs
+Cohesion: 0.39
+Nodes (3): DiscardedWork, hostUidFromRoot(), SharedScopeJanitor
 
 ### Community 159 - "Community 159"
 Cohesion: 0.25
@@ -1014,12 +1000,16 @@ Cohesion: 0.29
 Nodes (4): Flow, MaintenanceLog, Result, MaintenanceLogManager
 
 ### Community 168 - "Community 168"
-Cohesion: 0.24
-Nodes (6): ActiveFilterChip(), FilterSheetContent(), FilterTypeRow(), Modifier, MaintenanceLogListContent(), MaintenanceLog
+Cohesion: 0.20
+Nodes (4): Flow, OnboardingActions, Flow, TechnicianOnboardingActions
 
 ### Community 169 - "Community 169"
-Cohesion: 0.25
-Nodes (9): Composable, Modifier, SettingsCard(), SettingsRowGroup(), SettingsRowGroupPreview(), Modifier, NavController, SettingsContent() (+1 more)
+Cohesion: 0.16
+Nodes (15): Composable, Modifier, SettingsCard(), SettingsRowGroup(), SettingsRowGroupPreview(), ImageVector, SettingsLevel, DANGER (+7 more)
+
+### Community 171 - "Community 171"
+Cohesion: 0.15
+Nodes (5): AircraftScopeResolverImpl, Flow, SharedAircraftRef, AircraftScopeResolverImplTest, SharedAircraftRef
 
 ### Community 172 - "Community 172"
 Cohesion: 0.18
@@ -1034,20 +1024,20 @@ Cohesion: 0.22
 Nodes (6): WingsLogApplication, Application, initKoin(), stressTestKoinModules(), KoinAppDeclaration, Module
 
 ### Community 177 - "Community 177"
-Cohesion: 0.29
-Nodes (7): AccountUpgradeResult, Cancelled, CredentialInUse, Failed, Linked, AuthCredential, AuthCredential
-
-### Community 178 - "Community 178"
-Cohesion: 0.22
-Nodes (3): BlobFilesystem, blobRelativePath(), ByteArray
+Cohesion: 0.23
+Nodes (8): AccountUpgradeResult, Cancelled, CredentialInUse, Failed, Linked, AuthCredential, AuthCredential, AuthCredential
 
 ### Community 179 - "Community 179"
-Cohesion: 0.27
-Nodes (4): EntityStore, Flow, T, T
+Cohesion: 0.31
+Nodes (8): SquawkWithStatus, toWithStatus(), DismissedHistoryRow(), logId, MaintenanceLog, Modifier, LogHistoryRow(), SquawkDetailSheet()
 
 ### Community 180 - "Community 180"
 Cohesion: 0.29
 Nodes (4): fileSizeParts(), formatFileSize(), StringResource, FormatFileSizeTest
+
+### Community 181 - "Community 181"
+Cohesion: 0.53
+Nodes (8): AvatarFallback(), AvatarIcon(), InitialsCircle(), Dp, DrawableResource, Modifier, TextStyle, toInitials()
 
 ### Community 184 - "Community 184"
 Cohesion: 0.29
@@ -1058,12 +1048,12 @@ Cohesion: 0.31
 Nodes (6): CameraPickerDelegate, NSObject, rememberCameraCapture(), UIImagePickerController, UIImagePickerControllerDelegateProtocol, UINavigationControllerDelegateProtocol
 
 ### Community 186 - "Community 186"
-Cohesion: 0.24
-Nodes (8): ExportFormat, CSV, PDF, XLSX, FormatSection(), Composable, Section(), SectionHeader()
+Cohesion: 0.33
+Nodes (5): ExportFormat, CSV, PDF, XLSX, joinFormats()
 
 ### Community 187 - "Community 187"
-Cohesion: 0.31
-Nodes (9): HeaderCell(), HeaderRow(), MaintenanceLog, Modifier, LogRow(), MaintenanceLogTable(), primaryTableHours(), LazyListState (+1 more)
+Cohesion: 0.36
+Nodes (8): DueDateHero(), dueStatusColor(), Color, MaintenanceLog, Modifier, LogHistoryItem(), StatusBadge(), TaskDetailSheet()
 
 ### Community 188 - "Community 188"
 Cohesion: 0.40
@@ -1074,20 +1064,20 @@ Cohesion: 0.27
 Nodes (4): AircraftShareDeepLinks, StateFlow, formatInviteCode(), normalizeInviteCode()
 
 ### Community 190 - "Community 190"
-Cohesion: 0.20
-Nodes (3): StateFlow, ViewModel, StressTestViewModel
+Cohesion: 0.10
+Nodes (17): Done, Error, Idle, StateFlow, ViewModel, Running, StressTestProgressStep, CreatingAircraft (+9 more)
 
 ### Community 192 - "Community 192"
 Cohesion: 0.24
 Nodes (3): AnalyticsSyncTelemetry, NoOp, SyncTelemetry
 
 ### Community 193 - "Community 193"
-Cohesion: 0.42
-Nodes (3): Flow, T, SqlDelightEntityStore
+Cohesion: 0.43
+Nodes (6): Local, LocalLink, PendingAttachment, PendingDelete, Saved, visible()
 
 ### Community 194 - "Community 194"
-Cohesion: 0.25
-Nodes (6): ColorScheme, platformColorScheme(), WingslogTheme(), Modifier, SyncHeroIllustration(), SyncHeroIllustrationInactivePreview()
+Cohesion: 0.15
+Nodes (13): ColorScheme, platformColorScheme(), WingslogTheme(), FontFamily, TextStyle, rememberBrandHeadlineFamily(), rememberJetBrainsMonoFamily(), rememberWingslogTypography() (+5 more)
 
 ### Community 195 - "Community 195"
 Cohesion: 0.33
@@ -1110,8 +1100,8 @@ Cohesion: 0.31
 Nodes (6): FeatureLabManagerImpl, Flow, Result, toFeatureFlags(), toProto(), FeatureLabSettings
 
 ### Community 202 - "Community 202"
-Cohesion: 0.42
-Nodes (8): BadgeScheme, badgeSchemeFor(), ComponentTypeBadge(), MaintenanceLog, Modifier, MaintenanceLogCard(), PreviewMaintenanceLogCard(), primaryHours()
+Cohesion: 0.32
+Nodes (5): ComponentSection(), Modifier, ReadOnlyComponentField(), Modifier, SubComponentDropdown()
 
 ### Community 203 - "Community 203"
 Cohesion: 0.22
@@ -1146,12 +1136,12 @@ Cohesion: 0.29
 Nodes (7): AnnotatedString, Modifier, PreviewBanner(), PreviewBannerTone, Active, Neutral, Warn
 
 ### Community 212 - "Community 212"
-Cohesion: 0.29
-Nodes (6): WingsLogTopAppBar(), FeatureLabScreen(), FeatureToggleRow(), ImageVector, NavController, TopAppBarScrollBehavior
+Cohesion: 0.15
+Nodes (9): WingsLogTopAppBar(), FeatureLabScreen(), FeatureToggleRow(), ImageVector, NavController, FeatureLabViewModel, StateFlow, ViewModel (+1 more)
 
 ### Community 214 - "Community 214"
-Cohesion: 0.36
-Nodes (7): FontFamily, TextStyle, rememberBrandHeadlineFamily(), rememberJetBrainsMonoFamily(), rememberWingslogTypography(), WingslogTypography, Typography
+Cohesion: 0.29
+Nodes (3): createWingsLogDatabase(), SqlDriver, WingsLogDatabase
 
 ### Community 215 - "Community 215"
 Cohesion: 0.25
@@ -1166,8 +1156,8 @@ Cohesion: 0.46
 Nodes (7): BlobSyncState, Downloading, PendingUpload, RemoteOnly, Synced, UploadFailed, Uploading
 
 ### Community 220 - "Community 220"
-Cohesion: 0.25
-Nodes (7): ExportProgressStep, BUILDING_ARCHIVE, COLLECTING_DATA, COMPRESSING_ARCHIVE, SAVING_FILE, UPLOADING_ARCHIVE, exportRunningPhases()
+Cohesion: 0.29
+Nodes (6): ExportProgressStep, BUILDING_ARCHIVE, COLLECTING_DATA, COMPRESSING_ARCHIVE, SAVING_FILE, UPLOADING_ARCHIVE
 
 ### Community 223 - "Community 223"
 Cohesion: 0.32
@@ -1178,12 +1168,12 @@ Cohesion: 0.43
 Nodes (7): ConfigSection(), displayText(), NavController, SliderRow(), StepperRow(), StressTestScreen(), IntRange
 
 ### Community 225 - "Community 225"
-Cohesion: 0.43
-Nodes (6): Done, Error, Idle, Running, StressTestState, StressTestSummary
+Cohesion: 0.33
+Nodes (3): Flow, QuotaChecker, State
 
 ### Community 226 - "Community 226"
-Cohesion: 0.25
-Nodes (8): StressTestProgressStep, CreatingAircraft, CreatingLog, CreatingSquawk, CreatingTask, CreatingTechnician, DismissingSquawk, MarkingSquawkAddressed
+Cohesion: 0.43
+Nodes (5): Loading, PickError, Success, TaskFormEvent, TaskUiState
 
 ### Community 229 - "Community 229"
 Cohesion: 0.36
@@ -1192,6 +1182,10 @@ Nodes (4): ResourceReader, ByteArray, ProvideWholeFileResourceReader(), WholeFil
 ### Community 230 - "Community 230"
 Cohesion: 0.29
 Nodes (7): dependencies, @bufbuild/protobuf, firebase-admin, firebase-functions, @bufbuild/protobuf, firebase-admin, firebase-functions
+
+### Community 231 - "Community 231"
+Cohesion: 0.33
+Nodes (5): CircularImage(), Dp, DrawableResource, Modifier, Shape
 
 ### Community 233 - "Community 233"
 Cohesion: 0.33
@@ -1214,8 +1208,8 @@ Cohesion: 0.38
 Nodes (7): Intelligent Search Implementation, FTS5 Trigram Tokenizer, MediaPipe Text Embedder (all-MiniLM-L6-v2), NLEmbedding (Apple Neural Engine), Reciprocal Rank Fusion, sqlite-vec extension, Vector Embeddings
 
 ### Community 239 - "Community 239"
-Cohesion: 0.52
-Nodes (6): AttachmentStatus, Failed, LocalOnly, RemoteOnly, Synced, Uploading
+Cohesion: 0.83
+Nodes (3): Modifier, LogStatsSection(), StatCell()
 
 ### Community 242 - "Community 242"
 Cohesion: 0.38
@@ -1230,20 +1224,12 @@ Cohesion: 0.52
 Nodes (6): DeleteSuccess, FileAdded, LinkAdded, MaintenanceLogFormEvent, PickError, SaveSuccess
 
 ### Community 245 - "Community 245"
-Cohesion: 0.43
-Nodes (5): Error, Loading, LogFilter, MaintenanceLogListUiState, Success
-
-### Community 246 - "Community 246"
-Cohesion: 0.38
-Nodes (6): ImageVector, SettingsLevel, DANGER, DEFAULT, SettingsRow(), SettingsRowPreview()
+Cohesion: 0.50
+Nodes (3): ExportDeliveryEmailSource, AUTH_FALLBACK, EXPLICIT
 
 ### Community 247 - "Community 247"
 Cohesion: 0.29
 Nodes (3): EnterInviteCodeRoute(), NavController, EnterInviteCodeScreen()
-
-### Community 249 - "Community 249"
-Cohesion: 0.38
-Nodes (3): BrowserTitleAnalytics, prettifyScreenName(), webPageTitle()
 
 ### Community 250 - "Community 250"
 Cohesion: 0.33
@@ -1252,10 +1238,6 @@ Nodes (3): App, iosApp, Scene
 ### Community 251 - "Community 251"
 Cohesion: 0.53
 Nodes (4): Failed, InvalidEmail, SendLinkResult, Sent
-
-### Community 252 - "Community 252"
-Cohesion: 0.47
-Nodes (4): getAuth(), GoogleAuthProvider, Promise, signInWithPopup()
 
 ### Community 253 - "Community 253"
 Cohesion: 0.60
@@ -1273,29 +1255,13 @@ Nodes (6): CsvWriter (RFC 4180), ExportManager interface, Logbook Export (Design
 Cohesion: 0.33
 Nodes (6): Adaptive Layout Redesign, AdaptiveAppShell, AdaptiveDetailContainer, Ambient aircraft selection (switcher), LayoutTier window-size model, NavigationSuiteScaffold
 
-### Community 257 - "Community 257"
-Cohesion: 0.53
-Nodes (5): grantCameraUriPermission(), Context, rememberCameraCapture(), toFileProviderUri(), Uri
-
 ### Community 258 - "Community 258"
 Cohesion: 0.47
 Nodes (4): ExportDeliveryBackend, ExportDeliveryResult, RequestExportDeliveryRequestData, RequestExportDeliveryResponseData
 
 ### Community 260 - "Community 260"
-Cohesion: 0.60
-Nodes (5): Configuring, Error, ExportUiState, Running, Success
-
-### Community 261 - "Community 261"
-Cohesion: 0.33
-Nodes (3): FeatureLabManager, Flow, Result
-
-### Community 262 - "Community 262"
-Cohesion: 0.33
-Nodes (3): FeatureLabViewModel, StateFlow, ViewModel
-
-### Community 263 - "Community 263"
-Cohesion: 0.60
-Nodes (5): Error, Idle, Success, UpgradeUiState, Working
+Cohesion: 0.20
+Nodes (12): ExportBottomBar(), MetaDot(), rangeSummary(), DateRangeOption, AllTime, Custom, Last12Months, Configuring (+4 more)
 
 ### Community 264 - "Community 264"
 Cohesion: 0.40
@@ -1321,17 +1287,9 @@ Nodes (5): AnalyticsManager (core:analytics), login_state user property, Missing
 Cohesion: 0.50
 Nodes (5): Codebase Cleanup Plan, feature:shell shared nav graph module, LocalBlobStore moved to core:storage.blob, Feature managers never touch Firestore, Firestore sync engine (feature/sync)
 
-### Community 272 - "Community 272"
-Cohesion: 0.40
-Nodes (3): AttachmentOpener, Flow, StateFlow
-
 ### Community 273 - "Community 273"
 Cohesion: 0.40
 Nodes (4): Promise, getDirectory, rootPromise, storage
-
-### Community 274 - "Community 274"
-Cohesion: 0.70
-Nodes (4): Done, Downloading, DownloadState, Failed
 
 ### Community 275 - "Community 275"
 Cohesion: 0.70
@@ -1344,10 +1302,6 @@ Nodes (4): AllTime, Custom, ExportDateRange, LastNMonths
 ### Community 277 - "Community 277"
 Cohesion: 0.40
 Nodes (4): ExportDisplayLocation, DOWNLOADS_SQUAWKIT, FILES_SQUAWKIT, UNKNOWN
-
-### Community 279 - "Community 279"
-Cohesion: 0.40
-Nodes (4): DateRangeOption, AllTime, Custom, Last12Months
 
 ### Community 286 - "Community 286"
 Cohesion: 0.40
@@ -1381,6 +1335,10 @@ Nodes (4): Play Store Promo: Your Fleet, At a Glance (Fleet Overview), Play Stor
 Cohesion: 0.67
 Nodes (4): Play Store Promo: Every Entry, Fully Documented (Maintenance Logs), Play Store Promo: Every Task, On the Record (Work Logs), Maintenance Logs, Work Logs
 
+### Community 299 - "Community 299"
+Cohesion: 0.11
+Nodes (9): ByteArray, ZipFileWriter, ZipEntryPayload, ByteArray, ZipFileWriter, ByteArray, ZipFileWriter, ByteArray (+1 more)
+
 ### Community 305 - "Community 305"
 Cohesion: 0.83
 Nodes (3): gradlew script, die(), warn()
@@ -1389,29 +1347,25 @@ Nodes (3): gradlew script, die(), warn()
 Cohesion: 0.67
 Nodes (3): Screenshot Generator HTML Template, Play Store Screenshot Generator README, No per-user data on screenshot canvas
 
-### Community 493 - "SyncSettingsViewModel"
-Cohesion: 0.33
-Nodes (4): StateFlow, ViewModel, SyncSettingsUiState, SyncSettingsViewModel
-
 ## Knowledge Gaps
-- **307 isolated node(s):** `no-bare-koin-get.sh script`, `no-escape-chars.sh script`, `private`, `main`, `node` (+302 more)
+- **308 isolated node(s):** `fft`, `wrappedUploadSession`, `no-bare-koin-get.sh script`, `no-escape-chars.sh script`, `private` (+303 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **89 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **83 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `BlobId` connect `Local Blob Store (BlobId)` to `Community 135`, `Community 136`, `Community 145`, `Blob Store (SQLDelight/Sha256)`, `Attachment Manager Tests`, `BlobRef Store`, `Tombstone GC`, `iOS Blob Upload (URLSession)`, `Blob Delete Worker`, `Community 175`, `Attachment Refs & CollectionKind`, `Community 178`, `Storage Quota Checker`, `Community 60`, `Community 74`, `Community 204`, `Community 205`, `Community 111`, `Community 241`, `Community 117`?**
-  _High betweenness centrality (0.147) - this node is a cross-community bridge._
-- **Why does `Attachment` connect `Maintenance Log Proto Codec` to `Blob GC / Record Deletion`, `Community 68`, `Maintenance Task Proto`, `Community 111`?**
-  _High betweenness centrality (0.131) - this node is a cross-community bridge._
-- **Why does `Aircraft` connect `Community 80` to `Community 64`, `Tombstone GC`, `Edit Aircraft ViewModel`, `Logbook Export Archive Builder`, `Community 198`, `Community 199`, `Community 101`, `Fake Data Generator`, `Attachment Refs & CollectionKind`, `Community 113`, `Community 55`, `Community 56`, `Community 92`, `Community 63`?**
+- **Why does `BlobId` connect `Local Blob Store (BlobId)` to `Tombstone GC`, `Community 225`, `iOS Blob Upload (URLSession)`, `Attachment Form Controller`, `Community 74`, `Blob Delete Worker`, `Community 204`, `Community 205`, `Community 175`, `Attachment Refs & CollectionKind`, `Community 145`, `Community 241`, `Storage Quota Checker`, `Community 117`, `Blob Store (SQLDelight/Sha256)`, `Attachment Manager Tests`, `Community 60`, `BlobRef Store`?**
+  _High betweenness centrality (0.148) - this node is a cross-community bridge._
+- **Why does `Attachment` connect `Maintenance Log Proto Codec` to `Attachment Form Controller`, `Community 68`, `Maintenance Task Proto`?**
+  _High betweenness centrality (0.124) - this node is a cross-community bridge._
+- **Why does `Aircraft` connect `Community 80` to `Community 64`, `Tombstone GC`, `Edit Aircraft ViewModel`, `Community 101`, `Community 198`, `Community 199`, `Community 202`, `Fake Data Generator`, `Attachment Refs & CollectionKind`, `Community 55`, `Community 87`, `Community 56`, `Community 92`, `Community 63`?**
   _High betweenness centrality (0.124) - this node is a cross-community bridge._
 - **Are the 57 inferred relationships involving `BlobId` (e.g. with `.open()` and `.onEntityWritten()`) actually correct?**
   _`BlobId` has 57 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 5 inferred relationships involving `LogbookExportArchiveBuilder` (e.g. with `.buildEntries_embedsAttachmentPayloadsAndLinksCsvRows()` and `.buildEntries_multiAircraftUsesOneFolderPerAircraftAndRootReadme()`) actually correct?**
   _`LogbookExportArchiveBuilder` has 5 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `no-bare-koin-get.sh script`, `no-escape-chars.sh script`, `private` to the rest of the system?**
-  _307 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `fft`, `wrappedUploadSession`, `no-bare-koin-get.sh script` to the rest of the system?**
+  _308 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Cloud Functions Auth & Callables` be split into smaller, more focused modules?**
-  _Cohesion score 0.07526881720430108 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07936507936507936 - nodes in this community are weakly interconnected._
