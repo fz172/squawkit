@@ -57,6 +57,7 @@ import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -317,7 +318,9 @@ fun MaintenanceLogListContent(
                   start = Spacing.screenPadding,
                   end = Spacing.screenPadding,
                   top = Spacing.small,
-                  bottom = Spacing.buttonHeight + Spacing.extraLarge
+                  // Room for the add-FAB, plus the floating pill this list now scrolls beneath
+                  // (LocalNavPillClearance is 0 on non-compact tiers, where there is no pill).
+                  bottom = Spacing.buttonHeight + Spacing.extraLarge + LocalNavPillClearance.current
                 ),
                 verticalArrangement = Arrangement.spacedBy(Spacing.medium)
               ) {

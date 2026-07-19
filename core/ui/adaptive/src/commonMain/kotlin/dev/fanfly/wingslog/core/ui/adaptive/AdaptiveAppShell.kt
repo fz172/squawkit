@@ -1,14 +1,18 @@
 package dev.fanfly.wingslog.core.ui.adaptive
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -56,13 +60,16 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingNavItem
+import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingPillNavBarHeight
 import dev.fanfly.wingslog.core.ui.adaptive.compose.FloatingPillNavigationBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
@@ -630,6 +637,14 @@ private fun ScaffoldShell(
   BackHandler(enabled = state.section == ShellSection.SETTINGS) {
     onSelectSection(backTarget.value)
   }
+  // Settings runs full-screen with no nav container, so hide the pill there; the top-bar back arrow
+  // (wired via onExitSettings) is the way out.
+  val showPill = state.section != ShellSection.SETTINGS
+  // The pill is a bottom overlay, not a scaffold bar, so section content scrolls edge-to-edge
+  // underneath it. Content clears it via LocalNavPillClearance = the live nav-bar inset plus the
+  // pill's own height. Zero when the pill is hidden (Settings), so nothing over-pads there.
+  val navBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+  val pillClearance = if (showPill) navBarInset + FloatingPillNavBarHeight else 0.dp
   ShellContent(
     state = state,
     // The switcher lives in the top bar on COMPACT — there is no sidebar to host it, so it is the
@@ -642,10 +657,18 @@ private fun ScaffoldShell(
     onExitSettings = { onSelectSection(backTarget.value) },
     content = content,
     fab = fab,
-    bottomBar = {
-      // Settings runs full-screen with no nav container, so hide the pill there; the top-bar back
-      // arrow (wired via onExitSettings) is the way out.
-      if (state.section != ShellSection.SETTINGS) {
+    edgeToEdgeBottom = true,
+    contentBottomClearance = pillClearance,
+    bottomOverlay = {
+      if (showPill) {
+        // Section add-FAB rides above the pill at the trailing edge (empty for sections, e.g.
+        // Dashboard, that have no add action — an empty box then draws nothing).
+        Box(
+          modifier = Modifier.align(Alignment.BottomEnd)
+            .padding(end = 16.dp, bottom = pillClearance),
+        ) {
+          fab()
+        }
         FloatingPillNavigationBar(
           items = PER_AIRCRAFT_SECTIONS.map { s ->
             FloatingNavItem(
@@ -655,6 +678,7 @@ private fun ScaffoldShell(
               onClick = { onSelectSection(s) },
             )
           },
+          modifier = Modifier.align(Alignment.BottomCenter),
         )
       }
     },
@@ -684,10 +708,16 @@ private fun ShellContent(
   content: @Composable () -> Unit,
   // Per-section FAB; the host decides which sections show one. Settings never does.
   fab: @Composable () -> Unit = {},
-  // Bottom nav container. Empty on sidebar tiers (the sidebar is the nav); on COMPACT it carries the
-  // floating pill. As a real scaffold bottomBar it reserves height for content above and lifts the
-  // FAB / snackbars over it.
-  bottomBar: @Composable () -> Unit = {},
+  // Bottom overlay drawn over the content (aligns itself within the content Box). Empty on sidebar
+  // tiers; on COMPACT it carries the floating pill, which rides above the content rather than
+  // reserving layout height, so the content scrolls edge-to-edge beneath it.
+  bottomOverlay: @Composable BoxScope.() -> Unit = {},
+  // COMPACT only: lets content run under the pill / system nav bar (bottom inset dropped) and lifts
+  // the FAB and snackbars above the pill by [contentBottomClearance].
+  edgeToEdgeBottom: Boolean = false,
+  // Bottom padding the section content, FAB, and snackbars must add to clear the floating pill.
+  // Published to content via [LocalNavPillClearance]; 0 on tiers without a pill.
+  contentBottomClearance: Dp = 0.dp,
   snackbarHostState: SnackbarHostState,
 ) {
   // Full-screen Settings (compact) has no bottom nav bar to occupy the system navigation-bar area,
@@ -698,21 +728,29 @@ private fun ShellContent(
     onExitSettings != null && state.section == ShellSection.SETTINGS
   Scaffold(
     // Settings is full-screen and has no add action; suppress the FAB there. The FAB rides the
-    // trailing edge of the same width-capped frame as the content so they stay aligned on LARGE.
+    // trailing edge of the same width-capped frame as the content so they stay aligned on LARGE. On
+    // COMPACT the FAB instead rides in the bottom overlay above the floating pill (see the caller's
+    // bottomOverlay), so the scaffold slot is used only on the sidebar tiers.
     floatingActionButton = {
-      if (state.section != ShellSection.SETTINGS) {
+      if (!edgeToEdgeBottom && state.section != ShellSection.SETTINGS) {
         ConstrainedFloatingAction(ContentWidth.Pane) { fab() }
       }
     },
     contentWindowInsets =
-      if (fullScreenSettings) {
+      if (fullScreenSettings || edgeToEdgeBottom) {
+        // Let content run edge-to-edge under the floating pill / system nav bar; the section lists
+        // re-add the bottom space they need via LocalNavPillClearance.
         ScaffoldDefaults.contentWindowInsets
           .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
       } else {
         ScaffoldDefaults.contentWindowInsets
       },
-    snackbarHost = { SnackbarHost(snackbarHostState) },
-    bottomBar = bottomBar,
+    // Lift snackbars above the pill too, so a "changes discarded" notice isn't hidden behind it.
+    snackbarHost = {
+      Box(modifier = Modifier.padding(bottom = if (edgeToEdgeBottom) contentBottomClearance else 0.dp)) {
+        SnackbarHost(snackbarHostState)
+      }
+    },
     topBar = {
       if (showTopBar) {
         // The bar shares the content column's width cap so the title and actions line up with the
@@ -760,17 +798,20 @@ private fun ShellContent(
     // Cap the section body at the pane width so content stays readable on very wide windows
     // (github.com/fz172/squawkit/issues/101). Only LARGE panes are wide enough for the cap to bite;
     // narrower tiers keep filling the window as before.
-    Box(
-      modifier = Modifier.fillMaxSize()
-        .padding(padding),
-      contentAlignment = Alignment.TopCenter,
-    ) {
+    Box(modifier = Modifier.fillMaxSize().padding(padding)) {
       Box(
         modifier = Modifier.constrainedContentWidth(ContentWidth.Pane)
           .fillMaxHeight()
+          .align(Alignment.TopCenter)
       ) {
-        content()
+        // Section lists read this to pad their bottom so their last rows clear the floating pill they
+        // now scroll beneath.
+        CompositionLocalProvider(LocalNavPillClearance provides contentBottomClearance) {
+          content()
+        }
       }
+      // The floating pill (or nothing, on sidebar tiers) rides above the content, aligning itself.
+      bottomOverlay()
     }
   }
 }

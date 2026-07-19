@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.ComplianceSection
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
@@ -62,7 +63,9 @@ fun MaintenanceTasksTab(
       .fillMaxSize()
       .verticalScroll(scrollState)
       .onGloballyPositioned { contentTopY = it.positionInRoot().y }
-      .padding(horizontal = Spacing.screenPadding),
+      .padding(horizontal = Spacing.screenPadding)
+      // Clear the floating pill this content now scrolls beneath (0 on non-compact tiers).
+      .padding(bottom = LocalNavPillClearance.current),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
   ) {
     Spacer(Modifier.height(Spacing.medium))
