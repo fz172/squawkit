@@ -67,6 +67,8 @@
     .yes { color: var(--green); font-weight: 700; }
     .no { color: var(--red); font-weight: 700; }
     @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
+    pre.mermaid { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 16px 0; text-align: center; overflow-x: auto; line-height: normal; white-space: normal; box-shadow: 0 1px 2px rgba(18,32,51,0.04); }
+    .diagram-caption { font-size: 0.9rem; color: var(--muted); margin: 4px 0 0; }
   </style>
 </head>
 <body>
@@ -419,8 +421,188 @@ match /aircraft_shares/{acId} {
         <li>Share ACL state (Manage Access) is online-only; role for UI gating comes from the offline-correct local refs store.</li>
       </ul>
 
-      <h2 id="attachments">9. Attachments (R2) — fast-follow, not v1</h2>
-      <p>Blob objects live in Firebase Storage under user-scoped paths with matching Storage rules and a per-scope transfer pipeline keyed to <code>/users/{uid}/%</code> (see <a href="../storage/storage_r2_design.md">R2 design</a>). Shared attachments need: Storage rules consulting <code>aircraft_shares</code> (Storage rules can't <code>get()</code> Firestore — likely custom-claims or a token-minting function), and widening the blob drivers' scope prefixes like §5.3. Since attachment UI is itself behind <code>attachmentUploadEnabled</code>, v1 ships proto-level sharing only; attachment rows on shared aircraft render as unavailable ("attachment not shared yet") rather than broken.</p>
+      <h2 id="attachments">9. Attachments across shared aircraft</h2>
+
+      <div class="callout note">
+        <strong>Implementation Status</strong>
+        Designed here; <b>not yet built</b>. Sharing v1 ships an honest degradation (issue #146): a member sees the attachment exists and is told it is not available on a shared aircraft, the attach affordance is hidden, and plain link URLs in the payload still work. This section is the design for the fast-follow, tracked as epic <b>#196 [P8]</b> and its sub-issues (P8.1–P8.8). It supersedes the earlier "custom-claims, maybe" sketch.
+      </div>
+
+      <p>Blob objects live in Firebase Storage under user-scoped paths, with matching Storage rules and a per-scope transfer pipeline keyed to <code>/users/{uid}/%</code> (see <a href="../storage/storage_r2_design.md">R2 design</a>). An attachment on aircraft <code>acId</code> hosted by <code>hostUid</code> lands at <code>users/{hostUid}/aircraft/{acId}/blobs/{blobId}</code>. Firestore record data crosses the account boundary via the <code>aircraft_shares</code> ACL; the blobs hanging off those records do not.</p>
+
+      <h3>9.1 The blocker is structural</h3>
+      <p><code>storage.rules</code> is strictly <code>request.auth.uid == userId</code> for <b>read and write</b>, so a member can neither fetch a host's attachment nor upload one. This is not a missing <code>if</code>: <b>Storage rules cannot <code>get()</code> Firestore</b>, so they cannot consult the <code>aircraft_shares</code> ACL to authorize a cross-tree read. Crossing the boundary needs either a server-side broker or custom claims.</p>
+
+      <h3>9.2 Chosen approach — authorizing broker</h3>
+      <p><b>Hard requirement (decided):</b> content must not leak by any means, and revocation of read access must be <b>instant</b> — the ACL is checked immediately before every download begins. That requirement, not cost, picks the mechanism.</p>
+      <p>A Cloud Function is the <b>only</b> path across trees. For <b>reads</b> it is an <b>authorizing proxy</b>: on every request it re-checks the <code>aircraft_shares</code> ACL and, only if the caller is still a member, streams the object's bytes through itself — nothing revocable-only-by-expiry is ever handed to the client. For <b>writes</b> it mints a resumable upload session. <code>storage.rules</code> stay uid-scoped and closed.</p>
+      <table>
+        <thead><tr><th>Approach</th><th>How</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>A. Authorizing broker</b></td>
+            <td><b>Reads:</b> the function checks membership in <code>aircraft_shares/{acId}</code> at request time and <b>streams the object through itself</b> — no URL handed out. <b>Writes:</b> it mints a resumable-upload session into the host's tree. Rules never change.</td>
+            <td><span class="yes">Chosen.</span> Reads are authorized right before each stream begins, so revocation is <b>instant</b> and there is <b>no bearer URL to leak</b> (§9.2.1). Cost: download bytes flow through the function (egress + a held connection).</td>
+          </tr>
+          <tr>
+            <td>B. Signed download URLs</td>
+            <td>Callable checks the ACL once, then returns a short-lived <b>signed URL</b> the client fetches directly from Storage.</td>
+            <td><span class="no">Rejected.</span> A signed URL is a <b>bearer credential</b> — checked only at mint time, then usable by anyone holding it until it expires. That is a leak (§9.2.1) and revocation is not instant. Disqualified by the requirement above.</td>
+          </tr>
+          <tr>
+            <td>C. Custom claims</td>
+            <td>Put shared aircraft ids in the auth token so Storage rules check them directly.</td>
+            <td><span class="no">Rejected</span> (same as sharing v1): claims have a size cap, and <b>revocation does not take effect until the token refreshes</b> — an ex-member keeps blob access for up to an hour.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>The broker lives under <code>backend/firebase/functions/src/storage/</code> (alongside <code>blobRefs.ts</code>, <code>storageSweep.ts</code>) and reuses the ACL-check helper the existing sharing functions already use (<code>revokeAircraftShare</code>, <code>updateAircraftShareRole</code>, <code>onAircraftDeleted</code>).</p>
+
+      <h4>9.2.1 Reads go through an authorizing proxy, not a signed URL</h4>
+      <p>A signed URL cannot meet the requirement: it is a <b>bearer credential</b> whose ACL is checked once, at mint time, and then works for anyone who holds it until it expires. That leaves two gaps the requirement forbids — a member revoked just after minting keeps reading until the TTL lapses, and a leaked URL is usable by <i>anyone</i> for that same window. Shrinking the TTL narrows both but never closes them, so signed URLs are out for downloads.</p>
+      <p>The download path is therefore an <b>authorizing streaming proxy</b>: an authenticated HTTPS function (the caller presents their Firebase ID token) that, on <i>every</i> request, re-reads <code>aircraft_shares/{acId}</code> and only if the caller is still a member reads the object from the host tree and pipes the bytes back. Because nothing bearer is ever handed to the client:</p>
+      <ul>
+        <li><b>Revocation is instant.</b> The first request after the ACL drops the member is refused — no residual window.</li>
+        <li><b>Nothing leaks.</b> There is no URL to share; the endpoint is useless without the caller's own auth token, which the function verifies server-side on every request.</li>
+        <li><b>The check is at begin-time,</b> exactly as required. A transfer already streaming was authorized when it started; a member revoked mid-stream simply cannot begin the next one. (If even in-flight cut-off is ever wanted, the proxy can abort the stream on a live ACL change — not needed for v1.)</li>
+      </ul>
+      <p>Cost is the deliberate trade: download bytes flow through the function (egress, plus the connection is held for the transfer) rather than direct from Storage. Attachments are MB-scale and the functions run on <b>Gen2 (Cloud Run)</b> with streamed responses and long timeouts, so a slow download just holds its connection until done — there is no TTL to trip. A pathologically large blob on a slow link becomes a function-timeout tuning question, not a security one.</p>
+      <p><b>Uploads keep a resumable session</b>, and that is safe without a proxy. An upload is not a content leak — it adds bytes, it does not exfiltrate them — and a write by a just-revoked member is inert: the object lands <i>unreferenced</i>, because the only way to make it visible is a Firestore record write, which the ACL denies <b>instantly</b>; the orphan is then reclaimed by the sweep (§9.6). The ACL is still checked at session creation, so a non-member gets no session at all. (Streaming large uploads through a function would also collide with request-size limits — resumable sessions exist precisely to avoid that.)</p>
+
+      <p><b>The functions.</b> The broker is two:</p>
+      <ul>
+        <li><code>streamBlob(hostUid, acId, blobId)</code> — authenticated HTTPS function; <b>ACL check per request</b> → streams the object's bytes (reads).</li>
+        <li><code>getBlobUploadSession(hostUid, acId, blobId)</code> — ACL + entitlement check → resumable <b>upload session</b>, stamping <code>writer_uid</code> (writes).</li>
+      </ul>
+      <p>Two more touch P8 but are <i>not</i> the broker: the <b>entitlement projector</b> maintaining <code>aircraft_shares.attachmentsEnabled</code> (§9.7, P8.7) and the reused <b><code>storageSweep</code></b> (§9.6, P7). Four functions touch attachments-on-shared; two are the broker.</p>
+
+      <h3>9.3 One canonical blob, no mirrors</h3>
+      <p>Requirement 2: <b>one canonical blob per attachment, in the host's tree.</b> Copying blobs per member is explicitly out of scope — it multiplies storage cost and creates divergent copies of the same file. Every member reads and writes the same object through the broker; only <i>local caches</i> are per-device.</p>
+
+      <h3>9.4 Client scope widening</h3>
+      <p>Today the blob machinery only ever looks at the signed-in user's own tree, so a member's blobs on a shared aircraft are invisible to sync. Mirror the push-queue prefix widening of §5.3. Known gaps (all need fixing regardless of approach):</p>
+      <ul>
+        <li><code>SqlDelightLocalBlobStore</code> — the scheduler only scans <code>"/users/{myUid}/%"</code>, so a member's shared-aircraft blobs are never uploaded or downloaded.</li>
+        <li><code>AircraftOverviewViewModel.observeBlobStates</code> — hardcoded to <code>/users/{myUid}/aircraft/{acId}/</code>, the wrong prefix for a shared aircraft, so sync state never resolves.</li>
+        <li><code>BlobIndexReconciler</code> prefetch and the upload/download/delete drivers assume own-tree paths.</li>
+      </ul>
+      <p><code>AircraftScopeResolver</code> already resolves an aircraft id to the correct host-scoped <code>EntityScope</code> (own vs. shared, via the member's <code>shared_aircraft_ref</code>); the widened scopes drive off it rather than re-deriving paths. The drivers then branch on scope: own tree → the existing direct Storage path; foreign host → the §9.2 broker.</p>
+
+      <h3>9.5 Authorship</h3>
+      <p>A member's upload is attributable, exactly as <code>writer_uid</code> attests record writes (§7.5): the broker stamps the uploading member on the object so "who added this" survives across accounts.</p>
+
+      <h3>9.6 Revoke and deletion</h3>
+      <ul>
+        <li><b>Revoke never deletes host bytes</b> (requirement 3). Removing member B purges B's <i>local cache</i> only; the canonical blob stays put and reachable for the host and every remaining member. <code>revokeAircraftShare</code> / <code>onAircraftDeleted</code> must not touch <code>users/{hostUid}/…/blobs</code>.</li>
+        <li><b>Deletion cleans up for everyone</b> (requirement 4). Deleting an attachment, its parent record, or the aircraft tombstones the blob, and the cross-account sweep from [P7] #155 (<code>onRecordDeleted.ts</code>, <code>storageSweep.ts</code>) reclaims the bytes — no orphans accruing cost. A member-initiated delete must produce a tombstone the sweep picks up, not be dropped as a foreign-tree write.</li>
+      </ul>
+
+      <h3>9.7 Entitlement — the storage owner pays</h3>
+      <p>Attachments are gated (behind <code>attachmentUploadEnabled</code> in Feature Lab today, a <b>paywall</b> later), so the design takes an entitlement, not a dev flag. The decisive move: the gate is a property of the <b>aircraft</b>, not the user.</p>
+      <pre><code>attachmentsEnabled(acId) = entitlement(hostUid of acId)</code></pre>
+      <p>Whoever's storage holds the blob is who pays for it — the hosting owner. So an unsubscribed technician can <b>view and upload</b> (not view-only) on an aircraft whose owner has paid, and gets nothing on their own unpaid tree. A member must not be able to read the host's billing, so the host's entitlement is <b>projected</b> onto a rules-readable boolean on the ACL root — the same move the ACL already makes for roles: the fact is readable, the payload stays private.</p>
+      <pre><code>aircraft_shares/{acId}: { hostUid, memberRoles, attachmentsEnabled: true }</code></pre>
+      <p>A function maintains <code>attachmentsEnabled</code> when the host's subscription changes; the broker (§9.2) and the client drivers (§9.4) consult it. The <b>owner-only</b> toggle surfaces inside the <b>Edit Aircraft</b> page, where the aircraft's other properties live — making the scoping legible: you are enabling attachments <i>for this aircraft</i>, on the owner's storage and the owner's bill.</p>
+      <div class="callout note">
+        <strong>Decisions</strong>
+        <b>Lapse policy:</b> when a host's subscription expires mid-share, existing attachments stay <b>readable</b> and only <b>uploads stop</b> — making paid-for data unreadable the moment a card fails is hostile. <b>Quota:</b> no cap on what a technician uploads on the host's behalf — a mechanic mid-job must never be blocked by a limit; storage-weight <i>visibility</i> (not enforcement) is a separate general enhancement, <b>#199</b>, and is not blocked behind P8.
+      </div>
+
+      <h3>9.8 Sub-issues (epic #196)</h3>
+      <table>
+        <thead><tr><th>#</th><th>Sub-issue</th><th>Depends on</th></tr></thead>
+        <tbody>
+          <tr><td>P8.1</td><td>This design doc</td><td>—</td></tr>
+          <tr><td>P8.2</td><td>Cloud Function broker — ACL-checked signed download + resumable-upload URLs (§9.2)</td><td>P8.1</td></tr>
+          <tr><td>P8.3</td><td>Client: widen blob scheduler + blob-state scopes to shared aircraft (§9.4)</td><td>—</td></tr>
+          <tr><td>P8.4</td><td>Route blob drivers through the broker for foreign-hosted aircraft (§9.4)</td><td>P8.2, P8.3</td></tr>
+          <tr><td>P8.5</td><td>Revoke purges member cache only; canonical blob untouched (§9.6)</td><td>P8.4</td></tr>
+          <tr><td>P8.6</td><td>Deletion + blob GC across accounts, with [P7] #155 (§9.6)</td><td>P8.4</td></tr>
+          <tr><td>P8.7</td><td>Entitlement gate — aircraft-scoped ACL projection, owner-only toggle (§9.7)</td><td>P8.1, P8.2</td></tr>
+          <tr><td>P8.8</td><td>Two-account attachment E2E (extends §10)</td><td>P8.4–P8.7</td></tr>
+        </tbody>
+      </table>
+
+      <h3>9.9 Sequence diagrams</h3>
+      <p>Three flows a shared aircraft has to get right. Across all of them the record — and the <code>Attachment{id, sha256, mime, size}</code> it carries — already syncs cross-account through the P3 shared-scope fan-out, so <b>discovery is free</b>; only the <i>bytes</i> are gated, and the broker is the only door to them.</p>
+
+      <h4>Scenario 1 — technician views a worklog: discover, download, delete</h4>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T as Technician
+    participant BK as Broker
+    participant FS as Firestore
+    participant GCS as HostStorage
+    participant SW as StorageSweep
+    Note over T,FS: Discover - no bytes crossed yet
+    T->>FS: open worklog, pull record on shared scope
+    FS-->>T: record with Attachment id, sha256, mime, size
+    Note over T: BlobIndexReconciler registers blob_object REMOTE_ONLY<br>UI shows an attachment chip, badge says needs download
+    Note over T,GCS: Download, tap the chip
+    Note over T: BlobDownloadDriver sees a foreign host, uses the broker
+    T->>BK: streamBlob for hostUid, acId, blobId, with auth token
+    BK->>FS: read aircraft_shares acId, is caller still a member?
+    FS-->>BK: yes
+    BK->>GCS: read object from the host tree
+    GCS-->>BK: bytes
+    BK-->>T: streamed bytes, else PERMISSION_DENIED, no url handed out
+    Note over T: installDownloaded verifies sha256, cache is SYNCED
+    Note over T,SW: Delete, remove the attachment, any member may
+    T->>T: edit record, drop Attachment from proto, offline ok
+    T->>FS: sync push, record doc with attachment gone
+    Note over T: TombstoneGc reclaims this member's cached bytes
+    FS->>SW: scheduled sweep, blob now unreferenced?
+    SW->>GCS: delete the canonical bytes in the host tree
+      </pre>
+      <p class="diagram-caption">The member never deletes host bytes directly — the edit un-references the blob and the server-side sweep (P7 #155) reclaims it, so the same path works whether the deleter is the host or a member.</p>
+
+      <h4>Scenario 2 — technician uploads a new attachment, and it reaches other members</h4>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant T as Technician
+    participant BK as Broker
+    participant GCS as HostStorage
+    participant FS as Firestore
+    participant B as MemberB
+    Note over T: attach file to local cache, blob_object LOCAL_ONLY
+    T->>BK: getUploadSession for hostUid, acId, blobId
+    BK->>FS: ACL check and attachmentsEnabled for host?
+    FS-->>BK: ok
+    BK-->>T: resumable upload session url, stamps writer_uid
+    T->>GCS: PUT bytes into the host tree blobs
+    Note over T: blob_object SYNCED, add Attachment id, sha256 to record
+    T->>FS: sync push, record doc with new attachment ref
+    Note over FS,B: Fan-out to every other member
+    FS-->>B: pull record doc on shared scope
+    Note over B: AttachmentRefs sees new id, blob_object REMOTE_ONLY
+    B->>BK: streamBlob, same broker path as Scenario 1
+    BK-->>B: streamed bytes, ACL re-checked before this stream
+    Note over B: verify sha256, attachment now visible to B
+      </pre>
+      <p class="diagram-caption">One canonical blob in the host's tree (requirement 2): B does not receive a copy of the bytes from the uploader — it learns the ref through the record and fetches the same object through the broker.</p>
+
+      <h4>Scenario 3 — a member is removed: cleanup</h4>
+      <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant H as Host
+    participant RV as RevokeFn
+    participant FS as Firestore
+    participant B as MemberB
+    participant BK as Broker
+    H->>RV: revoke acId for member B
+    RV->>FS: drop B from aircraft_shares memberRoles
+    RV->>FS: delete B member doc, tombstone B shared_aircraft_ref
+    Note over FS,B: B's client reacts
+    FS-->>B: ref tombstone, or PERMISSION_DENIED on the shared scope
+    Note over B: SharedScopeJanitor tears the scope down
+    Note over B: purge local records and purgeLocal blob cache for the scope
+    Note over BK: next streamBlob from B re-checks the ACL, B is gone, refused
+    Note over H,FS: host tree blobs untouched<br>host and remaining members keep full access
+      </pre>
+      <p class="diagram-caption">Revoke only ever deletes B's <i>local cache</i> (requirement 3). The canonical bytes stay in the host's tree, and read access dies instantly — the proxy re-checks the ACL on <i>every</i> request, so the first stream B attempts after revocation is refused, with no bearer URL left alive anywhere (§9.2.1).</p>
 
       <h2 id="testing">10. Testing</h2>
       <ul>
@@ -467,7 +649,7 @@ match /aircraft_shares/{acId} {
         <li><a href="#client">Client Changes</a></li>
         <li><a href="#technician">Technician Profile Mirror</a></li>
         <li><a href="#offline">Offline &amp; Conflicts</a></li>
-        <li><a href="#attachments">Attachments (R2)</a></li>
+        <li><a href="#attachments">Attachments across shared aircraft</a></li>
         <li><a href="#testing">Testing</a></li>
         <li><a href="#phases">Implementation Phases</a></li>
         <li><a href="#open">Open Questions</a></li>
@@ -475,5 +657,9 @@ match /aircraft_shares/{acId} {
     </nav>
   </div>
 </main>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose", sequence: { useMaxWidth: true, mirrorActors: false } });
+</script>
 </body>
 </html>
