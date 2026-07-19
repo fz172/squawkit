@@ -419,8 +419,83 @@ match /aircraft_shares/{acId} {
         <li>Share ACL state (Manage Access) is online-only; role for UI gating comes from the offline-correct local refs store.</li>
       </ul>
 
-      <h2 id="attachments">9. Attachments (R2) — fast-follow, not v1</h2>
-      <p>Blob objects live in Firebase Storage under user-scoped paths with matching Storage rules and a per-scope transfer pipeline keyed to <code>/users/{uid}/%</code> (see <a href="../storage/storage_r2_design.md">R2 design</a>). Shared attachments need: Storage rules consulting <code>aircraft_shares</code> (Storage rules can't <code>get()</code> Firestore — likely custom-claims or a token-minting function), and widening the blob drivers' scope prefixes like §5.3. Since attachment UI is itself behind <code>attachmentUploadEnabled</code>, v1 ships proto-level sharing only; attachment rows on shared aircraft render as unavailable ("attachment not shared yet") rather than broken.</p>
+      <h2 id="attachments">9. Attachments across shared aircraft</h2>
+
+      <div class="callout note">
+        <strong>Implementation Status</strong>
+        Designed here; <b>not yet built</b>. Sharing v1 ships an honest degradation (issue #146): a member sees the attachment exists and is told it is not available on a shared aircraft, the attach affordance is hidden, and plain link URLs in the payload still work. This section is the design for the fast-follow, tracked as epic <b>#196 [P8]</b> and its sub-issues (P8.1–P8.8). It supersedes the earlier "custom-claims, maybe" sketch.
+      </div>
+
+      <p>Blob objects live in Firebase Storage under user-scoped paths, with matching Storage rules and a per-scope transfer pipeline keyed to <code>/users/{uid}/%</code> (see <a href="../storage/storage_r2_design.md">R2 design</a>). An attachment on aircraft <code>acId</code> hosted by <code>hostUid</code> lands at <code>users/{hostUid}/aircraft/{acId}/blobs/{blobId}</code>. Firestore record data crosses the account boundary via the <code>aircraft_shares</code> ACL; the blobs hanging off those records do not.</p>
+
+      <h3>9.1 The blocker is structural</h3>
+      <p><code>storage.rules</code> is strictly <code>request.auth.uid == userId</code> for <b>read and write</b>, so a member can neither fetch a host's attachment nor upload one. This is not a missing <code>if</code>: <b>Storage rules cannot <code>get()</code> Firestore</b>, so they cannot consult the <code>aircraft_shares</code> ACL to authorize a cross-tree read. Crossing the boundary needs either a server-side broker or custom claims.</p>
+
+      <h3>9.2 Chosen approach — signed-URL broker</h3>
+      <p>A Cloud Function is the <b>only</b> path across trees. A callable checks the <code>aircraft_shares</code> ACL and mints short-lived URLs; <code>storage.rules</code> stay uid-scoped and closed.</p>
+      <table>
+        <thead><tr><th>Approach</th><th>How</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>A. Signed-URL broker</b></td>
+            <td>Callable verifies membership in <code>aircraft_shares/{acId}</code>, then returns a short-lived <b>signed download URL</b> (reads) or a <b>resumable-upload session URL</b> (writes) into the host's tree. Rules never change.</td>
+            <td><span class="yes">Chosen.</span> Revocation is immediate by construction — a revoked member simply stops being issued URLs. Cost: one function hop per open/upload.</td>
+          </tr>
+          <tr>
+            <td>B. Custom claims</td>
+            <td>Put shared aircraft ids in the auth token so Storage rules check them directly.</td>
+            <td><span class="no">Rejected</span> (same as sharing v1): claims have a size cap, and <b>revocation does not take effect until the token refreshes</b> — an ex-member keeps blob access for up to an hour. A security regression relative to Firestore, where revocation is immediate.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>The broker lives under <code>backend/firebase/functions/src/storage/</code> (alongside <code>blobRefs.ts</code>, <code>storageSweep.ts</code>) and reuses the ACL-check helper the existing sharing functions already use (<code>revokeAircraftShare</code>, <code>updateAircraftShareRole</code>, <code>onAircraftDeleted</code>).</p>
+
+      <h3>9.3 One canonical blob, no mirrors</h3>
+      <p>Requirement 2: <b>one canonical blob per attachment, in the host's tree.</b> Copying blobs per member is explicitly out of scope — it multiplies storage cost and creates divergent copies of the same file. Every member reads and writes the same object through the broker; only <i>local caches</i> are per-device.</p>
+
+      <h3>9.4 Client scope widening</h3>
+      <p>Today the blob machinery only ever looks at the signed-in user's own tree, so a member's blobs on a shared aircraft are invisible to sync. Mirror the push-queue prefix widening of §5.3. Known gaps (all need fixing regardless of approach):</p>
+      <ul>
+        <li><code>SqlDelightLocalBlobStore</code> — the scheduler only scans <code>"/users/{myUid}/%"</code>, so a member's shared-aircraft blobs are never uploaded or downloaded.</li>
+        <li><code>AircraftOverviewViewModel.observeBlobStates</code> — hardcoded to <code>/users/{myUid}/aircraft/{acId}/</code>, the wrong prefix for a shared aircraft, so sync state never resolves.</li>
+        <li><code>BlobIndexReconciler</code> prefetch and the upload/download/delete drivers assume own-tree paths.</li>
+      </ul>
+      <p><code>AircraftScopeResolver</code> already resolves an aircraft id to the correct host-scoped <code>EntityScope</code> (own vs. shared, via the member's <code>shared_aircraft_ref</code>); the widened scopes drive off it rather than re-deriving paths. The drivers then branch on scope: own tree → the existing direct Storage path; foreign host → the §9.2 broker.</p>
+
+      <h3>9.5 Authorship</h3>
+      <p>A member's upload is attributable, exactly as <code>writer_uid</code> attests record writes (§7.5): the broker stamps the uploading member on the object so "who added this" survives across accounts.</p>
+
+      <h3>9.6 Revoke and deletion</h3>
+      <ul>
+        <li><b>Revoke never deletes host bytes</b> (requirement 3). Removing member B purges B's <i>local cache</i> only; the canonical blob stays put and reachable for the host and every remaining member. <code>revokeAircraftShare</code> / <code>onAircraftDeleted</code> must not touch <code>users/{hostUid}/…/blobs</code>.</li>
+        <li><b>Deletion cleans up for everyone</b> (requirement 4). Deleting an attachment, its parent record, or the aircraft tombstones the blob, and the cross-account sweep from [P7] #155 (<code>onRecordDeleted.ts</code>, <code>storageSweep.ts</code>) reclaims the bytes — no orphans accruing cost. A member-initiated delete must produce a tombstone the sweep picks up, not be dropped as a foreign-tree write.</li>
+      </ul>
+
+      <h3>9.7 Entitlement — the storage owner pays</h3>
+      <p>Attachments are gated (behind <code>attachmentUploadEnabled</code> in Feature Lab today, a <b>paywall</b> later), so the design takes an entitlement, not a dev flag. The decisive move: the gate is a property of the <b>aircraft</b>, not the user.</p>
+      <pre><code>attachmentsEnabled(acId) = entitlement(hostUid of acId)</code></pre>
+      <p>Whoever's storage holds the blob is who pays for it — the hosting owner. So an unsubscribed technician can <b>view and upload</b> (not view-only) on an aircraft whose owner has paid, and gets nothing on their own unpaid tree. A member must not be able to read the host's billing, so the host's entitlement is <b>projected</b> onto a rules-readable boolean on the ACL root — the same move the ACL already makes for roles: the fact is readable, the payload stays private.</p>
+      <pre><code>aircraft_shares/{acId}: { hostUid, memberRoles, attachmentsEnabled: true }</code></pre>
+      <p>A function maintains <code>attachmentsEnabled</code> when the host's subscription changes; the broker (§9.2) and the client drivers (§9.4) consult it. The <b>owner-only</b> toggle surfaces inside the <b>Edit Aircraft</b> page, where the aircraft's other properties live — making the scoping legible: you are enabling attachments <i>for this aircraft</i>, on the owner's storage and the owner's bill.</p>
+      <div class="callout note">
+        <strong>Decisions</strong>
+        <b>Lapse policy:</b> when a host's subscription expires mid-share, existing attachments stay <b>readable</b> and only <b>uploads stop</b> — making paid-for data unreadable the moment a card fails is hostile. <b>Quota:</b> no cap on what a technician uploads on the host's behalf — a mechanic mid-job must never be blocked by a limit; storage-weight <i>visibility</i> (not enforcement) is a separate general enhancement, <b>#199</b>, and is not blocked behind P8.
+      </div>
+
+      <h3>9.8 Sub-issues (epic #196)</h3>
+      <table>
+        <thead><tr><th>#</th><th>Sub-issue</th><th>Depends on</th></tr></thead>
+        <tbody>
+          <tr><td>P8.1</td><td>This design doc</td><td>—</td></tr>
+          <tr><td>P8.2</td><td>Cloud Function broker — ACL-checked signed download + resumable-upload URLs (§9.2)</td><td>P8.1</td></tr>
+          <tr><td>P8.3</td><td>Client: widen blob scheduler + blob-state scopes to shared aircraft (§9.4)</td><td>—</td></tr>
+          <tr><td>P8.4</td><td>Route blob drivers through the broker for foreign-hosted aircraft (§9.4)</td><td>P8.2, P8.3</td></tr>
+          <tr><td>P8.5</td><td>Revoke purges member cache only; canonical blob untouched (§9.6)</td><td>P8.4</td></tr>
+          <tr><td>P8.6</td><td>Deletion + blob GC across accounts, with [P7] #155 (§9.6)</td><td>P8.4</td></tr>
+          <tr><td>P8.7</td><td>Entitlement gate — aircraft-scoped ACL projection, owner-only toggle (§9.7)</td><td>P8.1, P8.2</td></tr>
+          <tr><td>P8.8</td><td>Two-account attachment E2E (extends §10)</td><td>P8.4–P8.7</td></tr>
+        </tbody>
+      </table>
 
       <h2 id="testing">10. Testing</h2>
       <ul>
@@ -467,7 +542,7 @@ match /aircraft_shares/{acId} {
         <li><a href="#client">Client Changes</a></li>
         <li><a href="#technician">Technician Profile Mirror</a></li>
         <li><a href="#offline">Offline &amp; Conflicts</a></li>
-        <li><a href="#attachments">Attachments (R2)</a></li>
+        <li><a href="#attachments">Attachments across shared aircraft</a></li>
         <li><a href="#testing">Testing</a></li>
         <li><a href="#phases">Implementation Phases</a></li>
         <li><a href="#open">Open Questions</a></li>
