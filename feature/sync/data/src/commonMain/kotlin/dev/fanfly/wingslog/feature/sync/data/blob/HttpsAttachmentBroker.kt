@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.sync.data.blob
 
 import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.app
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.functions.functions
 import io.ktor.client.HttpClient
@@ -28,16 +27,15 @@ class HttpsAttachmentBroker(
 
   private val log = Logger.withTag(TAG)
 
-  // All Firebase access is deferred to first use. The broker is constructed EAGERLY in the Koin
-  // graph (SyncEngine → UploadScheduler → drivers → broker), and touching `Firebase.app.options`
-  // during app startup NPEs on iOS (gitlive, before the app is fully brought up). Computing these
-  // eagerly was a startup crash. iOS never triggers them anyway: uploads use the platform
-  // scheduler's own resumable path, and downloads fail earlier at the (stubbed) App Check step.
+  // Firebase access is deferred to first use — the broker is constructed EAGERLY in the Koin graph
+  // (SyncEngine → UploadScheduler → drivers → broker), so eager access ran during app startup.
   private val functions by lazy { Firebase.functions(functionsRegion) }
 
   /** `https://{region}-{projectId}.cloudfunctions.net`, resolved on first `streamBlob` download. */
   private val functionsBaseUrl: String by lazy {
-    val projectId = Firebase.app.options.projectId
+    // NOT `Firebase.app.options.projectId` — that getter NPEs in gitlive on iOS (it crashed startup
+    // eagerly, then failed downloads once lazy). `firebaseProjectId()` reads a platform-safe source.
+    val projectId = firebaseProjectId()
     checkNotNull(projectId) { "Firebase projectId is required to reach the attachment broker" }
     "https://$functionsRegion-$projectId.cloudfunctions.net"
   }
