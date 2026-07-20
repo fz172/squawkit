@@ -24,8 +24,8 @@ import kotlinx.coroutines.sync.withLock
  *    (30s, 60s, 120s, …, capped at 60min) while the tab stays open.
  *  - [cancelAll] cancels the scope and recreates it; the in-flight sets are cleared so that
  *    a subsequent sign-in can re-queue work.
- *  - [prefetchRemoteOnly] is `false`: REMOTE_ONLY rows are not eagerly downloaded at sign-in;
- *    the open path calls [scheduleDownload] lazily via `AttachmentManager.ensureLocal`.
+ *
+ * Downloads are lazy (open-triggered) via the [prefetchRemoteOnly]` = false` default it inherits.
  */
 class ForegroundWebBlobScheduler(
   private val uploadDriver: BlobUploadDriver,
@@ -41,8 +41,6 @@ class ForegroundWebBlobScheduler(
   private val deletesInFlight = mutableSetOf<String>()
 
   private var scope = newScope()
-
-  override val prefetchRemoteOnly: Boolean = false
 
   override fun scheduleUpload(blobId: BlobId) {
     scope.launch {

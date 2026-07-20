@@ -24,7 +24,7 @@ import org.koin.dsl.module
  * Web blob transfer wiring. The foreground scheduler runs uploads/downloads/deletes for the
  * lifetime of the open tab; on reload `SyncEngine.schedulePendingBlobs` re-queues anything still
  * pending. REMOTE_ONLY rows are downloaded lazily on open (see
- * [ForegroundWebBlobScheduler.prefetchRemoteOnly]).
+ * [UploadScheduler.prefetchRemoteOnly]).
  */
 actual val blobSchedulerModule: Module = module {
   single { HttpClient(Js) }
