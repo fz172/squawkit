@@ -41,19 +41,6 @@ interface SharingManager {
   fun observeIsShared(acId: String): Flow<Boolean>
 
   /**
-   * Whether this aircraft belongs to *another* account's tree — i.e. it was shared into our fleet.
-   * False for our own aircraft, including one we host and share out.
-   *
-   * Distinct from [observeIsShared], and the difference matters: things that live outside the record
-   * payload are still user-scoped, so they are reachable for the host and not for anyone else.
-   * Attachment blobs are the case in point (design §9) — they sit in the host's storage and v1 does
-   * not share them, so a member can never fetch them.
-   *
-   * Answered from the local refs, so it is correct offline.
-   */
-  fun observeHostedByOther(acId: String): Flow<Boolean>
-
-  /**
    * Mints a pairing code (#164). Server-side: the code doc lives in a collection no client may read,
    * which is what keeps an aircraft id out of the invitee's hands (#202/#204).
    *
