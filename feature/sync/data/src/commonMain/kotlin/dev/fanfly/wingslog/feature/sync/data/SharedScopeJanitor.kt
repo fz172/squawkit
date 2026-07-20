@@ -10,6 +10,7 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 
 /**
@@ -31,6 +32,11 @@ class SharedScopeJanitor(
   private val writeLock: DatabaseWriteLock,
   /** Names the aircraft for the discarded-changes notice, before it is purged and unnameable. */
   private val aircraftStore: EntityStore<Aircraft>? = null,
+  /**
+   * Drops the member's cached attachment bytes for an ended share. Null in tests that only exercise
+   * the entity purge.
+   */
+  private val blobs: LocalBlobStore? = null,
 ) {
   private val log = Logger.withTag(TAG)
 
@@ -71,6 +77,12 @@ class SharedScopeJanitor(
       )
     }
 
+    // Read the cached blob ids before the rows go: this is a read, and it must happen outside the
+    // write lock below because purgeLocal takes that same (non-reentrant) lock itself.
+    val cachedBlobs = toPurge.associateWith { (hostUid, aircraftId) ->
+      blobs?.idsInScopePrefix("/users/$hostUid/aircraft/$aircraftId/%").orEmpty()
+    }
+
     writeLock.withLock {
       for ((hostUid, aircraftId) in toPurge) {
         val nestedPrefix = "/users/$hostUid/aircraft/$aircraftId/%"
@@ -84,6 +96,16 @@ class SharedScopeJanitor(
         db.schemaQueries.deleteCursorsInScopePrefix(nestedPrefix)
         log.i { "purged revoked shared aircraft $aircraftId (host $hostUid)" }
       }
+    }
+
+    // Drop the member's cached attachment bytes for the ended share (design §9.5, P8.5).
+    // purgeLocal deletes the local file + row outright — it does NOT tombstone, so nothing is ever
+    // queued that could delete the canonical blob out of the host's tree. Those bytes are the host's
+    // and stay reachable for them and for every remaining member.
+    for ((share, ids) in cachedBlobs) {
+      if (ids.isEmpty()) continue
+      blobs?.purgeLocal(ids)
+      log.i { "purged ${ids.size} cached blob(s) for revoked aircraft ${share.second}" }
     }
 
     // Only after the purge has actually happened — telling someone their work is gone, and then
