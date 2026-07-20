@@ -29,7 +29,6 @@ private data class AuthorshipContext(
   val authors: Map<String, String?>,
   val names: Map<String, String>,
   val isShared: Boolean,
-  val hostedByOther: Boolean,
 )
 
 /** Task cards and squawks a log can link to, resolved for the detail sheet's link rows. */
@@ -77,9 +76,6 @@ class MaintenanceLogListViewModel(
    */
   private val _isShared = MutableStateFlow(false)
 
-  /** Blobs live in the host's storage and are not shared in v1 (§9) — the rows say so. */
-  private val _hostedByOther = MutableStateFlow(false)
-
   init {
     observeLogs()
     observeTasks()
@@ -97,12 +93,11 @@ class MaintenanceLogListViewModel(
           _logAuthors,
           _namesByUid,
           _isShared,
-          _hostedByOther,
-        ) { authors, names, isShared, hostedByOther ->
-          AuthorshipContext(authors, names, isShared, hostedByOther)
+        ) { authors, names, isShared ->
+          AuthorshipContext(authors, names, isShared)
         },
       ) { logsState, filter, selectedLog, linkTargets, ctx ->
-        val (authors, names, isShared, hostedByOther) = ctx
+        val (authors, names, isShared) = ctx
         when (logsState) {
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
           LogsLoadState.Error -> MaintenanceLogListUiState.Error
@@ -129,7 +124,10 @@ class MaintenanceLogListViewModel(
                   nameForUid = { uid -> names[uid] },
                 )
                 ?: LogAuthorship.Unknown,
-              attachmentsUnavailable = hostedByOther,
+              // Attachments on a shared aircraft now travel through the broker (P8.4 §9.2), so the
+              // bytes are reachable. The flag stays in the UI for P8.7 (#248) to drive off owner
+              // entitlement — it must not key off "hosted by someone else" any more.
+              attachmentsUnavailable = false,
               availableCards = linkTargets.cards,
               availableSquawks = linkTargets.squawks,
             )
@@ -158,11 +156,6 @@ class MaintenanceLogListViewModel(
       sharingManager.observeIsShared(aircraftId)
         .catch { _isShared.value = false }
         .collect { _isShared.value = it }
-    }
-    viewModelScope.launch {
-      sharingManager.observeHostedByOther(aircraftId)
-        .catch { _hostedByOther.value = false }
-        .collect { _hostedByOther.value = it }
     }
     viewModelScope.launch {
       logManager.observeLogAuthors(aircraftId)
