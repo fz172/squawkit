@@ -53,7 +53,7 @@ class BlobDownloadDriver(
 
     val bytes = try {
       if (foreign) {
-        broker.download(location!!.ownerUid, location.aircraftId, id.value)
+        broker.download(location.ownerUid, location.aircraftId, id.value)
       } else {
         val url = storage.reference(remotePath)
           .getDownloadUrl()
