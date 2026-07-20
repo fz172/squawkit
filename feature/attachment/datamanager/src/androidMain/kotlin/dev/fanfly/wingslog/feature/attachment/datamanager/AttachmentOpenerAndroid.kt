@@ -89,16 +89,27 @@ class AttachmentOpenerAndroid(
   private suspend fun FlowCollector<OpenState>.emitOpenLocalFile(
     attachment: Attachment,
   ) {
-    val file = File(context.filesDir, blobRelativePath(attachment.id))
-    if (!file.exists()) {
-      emit(OpenState.Failed(Exception("Local blob file not found: ${attachment.id}")))
+    val blobFile = File(context.filesDir, blobRelativePath(attachment.id))
+    if (!blobFile.exists()) {
+      emit(OpenState.Failed(Exception("\"${attachment.displayName()}\" isn't on this device yet.")))
       return
     }
     try {
+      // The on-disk blob is named by its internal id (`{id}.bin`), and FileProvider reports that as
+      // the display name — so a viewer or "Save to Files" would keep it as `{id}.bin`. Materialize a
+      // copy under the attachment's real display name (namespaced by id to avoid collisions between
+      // two attachments that share a name) and hand THAT to the viewer.
+      val namedFile = File(
+        File(context.cacheDir, "attachment_open/${attachment.id}").apply { mkdirs() },
+        attachment.displayName(),
+      )
+      if (!namedFile.exists() || namedFile.length() != blobFile.length()) {
+        blobFile.copyTo(namedFile, overwrite = true)
+      }
       val contentUri = FileProvider.getUriForFile(
         context,
         "${context.packageName}.fileprovider",
-        file,
+        namedFile,
       )
       val intent = Intent(Intent.ACTION_VIEW).apply {
         setDataAndType(contentUri, attachment.mime_type.ifEmpty { "*/*" })
@@ -114,4 +125,14 @@ class AttachmentOpenerAndroid(
       emit(OpenState.Failed(e))
     }
   }
+}
+
+/**
+ * The attachment's user-facing file name, sanitized for use as an actual filename: path separators
+ * and characters that are illegal or reserved on common filesystems are replaced, and it falls back
+ * to the id only when there is no usable name (never surfaced to the user in normal use).
+ */
+private fun Attachment.displayName(): String {
+  val cleaned = name.trim().replace(Regex("""[/\\:*?"<>|\x00-\x1F]"""), "_")
+  return cleaned.ifBlank { id }
 }

@@ -8,4 +8,10 @@
   <cache-path
     name="camera_temp"
     path="camera_temp/" />
+  <!-- Exposes cacheDir/attachment_open/ where a blob is copied under its display name before being
+       handed to an external viewer, so the viewer / "Save to Files" keeps the real filename instead
+       of the internal blob id. -->
+  <cache-path
+    name="attachment_open"
+    path="attachment_open/" />
 </paths>

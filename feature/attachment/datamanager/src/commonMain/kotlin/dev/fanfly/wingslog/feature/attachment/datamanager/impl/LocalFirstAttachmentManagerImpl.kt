@@ -189,9 +189,11 @@ class LocalFirstAttachmentManagerImpl(
         true
       }
       if (completed == null) {
+        // Surfaced verbatim in the UI, so name the file the user recognizes — never the blob id.
+        val label = attachment.name.ifBlank { "the attachment" }
         emit(
           DownloadState.Failed(
-            Exception("Timed out waiting for ${id.value} to download")
+            Exception("Timed out downloading \"$label\".")
           )
         )
       }
