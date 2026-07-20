@@ -9,23 +9,35 @@ import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.blobRelativePath
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSURL
+import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
+import platform.UIKit.UIDocumentInteractionController
+import platform.UIKit.UIDocumentInteractionControllerDelegateProtocol
+import platform.UIKit.UIViewController
+import platform.UIKit.popoverPresentationController
+import platform.darwin.NSObject
+
+// Retained for the life of a preview — UIDocumentInteractionController.delegate is weak, so nothing
+// else holds these once emitOpenLocalFile returns.
+private var activeDocController: UIDocumentInteractionController? = null
+private var activeDocDelegate: NSObject? = null
 
 /**
- * R2 [AttachmentOpener] for iOS. Routes through [LocalBlobStore]; uses
- * `UIApplication.shared.openURL` for links and local file URLs.
- *
- * Note: opening local files via `openURL(file://)` hands the file to a compatible registered app
- * (e.g. Files). Full in-app QuickLook preview is deferred to M7.
+ * R2 [AttachmentOpener] for iOS. Routes through [LocalBlobStore]; opens links with
+ * `UIApplication.openURL` and local files with a QuickLook preview
+ * ([UIDocumentInteractionController.presentPreviewAnimated]), falling back to a share sheet for
+ * types QuickLook can't render.
  */
 class AttachmentOpenerIos(
   private val blobs: LocalBlobStore,
@@ -109,8 +121,59 @@ class AttachmentOpenerIos(
       return
     }
 
-    UIApplication.sharedApplication.openURL(NSURL.fileURLWithPath(namedPath))
-    emit(OpenState.Done)
+    val opened = withContext(Dispatchers.Main) {
+      presentPreview(NSURL.fileURLWithPath(namedPath))
+    }
+    if (opened) {
+      emit(OpenState.Done)
+    } else {
+      emit(OpenState.Failed(Exception("Couldn't open \"${attachment.displayFileName()}\".")))
+    }
+  }
+
+  /**
+   * Preview a local file via QuickLook. `openURL(file://)` does NOT open local files (it's for URL
+   * schemes), which is why taps silently did nothing. [UIDocumentInteractionController] previews the
+   * common types (images, PDF, docs) in-app; anything QuickLook can't render falls back to a share
+   * sheet ("Open in…" / Save). Must run on the main thread. Returns false only if there's no window.
+   */
+  private fun presentPreview(url: NSURL): Boolean {
+    val presenter = UIApplication.sharedApplication.keyWindow?.rootViewController
+      ?.topMostPresented() ?: return false
+    val delegate = DocInteractionDelegate(presenter)
+    val controller = UIDocumentInteractionController.interactionControllerWithURL(url)
+    controller.delegate = delegate
+    activeDocController = controller
+    activeDocDelegate = delegate
+
+    if (controller.presentPreviewAnimated(true)) return true
+
+    // No QuickLook preview for this type — offer the share sheet instead.
+    val activity = UIActivityViewController(activityItems = listOf(url), applicationActivities = null)
+    // iPad requires a popover anchor or it throws.
+    activity.popoverPresentationController?.sourceView = presenter.view
+    presenter.presentViewController(activity, animated = true, completion = null)
+    return true
+  }
+}
+
+private fun UIViewController.topMostPresented(): UIViewController {
+  var vc = this
+  while (true) vc = vc.presentedViewController ?: return vc
+}
+
+private class DocInteractionDelegate(
+  private val presenter: UIViewController,
+) : NSObject(), UIDocumentInteractionControllerDelegateProtocol {
+  override fun documentInteractionControllerViewControllerForPreview(
+    controller: UIDocumentInteractionController,
+  ): UIViewController = presenter
+
+  override fun documentInteractionControllerDidEndPreview(
+    controller: UIDocumentInteractionController,
+  ) {
+    activeDocController = null
+    activeDocDelegate = null
   }
 }
 
