@@ -94,7 +94,7 @@ class SharedScopeJanitor(
           aircraftId, // the aircraft doc itself
         )
         db.schemaQueries.deleteCursorsInScopePrefix(nestedPrefix)
-        log.i { "purged revoked shared aircraft $aircraftId (host $hostUid)" }
+        log.i { "purged a revoked shared aircraft" }
       }
     }
 
@@ -102,17 +102,19 @@ class SharedScopeJanitor(
     // purgeLocal deletes the local file + row outright — it does NOT tombstone, so nothing is ever
     // queued that could delete the canonical blob out of the host's tree. Those bytes are the host's
     // and stay reachable for them and for every remaining member.
-    for ((share, ids) in cachedBlobs) {
+    for ((_, ids) in cachedBlobs) {
       if (ids.isEmpty()) continue
       blobs?.purgeLocal(ids)
-      log.i { "purged ${ids.size} cached blob(s) for revoked aircraft ${share.second}" }
+      log.i { "purged ${ids.size} cached blob(s) for a revoked shared aircraft" }
     }
 
     // Only after the purge has actually happened — telling someone their work is gone, and then
-    // failing to remove it, would be worse than either outcome alone.
+    // failing to remove it, would be worse than either outcome alone. The notice is UI shown to this
+    // user and carries the tail number; the log line must not — it would record another account's
+    // aircraft identity.
     for ((_, work) in discarded) {
       if (work.count > 0) {
-        log.i { "discarded ${work.count} unsynced change(s) to ${work.label}" }
+        log.i { "discarded ${work.count} unsynced change(s) to a shared aircraft" }
         noticeSink(SyncNotice.ChangesDiscarded(work.label, work.count))
       }
     }

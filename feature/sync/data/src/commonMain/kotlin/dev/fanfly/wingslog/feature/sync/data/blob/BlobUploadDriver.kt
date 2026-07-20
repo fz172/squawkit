@@ -96,7 +96,7 @@ class BlobUploadDriver(
           .putData(bytes.toFirebaseData())
       }
       blobs.markUploaded(id, remotePath)
-      log.i { "uploaded ${id.value} → $remotePath" }
+      log.i { "uploaded ${id.value}" }
       true
     } catch (e: Exception) {
       log.w(e) { "upload transient failure for ${id.value}; will retry" }

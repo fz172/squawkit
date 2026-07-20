@@ -184,7 +184,7 @@ class PushWorker(
           // accuse the user of an expired session, and let the janitor purge the scope — which drops
           // these rows, so we don't retry a write we will never be allowed to make.
           val (hostUid, aircraftId) = shared
-          log.i { "PERMISSION_DENIED pushing to shared aircraft $aircraftId; treating as revoked (§5.4)" }
+          log.i { "PERMISSION_DENIED pushing to a shared aircraft; treating as revoked (§5.4)" }
           sharedScopeRevokedSink(hostUid, aircraftId)
           return@getOrElse false
         }

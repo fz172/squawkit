@@ -380,7 +380,7 @@ class SyncEngine(
       throw e
     } catch (e: Throwable) {
       if (isPermissionDenied(e)) {
-        log.i { "PERMISSION_DENIED on shared aircraft $aircraftId; treating as revoked (§5.4)" }
+        log.i { "PERMISSION_DENIED on a shared aircraft; treating as revoked (§5.4)" }
         // Every watcher on the scope is denied at once, so they all land here — but one revocation
         // happened, not five. Only the watcher that actually removes the ref reports it, or the
         // metric would count listeners instead of revocations.
