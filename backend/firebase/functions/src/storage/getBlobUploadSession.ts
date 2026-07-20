@@ -48,7 +48,7 @@ export const getBlobUploadSession = onCall<
     // exactly what this option is for. Native clients send no Origin (undefined), which is fine —
     // they don't do CORS. Origin is client-supplied but only governs which browser origins may read
     // the response; App Check + membership above remain the real authorization (P8.4 #245).
-    origin: callerOrigin(request.rawRequest.headers.origin),
+    origin: callerOrigin(request.rawRequest?.headers?.origin),
     metadata: {
       contentType: contentType ?? "application/octet-stream",
       // Authorship, attributable across accounts like `writer_uid` for records (§7.5).
