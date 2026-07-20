@@ -218,9 +218,6 @@ class AircraftOverviewViewModel(
             aogSquawks = aogSquawks,
             myRole = myRole,
             shared = isShared,
-            // Downloads on a shared aircraft now stream through the broker (P8.4 §9.2), so bytes are
-            // reachable. The flag stays in the UI for P8.7 (#248) to drive off owner entitlement.
-            attachmentsUnavailable = false,
             isAnonymous = auth.currentUser?.isAnonymous ?: true,
           )
         } else {

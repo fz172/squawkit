@@ -124,10 +124,6 @@ class MaintenanceLogListViewModel(
                   nameForUid = { uid -> names[uid] },
                 )
                 ?: LogAuthorship.Unknown,
-              // Attachments on a shared aircraft now travel through the broker (P8.4 §9.2), so the
-              // bytes are reachable. The flag stays in the UI for P8.7 (#248) to drive off owner
-              // entitlement — it must not key off "hosted by someone else" any more.
-              attachmentsUnavailable = false,
               availableCards = linkTargets.cards,
               availableSquawks = linkTargets.squawks,
             )

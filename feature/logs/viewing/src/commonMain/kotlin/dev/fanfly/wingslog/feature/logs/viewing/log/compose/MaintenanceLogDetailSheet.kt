@@ -77,8 +77,6 @@ fun MaintenanceLogDetailSheet(
   onTaskClick: ((String) -> Unit)? = null,
   availableSquawks: List<Squawk> = emptyList(),
   onSquawkClick: ((String) -> Unit)? = null,
-  /** Aircraft hosted by another account: blobs are user-scoped, so v1 cannot fetch them (§9). */
-  attachmentsUnavailable: Boolean = false,
   modifier: Modifier = Modifier,
 ) {
   val dateStr = log.timestamp?.toLocalDate()
@@ -140,7 +138,6 @@ fun MaintenanceLogDetailSheet(
       onAttachmentTap = onAttachmentTap,
       syncStates = syncStates,
       openError = openError,
-      attachmentsUnavailable = attachmentsUnavailable,
     )
 
     // Footer: technician (if enabled) | date

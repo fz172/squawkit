@@ -352,7 +352,6 @@ fun AircraftSectionContent(
       // from the Tasks tab or jumped to from a log), so render it here for the shell path.
       state.selectedTask?.let { selectedTask ->
         TaskDetailSheet(
-          attachmentsUnavailable = state.attachmentsUnavailable,
           cardWithStatus = selectedTask,
           logs = state.logsForSelectedTask,
           onDismiss = {

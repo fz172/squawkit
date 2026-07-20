@@ -340,7 +340,6 @@ fun MaintenanceLogListContent(
                 log = log,
                 availableCards = uiState.availableCards,
                 availableSquawks = uiState.availableSquawks,
-                attachmentsUnavailable = uiState.attachmentsUnavailable,
                 onDismiss = onDismissDetail,
                 authorship = uiState.selectedAuthorship,
                 onEditClick = onEditLog?.let { edit ->

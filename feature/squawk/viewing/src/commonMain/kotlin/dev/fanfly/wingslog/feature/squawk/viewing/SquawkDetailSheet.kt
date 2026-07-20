@@ -51,8 +51,6 @@ fun SquawkDetailSheet(
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
-  /** Aircraft hosted by another account: blobs are user-scoped, so v1 cannot fetch them (§9). */
-  attachmentsUnavailable: Boolean = false,
   modifier: Modifier = Modifier,
 ) {
   val squawk = item.squawk
@@ -134,7 +132,6 @@ fun SquawkDetailSheet(
       onAttachmentTap = onAttachmentTap,
       syncStates = syncStates,
       openError = openError,
-      attachmentsUnavailable = attachmentsUnavailable,
     )
   }
 }
