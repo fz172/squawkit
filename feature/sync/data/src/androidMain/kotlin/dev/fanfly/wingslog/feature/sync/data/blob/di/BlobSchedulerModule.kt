@@ -31,7 +31,6 @@ actual val blobSchedulerModule = module {
       auth = get<FirebaseAuth>(),
       httpClient = get<HttpClient>(),
       appCheck = get<AppCheckTokenProvider>(),
-      functionsBaseUrl = HttpsAttachmentBroker.functionsBaseUrl(),
     )
   }
 

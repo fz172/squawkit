@@ -18,21 +18,29 @@ import kotlinx.serialization.Serializable
 
 /**
  * GitLive-functions + ktor implementation of [AttachmentBroker] (design §9.2).
- *
- * @param functionsBaseUrl base of the deployed HTTP functions, e.g.
- *   `https://us-central1-{projectId}.cloudfunctions.net`. Used only for the `streamBlob` proxy; the
- *   upload session goes through the GitLive callable, which routes itself.
  */
 class HttpsAttachmentBroker(
   private val auth: FirebaseAuth,
   private val httpClient: HttpClient,
   private val appCheck: AppCheckTokenProvider,
-  private val functionsBaseUrl: String,
   private val functionsRegion: String = "us-central1",
 ) : AttachmentBroker {
 
   private val log = Logger.withTag(TAG)
-  private val functions = Firebase.functions(functionsRegion)
+
+  // All Firebase access is deferred to first use. The broker is constructed EAGERLY in the Koin
+  // graph (SyncEngine → UploadScheduler → drivers → broker), and touching `Firebase.app.options`
+  // during app startup NPEs on iOS (gitlive, before the app is fully brought up). Computing these
+  // eagerly was a startup crash. iOS never triggers them anyway: uploads use the platform
+  // scheduler's own resumable path, and downloads fail earlier at the (stubbed) App Check step.
+  private val functions by lazy { Firebase.functions(functionsRegion) }
+
+  /** `https://{region}-{projectId}.cloudfunctions.net`, resolved on first `streamBlob` download. */
+  private val functionsBaseUrl: String by lazy {
+    val projectId = Firebase.app.options.projectId
+    checkNotNull(projectId) { "Firebase projectId is required to reach the attachment broker" }
+    "https://$functionsRegion-$projectId.cloudfunctions.net"
+  }
 
   override suspend fun upload(
     hostUid: String,
@@ -100,13 +108,6 @@ class HttpsAttachmentBroker(
   companion object {
     private const val TAG = "HttpsAttachmentBroker"
     private const val APP_CHECK_HEADER = "X-Firebase-AppCheck"
-
-    /** `https://{region}-{projectId}.cloudfunctions.net` for the currently-initialised Firebase app. */
-    fun functionsBaseUrl(region: String = "us-central1"): String {
-      val projectId = Firebase.app.options.projectId
-      checkNotNull(projectId) { "Firebase projectId is required to reach the attachment broker" }
-      return "https://$region-$projectId.cloudfunctions.net"
-    }
   }
 }
 
