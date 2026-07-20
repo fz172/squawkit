@@ -55,12 +55,12 @@ class BlobDeleteDriver(
       try {
         storage.reference(remotePath)
           .delete()
-        log.i { "deleted remote object $remotePath" }
+        log.i { "deleted remote object for ${id.value}" }
       } catch (e: Exception) {
         if (isNotFound(e)) {
-          log.i { "remote object $remotePath already gone" }
+          log.i { "remote object for ${id.value} already gone" }
         } else {
-          log.w(e) { "transient failure deleting remote object $remotePath; will retry" }
+          log.w(e) { "transient failure deleting remote object for ${id.value}; will retry" }
           return false
         }
       }

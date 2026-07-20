@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.PostWriteHook
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sync.data.HydrationRunner
@@ -127,6 +128,7 @@ val syncModule: Module = module {
         db = db,
         writeLock = writeLock,
         aircraftStore = get<EntityStoreFactory>().create(CollectionKind.Aircraft),
+        blobs = getOrNull<LocalBlobStore>(),
       ),
       telemetry = get<SyncTelemetry>(),
       writeLock = writeLock,

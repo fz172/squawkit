@@ -4,7 +4,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import functionsTest from "firebase-functions-test";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { adminDb } from "../src/config/firebaseAdmin.js";
+import { adminDb, adminStorage } from "../src/config/firebaseAdmin.js";
 import { onAircraftDeleted } from "../src/sharing/onAircraftDeleted.js";
 import { redeemAircraftShareInvite } from "../src/sharing/redeemAircraftShareInvite.js";
 import { revokeAircraftShare as revoke } from "../src/sharing/revokeAircraftShare.js";
@@ -55,6 +55,7 @@ async function wipe() {
   await adminDb.recursiveDelete(adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`));
   for (const u of [HOST, OWNER2, TECH]) {
     await adminDb.recursiveDelete(adminDb.doc(`users/${u}`));
+    await adminStorage.bucket().deleteFiles({ prefix: `users/${u}/` });
   }
 }
 
@@ -77,6 +78,22 @@ describe("revokeAircraftShare", () => {
     expect(share?.memberRoles[TECH]).toBeUndefined();
     expect((await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/members/${TECH}`).get()).exists).toBe(false);
     expect((await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get()).data()?.deleted).toBe(true);
+  });
+
+  it("leaves the host's blobs untouched — a revoke is not a delete (P8.5 #246)", async () => {
+    // Removing a member must never destroy host-owned bytes. Those blobs stay reachable for the
+    // host and for every remaining member; only the revoked member's local cache is dropped, which
+    // the client does with a local purge that never tombstones (SharedScopeJanitor).
+    await seedShare({ [HOST]: "owner", [TECH]: "technician" });
+    await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/members/${TECH}`).set({ role: "technician" });
+    await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).set({ deleted: false });
+    const blob = `users/${HOST}/aircraft/${AC}/blobs/keep-me`;
+    await adminStorage.bucket().file(blob).save(Buffer.from([1, 2, 3]));
+
+    await wrappedRevoke(req(HOST, { hostUid: HOST, aircraftId: AC, memberUid: TECH }));
+
+    const [exists] = await adminStorage.bucket().file(blob).exists();
+    expect(exists).toBe(true);
   });
 
   it("cannot remove the hosting owner", async () => {

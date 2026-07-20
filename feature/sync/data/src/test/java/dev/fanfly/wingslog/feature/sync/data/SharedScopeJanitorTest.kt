@@ -6,8 +6,13 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.blob.BlobId
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -61,6 +66,35 @@ class SharedScopeJanitorTest {
     assertThat(cursor(EntityScope.aircraftChildUnsafe(HOST, SHARED_AC))).isNull()
     // Own aircraft untouched.
     assertThat(aircraftAt(EntityScope.userRoot(MEMBER))).hasSize(1)
+  }
+
+  @Test
+  fun revoke_purgesCachedBlobs_butNeverTombstonesTheCanonicalOne() = runTest {
+    // P8.5 (#246): removing a member drops only THEIR cached bytes. purgeLocal deletes the local
+    // file + row outright; delete() would tombstone, which the delete driver turns into a remote
+    // delete — that would destroy the host's blob, which is the one thing this must never do.
+    val blobs = mockk<LocalBlobStore>(relaxed = true)
+    val cached = listOf(BlobId("blob-a"), BlobId("blob-b"))
+    coEvery { blobs.idsInScopePrefix("/users/$HOST/aircraft/$SHARED_AC/%") } returns cached
+    val janitorWithBlobs = SharedScopeJanitor(db, DatabaseWriteLock(), blobs = blobs)
+    seedFixture()
+
+    janitorWithBlobs.purgeRevoked(MEMBER, liveShares = emptySet())
+
+    coVerify(exactly = 1) { blobs.purgeLocal(cached) }
+    coVerify(exactly = 0) { blobs.delete(any()) }
+  }
+
+  @Test
+  fun liveShare_leavesCachedBlobsAlone() = runTest {
+    val blobs = mockk<LocalBlobStore>(relaxed = true)
+    val janitorWithBlobs = SharedScopeJanitor(db, DatabaseWriteLock(), blobs = blobs)
+    seedFixture()
+
+    janitorWithBlobs.purgeRevoked(MEMBER, liveShares = setOf(HOST to SHARED_AC))
+
+    coVerify(exactly = 0) { blobs.purgeLocal(any()) }
+    coVerify(exactly = 0) { blobs.delete(any()) }
   }
 
   @Test

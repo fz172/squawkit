@@ -73,7 +73,7 @@ class HttpsAttachmentBroker(
     check(response.status.isSuccess()) {
       "brokered upload PUT for $blobId failed: ${response.status}"
     }
-    log.i { "brokered upload of $blobId into $hostUid/$aircraftId" }
+    log.i { "brokered upload of $blobId" }
   }
 
   override suspend fun download(
@@ -102,7 +102,7 @@ class HttpsAttachmentBroker(
       "brokered download of $blobId failed: ${response.status}"
     }
     val bytes = response.readRawBytes()
-    log.i { "brokered download of $blobId from $hostUid/$aircraftId (${bytes.size}B)" }
+    log.i { "brokered download of $blobId (${bytes.size}B)" }
     return bytes
   }
 

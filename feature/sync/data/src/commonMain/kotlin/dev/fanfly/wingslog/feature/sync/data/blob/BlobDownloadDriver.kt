@@ -58,7 +58,6 @@ class BlobDownloadDriver(
         val url = storage.reference(remotePath)
           .getDownloadUrl()
         log.d { "Download url is $url" }
-
         httpClient.get(url)
           .readRawBytes()
       }
@@ -70,7 +69,7 @@ class BlobDownloadDriver(
     val result = blobs.installDownloaded(id, bytes, ref.sha256)
     return result.fold(
       onSuccess = {
-        log.i { "downloaded ${id.value} from $remotePath" }
+        log.i { "downloaded ${id.value}" }
         true
       },
       onFailure = { e ->
