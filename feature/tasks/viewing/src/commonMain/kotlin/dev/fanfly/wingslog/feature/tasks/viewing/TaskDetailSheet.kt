@@ -70,8 +70,6 @@ fun TaskDetailSheet(
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
-  /** Aircraft hosted by another account: blobs are user-scoped, so v1 cannot fetch them (§9). */
-  attachmentsUnavailable: Boolean = false,
   modifier: Modifier = Modifier,
 ) {
   val card = cardWithStatus.card
@@ -193,7 +191,6 @@ fun TaskDetailSheet(
       onAttachmentTap = onAttachmentTap,
       syncStates = syncStates,
       openError = openError,
-      attachmentsUnavailable = attachmentsUnavailable,
     )
 
     if (card.attachments.isNotEmpty()) {

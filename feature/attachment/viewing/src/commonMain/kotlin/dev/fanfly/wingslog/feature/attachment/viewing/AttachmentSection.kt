@@ -16,7 +16,6 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.attachment.sharedassets.generated.resources.Res
-import wingslog.feature.attachment.sharedassets.generated.resources.attachments_not_shared_note
 import wingslog.feature.attachment.sharedassets.generated.resources.attachments
 import wingslog.feature.attachment.sharedassets.generated.resources.open_failed
 
@@ -31,8 +30,6 @@ fun AttachmentSection(
   modifier: Modifier = Modifier,
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
-  /** True on an aircraft hosted by another account: v1 syncs records, not blobs (design §9). */
-  attachmentsUnavailable: Boolean = false,
 ) {
   if (attachments.isEmpty()) return
 
@@ -45,20 +42,8 @@ fun AttachmentSection(
         syncState = if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) null
         else syncStates[attachment.id],
         onTap = onAttachmentTap,
-        // A link is just a URL in the payload — it travels with the record and works fine. Only
-        // blob-backed attachments are stuck in the host's storage.
-        unavailable = attachmentsUnavailable &&
-          attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK,
       )
       HorizontalDivider()
-    }
-    if (attachmentsUnavailable && attachments.any { it.type != AttachmentType.ATTACHMENT_TYPE_LINK }) {
-      Spacer(Modifier.height(Spacing.small))
-      Text(
-        text = stringResource(Res.string.attachments_not_shared_note),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
     }
     if (openError != null) {
       Spacer(Modifier.height(Spacing.small))
