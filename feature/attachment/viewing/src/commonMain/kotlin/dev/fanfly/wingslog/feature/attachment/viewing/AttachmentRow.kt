@@ -156,7 +156,8 @@ private fun Attachment.typeIcon() = when (type) {
 private fun Attachment.subtitle(): String = when (type) {
   AttachmentType.ATTACHMENT_TYPE_LINK -> url.displayDomain()
   else -> buildString {
-    if (mime_type.isNotBlank()) append(mime_type.mimeLabel())
+    val label = typeLabel()
+    if (label.isNotBlank()) append(label)
     if (size_bytes > 0L) {
       if (isNotEmpty()) append(stringResource(Res.string.subtitle_separator))
       append(size_bytes.formatFileSize())
@@ -171,10 +172,22 @@ private fun String.displayDomain(): String {
 }
 
 @Composable
-private fun String.mimeLabel(): String = when {
-  startsWith("image/") -> stringResource(Res.string.attachment_type_image)
-  this == "application/pdf" -> stringResource(Res.string.attachment_type_pdf)
-  startsWith("text/") -> stringResource(Res.string.attachment_type_text)
-  else -> substringAfterLast("/").uppercase()
-    .take(8)
+private fun Attachment.typeLabel(): String = when {
+  mime_type.startsWith("image/") -> stringResource(Res.string.attachment_type_image)
+  mime_type == "application/pdf" -> stringResource(Res.string.attachment_type_pdf)
+  mime_type.startsWith("text/") -> stringResource(Res.string.attachment_type_text)
+  else -> {
+    // Vendor mime subtypes are long and unfriendly — e.g. .docx is
+    // "vnd.openxmlformats-officedocument.wordprocessingml.document", which truncates to "VND.OPEN".
+    // Prefer the filename extension (DOCX, XLSX, ZIP…), which is what users recognize.
+    val ext = name.substringAfterLast('.', "")
+    when {
+      ext.length in 1..5 -> ext.uppercase()
+      mime_type.isNotBlank() -> mime_type.substringAfterLast('/')
+        .uppercase()
+        .take(8)
+
+      else -> ""
+    }
+  }
 }
