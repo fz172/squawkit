@@ -83,11 +83,14 @@ class HttpsAttachmentBroker(
   ): ByteArray {
     // §9.2.1: the proxy verifies App Check + ID token + the ACL on THIS request, then streams bytes.
     // Both headers are required; a missing App Check token would earn a flat 401, so fail early.
+    log.d { "brokered download $blobId: fetching ID token" }
     val idToken = auth.currentUser?.getIdToken(false)
       ?: error("brokered download of $blobId needs a signed-in user")
+    log.d { "brokered download $blobId: fetching App Check token" }
     val appCheckToken = appCheck.token()
       ?: error("brokered download of $blobId needs an App Check token (unavailable on this platform)")
 
+    log.d { "brokered download $blobId: GET $functionsBaseUrl/streamBlob" }
     val response = httpClient.get("$functionsBaseUrl/streamBlob") {
       header(HttpHeaders.Authorization, "Bearer $idToken")
       header(APP_CHECK_HEADER, appCheckToken)

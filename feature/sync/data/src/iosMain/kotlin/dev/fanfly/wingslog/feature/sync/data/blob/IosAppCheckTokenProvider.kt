@@ -1,7 +1,10 @@
 package dev.fanfly.wingslog.feature.sync.data.blob
 
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Bridge for the iOS App Check token. `FirebaseAppCheck` is linked only in the Swift app target,
@@ -19,9 +22,24 @@ object IosAppCheckBridge {
   }
 
   internal suspend fun token(): String? {
-    val p = provider ?: return null
-    return suspendCancellableCoroutine { cont -> p { token -> cont.resume(token) } }
+    val p = provider
+    if (p == null) {
+      log.w { "App Check token requested but no provider installed (iOS host didn't wire it)" }
+      return null
+    }
+    // Bound the wait: if the native completion never fires, the brokered download would otherwise
+    // hang forever with no error — surfacing only as a distant "timed out". Time out to a null token
+    // so it fails-and-retries, logged, instead.
+    val token = withTimeoutOrNull(TOKEN_TIMEOUT) {
+      suspendCancellableCoroutine { cont -> p { token -> cont.resume(token) } }
+    }
+    if (token == null) log.w { "App Check token was null/timed out after $TOKEN_TIMEOUT" }
+    else log.d { "App Check token obtained (${token.length} chars)" }
+    return token
   }
+
+  private val log = Logger.withTag("IosAppCheckBridge")
+  private val TOKEN_TIMEOUT = 10.seconds
 }
 
 /** iOS [AppCheckTokenProvider] backed by [IosAppCheckBridge]. */
