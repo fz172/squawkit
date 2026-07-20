@@ -1,6 +1,7 @@
 import SwiftUI
 import GoogleSignIn
 import FirebaseCore
+import FirebaseAppCheck
 import ComposeApp
 
 
@@ -9,6 +10,14 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
   func application(_ application: UIApplication,
                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+    // App Check must have a provider factory set BEFORE configure(), or every enforceAppCheck
+    // callable (redeem invite, revoke, upload session, export) is rejected as "unauthenticated".
+    // The debug provider prints a token to the console to register in the Firebase App Check console.
+    // The Simulator can never attest via App Attest / DeviceCheck, so use the debug provider there
+    // regardless of build config; a real release build falls through to the default App Attest.
+    #if targetEnvironment(simulator) || DEBUG
+    AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
+    #endif
     FirebaseApp.configure()
     MainEntry.shared.startSyncEngine()
     MainEntry.shared.installGoogleSignInHandler { [weak self] in
