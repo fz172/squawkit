@@ -70,7 +70,7 @@ class TaskDataManagerImplTest {
         value = task,
         updatedAt = Instant.DISTANT_PAST
       )
-      val scope = EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+      val scope = EntityScope.aircraftChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
       every { store.observeAll(scope) } returns flowOf(listOf(entity))
 
       val result = manager.observeTasks(TEST_AIRCRAFT_ID)
@@ -92,7 +92,7 @@ class TaskDataManagerImplTest {
       store.put(
         match { it.isNotEmpty() },
         match { it.id.isNotEmpty() },
-        EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID),
+        EntityScope.aircraftChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID),
       )
     }
   }
@@ -108,7 +108,7 @@ class TaskDataManagerImplTest {
       store.put(
         TEST_TASK_ID,
         task,
-        EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+        EntityScope.aircraftChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
       )
     }
   }
@@ -134,7 +134,7 @@ class TaskDataManagerImplTest {
       store.put(
         TEST_TASK_ID,
         task,
-        EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+        EntityScope.aircraftChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
       )
     }
   }
@@ -157,7 +157,7 @@ class TaskDataManagerImplTest {
     coVerify {
       store.delete(
         TEST_TASK_ID,
-        EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+        EntityScope.aircraftChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
       )
     }
   }
@@ -179,17 +179,17 @@ class TaskDataManagerImplTest {
 
 /**
  * Own-aircraft resolver driven by the same mocked auth the tests already set up: signed in →
- * `aircraftChild(uid, id)`, signed out → null / throw. Keeps these unit tests focused on the manager
+ * `aircraftChildUnsafe(uid, id)`, signed out → null / throw. Keeps these unit tests focused on the manager
  * (the own-vs-shared logic is covered by AircraftScopeResolverImplTest).
  */
 private class FakeScopeResolver(private val auth: FirebaseAuth) : AircraftScopeResolver {
   override fun resolve(aircraftId: String): Flow<EntityScope?> =
     auth.authStateChanged.map { user ->
-      user?.uid?.let { EntityScope.aircraftChild(it, aircraftId) }
+      user?.uid?.let { EntityScope.aircraftChildUnsafe(it, aircraftId) }
     }
 
   override suspend fun resolveNow(aircraftId: String): EntityScope {
     val uid = auth.currentUser?.uid ?: error("Not signed in")
-    return EntityScope.aircraftChild(uid, aircraftId)
+    return EntityScope.aircraftChildUnsafe(uid, aircraftId)
   }
 }

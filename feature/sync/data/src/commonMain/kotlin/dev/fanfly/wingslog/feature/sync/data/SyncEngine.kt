@@ -118,7 +118,7 @@ class SyncEngine(
       .first()
       .map { it.id }
     for (aircraftId in aircraftIds) {
-      val aircraftScope = EntityScope.aircraftChild(uid, aircraftId)
+      val aircraftScope = EntityScope.aircraftChildUnsafe(uid, aircraftId)
       for (kind in PER_AIRCRAFT_KINDS) {
         success = hydrationRunner.runFor(uid, kind, aircraftScope) && success
       }
@@ -292,7 +292,7 @@ class SyncEngine(
           aircraftSubScopeSupervisor = subSupervisor
           val subScope = CoroutineScope(subSupervisor + ioContext)
           for (aircraftId in aircraftIds) {
-            val acScope = EntityScope.aircraftChild(
+            val acScope = EntityScope.aircraftChildUnsafe(
               uid,
               aircraftId
             )
@@ -311,7 +311,7 @@ class SyncEngine(
 
     // Shared aircraft: the refs store (hydrated as a TOP_LEVEL_KIND) names foreign scopes that live
     // under each host's tree. Mirror the own-aircraft fan-out, but hydrate/listen the per-aircraft
-    // kinds at aircraftChild(hostUid, acId). The shared aircraft doc itself needs a doc-level pull
+    // kinds at aircraftChildUnsafe(hostUid, acId). The shared aircraft doc itself needs a doc-level pull
     // (§5.2, #123); this branch covers the nested maintenance data. See docs/sharing §5.1.
     val refStore: EntityStore<SharedAircraftRef> =
       storeFactory.create(CollectionKind.SharedAircraftRef)
@@ -343,7 +343,7 @@ class SyncEngine(
                 aircraftId
               )
             }
-            val acScope = EntityScope.aircraftChild(
+            val acScope = EntityScope.aircraftChildUnsafe(
               hostUid,
               aircraftId
             )
@@ -561,29 +561,56 @@ class SyncEngine(
       }
   }
 
+  /**
+   * Scans the local blob index for work the scheduler should pick up and enqueues it. Scoped to the
+   * user's own tree **plus every shared aircraft's nested-data subtree** (docs/sharing §5.3, #124 —
+   * the same prefix widening [PushWorker] applies to the dirty-push queue), so a member's edits to a
+   * shared plane's attachments are uploaded/prefetched rather than stranded. Re-runs whenever the
+   * live-refs set changes, so a share redeemed mid-session catches up its pending blobs; suspends
+   * for the life of the user scope. Tombstones are keyed by blob id regardless of scope, so they're
+   * swept once per pass, not per prefix.
+   *
+   * Idempotent: the platform schedulers dedupe by blob id (Android `ExistingWorkPolicy.KEEP`), so a
+   * re-scan of an unchanged prefix is a no-op.
+   */
   private suspend fun schedulePendingBlobs(
     uid: String,
     scheduler: UploadScheduler,
     database: WingsLogDatabase,
   ) {
-    val prefix = "/users/$uid/%"
-    database.schemaQueries.selectPendingUploads(
-      scopePrefix = prefix,
-      limit = 500
-    )
-      .awaitAsList()
-      .forEach { row -> scheduler.scheduleUpload(BlobId(row.id)) }
-    if (scheduler.prefetchRemoteOnly) {
-      database.schemaQueries.selectPendingDownloads(
-        scopePrefix = prefix,
-        limit = 500
-      )
-        .awaitAsList()
-        .forEach { row -> scheduler.scheduleDownload(BlobId(row.id)) }
-    }
-    database.schemaQueries.selectBlobTombstones(limit = 500)
-      .awaitAsList()
-      .forEach { row -> scheduler.scheduleDelete(BlobId(row.id)) }
+    val refStore: EntityStore<SharedAircraftRef> =
+      storeFactory.create(CollectionKind.SharedAircraftRef)
+    refStore.observeAll(EntityScope.userRoot(uid))
+      .map { refs ->
+        buildSet {
+          add("/users/$uid/%")
+          for (ref in refs) {
+            add("/users/${ref.value.host_uid}/aircraft/${ref.value.aircraft_id}/%")
+          }
+        }
+      }
+      .distinctUntilChanged()
+      .collect { prefixes ->
+        for (prefix in prefixes) {
+          database.schemaQueries.selectPendingUploads(
+            scopePrefix = prefix,
+            limit = 500
+          )
+            .awaitAsList()
+            .forEach { row -> scheduler.scheduleUpload(BlobId(row.id)) }
+          if (scheduler.prefetchRemoteOnly) {
+            database.schemaQueries.selectPendingDownloads(
+              scopePrefix = prefix,
+              limit = 500
+            )
+              .awaitAsList()
+              .forEach { row -> scheduler.scheduleDownload(BlobId(row.id)) }
+          }
+        }
+        database.schemaQueries.selectBlobTombstones(limit = 500)
+          .awaitAsList()
+          .forEach { row -> scheduler.scheduleDelete(BlobId(row.id)) }
+      }
   }
 
   companion object {

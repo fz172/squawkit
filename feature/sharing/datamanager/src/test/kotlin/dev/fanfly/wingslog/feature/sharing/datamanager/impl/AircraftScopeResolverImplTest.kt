@@ -54,7 +54,7 @@ class AircraftScopeResolverImplTest {
   @Test
   fun resolveNow_ownAircraft_usesMyUidScope() = runTest {
     assertThat(resolver.resolveNow(OWN_AC))
-      .isEqualTo(EntityScope.aircraftChild(MY_UID, OWN_AC))
+      .isEqualTo(EntityScope.aircraftChildUnsafe(MY_UID, OWN_AC))
   }
 
   @Test
@@ -62,7 +62,7 @@ class AircraftScopeResolverImplTest {
     seedSharedRef()
 
     assertThat(resolver.resolveNow(SHARED_AC))
-      .isEqualTo(EntityScope.aircraftChild(HOST_UID, SHARED_AC))
+      .isEqualTo(EntityScope.aircraftChildUnsafe(HOST_UID, SHARED_AC))
   }
 
   @Test
@@ -75,7 +75,7 @@ class AircraftScopeResolverImplTest {
   @Test
   fun resolve_ownAircraft_emitsMyUidScope() = runTest {
     assertThat(resolver.resolve(OWN_AC).first())
-      .isEqualTo(EntityScope.aircraftChild(MY_UID, OWN_AC))
+      .isEqualTo(EntityScope.aircraftChildUnsafe(MY_UID, OWN_AC))
   }
 
   @Test
@@ -83,7 +83,7 @@ class AircraftScopeResolverImplTest {
     seedSharedRef()
 
     assertThat(resolver.resolve(SHARED_AC).first())
-      .isEqualTo(EntityScope.aircraftChild(HOST_UID, SHARED_AC))
+      .isEqualTo(EntityScope.aircraftChildUnsafe(HOST_UID, SHARED_AC))
   }
 
   @Test

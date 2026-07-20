@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
+import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.storage.FirebaseStorage
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
@@ -11,8 +12,12 @@ import io.ktor.client.statement.readRawBytes
 
 /**
  * One-shot download of a single `blob_object` row from `REMOTE_ONLY` → `SYNCED`.
- * Gets the download URL from Firebase Storage, fetches bytes via HTTP, then
- * calls [LocalBlobStore.installDownloaded] which verifies the sha256 and writes to disk.
+ *
+ * **Own-tree** blobs fetch a Firebase Storage download URL and pull the bytes directly.
+ * **Foreign-hosted** (shared-aircraft) blobs go through the [AttachmentBroker] `streamBlob` proxy,
+ * because `storage.rules` deny cross-account reads and the proxy is the only authorized door
+ * (design §9.2). Either way the bytes flow into [LocalBlobStore.installDownloaded], which verifies
+ * the sha256 and writes to disk.
  *
  * Returns `true` on terminal success or permanent failure; `false` on transient failure.
  */
@@ -20,6 +25,8 @@ class BlobDownloadDriver(
   private val blobs: LocalBlobStore,
   private val storage: FirebaseStorage,
   private val httpClient: HttpClient,
+  private val auth: FirebaseAuth,
+  private val broker: AttachmentBroker,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -41,13 +48,20 @@ class BlobDownloadDriver(
       return true
     }
 
-    val bytes = try {
-      val url = storage.reference(remotePath)
-        .getDownloadUrl()
-      log.d { "Download url is $url" }
+    val location = BlobLocation.of(ref)
+    val foreign = location?.isForeign(auth.currentUser?.uid) == true
 
-      httpClient.get(url)
-        .readRawBytes()
+    val bytes = try {
+      if (foreign) {
+        broker.download(location!!.ownerUid, location.aircraftId, id.value)
+      } else {
+        val url = storage.reference(remotePath)
+          .getDownloadUrl()
+        log.d { "Download url is $url" }
+
+        httpClient.get(url)
+          .readRawBytes()
+      }
     } catch (e: Exception) {
       log.w(e) { "download transient failure for ${id.value}; will retry" }
       return false

@@ -26,7 +26,7 @@ private const val TEST_SHA256 =
 @OptIn(ExperimentalCoroutinesApi::class)
 class BlobIndexReconcilerTest {
 
-  private val scope = EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+  private val scope = EntityScope.aircraftChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
 
   private fun buildAttachment(
     id: String = "att-1",

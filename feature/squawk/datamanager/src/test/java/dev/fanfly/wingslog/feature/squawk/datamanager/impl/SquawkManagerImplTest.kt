@@ -34,7 +34,7 @@ class SquawkManagerImplTest {
   private lateinit var manager: SquawkManagerImpl
 
   private val testScope =
-    EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+    EntityScope.aircraftChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
 
   @Before
   fun setUp() {
@@ -266,17 +266,17 @@ class SquawkManagerImplTest {
 
 /**
  * Own-aircraft resolver driven by the same mocked auth the tests already set up: signed in →
- * `aircraftChild(uid, id)`, signed out → null / throw. Keeps these unit tests focused on the manager
+ * `aircraftChildUnsafe(uid, id)`, signed out → null / throw. Keeps these unit tests focused on the manager
  * (the own-vs-shared logic is covered by AircraftScopeResolverImplTest).
  */
 private class FakeScopeResolver(private val auth: FirebaseAuth) : AircraftScopeResolver {
   override fun resolve(aircraftId: String): Flow<EntityScope?> =
     auth.authStateChanged.map { user ->
-      user?.uid?.let { EntityScope.aircraftChild(it, aircraftId) }
+      user?.uid?.let { EntityScope.aircraftChildUnsafe(it, aircraftId) }
     }
 
   override suspend fun resolveNow(aircraftId: String): EntityScope {
     val uid = auth.currentUser?.uid ?: error("Not signed in")
-    return EntityScope.aircraftChild(uid, aircraftId)
+    return EntityScope.aircraftChildUnsafe(uid, aircraftId)
   }
 }

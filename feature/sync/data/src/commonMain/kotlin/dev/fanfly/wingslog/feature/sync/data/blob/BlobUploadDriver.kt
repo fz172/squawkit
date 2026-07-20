@@ -22,6 +22,7 @@ class BlobUploadDriver(
   private val storage: FirebaseStorage,
   private val auth: FirebaseAuth,
   private val fs: BlobFilesystem,
+  private val broker: AttachmentBroker,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -75,9 +76,25 @@ class BlobUploadDriver(
           .trim('/')
       }/blobs/${id.value}"
 
+    val location = BlobLocation.of(ref)
+    val foreign = location?.isForeign(user.uid) == true
+
     return try {
-      storage.reference(remotePath)
-        .putData(bytes.toFirebaseData())
+      if (foreign) {
+        // Foreign host: `storage.rules` deny a direct write, so mint a brokered resumable session
+        // into the host's tree and PUT the bytes there (design §9.2). remotePath already targets the
+        // host tree, so the row records the same canonical location on success.
+        broker.upload(
+          hostUid = location!!.ownerUid,
+          aircraftId = location.aircraftId,
+          blobId = id.value,
+          contentType = ref.contentType,
+          bytes = bytes,
+        )
+      } else {
+        storage.reference(remotePath)
+          .putData(bytes.toFirebaseData())
+      }
       blobs.markUploaded(id, remotePath)
       log.i { "uploaded ${id.value} → $remotePath" }
       true

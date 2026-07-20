@@ -31,12 +31,12 @@ import org.junit.Test
 private const val TEST_USER_ID = "user-push-001"
 private const val TEST_AIRCRAFT_ID = "aircraft-push-001"
 private val TEST_SCOPE =
-  EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+  EntityScope.aircraftChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
 private val TEST_KIND = CollectionKind.MaintenanceLog
 
 private const val HOST_UID = "host-push-001"
 private const val SHARED_AC = "aircraft-shared-001"
-private val SHARED_SCOPE = EntityScope.aircraftChild(HOST_UID, SHARED_AC)
+private val SHARED_SCOPE = EntityScope.aircraftChildUnsafe(HOST_UID, SHARED_AC)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PushWorkerTest {

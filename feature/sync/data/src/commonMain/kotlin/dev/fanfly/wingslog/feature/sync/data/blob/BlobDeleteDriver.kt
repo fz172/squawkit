@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.storage.FirebaseStorage
 
 /**
@@ -14,11 +15,18 @@ import dev.gitlive.firebase.storage.FirebaseStorage
  *
  * Safe to call multiple times — if the remote object is already gone, Firebase Storage returns a
  * 404 which we treat as success (the object is gone either way).
+ *
+ * **Foreign-hosted** (shared-aircraft) blobs are not deleted from Storage here: a member has no
+ * write rights to the host's tree and the broker exposes no delete door, so a direct delete would
+ * only earn a permanent `PERMISSION_DENIED`. The remote object is the host's to reclaim — via the
+ * host-side deletion cascade / orphan sweep (design §9.6, P8.6). We just drop the local row so the
+ * member's device stops tracking bytes it no longer references.
  */
 class BlobDeleteDriver(
   private val blobs: LocalBlobStore,
   private val storage: FirebaseStorage,
   private val db: WingsLogDatabase,
+  private val auth: FirebaseAuth,
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) {
 
@@ -40,8 +48,10 @@ class BlobDeleteDriver(
     // easy one to miss: it's a blob known from a synced record whose bytes were never downloaded to
     // this device (e.g. after a reinstall), so it very much exists in gs:// and must be removed.
     // Only LocalOnly carries a null path, and it has nothing in Storage to delete.
+    val foreign = BlobLocation.of(ref)?.isForeign(auth.currentUser?.uid) == true
+
     val remotePath = ref.remotePath
-    if (remotePath != null) {
+    if (remotePath != null && !foreign) {
       try {
         storage.reference(remotePath)
           .delete()
@@ -54,6 +64,8 @@ class BlobDeleteDriver(
           return false
         }
       }
+    } else if (foreign) {
+      log.i { "skipping remote delete of foreign-hosted blob ${id.value}; host reclaims it (§9.6)" }
     }
 
     writeLock.withLock { db.schemaQueries.hardDeleteBlob(id.value) }

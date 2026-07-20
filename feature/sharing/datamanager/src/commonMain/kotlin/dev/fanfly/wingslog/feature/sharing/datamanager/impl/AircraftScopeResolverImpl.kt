@@ -49,5 +49,5 @@ class AircraftScopeResolverImpl(
 
   /** Shared when a ref names a foreign host; own otherwise. */
   private fun scopeFor(uid: String, hostUid: String?, aircraftId: String): EntityScope =
-    EntityScope.aircraftChild(hostUid ?: uid, aircraftId)
+    EntityScope.aircraftChildUnsafe(hostUid ?: uid, aircraftId)
 }

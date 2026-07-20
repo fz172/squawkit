@@ -40,12 +40,12 @@ class SharedScopeJanitorTest {
     seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(HOST), SHARED_AC)
     seedEntity(
       CollectionKind.MaintenanceLog,
-      EntityScope.aircraftChild(HOST, SHARED_AC),
+      EntityScope.aircraftChildUnsafe(HOST, SHARED_AC),
       "log-1"
     )
     db.schemaQueries.upsertCursor(
       MEMBER, CollectionKind.MaintenanceLog,
-      EntityScope.aircraftChild(HOST, SHARED_AC)
+      EntityScope.aircraftChildUnsafe(HOST, SHARED_AC)
         .toPath(), false, null, 0, null,
     )
     seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(MEMBER), OWN_AC)
@@ -57,8 +57,8 @@ class SharedScopeJanitorTest {
     janitor.purgeRevoked(MEMBER, liveShares = emptySet())
 
     assertThat(aircraftAt(EntityScope.userRoot(HOST))).isEmpty()
-    assertThat(logsAt(EntityScope.aircraftChild(HOST, SHARED_AC))).isEmpty()
-    assertThat(cursor(EntityScope.aircraftChild(HOST, SHARED_AC))).isNull()
+    assertThat(logsAt(EntityScope.aircraftChildUnsafe(HOST, SHARED_AC))).isEmpty()
+    assertThat(cursor(EntityScope.aircraftChildUnsafe(HOST, SHARED_AC))).isNull()
     // Own aircraft untouched.
     assertThat(aircraftAt(EntityScope.userRoot(MEMBER))).hasSize(1)
   }
@@ -69,8 +69,8 @@ class SharedScopeJanitorTest {
     janitor.purgeRevoked(MEMBER, liveShares = setOf(HOST to SHARED_AC))
 
     assertThat(aircraftAt(EntityScope.userRoot(HOST))).hasSize(1)
-    assertThat(logsAt(EntityScope.aircraftChild(HOST, SHARED_AC))).hasSize(1)
-    assertThat(cursor(EntityScope.aircraftChild(HOST, SHARED_AC))).isNotNull()
+    assertThat(logsAt(EntityScope.aircraftChildUnsafe(HOST, SHARED_AC))).hasSize(1)
+    assertThat(cursor(EntityScope.aircraftChildUnsafe(HOST, SHARED_AC))).isNotNull()
   }
 
   private suspend fun seedEntity(
@@ -119,7 +119,7 @@ class SharedScopeJanitorTest {
     seedFixture()
     seedEntity(
       CollectionKind.MaintenanceLog,
-      EntityScope.aircraftChild(HOST, SHARED_AC),
+      EntityScope.aircraftChildUnsafe(HOST, SHARED_AC),
       "log-unsynced",
       dirty = true,
     )
@@ -155,7 +155,7 @@ class SharedScopeJanitorTest {
     seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(GUEST), GUEST_AC, dirty = true)
     seedEntity(
       CollectionKind.MaintenanceLog,
-      EntityScope.aircraftChild(GUEST, GUEST_AC),
+      EntityScope.aircraftChildUnsafe(GUEST, GUEST_AC),
       "log-guest",
       dirty = true,
     )
@@ -165,7 +165,7 @@ class SharedScopeJanitorTest {
     janitor.purgeRevoked(MEMBER, liveShares = emptySet())
 
     assertThat(aircraftAt(EntityScope.userRoot(GUEST))).hasSize(1)
-    assertThat(logsAt(EntityScope.aircraftChild(GUEST, GUEST_AC))).hasSize(1)
+    assertThat(logsAt(EntityScope.aircraftChildUnsafe(GUEST, GUEST_AC))).hasSize(1)
     assertThat(notices).isEmpty()
   }
 

@@ -11,6 +11,9 @@ import dev.fanfly.wingslog.core.storage.EntityCodecRegistry
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.WireCodec
+import dev.fanfly.wingslog.core.storage.blob.BlobId
+import dev.fanfly.wingslog.core.storage.blob.RemoteState
+import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -58,7 +61,7 @@ class SyncEngineTest {
     CollectionKind.Aircraft to EntityScope.userRoot(HOST)
       .toPath()
   private val sharedNestedKey =
-    CollectionKind.MaintenanceLog to EntityScope.aircraftChild(HOST, SHARED_AC)
+    CollectionKind.MaintenanceLog to EntityScope.aircraftChildUnsafe(HOST, SHARED_AC)
       .toPath()
 
   @Before
@@ -126,7 +129,7 @@ class SyncEngineTest {
       seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(HOST), SHARED_AC)
       seedEntity(
         CollectionKind.MaintenanceLog,
-        EntityScope.aircraftChild(HOST, SHARED_AC),
+        EntityScope.aircraftChildUnsafe(HOST, SHARED_AC),
         "log-1"
       )
       // Hydration (mocked out here) is what writes this in production; it is the janitor's evidence
@@ -154,7 +157,7 @@ class SyncEngineTest {
       assertThat(
         rowsAt(
           CollectionKind.MaintenanceLog,
-          EntityScope.aircraftChild(HOST, SHARED_AC)
+          EntityScope.aircraftChildUnsafe(HOST, SHARED_AC)
         )
       )
         .isEmpty()
@@ -164,9 +167,30 @@ class SyncEngineTest {
       job.cancel()
     }
 
+  @Test
+  fun schedulePendingBlobs_widensToSharedAircraftScope() = runTest(ioContext) {
+    seedRef()
+    // A member's own pending upload, and one on the shared aircraft (host's tree). The old
+    // own-tree-only scan (`/users/{member}/%`) would have found the first and stranded the second.
+    seedPendingUpload(EntityScope.aircraftChildUnsafe(MEMBER, "ac-own"), "blob-own")
+    seedPendingUpload(EntityScope.aircraftChildUnsafe(HOST, SHARED_AC), "blob-shared")
+    // A pending blob in an unrelated user's tree that is NOT a share of ours must stay untouched —
+    // scanning it would push it under our auth (PERMISSION_DENIED). Guards against over-widening.
+    seedPendingUpload(EntityScope.aircraftChildUnsafe("stranger-uid", "ac-x"), "blob-foreign")
+    val scheduler = FakeUploadScheduler()
+
+    engine = buildEngine(scheduler)
+    val job = engine.start()
+    testScheduler.advanceUntilIdle()
+
+    assertThat(scheduler.uploads).containsExactly("blob-own", "blob-shared")
+
+    job.cancel()
+  }
+
   // --- harness ---------------------------------------------------------------------------------
 
-  private fun buildEngine(): SyncEngine {
+  private fun buildEngine(scheduler: UploadScheduler? = null): SyncEngine {
     val user = mockk<FirebaseUser> {
       every { uid } returns MEMBER
       every { isAnonymous } returns false
@@ -202,6 +226,7 @@ class SyncEngineTest {
       syncPreferences = prefs,
       ioContext = ioContext,
       db = db,
+      uploadScheduler = scheduler,
       sharedScopeJanitor = SharedScopeJanitor(db, writeLock),
       writeLock = writeLock,
     )
@@ -241,7 +266,7 @@ class SyncEngineTest {
     db.schemaQueries.upsertCursor(
       uid = MEMBER,
       collection = CollectionKind.MaintenanceLog,
-      scope_path = EntityScope.aircraftChild(HOST, SHARED_AC)
+      scope_path = EntityScope.aircraftChildUnsafe(HOST, SHARED_AC)
         .toPath(),
       hydrated = true,
       last_seen_remote = null,
@@ -250,9 +275,38 @@ class SyncEngineTest {
     )
   }
 
+  private suspend fun seedPendingUpload(scope: EntityScope, blobId: String) {
+    db.schemaQueries.upsertBlob(
+      id = blobId,
+      scope_path = scope.toPath(),
+      relative_path = "blobs/$blobId",
+      content_type = "image/jpeg",
+      size_bytes = 1L,
+      sha256 = "sha-$blobId",
+      remote_state = RemoteState.LocalOnly,
+      remote_path = null,
+      upload_attempts = 0L,
+      last_attempt_at = null,
+      updated_at = 1000L,
+      deleted = false,
+    )
+  }
+
   private fun rowsAt(kind: CollectionKind, scope: EntityScope) =
     db.schemaQueries.selectAll(kind, scope.toPath())
       .executeAsList()
+}
+
+/** Records the blob ids handed to each schedule call so tests can assert what the scan enqueued. */
+private class FakeUploadScheduler : UploadScheduler {
+  val uploads = mutableListOf<String>()
+  val downloads = mutableListOf<String>()
+  val deletes = mutableListOf<String>()
+
+  override fun scheduleUpload(blobId: BlobId) { uploads += blobId.value }
+  override fun scheduleDownload(blobId: BlobId) { downloads += blobId.value }
+  override fun scheduleDelete(blobId: BlobId) { deletes += blobId.value }
+  override fun cancelAll() {}
 }
 
 /**

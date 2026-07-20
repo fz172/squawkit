@@ -16,7 +16,7 @@ class SyncCursorStoreTest {
   companion object {
     private const val TEST_UID = "user-cursor-001"
     private const val TEST_AIRCRAFT_ID = "aircraft-cursor-001"
-    private val TEST_SCOPE = EntityScope.aircraftChild(
+    private val TEST_SCOPE = EntityScope.aircraftChildUnsafe(
       TEST_UID,
       TEST_AIRCRAFT_ID
     )
@@ -246,7 +246,7 @@ class SyncCursorStoreTest {
 
   @Test
   fun cursors_differentScopesSameKind_areIsolated() = runTest {
-    val scopeOther = EntityScope.aircraftChild(
+    val scopeOther = EntityScope.aircraftChildUnsafe(
       TEST_UID,
       "other-aircraft"
     )

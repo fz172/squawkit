@@ -10,3 +10,11 @@ package dev.fanfly.wingslog.web
 external fun initializeAppCheck(app: dynamic, options: dynamic): dynamic
 
 external class ReCaptchaV3Provider(siteKey: String)
+
+// Fetches a current App Check token from an initialized AppCheck instance. Used by the attachment
+// broker's streamBlob download, which requires an X-Firebase-AppCheck header (P8.4 #245).
+external fun getToken(appCheck: dynamic, forceRefresh: Boolean): kotlin.js.Promise<AppCheckTokenResult>
+
+external interface AppCheckTokenResult {
+  val token: String
+}

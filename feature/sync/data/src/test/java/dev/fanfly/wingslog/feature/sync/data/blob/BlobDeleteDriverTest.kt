@@ -9,6 +9,8 @@ import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.db.SchemaQueries
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.storage.FirebaseStorage
 import dev.gitlive.firebase.storage.StorageReference
 import io.mockk.Runs
@@ -31,6 +33,7 @@ class BlobDeleteDriverTest {
   private lateinit var storage: FirebaseStorage
   private lateinit var db: WingsLogDatabase
   private lateinit var schemaQueries: SchemaQueries
+  private lateinit var auth: FirebaseAuth
   private lateinit var driver: BlobDeleteDriver
 
   @Before
@@ -40,7 +43,11 @@ class BlobDeleteDriverTest {
     schemaQueries = mockk(relaxed = true)
     db = mockk()
     every { db.schemaQueries } returns schemaQueries
-    driver = BlobDeleteDriver(blobs, storage, db, DatabaseWriteLock())
+    // The blobRef scope is owned by "u1"; signing in as "u1" keeps these blobs own-tree, so the
+    // driver takes the direct Firebase Storage delete path (foreign-host skipping is its own test).
+    val user = mockk<FirebaseUser> { every { uid } returns "u1" }
+    auth = mockk { every { currentUser } returns user }
+    driver = BlobDeleteDriver(blobs, storage, db, auth, DatabaseWriteLock())
   }
 
   private fun blobRef(
@@ -48,9 +55,10 @@ class BlobDeleteDriverTest {
     remoteState: RemoteState = RemoteState.RemoteOnly,
     remotePath: String? = REMOTE_PATH,
     deleted: Boolean = true,
+    ownerUid: String = "u1",
   ) = BlobRef(
     id = BlobId(id),
-    scope = EntityScope.aircraftChild("u1", "ac1"),
+    scope = EntityScope.aircraftChildUnsafe(ownerUid, "ac1"),
     relativePath = "blobs/$id.bin",
     sizeBytes = 10L,
     sha256 = "sha",
@@ -98,6 +106,21 @@ class BlobDeleteDriverTest {
   fun runOnce_localOnlyTombstone_skipsRemoteDeleteAndHardDeletesRow() = runTest {
     // LocalOnly never uploaded — remotePath is null and there is nothing in gs:// to remove.
     val ref = blobRef(remoteState = RemoteState.LocalOnly, remotePath = null)
+    coEvery { blobs.get(BlobId(BLOB_ID)) } returns ref
+
+    val result = driver.runOnce(BlobId(BLOB_ID))
+
+    assertThat(result).isTrue()
+    verify(exactly = 0) { storage.reference(any()) }
+    coVerify(exactly = 1) { schemaQueries.hardDeleteBlob(BLOB_ID) }
+  }
+
+  @Test
+  fun runOnce_foreignHostedTombstone_skipsRemoteDeleteButDropsRow() = runTest {
+    // A member has no write rights to the host's tree and the broker has no delete door, so a direct
+    // delete would only earn a permanent PERMISSION_DENIED. Drop the local row; the host reclaims the
+    // remote object via its own deletion cascade / sweep (§9.6, P8.6).
+    val ref = blobRef(remoteState = RemoteState.Synced, ownerUid = "host-uid")
     coEvery { blobs.get(BlobId(BLOB_ID)) } returns ref
 
     val result = driver.runOnce(BlobId(BLOB_ID))

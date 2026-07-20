@@ -15,7 +15,7 @@ import org.junit.Test
 private const val TEST_USER_ID = "user-pull-001"
 private const val TEST_AIRCRAFT_ID = "aircraft-pull-001"
 private val TEST_SCOPE =
-  EntityScope.aircraftChild(TEST_USER_ID, TEST_AIRCRAFT_ID)
+  EntityScope.aircraftChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
 private val TEST_KIND = CollectionKind.MaintenanceLog
 
 class PullListenerTest {

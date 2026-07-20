@@ -95,7 +95,7 @@ class FleetManagerImpl(
         // The aircraft doc lives at the *parent* of its nested data: own → users/{myUid}/aircraft,
         // shared → users/{hostUid}/aircraft. A ref for this id (keyed by aircraft id) names the host;
         // its absence means it's the user's own. (The AircraftScopeResolver handles the nested
-        // aircraftChild scope; the doc itself needs userRoot, hence the lookup here.)
+        // aircraftChildUnsafe scope; the doc itself needs userRoot, hence the lookup here.)
         refStore.observe(id, EntityScope.userRoot(user.uid)).flatMapLatest { ref ->
           val rootUid = ref?.value?.host_uid ?: user.uid
           store.observe(id, EntityScope.userRoot(rootUid))

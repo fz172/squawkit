@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.di.commonAppModules
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.stresstest.config.stressTestKoinModules
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
+import dev.fanfly.wingslog.feature.sync.data.blob.WebAppCheckBridge
 import dev.fanfly.wingslog.web.ActiveElsewhereScreen
 import dev.fanfly.wingslog.web.EmailLinkCompletionScreen
 import dev.fanfly.wingslog.web.EmojiFallbackProvider
@@ -12,6 +13,7 @@ import dev.fanfly.wingslog.web.WebApp
 import dev.fanfly.wingslog.web.createSqliteWorker
 import dev.fanfly.wingslog.web.gateSingleTab
 import dev.fanfly.wingslog.web.ReCaptchaV3Provider
+import dev.fanfly.wingslog.web.getToken
 import dev.fanfly.wingslog.web.initializeApp
 import dev.fanfly.wingslog.web.initializeAppCheck
 import dev.gitlive.firebase.Firebase
@@ -102,13 +104,18 @@ private fun initializeFirebaseAppCheck(app: dynamic) {
     // Firebase Console (App Check → the web app → Manage debug tokens) so localhost dev can attest.
     js("self.FIREBASE_APPCHECK_DEBUG_TOKEN = true")
   }
-  initializeAppCheck(
+  val appCheck = initializeAppCheck(
     app,
     json(
       "provider" to ReCaptchaV3Provider(APP_CHECK_SITE_KEY),
       "isTokenAutoRefreshEnabled" to true,
     ),
   )
+  // Hand the attachment broker (feature/sync/data) a way to mint App Check tokens for the streamBlob
+  // download proxy, which requires an X-Firebase-AppCheck header (P8.4 #245).
+  WebAppCheckBridge.tokenSource = {
+    getToken(appCheck, false).then { it.token }
+  }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)

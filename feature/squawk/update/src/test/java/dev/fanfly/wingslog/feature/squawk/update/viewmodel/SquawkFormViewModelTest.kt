@@ -543,23 +543,10 @@ class SquawkFormViewModelTest {
   // --- Attachments on a shared aircraft (design §9, #146) ---
 
   @Test
-  fun attachUnavailable_onAnAircraftHostedByAnotherAccount() = runTest(testDispatcher) {
-    // storage.rules is uid-scoped for writes as well as reads, so a member's upload into the host's
-    // tree is denied. Offering the attach button anyway would produce a file that silently never
-    // leaves the device.
+  fun attachAvailable_onAnAircraftHostedByAnotherAccount() = runTest(testDispatcher) {
+    // A member's upload now travels through the broker into the host's tree (P8.4 §9.2), so the
+    // attach button is offered on a shared aircraft — no longer hard-disabled by hosting.
     every { featureLabManager.observe() } returns flowOf(FeatureFlags(attachmentUploadEnabled = true))
-    every { sharingManager.observeHostedByOther(TEST_AIRCRAFT_ID) } returns flowOf(true)
-
-    val viewModel = buildViewModelForNew()
-    advanceUntilIdle()
-
-    assertThat(viewModel.attachmentUploadEnabled.value).isFalse()
-  }
-
-  @Test
-  fun attachAvailable_onOwnAircraft_whenTheFlagIsOn() = runTest(testDispatcher) {
-    every { featureLabManager.observe() } returns flowOf(FeatureFlags(attachmentUploadEnabled = true))
-    every { sharingManager.observeHostedByOther(TEST_AIRCRAFT_ID) } returns flowOf(false)
 
     val viewModel = buildViewModelForNew()
     advanceUntilIdle()
@@ -568,11 +555,19 @@ class SquawkFormViewModelTest {
   }
 
   @Test
-  fun attachStaysOff_onOwnAircraft_whenTheFlagIsOff() = runTest(testDispatcher) {
-    // The share check widens the gate for nobody: the feature flag (and later, the paywall) still
-    // has the final say.
+  fun attachAvailable_onOwnAircraft_whenTheFlagIsOn() = runTest(testDispatcher) {
+    every { featureLabManager.observe() } returns flowOf(FeatureFlags(attachmentUploadEnabled = true))
+
+    val viewModel = buildViewModelForNew()
+    advanceUntilIdle()
+
+    assertThat(viewModel.attachmentUploadEnabled.value).isTrue()
+  }
+
+  @Test
+  fun attachStaysOff_whenTheFlagIsOff() = runTest(testDispatcher) {
+    // The feature flag (and later, the P8.7 entitlement) still has the final say.
     every { featureLabManager.observe() } returns flowOf(FeatureFlags(attachmentUploadEnabled = false))
-    every { sharingManager.observeHostedByOther(TEST_AIRCRAFT_ID) } returns flowOf(false)
 
     val viewModel = buildViewModelForNew()
     advanceUntilIdle()

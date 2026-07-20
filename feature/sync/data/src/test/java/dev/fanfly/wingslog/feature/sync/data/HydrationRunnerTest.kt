@@ -17,7 +17,7 @@ import org.junit.Test
 class HydrationRunnerTest {
   private val TEST_UID = "user-hydration-001"
   private val TEST_AIRCRAFT_ID = "aircraft-hydration-001"
-  private val TEST_SCOPE = EntityScope.aircraftChild(
+  private val TEST_SCOPE = EntityScope.aircraftChildUnsafe(
     TEST_UID,
     TEST_AIRCRAFT_ID
   )
