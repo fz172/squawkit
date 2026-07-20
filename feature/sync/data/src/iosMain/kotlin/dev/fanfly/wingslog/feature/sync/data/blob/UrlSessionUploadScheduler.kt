@@ -57,6 +57,7 @@ class UrlSessionUploadScheduler(
   private val httpClient: HttpClient,
   private val downloadDriver: BlobDownloadDriver,
   private val deleteDriver: BlobDeleteDriver,
+  private val uploadDriver: BlobUploadDriver,
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) : UploadScheduler {
 
@@ -138,6 +139,19 @@ class UrlSessionUploadScheduler(
     val row = db.schemaQueries.selectBlobById(id.value)
       .executeAsOneOrNull() ?: return
     if (row.deleted) return
+
+    // Foreign-hosted (shared aircraft) blobs live in the HOST's tree, which storage.rules deny a
+    // direct write to. Route them through the shared upload driver → broker (getBlobUploadSession
+    // mints a session, App Check attached by the native SDK; the PUT runs in-process). Own-tree
+    // blobs fall through to the background-URLSession path below, unchanged.
+    val ownerUid = row.scope_path.trim('/')
+      .split('/')
+      .getOrNull(1)
+    val currentUid = auth.currentUser?.uid
+    if (ownerUid != null && currentUid != null && ownerUid != currentUid) {
+      uploadDriver.runOnce(id)
+      return
+    }
 
     when (row.remote_state) {
       RemoteState.Synced, RemoteState.RemoteOnly -> return

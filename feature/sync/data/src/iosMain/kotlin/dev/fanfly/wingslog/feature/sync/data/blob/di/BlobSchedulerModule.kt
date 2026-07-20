@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.feature.sync.data.blob.BlobDeleteDriver
 import dev.fanfly.wingslog.feature.sync.data.blob.BlobDownloadDriver
 import dev.fanfly.wingslog.feature.sync.data.blob.BlobUploadDriver
 import dev.fanfly.wingslog.feature.sync.data.blob.HttpsAttachmentBroker
+import dev.fanfly.wingslog.feature.sync.data.blob.IosAppCheckTokenProvider
 import dev.fanfly.wingslog.feature.sync.data.blob.UrlSessionUploadScheduler
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.storage.FirebaseStorage
@@ -21,10 +22,10 @@ import org.koin.dsl.module
 actual val blobSchedulerModule = module {
   single { HttpClient(Darwin) }
 
-  // iOS App Check token access is a fast-follow (P8.4 #245): until it lands, brokered DOWNLOADS of a
-  // foreign-hosted blob fail-and-retry. Brokered UPLOADS work — the getBlobUploadSession callable
-  // attaches App Check via the native SDK. Own-tree blobs are unaffected.
-  single<AppCheckTokenProvider> { AppCheckTokenProvider.Unavailable }
+  // Brokered downloads need an App Check token as the streamBlob header. FirebaseAppCheck lives only
+  // in the Swift target, so the host installs the token fetch via MainEntry.installAppCheckTokenProvider
+  // into IosAppCheckBridge (uninstalled → null token → download fails, as before).
+  single<AppCheckTokenProvider> { IosAppCheckTokenProvider() }
 
   single<AttachmentBroker> {
     HttpsAttachmentBroker(
@@ -74,6 +75,7 @@ actual val blobSchedulerModule = module {
       httpClient = get<HttpClient>(),
       downloadDriver = get<BlobDownloadDriver>(),
       deleteDriver = get<BlobDeleteDriver>(),
+      uploadDriver = get<BlobUploadDriver>(),
       writeLock = get<DatabaseWriteLock>(),
     )
   }

@@ -85,7 +85,7 @@ class BlobUploadDriver(
         // into the host's tree and PUT the bytes there (design §9.2). remotePath already targets the
         // host tree, so the row records the same canonical location on success.
         broker.upload(
-          hostUid = location!!.ownerUid,
+          hostUid = location.ownerUid,
           aircraftId = location.aircraftId,
           blobId = id.value,
           contentType = ref.contentType,

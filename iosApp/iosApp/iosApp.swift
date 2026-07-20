@@ -19,6 +19,13 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
     #endif
     FirebaseApp.configure()
+    // Hand the attachment broker (Kotlin/Native, which can't link FirebaseAppCheck) a way to mint
+    // App Check tokens for the streamBlob download header.
+    MainEntry.shared.installAppCheckTokenProvider { onToken in
+      AppCheck.appCheck().token(forcingRefresh: false) { token, _ in
+        onToken(token?.token)
+      }
+    }
     MainEntry.shared.startSyncEngine()
     MainEntry.shared.installGoogleSignInHandler { [weak self] in
       self?.googleSignInProvider.signIn()

@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.di.initKoin
 import dev.fanfly.wingslog.feature.login.EmailLinkDeepLinks
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
+import dev.fanfly.wingslog.feature.sync.data.blob.IosAppCheckBridge
 import dev.fanfly.wingslog.feature.sync.data.blob.UrlSessionUploadScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,15 @@ object MainEntry {
 
   fun installGoogleSignInHandler(handler: () -> Unit) {
     IosGoogleSignInBridge.install(handler)
+  }
+
+  /**
+   * Installs the App Check token fetch owned by the Swift app (`FirebaseAppCheck` is linked there,
+   * not in Kotlin/Native). [provider] is invoked with a callback that must be called with a fresh
+   * App Check token (or null). Used by the attachment broker's `streamBlob` download header.
+   */
+  fun installAppCheckTokenProvider(provider: (onToken: (String?) -> Unit) -> Unit) {
+    IosAppCheckBridge.install(provider)
   }
 
   fun completeGoogleSignIn(errorMessage: String?) {
