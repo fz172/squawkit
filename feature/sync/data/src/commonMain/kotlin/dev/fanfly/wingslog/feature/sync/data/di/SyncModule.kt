@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.sync.data.PushWorker
 import dev.fanfly.wingslog.feature.sync.data.RemoteFetcher
 import dev.fanfly.wingslog.feature.sync.data.SharedScopeJanitor
 import dev.fanfly.wingslog.feature.sync.data.SyncCursorStore
+import dev.fanfly.wingslog.feature.sync.data.SubscriptionSyncListener
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 import dev.fanfly.wingslog.feature.sync.data.SyncWriter
@@ -99,6 +100,13 @@ val syncModule: Module = module {
       telemetry = get<SyncTelemetry>(),
     )
   }
+  single<SubscriptionSyncListener> {
+    SubscriptionSyncListener(
+      firestore = get<FirebaseFirestore>(),
+      db = get<WingsLogDatabase>(),
+      writeLock = get<DatabaseWriteLock>(),
+    )
+  }
   single<SyncEngine> {
     val db = get<WingsLogDatabase>()
     val postWriteHook = getOrNull<PostWriteHook>()
@@ -132,6 +140,7 @@ val syncModule: Module = module {
       ),
       telemetry = get<SyncTelemetry>(),
       writeLock = writeLock,
+      subscriptionSyncListener = get<SubscriptionSyncListener>(),
     )
   }
 }
