@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Doc: Subscription (SquawkIt Pro)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb; --surface: #ffffff; --surface-alt: #eef3f9;
+      --text: #122033; --muted: #53657d; --line: #d8e1ec;
+      --blue: #1f5fa8; --blue-soft: #dbe9fb;
+      --green: #156f4a; --green-soft: #d8f0e3;
+      --amber: #9a6200; --amber-soft: #fdeecb;
+      --red: #a33a32; --red-soft: #f7dedb;
+      --shadow: rgba(18, 32, 51, 0.08);
+      --mono: "SFMono-Regular", "JetBrains Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.55; }
+    main { max-width: 1240px; margin: 0 auto; padding: 32px 20px 56px; }
+    .page-shell { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 28px; align-items: start; }
+    .doc-body { min-width: 0; }
+    h1, h2, h3, h4 { line-height: 1.2; margin: 0 0 12px; }
+    h1 { font-size: 2rem; }
+    h2 { margin-top: 38px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 1.35rem; }
+    h3 { margin-top: 24px; font-size: 1.08rem; }
+    h4 { margin-top: 18px; font-size: 0.95rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-alt); padding: 1px 6px; border-radius: 6px; }
+    pre { background: var(--text); color: #e7eef7; padding: 14px 16px; border-radius: 12px; overflow: auto; font-family: var(--mono); font-size: 0.83rem; line-height: 1.5; }
+    pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 16px 0; box-shadow: 0 1px 2px rgba(18,32,51,0.04); }
+    .hero { background: linear-gradient(180deg, var(--surface), var(--surface-alt)); border: 1px solid var(--line); border-radius: 20px; padding: 26px; margin-bottom: 24px; }
+    .hero h1 { margin-bottom: 8px; }
+    .lede { font-size: 1.1rem; color: var(--muted); margin: 0; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 0.82rem; font-weight: 600; margin: 0 6px 6px 0; }
+    .pill.green { background: var(--green-soft); color: var(--green); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+    .toc { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow: auto; background: rgba(255,255,255,0.9); backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px var(--shadow); }
+    .toc-title { margin: 0 0 10px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .toc ol { margin: 0; padding-left: 18px; }
+    .toc li { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92rem; }
+    th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+    th { background: var(--surface-alt); font-weight: 600; }
+    .callout { border-radius: 14px; padding: 14px 18px; margin: 16px 0; border: 1px solid var(--line); }
+    .callout.note { background: var(--blue-soft); border-color: #bcd6f5; }
+    .callout.win { background: var(--green-soft); border-color: #aee0c6; }
+    .callout.warn { background: var(--amber-soft); border-color: #f0d79a; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    ul.checks { list-style: none; padding-left: 0; }
+    ul.checks li { padding-left: 26px; position: relative; margin: 8px 0; }
+    ul.checks li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+    .phase { display: grid; grid-template-columns: 84px 1fr; gap: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin: 10px 0; }
+    .phase .tag { background: var(--surface-alt); padding: 12px 14px; font-weight: 700; color: var(--blue); border-right: 1px solid var(--line); }
+    .phase .body { padding: 12px 16px; }
+    .phase .body b { display:block; margin-bottom: 3px; }
+    @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <div>
+      <span class="pill amber">Status: Proposed</span>
+      <span class="pill">Design Doc</span>
+      <span class="pill">Entitlement · Sync · Cloud Functions</span>
+    </div>
+    <h1>Subscription — SquawkIt Pro</h1>
+    <p class="lede">Engineering design for the subscription feature. Companion to the <a href="subscription_PRD.html">PRD</a>: how the account-level entitlement is stored, synced, and gated on; the Feature&nbsp;Lab → Developer&nbsp;Options refactor; the server pipeline abstracted over an undecided billing provider; storage-usage accounting; and a phased build roadmap.</p>
+  </div>
+
+  <div class="page-shell">
+    <div class="doc-body">
+
+      <div class="callout note">
+        <strong>Implementation Status</strong>
+        Proposed. Not yet built. The billing integration (native vs. aggregator) is an explicit blackbox — everything here is written to be agnostic to it, and the purchase/paywall UI is out of scope until that call is made (PRD §14). This note will track what actually ships.
+      </div>
+
+      <h2 id="overview">1. Overview &amp; Principles</h2>
+      <p>Three architectural commitments drive the whole design:</p>
+      <ul>
+        <li><b>Entitlement is server-authoritative and account-scoped.</b> A trusted Cloud Function is the only writer; the client reads a synced, read-only copy. This is what makes "pay once, premium everywhere" structural rather than client logic (PRD §6).</li>
+        <li><b>The client gates on a tier enum, resolved locally.</b> A single <code>SubscriptionManager</code> exposes an effective <code>SubscriptionStatus</code> that features compare against a per-feature minimum tier. It works offline off the last synced entitlement.</li>
+        <li><b>Gate as promo, don't hide.</b> Gated affordances stay visible and open a reusable <code>ProUpsellSheet</code> (PRD §9).</li>
+        <li><b>Rolled out through <code>AppCapability</code>, default-open.</b> A new <code>isSubscriptionSupported</code> build gate (like <code>isAircraftSharingSupported</code>) stages the launch: on in dev/dogfood, off in the shipping release until GA. <b>While it is off there is no paywall at all</b> — every premium feature is treated as available (no gating), and the Subscription entry/page is hidden. Off means "unlocked for everyone," not "restricted."</li>
+      </ul>
+      <p>The design leans hard on existing infrastructure: the local-first <code>EntityStore</code> + sync engine carry the entitlement exactly as they already carry <code>SharedAircraftRef</code> (a server-written, client-read-only collection — the direct precedent), and the storage-usage number is summed by extending the scheduled storage sweep.</p>
+
+      <h2 id="modules">2. Module Layout</h2>
+      <p>A new canonical-layout module, <b><code>feature/subscription</code></b>, plus small touch points in existing modules.</p>
+      <pre><code>feature/subscription/
+  model/          SubscriptionStatus, Entitlement, PremiumFeature (pure Kotlin)
+  datamanager/    SubscriptionManager (interface + impl), Koin module
+                  → reads the local EntityStore; never Firestore
+  sharedassets/   strings ("SquawkIt Pro", benefit copy), icons — no feature deps
+  viewing/        SubscriptionScreen (status + comparison), ProUpsellSheet (reusable)
+  update/         SubscriptionViewModel, Upsell trigger plumbing
+
+core/appinfo/     + AppCapability.isSubscriptionSupported (staged-rollout gate)
+core/model/       + Subscription proto (settings package), regenerated
+core/storage/     + CollectionKind.Subscription
+core/nav/         + Screen.Subscription
+feature/shell/    register route + Settings entry; add-aircraft gate
+feature/featurelab → RENAMED to feature/developeroptions (see §5)
+backend/firebase/functions/  entitlement writer + promo callable + usage sweep</code></pre>
+      <p><b>Dependency direction.</b> <code>feature/subscription/datamanager</code> is the analog of <code>feature/featurelab/datamanager</code>: the feature modules that gate (logs/squawk/task <code>update</code>, export <code>update</code>, fleet, sharing) depend <i>on</i> it, exactly as they already depend on <code>attachment/viewing</code> and <code>featurelab/datamanager</code>. <code>ProUpsellSheet</code> lives in <code>feature/subscription/viewing</code> and is consumed by those UI modules, the same way <code>AttachmentFormSection</code> lives in <code>attachment/viewing</code> and is reused across forms.</p>
+
+      <h2 id="data">3. Data Model &amp; Storage</h2>
+
+      <h3>The entitlement record</h3>
+      <p>One document per account, at <code>users/{uid}/subscription/main</code>, written only by the server. It holds both the entitlement and the storage-usage figure (two writers touching disjoint fields — the billing pipeline and the sweep — via Firestore field merges):</p>
+      <pre><code>// core/model … settings/Subscription.proto  (wire name: "subscription")
+message Subscription {
+  Status  status              = 1;  // resolved tier the server grants
+  Lifecycle lifecycle         = 2;  // billing state (see below)
+  int64   member_since_millis = 3;  // earliest purchase/trial start
+  int64   current_period_end_millis = 4;
+  bool    will_renew          = 5;
+  Source  source              = 6;  // STORE_PURCHASE | SERVER_GRANT
+  string  origin_platform     = 7;  // "ios" | "android" | "web" — informational
+  int64   storage_bytes_used  = 8;  // written by the storage sweep (§7)
+  int64   storage_quota_bytes = 9;  // 0 = unlimited (v1); reserved for future tiers
+
+  enum Status    { STATUS_FREE = 0; STATUS_PRO = 1; }         // ordered, extensible
+  enum Lifecycle { NONE = 0; TRIALING = 1; ACTIVE = 2; CANCELED = 3; GRACE = 4; EXPIRED = 5; }
+  enum Source    { SOURCE_UNSPECIFIED = 0; STORE_PURCHASE = 1; SERVER_GRANT = 2; }
+}</code></pre>
+      <p>The proto enums carry a 0-valued default; the client maps <code>STATUS_FREE</code>/absent → <code>SubscriptionStatus.FREE</code>. Because the app has <b>not launched</b>, we can define wire names and fields freely — no migration constraints.</p>
+
+      <h3>CollectionKind + local store</h3>
+      <p>Add one kind; the client reads it through an <code>EntityStore&lt;Subscription&gt;</code> exactly like <code>FeatureLabSettings</code>:</p>
+      <pre><code>data object Subscription : CollectionKind {
+  override val wireName = "subscription"
+  override val schemaName = "settings.Subscription"
+}</code></pre>
+
+      <h3>Server-authoritative &amp; pull-only — no new sync machinery</h3>
+      <p>The entitlement is <b>read-only on the client</b>. This needs no new sync concept: the push worker only drains <i>locally dirtied</i> rows, and <b>no client code ever writes the <code>Subscription</code> doc to the local store</b> — managers only <code>observe()</code> it. So it is never dirty, never pushed, and hydration simply pulls the server's copy. This is precisely how <code>SharedAircraftRef</code> already behaves (Cloud Functions write it; the client reads it to compute scope prefixes). Security rules make the invariant enforceable, not just conventional:</p>
+      <pre><code>match /users/{uid}/subscription/{doc} {
+  allow read:  if request.auth.uid == uid;
+  allow write: if false;   // only the Admin SDK (Cloud Functions) writes
+}</code></pre>
+
+      <h2 id="manager">4. SubscriptionManager &amp; Gating</h2>
+      <p>The single reactive gate. Mirrors <code>FeatureLabManager</code>'s shape (auth-scoped <code>flatMapLatest</code> over the store), adding lifecycle resolution and the developer override.</p>
+      <pre><code>enum class SubscriptionStatus { FREE, PRO }   // ordered low → high
+
+enum class PremiumFeature(val minimum: SubscriptionStatus) {
+  ADD_AIRCRAFT(SubscriptionStatus.PRO),      // note the free-1 nuance below
+  ATTACHMENT_UPLOAD(SubscriptionStatus.PRO),
+  EMAIL_EXPORT(SubscriptionStatus.PRO),
+  SHARE_HOST(SubscriptionStatus.PRO),
+}
+
+interface SubscriptionManager {
+  fun observe(): Flow&lt;SubscriptionStatus&gt;          // effective tier (for gates + page)
+  fun observeEntitlement(): Flow&lt;Entitlement&gt;      // status page: memberSince, periodEnd, usage
+  fun hasAccess(feature: PremiumFeature): Flow&lt;Boolean&gt;   // currentStatus >= feature.minimum
+}</code></pre>
+      <p><b>Rollout gate first.</b> Before any entitlement logic runs, the manager checks <code>AppCapability.isSubscriptionSupported</code>. While the capability is off, <b>gating is disabled</b>: <code>hasAccess()</code> is always <code>true</code> and the add-aircraft limit is not enforced. No entitlement doc even needs to exist. <code>observe()</code> is irrelevant in this state because its only consumer, the Subscription page, is hidden (§8).</p>
+      <p>When the capability is on, <b>effective status</b> = lifecycle resolved to a tier (TRIALING/ACTIVE/CANCELED-before-end/GRACE → the granted tier; NONE/EXPIRED → FREE), then the <b>developer override</b> OR-ed on top:</p>
+      <pre><code>fun hasAccess(feature): Flow&lt;Boolean&gt; =
+  if (!appCapability.isSubscriptionSupported) flowOf(true)          // no paywall yet → open
+  else observe().map { status -&gt; status &gt;= feature.minimum }
+
+// effective status (capability on):
+val effective = when {
+  appCapability.isDeveloperOptionsSupported &amp;&amp; devOptions.forceStatus != null -> devOptions.forceStatus
+  else -> entitlement.resolveEffectiveStatus()   // lifecycle + currentPeriodEnd vs now
+}</code></pre>
+      <p>The override is honored <b>only in developer builds</b> (guarded by <code>AppCapability</code>), so a release build can never be forced premium even if the field were somehow set.</p>
+
+      <div class="callout warn">
+        <strong>The add-aircraft gate is not a flat tier check</strong>
+        Free allows <b>one</b> aircraft, not zero. <code>ADD_AIRCRAFT</code> access = <code>status == PRO || ownedAircraftCount &lt; FREE_AIRCRAFT_LIMIT(=1)</code>. The count comes from <code>FleetManager.observeFleetDashboard()</code>, filtered to <b>owned</b> aircraft — shared-in aircraft (<code>SharedAircraftRef</code>) never count against the limit (PRD R4). This composite lives in the fleet/shell add-aircraft path, combining <code>SubscriptionManager.observe()</code> with the owned count; every other gate uses the plain <code>hasAccess()</code>. Like all gates, it is bypassed entirely while <code>isSubscriptionSupported</code> is off (unlimited aircraft for everyone).
+      </div>
+
+      <h2 id="devoptions">5. Feature Lab → Developer Options Refactor</h2>
+      <p>Ships with the gating work, because the two flags can't be removed until their features re-gate on the subscription. Pre-launch, so proto/wire renames are free.</p>
+      <ul class="checks">
+        <li>Rename module <code>feature/featurelab</code> → <code>feature/developeroptions</code>; <code>FeatureLabManager</code> → <code>DeveloperOptionsManager</code>; proto <code>FeatureLabSettings</code> → <code>DeveloperSettings</code>; <code>CollectionKind.FeatureLab</code> → <code>DeveloperOptions</code>.</li>
+        <li>Remove <code>attachmentUploadEnabled</code> and <code>exportEmailDeliveryEnabled</code>. Add <code>forceSubscriptionStatus: SubscriptionStatus?</code> (proto: <code>FORCE_UNSET=0 | FORCE_FREE | FORCE_PRO</code>).</li>
+        <li><code>FeatureLabScreen</code> → <code>DeveloperOptionsScreen</code>: a segmented <b>Force subscription status</b> control (Off / Free / Pro) + the existing <i>Generate fake data</i> extra (<code>StressTestFeatureLabExtra</code>, renamed). Keep the <code>AppCapability.isFeatureLabSupported</code> gate (rename → <code>isDeveloperOptionsSupported</code>).</li>
+        <li>Settings row + <code>Screen.FeatureLab</code> → <code>Screen.DeveloperOptions</code>; string "Feature Lab" → "Developer Options".</li>
+      </ul>
+      <p><code>DeveloperOptionsManager</code> keeps the same read/write plumbing (it's a locally-written, per-account doc) — only its contents change. <code>SubscriptionManagerImpl</code> depends on it to read <code>forceStatus</code>.</p>
+
+      <h2 id="gatingimpl">6. Feature Gating Migration &amp; ProUpsellSheet</h2>
+      <p><code>ProUpsellSheet(trigger, onDismiss)</code> (in <code>subscription/viewing</code>) renders the contextual bottom sheet and routes to <code>Screen.Subscription</code> for "see all". Each consumer swaps its Feature-Lab boolean for a subscription gate and, when locked, opens the sheet instead of silently disabling.</p>
+      <table>
+        <tr><th>Consumer (today)</th><th>Change</th></tr>
+        <tr><td><code>AttachmentFormSection</code> (attachment/viewing) — used by log/squawk/task forms</td><td>Replace <code>uploadEnabled: Boolean</code> with an access state + <code>onUpsell(trigger)</code>. Photo/File options render locked; tapping opens the sheet. <b>Add Link stays free.</b> Replace <code>file_upload_coming_soon</code> copy (R16).</td></tr>
+        <tr><td><code>MaintenanceLogFormViewModel</code>, <code>SquawkFormViewModel</code>, <code>TaskViewModel</code></td><td>Observe <code>SubscriptionManager.hasAccess(ATTACHMENT_UPLOAD)</code> instead of <code>FeatureLabManager.observe().attachmentUploadEnabled</code>.</td></tr>
+        <tr><td><code>ExportViewModel</code> (delivery info)</td><td>Gate <code>EMAIL_EXPORT</code>; surface the email row as <b>shown-locked</b> (was hidden). Local export unaffected.</td></tr>
+        <tr><td>Fleet / shell <b>add-aircraft</b> (<code>onAddAircraft</code>)</td><td>Apply the composite add-aircraft gate; if locked, show <code>ProUpsellSheet(add_aircraft)</code> instead of navigating to <code>Screen.AddAircraft</code>.</td></tr>
+        <tr><td>Sharing host/invite (<code>InviteSheet</code> / <code>ManageAccess</code> entry)</td><td>Gate <code>SHARE_HOST</code>; the Share action shows the sheet when locked. Accepting an invite is never gated.</td></tr>
+      </table>
+
+      <h2 id="backend">7. Backend — Entitlement Pipeline &amp; Usage</h2>
+      <h3>Writer, abstracted over the billing blackbox</h3>
+      <p>One internal contract, one writer; the billing provider is a pluggable source that normalizes into it. This lets us build and test the whole client + writer before choosing native vs. aggregator.</p>
+      <pre><code>// normalized, provider-agnostic
+interface EntitlementSource {           // impl: RevenueCatWebhook | AppleAsn | PlayRtdn | Stripe
+  // maps a raw provider event → NormalizedEntitlement { uid, status, lifecycle,
+  //   memberSince, currentPeriodEnd, willRenew, source, originPlatform }
+}
+// the only writer of users/{uid}/subscription/main (entitlement fields), idempotent
+function applyEntitlement(update: NormalizedEntitlement): Promise&lt;void&gt;</code></pre>
+      <ul>
+        <li><b>Ingest:</b> an HTTPS webhook (aggregator) <i>or</i> store notifications (Apple ASSN v2, Play RTDN via Pub/Sub, Stripe) — decided later. Each validates the receipt/signature server-side and hands a <code>NormalizedEntitlement</code> to <code>applyEntitlement</code>.</li>
+        <li><b>Idempotency:</b> keyed on the provider's transaction/event id so retries and re-delivery don't double-apply.</li>
+        <li><b>Promos (<code>SERVER_GRANT</code>):</b> an admin-only callable (or console script) writes a comp'd entitlement with an end date and no store purchase — no billing provider involved.</li>
+        <li><b>Client never self-grants</b> from a local receipt; it only reads the synced result.</li>
+      </ul>
+      <div class="callout note">
+        <strong>v1 scope of the pipeline</strong>
+        Build the <code>applyEntitlement</code> writer, the security rules, the promo callable, and a <b>stub</b> ingest that the Force-subscription dev toggle and manual promo grants exercise end-to-end. The real provider webhook + purchase/paywall UI land after the billing decision.
+      </div>
+
+      <h3>Storage-usage sweep</h3>
+      <p>Per PRD §6, usage is summed server-side. Extend the scheduled storage sweep: for each account, one paginated <b><code>LIST</code> on the single prefix <code>users/{uid}/</code></b> (where all blobs live), sum <code>file.metadata.size</code>, and write <code>storage_bytes_used</code> onto the subscription doc via field merge. Authoritative, drift-free, no upload-path hook. Real-time incremental counting (<code>onObjectFinalized</code>/<code>onObjectDeleted</code>, reconciled by the sweep) is deferred to hard-quota enforcement. Because blobs live under the owner/host uid, shared-aircraft bytes accrue to the host.</p>
+
+      <h2 id="wiring">8. DI &amp; Navigation Wiring</h2>
+      <ul>
+        <li><b>Koin:</b> add <code>subscriptionModule</code> (manager + viewmodels) to the single list in <code>core/di/CommonAppModules.kt</code>, next to <code>featureLabModule</code> (which becomes <code>developerOptionsModule</code>).</li>
+        <li><b>Nav:</b> add <code>Screen.Subscription</code> in <code>core/nav</code>; register the route in <code>feature/shell/ShellNavGraph</code>; add the <b>Subscription</b> Settings row <b>gated by <code>isSubscriptionSupported</code></b> (near Backup&nbsp;&amp;&nbsp;Sync / Export) — hidden while the capability is off, exactly as the Feature Lab row is gated by <code>isFeatureLabSupported</code>. Rename the <code>FeatureLab</code> route/entry to <code>DeveloperOptions</code> (still gated by the dev-build capability).</li>
+        <li><b>ProUpsellSheet</b> hosting: shown from the shell (add-aircraft) and inline from each form; a thin <code>UpsellController</code> in <code>subscription/update</code> holds the trigger state.</li>
+      </ul>
+
+      <h2 id="testing">9. Testing</h2>
+      <ul>
+        <li><code>SubscriptionManagerImpl</code>: lifecycle→status resolution (canceled-before-end = PRO; expired = FREE; grace = PRO), dev-override honored only when <code>isDeveloperOptionsSupported</code>, offline reads from cache. (MockK + Truth + coroutines-test, per the repo harness.)</li>
+        <li>Add-aircraft composite gate: 0/1/2 owned, ×{FREE,PRO}, shared-in excluded.</li>
+        <li>Each consumer VM: emits locked vs. granted from a faked manager.</li>
+        <li>Functions (vitest + emulator): <code>applyEntitlement</code> idempotency; security rules deny client writes / allow owner reads; sweep sums a known bucket layout; promo grant expiry.</li>
+      </ul>
+
+      <h2 id="roadmap">10. Build Roadmap</h2>
+      <p>Sequenced so each phase is shippable and testable on its own. Phases 1–6 are billing-agnostic and unblocked today; 7 waits on the billing decision.</p>
+      <div class="phase"><div class="tag">P1</div><div class="body"><b>App capability + data/sync foundation</b><b>Add <code>AppCapability.isSubscriptionSupported</code></b> across all host actuals (<code>createAppCapability</code> in <code>core/appinfo</code>) — <b>off in the shipping release, on in dev + dogfood</b>, mirroring <code>isAircraftSharingSupported</code>. Then: Subscription proto, <code>CollectionKind.Subscription</code>, codec, security rules, hydration wired as pull-only. No UI. Verifies an admin-written doc reaches the device.</div></div>
+      <div class="phase"><div class="tag">P2</div><div class="body"><b>SubscriptionManager + gating core</b><code>SubscriptionStatus</code>, <code>PremiumFeature</code>, manager impl with lifecycle resolution + dev override, <b>and the <code>isSubscriptionSupported</code> default-open short-circuit</b> (gating disabled / all features available while the capability is off). Unit-tested (including the capability-off = all-access case). No consumer wired yet.</div></div>
+      <div class="phase"><div class="tag">P3</div><div class="body"><b>Developer Options refactor</b>Rename Feature Lab, drop the two flags, add Force subscription status. Unblocks manual testing of every gate.</div></div>
+      <div class="phase"><div class="tag">P4</div><div class="body"><b>Subscription page + ProUpsellSheet</b>Status/comparison screen (viewing/update), Settings entry <b>gated by <code>isSubscriptionSupported</code> (hidden while off)</b>, <code>Screen.Subscription</code>, DI. Reusable upsell sheet. Purchase CTA = placeholder.</div></div>
+      <div class="phase"><div class="tag">P5</div><div class="body"><b>Gating migration</b>Repoint attachments, email export, add-aircraft limit, sharing host to the manager + promo sheet — each <b>defaulting open while the capability is off</b>. Reword coming-soon strings (R16). Removes the last Feature-Lab flag usage.</div></div>
+      <div class="phase"><div class="tag">P6</div><div class="body"><b>Storage usage + entitlement writer</b>Extend the sweep to sum usage; display on the page. Land <code>applyEntitlement</code> + promo callable + stub ingest (exercised by dev override / manual grants).</div></div>
+      <div class="phase"><div class="tag">P7</div><div class="body"><b>Billing integration + GA (blocked on decision)</b>Real provider ingest (native vs. aggregator), purchase/paywall UI, platform Manage deep links. <b>GA = flip <code>isSubscriptionSupported</code> on in the release build</b> once the store products and pipeline are live. <span class="muted">Later:</span> per-tier storage quotas enforced against tracked usage.</div></div>
+
+      <h2 id="open">11. Open Questions</h2>
+      <ul>
+        <li><b>Billing provider</b> (PRD §14) — gates P7 only. Everything above is written against the normalized <code>EntitlementSource</code> so the choice is isolated.</li>
+        <li><b>Usage cadence</b> — how often the sweep recomputes usage (daily vs. hourly); display freshness follows it.</li>
+        <li><b>Guest paywall routing</b> — the exact hop from a locked affordance → account upgrade → purchase (guests can't subscribe; PRD §14).</li>
+      </ul>
+
+    </div>
+
+    <nav class="toc">
+      <p class="toc-title">On this page</p>
+      <ol>
+        <li><a href="#overview">Overview &amp; Principles</a></li>
+        <li><a href="#modules">Module Layout</a></li>
+        <li><a href="#data">Data Model &amp; Storage</a></li>
+        <li><a href="#manager">SubscriptionManager &amp; Gating</a></li>
+        <li><a href="#devoptions">Developer Options Refactor</a></li>
+        <li><a href="#gatingimpl">Gating Migration &amp; Upsell</a></li>
+        <li><a href="#backend">Backend — Pipeline &amp; Usage</a></li>
+        <li><a href="#wiring">DI &amp; Navigation</a></li>
+        <li><a href="#testing">Testing</a></li>
+        <li><a href="#roadmap">Build Roadmap</a></li>
+        <li><a href="#open">Open Questions</a></li>
+      </ol>
+    </nav>
+  </div>
+</main>
+</body>
+</html>
