@@ -20,9 +20,8 @@ import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
 
 /**
- * Mirrors [dev.fanfly.wingslog.feature.featurelab.datamanager.impl.FeatureLabManagerImpl]'s shape:
- * an auth-scoped `flatMapLatest` over the local [EntityStore], plus lifecycle resolution, the
- * default-open rollout gate, and the developer force-status override.
+ * Reads the entitlement from the local [EntityStore] on an auth-scoped `flatMapLatest`, resolves the
+ * effective tier, and applies the default-open rollout gate and the developer force-status override.
  *
  * @param forceStatus a developer override stream; emits a forced tier or `null` for "no override".
  *   Defaults to none; Developer Options wires the real source in P3. Honored only in developer
@@ -55,10 +54,10 @@ class SubscriptionManagerImpl(
     }
 
   override fun status(): Flow<Subscription.Status> =
-    combine(entitlement(), forceStatus) { subscription, override ->
-      // The override wins, but only in a developer build — never in the shipping release.
-      if (appCapability.isFeatureLabSupported && override != null) {
-        override
+    combine(entitlement(), forceStatus) { subscription, forced ->
+      // The forced tier wins, but only in a developer build — never in the shipping release.
+      if (appCapability.isFeatureLabSupported && forced != null) {
+        forced
       } else {
         subscription.effectiveStatusAt(clock.now().toEpochMilliseconds())
       }
