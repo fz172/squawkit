@@ -60,3 +60,34 @@ describe("baseline firestore.rules", () => {
     await assertFails(getDoc(doc(alice, "aircraft_shares/ac1")));
   });
 });
+
+// Subscription entitlement (SquawkIt Pro): server-authoritative at top-level subscriptions/{uid}.
+// The owner may read it; nobody but the Admin SDK may write it — a client write would be a paywall
+// bypass. See docs/subscription/subscription_design.html §3.
+describe("subscriptions/{uid} rules", () => {
+  it("lets the owner read an admin-written entitlement (round-trip)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "subscriptions/alice"), { status: 1, storageBytesUsed: 42 });
+    });
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertSucceeds(getDoc(doc(alice, "subscriptions/alice")));
+  });
+
+  it("denies the owner writing their own entitlement (no self-grant)", async () => {
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(setDoc(doc(alice, "subscriptions/alice"), { status: 1 }));
+  });
+
+  it("denies reading another user's entitlement", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "subscriptions/alice"), { status: 1 });
+    });
+    const bob = testEnv.authenticatedContext("bob").firestore();
+    await assertFails(getDoc(doc(bob, "subscriptions/alice")));
+  });
+
+  it("denies unauthenticated access", async () => {
+    const anon = testEnv.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(anon, "subscriptions/alice")));
+  });
+});
