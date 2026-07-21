@@ -89,6 +89,18 @@ service cloud.firestore {
       }
     }
 
+    // --- Subscription entitlement / SquawkIt Pro -----------------------------------------------
+
+    // Account-level entitlement, server-authoritative. It lives OUTSIDE the user tree on purpose:
+    // the broad users/{uid}/{document=**} rule grants the owner write, and Firestore rules are
+    // additive — so a doc under the user tree would be client-forgeable, i.e. a paywall bypass. Here
+    // the owner may READ their own entitlement; only the Admin SDK (the billing pipeline and the
+    // storage-usage sweep) writes it. See docs/subscription/subscription_design.html §3.
+    match /subscriptions/{uid} {
+      allow read: if request.auth.uid == uid;
+      allow write: if false; // functions only
+    }
+
     // --- Pairing-code invites (#164) -----------------------------------------------------------
 
     // The code IS the secret: the document holds the aircraft id, the host uid, and the role, keyed
