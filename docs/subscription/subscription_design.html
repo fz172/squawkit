@@ -88,7 +88,7 @@
       <p>Three architectural commitments drive the whole design:</p>
       <ul>
         <li><b>Entitlement is server-authoritative and account-scoped.</b> A trusted Cloud Function is the only writer; the client reads a synced, read-only copy. This is what makes "pay once, premium everywhere" structural rather than client logic (PRD §6).</li>
-        <li><b>The client gates on a tier enum, resolved locally.</b> A single <code>SubscriptionManager</code> exposes an effective <code>SubscriptionStatus</code> that features compare against a per-feature minimum tier. It works offline off the last synced entitlement.</li>
+        <li><b>The client gates on a tier enum, resolved locally.</b> A single <code>SubscriptionManager</code> exposes an effective <code>Subscription.Status</code> (the proto enum — no forked types, §4) that features compare against a per-feature minimum tier. It works offline off the last synced entitlement.</li>
         <li><b>Gate as promo, don't hide.</b> Gated affordances stay visible and open a reusable <code>ProUpsellSheet</code> (PRD §9).</li>
         <li><b>Rolled out through <code>AppCapability</code>, default-open.</b> A new <code>isSubscriptionSupported</code> build gate (like <code>isAircraftSharingSupported</code>) stages the launch: on in dev/dogfood, off in the shipping release until GA. <b>While it is off there is no paywall at all</b> — every premium feature is treated as available (no gating), and the Subscription entry/page is hidden. Off means "unlocked for everyone," not "restricted."</li>
       </ul>
@@ -97,7 +97,7 @@
       <h2 id="modules">2. Module Layout</h2>
       <p>A new canonical-layout module, <b><code>feature/subscription</code></b>, plus small touch points in existing modules.</p>
       <pre><code>feature/subscription/
-  model/          SubscriptionStatus, Entitlement (pure Kotlin)
+  model/          Subscription.effectiveStatusAt() over the proto — no forked enums/classes
   datamanager/    SubscriptionManager (interface + impl), Koin module
                   → reads the local EntityStore; never Firestore
   sharedassets/   strings ("SquawkIt Pro", benefit copy), icons — no feature deps
@@ -133,7 +133,7 @@ message Subscription {
   enum Lifecycle { NONE = 0; TRIALING = 1; ACTIVE = 2; CANCELED = 3; GRACE = 4; EXPIRED = 5; }
   enum Source    { SOURCE_UNSPECIFIED = 0; STORE_PURCHASE = 1; SERVER_GRANT = 2; }
 }</code></pre>
-      <p>The proto enums carry a 0-valued default; the client maps <code>STATUS_FREE</code>/absent → <code>SubscriptionStatus.FREE</code>. Because the app has <b>not launched</b>, we can define wire names and fields freely — no migration constraints.</p>
+      <p>The proto enums carry a 0-valued default, so an absent doc reads as <code>Subscription.Status.STATUS_FREE</code>. Because the app has <b>not launched</b>, we can define wire names and fields freely — no migration constraints.</p>
 
       <h3>CollectionKind + local cache</h3>
       <p>The client caches the entitlement in the local store like any other entity, so the manager reads it offline through an <code>EntityStore&lt;Subscription&gt;</code>. The <b>local</b> cache is keyed at <code>userRoot(uid)</code>; only the <i>remote</i> source differs (a dedicated listener, below — not the generic sync).</p>
@@ -155,11 +155,13 @@ message Subscription {
       <h2 id="manager">4. SubscriptionManager &amp; Gating</h2>
       <p>The single reactive gate. Mirrors <code>FeatureLabManager</code>'s shape (auth-scoped <code>flatMapLatest</code> over the store), adding lifecycle resolution and the developer override.</p>
       <p><b>No generic <code>PremiumFeature</code> enum.</b> The gated things are not homogeneous, and there is no single existing enable/disable boundary to key an enum on: two are booleans that already have a flag to replace (attachment upload, email export), one is a boolean gate that does not exist yet (hosting a share), and the aircraft limit is <b>not boolean at all</b> — it is a quantity. So the manager exposes <b>explicit capability accessors</b> (one per real gate site) and a separate <b>limit</b>, rather than a uniform <code>hasAccess(feature)</code> that would imply an enforcement hook the codebase doesn't have.</p>
-      <pre><code>enum class SubscriptionStatus { FREE, PRO }   // ordered low → high
+      <p><b>Reuse the proto as the model — don't fork enums or classes.</b> The <code>Subscription</code> proto (<code>core:model</code>, P1b) already defines <code>Status</code> (ordered <code>STATUS_FREE</code> &lt; <code>STATUS_PRO</code>), <code>Lifecycle</code>, and <code>Source</code>, and the Cloud Functions share the exact same enums via their generated TS. Re-declaring parallel Kotlin enums (or a hand-written <code>Entitlement</code> class) is pure drift risk, and it cuts against the repo convention of using proto types as domain models (<code>Aircraft</code>, <code>Squawk</code>, …). So the tier is <code>Subscription.Status</code> and the entitlement is the <code>Subscription</code> proto itself; <code>feature/subscription/model</code> holds only the <i>logic</i> over it.</p>
+      <pre><code>// feature/subscription/model — no new types, just the resolution over the proto:
+fun Subscription.effectiveStatusAt(nowMillis: Long): Subscription.Status
 
 interface SubscriptionManager {
-  fun status(): Flow&lt;SubscriptionStatus&gt;            // status page + comparison table
-  fun observeEntitlement(): Flow&lt;Entitlement&gt;       // memberSince, periodEnd, usage
+  fun status(): Flow&lt;Subscription.Status&gt;           // status page + comparison table
+  fun entitlement(): Flow&lt;Subscription&gt;             // the proto: memberSince, periodEnd, usage
 
   // Boolean capabilities — one gate site each (§6):
   fun canUploadAttachments(): Flow&lt;Boolean&gt;         // replaces attachmentUploadEnabled
@@ -169,22 +171,22 @@ interface SubscriptionManager {
   // Quantity limit — enforced against current usage, not a yes/no:
   fun aircraftLimit(): Flow&lt;Int?&gt;                   // null = unlimited; FREE = 1
 }</code></pre>
-      <p><b>Rollout gate first.</b> Before any entitlement logic runs, the manager checks <code>AppCapability.isSubscriptionSupported</code>. While the capability is off, <b>gating is disabled</b>: every capability accessor emits <code>true</code> and <code>aircraftLimit()</code> emits <code>null</code> (unlimited). No entitlement doc even needs to exist. <code>status()</code> is irrelevant in this state because its only consumer, the Subscription page, is hidden (§8). When on, <b>effective status</b> = lifecycle resolved to a tier (TRIALING/ACTIVE/CANCELED-before-end/GRACE → the granted tier; NONE/EXPIRED → FREE), then the <b>developer override</b> OR-ed on top. A private <code>gate(minimum)</code> helper centralizes the tier mapping the enum used to hold:</p>
-      <pre><code>private fun gate(minimum: SubscriptionStatus): Flow&lt;Boolean&gt; =
+      <p><b>Rollout gate first.</b> Before any entitlement logic runs, the manager checks <code>AppCapability.isSubscriptionSupported</code>. While the capability is off, <b>gating is disabled</b>: every capability accessor emits <code>true</code> and <code>aircraftLimit()</code> emits <code>null</code> (unlimited). No entitlement doc even needs to exist. <code>status()</code> is irrelevant in this state because its only consumer, the Subscription page, is hidden (§8). When on, <b>effective status</b> = lifecycle resolved to a tier (TRIALING/ACTIVE/CANCELED-before-end/GRACE → the granted tier; NONE/EXPIRED → FREE), then the <b>developer override</b> OR-ed on top. A private <code>gate(minimum)</code> helper centralizes the capability → minimum-tier mapping:</p>
+      <pre><code>private fun gate(minimum: Subscription.Status): Flow&lt;Boolean&gt; =
   if (!appCapability.isSubscriptionSupported) flowOf(true)          // no paywall yet → open
-  else status().map { it &gt;= minimum }
+  else status().map { it &gt;= minimum }                              // proto enums order by declaration
 
-override fun canUploadAttachments() = gate(PRO)
-override fun canEmailExports()      = gate(PRO)
-override fun canHostShare()         = gate(PRO)
+override fun canUploadAttachments() = gate(STATUS_PRO)
+override fun canEmailExports()      = gate(STATUS_PRO)
+override fun canHostShare()         = gate(STATUS_PRO)
 override fun aircraftLimit(): Flow&lt;Int?&gt; =
   if (!appCapability.isSubscriptionSupported) flowOf(null)          // unlimited while off
-  else status().map { if (it &gt;= PRO) null else FREE_AIRCRAFT_LIMIT } // = 1
+  else status().map { if (it &gt;= STATUS_PRO) null else FREE_AIRCRAFT_LIMIT } // = 1
 
 // status(), capability on:
 val effective = when {
   appCapability.isDeveloperOptionsSupported &amp;&amp; devOptions.forceStatus != null -> devOptions.forceStatus
-  else -> entitlement.resolveEffectiveStatus()   // lifecycle + currentPeriodEnd vs now
+  else -> subscription.effectiveStatusAt(nowMillis)   // lifecycle + current_period_end vs now
 }</code></pre>
       <p>The override is honored <b>only in developer builds</b> (guarded by <code>AppCapability</code>), so a release build can never be forced premium even if the field were somehow set. If the comparison page (§3 of the PRD) wants a data-driven "what each tier includes," that is <b>static presentation data</b>, kept separate from these enforcement accessors — not the same enum.</p>
 
@@ -197,7 +199,7 @@ val effective = when {
       <p>Ships with the gating work, because the two flags can't be removed until their features re-gate on the subscription. Pre-launch, so proto/wire renames are free.</p>
       <ul class="checks">
         <li>Rename module <code>feature/featurelab</code> → <code>feature/developeroptions</code>; <code>FeatureLabManager</code> → <code>DeveloperOptionsManager</code>; proto <code>FeatureLabSettings</code> → <code>DeveloperSettings</code>; <code>CollectionKind.FeatureLab</code> → <code>DeveloperOptions</code>.</li>
-        <li>Remove <code>attachmentUploadEnabled</code> and <code>exportEmailDeliveryEnabled</code>. Add <code>forceSubscriptionStatus: SubscriptionStatus?</code> (proto: <code>FORCE_UNSET=0 | FORCE_FREE | FORCE_PRO</code>).</li>
+        <li>Remove <code>attachmentUploadEnabled</code> and <code>exportEmailDeliveryEnabled</code>. Add a nullable force-status dev override typed as <code>Subscription.Status?</code> (stored in the developer-settings proto with an added <code>UNSET</code> sentinel so "off" is distinguishable from FREE).</li>
         <li><code>FeatureLabScreen</code> → <code>DeveloperOptionsScreen</code>: a segmented <b>Force subscription status</b> control (Off / Free / Pro) + the existing <i>Generate fake data</i> extra (<code>StressTestFeatureLabExtra</code>, renamed). Keep the <code>AppCapability.isFeatureLabSupported</code> gate (rename → <code>isDeveloperOptionsSupported</code>).</li>
         <li>Settings row + <code>Screen.FeatureLab</code> → <code>Screen.DeveloperOptions</code>; string "Feature Lab" → "Developer Options".</li>
       </ul>
@@ -256,7 +258,7 @@ function applyEntitlement(update: NormalizedEntitlement): Promise&lt;void&gt;</c
       <h2 id="roadmap">10. Build Roadmap</h2>
       <p>Sequenced so each phase is shippable and testable on its own. Phases 1–6 are billing-agnostic and unblocked today; 7 waits on the billing decision.</p>
       <div class="phase"><div class="tag">P1</div><div class="body"><b>App capability + data/sync foundation</b><b>Add <code>AppCapability.isSubscriptionSupported</code></b> across all host actuals (<code>createAppCapability</code> in <code>core/appinfo</code>) — <b>off in the shipping release, on in dev + dogfood</b>, mirroring <code>isAircraftSharingSupported</code>. Then: Subscription proto, <code>CollectionKind.Subscription</code>, codec, security rules for the top-level <code>subscriptions/{uid}</code> doc (owner read, write denied), and a dedicated listener mirroring it into the local store. No UI. Verifies an admin-written doc reaches the device.</div></div>
-      <div class="phase"><div class="tag">P2</div><div class="body"><b>SubscriptionManager + gating core</b><code>SubscriptionStatus</code>, the capability accessors (<code>canUploadAttachments</code>/<code>canEmailExports</code>/<code>canHostShare</code>) + <code>aircraftLimit</code>, manager impl with lifecycle resolution + dev override, <b>and the <code>isSubscriptionSupported</code> default-open short-circuit</b> (gating disabled / all features available while the capability is off). Unit-tested (including the capability-off = all-access case). No consumer wired yet.</div></div>
+      <div class="phase"><div class="tag">P2</div><div class="body"><b>SubscriptionManager + gating core</b><code>Subscription.effectiveStatusAt()</code> resolution over the proto (no forked enums), the capability accessors (<code>canUploadAttachments</code>/<code>canEmailExports</code>/<code>canHostShare</code>) + <code>aircraftLimit</code>, manager impl with lifecycle resolution + dev override, <b>and the <code>isSubscriptionSupported</code> default-open short-circuit</b> (gating disabled / all features available while the capability is off). Unit-tested (including the capability-off = all-access case). No consumer wired yet.</div></div>
       <div class="phase"><div class="tag">P3</div><div class="body"><b>Developer Options refactor</b>Rename Feature Lab, drop the two flags, add Force subscription status. Unblocks manual testing of every gate.</div></div>
       <div class="phase"><div class="tag">P4</div><div class="body"><b>Subscription page + ProUpsellSheet</b>Status/comparison screen (viewing/update), Settings entry <b>gated by <code>isSubscriptionSupported</code> (hidden while off)</b>, <code>Screen.Subscription</code>, DI. Reusable upsell sheet. Purchase CTA = placeholder.</div></div>
       <div class="phase"><div class="tag">P5</div><div class="body"><b>Gating migration</b>Repoint attachments, email export, add-aircraft limit, sharing host to the manager + promo sheet — each <b>defaulting open while the capability is off</b>. Reword coming-soon strings (R16). Removes the last Feature-Lab flag usage.</div></div>
