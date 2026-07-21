@@ -57,6 +57,7 @@ include(":feature:sharing:datamanager")
 include(":feature:sharing:sharedassets")
 include(":feature:sharing:viewing")
 include(":feature:sharing:update")
+include(":feature:subscription:model")
 
 include(":feature:fleet:datamanager")
 include(":feature:fleet:picker:data")
