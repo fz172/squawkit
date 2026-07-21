@@ -97,7 +97,7 @@
       <h2 id="modules">2. Module Layout</h2>
       <p>A new canonical-layout module, <b><code>feature/subscription</code></b>, plus small touch points in existing modules.</p>
       <pre><code>feature/subscription/
-  model/          SubscriptionStatus, Entitlement, PremiumFeature (pure Kotlin)
+  model/          SubscriptionStatus, Entitlement (pure Kotlin)
   datamanager/    SubscriptionManager (interface + impl), Koin module
                   → reads the local EntityStore; never Firestore
   sharedassets/   strings ("SquawkIt Pro", benefit copy), icons — no feature deps
@@ -151,36 +151,43 @@ message Subscription {
 
       <h2 id="manager">4. SubscriptionManager &amp; Gating</h2>
       <p>The single reactive gate. Mirrors <code>FeatureLabManager</code>'s shape (auth-scoped <code>flatMapLatest</code> over the store), adding lifecycle resolution and the developer override.</p>
+      <p><b>No generic <code>PremiumFeature</code> enum.</b> The gated things are not homogeneous, and there is no single existing enable/disable boundary to key an enum on: two are booleans that already have a flag to replace (attachment upload, email export), one is a boolean gate that does not exist yet (hosting a share), and the aircraft limit is <b>not boolean at all</b> — it is a quantity. So the manager exposes <b>explicit capability accessors</b> (one per real gate site) and a separate <b>limit</b>, rather than a uniform <code>hasAccess(feature)</code> that would imply an enforcement hook the codebase doesn't have.</p>
       <pre><code>enum class SubscriptionStatus { FREE, PRO }   // ordered low → high
 
-enum class PremiumFeature(val minimum: SubscriptionStatus) {
-  ADD_AIRCRAFT(SubscriptionStatus.PRO),      // note the free-1 nuance below
-  ATTACHMENT_UPLOAD(SubscriptionStatus.PRO),
-  EMAIL_EXPORT(SubscriptionStatus.PRO),
-  SHARE_HOST(SubscriptionStatus.PRO),
-}
-
 interface SubscriptionManager {
-  fun observe(): Flow&lt;SubscriptionStatus&gt;          // effective tier (for gates + page)
-  fun observeEntitlement(): Flow&lt;Entitlement&gt;      // status page: memberSince, periodEnd, usage
-  fun hasAccess(feature: PremiumFeature): Flow&lt;Boolean&gt;   // currentStatus >= feature.minimum
-}</code></pre>
-      <p><b>Rollout gate first.</b> Before any entitlement logic runs, the manager checks <code>AppCapability.isSubscriptionSupported</code>. While the capability is off, <b>gating is disabled</b>: <code>hasAccess()</code> is always <code>true</code> and the add-aircraft limit is not enforced. No entitlement doc even needs to exist. <code>observe()</code> is irrelevant in this state because its only consumer, the Subscription page, is hidden (§8).</p>
-      <p>When the capability is on, <b>effective status</b> = lifecycle resolved to a tier (TRIALING/ACTIVE/CANCELED-before-end/GRACE → the granted tier; NONE/EXPIRED → FREE), then the <b>developer override</b> OR-ed on top:</p>
-      <pre><code>fun hasAccess(feature): Flow&lt;Boolean&gt; =
-  if (!appCapability.isSubscriptionSupported) flowOf(true)          // no paywall yet → open
-  else observe().map { status -&gt; status &gt;= feature.minimum }
+  fun status(): Flow&lt;SubscriptionStatus&gt;            // status page + comparison table
+  fun observeEntitlement(): Flow&lt;Entitlement&gt;       // memberSince, periodEnd, usage
 
-// effective status (capability on):
+  // Boolean capabilities — one gate site each (§6):
+  fun canUploadAttachments(): Flow&lt;Boolean&gt;         // replaces attachmentUploadEnabled
+  fun canEmailExports(): Flow&lt;Boolean&gt;              // replaces exportEmailDeliveryEnabled
+  fun canHostShare(): Flow&lt;Boolean&gt;                 // NEW gate at the Share entry
+
+  // Quantity limit — enforced against current usage, not a yes/no:
+  fun aircraftLimit(): Flow&lt;Int?&gt;                   // null = unlimited; FREE = 1
+}</code></pre>
+      <p><b>Rollout gate first.</b> Before any entitlement logic runs, the manager checks <code>AppCapability.isSubscriptionSupported</code>. While the capability is off, <b>gating is disabled</b>: every capability accessor emits <code>true</code> and <code>aircraftLimit()</code> emits <code>null</code> (unlimited). No entitlement doc even needs to exist. <code>status()</code> is irrelevant in this state because its only consumer, the Subscription page, is hidden (§8). When on, <b>effective status</b> = lifecycle resolved to a tier (TRIALING/ACTIVE/CANCELED-before-end/GRACE → the granted tier; NONE/EXPIRED → FREE), then the <b>developer override</b> OR-ed on top. A private <code>gate(minimum)</code> helper centralizes the tier mapping the enum used to hold:</p>
+      <pre><code>private fun gate(minimum: SubscriptionStatus): Flow&lt;Boolean&gt; =
+  if (!appCapability.isSubscriptionSupported) flowOf(true)          // no paywall yet → open
+  else status().map { it &gt;= minimum }
+
+override fun canUploadAttachments() = gate(PRO)
+override fun canEmailExports()      = gate(PRO)
+override fun canHostShare()         = gate(PRO)
+override fun aircraftLimit(): Flow&lt;Int?&gt; =
+  if (!appCapability.isSubscriptionSupported) flowOf(null)          // unlimited while off
+  else status().map { if (it &gt;= PRO) null else FREE_AIRCRAFT_LIMIT } // = 1
+
+// status(), capability on:
 val effective = when {
   appCapability.isDeveloperOptionsSupported &amp;&amp; devOptions.forceStatus != null -> devOptions.forceStatus
   else -> entitlement.resolveEffectiveStatus()   // lifecycle + currentPeriodEnd vs now
 }</code></pre>
-      <p>The override is honored <b>only in developer builds</b> (guarded by <code>AppCapability</code>), so a release build can never be forced premium even if the field were somehow set.</p>
+      <p>The override is honored <b>only in developer builds</b> (guarded by <code>AppCapability</code>), so a release build can never be forced premium even if the field were somehow set. If the comparison page (§3 of the PRD) wants a data-driven "what each tier includes," that is <b>static presentation data</b>, kept separate from these enforcement accessors — not the same enum.</p>
 
       <div class="callout warn">
-        <strong>The add-aircraft gate is not a flat tier check</strong>
-        Free allows <b>one</b> aircraft, not zero. <code>ADD_AIRCRAFT</code> access = <code>status == PRO || ownedAircraftCount &lt; FREE_AIRCRAFT_LIMIT(=1)</code>. The count comes from <code>FleetManager.observeFleetDashboard()</code>, filtered to <b>owned</b> aircraft — shared-in aircraft (<code>SharedAircraftRef</code>) never count against the limit (PRD R4). This composite lives in the fleet/shell add-aircraft path, combining <code>SubscriptionManager.observe()</code> with the owned count; every other gate uses the plain <code>hasAccess()</code>. Like all gates, it is bypassed entirely while <code>isSubscriptionSupported</code> is off (unlimited aircraft for everyone).
+        <strong>Add-aircraft is a limit, not a capability</strong>
+        Free allows <b>one</b> aircraft, not zero — so it is a quantity (<code>aircraftLimit()</code>: <code>null</code>=unlimited, <code>FREE</code>=1), not a boolean feature. The add-aircraft path compares <code>aircraftLimit()</code> against the owned count from <code>FleetManager.observeFleetDashboard()</code>, filtered to <b>owned</b> aircraft — shared-in aircraft (<code>SharedAircraftRef</code>) never count (PRD R4). Future storage quota is the same shape, which is exactly why it belongs with limits rather than a fake yes/no. Bypassed while <code>isSubscriptionSupported</code> is off (unlimited for everyone).
       </div>
 
       <h2 id="devoptions">5. Feature Lab → Developer Options Refactor</h2>
@@ -195,13 +202,13 @@ val effective = when {
 
       <h2 id="gatingimpl">6. Feature Gating Migration &amp; ProUpsellSheet</h2>
       <p><code>ProUpsellSheet(trigger, onDismiss)</code> (in <code>subscription/viewing</code>) renders the contextual bottom sheet and routes to <code>Screen.Subscription</code> for "see all". Each consumer swaps its Feature-Lab boolean for a subscription gate and, when locked, opens the sheet instead of silently disabling.</p>
+      <p>The middle column below is the point of the accessor design: each gate maps to a <b>concrete boundary</b> — two already exist (a boolean to re-source), one is introduced here, and one is a count.</p>
       <table>
-        <tr><th>Consumer (today)</th><th>Change</th></tr>
-        <tr><td><code>AttachmentFormSection</code> (attachment/viewing) — used by log/squawk/task forms</td><td>Replace <code>uploadEnabled: Boolean</code> with an access state + <code>onUpsell(trigger)</code>. Photo/File options render locked; tapping opens the sheet. <b>Add Link stays free.</b> Replace <code>file_upload_coming_soon</code> copy (R16).</td></tr>
-        <tr><td><code>MaintenanceLogFormViewModel</code>, <code>SquawkFormViewModel</code>, <code>TaskViewModel</code></td><td>Observe <code>SubscriptionManager.hasAccess(ATTACHMENT_UPLOAD)</code> instead of <code>FeatureLabManager.observe().attachmentUploadEnabled</code>.</td></tr>
-        <tr><td><code>ExportViewModel</code> (delivery info)</td><td>Gate <code>EMAIL_EXPORT</code>; surface the email row as <b>shown-locked</b> (was hidden). Local export unaffected.</td></tr>
-        <tr><td>Fleet / shell <b>add-aircraft</b> (<code>onAddAircraft</code>)</td><td>Apply the composite add-aircraft gate; if locked, show <code>ProUpsellSheet(add_aircraft)</code> instead of navigating to <code>Screen.AddAircraft</code>.</td></tr>
-        <tr><td>Sharing host/invite (<code>InviteSheet</code> / <code>ManageAccess</code> entry)</td><td>Gate <code>SHARE_HOST</code>; the Share action shows the sheet when locked. Accepting an invite is never gated.</td></tr>
+        <tr><th>Gate</th><th>Boundary today</th><th>Change (via the accessor)</th></tr>
+        <tr><td>Attachment upload — <code>AttachmentFormSection</code> (attachment/viewing), used by log/squawk/task forms + their ViewModels</td><td><b>Exists:</b> <code>uploadEnabled: Boolean</code> param, fed from <code>FeatureLabManager…attachmentUploadEnabled</code> in each form UiState</td><td>ViewModels source the boolean from <code>canUploadAttachments()</code>. <code>AttachmentFormSection</code> gains <code>onUpsell(trigger)</code>: Photo/File render locked → open the sheet; <b>Add Link stays free</b>. Reword <code>file_upload_coming_soon</code> (R16).</td></tr>
+        <tr><td>Email export — <code>ExportViewModel</code> delivery info</td><td><b>Exists:</b> <code>exportEmailDeliveryEnabled</code> nulls <code>deliveryInfo</code></td><td>Source from <code>canEmailExports()</code>; surface the email row as <b>shown-locked</b> (was hidden). Local export unaffected.</td></tr>
+        <tr><td>Host a share — <code>InviteSheet</code> / <code>ManageAccess</code> entry</td><td><b>New:</b> no per-user gate exists (sharing is only build-gated by <code>isAircraftSharingSupported</code>)</td><td>Add one check at the Share entry from <code>canHostShare()</code>; locked → sheet. Accepting an invite is never gated.</td></tr>
+        <tr><td>Add aircraft — fleet/shell <code>onAddAircraft</code></td><td><b>New (count):</b> a bare nav action, no limit today</td><td>Compare <code>aircraftLimit()</code> against owned count; at limit → <code>ProUpsellSheet(add_aircraft)</code> instead of navigating to <code>Screen.AddAircraft</code>.</td></tr>
       </table>
 
       <h2 id="backend">7. Backend — Entitlement Pipeline &amp; Usage</h2>
@@ -246,7 +253,7 @@ function applyEntitlement(update: NormalizedEntitlement): Promise&lt;void&gt;</c
       <h2 id="roadmap">10. Build Roadmap</h2>
       <p>Sequenced so each phase is shippable and testable on its own. Phases 1–6 are billing-agnostic and unblocked today; 7 waits on the billing decision.</p>
       <div class="phase"><div class="tag">P1</div><div class="body"><b>App capability + data/sync foundation</b><b>Add <code>AppCapability.isSubscriptionSupported</code></b> across all host actuals (<code>createAppCapability</code> in <code>core/appinfo</code>) — <b>off in the shipping release, on in dev + dogfood</b>, mirroring <code>isAircraftSharingSupported</code>. Then: Subscription proto, <code>CollectionKind.Subscription</code>, codec, security rules, hydration wired as pull-only. No UI. Verifies an admin-written doc reaches the device.</div></div>
-      <div class="phase"><div class="tag">P2</div><div class="body"><b>SubscriptionManager + gating core</b><code>SubscriptionStatus</code>, <code>PremiumFeature</code>, manager impl with lifecycle resolution + dev override, <b>and the <code>isSubscriptionSupported</code> default-open short-circuit</b> (gating disabled / all features available while the capability is off). Unit-tested (including the capability-off = all-access case). No consumer wired yet.</div></div>
+      <div class="phase"><div class="tag">P2</div><div class="body"><b>SubscriptionManager + gating core</b><code>SubscriptionStatus</code>, the capability accessors (<code>canUploadAttachments</code>/<code>canEmailExports</code>/<code>canHostShare</code>) + <code>aircraftLimit</code>, manager impl with lifecycle resolution + dev override, <b>and the <code>isSubscriptionSupported</code> default-open short-circuit</b> (gating disabled / all features available while the capability is off). Unit-tested (including the capability-off = all-access case). No consumer wired yet.</div></div>
       <div class="phase"><div class="tag">P3</div><div class="body"><b>Developer Options refactor</b>Rename Feature Lab, drop the two flags, add Force subscription status. Unblocks manual testing of every gate.</div></div>
       <div class="phase"><div class="tag">P4</div><div class="body"><b>Subscription page + ProUpsellSheet</b>Status/comparison screen (viewing/update), Settings entry <b>gated by <code>isSubscriptionSupported</code> (hidden while off)</b>, <code>Screen.Subscription</code>, DI. Reusable upsell sheet. Purchase CTA = placeholder.</div></div>
       <div class="phase"><div class="tag">P5</div><div class="body"><b>Gating migration</b>Repoint attachments, email export, add-aircraft limit, sharing host to the manager + promo sheet — each <b>defaulting open while the capability is off</b>. Reword coming-soon strings (R16). Removes the last Feature-Lab flag usage.</div></div>
