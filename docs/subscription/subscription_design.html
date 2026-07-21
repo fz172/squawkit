@@ -92,7 +92,7 @@
         <li><b>Gate as promo, don't hide.</b> Gated affordances stay visible and open a reusable <code>ProUpsellSheet</code> (PRD §9).</li>
         <li><b>Rolled out through <code>AppCapability</code>, default-open.</b> A new <code>isSubscriptionSupported</code> build gate (like <code>isAircraftSharingSupported</code>) stages the launch: on in dev/dogfood, off in the shipping release until GA. <b>While it is off there is no paywall at all</b> — every premium feature is treated as available (no gating), and the Subscription entry/page is hidden. Off means "unlocked for everyone," not "restricted."</li>
       </ul>
-      <p>The design leans hard on existing infrastructure: the local-first <code>EntityStore</code> + sync engine carry the entitlement exactly as they already carry <code>SharedAircraftRef</code> (a server-written, client-read-only collection — the direct precedent), and the storage-usage number is summed by extending the scheduled storage sweep.</p>
+      <p>The design leans on existing infrastructure where it can: the local-first <code>EntityStore</code> caches the entitlement for offline reads, and the storage-usage number is summed by extending the scheduled storage sweep. The one deliberate deviation is the entitlement's <b>remote</b> path: because it must be un-forgeable it cannot ride the client-writable user tree (§3), so a small dedicated listener mirrors a top-level, function-only doc into that local cache.</p>
 
       <h2 id="modules">2. Module Layout</h2>
       <p>A new canonical-layout module, <b><code>feature/subscription</code></b>, plus small touch points in existing modules.</p>
@@ -116,7 +116,7 @@ backend/firebase/functions/  entitlement writer + promo callable + usage sweep</
       <h2 id="data">3. Data Model &amp; Storage</h2>
 
       <h3>The entitlement record</h3>
-      <p>One document per account, at <code>users/{uid}/subscription/main</code>, written only by the server. It holds both the entitlement and the storage-usage figure (two writers touching disjoint fields — the billing pipeline and the sweep — via Firestore field merges):</p>
+      <p>One document per account at the <b>top-level, function-only</b> path <code>subscriptions/{uid}</code> (see "why not the user tree" below), written only by the server. It holds both the entitlement and the storage-usage figure (two writers touching disjoint fields — the billing pipeline and the sweep — via Firestore field merges):</p>
       <pre><code>// core/model … settings/Subscription.proto  (wire name: "subscription")
 message Subscription {
   Status  status              = 1;  // resolved tier the server grants
@@ -135,19 +135,22 @@ message Subscription {
 }</code></pre>
       <p>The proto enums carry a 0-valued default; the client maps <code>STATUS_FREE</code>/absent → <code>SubscriptionStatus.FREE</code>. Because the app has <b>not launched</b>, we can define wire names and fields freely — no migration constraints.</p>
 
-      <h3>CollectionKind + local store</h3>
-      <p>Add one kind; the client reads it through an <code>EntityStore&lt;Subscription&gt;</code> exactly like <code>FeatureLabSettings</code>:</p>
+      <h3>CollectionKind + local cache</h3>
+      <p>The client caches the entitlement in the local store like any other entity, so the manager reads it offline through an <code>EntityStore&lt;Subscription&gt;</code>. The <b>local</b> cache is keyed at <code>userRoot(uid)</code>; only the <i>remote</i> source differs (a dedicated listener, below — not the generic sync).</p>
       <pre><code>data object Subscription : CollectionKind {
   override val wireName = "subscription"
   override val schemaName = "settings.Subscription"
 }</code></pre>
 
-      <h3>Server-authoritative &amp; pull-only — no new sync machinery</h3>
-      <p>The entitlement is <b>read-only on the client</b>. This needs no new sync concept: the push worker only drains <i>locally dirtied</i> rows, and <b>no client code ever writes the <code>Subscription</code> doc to the local store</b> — managers only <code>observe()</code> it. So it is never dirty, never pushed, and hydration simply pulls the server's copy. This is precisely how <code>SharedAircraftRef</code> already behaves (Cloud Functions write it; the client reads it to compute scope prefixes). Security rules make the invariant enforceable, not just conventional:</p>
-      <pre><code>match /users/{uid}/subscription/{doc} {
+      <h3>Server-authoritative — why it lives outside the user tree</h3>
+      <p>The entitlement is a paywall, so it must be <b>un-forgeable</b>: only the server may write it. That rules out putting it under the user's own tree. The user tree is governed by one broad rule —</p>
+      <pre><code>match /users/{userId}/{document=**} { allow read, write: if request.auth.uid == userId }</code></pre>
+      <p>— and Firestore rules are <b>additive (OR)</b>: a more-specific <code>allow write: if false</code> on a subpath <i>cannot</i> revoke the broad <code>allow write</code>. So anything under <code>users/{uid}/</code> is client-writable, and a user could forge <code>STATUS_PRO</code> by writing the doc straight to Firestore with their own token. (This is also why <code>SharedAircraftRef</code>, which lives under the user tree, is <b>not</b> a write-denied precedent — it relies on that same broad allow.) The entitlement therefore lives at a top-level path the broad rule doesn't cover, where writes are genuinely denied:</p>
+      <pre><code>match /subscriptions/{uid} {
   allow read:  if request.auth.uid == uid;
-  allow write: if false;   // only the Admin SDK (Cloud Functions) writes
+  allow write: if false;   // Admin SDK (Cloud Functions) only
 }</code></pre>
+      <p><b>Read path (one small piece of new machinery).</b> Because that doc is outside the user tree, the generic hydration doesn't fetch it. A dedicated <code>SubscriptionSyncListener</code> (bound in the sync/subscription layer) subscribes to <code>subscriptions/{uid}</code> while signed in and mirrors it into the local <code>EntityStore</code> (<code>CollectionKind.Subscription</code>). The listener is the <b>only</b> local writer of that row, so it is never marked dirty and never pushed; <code>SubscriptionManager</code> observes the local cache exactly as designed. A single-doc listener, not a new bidirectional collection.</p>
 
       <h2 id="manager">4. SubscriptionManager &amp; Gating</h2>
       <p>The single reactive gate. Mirrors <code>FeatureLabManager</code>'s shape (auth-scoped <code>flatMapLatest</code> over the store), adding lifecycle resolution and the developer override.</p>
@@ -219,7 +222,7 @@ interface EntitlementSource {           // impl: RevenueCatWebhook | AppleAsn | 
   // maps a raw provider event → NormalizedEntitlement { uid, status, lifecycle,
   //   memberSince, currentPeriodEnd, willRenew, source, originPlatform }
 }
-// the only writer of users/{uid}/subscription/main (entitlement fields), idempotent
+// the only writer of subscriptions/{uid} (entitlement fields), idempotent
 function applyEntitlement(update: NormalizedEntitlement): Promise&lt;void&gt;</code></pre>
       <ul>
         <li><b>Ingest:</b> an HTTPS webhook (aggregator) <i>or</i> store notifications (Apple ASSN v2, Play RTDN via Pub/Sub, Stripe) — decided later. Each validates the receipt/signature server-side and hands a <code>NormalizedEntitlement</code> to <code>applyEntitlement</code>.</li>
@@ -233,7 +236,7 @@ function applyEntitlement(update: NormalizedEntitlement): Promise&lt;void&gt;</c
       </div>
 
       <h3>Storage-usage sweep</h3>
-      <p>Per PRD §6, usage is summed server-side. Extend the scheduled storage sweep: for each account, one paginated <b><code>LIST</code> on the single prefix <code>users/{uid}/</code></b> (where all blobs live), sum <code>file.metadata.size</code>, and write <code>storage_bytes_used</code> onto the subscription doc via field merge. Authoritative, drift-free, no upload-path hook. Real-time incremental counting (<code>onObjectFinalized</code>/<code>onObjectDeleted</code>, reconciled by the sweep) is deferred to hard-quota enforcement. Because blobs live under the owner/host uid, shared-aircraft bytes accrue to the host.</p>
+      <p>Per PRD §6, usage is summed server-side. Extend the scheduled storage sweep: for each account, one paginated <b><code>LIST</code> on the single prefix <code>users/{uid}/</code></b> (where all blobs live), sum <code>file.metadata.size</code>, and write <code>storage_bytes_used</code> onto the <code>subscriptions/{uid}</code> doc via field merge. Authoritative, drift-free, no upload-path hook. Real-time incremental counting (<code>onObjectFinalized</code>/<code>onObjectDeleted</code>, reconciled by the sweep) is deferred to hard-quota enforcement. Because blobs live under the owner/host uid, shared-aircraft bytes accrue to the host.</p>
 
       <h2 id="wiring">8. DI &amp; Navigation Wiring</h2>
       <ul>
@@ -252,7 +255,7 @@ function applyEntitlement(update: NormalizedEntitlement): Promise&lt;void&gt;</c
 
       <h2 id="roadmap">10. Build Roadmap</h2>
       <p>Sequenced so each phase is shippable and testable on its own. Phases 1–6 are billing-agnostic and unblocked today; 7 waits on the billing decision.</p>
-      <div class="phase"><div class="tag">P1</div><div class="body"><b>App capability + data/sync foundation</b><b>Add <code>AppCapability.isSubscriptionSupported</code></b> across all host actuals (<code>createAppCapability</code> in <code>core/appinfo</code>) — <b>off in the shipping release, on in dev + dogfood</b>, mirroring <code>isAircraftSharingSupported</code>. Then: Subscription proto, <code>CollectionKind.Subscription</code>, codec, security rules, hydration wired as pull-only. No UI. Verifies an admin-written doc reaches the device.</div></div>
+      <div class="phase"><div class="tag">P1</div><div class="body"><b>App capability + data/sync foundation</b><b>Add <code>AppCapability.isSubscriptionSupported</code></b> across all host actuals (<code>createAppCapability</code> in <code>core/appinfo</code>) — <b>off in the shipping release, on in dev + dogfood</b>, mirroring <code>isAircraftSharingSupported</code>. Then: Subscription proto, <code>CollectionKind.Subscription</code>, codec, security rules for the top-level <code>subscriptions/{uid}</code> doc (owner read, write denied), and a dedicated listener mirroring it into the local store. No UI. Verifies an admin-written doc reaches the device.</div></div>
       <div class="phase"><div class="tag">P2</div><div class="body"><b>SubscriptionManager + gating core</b><code>SubscriptionStatus</code>, the capability accessors (<code>canUploadAttachments</code>/<code>canEmailExports</code>/<code>canHostShare</code>) + <code>aircraftLimit</code>, manager impl with lifecycle resolution + dev override, <b>and the <code>isSubscriptionSupported</code> default-open short-circuit</b> (gating disabled / all features available while the capability is off). Unit-tested (including the capability-off = all-access case). No consumer wired yet.</div></div>
       <div class="phase"><div class="tag">P3</div><div class="body"><b>Developer Options refactor</b>Rename Feature Lab, drop the two flags, add Force subscription status. Unblocks manual testing of every gate.</div></div>
       <div class="phase"><div class="tag">P4</div><div class="body"><b>Subscription page + ProUpsellSheet</b>Status/comparison screen (viewing/update), Settings entry <b>gated by <code>isSubscriptionSupported</code> (hidden while off)</b>, <code>Screen.Subscription</code>, DI. Reusable upsell sheet. Purchase CTA = placeholder.</div></div>
