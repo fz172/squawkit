@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRD: Subscription (SquawkIt Pro)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --surface-alt: #eef3f9;
+      --text: #122033;
+      --muted: #53657d;
+      --line: #d8e1ec;
+      --blue: #1f5fa8;
+      --blue-soft: #dbe9fb;
+      --green: #156f4a;
+      --green-soft: #d8f0e3;
+      --amber: #9a6200;
+      --amber-soft: #fdeecb;
+      --red: #a33a32;
+      --red-soft: #f7dedb;
+      --shadow: rgba(18, 32, 51, 0.08);
+      --mono: "SFMono-Regular", "JetBrains Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.55; }
+    main { max-width: 1240px; margin: 0 auto; padding: 32px 20px 56px; }
+    .page-shell { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 28px; align-items: start; }
+    .doc-body { min-width: 0; }
+    h1, h2, h3, h4 { line-height: 1.2; margin: 0 0 12px; }
+    h1 { font-size: 2rem; }
+    h2 { margin-top: 38px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 1.35rem; }
+    h3 { margin-top: 24px; font-size: 1.08rem; }
+    h4 { margin-top: 18px; font-size: 0.95rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-alt); padding: 1px 6px; border-radius: 6px; }
+    pre { background: var(--text); color: #e7eef7; padding: 14px 16px; border-radius: 12px; overflow: auto; font-family: var(--mono); font-size: 0.84rem; line-height: 1.5; }
+    pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 16px 0; box-shadow: 0 1px 2px rgba(18,32,51,0.04); }
+    .hero { background: linear-gradient(180deg, var(--surface), var(--surface-alt)); border: 1px solid var(--line); border-radius: 20px; padding: 26px; margin-bottom: 24px; }
+    .hero h1 { margin-bottom: 8px; }
+    .lede { font-size: 1.1rem; color: var(--muted); margin: 0; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 0.82rem; font-weight: 600; margin: 0 6px 6px 0; }
+    .pill.green { background: var(--green-soft); color: var(--green); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+    .pill.red { background: var(--red-soft); color: var(--red); }
+    .toc { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow: auto; background: rgba(255,255,255,0.9); backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px var(--shadow); }
+    .toc-title { margin: 0 0 10px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .toc ol { margin: 0; padding-left: 18px; }
+    .toc li { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92rem; }
+    th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+    th { background: var(--surface-alt); font-weight: 600; }
+    .compare th, .compare td { text-align: left; }
+    .compare col.plus, .compare .plus-cell { background: var(--blue-soft); }
+    .compare .col { text-align: center; width: 150px; }
+    .compare thead .col { font-size: 1rem; }
+    .compare .yes { color: var(--green); font-weight: 700; text-align: center; }
+    .compare .no { color: var(--muted); text-align: center; }
+    .compare td:first-child { font-weight: 500; }
+    .compare .plus-cell { text-align: center; font-weight: 700; color: var(--blue); }
+    .callout { border-radius: 14px; padding: 14px 18px; margin: 16px 0; border: 1px solid var(--line); }
+    .callout.note { background: var(--blue-soft); border-color: #bcd6f5; }
+    .callout.win { background: var(--green-soft); border-color: #aee0c6; }
+    .callout.warn { background: var(--amber-soft); border-color: #f0d79a; }
+    .callout.risk { background: var(--red-soft); border-color: #efc4bf; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    ul.checks { list-style: none; padding-left: 0; }
+    ul.checks li { padding-left: 26px; position: relative; margin: 8px 0; }
+    ul.checks li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+    ul.nots li::before { content: "✕"; color: var(--red); }
+    .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 12px; }
+    .meta-grid .card { margin: 0; }
+    .kpi { font-size: 1.4rem; font-weight: 700; color: var(--blue); }
+    .mock { border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; background: var(--surface); margin: 14px 0; }
+    .mock .row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .mock .row:last-child { border-bottom: 0; }
+    .mock .k { color: var(--muted); font-size: 0.9rem; }
+    .mock .v { font-weight: 600; }
+    @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <div>
+      <span class="pill amber">Status: Proposed</span>
+      <span class="pill">PRD</span>
+      <span class="pill">Entitlement · Billing · Local-first · Sync</span>
+    </div>
+    <h1>Subscription <span class="muted">— SquawkIt Pro</span></h1>
+    <p class="lede">A paid tier layered on top of the free experience. Free is a genuinely useful single-aircraft logbook, backed up and synced across your devices at no cost; SquawkIt Pro unlocks an unlimited fleet, photo &amp; file attachments, email export, and aircraft sharing — plus future premium features as they ship. One subscription entitles the account on every platform it signs in on; payment and cancellation happen through each platform's native store.</p>
+  </div>
+
+  <div class="page-shell">
+    <div class="doc-body">
+
+      <div class="callout note">
+        <strong>Decisions locked for this PRD</strong>
+        Tier shape: <b>one paid tier</b> above free, monthly billing, but modeled as an extensible <code>SubscriptionStatus</code> enum so more tiers can be added later without reworking gating. Entitlement is <b>server-authoritative and account-scoped</b>, so a purchase on any platform entitles the account everywhere. Feature gating moves off Feature Lab flags onto the <b>subscription status</b>. The old Feature Lab surface becomes <b>Developer Options</b> (dev builds only), keeping <i>Generate fake data</i> and adding a <b>Force subscription status</b> toggle.
+      </div>
+      <div class="callout warn">
+        <strong>Deliberately deferred (placeholders in v1)</strong>
+        The <b>billing integration</b> is undecided — native per-platform store integration (StoreKit / Play Billing / Stripe) vs. an aggregator (e.g. RevenueCat). Because of that, the actual <b>purchase / paywall flow</b> and the <b>Manage subscription</b> action are left as placeholders in this PRD and specified once the billing approach is chosen. This PRD commits to the entitlement model, the tier comparison / status page, feature gating, and the developer-options refactor.
+      </div>
+
+      <h2 id="problem">1. Problem &amp; Background</h2>
+      <p>SquawkIt has always been free, with two premium-flavored capabilities — <b>attachment upload</b> and <b>email delivery of exports</b> — hidden behind developer-only Feature Lab flags (<code>attachmentUploadEnabled</code>, <code>exportEmailDeliveryEnabled</code>). Those flags were scaffolding: a way to build and dogfood the features before there was any way to charge for them. Several of the app's most valuable capabilities — an unlimited fleet, photo &amp; file attachments, email export, and aircraft sharing — carry real, recurring cost (storage, egress, outbound email) and were never meant to be free forever. (Cloud backup &amp; sync stays free: it is the app's durability promise, and gating it would strand a signed-in user's records on one device — see §11.)</p>
+      <p>There is no way today for a user to pay for the app, and no concept of a paid account. To turn these cost-bearing capabilities into a sustainable offering — and to have a home for future premium features — we need a first-class <b>subscription</b>: a durable, account-level entitlement expressed as a <b>tier</b> that the app gates features on, that behaves correctly across Android, iOS, and web, and that supports the promotions (free trials, promo grants) we will want for growth.</p>
+      <ul>
+        <li><b>The gate is in the wrong place.</b> A Feature Lab flag lives only in developer builds (<code>AppCapability.isFeatureLabSupported = isDeveloperBuild</code>), so it can never be turned on for a shipping user. It cannot express "this user paid."</li>
+        <li><b>Entitlement must be account-level, not device-level or platform-level.</b> A pilot who subscribes on their iPhone expects the same premium features on the web and on an Android tablet. Store purchases are inherently per-platform; the entitlement they grant must not be.</li>
+        <li><b>The gate must be a tier, not a boolean.</b> With more than one paid tier likely in the future, "premium: yes/no" doesn't scale. Features should declare a <i>minimum tier</i> and the app should compare against the account's current <code>SubscriptionStatus</code>.</li>
+        <li><b>Cancellation and trials have money-touching semantics</b> (a canceled subscription stays valid to period end; a trial is "entitled but not yet paying"). One model must represent all of these truthfully, even offline.</li>
+      </ul>
+
+      <h2 id="goals">2. Goals &amp; Non-Goals</h2>
+      <h4>Goals</h4>
+      <ul class="checks">
+        <li>Introduce a single paid tier above free, billed <b>monthly</b>, modeled as an <b>extensible <code>SubscriptionStatus</code> enum</b> (not a boolean) so future tiers are additive.</li>
+        <li>Define a clear free tier — a useful <b>single-aircraft</b> logbook with <b>cloud backup &amp; sync free for everyone</b>; and put the following behind the paywall: <b>unlimited aircraft</b>, <b>attachments</b>, <b>email export</b>, and <b>aircraft sharing / inviting</b>.</li>
+        <li>Make entitlement <b>account-scoped and cross-platform</b>: subscribe on one platform, get the benefits on all.</li>
+        <li>Model <b>cancellation correctly</b> — access continues until the end of the paid period, then reverts to free.</li>
+        <li>Design <b>free trials and promotions</b> into the model from day one (e.g. a 7-day free trial), leaning on platform-native offers where they exist.</li>
+        <li>Make the subscription page a <b>plain-language tier comparison / marketing surface</b> for non-subscribers, and a <b>status page</b> ("member since…", renewal, Manage) for subscribers.</li>
+        <li><b>Retire the two Feature Lab flags</b>; gate their features on subscription status instead.</li>
+        <li>Refactor Feature Lab into <b>Developer Options</b> (dev builds only), keeping <i>Generate fake data</i> and adding a <b>Force subscription status</b> toggle.</li>
+        <li>Behave <b>gracefully offline</b> and <b>never destroy data on downgrade</b>.</li>
+      </ul>
+      <h4>Non-Goals</h4>
+      <ul class="checks nots">
+        <li>Choosing the billing integration (native per-platform vs. aggregator) — decided separately; this PRD is written to be agnostic to it.</li>
+        <li>The full <b>purchase / paywall UI</b> and the platform-native <b>Manage subscription</b> deep links — placeholders here, specified after the billing decision.</li>
+        <li>Shipping <b>additional</b> paid tiers in v1 (the model must <i>allow</i> them; only Free + one paid tier ship now).</li>
+        <li>Annual plans, family / team plans, or per-seat billing.</li>
+        <li>In-app cancellation or refunds — cancellation is done through the platform's native subscription management.</li>
+        <li>Metered / usage-based pricing (e.g. per-GB attachment storage). v1 tier is flat.</li>
+      </ul>
+
+      <h2 id="tiers">3. Tiers &amp; What's Included</h2>
+      <p>The free tier is deliberately a complete, trustworthy logbook — a single aircraft, fully logged, <b>backed up and synced to every device</b> — not a crippled demo. SquawkIt Pro is about <i>scale and collaboration</i>: more aircraft, richer records (attachments), email export, and sharing. This table is also the literal content of the marketing/comparison view non-subscribers see (§8).</p>
+      <table class="compare">
+        <colgroup><col /><col /><col class="plus" /></colgroup>
+        <thead>
+          <tr><th>Capability</th><th class="col">Free</th><th class="col plus-cell">SquawkIt Pro</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Aircraft</td><td class="col">1</td><td class="plus-cell">Unlimited</td></tr>
+          <tr><td>Maintenance logs, tasks &amp; squawks</td><td class="yes">✓</td><td class="plus-cell">✓</td></tr>
+          <tr><td>Export to this device (CSV / XLSX / PDF / ZIP)</td><td class="yes">✓</td><td class="plus-cell">✓</td></tr>
+          <tr><td>Photo &amp; file attachments</td><td class="no">—</td><td class="plus-cell">✓</td></tr>
+          <tr><td>Email a copy of exports</td><td class="no">—</td><td class="plus-cell">✓</td></tr>
+          <tr><td>Cloud backup &amp; multi-device sync</td><td class="yes">✓</td><td class="plus-cell">✓</td></tr>
+          <tr><td>Share aircraft &amp; invite others</td><td class="no">—</td><td class="plus-cell">✓</td></tr>
+          <tr><td>Future premium features</td><td class="no">—</td><td class="plus-cell">✓</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warn">
+        <strong>Sharing has two sides — only hosting is gated</strong>
+        <b>Inviting / hosting</b> a shared aircraft requires SquawkIt Pro. <b>Accepting an invite and viewing/contributing to an aircraft shared with you</b> does <i>not</i> require a subscription — otherwise a subscriber could never share with a free-tier mechanic, and sharing would be worthless. <b>Confirmed.</b>
+      </div>
+      <div class="callout win">
+        <strong>Backup &amp; sync stay free — durability is not paywalled</strong>
+        <b>Cloud backup and unlimited multi-device sync are free for every signed-in account.</b> This keeps the product's "Dependability First" promise intact and stays consistent with the <a href="../account/account_upgrade_PRD.html">Guest → Account Upgrade</a> flow (whose whole value is syncing records to a durable account). A user never loses records to a dead device just because they haven't paid; SquawkIt Pro sells <i>scale and collaboration</i>, not safety.
+      </div>
+
+      <h2 id="users">4. Users &amp; Use Cases</h2>
+      <table>
+        <tr><th>Persona</th><th>Situation</th><th>What the subscription does for them</th></tr>
+        <tr><td>Single-plane owner</td><td>Owns one aircraft; happy on free.</td><td>Uses SquawkIt free indefinitely for that one aircraft, on-device.</td></tr>
+        <tr><td>Fleet operator</td><td>Manages several aircraft.</td><td>Subscribes to log more than one aircraft at all.</td></tr>
+        <tr><td>Committed owner-operator</td><td>Wants photos attached and exports emailed to their A&amp;P.</td><td>Subscribes once; attachments and email export unlock on phone, tablet, and web (their records were already backed up on free).</td></tr>
+        <tr><td>Trial-curious pilot</td><td>Wants to try premium before paying.</td><td>Starts a 7-day free trial; is fully entitled during it; converts or reverts cleanly.</td></tr>
+        <tr><td>Owner + mechanic pair</td><td>Owner wants their A&amp;P to see and update a shared aircraft.</td><td>Owner subscribes and invites; the mechanic accepts and collaborates without needing their own subscription.</td></tr>
+        <tr><td>Churning subscriber</td><td>Cancels mid-month.</td><td>Keeps premium until the paid period ends, then quietly drops to free with all data intact (read-only over the free limits).</td></tr>
+        <tr><td>Promo recipient</td><td>Gets a comp'd month from support or a campaign.</td><td>A server-granted entitlement unlocks premium without any store purchase.</td></tr>
+      </table>
+
+      <h2 id="metrics">5. Success Metrics</h2>
+      <div class="meta-grid">
+        <div class="card"><div class="kpi">↑</div><div class="muted">Free → paid conversion</div></div>
+        <div class="card"><div class="kpi">↑</div><div class="muted">Trial → paid conversion</div></div>
+        <div class="card"><div class="kpi">↓</div><div class="muted">Monthly churn</div></div>
+        <div class="card"><div class="kpi">≈100%</div><div class="muted">Cross-platform entitlement accuracy</div></div>
+      </div>
+      <ul>
+        <li><b>Primary:</b> paid subscribers and free→paid conversion; trial start and trial→paid conversion.</li>
+        <li><b>Secondary:</b> which gate drives upgrades (hit a 2nd-aircraft wall vs. attachments vs. email export vs. sharing) — instrument the upsell entry point per trigger.</li>
+        <li><b>Guardrail:</b> entitlement correctness — a paid user is <i>never</i> shown as free, and downgrade <i>never</i> deletes data. Cross-platform mismatches are incidents.</li>
+        <li><b>Counter-metric:</b> support contacts about "I paid but it's locked" / "I canceled but was still charged" / "where did my second aircraft go?"</li>
+      </ul>
+
+      <h2 id="model">6. Entitlement Model</h2>
+      <p>The heart of this feature is a truthful, account-level <b>entitlement</b> that resolves to a <b>tier</b>. Design detail lives in the companion Design Doc; the PRD fixes the shape.</p>
+
+      <h3>Source of truth: server-authoritative, account-scoped</h3>
+      <p>A trusted server component (Cloud Function) is the <b>only</b> writer of entitlement. It learns about purchases from the billing provider — via store server-to-server notifications / webhooks and receipt validation — and writes a single canonical entitlement record on the user's account. Clients <b>never</b> self-grant from a local receipt; they read the server's verdict. Because it hangs off the account (not a device or platform), it is cross-platform for free: it rides the existing sync engine down to every signed-in device, cached in the local-first store (a new <code>CollectionKind</code>, alongside <code>UserInfo</code>).</p>
+
+      <h3>The gate is a tier enum, not a boolean</h3>
+      <p>The app gates on <code>SubscriptionStatus</code>, an ordered, extensible enum. v1 ships two members; future tiers are additive and do not disturb existing gates:</p>
+      <pre><code>enum class SubscriptionStatus {   // ordered low → high
+  FREE,
+  PRO,          // the v1 paid tier (working name "SquawkIt Pro")
+  // future: ENTERPRISE, ...
+}</code></pre>
+      <p>Every gated capability declares the <b>minimum tier</b> it needs; access is granted when the account's current status is at or above it (<code>currentStatus &gt;= feature.minimumStatus</code>). Adding a "PRO-only" feature later is a one-line map entry, never a new boolean threaded through the app.</p>
+      <table>
+        <tr><th>Capability</th><th>Minimum status</th></tr>
+        <tr><td>2nd+ aircraft, attachments, email export, hosting a shared aircraft</td><td><code>PRO</code></td></tr>
+        <tr><td>Everything else (single aircraft, logs/tasks/squawks, on-device export, <b>cloud backup &amp; sync</b>, accepting a shared aircraft)</td><td><code>FREE</code></td></tr>
+      </table>
+
+      <h3>Lifecycle state resolves to a status</h3>
+      <p>Separate from the tier is the billing <b>lifecycle</b>, which decides <i>whether</i> a purchased tier is currently in effect. The client reduces lifecycle to the effective <code>SubscriptionStatus</code>:</p>
+      <table>
+        <tr><th>Lifecycle</th><th>Meaning</th><th>Effective status</th></tr>
+        <tr><td><b>none</b></td><td>No entitlement.</td><td><code>FREE</code></td></tr>
+        <tr><td><b>trialing</b></td><td>In a free trial; not yet paying.</td><td>the trial's tier (e.g. <code>PRO</code>)</td></tr>
+        <tr><td><b>active</b></td><td>Paid and set to renew.</td><td>the purchased tier</td></tr>
+        <tr><td><b>canceled</b></td><td>Won't renew, but current paid period hasn't ended.</td><td>the tier, until <code>currentPeriodEnd</code></td></tr>
+        <tr><td><b>grace / on-hold</b></td><td>Renewal payment failed; store is retrying.</td><td>the tier, during the retry window (per platform policy)</td></tr>
+        <tr><td><b>expired</b></td><td>Period/trial ended without renewal.</td><td><code>FREE</code></td></tr>
+      </table>
+      <p>The entitlement record carries at least: <b>lifecycle</b>, the <b>tier</b> it grants, <b>start</b> ("member since"), <b>currentPeriodEnd</b>, <b>willRenew</b>, an <b>entitlement source</b> (<code>store_purchase</code> vs. <code>server_grant</code> for promos), and the <b>originating platform</b> of the purchase (informational, for Manage).</p>
+
+      <h3>What the app consumes</h3>
+      <p>A single reactive value — <code>SubscriptionManager.observe(): Flow&lt;SubscriptionStatus&gt;</code> (plus the richer entitlement for the status page) — replaces the two Feature Lab booleans. Every current consumer of the old flags (the log, squawk, and task attachment sections via their ViewModels; the export email-delivery path in <code>ExportViewModel</code>) reads the status gate instead. The <b>Force subscription status</b> developer override takes precedence in dev builds so gated paths can be exercised without a real purchase.</p>
+
+      <h3>Storage usage accounting</h3>
+      <p>Alongside entitlement, the account carries a <b>storage-usage</b> figure: total attachment bytes owned by the account. It is tracked <b>server-authoritatively</b> (a client can't be trusted to sum its own usage, and blobs are written from multiple devices). There is no cheap "bytes under a prefix" API in Cloud Storage, so v1 computes it the way the code already computes GC: a scheduled job lists the account's single blob prefix — <code>users/{uid}/</code>, where <i>all</i> of an account's blobs live (the natural extension point is the existing storage sweep) — sums each object's <code>size</code> metadata, and writes the total to a small synced value next to the entitlement doc, which rides the sync engine to the client. This is <b>periodic, not real-time</b> — freshness equals the sweep cadence, which is ample for display and a soft cap. (Firestore payloads name blob <i>ids</i>, not sizes; only the Storage object metadata knows bytes — hence the list-and-sum.) A real-time incremental counter (a new <code>onObjectFinalized</code>/<code>onObjectDeleted</code> trigger, reconciled by the sweep) is deferred to whenever a hard, at-upload quota is enforced.</p>
+      <p>Usage is tracked for <b>every</b> account, not just subscribers — a free user reads ~0 today, but a downgraded ex-subscriber still owns retained attachments that count, and tracking from day one means no backfill when tier quotas arrive. Because blobs are keyed by the <b>owner/host</b> uid, a member's uploads to a <b>shared</b> aircraft count against the <b>host's</b> usage, not the member's — the right model for quotas (the host must be Pro to share), but stated so a member isn't surprised. The record reserves a per-tier <b>quota</b> field; v1 leaves it unlimited (display usage only), and a future tier can set a cap that gates new uploads (the compounding-storage lever from §11).</p>
+
+      <h2 id="requirements">7. Functional Requirements</h2>
+      <table>
+        <tr><th>#</th><th>Requirement</th><th>Priority</th></tr>
+        <tr><td>R1</td><td>A single account-level entitlement record is the source of truth for subscription tier, written only by a trusted server component, synced to every signed-in device and cached locally (offline-tolerant).</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R2</td><td>The app gates features on an ordered, extensible <code>SubscriptionStatus</code> enum (v1: <code>FREE</code>, <code>PRO</code>) via a per-feature <b>minimum tier</b>, not a boolean.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R3</td><td>Free tier is limited to <b>1 aircraft</b>; creating a 2nd requires <code>PRO</code>. Attachments, email export, and hosting a shared aircraft all require <code>PRO</code>. Cloud backup &amp; sync are free for all signed-in accounts.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R4</td><td>Accepting an invite and viewing/contributing to an aircraft <b>shared with</b> the user does <i>not</i> require a subscription. Shared-in aircraft do not count against the free 1-aircraft limit.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R5</td><td>The two Feature Lab flags (<code>attachmentUploadEnabled</code>, <code>exportEmailDeliveryEnabled</code>) are removed from <code>FeatureFlags</code>, its proto, the Feature Lab UI, and all consumers, which repoint to the status gate.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R6</td><td>The subscription page shows a plain-language <b>tier comparison</b> to non-subscribers (the marketing surface) and a <b>status view</b> to subscribers ("member since", renewal/expiry, Manage).</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R7</td><td>A canceled subscription remains at its tier until <code>currentPeriodEnd</code>, then resolves to <code>FREE</code> automatically. The status page shows "Active until &lt;date&gt;" while canceled.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R8</td><td>Entitlement is cross-platform: a purchase surfaced on one platform sets the account's tier on all platforms it signs into, without a second purchase.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R9</td><td><b>Downgrade never destroys or freezes existing data.</b> A lapsed subscriber keeps and can still <b>edit</b> all existing aircraft, attachments, and shares; only <b>new</b> over-limit actions are blocked (can't add another aircraft, can't upload new attachments, can't host new shares). Backup &amp; sync continue (free).</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R10</td><td>The model supports a <b>free trial</b> (e.g. 7 days) as a first-class <code>trialing</code> lifecycle, preferring platform-native intro offers; and <b>server-granted promos</b> (<code>server_grant</code>) needing no store purchase.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R11</td><td>Feature Lab is refactored to <b>Developer Options</b>, still gated by <code>AppCapability.isFeatureLabSupported</code> (dev builds only), retaining <i>Generate fake data</i>.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R12</td><td>Developer Options gains a <b>Force subscription status</b> control that overrides the effective <code>SubscriptionStatus</code> locally (selectable tier, defaulting off), for testing gated features.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R13</td><td>Gated affordances (add-aircraft over limit, attachment picker, email-export, Share/invite) are <b>shown as locked promos</b> that route to the subscription page — never hidden or shown as broken — unless surfacing the gate at that spot would significantly hurt the flow.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R14</td><td>The <b>Manage subscription</b> action and the <b>purchase / paywall</b> entry are placeholders in v1, wired after the billing decision.</td><td><span class="pill">P1</span></td></tr>
+        <tr><td>R15</td><td><b>No grandfathering needed</b> — the app has not launched, so there is no pre-existing over-limit user data to protect. Limits apply uniformly from day one.</td><td><span class="pill">P2</span></td></tr>
+        <tr><td>R16</td><td>Placeholder "feature coming soon" / "not available" copy on gated features is <b>reworded to a subscribe CTA</b> ("Subscribe to SquawkIt Pro to …"). Known offender: <code>file_upload_coming_soon</code> ("File upload options coming soon"); sweep attachment and export strings for any similar copy.</td><td><span class="pill">P1</span></td></tr>
+        <tr><td>R17</td><td><b>Track attachment storage used per account</b>, server-authoritative, for <b>every</b> user — including free users who can't upload today (their figure is ~0, and a lapsed subscriber's retained attachments still count). Usage is computed server-side from the blob bookkeeping and synced to the client like entitlement.</td><td><span class="pill">P1</span></td></tr>
+        <tr><td>R18</td><td><b>Show storage used on the subscription page</b> for all users (e.g. "Storage used: 240&nbsp;MB"). The model reserves a per-tier <b>quota</b> field, displayed as "used of limit" once quotas exist; v1 tier is unlimited, so it shows usage only.</td><td><span class="pill">P1</span></td></tr>
+      </table>
+
+      <h2 id="ux">8. UX &amp; Flow</h2>
+
+      <h3>Entry point: Settings → Subscription</h3>
+      <p>A new Settings row (in the main grouped nav card, near Backup &amp; Sync / Export) leads to the subscription page, shown to all users. For non-subscribers it is the marketing/comparison surface and upsell entry; for subscribers it is the status page.</p>
+
+      <h3>Non-subscriber: comparison / marketing view</h3>
+      <p>The default view for a free user is the plain-language comparison from §3 — what you get now vs. with SquawkIt Pro — with a clear CTA:</p>
+      <div class="mock">
+        <div class="row"><span class="k">Header</span><span class="v">Do more with SquawkIt Pro</span></div>
+        <div class="row"><span class="k">Free</span><span class="v">1 aircraft · backed up &amp; synced across devices</span></div>
+        <div class="row"><span class="k">SquawkIt Pro</span><span class="v">Unlimited aircraft · attachments · email export · sharing</span></div>
+        <div class="row"><span class="k">Price</span><span class="v">$9.99 / month · 7-day free trial</span></div>
+        <div class="row"><span class="k">Storage used</span><span class="v">0 MB <span class="muted">(attachments are a Pro feature)</span></span></div>
+        <div class="row"><span class="k">CTA</span><span class="v"><span class="pill">Start free trial</span> <span class="muted">(purchase placeholder)</span></span></div>
+      </div>
+      <p>The comparison must be scannable — a two-column checklist, not prose — and honest about what free already does well (single-aircraft logbook, on-device, full logs/tasks/squawks/export). The CTA is the <b>purchase placeholder</b> (R14) until billing lands.</p>
+
+      <h3>Subscriber: status view</h3>
+      <div class="mock">
+        <div class="row"><span class="k">Plan</span><span class="v">SquawkIt Pro</span></div>
+        <div class="row"><span class="k">Status</span><span class="v">Active · renews Aug&nbsp;19, 2026</span></div>
+        <div class="row"><span class="k">Member since</span><span class="v">Mar&nbsp;2, 2026</span></div>
+        <div class="row"><span class="k">Storage used</span><span class="v">240 MB</span></div>
+        <div class="row"><span class="k">Includes</span><span class="v">Unlimited aircraft · attachments · email export · sharing</span></div>
+        <div class="row"><span class="k">&nbsp;</span><span class="v"><span class="pill">Manage subscription…</span> <span class="muted">(placeholder)</span></span></div>
+      </div>
+      <p>Variations: <b>Trialing</b> → "Free trial · 5 days left" + trial-end/first-charge date. <b>Canceled</b> → "Active until &lt;date&gt;" + "Your subscription won't renew." <b>Grace</b> → a calm "There's a problem with your payment" pointing at Manage.</p>
+
+      <h3>Gated features for free users</h3>
+      <div class="callout note">
+        <strong>Product principle: gate as promo, don't hide</strong>
+        We <b>do not hide</b> gated features. Each locked entry point is turned into a <b>promo opportunity</b> — it stays visible, reads as premium (a lock / "SquawkIt Pro" marker), and routes to the subscription page with copy that speaks to the intent. The only exception is when surfacing the gate would <i>significantly hurt the experience</i> at that spot; there we may soften or relocate it. This changes today's Feature-Lab-off behavior, which simply hides the picker options.
+      </div>
+      <p>Where a free user meets a premium capability — the file/photo picker in an attachment section, "Email me a copy" in export, or the Share action — the affordance stays visible and routes to the subscription page. The same holds on <b>downgrade over a limit</b>: a lapsed subscriber with several aircraft can still open and <b>edit</b> every existing aircraft, but the <b>Add aircraft</b> button leads to a promo page — e.g. <i>"Your plan doesn't include adding more aircraft. Subscribe to SquawkIt Pro to manage an unlimited fleet."</i></p>
+
+      <div class="callout win">
+        <strong>Honest, calm gating</strong>
+        Free is a real product, not a nag screen: one aircraft, fully logged, backed up and synced. Premium entry points are shown-and-locked (as promos), not hidden, so the value is legible. Cancellation never yanks access mid-period, and downgrade never deletes or freezes what someone logged — they keep editing everything they have; they just can't add <i>more</i>.
+      </div>
+
+      <h3>Developer Options (dev builds only)</h3>
+      <p>The former Feature Lab screen becomes <b>Developer Options</b>, reached from the same Settings entry gated by <code>isFeatureLabSupported</code>. Contents:</p>
+      <ul>
+        <li><b>Force subscription status</b> — select an effective tier (Off / <code>FREE</code> / <code>PRO</code>); when set, it overrides real entitlement locally.</li>
+        <li><b>Generate fake data</b> — unchanged (the existing stress-test extra).</li>
+      </ul>
+      <p>The attachment-upload and email-export toggles are gone (their features now follow subscription status).</p>
+
+      <h2 id="gating">9. Gating Entry Points &amp; Promo Design</h2>
+      <p>Every place a free user meets a Pro capability is an entry point. Per the "gate as promo, don't hide" principle (§8), each is turned into an upsell rather than removed. To keep them consistent, one small system serves them all.</p>
+
+      <h3>The promo system (three reusable pieces)</h3>
+      <ul>
+        <li><b>Inline Pro marker</b> — a small lock / "PRO" badge on the affordance itself. Always visible; this is the "don't hide" principle made concrete.</li>
+        <li><b><code>ProUpsellSheet</code></b> — a reusable bottom sheet opened on tap: contextual headline + the one benefit + <b>Start free trial</b> (→ purchase placeholder) + <b>See everything in Pro</b> (→ comparison page). Carries a <code>trigger</code> tag for the §5 "which gate drives upgrades" metric.</li>
+        <li><b>Subscription / comparison page</b> — the Settings entry and the deep-link target for "see all."</li>
+      </ul>
+      <p>Routing rule: a light tap gets the <b>sheet</b> (fast, contextual, dismissible); "see all" and the Settings row get the <b>page</b>. Never a dead toast or a disabled control with no explanation.</p>
+      <div class="card">
+        <pre><code>┌─────────────────────────────┐
+│  ✦ SquawkIt Pro             │
+│  Attach photos &amp; files to    │
+│  your maintenance records.   │
+│                              │
+│  [ Start 7-day free trial ]  │  → purchase placeholder
+│  See everything in Pro  ›    │  → comparison page
+└─────────────────────────────┘</code></pre>
+      </div>
+
+      <h3>Entry-point inventory</h3>
+      <table>
+        <tr><th>#</th><th>Capability</th><th>Entry point (real surface)</th><th>Free-tier treatment</th><th>Promo interaction</th><th>Trigger</th></tr>
+        <tr><td>1</td><td>Add 2nd+ aircraft</td><td>App-shell aircraft switcher <b>"+ Add aircraft"</b> (<code>onAddAircraft</code>, <code>AdaptiveShellRoute</code>)</td><td><b>Shown, locked</b> — only when already at the 1-aircraft limit</td><td>Intercept the tap → <code>ProUpsellSheet(add_aircraft)</code>. Do <b>not</b> open the AddAircraft form they can't submit.</td><td><code>add_aircraft</code></td></tr>
+        <tr><td>1b</td><td>(same)</td><td><b>Fleet empty state</b> "Add first aircraft" (<code>FleetEmptyState</code>)</td><td><b>Free — no lock</b> (0→1 is allowed)</td><td>— normal add flow —</td><td>—</td></tr>
+        <tr><td>2</td><td>Attachment photo/file upload</td><td><code>AttachmentFormSection</code> picker sheet, in <b>Log / Squawk / Task</b> add <b>and</b> edit forms</td><td><b>Shown, locked</b> — Take Photo &amp; Choose File carry the lock; <b>Add Link stays free</b> (no storage cost, already ungated)</td><td>Tapping a locked option → <code>ProUpsellSheet(attachment_upload)</code>. Reword the <code>file_upload_coming_soon</code> caption to a subscribe CTA (R16).</td><td><code>attachment_upload</code></td></tr>
+        <tr><td>3</td><td>Email a copy of export</td><td>Export selection delivery option (<code>ExportViewModel</code> / <code>ExportSelectionScreen</code>)</td><td><b>Change from hidden → shown, locked.</b> Today it's suppressed when off; make it a visible "Email me a copy — Pro" row. Export-to-device stays free.</td><td>Toggling the locked row → <code>ProUpsellSheet(email_export)</code>.</td><td><code>email_export</code></td></tr>
+        <tr><td>4</td><td>Host / invite to a shared aircraft</td><td>Aircraft <b>Share / Manage access</b> → <code>InviteSheetRoute</code> / <code>ManageAccessRoute</code>; the <b>Invite</b> button in <code>ManageAccessScreen</code></td><td><b>Shown, locked</b></td><td>Tapping Share → <code>ProUpsellSheet(share_host)</code>.</td><td><code>share_host</code></td></tr>
+        <tr><td>4b</td><td>Accept invite / view shared-in aircraft</td><td><code>onEnterInviteCode</code> / <code>EnterInviteCodeScreen</code>; shared-in aircraft in the switcher</td><td><b>Free — never locked</b> (R4)</td><td>— normal accept flow —</td><td>—</td></tr>
+        <tr><td>5</td><td>The subscription page itself</td><td>New <b>Settings → Subscription</b> row</td><td>Not gated — shown to everyone; it's the destination</td><td>Opens the comparison (non-subscriber) or status (subscriber) view</td><td><code>settings_entry</code></td></tr>
+      </table>
+
+      <h3>Notable decisions &amp; edge cases</h3>
+      <ul>
+        <li><b>Nothing is hidden for subscription reasons.</b> The only things that stay hidden are orthogonal <b>platform</b> gates: <code>AttachmentFormSection</code> already hides <b>Take Photo</b> when <code>isCameraCaptureSupported</code> is false (web/desktop) — keep that; just show the <i>file</i> option locked.</li>
+        <li><b>The first aircraft never shows a lock.</b> Gate 1 is at-limit-only: a free user with zero aircraft adds their first with no friction; the lock appears on "+ Add aircraft" once they're at 1. Getting this wrong makes the app feel paywalled on day one.</li>
+        <li><b>Links stay free.</b> The code already lets <code>Add Link</code> through with <code>uploadEnabled = false</code>; only photo/file upload (which costs storage) is Pro.</li>
+        <li><b>Downgrade viewing is free.</b> A lapsed subscriber opening a log with existing attachments still views/removes them; only the upload options lock — consistent with R9.</li>
+        <li><b>Email export is the one behavior change:</b> it moves from <i>hidden-when-off</i> to <i>shown-locked</i>, which is the whole point of the principle.</li>
+        <li><b>Sharing is still behind <code>isAircraftSharingSupported</code>.</b> While that build gate is off in release, gate 4 has no visible entry at all; the promo appears only once sharing GAs — so the two rollouts don't collide.</li>
+      </ul>
+
+      <h2 id="trials">10. Trials &amp; Promotions</h2>
+      <p>Two mechanisms, one model:</p>
+      <table>
+        <tr><th>Mechanism</th><th>How it works</th><th>Entitlement source</th></tr>
+        <tr><td><b>Platform-native free trial / intro offer</b></td><td>Configured in App Store Connect / Play Console / Stripe as an introductory offer on the monthly product. The store manages the trial clock and auto-converts to paid; the app just sees <code>trialing</code> → <code>active</code>.</td><td><code>store_purchase</code></td></tr>
+        <tr><td><b>Server-granted promo</b></td><td>A trusted server grant (support comp, campaign, promo-code redemption) writes an entitlement with a tier and end date and no store purchase behind it. Reverts to <code>FREE</code> at expiry unless a real purchase exists.</td><td><code>server_grant</code></td></tr>
+      </table>
+      <div class="callout note">
+        <strong>Prefer platform-native, but don't depend on it</strong>
+        The user asked to "design promos into the system unless the platform natively supports it." Stores <i>do</i> natively support free trials and intro offers, so we lean on them for the 7-day trial — keeping billing mechanics inside the store. The model still carries an explicit <code>trialing</code> lifecycle and a <code>server_grant</code> source, so promos that <i>aren't</i> expressible as a store offer (comps, cross-platform codes, non-store web grants) remain possible without a redesign.
+      </div>
+
+      <h2 id="refactor">11. Developer Options Refactor (flag retirement)</h2>
+      <p>This ships together with the entitlement work, because the features cannot be un-gated from Feature Lab until they are re-gated on subscription status.</p>
+      <ul>
+        <li>Remove <code>attachmentUploadEnabled</code> and <code>exportEmailDeliveryEnabled</code> from <code>FeatureFlags</code>, the <code>FeatureLabSettings</code> proto mapping, and <code>FeatureLabViewModel</code>.</li>
+        <li>Repoint every consumer (log / squawk / task attachment sections, export email delivery) from the flag to the <code>SubscriptionStatus</code> gate.</li>
+        <li>Rename the Feature Lab screen and Settings row to <b>Developer Options</b>; keep the <code>isFeatureLabSupported</code> (dev-build) gate and the <i>Generate fake data</i> extra.</li>
+        <li>Add the <b>Force subscription status</b> control, persisted like the other developer setting(s).</li>
+        <li><b>Revise gate copy to a subscribe CTA.</b> Replace placeholder "coming soon"/"not available" strings on gated features with subscribe messaging. The one known today is <code>file_upload_coming_soon</code> in <code>feature/attachment/sharedassets</code> ("File upload options coming soon") → e.g. "Subscribe to SquawkIt Pro to attach photos &amp; files." Sweep the attachment and export string tables for any sibling copy and reword consistently.</li>
+      </ul>
+      <p class="muted">Note: <code>FeatureFlags</code> becomes empty of user-facing flags after this. Whether the Feature Lab data plumbing is repurposed to store the <i>Force subscription status</i> dev setting or replaced by a dedicated developer-settings store is a Design-Doc call.</p>
+
+      <h2 id="edge">12. Edge Cases &amp; Risks</h2>
+      <table>
+        <tr><th>Case</th><th>Expected behavior</th></tr>
+        <tr><td>Offline subscriber opens the app</td><td>Last synced status is authoritative; premium features stay unlocked. No network gate on feature use.</td></tr>
+        <tr><td>Purchase on iOS, open web minutes later</td><td>Web reflects the tier once the server has processed the store notification and sync has run; brief propagation lag is expected, not a second purchase.</td></tr>
+        <tr><td>Canceled mid-period</td><td>Tier holds until <code>currentPeriodEnd</code>, then <code>FREE</code>. UI shows "Active until &lt;date&gt;".</td></tr>
+        <tr><td>Renewal payment fails</td><td>Enters grace/on-hold per store policy; tier continues during the retry window; status page prompts to fix payment.</td></tr>
+        <tr><td>Downgrade with multiple aircraft</td><td>All aircraft retained and fully <b>editable</b>; the <b>Add aircraft</b> button routes to a promo ("Subscribe to add more aircraft"). No deletion, no read-only freeze of existing data.</td></tr>
+        <tr><td>Downgrade with attachments already uploaded</td><td>Existing attachments retained and still viewable per the storage lifecycle; new uploads route to a promo. Not deleted on downgrade.</td></tr>
+        <tr><td>Downgrade while hosting a share</td><td>Backup &amp; sync continue (free). Existing members keep <b>read-only</b> access; no new invites until re-subscribing.</td></tr>
+        <tr><td>Free registered account &amp; backup</td><td>Fully backed up and synced across devices, same as a subscriber — backup is free.</td></tr>
+        <tr><td>Shared-in aircraft &amp; the free limit</td><td>Aircraft shared <i>to</i> a free user don't count toward their 1-aircraft limit and remain accessible.</td></tr>
+        <tr><td>Force subscription status on in a dev build</td><td>Local-only override; never affects the real server entitlement or another device.</td></tr>
+        <tr><td>Refund / chargeback</td><td>Store notification revokes entitlement server-side; client resolves to <code>FREE</code> on next sync; data retained (read-only over limits).</td></tr>
+      </table>
+      <div class="callout risk">
+        <strong>Primary risk: cross-platform entitlement lag &amp; trust</strong>
+        "Pay once, premium everywhere" depends on store→server→sync propagation that isn't instant, and clients must not self-grant from a raw (spoofable) receipt. Mitigation: server-validated entitlement as the only writer, a visibly cached local copy, a manual "restore/refresh" affordance, and clear messaging during propagation.
+      </div>
+
+      <h2 id="scope">13. Scope &amp; Phasing</h2>
+      <table>
+        <tr><th>Phase</th><th>Includes</th></tr>
+        <tr><td><b>v1 (this PRD)</b></td><td>Entitlement model with <code>SubscriptionStatus</code> enum + server source of truth + sync/local cache; free-tier limits (1 aircraft) and PRO gates (attachments, email export, sharing/hosting) with backup &amp; sync free for all; re-gate off Feature Lab flags; downgrade-safe read-only behavior; tier comparison/marketing view + subscriber status view (Manage &amp; purchase <b>placeholders</b>); trial/promo lifecycle modeled; per-account storage-usage tracking (server-side) + display on the subscription page; Developer Options refactor with Force subscription status.</td></tr>
+        <tr><td>Fast-follow (post billing decision)</td><td>Real purchase / paywall flow; platform-native Manage deep links; restore/refresh; the actual 7-day trial configured in stores; server webhook/receipt-validation pipeline hardened.</td></tr>
+        <tr><td>Later</td><td>Additional tiers (<code>ENTERPRISE</code>, …) using the same enum + minimum-tier gating; annual plan; promo-code redemption UI; win-back / churn messaging; <b>per-tier storage quotas</b> enforced against the tracked usage (gate new uploads over the cap), shown as "used of limit".</td></tr>
+      </table>
+
+      <h2 id="open">14. Decisions &amp; Open Questions</h2>
+      <ul>
+      <h4>Decided</h4>
+      <ul class="checks">
+        <li><b>Sharing on downgrade</b> — when a host lapses, existing members keep <b>read-only</b> access; the host can host no new shares until re-subscribing. (R9)</li>
+        <li><b>No grandfathering</b> — the app hasn't launched, so there is no pre-existing over-limit data. Limits apply uniformly from day one. (R15)</li>
+        <li><b>Downgrade over a limit is edit-not-freeze</b> — a lapsed subscriber keeps editing all existing content; only <b>new</b> over-limit actions (add aircraft, new upload, new share) route to a promo. This follows the "gate as promo, don't hide" principle (§8).</li>
+        <li><b>Guests can't subscribe</b> — a subscription requires a real (signed-in) account. A guest hitting the paywall is routed through the <a href="../account/account_upgrade_PRD.html">account upgrade</a> first, then to purchase.</li>
+        <li><b>Price &amp; trial</b> — working assumption <b>$9.99 / month</b> with a <b>7-day free trial</b> (tier name: <b>SquawkIt Pro</b>). Confirm before store setup; the model supports any value.</li>
+      </ul>
+      <h4>Still open</h4>
+      <ul>
+        <li><b>Billing integration (blackbox for now):</b> native per-platform (StoreKit 2 / Play Billing / Stripe) vs. an aggregator (RevenueCat). Deferred to the <b>engineering design doc</b>, which must weigh cost, maintenance, and architecture — including <b>where the entitlement / "member since" lives</b>. Note the client-facing shape is fixed either way: one server-written entitlement record in Firestore, synced to the device (§6); the billing choice only changes what <i>feeds</i> the writer. Blocking for the purchase phase, not for v1's model.</li>
+        <li><b>Web billing (depends on billing choice):</b> if selling on web (Stripe) is disproportionately hard, it is acceptable for <b>web to honor Pro features but not sell the subscription</b> — desktop users subscribe on mobile and web reflects it.</li>
+      </ul>
+      <div class="callout note">
+        <strong>Cost sanity — infra is not the constraint at $9.99</strong>
+        A back-of-envelope Firebase estimate (3,000 daily actives each doing 10 log writes, 10×1&nbsp;MB uploads, 20×1&nbsp;MB downloads) puts variable cost at roughly <b>$0.08–0.10 per active user per month</b>, dominated by download egress (~$0.12/GB), with Firestore ops in the single-dollar-per-month range across the whole base. Break-even is well under <b>$0.50/user/month</b> even padding generously, versus $9.99 (≈ $7 net after a 30% store fee). The one cost that <i>compounds</i> is retained attachment storage (~300&nbsp;MB/subscriber/month accumulating), which is why attachments are Pro-gated and why an attachment retention / quota policy is on the roadmap (§12). Full model in the chat analysis; it belongs in the eng design doc.
+      </div>
+
+      <div class="callout note">
+        <strong>Implementation Status</strong>
+        Proposed. Not yet built. A companion Design Doc will specify the entitlement record and <code>CollectionKind</code>, the <code>SubscriptionStatus</code> enum + minimum-tier gating, the server validation/webhook pipeline, the <code>SubscriptionManager</code> gate, and the Feature-Lab→Developer-Options refactor. This note will be updated to reflect what actually ships.
+      </div>
+
+    </div>
+
+    <nav class="toc">
+      <p class="toc-title">On this page</p>
+      <ol>
+        <li><a href="#problem">Problem &amp; Background</a></li>
+        <li><a href="#goals">Goals &amp; Non-Goals</a></li>
+        <li><a href="#tiers">Tiers &amp; What's Included</a></li>
+        <li><a href="#users">Users &amp; Use Cases</a></li>
+        <li><a href="#metrics">Success Metrics</a></li>
+        <li><a href="#model">Entitlement Model</a></li>
+        <li><a href="#requirements">Functional Requirements</a></li>
+        <li><a href="#ux">UX &amp; Flow</a></li>
+        <li><a href="#gating">Gating Entry Points &amp; Promo Design</a></li>
+        <li><a href="#trials">Trials &amp; Promotions</a></li>
+        <li><a href="#refactor">Developer Options Refactor</a></li>
+        <li><a href="#edge">Edge Cases &amp; Risks</a></li>
+        <li><a href="#scope">Scope &amp; Phasing</a></li>
+        <li><a href="#open">Decisions &amp; Open Questions</a></li>
+      </ol>
+    </nav>
+  </div>
+</main>
+</body>
+</html>
