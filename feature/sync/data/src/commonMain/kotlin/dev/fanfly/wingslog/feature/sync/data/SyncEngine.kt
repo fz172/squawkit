@@ -69,6 +69,8 @@ class SyncEngine(
   private val sharedScopeJanitor: SharedScopeJanitor? = null,
   private val writeLock: DatabaseWriteLock? = null,
   private val telemetry: SyncTelemetry = SyncTelemetry.NoOp,
+  /** Mirrors the top-level `subscriptions/{uid}` entitlement into the local store (read-only). */
+  private val subscriptionSyncListener: SubscriptionSyncListener? = null,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -266,6 +268,10 @@ class SyncEngine(
     if (uploadScheduler != null && db != null) {
       scope.launch { schedulePendingBlobs(uid, uploadScheduler, db) }
     }
+
+    // Read-only mirror of the server-authoritative entitlement doc, on the same per-user scope so it
+    // detaches on sign-out. Lives outside the user tree, so it isn't a TOP_LEVEL_KINDS hydration.
+    subscriptionSyncListener?.let { listener -> scope.launch { listener.run(uid) } }
 
     for (kind in TOP_LEVEL_KINDS) {
       scope.launch {
