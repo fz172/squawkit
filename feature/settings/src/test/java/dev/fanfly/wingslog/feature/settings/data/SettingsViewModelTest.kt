@@ -108,6 +108,7 @@ class SettingsViewModelTest {
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
         isAppleSignInSupported = false,
+        isSubscriptionSupported = false,
       ),
     )
 
@@ -133,6 +134,7 @@ class SettingsViewModelTest {
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
         isAppleSignInSupported = false,
+        isSubscriptionSupported = false,
       ),
     )
 
@@ -158,6 +160,7 @@ class SettingsViewModelTest {
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
         isAppleSignInSupported = false,
+        isSubscriptionSupported = false,
       ),
     )
 
@@ -184,6 +187,7 @@ class SettingsViewModelTest {
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
         isAppleSignInSupported = false,
+        isSubscriptionSupported = false,
       ),
     )
 
@@ -210,6 +214,7 @@ class SettingsViewModelTest {
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
         isAppleSignInSupported = false,
+        isSubscriptionSupported = false,
       ),
     )
 

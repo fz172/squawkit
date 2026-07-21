@@ -22,6 +22,16 @@ data class AppCapability(
   val isCameraCaptureSupported: Boolean,
   val isAnonymousLoginSupported: Boolean,
   val isAppleSignInSupported: Boolean,
+  /**
+   * Subscriptions / SquawkIt Pro (subscription design §1). The staged-rollout gate, like
+   * [isAircraftSharingSupported]: on in dev + dogfood, off in the shipping release until GA.
+   *
+   * A build-time gate rather than a Feature Lab flag, because the whole paywall must be able to
+   * ship dark and be turned on later. Crucially, **"off" means unlocked for everyone, not
+   * restricted**: while this is false there is no gating at all — every premium feature is treated
+   * as available and the Subscription entry/page is hidden. GA is flipping this to `true`.
+   */
+  val isSubscriptionSupported: Boolean,
 )
 
 /**
