@@ -13,6 +13,7 @@ class CollectionKindCoverageTest {
     CollectionKind.Technician,
     CollectionKind.UserInfo,
     CollectionKind.FeatureLab,
+    CollectionKind.Subscription,
     CollectionKind.Squawk,
     CollectionKind.SharedAircraftRef,
   )

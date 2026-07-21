@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+option java_package = "dev.fanfly.wingslog.core.model.settings";
+option java_multiple_files = true;
+
+// Account-level subscription entitlement (SquawkIt Pro). Server-authoritative: written only by the
+// Cloud Functions billing pipeline + storage sweep, at the top-level function-only path
+// `subscriptions/{uid}`, and mirrored read-only into the local store on the client. See
+// docs/subscription/subscription_design.html §3.
+message Subscription {
+  // Resolved tier the server grants. Ordered low → high; extensible with future tiers.
+  Status status = 1;
+  // Billing lifecycle. The client resolves this (+ current_period_end) to an effective Status.
+  Lifecycle lifecycle = 2;
+  // Earliest purchase/trial start — the "member since" shown on the status page.
+  int64 member_since_millis = 3;
+  int64 current_period_end_millis = 4;
+  bool will_renew = 5;
+  // How the entitlement was granted: a store purchase or a server-side promo grant.
+  Source source = 6;
+  // Originating platform of the purchase ("ios" | "android" | "web") — informational, for Manage.
+  string origin_platform = 7;
+  // Total attachment bytes owned by the account, summed by the storage sweep (§7).
+  int64 storage_bytes_used = 8;
+  // Per-tier cap; 0 = unlimited (v1). Reserved for future per-tier quotas.
+  int64 storage_quota_bytes = 9;
+
+  enum Status {
+    STATUS_FREE = 0;
+    STATUS_PRO = 1;
+  }
+
+  enum Lifecycle {
+    LIFECYCLE_NONE = 0;
+    LIFECYCLE_TRIALING = 1;
+    LIFECYCLE_ACTIVE = 2;
+    LIFECYCLE_CANCELED = 3;
+    LIFECYCLE_GRACE = 4;
+    LIFECYCLE_EXPIRED = 5;
+  }
+
+  enum Source {
+    SOURCE_UNSPECIFIED = 0;
+    SOURCE_STORE_PURCHASE = 1;
+    SOURCE_SERVER_GRANT = 2;
+  }
+}
