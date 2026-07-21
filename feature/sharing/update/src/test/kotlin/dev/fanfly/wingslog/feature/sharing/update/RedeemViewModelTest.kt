@@ -283,4 +283,5 @@ private fun appCapability(sharing: Boolean) = AppCapability(
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = true,
   isAppleSignInSupported = false,
+  isSubscriptionSupported = false,
 )

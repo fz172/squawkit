@@ -8,4 +8,6 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = false,
   isAppleSignInSupported = true,
+  // Staged rollout: dev + dogfood only until GA. Off = no paywall (everything unlocked).
+  isSubscriptionSupported = isDeveloperBuild,
 )
