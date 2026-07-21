@@ -51,6 +51,16 @@ sealed interface CollectionKind {
     override val schemaName = "settings.FeatureLabSettings"
   }
 
+  /**
+   * Account-level subscription entitlement (SquawkIt Pro). Server-authoritative: written only by
+   * Cloud Functions at the top-level `subscriptions/{uid}` doc and mirrored read-only into the
+   * local store. See docs/subscription/subscription_design.html §3.
+   */
+  data object Subscription : CollectionKind {
+    override val wireName = "subscription"
+    override val schemaName = "settings.Subscription"
+  }
+
   data object Squawk : CollectionKind {
     override val wireName = "squawk"
     override val schemaName = "aircraft.Squawk"
@@ -80,6 +90,7 @@ sealed interface CollectionKind {
       Technician,
       UserInfo,
       FeatureLab,
+      Subscription,
       Squawk,
       SharedAircraftRef,
     )
