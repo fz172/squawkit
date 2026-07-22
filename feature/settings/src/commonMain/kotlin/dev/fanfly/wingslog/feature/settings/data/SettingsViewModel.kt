@@ -27,7 +27,12 @@ class SettingsViewModel(
 ) : ViewModel() {
 
   private val _user =
-    MutableStateFlow(SettingsUiState(isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported))
+    MutableStateFlow(
+      SettingsUiState(
+        isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
+        isSubscriptionSupported = appCapability.isSubscriptionSupported,
+      )
+    )
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
 
   /** Device-local light/dark/system preference, shared with the root theme. */
@@ -62,6 +67,7 @@ class SettingsViewModel(
     _user.value = SettingsUiState(
       userStatus = UserStatus.LOADING,
       isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
+      isSubscriptionSupported = appCapability.isSubscriptionSupported,
     )
   }
 

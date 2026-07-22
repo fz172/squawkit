@@ -36,6 +36,11 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.settings.generated.resources.Res
 import wingslog.feature.settings.generated.resources.developer_options
+import wingslog.feature.settings.generated.resources.developer_options_force_free
+import wingslog.feature.settings.generated.resources.developer_options_force_off
+import wingslog.feature.settings.generated.resources.developer_options_force_pro
+import wingslog.feature.settings.generated.resources.developer_options_force_subscription_subtitle
+import wingslog.feature.settings.generated.resources.developer_options_force_subscription_title
 import wingslog.feature.settings.generated.resources.developer_options_subtitle
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,8 +98,7 @@ fun DeveloperOptionsScreen(
 
 /**
  * Developer-only override of the effective subscription tier. Off = use the real entitlement; Free
- * or Pro force that tier locally (honored only in developer builds). Labels are hardcoded — this
- * screen never ships to real users.
+ * or Pro force that tier locally (honored only in developer builds).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,9 +107,9 @@ private fun ForceSubscriptionRow(
   onSelect: (Subscription.Status?) -> Unit,
 ) {
   val options: List<Pair<String, Subscription.Status?>> = listOf(
-    "Off" to null,
-    "Free" to Subscription.Status.STATUS_FREE,
-    "Pro" to Subscription.Status.STATUS_PRO,
+    stringResource(Res.string.developer_options_force_off) to null,
+    stringResource(Res.string.developer_options_force_free) to Subscription.Status.STATUS_FREE,
+    stringResource(Res.string.developer_options_force_pro) to Subscription.Status.STATUS_PRO,
   )
   Column(
     modifier = Modifier
@@ -121,12 +125,12 @@ private fun ForceSubscriptionRow(
       )
       Column(modifier = Modifier.weight(1f)) {
         Text(
-          text = "Force subscription status",
+          text = stringResource(Res.string.developer_options_force_subscription_title),
           style = MaterialTheme.typography.bodyLarge,
           fontWeight = FontWeight.Medium,
         )
         Text(
-          text = "Make this account behave as the chosen tier, ignoring the real entitlement.",
+          text = stringResource(Res.string.developer_options_force_subscription_subtitle),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

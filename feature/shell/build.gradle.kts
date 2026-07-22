@@ -54,6 +54,7 @@ kotlin {
       implementation(project(":feature:fleet:viewing"))
       implementation(project(":feature:logs:update"))
       implementation(project(":feature:settings"))
+      implementation(project(":feature:subscription:viewing"))
       implementation(project(":feature:sharing:update"))
       // App-start retry of an owed technician-mirror publish (design §7.2).
       implementation(project(":feature:sharing:datamanager"))
