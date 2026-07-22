@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -62,6 +63,8 @@ import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.developer_options
 import wingslog.feature.settings.generated.resources.settings_export_subtitle
 import wingslog.feature.settings.generated.resources.settings_developer_options_subtitle
+import wingslog.feature.settings.generated.resources.settings_subscription
+import wingslog.feature.settings.generated.resources.settings_subscription_subtitle
 import wingslog.feature.settings.generated.resources.settings_logout_subtitle
 import wingslog.feature.settings.generated.resources.settings_subtitle
 import wingslog.feature.settings.generated.resources.settings_sync_subtitle
@@ -203,6 +206,18 @@ fun SettingsContent(
               subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
               onClick = { detailNav.navigate(Screen.ExportLogs.route) },
             )
+          }
+          // Shown only where the subscription capability is on (dev + dogfood today); hidden in the
+          // shipping release until GA, so no user sees a paywall entry before it exists.
+          if (user.isSubscriptionSupported) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.Star,
+                title = stringResource(SettingsRes.string.settings_subscription),
+                subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
+                onClick = { detailNav.navigate(Screen.Subscription.route) },
+              )
+            }
           }
           // Developer Options is a developer surface: only on debug and dogfood-style builds, never in release.
           if (user.isDeveloperOptionsSupported) {

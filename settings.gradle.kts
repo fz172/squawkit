@@ -59,6 +59,7 @@ include(":feature:sharing:viewing")
 include(":feature:sharing:update")
 include(":feature:subscription:model")
 include(":feature:subscription:datamanager")
+include(":feature:subscription:viewing")
 
 include(":feature:fleet:datamanager")
 include(":feature:fleet:picker:data")

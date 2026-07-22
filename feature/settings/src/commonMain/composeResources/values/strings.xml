@@ -7,6 +7,8 @@
   <string name="settings_sync_subtitle">Keep your records synced across devices</string>
   <string name="settings_export_subtitle">Export and share your logbook</string>
   <string name="settings_developer_options_subtitle">Advanced controls, synced across your devices</string>
+  <string name="settings_subscription">SquawkIt Pro</string>
+  <string name="settings_subscription_subtitle">Your plan, benefits, and storage</string>
   <string name="account_upgrade_login_cta">Log in</string>
   <string name="account_upgrade_login_subtitle">Connect your records to an account to sync and back them up</string>
   <string name="account_upgrade_working">Syncing your records…</string>

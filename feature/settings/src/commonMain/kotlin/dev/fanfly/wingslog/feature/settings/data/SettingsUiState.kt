@@ -8,6 +8,7 @@ data class SettingsUiState(
   // Guest (anonymous) accounts keep all data on-device only; logging out erases it permanently.
   val isAnonymous: Boolean = false,
   val isDeveloperOptionsSupported: Boolean = false,
+  val isSubscriptionSupported: Boolean = false,
 )
 
 enum class UserStatus {
