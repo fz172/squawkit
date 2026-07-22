@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.developeroptions.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.model.settings.DeveloperSettings
+import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
@@ -52,12 +53,28 @@ class DeveloperOptionsManagerImpl(
   }
 }
 
-private fun DeveloperSettings.toDeveloperFlags() = DeveloperFlags(
+internal fun DeveloperSettings.toDeveloperFlags() = DeveloperFlags(
   attachmentUploadEnabled = attachment_upload_enabled,
   exportEmailDeliveryEnabled = export_email_delivery_enabled,
+  forceSubscriptionStatus = force_subscription_status.toSubscriptionStatusOrNull(),
 )
 
-private fun DeveloperFlags.toProto() = DeveloperSettings(
+internal fun DeveloperFlags.toProto() = DeveloperSettings(
   attachment_upload_enabled = attachmentUploadEnabled,
   export_email_delivery_enabled = exportEmailDeliveryEnabled,
+  force_subscription_status = forceSubscriptionStatus.toForceProto(),
 )
+
+private fun DeveloperSettings.ForceSubscriptionStatus.toSubscriptionStatusOrNull(): Subscription.Status? =
+  when (this) {
+    DeveloperSettings.ForceSubscriptionStatus.FORCE_SUBSCRIPTION_STATUS_FREE -> Subscription.Status.STATUS_FREE
+    DeveloperSettings.ForceSubscriptionStatus.FORCE_SUBSCRIPTION_STATUS_PRO -> Subscription.Status.STATUS_PRO
+    DeveloperSettings.ForceSubscriptionStatus.FORCE_SUBSCRIPTION_STATUS_UNSET -> null
+  }
+
+private fun Subscription.Status?.toForceProto(): DeveloperSettings.ForceSubscriptionStatus =
+  when (this) {
+    Subscription.Status.STATUS_FREE -> DeveloperSettings.ForceSubscriptionStatus.FORCE_SUBSCRIPTION_STATUS_FREE
+    Subscription.Status.STATUS_PRO -> DeveloperSettings.ForceSubscriptionStatus.FORCE_SUBSCRIPTION_STATUS_PRO
+    null -> DeveloperSettings.ForceSubscriptionStatus.FORCE_SUBSCRIPTION_STATUS_UNSET
+  }

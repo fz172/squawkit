@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.settings.developeroptions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class DeveloperOptionsViewModel(
-  private val featureLabManager: DeveloperOptionsManager,
+  private val developerOptionsManager: DeveloperOptionsManager,
 ) : ViewModel() {
 
   private val _flags = MutableStateFlow(DeveloperFlags())
@@ -18,20 +19,27 @@ class DeveloperOptionsViewModel(
 
   init {
     viewModelScope.launch {
-      featureLabManager.observe()
+      developerOptionsManager.observe()
         .collect { _flags.value = it }
     }
   }
 
   fun setAttachmentUploadEnabled(enabled: Boolean) {
     viewModelScope.launch {
-      featureLabManager.update(_flags.value.copy(attachmentUploadEnabled = enabled))
+      developerOptionsManager.update(_flags.value.copy(attachmentUploadEnabled = enabled))
     }
   }
 
   fun setExportEmailDeliveryEnabled(enabled: Boolean) {
     viewModelScope.launch {
-      featureLabManager.update(_flags.value.copy(exportEmailDeliveryEnabled = enabled))
+      developerOptionsManager.update(_flags.value.copy(exportEmailDeliveryEnabled = enabled))
+    }
+  }
+
+  /** `null` clears the override (use the real entitlement); FREE/PRO force that tier locally. */
+  fun setForceSubscriptionStatus(status: Subscription.Status?) {
+    viewModelScope.launch {
+      developerOptionsManager.update(_flags.value.copy(forceSubscriptionStatus = status))
     }
   }
 }
