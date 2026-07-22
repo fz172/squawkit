@@ -206,17 +206,17 @@ class LocalAccountMigratorTest {
   }
 
   @Test
-  fun reassign_dropsGuestFeatureLab_notInheritedIntoTheAccount() = runTest {
-    // FeatureLab is a per-user singleton at the fixed id "main", like UserInfo. A guest's
+  fun reassign_dropsGuestDeveloperOptions_notInheritedIntoTheAccount() = runTest {
+    // DeveloperOptions is a per-user singleton at the fixed id "main", like UserInfo. A guest's
     // experimental toggles must not ride the merge into a real account: the guest's row is dropped,
     // not moved (moving it would override the account's own device flags — and collide when the
     // account already has a local copy).
     db.schemaQueries.upsert(
-      collection = CollectionKind.FeatureLab,
+      collection = CollectionKind.DeveloperOptions,
       scope_path = "/users/$FROM_UID/",
       id = "main",
       payload = byteArrayOf(1),
-      payload_schema = CollectionKind.FeatureLab.schemaName,
+      payload_schema = CollectionKind.DeveloperOptions.schemaName,
       updated_at = 1_000L,
       remote_updated_at = null,
       dirty = false,
@@ -227,11 +227,11 @@ class LocalAccountMigratorTest {
     migrator.reassign(FROM_UID, TO_UID)
 
     assertThat(
-      db.schemaQueries.selectAll(CollectionKind.FeatureLab, "/users/$FROM_UID/")
+      db.schemaQueries.selectAll(CollectionKind.DeveloperOptions, "/users/$FROM_UID/")
         .awaitAsList()
     ).isEmpty()
     assertThat(
-      db.schemaQueries.selectAll(CollectionKind.FeatureLab, "/users/$TO_UID/")
+      db.schemaQueries.selectAll(CollectionKind.DeveloperOptions, "/users/$TO_UID/")
         .awaitAsList()
     ).isEmpty()
   }

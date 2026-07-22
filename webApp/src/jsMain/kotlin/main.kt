@@ -128,7 +128,7 @@ private fun startPrimaryTab() {
           single<Worker> { createSqliteWorker() }
           // __WINGSLOG_DEBUG__ is injected at bundle time by webpack DefinePlugin
           // (webpack.config.d/debug-flag.js); true only for the debug web build, which surfaces
-          // developer-only entries like Feature Lab. Guarded with typeof so it's safe if undefined.
+          // developer-only entries like Developer Options. Guarded with typeof so it's safe if undefined.
           single { createAppCapability(isDeveloperBuild = isWebDebugBuild) }
         },
       ),

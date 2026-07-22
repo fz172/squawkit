@@ -1,13 +1,13 @@
-package dev.fanfly.wingslog.feature.featurelab.datamanager.impl
+package dev.fanfly.wingslog.feature.developeroptions.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.core.model.settings.FeatureLabSettings
+import dev.fanfly.wingslog.core.model.settings.DeveloperSettings
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -16,30 +16,30 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-class FeatureLabManagerImpl(
+class DeveloperOptionsManagerImpl(
   private val firebaseAuth: FirebaseAuth,
   storeFactory: EntityStoreFactory,
-) : FeatureLabManager {
+) : DeveloperOptionsManager {
 
-  private val store: EntityStore<FeatureLabSettings> =
-    storeFactory.create(CollectionKind.FeatureLab)
+  private val store: EntityStore<DeveloperSettings> =
+    storeFactory.create(CollectionKind.DeveloperOptions)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observe(): Flow<FeatureFlags> =
+  override fun observe(): Flow<DeveloperFlags> =
     firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) {
-        flowOf(FeatureFlags())
+        flowOf(DeveloperFlags())
       } else {
         store.observe(DOC_ID, EntityScope.userRoot(user.uid))
-          .map { it?.value?.toFeatureFlags() ?: FeatureFlags() }
+          .map { it?.value?.toDeveloperFlags() ?: DeveloperFlags() }
           .catch { e ->
             logger.w(e) { "Error observing feature lab settings" }
-            emit(FeatureFlags())
+            emit(DeveloperFlags())
           }
       }
     }
 
-  override suspend fun update(flags: FeatureFlags): Result<Unit> = runCatching {
+  override suspend fun update(flags: DeveloperFlags): Result<Unit> = runCatching {
     val uid = firebaseAuth.currentUser?.uid
       ?: error("Cannot update feature lab settings when no user is signed in")
     store.put(DOC_ID, flags.toProto(), EntityScope.userRoot(uid))
@@ -47,17 +47,17 @@ class FeatureLabManagerImpl(
     .map { }
 
   companion object {
-    private val logger = Logger.withTag("FeatureLabManagerImpl")
+    private val logger = Logger.withTag("DeveloperOptionsManagerImpl")
     private const val DOC_ID = "main"
   }
 }
 
-private fun FeatureLabSettings.toFeatureFlags() = FeatureFlags(
+private fun DeveloperSettings.toDeveloperFlags() = DeveloperFlags(
   attachmentUploadEnabled = attachment_upload_enabled,
   exportEmailDeliveryEnabled = export_email_delivery_enabled,
 )
 
-private fun FeatureFlags.toProto() = FeatureLabSettings(
+private fun DeveloperFlags.toProto() = DeveloperSettings(
   attachment_upload_enabled = attachmentUploadEnabled,
   export_email_delivery_enabled = exportEmailDeliveryEnabled,
 )

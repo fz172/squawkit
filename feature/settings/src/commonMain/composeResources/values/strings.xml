@@ -6,7 +6,7 @@
   <string name="settings_technicians_subtitle">Manage technician info who performs maintenance work</string>
   <string name="settings_sync_subtitle">Keep your records synced across devices</string>
   <string name="settings_export_subtitle">Export and share your logbook</string>
-  <string name="settings_feature_lab_subtitle">Advanced controls, synced across your devices</string>
+  <string name="settings_developer_options_subtitle">Advanced controls, synced across your devices</string>
   <string name="account_upgrade_login_cta">Log in</string>
   <string name="account_upgrade_login_subtitle">Connect your records to an account to sync and back them up</string>
   <string name="account_upgrade_working">Syncing your records…</string>
@@ -21,10 +21,10 @@
   <string name="firebase_logging_title">Help Us Improve</string>
   <string name="firebase_logging_subtitle">Share anonymous diagnostics and usage data to help us improve SquawkIt</string>
   <string name="remove_local_data">Remove this account from this device</string>
-  <string name="feature_lab">Feature Lab</string>
-  <string name="feature_lab_subtitle">Advanced controls. Changes sync across your devices.</string>
-  <string name="feature_lab_attachments_title">Attachment Uploads</string>
-  <string name="feature_lab_attachments_subtitle">Allow uploading files and photos to maintenance records. Link attachments are always available.</string>
-  <string name="feature_lab_export_email_title">Email Export Delivery</string>
-  <string name="feature_lab_export_email_subtitle">Upload exports to the cloud and email a download link. When off, exports stay on this device only.</string>
+  <string name="developer_options">Developer Options</string>
+  <string name="developer_options_subtitle">Advanced controls. Changes sync across your devices.</string>
+  <string name="developer_options_attachments_title">Attachment Uploads</string>
+  <string name="developer_options_attachments_subtitle">Allow uploading files and photos to maintenance records. Link attachments are always available.</string>
+  <string name="developer_options_export_email_title">Email Export Delivery</string>
+  <string name="developer_options_export_email_subtitle">Upload exports to the cloud and email a download link. When off, exports stay on this device only.</string>
 </resources>

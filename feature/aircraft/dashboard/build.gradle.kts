@@ -53,7 +53,7 @@ kotlin {
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
-      implementation(project(":feature:featurelab:datamanager"))
+      implementation(project(":feature:developeroptions:datamanager"))
       implementation(libs.gitlive.firebase.auth)
       implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:attachment:model"))

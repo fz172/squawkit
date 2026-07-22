@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.core.appinfo
 
 actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
-  isFeatureLabSupported = isDeveloperBuild,
+  isDeveloperOptionsSupported = isDeveloperBuild,
   // Staged rollout (#134): dev + dogfood only. GA is flipping this to `true`.
   isAircraftSharingSupported = isDeveloperBuild,
   isStressTestSupported = isDeveloperBuild,

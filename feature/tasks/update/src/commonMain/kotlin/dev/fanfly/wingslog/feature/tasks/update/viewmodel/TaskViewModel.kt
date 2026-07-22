@@ -17,7 +17,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormControll
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
@@ -142,7 +142,7 @@ class TaskViewModel(
   private val attachmentManager: AttachmentManager,
   private val auth: FirebaseAuth,
   private val maintenanceLogManager: MaintenanceLogManager,
-  private val featureLabManager: FeatureLabManager,
+  private val featureLabManager: DeveloperOptionsManager,
   private val sharingManager: SharingManager,
   private val taskDueManager: TaskDueManager,
   savedStateHandle: SavedStateHandle,

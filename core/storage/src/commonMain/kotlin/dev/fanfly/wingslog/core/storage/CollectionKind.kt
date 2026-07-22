@@ -46,9 +46,9 @@ sealed interface CollectionKind {
     override val schemaName = "userinfo.UserInfo"
   }
 
-  data object FeatureLab : CollectionKind {
-    override val wireName = "feature_lab_settings"
-    override val schemaName = "settings.FeatureLabSettings"
+  data object DeveloperOptions : CollectionKind {
+    override val wireName = "developer_settings"
+    override val schemaName = "settings.DeveloperSettings"
   }
 
   /**
@@ -89,7 +89,7 @@ sealed interface CollectionKind {
       MaintenanceOverview,
       Technician,
       UserInfo,
-      FeatureLab,
+      DeveloperOptions,
       Subscription,
       Squawk,
       SharedAircraftRef,

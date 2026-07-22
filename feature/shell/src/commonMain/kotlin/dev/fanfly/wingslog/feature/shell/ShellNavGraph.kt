@@ -13,13 +13,13 @@ import dev.fanfly.wingslog.feature.aircraft.update.EditAircraftScreen
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
-import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabScreen
+import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsScreen
 import dev.fanfly.wingslog.feature.sharing.update.EnterInviteCodeRoute
 import dev.fanfly.wingslog.feature.sharing.update.InviteSheetRoute
 import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
-import dev.fanfly.wingslog.feature.stresstest.config.StressTestFeatureLabExtra
+import dev.fanfly.wingslog.feature.stresstest.config.StressTestDeveloperOptionsExtra
 import dev.fanfly.wingslog.feature.stresstest.config.registerStressTestRoutes
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
 import dev.fanfly.wingslog.feature.tasks.update.ui.AddTaskRoute
@@ -145,7 +145,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
  * nested settings NavHost (so detail pages render in the content pane beside the sidebar).
  * [navController] is whichever graph the caller is wiring.
  *
- * Stress-test routes and the FeatureLab debug entry are gated on [isStressTestSupported]
+ * Stress-test routes and the DeveloperOptions debug entry are gated on [isStressTestSupported]
  * (`AppCapability.isStressTestSupported`) on every host.
  */
 /**
@@ -190,11 +190,11 @@ fun NavGraphBuilder.settingsDetailRoutes(
   composable(Screen.ExportHistory.route) {
     ExportHistoryRoute(navController = navController)
   }
-  composable(Screen.FeatureLab.route) {
-    FeatureLabScreen(
+  composable(Screen.DeveloperOptions.route) {
+    DeveloperOptionsScreen(
       navController = navController,
       dogfoodContent = {
-        if (isStressTestSupported) StressTestFeatureLabExtra(
+        if (isStressTestSupported) StressTestDeveloperOptionsExtra(
           navController
         )
       },

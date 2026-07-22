@@ -18,7 +18,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormControll
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -75,7 +75,7 @@ class SquawkFormViewModel(
   private val attachmentManager: AttachmentManager,
   private val logManager: MaintenanceLogManager,
   private val auth: FirebaseAuth,
-  private val featureLabManager: FeatureLabManager,
+  private val featureLabManager: DeveloperOptionsManager,
   private val sharingManager: SharingManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {

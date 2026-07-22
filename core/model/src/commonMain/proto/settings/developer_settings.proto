@@ -3,12 +3,12 @@ syntax = "proto3";
 option java_package = "dev.fanfly.wingslog.core.model.settings";
 option java_multiple_files = true;
 
-message FeatureLabSettings {
+message DeveloperSettings {
   reserved 1, 2, 3, 5, 6;
   reserved "technician_disabled", "attachment_upload_disabled", "export_logs_enabled", "account_upgrade_enabled", "adaptive_shell_enabled";
 
   bool export_email_delivery_enabled = 4;
   // Positive so the proto3 default (false) leaves file/photo uploads off on every build; users
-  // opt in via Feature Lab. Replaces the negative attachment_upload_disabled (field 2).
+  // opt in via Developer Options. Replaces the negative attachment_upload_disabled (field 2).
   bool attachment_upload_enabled = 7;
 }

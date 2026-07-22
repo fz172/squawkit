@@ -37,7 +37,7 @@ kotlin {
       implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:export:datamanager"))
       implementation(project(":feature:export:update"))
-      implementation(project(":feature:featurelab:datamanager"))
+      implementation(project(":feature:developeroptions:datamanager"))
       implementation(project(":feature:subscription:datamanager"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:fleet:picker:data"))

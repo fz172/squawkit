@@ -59,7 +59,7 @@ if (isReleaseBuild) {
 val computedVersionName = "$major.$minor.$today.$patch"
 
 // Set via `-PdeveloperBuild=true` to produce a signed, distributable "dogfood-style" release
-// build with developer tooling (Feature Lab, stress test) turned on. Debug builds always have it on.
+// build with developer tooling (Developer Options, stress test) turned on. Debug builds always have it on.
 val developerBuild =
   (findProperty("developerBuild") as? String)?.toBoolean() ?: false
 

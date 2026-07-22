@@ -7,9 +7,9 @@ import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
-import dev.fanfly.wingslog.feature.settings.featurelab.FeatureLabViewModel
+import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsViewModel
 import dev.fanfly.wingslog.feature.settings.upgrade.AccountUpgradeViewModel
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
@@ -22,13 +22,13 @@ val settingsModule = module {
       get<AuthManager>(),
       get<AttachmentManager>(),
       get<DatabaseIntegrityChecker>(),
-      get<FeatureLabManager>(),
+      get<DeveloperOptionsManager>(),
       get<AppearanceController>(),
       get<AnalyticsPreferenceController>(),
       get<AppCapability>(),
     )
   }
-  viewModel { FeatureLabViewModel(get<FeatureLabManager>()) }
+  viewModel { DeveloperOptionsViewModel(get<DeveloperOptionsManager>()) }
   viewModel {
     AccountUpgradeViewModel(
       authManager = get<AuthManager>(),

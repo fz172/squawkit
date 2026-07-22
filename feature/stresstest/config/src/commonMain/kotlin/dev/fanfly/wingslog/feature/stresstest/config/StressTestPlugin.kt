@@ -46,7 +46,7 @@ fun registerStressTestRoutes(
 }
 
 @Composable
-fun StressTestFeatureLabExtra(navController: NavController) {
+fun StressTestDeveloperOptionsExtra(navController: NavController) {
   Spacer(Modifier.height(Spacing.extraLarge))
   Text(
     text = stringResource(Res.string.debug_tools_header),

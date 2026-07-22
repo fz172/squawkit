@@ -80,7 +80,7 @@ include(":feature:attachment:viewing")
 include(":feature:export:datamanager")
 include(":feature:export:sharedassets")
 include(":feature:export:update")
-include(":feature:featurelab:datamanager")
+include(":feature:developeroptions:datamanager")
 
 include(":feature:squawk:model")
 include(":feature:squawk:datamanager")

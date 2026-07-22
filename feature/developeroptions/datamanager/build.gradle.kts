@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.featurelab.datamanager"
+  namespace = "dev.fanfly.wingslog.feature.developeroptions.datamanager"
   compileSdk = 37
 
   defaultConfig {

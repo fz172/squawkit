@@ -25,7 +25,7 @@ fun webPageTitle(screenName: String): String {
     screenName == "sync_settings" -> "Sync"
     screenName == "export_logs" -> "Export logs"
     screenName == "export_history" -> "Export history"
-    screenName == "feature_lab" -> "Feature Lab"
+    screenName == "developer_options" -> "Developer Options"
     screenName == "manage_technicians" -> "Technicians"
     screenName.startsWith("edit_technician") -> "Edit technician"
 

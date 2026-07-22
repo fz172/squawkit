@@ -59,9 +59,9 @@ import wingslog.feature.settings.generated.resources.account_upgrade_login_subti
 import wingslog.feature.settings.generated.resources.account_upgrade_success
 import wingslog.feature.settings.generated.resources.account_upgrade_working
 import wingslog.feature.settings.generated.resources.app_version
-import wingslog.feature.settings.generated.resources.feature_lab
+import wingslog.feature.settings.generated.resources.developer_options
 import wingslog.feature.settings.generated.resources.settings_export_subtitle
-import wingslog.feature.settings.generated.resources.settings_feature_lab_subtitle
+import wingslog.feature.settings.generated.resources.settings_developer_options_subtitle
 import wingslog.feature.settings.generated.resources.settings_logout_subtitle
 import wingslog.feature.settings.generated.resources.settings_subtitle
 import wingslog.feature.settings.generated.resources.settings_sync_subtitle
@@ -78,7 +78,7 @@ import wingslog.feature.technician.sharedassets.generated.resources.Res as Techn
 
 /**
  * The settings body — profile card, technician profiles, sync/cloud backup, Export entry point,
- * Feature Lab, account action, and app version.
+ * Developer Options, account action, and app version.
  *
  * Detail pages embed in the content pane next to the sidebar when one is present: in that case the
  * caller passes a [sectionNavController] scoped to a nested NavHost, and the rows navigate it so the
@@ -204,14 +204,14 @@ fun SettingsContent(
               onClick = { detailNav.navigate(Screen.ExportLogs.route) },
             )
           }
-          // Feature Lab is a developer surface: only on debug and dogfood-style builds, never in release.
-          if (user.isFeatureLabSupported) {
+          // Developer Options is a developer surface: only on debug and dogfood-style builds, never in release.
+          if (user.isDeveloperOptionsSupported) {
             add {
               SettingsRow(
                 icon = Icons.Default.Tune,
-                title = stringResource(SettingsRes.string.feature_lab),
-                subtitle = stringResource(SettingsRes.string.settings_feature_lab_subtitle),
-                onClick = { detailNav.navigate(Screen.FeatureLab.route) },
+                title = stringResource(SettingsRes.string.developer_options),
+                subtitle = stringResource(SettingsRes.string.settings_developer_options_subtitle),
+                onClick = { detailNav.navigate(Screen.DeveloperOptions.route) },
               )
             }
           }
