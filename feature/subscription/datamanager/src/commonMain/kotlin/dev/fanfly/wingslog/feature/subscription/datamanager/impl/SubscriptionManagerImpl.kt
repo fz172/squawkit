@@ -25,7 +25,7 @@ import kotlin.time.Clock
  *
  * @param forceStatus a developer override stream; emits a forced tier or `null` for "no override".
  *   Defaults to none; Developer Options wires the real source in P3. Honored only in developer
- *   builds ([AppCapability.isFeatureLabSupported]), so a release build can never be forced premium.
+ *   builds ([AppCapability.isDeveloperOptionsSupported]), so a release build can never be forced premium.
  */
 class SubscriptionManagerImpl(
   private val firebaseAuth: FirebaseAuth,
@@ -56,7 +56,7 @@ class SubscriptionManagerImpl(
   override fun status(): Flow<Subscription.Status> =
     combine(entitlement(), forceStatus) { subscription, forced ->
       // The forced tier wins, but only in a developer build — never in the shipping release.
-      if (appCapability.isFeatureLabSupported && forced != null) {
+      if (appCapability.isDeveloperOptionsSupported && forced != null) {
         forced
       } else {
         subscription.effectiveStatusAt(clock.now().toEpochMilliseconds())

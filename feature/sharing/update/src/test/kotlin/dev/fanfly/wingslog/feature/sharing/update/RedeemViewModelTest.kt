@@ -277,7 +277,7 @@ class RedeemViewModelTest {
 }
 
 private fun appCapability(sharing: Boolean) = AppCapability(
-  isFeatureLabSupported = false,
+  isDeveloperOptionsSupported = false,
   isAircraftSharingSupported = sharing,
   isStressTestSupported = false,
   isCameraCaptureSupported = false,

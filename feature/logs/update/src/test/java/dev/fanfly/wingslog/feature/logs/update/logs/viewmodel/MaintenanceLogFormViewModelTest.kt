@@ -7,8 +7,8 @@ import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -55,7 +55,7 @@ class MaintenanceLogFormViewModelTest {
   private lateinit var technicianManager: TechnicianManager
   private lateinit var sharingManager: SharingManager
   private lateinit var auth: FirebaseAuth
-  private lateinit var featureLabManager: FeatureLabManager
+  private lateinit var featureLabManager: DeveloperOptionsManager
 
   @Before
   fun setUp() {
@@ -77,7 +77,7 @@ class MaintenanceLogFormViewModelTest {
     every { auth.currentUser } returns mockUser
 
     // Prevent the init-block flows from suspending forever.
-    every { featureLabManager.observe() } returns flowOf(FeatureFlags())
+    every { featureLabManager.observe() } returns flowOf(DeveloperFlags())
     every { fleetManager.loadAircraft(TEST_AIRCRAFT_ID) } returns flowOf(null)
     every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
       emptyList()

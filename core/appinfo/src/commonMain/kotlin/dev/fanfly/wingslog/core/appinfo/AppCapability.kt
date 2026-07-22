@@ -5,13 +5,13 @@ package dev.fanfly.wingslog.core.appinfo
  * at Koin startup via [createAppCapability] and injected wherever a feature needs to gate on it.
  */
 data class AppCapability(
-  val isFeatureLabSupported: Boolean,
+  val isDeveloperOptionsSupported: Boolean,
   /**
    * Aircraft sharing (#134, design §6.1). The staged-rollout gate: on in dev and dogfood, off in
    * the shipping release, and GA is flipping this to `true`.
    *
-   * A build-time gate rather than a Feature Lab flag, because Feature Lab only exists in developer
-   * builds ([isFeatureLabSupported] is `isDeveloperBuild`) — a lab toggle could never be turned on
+   * A build-time gate rather than a Developer Options flag, because Developer Options only exists in developer
+   * builds ([isDeveloperOptionsSupported] is `isDeveloperBuild`) — a lab toggle could never be turned on
    * in a release build, so it cannot express "ship this to real users later".
    *
    * "Off" means genuinely off, not merely hidden: entry points disappear AND an inbound invite link
@@ -26,7 +26,7 @@ data class AppCapability(
    * Subscriptions / SquawkIt Pro (subscription design §1). The staged-rollout gate, like
    * [isAircraftSharingSupported]: on in dev + dogfood, off in the shipping release until GA.
    *
-   * A build-time gate rather than a Feature Lab flag, because the whole paywall must be able to
+   * A build-time gate rather than a Developer Options flag, because the whole paywall must be able to
    * ship dark and be turned on later. Crucially, **"off" means unlocked for everyone, not
    * restricted**: while this is false there is no gating at all — every premium feature is treated
    * as available and the Subscription entry/page is hidden. GA is flipping this to `true`.

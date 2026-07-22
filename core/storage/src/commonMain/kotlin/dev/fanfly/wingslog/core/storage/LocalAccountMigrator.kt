@@ -18,7 +18,7 @@ interface LocalAccountMigrator {
    * re-hydrates its existing cloud set.
    *
    * The merge is additive for *content* (both record sets survive, per design §5), but the
-   * destination account keeps its own *device/identity singletons* (UserInfo, FeatureLab): the
+   * destination account keeps its own *device/identity singletons* (UserInfo, DeveloperOptions): the
    * guest's copies are dropped rather than moved (a guest's experimental flags are not inherited
    * into a real account). Guest records that would land on an id the destination already holds are
    * dropped for the same reason — see [reassign]'s SQL and [LocalAccountMigratorImpl.DROPPED_ON_MERGE].
@@ -49,7 +49,7 @@ class LocalAccountMigratorImpl(
           // Per-user singletons live at a fixed id under the user root, so the destination account
           // already has its own — they are dropped from the guest scope, never moved. Moving one
           // would collide on the primary key (both sit at the same id) AND override the account's
-          // own copy: its identity (UserInfo → self-technician) or its device toggles (FeatureLab).
+          // own copy: its identity (UserInfo → self-technician) or its device toggles (DeveloperOptions).
           // A guest's experimental flags are not something to inherit into a real account.
           for (kind in DROPPED_ON_MERGE) {
             db.schemaQueries.deleteCollectionInScopePrefix(kind, oldPrefixLike)
@@ -94,7 +94,7 @@ class LocalAccountMigratorImpl(
      */
     private val DROPPED_ON_MERGE: List<CollectionKind> = listOf(
       CollectionKind.UserInfo,
-      CollectionKind.FeatureLab,
+      CollectionKind.DeveloperOptions,
     )
   }
 }

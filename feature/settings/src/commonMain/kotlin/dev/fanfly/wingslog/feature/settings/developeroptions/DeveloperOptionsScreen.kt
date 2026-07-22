@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.featurelab
+package dev.fanfly.wingslog.feature.settings.developeroptions
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,18 +34,18 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.settings.generated.resources.Res
-import wingslog.feature.settings.generated.resources.feature_lab
-import wingslog.feature.settings.generated.resources.feature_lab_attachments_subtitle
-import wingslog.feature.settings.generated.resources.feature_lab_attachments_title
-import wingslog.feature.settings.generated.resources.feature_lab_export_email_subtitle
-import wingslog.feature.settings.generated.resources.feature_lab_export_email_title
-import wingslog.feature.settings.generated.resources.feature_lab_subtitle
+import wingslog.feature.settings.generated.resources.developer_options
+import wingslog.feature.settings.generated.resources.developer_options_attachments_subtitle
+import wingslog.feature.settings.generated.resources.developer_options_attachments_title
+import wingslog.feature.settings.generated.resources.developer_options_export_email_subtitle
+import wingslog.feature.settings.generated.resources.developer_options_export_email_title
+import wingslog.feature.settings.generated.resources.developer_options_subtitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FeatureLabScreen(
+fun DeveloperOptionsScreen(
   navController: NavController,
-  viewModel: FeatureLabViewModel = koinViewModel(),
+  viewModel: DeveloperOptionsViewModel = koinViewModel(),
   dogfoodContent: @Composable () -> Unit = {},
 ) {
   val flags by viewModel.flags.collectAsStateWithLifecycle()
@@ -54,7 +54,7 @@ fun FeatureLabScreen(
     topBar = {
       ConstrainedTopBar {
         WingsLogTopAppBar(
-          title = stringResource(Res.string.feature_lab),
+          title = stringResource(Res.string.developer_options),
           onBackClick = { navController.popBackStack() },
         )
       }
@@ -73,7 +73,7 @@ fun FeatureLabScreen(
           .padding(Spacing.screenPadding),
       ) {
         Text(
-          text = stringResource(Res.string.feature_lab_subtitle),
+          text = stringResource(Res.string.developer_options_subtitle),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -84,8 +84,8 @@ fun FeatureLabScreen(
 
         FeatureToggleRow(
           icon = Icons.Outlined.AttachFile,
-          title = stringResource(Res.string.feature_lab_attachments_title),
-          subtitle = stringResource(Res.string.feature_lab_attachments_subtitle),
+          title = stringResource(Res.string.developer_options_attachments_title),
+          subtitle = stringResource(Res.string.developer_options_attachments_subtitle),
           checked = flags.attachmentUploadEnabled,
           onCheckedChange = viewModel::setAttachmentUploadEnabled,
         )
@@ -94,8 +94,8 @@ fun FeatureLabScreen(
 
         FeatureToggleRow(
           icon = Icons.Default.Mail,
-          title = stringResource(Res.string.feature_lab_export_email_title),
-          subtitle = stringResource(Res.string.feature_lab_export_email_subtitle),
+          title = stringResource(Res.string.developer_options_export_email_title),
+          subtitle = stringResource(Res.string.developer_options_export_email_subtitle),
           checked = flags.exportEmailDeliveryEnabled,
           onCheckedChange = viewModel::setExportEmailDeliveryEnabled,
         )

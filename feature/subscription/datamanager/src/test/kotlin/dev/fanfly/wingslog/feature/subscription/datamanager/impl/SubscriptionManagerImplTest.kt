@@ -42,7 +42,7 @@ class SubscriptionManagerImplTest {
   }
 
   private fun capability(subscription: Boolean, devBuild: Boolean = false) = AppCapability(
-    isFeatureLabSupported = devBuild,
+    isDeveloperOptionsSupported = devBuild,
     isAircraftSharingSupported = false,
     isStressTestSupported = false,
     isCameraCaptureSupported = false,

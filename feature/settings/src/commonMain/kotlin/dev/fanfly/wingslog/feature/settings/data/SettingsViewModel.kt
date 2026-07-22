@@ -9,7 +9,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,14 +20,14 @@ class SettingsViewModel(
   private val authManager: AuthManager,
   private val attachmentManager: AttachmentManager,
   private val dbChecker: DatabaseIntegrityChecker,
-  private val featureLabManager: FeatureLabManager,
+  private val featureLabManager: DeveloperOptionsManager,
   private val appearanceController: AppearanceController,
   private val analyticsPreferenceController: AnalyticsPreferenceController,
   private val appCapability: AppCapability,
 ) : ViewModel() {
 
   private val _user =
-    MutableStateFlow(SettingsUiState(isFeatureLabSupported = appCapability.isFeatureLabSupported))
+    MutableStateFlow(SettingsUiState(isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported))
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
 
   /** Device-local light/dark/system preference, shared with the root theme. */
@@ -46,10 +46,10 @@ class SettingsViewModel(
 
   init {
     loadUserProfile()
-    observeFeatureFlags()
+    observeDeveloperFlags()
   }
 
-  private fun observeFeatureFlags() {
+  private fun observeDeveloperFlags() {
     viewModelScope.launch {
       featureLabManager.observe()
         .collect { flags ->
@@ -61,7 +61,7 @@ class SettingsViewModel(
   private fun loadUserProfile() {
     _user.value = SettingsUiState(
       userStatus = UserStatus.LOADING,
-      isFeatureLabSupported = appCapability.isFeatureLabSupported,
+      isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
     )
   }
 

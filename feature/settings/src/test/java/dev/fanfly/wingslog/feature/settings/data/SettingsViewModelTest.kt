@@ -10,8 +10,8 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.core.ui.theme.AppearanceStore
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coJustRun
 import io.mockk.coVerify
@@ -39,7 +39,7 @@ class SettingsViewModelTest {
   private lateinit var authManager: AuthManager
   private lateinit var attachmentManager: AttachmentManager
   private lateinit var dbChecker: DatabaseIntegrityChecker
-  private lateinit var featureLabManager: FeatureLabManager
+  private lateinit var featureLabManager: DeveloperOptionsManager
   private lateinit var appearanceController: AppearanceController
   private lateinit var analyticsPreferenceController: AnalyticsPreferenceController
   private lateinit var viewModel: SettingsViewModel
@@ -75,7 +75,7 @@ class SettingsViewModelTest {
       InMemoryAnalyticsPreferenceStore(),
       mockk(relaxed = true),
     )
-    every { featureLabManager.observe() } returns flowOf(FeatureFlags())
+    every { featureLabManager.observe() } returns flowOf(DeveloperFlags())
 
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.uid } returns TEST_USER_ID
@@ -102,7 +102,7 @@ class SettingsViewModelTest {
       appearanceController,
       analyticsPreferenceController,
       AppCapability(
-        isFeatureLabSupported = false,
+        isDeveloperOptionsSupported = false,
         isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
@@ -128,7 +128,7 @@ class SettingsViewModelTest {
       appearanceController,
       analyticsPreferenceController,
       AppCapability(
-        isFeatureLabSupported = false,
+        isDeveloperOptionsSupported = false,
         isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
@@ -154,7 +154,7 @@ class SettingsViewModelTest {
       appearanceController,
       analyticsPreferenceController,
       AppCapability(
-        isFeatureLabSupported = false,
+        isDeveloperOptionsSupported = false,
         isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
@@ -181,7 +181,7 @@ class SettingsViewModelTest {
       appearanceController,
       analyticsPreferenceController,
       AppCapability(
-        isFeatureLabSupported = false,
+        isDeveloperOptionsSupported = false,
         isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
@@ -208,7 +208,7 @@ class SettingsViewModelTest {
       appearanceController,
       analyticsPreferenceController,
       AppCapability(
-        isFeatureLabSupported = false,
+        isDeveloperOptionsSupported = false,
         isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,

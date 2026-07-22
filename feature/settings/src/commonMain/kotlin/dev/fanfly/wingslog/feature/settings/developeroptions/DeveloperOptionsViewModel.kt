@@ -1,20 +1,20 @@
-package dev.fanfly.wingslog.feature.settings.featurelab
+package dev.fanfly.wingslog.feature.settings.developeroptions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureFlags
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class FeatureLabViewModel(
-  private val featureLabManager: FeatureLabManager,
+class DeveloperOptionsViewModel(
+  private val featureLabManager: DeveloperOptionsManager,
 ) : ViewModel() {
 
-  private val _flags = MutableStateFlow(FeatureFlags())
-  val flags: StateFlow<FeatureFlags> = _flags.asStateFlow()
+  private val _flags = MutableStateFlow(DeveloperFlags())
+  val flags: StateFlow<DeveloperFlags> = _flags.asStateFlow()
 
   init {
     viewModelScope.launch {

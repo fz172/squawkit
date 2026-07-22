@@ -1,6 +1,6 @@
-package dev.fanfly.wingslog.feature.featurelab.datamanager
+package dev.fanfly.wingslog.feature.developeroptions.datamanager
 
-data class FeatureFlags(
+data class DeveloperFlags(
   val attachmentUploadEnabled: Boolean = false,
   val exportEmailDeliveryEnabled: Boolean = false,
 )

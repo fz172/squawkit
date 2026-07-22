@@ -81,7 +81,7 @@ fun AttachmentFormSection(
   visibleAttachments: List<PendingAttachment>,
   isAnonymous: Boolean,
   filesAtLimit: Boolean,
-  // Feature Lab `attachmentUploadEnabled`: gates only the file/photo picker options. Links are
+  // Developer Options `attachmentUploadEnabled`: gates only the file/photo picker options. Links are
   // always available; when off the upload buttons render disabled with a "coming soon" note.
   uploadEnabled: Boolean,
   showPickerSheet: Boolean,

@@ -31,7 +31,7 @@ object AttachmentRefs {
     CollectionKind.MaintenanceOverview,
     CollectionKind.Technician,
     CollectionKind.UserInfo,
-    CollectionKind.FeatureLab,
+    CollectionKind.DeveloperOptions,
     CollectionKind.Subscription,
     CollectionKind.SharedAircraftRef,
       -> emptyList()

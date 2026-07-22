@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.tasks.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.featurelab.datamanager.FeatureLabManager
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
@@ -18,7 +18,7 @@ val tasksUiModule = module {
       get<AttachmentManager>(),
       get<FirebaseAuth>(),
       get<MaintenanceLogManager>(),
-      get<FeatureLabManager>(),
+      get<DeveloperOptionsManager>(),
       get<SharingManager>(),
       get<TaskDueManager>(),
       get<SavedStateHandle>(),

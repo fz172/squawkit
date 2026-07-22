@@ -47,7 +47,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":feature:export:datamanager"))
       implementation(project(":feature:export:sharedassets"))
-      implementation(project(":feature:featurelab:datamanager"))
+      implementation(project(":feature:developeroptions:datamanager"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:squawk:datamanager"))

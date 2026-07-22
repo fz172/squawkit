@@ -55,7 +55,7 @@ kotlin {
       implementation(project(":feature:squawk:viewing"))
       implementation(project(":feature:logs:sharedassets"))
       implementation(project(":feature:logs:datamanager"))
-      implementation(project(":feature:featurelab:datamanager"))
+      implementation(project(":feature:developeroptions:datamanager"))
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:attachment:sharedassets"))
       implementation(project(":feature:attachment:datamanager"))
