@@ -72,7 +72,7 @@ kotlin {
       implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:technician:manage"))
       implementation(project(":feature:technician:sharedassets"))
-      implementation(project(":feature:developeroptions:datamanager"))
+      implementation(project(":feature:subscription:datamanager"))
 
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:attachment:sharedassets"))

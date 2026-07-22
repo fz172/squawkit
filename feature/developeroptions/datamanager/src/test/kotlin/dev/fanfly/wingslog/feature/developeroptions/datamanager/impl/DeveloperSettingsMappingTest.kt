@@ -15,12 +15,4 @@ class DeveloperSettingsMappingTest {
       assertThat(flags.toProto().toDeveloperFlags().forceSubscriptionStatus).isEqualTo(status)
     }
   }
-
-  @Test
-  fun `the boolean flags still round-trip`() {
-    val flags = DeveloperFlags(attachmentUploadEnabled = true, exportEmailDeliveryEnabled = true)
-    val back = flags.toProto().toDeveloperFlags()
-    assertThat(back.attachmentUploadEnabled).isTrue()
-    assertThat(back.exportEmailDeliveryEnabled).isTrue()
-  }
 }

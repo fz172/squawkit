@@ -23,8 +23,4 @@
   <string name="remove_local_data">Remove this account from this device</string>
   <string name="developer_options">Developer Options</string>
   <string name="developer_options_subtitle">Advanced controls. Changes sync across your devices.</string>
-  <string name="developer_options_attachments_title">Attachment Uploads</string>
-  <string name="developer_options_attachments_subtitle">Allow uploading files and photos to maintenance records. Link attachments are always available.</string>
-  <string name="developer_options_export_email_title">Email Export Delivery</string>
-  <string name="developer_options_export_email_subtitle">Upload exports to the cloud and email a download link. When off, exports stay on this device only.</string>
 </resources>

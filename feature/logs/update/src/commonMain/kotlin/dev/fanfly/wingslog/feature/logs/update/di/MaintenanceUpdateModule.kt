@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.logs.update.di
 
 import androidx.lifecycle.SavedStateHandle
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormViewModel
@@ -25,7 +25,7 @@ val maintenanceUpdateModule = module {
       get<TechnicianManager>(),
       get<SharingManager>(),
       get<FirebaseAuth>(),
-      get<DeveloperOptionsManager>(),
+      get<SubscriptionManager>(),
       get<SavedStateHandle>(),
     )
   }

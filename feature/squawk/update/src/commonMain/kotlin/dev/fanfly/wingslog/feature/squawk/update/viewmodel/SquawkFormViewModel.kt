@@ -18,7 +18,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormControll
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -75,7 +75,7 @@ class SquawkFormViewModel(
   private val attachmentManager: AttachmentManager,
   private val logManager: MaintenanceLogManager,
   private val auth: FirebaseAuth,
-  private val featureLabManager: DeveloperOptionsManager,
+  private val subscriptionManager: SubscriptionManager,
   private val sharingManager: SharingManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -114,10 +114,10 @@ class SquawkFormViewModel(
       loadLogs()
     }
     viewModelScope.launch {
-      // A member's attachments on a shared aircraft now travel through the broker (P8.4 §9.2), so the
-      // gate is just the feature flag — owner-scoped entitlement gating lands with P8.7 (#248).
-      featureLabManager.observe()
-        .collect { flags -> _attachmentUploadEnabled.value = flags.attachmentUploadEnabled }
+      // A member's attachments on a shared aircraft travel through the broker (P8.4 §9.2); the gate
+      // is now the subscription (default-open until the subscription capability ships).
+      subscriptionManager.canUploadAttachments()
+        .collect { _attachmentUploadEnabled.value = it }
     }
   }
 

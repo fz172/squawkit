@@ -7,8 +7,7 @@ import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -55,7 +54,7 @@ class MaintenanceLogFormViewModelTest {
   private lateinit var technicianManager: TechnicianManager
   private lateinit var sharingManager: SharingManager
   private lateinit var auth: FirebaseAuth
-  private lateinit var featureLabManager: DeveloperOptionsManager
+  private lateinit var subscriptionManager: SubscriptionManager
 
   @Before
   fun setUp() {
@@ -69,7 +68,7 @@ class MaintenanceLogFormViewModelTest {
     technicianManager = mockk(relaxed = true)
     sharingManager = mockk(relaxed = true)
     auth = mockk(relaxed = true)
-    featureLabManager = mockk(relaxed = true)
+    subscriptionManager = mockk(relaxed = true)
 
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.isAnonymous } returns false
@@ -77,7 +76,7 @@ class MaintenanceLogFormViewModelTest {
     every { auth.currentUser } returns mockUser
 
     // Prevent the init-block flows from suspending forever.
-    every { featureLabManager.observe() } returns flowOf(DeveloperFlags())
+    every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
     every { fleetManager.loadAircraft(TEST_AIRCRAFT_ID) } returns flowOf(null)
     every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
       emptyList()
@@ -226,7 +225,7 @@ class MaintenanceLogFormViewModelTest {
         technicianManager = technicianManager,
         sharingManager = sharingManager,
         auth = auth,
-        featureLabManager = featureLabManager,
+        subscriptionManager = subscriptionManager,
         savedStateHandle = SavedStateHandle(
           mapOf(
             Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID,
@@ -417,7 +416,7 @@ class MaintenanceLogFormViewModelTest {
       technicianManager = technicianManager,
       sharingManager = sharingManager,
       auth = auth,
-      featureLabManager = featureLabManager,
+      subscriptionManager = subscriptionManager,
       savedStateHandle = SavedStateHandle(
         mapOf(
           Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID,
@@ -436,7 +435,7 @@ class MaintenanceLogFormViewModelTest {
       technicianManager = technicianManager,
       sharingManager = sharingManager,
       auth = auth,
-      featureLabManager = featureLabManager,
+      subscriptionManager = subscriptionManager,
       savedStateHandle = SavedStateHandle(
         buildMap {
           put(Screen.AIRCRAFT_ID, TEST_AIRCRAFT_ID)

@@ -45,7 +45,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":feature:developeroptions:datamanager"))
+      implementation(project(":feature:subscription:datamanager"))
       implementation(project(":feature:tasks:model"))
       implementation(libs.gitlive.firebase.auth)
       implementation(project(":feature:tasks:datamanager"))
