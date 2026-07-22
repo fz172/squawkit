@@ -34,4 +34,11 @@
 
   <!-- Shared -->
   <string name="subscription_storage_used">Storage used</string>
+
+  <!-- Pro upsell sheet -->
+  <string name="upsell_see_plans">See everything in Pro</string>
+  <string name="upsell_body_add_aircraft">Add unlimited aircraft with SquawkIt Pro.</string>
+  <string name="upsell_body_attachment">Attach photos and files to your maintenance records with SquawkIt Pro.</string>
+  <string name="upsell_body_email">Email a copy of your exports with SquawkIt Pro.</string>
+  <string name="upsell_body_share">Share aircraft and invite others with SquawkIt Pro.</string>
 </resources>
