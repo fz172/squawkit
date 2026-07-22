@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.export.update.viewmodel
 
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -18,7 +18,7 @@ val exportUiModule = module {
       logsManager = get<MaintenanceLogManager>(),
       taskDataManager = get<TaskDataManager>(),
       squawkManager = get<SquawkManager>(),
-      featureLabManager = get<DeveloperOptionsManager>(),
+      subscriptionManager = get<SubscriptionManager>(),
       auth = get<FirebaseAuth>(),
     )
   }

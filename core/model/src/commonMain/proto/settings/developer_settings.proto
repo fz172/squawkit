@@ -4,13 +4,10 @@ option java_package = "dev.fanfly.wingslog.core.model.settings";
 option java_multiple_files = true;
 
 message DeveloperSettings {
-  reserved 1, 2, 3, 5, 6;
-  reserved "technician_disabled", "attachment_upload_disabled", "export_logs_enabled", "account_upgrade_enabled", "adaptive_shell_enabled";
-
-  bool export_email_delivery_enabled = 4;
-  // Positive so the proto3 default (false) leaves file/photo uploads off on every build; users
-  // opt in via Developer Options. Replaces the negative attachment_upload_disabled (field 2).
-  bool attachment_upload_enabled = 7;
+  // 4 and 7 held export_email_delivery_enabled / attachment_upload_enabled — now gated by the
+  // subscription (SubscriptionManager), so they were removed.
+  reserved 1, 2, 3, 4, 5, 6, 7;
+  reserved "technician_disabled", "attachment_upload_disabled", "export_logs_enabled", "account_upgrade_enabled", "adaptive_shell_enabled", "export_email_delivery_enabled", "attachment_upload_enabled";
 
   // Developer force-override of the effective subscription tier. UNSET = no override (the real
   // entitlement applies); SubscriptionManager honors this only in developer builds.

@@ -54,14 +54,10 @@ class DeveloperOptionsManagerImpl(
 }
 
 internal fun DeveloperSettings.toDeveloperFlags() = DeveloperFlags(
-  attachmentUploadEnabled = attachment_upload_enabled,
-  exportEmailDeliveryEnabled = export_email_delivery_enabled,
   forceSubscriptionStatus = force_subscription_status.toSubscriptionStatusOrNull(),
 )
 
 internal fun DeveloperFlags.toProto() = DeveloperSettings(
-  attachment_upload_enabled = attachmentUploadEnabled,
-  export_email_delivery_enabled = exportEmailDeliveryEnabled,
   force_subscription_status = forceSubscriptionStatus.toForceProto(),
 )
 

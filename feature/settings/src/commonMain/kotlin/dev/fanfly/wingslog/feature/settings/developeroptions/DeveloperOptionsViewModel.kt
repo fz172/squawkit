@@ -24,18 +24,6 @@ class DeveloperOptionsViewModel(
     }
   }
 
-  fun setAttachmentUploadEnabled(enabled: Boolean) {
-    viewModelScope.launch {
-      developerOptionsManager.update(_flags.value.copy(attachmentUploadEnabled = enabled))
-    }
-  }
-
-  fun setExportEmailDeliveryEnabled(enabled: Boolean) {
-    viewModelScope.launch {
-      developerOptionsManager.update(_flags.value.copy(exportEmailDeliveryEnabled = enabled))
-    }
-  }
-
   /** `null` clears the override (use the real entitlement); FREE/PRO force that tier locally. */
   fun setForceSubscriptionStatus(status: Subscription.Status?) {
     viewModelScope.launch {

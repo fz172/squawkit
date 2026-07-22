@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -20,13 +18,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -40,10 +36,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.settings.generated.resources.Res
 import wingslog.feature.settings.generated.resources.developer_options
-import wingslog.feature.settings.generated.resources.developer_options_attachments_subtitle
-import wingslog.feature.settings.generated.resources.developer_options_attachments_title
-import wingslog.feature.settings.generated.resources.developer_options_export_email_subtitle
-import wingslog.feature.settings.generated.resources.developer_options_export_email_title
 import wingslog.feature.settings.generated.resources.developer_options_subtitle
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,25 +77,6 @@ fun DeveloperOptionsScreen(
 
         Spacer(Modifier.height(Spacing.large))
 
-        HorizontalDivider()
-
-        FeatureToggleRow(
-          icon = Icons.Outlined.AttachFile,
-          title = stringResource(Res.string.developer_options_attachments_title),
-          subtitle = stringResource(Res.string.developer_options_attachments_subtitle),
-          checked = flags.attachmentUploadEnabled,
-          onCheckedChange = viewModel::setAttachmentUploadEnabled,
-        )
-
-        HorizontalDivider()
-
-        FeatureToggleRow(
-          icon = Icons.Default.Mail,
-          title = stringResource(Res.string.developer_options_export_email_title),
-          subtitle = stringResource(Res.string.developer_options_export_email_subtitle),
-          checked = flags.exportEmailDeliveryEnabled,
-          onCheckedChange = viewModel::setExportEmailDeliveryEnabled,
-        )
         HorizontalDivider()
 
         ForceSubscriptionRow(
@@ -171,45 +144,5 @@ private fun ForceSubscriptionRow(
         }
       }
     }
-  }
-}
-
-@Composable
-private fun FeatureToggleRow(
-  icon: ImageVector,
-  title: String,
-  subtitle: String,
-  checked: Boolean,
-  onCheckedChange: (Boolean) -> Unit,
-) {
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(vertical = Spacing.medium),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Icon(
-      imageVector = icon,
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.padding(end = Spacing.medium),
-    )
-    Column(modifier = Modifier.weight(1f)) {
-      Text(
-        text = title,
-        style = MaterialTheme.typography.bodyLarge,
-        fontWeight = FontWeight.Medium,
-      )
-      Text(
-        text = subtitle,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-    Switch(
-      checked = checked,
-      onCheckedChange = onCheckedChange,
-      modifier = Modifier.padding(start = Spacing.medium),
-    )
   }
 }

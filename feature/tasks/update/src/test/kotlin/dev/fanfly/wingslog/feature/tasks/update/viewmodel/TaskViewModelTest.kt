@@ -6,8 +6,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -46,7 +45,7 @@ class TaskViewModelTest {
   private lateinit var attachmentManager: AttachmentManager
   private lateinit var auth: FirebaseAuth
   private lateinit var maintenanceLogManager: MaintenanceLogManager
-  private lateinit var featureLabManager: DeveloperOptionsManager
+  private lateinit var subscriptionManager: SubscriptionManager
   private lateinit var sharingManager: SharingManager
   private lateinit var taskDueManager: TaskDueManager
 
@@ -58,7 +57,7 @@ class TaskViewModelTest {
     attachmentManager = mockk(relaxed = true)
     auth = mockk(relaxed = true)
     maintenanceLogManager = mockk(relaxed = true)
-    featureLabManager = mockk(relaxed = true)
+    subscriptionManager = mockk(relaxed = true)
     sharingManager = mockk(relaxed = true)
     taskDueManager = mockk(relaxed = true)
 
@@ -67,7 +66,7 @@ class TaskViewModelTest {
     every { auth.currentUser } returns mockUser
 
     // Prevent the load flows from suspending forever.
-    every { featureLabManager.observe() } returns flowOf(DeveloperFlags())
+    every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
     every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(emptyList())
     every { maintenanceLogManager.observeLogs(TEST_AIRCRAFT_ID) } returns flowOf(emptyList())
     every { maintenanceLogManager.observeMaintenanceOverview(TEST_AIRCRAFT_ID) } returns flowOf(null)
@@ -172,7 +171,7 @@ class TaskViewModelTest {
       attachmentManager = attachmentManager,
       auth = auth,
       maintenanceLogManager = maintenanceLogManager,
-      featureLabManager = featureLabManager,
+      subscriptionManager = subscriptionManager,
       sharingManager = sharingManager,
       taskDueManager = taskDueManager,
       savedStateHandle = SavedStateHandle(mapOf(Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID)),
@@ -184,7 +183,7 @@ class TaskViewModelTest {
       attachmentManager = attachmentManager,
       auth = auth,
       maintenanceLogManager = maintenanceLogManager,
-      featureLabManager = featureLabManager,
+      subscriptionManager = subscriptionManager,
       sharingManager = sharingManager,
       taskDueManager = taskDueManager,
       savedStateHandle = SavedStateHandle(

@@ -12,7 +12,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -44,7 +44,7 @@ class ExportViewModel(
   private val logsManager: MaintenanceLogManager,
   private val taskDataManager: TaskDataManager,
   private val squawkManager: SquawkManager,
-  private val featureLabManager: DeveloperOptionsManager,
+  private val subscriptionManager: SubscriptionManager,
   private val auth: FirebaseAuth,
   clock: Clock = Clock.System,
   timeZone: TimeZone = TimeZone.currentSystemDefault(),
@@ -133,8 +133,8 @@ class ExportViewModel(
     viewModelScope.launch {
       combine(
         auth.authStateChanged,
-        featureLabManager.observe(),
-      ) { user, flags -> user to flags.exportEmailDeliveryEnabled }
+        subscriptionManager.canEmailExports(),
+      ) { user, canEmail -> user to canEmail }
         .collect { (user, emailDeliveryEnabled) ->
           val signedIn = user != null && !user.isAnonymous
           val authEmail = user?.email.orEmpty()

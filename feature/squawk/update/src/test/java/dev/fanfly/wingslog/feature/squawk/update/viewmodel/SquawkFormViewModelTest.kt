@@ -8,8 +8,7 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -47,7 +46,7 @@ class SquawkFormViewModelTest {
   private lateinit var attachmentManager: AttachmentManager
   private lateinit var logManager: MaintenanceLogManager
   private lateinit var auth: FirebaseAuth
-  private lateinit var featureLabManager: DeveloperOptionsManager
+  private lateinit var subscriptionManager: SubscriptionManager
 
   // Only gates the attach affordance on shared aircraft; irrelevant to these assertions.
   private lateinit var sharingManager: SharingManager
@@ -60,7 +59,7 @@ class SquawkFormViewModelTest {
     attachmentManager = mockk(relaxed = true)
     logManager = mockk(relaxed = true)
     auth = mockk(relaxed = true)
-    featureLabManager = mockk(relaxed = true)
+    subscriptionManager = mockk(relaxed = true)
     sharingManager = mockk(relaxed = true)
 
     val mockUser = mockk<FirebaseUser>()
@@ -68,7 +67,7 @@ class SquawkFormViewModelTest {
     every { auth.currentUser } returns mockUser
 
     // Prevent the init-block flows from suspending forever.
-    every { featureLabManager.observe() } returns flowOf(DeveloperFlags())
+    every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
     every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
       emptyList()
     )
@@ -517,7 +516,7 @@ class SquawkFormViewModelTest {
       attachmentManager = attachmentManager,
       logManager = logManager,
       auth = auth,
-      featureLabManager = featureLabManager,
+      subscriptionManager = subscriptionManager,
       sharingManager = sharingManager,
       savedStateHandle = SavedStateHandle(
         mapOf(
@@ -533,7 +532,7 @@ class SquawkFormViewModelTest {
       attachmentManager = attachmentManager,
       logManager = logManager,
       auth = auth,
-      featureLabManager = featureLabManager,
+      subscriptionManager = subscriptionManager,
       sharingManager = sharingManager,
       savedStateHandle = SavedStateHandle(
         mapOf(Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID)
@@ -546,7 +545,7 @@ class SquawkFormViewModelTest {
   fun attachAvailable_onAnAircraftHostedByAnotherAccount() = runTest(testDispatcher) {
     // A member's upload now travels through the broker into the host's tree (P8.4 §9.2), so the
     // attach button is offered on a shared aircraft — no longer hard-disabled by hosting.
-    every { featureLabManager.observe() } returns flowOf(DeveloperFlags(attachmentUploadEnabled = true))
+    every { subscriptionManager.canUploadAttachments() } returns flowOf(true)
 
     val viewModel = buildViewModelForNew()
     advanceUntilIdle()
@@ -556,7 +555,7 @@ class SquawkFormViewModelTest {
 
   @Test
   fun attachAvailable_onOwnAircraft_whenTheFlagIsOn() = runTest(testDispatcher) {
-    every { featureLabManager.observe() } returns flowOf(DeveloperFlags(attachmentUploadEnabled = true))
+    every { subscriptionManager.canUploadAttachments() } returns flowOf(true)
 
     val viewModel = buildViewModelForNew()
     advanceUntilIdle()
@@ -567,7 +566,7 @@ class SquawkFormViewModelTest {
   @Test
   fun attachStaysOff_whenTheFlagIsOff() = runTest(testDispatcher) {
     // The feature flag (and later, the P8.7 entitlement) still has the final say.
-    every { featureLabManager.observe() } returns flowOf(DeveloperFlags(attachmentUploadEnabled = false))
+    every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
 
     val viewModel = buildViewModelForNew()
     advanceUntilIdle()

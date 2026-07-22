@@ -13,7 +13,7 @@ import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -58,7 +58,7 @@ class MaintenanceLogFormViewModel(
   private val technicianManager: TechnicianManager,
   private val sharingManager: SharingManager,
   private val auth: FirebaseAuth,
-  private val featureLabManager: DeveloperOptionsManager,
+  private val subscriptionManager: SubscriptionManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -96,7 +96,7 @@ class MaintenanceLogFormViewModel(
     observeTasks()
     observeTechnicians()
     checkAuth()
-    observeDeveloperFlags()
+    observeAttachmentAccess()
     // Mirror the shared attachment controller into UiState so the snapshot/dirty-check
     // logic keeps working off a single state object.
     attachmentForm.pendingAttachments
@@ -105,12 +105,12 @@ class MaintenanceLogFormViewModel(
     if (isEditMode) loadLog()
   }
 
-  private fun observeDeveloperFlags() {
-    // A member's attachments on a shared aircraft now travel through the broker (P8.4 §9.2), so the
-    // gate is just the feature flag — owner-scoped entitlement gating lands with P8.7 (#248).
-    featureLabManager.observe()
-      .onEach { flags ->
-        _uiState.update { it.copy(attachmentUploadEnabled = flags.attachmentUploadEnabled) }
+  private fun observeAttachmentAccess() {
+    // A member's attachments on a shared aircraft travel through the broker (P8.4 §9.2); the gate is
+    // now the subscription (default-open until the subscription capability ships).
+    subscriptionManager.canUploadAttachments()
+      .onEach { canUpload ->
+        _uiState.update { it.copy(attachmentUploadEnabled = canUpload) }
       }
       .launchIn(viewModelScope)
   }
