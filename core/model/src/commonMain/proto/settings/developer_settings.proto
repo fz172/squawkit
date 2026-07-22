@@ -11,4 +11,14 @@ message DeveloperSettings {
   // Positive so the proto3 default (false) leaves file/photo uploads off on every build; users
   // opt in via Developer Options. Replaces the negative attachment_upload_disabled (field 2).
   bool attachment_upload_enabled = 7;
+
+  // Developer force-override of the effective subscription tier. UNSET = no override (the real
+  // entitlement applies); SubscriptionManager honors this only in developer builds.
+  ForceSubscriptionStatus force_subscription_status = 8;
+
+  enum ForceSubscriptionStatus {
+    FORCE_SUBSCRIPTION_STATUS_UNSET = 0;
+    FORCE_SUBSCRIPTION_STATUS_FREE = 1;
+    FORCE_SUBSCRIPTION_STATUS_PRO = 2;
+  }
 }

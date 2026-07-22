@@ -39,6 +39,7 @@ kotlin {
       implementation(project(":core:storage"))
       implementation(project(":core:appinfo"))
       implementation(project(":feature:subscription:model"))
+      implementation(project(":feature:developeroptions:datamanager"))
       implementation(libs.gitlive.firebase.auth)
 
       // Logging
