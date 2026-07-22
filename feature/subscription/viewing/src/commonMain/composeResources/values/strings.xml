@@ -1,7 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="subscription_title">SquawkIt Pro</string>
-  <string name="subscription_coming_soon">Subscription page — coming soon. Current tier: %1$s</string>
-  <string name="subscription_tier_free">Free</string>
-  <string name="subscription_tier_pro">Pro</string>
+
+  <!-- Non-subscriber comparison view -->
+  <string name="subscription_compare_header">Do more with SquawkIt Pro</string>
+  <string name="subscription_compare_subhead">Free is a complete single-aircraft logbook, backed up and synced. SquawkIt Pro adds scale and collaboration.</string>
+  <string name="subscription_col_free">Free</string>
+  <string name="subscription_col_pro">Pro</string>
+  <string name="subscription_feature_aircraft">Aircraft</string>
+  <string name="subscription_feature_records">Logs, tasks &amp; squawks</string>
+  <string name="subscription_feature_export">Export to this device</string>
+  <string name="subscription_feature_backup">Cloud backup &amp; sync</string>
+  <string name="subscription_feature_attachments">Photo &amp; file attachments</string>
+  <string name="subscription_feature_email">Email a copy of exports</string>
+  <string name="subscription_feature_sharing">Share aircraft &amp; invite others</string>
+  <string name="subscription_aircraft_free">1</string>
+  <string name="subscription_aircraft_unlimited">Unlimited</string>
+  <string name="subscription_cta_start_trial">Start free trial</string>
+  <string name="subscription_cta_placeholder">Purchasing arrives with billing setup.</string>
+
+  <!-- Subscriber status view -->
+  <string name="subscription_status_label">Status</string>
+  <string name="subscription_member_since">Member since</string>
+  <string name="subscription_includes_label">Includes</string>
+  <string name="subscription_includes_value">Unlimited aircraft · attachments · email export · sharing</string>
+  <string name="subscription_manage">Manage subscription…</string>
+  <string name="subscription_manage_placeholder">Managing your subscription arrives with billing setup.</string>
+  <string name="subscription_status_active">Active · renews %1$s</string>
+  <string name="subscription_status_active_no_date">Active</string>
+  <string name="subscription_status_trialing">Free trial</string>
+  <string name="subscription_status_canceled">Active until %1$s</string>
+  <string name="subscription_status_grace">There\'s a problem with your payment</string>
+
+  <!-- Shared -->
+  <string name="subscription_storage_used">Storage used</string>
 </resources>
