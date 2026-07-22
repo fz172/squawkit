@@ -15,7 +15,7 @@
   <string name="open_failed">Could not open attachment. Try again.</string>
   <string name="remove_attachment">Remove attachment</string>
   <string name="no_attachments">No attachments yet</string>
-  <string name="file_upload_coming_soon">File upload options coming soon</string>
+  <string name="file_upload_coming_soon">Subscribe to SquawkIt Pro to attach photos &amp; files</string>
   <string name="file_added">File added</string>
   <string name="link_added">Link added</string>
   <string name="file_read_error">Could not read selected file</string>

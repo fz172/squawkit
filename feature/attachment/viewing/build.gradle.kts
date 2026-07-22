@@ -36,6 +36,7 @@ kotlin {
       implementation(project(":core:appinfo"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))
+      implementation(project(":feature:subscription:viewing"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:model"))
       implementation(project(":feature:attachment:model"))

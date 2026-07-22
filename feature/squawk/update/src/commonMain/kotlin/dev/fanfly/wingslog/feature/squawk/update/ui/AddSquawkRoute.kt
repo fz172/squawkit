@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
@@ -91,6 +92,7 @@ fun AddSquawkRoute(
         onAddLink = viewModel::addLink,
         onDismissSheet = viewModel::hideAttachmentPicker,
         onPickError = viewModel::onFilePickError,
+        onSeePlans = { navController.navigate(Screen.Subscription.route) },
       )
     },
   )
