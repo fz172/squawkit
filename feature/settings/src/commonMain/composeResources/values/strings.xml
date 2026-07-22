@@ -25,4 +25,9 @@
   <string name="remove_local_data">Remove this account from this device</string>
   <string name="developer_options">Developer Options</string>
   <string name="developer_options_subtitle">Advanced controls. Changes sync across your devices.</string>
+  <string name="developer_options_force_subscription_title">Force subscription status</string>
+  <string name="developer_options_force_subscription_subtitle">Make this account behave as the chosen tier, ignoring the real entitlement.</string>
+  <string name="developer_options_force_off">Off</string>
+  <string name="developer_options_force_free">Free</string>
+  <string name="developer_options_force_pro">Pro</string>
 </resources>

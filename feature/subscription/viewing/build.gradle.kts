@@ -49,6 +49,7 @@ kotlin {
 
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.compose.foundation)
+      implementation(libs.components.resources)
       implementation(libs.androidx.navigation.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
     }
