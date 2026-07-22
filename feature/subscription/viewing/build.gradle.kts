@@ -49,9 +49,16 @@ kotlin {
 
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.compose.foundation)
+      implementation(project(":core:datetime"))
       implementation(libs.components.resources)
+      implementation(libs.kotlinx.datetime)
       implementation(libs.androidx.navigation.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
     }
   }
+}
+
+dependencies {
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
 }
