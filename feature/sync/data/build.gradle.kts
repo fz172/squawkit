@@ -76,4 +76,6 @@ dependencies {
   testImplementation(libs.truth)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.sqldelight.sqlite.driver)
+  // Reflects over the Wire proto's declared fields to prove the wire doc maps all of them.
+  testImplementation(kotlin("reflect"))
 }
