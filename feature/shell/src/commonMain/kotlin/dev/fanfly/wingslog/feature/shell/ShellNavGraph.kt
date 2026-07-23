@@ -186,6 +186,7 @@ fun NavGraphBuilder.settingsDetailRoutes(
     ExportSelectionRoute(
       navController = navController,
       onNavigateToHistory = { navController.navigate(Screen.ExportHistory.route) },
+      onSeePlans = { navController.navigate(Screen.Subscription.route) },
     )
   }
   composable(Screen.ExportHistory.route) {

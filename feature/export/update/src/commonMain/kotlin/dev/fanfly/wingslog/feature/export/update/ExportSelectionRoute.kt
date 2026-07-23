@@ -11,6 +11,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun ExportSelectionRoute(
   navController: NavController,
   onNavigateToHistory: () -> Unit,
+  onSeePlans: () -> Unit,
   viewModel: ExportViewModel = koinViewModel(),
 ) {
   val state by viewModel.state.collectAsStateWithLifecycle()
@@ -34,5 +35,6 @@ fun ExportSelectionRoute(
       navController.popBackStack()
     },
     onRetry = viewModel::onRetry,
+    onSeePlans = onSeePlans,
   )
 }

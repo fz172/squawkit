@@ -36,6 +36,8 @@
   <string name="export_primary_action">Export ZIP</string>
   <string name="export_email_action">Email export</string>
   <string name="export_sent_to">Sent to %1$s</string>
+  <string name="export_email_locked_title">Email a copy</string>
+  <string name="export_email_locked_subtitle">Get your exports emailed with SquawkIt Pro</string>
 
   <!-- Running -->
   <string name="export_running_title">Preparing export</string>

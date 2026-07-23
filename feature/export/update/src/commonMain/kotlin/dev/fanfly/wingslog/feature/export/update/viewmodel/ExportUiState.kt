@@ -21,6 +21,10 @@ sealed interface ExportUiState {
     val customStart: LocalDate,
     val customEnd: LocalDate,
     val resolvedDeliveryInfo: ExportDeliveryInfo? = null,
+    // True when the user would qualify for email delivery (signed in with an email) but the Pro
+    // gate is off. The email option is surfaced shown-locked as a promo rather than hidden; local
+    // (save-to-device) export is unaffected. Mutually exclusive with a non-null resolvedDeliveryInfo.
+    val emailDeliveryLocked: Boolean = false,
     val estimatedSizeBytes: Long = 0L,
     val estimatedLogCount: Int = 0,
     val isLoadingAircraft: Boolean = true,

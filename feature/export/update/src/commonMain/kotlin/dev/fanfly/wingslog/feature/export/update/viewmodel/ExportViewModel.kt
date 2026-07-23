@@ -139,23 +139,23 @@ class ExportViewModel(
           val signedIn = user != null && !user.isAnonymous
           val authEmail = user?.email.orEmpty()
             .trim()
-          // When email delivery is disabled, behave as if the user has no email account: no
-          // resolved delivery info means no upload, no server-side email, and the local-only UI.
-          val info = when {
-            !emailDeliveryEnabled -> null
-            !signedIn -> null
-            authEmail.isNotBlank() -> ExportDeliveryInfo(
-              authEmail,
-              ExportDeliveryEmailSource.AUTH_FALLBACK
-            )
-
-            else -> null
+          // A signed-in user with an email is who email delivery is for; guests and email-less
+          // accounts are local-only regardless of the gate.
+          val eligibleForEmail = signedIn && authEmail.isNotBlank()
+          val info = if (emailDeliveryEnabled && eligibleForEmail) {
+            ExportDeliveryInfo(authEmail, ExportDeliveryEmailSource.AUTH_FALLBACK)
+          } else {
+            null
           }
+          // When the Pro gate is off but the user would otherwise get email delivery, surface the
+          // option shown-locked (a promo) instead of hiding it. Local export is unaffected.
+          val locked = eligibleForEmail && !emailDeliveryEnabled
           latestDeliveryInfo = info
           val current =
             _state.value as? ExportUiState.Configuring ?: return@collect
           val next = current.copy(
             resolvedDeliveryInfo = info,
+            emailDeliveryLocked = locked,
           )
           lastConfiguring = next
           _state.value = next
