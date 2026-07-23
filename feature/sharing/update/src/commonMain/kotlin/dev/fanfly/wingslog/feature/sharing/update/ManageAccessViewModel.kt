@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.viewing.ManageAccessUiState
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 class ManageAccessViewModel(
   private val sharingManager: SharingManager,
   private val cloudSync: CloudSyncSetting,
+  private val subscriptionManager: SubscriptionManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -36,6 +38,12 @@ class ManageAccessViewModel(
 
   init {
     observeShare()
+    // The host-a-share gate. Default-open while the subscription capability is off; when locked, the
+    // route surfaces the Invite action as a promo. Leaving/managing an existing share is unaffected.
+    viewModelScope.launch {
+      subscriptionManager.canHostShare()
+        .collect { canHost -> _uiState.update { it.copy(canHostShare = canHost) } }
+    }
     // Self-heal a missing member doc. The roster's membership comes from the ACL, but names and
     // photos come from the member docs — so a member whose doc is absent renders as a bare uid. This
     // is idempotent and cheap, and it means opening the screen repairs the row rather than staring

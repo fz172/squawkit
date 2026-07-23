@@ -99,6 +99,12 @@ data class ManageAccessUiState(
    * itself rather than failing on tap.
    */
   val syncEnabled: Boolean = true,
+  /**
+   * Hosting a share is a Pro capability (subscription gate). When off, the owner's Invite action is
+   * surfaced as a promo (opens the upsell) rather than hidden; managing/leaving an existing share is
+   * unaffected. `true` while the capability is off (default-open). See subscription_design.html §6.
+   */
+  val canHostShare: Boolean = true,
 ) {
   /** Owners manage access; everyone else sees a read-only roster. Never while sync is off. */
   val canManage: Boolean get() = myRole == ShareRole.OWNER && syncEnabled

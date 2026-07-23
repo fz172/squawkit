@@ -7,7 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -27,6 +29,8 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.settings.SettingsContent
 import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
+import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
+import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -47,6 +51,19 @@ fun AdaptiveShellRoute(
 ) {
   val viewModel = koinViewModel<AdaptiveShellViewModel>()
   val state by viewModel.uiState.collectAsState()
+  val atAircraftLimit by viewModel.atAircraftLimit.collectAsState()
+
+  // At the owned-aircraft limit, the Add-aircraft entry surfaces the promo instead of navigating
+  // (gate as promo, not a hidden action). Never reached from the empty-fleet state — 0 owned is
+  // never at limit. Default-open while the subscription capability is off.
+  var showAddAircraftUpsell by remember { mutableStateOf(false) }
+  val onAddAircraft = {
+    if (atAircraftLimit) {
+      showAddAircraftUpsell = true
+    } else {
+      navController.navigate(Screen.AddAircraft.route)
+    }
+  }
 
   // Manual invite-code entry (#209). Offered only when aircraft sharing is built into this app —
   // otherwise the affordance is dropped, not shown-and-broken. Reused by both the switcher (populated
@@ -109,7 +126,7 @@ fun AdaptiveShellRoute(
     onSelectSection = viewModel::selectSection,
     onSelectAircraft = viewModel::selectAircraft,
     onOpenSettings = viewModel::openSettings,
-    onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+    onAddAircraft = onAddAircraft,
     onEnterInviteCode = onEnterInviteCode,
     sectionContent = { section, aircraftId ->
       if (section == ShellSection.SETTINGS) {
@@ -140,6 +157,17 @@ fun AdaptiveShellRoute(
       )
     },
   )
+
+  if (showAddAircraftUpsell) {
+    ProUpsellSheet(
+      trigger = UpsellTrigger.ADD_AIRCRAFT,
+      onSeePlans = {
+        showAddAircraftUpsell = false
+        navController.navigate(Screen.Subscription.route)
+      },
+      onDismiss = { showAddAircraftUpsell = false },
+    )
+  }
 }
 
 /** Nested route for the Settings list itself, hosted inside the content pane in sidebar mode. */

@@ -4,9 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.sharing.viewing.ManageAccessScreen
+import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
+import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import org.koin.compose.viewmodel.koinViewModel
 
 /** Binds [ManageAccessViewModel] to [ManageAccessScreen]; registered on the shell nav graph. */
@@ -22,14 +27,33 @@ fun ManageAccessRoute(navController: NavController) {
     if (state.leaveSuccess || state.accessRevoked) navController.popBackStack()
   }
 
+  // Hosting a share is Pro-only: when locked, the owner's Invite action opens the promo instead of
+  // navigating (gate as promo). Accepting an invite and managing an existing share stay ungated.
+  var showUpsell by remember { mutableStateOf(false) }
+
   ManageAccessScreen(
     state = state,
     onChangeRole = viewModel::changeRole,
     onRevoke = viewModel::revoke,
     onLeave = viewModel::leave,
     onInvite = {
-      navController.navigate(Screen.InviteToAircraft.createRoute(viewModel.aircraftId))
+      if (state.canHostShare) {
+        navController.navigate(Screen.InviteToAircraft.createRoute(viewModel.aircraftId))
+      } else {
+        showUpsell = true
+      }
     },
     onBack = { navController.popBackStack() },
   )
+
+  if (showUpsell) {
+    ProUpsellSheet(
+      trigger = UpsellTrigger.SHARE_HOST,
+      onSeePlans = {
+        showUpsell = false
+        navController.navigate(Screen.Subscription.route)
+      },
+      onDismiss = { showUpsell = false },
+    )
+  }
 }
