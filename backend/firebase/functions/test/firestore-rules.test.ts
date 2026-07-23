@@ -91,3 +91,21 @@ describe("subscriptions/{uid} rules", () => {
     await assertFails(getDoc(doc(anon, "subscriptions/alice")));
   });
 });
+
+// Entitlement idempotency markers: pure server bookkeeping for the writer, functions-only. No client
+// may read (it would leak billing-event ids) or write (it could forge a "already applied" and block
+// a real grant). See docs/subscription/subscription_design.html §7.
+describe("entitlement_ingest/{eventId} rules", () => {
+  it("denies a signed-in user reading a marker", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "entitlement_ingest/evt-1"), { uid: "alice" });
+    });
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(getDoc(doc(alice, "entitlement_ingest/evt-1")));
+  });
+
+  it("denies a signed-in user writing a marker", async () => {
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(setDoc(doc(alice, "entitlement_ingest/evt-1"), { uid: "alice" }));
+  });
+});
