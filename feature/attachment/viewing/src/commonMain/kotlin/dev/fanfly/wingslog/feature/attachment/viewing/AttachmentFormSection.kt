@@ -46,6 +46,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
+import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.add
@@ -81,8 +83,8 @@ fun AttachmentFormSection(
   visibleAttachments: List<PendingAttachment>,
   isAnonymous: Boolean,
   filesAtLimit: Boolean,
-  // Developer Options `attachmentUploadEnabled`: gates only the file/photo picker options. Links are
-  // always available; when off the upload buttons render disabled with a "coming soon" note.
+  // Gates only the file/photo picker options (the subscription's canUploadAttachments). Links are
+  // always available; when off, the upload options become a locked promo that opens [ProUpsellSheet].
   uploadEnabled: Boolean,
   showPickerSheet: Boolean,
   onAddClick: () -> Unit,
@@ -92,7 +94,11 @@ fun AttachmentFormSection(
   onDismissSheet: () -> Unit,
   modifier: Modifier = Modifier,
   onPickError: () -> Unit = {},
+  // When attachments are gated off, tapping a locked upload option routes here (navigate to the
+  // subscription page). Null keeps the pre-subscription behavior (options simply disabled).
+  onSeePlans: (() -> Unit)? = null,
 ) {
+  var showUpsell by remember { mutableStateOf(false) }
   val pickFiles = rememberFilePicker(
     onResult = { files -> onPickFiles(files) },
     onReadError = onPickError,
@@ -167,7 +173,17 @@ fun AttachmentFormSection(
           name
         ); onDismissSheet()
       },
+      // Locked upload option tapped: close the picker, then surface the promo (avoids a nested sheet).
+      onUpsell = onSeePlans?.let { { onDismissSheet(); showUpsell = true } },
       onDismiss = onDismissSheet,
+    )
+  }
+
+  if (showUpsell && onSeePlans != null) {
+    ProUpsellSheet(
+      trigger = UpsellTrigger.ATTACHMENT_UPLOAD,
+      onSeePlans = { onSeePlans(); showUpsell = false },
+      onDismiss = { showUpsell = false },
     )
   }
 }
@@ -294,8 +310,12 @@ private fun AttachmentPickerSheet(
   onChooseFile: () -> Unit,
   onTakePhoto: () -> Unit,
   onAddLink: (url: String, name: String) -> Unit,
+  onUpsell: (() -> Unit)?,
   onDismiss: () -> Unit,
 ) {
+  // When upload is gated off but an upsell is available, the file/photo options stay tappable and
+  // route to the promo instead of the picker.
+  val upsellLocked = !uploadEnabled && onUpsell != null
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
   var showLinkField by remember { mutableStateOf(false) }
   var linkUrl by remember { mutableStateOf("") }
@@ -322,16 +342,16 @@ private fun AttachmentPickerSheet(
             AttachmentPickerOption(
               icon = Icons.Outlined.PhotoCamera,
               label = stringResource(AttachRes.string.take_photo),
-              onClick = onTakePhoto,
-              enabled = uploadEnabled && !filesAtLimit,
+              onClick = if (upsellLocked) onUpsell!! else onTakePhoto,
+              enabled = upsellLocked || (uploadEnabled && !filesAtLimit),
               modifier = Modifier.weight(1f),
             )
           }
           AttachmentPickerOption(
             icon = Icons.Default.Add,
             label = stringResource(AttachRes.string.choose_file),
-            onClick = onChooseFile,
-            enabled = uploadEnabled && !filesAtLimit,
+            onClick = if (upsellLocked) onUpsell!! else onChooseFile,
+            enabled = upsellLocked || (uploadEnabled && !filesAtLimit),
             modifier = Modifier.weight(1f),
           )
           AttachmentPickerOption(

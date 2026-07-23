@@ -109,6 +109,7 @@ fun EditSquawkRoute(
         onAddLink = viewModel::addLink,
         onDismissSheet = viewModel::hideAttachmentPicker,
         onPickError = viewModel::onFilePickError,
+        onSeePlans = { navController.navigate(Screen.Subscription.route) },
       )
     },
   )
