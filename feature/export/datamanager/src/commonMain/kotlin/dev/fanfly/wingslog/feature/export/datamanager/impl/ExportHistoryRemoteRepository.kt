@@ -134,7 +134,7 @@ class ExportHistoryRemoteRepository(
 }
 
 @Serializable
-private data class ExportRecordWire(
+internal data class ExportRecordWire(
   val exportId: String,
   val uid: String,
   val fileName: String,
@@ -155,7 +155,7 @@ private data class ExportRecordWire(
 )
 
 @Serializable
-private data class ExportRecordDateRangeWire(
+internal data class ExportRecordDateRangeWire(
   val kind: String,
   val months: Int = 0,
   val customStart: String = "",
@@ -163,7 +163,7 @@ private data class ExportRecordDateRangeWire(
 )
 
 @Serializable
-private data class ExportRecordAircraftWire(
+internal data class ExportRecordAircraftWire(
   val tailNumber: String,
   val makeModel: String,
 )
@@ -188,7 +188,7 @@ private fun ExportRecord.toWire(uid: String) = ExportRecordWire(
   remoteExpiresAtEpochMillis = remote_expires_at_epoch_millis.takeIf { it > 0L },
 )
 
-private fun ExportRecordWire.toExportRecord() = ExportRecord(
+internal fun ExportRecordWire.toExportRecord() = ExportRecord(
   export_id = exportId,
   file_path = "",
   file_name = fileName,
@@ -215,7 +215,7 @@ private fun ExportRecordDateRange.toWire() = ExportRecordDateRangeWire(
   customEnd = custom_end,
 )
 
-private fun ExportRecordDateRangeWire.toProto() = ExportRecordDateRange(
+internal fun ExportRecordDateRangeWire.toProto() = ExportRecordDateRange(
   kind = kind,
   months = months,
   custom_start = customStart,
@@ -227,7 +227,7 @@ private fun ExportRecordAircraft.toWire() = ExportRecordAircraftWire(
   makeModel = make_model,
 )
 
-private fun ExportRecordAircraftWire.toProto() = ExportRecordAircraft(
+internal fun ExportRecordAircraftWire.toProto() = ExportRecordAircraft(
   tail_number = tailNumber,
   make_model = makeModel,
 )
