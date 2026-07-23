@@ -5,17 +5,20 @@ import { adminDb, adminStorage } from "../config/firebaseAdmin.js";
 import { blobIdsInPayload, schemaCanOwnBlobs } from "./blobRefs.js";
 
 /**
- * The scheduled storage sweep (#159). Two jobs, over every user's tree:
+ * The scheduled storage sweep (#159). Three jobs, over every user's tree:
  *
  *   1. **Purge expired tombstones.** Nothing else does. Every record a user has ever deleted still
  *      sits in Firestore with its payload intact, growing without bound.
  *   2. **Collect orphaned blobs.** The backstop for bytes whose owning record is gone — including
  *      the entire pre-existing backlog, which is reachable precisely because the server can decode a
  *      payload (docs/storage/deletion_gc_design.html §3).
+ *   3. **Sum storage usage.** Total the account's blob bytes and record them on its entitlement doc,
+ *      the server-authoritative figure the subscription page shows (subscription_design.html §7).
  *
- * Both are destructive in ways that cannot be undone: purge a tombstone too early and a deleted
- * record RESURRECTS; delete a blob too eagerly and a user's photo is gone. Hence [SweepOptions.dryRun],
- * which defaults on, and the two grace windows.
+ * The first two are destructive in ways that cannot be undone: purge a tombstone too early and a
+ * deleted record RESURRECTS; delete a blob too eagerly and a user's photo is gone. Hence
+ * [SweepOptions.dryRun], which defaults on, and the two grace windows. The usage sum only writes a
+ * number, but it honours dry-run too — a rehearsal changes nothing.
  */
 
 export type SweepOptions = {
@@ -44,6 +47,12 @@ export type SweepReport = {
   purgedTombstonePaths: string[];
   /** True when the lists above were truncated — the counts are still complete. */
   truncated: boolean;
+  /**
+   * Total blob bytes owned by each account (keyed by uid), summed from the single `users/{uid}/`
+   * prefix and written to `subscriptions/{uid}.storageBytesUsed`. Shared-aircraft bytes accrue to
+   * the host, since blobs live under the host's uid. Present for every account scanned.
+   */
+  storageBytesByUid: Record<string, number>;
 };
 
 /** Enough to eyeball a real backlog, small enough that one log entry stays readable. */
@@ -66,6 +75,7 @@ export async function runStorageSweep(options: SweepOptions): Promise<SweepRepor
     orphanBlobPaths: [],
     purgedTombstonePaths: [],
     truncated: false,
+    storageBytesByUid: {},
   };
 
   const users = options.onlyUid
@@ -80,6 +90,9 @@ export async function runStorageSweep(options: SweepOptions): Promise<SweepRepor
     // dead; purge it first and the blobs it owned become unattributable orphans in the same run.
     await collectOrphanBlobs(uid, options, report);
     await purgeExpiredTombstones(uid, options, report);
+    // Usage last: in a real run the orphans are already gone, so the total counts only what actually
+    // remains — the drift-free figure the entitlement doc should carry.
+    await sumStorageUsage(uid, options, report);
   }
 
   // Two entries on purpose: a summary that is easy to scan, and the itemised list that makes the
@@ -90,6 +103,7 @@ export async function runStorageSweep(options: SweepOptions): Promise<SweepRepor
     tombstonesPurged: report.tombstonesPurged,
     orphanBlobsCollected: report.orphanBlobsCollected,
     aircraftSkipped: report.aircraftSkipped,
+    accountsMeasured: Object.keys(report.storageBytesByUid).length,
     truncated: report.truncated,
   });
   logger.info(options.dryRun ? "Storage sweep — what it WOULD delete" : "Storage sweep — deleted", {
@@ -196,6 +210,37 @@ async function collectOrphanBlobs(
       record(report.orphanBlobPaths, file.name, report);
       if (!options.dryRun) await file.delete({ ignoreNotFound: true });
     }
+  }
+}
+
+/**
+ * Sum every blob the account owns and record it on the entitlement doc.
+ *
+ * One LIST over the single prefix `users/{uid}/` — where all of an account's blobs live, including
+ * shared-aircraft bytes, which accrue to the host because they sit under the host's uid. The total
+ * is written to `subscriptions/{uid}.storageBytesUsed` via field merge, so it never disturbs the
+ * billing pipeline's own fields on that doc (subscription_design.html §7). Authoritative and
+ * drift-free: it counts what is actually stored, so there is no upload-path hook to keep in sync.
+ *
+ * Honours dry-run: the total is still computed and reported, but nothing is written.
+ */
+async function sumStorageUsage(
+  uid: string,
+  options: SweepOptions,
+  report: SweepReport,
+): Promise<void> {
+  // getFiles auto-paginates: it fetches every page and returns the full list for the prefix.
+  const [files] = await adminStorage.bucket().getFiles({ prefix: `users/${uid}/` });
+
+  let totalBytes = 0;
+  for (const file of files) {
+    // List metadata carries the object size; coerce because it arrives as a numeric string.
+    totalBytes += Number(file.metadata.size ?? 0);
+  }
+
+  report.storageBytesByUid[uid] = totalBytes;
+  if (!options.dryRun) {
+    await adminDb.doc(`subscriptions/${uid}`).set({ storageBytesUsed: totalBytes }, { merge: true });
   }
 }
 
