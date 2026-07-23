@@ -48,6 +48,7 @@ kotlin {
       implementation(project(":feature:export:datamanager"))
       implementation(project(":feature:export:sharedassets"))
       implementation(project(":feature:subscription:datamanager"))
+      implementation(project(":feature:subscription:viewing"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:squawk:datamanager"))
@@ -76,4 +77,6 @@ dependencies {
   implementation(platform(libs.firebase.bom))
   testImplementation(libs.junit)
   testImplementation(libs.truth)
+  testImplementation(libs.mockk)
+  testImplementation(libs.kotlinx.coroutines.test)
 }

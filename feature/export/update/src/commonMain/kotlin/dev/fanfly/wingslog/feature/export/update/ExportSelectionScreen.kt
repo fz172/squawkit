@@ -40,9 +40,11 @@ import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.IosShare
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TableView
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
@@ -96,6 +98,8 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import dev.fanfly.wingslog.feature.export.update.viewmodel.AircraftSelectionRow
 import dev.fanfly.wingslog.feature.export.update.viewmodel.DateRangeOption
 import dev.fanfly.wingslog.feature.export.update.viewmodel.ExportUiState
+import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
+import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -121,6 +125,8 @@ import wingslog.feature.export.sharedassets.generated.resources.export_custom_st
 import wingslog.feature.export.sharedassets.generated.resources.export_date_range_section
 import wingslog.feature.export.sharedassets.generated.resources.export_email_action
 import wingslog.feature.export.sharedassets.generated.resources.export_email_body
+import wingslog.feature.export.sharedassets.generated.resources.export_email_locked_subtitle
+import wingslog.feature.export.sharedassets.generated.resources.export_email_locked_title
 import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
 import wingslog.feature.export.sharedassets.generated.resources.export_error_details
 import wingslog.feature.export.sharedassets.generated.resources.export_error_subtitle
@@ -184,6 +190,7 @@ fun ExportSelectionScreen(
   onShareExport: (String, String, String, String) -> Unit,
   onDone: () -> Unit,
   onRetry: () -> Unit,
+  onSeePlans: () -> Unit,
 ) {
   Scaffold(
     topBar = {
@@ -228,6 +235,7 @@ fun ExportSelectionScreen(
         onCustomRangeChange = onCustomRangeChange,
         onNavigateToHistory = onNavigateToHistory,
         onExport = onExport,
+        onSeePlans = onSeePlans,
       )
 
       is ExportUiState.Running -> RunningContent(
@@ -267,18 +275,23 @@ private fun ConfiguringContent(
   onCustomRangeChange: (LocalDate, LocalDate) -> Unit,
   onNavigateToHistory: () -> Unit,
   onExport: () -> Unit,
+  onSeePlans: () -> Unit,
 ) {
   if (!state.isLoadingAircraft && state.aircraft.isEmpty()) {
     EmptyAircraftContent(modifier, onNavigateToHistory)
     return
   }
 
+  var showUpsell by remember { mutableStateOf(false) }
+
   Box(
     modifier = modifier.fillMaxSize(),
     contentAlignment = Alignment.TopCenter,
   ) {
+    // Both the resolved "Sent to …" line and the shown-locked promo row add a footer row below the
+    // primary button, so either one reserves the taller bottom-bar height.
     val bottomBarReservedHeight =
-      if (state.resolvedDeliveryInfo?.destinationEmail != null) {
+      if (state.resolvedDeliveryInfo?.destinationEmail != null || state.emailDeliveryLocked) {
         ExportBottomBarWithEmailReservedHeight
       } else {
         ExportBottomBarReservedHeight
@@ -301,9 +314,20 @@ private fun ConfiguringContent(
       Box(
         modifier = Modifier.align(Alignment.BottomCenter),
       ) {
-        ExportBottomBar(state, onExport)
+        ExportBottomBar(state, onExport, onEmailLocked = { showUpsell = true })
       }
     }
+  }
+
+  if (showUpsell) {
+    ProUpsellSheet(
+      trigger = UpsellTrigger.EMAIL_EXPORT,
+      onSeePlans = {
+        onSeePlans()
+        showUpsell = false
+      },
+      onDismiss = { showUpsell = false },
+    )
   }
 }
 
@@ -703,6 +727,7 @@ private fun DateRangePickerHeadlineCell(
 private fun ExportBottomBar(
   state: ExportUiState.Configuring,
   onExport: () -> Unit,
+  onEmailLocked: () -> Unit,
 ) {
   val deliveryEmail = state.resolvedDeliveryInfo?.destinationEmail
   Box(
@@ -789,8 +814,53 @@ private fun ExportBottomBar(
           textAlign = TextAlign.Center,
           modifier = Modifier.fillMaxWidth(),
         )
+      } else if (state.emailDeliveryLocked) {
+        LockedEmailRow(onClick = onEmailLocked)
       }
     }
+  }
+}
+
+/**
+ * Shown-locked email-delivery affordance: the Pro-only "email a copy" option is surfaced as a
+ * tappable promo (opening [ProUpsellSheet]) rather than hidden. Saving to the device is unaffected.
+ */
+@Composable
+private fun LockedEmailRow(onClick: () -> Unit) {
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+      .clickable(onClick = onClick)
+      .padding(vertical = Spacing.small, horizontal = Spacing.small),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+  ) {
+    Icon(
+      imageVector = Icons.Default.Lock,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.primary,
+      modifier = Modifier.size(18.dp),
+    )
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = stringResource(Res.string.export_email_locked_title),
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface,
+      )
+      Text(
+        text = stringResource(Res.string.export_email_locked_subtitle),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+    Icon(
+      imageVector = Icons.Default.Star,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.primary,
+      modifier = Modifier.size(18.dp),
+    )
   }
 }
 
