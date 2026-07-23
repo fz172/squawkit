@@ -156,4 +156,6 @@ dependencies {
   testImplementation(libs.mockk)
   testImplementation(libs.truth)
   testImplementation(libs.kotlinx.coroutines.test)
+  // Reflects over Wire proto fields to prove the export wire docs map all of them.
+  testImplementation(kotlin("reflect"))
 }

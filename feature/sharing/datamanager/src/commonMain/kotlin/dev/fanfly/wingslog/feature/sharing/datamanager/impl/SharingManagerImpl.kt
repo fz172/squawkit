@@ -506,7 +506,7 @@ class SharingManagerImpl(
  * an owner doing FAR 43 preventive maintenance with no A&P certificate still publishes a valid
  * name-only mirror (design §7).
  */
-private fun Technician.toMirrorWire(): TechnicianMirrorWire =
+internal fun Technician.toMirrorWire(): TechnicianMirrorWire =
   TechnicianMirrorWire(
     name = name,
     certificateType = certificate_type.name,
@@ -523,7 +523,7 @@ private fun Technician.toMirrorWire(): TechnicianMirrorWire =
  * Enum names are decoded leniently: an unknown value from a newer client degrades to NONE/UNKNOWN
  * rather than throwing and taking out the whole roster.
  */
-private fun TechnicianMirrorWire.toTechnician(memberUid: String): Technician =
+internal fun TechnicianMirrorWire.toTechnician(memberUid: String): Technician =
   Technician(
     id = memberUid,
     name = name,
@@ -602,7 +602,7 @@ private data class MemberWire(
  * member's own client; certificate fields may be empty (a name-only mirror is still valid).
  */
 @Serializable
-private data class TechnicianMirrorWire(
+internal data class TechnicianMirrorWire(
   val name: String = "",
   val certificateType: String = "",
   val certNumber: String = "",

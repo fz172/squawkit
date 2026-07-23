@@ -47,6 +47,7 @@ async function logExists(id: string): Promise<boolean> {
 beforeEach(async () => {
   await adminDb.recursiveDelete(adminDb.doc(`users/${UID}`));
   await adminStorage.bucket().deleteFiles({ prefix: `users/${UID}/` });
+  await adminDb.doc(`subscriptions/${UID}`).delete();
   await adminDb.doc(`users/${UID}/aircraft/${AC}`).set({ deleted: false, schema: "aircraft.Aircraft" });
 });
 
@@ -159,6 +160,62 @@ describe("dry run", () => {
     // …and everything is still there.
     expect(await logExists("old")).toBe(true);
     expect(await blobExists("orphan")).toBe(true);
+  });
+});
+
+describe("storage usage sum", () => {
+  const subDoc = () => adminDb.doc(`subscriptions/${UID}`);
+
+  it("sums blob bytes across the tree and writes storageBytesUsed", async () => {
+    // grace 7 keeps these fresh blobs, so the sum sees them; each putBlob writes 3 bytes.
+    await putBlob("a");
+    await putBlob("b");
+
+    const report = await runStorageSweep(DEFAULTS);
+
+    expect(report.storageBytesByUid[UID]).toBe(6);
+    expect((await subDoc().get()).data()?.storageBytesUsed).toBe(6);
+  });
+
+  it("records zero for an account with no blobs", async () => {
+    const report = await runStorageSweep(DEFAULTS);
+
+    expect(report.storageBytesByUid[UID]).toBe(0);
+    expect((await subDoc().get()).data()?.storageBytesUsed).toBe(0);
+  });
+
+  it("merges usage without disturbing the billing fields on the doc", async () => {
+    // The billing pipeline owns these fields; the sweep must never clobber them.
+    await subDoc().set({ status: 1, memberSinceMillis: 123 });
+    await putBlob("a");
+
+    await runStorageSweep(DEFAULTS);
+
+    const data = (await subDoc().get()).data();
+    expect(data?.status).toBe(1);
+    expect(data?.memberSinceMillis).toBe(123);
+    expect(data?.storageBytesUsed).toBe(3);
+  });
+
+  it("counts only what remains after orphan collection", async () => {
+    // The orphan is deleted earlier in the same run, so the authoritative total excludes it.
+    await putBlob("orphan");
+    await putLog("live", { deleted: false, blobs: [] });
+
+    const report = await runStorageSweep({ ...DEFAULTS, orphanGraceDays: 0 });
+
+    expect(report.orphanBlobsCollected).toBe(1);
+    expect(report.storageBytesByUid[UID]).toBe(0);
+    expect((await subDoc().get()).data()?.storageBytesUsed).toBe(0);
+  });
+
+  it("computes usage but writes nothing on a dry run", async () => {
+    await putBlob("a");
+
+    const report = await runStorageSweep({ ...DEFAULTS, dryRun: true });
+
+    expect(report.storageBytesByUid[UID]).toBe(3);
+    expect((await subDoc().get()).exists).toBe(false);
   });
 });
 
