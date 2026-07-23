@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -32,8 +33,11 @@ class ManageAccessViewModelTest {
   private val dispatcher = UnconfinedTestDispatcher()
   private lateinit var sharing: SharingManager
   private lateinit var cloudSync: CloudSyncSetting
+  private lateinit var subscription: SubscriptionManager
   private val role = MutableStateFlow<ShareRole?>(ShareRole.OWNER)
   private val share = MutableStateFlow(AircraftShareState())
+  // Host-a-share gate; on (default-open) unless a test flips it.
+  private val canHostShare = MutableStateFlow(true)
 
   @Before
   fun setUp() {
@@ -41,8 +45,10 @@ class ManageAccessViewModelTest {
     sharing = mockk()
     // Sharing is a cloud feature (PRD E2); these tests are about the roster, so sync is on.
     cloudSync = CloudSyncSetting { true }
+    subscription = mockk()
     every { sharing.observeMyRole(AC_ID) } returns role
     every { sharing.observeShareState(AC_ID) } returns share
+    every { subscription.canHostShare() } returns canHostShare
     // Opening the screen republishes our own member doc, self-healing a missing one.
     coEvery { sharing.publishTechnicianMirror(any()) } returns Result.success(Unit)
   }
@@ -53,6 +59,7 @@ class ManageAccessViewModelTest {
   private fun viewModel() = ManageAccessViewModel(
     sharingManager = sharing,
     cloudSync = cloudSync,
+    subscriptionManager = subscription,
     savedStateHandle = SavedStateHandle(mapOf(Screen.AIRCRAFT_ID to AC_ID)),
   )
 
@@ -210,5 +217,20 @@ class ManageAccessViewModelTest {
     val state = viewModel().uiState.value
 
     assertThat(state.canManage).isTrue()
+  }
+
+  @Test
+  fun canHostShare_defaultsOpen() = runTest {
+    canHostShare.value = true
+
+    assertThat(viewModel().uiState.value.canHostShare).isTrue()
+  }
+
+  @Test
+  fun canHostShare_lockedWhenGateOff() = runTest {
+    canHostShare.value = false
+
+    // The Invite action stays visible for owners but is surfaced as a promo by the route.
+    assertThat(viewModel().uiState.value.canHostShare).isFalse()
   }
 }

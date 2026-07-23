@@ -9,12 +9,16 @@ import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedAircraftStore
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -25,13 +29,28 @@ import kotlinx.coroutines.launch
  * navigation argument carried per destination — see `docs/web/web_adaptive_layout_design.html` §6.
  */
 class AdaptiveShellViewModel(
-  fleetManager: FleetManager,
+  private val fleetManager: FleetManager,
   private val technicianManager: TechnicianManager,
   private val authManager: AuthManager,
   private val sharingManager: SharingManager,
+  private val subscriptionManager: SubscriptionManager,
   private val syncEngine: SyncEngine,
   private val selectedAircraftStore: SelectedAircraftStore,
 ) : ViewModel() {
+
+  /**
+   * Whether the account is at its owned-aircraft limit (Pro gate). Shared aircraft are pointers into
+   * another account's tree and never count against the limit. `false` while the capability is off
+   * (default-open) since [SubscriptionManager.aircraftLimit] is unlimited then. The Add-aircraft
+   * entry consults this to open the upsell instead of navigating; see subscription_design.html §4/§6.
+   */
+  val atAircraftLimit: StateFlow<Boolean> =
+    combine(
+      fleetManager.observeFleetDashboard(),
+      subscriptionManager.aircraftLimit(),
+    ) { fleet, limit ->
+      limit != null && fleet.count { !it.shared } >= limit
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
   /**
    * The aircraft remembered from the last session, used as the initial selection so the app reopens

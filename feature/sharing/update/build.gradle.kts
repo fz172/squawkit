@@ -46,6 +46,8 @@ kotlin {
       implementation(project(":feature:sharing:sharedassets"))
       implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:sharing:viewing"))
+      implementation(project(":feature:subscription:datamanager"))
+      implementation(project(":feature:subscription:viewing"))
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.androidx.navigation.compose)
       implementation(libs.gitlive.firebase.auth)
