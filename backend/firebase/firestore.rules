@@ -101,6 +101,12 @@ service cloud.firestore {
       allow write: if false; // functions only
     }
 
+    // Idempotency markers for the entitlement writer, one per applied billing event. Pure server
+    // bookkeeping (subscription_design.html §7) — no client may read or write it, only the Admin SDK.
+    match /entitlement_ingest/{eventId} {
+      allow read, write: if false; // functions only
+    }
+
     // --- Pairing-code invites (#164) -----------------------------------------------------------
 
     // The code IS the secret: the document holds the aircraft id, the host uid, and the role, keyed

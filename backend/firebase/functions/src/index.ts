@@ -13,6 +13,7 @@ import { scheduledStorageSweep } from "./storage/storageSweepTriggers.js";
 import { redeemAircraftShareInvite } from "./sharing/redeemAircraftShareInvite.js";
 import { revokeAircraftShare } from "./sharing/revokeAircraftShare.js";
 import { updateAircraftShareRole } from "./sharing/updateAircraftShareRole.js";
+import { grantPromoEntitlement } from "./subscription/grantPromoEntitlement.js";
 import { requireAuthenticatedApp } from "./shared/auth.js";
 
 type HealthProbeResponse = {
@@ -49,3 +50,4 @@ export { onRecordDeleted };
 export { scheduledStorageSweep };
 export { streamBlob };
 export { getBlobUploadSession };
+export { grantPromoEntitlement };
