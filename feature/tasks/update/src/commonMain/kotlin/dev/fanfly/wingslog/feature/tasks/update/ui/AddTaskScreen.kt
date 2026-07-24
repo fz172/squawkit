@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -189,6 +190,8 @@ fun AddTaskScreen(
           Column(
             modifier = Modifier.fillMaxHeight()
               .constrainedContentWidth(ContentWidth.Form)
+              // Keep a focused field above the keyboard (edge-to-edge doesn't resize the window). (#332)
+              .imePadding()
               .verticalScroll(rememberScrollState())
               .padding(Spacing.screenPadding)
           ) {
