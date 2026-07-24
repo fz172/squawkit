@@ -26,6 +26,18 @@ interface SharingManager {
   fun observeMyRole(acId: String): Flow<ShareRole?>
 
   /**
+   * Whether [acId] is hosted by *another* account — shared into this user's fleet, so the host, not
+   * this user, owns and pays for its storage. Answered locally from the refs store (a ref exists iff
+   * the aircraft was shared in), so it is instant and offline-correct; false for an own aircraft and
+   * while signed out.
+   *
+   * This is what makes the attachment gate aircraft-scoped (design §9.7): on a foreign host's
+   * aircraft the member is never blocked by their *own* subscription — the host's entitlement governs
+   * and the broker enforces it — so an unsubscribed technician can still upload on a paid owner's plane.
+   */
+  fun observeIsForeignHosted(acId: String): Flow<Boolean>
+
+  /**
    * Whether this aircraft is part of a share at all — true for *every* partner in it, the hosting
    * owner included, false for an aircraft nobody else can see.
    *

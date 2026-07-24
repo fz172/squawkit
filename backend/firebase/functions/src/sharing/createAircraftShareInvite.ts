@@ -18,6 +18,10 @@ import {
   type AircraftShareDoc,
   type ShareRole,
 } from "./sharingModels.js";
+import {
+  isEntitledToAttachments,
+  subscriptionDocPath,
+} from "../subscription/entitlementModel.js";
 
 type CreateRequest = { aircraftId: string; role: ShareRole; aircraftLabel: string };
 type CreateResponse = { code: string; formattedCode: string; codeId: string; expiresAtMs: number };
@@ -54,7 +58,12 @@ export const createAircraftShareInvite = onCall<CreateRequest, Promise<CreateRes
     const expiresAt = Timestamp.fromMillis(now + INVITE_TTL_MS);
 
     await adminDb.runTransaction(async (tx) => {
-      const shareSnap = await tx.get(shareRef);
+      // Both reads first — a transaction must read before it writes. The subscription read only
+      // matters on the bootstrap path below, but reading it unconditionally keeps the ordering simple.
+      const [shareSnap, subSnap] = await Promise.all([
+        tx.get(shareRef),
+        tx.get(adminDb.doc(subscriptionDocPath(uid))),
+      ]);
 
       // Non-owners cannot invite. On a not-yet-shared aircraft there is no ACL, and the caller owns
       // the aircraft (checked above) — so this bootstraps it with them as owner.
@@ -69,6 +78,11 @@ export const createAircraftShareInvite = onCall<CreateRequest, Promise<CreateRes
           aircraftId,
           memberRoles: { [uid]: SHARE_ROLE.OWNER },
           createdAt: FieldValue.serverTimestamp(),
+          // Stamp the host's entitlement at creation so a free host's first share is gated from the
+          // outset (design §9.7). Without this the field would be absent — which the broker treats as
+          // enabled — until the host's next subscription write, letting a free host briefly host
+          // attachments. The projector (projectAttachmentEntitlement) maintains it thereafter.
+          attachmentsEnabled: isEntitledToAttachments(subSnap.data(), now),
         });
       }
 
