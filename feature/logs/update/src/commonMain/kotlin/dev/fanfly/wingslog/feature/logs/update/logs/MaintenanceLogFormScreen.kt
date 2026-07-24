@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -267,6 +268,10 @@ fun MaintenanceLogFormScreen(
               modifier = Modifier
                 .fillMaxHeight()
                 .constrainedContentWidth(ContentWidth.Form)
+                // Shrink the scroll viewport by the keyboard height so a focused field (e.g. the long
+                // work-description) scrolls above the IME instead of being hidden behind it (edge-to-
+                // edge doesn't resize the window). Matches EditAircraft/EditTechnician. (#332)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(Spacing.screenPadding),
             ) {
