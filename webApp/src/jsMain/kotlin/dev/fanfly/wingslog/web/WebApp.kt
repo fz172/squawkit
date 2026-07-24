@@ -116,9 +116,10 @@ fun WebApp() {
                 },
               )
             }
-            composable(Screen.AdaptiveShell.route) {
+            composable(Screen.AdaptiveShell.route) { entry ->
               AdaptiveShellRoute(
                 navController = navController,
+                shellEntry = entry,
                 isStressTestSupported = appCapability.isStressTestSupported,
               )
             }

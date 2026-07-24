@@ -23,8 +23,15 @@ fun ManageAccessRoute(navController: NavController) {
   // Leaving removes this aircraft from the user's fleet — pop back once it succeeds. Being revoked
   // while the screen is open is the same ending, arrived at from the other side: we are no longer a
   // member, so the roster on screen is stale and must not stay up.
-  LaunchedEffect(state.leaveSuccess, state.accessRevoked) {
-    if (state.leaveSuccess || state.accessRevoked) navController.popBackStack()
+  //
+  // Both flip true when you leave: leave() self-revokes, so leaveSuccess lands first and then the
+  // roster listener is denied and sets accessRevoked. Keying the effect on the two flags separately
+  // re-ran it on the second flip and popped TWICE — the second pop took out the shell beneath,
+  // leaving an empty back stack (black screen / the getBackStackEntry crash). Derive a single trigger
+  // so it fires once, and pop THIS screen by route so a stray fire can never remove the shell.
+  val shouldLeave = state.leaveSuccess || state.accessRevoked
+  LaunchedEffect(shouldLeave) {
+    if (shouldLeave) navController.popBackStack(Screen.ManageAccess.route, inclusive = true)
   }
 
   // Hosting a share is Pro-only: when locked, the owner's Invite action opens the promo instead of
