@@ -14,6 +14,7 @@ import { redeemAircraftShareInvite } from "./sharing/redeemAircraftShareInvite.j
 import { revokeAircraftShare } from "./sharing/revokeAircraftShare.js";
 import { updateAircraftShareRole } from "./sharing/updateAircraftShareRole.js";
 import { grantPromoEntitlement } from "./subscription/grantPromoEntitlement.js";
+import { projectAttachmentEntitlement } from "./subscription/projectAttachmentEntitlement.js";
 import { requireAuthenticatedApp } from "./shared/auth.js";
 
 type HealthProbeResponse = {
@@ -51,3 +52,4 @@ export { scheduledStorageSweep };
 export { streamBlob };
 export { getBlobUploadSession };
 export { grantPromoEntitlement };
+export { projectAttachmentEntitlement };

@@ -68,6 +68,8 @@ class SquawkFormViewModelTest {
 
     // Prevent the init-block flows from suspending forever.
     every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
+    // Own aircraft by default; foreign-hosted tests override this.
+    every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
     every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
       emptyList()
     )
@@ -564,13 +566,27 @@ class SquawkFormViewModelTest {
   }
 
   @Test
-  fun attachStaysOff_whenTheFlagIsOff() = runTest(testDispatcher) {
-    // The feature flag (and later, the P8.7 entitlement) still has the final say.
+  fun attachStaysOff_onOwnAircraft_whenTheEntitlementIsOff() = runTest(testDispatcher) {
+    // On an OWN aircraft the member's own entitlement has the final say (P8.7 §9.7).
     every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
+    every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
 
     val viewModel = buildViewModelForNew()
     advanceUntilIdle()
 
     assertThat(viewModel.attachmentUploadEnabled.value).isFalse()
+  }
+
+  @Test
+  fun attachAvailable_onForeignHostedAircraft_evenWithoutOwnEntitlement() = runTest(testDispatcher) {
+    // The host pays and the broker enforces the host's entitlement, so a member with no subscription
+    // of their own can still attach on a paid owner's aircraft (P8.7 §9.7).
+    every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
+    every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(true)
+
+    val viewModel = buildViewModelForNew()
+    advanceUntilIdle()
+
+    assertThat(viewModel.attachmentUploadEnabled.value).isTrue()
   }
 }

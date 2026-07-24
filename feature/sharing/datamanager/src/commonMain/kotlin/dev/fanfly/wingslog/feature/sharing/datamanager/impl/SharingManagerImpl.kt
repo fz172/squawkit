@@ -232,6 +232,15 @@ class SharingManagerImpl(
     }
   }
 
+  override fun observeIsForeignHosted(acId: String): Flow<Boolean> {
+    val uid = auth.currentUser?.uid ?: return flowOf(false)
+    // A ref exists iff the aircraft was shared *into* this fleet — exactly the foreign-hosted case,
+    // and the co-owner-on-a-foreign-tree case too, since a co-owner also holds a ref.
+    return refStore.observe(acId, EntityScope.userRoot(uid))
+      .map { it != null }
+      .distinctUntilChanged()
+  }
+
   override suspend fun createInvite(
     acId: String,
     role: ShareRole,

@@ -77,6 +77,8 @@ class MaintenanceLogFormViewModelTest {
 
     // Prevent the init-block flows from suspending forever.
     every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
+    // Own aircraft by default; foreign-hosted tests override this.
+    every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
     every { fleetManager.loadAircraft(TEST_AIRCRAFT_ID) } returns flowOf(null)
     every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
       emptyList()
@@ -91,6 +93,32 @@ class MaintenanceLogFormViewModelTest {
   fun tearDown() {
     Dispatchers.resetMain()
   }
+
+  @Test
+  fun attachAvailable_onForeignHostedAircraft_evenWithoutOwnEntitlement() =
+    runTest(testDispatcher) {
+      // The host pays and the broker enforces the host's entitlement, so a member with no
+      // subscription of their own can still attach on a paid owner's aircraft (P8.7 §9.7).
+      every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
+      every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(true)
+
+      val viewModel = buildViewModelForNew()
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.attachmentUploadEnabled).isTrue()
+    }
+
+  @Test
+  fun attachStaysOff_onOwnAircraft_whenTheEntitlementIsOff() =
+    runTest(testDispatcher) {
+      every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
+      every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
+
+      val viewModel = buildViewModelForNew()
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.attachmentUploadEnabled).isFalse()
+    }
 
   @Test
   fun observeSquawks_editingLog_includesSquawkAddressedByThisLog() =

@@ -106,11 +106,16 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun observeAttachmentAccess() {
-    // A member's attachments on a shared aircraft travel through the broker (P8.4 §9.2); the gate is
-    // now the subscription (default-open until the subscription capability ships).
-    subscriptionManager.canUploadAttachments()
-      .onEach { canUpload ->
-        _uiState.update { it.copy(attachmentUploadEnabled = canUpload) }
+    // The attachment gate is aircraft-scoped (§9.7): on a foreign host's aircraft the host pays and
+    // the broker enforces the host's entitlement, so the member is never gated by their own
+    // subscription; on an own aircraft the member's own entitlement governs. (Both default-open until
+    // the subscription capability ships.)
+    combine(
+      subscriptionManager.canUploadAttachments(),
+      sharingManager.observeIsForeignHosted(aircraftId),
+    ) { canUpload, foreignHosted -> foreignHosted || canUpload }
+      .onEach { enabled ->
+        _uiState.update { it.copy(attachmentUploadEnabled = enabled) }
       }
       .launchIn(viewModelScope)
   }
