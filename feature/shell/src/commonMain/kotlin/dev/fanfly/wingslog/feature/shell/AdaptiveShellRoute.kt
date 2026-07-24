@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -47,6 +48,7 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 @Composable
 fun AdaptiveShellRoute(
   navController: NavController,
+  shellEntry: NavBackStackEntry,
   isStressTestSupported: Boolean,
 ) {
   val viewModel = koinViewModel<AdaptiveShellViewModel>()
@@ -85,9 +87,12 @@ fun AdaptiveShellRoute(
   // The shell's own back-stack entry: dialog destinations (add/edit squawk, log, etc.) pushed on
   // top of it write a pending success message here (via previousBackStackEntry) before popping, so
   // this is where cross-screen snackbars land once the dialog closes.
-  val shellEntry = remember(navController) {
-    navController.getBackStackEntry(Screen.AdaptiveShell.route)
-  }
+  //
+  // [shellEntry] is the entry the NavHost is composing this destination for — passed in rather than
+  // re-derived with navController.getBackStackEntry(route). That lookup THROWS when the route is
+  // momentarily absent from the back stack, which the controller can report mid-pop; the shell then
+  // recomposing during the pop that ends a share crashed the app. The passed entry is always the one
+  // being composed, and it is the same object dialogs target via previousBackStackEntry.
   val successMessage by shellEntry.savedStateHandle
     .getStateFlow<String?>(CROSS_SCREEN_SUCCESS_MESSAGE, null)
     .collectAsState()

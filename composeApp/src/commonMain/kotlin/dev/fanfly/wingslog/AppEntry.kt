@@ -129,9 +129,10 @@ private fun NavGraphBuilder.shellGraph(
     startDestination = Screen.AdaptiveShell.route,
     route = GRAPH_SHELL
   ) {
-    composable(Screen.AdaptiveShell.route) {
+    composable(Screen.AdaptiveShell.route) { entry ->
       AdaptiveShellRoute(
         navController = navController,
+        shellEntry = entry,
         isStressTestSupported = isStressTestSupported,
       )
     }
