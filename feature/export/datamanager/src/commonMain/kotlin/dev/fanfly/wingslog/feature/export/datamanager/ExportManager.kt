@@ -44,4 +44,11 @@ interface ExportManager {
    * (including the no-op case where it was already on device).
    */
   suspend fun saveToDevice(exportId: String): Boolean
+
+  /**
+   * Returns the archive bytes for [exportId], for platforms with no durable local file handle to
+   * hand straight to the OS (i.e. web) — prefers an in-session local cache and falls back to the
+   * cloud copy when uploaded. Null when neither is available.
+   */
+  suspend fun downloadArchiveBytes(exportId: String): ByteArray?
 }

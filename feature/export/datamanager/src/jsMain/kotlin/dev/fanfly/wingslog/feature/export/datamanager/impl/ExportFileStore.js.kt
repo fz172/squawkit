@@ -2,33 +2,31 @@ package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
-import kotlinx.browser.document
 import kotlinx.browser.localStorage
-import kotlinx.browser.window
-import org.khronos.webgl.Uint8Array
-import org.w3c.dom.Node
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-// Give the freshly-clicked download a moment to start before the object URL is revoked.
-private const val OBJECT_URL_REVOKE_DELAY_MS = 60_000
-
 /**
- * Web [ExportFileStore]. Browsers have no app-private archive directory, so a finished export is
- * streamed straight to the user's Downloads via a temporary object URL + programmatic anchor click.
+ * Web [ExportFileStore]. Browsers have no app-private archive directory, so a finished export's
+ * bytes are cached in memory (keyed by file name) until the user explicitly downloads it, at which
+ * point they're streamed to the user's Downloads via a temporary object URL + programmatic anchor
+ * click (see [ExportFileDownloader]).
  *
- * The history index (export scope/metadata) is persisted in `localStorage`, base64-encoded. Because
- * the browser owns the downloaded file once it lands, the app can't re-read or re-delete it, so
- * [listExports] returns the stored index verbatim and [deleteExport] only forgets the metadata.
+ * The history index (export scope/metadata) is persisted in `localStorage`, base64-encoded. The
+ * in-memory byte cache does not survive a page reload, so a later download for an already-synced
+ * export falls back to the cloud copy (see `ExportManager.downloadArchiveBytes`); [listExports]
+ * returns the stored index verbatim and [deleteExport] only forgets the metadata.
  */
 @OptIn(ExperimentalEncodingApi::class)
 actual class ExportFileStore {
+
+  private val cachedArchives = mutableMapOf<String, ByteArray>()
 
   actual suspend fun writeZip(
     fileName: String,
     bytes: ByteArray
   ): ExportedFile {
-    triggerDownload(fileName, bytes)
+    cachedArchives[fileName] = bytes
     return ExportedFile(
       // No durable, app-reachable path exists on the web; the file name is the only stable handle.
       filePath = fileName,
@@ -37,6 +35,8 @@ actual class ExportFileStore {
       sizeBytes = bytes.size.toLong(),
     )
   }
+
+  actual suspend fun readBytes(filePath: String): ByteArray? = cachedArchives[filePath]
 
   actual suspend fun saveRecord(ownerUid: String, record: ExportRecord) {
     writeIndex(
@@ -53,24 +53,6 @@ actual class ExportFileStore {
     if (stored.none { it.export_id == exportId }) return false
     writeIndex(ownerUid, ExportRecordManifest.remove(stored, exportId))
     return true
-  }
-
-  private fun triggerDownload(fileName: String, bytes: ByteArray) {
-    val data = Uint8Array(bytes.toTypedArray())
-    val type = "application/zip"
-    val url =
-      js("URL.createObjectURL(new Blob([data], { type: type }))").unsafeCast<String>()
-    val anchor = document.createElement("a")
-      .asDynamic()
-    anchor.href = url
-    anchor.download = fileName
-    document.body?.appendChild(anchor.unsafeCast<Node>())
-    anchor.click()
-    document.body?.removeChild(anchor.unsafeCast<Node>())
-    window.setTimeout(
-      { js("URL.revokeObjectURL(url)"); Unit },
-      OBJECT_URL_REVOKE_DELAY_MS
-    )
   }
 
   private fun storageKey(ownerUid: String): String =

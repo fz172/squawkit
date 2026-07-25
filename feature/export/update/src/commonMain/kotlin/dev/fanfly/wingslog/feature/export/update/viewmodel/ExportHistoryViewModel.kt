@@ -129,4 +129,11 @@ class ExportHistoryViewModel(
       )
     }
   }
+
+  /**
+   * Resolves the archive bytes for [exportId] for platforms whose Download action has no durable
+   * local file handle (web) and must fetch the bytes on demand.
+   */
+  suspend fun fetchArchiveBytes(exportId: String): ByteArray? =
+    exportManager.downloadArchiveBytes(exportId)
 }

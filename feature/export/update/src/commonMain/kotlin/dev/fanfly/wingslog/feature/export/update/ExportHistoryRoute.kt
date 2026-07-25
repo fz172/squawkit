@@ -5,13 +5,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryOutcome
 import dev.fanfly.wingslog.feature.export.update.viewmodel.ExportHistoryViewModel
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.export.sharedassets.generated.resources.Res
+import wingslog.feature.export.sharedassets.generated.resources.export_download_failed
+import wingslog.feature.export.sharedassets.generated.resources.export_download_success
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_failed
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_in_progress
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delivery_sent
@@ -23,7 +27,8 @@ fun ExportHistoryRoute(
   viewModel: ExportHistoryViewModel = koinViewModel(),
 ) {
   val state by viewModel.state.collectAsStateWithLifecycle()
-  val exportFileSharer = rememberExportFileSharer()
+  val downloader = rememberExportFileDownloader()
+  val coroutineScope = rememberCoroutineScope()
   val snackbarHostState = remember { SnackbarHostState() }
 
   val sentMessage = stringResource(Res.string.export_history_delivery_sent)
@@ -32,6 +37,8 @@ fun ExportHistoryRoute(
     stringResource(Res.string.export_history_delivery_throttled)
   val inProgressMessage =
     stringResource(Res.string.export_history_delivery_in_progress)
+  val downloadedMessage = stringResource(Res.string.export_download_success)
+  val downloadFailedMessage = stringResource(Res.string.export_download_failed)
 
   LaunchedEffect(viewModel) {
     viewModel.deliveryEvents.collect { outcome ->
@@ -50,7 +57,14 @@ fun ExportHistoryRoute(
     state = state,
     onNavigateBack = { navController.popBackStack() },
     onNew = { navController.popBackStack() },
-    onShareExport = exportFileSharer::share,
+    onDownloadExport = { exportId, filePath, fileName ->
+      coroutineScope.launch {
+        val success = downloader.download(filePath, fileName) {
+          viewModel.fetchArchiveBytes(exportId)
+        }
+        snackbarHostState.showSnackbar(if (success) downloadedMessage else downloadFailedMessage)
+      }
+    },
     onResendDelivery = { record -> viewModel.onResendDelivery(record.export_id) },
     onRetryDelivery = { record -> viewModel.onRetryDelivery(record.export_id) },
     onSaveToDevice = { record -> viewModel.onSaveToDevice(record.export_id) },

@@ -1,4 +1,8 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@file:OptIn(
+  ExperimentalMaterial3Api::class,
+  ExperimentalLayoutApi::class,
+  ExperimentalComposeUiApi::class,
+)
 
 package dev.fanfly.wingslog.feature.export.update
 
@@ -44,7 +48,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TableView
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
@@ -70,16 +73,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
@@ -126,11 +129,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_custom_ra
 import wingslog.feature.export.sharedassets.generated.resources.export_custom_start_date
 import wingslog.feature.export.sharedassets.generated.resources.export_date_range_section
 import wingslog.feature.export.sharedassets.generated.resources.export_download
-import wingslog.feature.export.sharedassets.generated.resources.export_email_body
-import wingslog.feature.export.sharedassets.generated.resources.export_email_locked_subtitle
-import wingslog.feature.export.sharedassets.generated.resources.export_email_locked_title
 import wingslog.feature.export.sharedassets.generated.resources.export_email_sent_action
-import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
 import wingslog.feature.export.sharedassets.generated.resources.export_error_details
 import wingslog.feature.export.sharedassets.generated.resources.export_error_subtitle
 import wingslog.feature.export.sharedassets.generated.resources.export_error_title
@@ -161,14 +160,11 @@ import wingslog.feature.export.sharedassets.generated.resources.export_running_s
 import wingslog.feature.export.sharedassets.generated.resources.export_running_title
 import wingslog.feature.export.sharedassets.generated.resources.export_select_all
 import wingslog.feature.export.sharedassets.generated.resources.export_send_to_email_action
-import wingslog.feature.export.sharedassets.generated.resources.export_share_title
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_file_name
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_location
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_auth
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed_title
-import wingslog.feature.export.sharedassets.generated.resources.export_success_emailed_subtitle
-import wingslog.feature.export.sharedassets.generated.resources.export_success_sent_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
 import wingslog.feature.export.sharedassets.generated.resources.export_untitled_aircraft
 import wingslog.feature.export.sharedassets.generated.resources.export_view_exports
@@ -189,13 +185,17 @@ fun ExportSelectionScreen(
   onCustomRangeChange: (LocalDate, LocalDate) -> Unit,
   onExport: () -> Unit,
   onCancel: () -> Unit,
-  onShareExport: (String, String, String, String) -> Unit,
+  onDownloadExport: (exportId: String, filePath: String, fileName: String) -> Unit,
   onSendToEmail: () -> Unit,
   onDone: () -> Unit,
   onRetry: () -> Unit,
   onSeePlans: () -> Unit,
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+  // There's no explicit "Done" action on the success screen anymore — the same cleanup (reset to
+  // the last editable configuration) now happens on back navigation, gesture included.
+  BackHandler(enabled = state is ExportUiState.Success) { onDone() }
+
   Scaffold(
     topBar = {
       ConstrainedTopBar(ContentWidth.Form) {
@@ -203,6 +203,7 @@ fun ExportSelectionScreen(
           title = stringResource(Res.string.feature_name_export_logs),
           onBackClick = when (state) {
             is ExportUiState.Running -> onCancel
+            is ExportUiState.Success -> onDone
             else -> onNavigateBack
           },
           actions = {
@@ -251,10 +252,9 @@ fun ExportSelectionScreen(
       is ExportUiState.Success -> SuccessResult(
         state = state,
         modifier = Modifier.padding(innerPadding),
-        onShare = onShareExport,
+        onDownload = onDownloadExport,
         onSendToEmail = onSendToEmail,
         onHistory = onNavigateToHistory,
-        onDone = onDone,
         onSeePlans = onSeePlans,
       )
 
@@ -787,49 +787,6 @@ private fun ExportBottomBar(
   }
 }
 
-/**
- * Shown-locked email-delivery affordance: the Pro-only "email a copy" option is surfaced as a
- * tappable promo (opening [ProUpsellSheet]) rather than hidden. Saving to the device is unaffected.
- */
-@Composable
-private fun LockedEmailRow(onClick: () -> Unit) {
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .clickable(onClick = onClick)
-      .padding(vertical = Spacing.small, horizontal = Spacing.small),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-  ) {
-    Icon(
-      imageVector = Icons.Default.Lock,
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.primary,
-      modifier = Modifier.size(18.dp),
-    )
-    Column(modifier = Modifier.weight(1f)) {
-      Text(
-        text = stringResource(Res.string.export_email_locked_title),
-        style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurface,
-      )
-      Text(
-        text = stringResource(Res.string.export_email_locked_subtitle),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-    Icon(
-      imageVector = Icons.Default.Star,
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.primary,
-      modifier = Modifier.size(18.dp),
-    )
-  }
-}
-
 @Composable
 private fun MetaDot() {
   Text(
@@ -990,10 +947,9 @@ private fun ExportProgressStep.label(): String = when (this) {
 private fun SuccessResult(
   state: ExportUiState.Success,
   modifier: Modifier,
-  onShare: (String, String, String, String) -> Unit,
+  onDownload: (exportId: String, filePath: String, fileName: String) -> Unit,
   onSendToEmail: () -> Unit,
   onHistory: () -> Unit,
-  onDone: () -> Unit,
   onSeePlans: () -> Unit,
 ) {
   val fileName =
@@ -1005,9 +961,6 @@ private fun SuccessResult(
       ExportDisplayLocation.UNKNOWN -> stringResource(Res.string.export_stub_preview_location)
     }
   }
-  val shareTitle = stringResource(Res.string.export_share_title)
-  val emailSubject = stringResource(Res.string.export_email_subject, fileName)
-  val emailBody = stringResource(Res.string.export_email_body)
 
   var showUpsell by remember { mutableStateOf(false) }
 
@@ -1042,15 +995,8 @@ private fun SuccessResult(
     heroIcon = Icons.Default.Check,
     heroColor = MaterialTheme.statusColors.positive.accent,
     heroContainer = MaterialTheme.statusColors.positive.container,
-    title = stringResource(
-      if (emailSucceeded) Res.string.export_success_sent_title else Res.string.export_success_title
-    ),
-    subtitle = if (emailSucceeded) "" else location,
-    subtitleContent = if (emailSucceeded && state.deliveryInfo != null) {
-      { EmailedSubtitle(state.deliveryInfo.destinationEmail) }
-    } else {
-      null
-    },
+    title = stringResource(Res.string.export_success_title),
+    subtitle = location,
     body = {
       ReceiptCard(
         fileName = fileName,
@@ -1066,44 +1012,42 @@ private fun SuccessResult(
       )
     },
     actions = {
-      ResultPrimaryButton(
-        label = stringResource(Res.string.export_download),
-        icon = Icons.Default.Download,
-        onClick = {
-          onShare(
-            state.filePath,
-            shareTitle,
-            emailSubject,
-            emailBody
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+      ) {
+        SuccessBarAction(
+          modifier = Modifier.weight(1f),
+          icon = Icons.Default.Download,
+          label = stringResource(Res.string.export_download),
+          onClick = { onDownload(state.exportId, state.filePath, fileName) },
+        )
+        when {
+          state.deliveryInfo != null -> SuccessBarAction(
+            modifier = Modifier.weight(1f),
+            icon = if (emailSucceeded) Icons.Default.Check else Icons.Default.Mail,
+            label = stringResource(
+              if (emailSucceeded) Res.string.export_email_sent_action
+              else Res.string.export_send_to_email_action
+            ),
+            enabled = !emailSucceeded && !state.isSendingEmail,
+            onClick = onSendToEmail,
           )
-        },
-      )
-      when {
-        state.deliveryInfo != null -> ResultSecondaryButton(
-          label = stringResource(
-            if (emailSucceeded) Res.string.export_email_sent_action
-            else Res.string.export_send_to_email_action
-          ),
-          icon = if (emailSucceeded) Icons.Default.Check else Icons.Default.Mail,
-          enabled = !emailSucceeded && !state.isSendingEmail,
-          onClick = onSendToEmail,
-        )
 
-        state.emailDeliveryLocked -> LockedEmailRow(onClick = { showUpsell = true })
-      }
-      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-        ResultSecondaryButton(
+          state.emailDeliveryLocked -> SuccessBarAction(
+            modifier = Modifier.weight(1f),
+            icon = Icons.Default.Lock,
+            label = stringResource(Res.string.export_send_to_email_action),
+            onClick = { showUpsell = true },
+          )
+
+          else -> Spacer(Modifier.weight(1f))
+        }
+        SuccessBarAction(
           modifier = Modifier.weight(1f),
-          label = stringResource(Res.string.export_view_exports),
           icon = Icons.Default.History,
+          label = stringResource(Res.string.export_view_exports),
           onClick = onHistory,
-        )
-        ResultSecondaryButton(
-          modifier = Modifier.weight(1f),
-          label = stringResource(CoreRes.string.done),
-          icon = null,
-          plain = true,
-          onClick = onDone,
         )
       }
     },
@@ -1121,24 +1065,42 @@ private fun SuccessResult(
   }
 }
 
-/** Emailed-success subtitle with the destination address rendered in mono, per the design. */
+/** One compact icon-over-label action in the success screen's bottom action bar. */
 @Composable
-private fun EmailedSubtitle(email: String) {
-  Text(
-    text = buildAnnotatedString {
-      append(stringResource(Res.string.export_success_emailed_subtitle))
-      if (email.isNotBlank()) {
-        append(" ")
-        withStyle(
-          WingslogTypography.dataMedium.toSpanStyle()
-            .copy(color = MaterialTheme.colorScheme.onSurface)
-        ) { append(email) }
-      }
-    },
-    style = MaterialTheme.typography.bodyMedium,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-    textAlign = TextAlign.Center,
-  )
+private fun SuccessBarAction(
+  icon: ImageVector,
+  label: String,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  onClick: () -> Unit,
+) {
+  val contentColor = if (enabled) {
+    MaterialTheme.colorScheme.primary
+  } else {
+    MaterialTheme.colorScheme.outline
+  }
+  Column(
+    modifier = modifier
+      .clip(RoundedCornerShape(Spacing.chipCornerRadius))
+      .let { if (enabled) it.clickable(onClick = onClick) else it }
+      .padding(vertical = Spacing.small, horizontal = Spacing.extraSmall),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+  ) {
+    Icon(
+      imageVector = icon,
+      contentDescription = null,
+      tint = contentColor,
+      modifier = Modifier.size(22.dp),
+    )
+    Text(
+      text = label,
+      style = MaterialTheme.typography.labelSmall,
+      color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
+      textAlign = TextAlign.Center,
+      maxLines = 2,
+    )
+  }
 }
 
 /** Failed-delivery summary folded into the receipt card, so the success screen stays one card. */

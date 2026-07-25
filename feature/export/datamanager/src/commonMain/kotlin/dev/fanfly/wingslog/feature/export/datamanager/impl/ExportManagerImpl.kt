@@ -257,6 +257,22 @@ class ExportManagerImpl(
     return true
   }
 
+  override suspend fun downloadArchiveBytes(exportId: String): ByteArray? {
+    val ownerUid = currentOwnerUid()
+    val local = ownerUid?.let { exportFileStore.listExports(it) }
+      ?.firstOrNull { it.export_id == exportId }
+    local?.file_path
+      ?.takeIf { it.isNotBlank() }
+      ?.let { path -> exportFileStore.readBytes(path)?.let { return it } }
+
+    val remoteRef = local?.remote_archive_ref?.takeIf { it.isNotBlank() }
+      ?: remoteRepository.listRemoteRecords()
+        .firstOrNull { it.export_id == exportId }
+        ?.remote_archive_ref
+        ?.takeIf { it.isNotBlank() }
+    return remoteRef?.let { remoteRepository.downloadArchive(it) }
+  }
+
   private fun currentOwnerUid(): String? = auth.currentUser?.uid
 
   private fun buildRecord(
