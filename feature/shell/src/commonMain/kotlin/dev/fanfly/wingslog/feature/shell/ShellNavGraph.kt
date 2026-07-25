@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.shell
 
-import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
@@ -14,7 +13,6 @@ import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsScreen
-import dev.fanfly.wingslog.feature.subscription.viewing.SubscriptionScreen
 import dev.fanfly.wingslog.feature.sharing.update.EnterInviteCodeRoute
 import dev.fanfly.wingslog.feature.sharing.update.InviteSheetRoute
 import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
@@ -22,6 +20,7 @@ import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
 import dev.fanfly.wingslog.feature.stresstest.config.StressTestDeveloperOptionsExtra
 import dev.fanfly.wingslog.feature.stresstest.config.registerStressTestRoutes
+import dev.fanfly.wingslog.feature.subscription.viewing.SubscriptionScreen
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
 import dev.fanfly.wingslog.feature.tasks.update.ui.AddTaskRoute
 import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
@@ -38,7 +37,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun NavGraphBuilder.formDialogs(navController: NavController) {
   dialog(
     route = Screen.AddAircraft.route,
-    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
       EditAircraftScreen(navController = navController)
@@ -48,7 +47,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
   // the scrimmed fleet, so it looks the same on a phone and a wide window.
   dialog(
     route = Screen.EnterInviteCode.route,
-    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    dialogProperties = formDialogProperties(),
   ) {
     EnterInviteCodeRoute(navController = navController)
   }
@@ -58,7 +57,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       type = NavType.StringType
       nullable = true
     }),
-    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
       EditAircraftScreen(navController = navController)
@@ -69,7 +68,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
     arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
       type = NavType.StringType
     }),
-    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
       AddTaskRoute(navController = navController)
@@ -81,7 +80,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
       navArgument(Screen.CARD_ID) { type = NavType.StringType },
     ),
-    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
       EditTaskRoute(navController = navController)
@@ -97,7 +96,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
         defaultValue = null
       },
     ),
-    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
       MaintenanceLogFormScreen(navController = navController)
@@ -109,7 +108,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
       navArgument(Screen.LOG_ID) { type = NavType.StringType },
     ),
-    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
       MaintenanceLogFormScreen(navController = navController)
@@ -120,7 +119,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
     arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
       type = NavType.StringType
     }),
-    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
       AddSquawkRoute(navController = navController)
@@ -132,7 +131,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
       navArgument(Screen.SQUAWK_ID) { type = NavType.StringType },
     ),
-    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
       EditSquawkRoute(navController = navController)
@@ -167,7 +166,7 @@ fun NavGraphBuilder.sharingRoutes(navController: NavController) {
     arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
       type = NavType.StringType
     }),
-    dialogProperties = DialogProperties(usePlatformDefaultWidth = false),
+    dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
       InviteSheetRoute(navController = navController)
