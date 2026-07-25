@@ -95,6 +95,7 @@
   <string name="task_interval_description">Set a recurring interval based on time, engine hours, or both.</string>
 
   <string name="basics">Basics</string>
+  <string name="compliance">Compliance</string>
   <string name="schedule">Schedule</string>
   <string name="task_identity_description">Define the core name and component category for this maintenance requirement.</string>
   <string name="adjustments">Adjustments</string>
