@@ -38,7 +38,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
@@ -218,6 +220,7 @@ fun ManageAccessScreen(
   }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun AccessPanel(
   state: ManageAccessUiState,
@@ -242,6 +245,11 @@ private fun AccessPanel(
   // undoable, and neither used to ask.
   var revoking by remember { mutableStateOf<ShareMember?>(null) }
   var leaving by remember { mutableStateOf(false) }
+
+  // The system/gesture back press otherwise dismisses the whole dialog (it's the Dialog's own
+  // onDismissRequest) regardless of which of the four steps is showing. From anywhere but MAIN,
+  // back should step back to the roster first, same as the header's back arrow.
+  BackHandler(enabled = state.view != AccessPanelView.MAIN) { onBackToMain() }
 
   val snackbarHostState = remember { SnackbarHostState() }
   val toastText = state.toast?.text()
