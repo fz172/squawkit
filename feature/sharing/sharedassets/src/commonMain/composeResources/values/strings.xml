@@ -11,12 +11,38 @@
   <string name="manage_access_role_technician">Technician</string>
   <string name="manage_access_badge_you">You</string>
   <string name="manage_access_unnamed_member">Unnamed member</string>
-  <string name="manage_access_member_actions">Member actions</string>
-  <string name="manage_access_make_owner">Make co-owner</string>
-  <string name="manage_access_make_technician">Make technician</string>
   <string name="manage_access_revoke">Remove access</string>
   <string name="manage_access_leave">Leave shared aircraft</string>
-  <string name="manage_access_invite">Invite</string>
+  <!-- Access panel — main view -->
+  <string name="manage_access_people_section">People with access</string>
+  <string name="manage_access_member_count_singular">1 person</string>
+  <string name="manage_access_member_count_plural">%1$d people</string>
+  <string name="manage_access_solo_title">No one else has access</string>
+  <string name="manage_access_solo_body">Invite a mechanic or a co-owner and they can log squawks, tasks, and work against this aircraft.</string>
+  <string name="manage_access_invites_section">Open invite codes</string>
+  <string name="manage_access_invites_hint">Anyone holding a code can join. Codes are not tied to a person.</string>
+  <string name="manage_access_invite_meta">%1$s · expires in %2$s</string>
+  <string name="manage_access_help_title">What each role can do</string>
+  <string name="manage_access_perm_squawks_tasks">Squawks and tasks</string>
+  <string name="manage_access_perm_work_logs">Work logs</string>
+  <string name="manage_access_perm_aircraft_details">Aircraft details</string>
+  <string name="manage_access_perm_manage_access">Manage access</string>
+  <string name="manage_access_help_footer">Only the owner can delete the aircraft or hand over ownership. Anyone can leave on their own.</string>
+  <string name="manage_access_role_technician_desc">Add and edit squawks, maintenance tasks, and work logs. Cannot change aircraft details.</string>
+  <string name="manage_access_role_co_owner_desc">Everything a technician can do, plus edit aircraft details and manage who has access.</string>
+  <string name="manage_access_create_invite">Create invite code</string>
+  <!-- Access panel — code view -->
+  <string name="manage_access_code_title">Invite code</string>
+  <string name="manage_access_code_subtitle">%1$s · single use</string>
+  <string name="manage_access_expiry_note">One person, one use. The code stops working once it’s redeemed, or after 24 hours.</string>
+  <string name="manage_access_expires_in">Expires in %1$s</string>
+  <!-- Access panel — member view -->
+  <string name="manage_access_done">Done</string>
+  <!-- Access panel — transient confirmations -->
+  <string name="manage_access_toast_link_copied">Invite link copied</string>
+  <string name="manage_access_toast_role_updated">Role updated</string>
+  <string name="manage_access_toast_access_removed">Access removed</string>
+  <string name="manage_access_toast_code_cancelled">Invite code cancelled</string>
   <!-- Revoke confirmation (PRD D2/D3). Revoking is server-enforced and immediate, and it destroys
        any edits the member made offline and had not yet synced — the one data-loss window in the
        design. The owner is told that before they do it, not after. -->
@@ -31,22 +57,23 @@ If they made changes while offline that have not synced yet, those changes are l
 
 The owner can invite you again.</string>
   <string name="leave_confirm_action">Leave</string>
-  <!-- Invite sheet -->
+  <!-- Role change confirmation. A co-owner can edit aircraft details and manage access — same tier
+       as the demoting/promoting owner — so this is a real permission grant/revoke, not a label
+       swap, and takes effect immediately. -->
+  <string name="role_confirm_title">Change %1$s’s role to %2$s?</string>
+  <string name="role_confirm_body">This changes what they can do on this aircraft right away.</string>
+  <string name="role_confirm_action">Change role</string>
+  <!-- Invite view (nested in the access panel) -->
   <string name="invite_title">Invite to aircraft</string>
   <string name="invite_role_label">Role</string>
   <string name="invite_role_owner">Co-owner</string>
   <string name="invite_role_technician">Technician</string>
-  <string name="invite_create">Create invite link</string>
-  <string name="invite_note">Single-use code, expires in 1 day.</string>
-  <string name="invite_code_hint">Read this out, or have them type it in. It works once, and expires in a day.</string>
-  <string name="invite_scan_hint">Or scan this, or send the link.</string>
+  <string name="invite_code_hint">Read it out, or have them type it into Join aircraft.</string>
+  <string name="invite_scan_hint">Or have them scan this.</string>
   <string name="invite_share">Share link</string>
   <string name="invite_copy">Copy link</string>
-  <string name="invite_copied">Copied</string>
-  <string name="invite_pending_title">Pending invites</string>
-  <string name="invite_cancel">Cancel invite</string>
+  <string name="invite_cancel">Cancel this code</string>
   <string name="invite_qr_desc">Invite QR code</string>
-  <string name="invite_new">New invite</string>
   <string name="invite_link_unavailable">This code was created on another device. Codes are never stored, so it cannot be shown again — cancel it and create a new one.</string>
   <!-- Redeem confirmation -->
   <string name="redeem_confirm_title">Aircraft invitation</string>

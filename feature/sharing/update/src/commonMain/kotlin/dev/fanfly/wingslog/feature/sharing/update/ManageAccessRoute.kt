@@ -7,18 +7,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.sharing.viewing.ManageAccessScreen
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.sharing.sharedassets.generated.resources.Res
+import wingslog.feature.sharing.sharedassets.generated.resources.invite_title
 
 /** Binds [ManageAccessViewModel] to [ManageAccessScreen]; registered on the shell nav graph. */
 @Composable
 fun ManageAccessRoute(navController: NavController) {
   val viewModel = koinViewModel<ManageAccessViewModel>()
   val state by viewModel.uiState.collectAsState()
+  val linkSharer = rememberLinkSharer()
+  val clipboard = LocalClipboardManager.current
+  val chooserTitle = stringResource(Res.string.invite_title)
 
   // Leaving removes this aircraft from the user's fleet — pop back once it succeeds. Being revoked
   // while the screen is open is the same ending, arrived at from the other side: we are no longer a
@@ -34,23 +42,33 @@ fun ManageAccessRoute(navController: NavController) {
     if (shouldLeave) navController.popBackStack(Screen.ManageAccess.route, inclusive = true)
   }
 
-  // Hosting a share is Pro-only: when locked, the owner's Invite action opens the promo instead of
-  // navigating (gate as promo). Accepting an invite and managing an existing share stay ungated.
+  // Hosting a share is Pro-only: when locked, the "Create invite code" action opens the promo
+  // instead of navigating into the invite step (gate as promo). Accepting an invite and managing an
+  // existing share stay ungated.
   var showUpsell by remember { mutableStateOf(false) }
 
   ManageAccessScreen(
     state = state,
+    onOpenInvite = {
+      if (state.canHostShare) viewModel.openInvite() else showUpsell = true
+    },
+    onSelectInviteRole = viewModel::selectInviteRole,
+    onCreateInvite = viewModel::createInvite,
+    onOpenCode = viewModel::openCode,
+    onCancelInvite = viewModel::cancelInvite,
+    onShareInvite = { url -> linkSharer.shareLink(url, chooserTitle) },
+    onCopyInvite = { url ->
+      clipboard.setText(AnnotatedString(url))
+      viewModel.onInviteLinkCopied()
+    },
+    onOpenMember = viewModel::openMember,
     onChangeRole = viewModel::changeRole,
     onRevoke = viewModel::revoke,
     onLeave = viewModel::leave,
-    onInvite = {
-      if (state.canHostShare) {
-        navController.navigate(Screen.InviteToAircraft.createRoute(viewModel.aircraftId))
-      } else {
-        showUpsell = true
-      }
-    },
-    onBack = { navController.popBackStack() },
+    onToggleHelp = viewModel::toggleHelp,
+    onBackToMain = viewModel::backToMain,
+    onDismiss = { navController.popBackStack() },
+    onToastShown = viewModel::clearToast,
   )
 
   if (showUpsell) {
