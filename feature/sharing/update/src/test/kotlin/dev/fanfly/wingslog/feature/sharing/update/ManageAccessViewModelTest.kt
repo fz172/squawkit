@@ -3,12 +3,17 @@ package dev.fanfly.wingslog.feature.sharing.update
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.storage.CloudSyncSetting
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
+import dev.fanfly.wingslog.feature.sharing.model.InviteLink
+import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
+import dev.fanfly.wingslog.feature.sharing.viewing.AccessPanelView
+import dev.fanfly.wingslog.feature.sharing.viewing.AccessToast
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
-import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -38,6 +43,8 @@ class ManageAccessViewModelTest {
   private val share = MutableStateFlow(AircraftShareState())
   // Host-a-share gate; on (default-open) unless a test flips it.
   private val canHostShare = MutableStateFlow(true)
+  // Supplies the aircraft label carried on new invites for the invitee's preview (#201).
+  private val fleet: FleetManager = mockk(relaxed = true)
 
   @Before
   fun setUp() {
@@ -60,6 +67,7 @@ class ManageAccessViewModelTest {
     sharingManager = sharing,
     cloudSync = cloudSync,
     subscriptionManager = subscription,
+    fleetManager = fleet,
     savedStateHandle = SavedStateHandle(mapOf(Screen.AIRCRAFT_ID to AC_ID)),
   )
 
@@ -122,7 +130,7 @@ class ManageAccessViewModelTest {
   @Test
   fun rosterUnavailable_stillResolvesRole_andCanManage() = runTest {
     // A never-shared aircraft: the owner isn't in memberRoles yet, so the roster read is denied.
-    // Role is resolved locally and must still land (so the Invite action stays available); the
+    // Role is resolved locally and must still land (so "Create invite code" stays available); the
     // roster failure is swallowed rather than surfaced or left spinning.
     every { sharing.observeShareState(AC_ID) } returns flow { throw RuntimeException("denied") }
 
@@ -189,7 +197,7 @@ class ManageAccessViewModelTest {
   @Test
   fun syncOff_disablesManagementAndLeaving() = runTest {
     // Sharing is a cloud feature end to end: with sync off there is nothing to share into and
-    // nothing to receive from. Offering Invite / Remove / Leave here would fail on tap.
+    // nothing to receive from. Offering invite / remove / leave here would fail on tap.
     cloudSync = CloudSyncSetting { false }
     share.value = AircraftShareState(
       members = listOf(
@@ -230,7 +238,117 @@ class ManageAccessViewModelTest {
   fun canHostShare_lockedWhenGateOff() = runTest {
     canHostShare.value = false
 
-    // The Invite action stays visible for owners but is surfaced as a promo by the route.
+    // The "Create invite code" action stays visible for owners but is surfaced as a promo by the
+    // route.
     assertThat(viewModel().uiState.value.canHostShare).isFalse()
+  }
+
+  // --- Panel navigation (people → role → code → member) ---
+
+  @Test
+  fun openInvite_switchesToInviteView() = runTest {
+    val vm = viewModel()
+    vm.openInvite()
+    assertThat(vm.uiState.value.view).isEqualTo(AccessPanelView.INVITE)
+  }
+
+  @Test
+  fun openMember_switchesToMemberView_andTracksUid() = runTest {
+    val vm = viewModel()
+    vm.openMember("tech")
+    assertThat(vm.uiState.value.view).isEqualTo(AccessPanelView.MEMBER)
+    assertThat(vm.uiState.value.activeMemberUid).isEqualTo("tech")
+  }
+
+  @Test
+  fun backToMain_resetsViewAndActiveSelections() = runTest {
+    val vm = viewModel()
+    vm.openMember("tech")
+
+    vm.backToMain()
+
+    assertThat(vm.uiState.value.view).isEqualTo(AccessPanelView.MAIN)
+    assertThat(vm.uiState.value.activeMemberUid).isNull()
+  }
+
+  // --- Invite creation (ported from the former InviteSheetViewModel) ---
+
+  @Test
+  fun defaultInviteRole_isTechnician() = runTest {
+    assertThat(viewModel().uiState.value.selectedInviteRole).isEqualTo(ShareRole.TECHNICIAN)
+  }
+
+  @Test
+  fun selectInviteRole_updatesState() = runTest {
+    val vm = viewModel()
+    vm.selectInviteRole(ShareRole.OWNER)
+    assertThat(vm.uiState.value.selectedInviteRole).isEqualTo(ShareRole.OWNER)
+  }
+
+  @Test
+  fun createInvite_success_opensCodeView() = runTest {
+    coEvery { sharing.createInvite(AC_ID, ShareRole.OWNER, any()) } returns
+      Result.success(
+        InviteLink(
+          code = "EFA2GGTH",
+          formattedCode = "EFA2-GGTH",
+          codeId = "h",
+          url = "https://squawkit.fanfly.dev/share#EFA2GGTH",
+          expiresAtEpochMs = 0L,
+        ),
+      )
+
+    val vm = viewModel()
+    vm.selectInviteRole(ShareRole.OWNER)
+    vm.createInvite()
+
+    assertThat(vm.uiState.value.view).isEqualTo(AccessPanelView.CODE)
+    assertThat(vm.uiState.value.activeInviteCodeId).isEqualTo("h")
+    assertThat(vm.uiState.value.creatingInvite).isFalse()
+    coVerify { sharing.createInvite(AC_ID, ShareRole.OWNER, any()) }
+  }
+
+  @Test
+  fun createInvite_failure_surfacesErrorAndClearsCreating() = runTest {
+    coEvery { sharing.createInvite(AC_ID, ShareRole.TECHNICIAN, any()) } returns
+      Result.failure(RuntimeException("no network"))
+
+    val vm = viewModel()
+    vm.createInvite()
+
+    assertThat(vm.uiState.value.view).isEqualTo(AccessPanelView.MAIN)
+    assertThat(vm.uiState.value.creatingInvite).isFalse()
+    assertThat(vm.uiState.value.error).isEqualTo("no network")
+  }
+
+  @Test
+  fun pendingInvites_reflectShareState() = runTest {
+    val vm = viewModel()
+    share.value = AircraftShareState(
+      invites = listOf(
+        PendingInvite(
+          codeId = "t1",
+          role = ShareRole.TECHNICIAN,
+          createdAtEpochMs = 0L,
+          expiresAtEpochMs = 1L,
+        ),
+      ),
+    )
+
+    assertThat(vm.uiState.value.invites).hasSize(1)
+    assertThat(vm.uiState.value.invites.first().codeId).isEqualTo("t1")
+  }
+
+  @Test
+  fun cancelInvite_delegatesToManager_andReturnsToMain() = runTest {
+    coEvery { sharing.cancelInvite(AC_ID, "t1") } returns Result.success(Unit)
+
+    val vm = viewModel()
+    vm.openCode("t1")
+    vm.cancelInvite("t1")
+
+    coVerify { sharing.cancelInvite(AC_ID, "t1") }
+    assertThat(vm.uiState.value.view).isEqualTo(AccessPanelView.MAIN)
+    assertThat(vm.uiState.value.toast).isEqualTo(AccessToast.CODE_CANCELLED)
   }
 }

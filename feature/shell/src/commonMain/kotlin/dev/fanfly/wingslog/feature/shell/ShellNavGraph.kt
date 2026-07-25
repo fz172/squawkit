@@ -14,7 +14,6 @@ import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsScreen
 import dev.fanfly.wingslog.feature.sharing.update.EnterInviteCodeRoute
-import dev.fanfly.wingslog.feature.sharing.update.InviteSheetRoute
 import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
@@ -153,23 +152,15 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
  * Reached from an aircraft's context (the entry point + role-gated visibility land with #133).
  */
 fun NavGraphBuilder.sharingRoutes(navController: NavController) {
-  composable(
-    route = Screen.ManageAccess.route,
-    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
-      type = NavType.StringType
-    }),
-  ) {
-    ManageAccessRoute(navController = navController)
-  }
   dialog(
-    route = Screen.InviteToAircraft.route,
+    route = Screen.ManageAccess.route,
     arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
       type = NavType.StringType
     }),
     dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
-      InviteSheetRoute(navController = navController)
+      ManageAccessRoute(navController = navController)
     }
   }
 }

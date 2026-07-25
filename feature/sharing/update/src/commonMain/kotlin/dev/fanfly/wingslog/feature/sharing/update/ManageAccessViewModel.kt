@@ -6,8 +6,11 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
+import dev.fanfly.wingslog.feature.sharing.viewing.AccessPanelView
+import dev.fanfly.wingslog.feature.sharing.viewing.AccessToast
 import dev.fanfly.wingslog.feature.sharing.viewing.ManageAccessUiState
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,13 +20,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Drives the Manage Access screen for one aircraft: combines the caller's locally-resolved role
- * with the (online-only) Firestore roster, and issues owner mutations / leave via [SharingManager].
+ * Drives the Manage Access panel for one aircraft: the (online-only) Firestore roster + pending
+ * invites, the caller's locally-resolved role, and every owner mutation — invite, cancel, change
+ * role, revoke, leave — via [SharingManager]. Also owns which of the panel's four steps (people →
+ * role → code → member, squawkit#269) is currently showing.
  */
 class ManageAccessViewModel(
   private val sharingManager: SharingManager,
   private val cloudSync: CloudSyncSetting,
   private val subscriptionManager: SubscriptionManager,
+  private val fleetManager: FleetManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -38,8 +44,10 @@ class ManageAccessViewModel(
 
   init {
     observeShare()
+    observeAircraftLabel()
     // The host-a-share gate. Default-open while the subscription capability is off; when locked, the
-    // route surfaces the Invite action as a promo. Leaving/managing an existing share is unaffected.
+    // route surfaces the "Create invite code" action as a promo. Leaving/managing an existing share
+    // is unaffected.
     viewModelScope.launch {
       subscriptionManager.canHostShare()
         .collect { canHost -> _uiState.update { it.copy(canHostShare = canHost) } }
@@ -53,7 +61,7 @@ class ManageAccessViewModel(
 
   private fun observeShare() {
     // Role is resolved locally (own aircraft ⇒ owner, shared ⇒ ref) — always available, and what
-    // gates the Invite action. Kept separate from the roster so it never depends on it.
+    // gates the "Create invite code" action. Kept separate from the roster so it never depends on it.
     viewModelScope.launch {
       sharingManager.observeMyRole(aircraftId)
         .collect { role ->
@@ -84,7 +92,26 @@ class ManageAccessViewModel(
             }
             return@collect
           }
-          _uiState.update { it.copy(members = share.members) }
+          _uiState.update { it.copy(members = share.members, invites = share.invites) }
+        }
+    }
+  }
+
+  /**
+   * What the invitee is shown before accepting (#201). It has to be carried on the invite: the
+   * server cannot read it out of the aircraft record, which is opaque proto bytes.
+   */
+  private fun observeAircraftLabel() {
+    viewModelScope.launch {
+      fleetManager.loadAircraft(aircraftId)
+        .catch { }
+        .collect { aircraft ->
+          val label = aircraft?.let {
+            listOf(it.tail_number, listOf(it.make, it.model).filter(String::isNotBlank).joinToString(" "))
+              .filter(String::isNotBlank)
+              .joinToString(" · ")
+          }.orEmpty()
+          _uiState.update { it.copy(aircraftLabel = label) }
         }
     }
   }
@@ -96,9 +123,72 @@ class ManageAccessViewModel(
    */
   private var seenSelfInRoster = false
 
+  // --- Panel navigation (main → invite → code → member) ---
+
+  fun openInvite() {
+    _uiState.update { it.copy(view = AccessPanelView.INVITE) }
+  }
+
+  fun openCode(codeId: String) {
+    _uiState.update { it.copy(view = AccessPanelView.CODE, activeInviteCodeId = codeId) }
+  }
+
+  fun openMember(uid: String) {
+    _uiState.update { it.copy(view = AccessPanelView.MEMBER, activeMemberUid = uid) }
+  }
+
+  fun backToMain() {
+    _uiState.update {
+      it.copy(view = AccessPanelView.MAIN, activeInviteCodeId = null, activeMemberUid = null)
+    }
+  }
+
+  // --- Invite creation ---
+
+  fun selectInviteRole(role: ShareRole) {
+    _uiState.update { it.copy(selectedInviteRole = role) }
+  }
+
+  fun createInvite() {
+    if (_uiState.value.creatingInvite) return
+    _uiState.update { it.copy(creatingInvite = true, error = null) }
+    viewModelScope.launch {
+      sharingManager.createInvite(aircraftId, _uiState.value.selectedInviteRole, _uiState.value.aircraftLabel)
+        .onSuccess { link ->
+          _uiState.update {
+            it.copy(creatingInvite = false, view = AccessPanelView.CODE, activeInviteCodeId = link.codeId)
+          }
+        }
+        .onFailure { e -> _uiState.update { it.copy(creatingInvite = false, error = e.message) } }
+    }
+  }
+
+  fun cancelInvite(codeId: String) {
+    viewModelScope.launch {
+      sharingManager.cancelInvite(aircraftId, codeId)
+        .onSuccess {
+          _uiState.update {
+            it.copy(view = AccessPanelView.MAIN, activeInviteCodeId = null, toast = AccessToast.CODE_CANCELLED)
+          }
+        }
+        .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
+    }
+  }
+
+  fun onInviteLinkCopied() {
+    _uiState.update { it.copy(toast = AccessToast.LINK_COPIED) }
+  }
+
+  fun toggleHelp() {
+    _uiState.update { it.copy(helpExpanded = !it.helpExpanded) }
+  }
+
+  // --- Roster mutations ---
+
   fun changeRole(uid: String, role: ShareRole) {
     viewModelScope.launch {
       sharingManager.updateRole(aircraftId, uid, role)
+        .onSuccess { _uiState.update { it.copy(toast = AccessToast.ROLE_UPDATED) } }
         .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
   }
@@ -106,6 +196,11 @@ class ManageAccessViewModel(
   fun revoke(uid: String) {
     viewModelScope.launch {
       sharingManager.revokeMember(aircraftId, uid)
+        .onSuccess {
+          _uiState.update {
+            it.copy(view = AccessPanelView.MAIN, activeMemberUid = null, toast = AccessToast.ACCESS_REMOVED)
+          }
+        }
         .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
   }
@@ -120,5 +215,9 @@ class ManageAccessViewModel(
 
   fun clearError() {
     _uiState.update { it.copy(error = null) }
+  }
+
+  fun clearToast() {
+    _uiState.update { it.copy(toast = null) }
   }
 }
