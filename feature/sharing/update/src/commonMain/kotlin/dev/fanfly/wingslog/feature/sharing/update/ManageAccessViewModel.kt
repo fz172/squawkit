@@ -164,14 +164,21 @@ class ManageAccessViewModel(
   }
 
   fun cancelInvite(codeId: String) {
+    if (_uiState.value.cancellingInvite) return
+    _uiState.update { it.copy(cancellingInvite = true, error = null) }
     viewModelScope.launch {
       sharingManager.cancelInvite(aircraftId, codeId)
         .onSuccess {
           _uiState.update {
-            it.copy(view = AccessPanelView.MAIN, activeInviteCodeId = null, toast = AccessToast.CODE_CANCELLED)
+            it.copy(
+              cancellingInvite = false,
+              view = AccessPanelView.MAIN,
+              activeInviteCodeId = null,
+              toast = AccessToast.CODE_CANCELLED,
+            )
           }
         }
-        .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
+        .onFailure { e -> _uiState.update { it.copy(cancellingInvite = false, error = e.message) } }
     }
   }
 

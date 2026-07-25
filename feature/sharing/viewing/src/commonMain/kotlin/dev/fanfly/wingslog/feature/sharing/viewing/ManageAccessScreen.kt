@@ -133,6 +133,9 @@ data class ManageAccessUiState(
   val invites: List<PendingInvite> = emptyList(),
   val selectedInviteRole: ShareRole = ShareRole.TECHNICIAN,
   val creatingInvite: Boolean = false,
+  /** True while a cancel request for the active invite is in flight — disables the button so the
+   *  slow round trip can't be tapped again, instead of failing silently on the second call. */
+  val cancellingInvite: Boolean = false,
   /** codeId of the invite the CODE view is showing. */
   val activeInviteCodeId: String? = null,
   /** uid of the member the MEMBER view is showing. */
@@ -172,7 +175,10 @@ fun ManageAccessScreen(
   modifier: Modifier = Modifier,
 ) {
   when {
-    state.isLoading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    state.isLoading -> Box(
+      modifier.fillMaxSize(),
+      contentAlignment = Alignment.Center
+    ) {
       CircularProgressIndicator(Modifier.padding(Spacing.xLarge))
     }
 
@@ -333,19 +339,35 @@ private fun PanelHeader(state: ManageAccessUiState, onLeading: () -> Unit) {
       // centered card already clears the status bar via its own outer padding, so gate this rather
       // than pushing the header down needlessly there too.
       .let { if (LocalLayoutTier.current == LayoutTier.COMPACT) it.statusBarsPadding() else it }
-      .padding(start = Spacing.small, end = Spacing.large, top = Spacing.small, bottom = Spacing.small),
+      .padding(
+        start = Spacing.small,
+        end = Spacing.large,
+        top = Spacing.small,
+        bottom = Spacing.small
+      ),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     IconButton(onClick = onLeading) {
       if (state.view == AccessPanelView.MAIN) {
-        Icon(Icons.Filled.Close, contentDescription = stringResource(CoreRes.string.cancel))
+        Icon(
+          Icons.Filled.Close,
+          contentDescription = stringResource(CoreRes.string.cancel)
+        )
       } else {
-        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(CoreRes.string.cancel))
+        Icon(
+          Icons.AutoMirrored.Filled.ArrowBack,
+          contentDescription = stringResource(CoreRes.string.cancel)
+        )
       }
     }
     Spacer(Modifier.width(Spacing.small))
     Column(Modifier.weight(1f)) {
-      Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+      Text(
+        title,
+        style = MaterialTheme.typography.titleLarge,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+      )
       if (subtitle.isNotBlank()) {
         Text(
           subtitle,
@@ -360,26 +382,33 @@ private fun PanelHeader(state: ManageAccessUiState, onLeading: () -> Unit) {
 }
 
 @Composable
-private fun panelTitles(state: ManageAccessUiState): Pair<String, String> = when (state.view) {
-  AccessPanelView.MAIN -> stringResource(Res.string.manage_access_title) to state.aircraftLabel
-  AccessPanelView.INVITE -> stringResource(Res.string.invite_title) to state.aircraftLabel
-  AccessPanelView.CODE -> {
-    val invite = state.activeInvite
-    val subtitle = if (invite != null) {
-      stringResource(Res.string.manage_access_code_subtitle, roleLabel(invite.role, isHost = false))
-    } else {
-      ""
+private fun panelTitles(state: ManageAccessUiState): Pair<String, String> =
+  when (state.view) {
+    AccessPanelView.MAIN -> stringResource(Res.string.manage_access_title) to state.aircraftLabel
+    AccessPanelView.INVITE -> stringResource(Res.string.invite_title) to state.aircraftLabel
+    AccessPanelView.CODE -> {
+      val invite = state.activeInvite
+      val subtitle = if (invite != null) {
+        stringResource(
+          Res.string.manage_access_code_subtitle,
+          roleLabel(invite.role, isHost = false)
+        )
+      } else {
+        ""
+      }
+      stringResource(Res.string.manage_access_code_title) to subtitle
     }
-    stringResource(Res.string.manage_access_code_title) to subtitle
-  }
 
-  AccessPanelView.MEMBER -> {
-    val member = state.activeMember
-    val name = member?.displayName?.ifBlank { stringResource(Res.string.manage_access_unnamed_member) }.orEmpty()
-    val subtitle = member?.let { roleLabel(it.role, it.isHost) }.orEmpty()
-    name to subtitle
+    AccessPanelView.MEMBER -> {
+      val member = state.activeMember
+      val name =
+        member?.displayName?.ifBlank { stringResource(Res.string.manage_access_unnamed_member) }
+          .orEmpty()
+      val subtitle = member?.let { roleLabel(it.role, it.isHost) }
+        .orEmpty()
+      name to subtitle
+    }
   }
-}
 
 @Composable
 private fun PanelBottomBar(
@@ -421,7 +450,8 @@ private fun PanelBottomBar(
           Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
             Button(
               onClick = { onShareInvite(url) },
-              modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
+              modifier = Modifier.weight(1f)
+                .height(Spacing.buttonHeight),
             ) {
               Icon(Icons.Filled.IosShare, contentDescription = null)
               Spacer(Modifier.width(Spacing.small))
@@ -429,7 +459,8 @@ private fun PanelBottomBar(
             }
             OutlinedButton(
               onClick = { onCopyInvite(url) },
-              modifier = Modifier.weight(1f).height(Spacing.buttonHeight),
+              modifier = Modifier.weight(1f)
+                .height(Spacing.buttonHeight),
             ) {
               Icon(Icons.Filled.ContentCopy, contentDescription = null)
               Spacer(Modifier.width(Spacing.small))
@@ -440,9 +471,23 @@ private fun PanelBottomBar(
         invite?.let {
           TextButton(
             onClick = { onCancelInvite(it.codeId) },
+            enabled = !state.cancellingInvite,
             modifier = Modifier.fillMaxWidth(),
           ) {
-            Text(stringResource(Res.string.invite_cancel), color = MaterialTheme.colorScheme.error)
+            if (state.cancellingInvite) {
+              CircularProgressIndicator(
+                Modifier.padding(2.dp)
+                  .height(20.dp)
+                  .width(20.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.error,
+              )
+            } else {
+              Text(
+                stringResource(Res.string.invite_cancel),
+                color = MaterialTheme.colorScheme.error
+              )
+            }
           }
         }
       }
@@ -456,14 +501,23 @@ private fun PanelBottomBar(
 }
 
 @Composable
-private fun PrimaryActionButton(label: String, onClick: () -> Unit, loading: Boolean = false) {
+private fun PrimaryActionButton(
+  label: String,
+  onClick: () -> Unit,
+  loading: Boolean = false
+) {
   Button(
     onClick = onClick,
     enabled = !loading,
-    modifier = Modifier.fillMaxWidth().height(Spacing.buttonHeight),
+    modifier = Modifier.fillMaxWidth()
+      .height(Spacing.buttonHeight),
   ) {
     if (loading) {
-      CircularProgressIndicator(Modifier.padding(2.dp).height(20.dp).width(20.dp), strokeWidth = 2.dp)
+      CircularProgressIndicator(
+        Modifier.padding(2.dp)
+          .height(20.dp)
+          .width(20.dp), strokeWidth = 2.dp
+      )
     } else {
       Text(label)
     }

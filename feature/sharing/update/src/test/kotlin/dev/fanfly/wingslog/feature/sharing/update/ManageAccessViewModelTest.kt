@@ -18,6 +18,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -350,5 +351,27 @@ class ManageAccessViewModelTest {
     coVerify { sharing.cancelInvite(AC_ID, "t1") }
     assertThat(vm.uiState.value.view).isEqualTo(AccessPanelView.MAIN)
     assertThat(vm.uiState.value.toast).isEqualTo(AccessToast.CODE_CANCELLED)
+  }
+
+  @Test
+  fun cancelInvite_marksCancellingWhileInFlight_andIgnoresASecondTap() = runTest {
+    // The round trip is slow and the button gives no feedback without this: a second tap before the
+    // first call lands must not fire a second request.
+    val gate = CompletableDeferred<Unit>()
+    coEvery { sharing.cancelInvite(AC_ID, "t1") } coAnswers {
+      gate.await()
+      Result.success(Unit)
+    }
+
+    val vm = viewModel()
+    vm.openCode("t1")
+    vm.cancelInvite("t1")
+    assertThat(vm.uiState.value.cancellingInvite).isTrue()
+
+    vm.cancelInvite("t1")
+    gate.complete(Unit)
+
+    coVerify(exactly = 1) { sharing.cancelInvite(AC_ID, "t1") }
+    assertThat(vm.uiState.value.cancellingInvite).isFalse()
   }
 }
