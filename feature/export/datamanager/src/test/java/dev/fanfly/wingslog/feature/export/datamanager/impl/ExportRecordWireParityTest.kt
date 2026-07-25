@@ -23,8 +23,8 @@ class ExportRecordWireParityTest {
       exportId = "e1",
       uid = "u1",
       fileName = "logbook.zip",
-      sizeBytes = 1_024,
-      createdAtEpochMillis = 1_700_000_000_000,
+      sizeBytes = 1_024.0,
+      createdAtEpochMillis = 1_700_000_000_000.0,
       displayLocation = "Downloads",
       formats = listOf("PDF"),
       dateRange = ExportRecordDateRangeWire(
@@ -38,10 +38,10 @@ class ExportRecordWireParityTest {
       destinationEmail = "pilot@example.com",
       destinationEmailSource = "auth",
       persistedDeliveryState = "SENT",
-      deliverySentAtEpochMillis = 1_700_000_500_000,
+      deliverySentAtEpochMillis = 1_700_000_500_000.0,
       deliveryFailureCode = "NONE",
       deliveryFailureMessage = "n/a",
-      remoteExpiresAtEpochMillis = 1_800_000_000_000,
+      remoteExpiresAtEpochMillis = 1_800_000_000_000.0,
     ).toExportRecord()
 
     // file_path is a local device path, never persisted to the remote history doc (toExportRecord
