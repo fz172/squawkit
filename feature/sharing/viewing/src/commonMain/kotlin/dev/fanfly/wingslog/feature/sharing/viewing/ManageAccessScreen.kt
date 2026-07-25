@@ -79,6 +79,9 @@ import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_u
 import wingslog.feature.sharing.sharedassets.generated.resources.revoke_confirm_action
 import wingslog.feature.sharing.sharedassets.generated.resources.revoke_confirm_body
 import wingslog.feature.sharing.sharedassets.generated.resources.revoke_confirm_title
+import wingslog.feature.sharing.sharedassets.generated.resources.role_confirm_action
+import wingslog.feature.sharing.sharedassets.generated.resources.role_confirm_body
+import wingslog.feature.sharing.sharedassets.generated.resources.role_confirm_title
 import wingslog.feature.sharing.sharedassets.generated.resources.sharing_sync_off_body
 import wingslog.feature.sharing.sharedassets.generated.resources.sharing_sync_off_title
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
@@ -245,6 +248,11 @@ private fun AccessPanel(
   // undoable, and neither used to ask.
   var revoking by remember { mutableStateOf<ShareMember?>(null) }
   var leaving by remember { mutableStateOf(false) }
+  // A role change is a real permission grant/revoke (co-owner can edit aircraft details and manage
+  // access), and it takes effect immediately — so it gets the same "ask first" treatment. The member
+  // is captured with the tap (not re-looked-up from state.activeMember at render time), same as
+  // [revoking] above, so the dialog can't dangle if the roster changes underneath it.
+  var pendingRoleChange by remember { mutableStateOf<Pair<ShareMember, ShareRole>?>(null) }
 
   // The system/gesture back press otherwise dismisses the whole dialog (it's the Dialog's own
   // onDismissRequest) regardless of which of the four steps is showing. From anywhere but MAIN,
@@ -288,6 +296,23 @@ private fun AccessPanel(
     )
   }
 
+  pendingRoleChange?.let { (member, role) ->
+    ConfirmDialog(
+      title = stringResource(
+        Res.string.role_confirm_title,
+        member.displayName.ifBlank { stringResource(Res.string.manage_access_unnamed_member) },
+        roleLabel(role, isHost = false),
+      ),
+      body = stringResource(Res.string.role_confirm_body),
+      confirmLabel = stringResource(Res.string.role_confirm_action),
+      onConfirm = {
+        onChangeRole(member.uid, role)
+        pendingRoleChange = null
+      },
+      onDismiss = { pendingRoleChange = null },
+    )
+  }
+
   Scaffold(
     modifier = modifier,
     topBar = {
@@ -328,7 +353,11 @@ private fun AccessPanel(
 
         AccessPanelView.MEMBER -> MemberView(
           state = state,
-          onChangeRole = onChangeRole,
+          onChangeRole = { uid, role ->
+            state.activeMember?.takeIf { it.uid == uid }?.let { member ->
+              pendingRoleChange = member to role
+            }
+          },
           onRemove = { state.activeMember?.let { revoking = it } },
         )
       }

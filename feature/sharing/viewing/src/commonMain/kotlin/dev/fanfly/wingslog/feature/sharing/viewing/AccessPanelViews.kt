@@ -330,12 +330,12 @@ internal fun MemberView(
       RoleOptionCard(
         role = ShareRole.TECHNICIAN,
         selected = member.role == ShareRole.TECHNICIAN,
-        onClick = { onChangeRole(member.uid, ShareRole.TECHNICIAN) },
+        onClick = { if (member.role != ShareRole.TECHNICIAN) onChangeRole(member.uid, ShareRole.TECHNICIAN) },
       )
       RoleOptionCard(
         role = ShareRole.OWNER,
         selected = member.role == ShareRole.OWNER,
-        onClick = { onChangeRole(member.uid, ShareRole.OWNER) },
+        onClick = { if (member.role != ShareRole.OWNER) onChangeRole(member.uid, ShareRole.OWNER) },
       )
     }
 

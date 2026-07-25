@@ -57,6 +57,12 @@ If they made changes while offline that have not synced yet, those changes are l
 
 The owner can invite you again.</string>
   <string name="leave_confirm_action">Leave</string>
+  <!-- Role change confirmation. A co-owner can edit aircraft details and manage access — same tier
+       as the demoting/promoting owner — so this is a real permission grant/revoke, not a label
+       swap, and takes effect immediately. -->
+  <string name="role_confirm_title">Change %1$s’s role to %2$s?</string>
+  <string name="role_confirm_body">This changes what they can do on this aircraft right away.</string>
+  <string name="role_confirm_action">Change role</string>
   <!-- Invite view (nested in the access panel) -->
   <string name="invite_title">Invite to aircraft</string>
   <string name="invite_role_label">Role</string>
