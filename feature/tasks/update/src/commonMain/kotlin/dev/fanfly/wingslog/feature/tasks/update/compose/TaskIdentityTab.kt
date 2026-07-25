@@ -112,6 +112,8 @@ fun TaskIdentityTab(
       }
     }
 
+    attachmentSection()
+
     if (isEditing) {
       MaintenanceHistorySection(
         taskId = taskId,
@@ -120,8 +122,6 @@ fun TaskIdentityTab(
         onRemoveLog = onRemoveLog,
       )
     }
-
-    attachmentSection()
   }
 }
 
