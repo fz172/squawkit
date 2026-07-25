@@ -11,6 +11,7 @@ sealed interface ExportProgress {
    * Completed archive metadata. UI should prefer [displayLocationKind] for localized labels.
    */
   data class Success(
+    val exportId: String,
     val filePath: String,
     val fileName: String,
     val displayLocation: String,

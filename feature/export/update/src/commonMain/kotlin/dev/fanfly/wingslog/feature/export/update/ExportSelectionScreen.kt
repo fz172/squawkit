@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Event
@@ -39,7 +40,6 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.IosShare
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.PictureAsPdf
@@ -59,6 +59,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
@@ -123,10 +125,11 @@ import wingslog.feature.export.sharedassets.generated.resources.export_custom_en
 import wingslog.feature.export.sharedassets.generated.resources.export_custom_range_title
 import wingslog.feature.export.sharedassets.generated.resources.export_custom_start_date
 import wingslog.feature.export.sharedassets.generated.resources.export_date_range_section
-import wingslog.feature.export.sharedassets.generated.resources.export_email_action
+import wingslog.feature.export.sharedassets.generated.resources.export_download
 import wingslog.feature.export.sharedassets.generated.resources.export_email_body
 import wingslog.feature.export.sharedassets.generated.resources.export_email_locked_subtitle
 import wingslog.feature.export.sharedassets.generated.resources.export_email_locked_title
+import wingslog.feature.export.sharedassets.generated.resources.export_email_sent_action
 import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
 import wingslog.feature.export.sharedassets.generated.resources.export_error_details
 import wingslog.feature.export.sharedassets.generated.resources.export_error_subtitle
@@ -157,8 +160,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_receipt_r
 import wingslog.feature.export.sharedassets.generated.resources.export_running_stage_counter
 import wingslog.feature.export.sharedassets.generated.resources.export_running_title
 import wingslog.feature.export.sharedassets.generated.resources.export_select_all
-import wingslog.feature.export.sharedassets.generated.resources.export_sent_to
-import wingslog.feature.export.sharedassets.generated.resources.export_share
+import wingslog.feature.export.sharedassets.generated.resources.export_send_to_email_action
 import wingslog.feature.export.sharedassets.generated.resources.export_share_title
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_file_name
 import wingslog.feature.export.sharedassets.generated.resources.export_stub_preview_location
@@ -188,9 +190,11 @@ fun ExportSelectionScreen(
   onExport: () -> Unit,
   onCancel: () -> Unit,
   onShareExport: (String, String, String, String) -> Unit,
+  onSendToEmail: () -> Unit,
   onDone: () -> Unit,
   onRetry: () -> Unit,
   onSeePlans: () -> Unit,
+  snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
   Scaffold(
     topBar = {
@@ -214,6 +218,7 @@ fun ExportSelectionScreen(
         )
       }
     },
+    snackbarHost = { SnackbarHost(snackbarHostState) },
   ) { innerPadding ->
     val layoutDirection = LocalLayoutDirection.current
     when (state) {
@@ -235,7 +240,6 @@ fun ExportSelectionScreen(
         onCustomRangeChange = onCustomRangeChange,
         onNavigateToHistory = onNavigateToHistory,
         onExport = onExport,
-        onSeePlans = onSeePlans,
       )
 
       is ExportUiState.Running -> RunningContent(
@@ -248,8 +252,10 @@ fun ExportSelectionScreen(
         state = state,
         modifier = Modifier.padding(innerPadding),
         onShare = onShareExport,
+        onSendToEmail = onSendToEmail,
         onHistory = onNavigateToHistory,
         onDone = onDone,
+        onSeePlans = onSeePlans,
       )
 
       is ExportUiState.Error -> ErrorResult(
@@ -275,27 +281,16 @@ private fun ConfiguringContent(
   onCustomRangeChange: (LocalDate, LocalDate) -> Unit,
   onNavigateToHistory: () -> Unit,
   onExport: () -> Unit,
-  onSeePlans: () -> Unit,
 ) {
   if (!state.isLoadingAircraft && state.aircraft.isEmpty()) {
     EmptyAircraftContent(modifier, onNavigateToHistory)
     return
   }
 
-  var showUpsell by remember { mutableStateOf(false) }
-
   Box(
     modifier = modifier.fillMaxSize(),
     contentAlignment = Alignment.TopCenter,
   ) {
-    // Both the resolved "Sent to …" line and the shown-locked promo row add a footer row below the
-    // primary button, so either one reserves the taller bottom-bar height.
-    val bottomBarReservedHeight =
-      if (state.resolvedDeliveryInfo?.destinationEmail != null || state.emailDeliveryLocked) {
-        ExportBottomBarWithEmailReservedHeight
-      } else {
-        ExportBottomBarReservedHeight
-      }
     ExportSetupList(
       state = state,
       onToggleAircraft = onToggleAircraft,
@@ -308,26 +303,15 @@ private fun ConfiguringContent(
         .fillMaxHeight()
         .constrainedContentWidth(ContentWidth.Form)
         .padding(horizontal = Spacing.screenPadding),
-      bottomPadding = bottomBarReservedHeight,
+      bottomPadding = ExportBottomBarReservedHeight,
     )
     if (state.aircraft.isNotEmpty()) {
       Box(
         modifier = Modifier.align(Alignment.BottomCenter),
       ) {
-        ExportBottomBar(state, onExport, onEmailLocked = { showUpsell = true })
+        ExportBottomBar(state, onExport)
       }
     }
-  }
-
-  if (showUpsell) {
-    ProUpsellSheet(
-      trigger = UpsellTrigger.EMAIL_EXPORT,
-      onSeePlans = {
-        onSeePlans()
-        showUpsell = false
-      },
-      onDismiss = { showUpsell = false },
-    )
   }
 }
 
@@ -425,7 +409,6 @@ private val FORMAT_CHOICES = listOf(
 )
 
 private val ExportBottomBarReservedHeight = 176.dp
-private val ExportBottomBarWithEmailReservedHeight = 200.dp
 
 @Composable
 private fun FormatSection(
@@ -727,9 +710,7 @@ private fun DateRangePickerHeadlineCell(
 private fun ExportBottomBar(
   state: ExportUiState.Configuring,
   onExport: () -> Unit,
-  onEmailLocked: () -> Unit,
 ) {
-  val deliveryEmail = state.resolvedDeliveryInfo?.destinationEmail
   Box(
     modifier = Modifier
       .fillMaxWidth()
@@ -792,30 +773,15 @@ private fun ExportBottomBar(
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
       ) {
         Icon(
-          imageVector = if (deliveryEmail != null) Icons.Default.Mail else Icons.Default.FolderZip,
+          imageVector = Icons.Default.FolderZip,
           contentDescription = null,
           modifier = Modifier.size(20.dp),
         )
         Spacer(Modifier.width(Spacing.small))
         Text(
-          text = stringResource(
-            if (deliveryEmail != null) Res.string.export_email_action
-            else Res.string.export_primary_action
-          ),
+          text = stringResource(Res.string.export_primary_action),
           style = MaterialTheme.typography.titleMedium,
         )
-      }
-
-      if (deliveryEmail != null) {
-        Text(
-          text = stringResource(Res.string.export_sent_to, deliveryEmail),
-          style = MaterialTheme.typography.labelSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          textAlign = TextAlign.Center,
-          modifier = Modifier.fillMaxWidth(),
-        )
-      } else if (state.emailDeliveryLocked) {
-        LockedEmailRow(onClick = onEmailLocked)
       }
     }
   }
@@ -1025,8 +991,10 @@ private fun SuccessResult(
   state: ExportUiState.Success,
   modifier: Modifier,
   onShare: (String, String, String, String) -> Unit,
+  onSendToEmail: () -> Unit,
   onHistory: () -> Unit,
   onDone: () -> Unit,
+  onSeePlans: () -> Unit,
 ) {
   val fileName =
     state.fileName.ifBlank { stringResource(Res.string.export_stub_preview_file_name) }
@@ -1041,22 +1009,19 @@ private fun SuccessResult(
   val emailSubject = stringResource(Res.string.export_email_subject, fileName)
   val emailBody = stringResource(Res.string.export_email_body)
 
-  // Email users have their archive delivered by email; the device subtitle and manual-share button
-  // apply only to the no-email path.
-  val deliveredByEmail = state.deliveryInfo != null
-  // Delivery is asynchronous, so right after export the state is usually QUEUED/SENDING rather than
-  // SENT. Treat anything that isn't an outright failure as the clean "Export sent" success; only a
-  // genuine failure falls back to the status card.
-  val deliveryFailed =
-    deliveredByEmail && state.persistedDeliveryState == "FAILED"
-  val emailSucceeded = deliveredByEmail && !deliveryFailed
+  var showUpsell by remember { mutableStateOf(false) }
+
+  // The archive is always saved locally first; email is a separate, explicit action the user
+  // takes below, never automatic.
+  val emailSucceeded = state.persistedDeliveryState == "SENT"
+  val deliveryFailed = state.persistedDeliveryState == "FAILED"
   // A failed email delivery folds into the receipt as a labeled status section rather than a
   // separate stacked card, so the success screen stays a single card.
   val deliveryFailure = if (deliveryFailed) {
     val reason = state.deliveryFailureMessage.ifBlank {
       stringResource(Res.string.export_success_delivery_failed)
     }
-    val destination = state.deliveryInfo.destinationEmail
+    val destination = state.deliveryInfo?.destinationEmail.orEmpty()
     DeliveryFailure(
       title = stringResource(Res.string.export_success_delivery_failed_title),
       message = if (destination.isNotBlank()) {
@@ -1080,8 +1045,8 @@ private fun SuccessResult(
     title = stringResource(
       if (emailSucceeded) Res.string.export_success_sent_title else Res.string.export_success_title
     ),
-    subtitle = if (deliveredByEmail) "" else location,
-    subtitleContent = if (emailSucceeded) {
+    subtitle = if (emailSucceeded) "" else location,
+    subtitleContent = if (emailSucceeded && state.deliveryInfo != null) {
       { EmailedSubtitle(state.deliveryInfo.destinationEmail) }
     } else {
       null
@@ -1101,48 +1066,59 @@ private fun SuccessResult(
       )
     },
     actions = {
-      if (deliveredByEmail) {
-        ResultPrimaryButton(
-          label = stringResource(CoreRes.string.done),
-          icon = null,
-          onClick = onDone,
+      ResultPrimaryButton(
+        label = stringResource(Res.string.export_download),
+        icon = Icons.Default.Download,
+        onClick = {
+          onShare(
+            state.filePath,
+            shareTitle,
+            emailSubject,
+            emailBody
+          )
+        },
+      )
+      when {
+        state.deliveryInfo != null -> ResultSecondaryButton(
+          label = stringResource(
+            if (emailSucceeded) Res.string.export_email_sent_action
+            else Res.string.export_send_to_email_action
+          ),
+          icon = if (emailSucceeded) Icons.Default.Check else Icons.Default.Mail,
+          enabled = !emailSucceeded && !state.isSendingEmail,
+          onClick = onSendToEmail,
         )
+
+        state.emailDeliveryLocked -> LockedEmailRow(onClick = { showUpsell = true })
+      }
+      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
         ResultSecondaryButton(
+          modifier = Modifier.weight(1f),
           label = stringResource(Res.string.export_view_exports),
           icon = Icons.Default.History,
           onClick = onHistory,
         )
-      } else {
-        ResultPrimaryButton(
-          label = stringResource(Res.string.export_share),
-          icon = Icons.Default.IosShare,
-          onClick = {
-            onShare(
-              state.filePath,
-              shareTitle,
-              emailSubject,
-              emailBody
-            )
-          },
+        ResultSecondaryButton(
+          modifier = Modifier.weight(1f),
+          label = stringResource(CoreRes.string.done),
+          icon = null,
+          plain = true,
+          onClick = onDone,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-          ResultSecondaryButton(
-            modifier = Modifier.weight(1f),
-            label = stringResource(Res.string.export_view_exports),
-            icon = Icons.Default.History,
-            onClick = onHistory,
-          )
-          ResultSecondaryButton(
-            modifier = Modifier.weight(1f),
-            label = stringResource(CoreRes.string.done),
-            icon = null,
-            plain = true,
-            onClick = onDone,
-          )
-        }
       }
     },
   )
+
+  if (showUpsell) {
+    ProUpsellSheet(
+      trigger = UpsellTrigger.EMAIL_EXPORT,
+      onSeePlans = {
+        onSeePlans()
+        showUpsell = false
+      },
+      onDismiss = { showUpsell = false },
+    )
+  }
 }
 
 /** Emailed-success subtitle with the destination address rendered in mono, per the design. */
@@ -1467,11 +1443,13 @@ private fun ResultSecondaryButton(
   icon: ImageVector?,
   modifier: Modifier = Modifier,
   plain: Boolean = false,
+  enabled: Boolean = true,
   onClick: () -> Unit,
 ) {
   if (plain) {
     TextButton(
       onClick = onClick,
+      enabled = enabled,
       modifier = modifier.fillMaxWidth()
         .height(48.dp),
     ) {
@@ -1480,6 +1458,7 @@ private fun ResultSecondaryButton(
   } else {
     OutlinedButton(
       onClick = onClick,
+      enabled = enabled,
       modifier = modifier.fillMaxWidth()
         .height(48.dp),
       shape = RoundedCornerShape(Spacing.chipCornerRadius),

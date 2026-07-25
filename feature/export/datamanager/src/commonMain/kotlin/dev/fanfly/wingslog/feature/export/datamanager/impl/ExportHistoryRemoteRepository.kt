@@ -59,11 +59,10 @@ class ExportHistoryRemoteRepository(
         .putData(archiveBytes.toFirebaseData())
       val synced = record.copy(
         remote_archive_ref = remotePath,
+        // Delivery is always an explicit, user-initiated action now (never automatic on upload),
+        // so a freshly synced record starts NOT_REQUESTED regardless of destination_email.
         persisted_delivery_state = record.persisted_delivery_state.ifBlank {
-          record.destination_email
-            .takeIf { it.isNotBlank() }
-            ?.let { ExportDeliveryStates.QUEUED }
-            ?: ExportDeliveryStates.NOT_REQUESTED
+          ExportDeliveryStates.NOT_REQUESTED
         },
         remote_expires_at_epoch_millis = (clock.now() + 60.days).toEpochMilliseconds(),
       )
