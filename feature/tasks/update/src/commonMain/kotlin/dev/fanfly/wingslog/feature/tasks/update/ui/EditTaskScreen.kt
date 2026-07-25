@@ -56,12 +56,12 @@ import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.ADJUSTMENT_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
-import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
+import dev.fanfly.wingslog.feature.tasks.update.compose.COMPLIANCE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.SCHEDULE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.compose.TASK_FORM_TAB_KEYS
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskAdjustmentsTab
-import dev.fanfly.wingslog.feature.tasks.update.compose.TaskDetailTab
+import dev.fanfly.wingslog.feature.tasks.update.compose.TaskComplianceTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
@@ -183,7 +183,7 @@ fun EditTaskScreen(
           TaskTabRow(
             tabs = listOf(
               BASIC_TAB,
-              DETAILS_TAB,
+              COMPLIANCE_TAB,
               SCHEDULE_TAB,
               ADJUSTMENT_TAB
             ),
@@ -228,22 +228,23 @@ fun EditTaskScreen(
                 onTitleChange = onTitleChange,
                 component = state.component,
                 onComponentChange = null,
-                complianceType = state.type,
-                onComplianceTypeChange = null,
+                isEditing = true,
+                taskId = card.id,
+                availableLogs = availableLogs,
+                onAddLog = onShowLogPicker,
+                onRemoveLog = onRemoveLog,
+                attachmentSection = attachmentSection
               )
 
-              1 -> TaskDetailTab(
+              1 -> TaskComplianceTab(
+                complianceType = state.type,
+                onComplianceTypeChange = null,
                 refNumber = state.refNumber,
                 onRefNumberChange = onRefNumberChange,
                 complianceAuthority = state.complianceAuthority,
                 onComplianceAuthorityChange = onComplianceAuthorityChange,
                 complianceNotes = state.complianceNotes,
                 onComplianceNotesChange = onComplianceNotesChange,
-                taskId = card.id,
-                availableLogs = availableLogs,
-                onAddLog = onShowLogPicker,
-                onRemoveLog = onRemoveLog,
-                attachmentSection = attachmentSection
               )
 
               2 -> TaskScheduleTab(

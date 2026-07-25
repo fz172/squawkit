@@ -12,12 +12,11 @@ import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.details
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.adjustments
 import wingslog.feature.tasks.update.generated.resources.basics
+import wingslog.feature.tasks.update.generated.resources.compliance
 import wingslog.feature.tasks.update.generated.resources.schedule
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 data class TaskTabSpec(
   val icon: ImageVector,
@@ -25,10 +24,10 @@ data class TaskTabSpec(
 )
 
 /** Stable, locale-independent analytics keys for the task-form tabs, in tab order. */
-val TASK_FORM_TAB_KEYS = listOf("basics", "details", "schedule", "adjustments")
+val TASK_FORM_TAB_KEYS = listOf("basics", "compliance", "schedule", "adjustments")
 
 var BASIC_TAB = TaskTabSpec(Icons.Default.Edit, Res.string.basics)
-var DETAILS_TAB = TaskTabSpec(Icons.Default.Info, CoreRes.string.details)
+var COMPLIANCE_TAB = TaskTabSpec(Icons.Default.Info, Res.string.compliance)
 var SCHEDULE_TAB = TaskTabSpec(Icons.Default.DateRange, Res.string.schedule)
 var ADJUSTMENT_TAB = TaskTabSpec(Icons.Default.Tune, Res.string.adjustments)
 

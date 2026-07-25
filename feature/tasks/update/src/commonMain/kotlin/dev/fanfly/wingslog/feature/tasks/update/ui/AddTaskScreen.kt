@@ -48,11 +48,11 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
-import dev.fanfly.wingslog.feature.tasks.update.compose.DETAILS_TAB
+import dev.fanfly.wingslog.feature.tasks.update.compose.COMPLIANCE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.SCHEDULE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.compose.TASK_FORM_TAB_KEYS
-import dev.fanfly.wingslog.feature.tasks.update.compose.TaskDetailTab
+import dev.fanfly.wingslog.feature.tasks.update.compose.TaskComplianceTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
@@ -156,7 +156,7 @@ fun AddTaskScreen(
           TaskTabRow(
             tabs = listOf(
               BASIC_TAB,
-              DETAILS_TAB,
+              COMPLIANCE_TAB,
               SCHEDULE_TAB,
             ),
             selectedIndex = pagerState.currentPage,
@@ -200,18 +200,18 @@ fun AddTaskScreen(
                 onTitleChange = onTitleChange,
                 component = state.component,
                 onComponentChange = onComponentChange,
-                complianceType = state.type,
-                onComplianceTypeChange = onTypeChange,
+                attachmentSection = attachmentSection
               )
 
-              1 -> TaskDetailTab(
+              1 -> TaskComplianceTab(
+                complianceType = state.type,
+                onComplianceTypeChange = onTypeChange,
                 refNumber = state.refNumber,
                 onRefNumberChange = onRefNumberChange,
                 complianceAuthority = state.complianceAuthority,
                 onComplianceAuthorityChange = onComplianceAuthorityChange,
                 complianceNotes = state.complianceNotes,
                 onComplianceNotesChange = onComplianceNotesChange,
-                attachmentSection = attachmentSection
               )
 
               2 -> TaskScheduleTab(
