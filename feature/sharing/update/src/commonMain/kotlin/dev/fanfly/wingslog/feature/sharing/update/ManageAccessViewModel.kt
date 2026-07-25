@@ -92,7 +92,21 @@ class ManageAccessViewModel(
             }
             return@collect
           }
-          _uiState.update { it.copy(members = share.members, invites = share.invites) }
+          _uiState.update { current ->
+            // The invite the CODE view is showing can vanish out from under it — someone redeemed
+            // it, it expired, or it was cancelled from another device — and the roster stream is the
+            // only place that's ever noticed. Leaving the view parked there renders an empty CODE
+            // step forever; step back to the roster, same as a local cancel would.
+            val activeInviteGone = current.view == AccessPanelView.CODE &&
+              current.activeInviteCodeId != null &&
+              share.invites.none { it.codeId == current.activeInviteCodeId }
+            current.copy(
+              members = share.members,
+              invites = share.invites,
+              view = if (activeInviteGone) AccessPanelView.MAIN else current.view,
+              activeInviteCodeId = if (activeInviteGone) null else current.activeInviteCodeId,
+            )
+          }
         }
     }
   }

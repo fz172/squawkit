@@ -341,6 +341,59 @@ class ManageAccessViewModelTest {
   }
 
   @Test
+  fun activeInviteVanishesFromRoster_closesCodeViewBackToMain() = runTest {
+    // e.g. redeemed on another device: nothing local ever calls cancelInvite, the code just drops
+    // out of the next roster snapshot. The CODE view has nothing left to show and must not be left
+    // stranded there.
+    share.value = AircraftShareState(
+      members = listOf(
+        ShareMember(uid = "host", displayName = "Host", role = ShareRole.OWNER, isHost = true, isSelf = true),
+      ),
+      invites = listOf(
+        PendingInvite(codeId = "t1", role = ShareRole.TECHNICIAN, createdAtEpochMs = 0L, expiresAtEpochMs = 1L),
+      ),
+    )
+    val vm = viewModel()
+    vm.openCode("t1")
+    assertThat(vm.uiState.value.view).isEqualTo(AccessPanelView.CODE)
+
+    share.value = AircraftShareState(
+      members = listOf(
+        ShareMember(uid = "host", displayName = "Host", role = ShareRole.OWNER, isHost = true, isSelf = true),
+        ShareMember(uid = "tech", displayName = "Tech", role = ShareRole.TECHNICIAN),
+      ),
+      invites = emptyList(),
+    )
+
+    assertThat(vm.uiState.value.view).isEqualTo(AccessPanelView.MAIN)
+    assertThat(vm.uiState.value.activeInviteCodeId).isNull()
+    assertThat(vm.uiState.value.members).hasSize(2)
+  }
+
+  @Test
+  fun otherInviteVanishing_doesNotDisturbTheOpenCodeView() = runTest {
+    // Only the invite currently on screen should trigger the close — an unrelated code expiring or
+    // being cancelled elsewhere shouldn't yank the owner out of what they're looking at.
+    share.value = AircraftShareState(
+      invites = listOf(
+        PendingInvite(codeId = "t1", role = ShareRole.TECHNICIAN, createdAtEpochMs = 0L, expiresAtEpochMs = 1L),
+        PendingInvite(codeId = "t2", role = ShareRole.TECHNICIAN, createdAtEpochMs = 0L, expiresAtEpochMs = 1L),
+      ),
+    )
+    val vm = viewModel()
+    vm.openCode("t1")
+
+    share.value = AircraftShareState(
+      invites = listOf(
+        PendingInvite(codeId = "t1", role = ShareRole.TECHNICIAN, createdAtEpochMs = 0L, expiresAtEpochMs = 1L),
+      ),
+    )
+
+    assertThat(vm.uiState.value.view).isEqualTo(AccessPanelView.CODE)
+    assertThat(vm.uiState.value.activeInviteCodeId).isEqualTo("t1")
+  }
+
+  @Test
   fun cancelInvite_delegatesToManager_andReturnsToMain() = runTest {
     coEvery { sharing.cancelInvite(AC_ID, "t1") } returns Result.success(Unit)
 
