@@ -431,7 +431,7 @@ private fun MemberRow(member: ShareMember, clickable: Boolean, onClick: () -> Un
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
-    if (member.isHost) {
+    if (member.isHost && !member.isSelf) {
       Icon(
         Icons.Filled.LockPerson,
         contentDescription = null,
