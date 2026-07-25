@@ -50,7 +50,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.sync.settings.generated.resources.Res
 import wingslog.feature.sync.settings.generated.resources.setting_item_sync
 import wingslog.feature.sync.settings.generated.resources.setting_item_sync_on_cellular
-import wingslog.feature.sync.settings.generated.resources.sync_attachments_disclaimer
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_active
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_paused
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_signin
@@ -146,13 +145,6 @@ fun SyncSettingsScreen(
           }
 
           StatusSection(state = state)
-
-          Text(
-            text = stringResource(Res.string.sync_attachments_disclaimer),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-
           Spacer(Modifier.height(Spacing.large))
         }
       }

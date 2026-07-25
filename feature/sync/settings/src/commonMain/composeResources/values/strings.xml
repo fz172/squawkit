@@ -1,6 +1,5 @@
 <resources>
   <string name="setting_item_sync">Cloud Sync</string>
-  <string name="sync_attachments_disclaimer">Attachments and shared aircraft require an internet connection and a permanent (non-anonymous) account. Your aircraft, logs, tasks, technicians and license info sync automatically.</string>
   <string name="sync_hero_title_signin">Sign in to enable sync</string>
   <string name="sync_hero_body_signin">You're using the app anonymously. All data stays on this device. Sign in with a permanent account on the previous screen to back things up.</string>
   <string name="sync_hero_title_paused">Sync is paused</string>
