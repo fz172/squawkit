@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -148,6 +149,7 @@ fun EditTaskScreen(
   }
 
   Scaffold(
+    modifier = Modifier.imePadding(),
     containerColor = MaterialTheme.colorScheme.background,
     topBar = {
       Column {

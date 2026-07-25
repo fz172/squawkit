@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -175,6 +176,7 @@ fun MaintenanceLogFormScreen(
   }
 
   Scaffold(
+    modifier = Modifier.imePadding(),
     containerColor = MaterialTheme.colorScheme.background,
     topBar = {
       Column {
@@ -224,21 +226,6 @@ fun MaintenanceLogFormScreen(
       }
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
-    bottomBar = {
-      if (!uiState.isLoading) {
-        BottomButtons(
-          onPrimaryClick = viewModel::save,
-          onSecondaryClick = { tryNavigateBack() },
-          onDangerClick = if (viewModel.isEditMode) {
-            { showDeleteDialog = true }
-          } else null,
-          dangerLabel = stringResource(CoreRes.string.delete),
-          primaryEnabled = !uiState.isSaving,
-          isPrimaryFunctionInProgress = uiState.isSaving,
-          primaryLabel = stringResource(CoreRes.string.save),
-        )
-      }
-    },
   ) { innerPadding ->
     if (uiState.isLoading) {
       Box(
@@ -326,6 +313,18 @@ fun MaintenanceLogFormScreen(
             }
           }
         }
+
+        BottomButtons(
+          onPrimaryClick = viewModel::save,
+          onSecondaryClick = { tryNavigateBack() },
+          onDangerClick = if (viewModel.isEditMode) {
+            { showDeleteDialog = true }
+          } else null,
+          dangerLabel = stringResource(CoreRes.string.delete),
+          primaryEnabled = !uiState.isSaving,
+          isPrimaryFunctionInProgress = uiState.isSaving,
+          primaryLabel = stringResource(CoreRes.string.save),
+        )
       }
     }
   }
