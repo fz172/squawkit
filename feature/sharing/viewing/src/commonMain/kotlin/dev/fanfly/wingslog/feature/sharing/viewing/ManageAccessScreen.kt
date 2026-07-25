@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -39,6 +41,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
@@ -324,6 +328,11 @@ private fun PanelHeader(state: ManageAccessUiState, onLeading: () -> Unit) {
   Row(
     modifier = Modifier
       .fillMaxWidth()
+      // The dialog this panel renders in draws edge-to-edge (formDialogProperties'
+      // decorFitsSystemWindows = false) only on the COMPACT full-screen presentation — the MEDIUM+
+      // centered card already clears the status bar via its own outer padding, so gate this rather
+      // than pushing the header down needlessly there too.
+      .let { if (LocalLayoutTier.current == LayoutTier.COMPACT) it.statusBarsPadding() else it }
       .padding(start = Spacing.small, end = Spacing.large, top = Spacing.small, bottom = Spacing.small),
     verticalAlignment = Alignment.CenterVertically,
   ) {
@@ -385,6 +394,8 @@ private fun PanelBottomBar(
   Column(
     modifier = Modifier
       .fillMaxWidth()
+      // See the matching comment on PanelHeader — only needed on the edge-to-edge COMPACT sheet.
+      .let { if (LocalLayoutTier.current == LayoutTier.COMPACT) it.navigationBarsPadding() else it }
       .padding(horizontal = Spacing.large, vertical = Spacing.medium),
     verticalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
