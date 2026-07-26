@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.aircraft.AttachmentType.ATTACHMENT_TYPE_LINK
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryOutcome
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
@@ -20,12 +21,14 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
@@ -59,6 +62,10 @@ class ExportViewModel(
 
   private val _state = MutableStateFlow<ExportUiState>(defaultConfiguring)
   val state: StateFlow<ExportUiState> = _state.asStateFlow()
+
+  // One-shot outcome of an explicit "Send to my email" tap, for the UI to surface as a snackbar.
+  private val _deliveryEvents = Channel<ExportDeliveryOutcome>()
+  val deliveryEvents = _deliveryEvents.receiveAsFlow()
 
   private var lastConfiguring: ExportUiState.Configuring = defaultConfiguring
   private var exportJob: Job? = null
@@ -255,11 +262,48 @@ class ExportViewModel(
   }
 
   /**
+   * Explicitly requests delivery of the just-finished export to the user's email. Delivery is
+   * never triggered automatically — this is the only path that sends one.
+   */
+  fun onSendToEmail() {
+    val success = _state.value as? ExportUiState.Success ?: return
+    if (success.isSendingEmail) return
+    _state.value = success.copy(isSendingEmail = true)
+    viewModelScope.launch {
+      val outcome = exportManager.resendDelivery(success.exportId)
+      val current = _state.value as? ExportUiState.Success
+      if (current != null && current.exportId == success.exportId) {
+        _state.value = current.copy(
+          isSendingEmail = false,
+          persistedDeliveryState = when (outcome) {
+            is ExportDeliveryOutcome.Sent -> "SENT"
+            is ExportDeliveryOutcome.Failed -> "FAILED"
+            else -> current.persistedDeliveryState
+          },
+          deliveryFailureMessage = if (outcome is ExportDeliveryOutcome.Failed) {
+            outcome.reason
+          } else {
+            current.deliveryFailureMessage
+          },
+        )
+      }
+      _deliveryEvents.send(outcome)
+    }
+  }
+
+  /**
    * Returns from an error state to the last editable configuration.
    */
   fun onRetry() {
     _state.value = lastConfiguring
   }
+
+  /**
+   * Resolves the archive bytes for [exportId] for platforms whose Download action has no durable
+   * local file handle (web) and must fetch the bytes on demand.
+   */
+  suspend fun fetchArchiveBytes(exportId: String): ByteArray? =
+    exportManager.downloadArchiveBytes(exportId)
 
   private fun reduceConfiguring(
     transform: (ExportUiState.Configuring) -> ExportUiState.Configuring,
@@ -286,6 +330,7 @@ class ExportViewModel(
   private fun ExportProgress.toUiState(): ExportUiState = when (this) {
     is ExportProgress.Running -> ExportUiState.Running(step, percent)
     is ExportProgress.Success -> ExportUiState.Success(
+      exportId = exportId,
       fileName = fileName,
       displayLocation = displayLocation,
       displayLocationKind = displayLocationKind,
@@ -299,6 +344,7 @@ class ExportViewModel(
       customStart = lastConfiguring.customStart,
       customEnd = lastConfiguring.customEnd,
       deliveryInfo = latestDeliveryInfo,
+      emailDeliveryLocked = lastConfiguring.emailDeliveryLocked,
       persistedDeliveryState = persistedDeliveryState,
       deliveryFailureMessage = deliveryFailureMessage,
     )

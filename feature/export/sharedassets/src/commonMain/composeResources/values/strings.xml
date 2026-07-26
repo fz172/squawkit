@@ -33,11 +33,7 @@
   <!-- Setup: footer -->
   <string name="export_footer_aircraft_count">%1$d aircraft</string>
   <string name="export_estimated_size">~%1$s</string>
-  <string name="export_primary_action">Export ZIP</string>
-  <string name="export_email_action">Email export</string>
-  <string name="export_sent_to">Sent to %1$s</string>
-  <string name="export_email_locked_title">Email a copy</string>
-  <string name="export_email_locked_subtitle">Get your exports emailed with SquawkIt Pro</string>
+  <string name="export_primary_action">Start</string>
 
   <!-- Running -->
   <string name="export_running_title">Preparing export</string>
@@ -53,19 +49,17 @@
   <string name="export_progress_compressing_archive_detail">Packing documents and attachments into the final ZIP archive.</string>
   <string name="export_progress_saving_file">Saving export...</string>
   <string name="export_progress_saving_file_detail">Writing the ZIP to your device and updating local export history.</string>
-  <string name="export_progress_uploading_archive">Sending email...</string>
-  <string name="export_progress_uploading_archive_detail">Uploading your archive and requesting your secure email delivery.</string>
+  <string name="export_progress_uploading_archive">Syncing to the cloud...</string>
+  <string name="export_progress_uploading_archive_detail">Uploading your archive so it's ready to download or email later.</string>
 
   <!-- Result: success -->
   <string name="export_success_title">Export ready</string>
-  <string name="export_success_sent_title">Export sent</string>
-  <string name="export_success_emailed_subtitle">Secure download link emailed to</string>
   <string name="export_stub_preview_file_name">SquawkIt_Logs_preview.zip</string>
   <string name="export_stub_preview_location">Saved to this device</string>
   <string name="export_location_downloads_squawkit">Saved to Downloads · SquawkIt</string>
   <string name="export_location_files_squawkit">Saved to Files · SquawkIt</string>
   <string name="export_success_delivery_failed_title">Delivery failed</string>
-  <string name="export_success_delivery_failed">Automatic delivery failed. Use Share for now, then retry from export history later.</string>
+  <string name="export_success_delivery_failed">Delivery failed. Use Download for now, then try emailing it again.</string>
   <string name="export_success_delivery_auth">Destination: signed-in account email %1$s</string>
   <string name="export_receipt_file_subtitle">%1$s · ZIP containing %2$s + attachments</string>
   <string name="export_receipt_aircraft">Aircraft</string>
@@ -75,17 +69,12 @@
   <string name="export_aircraft_summary_more">%1$s + %2$d more</string>
 
   <!-- Result: actions -->
-  <string name="export_share">Share</string>
+  <string name="export_download">Download</string>
+  <string name="export_download_success">Saved to your device</string>
+  <string name="export_download_failed">Couldn’t download the export</string>
+  <string name="export_send_to_email_action">Email it to me</string>
+  <string name="export_email_sent_action">Emailed</string>
   <string name="export_view_exports">View exports</string>
-  <string name="export_share_title">Share export</string>
-  <string name="export_email_subject">SquawkIt logbook export: %1$s</string>
-  <string name="export_email_body">Hi,
-
-Your SquawkIt logbook export is attached.
-
-To use it, save the ZIP file and unzip it. The ZIP contains your selected report documents plus any available attachments, and a README.txt with import steps.
-
-Thank you for choosing SquawkIt.</string>
 
   <!-- Result: error -->
   <string name="export_error_title">Export failed</string>
@@ -111,7 +100,7 @@ Thank you for choosing SquawkIt.</string>
   <string name="export_resend_email">Email this export again</string>
   <string name="export_history_more_actions">More actions</string>
   <string name="export_history_menu_resend">Resend email</string>
-  <string name="export_history_menu_share">Share file</string>
+  <string name="export_history_menu_download">Download</string>
   <string name="export_history_menu_save">Save to device</string>
   <string name="export_history_menu_delete">Delete export</string>
   <string name="export_history_status_cloud">In the cloud</string>

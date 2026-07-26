@@ -12,6 +12,12 @@ expect class ExportFileStore {
   suspend fun writeZip(fileName: String, bytes: ByteArray): ExportedFile
 
   /**
+   * Reads back the bytes for the archive at [filePath] (an [ExportedFile.filePath]), for platforms
+   * with no durable local handle to hand straight to the OS (i.e. web). Null when unavailable.
+   */
+  suspend fun readBytes(filePath: String): ByteArray?
+
+  /**
    * Persists [record] in the app-private metadata index so its full scope is rediscoverable when
    * listing history. Keyed by `export_id`; replaces any existing record for the same export.
    */

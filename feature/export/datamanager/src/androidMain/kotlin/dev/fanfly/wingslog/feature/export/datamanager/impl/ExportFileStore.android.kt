@@ -61,6 +61,14 @@ actual class ExportFileStore(private val context: Context) {
       )
     }
 
+  actual suspend fun readBytes(filePath: String): ByteArray? =
+    withContext(Dispatchers.IO) {
+      runCatching {
+        context.contentResolver.openInputStream(filePath.toUri())
+          ?.use { it.readBytes() }
+      }.getOrNull()
+    }
+
   actual suspend fun saveRecord(ownerUid: String, record: ExportRecord): Unit =
     withContext(Dispatchers.IO) {
       writeIndex(

@@ -56,6 +56,12 @@ actual class ExportFileStore {
       )
     }
 
+  actual suspend fun readBytes(filePath: String): ByteArray? =
+    withContext(Dispatchers.Default) {
+      NSData.dataWithContentsOfFile(filePath)
+        ?.toByteArray()
+    }
+
   actual suspend fun saveRecord(ownerUid: String, record: ExportRecord): Unit =
     withContext(Dispatchers.Default) {
       ensureDirectory()

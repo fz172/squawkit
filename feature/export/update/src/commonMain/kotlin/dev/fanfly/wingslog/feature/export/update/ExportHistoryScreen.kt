@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.Inbox
-import androidx.compose.material.icons.filled.IosShare
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Smartphone
@@ -75,8 +74,6 @@ import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_all_time
-import wingslog.feature.export.sharedassets.generated.resources.export_email_body
-import wingslog.feature.export.sharedassets.generated.resources.export_email_subject
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body_cloud_only
 import wingslog.feature.export.sharedassets.generated.resources.export_history_delete_confirm_body_device_and_cloud
@@ -85,9 +82,9 @@ import wingslog.feature.export.sharedassets.generated.resources.export_history_e
 import wingslog.feature.export.sharedassets.generated.resources.export_history_empty_title
 import wingslog.feature.export.sharedassets.generated.resources.export_history_item_meta
 import wingslog.feature.export.sharedassets.generated.resources.export_history_menu_delete
+import wingslog.feature.export.sharedassets.generated.resources.export_history_menu_download
 import wingslog.feature.export.sharedassets.generated.resources.export_history_menu_resend
 import wingslog.feature.export.sharedassets.generated.resources.export_history_menu_save
-import wingslog.feature.export.sharedassets.generated.resources.export_history_menu_share
 import wingslog.feature.export.sharedassets.generated.resources.export_history_more_actions
 import wingslog.feature.export.sharedassets.generated.resources.export_history_new
 import wingslog.feature.export.sharedassets.generated.resources.export_history_status_cloud
@@ -95,7 +92,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_history_s
 import wingslog.feature.export.sharedassets.generated.resources.export_history_title
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_last_n_months
-import wingslog.feature.export.sharedassets.generated.resources.export_share_title
 import kotlin.time.Instant
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
@@ -104,7 +100,7 @@ fun ExportHistoryScreen(
   state: ExportHistoryUiState,
   onNavigateBack: () -> Unit,
   onNew: () -> Unit,
-  onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
+  onDownloadExport: (exportId: String, filePath: String, fileName: String) -> Unit,
   onResendDelivery: (ExportRecord) -> Unit,
   onRetryDelivery: (ExportRecord) -> Unit,
   onSaveToDevice: (ExportRecord) -> Unit,
@@ -134,7 +130,7 @@ fun ExportHistoryScreen(
             exports = state.exports,
             canEmailDelivery = state.canEmailDelivery,
             modifier = contentModifier,
-            onShareExport = onShareExport,
+            onDownloadExport = onDownloadExport,
             onResendDelivery = onResendDelivery,
             onRetryDelivery = onRetryDelivery,
             onSaveToDevice = onSaveToDevice,
@@ -201,7 +197,7 @@ private fun ExportList(
   exports: List<ExportRecord>,
   canEmailDelivery: Boolean,
   modifier: Modifier,
-  onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
+  onDownloadExport: (exportId: String, filePath: String, fileName: String) -> Unit,
   onResendDelivery: (ExportRecord) -> Unit,
   onRetryDelivery: (ExportRecord) -> Unit,
   onSaveToDevice: (ExportRecord) -> Unit,
@@ -223,7 +219,7 @@ private fun ExportList(
         ExportHistoryCard(
           record = record,
           canEmailDelivery = canEmailDelivery,
-          onShareExport = onShareExport,
+          onDownloadExport = onDownloadExport,
           onResendDelivery = { onResendDelivery(record) },
           onRetryDelivery = { onRetryDelivery(record) },
           onSaveToDevice = { onSaveToDevice(record) },
@@ -238,7 +234,7 @@ private fun ExportList(
 private fun ExportHistoryCard(
   record: ExportRecord,
   canEmailDelivery: Boolean,
-  onShareExport: (filePath: String, chooserTitle: String, subject: String, body: String) -> Unit,
+  onDownloadExport: (exportId: String, filePath: String, fileName: String) -> Unit,
   onResendDelivery: () -> Unit,
   onRetryDelivery: () -> Unit,
   onSaveToDevice: () -> Unit,
@@ -246,10 +242,6 @@ private fun ExportHistoryCard(
 ) {
   var showDeleteConfirm by remember { mutableStateOf(false) }
   var menuExpanded by remember { mutableStateOf(false) }
-  val shareTitle = stringResource(Res.string.export_share_title)
-  val emailSubject =
-    stringResource(Res.string.export_email_subject, record.file_name)
-  val emailBody = stringResource(Res.string.export_email_body)
   val aircraftTitle = aircraftSummary(record)
   val scope = scopeLine(record)
   val onDevice = record.file_path.isNotBlank()
@@ -389,21 +381,16 @@ private fun ExportHistoryCard(
         }
         if (canShareDevice) {
           DropdownMenuItem(
-            text = { Text(stringResource(Res.string.export_history_menu_share)) },
+            text = { Text(stringResource(Res.string.export_history_menu_download)) },
             leadingIcon = {
               Icon(
-                Icons.Default.IosShare,
+                Icons.Default.Download,
                 contentDescription = null
               )
             },
             onClick = {
               menuExpanded = false
-              onShareExport(
-                record.file_path,
-                shareTitle,
-                emailSubject,
-                emailBody
-              )
+              onDownloadExport(record.export_id, record.file_path, record.file_name)
             },
           )
         }

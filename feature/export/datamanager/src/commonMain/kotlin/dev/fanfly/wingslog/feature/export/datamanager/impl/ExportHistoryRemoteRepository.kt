@@ -59,11 +59,10 @@ class ExportHistoryRemoteRepository(
         .putData(archiveBytes.toFirebaseData())
       val synced = record.copy(
         remote_archive_ref = remotePath,
+        // Delivery is always an explicit, user-initiated action now (never automatic on upload),
+        // so a freshly synced record starts NOT_REQUESTED regardless of destination_email.
         persisted_delivery_state = record.persisted_delivery_state.ifBlank {
-          record.destination_email
-            .takeIf { it.isNotBlank() }
-            ?.let { ExportDeliveryStates.QUEUED }
-            ?: ExportDeliveryStates.NOT_REQUESTED
+          ExportDeliveryStates.NOT_REQUESTED
         },
         remote_expires_at_epoch_millis = (clock.now() + 60.days).toEpochMilliseconds(),
       )
@@ -138,8 +137,13 @@ internal data class ExportRecordWire(
   val exportId: String,
   val uid: String,
   val fileName: String,
-  val sizeBytes: Long,
-  val createdAtEpochMillis: Long,
+  // Double, not Long: GitLive's Firestore JS binding can't encode a Kotlin Long into the plain JS
+  // `number` the Firestore SDK expects (setDoc() throws "Unsupported field value: a custom Long
+  // object" on web) — silently caught by uploadAndSync()'s runCatching, so the sync just never
+  // happens. Double round-trips these values losslessly (exact up to 2^53) and the backend already
+  // treats them as plain `number` (see exportModels.ts), so this is safe on every platform.
+  val sizeBytes: Double,
+  val createdAtEpochMillis: Double,
   val displayLocation: String,
   val formats: List<String> = emptyList(),
   val dateRange: ExportRecordDateRangeWire? = null,
@@ -148,10 +152,10 @@ internal data class ExportRecordWire(
   val destinationEmail: String? = null,
   val destinationEmailSource: String? = null,
   val persistedDeliveryState: String = ExportDeliveryStates.NOT_REQUESTED,
-  val deliverySentAtEpochMillis: Long? = null,
+  val deliverySentAtEpochMillis: Double? = null,
   val deliveryFailureCode: String? = null,
   val deliveryFailureMessage: String? = null,
-  val remoteExpiresAtEpochMillis: Long? = null,
+  val remoteExpiresAtEpochMillis: Double? = null,
 )
 
 @Serializable
@@ -172,8 +176,8 @@ private fun ExportRecord.toWire(uid: String) = ExportRecordWire(
   exportId = export_id,
   uid = uid,
   fileName = file_name,
-  sizeBytes = size_bytes,
-  createdAtEpochMillis = created_at_epoch_millis,
+  sizeBytes = size_bytes.toDouble(),
+  createdAtEpochMillis = created_at_epoch_millis.toDouble(),
   displayLocation = display_location,
   formats = formats,
   dateRange = date_range?.toWire(),
@@ -182,18 +186,18 @@ private fun ExportRecord.toWire(uid: String) = ExportRecordWire(
   destinationEmail = destination_email.nullIfBlank(),
   destinationEmailSource = destination_email_source.nullIfBlank(),
   persistedDeliveryState = persisted_delivery_state.ifBlank { ExportDeliveryStates.NOT_REQUESTED },
-  deliverySentAtEpochMillis = delivery_sent_at_epoch_millis.takeIf { it > 0L },
+  deliverySentAtEpochMillis = delivery_sent_at_epoch_millis.takeIf { it > 0L }?.toDouble(),
   deliveryFailureCode = delivery_failure_code.nullIfBlank(),
   deliveryFailureMessage = delivery_failure_message.nullIfBlank(),
-  remoteExpiresAtEpochMillis = remote_expires_at_epoch_millis.takeIf { it > 0L },
+  remoteExpiresAtEpochMillis = remote_expires_at_epoch_millis.takeIf { it > 0L }?.toDouble(),
 )
 
 internal fun ExportRecordWire.toExportRecord() = ExportRecord(
   export_id = exportId,
   file_path = "",
   file_name = fileName,
-  size_bytes = sizeBytes,
-  created_at_epoch_millis = createdAtEpochMillis,
+  size_bytes = sizeBytes.toLong(),
+  created_at_epoch_millis = createdAtEpochMillis.toLong(),
   display_location = displayLocation,
   formats = formats,
   date_range = dateRange?.toProto(),
@@ -202,10 +206,10 @@ internal fun ExportRecordWire.toExportRecord() = ExportRecord(
   destination_email = destinationEmail.orEmpty(),
   destination_email_source = destinationEmailSource.orEmpty(),
   persisted_delivery_state = persistedDeliveryState,
-  delivery_sent_at_epoch_millis = deliverySentAtEpochMillis ?: 0L,
+  delivery_sent_at_epoch_millis = deliverySentAtEpochMillis?.toLong() ?: 0L,
   delivery_failure_code = deliveryFailureCode.orEmpty(),
   delivery_failure_message = deliveryFailureMessage.orEmpty(),
-  remote_expires_at_epoch_millis = remoteExpiresAtEpochMillis ?: 0L,
+  remote_expires_at_epoch_millis = remoteExpiresAtEpochMillis?.toLong() ?: 0L,
 )
 
 private fun ExportRecordDateRange.toWire() = ExportRecordDateRangeWire(

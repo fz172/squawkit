@@ -112,31 +112,26 @@ class ExportManagerImpl(
         percent = 86
       )
     )
+    // Uploads to cloud storage when the user is email-eligible, so a later explicit "Send to my
+    // email" tap (see ExportManager.resendDelivery) has an archive to attach without re-uploading.
+    // Delivery itself is never triggered here — only an explicit user action requests it.
     val remoteRecord = remoteRepository.uploadAndSync(localRecord, zipBytes)
-    if (remoteRecord.remote_archive_ref.isNotBlank() && remoteRecord.destination_email.isNotBlank()) {
-      emit(
-        ExportProgress.Running(
-          step = ExportProgressStep.UPLOADING_ARCHIVE,
-          percent = 95
-        )
-      )
-    }
-    val finalRecord = remoteRecord.requestDeliveryIfEligible()
-    // Keep the on-device file after delivery so every export stays available both locally and in
-    // the cloud. The persisted local record carries the remote ref + delivery state once synced.
-    if (ownerUid != null && finalRecord != localRecord) {
-      exportFileStore.saveRecord(ownerUid, finalRecord)
+    // Keep the on-device file after upload so every export stays available both locally and in
+    // the cloud. The persisted local record carries the remote ref once synced.
+    if (ownerUid != null && remoteRecord != localRecord) {
+      exportFileStore.saveRecord(ownerUid, remoteRecord)
     }
     emit(
       ExportProgress.Success(
+        exportId = remoteRecord.export_id,
         filePath = saved.filePath,
         fileName = saved.fileName,
         // Left blank so the UI renders the localized label from displayLocationKind.
         displayLocation = "",
         sizeBytes = saved.sizeBytes,
         displayLocationKind = saved.displayLocationKind,
-        persistedDeliveryState = finalRecord.persisted_delivery_state,
-        deliveryFailureMessage = finalRecord.delivery_failure_message,
+        persistedDeliveryState = remoteRecord.persisted_delivery_state,
+        deliveryFailureMessage = remoteRecord.delivery_failure_message,
       )
     )
   }
@@ -262,6 +257,22 @@ class ExportManagerImpl(
     return true
   }
 
+  override suspend fun downloadArchiveBytes(exportId: String): ByteArray? {
+    val ownerUid = currentOwnerUid()
+    val local = ownerUid?.let { exportFileStore.listExports(it) }
+      ?.firstOrNull { it.export_id == exportId }
+    local?.file_path
+      ?.takeIf { it.isNotBlank() }
+      ?.let { path -> exportFileStore.readBytes(path)?.let { return it } }
+
+    val remoteRef = local?.remote_archive_ref?.takeIf { it.isNotBlank() }
+      ?: remoteRepository.listRemoteRecords()
+        .firstOrNull { it.export_id == exportId }
+        ?.remote_archive_ref
+        ?.takeIf { it.isNotBlank() }
+    return remoteRef?.let { remoteRepository.downloadArchive(it) }
+  }
+
   private fun currentOwnerUid(): String? = auth.currentUser?.uid
 
   private fun buildRecord(
@@ -306,20 +317,4 @@ class ExportManagerImpl(
         custom_end = endInclusive.toString(),
       )
     }
-
-  private suspend fun ExportRecord.requestDeliveryIfEligible(): ExportRecord {
-    if (remote_archive_ref.isBlank() || destination_email.isBlank()) return this
-    return runCatching {
-      val delivery = deliveryBackend.requestExportDelivery(export_id)
-      copy(
-        persisted_delivery_state = delivery.persistedDeliveryState,
-        delivery_sent_at_epoch_millis = delivery.deliverySentAtEpochMillis,
-        delivery_failure_code = delivery.deliveryFailureCode,
-        delivery_failure_message = delivery.deliveryFailureMessage,
-      )
-    }.getOrElse { error ->
-      log.w(error) { "export delivery request failed for $export_id" }
-      this
-    }
-  }
 }

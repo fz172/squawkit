@@ -35,8 +35,13 @@ sealed interface ExportUiState {
 
   /**
    * Completed export details shown on the result screen after the archive is saved.
+   *
+   * Delivery is never automatic: [deliveryInfo] non-null just means the signed-in user is
+   * Pro-eligible for email delivery, and [persistedDeliveryState]/[deliveryFailureMessage] only
+   * change once the user explicitly taps "Send to my email" on this screen.
    */
   data class Success(
+    val exportId: String,
     val fileName: String,
     val displayLocation: String,
     val displayLocationKind: ExportDisplayLocation,
@@ -48,8 +53,11 @@ sealed interface ExportUiState {
     val customStart: LocalDate,
     val customEnd: LocalDate,
     val deliveryInfo: ExportDeliveryInfo?,
+    // Shown-locked promo for the "Send to my email" action when the user is eligible but not Pro.
+    val emailDeliveryLocked: Boolean = false,
     val persistedDeliveryState: String = "",
     val deliveryFailureMessage: String = "",
+    val isSendingEmail: Boolean = false,
   ) : ExportUiState
 
   data class Error(val message: String) : ExportUiState
