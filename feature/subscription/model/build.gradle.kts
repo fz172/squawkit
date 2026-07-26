@@ -32,6 +32,9 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
+      // `api`, not `implementation`: BillingManager exposes Flow in its public signature, so every
+      // consumer (datamanager, viewing, billing) needs the coroutines types on its compile path.
+      api(libs.kotlinx.coroutines.core)
     }
   }
 }

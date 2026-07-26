@@ -60,6 +60,8 @@ include(":feature:sharing:update")
 include(":feature:subscription:model")
 include(":feature:subscription:datamanager")
 include(":feature:subscription:viewing")
+// Android + iOS only: wraps the RevenueCat SDK, which publishes no Kotlin/JS variant.
+include(":feature:subscription:billing")
 
 include(":feature:fleet:datamanager")
 include(":feature:fleet:picker:data")

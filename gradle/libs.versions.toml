@@ -26,6 +26,7 @@ materialIconsExtended = "1.7.3"
 mockk = "1.14.11"
 navigationCompose = "2.9.2"
 playServicesAuth = "21.6.0"
+purchasesKmp = "3.3.1"
 sqldelight = "2.3.2"
 truth = "1.4.5"
 wire = "6.4.1"
@@ -84,6 +85,10 @@ material3 = { module = "org.jetbrains.compose.material3:material3", version.ref 
 material3-adaptive-navigation-suite = { module = "org.jetbrains.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+# RevenueCat KMP — Android + iOS only (no JS variant is published), so these may only be
+# referenced from `feature/subscription/billing`, which does not declare a web target.
+purchases-kmp-core = { module = "com.revenuecat.purchases:purchases-kmp-core", version.ref = "purchasesKmp" }
+purchases-kmp-ui = { module = "com.revenuecat.purchases:purchases-kmp-ui", version.ref = "purchasesKmp" }
 sqldelight-android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
 sqldelight-async-extensions = { module = "app.cash.sqldelight:async-extensions", version.ref = "sqldelight" }
 sqldelight-coroutines-extensions = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }

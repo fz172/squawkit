@@ -55,6 +55,14 @@ kotlin {
       implementation(libs.androidx.navigation.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
     }
+    // The RevenueCat paywall / Customer Center UI is Android+iOS only; jsMain's actual renders
+    // nothing. See PaywallHost.kt.
+    androidMain.dependencies {
+      implementation(project(":feature:subscription:billing"))
+    }
+    iosMain.dependencies {
+      implementation(project(":feature:subscription:billing"))
+    }
   }
 }
 

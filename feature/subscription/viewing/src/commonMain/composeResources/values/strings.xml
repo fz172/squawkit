@@ -17,7 +17,10 @@
   <string name="subscription_aircraft_free">1</string>
   <string name="subscription_aircraft_unlimited">Unlimited</string>
   <string name="subscription_cta_start_trial">Start free trial</string>
-  <string name="subscription_cta_placeholder">Purchasing arrives with billing setup.</string>
+  <!-- Shown on web, which can use a subscription but never buy one. -->
+  <string name="subscription_purchase_on_mobile">Subscribe in the SquawkIt app on iPhone or Android. Your subscription works everywhere, including here.</string>
+  <!-- The store took payment; the entitlement is still syncing back from the server. -->
+  <string name="subscription_activating">Payment received. Activating SquawkIt Pro…</string>
 
   <!-- Subscriber status view -->
   <string name="subscription_status_label">Status</string>
@@ -25,12 +28,13 @@
   <string name="subscription_includes_label">Includes</string>
   <string name="subscription_includes_value">Unlimited aircraft · attachments · email export · sharing</string>
   <string name="subscription_manage">Manage subscription…</string>
-  <string name="subscription_manage_placeholder">Managing your subscription arrives with billing setup.</string>
+  <!-- Web: Pro is active here, but cancel/change-plan belong to the store that sold it. -->
+  <string name="subscription_manage_on_mobile">Manage or cancel your subscription in the SquawkIt app on the device you subscribed with.</string>
   <string name="subscription_status_active">Active · renews %1$s</string>
   <string name="subscription_status_active_no_date">Active</string>
   <string name="subscription_status_trialing">Free trial</string>
   <string name="subscription_status_canceled">Active until %1$s</string>
-  <string name="subscription_status_grace">There\'s a problem with your payment</string>
+  <string name="subscription_status_grace">There’s a problem with your payment</string>
 
   <!-- Shared -->
   <string name="subscription_storage_used">Storage used</string>

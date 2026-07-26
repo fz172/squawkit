@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.di.exportDataManagerModule
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportPlatformModule
 import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUiModule
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOptionsModule
+import dev.fanfly.wingslog.feature.subscription.datamanager.di.platformBillingModule
 import dev.fanfly.wingslog.feature.subscription.datamanager.di.subscriptionModule
 import dev.fanfly.wingslog.feature.subscription.viewing.di.subscriptionUiModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
@@ -73,6 +74,8 @@ val commonAppModules: List<Module> = listOf(
   exportUiModule,
   developerOptionsModule,
   subscriptionModule,
+  // RevenueCat on Android/iOS; the no-purchase binding on web (see PlatformBillingModule).
+  platformBillingModule,
   subscriptionUiModule,
   technicianDataManagerModule,
   technicianManageModule,
