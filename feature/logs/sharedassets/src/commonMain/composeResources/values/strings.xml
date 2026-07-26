@@ -15,6 +15,7 @@
   <string name="engine_with_index">Engine %1$d</string>
   <string name="blade_with_index">Blade %1$d</string>
   <string name="resolve_squawk_work_description">Resolve squawk "%1$s"</string>
+  <string name="resolve_task_work_description">Performed maintenance task "%1$s"</string>
 
   <!-- Authorship (design §7.5). Shown only when the writer is NOT the technician named on the log;
        a technician signing their own work is the unremarkable case and says nothing. These render

@@ -73,7 +73,7 @@ class MaintenanceLogFormViewModel(
 
   // Set when this screen is opened from the task edit screen's "Create Work Log" resolve option,
   // to preselect this task once it shows up in observeTasks() below. Mirrors the squawk-preselect
-  // flow above but has no work-description prefill equivalent.
+  // flow above, including the work-description prefill.
   private val preselectedCardId: String? = savedStateHandle[Screen.CARD_ID]
   private var preselectedCardSeeded = false
 
@@ -162,15 +162,17 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun maybeCaptureInitialSnapshot() {
-    // Also wait for a pending squawk-title prefill to be consumed (see
-    // consumeResolveSquawkPrefill below), so the baseline includes the final prefilled
-    // workDescription too and doesn't read as an unsaved change the instant it lands.
+    // Also wait for a pending squawk/task-title prefill to be consumed (see
+    // consumeResolveSquawkPrefill / consumeResolveTaskPrefill below), so the baseline includes
+    // the final prefilled workDescription too and doesn't read as an unsaved change the instant
+    // it lands.
     //
     // Known gap (#348): the *Loaded flags below latch on any emission, including a
     // transitional one that doesn't yet contain a preselected squawk/task — so the baseline
     // can be captured before that preselection is seeded.
     if (!isEditMode && techniciansLoaded && squawksLoaded && tasksLoaded &&
-      _uiState.value.pendingResolveSquawkTitle == null
+      _uiState.value.pendingResolveSquawkTitle == null &&
+      _uiState.value.pendingResolveTaskTitle == null
     ) {
       captureInitialSnapshot()
     }
@@ -249,6 +251,7 @@ class MaintenanceLogFormViewModel(
               ?.let { card ->
                 next = next.copy(
                   selectedInspectionIds = (next.selectedInspectionIds + card.id).distinct(),
+                  pendingResolveTaskTitle = card.title,
                 )
                 // Only latch once the task is actually found — an empty/transitional first
                 // emission must not permanently skip this; it should simply retry on the next
@@ -262,6 +265,23 @@ class MaintenanceLogFormViewModel(
         maybeCaptureInitialSnapshot()
       }
       .launchIn(viewModelScope)
+  }
+
+  /**
+   * Called by the screen once it has resolved [MaintenanceLogFormUiState.pendingResolveTaskTitle]
+   * into a localized string, to prepend it to the work description and clear the pending marker.
+   * Mirrors [consumeResolveSquawkPrefill] — see its doc for why blank input is ignored.
+   */
+  fun consumeResolveTaskPrefill(workDescription: String) {
+    if (workDescription.isBlank()) return
+    _uiState.update {
+      it.copy(
+        workDescription = if (it.workDescription.isBlank()) workDescription
+        else "$workDescription\n${it.workDescription}",
+        pendingResolveTaskTitle = null,
+      )
+    }
+    maybeCaptureInitialSnapshot()
   }
 
   private fun loadAircraft() {
