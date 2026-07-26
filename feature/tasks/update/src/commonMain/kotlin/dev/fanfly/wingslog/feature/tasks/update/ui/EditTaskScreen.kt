@@ -94,6 +94,7 @@ fun EditTaskScreen(
   availableLogs: List<MaintenanceLog> = emptyList(),
   currentEngineHours: Float,
   naturalDueMetadata: DueMetadata?,
+  effectiveDueMetadata: DueMetadata?,
   onTitleChange: (String) -> Unit,
   onScheduleChange: (ScheduleState) -> Unit,
   onRefNumberChange: (String) -> Unit,
@@ -299,6 +300,8 @@ fun EditTaskScreen(
                 onDateClick = { showDatePicker = true },
                 naturalDueDate = naturalDueMetadata?.nextDueDate,
                 naturalDueEngine = naturalDueMetadata?.nextDueEngine,
+                currentDueDate = effectiveDueMetadata?.nextDueDate,
+                currentDueEngine = effectiveDueMetadata?.nextDueEngine,
                 currentEngineHours = currentEngineHours,
                 onDeleteRequest = { showDeleteConfirm = true },
               )

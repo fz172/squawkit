@@ -100,6 +100,10 @@ fun TaskAdjustmentsTab(
   onDateClick: () -> Unit,
   naturalDueDate: LocalDate?,
   naturalDueEngine: Float?,
+  // What this task's next due actually reads as right now — a recorded skip or a saved
+  // reschedule included. Falls back to the natural due when it can't be computed.
+  currentDueDate: LocalDate?,
+  currentDueEngine: Float?,
   currentEngineHours: Float,
   onDeleteRequest: () -> Unit,
   modifier: Modifier = Modifier,
@@ -137,6 +141,11 @@ fun TaskAdjustmentsTab(
       .toLocalDateTime(timeZone).date
   }
   val rescheduledEngine = forcedEngineHours.toFloatOrNull()
+  // What the neutral banner reports. Prefers the effective due so a persisted skip or override
+  // reads the same here as on the dashboard (#347), falling back to the rules-only due for
+  // schedules the due manager can't resolve to a date.
+  val neutralDueDate = currentDueDate ?: naturalDueDate
+  val neutralDueEngine = currentDueEngine ?: naturalDueEngine
 
   Column(
     modifier = modifier.fillMaxWidth(),
@@ -211,30 +220,30 @@ fun TaskAdjustmentsTab(
         }
       }
 
-      // ── Neutral, TIME mode with a known natural due ──────────────────────
-      mode == ScheduleMode.TIME && naturalDueDate != null -> {
-        val natStr = naturalDueDate.toDisplayFormat()
+      // ── Neutral, TIME mode with a known due ──────────────────────────────
+      mode == ScheduleMode.TIME && neutralDueDate != null -> {
+        val dueStr = neutralDueDate.toDisplayFormat()
         bannerPrimary = monoOn(
           stringResource(
             Res.string.adj_preview_primary_date,
-            natStr,
-            relativeDaysPhrase(today.daysUntil(naturalDueDate)),
+            dueStr,
+            relativeDaysPhrase(today.daysUntil(neutralDueDate)),
           ),
-          natStr,
+          dueStr,
         )
         bannerSecondary = AnnotatedString("")
       }
 
-      // ── Neutral, HOURS mode with a known natural due ─────────────────────
-      mode == ScheduleMode.HOURS && naturalDueEngine != null -> {
-        val natStr = formatEngineHours(naturalDueEngine)
+      // ── Neutral, HOURS mode with a known due ─────────────────────────────
+      mode == ScheduleMode.HOURS && neutralDueEngine != null -> {
+        val dueStr = formatEngineHours(neutralDueEngine)
         bannerPrimary = monoOn(
           stringResource(
             Res.string.adj_preview_primary_hours,
-            natStr,
-            relativeEnginePhrase(naturalDueEngine - currentEngineHours),
+            dueStr,
+            relativeEnginePhrase(neutralDueEngine - currentEngineHours),
           ),
-          natStr,
+          dueStr,
         )
         bannerSecondary = AnnotatedString("")
       }

@@ -82,6 +82,7 @@ fun EditTaskRoute(
       availableLogs = successState.availableLogs,
       currentEngineHours = successState.currentEngineHours,
       naturalDueMetadata = successState.naturalDueMetadata,
+      effectiveDueMetadata = successState.effectiveDueMetadata,
       onTitleChange = viewModel::onTitleChange,
       onScheduleChange = viewModel::onScheduleChange,
       onRefNumberChange = viewModel::onRefNumberChange,

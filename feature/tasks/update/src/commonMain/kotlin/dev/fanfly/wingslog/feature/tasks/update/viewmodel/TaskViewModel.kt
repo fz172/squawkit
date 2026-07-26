@@ -46,7 +46,10 @@ sealed interface TaskUiState {
     val allInspections: List<MaintenanceTask> = emptyList(),
     val availableLogs: List<MaintenanceLog> = emptyList(),
     val currentEngineHours: Float,
+    /** Rules-only next due, ignoring any reschedule override or recorded skip. */
     val naturalDueMetadata: DueMetadata? = null,
+    /** Next due as the rest of the app shows it, override and recorded skip included. */
+    val effectiveDueMetadata: DueMetadata? = null,
     val error: UiText? = null,
   ) : TaskUiState
 }
@@ -213,19 +216,21 @@ class TaskViewModel(
         Triple(cards, logs, overview)
       }.collect { (cards, logs, overview) ->
         val engineHours = overview?.current_engine_time?.toFloat() ?: 0f
-        // Compute the rules-only "natural" next-due for the card being edited so the
-        // adjustments preview banner can show what the schedule would say absent any
-        // force-override or force-complied state.
-        val naturalDue = cardId?.let { id ->
-          cards.firstOrNull { it.id == id }
-            ?.let { card ->
-              val stripped = card.copy(
-                force_complied_status = null,
-                force_due_date = null,
-                force_due_engine_hour = 0f,
-              )
-              taskDueManager.computeNextDue(stripped, logs, cards)
-            }
+        val editedCard = cardId?.let { id -> cards.firstOrNull { it.id == id } }
+        // The rules-only "natural" next-due, so the adjustments preview banner can show what
+        // the schedule alone would say absent any force-override or force-complied state.
+        val naturalDue = editedCard?.let { card ->
+          val stripped = card.copy(
+            force_complied_status = null,
+            force_due_date = null,
+            force_due_engine_hour = 0f,
+          )
+          taskDueManager.computeNextDue(stripped, logs, cards)
+        }
+        // The same computation the dashboard task cards run, so the banner's "Current" reading
+        // agrees with them once an override or a skip has been persisted (#347).
+        val effectiveDue = editedCard?.let { card ->
+          taskDueManager.computeNextDue(card, logs, cards)
         }
         _uiState.update { prev ->
           TaskUiState.Success(
@@ -234,6 +239,7 @@ class TaskViewModel(
             availableLogs = logs,
             currentEngineHours = engineHours,
             naturalDueMetadata = naturalDue,
+            effectiveDueMetadata = effectiveDue,
             error = (prev as? TaskUiState.Success)?.error,
           )
         }

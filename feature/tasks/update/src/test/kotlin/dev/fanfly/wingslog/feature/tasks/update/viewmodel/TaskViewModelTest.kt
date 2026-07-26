@@ -13,6 +13,8 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import kotlinx.datetime.LocalDate
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
@@ -308,6 +310,39 @@ class TaskViewModelTest {
     assertThat(persisted.captured.force_due_date).isNull()
     assertThat(persisted.captured.force_due_engine_hour).isEqualTo(0f)
     assertThat(persisted.captured.force_complied_status).isNotNull()
+  }
+
+  // ---- preview banner due readings (#347) ----
+
+  /**
+   * The adjustments banner's "Current" reading has to agree with the dashboard task cards, so
+   * it reads the effective due — the stored card, skip and override included — while the
+   * rules-only natural due stays available for the reschedule "Was …" line.
+   */
+  @Test
+  fun loadData_exposesBothTheEffectiveAndTheRulesOnlyDue() = runTest(testDispatcher) {
+    val skipped = MaintenanceTask(
+      id = TEST_CARD_ID,
+      title = "Oil change",
+      force_complied_status = ForceCompliedStatus(complied_engine_hours = 10f),
+    )
+    every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(listOf(skipped))
+    every { taskDueManager.computeNextDue(any(), any(), any()) } answers {
+      // Stand in for the force-complied advancement: the stripped card still reads 9/30, the
+      // stored one has been advanced a cycle to 11/30.
+      if (firstArg<MaintenanceTask>().force_complied_status != null) {
+        DueMetadata(nextDueDate = LocalDate(2026, 11, 30))
+      } else {
+        DueMetadata(nextDueDate = LocalDate(2026, 9, 30))
+      }
+    }
+
+    val viewModel = buildViewModelForEdit()
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value as TaskUiState.Success
+    assertThat(state.effectiveDueMetadata?.nextDueDate).isEqualTo(LocalDate(2026, 11, 30))
+    assertThat(state.naturalDueMetadata?.nextDueDate).isEqualTo(LocalDate(2026, 9, 30))
   }
 
   // ---- force-complied status vs. schedule edits ----
