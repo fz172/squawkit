@@ -79,6 +79,8 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -196,6 +198,11 @@ fun ExportSelectionScreen(
   // the last editable configuration) now happens on back navigation, gesture included.
   BackHandler(enabled = state is ExportUiState.Success) { onDone() }
 
+  // The success screen's action bar isn't a real Scaffold bottomBar (it's pinned to the bottom of
+  // the content column instead, matching ConfiguringContent's pattern), so Scaffold can't push the
+  // snackbar above it automatically — measure it and pad the snackbar host ourselves.
+  var successActionsHeight by remember { mutableStateOf(0.dp) }
+
   Scaffold(
     topBar = {
       ConstrainedTopBar(ContentWidth.Form) {
@@ -219,7 +226,14 @@ fun ExportSelectionScreen(
         )
       }
     },
-    snackbarHost = { SnackbarHost(snackbarHostState) },
+    snackbarHost = {
+      SnackbarHost(
+        snackbarHostState,
+        modifier = Modifier.padding(
+          bottom = if (state is ExportUiState.Success) successActionsHeight else 0.dp
+        ),
+      )
+    },
   ) { innerPadding ->
     val layoutDirection = LocalLayoutDirection.current
     when (state) {
@@ -256,6 +270,7 @@ fun ExportSelectionScreen(
         onSendToEmail = onSendToEmail,
         onHistory = onNavigateToHistory,
         onSeePlans = onSeePlans,
+        onActionsHeightChanged = { successActionsHeight = it },
       )
 
       is ExportUiState.Error -> ErrorResult(
@@ -951,7 +966,9 @@ private fun SuccessResult(
   onSendToEmail: () -> Unit,
   onHistory: () -> Unit,
   onSeePlans: () -> Unit,
+  onActionsHeightChanged: (Dp) -> Unit = {},
 ) {
+  val density = LocalDensity.current
   val fileName =
     state.fileName.ifBlank { stringResource(Res.string.export_stub_preview_file_name) }
   val location = state.displayLocation.ifBlank {
@@ -1013,7 +1030,10 @@ private fun SuccessResult(
     },
     actions = {
       Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+          .onGloballyPositioned { coordinates ->
+            onActionsHeightChanged(with(density) { coordinates.size.height.toDp() })
+          },
         horizontalArrangement = Arrangement.SpaceEvenly,
       ) {
         SuccessBarAction(
