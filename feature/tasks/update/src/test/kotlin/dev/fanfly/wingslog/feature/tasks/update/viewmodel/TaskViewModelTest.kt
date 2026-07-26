@@ -2,7 +2,9 @@ package dev.fanfly.wingslog.feature.tasks.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
@@ -209,7 +211,7 @@ class TaskViewModelTest {
   }
 
   @Test
-  fun selectCreateWorkLog_sendsNavigateToCreateLogEvent_whenMenuOpen() = runTest(testDispatcher) {
+  fun selectCreateWorkLog_sendsNavigateToCreateLogEvent() = runTest(testDispatcher) {
     val viewModel = buildViewModelForEdit()
     advanceUntilIdle()
     val events = mutableListOf<TaskFormEvent>()
@@ -227,9 +229,13 @@ class TaskViewModelTest {
     collectJob.cancel()
   }
 
-  /** Guards against a double-tap firing this twice before the menu's dismissal recomposes. */
+  /**
+   * Guards against a double-tap queueing two navigations. The screen may raise an
+   * unsaved-changes prompt between the tap and this call, so the guard can't key off the menu
+   * still being open.
+   */
   @Test
-  fun selectCreateWorkLog_doesNothing_whenMenuNotOpen() = runTest(testDispatcher) {
+  fun selectCreateWorkLog_sendsOnlyOneEvent_whenInvokedTwice() = runTest(testDispatcher) {
     val viewModel = buildViewModelForEdit()
     advanceUntilIdle()
     val events = mutableListOf<TaskFormEvent>()
@@ -237,34 +243,143 @@ class TaskViewModelTest {
     advanceUntilIdle()
 
     viewModel.selectCreateWorkLog()
+    viewModel.selectCreateWorkLog()
     advanceUntilIdle()
 
-    assertThat(events).isEmpty()
+    assertThat(events).hasSize(1)
     collectJob.cancel()
   }
 
   @Test
-  fun skipThisCycle_persistsForceCompliedStatusOnCard_andInvokesOnSuccess() = runTest(testDispatcher) {
-    coEvery { inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, any()) } returns Result.success(true)
+  fun skipThisCycle_persistsForceCompliedStatusAtCurrentEngineHours_andInvokesOnSuccess() =
+    runTest(testDispatcher) {
+      coEvery {
+        inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, any())
+      } returns Result.success(true)
+      val viewModel = buildViewModelForEdit()
+      advanceUntilIdle()
+      val card = MaintenanceTask(id = TEST_CARD_ID, title = "Oil change")
+      var succeeded = false
+
+      viewModel.skipThisCycle(
+        card = card,
+        currentEngineHours = 42f,
+        onSuccess = { succeeded = true },
+      )
+      advanceUntilIdle()
+
+      assertThat(succeeded).isTrue()
+      val persisted = slot<MaintenanceTask>()
+      coVerify { inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, capture(persisted)) }
+      val status = persisted.captured.force_complied_status
+      assertThat(status).isNotNull()
+      assertThat(status!!.complied_engine_hours).isEqualTo(42f)
+      assertThat(status.complied_date).isNotNull()
+    }
+
+  /**
+   * TaskDueManager resolves force-due overrides and returns before it reads force-complied
+   * state, so a skip that left an override in place would never move the next due — the user
+   * would see a "cycle skipped" toast and an unchanged due date.
+   */
+  @Test
+  fun skipThisCycle_clearsRescheduleOverride() = runTest(testDispatcher) {
+    coEvery {
+      inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, any())
+    } returns Result.success(true)
     val viewModel = buildViewModelForEdit()
     advanceUntilIdle()
-    val card = MaintenanceTask(id = TEST_CARD_ID, title = "Oil change")
-    var succeeded = false
+    val rescheduled = MaintenanceTask(
+      id = TEST_CARD_ID,
+      title = "Oil change",
+      force_due_date = toWireInstant(1_800_000_000L),
+      force_due_engine_hour = 1500f,
+    )
 
     viewModel.skipThisCycle(
-      card = card,
+      card = rescheduled,
       currentEngineHours = 42f,
-      onSuccess = { succeeded = true },
+      onSuccess = {},
     )
     advanceUntilIdle()
 
-    assertThat(succeeded).isTrue()
+    val persisted = slot<MaintenanceTask>()
+    coVerify { inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, capture(persisted)) }
+    assertThat(persisted.captured.force_due_date).isNull()
+    assertThat(persisted.captured.force_due_engine_hour).isEqualTo(0f)
+    assertThat(persisted.captured.force_complied_status).isNotNull()
+  }
+
+  // ---- force-complied status vs. schedule edits ----
+
+  /**
+   * A skip marks one specific cycle complete. Once the schedule moves, that cycle no longer
+   * describes anything real, so saving the edited schedule must drop it rather than silently
+   * advance a due date the user never skipped.
+   */
+  @Test
+  fun saveEditedTask_dropsForceCompliedStatus_whenScheduleChanged() = runTest(testDispatcher) {
+    val stored = skippedCard(forceDueEngine = 0f)
+    every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(listOf(stored))
+    coEvery {
+      inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, any())
+    } returns Result.success(true)
+    val viewModel = buildViewModelForEdit()
+    advanceUntilIdle()
+
+    viewModel.saveEditedTaskFrom(stored.copy(force_due_engine_hour = 1500f))
+    advanceUntilIdle()
+
+    val persisted = slot<MaintenanceTask>()
+    coVerify { inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, capture(persisted)) }
+    assertThat(persisted.captured.force_complied_status).isNull()
+  }
+
+  @Test
+  fun saveEditedTask_keepsForceCompliedStatus_whenScheduleUnchanged() = runTest(testDispatcher) {
+    val stored = skippedCard(forceDueEngine = 0f)
+    every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(listOf(stored))
+    coEvery {
+      inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, any())
+    } returns Result.success(true)
+    val viewModel = buildViewModelForEdit()
+    advanceUntilIdle()
+
+    // Editing a non-schedule field must leave the recorded skip alone.
+    viewModel.saveEditedTaskFrom(stored.copy(title = "Oil change (50h)"))
+    advanceUntilIdle()
+
     val persisted = slot<MaintenanceTask>()
     coVerify { inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, capture(persisted)) }
     assertThat(persisted.captured.force_complied_status).isNotNull()
   }
 
   // ---- helpers ----
+
+  private fun skippedCard(forceDueEngine: Float) = MaintenanceTask(
+    id = TEST_CARD_ID,
+    title = "Oil change",
+    force_due_engine_hour = forceDueEngine,
+    force_complied_status = ForceCompliedStatus(complied_engine_hours = 10f),
+  )
+
+  /** Calls [TaskViewModel.saveEditedTask] with the field values carried by [card]. */
+  private fun TaskViewModel.saveEditedTaskFrom(card: MaintenanceTask) = saveEditedTask(
+    cardId = card.id,
+    title = card.title,
+    type = card.type,
+    component = card.component,
+    rules = card.rules,
+    referenceNumber = card.reference_number,
+    complianceAuthority = card.compliance_authority,
+    complianceDetails = card.compliance_details,
+    isOneTime = card.is_one_time,
+    forceDueDate = card.force_due_date,
+    forceDueEngine = card.force_due_engine_hour,
+    forceCompliedStatus = card.force_complied_status,
+    notes = card.notes,
+    onSuccess = {},
+  )
 
   private fun buildViewModelForNew(): TaskViewModel =
     TaskViewModel(

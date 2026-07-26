@@ -79,6 +79,9 @@ import wingslog.feature.tasks.update.generated.resources.resolve_task
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 
+/** The Resolve-menu options that leave the screen, and so have to pass the unsaved-changes gate. */
+private enum class ResolveAction { CreateWorkLog, Skip }
+
 @OptIn(
   ExperimentalMaterial3Api::class,
   ExperimentalComposeUiApi::class
@@ -120,11 +123,31 @@ fun EditTaskScreen(
   var showDeleteConfirm by remember { mutableStateOf(false) }
   var showSkipConfirm by remember { mutableStateOf(false) }
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
+  // Set when the unsaved-changes prompt was raised by a Resolve option rather than by
+  // cancel/back, so discarding continues into that option instead of just leaving the screen.
+  var pendingResolveAction by remember { mutableStateOf<ResolveAction?>(null) }
 
   val hasChanges = state.hasChanges
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()
+  }
+
+  // Both Resolve options persist against the card as last saved and then navigate away, so
+  // pending form edits would be dropped silently — prompt for them the same way back does.
+  val runResolveAction = { action: ResolveAction ->
+    when (action) {
+      ResolveAction.CreateWorkLog -> onCreateWorkLogClick()
+      ResolveAction.Skip -> showSkipConfirm = true
+    }
+  }
+  val tryResolveAction = { action: ResolveAction ->
+    if (hasChanges) {
+      pendingResolveAction = action
+      showUnsavedChangesDialog = true
+    } else {
+      runResolveAction(action)
+    }
   }
 
   BackHandler(enabled = hasChanges) {
@@ -136,9 +159,14 @@ fun EditTaskScreen(
     UnsavedChangesDialog(
       onConfirm = {
         showUnsavedChangesDialog = false
-        onCancel()
+        val pending = pendingResolveAction
+        pendingResolveAction = null
+        if (pending != null) runResolveAction(pending) else onCancel()
       },
-      onDismiss = { showUnsavedChangesDialog = false },
+      onDismiss = {
+        showUnsavedChangesDialog = false
+        pendingResolveAction = null
+      },
     )
   }
 
@@ -309,9 +337,10 @@ fun EditTaskScreen(
               ?: "",
             force_due_engine_hour = updatedForceDueEngine,
             force_due_date = updatedForceDueDate,
-            // Skip This Cycle is now a separate, immediately-persisted action off the Resolve
-            // menu (see TaskViewModel.skipThisCycle) — this form never touches it, so it just
-            // carries the card's current value forward unchanged.
+            // Skip This Cycle is a separate, immediately-persisted action off the Resolve menu
+            // (see TaskViewModel.skipThisCycle), so this form only carries the stored value
+            // forward. Dropping it when the schedule it was recorded against changes is
+            // TaskViewModel.isScheduleChanged's job, not the form's.
             force_complied_status = card.force_complied_status
           )
           onSave(updated)
@@ -323,10 +352,13 @@ fun EditTaskScreen(
           ResolveTaskOptionsMenu(
             expanded = state.showResolveMenu,
             onDismissRequest = onResolveMenuDismiss,
-            onCreateWorkLog = onCreateWorkLogClick,
+            onCreateWorkLog = {
+              onResolveMenuDismiss()
+              tryResolveAction(ResolveAction.CreateWorkLog)
+            },
             onSkipThisCycle = {
               onResolveMenuDismiss()
-              showSkipConfirm = true
+              tryResolveAction(ResolveAction.Skip)
             },
           )
         },

@@ -43,11 +43,9 @@ import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
-import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.select_date
@@ -534,40 +532,6 @@ private fun AdjSectionLabel(
 }
 
 // ─── Banner helpers ──────────────────────────────────────────────────────────
-
-internal fun advanceDatePastToday(
-  natural: LocalDate?,
-  schedule: ScheduleState,
-  today: LocalDate,
-): LocalDate? {
-  if (natural == null || schedule.mode != ScheduleMode.TIME) return null
-  val n = schedule.calValue.toIntOrNull() ?: return null
-  if (n <= 0) return null
-  // Always advance at least once (matches TaskDueManagerImpl force-complied path).
-  var advanced = natural.step(schedule.calUnit, n)
-  while (advanced <= today) advanced = advanced.step(schedule.calUnit, n)
-  return advanced
-}
-
-private fun LocalDate.step(unit: ScheduleTimeUnit, n: Int): LocalDate =
-  when (unit) {
-    ScheduleTimeUnit.DAYS -> plus(n, DateTimeUnit.DAY)
-    ScheduleTimeUnit.MONTHS -> plus(n, DateTimeUnit.MONTH)
-    ScheduleTimeUnit.YEARS -> plus(n, DateTimeUnit.YEAR)
-  }
-
-internal fun advanceEnginePastNow(
-  natural: Float?,
-  schedule: ScheduleState,
-  currentEngineHours: Float,
-): Float? {
-  if (natural == null || schedule.mode != ScheduleMode.HOURS) return null
-  val interval = schedule.hourValue.toFloatOrNull() ?: return null
-  if (interval <= 0f) return null
-  var advanced = natural + interval
-  while (advanced <= currentEngineHours) advanced += interval
-  return advanced
-}
 
 @Composable
 private fun relativeDaysPhrase(days: Int): String = when {

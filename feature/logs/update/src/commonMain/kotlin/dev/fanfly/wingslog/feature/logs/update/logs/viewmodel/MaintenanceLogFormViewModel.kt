@@ -165,6 +165,10 @@ class MaintenanceLogFormViewModel(
     // Also wait for a pending squawk-title prefill to be consumed (see
     // consumeResolveSquawkPrefill below), so the baseline includes the final prefilled
     // workDescription too and doesn't read as an unsaved change the instant it lands.
+    //
+    // Known gap (#348): the *Loaded flags below latch on any emission, including a
+    // transitional one that doesn't yet contain a preselected squawk/task — so the baseline
+    // can be captured before that preselection is seeded.
     if (!isEditMode && techniciansLoaded && squawksLoaded && tasksLoaded &&
       _uiState.value.pendingResolveSquawkTitle == null
     ) {

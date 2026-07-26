@@ -289,12 +289,15 @@ class TaskViewModel(
 
   fun hideResolveMenu() = _formState.update { it.copy(showResolveMenu = false) }
 
+  // Latched by selectCreateWorkLog so a double-tap can't queue two navigation events. Not part
+  // of form state: the screen may raise an unsaved-changes prompt between the tap and this call,
+  // so the open/closed state of the menu is no longer a usable guard.
+  private var createWorkLogRequested = false
+
   fun selectCreateWorkLog() {
-    val current = _formState.value
     val id = cardId ?: return
-    // Guards against a double-tap firing this twice before the menu's dismissal recomposes:
-    // the first call flips showResolveMenu synchronously, so a second call sees it already false.
-    if (!current.showResolveMenu) return
+    if (createWorkLogRequested) return
+    createWorkLogRequested = true
     _formState.update { it.copy(showResolveMenu = false) }
     viewModelScope.launch {
       _events.send(TaskFormEvent.NavigateToCreateLog(aircraftId, id))
@@ -305,6 +308,10 @@ class TaskViewModel(
    * Marks [card]'s current cycle complete without a log, persisting immediately against the
    * card as last saved (not any pending in-memory form edits) — mirrors
    * SquawkFormViewModel.confirmDismiss() calling squawkManager.dismissSquawk() directly.
+   *
+   * Clears any reschedule override as part of the same write, the way saving a linked
+   * maintenance log does: TaskDueManager resolves force-due dates before it ever looks at
+   * force-complied state, so a skip left alongside an override would never move the next due.
    */
   fun skipThisCycle(
     card: MaintenanceTask,
@@ -314,6 +321,8 @@ class TaskViewModel(
     _formState.update { it.copy(showResolveMenu = false) }
     viewModelScope.launch {
       val skipped = card.copy(
+        force_due_date = null,
+        force_due_engine_hour = 0f,
         force_complied_status = ForceCompliedStatus(
           complied_date = toWireInstant(Clock.System.now().epochSeconds),
           complied_engine_hours = currentEngineHours,
@@ -458,6 +467,33 @@ class TaskViewModel(
     }
   }
 
+  /**
+   * True when this save changes the schedule the stored card's force-complied status was
+   * recorded against.
+   *
+   * A skip ("Skip This Cycle") marks one specific cycle complete. Once the rules or the
+   * reschedule override move, that cycle no longer describes anything real, and leaving the
+   * status in place would silently advance a due date the user never skipped — so the caller
+   * drops it. Unknown cards (not yet loaded) are treated as unchanged: better to carry the
+   * status forward than to clear one we can't compare against.
+   */
+  private fun isScheduleChanged(
+    cardId: String,
+    rules: List<InspectionRule>,
+    isOneTime: Boolean,
+    forceDueDate: Instant?,
+    forceDueEngine: Float,
+  ): Boolean {
+    val stored = (_uiState.value as? TaskUiState.Success)
+      ?.allInspections
+      ?.find { it.id == cardId }
+      ?: return false
+    return rules != stored.rules ||
+      isOneTime != stored.is_one_time ||
+      forceDueDate != stored.force_due_date ||
+      forceDueEngine != stored.force_due_engine_hour
+  }
+
   fun saveEditedTask(
     cardId: String,
     title: String,
@@ -491,7 +527,9 @@ class TaskViewModel(
           is_one_time = isOneTime,
           force_due_date = forceDueDate,
           force_due_engine_hour = forceDueEngine,
-          force_complied_status = forceCompliedStatus,
+          force_complied_status = if (
+            isScheduleChanged(cardId, rules, isOneTime, forceDueDate, forceDueEngine)
+          ) null else forceCompliedStatus,
           notes = notes,
           attachments = attachments,
         )
