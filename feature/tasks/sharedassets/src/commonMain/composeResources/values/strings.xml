@@ -26,4 +26,8 @@
   <string name="affects_n_tasks">Affects %1$d maintenance task(s)</string>
   <string name="delete_task">Delete Task</string>
   <string name="delete_task_confirmation">Delete "%1$s"? This cannot be undone. Maintenance logs that reference this task will not be deleted.</string>
+
+  <string name="skip_task_confirm_title">Skip This Cycle?</string>
+  <string name="skip_task_confirm_body">Marks complete without logging and snoozes one cycle to the next due target. This can’t be undone.</string>
+  <string name="skip_task_confirm_action">Skip</string>
 </resources>

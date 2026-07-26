@@ -17,9 +17,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -43,27 +43,21 @@ import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
-import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.adj_preview_hint
 import wingslog.feature.tasks.update.generated.resources.adj_preview_label_neutral
-import wingslog.feature.tasks.update.generated.resources.adj_preview_label_warn
 import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_primary
 import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_secondary_linked
 import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_secondary_unset
 import wingslog.feature.tasks.update.generated.resources.adj_preview_primary_date
 import wingslog.feature.tasks.update.generated.resources.adj_preview_primary_hours
-import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_day_ago
-import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_days_ago
 import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_due_today
-import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_hours_ago
 import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_hours_at
 import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_in_day
 import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_in_days
@@ -74,10 +68,6 @@ import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_overdue
 import wingslog.feature.tasks.update.generated.resources.adj_preview_reschedule_date_primary
 import wingslog.feature.tasks.update.generated.resources.adj_preview_reschedule_hours_primary
 import wingslog.feature.tasks.update.generated.resources.adj_preview_reschedule_was_date
-import wingslog.feature.tasks.update.generated.resources.adj_preview_skip_primary
-import wingslog.feature.tasks.update.generated.resources.adj_preview_skip_secondary
-import wingslog.feature.tasks.update.generated.resources.adj_preview_skip_secondary_with_original_date
-import wingslog.feature.tasks.update.generated.resources.adj_preview_skip_secondary_with_original_hours
 import wingslog.feature.tasks.update.generated.resources.adj_preview_was_date
 import wingslog.feature.tasks.update.generated.resources.adj_preview_was_hours
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_disabled_linked
@@ -87,11 +77,9 @@ import wingslog.feature.tasks.update.generated.resources.adj_reschedule_subtitle
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_title
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_was_date
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_was_hours
-import wingslog.feature.tasks.update.generated.resources.adj_skip_section_label
-import wingslog.feature.tasks.update.generated.resources.adj_skip_subtitle_active
-import wingslog.feature.tasks.update.generated.resources.adj_skip_subtitle_inactive
-import wingslog.feature.tasks.update.generated.resources.adj_skip_title_active
-import wingslog.feature.tasks.update.generated.resources.adj_skip_title_inactive
+import wingslog.feature.tasks.update.generated.resources.delete_task_section_label
+import wingslog.feature.tasks.update.generated.resources.delete_this_task_subtitle
+import wingslog.feature.tasks.update.generated.resources.delete_this_task_title
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_label
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -110,11 +98,14 @@ fun TaskAdjustmentsTab(
   onForceOverrideDateChange: (Boolean) -> Unit,
   forcedDateMillis: Long?,
   onDateClick: () -> Unit,
-  isSkipping: Boolean,
-  onSkipToggle: () -> Unit,
   naturalDueDate: LocalDate?,
   naturalDueEngine: Float?,
+  // What this task's next due actually reads as right now — a recorded skip or a saved
+  // reschedule included. Falls back to the natural due when it can't be computed.
+  currentDueDate: LocalDate?,
+  currentDueEngine: Float?,
   currentEngineHours: Float,
+  onDeleteRequest: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val mode = schedule.mode
@@ -150,97 +141,24 @@ fun TaskAdjustmentsTab(
       .toLocalDateTime(timeZone).date
   }
   val rescheduledEngine = forcedEngineHours.toFloatOrNull()
-  // When skip is applied, advance the natural rule-derived next-due past today
-  // (or past current engine hours for hour-based rules) — mirrors the
-  // force-complied advancement in TaskDueManagerImpl.
-  val skippedDueDate = if (mode == ScheduleMode.TIME)
-    advanceDatePastToday(naturalDueDate, schedule, today) else null
-  val skippedDueEngine = if (mode == ScheduleMode.HOURS)
-    advanceEnginePastNow(
-      naturalDueEngine,
-      schedule,
-      currentEngineHours
-    ) else null
+  // What the neutral banner reports. Prefers the effective due so a persisted skip or override
+  // reads the same here as on the dashboard (#347), falling back to the rules-only due for
+  // schedules the due manager can't resolve to a date.
+  val neutralDueDate = currentDueDate ?: naturalDueDate
+  val neutralDueEngine = currentDueEngine ?: naturalDueEngine
 
   Column(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
-    val bannerTone = when {
-      isSkipping -> PreviewBannerTone.Warn
-      rescheduleOn -> PreviewBannerTone.Active
-      else -> PreviewBannerTone.Neutral
-    }
+    val bannerTone = if (rescheduleOn) PreviewBannerTone.Active else PreviewBannerTone.Neutral
     val bannerLabel = stringResource(
-      when {
-        isSkipping -> Res.string.adj_preview_label_warn
-        rescheduleOn -> Res.string.schedule_preview_label
-        else -> Res.string.adj_preview_label_neutral
-      }
+      if (rescheduleOn) Res.string.schedule_preview_label
+      else Res.string.adj_preview_label_neutral
     )
     val bannerPrimary: AnnotatedString
     val bannerSecondary: AnnotatedString
     when {
-      // ── Skip on, TIME mode with a computable advanced due ────────────────
-      isSkipping && skippedDueDate != null -> {
-        val skippedStr = skippedDueDate.toDisplayFormat()
-        bannerPrimary = monoOn(
-          stringResource(
-            Res.string.adj_preview_primary_date,
-            skippedStr,
-            relativeDaysPhrase(today.daysUntil(skippedDueDate)),
-          ),
-          skippedStr,
-        )
-        bannerSecondary = if (naturalDueDate != null) {
-          val natStr = naturalDueDate.toDisplayFormat()
-          monoOn(
-            stringResource(
-              Res.string.adj_preview_skip_secondary_with_original_date,
-              natStr,
-              relativeDaysAgoPhrase(today.daysUntil(naturalDueDate)),
-            ),
-            natStr,
-          )
-        } else {
-          AnnotatedString(stringResource(Res.string.adj_preview_skip_secondary))
-        }
-      }
-
-      // ── Skip on, HOURS mode with a computable advanced due ───────────────
-      isSkipping && skippedDueEngine != null -> {
-        val skippedStr = formatEngineHours(skippedDueEngine)
-        bannerPrimary = monoOn(
-          stringResource(
-            Res.string.adj_preview_primary_hours,
-            skippedStr,
-            relativeEnginePhrase(skippedDueEngine - currentEngineHours),
-          ),
-          skippedStr,
-        )
-        bannerSecondary = if (naturalDueEngine != null) {
-          val natStr = formatEngineHours(naturalDueEngine)
-          monoOn(
-            stringResource(
-              Res.string.adj_preview_skip_secondary_with_original_hours,
-              natStr,
-              relativeEngineAgoPhrase(naturalDueEngine - currentEngineHours),
-            ),
-            natStr,
-          )
-        } else {
-          AnnotatedString(stringResource(Res.string.adj_preview_skip_secondary))
-        }
-      }
-
-      // ── Skip on, no advanceable rule (LINKED / ASAP / no interval) ───────
-      isSkipping -> {
-        bannerPrimary =
-          AnnotatedString(stringResource(Res.string.adj_preview_skip_primary))
-        bannerSecondary =
-          AnnotatedString(stringResource(Res.string.adj_preview_skip_secondary))
-      }
-
       // ── Reschedule on, TIME mode ─────────────────────────────────────────
       rescheduleOn && mode == ScheduleMode.TIME -> {
         if (rescheduledDate != null) {
@@ -302,30 +220,30 @@ fun TaskAdjustmentsTab(
         }
       }
 
-      // ── Neutral, TIME mode with a known natural due ──────────────────────
-      mode == ScheduleMode.TIME && naturalDueDate != null -> {
-        val natStr = naturalDueDate.toDisplayFormat()
+      // ── Neutral, TIME mode with a known due ──────────────────────────────
+      mode == ScheduleMode.TIME && neutralDueDate != null -> {
+        val dueStr = neutralDueDate.toDisplayFormat()
         bannerPrimary = monoOn(
           stringResource(
             Res.string.adj_preview_primary_date,
-            natStr,
-            relativeDaysPhrase(today.daysUntil(naturalDueDate)),
+            dueStr,
+            relativeDaysPhrase(today.daysUntil(neutralDueDate)),
           ),
-          natStr,
+          dueStr,
         )
         bannerSecondary = AnnotatedString("")
       }
 
-      // ── Neutral, HOURS mode with a known natural due ─────────────────────
-      mode == ScheduleMode.HOURS && naturalDueEngine != null -> {
-        val natStr = formatEngineHours(naturalDueEngine)
+      // ── Neutral, HOURS mode with a known due ─────────────────────────────
+      mode == ScheduleMode.HOURS && neutralDueEngine != null -> {
+        val dueStr = formatEngineHours(neutralDueEngine)
         bannerPrimary = monoOn(
           stringResource(
             Res.string.adj_preview_primary_hours,
-            natStr,
-            relativeEnginePhrase(naturalDueEngine - currentEngineHours),
+            dueStr,
+            relativeEnginePhrase(neutralDueEngine - currentEngineHours),
           ),
-          natStr,
+          dueStr,
         )
         bannerSecondary = AnnotatedString("")
       }
@@ -360,28 +278,20 @@ fun TaskAdjustmentsTab(
     RescheduleCard(
       mode = mode,
       rescheduleOn = rescheduleOn,
-      onToggle = { on ->
-        setReschedule(on)
-        if (on && isSkipping) onSkipToggle()
-      },
+      onToggle = { on -> setReschedule(on) },
       forcedEngineHours = forcedEngineHours,
       onForcedEngineHoursChange = onForcedEngineHoursChange,
       forcedDateMillis = forcedDateMillis,
       onDateClick = onDateClick,
     )
 
-    // Section 2 — Skip this cycle
+    // Delete task — kept separate from the Resolve menu (Create Work Log / Skip This Cycle)
+    // since deletion has no squawk-resolve analog.
     AdjSectionLabel(
-      label = stringResource(Res.string.adj_skip_section_label),
-      complete = isSkipping,
+      label = stringResource(Res.string.delete_task_section_label),
+      complete = false,
     )
-    SkipCard(
-      isSkipping = isSkipping,
-      onToggle = {
-        if (!isSkipping && rescheduleOn) setReschedule(false)
-        onSkipToggle()
-      },
-    )
+    DeleteTaskCard(onClick = onDeleteRequest)
   }
 }
 
@@ -540,30 +450,23 @@ private fun RescheduleCard(
   }
 }
 
-// ─── Skip section ────────────────────────────────────────────────────────────
+// ─── Delete task section ─────────────────────────────────────────────────────
 
 @Composable
-private fun SkipCard(
-  isSkipping: Boolean,
-  onToggle: () -> Unit,
-) {
-  val warning = MaterialTheme.statusColors.caution.accent
-  val borderColor =
-    if (isSkipping) warning else MaterialTheme.colorScheme.outlineVariant
-  val bg =
-    if (isSkipping) warning.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surfaceContainer
+private fun DeleteTaskCard(onClick: () -> Unit) {
+  val critical = MaterialTheme.statusColors.critical.accent
 
   Row(
     modifier = Modifier
       .fillMaxWidth()
       .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .background(bg)
+      .background(MaterialTheme.colorScheme.surfaceContainer)
       .border(
         Spacing.hairline,
-        borderColor,
+        critical.copy(alpha = 0.4f),
         RoundedCornerShape(Spacing.cardCornerRadius)
       )
-      .clickable(role = Role.Button) { onToggle() }
+      .clickable(role = Role.Button, onClick = onClick)
       .padding(
         horizontal = Spacing.large,
         vertical = Spacing.medium
@@ -574,35 +477,35 @@ private fun SkipCard(
     Box(
       modifier = Modifier
         .size(Spacing.huge)
-        .clip(RoundedCornerShape(Spacing.smallCornerRadius))
-        .background(
-          if (isSkipping) warning.copy(alpha = 0.18f)
-          else MaterialTheme.colorScheme.surfaceContainerHighest
-        ),
+        .clip(RoundedCornerShape(percent = 50))
+        .background(critical.copy(alpha = 0.12f)),
       contentAlignment = Alignment.Center,
     ) {
       Icon(
-        if (isSkipping) Icons.Default.Check else Icons.Default.FastForward,
+        Icons.Default.Delete,
         contentDescription = null,
         modifier = Modifier.size(Spacing.large),
-        tint = if (isSkipping) warning else MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = critical,
       )
     }
     Column(modifier = Modifier.weight(1f)) {
       Text(
-        if (isSkipping) stringResource(Res.string.adj_skip_title_active)
-        else stringResource(Res.string.adj_skip_title_inactive),
+        stringResource(Res.string.delete_this_task_title),
         style = MaterialTheme.typography.bodyLarge,
         fontWeight = FontWeight.SemiBold,
-        color = if (isSkipping) warning else MaterialTheme.colorScheme.onSurface,
+        color = critical,
       )
       Text(
-        if (isSkipping) stringResource(Res.string.adj_skip_subtitle_active)
-        else stringResource(Res.string.adj_skip_subtitle_inactive),
+        stringResource(Res.string.delete_this_task_subtitle),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
+    Icon(
+      Icons.AutoMirrored.Filled.KeyboardArrowRight,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
   }
 }
 
@@ -639,40 +542,6 @@ private fun AdjSectionLabel(
 
 // ─── Banner helpers ──────────────────────────────────────────────────────────
 
-internal fun advanceDatePastToday(
-  natural: LocalDate?,
-  schedule: ScheduleState,
-  today: LocalDate,
-): LocalDate? {
-  if (natural == null || schedule.mode != ScheduleMode.TIME) return null
-  val n = schedule.calValue.toIntOrNull() ?: return null
-  if (n <= 0) return null
-  // Always advance at least once (matches TaskDueManagerImpl force-complied path).
-  var advanced = natural.step(schedule.calUnit, n)
-  while (advanced <= today) advanced = advanced.step(schedule.calUnit, n)
-  return advanced
-}
-
-private fun LocalDate.step(unit: ScheduleTimeUnit, n: Int): LocalDate =
-  when (unit) {
-    ScheduleTimeUnit.DAYS -> plus(n, DateTimeUnit.DAY)
-    ScheduleTimeUnit.MONTHS -> plus(n, DateTimeUnit.MONTH)
-    ScheduleTimeUnit.YEARS -> plus(n, DateTimeUnit.YEAR)
-  }
-
-internal fun advanceEnginePastNow(
-  natural: Float?,
-  schedule: ScheduleState,
-  currentEngineHours: Float,
-): Float? {
-  if (natural == null || schedule.mode != ScheduleMode.HOURS) return null
-  val interval = schedule.hourValue.toFloatOrNull() ?: return null
-  if (interval <= 0f) return null
-  var advanced = natural + interval
-  while (advanced <= currentEngineHours) advanced += interval
-  return advanced
-}
-
 @Composable
 private fun relativeDaysPhrase(days: Int): String = when {
   days == 0 -> stringResource(Res.string.adj_preview_rel_due_today)
@@ -680,15 +549,6 @@ private fun relativeDaysPhrase(days: Int): String = when {
   days > 1 -> stringResource(Res.string.adj_preview_rel_in_days, days)
   days == -1 -> stringResource(Res.string.adj_preview_rel_overdue_day)
   else -> stringResource(Res.string.adj_preview_rel_overdue_days, -days)
-}
-
-@Composable
-private fun relativeDaysAgoPhrase(days: Int): String = when {
-  days == 0 -> stringResource(Res.string.adj_preview_rel_due_today)
-  days == -1 -> stringResource(Res.string.adj_preview_rel_day_ago)
-  days < -1 -> stringResource(Res.string.adj_preview_rel_days_ago, -days)
-  days == 1 -> stringResource(Res.string.adj_preview_rel_in_day)
-  else -> stringResource(Res.string.adj_preview_rel_in_days, days)
 }
 
 @Composable
@@ -700,18 +560,6 @@ private fun relativeEnginePhrase(deltaHours: Float): String {
     stringResource(Res.string.adj_preview_rel_in_hours, formatted)
   } else {
     stringResource(Res.string.adj_preview_rel_over_hours, formatted)
-  }
-}
-
-@Composable
-private fun relativeEngineAgoPhrase(deltaHours: Float): String {
-  val absDelta = abs(deltaHours)
-  if (absDelta < 0.05f) return stringResource(Res.string.adj_preview_rel_hours_at)
-  val formatted = formatEngineHours(absDelta)
-  return if (deltaHours < 0f) {
-    stringResource(Res.string.adj_preview_rel_hours_ago, formatted)
-  } else {
-    stringResource(Res.string.adj_preview_rel_in_hours, formatted)
   }
 }
 

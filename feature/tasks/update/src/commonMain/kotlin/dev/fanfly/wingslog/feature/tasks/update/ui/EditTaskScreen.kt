@@ -41,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
@@ -57,6 +56,7 @@ import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.ADJUSTMENT_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.COMPLIANCE_TAB
+import dev.fanfly.wingslog.feature.tasks.update.compose.ResolveTaskOptionsMenu
 import dev.fanfly.wingslog.feature.tasks.update.compose.SCHEDULE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.compose.TASK_FORM_TAB_KEYS
@@ -67,15 +67,20 @@ import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskFormState
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
+import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ok
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
-import kotlin.time.Clock
+import wingslog.feature.tasks.update.generated.resources.Res
+import wingslog.feature.tasks.update.generated.resources.resolve_task
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
+
+/** The Resolve-menu options that leave the screen, and so have to pass the unsaved-changes gate. */
+private enum class ResolveAction { CreateWorkLog, Skip }
 
 @OptIn(
   ExperimentalMaterial3Api::class,
@@ -89,6 +94,7 @@ fun EditTaskScreen(
   availableLogs: List<MaintenanceLog> = emptyList(),
   currentEngineHours: Float,
   naturalDueMetadata: DueMetadata?,
+  effectiveDueMetadata: DueMetadata?,
   onTitleChange: (String) -> Unit,
   onScheduleChange: (ScheduleState) -> Unit,
   onRefNumberChange: (String) -> Unit,
@@ -98,10 +104,13 @@ fun EditTaskScreen(
   onForcedEngineHoursChange: (String) -> Unit,
   onForceOverrideDateChange: (Boolean) -> Unit,
   onForcedDateMillisChange: (Long?) -> Unit,
-  onForceCompliedStatusChange: (ForceCompliedStatus?) -> Unit,
   onSave: (MaintenanceTask) -> Unit,
   onCancel: () -> Unit,
   onDeleteRequest: (String) -> Unit,
+  onResolveClick: () -> Unit,
+  onResolveMenuDismiss: () -> Unit,
+  onCreateWorkLogClick: () -> Unit,
+  onSkipConfirm: () -> Unit,
   isSaving: Boolean = false,
   showLogPicker: Boolean = false,
   onShowLogPicker: () -> Unit = {},
@@ -113,12 +122,33 @@ fun EditTaskScreen(
 ) {
   var showDatePicker by remember { mutableStateOf(false) }
   var showDeleteConfirm by remember { mutableStateOf(false) }
+  var showSkipConfirm by remember { mutableStateOf(false) }
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
+  // Set when the unsaved-changes prompt was raised by a Resolve option rather than by
+  // cancel/back, so discarding continues into that option instead of just leaving the screen.
+  var pendingResolveAction by remember { mutableStateOf<ResolveAction?>(null) }
 
   val hasChanges = state.hasChanges
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()
+  }
+
+  // Both Resolve options persist against the card as last saved and then navigate away, so
+  // pending form edits would be dropped silently — prompt for them the same way back does.
+  val runResolveAction = { action: ResolveAction ->
+    when (action) {
+      ResolveAction.CreateWorkLog -> onCreateWorkLogClick()
+      ResolveAction.Skip -> showSkipConfirm = true
+    }
+  }
+  val tryResolveAction = { action: ResolveAction ->
+    if (hasChanges) {
+      pendingResolveAction = action
+      showUnsavedChangesDialog = true
+    } else {
+      runResolveAction(action)
+    }
   }
 
   BackHandler(enabled = hasChanges) {
@@ -130,9 +160,14 @@ fun EditTaskScreen(
     UnsavedChangesDialog(
       onConfirm = {
         showUnsavedChangesDialog = false
-        onCancel()
+        val pending = pendingResolveAction
+        pendingResolveAction = null
+        if (pending != null) runResolveAction(pending) else onCancel()
       },
-      onDismiss = { showUnsavedChangesDialog = false },
+      onDismiss = {
+        showUnsavedChangesDialog = false
+        pendingResolveAction = null
+      },
     )
   }
 
@@ -263,20 +298,12 @@ fun EditTaskScreen(
                 onForceOverrideDateChange = onForceOverrideDateChange,
                 forcedDateMillis = state.forcedDateMillis,
                 onDateClick = { showDatePicker = true },
-                isSkipping = state.forceCompliedStatus != null,
-                onSkipToggle = {
-                  onForceCompliedStatusChange(
-                    if (state.forceCompliedStatus != null) null else {
-                      ForceCompliedStatus(
-                        complied_date = toWireInstant(Clock.System.now().epochSeconds),
-                        complied_engine_hours = currentEngineHours
-                      )
-                    }
-                  )
-                },
                 naturalDueDate = naturalDueMetadata?.nextDueDate,
                 naturalDueEngine = naturalDueMetadata?.nextDueEngine,
+                currentDueDate = effectiveDueMetadata?.nextDueDate,
+                currentDueEngine = effectiveDueMetadata?.nextDueEngine,
                 currentEngineHours = currentEngineHours,
+                onDeleteRequest = { showDeleteConfirm = true },
               )
             }
           }
@@ -300,11 +327,6 @@ fun EditTaskScreen(
               )
             } else null
 
-          val isScheduleChanged = ruleList != card.rules ||
-            state.schedule.isOneTime != card.is_one_time ||
-            updatedForceDueEngine != card.force_due_engine_hour ||
-            updatedForceDueDate != card.force_due_date
-
           val updated = card.copy(
             title = state.title,
             component = state.component,
@@ -318,12 +340,31 @@ fun EditTaskScreen(
               ?: "",
             force_due_engine_hour = updatedForceDueEngine,
             force_due_date = updatedForceDueDate,
-            force_complied_status = if (isScheduleChanged) null else state.forceCompliedStatus
+            // Skip This Cycle is a separate, immediately-persisted action off the Resolve menu
+            // (see TaskViewModel.skipThisCycle), so this form only carries the stored value
+            // forward. Dropping it when the schedule it was recorded against changes is
+            // TaskViewModel.isScheduleChanged's job, not the form's.
+            force_complied_status = card.force_complied_status
           )
           onSave(updated)
         },
         onSecondaryClick = { tryCancel() },
-        onDangerClick = { showDeleteConfirm = true },
+        onDangerClick = onResolveClick,
+        dangerLabel = stringResource(Res.string.resolve_task),
+        dangerMenuContent = {
+          ResolveTaskOptionsMenu(
+            expanded = state.showResolveMenu,
+            onDismissRequest = onResolveMenuDismiss,
+            onCreateWorkLog = {
+              onResolveMenuDismiss()
+              tryResolveAction(ResolveAction.CreateWorkLog)
+            },
+            onSkipThisCycle = {
+              onResolveMenuDismiss()
+              tryResolveAction(ResolveAction.Skip)
+            },
+          )
+        },
         primaryEnabled = state.title.isNotBlank(),
         isPrimaryFunctionInProgress = isSaving
       )
@@ -338,6 +379,15 @@ fun EditTaskScreen(
         onDeleteRequest(card.id)
       },
       onDismiss = { showDeleteConfirm = false })
+  }
+
+  if (showSkipConfirm) {
+    SkipTaskConfirmDialog(
+      onConfirm = {
+        showSkipConfirm = false
+        onSkipConfirm()
+      },
+      onDismiss = { showSkipConfirm = false })
   }
 
   if (showLogPicker) {

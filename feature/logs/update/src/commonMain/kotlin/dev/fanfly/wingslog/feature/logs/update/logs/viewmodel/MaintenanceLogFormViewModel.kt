@@ -71,10 +71,17 @@ class MaintenanceLogFormViewModel(
   private val preselectedSquawkId: String? = savedStateHandle[Screen.SQUAWK_ID]
   private var preselectedSquawkSeeded = false
 
-  // Both flags gate captureInitialSnapshot() below, so the unsaved-changes baseline isn't
-  // captured until the squawk-preselect flow has had a chance to seed selectedSquawkIds.
+  // Set when this screen is opened from the task edit screen's "Create Work Log" resolve option,
+  // to preselect this task once it shows up in observeTasks() below. Mirrors the squawk-preselect
+  // flow above but has no work-description prefill equivalent.
+  private val preselectedCardId: String? = savedStateHandle[Screen.CARD_ID]
+  private var preselectedCardSeeded = false
+
+  // All three flags gate captureInitialSnapshot() below, so the unsaved-changes baseline isn't
+  // captured until the squawk/task-preselect flows have had a chance to seed their selections.
   private var techniciansLoaded = false
   private var squawksLoaded = false
+  private var tasksLoaded = false
 
   private var saveJob: Job? = null
   private val attachmentForm =
@@ -158,7 +165,11 @@ class MaintenanceLogFormViewModel(
     // Also wait for a pending squawk-title prefill to be consumed (see
     // consumeResolveSquawkPrefill below), so the baseline includes the final prefilled
     // workDescription too and doesn't read as an unsaved change the instant it lands.
-    if (!isEditMode && techniciansLoaded && squawksLoaded &&
+    //
+    // Known gap (#348): the *Loaded flags below latch on any emission, including a
+    // transitional one that doesn't yet contain a preselected squawk/task — so the baseline
+    // can be captured before that preselection is seeded.
+    if (!isEditMode && techniciansLoaded && squawksLoaded && tasksLoaded &&
       _uiState.value.pendingResolveSquawkTitle == null
     ) {
       captureInitialSnapshot()
@@ -231,7 +242,24 @@ class MaintenanceLogFormViewModel(
   private fun observeTasks() {
     inspectionDataManager.observeTasks(aircraftId)
       .onEach { cards ->
-        _uiState.update { it.copy(availableInspectionCards = cards) }
+        _uiState.update { state ->
+          var next = state.copy(availableInspectionCards = cards)
+          if (!isEditMode && !preselectedCardSeeded && preselectedCardId != null) {
+            cards.find { it.id == preselectedCardId }
+              ?.let { card ->
+                next = next.copy(
+                  selectedInspectionIds = (next.selectedInspectionIds + card.id).distinct(),
+                )
+                // Only latch once the task is actually found — an empty/transitional first
+                // emission must not permanently skip this; it should simply retry on the next
+                // emission.
+                preselectedCardSeeded = true
+              }
+          }
+          next
+        }
+        tasksLoaded = true
+        maybeCaptureInitialSnapshot()
       }
       .launchIn(viewModelScope)
   }

@@ -19,6 +19,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.task_deleted
+import wingslog.feature.tasks.update.generated.resources.task_skipped
 import wingslog.feature.tasks.update.generated.resources.task_updated
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
@@ -38,6 +39,7 @@ fun EditTaskRoute(
 
   val updatedMessage = stringResource(Res.string.task_updated)
   val deletedMessage = stringResource(Res.string.task_deleted)
+  val skippedMessage = stringResource(Res.string.task_skipped)
   val fileReadErrorMessage = stringResource(AttachRes.string.file_read_error)
   val snackbarHostState = remember { SnackbarHostState() }
 
@@ -47,6 +49,16 @@ fun EditTaskRoute(
         is TaskFormEvent.PickError -> snackbarHostState.showSnackbar(
           fileReadErrorMessage
         )
+
+        is TaskFormEvent.NavigateToCreateLog -> {
+          navController.popBackStack()
+          navController.navigate(
+            Screen.AddMaintenanceLog.createRoute(
+              aircraftId = event.aircraftId,
+              cardId = event.cardId,
+            )
+          )
+        }
       }
     }
   }
@@ -70,6 +82,7 @@ fun EditTaskRoute(
       availableLogs = successState.availableLogs,
       currentEngineHours = successState.currentEngineHours,
       naturalDueMetadata = successState.naturalDueMetadata,
+      effectiveDueMetadata = successState.effectiveDueMetadata,
       onTitleChange = viewModel::onTitleChange,
       onScheduleChange = viewModel::onScheduleChange,
       onRefNumberChange = viewModel::onRefNumberChange,
@@ -79,7 +92,6 @@ fun EditTaskRoute(
       onForcedEngineHoursChange = viewModel::onForcedEngineHoursChange,
       onForceOverrideDateChange = viewModel::onForceOverrideDateChange,
       onForcedDateMillisChange = viewModel::onForcedDateMillisChange,
-      onForceCompliedStatusChange = viewModel::onForceCompliedStatusChange,
       isSaving = isSaving,
       snackbarHostState = snackbarHostState,
       showLogPicker = showLogPicker,
@@ -133,6 +145,22 @@ fun EditTaskRoute(
             navController.previousBackStackEntry?.savedStateHandle?.set(
               CROSS_SCREEN_SUCCESS_MESSAGE,
               deletedMessage
+            )
+            navController.popBackStack()
+          }
+        )
+      },
+      onResolveClick = viewModel::showResolveMenu,
+      onResolveMenuDismiss = viewModel::hideResolveMenu,
+      onCreateWorkLogClick = viewModel::selectCreateWorkLog,
+      onSkipConfirm = {
+        viewModel.skipThisCycle(
+          card = card,
+          currentEngineHours = successState.currentEngineHours,
+          onSuccess = {
+            navController.previousBackStackEntry?.savedStateHandle?.set(
+              CROSS_SCREEN_SUCCESS_MESSAGE,
+              skippedMessage
             )
             navController.popBackStack()
           }

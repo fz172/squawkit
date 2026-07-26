@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.nav.Screen
@@ -37,6 +38,7 @@ private const val ADDRESSED_SQUAWK_ID = "squawk-addressed-by-this-log"
 private const val OTHER_LOG_SQUAWK_ID = "squawk-addressed-by-other-log"
 private const val OPEN_SQUAWK_ID = "squawk-open"
 private const val PRESELECTED_SQUAWK_ID = "squawk-preselected"
+private const val PRESELECTED_CARD_ID = "task-preselected"
 private const val SELF_TECH_ID = "tech-self"
 private const val TEST_UID = "uid-sponge"
 private const val LINKED_UID = "uid-linked-mechanic"
@@ -268,6 +270,58 @@ class MaintenanceLogFormViewModelTest {
       assertThat(viewModel.uiState.value.pendingResolveSquawkTitle).isNull()
     }
 
+  // ---- task preselect (opened via task edit screen's "Create Work Log" resolve option) ----
+
+  @Test
+  fun preselectedCardId_seedsSelectedInspectionIds() =
+    runTest(testDispatcher) {
+      every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          MaintenanceTask(id = PRESELECTED_CARD_ID, title = "Oil change"),
+        )
+      )
+
+      val viewModel = buildViewModelForNew(preselectedCardId = PRESELECTED_CARD_ID)
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.selectedInspectionIds).containsExactly(
+        PRESELECTED_CARD_ID
+      )
+    }
+
+  @Test
+  fun preselectedCardId_whenEditingExistingLog_isIgnored() =
+    runTest(testDispatcher) {
+      every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          MaintenanceTask(id = PRESELECTED_CARD_ID, title = "Oil change"),
+        )
+      )
+
+      // Edit-mode routes never carry a cardId nav arg, but guard the case anyway.
+      val viewModel = MaintenanceLogFormViewModel(
+        logManager = logManager,
+        fleetManager = fleetManager,
+        inspectionDataManager = inspectionDataManager,
+        squawkManager = squawkManager,
+        attachmentManager = attachmentManager,
+        technicianManager = technicianManager,
+        sharingManager = sharingManager,
+        auth = auth,
+        subscriptionManager = subscriptionManager,
+        savedStateHandle = SavedStateHandle(
+          mapOf(
+            Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID,
+            Screen.LOG_ID to TEST_LOG_ID,
+            Screen.CARD_ID to PRESELECTED_CARD_ID,
+          )
+        ),
+      )
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.selectedInspectionIds).isEmpty()
+    }
+
   @Test
   fun consumeResolveSquawkPrefill_setsWorkDescriptionAndClearsPendingTitle() =
     runTest(testDispatcher) {
@@ -453,7 +507,10 @@ class MaintenanceLogFormViewModelTest {
       ),
     )
 
-  private fun buildViewModelForNew(preselectedSquawkId: String? = null): MaintenanceLogFormViewModel =
+  private fun buildViewModelForNew(
+    preselectedSquawkId: String? = null,
+    preselectedCardId: String? = null,
+  ): MaintenanceLogFormViewModel =
     MaintenanceLogFormViewModel(
       logManager = logManager,
       fleetManager = fleetManager,
@@ -470,6 +527,10 @@ class MaintenanceLogFormViewModelTest {
           if (preselectedSquawkId != null) put(
             Screen.SQUAWK_ID,
             preselectedSquawkId
+          )
+          if (preselectedCardId != null) put(
+            Screen.CARD_ID,
+            preselectedCardId
           )
         }
       ),

@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.common.UiText
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
+import kotlin.time.Clock
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 sealed interface TaskUiState {
@@ -44,13 +46,17 @@ sealed interface TaskUiState {
     val allInspections: List<MaintenanceTask> = emptyList(),
     val availableLogs: List<MaintenanceLog> = emptyList(),
     val currentEngineHours: Float,
+    /** Rules-only next due, ignoring any reschedule override or recorded skip. */
     val naturalDueMetadata: DueMetadata? = null,
+    /** Next due as the rest of the app shows it, override and recorded skip included. */
+    val effectiveDueMetadata: DueMetadata? = null,
     val error: UiText? = null,
   ) : TaskUiState
 }
 
 sealed interface TaskFormEvent {
   data object PickError : TaskFormEvent
+  data class NavigateToCreateLog(val aircraftId: String, val cardId: String) : TaskFormEvent
 }
 
 /**
@@ -67,11 +73,14 @@ data class TaskFormState(
   val refNumber: String = "",
   val complianceAuthority: String = "",
   val complianceNotes: String = "",
-  val forceCompliedStatus: ForceCompliedStatus? = null,
   val forceOverrideEngine: Boolean = false,
   val forcedEngineHours: String = "",
   val forceOverrideDate: Boolean = false,
   val forcedDateMillis: Long? = null,
+  // "Resolve" popup off the bottom bar (Create Work Log / Skip This Cycle) — mirrors
+  // SquawkFormState.showResolveMenu. Skip is an immediate-persist action (see
+  // TaskViewModel.skipThisCycle), not a pending form field, so it isn't part of this form state.
+  val showResolveMenu: Boolean = false,
   val initialTitle: String = "",
   val initialComponent: ComponentType = ComponentType.COMPONENT_AIRFRAME,
   val initialType: ComplianceType = ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
@@ -79,7 +88,6 @@ data class TaskFormState(
   val initialRefNumber: String = "",
   val initialComplianceAuthority: String = "",
   val initialComplianceNotes: String = "",
-  val initialForceCompliedStatus: ForceCompliedStatus? = null,
   val initialForceOverrideEngine: Boolean = false,
   val initialForcedEngineHours: String = "",
   val initialForceOverrideDate: Boolean = false,
@@ -93,7 +101,6 @@ data class TaskFormState(
       refNumber != initialRefNumber ||
       complianceAuthority != initialComplianceAuthority ||
       complianceNotes != initialComplianceNotes ||
-      forceCompliedStatus != initialForceCompliedStatus ||
       forceOverrideEngine != initialForceOverrideEngine ||
       (forceOverrideEngine && forcedEngineHours != initialForcedEngineHours) ||
       forceOverrideDate != initialForceOverrideDate ||
@@ -115,7 +122,6 @@ data class TaskFormState(
         refNumber = card.reference_number,
         complianceAuthority = card.compliance_authority,
         complianceNotes = card.compliance_details,
-        forceCompliedStatus = card.force_complied_status,
         forceOverrideEngine = forceOverrideEngine,
         forcedEngineHours = forcedEngineHours,
         forceOverrideDate = forceOverrideDate,
@@ -127,7 +133,6 @@ data class TaskFormState(
         initialRefNumber = card.reference_number,
         initialComplianceAuthority = card.compliance_authority,
         initialComplianceNotes = card.compliance_details,
-        initialForceCompliedStatus = card.force_complied_status,
         initialForceOverrideEngine = forceOverrideEngine,
         initialForcedEngineHours = forcedEngineHours,
         initialForceOverrideDate = forceOverrideDate,
@@ -211,19 +216,21 @@ class TaskViewModel(
         Triple(cards, logs, overview)
       }.collect { (cards, logs, overview) ->
         val engineHours = overview?.current_engine_time?.toFloat() ?: 0f
-        // Compute the rules-only "natural" next-due for the card being edited so the
-        // adjustments preview banner can show what the schedule would say absent any
-        // force-override or force-complied state.
-        val naturalDue = cardId?.let { id ->
-          cards.firstOrNull { it.id == id }
-            ?.let { card ->
-              val stripped = card.copy(
-                force_complied_status = null,
-                force_due_date = null,
-                force_due_engine_hour = 0f,
-              )
-              taskDueManager.computeNextDue(stripped, logs, cards)
-            }
+        val editedCard = cardId?.let { id -> cards.firstOrNull { it.id == id } }
+        // The rules-only "natural" next-due, so the adjustments preview banner can show what
+        // the schedule alone would say absent any force-override or force-complied state.
+        val naturalDue = editedCard?.let { card ->
+          val stripped = card.copy(
+            force_complied_status = null,
+            force_due_date = null,
+            force_due_engine_hour = 0f,
+          )
+          taskDueManager.computeNextDue(stripped, logs, cards)
+        }
+        // The same computation the dashboard task cards run, so the banner's "Current" reading
+        // agrees with them once an override or a skip has been persisted (#347).
+        val effectiveDue = editedCard?.let { card ->
+          taskDueManager.computeNextDue(card, logs, cards)
         }
         _uiState.update { prev ->
           TaskUiState.Success(
@@ -232,6 +239,7 @@ class TaskViewModel(
             availableLogs = logs,
             currentEngineHours = engineHours,
             naturalDueMetadata = naturalDue,
+            effectiveDueMetadata = effectiveDue,
             error = (prev as? TaskUiState.Success)?.error,
           )
         }
@@ -281,8 +289,55 @@ class TaskViewModel(
   fun onForcedDateMillisChange(value: Long?) =
     _formState.update { it.copy(forcedDateMillis = value) }
 
-  fun onForceCompliedStatusChange(value: ForceCompliedStatus?) =
-    _formState.update { it.copy(forceCompliedStatus = value) }
+  // ── Resolve menu (Create Work Log / Skip This Cycle) ─────────────────────
+
+  fun showResolveMenu() = _formState.update { it.copy(showResolveMenu = true) }
+
+  fun hideResolveMenu() = _formState.update { it.copy(showResolveMenu = false) }
+
+  // Latched by selectCreateWorkLog so a double-tap can't queue two navigation events. Not part
+  // of form state: the screen may raise an unsaved-changes prompt between the tap and this call,
+  // so the open/closed state of the menu is no longer a usable guard.
+  private var createWorkLogRequested = false
+
+  fun selectCreateWorkLog() {
+    val id = cardId ?: return
+    if (createWorkLogRequested) return
+    createWorkLogRequested = true
+    _formState.update { it.copy(showResolveMenu = false) }
+    viewModelScope.launch {
+      _events.send(TaskFormEvent.NavigateToCreateLog(aircraftId, id))
+    }
+  }
+
+  /**
+   * Marks [card]'s current cycle complete without a log, persisting immediately against the
+   * card as last saved (not any pending in-memory form edits) — mirrors
+   * SquawkFormViewModel.confirmDismiss() calling squawkManager.dismissSquawk() directly.
+   *
+   * Clears any reschedule override as part of the same write, the way saving a linked
+   * maintenance log does: TaskDueManager resolves force-due dates before it ever looks at
+   * force-complied state, so a skip left alongside an override would never move the next due.
+   */
+  fun skipThisCycle(
+    card: MaintenanceTask,
+    currentEngineHours: Float,
+    onSuccess: () -> Unit,
+  ) {
+    _formState.update { it.copy(showResolveMenu = false) }
+    viewModelScope.launch {
+      val skipped = card.copy(
+        force_due_date = null,
+        force_due_engine_hour = 0f,
+        force_complied_status = ForceCompliedStatus(
+          complied_date = toWireInstant(Clock.System.now().epochSeconds),
+          complied_engine_hours = currentEngineHours,
+        )
+      )
+      inspectionDataManager.updateTask(aircraftId, skipped)
+        .onSuccess { onSuccess() }
+    }
+  }
 
   // ── Attachment management ────────────────────────────────────────────────
 
@@ -418,6 +473,33 @@ class TaskViewModel(
     }
   }
 
+  /**
+   * True when this save changes the schedule the stored card's force-complied status was
+   * recorded against.
+   *
+   * A skip ("Skip This Cycle") marks one specific cycle complete. Once the rules or the
+   * reschedule override move, that cycle no longer describes anything real, and leaving the
+   * status in place would silently advance a due date the user never skipped — so the caller
+   * drops it. Unknown cards (not yet loaded) are treated as unchanged: better to carry the
+   * status forward than to clear one we can't compare against.
+   */
+  private fun isScheduleChanged(
+    cardId: String,
+    rules: List<InspectionRule>,
+    isOneTime: Boolean,
+    forceDueDate: Instant?,
+    forceDueEngine: Float,
+  ): Boolean {
+    val stored = (_uiState.value as? TaskUiState.Success)
+      ?.allInspections
+      ?.find { it.id == cardId }
+      ?: return false
+    return rules != stored.rules ||
+      isOneTime != stored.is_one_time ||
+      forceDueDate != stored.force_due_date ||
+      forceDueEngine != stored.force_due_engine_hour
+  }
+
   fun saveEditedTask(
     cardId: String,
     title: String,
@@ -451,7 +533,9 @@ class TaskViewModel(
           is_one_time = isOneTime,
           force_due_date = forceDueDate,
           force_due_engine_hour = forceDueEngine,
-          force_complied_status = forceCompliedStatus,
+          force_complied_status = if (
+            isScheduleChanged(cardId, rules, isOneTime, forceDueDate, forceDueEngine)
+          ) null else forceCompliedStatus,
           notes = notes,
           attachments = attachments,
         )

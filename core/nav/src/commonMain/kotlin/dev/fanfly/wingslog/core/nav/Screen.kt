@@ -56,10 +56,18 @@ sealed class Screen(val route: String) {
   }
 
   data object AddMaintenanceLog :
-    Screen("maintenance_log_create/{$AIRCRAFT_ID}?$SQUAWK_ID={$SQUAWK_ID}") {
-    fun createRoute(aircraftId: String, squawkId: String? = null): String {
+    Screen("maintenance_log_create/{$AIRCRAFT_ID}?$SQUAWK_ID={$SQUAWK_ID}&$CARD_ID={$CARD_ID}") {
+    fun createRoute(
+      aircraftId: String,
+      squawkId: String? = null,
+      cardId: String? = null,
+    ): String {
       val base = "maintenance_log_create/$aircraftId"
-      return if (squawkId != null) "$base?$SQUAWK_ID=$squawkId" else base
+      val params = buildList {
+        if (squawkId != null) add("$SQUAWK_ID=$squawkId")
+        if (cardId != null) add("$CARD_ID=$cardId")
+      }
+      return if (params.isEmpty()) base else "$base?${params.joinToString("&")}"
     }
   }
 
