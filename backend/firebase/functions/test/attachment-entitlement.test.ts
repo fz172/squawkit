@@ -30,6 +30,7 @@ describe("isEntitledToAttachments (mirrors client effectiveStatusAt)", () => {
     status: SUBSCRIPTION_STATUS.PRO,
     lifecycle: SUBSCRIPTION_LIFECYCLE.ACTIVE,
     currentPeriodEndMillis: NOW + 30 * DAY,
+    willRenew: true,
     ...over,
   });
 
@@ -43,6 +44,19 @@ describe("isEntitledToAttachments (mirrors client effectiveStatusAt)", () => {
     expect(isEntitledToAttachments(pro({ status: SUBSCRIPTION_STATUS.FREE }), NOW)).toBe(false);
     expect(isEntitledToAttachments(pro({ lifecycle: SUBSCRIPTION_LIFECYCLE.EXPIRED }), NOW)).toBe(false);
     expect(isEntitledToAttachments(pro({ lifecycle: SUBSCRIPTION_LIFECYCLE.NONE }), NOW)).toBe(false);
+  });
+
+  it("keeps a renewing subscription entitled past its period end, awaiting the renewal", () => {
+    // Deliberate, and mirrored in SubscriptionResolutionTest: a renewal is expected, so a passed
+    // period end means "not heard yet". Bounding a renewal that never arrives is a server concern.
+    expect(isEntitledToAttachments(pro(), NOW + 60 * DAY)).toBe(true);
+  });
+
+  it("lapses a non-renewing subscription at its period end", () => {
+    // The server-granted comp: ACTIVE + willRenew=false with an end date. Before this it never expired.
+    const comp = pro({ willRenew: false, currentPeriodEndMillis: NOW + DAY });
+    expect(isEntitledToAttachments(comp, NOW)).toBe(true);
+    expect(isEntitledToAttachments(comp, NOW + 2 * DAY)).toBe(false);
   });
 
   it("keeps a canceled subscription entitled only until its period end", () => {
@@ -80,7 +94,14 @@ function subscriptionChange(
   };
 }
 
-const proDoc = { status: SUBSCRIPTION_STATUS.PRO, lifecycle: SUBSCRIPTION_LIFECYCLE.ACTIVE };
+// A realistic active subscriber, as `applyEntitlement` would actually write it. The period end is
+// relative to the real clock because the trigger resolves against `Date.now()`, not [NOW].
+const proDoc = {
+  status: SUBSCRIPTION_STATUS.PRO,
+  lifecycle: SUBSCRIPTION_LIFECYCLE.ACTIVE,
+  currentPeriodEndMillis: Date.now() + 30 * DAY,
+  willRenew: true,
+};
 const freeDoc = { status: SUBSCRIPTION_STATUS.FREE, lifecycle: SUBSCRIPTION_LIFECYCLE.NONE };
 
 async function seedShare(hostUid: string, acId: string, attachmentsEnabled?: boolean) {
