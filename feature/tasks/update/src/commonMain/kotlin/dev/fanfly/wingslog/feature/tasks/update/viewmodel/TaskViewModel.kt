@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.InspectionRule
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.common.UiText
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
+import kotlin.time.Clock
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 sealed interface TaskUiState {
@@ -51,6 +53,7 @@ sealed interface TaskUiState {
 
 sealed interface TaskFormEvent {
   data object PickError : TaskFormEvent
+  data class NavigateToCreateLog(val aircraftId: String, val cardId: String) : TaskFormEvent
 }
 
 /**
@@ -67,11 +70,14 @@ data class TaskFormState(
   val refNumber: String = "",
   val complianceAuthority: String = "",
   val complianceNotes: String = "",
-  val forceCompliedStatus: ForceCompliedStatus? = null,
   val forceOverrideEngine: Boolean = false,
   val forcedEngineHours: String = "",
   val forceOverrideDate: Boolean = false,
   val forcedDateMillis: Long? = null,
+  // "Resolve" popup off the bottom bar (Create Work Log / Skip This Cycle) — mirrors
+  // SquawkFormState.showResolveMenu. Skip is an immediate-persist action (see
+  // TaskViewModel.skipThisCycle), not a pending form field, so it isn't part of this form state.
+  val showResolveMenu: Boolean = false,
   val initialTitle: String = "",
   val initialComponent: ComponentType = ComponentType.COMPONENT_AIRFRAME,
   val initialType: ComplianceType = ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
@@ -79,7 +85,6 @@ data class TaskFormState(
   val initialRefNumber: String = "",
   val initialComplianceAuthority: String = "",
   val initialComplianceNotes: String = "",
-  val initialForceCompliedStatus: ForceCompliedStatus? = null,
   val initialForceOverrideEngine: Boolean = false,
   val initialForcedEngineHours: String = "",
   val initialForceOverrideDate: Boolean = false,
@@ -93,7 +98,6 @@ data class TaskFormState(
       refNumber != initialRefNumber ||
       complianceAuthority != initialComplianceAuthority ||
       complianceNotes != initialComplianceNotes ||
-      forceCompliedStatus != initialForceCompliedStatus ||
       forceOverrideEngine != initialForceOverrideEngine ||
       (forceOverrideEngine && forcedEngineHours != initialForcedEngineHours) ||
       forceOverrideDate != initialForceOverrideDate ||
@@ -115,7 +119,6 @@ data class TaskFormState(
         refNumber = card.reference_number,
         complianceAuthority = card.compliance_authority,
         complianceNotes = card.compliance_details,
-        forceCompliedStatus = card.force_complied_status,
         forceOverrideEngine = forceOverrideEngine,
         forcedEngineHours = forcedEngineHours,
         forceOverrideDate = forceOverrideDate,
@@ -127,7 +130,6 @@ data class TaskFormState(
         initialRefNumber = card.reference_number,
         initialComplianceAuthority = card.compliance_authority,
         initialComplianceNotes = card.compliance_details,
-        initialForceCompliedStatus = card.force_complied_status,
         initialForceOverrideEngine = forceOverrideEngine,
         initialForcedEngineHours = forcedEngineHours,
         initialForceOverrideDate = forceOverrideDate,
@@ -281,8 +283,46 @@ class TaskViewModel(
   fun onForcedDateMillisChange(value: Long?) =
     _formState.update { it.copy(forcedDateMillis = value) }
 
-  fun onForceCompliedStatusChange(value: ForceCompliedStatus?) =
-    _formState.update { it.copy(forceCompliedStatus = value) }
+  // ── Resolve menu (Create Work Log / Skip This Cycle) ─────────────────────
+
+  fun showResolveMenu() = _formState.update { it.copy(showResolveMenu = true) }
+
+  fun hideResolveMenu() = _formState.update { it.copy(showResolveMenu = false) }
+
+  fun selectCreateWorkLog() {
+    val current = _formState.value
+    val id = cardId ?: return
+    // Guards against a double-tap firing this twice before the menu's dismissal recomposes:
+    // the first call flips showResolveMenu synchronously, so a second call sees it already false.
+    if (!current.showResolveMenu) return
+    _formState.update { it.copy(showResolveMenu = false) }
+    viewModelScope.launch {
+      _events.send(TaskFormEvent.NavigateToCreateLog(aircraftId, id))
+    }
+  }
+
+  /**
+   * Marks [card]'s current cycle complete without a log, persisting immediately against the
+   * card as last saved (not any pending in-memory form edits) — mirrors
+   * SquawkFormViewModel.confirmDismiss() calling squawkManager.dismissSquawk() directly.
+   */
+  fun skipThisCycle(
+    card: MaintenanceTask,
+    currentEngineHours: Float,
+    onSuccess: () -> Unit,
+  ) {
+    _formState.update { it.copy(showResolveMenu = false) }
+    viewModelScope.launch {
+      val skipped = card.copy(
+        force_complied_status = ForceCompliedStatus(
+          complied_date = toWireInstant(Clock.System.now().epochSeconds),
+          complied_engine_hours = currentEngineHours,
+        )
+      )
+      inspectionDataManager.updateTask(aircraftId, skipped)
+        .onSuccess { onSuccess() }
+    }
+  }
 
   // ── Attachment management ────────────────────────────────────────────────
 

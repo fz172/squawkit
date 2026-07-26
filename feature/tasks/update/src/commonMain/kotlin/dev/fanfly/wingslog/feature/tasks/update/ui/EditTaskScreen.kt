@@ -41,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
@@ -57,6 +56,7 @@ import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.ADJUSTMENT_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.COMPLIANCE_TAB
+import dev.fanfly.wingslog.feature.tasks.update.compose.ResolveTaskOptionsMenu
 import dev.fanfly.wingslog.feature.tasks.update.compose.SCHEDULE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.compose.TASK_FORM_TAB_KEYS
@@ -67,13 +67,15 @@ import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskFormState
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
+import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ok
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
-import kotlin.time.Clock
+import wingslog.feature.tasks.update.generated.resources.Res
+import wingslog.feature.tasks.update.generated.resources.resolve_task
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 
@@ -98,10 +100,13 @@ fun EditTaskScreen(
   onForcedEngineHoursChange: (String) -> Unit,
   onForceOverrideDateChange: (Boolean) -> Unit,
   onForcedDateMillisChange: (Long?) -> Unit,
-  onForceCompliedStatusChange: (ForceCompliedStatus?) -> Unit,
   onSave: (MaintenanceTask) -> Unit,
   onCancel: () -> Unit,
   onDeleteRequest: (String) -> Unit,
+  onResolveClick: () -> Unit,
+  onResolveMenuDismiss: () -> Unit,
+  onCreateWorkLogClick: () -> Unit,
+  onSkipConfirm: () -> Unit,
   isSaving: Boolean = false,
   showLogPicker: Boolean = false,
   onShowLogPicker: () -> Unit = {},
@@ -113,6 +118,7 @@ fun EditTaskScreen(
 ) {
   var showDatePicker by remember { mutableStateOf(false) }
   var showDeleteConfirm by remember { mutableStateOf(false) }
+  var showSkipConfirm by remember { mutableStateOf(false) }
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
 
   val hasChanges = state.hasChanges
@@ -263,20 +269,10 @@ fun EditTaskScreen(
                 onForceOverrideDateChange = onForceOverrideDateChange,
                 forcedDateMillis = state.forcedDateMillis,
                 onDateClick = { showDatePicker = true },
-                isSkipping = state.forceCompliedStatus != null,
-                onSkipToggle = {
-                  onForceCompliedStatusChange(
-                    if (state.forceCompliedStatus != null) null else {
-                      ForceCompliedStatus(
-                        complied_date = toWireInstant(Clock.System.now().epochSeconds),
-                        complied_engine_hours = currentEngineHours
-                      )
-                    }
-                  )
-                },
                 naturalDueDate = naturalDueMetadata?.nextDueDate,
                 naturalDueEngine = naturalDueMetadata?.nextDueEngine,
                 currentEngineHours = currentEngineHours,
+                onDeleteRequest = { showDeleteConfirm = true },
               )
             }
           }
@@ -300,11 +296,6 @@ fun EditTaskScreen(
               )
             } else null
 
-          val isScheduleChanged = ruleList != card.rules ||
-            state.schedule.isOneTime != card.is_one_time ||
-            updatedForceDueEngine != card.force_due_engine_hour ||
-            updatedForceDueDate != card.force_due_date
-
           val updated = card.copy(
             title = state.title,
             component = state.component,
@@ -318,12 +309,27 @@ fun EditTaskScreen(
               ?: "",
             force_due_engine_hour = updatedForceDueEngine,
             force_due_date = updatedForceDueDate,
-            force_complied_status = if (isScheduleChanged) null else state.forceCompliedStatus
+            // Skip This Cycle is now a separate, immediately-persisted action off the Resolve
+            // menu (see TaskViewModel.skipThisCycle) — this form never touches it, so it just
+            // carries the card's current value forward unchanged.
+            force_complied_status = card.force_complied_status
           )
           onSave(updated)
         },
         onSecondaryClick = { tryCancel() },
-        onDangerClick = { showDeleteConfirm = true },
+        onDangerClick = onResolveClick,
+        dangerLabel = stringResource(Res.string.resolve_task),
+        dangerMenuContent = {
+          ResolveTaskOptionsMenu(
+            expanded = state.showResolveMenu,
+            onDismissRequest = onResolveMenuDismiss,
+            onCreateWorkLog = onCreateWorkLogClick,
+            onSkipThisCycle = {
+              onResolveMenuDismiss()
+              showSkipConfirm = true
+            },
+          )
+        },
         primaryEnabled = state.title.isNotBlank(),
         isPrimaryFunctionInProgress = isSaving
       )
@@ -338,6 +344,15 @@ fun EditTaskScreen(
         onDeleteRequest(card.id)
       },
       onDismiss = { showDeleteConfirm = false })
+  }
+
+  if (showSkipConfirm) {
+    SkipTaskConfirmDialog(
+      onConfirm = {
+        showSkipConfirm = false
+        onSkipConfirm()
+      },
+      onDismiss = { showSkipConfirm = false })
   }
 
   if (showLogPicker) {

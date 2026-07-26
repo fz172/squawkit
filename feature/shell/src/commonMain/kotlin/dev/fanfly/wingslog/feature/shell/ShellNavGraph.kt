@@ -94,6 +94,11 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
         nullable = true
         defaultValue = null
       },
+      navArgument(Screen.CARD_ID) {
+        type = NavType.StringType
+        nullable = true
+        defaultValue = null
+      },
     ),
     dialogProperties = formDialogProperties(),
   ) {

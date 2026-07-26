@@ -107,13 +107,9 @@
   <string name="adj_preview_reschedule_date_primary">Next due %1$s</string>
   <string name="adj_preview_reschedule_hours_primary">Next due at %1$s tach hrs</string>
   <string name="adj_preview_reschedule_was_date">Was set by schedule</string>
-  <string name="adj_preview_skip_primary">Skipping this cycle</string>
-  <string name="adj_preview_skip_secondary">Will be marked complete without a log entry</string>
   <!-- Adjustments tab — preview banner with next-due + relative phrasing -->
   <string name="adj_preview_primary_date">Next due %1$s · %2$s</string>
   <string name="adj_preview_primary_hours">Next due at %1$s tach hrs · %2$s</string>
-  <string name="adj_preview_skip_secondary_with_original_date">Original: %1$s · %2$s</string>
-  <string name="adj_preview_skip_secondary_with_original_hours">Original: %1$s tach hrs · %2$s</string>
   <string name="adj_preview_was_date">Was %1$s</string>
   <string name="adj_preview_was_hours">Was %1$s tach hrs</string>
   <!-- Relative phrases (days) -->
@@ -122,18 +118,14 @@
   <string name="adj_preview_rel_in_days">in %1$d days</string>
   <string name="adj_preview_rel_overdue_day">overdue by 1 day</string>
   <string name="adj_preview_rel_overdue_days">overdue by %1$d days</string>
-  <string name="adj_preview_rel_day_ago">1 day ago</string>
-  <string name="adj_preview_rel_days_ago">%1$d days ago</string>
   <!-- Relative phrases (tach hours) -->
   <string name="adj_preview_rel_in_hours">in %1$s tach hrs</string>
   <string name="adj_preview_rel_over_hours">over by %1$s tach hrs</string>
-  <string name="adj_preview_rel_hours_ago">%1$s tach hrs ago</string>
   <string name="adj_preview_rel_hours_at">at current hours</string>
   <!-- Preview banner eyebrow labels and hints -->
   <string name="schedule_preview_label">Preview</string>
   <string name="schedule_preview_hint">How this task will appear</string>
   <string name="adj_preview_label_neutral">Current</string>
-  <string name="adj_preview_label_warn">On save</string>
   <string name="adj_preview_hint">What will happen</string>
 
   <!-- Adjustments tab — reschedule section -->
@@ -145,12 +137,19 @@
   <string name="adj_reschedule_was_date">Original date set by schedule</string>
   <string name="adj_reschedule_was_hours">Original hours set by schedule</string>
 
-  <!-- Adjustments tab — skip section -->
-  <string name="adj_skip_section_label">Skip this cycle</string>
-  <string name="adj_skip_title_active">Will skip on save</string>
-  <string name="adj_skip_title_inactive">Mark complete without logging</string>
-  <string name="adj_skip_subtitle_active">Tap again to undo. The task will appear at the next interval.</string>
-  <string name="adj_skip_subtitle_inactive">Snoozes one cycle. Useful when work was already done off-app.</string>
+  <!-- Adjustments tab — delete task section -->
+  <string name="delete_task_section_label">Delete Task</string>
+  <string name="delete_this_task_title">Delete this task</string>
+  <string name="delete_this_task_subtitle">Permanently removes this task and its maintenance schedule.</string>
+
+  <!-- Resolve menu (bottom bar) -->
+  <string name="resolve_task">Resolve</string>
+  <string name="create_work_log">Create Work Log</string>
+  <string name="create_work_log_subtitle">Opens a new log, pre-linked to this task</string>
+  <string name="skip_this_cycle_option">Skip This Cycle</string>
+  <string name="skip_this_cycle_option_subtitle">Marks complete without logging</string>
+  <string name="task_skipped">Cycle skipped — next due rescheduled</string>
+
   <string name="no_log_history">No maintenance logs recorded for this task.</string>
   <string name="task_updated">Task updated</string>
   <string name="task_deleted">Task deleted</string>

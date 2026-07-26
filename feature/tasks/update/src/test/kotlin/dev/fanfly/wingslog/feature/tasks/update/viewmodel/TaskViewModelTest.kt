@@ -14,12 +14,15 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -189,6 +192,76 @@ class TaskViewModelTest {
     // The in-flight title edit survives, and the re-emission does not reseed other fields.
     assertThat(viewModel.formState.value.title).isEqualTo("Oil change (edited)")
     assertThat(viewModel.formState.value.refNumber).isEmpty()
+  }
+
+  // ---- resolve menu (Create Work Log / Skip This Cycle) ----
+
+  @Test
+  fun showResolveMenu_and_hideResolveMenu_toggleFormState() = runTest(testDispatcher) {
+    val viewModel = buildViewModelForEdit()
+    advanceUntilIdle()
+
+    viewModel.showResolveMenu()
+    assertThat(viewModel.formState.value.showResolveMenu).isTrue()
+
+    viewModel.hideResolveMenu()
+    assertThat(viewModel.formState.value.showResolveMenu).isFalse()
+  }
+
+  @Test
+  fun selectCreateWorkLog_sendsNavigateToCreateLogEvent_whenMenuOpen() = runTest(testDispatcher) {
+    val viewModel = buildViewModelForEdit()
+    advanceUntilIdle()
+    val events = mutableListOf<TaskFormEvent>()
+    val collectJob = launch { viewModel.events.collect { events.add(it) } }
+    advanceUntilIdle()
+
+    viewModel.showResolveMenu()
+    viewModel.selectCreateWorkLog()
+    advanceUntilIdle()
+
+    assertThat(events).containsExactly(
+      TaskFormEvent.NavigateToCreateLog(TEST_AIRCRAFT_ID, TEST_CARD_ID)
+    )
+    assertThat(viewModel.formState.value.showResolveMenu).isFalse()
+    collectJob.cancel()
+  }
+
+  /** Guards against a double-tap firing this twice before the menu's dismissal recomposes. */
+  @Test
+  fun selectCreateWorkLog_doesNothing_whenMenuNotOpen() = runTest(testDispatcher) {
+    val viewModel = buildViewModelForEdit()
+    advanceUntilIdle()
+    val events = mutableListOf<TaskFormEvent>()
+    val collectJob = launch { viewModel.events.collect { events.add(it) } }
+    advanceUntilIdle()
+
+    viewModel.selectCreateWorkLog()
+    advanceUntilIdle()
+
+    assertThat(events).isEmpty()
+    collectJob.cancel()
+  }
+
+  @Test
+  fun skipThisCycle_persistsForceCompliedStatusOnCard_andInvokesOnSuccess() = runTest(testDispatcher) {
+    coEvery { inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, any()) } returns Result.success(true)
+    val viewModel = buildViewModelForEdit()
+    advanceUntilIdle()
+    val card = MaintenanceTask(id = TEST_CARD_ID, title = "Oil change")
+    var succeeded = false
+
+    viewModel.skipThisCycle(
+      card = card,
+      currentEngineHours = 42f,
+      onSuccess = { succeeded = true },
+    )
+    advanceUntilIdle()
+
+    assertThat(succeeded).isTrue()
+    val persisted = slot<MaintenanceTask>()
+    coVerify { inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, capture(persisted)) }
+    assertThat(persisted.captured.force_complied_status).isNotNull()
   }
 
   // ---- helpers ----
