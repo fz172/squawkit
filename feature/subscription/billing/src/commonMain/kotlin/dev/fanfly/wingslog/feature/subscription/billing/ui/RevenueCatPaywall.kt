@@ -13,6 +13,7 @@ import com.revenuecat.purchases.kmp.ui.revenuecatui.CustomerCenter
 import com.revenuecat.purchases.kmp.ui.revenuecatui.Paywall
 import com.revenuecat.purchases.kmp.ui.revenuecatui.PaywallListener
 import com.revenuecat.purchases.kmp.ui.revenuecatui.PaywallOptions
+import dev.fanfly.wingslog.feature.subscription.model.PRO_ENTITLEMENT_ID
 
 /**
  * The RevenueCat-hosted paywall, laid out by the dashboard's Paywall Editor rather than by us.
@@ -53,8 +54,13 @@ fun RevenueCatProPaywall(
         }
 
         override fun onRestoreCompleted(customerInfo: CustomerInfo) {
-          logger.i { "Paywall restore completed." }
-          currentOnPurchaseCompleted()
+          // "Completed" only means the restore ran — it fires even when the store had nothing to
+          // give back. Signalling completion regardless would leave the page stuck on "activating"
+          // forever, waiting for an entitlement no purchase will ever produce. Only a restore that
+          // actually returned the Pro entitlement is worth waiting on.
+          val restoredPro = customerInfo.entitlements.active.containsKey(PRO_ENTITLEMENT_ID)
+          logger.i { "Paywall restore completed; restored Pro: $restoredPro" }
+          if (restoredPro) currentOnPurchaseCompleted()
         }
 
         override fun onPurchaseCancelled() {
