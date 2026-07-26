@@ -55,6 +55,12 @@ data class MaintenanceLogFormUiState(
    * once consumed (or if this log wasn't opened via that flow).
    */
   val pendingResolveSquawkTitle: String? = null,
+  /**
+   * Title of a task this log was opened to resolve (via the task edit screen's "Create Work
+   * Log" option), pending resolution into a localized [workDescription] prefill by the screen.
+   * Null once consumed (or if this log wasn't opened via that flow).
+   */
+  val pendingResolveTaskTitle: String? = null,
 ) {
   val visibleAttachments: List<PendingAttachment> get() = pendingAttachments.visible()
   val fileAttachmentCount: Int get() = pendingAttachments.fileCount()

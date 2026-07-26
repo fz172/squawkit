@@ -287,6 +287,7 @@ class MaintenanceLogFormViewModelTest {
       assertThat(viewModel.uiState.value.selectedInspectionIds).containsExactly(
         PRESELECTED_CARD_ID
       )
+      assertThat(viewModel.uiState.value.pendingResolveTaskTitle).isEqualTo("Oil change")
     }
 
   @Test
@@ -320,6 +321,61 @@ class MaintenanceLogFormViewModelTest {
       advanceUntilIdle()
 
       assertThat(viewModel.uiState.value.selectedInspectionIds).isEmpty()
+      assertThat(viewModel.uiState.value.pendingResolveTaskTitle).isNull()
+    }
+
+  @Test
+  fun consumeResolveTaskPrefill_setsWorkDescriptionAndClearsPendingTitle() =
+    runTest(testDispatcher) {
+      every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          MaintenanceTask(id = PRESELECTED_CARD_ID, title = "Oil change"),
+        )
+      )
+      val viewModel = buildViewModelForNew(preselectedCardId = PRESELECTED_CARD_ID)
+      advanceUntilIdle()
+
+      viewModel.consumeResolveTaskPrefill("Performed maintenance task \"Oil change\"")
+
+      assertThat(viewModel.uiState.value.workDescription)
+        .isEqualTo("Performed maintenance task \"Oil change\"")
+      assertThat(viewModel.uiState.value.pendingResolveTaskTitle).isNull()
+    }
+
+  @Test
+  fun consumeResolveTaskPrefill_ignoresBlankInput_doesNotClearPendingTitle() =
+    runTest(testDispatcher) {
+      every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          MaintenanceTask(id = PRESELECTED_CARD_ID, title = "Oil change"),
+        )
+      )
+      val viewModel = buildViewModelForNew(preselectedCardId = PRESELECTED_CARD_ID)
+      advanceUntilIdle()
+
+      viewModel.consumeResolveTaskPrefill("")
+
+      assertThat(viewModel.uiState.value.workDescription).isEmpty()
+      assertThat(viewModel.uiState.value.pendingResolveTaskTitle).isEqualTo("Oil change")
+    }
+
+  @Test
+  fun consumeResolveTaskPrefill_whenUserAlreadyTyped_prependsInsteadOfOverwriting() =
+    runTest(testDispatcher) {
+      every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
+        listOf(
+          MaintenanceTask(id = PRESELECTED_CARD_ID, title = "Oil change"),
+        )
+      )
+      val viewModel = buildViewModelForNew(preselectedCardId = PRESELECTED_CARD_ID)
+      advanceUntilIdle()
+      viewModel.onWorkDescriptionChange("Already changed the oil")
+
+      viewModel.consumeResolveTaskPrefill("Performed maintenance task \"Oil change\"")
+
+      assertThat(viewModel.uiState.value.workDescription)
+        .isEqualTo("Performed maintenance task \"Oil change\"\nAlready changed the oil")
+      assertThat(viewModel.uiState.value.pendingResolveTaskTitle).isNull()
     }
 
   @Test

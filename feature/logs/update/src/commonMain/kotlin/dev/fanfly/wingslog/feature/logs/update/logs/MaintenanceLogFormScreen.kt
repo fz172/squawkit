@@ -85,6 +85,7 @@ import wingslog.feature.attachment.sharedassets.generated.resources.file_read_er
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.logs.sharedassets.generated.resources.edit_log
 import wingslog.feature.logs.sharedassets.generated.resources.resolve_squawk_work_description
+import wingslog.feature.logs.sharedassets.generated.resources.resolve_task_work_description
 import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.logs.update.generated.resources.delete_log
 import wingslog.feature.logs.update.generated.resources.log_deleted
@@ -143,6 +144,15 @@ fun MaintenanceLogFormScreen(
   }
   LaunchedEffect(resolveSquawkPrefill) {
     resolveSquawkPrefill?.let { viewModel.consumeResolveSquawkPrefill(it) }
+  }
+
+  // Opened via the task edit screen's "Create Work Log" resolve option: mirrors the squawk
+  // prefill flow above.
+  val resolveTaskPrefill = uiState.pendingResolveTaskTitle?.let { title ->
+    stringResource(SharedRes.string.resolve_task_work_description, title)
+  }
+  LaunchedEffect(resolveTaskPrefill) {
+    resolveTaskPrefill?.let { viewModel.consumeResolveTaskPrefill(it) }
   }
 
   LaunchedEffect(viewModel) {
