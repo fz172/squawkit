@@ -132,14 +132,15 @@ class TaskDueManagerImpl(
               timeRule.interval_days,
               DateTimeUnit.DAY
             )
-
+            // Month- and year-based intervals snap to end-of-month so a task done
+            // mid-month is due at the close of the calendar month it lands in
+            // (e.g. logged 12/14/2025 + 12mo → due 12/31/2026).
             timeRule.interval_years > 0 -> baseDate.plus(
               timeRule.interval_years,
               DateTimeUnit.YEAR
             )
-            // Month-based intervals snap to end-of-month so a task done mid-month
-            // is due at the close of the calendar month it lands in
-            // (e.g. logged 12/14/2025 + 12mo → due 12/31/2026).
+              .endOfMonth()
+
             else -> baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH)
               .endOfMonth()
           }
@@ -231,7 +232,7 @@ class TaskDueManagerImpl(
               timeRule.interval_years > 0 -> plus(
                 timeRule.interval_years,
                 DateTimeUnit.YEAR
-              )
+              ).endOfMonth()
 
               else -> plus(
                 timeRule.interval_months,

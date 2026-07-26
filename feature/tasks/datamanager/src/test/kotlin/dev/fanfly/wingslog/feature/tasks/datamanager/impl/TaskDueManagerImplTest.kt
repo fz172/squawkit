@@ -179,6 +179,16 @@ class TaskDueManagerImplTest {
   }
 
   @Test
+  fun timeRule_yearsInterval_snapsToEndOfMonth() {
+    val card = card(id = "c1", rules = listOf(timeRuleYears(6)))
+    val log = log(inspectionIds = listOf("c1"), timestamp = iso("2026-07-19"))
+
+    val result = manager.computeNextDue(card, listOf(log), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2032, 7, 31))
+  }
+
+  @Test
   fun engineRule_airframeComponent_tracksAirframeTime() {
     val card = card(
       id = "c1",
@@ -450,6 +460,17 @@ class TaskDueManagerImplTest {
     InspectionRule(
       time_rule = TimeRule(
         interval_months = months,
+        creation_date = creationDate
+      )
+    )
+
+  private fun timeRuleYears(
+    years: Int,
+    creationDate: WireInstant? = null
+  ): InspectionRule =
+    InspectionRule(
+      time_rule = TimeRule(
+        interval_years = years,
         creation_date = creationDate
       )
     )
