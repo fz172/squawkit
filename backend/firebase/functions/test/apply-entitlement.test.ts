@@ -85,6 +85,38 @@ describe("applyEntitlement", () => {
   });
 });
 
+describe("applyEntitlement member-since", () => {
+  beforeEach(async () => {
+    await subDoc().delete();
+  });
+
+  it("keeps the earliest member-since when a later event reports a newer date", async () => {
+    const firstPurchase = 1_600_000_000_000;
+    const renewal = 1_700_000_000_000;
+
+    await applyEntitlement(entitlement({ eventId: "e1", memberSinceMillis: firstPurchase }));
+    await applyEntitlement(entitlement({ eventId: "e2", memberSinceMillis: renewal }));
+
+    // A renewal reports the renewal date; "member since" must not walk forward with it.
+    expect((await subDoc().get()).data()?.memberSinceMillis).toBe(firstPurchase);
+  });
+
+  it("does not let an unknown (zero) member-since clobber a stored purchase date", async () => {
+    const firstPurchase = 1_600_000_000_000;
+
+    await applyEntitlement(entitlement({ eventId: "e1", memberSinceMillis: firstPurchase }));
+    await applyEntitlement(entitlement({ eventId: "e2", memberSinceMillis: 0 }));
+
+    expect((await subDoc().get()).data()?.memberSinceMillis).toBe(firstPurchase);
+  });
+
+  it("accepts the incoming date when nothing is stored yet", async () => {
+    await applyEntitlement(entitlement({ eventId: "e1", memberSinceMillis: 1_650_000_000_000 }));
+
+    expect((await subDoc().get()).data()?.memberSinceMillis).toBe(1_650_000_000_000);
+  });
+});
+
 describe("stub entitlement ingest", () => {
   it("normalizes a raw provider event and applies it through the writer", async () => {
     const result = await ingestStubEntitlementEvent({

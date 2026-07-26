@@ -4,6 +4,16 @@ export const FUNCTION_REGION = "us-central1";
 export const FUNCTIONS_RUNTIME_NODE = "22";
 export const EXPORT_DELIVERY_API_KEY = defineSecret("EXPORT_DELIVERY_API_KEY");
 
+/**
+ * Shared secret for the `Authorization` header RevenueCat sends with every webhook delivery.
+ *
+ * RevenueCat does not sign webhook bodies, so this header is the only proof a delivery is genuine —
+ * and the endpoint behind it grants paid entitlements. Set it to a long random string in both the
+ * RevenueCat dashboard (Integrations → Webhooks) and here:
+ * `firebase functions:secrets:set REVENUECAT_WEBHOOK_AUTH`.
+ */
+export const REVENUECAT_WEBHOOK_AUTH = defineSecret("REVENUECAT_WEBHOOK_AUTH");
+
 export const EXPORT_DELIVERY_PROVIDER = process.env.EXPORT_DELIVERY_PROVIDER ?? "resend";
 export const EXPORT_DELIVERY_SIGNED_URL_TTL_MS = 24 * 60 * 60 * 1000;
 export const EXPORT_DELIVERY_LEASE_TTL_MS = 10 * 60 * 1000;

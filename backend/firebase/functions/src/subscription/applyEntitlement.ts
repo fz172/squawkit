@@ -38,12 +38,21 @@ export async function applyEntitlement(update: NormalizedEntitlement): Promise<A
       return { applied: false, reason: "duplicate" };
     }
 
+    // "Member since" is the EARLIEST purchase/trial start (design §3), but a provider reports the
+    // current transaction's date on every event — a renewal would otherwise walk it forward a year
+    // at a time and the status page would tell a two-year subscriber they joined last month.
+    const existing = await tx.get(subRef);
+    const memberSinceMillis = earliestMemberSince(
+      existing.data()?.memberSinceMillis,
+      update.memberSinceMillis,
+    );
+
     tx.set(
       subRef,
       {
         status: update.status,
         lifecycle: update.lifecycle,
-        memberSinceMillis: update.memberSinceMillis,
+        memberSinceMillis,
         currentPeriodEndMillis: update.currentPeriodEndMillis,
         willRenew: update.willRenew,
         source: update.source,
@@ -61,4 +70,18 @@ export async function applyEntitlement(update: NormalizedEntitlement): Promise<A
     logger.info("Skipped duplicate entitlement event", { uid: update.uid, eventId: update.eventId });
   }
   return result;
+}
+
+/**
+ * The earlier of the stored and incoming member-since, ignoring absent/zero on either side.
+ *
+ * A server grant with no known start (0) must not clobber a real purchase date, and a real purchase
+ * date must not be pushed later by a subsequent event.
+ */
+function earliestMemberSince(stored: unknown, incoming: number): number {
+  const storedMillis = typeof stored === "number" && stored > 0 ? stored : 0;
+  const incomingMillis = incoming > 0 ? incoming : 0;
+  if (storedMillis === 0) return incomingMillis;
+  if (incomingMillis === 0) return storedMillis;
+  return Math.min(storedMillis, incomingMillis);
 }
