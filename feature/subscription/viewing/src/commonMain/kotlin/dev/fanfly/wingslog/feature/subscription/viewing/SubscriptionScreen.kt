@@ -67,6 +67,7 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_in
 import wingslog.feature.subscription.viewing.generated.resources.subscription_manage
 import wingslog.feature.subscription.viewing.generated.resources.subscription_manage_on_mobile
 import wingslog.feature.subscription.viewing.generated.resources.subscription_member_since
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_label
 import wingslog.feature.subscription.viewing.generated.resources.subscription_purchase_on_mobile
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_active
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_active_no_date
@@ -164,6 +165,15 @@ private fun SubscriberStatusView(state: SubscriptionUiState, onManage: () -> Uni
   InfoRow(stringResource(Res.string.subscription_status_label), statusLine(state))
   state.memberSince?.let {
     InfoRow(stringResource(Res.string.subscription_member_since), it)
+  }
+  // Omitted entirely when there is no store to name (a comp, or an unrecognised platform) — see
+  // purchasePlatformOf. Sourced from the synced entitlement, so it names the store that actually
+  // billed even when the pilot is reading this on a different platform.
+  state.purchasePlatform?.let {
+    InfoRow(
+      stringResource(Res.string.subscription_platform_label),
+      stringResource(it.labelRes),
+    )
   }
   InfoRow(
     stringResource(Res.string.subscription_includes_label),

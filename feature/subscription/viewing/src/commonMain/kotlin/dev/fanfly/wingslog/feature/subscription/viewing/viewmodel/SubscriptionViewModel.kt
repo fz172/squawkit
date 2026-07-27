@@ -13,6 +13,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.StringResource
+import wingslog.feature.subscription.viewing.generated.resources.Res
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_amazon
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_app_store
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_mac_app_store
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_play_store
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_test_store
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_web
 import kotlin.time.Instant
 
 /** Display state for the subscription page. Dates are pre-formatted; storage is formatted in the UI. */
@@ -38,7 +46,51 @@ data class SubscriptionUiState(
    * design forbids) or appearing to have done nothing after the pilot paid.
    */
   val isActivating: Boolean = false,
+  /**
+   * Where the subscription was bought, so the pilot knows where to cancel it. `null` when there is
+   * no store to name — a comped account, or a platform we don't recognise.
+   */
+  val purchasePlatform: PurchasePlatform? = null,
 )
+
+/**
+ * The store that billed the subscription, as shown on the status page.
+ *
+ * Sourced from the synced entitlement's `origin_platform`, **not** from the local store SDK. The
+ * entitlement is account-scoped, so a pilot who subscribed on an iPhone and later opens the Android
+ * app (or the web app, which has no SDK at all) is still correctly told "App Store".
+ *
+ * The web billers collapse into one [WEB] entry because they all cancel in the same place from the
+ * pilot's point of view; the app stores deliberately do not, because they don't.
+ */
+enum class PurchasePlatform(val labelRes: StringResource) {
+  APP_STORE(Res.string.subscription_platform_app_store),
+  MAC_APP_STORE(Res.string.subscription_platform_mac_app_store),
+  PLAY_STORE(Res.string.subscription_platform_play_store),
+  AMAZON(Res.string.subscription_platform_amazon),
+  WEB(Res.string.subscription_platform_web),
+  TEST_STORE(Res.string.subscription_platform_test_store),
+}
+
+/**
+ * Maps the entitlement's `origin_platform` onto a store worth naming.
+ *
+ * `null` means "show no row at all" rather than "show Unknown": a comped or server-granted account
+ * has nothing to cancel, and printing the word "unknown" to a paying subscriber tells them nothing
+ * and looks broken. Anything unrecognised — including a value written by a newer server than this
+ * client — falls into the same silent bucket.
+ */
+internal fun purchasePlatformOf(originPlatform: String): PurchasePlatform? =
+  when (originPlatform) {
+    "app_store" -> PurchasePlatform.APP_STORE
+    "mac_app_store" -> PurchasePlatform.MAC_APP_STORE
+    "play_store" -> PurchasePlatform.PLAY_STORE
+    "amazon" -> PurchasePlatform.AMAZON
+    "stripe", "rc_billing", "paddle" -> PurchasePlatform.WEB
+    "test_store" -> PurchasePlatform.TEST_STORE
+    // "promotional" and "server" are grants, not purchases — nothing to cancel.
+    else -> null
+  }
 
 class SubscriptionViewModel(
   subscriptionManager: SubscriptionManager,
@@ -85,6 +137,7 @@ internal fun toSubscriptionUiState(
   storageBytesUsed = subscription.storage_bytes_used,
   isPurchaseSupported = isPurchaseSupported,
   isActivating = isActivating,
+  purchasePlatform = purchasePlatformOf(subscription.origin_platform),
 )
 
 private fun Long.toDisplayDateOrNull(timeZone: TimeZone): String? =

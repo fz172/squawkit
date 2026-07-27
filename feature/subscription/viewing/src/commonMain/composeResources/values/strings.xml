@@ -25,6 +25,14 @@
   <!-- Subscriber status view -->
   <string name="subscription_status_label">Status</string>
   <string name="subscription_member_since">Member since</string>
+  <!-- Where the subscription was bought, so the pilot knows where to cancel it. -->
+  <string name="subscription_platform_label">Subscription platform</string>
+  <string name="subscription_platform_app_store">App Store</string>
+  <string name="subscription_platform_mac_app_store">Mac App Store</string>
+  <string name="subscription_platform_play_store">Google Play</string>
+  <string name="subscription_platform_amazon">Amazon Appstore</string>
+  <string name="subscription_platform_web">Web</string>
+  <string name="subscription_platform_test_store">Test Store (developer build)</string>
   <string name="subscription_includes_label">Includes</string>
   <string name="subscription_includes_value">Unlimited aircraft · attachments · email export · sharing</string>
   <string name="subscription_manage">Manage subscription…</string>

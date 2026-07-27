@@ -48,4 +48,43 @@ class SubscriptionUiStateTest {
     // 2023-11-14 UTC.
     assertThat(present.memberSince).isEqualTo("Nov 14, 2023")
   }
+
+  @Test
+  fun `purchase platform names the store that billed`() {
+    assertThat(purchasePlatformOf("app_store")).isEqualTo(PurchasePlatform.APP_STORE)
+    assertThat(purchasePlatformOf("mac_app_store")).isEqualTo(PurchasePlatform.MAC_APP_STORE)
+    assertThat(purchasePlatformOf("play_store")).isEqualTo(PurchasePlatform.PLAY_STORE)
+    assertThat(purchasePlatformOf("test_store")).isEqualTo(PurchasePlatform.TEST_STORE)
+    // Play and Amazon cancel in completely different places, so they must not collapse together.
+    assertThat(purchasePlatformOf("amazon")).isEqualTo(PurchasePlatform.AMAZON)
+    assertThat(purchasePlatformOf("amazon")).isNotEqualTo(purchasePlatformOf("play_store"))
+  }
+
+  @Test
+  fun `the web billers collapse into one entry`() {
+    assertThat(purchasePlatformOf("stripe")).isEqualTo(PurchasePlatform.WEB)
+    assertThat(purchasePlatformOf("rc_billing")).isEqualTo(PurchasePlatform.WEB)
+    assertThat(purchasePlatformOf("paddle")).isEqualTo(PurchasePlatform.WEB)
+  }
+
+  @Test
+  fun `grants and unrecognised platforms show no row rather than the word unknown`() {
+    // A comp has no store to cancel at, so naming one would be worse than saying nothing.
+    assertThat(purchasePlatformOf("server")).isNull()
+    assertThat(purchasePlatformOf("promotional")).isNull()
+    assertThat(purchasePlatformOf("unknown")).isNull()
+    assertThat(purchasePlatformOf("")).isNull()
+    // A value written by a newer server than this client falls into the same silent bucket.
+    assertThat(purchasePlatformOf("some_future_store")).isNull()
+  }
+
+  @Test
+  fun `purchase platform is read from the entitlement`() {
+    val state = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(origin_platform = "play_store"),
+      TimeZone.UTC,
+    )
+    assertThat(state.purchasePlatform).isEqualTo(PurchasePlatform.PLAY_STORE)
+  }
 }
