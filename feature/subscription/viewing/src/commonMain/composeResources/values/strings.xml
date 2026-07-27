@@ -20,7 +20,7 @@
   <!-- A guest account cannot be recovered on another device, so it must not hold a subscription. -->
   <string name="subscription_sign_in_to_subscribe">Sign in to subscribe, so your subscription is tied to your account and works on every device.</string>
   <!-- Shown on web, which can use a subscription but never buy one. -->
-  <string name="subscription_purchase_on_mobile">Subscribe in the SquawkIt app on iPhone or Android. Your subscription works everywhere, including here.</string>
+  <string name="subscription_purchase_on_mobile">Subscribe in the SquawkIt app on iOS or Android. Your subscription works everywhere, including here.</string>
   <!-- The store took payment; the entitlement is still syncing back from the server. -->
   <string name="subscription_activating">Payment received. Activating SquawkIt Pro…</string>
 

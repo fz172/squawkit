@@ -61,11 +61,11 @@ import wingslog.feature.settings.generated.resources.account_upgrade_success
 import wingslog.feature.settings.generated.resources.account_upgrade_working
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.developer_options
-import wingslog.feature.settings.generated.resources.settings_export_subtitle
 import wingslog.feature.settings.generated.resources.settings_developer_options_subtitle
+import wingslog.feature.settings.generated.resources.settings_export_subtitle
+import wingslog.feature.settings.generated.resources.settings_logout_subtitle
 import wingslog.feature.settings.generated.resources.settings_subscription
 import wingslog.feature.settings.generated.resources.settings_subscription_subtitle
-import wingslog.feature.settings.generated.resources.settings_logout_subtitle
 import wingslog.feature.settings.generated.resources.settings_subtitle
 import wingslog.feature.settings.generated.resources.settings_sync_subtitle
 import wingslog.feature.settings.generated.resources.settings_technicians_subtitle
@@ -176,21 +176,30 @@ fun SettingsContent(
           SettingsHeader()
         }
 
-        // For anonymous guest "Log in" connects their on-device records to a real
-        // account (the upgrade flow). It replaces the destructive guest logout entirely.
-        val guestCanUpgrade = user.isAnonymous
-
-        // The main navigation entries live in one grouped card with dividers between them; only the
-        // rows that apply to this user are added, so the dividers always land correctly.
-        val navRows = buildList<@Composable () -> Unit> {
-          add {
-            SettingsRow(
-              icon = Icons.Default.Engineering,
-              title = stringResource(TechnicianRes.string.manage_technicians),
-              subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
-              onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
-            )
+        val accountAndSubscriptionRows = buildList<@Composable () -> Unit> {
+          // Shown only where the subscription capability is on (dev + dogfood today); hidden in the
+          // shipping release until GA, so no user sees a paywall entry before it exists.
+          if (user.isSubscriptionSupported) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.Star,
+                title = stringResource(SettingsRes.string.settings_subscription),
+                subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
+                onClick = { detailNav.navigate(Screen.Subscription.route) },
+              )
+            }
+            add {
+              SettingsRow(
+                icon = Icons.Default.Engineering,
+                title = stringResource(TechnicianRes.string.manage_technicians),
+                subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
+                onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
+              )
+            }
           }
+        }
+
+        val dataAndLogsRows = buildList<@Composable () -> Unit> {
           add {
             SettingsRow(
               icon = Icons.Default.CloudSync,
@@ -207,17 +216,23 @@ fun SettingsContent(
               onClick = { detailNav.navigate(Screen.ExportLogs.route) },
             )
           }
-          // Shown only where the subscription capability is on (dev + dogfood today); hidden in the
-          // shipping release until GA, so no user sees a paywall entry before it exists.
-          if (user.isSubscriptionSupported) {
-            add {
-              SettingsRow(
-                icon = Icons.Default.Star,
-                title = stringResource(SettingsRes.string.settings_subscription),
-                subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
-                onClick = { detailNav.navigate(Screen.Subscription.route) },
-              )
-            }
+        }
+
+        val preferenceRows = buildList<@Composable () -> Unit> {
+
+          add {
+            AppearanceSettingRow(
+              mode = appearanceMode,
+              onModeChange = settingsViewModel::setAppearance,
+            )
+          }
+        }
+        val advancedRows = buildList<@Composable () -> Unit> {
+          add {
+            FirebaseLoggingSettingRow(
+              enabled = firebaseLoggingEnabled,
+              onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
+            )
           }
           // Developer Options is a developer surface: only on debug and dogfood-style builds, never in release.
           if (user.isDeveloperOptionsSupported) {
@@ -231,29 +246,13 @@ fun SettingsContent(
             }
           }
         }
-        SettingsRowGroup(rows = navRows)
+        SettingsRowGroup(rows = accountAndSubscriptionRows)
+        SettingsRowGroup(rows = dataAndLogsRows)
+        SettingsRowGroup(preferenceRows)
+        SettingsRowGroup(advancedRows)
 
-        SettingsRowGroup(
-          rows = listOf(
-            {
-              AppearanceSettingRow(
-                mode = appearanceMode,
-                onModeChange = settingsViewModel::setAppearance,
-              )
-            },
-            {
-              FirebaseLoggingSettingRow(
-                enabled = firebaseLoggingEnabled,
-                onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
-              )
-            },
-          ),
-        )
-
-        // Guest + flag on shows "Log in" (runs the upgrade); real accounts show "Log out". An
-        // anonymous user without the upgrade flag has no sign-out action — logging out would
-        // erase their on-device data, so we omit the card entirely.
-        if (guestCanUpgrade) {
+        // Guest shows "Log in" (runs the upgrade); real accounts show "Log out".
+        if (user.isAnonymous) {
           SettingsCard {
             SettingsRow(
               icon = Icons.AutoMirrored.Filled.Login,
@@ -263,7 +262,7 @@ fun SettingsContent(
               onClick = { accountUpgradeViewModel.startUpgrade() },
             )
           }
-        } else if (!user.isAnonymous) {
+        } else {
           SettingsCard {
             SettingsRow(
               icon = Icons.AutoMirrored.Filled.Logout,
