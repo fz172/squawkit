@@ -16,27 +16,40 @@
   <string name="subscription_feature_sharing">Share aircraft &amp; invite others</string>
   <string name="subscription_aircraft_free">1</string>
   <string name="subscription_aircraft_unlimited">Unlimited</string>
-  <string name="subscription_cta_start_trial">Start free trial</string>
-  <string name="subscription_cta_placeholder">Purchasing arrives with billing setup.</string>
+  <string name="subscription_cta_subscribe">Subscribe</string>
+  <!-- A guest account cannot be recovered on another device, so it must not hold a subscription. -->
+  <string name="subscription_sign_in_to_subscribe">Sign in to subscribe, so your subscription is tied to your account and works on every device.</string>
+  <!-- Shown on web, which can use a subscription but never buy one. -->
+  <string name="subscription_purchase_on_mobile">Subscribe in the SquawkIt app on iOS or Android. Your subscription works everywhere, including here.</string>
+  <!-- The store took payment; the entitlement is still syncing back from the server. -->
+  <string name="subscription_activating">Payment received. Activating SquawkIt Pro…</string>
 
   <!-- Subscriber status view -->
   <string name="subscription_status_label">Status</string>
   <string name="subscription_member_since">Member since</string>
+  <!-- Where the subscription was bought, so the pilot knows where to cancel it. -->
+  <string name="subscription_platform_label">Subscription platform</string>
+  <string name="subscription_platform_app_store">App Store</string>
+  <string name="subscription_platform_mac_app_store">Mac App Store</string>
+  <string name="subscription_platform_play_store">Google Play</string>
+  <string name="subscription_platform_amazon">Amazon Appstore</string>
+  <string name="subscription_platform_web">Web</string>
+  <string name="subscription_platform_test_store">Test Store (developer build)</string>
   <string name="subscription_includes_label">Includes</string>
   <string name="subscription_includes_value">Unlimited aircraft · attachments · email export · sharing</string>
   <string name="subscription_manage">Manage subscription…</string>
-  <string name="subscription_manage_placeholder">Managing your subscription arrives with billing setup.</string>
+  <!-- Web: Pro is active here, but cancel/change-plan belong to the store that sold it. -->
+  <string name="subscription_manage_on_mobile">Manage or cancel your subscription in the SquawkIt app on the device you subscribed with.</string>
   <string name="subscription_status_active">Active · renews %1$s</string>
   <string name="subscription_status_active_no_date">Active</string>
   <string name="subscription_status_trialing">Free trial</string>
   <string name="subscription_status_canceled">Active until %1$s</string>
-  <string name="subscription_status_grace">There\'s a problem with your payment</string>
+  <string name="subscription_status_grace">There’s a problem with your payment</string>
 
   <!-- Shared -->
   <string name="subscription_storage_used">Storage used</string>
 
   <!-- Pro upsell sheet -->
-  <string name="upsell_see_plans">See everything in Pro</string>
   <string name="upsell_body_add_aircraft">Add unlimited aircraft with SquawkIt Pro.</string>
   <string name="upsell_body_attachment">Attach photos and files to your maintenance records with SquawkIt Pro.</string>
   <string name="upsell_body_email">Email a copy of your exports with SquawkIt Pro.</string>

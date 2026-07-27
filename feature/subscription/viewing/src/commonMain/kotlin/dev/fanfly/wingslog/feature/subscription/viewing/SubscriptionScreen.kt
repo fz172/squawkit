@@ -24,6 +24,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -37,19 +40,21 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.CustomerCenterHost
+import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProPaywallHost
 import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionUiState
 import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.subscription.viewing.generated.resources.Res
+import wingslog.feature.subscription.viewing.generated.resources.subscription_activating
 import wingslog.feature.subscription.viewing.generated.resources.subscription_aircraft_free
 import wingslog.feature.subscription.viewing.generated.resources.subscription_aircraft_unlimited
 import wingslog.feature.subscription.viewing.generated.resources.subscription_col_free
 import wingslog.feature.subscription.viewing.generated.resources.subscription_col_pro
 import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_header
 import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_subhead
-import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_placeholder
-import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_start_trial
+import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_subscribe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_aircraft
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_attachments
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_backup
@@ -60,8 +65,11 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_fe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_includes_label
 import wingslog.feature.subscription.viewing.generated.resources.subscription_includes_value
 import wingslog.feature.subscription.viewing.generated.resources.subscription_manage
-import wingslog.feature.subscription.viewing.generated.resources.subscription_manage_placeholder
+import wingslog.feature.subscription.viewing.generated.resources.subscription_manage_on_mobile
 import wingslog.feature.subscription.viewing.generated.resources.subscription_member_since
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_label
+import wingslog.feature.subscription.viewing.generated.resources.subscription_purchase_on_mobile
+import wingslog.feature.subscription.viewing.generated.resources.subscription_sign_in_to_subscribe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_active
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_active_no_date
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_canceled
@@ -72,8 +80,12 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_st
 import wingslog.feature.subscription.viewing.generated.resources.subscription_title
 
 /**
- * The subscription page. Non-subscribers see the tier comparison + upgrade CTA; subscribers see
- * their status. Storage used is shown to both. Purchase/Manage are placeholders until billing lands.
+ * The subscription page. Non-subscribers see the tier comparison and buy into RevenueCat's hosted
+ * paywall; subscribers see their status and manage it through RevenueCat's Customer Center. Storage
+ * used is shown to both.
+ *
+ * On web both surfaces are unavailable — the pilot can hold Pro here but must buy and manage it on
+ * a phone — so the buttons are disabled with an explanatory line instead.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,6 +94,26 @@ fun SubscriptionScreen(
   viewModel: SubscriptionViewModel = koinViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  var sheet by remember { mutableStateOf(BillingSheet.None) }
+
+  // Full-screen, replacing the page rather than layering over it: both RevenueCat surfaces bring
+  // their own scaffolding and close affordance, so nesting them inside ours would double the chrome.
+  when (sheet) {
+    BillingSheet.Paywall -> {
+      ProPaywallHost(
+        onPurchaseCompleted = { viewModel.onPurchaseCompleted() },
+        onDismiss = { sheet = BillingSheet.None },
+      )
+      return
+    }
+
+    BillingSheet.CustomerCenter -> {
+      CustomerCenterHost(onDismiss = { sheet = BillingSheet.None })
+      return
+    }
+
+    BillingSheet.None -> Unit
+  }
 
   Scaffold(
     topBar = {
@@ -108,9 +140,15 @@ fun SubscriptionScreen(
         verticalArrangement = Arrangement.spacedBy(Spacing.medium),
       ) {
         if (uiState.isPro) {
-          SubscriberStatusView(uiState)
+          SubscriberStatusView(
+            state = uiState,
+            onManage = { sheet = BillingSheet.CustomerCenter },
+          )
         } else {
-          ProComparisonView()
+          ProComparisonView(
+            state = uiState,
+            onSubscribe = { sheet = BillingSheet.Paywall },
+          )
         }
 
         HorizontalDivider()
@@ -124,24 +162,41 @@ fun SubscriptionScreen(
 }
 
 @Composable
-private fun SubscriberStatusView(state: SubscriptionUiState) {
+private fun SubscriberStatusView(state: SubscriptionUiState, onManage: () -> Unit) {
   InfoRow(stringResource(Res.string.subscription_status_label), statusLine(state))
   state.memberSince?.let {
     InfoRow(stringResource(Res.string.subscription_member_since), it)
+  }
+  // Omitted entirely when there is no store to name (a comp, or an unrecognised platform) — see
+  // purchasePlatformOf. Sourced from the synced entitlement, so it names the store that actually
+  // billed even when the pilot is reading this on a different platform.
+  state.purchasePlatform?.let {
+    InfoRow(
+      stringResource(Res.string.subscription_platform_label),
+      stringResource(it.labelRes),
+    )
   }
   InfoRow(
     stringResource(Res.string.subscription_includes_label),
     stringResource(Res.string.subscription_includes_value),
   )
   Spacer(Modifier.height(Spacing.small))
-  OutlinedButton(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) {
+  OutlinedButton(
+    onClick = onManage,
+    enabled = state.isPurchaseSupported,
+    modifier = Modifier.fillMaxWidth(),
+  ) {
     Text(stringResource(Res.string.subscription_manage))
   }
-  Text(
-    text = stringResource(Res.string.subscription_manage_placeholder),
-    style = MaterialTheme.typography.bodySmall,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-  )
+  if (!state.isPurchaseSupported) {
+    // Web: the subscription is real and Pro is unlocked here, but cancelling or switching plans has
+    // to happen on the device that bought it — the store owns those flows.
+    Text(
+      text = stringResource(Res.string.subscription_manage_on_mobile),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+  }
 }
 
 @Composable
@@ -167,8 +222,11 @@ private fun statusLine(state: SubscriptionUiState): String = when (state.lifecyc
     }
 }
 
+/** Which full-screen billing surface, if any, is covering the page. */
+private enum class BillingSheet { None, Paywall, CustomerCenter }
+
 @Composable
-private fun ProComparisonView() {
+private fun ProComparisonView(state: SubscriptionUiState, onSubscribe: () -> Unit) {
   Text(
     text = stringResource(Res.string.subscription_compare_header),
     style = MaterialTheme.typography.headlineSmall,
@@ -196,14 +254,38 @@ private fun ProComparisonView() {
   CompareRow(stringResource(Res.string.subscription_feature_sharing), Cell.No, Cell.Yes)
 
   Spacer(Modifier.height(Spacing.medium))
-  Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) {
-    Text(stringResource(Res.string.subscription_cta_start_trial))
+  Button(
+    onClick = onSubscribe,
+    // Disabled while activating so a pilot who has just paid can't start a second purchase in the
+    // window before their entitlement syncs, and for a guest, who has no durable account to attach
+    // a subscription to.
+    enabled = state.isPurchaseSupported && !state.isActivating && !state.isGuest,
+    modifier = Modifier.fillMaxWidth(),
+  ) {
+    Text(stringResource(Res.string.subscription_cta_subscribe))
   }
-  Text(
-    text = stringResource(Res.string.subscription_cta_placeholder),
-    style = MaterialTheme.typography.bodySmall,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-  )
+  when {
+    // Most actionable first: a guest can fix this, and until they do nothing else about the button
+    // matters.
+    state.isGuest -> Text(
+      text = stringResource(Res.string.subscription_sign_in_to_subscribe),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
+    state.isActivating -> Text(
+      text = stringResource(Res.string.subscription_activating),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
+    // Web: purchasing is mobile-only, but a subscription bought there unlocks Pro here too.
+    !state.isPurchaseSupported -> Text(
+      text = stringResource(Res.string.subscription_purchase_on_mobile),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+  }
 }
 
 private const val CELL_WIDTH_DP = 84

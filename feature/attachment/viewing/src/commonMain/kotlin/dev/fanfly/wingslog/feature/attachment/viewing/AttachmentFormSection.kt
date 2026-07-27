@@ -342,7 +342,7 @@ private fun AttachmentPickerSheet(
             AttachmentPickerOption(
               icon = Icons.Outlined.PhotoCamera,
               label = stringResource(AttachRes.string.take_photo),
-              onClick = if (upsellLocked) onUpsell!! else onTakePhoto,
+              onClick = if (upsellLocked) onUpsell else onTakePhoto,
               enabled = upsellLocked || (uploadEnabled && !filesAtLimit),
               modifier = Modifier.weight(1f),
             )
@@ -350,7 +350,7 @@ private fun AttachmentPickerSheet(
           AttachmentPickerOption(
             icon = Icons.Default.Add,
             label = stringResource(AttachRes.string.choose_file),
-            onClick = if (upsellLocked) onUpsell!! else onChooseFile,
+            onClick = if (upsellLocked) onUpsell else onChooseFile,
             enabled = upsellLocked || (uploadEnabled && !filesAtLimit),
             modifier = Modifier.weight(1f),
           )

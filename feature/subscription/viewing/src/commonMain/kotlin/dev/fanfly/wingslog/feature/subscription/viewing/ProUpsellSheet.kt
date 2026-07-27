@@ -1,12 +1,11 @@
 package dev.fanfly.wingslog.feature.subscription.viewing
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -21,14 +20,12 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.subscription.viewing.generated.resources.Res
-import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_placeholder
-import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_start_trial
+import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_subscribe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_title
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_add_aircraft
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_attachment
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_email
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_share
-import wingslog.feature.subscription.viewing.generated.resources.upsell_see_plans
 
 /**
  * Where a locked, Pro-only affordance was tapped. Drives the sheet's contextual copy, and its
@@ -44,7 +41,8 @@ enum class UpsellTrigger(val bodyRes: StringResource) {
 
 /**
  * Reusable "gate as promo" bottom sheet. A gated feature opens this instead of failing silently: a
- * contextual benefit + a trial CTA (placeholder until billing) + a link to the full comparison page.
+ * contextual benefit + a CTA, both routing to the Subscription page where the comparison and the
+ * store paywall live.
  *
  * Consumers hold a `mutableStateOf<UpsellTrigger?>(null)` and render this when non-null:
  * ```
@@ -88,17 +86,11 @@ fun ProUpsellSheet(
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
-      // Purchasing is a placeholder until the billing integration lands.
-      Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) {
-        Text(stringResource(Res.string.subscription_cta_start_trial))
-      }
-      Text(
-        text = stringResource(Res.string.subscription_cta_placeholder),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
+      // Routes to the Subscription page rather than opening the paywall inline: the sheet is a
+      // contextual promo shown over whatever the pilot was doing, and the page is where the full
+      // comparison and the store's own paywall live.
       TextButton(onClick = onSeePlans, modifier = Modifier.fillMaxWidth()) {
-        Text(stringResource(Res.string.upsell_see_plans))
+        Text(stringResource(Res.string.subscription_cta_subscribe))
       }
     }
   }

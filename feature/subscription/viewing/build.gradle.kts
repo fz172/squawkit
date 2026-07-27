@@ -42,6 +42,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:sharedassets"))
+      implementation(project(":core:auth"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
@@ -55,10 +56,22 @@ kotlin {
       implementation(libs.androidx.navigation.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)
     }
+    // The RevenueCat paywall / Customer Center UI is Android+iOS only; jsMain's actual renders
+    // nothing. See PaywallHost.kt.
+    androidMain.dependencies {
+      implementation(project(":feature:subscription:billing"))
+    }
+    iosMain.dependencies {
+      implementation(project(":feature:subscription:billing"))
+    }
   }
 }
 
 dependencies {
+  // gitlive firebase-auth (via core:auth) resolves its Android artifact versions from the BOM.
+  implementation(platform(libs.firebase.bom))
   testImplementation(libs.junit)
   testImplementation(libs.truth)
+  testImplementation(libs.mockk)
+  testImplementation(libs.kotlinx.coroutines.test)
 }

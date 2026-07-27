@@ -38,9 +38,12 @@ kotlin {
       implementation(project(":core:model"))
       implementation(project(":core:storage"))
       implementation(project(":core:appinfo"))
-      implementation(project(":feature:subscription:model"))
+      // `api`: SubscriptionModule exposes BillingManager to consumers wiring the purchase UI.
+      api(project(":feature:subscription:model"))
       implementation(project(":feature:developeroptions:datamanager"))
       implementation(libs.gitlive.firebase.auth)
+      // Calls the reconcileMyEntitlement callable (FirebaseEntitlementReconciler).
+      implementation(libs.gitlive.firebase.functions)
 
       // Logging
       implementation(libs.kermit)
@@ -48,6 +51,12 @@ kotlin {
     androidMain.dependencies {
       // DI
       implementation(libs.koin.android)
+      // RevenueCat lives behind this module's `platformBillingModule` actual. Declared per-platform
+      // because the SDK publishes no Kotlin/JS variant — jsMain binds UnsupportedBillingManager.
+      implementation(project(":feature:subscription:billing"))
+    }
+    iosMain.dependencies {
+      implementation(project(":feature:subscription:billing"))
     }
   }
 }
