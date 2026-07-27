@@ -60,6 +60,11 @@ export function subscriptionDocPath(uid: string): string {
  * Reads the plain numeric fields `applyEntitlement` writes. A missing doc or missing field resolves
  * to FREE — the proto int default (0) is FREE/NONE, so `undefined` composes correctly with no special
  * casing. Only the entitlement fields are read; the sweep's `storageBytesUsed` is ignored.
+ *
+ * `willRenew` decides whether the period end is binding, for the reasons spelled out on the Kotlin
+ * side: a renewing subscription whose period end has just passed is waiting on a renewal we have not
+ * received yet, while a non-renewing one (a one-off purchase, or a server-granted comp) has a final
+ * end date that must be honored. Keep the two implementations in step.
  */
 export function effectiveStatusAt(
   data: Record<string, unknown> | undefined,
@@ -68,13 +73,16 @@ export function effectiveStatusAt(
   const status = intField(data?.status);
   const lifecycle = intField(data?.lifecycle);
   const periodEnd = intField(data?.currentPeriodEndMillis);
+  const willRenew = data?.willRenew === true;
+  // An unset end date (0) reads as lapsed rather than as "forever".
+  const statusUntilPeriodEnd = periodEnd > nowMillis ? status : SUBSCRIPTION_STATUS.FREE;
   switch (lifecycle) {
     case SUBSCRIPTION_LIFECYCLE.TRIALING:
     case SUBSCRIPTION_LIFECYCLE.ACTIVE:
     case SUBSCRIPTION_LIFECYCLE.GRACE:
-      return status;
+      return willRenew ? status : statusUntilPeriodEnd;
     case SUBSCRIPTION_LIFECYCLE.CANCELED:
-      return periodEnd > nowMillis ? status : SUBSCRIPTION_STATUS.FREE;
+      return statusUntilPeriodEnd;
     // NONE, EXPIRED, and anything unrecognized → FREE.
     default:
       return SUBSCRIPTION_STATUS.FREE;

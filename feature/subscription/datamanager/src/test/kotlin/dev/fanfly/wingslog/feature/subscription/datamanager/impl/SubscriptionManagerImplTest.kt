@@ -66,9 +66,23 @@ class SubscriptionManagerImplTest {
       flowOf(StorageEntity("main", subscription, Instant.fromEpochMilliseconds(0)))
   }
 
+  /**
+   * An actively renewing subscriber, as `applyEntitlement` actually writes one. `will_renew` keeps
+   * this independent of the wall clock: a renewing subscription is entitled regardless of where its
+   * period end falls (see `Subscription.effectiveStatusAt`).
+   */
   private val proActive = Subscription(
     status = Subscription.Status.STATUS_PRO,
     lifecycle = Subscription.Lifecycle.LIFECYCLE_ACTIVE,
+    will_renew = true,
+  )
+
+  /** A server-granted comp whose end date has passed: ACTIVE, but nothing will renew it. */
+  private val proCompExpired = Subscription(
+    status = Subscription.Status.STATUS_PRO,
+    lifecycle = Subscription.Lifecycle.LIFECYCLE_ACTIVE,
+    will_renew = false,
+    current_period_end_millis = 1L,
   )
 
   @Test
@@ -88,6 +102,17 @@ class SubscriptionManagerImplTest {
     assertThat(m.status().first()).isEqualTo(Subscription.Status.STATUS_PRO)
     assertThat(m.canUploadAttachments().first()).isTrue()
     assertThat(m.aircraftLimit().first()).isNull()
+  }
+
+  @Test
+  fun `capability on with an expired comp - gates closed and one aircraft`() = runTest {
+    // A promo grant is ACTIVE with willRenew=false and an end date; once that date passes nothing
+    // will renew it, so it must lapse to Free rather than entitle forever.
+    entitle(proCompExpired)
+    val m = manager(capability(subscription = true))
+    assertThat(m.status().first()).isEqualTo(Subscription.Status.STATUS_FREE)
+    assertThat(m.canUploadAttachments().first()).isFalse()
+    assertThat(m.aircraftLimit().first()).isEqualTo(SubscriptionManagerImpl.FREE_AIRCRAFT_LIMIT)
   }
 
   @Test
