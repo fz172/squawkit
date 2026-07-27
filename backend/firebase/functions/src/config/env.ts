@@ -71,6 +71,15 @@ export const ENTITLEMENT_RECONCILE_MAX_PER_RUN = 200;
  */
 export const ENTITLEMENT_RECONCILE_REQUEST_SPACING_MS = 1_000;
 
+/**
+ * Minimum gap between on-demand reconciles for one account (`reconcileMyEntitlement`).
+ *
+ * The client may call as often as it likes and every call costs a RevenueCat REST request against a
+ * rate-limited API. Long enough that a retry loop or a restart storm cannot amplify into a quota
+ * problem; short enough that a pilot whose purchase did not land can try again within a session.
+ */
+export const ENTITLEMENT_RECONCILE_ON_DEMAND_THROTTLE_MS = 5 * 60 * 1000;
+
 export const EXPORT_DELIVERY_PROVIDER = process.env.EXPORT_DELIVERY_PROVIDER ?? "resend";
 export const EXPORT_DELIVERY_SIGNED_URL_TTL_MS = 24 * 60 * 60 * 1000;
 export const EXPORT_DELIVERY_LEASE_TTL_MS = 10 * 60 * 1000;

@@ -16,6 +16,7 @@ import { updateAircraftShareRole } from "./sharing/updateAircraftShareRole.js";
 import { grantPromoEntitlement } from "./subscription/grantPromoEntitlement.js";
 import { projectAttachmentEntitlement } from "./subscription/projectAttachmentEntitlement.js";
 import { scheduledEntitlementReconcile } from "./subscription/entitlementReconcileTriggers.js";
+import { reconcileMyEntitlement } from "./subscription/reconcileMyEntitlement.js";
 import { revenueCatWebhook } from "./subscription/revenueCatWebhook.js";
 import { requireAuthenticatedApp } from "./shared/auth.js";
 
@@ -56,4 +57,5 @@ export { getBlobUploadSession };
 export { grantPromoEntitlement };
 export { projectAttachmentEntitlement };
 export { revenueCatWebhook };
+export { reconcileMyEntitlement };
 export { scheduledEntitlementReconcile };

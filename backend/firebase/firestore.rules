@@ -107,6 +107,13 @@ service cloud.firestore {
       allow read, write: if false; // functions only
     }
 
+    // Per-account throttle for on-demand entitlement reconciles (#355). Server bookkeeping again,
+    // and load-bearing: a client that could clear its own marker could call the reconcile endpoint
+    // in a loop and burn the project's RevenueCat rate limit.
+    match /entitlement_reconcile/{uid} {
+      allow read, write: if false; // functions only
+    }
+
     // --- Pairing-code invites (#164) -----------------------------------------------------------
 
     // The code IS the secret: the document holds the aircraft id, the host uid, and the role, keyed
