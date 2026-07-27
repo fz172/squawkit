@@ -78,6 +78,20 @@ export const revenueCatWebhook = onRequest(
 
     try {
       const { applied } = await applyEntitlement(result.entitlement);
+      // The provider's event type is only known here — `applyEntitlement` takes the normalized
+      // contract and cannot say whether a write came from a purchase, a renewal or an expiry.
+      // Without this, two events arriving seconds apart are indistinguishable in the logs, which is
+      // exactly the question asked when diagnosing drift. Deliberately no uid: `applyEntitlement`
+      // already logs it, and repeating account ids at info level is the thing to avoid.
+      logger.info("Handled RevenueCat event", {
+        type: event.type,
+        applied,
+        eventId: result.entitlement.eventId,
+        status: result.entitlement.status,
+        lifecycle: result.entitlement.lifecycle,
+        currentPeriodEndMillis: result.entitlement.currentPeriodEndMillis,
+        originPlatform: result.entitlement.originPlatform,
+      });
       response.status(200).json({ applied });
     } catch (error) {
       // 500 so RevenueCat retries; the event id keeps the retry idempotent.
