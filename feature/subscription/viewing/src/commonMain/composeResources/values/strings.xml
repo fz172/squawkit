@@ -19,7 +19,12 @@
   <string name="subscription_feature_email">Email a copy of exports</string>
   <string name="subscription_feature_sharing">Share aircraft &amp; invite others</string>
   <string name="subscription_aircraft_free">1</string>
+  <!-- Announced in place of subscription_cell_unlimited, which is the glyph shown in its cell. -->
   <string name="subscription_aircraft_unlimited">Unlimited</string>
+  <!-- Comparison table: the tier does not include this feature. An em dash, not a crossed box. -->
+  <string name="subscription_cell_excluded">—</string>
+  <!-- Comparison table: no aircraft limit. Reads as the infinity glyph, speaks as "Unlimited". -->
+  <string name="subscription_cell_unlimited">∞</string>
   <string name="subscription_cta_subscribe">Subscribe</string>
   <!-- A guest account cannot be recovered on another device, so it must not hold a subscription. -->
   <string name="subscription_sign_in_to_subscribe">Sign in to subscribe, so your subscription is tied to your account and works on every device.</string>

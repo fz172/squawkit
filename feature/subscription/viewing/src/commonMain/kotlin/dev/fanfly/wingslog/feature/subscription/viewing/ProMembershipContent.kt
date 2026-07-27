@@ -55,7 +55,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.core.ui.theme.toneFor
-import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.PurchasePlatform
+import dev.fanfly.wingslog.feature.subscription.model.PurchasePlatform
 import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionUiState
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -75,6 +75,12 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_pe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_perk_attachments_title
 import wingslog.feature.subscription.viewing.generated.resources.subscription_perk_sharing_body
 import wingslog.feature.subscription.viewing.generated.resources.subscription_perk_sharing_title
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_amazon
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_app_store
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_mac_app_store
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_play_store
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_test_store
+import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_web
 import wingslog.feature.subscription.viewing.generated.resources.subscription_purchased_on
 import wingslog.feature.subscription.viewing.generated.resources.subscription_renews
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_active
@@ -122,7 +128,7 @@ private fun MembershipCard(state: SubscriptionUiState) {
         Text(
           text = stringResource(Res.string.subscription_title),
           style = MaterialTheme.typography.headlineSmall,
-          modifier = Modifier.padding(top = 14.dp),
+          modifier = Modifier.padding(top = Spacing.large),
         )
 
         HorizontalDivider(
@@ -157,7 +163,7 @@ private fun MembershipCard(state: SubscriptionUiState) {
         )
         FactRow(
           label = stringResource(Res.string.subscription_storage_used),
-          modifier = Modifier.padding(top = 14.dp),
+          modifier = Modifier.padding(top = Spacing.large),
         ) {
           Text(state.storageBytesUsed.formatFileSize(), style = WingslogTypography.dataSmall)
         }
@@ -173,9 +179,9 @@ private fun MembershipCard(state: SubscriptionUiState) {
               imageVector = platform.icon,
               contentDescription = null,
               tint = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.size(STORE_ICON),
+              modifier = Modifier.size(Spacing.large),
             )
-            Spacer(Modifier.width(Spacing.extraSmall + 2.dp))
+            Spacer(Modifier.width(Spacing.small))
             Text(stringResource(platform.labelRes), style = WingslogTypography.dataSmall)
           }
         }
@@ -229,7 +235,7 @@ private fun StatusIndicator(lifecycle: Subscription.Lifecycle) {
   }
   val accent = MaterialTheme.statusColors.toneFor(tier).accent
   Row(verticalAlignment = Alignment.CenterVertically) {
-    Box(Modifier.size(STATUS_DOT).background(accent, CircleShape))
+    Box(Modifier.size(Spacing.small).background(accent, CircleShape))
     Spacer(Modifier.width(Spacing.small))
     Text(
       text = stringResource(labelRes).uppercase(),
@@ -321,24 +327,24 @@ private fun PerkGrid() {
 @Composable
 private fun PerkCard(icon: ImageVector, title: String, body: String, modifier: Modifier = Modifier) {
   SubscriptionPanel(modifier) {
-    Column(Modifier.padding(14.dp)) {
+    Column(Modifier.padding(Spacing.large)) {
       Icon(
         imageVector = icon,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.size(PERK_ICON),
+        modifier = Modifier.size(Spacing.xLarge),
       )
       Text(
         text = title,
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(top = 10.dp),
+        modifier = Modifier.padding(top = Spacing.medium),
       )
       Text(
         text = body,
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 2.dp),
+        modifier = Modifier.padding(top = Spacing.none),
       )
     }
   }
@@ -363,7 +369,7 @@ private fun ColumnScope.ManageAction(onManage: () -> Unit) {
     Icon(
       imageVector = Icons.AutoMirrored.Filled.OpenInNew,
       contentDescription = null,
-      modifier = Modifier.size(CELL_ICON),
+      modifier = Modifier.size(Spacing.xLarge),
     )
   }
   SubscriptionCaption(
@@ -398,7 +404,7 @@ private fun ColumnScope.ManagedElsewhere(isPurchaseSupported: Boolean) {
         imageVector = Icons.Default.Info,
         contentDescription = null,
         tint = caution,
-        modifier = Modifier.size(PERK_ICON),
+        modifier = Modifier.size(Spacing.xLarge),
       )
       Column {
         Text(
@@ -460,7 +466,7 @@ private fun LockedManageButton() {
       imageVector = Icons.Default.Lock,
       contentDescription = null,
       tint = outline,
-      modifier = Modifier.size(CELL_ICON),
+      modifier = Modifier.size(Spacing.xLarge),
     )
     Spacer(Modifier.width(Spacing.small))
     Text(
@@ -471,6 +477,23 @@ private fun LockedManageButton() {
     )
   }
 }
+
+/**
+ * The store's display name.
+ *
+ * Lives here rather than on the enum because [PurchasePlatform] is a `model` type shared with the
+ * billing layer, which has no Compose resources — and a store's *name* is a presentation concern in
+ * a way its identity is not.
+ */
+private val PurchasePlatform.labelRes: StringResource
+  get() = when (this) {
+    PurchasePlatform.APP_STORE -> Res.string.subscription_platform_app_store
+    PurchasePlatform.MAC_APP_STORE -> Res.string.subscription_platform_mac_app_store
+    PurchasePlatform.PLAY_STORE -> Res.string.subscription_platform_play_store
+    PurchasePlatform.AMAZON -> Res.string.subscription_platform_amazon
+    PurchasePlatform.WEB -> Res.string.subscription_platform_web
+    PurchasePlatform.TEST_STORE -> Res.string.subscription_platform_test_store
+  }
 
 /**
  * The glyph for the store that billed the subscription.
@@ -488,12 +511,11 @@ private val PurchasePlatform.icon: ImageVector
     PurchasePlatform.TEST_STORE -> Icons.Default.Science
   }
 
-private val STATUS_DOT = 8.dp
-private val STORE_ICON = 16.dp
-private val PERK_ICON = 20.dp
-private val CELL_ICON = 18.dp
-
-// Corner ribbon geometry, in the card's own top-right box.
+/**
+ * Corner ribbon geometry, in the card's own top-right box — a bar wider than the box it is clipped
+ * to, rotated about its centre. Not [Spacing] values: these are one decoration's construction, and
+ * snapping them to the spacing scale would just move the ribbon off the corner.
+ */
 private val RIBBON_BOX = 104.dp
 private val RIBBON_WIDTH = 150.dp
 private val RIBBON_OFFSET_X = 42.dp

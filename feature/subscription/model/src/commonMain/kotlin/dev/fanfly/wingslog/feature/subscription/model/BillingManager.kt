@@ -33,15 +33,16 @@ interface BillingManager {
   val isPurchaseSupported: Boolean
 
   /**
-   * The store this build buys and manages through, so the UI can tell a subscriber whether the
-   * *manage* flow will actually reach their subscription.
+   * The store this build buys and manages through, or `null` where there is none — web, and any
+   * build with no configured key.
    *
-   * Entitlement is account-scoped, so a pilot who subscribed on an iPhone sees Pro in the Android
-   * app — but neither the store nor RevenueCat's Customer Center can cancel or change a plan sold
-   * by a different store. Comparing this against the entitlement's origin platform is what
-   * separates "manage it here" from "go back to the device you bought it on".
+   * Exists so the UI can tell a subscriber whether the *manage* flow will actually reach their
+   * subscription. Entitlement is account-scoped, so a pilot who subscribed on an iPhone sees Pro in
+   * the Android app — but neither the store nor RevenueCat's Customer Center can cancel or change a
+   * plan sold by a different store. Comparing this against the entitlement's origin platform is
+   * what separates "manage it here" from "go back to the device you bought it on".
    */
-  val store: BillingStore
+  val store: PurchasePlatform?
 
   /**
    * The Pro offering (its packages and localized prices) for a custom purchase UI, or
@@ -72,18 +73,26 @@ interface BillingManager {
 }
 
 /**
- * The store a build transacts with.
+ * A storefront SquawkIt Pro can be billed by.
  *
- * Deliberately not "the platform": what matters for managing a subscription is the storefront that
- * billed it, and an Android build sold through Google Play cannot manage an Amazon Appstore
- * subscription any more than it can manage an App Store one.
+ * One vocabulary for two questions that have to be compared against each other: which store *billed*
+ * a subscription (read from the entitlement's `origin_platform`, so it is right even when the pilot
+ * is reading it on another platform) and which store *this build* transacts with ([BillingManager.store]).
+ * Splitting those into two enums would mean a mapping between them that could only ever go stale.
+ *
+ * Store-specific on purpose — "android" would not distinguish Google Play from the Amazon Appstore,
+ * which cancel in completely different places. The web billers do collapse into one [WEB] entry,
+ * because from the pilot's point of view they all cancel in the same place.
  */
-enum class BillingStore {
-  PLAY_STORE,
+enum class PurchasePlatform {
   APP_STORE,
+  MAC_APP_STORE,
+  PLAY_STORE,
+  AMAZON,
+  WEB,
 
-  /** No store: web, or a build with no configured key. Nothing can be bought or managed here. */
-  NONE,
+  /** RevenueCat's simulated store, which developer and dogfood builds transact with. */
+  TEST_STORE,
 }
 
 /** The identifier of the entitlement configured in the RevenueCat dashboard. */
@@ -174,7 +183,7 @@ sealed interface StoreCustomerInfo {
 object UnsupportedBillingManager : BillingManager {
   override val isPurchaseSupported: Boolean = false
 
-  override val store: BillingStore = BillingStore.NONE
+  override val store: PurchasePlatform? = null
 
   override suspend fun proOffering(): ProOffering = ProOffering.Unavailable(BillingError.UNSUPPORTED)
 

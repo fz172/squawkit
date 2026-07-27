@@ -41,6 +41,8 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_ac
 import wingslog.feature.subscription.viewing.generated.resources.subscription_aircraft_free
 import wingslog.feature.subscription.viewing.generated.resources.subscription_aircraft_unlimited
 import wingslog.feature.subscription.viewing.generated.resources.subscription_billing_note
+import wingslog.feature.subscription.viewing.generated.resources.subscription_cell_excluded
+import wingslog.feature.subscription.viewing.generated.resources.subscription_cell_unlimited
 import wingslog.feature.subscription.viewing.generated.resources.subscription_col_free
 import wingslog.feature.subscription.viewing.generated.resources.subscription_col_pro
 import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_header
@@ -138,7 +140,7 @@ internal fun ColumnScope.ProPaywallContent(state: SubscriptionUiState, onSubscri
 private fun BillingNote() {
   SubscriptionPanel {
     Row(
-      modifier = Modifier.padding(horizontal = 14.dp, vertical = Spacing.medium),
+      modifier = Modifier.padding(horizontal = Spacing.large, vertical = Spacing.medium),
       horizontalArrangement = Arrangement.spacedBy(Spacing.small),
       verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -146,7 +148,7 @@ private fun BillingNote() {
         imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(NOTE_ICON),
+        modifier = Modifier.size(Spacing.xLarge),
       )
       Text(
         text = stringResource(Res.string.subscription_billing_note),
@@ -186,7 +188,7 @@ private fun CompareHeader() {
     modifier = Modifier
       .fillMaxWidth()
       .padding(start = Spacing.large, end = Spacing.extraSmall)
-      .padding(top = Spacing.medium, bottom = 10.dp),
+      .padding(top = Spacing.medium, bottom = Spacing.medium),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     SectionLabel(
@@ -212,7 +214,7 @@ private fun CompareHeader() {
         .width(PRO_COLUMN)
         .clip(RoundedCornerShape(Spacing.badgeCornerRadius))
         .background(MaterialTheme.colorScheme.primary.copy(alpha = PRO_HEADER_TINT))
-        .padding(vertical = Spacing.extraSmall + 2.dp),
+        .padding(vertical = Spacing.extraSmall),
     )
   }
   HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -279,11 +281,11 @@ private fun CellContent(cell: Cell, isPro: Boolean, modifier: Modifier = Modifie
         imageVector = Icons.Default.Check,
         contentDescription = null,
         tint = tint,
-        modifier = Modifier.size(CELL_ICON),
+        modifier = Modifier.size(Spacing.xLarge),
       )
 
       Cell.No -> Text(
-        text = EM_DASH,
+        text = stringResource(Res.string.subscription_cell_excluded),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.outline,
       )
@@ -293,7 +295,7 @@ private fun CellContent(cell: Cell, isPro: Boolean, modifier: Modifier = Modifie
       Cell.Unlimited -> {
         val spoken = stringResource(Res.string.subscription_aircraft_unlimited)
         Text(
-          text = INFINITY,
+          text = stringResource(Res.string.subscription_cell_unlimited),
           style = WingslogTypography.dataMedium,
           fontWeight = FontWeight.Bold,
           color = tint,
@@ -304,16 +306,16 @@ private fun CellContent(cell: Cell, isPro: Boolean, modifier: Modifier = Modifie
   }
 }
 
+/**
+ * Comparison-table geometry. Not [Spacing] values: these are the table's own column widths and row
+ * height, sized so "Unlimited" and a 44dp touch target both fit, and pushing one screen's layout
+ * into the shared token file would make it a dumping ground.
+ */
 private val FREE_COLUMN = 64.dp
 private val PRO_COLUMN = 72.dp
 private val ROW_HEIGHT = 44.dp
-private val CELL_ICON = 18.dp
-private val NOTE_ICON = 18.dp
 
 /** Barely-there washes: enough to group the Pro column, not enough to look like a selected row. */
 private const val PRO_HEADER_TINT = 0.08f
 private const val PRO_COLUMN_TINT = 0.05f
 private const val ROW_RULE_ALPHA = 0.7f
-
-private const val EM_DASH = "—"
-private const val INFINITY = "∞"

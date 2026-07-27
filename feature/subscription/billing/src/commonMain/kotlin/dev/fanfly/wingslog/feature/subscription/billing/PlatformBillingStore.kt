@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.subscription.billing
 
-import dev.fanfly.wingslog.feature.subscription.model.BillingStore
+import dev.fanfly.wingslog.feature.subscription.model.PurchasePlatform
 
 /**
  * The storefront this build transacts with — Google Play on Android, the App Store on iOS.
@@ -11,4 +11,4 @@ import dev.fanfly.wingslog.feature.subscription.model.BillingStore
  * works — a build with no key still runs on Play, it just has no key — so the manager pairs this
  * with its own configured state before reporting a store.
  */
-internal expect val platformBillingStore: BillingStore
+internal expect val platformBillingStore: PurchasePlatform

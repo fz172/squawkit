@@ -2,14 +2,14 @@ package dev.fanfly.wingslog.feature.subscription.viewing.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
 import dev.fanfly.wingslog.feature.subscription.datamanager.NoOpEntitlementReconciler
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.subscription.model.BillingManager
-import dev.fanfly.wingslog.feature.subscription.model.BillingStore
+import dev.fanfly.wingslog.feature.subscription.model.PurchasePlatform
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,14 +21,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.resources.StringResource
-import wingslog.feature.subscription.viewing.generated.resources.Res
-import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_amazon
-import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_app_store
-import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_mac_app_store
-import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_play_store
-import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_test_store
-import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_web
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
 /** Display state for the subscription page. Dates are pre-formatted; storage is formatted in the UI. */
@@ -79,26 +72,11 @@ data class SubscriptionUiState(
 )
 
 /**
- * The store that billed the subscription, as shown on the status page.
- *
- * Sourced from the synced entitlement's `origin_platform`, **not** from the local store SDK. The
- * entitlement is account-scoped, so a pilot who subscribed on an iPhone and later opens the Android
- * app (or the web app, which has no SDK at all) is still correctly told "App Store".
- *
- * The web billers collapse into one [WEB] entry because they all cancel in the same place from the
- * pilot's point of view; the app stores deliberately do not, because they don't.
- */
-enum class PurchasePlatform(val labelRes: StringResource) {
-  APP_STORE(Res.string.subscription_platform_app_store),
-  MAC_APP_STORE(Res.string.subscription_platform_mac_app_store),
-  PLAY_STORE(Res.string.subscription_platform_play_store),
-  AMAZON(Res.string.subscription_platform_amazon),
-  WEB(Res.string.subscription_platform_web),
-  TEST_STORE(Res.string.subscription_platform_test_store),
-}
-
-/**
  * Maps the entitlement's `origin_platform` onto a store worth naming.
+ *
+ * Sourced from the synced entitlement, **not** from the local store SDK. The entitlement is
+ * account-scoped, so a pilot who subscribed on an iPhone and later opens the Android app (or the
+ * web app, which has no SDK at all) is still correctly told "App Store".
  *
  * `null` means "show no row at all" rather than "show Unknown": a comped or server-granted account
  * has nothing to cancel, and printing the word "unknown" to a paying subscriber tells them nothing
@@ -118,26 +96,33 @@ internal fun purchasePlatformOf(originPlatform: String): PurchasePlatform? =
   }
 
 /**
- * Whether the store on this device can manage a subscription that was billed by [platform].
+ * Whether the [store] this build transacts with can manage a subscription that was billed by
+ * [platform].
  *
- * The blocking case is a *different real storefront*: Apple will not cancel a Google Play plan, and
- * the web app has no store at all. Everything else is permissive on purpose —
+ * Both sides speak [PurchasePlatform], so the rule is mostly just "same storefront". The exceptions
+ * are all deliberate:
  *
- * - `null` (a comp or server grant) has nothing to cancel anywhere, so there is no other platform to
- *   send the pilot to; the Customer Center still handles it gracefully.
- * - [PurchasePlatform.TEST_STORE] is the simulated store a developer/dogfood build transacts with.
- *   Its origin never matches a real storefront, so treating a mismatch as blocking would break
- *   managing every dogfood purchase.
+ * - A build with no store ([store] `null` — web, or no configured key) manages nothing, whatever
+ *   sold the subscription.
+ * - A grant with no store behind it ([platform] `null` — a comp) has nothing to cancel anywhere, so
+ *   there is no other platform to send the pilot to and the Customer Center handles it gracefully.
+ * - [PurchasePlatform.TEST_STORE] is the simulated store developer and dogfood builds transact with.
+ *   Its origin never matches a real storefront, so treating that as a mismatch would break managing
+ *   every dogfood purchase — which, before GA, is every purchase.
+ * - Both Apple storefronts are managed from the same place, so an App Store build handles either.
+ *
+ * Everything else — Amazon without an Amazon build, a web subscription anywhere — falls out of the
+ * equality check as unmanageable, which is correct.
  */
-internal fun canManageHere(platform: PurchasePlatform?, store: BillingStore): Boolean =
-  when (platform) {
-    null, PurchasePlatform.TEST_STORE -> store != BillingStore.NONE
-    PurchasePlatform.PLAY_STORE -> store == BillingStore.PLAY_STORE
-    PurchasePlatform.APP_STORE, PurchasePlatform.MAC_APP_STORE -> store == BillingStore.APP_STORE
-    // Amazon needs an Amazon Appstore build, which SquawkIt does not ship; web subscriptions are
-    // cancelled in the biller's own portal, never in the app.
-    PurchasePlatform.AMAZON, PurchasePlatform.WEB -> false
-  }
+internal fun canManageHere(
+  platform: PurchasePlatform?,
+  store: PurchasePlatform?
+): Boolean = when {
+  store == null -> false
+  platform == null || platform == PurchasePlatform.TEST_STORE -> true
+  platform == PurchasePlatform.MAC_APP_STORE -> store == PurchasePlatform.APP_STORE
+  else -> platform == store
+}
 
 class SubscriptionViewModel(
   private val subscriptionManager: SubscriptionManager,
@@ -170,7 +155,11 @@ class SubscriptionViewModel(
         // (see SettingsViewModel), so an in-session upgrade is reflected when the page is revisited.
         isGuest = authManager.getCurrentUser()?.isAnonymous == true,
       )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SubscriptionUiState())
+    }.stateIn(
+      viewModelScope,
+      SharingStarted.WhileSubscribed(5_000),
+      SubscriptionUiState()
+    )
 
   /**
    * The store accepted a purchase; wait for the entitlement webhook to land.
@@ -189,11 +178,13 @@ class SubscriptionViewModel(
     purchasePending.value = true
     activationWatchdog?.cancel()
     activationWatchdog = viewModelScope.launch {
-      delay(activationGraceMillis)
+      delay(activationGraceMillis.milliseconds)
       // Re-read rather than trusting the flag: by now the webhook has usually landed, and asking
       // the server to re-check an account that is already Pro would burn a provider lookup for
       // nothing.
-      if (subscriptionManager.status().first() != Subscription.Status.STATUS_PRO) {
+      if (subscriptionManager.status()
+          .first() != Subscription.Status.STATUS_PRO
+      ) {
         entitlementReconciler.reconcileNow()
       }
     }
@@ -215,7 +206,7 @@ internal fun toSubscriptionUiState(
   subscription: Subscription,
   timeZone: TimeZone = TimeZone.currentSystemDefault(),
   isPurchaseSupported: Boolean = false,
-  store: BillingStore = BillingStore.NONE,
+  store: PurchasePlatform? = null,
   isActivating: Boolean = false,
   isGuest: Boolean = false,
 ): SubscriptionUiState {
@@ -225,7 +216,9 @@ internal fun toSubscriptionUiState(
     lifecycle = subscription.lifecycle,
     willRenew = subscription.will_renew,
     memberSince = subscription.member_since_millis.toDisplayDateOrNull(timeZone),
-    currentPeriodEnd = subscription.current_period_end_millis.toDisplayDateOrNull(timeZone),
+    currentPeriodEnd = subscription.current_period_end_millis.toDisplayDateOrNull(
+      timeZone
+    ),
     storageBytesUsed = subscription.storage_bytes_used,
     isPurchaseSupported = isPurchaseSupported,
     isActivating = isActivating,
