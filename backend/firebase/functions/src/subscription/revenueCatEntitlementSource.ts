@@ -191,7 +191,7 @@ function willRenewForEventType(type: string): boolean {
  * The vocabulary is a closed set the client maps to display names; anything unrecognized is
  * `"unknown"`, which the UI renders as no row rather than as the word "unknown".
  */
-function originPlatformForStore(store: string | null): string {
+export function originPlatformForStore(store: string | null): string {
   switch (store) {
     case "APP_STORE":
       return "app_store";
