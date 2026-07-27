@@ -3,8 +3,12 @@
   <string name="subscription_title">SquawkIt Pro</string>
 
   <!-- Non-subscriber comparison view -->
-  <string name="subscription_compare_header">Do more with SquawkIt Pro</string>
-  <string name="subscription_compare_subhead">Free is a complete single-aircraft logbook, backed up and synced. SquawkIt Pro adds scale and collaboration.</string>
+  <string name="subscription_compare_header">Your all-access pass</string>
+  <string name="subscription_compare_subhead">Free is a complete single-aircraft logbook, backed up and synced. Pro adds scale, attachments and collaboration.</string>
+  <!-- Sets expectations before the store paywall opens: SquawkIt never shows a price itself. -->
+  <string name="subscription_billing_note">Monthly and annual billing, price and payment method are chosen in the store.</string>
+  <string name="subscription_cta_caption">Price shown at checkout. Cancel anytime.</string>
+  <string name="subscription_includes_header">What’s included</string>
   <string name="subscription_col_free">Free</string>
   <string name="subscription_col_pro">Pro</string>
   <string name="subscription_feature_aircraft">Aircraft</string>
@@ -15,7 +19,12 @@
   <string name="subscription_feature_email">Email a copy of exports</string>
   <string name="subscription_feature_sharing">Share aircraft &amp; invite others</string>
   <string name="subscription_aircraft_free">1</string>
+  <!-- Announced in place of subscription_cell_unlimited, which is the glyph shown in its cell. -->
   <string name="subscription_aircraft_unlimited">Unlimited</string>
+  <!-- Comparison table: the tier does not include this feature. An em dash, not a crossed box. -->
+  <string name="subscription_cell_excluded">—</string>
+  <!-- Comparison table: no aircraft limit. Reads as the infinity glyph, speaks as "Unlimited". -->
+  <string name="subscription_cell_unlimited">∞</string>
   <string name="subscription_cta_subscribe">Subscribe</string>
   <!-- A guest account cannot be recovered on another device, so it must not hold a subscription. -->
   <string name="subscription_sign_in_to_subscribe">Sign in to subscribe, so your subscription is tied to your account and works on every device.</string>
@@ -25,26 +34,40 @@
   <string name="subscription_activating">Payment received. Activating SquawkIt Pro…</string>
 
   <!-- Subscriber status view -->
-  <string name="subscription_status_label">Status</string>
   <string name="subscription_member_since">Member since</string>
   <!-- Where the subscription was bought, so the pilot knows where to cancel it. -->
-  <string name="subscription_platform_label">Subscription platform</string>
   <string name="subscription_platform_app_store">App Store</string>
   <string name="subscription_platform_mac_app_store">Mac App Store</string>
   <string name="subscription_platform_play_store">Google Play</string>
   <string name="subscription_platform_amazon">Amazon Appstore</string>
   <string name="subscription_platform_web">Web</string>
   <string name="subscription_platform_test_store">Test Store (developer build)</string>
-  <string name="subscription_includes_label">Includes</string>
-  <string name="subscription_includes_value">Unlimited aircraft · attachments · email export · sharing</string>
-  <string name="subscription_manage">Manage subscription…</string>
-  <!-- Web: Pro is active here, but cancel/change-plan belong to the store that sold it. -->
-  <string name="subscription_manage_on_mobile">Manage or cancel your subscription in the SquawkIt app on the device you subscribed with.</string>
-  <string name="subscription_status_active">Active · renews %1$s</string>
-  <string name="subscription_status_active_no_date">Active</string>
+  <string name="subscription_manage">Manage subscription</string>
+  <!-- Sits under an enabled Manage button: the store, not SquawkIt, owns plan changes. -->
+  <string name="subscription_manage_caption">Plan changes and cancellation are handled by the store.</string>
+  <string name="subscription_renews">Renews</string>
+  <!-- Replaces "Renews" once the subscription is set to end rather than renew. -->
+  <string name="subscription_ends">Ends</string>
+  <string name="subscription_purchased_on">Purchased on</string>
+  <string name="subscription_unlocked_header">Unlocked with Pro</string>
+  <string name="subscription_perk_aircraft_title">Unlimited aircraft</string>
+  <string name="subscription_perk_aircraft_body">Whole fleet in one logbook</string>
+  <string name="subscription_perk_attachments_title">Attachments</string>
+  <string name="subscription_perk_attachments_body">Photos and files on any log</string>
+  <string name="subscription_perk_sharing_title">Sharing</string>
+  <string name="subscription_perk_sharing_body">Invite owners and technicians</string>
+
+  <!-- The subscription is real and Pro is unlocked here, but this device's store did not sell it. -->
+  <string name="subscription_managed_elsewhere_title">Managed on another platform</string>
+  <string name="subscription_managed_elsewhere_body">This subscription was purchased on a different platform. Open SquawkIt on the device and store account it was purchased with to change or cancel it.</string>
+  <!-- Web has no store at all, so there is no "different platform" to name — only "not here". -->
+  <string name="subscription_managed_elsewhere_body_web">Subscriptions can’t be changed here. Open SquawkIt on the device and store account it was purchased with to change or cancel it.</string>
+  <string name="subscription_managed_elsewhere_caption">Your Pro features stay active everywhere you sign in.</string>
+
+  <string name="subscription_status_active">Active</string>
   <string name="subscription_status_trialing">Free trial</string>
-  <string name="subscription_status_canceled">Active until %1$s</string>
-  <string name="subscription_status_grace">There’s a problem with your payment</string>
+  <string name="subscription_status_canceled">Canceled</string>
+  <string name="subscription_status_grace">Payment problem</string>
 
   <!-- Shared -->
   <string name="subscription_storage_used">Storage used</string>

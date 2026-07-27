@@ -33,6 +33,18 @@ interface BillingManager {
   val isPurchaseSupported: Boolean
 
   /**
+   * The store this build buys and manages through, or `null` where there is none — web, and any
+   * build with no configured key.
+   *
+   * Exists so the UI can tell a subscriber whether the *manage* flow will actually reach their
+   * subscription. Entitlement is account-scoped, so a pilot who subscribed on an iPhone sees Pro in
+   * the Android app — but neither the store nor RevenueCat's Customer Center can cancel or change a
+   * plan sold by a different store. Comparing this against the entitlement's origin platform is
+   * what separates "manage it here" from "go back to the device you bought it on".
+   */
+  val store: PurchasePlatform?
+
+  /**
    * The Pro offering (its packages and localized prices) for a custom purchase UI, or
    * [ProOffering.Unavailable] when offerings can't be loaded. Prefer the RevenueCat-hosted paywall
    * for the primary flow; this backs the fallback/native UI and the price shown in upsell copy.
@@ -58,6 +70,29 @@ interface BillingManager {
    * pass `null` on sign-out.
    */
   suspend fun setAppUserId(uid: String?)
+}
+
+/**
+ * A storefront SquawkIt Pro can be billed by.
+ *
+ * One vocabulary for two questions that have to be compared against each other: which store *billed*
+ * a subscription (read from the entitlement's `origin_platform`, so it is right even when the pilot
+ * is reading it on another platform) and which store *this build* transacts with ([BillingManager.store]).
+ * Splitting those into two enums would mean a mapping between them that could only ever go stale.
+ *
+ * Store-specific on purpose — "android" would not distinguish Google Play from the Amazon Appstore,
+ * which cancel in completely different places. The web billers do collapse into one [WEB] entry,
+ * because from the pilot's point of view they all cancel in the same place.
+ */
+enum class PurchasePlatform {
+  APP_STORE,
+  MAC_APP_STORE,
+  PLAY_STORE,
+  AMAZON,
+  WEB,
+
+  /** RevenueCat's simulated store, which developer and dogfood builds transact with. */
+  TEST_STORE,
 }
 
 /** The identifier of the entitlement configured in the RevenueCat dashboard. */
@@ -147,6 +182,8 @@ sealed interface StoreCustomerInfo {
  */
 object UnsupportedBillingManager : BillingManager {
   override val isPurchaseSupported: Boolean = false
+
+  override val store: PurchasePlatform? = null
 
   override suspend fun proOffering(): ProOffering = ProOffering.Unavailable(BillingError.UNSUPPORTED)
 

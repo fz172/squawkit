@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.subscription.model.BillingManager
+import dev.fanfly.wingslog.feature.subscription.model.PurchasePlatform
 import dev.fanfly.wingslog.feature.subscription.model.UnsupportedBillingManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -163,6 +164,59 @@ class SubscriptionUiStateTest {
       TimeZone.UTC,
     )
     assertThat(state.purchasePlatform).isEqualTo(PurchasePlatform.PLAY_STORE)
+  }
+
+  @Test
+  fun `a subscription bought on this device's store can be managed here`() {
+    assertThat(canManageHere(PurchasePlatform.PLAY_STORE, PurchasePlatform.PLAY_STORE)).isTrue()
+    assertThat(canManageHere(PurchasePlatform.APP_STORE, PurchasePlatform.APP_STORE)).isTrue()
+    // Both Apple storefronts are managed from the same place, so an iOS build handles either.
+    assertThat(canManageHere(PurchasePlatform.MAC_APP_STORE, PurchasePlatform.APP_STORE)).isTrue()
+  }
+
+  @Test
+  fun `a subscription bought on another store cannot be managed here`() {
+    // Pro is still unlocked on this device — entitlement is account-scoped — but Apple will not
+    // cancel a Google Play plan, so the page must send the pilot back to the device that bought it.
+    assertThat(canManageHere(PurchasePlatform.APP_STORE, PurchasePlatform.PLAY_STORE)).isFalse()
+    assertThat(canManageHere(PurchasePlatform.PLAY_STORE, PurchasePlatform.APP_STORE)).isFalse()
+    assertThat(canManageHere(PurchasePlatform.AMAZON, PurchasePlatform.PLAY_STORE)).isFalse()
+    // Web subscriptions are cancelled in the biller's own portal, never in the app.
+    assertThat(canManageHere(PurchasePlatform.WEB, PurchasePlatform.PLAY_STORE)).isFalse()
+  }
+
+  @Test
+  fun `a build with no store manages nothing`() {
+    // Web holds a real subscription and shows Pro, but has no Customer Center to open at all.
+    assertThat(canManageHere(PurchasePlatform.PLAY_STORE, store = null)).isFalse()
+    assertThat(canManageHere(null, store = null)).isFalse()
+    assertThat(canManageHere(PurchasePlatform.TEST_STORE, store = null)).isFalse()
+  }
+
+  @Test
+  fun `test store purchases stay manageable on the build that made them`() {
+    // The simulated store's origin matches no real storefront. Treating that as a mismatch would
+    // block managing every dogfood purchase, which is the only kind that exists before GA.
+    assertThat(canManageHere(PurchasePlatform.TEST_STORE, PurchasePlatform.PLAY_STORE)).isTrue()
+    assertThat(canManageHere(PurchasePlatform.TEST_STORE, PurchasePlatform.APP_STORE)).isTrue()
+  }
+
+  @Test
+  fun `a grant with no store behind it is not treated as bought elsewhere`() {
+    // A comp has nothing to cancel and no other device to be sent to, so blocking the button would
+    // point the pilot at a platform that does not exist.
+    assertThat(canManageHere(null, PurchasePlatform.PLAY_STORE)).isTrue()
+  }
+
+  @Test
+  fun `canManage is resolved from the entitlement's origin store`() {
+    val state = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(origin_platform = "app_store"),
+      TimeZone.UTC,
+      store = PurchasePlatform.PLAY_STORE,
+    )
+    assertThat(state.canManage).isFalse()
   }
 
   @Test
