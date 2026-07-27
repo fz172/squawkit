@@ -179,19 +179,40 @@ function willRenewForEventType(type: string): boolean {
   }
 }
 
-/** Informational only — which store the purchase came from. */
+/**
+ * Which store billed the purchase — the answer to "where do I cancel this?".
+ *
+ * Deliberately store-specific rather than collapsed onto a device platform. An earlier version
+ * mapped PLAY_STORE and AMAZON both to "android", and the three web billers all to "web", which
+ * destroyed exactly the distinction this field exists to carry: cancelling an Amazon Appstore
+ * subscription is a different journey from cancelling a Google Play one, and telling a subscriber
+ * "Android" helps them not at all.
+ *
+ * The vocabulary is a closed set the client maps to display names; anything unrecognized is
+ * `"unknown"`, which the UI renders as no row rather than as the word "unknown".
+ */
 function originPlatformForStore(store: string | null): string {
   switch (store) {
     case "APP_STORE":
+      return "app_store";
     case "MAC_APP_STORE":
-      return "ios";
+      return "mac_app_store";
     case "PLAY_STORE":
+      return "play_store";
     case "AMAZON":
-      return "android";
+      return "amazon";
     case "STRIPE":
+      return "stripe";
     case "RC_BILLING":
+      return "rc_billing";
     case "PADDLE":
-      return "web";
+      return "paddle";
+    // A grant made from the RevenueCat dashboard — no store, so nothing for the pilot to cancel.
+    case "PROMOTIONAL":
+      return "promotional";
+    // The simulated store behind a Test Store key; only ever seen in a developer build.
+    case "TEST_STORE":
+      return "test_store";
     default:
       return "unknown";
   }

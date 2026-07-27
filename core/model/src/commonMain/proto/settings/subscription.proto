@@ -18,7 +18,11 @@ message Subscription {
   bool will_renew = 5;
   // How the entitlement was granted: a store purchase or a server-side promo grant.
   Source source = 6;
-  // Originating platform of the purchase ("ios" | "android" | "web") — informational, for Manage.
+  // Which store billed the purchase, so the subscriber can be told where to cancel it. A closed
+  // vocabulary the client maps to display names: "app_store" | "mac_app_store" | "play_store" |
+  // "amazon" | "stripe" | "rc_billing" | "paddle" | "promotional" | "test_store" | "server"
+  // (our own promo grant) | "unknown". Store-specific on purpose — "android" would not distinguish
+  // Google Play from the Amazon Appstore, which cancel in completely different places.
   string origin_platform = 7;
   // Total attachment bytes owned by the account, summed by the storage sweep (§7).
   int64 storage_bytes_used = 8;
