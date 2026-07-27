@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.subscription.viewing.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
 import dev.fanfly.wingslog.feature.subscription.datamanager.NoOpEntitlementReconciler
@@ -57,6 +58,14 @@ data class SubscriptionUiState(
    * no store to name — a comped account, or a platform we don't recognise.
    */
   val purchasePlatform: PurchasePlatform? = null,
+  /**
+   * Signed in as a guest (anonymous Firebase account), which must not be allowed to subscribe.
+   *
+   * A guest account cannot be recovered on another device or after a reinstall. Letting one buy a
+   * subscription would take the pilot's money and tie the entitlement to an identity they can lose
+   * — the charged-and-stranded case, created deliberately rather than by a dropped webhook.
+   */
+  val isGuest: Boolean = false,
 )
 
 /**
@@ -101,6 +110,7 @@ internal fun purchasePlatformOf(originPlatform: String): PurchasePlatform? =
 class SubscriptionViewModel(
   private val subscriptionManager: SubscriptionManager,
   billingManager: BillingManager,
+  private val authManager: AuthManager,
   private val entitlementReconciler: EntitlementReconciler = NoOpEntitlementReconciler,
   /** How long to wait for the webhook before asking the server to re-check. Overridden in tests. */
   private val activationGraceMillis: Long = ACTIVATION_GRACE_MILLIS,
@@ -122,6 +132,10 @@ class SubscriptionViewModel(
         // Once the entitlement lands, the pending flag is moot — resolve it from the tier rather
         // than trusting a flag to be cleared, so the UI can never stick on "activating".
         isActivating = pending && status != Subscription.Status.STATUS_PRO,
+        // Re-read on every emission rather than held: `status()` is auth-scoped, so signing in or
+        // out re-runs this. Linking a guest account to a real one does NOT fire authStateChanged
+        // (see SettingsViewModel), so an in-session upgrade is reflected when the page is revisited.
+        isGuest = authManager.getCurrentUser()?.isAnonymous == true,
       )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SubscriptionUiState())
 
@@ -169,6 +183,7 @@ internal fun toSubscriptionUiState(
   timeZone: TimeZone = TimeZone.currentSystemDefault(),
   isPurchaseSupported: Boolean = false,
   isActivating: Boolean = false,
+  isGuest: Boolean = false,
 ): SubscriptionUiState = SubscriptionUiState(
   isPro = status == Subscription.Status.STATUS_PRO,
   lifecycle = subscription.lifecycle,
@@ -179,6 +194,7 @@ internal fun toSubscriptionUiState(
   isPurchaseSupported = isPurchaseSupported,
   isActivating = isActivating,
   purchasePlatform = purchasePlatformOf(subscription.origin_platform),
+  isGuest = isGuest,
 )
 
 private fun Long.toDisplayDateOrNull(timeZone: TimeZone): String? =

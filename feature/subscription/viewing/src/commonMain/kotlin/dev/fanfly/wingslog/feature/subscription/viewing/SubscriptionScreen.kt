@@ -54,7 +54,7 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_co
 import wingslog.feature.subscription.viewing.generated.resources.subscription_col_pro
 import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_header
 import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_subhead
-import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_start_trial
+import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_subscribe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_aircraft
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_attachments
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_backup
@@ -69,6 +69,7 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_ma
 import wingslog.feature.subscription.viewing.generated.resources.subscription_member_since
 import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_label
 import wingslog.feature.subscription.viewing.generated.resources.subscription_purchase_on_mobile
+import wingslog.feature.subscription.viewing.generated.resources.subscription_sign_in_to_subscribe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_active
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_active_no_date
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_canceled
@@ -256,13 +257,22 @@ private fun ProComparisonView(state: SubscriptionUiState, onSubscribe: () -> Uni
   Button(
     onClick = onSubscribe,
     // Disabled while activating so a pilot who has just paid can't start a second purchase in the
-    // window before their entitlement syncs.
-    enabled = state.isPurchaseSupported && !state.isActivating,
+    // window before their entitlement syncs, and for a guest, who has no durable account to attach
+    // a subscription to.
+    enabled = state.isPurchaseSupported && !state.isActivating && !state.isGuest,
     modifier = Modifier.fillMaxWidth(),
   ) {
-    Text(stringResource(Res.string.subscription_cta_start_trial))
+    Text(stringResource(Res.string.subscription_cta_subscribe))
   }
   when {
+    // Most actionable first: a guest can fix this, and until they do nothing else about the button
+    // matters.
+    state.isGuest -> Text(
+      text = stringResource(Res.string.subscription_sign_in_to_subscribe),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
     state.isActivating -> Text(
       text = stringResource(Res.string.subscription_activating),
       style = MaterialTheme.typography.bodySmall,

@@ -42,6 +42,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:sharedassets"))
+      implementation(project(":core:auth"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
@@ -67,7 +68,10 @@ kotlin {
 }
 
 dependencies {
+  // gitlive firebase-auth (via core:auth) resolves its Android artifact versions from the BOM.
+  implementation(platform(libs.firebase.bom))
   testImplementation(libs.junit)
   testImplementation(libs.truth)
+  testImplementation(libs.mockk)
   testImplementation(libs.kotlinx.coroutines.test)
 }

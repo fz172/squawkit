@@ -1,19 +1,25 @@
 package dev.fanfly.wingslog.feature.subscription.viewing.viewmodel
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.subscription.model.BillingManager
 import dev.fanfly.wingslog.feature.subscription.model.UnsupportedBillingManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import dev.gitlive.firebase.auth.FirebaseUser
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import dev.fanfly.wingslog.core.model.settings.Subscription
 import kotlinx.datetime.TimeZone
@@ -159,6 +165,24 @@ class SubscriptionUiStateTest {
     assertThat(state.purchasePlatform).isEqualTo(PurchasePlatform.PLAY_STORE)
   }
 
+  @Test
+  fun `a guest cannot subscribe`() = runTest {
+    // A guest account cannot be recovered on another device, so letting one buy a subscription
+    // would take the pilot's money and tie it to an identity they can lose.
+    val vm = viewModel(
+      status = Subscription.Status.STATUS_FREE,
+      reconciler = RecordingReconciler(),
+      isGuest = true,
+    )
+    assertThat(stateOf(vm).isGuest).isTrue()
+  }
+
+  @Test
+  fun `a signed-in account is not treated as a guest`() = runTest {
+    val vm = viewModel(status = Subscription.Status.STATUS_FREE, reconciler = RecordingReconciler())
+    assertThat(stateOf(vm).isGuest).isFalse()
+  }
+
   private companion object {
     private const val GRACE = 10_000L
   }
@@ -179,12 +203,35 @@ class SubscriptionUiStateTest {
     status: Subscription.Status,
     reconciler: EntitlementReconciler,
     billingManager: BillingManager = UnsupportedBillingManager,
+    isGuest: Boolean = false,
   ) = SubscriptionViewModel(
     subscriptionManager = FixedSubscriptionManager(status),
     billingManager = billingManager,
     entitlementReconciler = reconciler,
+    authManager = authManager(isGuest),
     activationGraceMillis = GRACE,
   )
+
+  /**
+   * The first state the ViewModel actually computes.
+   *
+   * `uiState` is a StateFlow seeded with a default and started `WhileSubscribed`, so reading it
+   * without a collector just returns that placeholder — the upstream combine never runs.
+   */
+  private fun TestScope.stateOf(vm: SubscriptionViewModel): SubscriptionUiState {
+    val job = launch { vm.uiState.collect { } }
+    runCurrent()
+    val state = vm.uiState.value
+    job.cancel()
+    return state
+  }
+
+  /** An AuthManager reporting a signed-in user who is, or is not, a guest. */
+  private fun authManager(isGuest: Boolean): AuthManager = mockk(relaxed = true) {
+    every { getCurrentUser() } returns mockk<FirebaseUser>(relaxed = true) {
+      every { this@mockk.isAnonymous } returns isGuest
+    }
+  }
 
   private class FixedSubscriptionManager(
     private val status: Subscription.Status,

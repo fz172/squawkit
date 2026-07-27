@@ -21,7 +21,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.subscription.viewing.generated.resources.Res
-import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_start_trial
+import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_subscribe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_title
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_add_aircraft
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_attachment
@@ -92,7 +92,7 @@ fun ProUpsellSheet(
       // contextual promo shown over whatever the pilot was doing, and the page is where the full
       // comparison and the store's own paywall live.
       Button(onClick = onSeePlans, modifier = Modifier.fillMaxWidth()) {
-        Text(stringResource(Res.string.subscription_cta_start_trial))
+        Text(stringResource(Res.string.subscription_cta_subscribe))
       }
       TextButton(onClick = onSeePlans, modifier = Modifier.fillMaxWidth()) {
         Text(stringResource(Res.string.upsell_see_plans))
