@@ -55,7 +55,7 @@ describe("normalizeRevenueCatEvent", () => {
       currentPeriodEndMillis: EXPIRES_AT,
       willRenew: true,
       source: ENTITLEMENT_SOURCE.STORE_PURCHASE,
-      originPlatform: "ios",
+      originPlatform: "app_store",
     });
   });
 
@@ -101,10 +101,21 @@ describe("normalizeRevenueCatEvent", () => {
     expect(result.willRenew).toBe(true);
   });
 
-  it("maps the store onto the origin platform", () => {
-    expect(normalizeToEntitlement(event({ store: "PLAY_STORE" })).originPlatform).toBe("android");
-    expect(normalizeToEntitlement(event({ store: "APP_STORE" })).originPlatform).toBe("ios");
-    expect(normalizeToEntitlement(event({ store: "STRIPE" })).originPlatform).toBe("web");
+  it("records which store billed the purchase, keeping stores distinct", () => {
+    const platform = (store: string) => normalizeToEntitlement(event({ store })).originPlatform;
+    expect(platform("APP_STORE")).toBe("app_store");
+    expect(platform("MAC_APP_STORE")).toBe("mac_app_store");
+    expect(platform("PLAY_STORE")).toBe("play_store");
+    expect(platform("STRIPE")).toBe("stripe");
+    expect(platform("RC_BILLING")).toBe("rc_billing");
+    expect(platform("PROMOTIONAL")).toBe("promotional");
+    expect(platform("TEST_STORE")).toBe("test_store");
+    // Play and Amazon must not collapse together — they cancel in completely different places.
+    expect(platform("AMAZON")).toBe("amazon");
+    expect(platform("AMAZON")).not.toBe(platform("PLAY_STORE"));
+  });
+
+  it("falls back to unknown for an unrecognised store", () => {
     expect(normalizeToEntitlement(event({ store: "SOMETHING_NEW" })).originPlatform).toBe("unknown");
   });
 
