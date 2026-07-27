@@ -14,6 +14,63 @@ export const EXPORT_DELIVERY_API_KEY = defineSecret("EXPORT_DELIVERY_API_KEY");
  */
 export const REVENUECAT_WEBHOOK_AUTH = defineSecret("REVENUECAT_WEBHOOK_AUTH");
 
+/**
+ * RevenueCat **secret** REST API key (`sk_…`), used by the reconciler to ask RevenueCat what a
+ * subscriber's real state is.
+ *
+ * Not to be confused with the public SDK keys (`goog_`/`appl_`/`test_`) embedded in the app: this
+ * one can read and modify customer data across the whole project, so it never leaves the server.
+ * From RevenueCat → Project settings → API keys → Secret keys.
+ *
+ * `firebase functions:secrets:set REVENUECAT_SECRET_API_KEY`
+ *
+ * NOTE: this project grants Secret Manager access **per secret**. Before the first deploy, mirror
+ * the bindings on EXPORT_DELIVERY_API_KEY, or CI fails with a 403 on `setIamPolicy`:
+ *   gcloud secrets add-iam-policy-binding REVENUECAT_SECRET_API_KEY \
+ *     --member=serviceAccount:github-action-1080760243@wingslog-9ca4e.iam.gserviceaccount.com \
+ *     --role=roles/secretmanager.admin
+ *   gcloud secrets add-iam-policy-binding REVENUECAT_SECRET_API_KEY \
+ *     --member=serviceAccount:811416892017-compute@developer.gserviceaccount.com \
+ *     --role=roles/secretmanager.secretAccessor
+ */
+export const REVENUECAT_SECRET_API_KEY = defineSecret("REVENUECAT_SECRET_API_KEY");
+
+// --- Entitlement reconciler (#355) -------------------------------------------------------------
+//
+// The backstop for entitlement drift: webhooks are the primary path, and this catches what they
+// miss (a delivery we dropped, an event we ignored, a provider outage). Constants rather than .env
+// for the same reason as STORAGE_SWEEP_SCHEDULE — `onSchedule` needs the schedule during the
+// deploy-time analysis, where .env does not exist — and because none of these are destructive
+// enough to warrant the sweep's "refuse to run without explicit config" treatment.
+
+/** How often the reconciler runs. Daily: it is a smoke detector, not a real-time path. */
+export const ENTITLEMENT_RECONCILE_SCHEDULE = "every 24 hours";
+
+/**
+ * How far past its period end an entitlement must be before the reconciler will question it.
+ *
+ * Without this, every run would catch real subscribers in the legitimate few-minute gap between a
+ * period ending and its renewal webhook arriving, and burn a REST lookup on an account that is
+ * perfectly healthy. That gap is the same one `effectiveStatusAt` deliberately keeps granting
+ * through, so the two must not disagree about what counts as "suspicious".
+ */
+export const ENTITLEMENT_RECONCILE_GRACE_MS = 60 * 60 * 1000;
+
+/**
+ * Most accounts reconciled in one run.
+ *
+ * A bounded run cannot turn a bad day into a rate-limit ban. Exceeding this is itself the alarm:
+ * a healthy pipeline drifts approximately zero accounts, so a full run means webhooks are broken
+ * and the fix is upstream, not more throughput. The remainder is picked up by the next run.
+ */
+export const ENTITLEMENT_RECONCILE_MAX_PER_RUN = 200;
+
+/**
+ * Pause between RevenueCat REST calls. Their guidance for v1 is roughly one request per second;
+ * nothing is waiting on this job, so there is no reason to go faster.
+ */
+export const ENTITLEMENT_RECONCILE_REQUEST_SPACING_MS = 1_000;
+
 export const EXPORT_DELIVERY_PROVIDER = process.env.EXPORT_DELIVERY_PROVIDER ?? "resend";
 export const EXPORT_DELIVERY_SIGNED_URL_TTL_MS = 24 * 60 * 60 * 1000;
 export const EXPORT_DELIVERY_LEASE_TTL_MS = 10 * 60 * 1000;
