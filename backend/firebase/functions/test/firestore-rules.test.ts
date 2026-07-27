@@ -109,3 +109,24 @@ describe("entitlement_ingest/{eventId} rules", () => {
     await assertFails(setDoc(doc(alice, "entitlement_ingest/evt-1"), { uid: "alice" }));
   });
 });
+
+// On-demand reconcile throttle (#355). Denying writes is what stops a client clearing its own
+// marker and calling the reconcile endpoint in a loop against RevenueCat's rate limit.
+describe("entitlement_reconcile/{uid} rules", () => {
+  it("denies a user reading their own throttle marker", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "entitlement_reconcile/alice"), {
+        lastReconciledAtMillis: 1,
+      });
+    });
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(getDoc(doc(alice, "entitlement_reconcile/alice")));
+  });
+
+  it("denies a user resetting their own throttle marker", async () => {
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(
+      setDoc(doc(alice, "entitlement_reconcile/alice"), { lastReconciledAtMillis: 0 }),
+    );
+  });
+});

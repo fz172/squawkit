@@ -110,6 +110,17 @@ function intField(value: unknown): number {
  * `SubscriptionDocWire` decode never sees this internal bookkeeping, and functions-only per the
  * Firestore rules.
  */
+/**
+ * Per-account throttle marker for on-demand reconciles.
+ *
+ * Its own collection, not a field on `subscriptions/{uid}`, for the same reason as
+ * [entitlementIngestDocPath]: the client decodes that document, and server bookkeeping has no
+ * business appearing in it.
+ */
+export function reconcileThrottleDocPath(uid: string): string {
+  return `entitlement_reconcile/${uid}`;
+}
+
 export function entitlementIngestDocPath(eventId: string): string {
   return `entitlement_ingest/${eventId}`;
 }
