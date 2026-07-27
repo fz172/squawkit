@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -209,7 +210,10 @@ private fun ProRibbon(modifier: Modifier = Modifier) {
         .align(Alignment.TopEnd)
         .offset(x = RIBBON_OFFSET_X, y = RIBBON_OFFSET_Y)
         .rotate(RIBBON_ANGLE)
-        .width(RIBBON_WIDTH)
+        // requiredWidth, not width: the bar is deliberately wider than the box that clips it, and
+        // `width` would coerce it into the box's 104dp constraint. That shortening moves the bar's
+        // centre — which is the rotation origin — and swings the whole band off the corner.
+        .requiredWidth(RIBBON_WIDTH)
         .background(MaterialTheme.colorScheme.primary)
         .padding(vertical = Spacing.extraSmall),
     )

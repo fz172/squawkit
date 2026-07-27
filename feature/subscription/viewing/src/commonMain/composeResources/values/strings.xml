@@ -3,7 +3,7 @@
   <string name="subscription_title">SquawkIt Pro</string>
 
   <!-- Non-subscriber comparison view -->
-  <string name="subscription_compare_header">Log a fleet, not just one aircraft</string>
+  <string name="subscription_compare_header">Your all-access pass</string>
   <string name="subscription_compare_subhead">Free is a complete single-aircraft logbook, backed up and synced. Pro adds scale, attachments and collaboration.</string>
   <!-- Sets expectations before the store paywall opens: SquawkIt never shows a price itself. -->
   <string name="subscription_billing_note">Monthly and annual billing, price and payment method are chosen in the store.</string>
