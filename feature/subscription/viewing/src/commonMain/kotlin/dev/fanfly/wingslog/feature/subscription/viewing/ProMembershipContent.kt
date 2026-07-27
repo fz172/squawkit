@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -26,7 +25,6 @@ import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Laptop
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PhoneIphone
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.ShoppingBag
@@ -39,11 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -100,7 +94,10 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_un
  * below are a reminder of what the money buys, not another attempt to sell it.
  */
 @Composable
-internal fun ColumnScope.ProMembershipContent(state: SubscriptionUiState, onManage: () -> Unit) {
+internal fun ProMembershipContent(
+  state: SubscriptionUiState,
+  onManage: () -> Unit
+) {
   MembershipCard(state)
 
   SectionLabel(stringResource(Res.string.subscription_unlocked_header))
@@ -166,7 +163,10 @@ private fun MembershipCard(state: SubscriptionUiState) {
           label = stringResource(Res.string.subscription_storage_used),
           modifier = Modifier.padding(top = Spacing.large),
         ) {
-          Text(state.storageBytesUsed.formatFileSize(), style = WingslogTypography.dataSmall)
+          Text(
+            state.storageBytesUsed.formatFileSize(),
+            style = WingslogTypography.dataSmall
+          )
         }
         // Omitted entirely when there is no store to name (a comp, or an unrecognised platform) —
         // see purchasePlatformOf. Sourced from the synced entitlement, so it names the store that
@@ -183,7 +183,10 @@ private fun MembershipCard(state: SubscriptionUiState) {
               modifier = Modifier.size(Spacing.large),
             )
             Spacer(Modifier.width(Spacing.small))
-            Text(stringResource(platform.labelRes), style = WingslogTypography.dataSmall)
+            Text(
+              stringResource(platform.labelRes),
+              style = WingslogTypography.dataSmall
+            )
           }
         }
       }
@@ -198,7 +201,10 @@ private fun MembershipCard(state: SubscriptionUiState) {
  */
 @Composable
 private fun ProRibbon(modifier: Modifier = Modifier) {
-  Box(modifier = modifier.size(RIBBON_BOX).clipToBounds()) {
+  Box(
+    modifier = modifier.size(RIBBON_BOX)
+      .clipToBounds()
+  ) {
     Text(
       text = stringResource(Res.string.subscription_col_pro).uppercase(),
       style = MaterialTheme.typography.titleSmall,
@@ -239,7 +245,10 @@ private fun StatusIndicator(lifecycle: Subscription.Lifecycle) {
   }
   val accent = MaterialTheme.statusColors.toneFor(tier).accent
   Row(verticalAlignment = Alignment.CenterVertically) {
-    Box(Modifier.size(Spacing.small).background(accent, CircleShape))
+    Box(
+      Modifier.size(Spacing.small)
+        .background(accent, CircleShape)
+    )
     Spacer(Modifier.width(Spacing.small))
     Text(
       text = stringResource(labelRes).uppercase(),
@@ -253,7 +262,11 @@ private fun StatusIndicator(lifecycle: Subscription.Lifecycle) {
 
 /** A labelled date, or nothing at all — an empty slot beats a placeholder dash under a heading. */
 @Composable
-private fun DateTile(label: String, value: String?, modifier: Modifier = Modifier) {
+private fun DateTile(
+  label: String,
+  value: String?,
+  modifier: Modifier = Modifier
+) {
   Column(modifier) {
     if (value != null) {
       TileLabel(label)
@@ -329,7 +342,12 @@ private fun PerkGrid() {
 }
 
 @Composable
-private fun PerkCard(icon: ImageVector, title: String, body: String, modifier: Modifier = Modifier) {
+private fun PerkCard(
+  icon: ImageVector,
+  title: String,
+  body: String,
+  modifier: Modifier = Modifier
+) {
   SubscriptionPanel(modifier) {
     Column(Modifier.padding(Spacing.large)) {
       Icon(
@@ -355,7 +373,7 @@ private fun PerkCard(icon: ImageVector, title: String, body: String, modifier: M
 }
 
 @Composable
-private fun ColumnScope.ManageAction(onManage: () -> Unit) {
+private fun ManageAction(onManage: () -> Unit) {
   OutlinedButton(
     onClick = onManage,
     shape = RoundedCornerShape(Spacing.buttonCornerRadius),
@@ -393,7 +411,7 @@ private fun ColumnScope.ManageAction(onManage: () -> Unit) {
  * @param isPurchaseSupported false on web, which has no store to be a *different* store from.
  */
 @Composable
-private fun ColumnScope.ManagedElsewhere(isPurchaseSupported: Boolean) {
+private fun ManagedElsewhere(isPurchaseSupported: Boolean) {
   val caution = MaterialTheme.statusColors.toneFor(StatusTier.CAUTION).accent
   SubscriptionPanel(
     modifier = Modifier.fillMaxWidth(),
@@ -431,55 +449,11 @@ private fun ColumnScope.ManagedElsewhere(isPurchaseSupported: Boolean) {
   }
 
   Spacer(Modifier.height(Spacing.medium))
-  LockedManageButton()
   SubscriptionCaption(
     text = stringResource(Res.string.subscription_managed_elsewhere_caption),
     textAlign = TextAlign.Center,
     modifier = Modifier.padding(top = Spacing.medium),
   )
-}
-
-/**
- * A button-shaped statement that there is no button.
- *
- * Deliberately not a disabled [OutlinedButton]: a dashed outline reads as "not available here" at a
- * glance, where a greyed solid one reads as "temporarily broken, try again".
- */
-@Composable
-private fun LockedManageButton() {
-  val outline = MaterialTheme.colorScheme.outline
-  val stroke = Stroke(
-    width = LOCKED_STROKE_PX,
-    pathEffect = PathEffect.dashPathEffect(floatArrayOf(LOCKED_DASH_PX, LOCKED_DASH_PX)),
-  )
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .height(Spacing.buttonHeight)
-      .drawBehind {
-        drawRoundRect(
-          color = outline,
-          style = stroke,
-          cornerRadius = CornerRadius(Spacing.buttonCornerRadius.toPx()),
-        )
-      },
-    horizontalArrangement = Arrangement.Center,
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Icon(
-      imageVector = Icons.Default.Lock,
-      contentDescription = null,
-      tint = outline,
-      modifier = Modifier.size(Spacing.xLarge),
-    )
-    Spacer(Modifier.width(Spacing.small))
-    Text(
-      text = stringResource(Res.string.subscription_manage),
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.SemiBold,
-      color = outline,
-    )
-  }
 }
 
 /**
@@ -522,8 +496,8 @@ private val PurchasePlatform.icon: ImageVector
  */
 private val RIBBON_BOX = 104.dp
 private val RIBBON_WIDTH = 150.dp
-private val RIBBON_OFFSET_X = 42.dp
-private val RIBBON_OFFSET_Y = 22.dp
+private val RIBBON_OFFSET_X = 24.dp
+private val RIBBON_OFFSET_Y = 20.dp
 private const val RIBBON_ANGLE = 45f
 private val RIBBON_TRACKING = 2.6.sp
 private val STATUS_TRACKING = 1.1.sp

@@ -100,11 +100,10 @@ fun SubscriptionScreen(
     ) {
       Column(
         modifier = Modifier
-          .constrainedContentWidth(ContentWidth.Reading)
+          .constrainedContentWidth(ContentWidth.Pane)
           .fillMaxSize()
-          .verticalScroll(rememberScrollState())
-          .padding(horizontal = Spacing.extraLarge)
-          .padding(bottom = Spacing.extraLarge),
+          .padding(Spacing.screenPadding)
+          .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(Spacing.large),
       ) {
         if (uiState.isPro) {
