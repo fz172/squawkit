@@ -4,13 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.model.settings.Subscription
+import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
+import dev.fanfly.wingslog.feature.subscription.datamanager.NoOpEntitlementReconciler
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.subscription.model.BillingManager
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
@@ -93,11 +99,15 @@ internal fun purchasePlatformOf(originPlatform: String): PurchasePlatform? =
   }
 
 class SubscriptionViewModel(
-  subscriptionManager: SubscriptionManager,
+  private val subscriptionManager: SubscriptionManager,
   billingManager: BillingManager,
+  private val entitlementReconciler: EntitlementReconciler = NoOpEntitlementReconciler,
+  /** How long to wait for the webhook before asking the server to re-check. Overridden in tests. */
+  private val activationGraceMillis: Long = ACTIVATION_GRACE_MILLIS,
 ) : ViewModel() {
 
   private val purchasePending = MutableStateFlow(false)
+  private var activationWatchdog: Job? = null
 
   val uiState: StateFlow<SubscriptionUiState> =
     combine(
@@ -115,9 +125,40 @@ class SubscriptionViewModel(
       )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SubscriptionUiState())
 
-  /** The store accepted a purchase; wait for the entitlement webhook to land. */
+  /**
+   * The store accepted a purchase; wait for the entitlement webhook to land.
+   *
+   * Also arms a watchdog. Normally the webhook writes the entitlement and it syncs down within a
+   * second or two — but when that never happens, the pilot has been charged and is left watching
+   * "Activating SquawkIt Pro…" indefinitely. The daily reconciler cannot rescue them either: an
+   * account that never got Pro has nothing stale for a scan to find. So after a grace period, ask
+   * the server to re-check this account against the provider directly.
+   *
+   * Fire-and-forget by design. It asks a question the server answers authoritatively; the entitlement
+   * still arrives through the normal synced path, so a failed or throttled call changes nothing the
+   * pilot can see.
+   */
   fun onPurchaseCompleted() {
     purchasePending.value = true
+    activationWatchdog?.cancel()
+    activationWatchdog = viewModelScope.launch {
+      delay(activationGraceMillis)
+      // Re-read rather than trusting the flag: by now the webhook has usually landed, and asking
+      // the server to re-check an account that is already Pro would burn a provider lookup for
+      // nothing.
+      if (subscriptionManager.status().first() != Subscription.Status.STATUS_PRO) {
+        entitlementReconciler.reconcileNow()
+      }
+    }
+  }
+
+  private companion object {
+    /**
+     * Long enough that the webhook round trip — store → provider → webhook → Firestore → sync —
+     * has genuinely had its chance, short enough that a pilot who just paid is not left staring.
+     * Observed round trips in testing were under two seconds.
+     */
+    private const val ACTIVATION_GRACE_MILLIS = 10_000L
   }
 }
 

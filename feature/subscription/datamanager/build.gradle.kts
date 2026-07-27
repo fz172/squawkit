@@ -42,6 +42,8 @@ kotlin {
       api(project(":feature:subscription:model"))
       implementation(project(":feature:developeroptions:datamanager"))
       implementation(libs.gitlive.firebase.auth)
+      // Calls the reconcileMyEntitlement callable (FirebaseEntitlementReconciler).
+      implementation(libs.gitlive.firebase.functions)
 
       // Logging
       implementation(libs.kermit)

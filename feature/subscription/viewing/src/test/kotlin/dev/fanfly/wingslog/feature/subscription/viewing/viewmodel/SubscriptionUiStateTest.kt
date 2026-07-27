@@ -1,11 +1,40 @@
 package dev.fanfly.wingslog.feature.subscription.viewing.viewmodel
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.feature.subscription.model.BillingManager
+import dev.fanfly.wingslog.feature.subscription.model.UnsupportedBillingManager
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import dev.fanfly.wingslog.core.model.settings.Subscription
 import kotlinx.datetime.TimeZone
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SubscriptionUiStateTest {
+
+  // `viewModelScope` dispatches on Main. Binding it to a TestDispatcher both makes the watchdog
+  // runnable and hands `runTest` the same scheduler, so `advanceTimeBy` drives the delay.
+  @Before
+  fun setUpMainDispatcher() {
+    Dispatchers.setMain(StandardTestDispatcher())
+  }
+
+  @After
+  fun tearDownMainDispatcher() {
+    Dispatchers.resetMain()
+  }
 
   @Test
   fun `pro status maps to isPro with lifecycle and storage carried through`() {
@@ -79,6 +108,48 @@ class SubscriptionUiStateTest {
   }
 
   @Test
+  fun `activation watchdog asks the server to re-check when the entitlement never lands`() = runTest {
+    // The charged-but-not-entitled case: the store took payment, no webhook arrived, and a daily
+    // scan can never find this account because it holds no Pro entitlement to look stale.
+    val reconciler = RecordingReconciler()
+    val vm = viewModel(status = Subscription.Status.STATUS_FREE, reconciler = reconciler)
+
+    vm.onPurchaseCompleted()
+    advanceTimeBy(GRACE + 1)
+    runCurrent()
+
+    assertThat(reconciler.calls).isEqualTo(1)
+  }
+
+  @Test
+  fun `activation watchdog stays quiet once the entitlement has landed`() = runTest {
+    // Asking the server to re-check an account that is already Pro burns a provider lookup for
+    // nothing, so the watchdog re-reads the tier rather than trusting the pending flag.
+    val reconciler = RecordingReconciler()
+    val vm = viewModel(status = Subscription.Status.STATUS_PRO, reconciler = reconciler)
+
+    vm.onPurchaseCompleted()
+    advanceTimeBy(GRACE + 1)
+    runCurrent()
+
+    assertThat(reconciler.calls).isEqualTo(0)
+  }
+
+  @Test
+  fun `a second purchase restarts the watchdog rather than stacking another`() = runTest {
+    val reconciler = RecordingReconciler()
+    val vm = viewModel(status = Subscription.Status.STATUS_FREE, reconciler = reconciler)
+
+    vm.onPurchaseCompleted()
+    advanceTimeBy(GRACE / 2)
+    vm.onPurchaseCompleted()
+    advanceTimeBy(GRACE + 1)
+    runCurrent()
+
+    assertThat(reconciler.calls).isEqualTo(1)
+  }
+
+  @Test
   fun `purchase platform is read from the entitlement`() {
     val state = toSubscriptionUiState(
       Subscription.Status.STATUS_PRO,
@@ -86,5 +157,43 @@ class SubscriptionUiStateTest {
       TimeZone.UTC,
     )
     assertThat(state.purchasePlatform).isEqualTo(PurchasePlatform.PLAY_STORE)
+  }
+
+  private companion object {
+    private const val GRACE = 10_000L
+  }
+
+  /** Counts reconcile requests so a test can assert the watchdog fired exactly once. */
+  private class RecordingReconciler : EntitlementReconciler {
+    var calls = 0
+      private set
+
+    override suspend fun reconcileNow(): Boolean {
+      calls++
+      return false
+    }
+  }
+
+  /** A ViewModel over a fixed tier, with the watchdog grace shortened to virtual time. */
+  private fun viewModel(
+    status: Subscription.Status,
+    reconciler: EntitlementReconciler,
+    billingManager: BillingManager = UnsupportedBillingManager,
+  ) = SubscriptionViewModel(
+    subscriptionManager = FixedSubscriptionManager(status),
+    billingManager = billingManager,
+    entitlementReconciler = reconciler,
+    activationGraceMillis = GRACE,
+  )
+
+  private class FixedSubscriptionManager(
+    private val status: Subscription.Status,
+  ) : SubscriptionManager {
+    override fun status(): Flow<Subscription.Status> = flowOf(status)
+    override fun entitlement(): Flow<Subscription> = flowOf(Subscription())
+    override fun canUploadAttachments(): Flow<Boolean> = flowOf(false)
+    override fun canEmailExports(): Flow<Boolean> = flowOf(false)
+    override fun canHostShare(): Flow<Boolean> = flowOf(false)
+    override fun aircraftLimit(): Flow<Int?> = flowOf(1)
   }
 }
