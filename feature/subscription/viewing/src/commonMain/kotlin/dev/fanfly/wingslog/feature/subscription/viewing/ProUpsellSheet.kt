@@ -1,12 +1,11 @@
 package dev.fanfly.wingslog.feature.subscription.viewing
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,7 +26,6 @@ import wingslog.feature.subscription.viewing.generated.resources.upsell_body_add
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_attachment
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_email
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_share
-import wingslog.feature.subscription.viewing.generated.resources.upsell_see_plans
 
 /**
  * Where a locked, Pro-only affordance was tapped. Drives the sheet's contextual copy, and its
@@ -91,11 +89,8 @@ fun ProUpsellSheet(
       // Routes to the Subscription page rather than opening the paywall inline: the sheet is a
       // contextual promo shown over whatever the pilot was doing, and the page is where the full
       // comparison and the store's own paywall live.
-      Button(onClick = onSeePlans, modifier = Modifier.fillMaxWidth()) {
-        Text(stringResource(Res.string.subscription_cta_subscribe))
-      }
       TextButton(onClick = onSeePlans, modifier = Modifier.fillMaxWidth()) {
-        Text(stringResource(Res.string.upsell_see_plans))
+        Text(stringResource(Res.string.subscription_cta_subscribe))
       }
     }
   }
