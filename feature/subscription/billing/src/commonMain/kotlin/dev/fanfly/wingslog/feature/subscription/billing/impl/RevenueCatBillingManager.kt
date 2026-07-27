@@ -21,9 +21,11 @@ import com.revenuecat.purchases.kmp.models.PurchasesTransactionException
 import com.revenuecat.purchases.kmp.models.StoreProduct
 import com.revenuecat.purchases.kmp.models.StoreTransaction
 import dev.fanfly.wingslog.feature.subscription.billing.RevenueCatApiKey
+import dev.fanfly.wingslog.feature.subscription.billing.platformBillingStore
 import dev.fanfly.wingslog.feature.subscription.model.BillingError
 import dev.fanfly.wingslog.feature.subscription.model.BillingManager
 import dev.fanfly.wingslog.feature.subscription.model.BillingPeriod
+import dev.fanfly.wingslog.feature.subscription.model.BillingStore
 import dev.fanfly.wingslog.feature.subscription.model.PRO_ENTITLEMENT_ID
 import dev.fanfly.wingslog.feature.subscription.model.PRO_OFFERING_ID
 import dev.fanfly.wingslog.feature.subscription.model.ProOffering
@@ -64,6 +66,13 @@ class RevenueCatBillingManager(
    * other method below short-circuits.
    */
   override val isPurchaseSupported: Boolean = apiKey != null
+
+  /**
+   * [BillingStore.NONE] when unconfigured: with no SDK there is no Customer Center to open, so the
+   * UI must treat this build as unable to manage anything rather than as a Play/App Store client.
+   */
+  override val store: BillingStore =
+    if (isPurchaseSupported) platformBillingStore else BillingStore.NONE
 
   init {
     if (apiKey == null) {

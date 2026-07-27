@@ -33,6 +33,17 @@ interface BillingManager {
   val isPurchaseSupported: Boolean
 
   /**
+   * The store this build buys and manages through, so the UI can tell a subscriber whether the
+   * *manage* flow will actually reach their subscription.
+   *
+   * Entitlement is account-scoped, so a pilot who subscribed on an iPhone sees Pro in the Android
+   * app — but neither the store nor RevenueCat's Customer Center can cancel or change a plan sold
+   * by a different store. Comparing this against the entitlement's origin platform is what
+   * separates "manage it here" from "go back to the device you bought it on".
+   */
+  val store: BillingStore
+
+  /**
    * The Pro offering (its packages and localized prices) for a custom purchase UI, or
    * [ProOffering.Unavailable] when offerings can't be loaded. Prefer the RevenueCat-hosted paywall
    * for the primary flow; this backs the fallback/native UI and the price shown in upsell copy.
@@ -58,6 +69,21 @@ interface BillingManager {
    * pass `null` on sign-out.
    */
   suspend fun setAppUserId(uid: String?)
+}
+
+/**
+ * The store a build transacts with.
+ *
+ * Deliberately not "the platform": what matters for managing a subscription is the storefront that
+ * billed it, and an Android build sold through Google Play cannot manage an Amazon Appstore
+ * subscription any more than it can manage an App Store one.
+ */
+enum class BillingStore {
+  PLAY_STORE,
+  APP_STORE,
+
+  /** No store: web, or a build with no configured key. Nothing can be bought or managed here. */
+  NONE,
 }
 
 /** The identifier of the entitlement configured in the RevenueCat dashboard. */
@@ -147,6 +173,8 @@ sealed interface StoreCustomerInfo {
  */
 object UnsupportedBillingManager : BillingManager {
   override val isPurchaseSupported: Boolean = false
+
+  override val store: BillingStore = BillingStore.NONE
 
   override suspend fun proOffering(): ProOffering = ProOffering.Unavailable(BillingError.UNSUPPORTED)
 

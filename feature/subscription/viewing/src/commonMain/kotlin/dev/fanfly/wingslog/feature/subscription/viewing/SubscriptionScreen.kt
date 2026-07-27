@@ -1,25 +1,19 @@
 package dev.fanfly.wingslog.feature.subscription.viewing
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,63 +23,36 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
-import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.subscription.viewing.paywall.CustomerCenterHost
 import dev.fanfly.wingslog.feature.subscription.viewing.paywall.ProPaywallHost
-import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionUiState
 import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.subscription.viewing.generated.resources.Res
-import wingslog.feature.subscription.viewing.generated.resources.subscription_activating
-import wingslog.feature.subscription.viewing.generated.resources.subscription_aircraft_free
-import wingslog.feature.subscription.viewing.generated.resources.subscription_aircraft_unlimited
-import wingslog.feature.subscription.viewing.generated.resources.subscription_col_free
-import wingslog.feature.subscription.viewing.generated.resources.subscription_col_pro
-import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_header
-import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_subhead
-import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_subscribe
-import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_aircraft
-import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_attachments
-import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_backup
-import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_email
-import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_export
-import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_records
-import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_sharing
-import wingslog.feature.subscription.viewing.generated.resources.subscription_includes_label
-import wingslog.feature.subscription.viewing.generated.resources.subscription_includes_value
-import wingslog.feature.subscription.viewing.generated.resources.subscription_manage
-import wingslog.feature.subscription.viewing.generated.resources.subscription_manage_on_mobile
-import wingslog.feature.subscription.viewing.generated.resources.subscription_member_since
-import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_label
-import wingslog.feature.subscription.viewing.generated.resources.subscription_purchase_on_mobile
-import wingslog.feature.subscription.viewing.generated.resources.subscription_sign_in_to_subscribe
-import wingslog.feature.subscription.viewing.generated.resources.subscription_status_active
-import wingslog.feature.subscription.viewing.generated.resources.subscription_status_active_no_date
-import wingslog.feature.subscription.viewing.generated.resources.subscription_status_canceled
-import wingslog.feature.subscription.viewing.generated.resources.subscription_status_grace
-import wingslog.feature.subscription.viewing.generated.resources.subscription_status_label
-import wingslog.feature.subscription.viewing.generated.resources.subscription_status_trialing
-import wingslog.feature.subscription.viewing.generated.resources.subscription_storage_used
 import wingslog.feature.subscription.viewing.generated.resources.subscription_title
 
 /**
  * The subscription page. Non-subscribers see the tier comparison and buy into RevenueCat's hosted
- * paywall; subscribers see their status and manage it through RevenueCat's Customer Center. Storage
- * used is shown to both.
+ * paywall; subscribers see their membership and manage it through RevenueCat's Customer Center.
  *
- * On web both surfaces are unavailable — the pilot can hold Pro here but must buy and manage it on
- * a phone — so the buttons are disabled with an explanatory line instead.
+ * The two states are deliberately different pages rather than one page with a swapped button. Before
+ * buying, the pilot is deciding, so the screen argues — headline, comparison, one call to action.
+ * After buying, they are checking on something they already own, so it reports — status, dates,
+ * storage, and a way out to the store.
+ *
+ * Neither state ever prints a price: the store owns pricing, currency and billing period, and
+ * quoting them here would eventually be wrong somewhere.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,239 +103,81 @@ fun SubscriptionScreen(
           .constrainedContentWidth(ContentWidth.Reading)
           .fillMaxSize()
           .verticalScroll(rememberScrollState())
-          .padding(Spacing.screenPadding),
-        verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+          .padding(horizontal = Spacing.extraLarge)
+          .padding(bottom = Spacing.extraLarge),
+        verticalArrangement = Arrangement.spacedBy(Spacing.large),
       ) {
         if (uiState.isPro) {
-          SubscriberStatusView(
+          ProMembershipContent(
             state = uiState,
             onManage = { sheet = BillingSheet.CustomerCenter },
           )
         } else {
-          ProComparisonView(
+          ProPaywallContent(
             state = uiState,
             onSubscribe = { sheet = BillingSheet.Paywall },
           )
         }
-
-        HorizontalDivider()
-        InfoRow(
-          label = stringResource(Res.string.subscription_storage_used),
-          value = uiState.storageBytesUsed.formatFileSize(),
-        )
       }
     }
   }
 }
 
-@Composable
-private fun SubscriberStatusView(state: SubscriptionUiState, onManage: () -> Unit) {
-  InfoRow(stringResource(Res.string.subscription_status_label), statusLine(state))
-  state.memberSince?.let {
-    InfoRow(stringResource(Res.string.subscription_member_since), it)
-  }
-  // Omitted entirely when there is no store to name (a comp, or an unrecognised platform) — see
-  // purchasePlatformOf. Sourced from the synced entitlement, so it names the store that actually
-  // billed even when the pilot is reading this on a different platform.
-  state.purchasePlatform?.let {
-    InfoRow(
-      stringResource(Res.string.subscription_platform_label),
-      stringResource(it.labelRes),
-    )
-  }
-  InfoRow(
-    stringResource(Res.string.subscription_includes_label),
-    stringResource(Res.string.subscription_includes_value),
-  )
-  Spacer(Modifier.height(Spacing.small))
-  OutlinedButton(
-    onClick = onManage,
-    enabled = state.isPurchaseSupported,
-    modifier = Modifier.fillMaxWidth(),
-  ) {
-    Text(stringResource(Res.string.subscription_manage))
-  }
-  if (!state.isPurchaseSupported) {
-    // Web: the subscription is real and Pro is unlocked here, but cancelling or switching plans has
-    // to happen on the device that bought it — the store owns those flows.
-    Text(
-      text = stringResource(Res.string.subscription_manage_on_mobile),
-      style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-  }
-}
-
-@Composable
-private fun statusLine(state: SubscriptionUiState): String = when (state.lifecycle) {
-  Subscription.Lifecycle.LIFECYCLE_TRIALING ->
-    stringResource(Res.string.subscription_status_trialing)
-
-  Subscription.Lifecycle.LIFECYCLE_CANCELED ->
-    if (state.currentPeriodEnd != null) {
-      stringResource(Res.string.subscription_status_canceled, state.currentPeriodEnd)
-    } else {
-      stringResource(Res.string.subscription_status_active_no_date)
-    }
-
-  Subscription.Lifecycle.LIFECYCLE_GRACE ->
-    stringResource(Res.string.subscription_status_grace)
-
-  else ->
-    if (state.willRenew && state.currentPeriodEnd != null) {
-      stringResource(Res.string.subscription_status_active, state.currentPeriodEnd)
-    } else {
-      stringResource(Res.string.subscription_status_active_no_date)
-    }
-}
-
 /** Which full-screen billing surface, if any, is covering the page. */
 private enum class BillingSheet { None, Paywall, CustomerCenter }
 
+/**
+ * A bordered panel — the page's one container shape, used for the comparison table, the membership
+ * card and the perk tiles so they read as one family rather than three card styles.
+ */
 @Composable
-private fun ProComparisonView(state: SubscriptionUiState, onSubscribe: () -> Unit) {
-  Text(
-    text = stringResource(Res.string.subscription_compare_header),
-    style = MaterialTheme.typography.headlineSmall,
-    fontWeight = FontWeight.Bold,
+internal fun SubscriptionPanel(
+  modifier: Modifier = Modifier,
+  borderColor: Color = MaterialTheme.colorScheme.outlineVariant,
+  containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+  content: @Composable ColumnScope.() -> Unit,
+) {
+  val shape = RoundedCornerShape(Spacing.cardCornerRadius)
+  Column(
+    modifier = modifier
+      .clip(shape)
+      .background(containerColor)
+      .border(Spacing.hairline, borderColor, shape),
+    content = content,
   )
+}
+
+/**
+ * An uppercase section marker ("What's included", "Unlocked with Pro").
+ *
+ * Uppercased at render rather than in the string resource so translations stay sentence case and a
+ * language without letter case is unaffected.
+ */
+@Composable
+internal fun SectionLabel(text: String, modifier: Modifier = Modifier) {
   Text(
-    text = stringResource(Res.string.subscription_compare_subhead),
-    style = MaterialTheme.typography.bodyMedium,
+    text = text.uppercase(),
+    style = MaterialTheme.typography.labelSmall,
+    letterSpacing = SECTION_LABEL_TRACKING,
     color = MaterialTheme.colorScheme.onSurfaceVariant,
+    modifier = modifier,
   )
-  Spacer(Modifier.height(Spacing.small))
+}
 
-  CompareHeader()
-  HorizontalDivider()
-  CompareRow(
-    stringResource(Res.string.subscription_feature_aircraft),
-    Cell.Label(stringResource(Res.string.subscription_aircraft_free)),
-    Cell.Label(stringResource(Res.string.subscription_aircraft_unlimited)),
+/** Fine print under a button — never the only place a state is communicated. */
+@Composable
+internal fun SubscriptionCaption(
+  text: String,
+  modifier: Modifier = Modifier,
+  textAlign: TextAlign? = null,
+) {
+  Text(
+    text = text,
+    style = MaterialTheme.typography.bodySmall,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    textAlign = textAlign,
+    modifier = modifier.fillMaxWidth(),
   )
-  CompareRow(stringResource(Res.string.subscription_feature_records), Cell.Yes, Cell.Yes)
-  CompareRow(stringResource(Res.string.subscription_feature_export), Cell.Yes, Cell.Yes)
-  CompareRow(stringResource(Res.string.subscription_feature_backup), Cell.Yes, Cell.Yes)
-  CompareRow(stringResource(Res.string.subscription_feature_attachments), Cell.No, Cell.Yes)
-  CompareRow(stringResource(Res.string.subscription_feature_email), Cell.No, Cell.Yes)
-  CompareRow(stringResource(Res.string.subscription_feature_sharing), Cell.No, Cell.Yes)
-
-  Spacer(Modifier.height(Spacing.medium))
-  Button(
-    onClick = onSubscribe,
-    // Disabled while activating so a pilot who has just paid can't start a second purchase in the
-    // window before their entitlement syncs, and for a guest, who has no durable account to attach
-    // a subscription to.
-    enabled = state.isPurchaseSupported && !state.isActivating && !state.isGuest,
-    modifier = Modifier.fillMaxWidth(),
-  ) {
-    Text(stringResource(Res.string.subscription_cta_subscribe))
-  }
-  when {
-    // Most actionable first: a guest can fix this, and until they do nothing else about the button
-    // matters.
-    state.isGuest -> Text(
-      text = stringResource(Res.string.subscription_sign_in_to_subscribe),
-      style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-
-    state.isActivating -> Text(
-      text = stringResource(Res.string.subscription_activating),
-      style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-
-    // Web: purchasing is mobile-only, but a subscription bought there unlocks Pro here too.
-    !state.isPurchaseSupported -> Text(
-      text = stringResource(Res.string.subscription_purchase_on_mobile),
-      style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-  }
 }
 
-private const val CELL_WIDTH_DP = 84
-
-@Composable
-private fun CompareHeader() {
-  Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-    Spacer(Modifier.weight(1f))
-    ColumnHeader(stringResource(Res.string.subscription_col_free))
-    ColumnHeader(stringResource(Res.string.subscription_col_pro))
-  }
-}
-
-@Composable
-private fun ColumnHeader(text: String) {
-  Box(modifier = Modifier.width(CELL_WIDTH_DP.dp), contentAlignment = Alignment.Center) {
-    Text(
-      text = text,
-      style = MaterialTheme.typography.labelLarge,
-      fontWeight = FontWeight.SemiBold,
-    )
-  }
-}
-
-private sealed interface Cell {
-  data object Yes : Cell
-  data object No : Cell
-  data class Label(val text: String) : Cell
-}
-
-@Composable
-private fun CompareRow(label: String, free: Cell, pro: Cell) {
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(vertical = Spacing.small),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Text(text = label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-    CellContent(free)
-    CellContent(pro)
-  }
-}
-
-@Composable
-private fun CellContent(cell: Cell) {
-  Box(modifier = Modifier.width(CELL_WIDTH_DP.dp), contentAlignment = Alignment.Center) {
-    when (cell) {
-      Cell.Yes -> Icon(
-        imageVector = Icons.Default.Check,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.primary,
-      )
-
-      Cell.No -> Text(
-        text = "—",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-
-      is Cell.Label -> Text(
-        text = cell.text,
-        style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.Medium,
-      )
-    }
-  }
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(vertical = Spacing.small),
-    horizontalArrangement = Arrangement.SpaceBetween,
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Text(
-      text = label,
-      style = MaterialTheme.typography.bodyMedium,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-  }
-}
+internal val SECTION_LABEL_TRACKING = 0.9.sp

@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconcile
 import dev.fanfly.wingslog.feature.subscription.datamanager.NoOpEntitlementReconciler
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.subscription.model.BillingManager
+import dev.fanfly.wingslog.feature.subscription.model.BillingStore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,6 +60,15 @@ data class SubscriptionUiState(
    */
   val purchasePlatform: PurchasePlatform? = null,
   /**
+   * Whether the *manage* flow on this device can actually reach this subscription.
+   *
+   * Distinct from [isPurchaseSupported], which only asks whether this build has a store at all. A
+   * subscriber can hold Pro on a device that cannot manage it — bought on an iPhone, read on
+   * Android — and offering a button that opens a Customer Center with nothing in it is worse than
+   * saying plainly where the plan lives. See [canManageHere].
+   */
+  val canManage: Boolean = false,
+  /**
    * Signed in as a guest (anonymous Firebase account), which must not be allowed to subscribe.
    *
    * A guest account cannot be recovered on another device or after a reinstall. Letting one buy a
@@ -107,6 +117,28 @@ internal fun purchasePlatformOf(originPlatform: String): PurchasePlatform? =
     else -> null
   }
 
+/**
+ * Whether the store on this device can manage a subscription that was billed by [platform].
+ *
+ * The blocking case is a *different real storefront*: Apple will not cancel a Google Play plan, and
+ * the web app has no store at all. Everything else is permissive on purpose —
+ *
+ * - `null` (a comp or server grant) has nothing to cancel anywhere, so there is no other platform to
+ *   send the pilot to; the Customer Center still handles it gracefully.
+ * - [PurchasePlatform.TEST_STORE] is the simulated store a developer/dogfood build transacts with.
+ *   Its origin never matches a real storefront, so treating a mismatch as blocking would break
+ *   managing every dogfood purchase.
+ */
+internal fun canManageHere(platform: PurchasePlatform?, store: BillingStore): Boolean =
+  when (platform) {
+    null, PurchasePlatform.TEST_STORE -> store != BillingStore.NONE
+    PurchasePlatform.PLAY_STORE -> store == BillingStore.PLAY_STORE
+    PurchasePlatform.APP_STORE, PurchasePlatform.MAC_APP_STORE -> store == BillingStore.APP_STORE
+    // Amazon needs an Amazon Appstore build, which SquawkIt does not ship; web subscriptions are
+    // cancelled in the biller's own portal, never in the app.
+    PurchasePlatform.AMAZON, PurchasePlatform.WEB -> false
+  }
+
 class SubscriptionViewModel(
   private val subscriptionManager: SubscriptionManager,
   billingManager: BillingManager,
@@ -129,6 +161,7 @@ class SubscriptionViewModel(
         status = status,
         subscription = subscription,
         isPurchaseSupported = billingManager.isPurchaseSupported,
+        store = billingManager.store,
         // Once the entitlement lands, the pending flag is moot — resolve it from the tier rather
         // than trusting a flag to be cleared, so the UI can never stick on "activating".
         isActivating = pending && status != Subscription.Status.STATUS_PRO,
@@ -182,20 +215,25 @@ internal fun toSubscriptionUiState(
   subscription: Subscription,
   timeZone: TimeZone = TimeZone.currentSystemDefault(),
   isPurchaseSupported: Boolean = false,
+  store: BillingStore = BillingStore.NONE,
   isActivating: Boolean = false,
   isGuest: Boolean = false,
-): SubscriptionUiState = SubscriptionUiState(
-  isPro = status == Subscription.Status.STATUS_PRO,
-  lifecycle = subscription.lifecycle,
-  willRenew = subscription.will_renew,
-  memberSince = subscription.member_since_millis.toDisplayDateOrNull(timeZone),
-  currentPeriodEnd = subscription.current_period_end_millis.toDisplayDateOrNull(timeZone),
-  storageBytesUsed = subscription.storage_bytes_used,
-  isPurchaseSupported = isPurchaseSupported,
-  isActivating = isActivating,
-  purchasePlatform = purchasePlatformOf(subscription.origin_platform),
-  isGuest = isGuest,
-)
+): SubscriptionUiState {
+  val purchasePlatform = purchasePlatformOf(subscription.origin_platform)
+  return SubscriptionUiState(
+    isPro = status == Subscription.Status.STATUS_PRO,
+    lifecycle = subscription.lifecycle,
+    willRenew = subscription.will_renew,
+    memberSince = subscription.member_since_millis.toDisplayDateOrNull(timeZone),
+    currentPeriodEnd = subscription.current_period_end_millis.toDisplayDateOrNull(timeZone),
+    storageBytesUsed = subscription.storage_bytes_used,
+    isPurchaseSupported = isPurchaseSupported,
+    isActivating = isActivating,
+    purchasePlatform = purchasePlatform,
+    canManage = canManageHere(purchasePlatform, store),
+    isGuest = isGuest,
+  )
+}
 
 private fun Long.toDisplayDateOrNull(timeZone: TimeZone): String? =
   if (this <= 0L) {
