@@ -356,6 +356,29 @@ describe("normalizeSubscriber", () => {
       }
     });
 
+    it("refuses the URL for a store that cannot have a management page", () => {
+      // RevenueCat reports a Play management_url for a Test Store subscriber even though Play holds
+      // no record of a simulated purchase. Kept in step with the webhook path, so a reconcile cannot
+      // put the dead link back after an event cleared it.
+      const testStore = normalizeSubscriber(
+        UID,
+        {
+          ...withSubscription({ store: "test_store" }),
+          management_url: PLAY_URL,
+        },
+        NOW,
+      );
+      expect(testStore.originPlatform).toBe("test_store");
+      expect(testStore.managementUrl).toBe("");
+
+      const promo = normalizeSubscriber(
+        UID,
+        { ...withSubscription({ store: "promotional" }), management_url: PLAY_URL },
+        NOW,
+      );
+      expect(promo.managementUrl).toBe("");
+    });
+
     it("still carries the URL for a lapsed subscriber", () => {
       // A subscriber whose Pro has expired may still have a store page worth reaching — reactivating
       // is done there. Dropping it on the lapsed path would take the link away at the moment it is

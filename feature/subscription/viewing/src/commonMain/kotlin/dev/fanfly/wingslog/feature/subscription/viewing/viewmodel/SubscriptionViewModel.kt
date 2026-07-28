@@ -305,17 +305,11 @@ internal fun toSubscriptionUiState(
 ): SubscriptionUiState {
   val purchasePlatform = purchasePlatformOf(subscription.origin_platform)
   val isComped = isCompedEntitlement(subscription)
-  // A Test Store purchase is simulated, but RevenueCat still reports a `management_url` for it —
-  // observed 2026-07-27 pointing at Google Play, contrary to what #363 assumed. Play holds no record
-  // of a simulated purchase, so following it lands a dogfooder on a page that does not list their
-  // subscription. Suppressed here rather than trusted: `origin_platform` is the authority on what
-  // actually billed, and it says nothing did.
-  val isSimulated = purchasePlatform == PurchasePlatform.TEST_STORE
-  val hasNothingToManage = isComped || isSimulated
-  // The provider's deep link first; our per-store page only as a downgrade. Neither applies above.
-  val providerUrl =
-    if (hasNothingToManage) null else manageableUrlOrNull(subscription.management_url)
-  val derivedUrl = if (hasNothingToManage) null else derivedManagementUrlFor(purchasePlatform)
+  // The provider's deep link first; our per-store page only as a downgrade. A comp gets neither.
+  // A simulated Test Store purchase is filtered upstream: the server never persists a URL for one,
+  // so `management_url` is empty by the time it reaches here.
+  val providerUrl = if (isComped) null else manageableUrlOrNull(subscription.management_url)
+  val derivedUrl = if (isComped) null else derivedManagementUrlFor(purchasePlatform)
   return SubscriptionUiState(
     isPro = status == Subscription.Status.STATUS_PRO,
     lifecycle = subscription.lifecycle,

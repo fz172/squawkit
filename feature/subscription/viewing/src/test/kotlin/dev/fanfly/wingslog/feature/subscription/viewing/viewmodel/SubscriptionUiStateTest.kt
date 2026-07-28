@@ -381,23 +381,6 @@ class SubscriptionUiStateTest {
     assertThat(state.isManagementUrlDerived).isFalse()
   }
 
-  @Test
-  fun `a test store purchase ignores the management url the provider reports`() {
-    // Observed on web 2026-07-27: RevenueCat returns a Play management_url for a Test Store
-    // subscriber, contrary to what #363 assumed. Play has no record of a simulated purchase, so the
-    // link is a dead end — origin_platform is the authority, and it says nothing really billed.
-    val state = toSubscriptionUiState(
-      Subscription.Status.STATUS_PRO,
-      Subscription(
-        origin_platform = "test_store",
-        management_url = "https://play.google.com/store/account/subscriptions",
-      ),
-      TimeZone.UTC,
-      store = null,
-    )
-    assertThat(state.managementUrl).isNull()
-    assertThat(state.isManagementUrlDerived).isFalse()
-  }
 
   @Test
   fun `a comp gets no derived fallback even when it names a store`() {

@@ -95,6 +95,7 @@ export function normalizeRevenueCatEvent(event: RevenueCatEvent): NormalizeResul
     return { kind: "ignored", reason: "anonymous_app_user_id" };
   }
 
+  const store = asString(event.store);
   const expired = lifecycle === SUBSCRIPTION_LIFECYCLE.EXPIRED;
   const purchasedAt = asMillis(event.purchased_at_ms) ?? 0;
   // A billing-issue grace period ends at its own timestamp, not the paid-through date.
@@ -122,10 +123,19 @@ export function normalizeRevenueCatEvent(event: RevenueCatEvent): NormalizeResul
       // at. Reporting it as STORE_PURCHASE made `source` disagree with `origin_platform` and forced
       // every consumer to special-case the pair. The webhook is the only path that can see this, so
       // it is the only place it can be labelled honestly.
-      source: isPromotionalStore(asString(event.store))
+      source: isPromotionalStore(store)
         ? ENTITLEMENT_SOURCE.SERVER_GRANT
         : ENTITLEMENT_SOURCE.STORE_PURCHASE,
-      originPlatform: originPlatformForStore(asString(event.store)),
+      originPlatform: originPlatformForStore(store),
+      // Normally `undefined` — a webhook event carries no `management_url`, so it must leave
+      // whatever a reconcile learned alone (#363).
+      //
+      // The one exception is a store that cannot have a real management page. RevenueCat *does*
+      // report a `management_url` for a Test Store subscriber, pointing at Google Play, which is a
+      // dead end: Play holds no record of a simulated purchase. Here the event knows something the
+      // generic path does not, so it clears the field rather than preserving a link that never
+      // worked — which is also how a stale one already in Firestore gets cleaned up.
+      managementUrl: hasNoManagementPage(store) ? "" : undefined,
     },
   };
 }
@@ -133,6 +143,16 @@ export function normalizeRevenueCatEvent(event: RevenueCatEvent): NormalizeResul
 /** RevenueCat's own dashboard grant — a comp, however it is dressed up as an event. */
 function isPromotionalStore(store: string | null): boolean {
   return store === "PROMOTIONAL";
+}
+
+/**
+ * Stores that can never have a usable management page, whatever the provider reports.
+ *
+ * TEST_STORE is simulated — nothing was really billed. PROMOTIONAL is a comp, with no purchase to
+ * cancel. Both are cases where a URL would send someone to a page that does not list them.
+ */
+function hasNoManagementPage(store: string | null): boolean {
+  return store === "TEST_STORE" || isPromotionalStore(store);
 }
 
 /**
