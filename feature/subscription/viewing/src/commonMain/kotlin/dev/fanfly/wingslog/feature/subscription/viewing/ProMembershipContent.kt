@@ -61,6 +61,7 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_en
 import wingslog.feature.subscription.viewing.generated.resources.subscription_manage
 import wingslog.feature.subscription.viewing.generated.resources.subscription_manage_caption
 import wingslog.feature.subscription.viewing.generated.resources.subscription_manage_link_caption
+import wingslog.feature.subscription.viewing.generated.resources.subscription_manage_store_caption
 import wingslog.feature.subscription.viewing.generated.resources.subscription_managed_elsewhere_body
 import wingslog.feature.subscription.viewing.generated.resources.subscription_managed_elsewhere_body_web
 import wingslog.feature.subscription.viewing.generated.resources.subscription_managed_elsewhere_caption
@@ -115,9 +116,10 @@ internal fun ProMembershipContent(
     // This build's own store sold it: the Customer Center is richer than any link — it can change
     // plan, apply a promo and handle a refund request in-app.
     state.canManage -> ManageAction(onManage)
-    // No Customer Center here, but the server knows where the plan actually lives. Sending the pilot
-    // straight there beats telling them to go find another device (#363).
-    managementUrl != null -> ManageElsewhereLink(managementUrl)
+    // No Customer Center here, but we know where the plan lives — either exactly, from the provider,
+    // or at least which store's subscriptions page to open (#363, #361). Either beats telling the
+    // pilot to go find another device.
+    managementUrl != null -> ManageElsewhereLink(managementUrl, state.isManagementUrlDerived)
     else -> ManagedElsewhere(isPurchaseSupported = state.isPurchaseSupported)
   }
 }
@@ -400,13 +402,23 @@ private fun ManageAction(onManage: () -> Unit) {
  * showing a subscription bought on some other store.
  *
  * The caption names no store because the card above already does, in a row sourced from the same
- * entitlement — repeating it under the button would be the third time on one screen.
+ * entitlement — repeating it under the button would be the third time on one screen. It does say
+ * whether the destination is *this* subscription or merely the store's subscriptions list, since
+ * that is the one thing the pilot cannot tell before tapping.
+ *
+ * @param isDerived the URL is our own per-store page, not the provider's deep link.
  */
 @Composable
-private fun ManageElsewhereLink(url: String) {
+private fun ManageElsewhereLink(url: String, isDerived: Boolean) {
   val uriHandler = LocalUriHandler.current
   ManageButton(
-    caption = stringResource(Res.string.subscription_manage_link_caption),
+    caption = stringResource(
+      if (isDerived) {
+        Res.string.subscription_manage_store_caption
+      } else {
+        Res.string.subscription_manage_link_caption
+      },
+    ),
     onClick = { uriHandler.openUri(url) },
   )
 }

@@ -134,6 +134,20 @@ describe("normalizeRevenueCatEvent", () => {
     );
   });
 
+  it("leaves the management URL untouched for a real store", () => {
+    // `undefined`, not "": a webhook carries no management_url, so it must not blank the link a
+    // reconcile learned. Anything else and every renewal would wipe it.
+    expect(normalizeToEntitlement(event({ store: "PLAY_STORE" })).managementUrl).toBeUndefined();
+  });
+
+  it("clears the management URL for a store that cannot have one", () => {
+    // RevenueCat reports a Play management_url for Test Store subscribers, but Play holds no record
+    // of a simulated purchase — the link is a dead end. Observed on web 2026-07-27. Clearing it here
+    // is also what cleans up a stale value already in Firestore, on the next event.
+    expect(normalizeToEntitlement(event({ store: "TEST_STORE" })).managementUrl).toBe("");
+    expect(normalizeToEntitlement(event({ store: "PROMOTIONAL" })).managementUrl).toBe("");
+  });
+
   it("carries the RevenueCat event id through as the idempotency key", () => {
     expect(normalizeToEntitlement(event({ id: "rc-evt-99" })).eventId).toBe("rc-evt-99");
   });

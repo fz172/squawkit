@@ -50,6 +50,12 @@
     Customer Center. Says "opens" because the pilot is about to leave the app — on web, in a new tab.
   -->
   <string name="subscription_manage_link_caption">Opens the store page where this subscription is billed.</string>
+  <!--
+    The same button, but pointing at the store's general subscriptions list rather than a deep link
+    to this plan — used when the store reports no direct URL. Worded so it does not promise more
+    than it delivers; the pilot may have to pick the subscription once they arrive.
+  -->
+  <string name="subscription_manage_store_caption">Opens your subscriptions in the store that billed this plan.</string>
   <string name="subscription_renews">Renews</string>
   <!-- Replaces "Renews" once the subscription is set to end rather than renew. -->
   <string name="subscription_ends">Ends</string>

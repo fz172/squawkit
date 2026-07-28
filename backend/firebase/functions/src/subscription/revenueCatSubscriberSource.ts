@@ -99,7 +99,13 @@ export function normalizeSubscriber(
   // Always resolved, never left `undefined`: the REST view is the only source that can answer this,
   // so a reconcile that finds none is the authoritative "there is no link" and must clear a stale
   // one. The webhook path is what leaves it `undefined`. See NormalizedEntitlement.managementUrl.
-  const managementUrl = safeManagementUrl(subscriber.management_url);
+  //
+  // Suppressed outright for stores that cannot have a real management page. RevenueCat reports a
+  // Play `management_url` for Test Store subscribers even though Play holds no record of a simulated
+  // purchase — kept in step with the webhook path so a reconcile cannot put the dead link back.
+  const managementUrl = hasNoManagementPage(originPlatform)
+    ? ""
+    : safeManagementUrl(subscriber.management_url);
 
   const expiresAt = toMillis(entitlement?.expires_date);
   // A lifetime entitlement has no expiry: entitled, nothing to wait for.
@@ -220,6 +226,16 @@ function sourceForOriginPlatform(originPlatform: string): number {
   return originPlatform === "promotional"
     ? ENTITLEMENT_SOURCE.SERVER_GRANT
     : ENTITLEMENT_SOURCE.STORE_PURCHASE;
+}
+
+/**
+ * Stores that can never have a usable management page — the REST twin of the webhook's check, in
+ * that path's lower-cased vocabulary.
+ *
+ * A simulated purchase and a comp both resolve to a page that would not list the subscriber.
+ */
+function hasNoManagementPage(originPlatform: string): boolean {
+  return originPlatform === "test_store" || originPlatform === "promotional";
 }
 
 /**
