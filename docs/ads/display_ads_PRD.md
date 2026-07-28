@@ -8,6 +8,13 @@
 > the app-side row ships with the feature, not before it (advertising "ad-free" while no one sees ads is a lie
 > in the other direction).
 
+> **Tier naming.** Shipped user-facing copy calls the tiers **Core** (free) and **Heavy** (paid) — renamed
+> from "Free" / "SquawkIt Pro" in #369, *display copy only*. The code keeps `Subscription.Status.FREE` /
+> `PRO`, the `subscription_col_free` / `subscription_col_pro` resource ids, and the `SquawkIt Pro`
+> RevenueCat entitlement id. This PRD uses **Core / Heavy for anything a pilot reads** and the enum names
+> when talking about gating. The subscription PRD's HTML table still carries the pre-rename copy, so §9
+> mirrors it as-is rather than half-renaming someone else's doc.
+
 **Owner:** Product · **Status:** Proposed · **Date:** 2026-07-28
 **Related:** [Subscription PRD](../subscription/subscription_PRD.html) · [Subscription Design](../subscription/subscription_design.html) · [Product overview](../product/PRD.md)
 
@@ -20,7 +27,7 @@ record lists a pilot actually lives in — **squawks**, **maintenance tasks**, a
 at a cadence of **one ad every 10 items**, with a single trailing ad for lists shorter than 10 items and
 **no ad at all when a list is empty**. Volume is bounded by a hard **cap of 10 ad units per session** across
 all surfaces, and wide layouts render **thin** units — two side by side, or one centered — so a full-width
-slot never becomes a billboard. SquawkIt Pro remains completely ad-free, and "Ad-free" becomes a line in the
+slot never becomes a billboard. The paid tier (**Heavy**) remains completely ad-free, and "Ad-free" becomes a line in the
 tier comparison table, giving the paywall a second, continuously visible argument.
 
 Ads are a **revenue floor for users who will never subscribe**, not a replacement for the subscription.
@@ -224,7 +231,7 @@ guardrails, not tuned quietly.
 - **Label:** a small "Sponsored" label in `onSurfaceVariant`, top-left of the card, always present (G6).
 - **Surface:** neutral `surfaceVariant`/`outlineVariant` treatment, no status colors (G8), no dynamic color
   (per `DESIGN.md`).
-- **Upgrade affordance:** a low-emphasis footer link — **"Remove ads with SquawkIt Pro"** — navigating to
+- **Upgrade affordance:** a low-emphasis footer link — **"Remove ads with Heavy"** — navigating to
   the subscription screen. This is the ad card's only in-app tap target besides the ad creative itself, and
   it is what makes the ad an argument for Pro rather than only a nuisance.
 - **Format:** an inline adaptive display unit — see §7.1 for how the unit(s) are laid out per layout tier.
@@ -252,7 +259,7 @@ Additional rules:
   shown half-empty.
 - **No fill collapses.** Both units unfilled → the whole row is zero height (G5).
 - **The band is one slot.** "Sponsored" is labeled **once** per slot, not once per unit, and the "Remove ads
-  with SquawkIt Pro" link appears once, at the band's trailing edge.
+  with Heavy" link appears once, at the band's trailing edge.
 - **Two units, two impressions.** A two-up slot counts as two against the session cap and emits two
   `ad_impression` events (§12), distinguished by a `unit_position` param.
 
@@ -316,6 +323,8 @@ Ad-free becomes a listed Pro benefit. The canonical table in
 Row order mirrors the shipped HTML table; the new row is inserted after *Cloud backup & multi-device sync*
 and before *Share aircraft & invite others*. Mid-table rather than appended, deliberately: "Future premium
 features" is the table's closing catch-all line, and a concrete, shipped benefit should not sit below it.
+Column headers above are the doc's pre-rename copy; the in-app table's columns already read **Core** and
+**Heavy** (see the tier-naming note at the top), and this row inherits those headers unchanged.
 
 **In-app parity (ships with the feature, not before).** The same row is added to the `ComparisonTable`
 composable in `ProPaywallContent.kt`:
@@ -356,7 +365,7 @@ holding.
 | F4 | Ads are shown only when the effective subscription status is `FREE`; any paid tier is ad-free. |
 | F5 | Purchasing Pro removes ads reactively, without an app restart; expiry restores them. |
 | F6 | Ads are gated behind `AppCapability.isAdsSupported` (off in the shipping release until GA) and off entirely on the web host. |
-| F7 | Each ad card is labeled "Sponsored" and carries a "Remove ads with SquawkIt Pro" link to the subscription screen. |
+| F7 | Each ad card is labeled "Sponsored" and carries a "Remove ads with Heavy" link to the subscription screen. |
 | F8 | Index-based list behaviors (notably logs jump-to-log / `scrollToLogId`) resolve against the **display** list so ads never shift a scroll target. |
 | F9 | An unfilled or failed ad slot renders at zero height and never leaves a gap or placeholder. |
 | F10 | Developer Options exposes a **Force ads** toggle in developer builds. |
@@ -394,7 +403,7 @@ Events, via the existing `AnalyticsManager.logEvent`:
 | `ad_impression` | `surface`, `slot_index`, `unit_position`, `session_count` (1–10, this unit's ordinal in the session) |
 | `ad_click` | `surface`, `slot_index`, `unit_position` |
 | `ad_fill_failed` | `surface`, `reason` |
-| `ad_upsell_tapped` | `surface` — the "Remove ads with SquawkIt Pro" link |
+| `ad_upsell_tapped` | `surface` — the "Remove ads with Heavy" link |
 | `ad_session_cap_reached` | `surface` — emitted once per session when the 10th unit displays; tells us how often the cap actually binds |
 
 **Primary:** ad revenue per free DAU; fill rate; impressions per free session (bounded at 10 by F13 — a
