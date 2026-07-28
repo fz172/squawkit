@@ -240,7 +240,7 @@ Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, i
 
 Feature PRDs and architecture design docs live in `docs/`, organized into **per-topic subfolders**:
 
-- `docs/product/` — `PRD.md` (product overview), `platform_feature_parity.html` (Android/iOS/web feature matrix)
+- `docs/product/` — `PRD.md` (product overview), `multi_domain_maintenance_PRD.html` (proposed pivot from aircraft-only to any maintainable asset via templates), `platform_feature_parity.html` (Android/iOS/web feature matrix)
 - `docs/storage/` — `storage_mode_PRD.md`, `storage_r1_design.md`, `storage_r2_design.md` (local-first)
 - `docs/attachments/` — `attachments_PRD.md`, `attachments_design.md`
 - `docs/squawks/` — `user_squawking_prd.md`, `squawk_design.md`
