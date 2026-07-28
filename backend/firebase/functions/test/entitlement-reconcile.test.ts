@@ -10,7 +10,10 @@ import {
 } from "../src/subscription/entitlementModel.js";
 import { runEntitlementReconcile } from "../src/subscription/reconcileEntitlements.js";
 import { RevenueCatRateLimitError, type RevenueCatSubscriber } from "../src/subscription/revenueCatApi.js";
-import { normalizeSubscriber } from "../src/subscription/revenueCatSubscriberSource.js";
+import {
+  normalizeSubscriber,
+  reconcileEventId,
+} from "../src/subscription/revenueCatSubscriberSource.js";
 import { PRO_ENTITLEMENT_ID } from "../src/subscription/revenueCatEntitlementSource.js";
 
 /**
@@ -404,6 +407,34 @@ describe("normalizeSubscriber", () => {
       const summary = await runEntitlementReconcile(options());
 
       expect(summary.examined).toBe(0);
+    });
+
+    it("backfills an account that was ALREADY reconciled into its current state", async () => {
+      // The trap the URL is part of the event id for. This account was reconciled before (a dropped
+      // webhook, repaired), so a marker already exists for its current lifecycle + period end. If the
+      // id ignored the URL, the backfill run would recompute that same id, hit the marker, skip the
+      // write — and re-select the account every night forever, never settling.
+      const periodEnd = NOW + 20 * DAY;
+      await adminDb
+        .doc(subscriptionDocPath(UID))
+        .set(
+          staleProDoc({
+            currentPeriodEndMillis: periodEnd,
+            source: ENTITLEMENT_SOURCE.STORE_PURCHASE,
+          }),
+        );
+      // The marker a previous URL-less reconcile of this exact state would have left behind.
+      await adminDb
+        .doc(`entitlement_ingest/${reconcileEventId(UID, SUBSCRIPTION_LIFECYCLE.ACTIVE, periodEnd)}`)
+        .set({ uid: UID, appliedAtMillis: NOW - DAY });
+
+      await runEntitlementReconcile(
+        options({
+          fetchSubscriberImpl: async () => ({ ...activeSubscriber, management_url: PLAY_URL }),
+        }),
+      );
+
+      expect((await docOf(UID))?.managementUrl).toBe(PLAY_URL);
     });
 
     it("does not backfill a server grant", async () => {

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import {
   ENTITLEMENT_SOURCE,
   SUBSCRIPTION_LIFECYCLE,
@@ -30,7 +32,7 @@ function lapsed(
 ): NormalizedEntitlement {
   return {
     uid,
-    eventId: reconcileEventId(uid, SUBSCRIPTION_LIFECYCLE.EXPIRED, 0),
+    eventId: reconcileEventId(uid, SUBSCRIPTION_LIFECYCLE.EXPIRED, 0, managementUrl),
     status: SUBSCRIPTION_STATUS.FREE,
     lifecycle: SUBSCRIPTION_LIFECYCLE.EXPIRED,
     // Never known from an absent entitlement; `applyEntitlement` keeps whatever it already has.
@@ -50,9 +52,23 @@ function lapsed(
  * Deriving it from the *resolved outcome* means a run that finds nothing new is a no-op write rather
  * than churn: reconciling the same unchanged state tomorrow produces the same id and is skipped. A
  * genuine change produces a different id and applies.
+ *
+ * The management URL is part of that outcome (#363), and must be — otherwise an account already
+ * reconciled into its current lifecycle and period end would recompute the *same* id when the URL is
+ * later learned, hit its own marker, and skip the write. The field would stay absent, so the backfill
+ * would re-select it and burn a RevenueCat lookup every night with no way to ever settle.
+ *
+ * Hashed rather than interpolated: this string becomes a Firestore document id under
+ * `entitlement_ingest/`, and a URL contains `/`, which is illegal there.
  */
-export function reconcileEventId(uid: string, lifecycle: number, periodEndMillis: number): string {
-  return `reconcile:${uid}:${lifecycle}:${periodEndMillis}`;
+export function reconcileEventId(
+  uid: string,
+  lifecycle: number,
+  periodEndMillis: number,
+  managementUrl = "",
+): string {
+  const urlTag = createHash("sha1").update(managementUrl).digest("hex").slice(0, 8);
+  return `reconcile:${uid}:${lifecycle}:${periodEndMillis}:${urlTag}`;
 }
 
 /**
@@ -115,7 +131,7 @@ export function normalizeSubscriber(
 
   return {
     uid,
-    eventId: reconcileEventId(uid, lifecycle, periodEnd),
+    eventId: reconcileEventId(uid, lifecycle, periodEnd, managementUrl),
     status: SUBSCRIPTION_STATUS.PRO,
     lifecycle,
     memberSinceMillis:
