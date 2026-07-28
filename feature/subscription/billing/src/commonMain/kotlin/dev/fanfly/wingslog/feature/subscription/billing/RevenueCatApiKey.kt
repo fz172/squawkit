@@ -31,7 +31,8 @@ object RevenueCatApiKey {
   private const val TEST_STORE_KEY = "test_cyjrLvZCJaTnceyCXOItRlYHWSE"
 
   /**
-   * The platform's production key, or `null` until the store products are live.
+   * The platform's production key, or `null` until that store's products are live. Set on Android;
+   * still `null` on iOS.
    *
    * `null` is a supported state, not a bug: [dev.fanfly.wingslog.feature.subscription.billing.impl]
    * skips `Purchases.configure` entirely and the app runs with purchasing unsupported. That matches
