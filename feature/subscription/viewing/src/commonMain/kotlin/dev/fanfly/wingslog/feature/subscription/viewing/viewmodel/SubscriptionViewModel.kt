@@ -74,6 +74,19 @@ data class SubscriptionUiState(
    */
   val managementUrl: String? = null,
   /**
+   * Pro was granted rather than bought, so there is nothing to manage anywhere.
+   *
+   * The page shows no manage affordance at all for these — not the Customer Center, not a link, and
+   * not the "managed on another platform" notice, whose copy ("open SquawkIt on the device it was
+   * purchased with") would be actively false. A comp has no store, no receipt, and no page to send
+   * anyone to; the membership card above still reports the tier and its end date, which is the whole
+   * truth of the account.
+   *
+   * Distinct from an *unrecognised* store, which also has no [purchasePlatform] but is a real
+   * purchase someone may well need to cancel — that keeps the generic message.
+   */
+  val isComped: Boolean = false,
+  /**
    * Signed in as a guest (anonymous Firebase account), which must not be allowed to subscribe.
    *
    * A guest account cannot be recovered on another device or after a reinstall. Letting one buy a
@@ -108,6 +121,23 @@ internal fun purchasePlatformOf(originPlatform: String): PurchasePlatform? =
   }
 
 /**
+ * Whether Pro was granted rather than bought, in either of the two ways that can happen.
+ *
+ * The two do not agree on `source`, which is why both are checked. Our own admin grant
+ * (`grantPromoEntitlement`) writes `SOURCE_SERVER_GRANT` with `origin_platform` `"server"`. A promo
+ * granted from the RevenueCat dashboard arrives as a *webhook*, and the webhook path always writes
+ * `SOURCE_STORE_PURCHASE` — only its `origin_platform` of `"promotional"` gives it away.
+ *
+ * Deliberately does NOT treat an unrecognised or absent `origin_platform` as a comp. That is a real
+ * purchase from a store this client is too old to name, and its owner may genuinely need to cancel
+ * it — they get the generic "managed elsewhere" message rather than silence.
+ */
+internal fun isCompedEntitlement(subscription: Subscription): Boolean =
+  subscription.source == Subscription.Source.SOURCE_SERVER_GRANT ||
+    subscription.origin_platform == "promotional" ||
+    subscription.origin_platform == "server"
+
+/**
  * Whether the [store] this build transacts with can manage a subscription that was billed by
  * [platform].
  *
@@ -116,8 +146,10 @@ internal fun purchasePlatformOf(originPlatform: String): PurchasePlatform? =
  *
  * - A build with no store ([store] `null` — web, or no configured key) manages nothing, whatever
  *   sold the subscription.
- * - A grant with no store behind it ([platform] `null` — a comp) has nothing to cancel anywhere, so
- *   there is no other platform to send the pilot to and the Customer Center handles it gracefully.
+ * - A `null` [platform] here means an *unrecognised* store — a purchase written by a newer server
+ *   than this client. It is still a real purchase, so the local Customer Center is offered rather
+ *   than nothing. Comps never reach this function: [isCompedEntitlement] is checked first and shows
+ *   no manage affordance at all.
  * - [PurchasePlatform.TEST_STORE] is the simulated store developer and dogfood builds transact with.
  *   Its origin never matches a real storefront, so treating that as a mismatch would break managing
  *   every dogfood purchase — which, before GA, is every purchase.
@@ -177,10 +209,11 @@ class SubscriptionViewModel(
         .firstOrNull { (status, _) -> status == Subscription.Status.STATUS_PRO }
         ?.second ?: return@launch
 
-      val needsLink = !canManageHere(
-        purchasePlatformOf(subscription.origin_platform),
-        billingManager.store,
-      )
+      // A comp has no store and therefore no URL to learn; asking would burn a provider lookup for
+      // an account RevenueCat may never have heard of. The server-side backfill skips them for the
+      // same reason.
+      val needsLink = !isCompedEntitlement(subscription) &&
+        !canManageHere(purchasePlatformOf(subscription.origin_platform), billingManager.store)
       if (needsLink && manageableUrlOrNull(subscription.management_url) == null) {
         entitlementReconciler.reconcileNow()
       }
@@ -262,6 +295,7 @@ internal fun toSubscriptionUiState(
   isGuest: Boolean = false,
 ): SubscriptionUiState {
   val purchasePlatform = purchasePlatformOf(subscription.origin_platform)
+  val isComped = isCompedEntitlement(subscription)
   return SubscriptionUiState(
     isPro = status == Subscription.Status.STATUS_PRO,
     lifecycle = subscription.lifecycle,
@@ -274,8 +308,9 @@ internal fun toSubscriptionUiState(
     isPurchaseSupported = isPurchaseSupported,
     isActivating = isActivating,
     purchasePlatform = purchasePlatform,
-    canManage = canManageHere(purchasePlatform, store),
-    managementUrl = manageableUrlOrNull(subscription.management_url),
+    canManage = !isComped && canManageHere(purchasePlatform, store),
+    managementUrl = if (isComped) null else manageableUrlOrNull(subscription.management_url),
+    isComped = isComped,
     isGuest = isGuest,
   )
 }

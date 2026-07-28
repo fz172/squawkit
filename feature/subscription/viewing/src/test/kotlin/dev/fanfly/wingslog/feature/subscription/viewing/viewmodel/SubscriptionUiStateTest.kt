@@ -220,6 +220,83 @@ class SubscriptionUiStateTest {
   }
 
   @Test
+  fun `a comped account shows no manage affordance at all`() {
+    // Both flavours of comp. Our admin RPC writes SERVER_GRANT + "server"; a promo granted from the
+    // RevenueCat dashboard arrives as a webhook, which is why the server now labels a PROMOTIONAL
+    // store as a grant too. Neither has anything to cancel.
+    val adminGrant = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(
+        source = Subscription.Source.SOURCE_SERVER_GRANT,
+        origin_platform = "server",
+      ),
+      TimeZone.UTC,
+      store = PurchasePlatform.PLAY_STORE,
+    )
+    val dashboardPromo = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(origin_platform = "promotional"),
+      TimeZone.UTC,
+      store = PurchasePlatform.PLAY_STORE,
+    )
+
+    for (state in listOf(adminGrant, dashboardPromo)) {
+      assertThat(state.isComped).isTrue()
+      // Not the Customer Center, and not a link — the page renders nothing in that slot.
+      assertThat(state.canManage).isFalse()
+      assertThat(state.managementUrl).isNull()
+      assertThat(state.purchasePlatform).isNull()
+    }
+  }
+
+  @Test
+  fun `a comp never offers a link even if one somehow got written`() {
+    val state = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(
+        source = Subscription.Source.SOURCE_SERVER_GRANT,
+        origin_platform = "server",
+        management_url = "https://play.google.com/store/account/subscriptions",
+      ),
+      TimeZone.UTC,
+      store = null,
+    )
+
+    assertThat(state.managementUrl).isNull()
+  }
+
+  @Test
+  fun `an unrecognised store is not mistaken for a comp`() {
+    // A purchase written by a newer server than this client still has a real store behind it and an
+    // owner who may need to cancel — it must keep an affordance rather than falling silent.
+    val state = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(origin_platform = "some_future_store"),
+      TimeZone.UTC,
+      store = PurchasePlatform.PLAY_STORE,
+    )
+
+    assertThat(state.isComped).isFalse()
+    assertThat(state.canManage).isTrue()
+  }
+
+  @Test
+  fun `a comp is never asked to reconcile for a management url`() = runTest {
+    val reconciler = RecordingReconciler()
+    viewModel(
+      status = Subscription.Status.STATUS_PRO,
+      reconciler = reconciler,
+      subscription = Subscription(
+        source = Subscription.Source.SOURCE_SERVER_GRANT,
+        origin_platform = "server",
+      ),
+    )
+    runCurrent()
+
+    assertThat(reconciler.calls).isEqualTo(0)
+  }
+
+  @Test
   fun `the synced management url is surfaced so a store-less build can still link out`() {
     // Web's only route to managing a subscription (#363): no billing SDK, so nothing local can
     // derive this — it has to arrive on the entitlement.

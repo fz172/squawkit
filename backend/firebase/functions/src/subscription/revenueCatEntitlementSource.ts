@@ -117,10 +117,22 @@ export function normalizeRevenueCatEvent(event: RevenueCatEvent): NormalizeResul
       memberSinceMillis: purchasedAt,
       currentPeriodEndMillis: periodEnd,
       willRenew: willRenewForEventType(type),
-      source: ENTITLEMENT_SOURCE.STORE_PURCHASE,
+      // A promo granted from the RevenueCat dashboard arrives here like any other event, but it is
+      // not a purchase: nobody paid, there is no receipt, and there is no store page to cancel it
+      // at. Reporting it as STORE_PURCHASE made `source` disagree with `origin_platform` and forced
+      // every consumer to special-case the pair. The webhook is the only path that can see this, so
+      // it is the only place it can be labelled honestly.
+      source: isPromotionalStore(asString(event.store))
+        ? ENTITLEMENT_SOURCE.SERVER_GRANT
+        : ENTITLEMENT_SOURCE.STORE_PURCHASE,
       originPlatform: originPlatformForStore(asString(event.store)),
     },
   };
+}
+
+/** RevenueCat's own dashboard grant — a comp, however it is dressed up as an event. */
+function isPromotionalStore(store: string | null): boolean {
+  return store === "PROMOTIONAL";
 }
 
 /**
