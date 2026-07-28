@@ -2,7 +2,11 @@ import { logger } from "firebase-functions/v2";
 
 import { adminDb } from "../config/firebaseAdmin.js";
 import { applyEntitlement } from "./applyEntitlement.js";
-import { SUBSCRIPTION_LIFECYCLE, SUBSCRIPTION_STATUS } from "./entitlementModel.js";
+import {
+  ENTITLEMENT_SOURCE,
+  SUBSCRIPTION_LIFECYCLE,
+  SUBSCRIPTION_STATUS,
+} from "./entitlementModel.js";
 import {
   fetchSubscriber,
   RevenueCatRateLimitError,
@@ -160,13 +164,28 @@ export async function runEntitlementReconcile(
 type StaleCandidate = { uid: string; status: number; lifecycle: number };
 
 /**
- * Accounts we currently grant Pro to whose period end is well past.
+ * Accounts worth re-asking RevenueCat about: those whose period end is well past, plus those still
+ * missing a management URL.
  *
  * Queried on `status == PRO` alone — a single-field equality, served by Firestore's automatic index
  * — then filtered in memory. Filtering server-side on lifecycle and period end too would need a
  * composite index, and this project manages no indexes as code; the read set is bounded by the
  * number of *paying subscribers*, which is the right thing to be proportional to. Revisit with a
  * declared index if that count ever makes a daily pass expensive.
+ *
+ * ## The management-URL backfill (#363)
+ *
+ * `management_url` exists only on the REST subscriber view, so it can only ever be learned by a
+ * reconcile — and the staleness rule above never looks at a *healthy* subscription, whose period end
+ * is by definition in the future. Without this second population a subscriber who paid and whose
+ * webhook worked would never be reconciled at all, and web would never get a Manage link. That is
+ * the happy path, so it has to be covered here rather than left to the drift backstop.
+ *
+ * Deliberately keyed on the field being **absent**, not falsy. Once a reconcile has written it —
+ * including writing `""` because the provider reports none, which is what the Test Store always does
+ * — the account stops matching. Testing for falsy instead would re-query those accounts every single
+ * day forever, and the deterministic reconcile event id means the write that would clear them is
+ * skipped as a duplicate, so they could never age out.
  */
 async function findStaleEntitlements(cutoffMillis: number): Promise<StaleCandidate[]> {
   const snapshot = await adminDb
@@ -181,9 +200,17 @@ async function findStaleEntitlements(cutoffMillis: number): Promise<StaleCandida
     const periodEnd =
       typeof data.currentPeriodEndMillis === "number" ? data.currentPeriodEndMillis : 0;
     if (!ENTITLING_LIFECYCLES.has(lifecycle)) continue;
+
     // A zero period end means "never known" rather than "expired at the epoch"; leave those alone
     // instead of interrogating RevenueCat about every comped account on every run.
-    if (periodEnd <= 0 || periodEnd >= cutoffMillis) continue;
+    const isStale = periodEnd > 0 && periodEnd < cutoffMillis;
+    // Store purchases only: a server grant has no store, so RevenueCat may not know the customer at
+    // all and the lookup would log the "entitled account RevenueCat has never seen" alarm on every
+    // run. There is also nothing for a comped pilot to manage.
+    const needsManagementUrl =
+      data.managementUrl === undefined && data.source === ENTITLEMENT_SOURCE.STORE_PURCHASE;
+
+    if (!isStale && !needsManagementUrl) continue;
     stale.push({ uid: doc.id, status: SUBSCRIPTION_STATUS.PRO, lifecycle });
   }
   return stale;

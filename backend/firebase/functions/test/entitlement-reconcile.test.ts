@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { adminDb } from "./helpers.js";
 
 import {
+  ENTITLEMENT_SOURCE,
   SUBSCRIPTION_LIFECYCLE,
   SUBSCRIPTION_STATUS,
   subscriptionDocPath,
@@ -371,6 +372,51 @@ describe("normalizeSubscriber", () => {
       );
 
       expect((await docOf(UID))?.managementUrl).toBe(PLAY_URL);
+    });
+
+    it("backfills a HEALTHY subscription that has no management URL yet", async () => {
+      // The bug this exists for: `management_url` is REST-only, so a purchase whose webhook worked
+      // is never reconciled — and a healthy subscription is never stale, so the drift scan skipped
+      // it forever. Web would have waited for the plan to lapse before offering a Manage link.
+      await adminDb
+        .doc(subscriptionDocPath(UID))
+        .set(staleProDoc({ currentPeriodEndMillis: NOW + 20 * DAY, source: ENTITLEMENT_SOURCE.STORE_PURCHASE }));
+
+      const summary = await runEntitlementReconcile(
+        options({
+          fetchSubscriberImpl: async () => ({ ...activeSubscriber, management_url: PLAY_URL }),
+        }),
+      );
+
+      expect(summary.examined).toBe(1);
+      expect((await docOf(UID))?.managementUrl).toBe(PLAY_URL);
+    });
+
+    it("stops backfilling once the URL has been resolved, even to empty", async () => {
+      // Keyed on the field being ABSENT, not falsy. The Test Store reports no management_url, so
+      // those accounts settle on "" — and because the reconcile event id is deterministic, the write
+      // that would clear them again is skipped as a duplicate. A falsy test would re-query them
+      // every day forever with no way to age out.
+      await adminDb
+        .doc(subscriptionDocPath(UID))
+        .set(staleProDoc({ currentPeriodEndMillis: NOW + 20 * DAY, source: ENTITLEMENT_SOURCE.STORE_PURCHASE, managementUrl: "" }));
+
+      const summary = await runEntitlementReconcile(options());
+
+      expect(summary.examined).toBe(0);
+    });
+
+    it("does not backfill a server grant", async () => {
+      // A comp has no store behind it, so RevenueCat may not know the customer at all — the lookup
+      // would trip the "entitled account RevenueCat has never seen" alarm on every run, and there is
+      // nothing for a comped pilot to manage anyway.
+      await adminDb
+        .doc(subscriptionDocPath(UID))
+        .set(staleProDoc({ currentPeriodEndMillis: NOW + 20 * DAY, source: ENTITLEMENT_SOURCE.SERVER_GRANT }));
+
+      const summary = await runEntitlementReconcile(options());
+
+      expect(summary.examined).toBe(0);
     });
   });
 });

@@ -28,7 +28,7 @@ object RevenueCatApiKey {
    * reach real money at all. The *secret* half of this integration — the webhook authorization
    * header — lives in Cloud Functions config, never here.
    */
-  private const val TEST_STORE_KEY = "test_cyjrLvZCJaTnceyCXOItRlYHWSE"
+  private const val TEST_STORE_KEY = "goog_yzPMCqJgkvCMWogDsSDrgLwSBak"
 
   /**
    * The platform's production key, or `null` until that store's products are live. Set on Android;
