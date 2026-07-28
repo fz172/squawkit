@@ -3,13 +3,17 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { adminDb } from "./helpers.js";
 
 import {
+  ENTITLEMENT_SOURCE,
   SUBSCRIPTION_LIFECYCLE,
   SUBSCRIPTION_STATUS,
   subscriptionDocPath,
 } from "../src/subscription/entitlementModel.js";
 import { runEntitlementReconcile } from "../src/subscription/reconcileEntitlements.js";
 import { RevenueCatRateLimitError, type RevenueCatSubscriber } from "../src/subscription/revenueCatApi.js";
-import { normalizeSubscriber } from "../src/subscription/revenueCatSubscriberSource.js";
+import {
+  normalizeSubscriber,
+  reconcileEventId,
+} from "../src/subscription/revenueCatSubscriberSource.js";
 import { PRO_ENTITLEMENT_ID } from "../src/subscription/revenueCatEntitlementSource.js";
 
 /**
@@ -310,6 +314,141 @@ describe("normalizeSubscriber", () => {
     // REST says "app_store", webhooks say "APP_STORE" — one mapping, so they cannot drift apart.
     const result = normalizeSubscriber(UID, withSubscription({ store: "app_store" }), NOW);
     expect(result.originPlatform).toBe("app_store");
+  });
+
+  /**
+   * The management URL (#363). The REST view is the ONLY source that carries it — webhooks do not —
+   * so everything the web app can offer for managing a subscription depends on these.
+   */
+  describe("management URL", () => {
+    const PLAY_URL = "https://play.google.com/store/account/subscriptions";
+
+    it("carries the provider's management_url", () => {
+      const result = normalizeSubscriber(UID, { ...activeSubscriber, management_url: PLAY_URL }, NOW);
+      expect(result.managementUrl).toBe(PLAY_URL);
+    });
+
+    it("resolves to empty rather than undefined when the provider reports none", () => {
+      // Empty, NOT undefined: the difference decides whether `applyEntitlement` clears a stale URL
+      // or preserves it, and the REST view is authoritative enough to clear. The Test Store exposes
+      // no management_url at all, which is exactly this case.
+      expect(normalizeSubscriber(UID, activeSubscriber, NOW).managementUrl).toBe("");
+      expect(
+        normalizeSubscriber(UID, { ...activeSubscriber, management_url: null }, NOW).managementUrl,
+      ).toBe("");
+      expect(
+        normalizeSubscriber(UID, { ...activeSubscriber, management_url: "   " }, NOW).managementUrl,
+      ).toBe("");
+    });
+
+    it("rejects any scheme other than https", () => {
+      // This value is persisted and then handed to a URI handler by the client — on web, straight
+      // into the browser. A `javascript:` URL reaching Firestore would be stored XSS aimed at our
+      // own subscribers, so the scheme is checked at the boundary it enters our storage.
+      for (const hostile of [
+        "javascript:alert(1)",
+        "data:text/html,<script>alert(1)</script>",
+        "http://play.google.com/store/account/subscriptions",
+        "not a url at all",
+      ]) {
+        const result = normalizeSubscriber(UID, { ...activeSubscriber, management_url: hostile }, NOW);
+        expect(result.managementUrl, hostile).toBe("");
+      }
+    });
+
+    it("still carries the URL for a lapsed subscriber", () => {
+      // A subscriber whose Pro has expired may still have a store page worth reaching — reactivating
+      // is done there. Dropping it on the lapsed path would take the link away at the moment it is
+      // most useful.
+      const result = normalizeSubscriber(UID, { ...lapsedSubscriber, management_url: PLAY_URL }, NOW);
+      expect(result.status).toBe(SUBSCRIPTION_STATUS.FREE);
+      expect(result.managementUrl).toBe(PLAY_URL);
+    });
+
+    it("survives a reconcile onto the entitlement doc", async () => {
+      await adminDb.doc(subscriptionDocPath(UID)).set(staleProDoc());
+
+      await runEntitlementReconcile(
+        options({
+          fetchSubscriberImpl: async () => ({ ...activeSubscriber, management_url: PLAY_URL }),
+        }),
+      );
+
+      expect((await docOf(UID))?.managementUrl).toBe(PLAY_URL);
+    });
+
+    it("backfills a HEALTHY subscription that has no management URL yet", async () => {
+      // The bug this exists for: `management_url` is REST-only, so a purchase whose webhook worked
+      // is never reconciled — and a healthy subscription is never stale, so the drift scan skipped
+      // it forever. Web would have waited for the plan to lapse before offering a Manage link.
+      await adminDb
+        .doc(subscriptionDocPath(UID))
+        .set(staleProDoc({ currentPeriodEndMillis: NOW + 20 * DAY, source: ENTITLEMENT_SOURCE.STORE_PURCHASE }));
+
+      const summary = await runEntitlementReconcile(
+        options({
+          fetchSubscriberImpl: async () => ({ ...activeSubscriber, management_url: PLAY_URL }),
+        }),
+      );
+
+      expect(summary.examined).toBe(1);
+      expect((await docOf(UID))?.managementUrl).toBe(PLAY_URL);
+    });
+
+    it("stops backfilling once the URL has been resolved, even to empty", async () => {
+      // Keyed on the field being ABSENT, not falsy. The Test Store reports no management_url, so
+      // those accounts settle on "" — and because the reconcile event id is deterministic, the write
+      // that would clear them again is skipped as a duplicate. A falsy test would re-query them
+      // every day forever with no way to age out.
+      await adminDb
+        .doc(subscriptionDocPath(UID))
+        .set(staleProDoc({ currentPeriodEndMillis: NOW + 20 * DAY, source: ENTITLEMENT_SOURCE.STORE_PURCHASE, managementUrl: "" }));
+
+      const summary = await runEntitlementReconcile(options());
+
+      expect(summary.examined).toBe(0);
+    });
+
+    it("backfills an account that was ALREADY reconciled into its current state", async () => {
+      // The trap the URL is part of the event id for. This account was reconciled before (a dropped
+      // webhook, repaired), so a marker already exists for its current lifecycle + period end. If the
+      // id ignored the URL, the backfill run would recompute that same id, hit the marker, skip the
+      // write — and re-select the account every night forever, never settling.
+      const periodEnd = NOW + 20 * DAY;
+      await adminDb
+        .doc(subscriptionDocPath(UID))
+        .set(
+          staleProDoc({
+            currentPeriodEndMillis: periodEnd,
+            source: ENTITLEMENT_SOURCE.STORE_PURCHASE,
+          }),
+        );
+      // The marker a previous URL-less reconcile of this exact state would have left behind.
+      await adminDb
+        .doc(`entitlement_ingest/${reconcileEventId(UID, SUBSCRIPTION_LIFECYCLE.ACTIVE, periodEnd)}`)
+        .set({ uid: UID, appliedAtMillis: NOW - DAY });
+
+      await runEntitlementReconcile(
+        options({
+          fetchSubscriberImpl: async () => ({ ...activeSubscriber, management_url: PLAY_URL }),
+        }),
+      );
+
+      expect((await docOf(UID))?.managementUrl).toBe(PLAY_URL);
+    });
+
+    it("does not backfill a server grant", async () => {
+      // A comp has no store behind it, so RevenueCat may not know the customer at all — the lookup
+      // would trip the "entitled account RevenueCat has never seen" alarm on every run, and there is
+      // nothing for a comped pilot to manage anyway.
+      await adminDb
+        .doc(subscriptionDocPath(UID))
+        .set(staleProDoc({ currentPeriodEndMillis: NOW + 20 * DAY, source: ENTITLEMENT_SOURCE.SERVER_GRANT }));
+
+      const summary = await runEntitlementReconcile(options());
+
+      expect(summary.examined).toBe(0);
+    });
   });
 });
 

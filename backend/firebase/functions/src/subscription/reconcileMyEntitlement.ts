@@ -62,6 +62,9 @@ export const reconcileMyEntitlement = onCall<unknown, Promise<ReconcileResponse>
 
     const now = Date.now();
     if (!(await claimThrottleSlot(uid, now))) {
+      // Visible because from the client's side a throttled call and a call that never happened look
+      // identical — both are "I opened the page and nothing changed".
+      logger.info("On-demand reconcile throttled", { uid });
       return { reconciled: false, reason: "throttled" };
     }
 
@@ -76,14 +79,19 @@ export const reconcileMyEntitlement = onCall<unknown, Promise<ReconcileResponse>
 
       const resolved = normalizeSubscriber(uid, subscriber, now);
       const { applied } = await applyEntitlement(resolved);
-      if (applied) {
-        logger.info("Reconciled an entitlement on demand", {
-          uid,
-          status: resolved.status,
-          lifecycle: resolved.lifecycle,
-          currentPeriodEndMillis: resolved.currentPeriodEndMillis,
-        });
-      }
+      // Logged on both branches, and always carrying the management URL: the client calls this
+      // specifically to learn that URL (#363), so "was it applied, and what URL did we resolve" is
+      // the whole diagnostic. An "unchanged" here with an empty URL is the expected, correct outcome
+      // for a Test Store purchase — the same shape as a genuine failure, so it has to be visible.
+      logger.info("On-demand reconcile finished", {
+        uid,
+        applied,
+        status: resolved.status,
+        lifecycle: resolved.lifecycle,
+        currentPeriodEndMillis: resolved.currentPeriodEndMillis,
+        managementUrl: resolved.managementUrl ?? "",
+        eventId: resolved.eventId,
+      });
       return applied ? { reconciled: true } : { reconciled: false, reason: "unchanged" };
     } catch (error) {
       if (error instanceof RevenueCatRateLimitError) {

@@ -220,6 +220,107 @@ class SubscriptionUiStateTest {
   }
 
   @Test
+  fun `the synced management url is surfaced so a store-less build can still link out`() {
+    // Web's only route to managing a subscription (#363): no billing SDK, so nothing local can
+    // derive this — it has to arrive on the entitlement.
+    val state = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(
+        origin_platform = "play_store",
+        management_url = "https://play.google.com/store/account/subscriptions",
+      ),
+      TimeZone.UTC,
+      store = null,
+    )
+    assertThat(state.canManage).isFalse()
+    assertThat(state.managementUrl).isEqualTo("https://play.google.com/store/account/subscriptions")
+  }
+
+  @Test
+  fun `an unset management url falls back to naming the store`() {
+    // Both "no reconcile has run yet" and "this store has no such page" land here, and both must
+    // leave the existing managed-elsewhere copy in place rather than an inert button.
+    val state = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(origin_platform = "play_store"),
+      TimeZone.UTC,
+      store = null,
+    )
+    assertThat(state.managementUrl).isNull()
+    assertThat(state.purchasePlatform).isEqualTo(PurchasePlatform.PLAY_STORE)
+  }
+
+  @Test
+  fun `a management url that is not https is refused`() {
+    // Second gate behind the server's own scheme check. This value came from a third party and is
+    // handed to a URI handler — on web, straight to the browser — so `javascript:` must never reach
+    // it, including from a doc written before the server validated.
+    for (hostile in listOf(
+      "javascript:alert(1)",
+      "data:text/html,<script>alert(1)</script>",
+      "http://play.google.com/store/account/subscriptions",
+      "",
+    )) {
+      assertThat(manageableUrlOrNull(hostile)).isNull()
+    }
+  }
+
+  @Test
+  fun `a Pro account with no management link asks the server to reconcile`() = runTest {
+    // The gap this closes: `management_url` is REST-only, so a purchase whose webhook worked is
+    // never reconciled and never learns it — and the daily scan only looks at STALE entitlements, so
+    // a healthy subscription would wait until it lapsed to get a link. Web has no billing SDK at
+    // all, so without this it never gets one.
+    val reconciler = RecordingReconciler()
+    viewModel(
+      status = Subscription.Status.STATUS_PRO,
+      reconciler = reconciler,
+      subscription = Subscription(origin_platform = "play_store"),
+    )
+    runCurrent()
+
+    assertThat(reconciler.calls).isEqualTo(1)
+  }
+
+  @Test
+  fun `a Pro account that already has a management link asks for nothing`() = runTest {
+    val reconciler = RecordingReconciler()
+    viewModel(status = Subscription.Status.STATUS_PRO, reconciler = reconciler)
+    runCurrent()
+
+    assertThat(reconciler.calls).isEqualTo(0)
+  }
+
+  @Test
+  fun `a build whose own store sold the subscription does not ask for a link`() = runTest {
+    // It opens the Customer Center instead, which is richer than any URL — asking would burn a
+    // provider lookup for a link the page will never render.
+    val reconciler = RecordingReconciler()
+    viewModel(
+      status = Subscription.Status.STATUS_PRO,
+      reconciler = reconciler,
+      billingManager = FakeBillingManager(PurchasePlatform.PLAY_STORE),
+      subscription = Subscription(origin_platform = "play_store"),
+    )
+    runCurrent()
+
+    assertThat(reconciler.calls).isEqualTo(0)
+  }
+
+  @Test
+  fun `a free account is never asked about a management link`() = runTest {
+    val reconciler = RecordingReconciler()
+    viewModel(
+      status = Subscription.Status.STATUS_FREE,
+      reconciler = reconciler,
+      subscription = Subscription(origin_platform = "play_store"),
+    )
+    runCurrent()
+
+    assertThat(reconciler.calls).isEqualTo(0)
+  }
+
+  @Test
   fun `a guest cannot subscribe`() = runTest {
     // A guest account cannot be recovered on another device, so letting one buy a subscription
     // would take the pilot's money and tie it to an identity they can lose.
@@ -239,7 +340,23 @@ class SubscriptionUiStateTest {
 
   private companion object {
     private const val GRACE = 10_000L
+
+    /**
+     * The default fixture entitlement: Pro with a management link already known.
+     *
+     * Deliberately "already linked" so the watchdog tests below measure only the watchdog. The
+     * ViewModel also asks for a reconcile when a Pro account has *no* management URL (#363), and a
+     * default of `Subscription()` would fire that on construction and be counted as a watchdog call.
+     */
+    private val ALREADY_LINKED = Subscription(
+      management_url = "https://play.google.com/store/account/subscriptions",
+    )
   }
+
+  /** A build that transacts with [store]; every other capability stays the unsupported no-op. */
+  private class FakeBillingManager(
+    override val store: PurchasePlatform?,
+  ) : BillingManager by UnsupportedBillingManager
 
   /** Counts reconcile requests so a test can assert the watchdog fired exactly once. */
   private class RecordingReconciler : EntitlementReconciler {
@@ -258,8 +375,9 @@ class SubscriptionUiStateTest {
     reconciler: EntitlementReconciler,
     billingManager: BillingManager = UnsupportedBillingManager,
     isGuest: Boolean = false,
+    subscription: Subscription = ALREADY_LINKED,
   ) = SubscriptionViewModel(
-    subscriptionManager = FixedSubscriptionManager(status),
+    subscriptionManager = FixedSubscriptionManager(status, subscription),
     billingManager = billingManager,
     entitlementReconciler = reconciler,
     authManager = authManager(isGuest),
@@ -289,9 +407,10 @@ class SubscriptionUiStateTest {
 
   private class FixedSubscriptionManager(
     private val status: Subscription.Status,
+    private val subscription: Subscription = ALREADY_LINKED,
   ) : SubscriptionManager {
     override fun status(): Flow<Subscription.Status> = flowOf(status)
-    override fun entitlement(): Flow<Subscription> = flowOf(Subscription())
+    override fun entitlement(): Flow<Subscription> = flowOf(subscription)
     override fun canUploadAttachments(): Flow<Boolean> = flowOf(false)
     override fun canEmailExports(): Flow<Boolean> = flowOf(false)
     override fun canHostShare(): Flow<Boolean> = flowOf(false)

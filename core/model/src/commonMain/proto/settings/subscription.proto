@@ -28,6 +28,20 @@ message Subscription {
   int64 storage_bytes_used = 8;
   // Per-tier cap; 0 = unlimited (v1). Reserved for future per-tier quotas.
   int64 storage_quota_bytes = 9;
+  // Deep link to the store's own subscription management page for THIS purchase, as reported by
+  // RevenueCat (`management_url`). Empty when unknown.
+  //
+  // Exists for web, which has no billing SDK at all — no Customer Center and no way to derive this
+  // locally — so the only way the web app can offer a working "Manage" is to be told the URL. It is
+  // equally useful on a native build reading a subscription bought on another store.
+  //
+  // Only ever arrives via the REST reconciler: the webhook event does not carry this field, so
+  // `applyEntitlement` preserves whatever it already holds when an update omits it. A purchase is
+  // therefore manageable-by-link only once a reconcile has run, not the instant it completes.
+  //
+  // Always an `https:` URL — the server rejects any other scheme before persisting, because the
+  // client hands this straight to a URI handler.
+  string management_url = 10;
 
   enum Status {
     STATUS_FREE = 0;

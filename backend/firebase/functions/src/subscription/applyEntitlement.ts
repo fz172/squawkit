@@ -57,6 +57,10 @@ export async function applyEntitlement(update: NormalizedEntitlement): Promise<A
         willRenew: update.willRenew,
         source: update.source,
         originPlatform: update.originPlatform,
+        // Omitted from the merge entirely when the source doesn't know it (#363). The webhook event
+        // carries no `management_url`, so writing `""` here would blank the link a reconcile had
+        // learned every time a renewal came through.
+        ...(update.managementUrl === undefined ? {} : { managementUrl: update.managementUrl }),
       },
       { merge: true },
     );
@@ -65,7 +69,15 @@ export async function applyEntitlement(update: NormalizedEntitlement): Promise<A
   });
 
   if (result.applied) {
-    logger.info("Applied entitlement", { uid: update.uid, eventId: update.eventId, source: update.source });
+    logger.info("Applied entitlement", {
+      uid: update.uid,
+      eventId: update.eventId,
+      source: update.source,
+      // Distinguishes the three states of the management URL at the single writer: written with a
+      // value, deliberately cleared, or left untouched because the source could not know it (#363).
+      managementUrl:
+        update.managementUrl === undefined ? "(unchanged)" : update.managementUrl || "(cleared)",
+    });
   } else {
     logger.info("Skipped duplicate entitlement event", { uid: update.uid, eventId: update.eventId });
   }

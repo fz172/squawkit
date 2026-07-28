@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -61,6 +62,17 @@ data class SubscriptionUiState(
    * saying plainly where the plan lives. See [canManageHere].
    */
   val canManage: Boolean = false,
+  /**
+   * The store's own management page for this subscription, when the server has learned one (#363).
+   *
+   * The fallback for every surface [canManage] excludes — above all web, where there is no billing
+   * SDK to open a Customer Center with. A link is strictly better than the "go find the device you
+   * bought it on" copy, so it wins whenever it is present.
+   *
+   * `null` covers both "no reconcile has run yet" and "this store exposes no such page" (the Test
+   * Store exposes none at all), and both correctly fall back to naming the store.
+   */
+  val managementUrl: String? = null,
   /**
    * Signed in as a guest (anonymous Firebase account), which must not be allowed to subscribe.
    *
@@ -126,7 +138,7 @@ internal fun canManageHere(
 
 class SubscriptionViewModel(
   private val subscriptionManager: SubscriptionManager,
-  billingManager: BillingManager,
+  private val billingManager: BillingManager,
   private val authManager: AuthManager,
   private val entitlementReconciler: EntitlementReconciler = NoOpEntitlementReconciler,
   /** How long to wait for the webhook before asking the server to re-check. Overridden in tests. */
@@ -135,6 +147,45 @@ class SubscriptionViewModel(
 
   private val purchasePending = MutableStateFlow(false)
   private var activationWatchdog: Job? = null
+
+  init {
+    requestManagementUrlIfMissing()
+  }
+
+  /**
+   * Ask the server to reconcile when this account holds Pro but has no management URL yet (#363).
+   *
+   * The URL lives only on RevenueCat's REST subscriber view, never on a webhook event, so a purchase
+   * whose webhook worked perfectly is never reconciled and never learns it. The daily scan's other
+   * population is *stale* entitlements, and a healthy subscription is by definition not stale — so
+   * without this the pilot on the surface that most needs the link (web, which has no billing SDK at
+   * all) would wait for their subscription to lapse before getting one.
+   *
+   * Only asked where the link would actually be used: a build whose own store sold the subscription
+   * opens the Customer Center instead and needs nothing. Fire-and-forget, and safe to repeat — the
+   * callable is throttled per account server-side, so an account whose provider genuinely reports no
+   * URL (the Test Store reports none) costs one cheap rejected call per page visit at worst.
+   */
+  private fun requestManagementUrlIfMissing() {
+    viewModelScope.launch {
+      // firstOrNull, not first: an account that never becomes Pro simply has nothing to ask about,
+      // and `first` would throw NoSuchElementException the moment the upstream flow completed.
+      val subscription = combine(
+        subscriptionManager.status(),
+        subscriptionManager.entitlement(),
+      ) { status, subscription -> status to subscription }
+        .firstOrNull { (status, _) -> status == Subscription.Status.STATUS_PRO }
+        ?.second ?: return@launch
+
+      val needsLink = !canManageHere(
+        purchasePlatformOf(subscription.origin_platform),
+        billingManager.store,
+      )
+      if (needsLink && manageableUrlOrNull(subscription.management_url) == null) {
+        entitlementReconciler.reconcileNow()
+      }
+    }
+  }
 
   val uiState: StateFlow<SubscriptionUiState> =
     combine(
@@ -224,9 +275,20 @@ internal fun toSubscriptionUiState(
     isActivating = isActivating,
     purchasePlatform = purchasePlatform,
     canManage = canManageHere(purchasePlatform, store),
+    managementUrl = manageableUrlOrNull(subscription.management_url),
     isGuest = isGuest,
   )
 }
+
+/**
+ * The synced management URL, if it is one we are willing to open.
+ *
+ * The server already scheme-checks before persisting, so this is the second of two gates rather than
+ * the only one — kept because the value originates with a third party and ends up at a URI handler,
+ * and because a doc written by an older server predates that check. Cheap enough to be worth it.
+ */
+internal fun manageableUrlOrNull(url: String): String? =
+  url.trim().takeIf { it.startsWith("https://", ignoreCase = true) }
 
 private fun Long.toDisplayDateOrNull(timeZone: TimeZone): String? =
   if (this <= 0L) {

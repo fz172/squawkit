@@ -1,3 +1,7 @@
+import { createHash } from "node:crypto";
+
+import { logger } from "firebase-functions/v2";
+
 import {
   ENTITLEMENT_SOURCE,
   SUBSCRIPTION_LIFECYCLE,
@@ -22,10 +26,15 @@ import type { RevenueCatSubscriber, RevenueCatSubscription } from "./revenueCatA
  */
 
 /** A subscriber with no Pro entitlement resolves to this — the account is simply Free. */
-function lapsed(uid: string, nowMillis: number, originPlatform: string): NormalizedEntitlement {
+function lapsed(
+  uid: string,
+  nowMillis: number,
+  originPlatform: string,
+  managementUrl: string,
+): NormalizedEntitlement {
   return {
     uid,
-    eventId: reconcileEventId(uid, SUBSCRIPTION_LIFECYCLE.EXPIRED, 0),
+    eventId: reconcileEventId(uid, SUBSCRIPTION_LIFECYCLE.EXPIRED, 0, managementUrl),
     status: SUBSCRIPTION_STATUS.FREE,
     lifecycle: SUBSCRIPTION_LIFECYCLE.EXPIRED,
     // Never known from an absent entitlement; `applyEntitlement` keeps whatever it already has.
@@ -34,6 +43,7 @@ function lapsed(uid: string, nowMillis: number, originPlatform: string): Normali
     willRenew: false,
     source: ENTITLEMENT_SOURCE.STORE_PURCHASE,
     originPlatform,
+    managementUrl,
   };
 }
 
@@ -44,9 +54,23 @@ function lapsed(uid: string, nowMillis: number, originPlatform: string): Normali
  * Deriving it from the *resolved outcome* means a run that finds nothing new is a no-op write rather
  * than churn: reconciling the same unchanged state tomorrow produces the same id and is skipped. A
  * genuine change produces a different id and applies.
+ *
+ * The management URL is part of that outcome (#363), and must be — otherwise an account already
+ * reconciled into its current lifecycle and period end would recompute the *same* id when the URL is
+ * later learned, hit its own marker, and skip the write. The field would stay absent, so the backfill
+ * would re-select it and burn a RevenueCat lookup every night with no way to ever settle.
+ *
+ * Hashed rather than interpolated: this string becomes a Firestore document id under
+ * `entitlement_ingest/`, and a URL contains `/`, which is illegal there.
  */
-export function reconcileEventId(uid: string, lifecycle: number, periodEndMillis: number): string {
-  return `reconcile:${uid}:${lifecycle}:${periodEndMillis}`;
+export function reconcileEventId(
+  uid: string,
+  lifecycle: number,
+  periodEndMillis: number,
+  managementUrl = "",
+): string {
+  const urlTag = createHash("sha1").update(managementUrl).digest("hex").slice(0, 8);
+  return `reconcile:${uid}:${lifecycle}:${periodEndMillis}:${urlTag}`;
 }
 
 /**
@@ -72,13 +96,17 @@ export function normalizeSubscriber(
     latestSubscription(subscriber);
 
   const originPlatform = originPlatformForStore(normalizeStore(subscription?.store ?? null));
+  // Always resolved, never left `undefined`: the REST view is the only source that can answer this,
+  // so a reconcile that finds none is the authoritative "there is no link" and must clear a stale
+  // one. The webhook path is what leaves it `undefined`. See NormalizedEntitlement.managementUrl.
+  const managementUrl = safeManagementUrl(subscriber.management_url);
 
   const expiresAt = toMillis(entitlement?.expires_date);
   // A lifetime entitlement has no expiry: entitled, nothing to wait for.
   const isLifetime = entitlement != null && entitlement.expires_date == null;
 
   if (entitlement == null || (!isLifetime && (expiresAt == null || expiresAt <= nowMillis))) {
-    return lapsed(uid, nowMillis, originPlatform);
+    return lapsed(uid, nowMillis, originPlatform, managementUrl);
   }
 
   const graceEndsAt = toMillis(
@@ -105,7 +133,7 @@ export function normalizeSubscriber(
 
   return {
     uid,
-    eventId: reconcileEventId(uid, lifecycle, periodEnd),
+    eventId: reconcileEventId(uid, lifecycle, periodEnd, managementUrl),
     status: SUBSCRIPTION_STATUS.PRO,
     lifecycle,
     memberSinceMillis:
@@ -118,7 +146,37 @@ export function normalizeSubscriber(
     willRenew: unsubscribedAt == null && !isLifetime,
     source: ENTITLEMENT_SOURCE.STORE_PURCHASE,
     originPlatform,
+    managementUrl,
   };
+}
+
+/**
+ * The provider's `management_url`, or `""` if it is absent or not something we are willing to hand
+ * to a client's URI handler.
+ *
+ * Scheme-checked here rather than on the client because this is the boundary the value crosses from
+ * a third party into our own storage: the web app opens whatever ends up in this field, so a
+ * `javascript:` or `data:` URL reaching Firestore would be a stored redirect/XSS vector aimed at
+ * our own users. `https:` only — every real store management page is https, and RevenueCat's own
+ * `management_url` always is.
+ *
+ * Note the failure mode is deliberately silent-and-empty rather than an exception: a malformed URL
+ * must not abort a reconcile that is otherwise correctly resolving whether someone keeps their Pro.
+ */
+function safeManagementUrl(url: string | null | undefined): string {
+  if (typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (trimmed.length === 0) return "";
+  try {
+    if (new URL(trimmed).protocol === "https:") return trimmed;
+  } catch {
+    // Falls through to the rejection log below — an unparseable URL is refused like any other.
+  }
+  // Loud, because the two ways this line is reached are very different: a provider that changed its
+  // URL format (our bug, and every subscriber silently loses their Manage link), or a genuinely
+  // hostile value. Silently returning "" would make the first indistinguishable from "no URL".
+  logger.warn("Refused a non-https management_url from RevenueCat", { managementUrl: trimmed });
+  return "";
 }
 
 /**

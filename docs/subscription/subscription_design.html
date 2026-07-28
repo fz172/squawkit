@@ -128,12 +128,20 @@ message Subscription {
   string  origin_platform     = 7;  // "ios" | "android" | "web" — informational
   int64   storage_bytes_used  = 8;  // written by the storage sweep (§7)
   int64   storage_quota_bytes = 9;  // 0 = unlimited (v1); reserved for future tiers
+  string  management_url      = 10; // store's own manage page; REST-only, "" until known
 
   enum Status    { STATUS_FREE = 0; STATUS_PRO = 1; }         // ordered, extensible
   enum Lifecycle { NONE = 0; TRIALING = 1; ACTIVE = 2; CANCELED = 3; GRACE = 4; EXPIRED = 5; }
   enum Source    { SOURCE_UNSPECIFIED = 0; STORE_PURCHASE = 1; SERVER_GRANT = 2; }
 }</code></pre>
       <p>The proto enums carry a 0-valued default, so an absent doc reads as <code>Subscription.Status.STATUS_FREE</code>. Because the app has <b>not launched</b>, we can define wire names and fields freely — no migration constraints.</p>
+
+      <p><code>management_url</code> exists for <b>web</b>, which has no billing SDK at all — <code>purchases-kmp</code> publishes no Kotlin/JS variant, so there is no Customer Center and no <code>CustomerInfo.managementUrl</code> to read locally. Carrying the URL on the entitlement is the only way the web app can offer a working "Manage"; it is equally useful on a native build showing a subscription bought on another store. Two properties are load-bearing:</p>
+      <ul>
+        <li><b>REST-only.</b> RevenueCat's webhook events do not carry <code>management_url</code> — only the subscriber REST view does. So the value arrives via the reconciler (§7), never the purchase webhook, and a purchase is manageable-by-link only after a reconcile has run. <code>applyEntitlement</code> therefore omits the field from its merge when a source does not know it, rather than writing <code>""</code> and blanking the link on the next renewal.</li>
+        <li><b>https only.</b> The client hands this straight to a URI handler — on web, straight to the browser — so the server rejects any other scheme before persisting. A <code>javascript:</code> URL reaching Firestore would be stored XSS aimed at our own subscribers. The client re-checks as a second gate.</li>
+      </ul>
+      <p>The Test Store exposes no <code>management_url</code> at all, so before GA this field is empty in developer and dogfood builds and the UI falls back to naming the store.</p>
 
       <h3>CollectionKind + local cache</h3>
       <p>The client caches the entitlement in the local store like any other entity, so the manager reads it offline through an <code>EntityStore&lt;Subscription&gt;</code>. The <b>local</b> cache is keyed at <code>userRoot(uid)</code>; only the <i>remote</i> source differs (a dedicated listener, below — not the generic sync).</p>

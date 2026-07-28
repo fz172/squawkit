@@ -46,6 +46,17 @@ export type NormalizedEntitlement = {
   willRenew: boolean;
   source: number;
   originPlatform: string;
+  /**
+   * The store's management deep link, when this source knows it (#363).
+   *
+   * Three-valued on purpose, and the distinction matters:
+   * - `undefined` — this source cannot know. The webhook event carries no `management_url` at all,
+   *   so an event must leave whatever a previous reconcile learned untouched rather than blank it.
+   * - `""` — the provider was asked and reported none (the Test Store never exposes one). Clears a
+   *   stale value.
+   * - a URL — persisted and rendered as a working Manage link.
+   */
+  managementUrl?: string;
 };
 
 /** Server-authoritative entitlement doc, read by the owner and by the client's sync listener. */

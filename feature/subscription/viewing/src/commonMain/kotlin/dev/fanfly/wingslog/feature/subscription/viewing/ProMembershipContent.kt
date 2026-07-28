@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,6 +60,7 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_co
 import wingslog.feature.subscription.viewing.generated.resources.subscription_ends
 import wingslog.feature.subscription.viewing.generated.resources.subscription_manage
 import wingslog.feature.subscription.viewing.generated.resources.subscription_manage_caption
+import wingslog.feature.subscription.viewing.generated.resources.subscription_manage_link_caption
 import wingslog.feature.subscription.viewing.generated.resources.subscription_managed_elsewhere_body
 import wingslog.feature.subscription.viewing.generated.resources.subscription_managed_elsewhere_body_web
 import wingslog.feature.subscription.viewing.generated.resources.subscription_managed_elsewhere_caption
@@ -104,10 +106,15 @@ internal fun ProMembershipContent(
   PerkGrid()
 
   Spacer(Modifier.height(Spacing.small))
-  if (state.canManage) {
-    ManageAction(onManage)
-  } else {
-    ManagedElsewhere(isPurchaseSupported = state.isPurchaseSupported)
+  val managementUrl = state.managementUrl
+  when {
+    // This build's own store sold it: the Customer Center is richer than any link — it can change
+    // plan, apply a promo and handle a refund request in-app.
+    state.canManage -> ManageAction(onManage)
+    // No Customer Center here, but the server knows where the plan actually lives. Sending the pilot
+    // straight there beats telling them to go find another device (#363).
+    managementUrl != null -> ManageElsewhereLink(managementUrl)
+    else -> ManagedElsewhere(isPurchaseSupported = state.isPurchaseSupported)
   }
 }
 
@@ -374,8 +381,37 @@ private fun PerkCard(
 
 @Composable
 private fun ManageAction(onManage: () -> Unit) {
-  OutlinedButton(
+  ManageButton(
+    caption = stringResource(Res.string.subscription_manage_caption),
     onClick = onManage,
+  )
+}
+
+/**
+ * Manage a subscription this build's store cannot reach, by opening the store's own page.
+ *
+ * The web app's only route to managing anything: `purchases-kmp` publishes no Kotlin/JS variant, so
+ * there is no Customer Center and no `CustomerInfo.managementUrl` to ask for locally — the URL has
+ * to be carried on the synced entitlement instead (#363). Equally the right answer on a native build
+ * showing a subscription bought on some other store.
+ *
+ * The caption names no store because the card above already does, in a row sourced from the same
+ * entitlement — repeating it under the button would be the third time on one screen.
+ */
+@Composable
+private fun ManageElsewhereLink(url: String) {
+  val uriHandler = LocalUriHandler.current
+  ManageButton(
+    caption = stringResource(Res.string.subscription_manage_link_caption),
+    onClick = { uriHandler.openUri(url) },
+  )
+}
+
+/** The page's one "leave for the store" control, whatever is on the other end of it. */
+@Composable
+private fun ManageButton(caption: String, onClick: () -> Unit) {
+  OutlinedButton(
+    onClick = onClick,
     shape = RoundedCornerShape(Spacing.buttonCornerRadius),
     modifier = Modifier
       .fillMaxWidth()
@@ -395,7 +431,7 @@ private fun ManageAction(onManage: () -> Unit) {
     )
   }
   SubscriptionCaption(
-    text = stringResource(Res.string.subscription_manage_caption),
+    text = caption,
     textAlign = TextAlign.Center,
   )
 }

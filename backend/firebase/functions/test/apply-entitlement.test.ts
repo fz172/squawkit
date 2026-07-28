@@ -50,6 +50,42 @@ describe("applyEntitlement", () => {
     });
   });
 
+  it("persists a management URL the source knows", async () => {
+    await applyEntitlement(entitlement({ managementUrl: "https://play.google.com/store/account/subscriptions" }));
+
+    expect((await subDoc().get()).data()?.managementUrl).toBe(
+      "https://play.google.com/store/account/subscriptions",
+    );
+  });
+
+  it("leaves a stored management URL alone when the source cannot know it (#363)", async () => {
+    // The whole reason `managementUrl` is optional rather than defaulted to "". A reconcile learns
+    // the URL from the REST view; every webhook that follows — a renewal, a cancellation — carries
+    // no `management_url` at all. Writing "" for those would blank the link on the next renewal and
+    // web would silently fall back to "go find the device you bought it on".
+    await applyEntitlement(
+      entitlement({ eventId: "reconcile", managementUrl: "https://apps.apple.com/account/subscriptions" }),
+    );
+
+    await applyEntitlement(entitlement({ eventId: "renewal-webhook", managementUrl: undefined }));
+
+    expect((await subDoc().get()).data()?.managementUrl).toBe(
+      "https://apps.apple.com/account/subscriptions",
+    );
+  });
+
+  it("clears a stale management URL when the provider reports none", async () => {
+    // The other half: "" is a real answer, not an absent one. A subscription that moved stores (or
+    // a Test Store purchase, which exposes no page at all) must stop offering a link that 404s.
+    await applyEntitlement(
+      entitlement({ eventId: "reconcile-1", managementUrl: "https://play.google.com/store/account/subscriptions" }),
+    );
+
+    await applyEntitlement(entitlement({ eventId: "reconcile-2", managementUrl: "" }));
+
+    expect((await subDoc().get()).data()?.managementUrl).toBe("");
+  });
+
   it("is idempotent — a re-delivered event does not apply twice", async () => {
     await applyEntitlement(entitlement());
     // Same event id, different payload: a retry/re-delivery must be a no-op, not an overwrite.
