@@ -119,6 +119,21 @@ describe("normalizeRevenueCatEvent", () => {
     expect(normalizeToEntitlement(event({ store: "SOMETHING_NEW" })).originPlatform).toBe("unknown");
   });
 
+  it("labels a dashboard promo as a grant, not a purchase", () => {
+    // Nobody paid, there is no receipt, and there is no store page to cancel it at. Reporting it as
+    // STORE_PURCHASE made `source` disagree with `origin_platform` and forced every consumer to
+    // special-case the pair — the client shows no manage affordance for a comp.
+    const promo = normalizeToEntitlement(event({ store: "PROMOTIONAL" }));
+    expect(promo.source).toBe(ENTITLEMENT_SOURCE.SERVER_GRANT);
+    expect(promo.originPlatform).toBe("promotional");
+  });
+
+  it("still labels a real store purchase as one", () => {
+    expect(normalizeToEntitlement(event({ store: "PLAY_STORE" })).source).toBe(
+      ENTITLEMENT_SOURCE.STORE_PURCHASE,
+    );
+  });
+
   it("carries the RevenueCat event id through as the idempotency key", () => {
     expect(normalizeToEntitlement(event({ id: "rc-evt-99" })).eventId).toBe("rc-evt-99");
   });

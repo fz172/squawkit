@@ -108,6 +108,10 @@ internal fun ProMembershipContent(
   Spacer(Modifier.height(Spacing.small))
   val managementUrl = state.managementUrl
   when {
+    // Granted, not bought: nothing to cancel, nowhere to send anyone, so no affordance at all. Even
+    // the "managed on another platform" notice would be wrong — it tells the pilot to open the app
+    // on the device they purchased with, and there was no purchase.
+    state.isComped -> Unit
     // This build's own store sold it: the Customer Center is richer than any link — it can change
     // plan, apply a promo and handle a refund request in-app.
     state.canManage -> ManageAction(onManage)

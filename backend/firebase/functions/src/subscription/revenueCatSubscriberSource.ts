@@ -41,7 +41,7 @@ function lapsed(
     memberSinceMillis: 0,
     currentPeriodEndMillis: nowMillis,
     willRenew: false,
-    source: ENTITLEMENT_SOURCE.STORE_PURCHASE,
+    source: sourceForOriginPlatform(originPlatform),
     originPlatform,
     managementUrl,
   };
@@ -144,7 +144,7 @@ export function normalizeSubscriber(
     // Nothing further is coming once the customer has unsubscribed; a lifetime purchase likewise
     // never renews, and must therefore not be treated as "awaiting a renewal".
     willRenew: unsubscribedAt == null && !isLifetime,
-    source: ENTITLEMENT_SOURCE.STORE_PURCHASE,
+    source: sourceForOriginPlatform(originPlatform),
     originPlatform,
     managementUrl,
   };
@@ -207,6 +207,19 @@ function latestSubscription(subscriber: RevenueCatSubscriber): RevenueCatSubscri
   return all.reduce((best, candidate) =>
     (toMillis(candidate.expires_date) ?? 0) > (toMillis(best.expires_date) ?? 0) ? candidate : best,
   );
+}
+
+/**
+ * A dashboard promo is a grant, not a purchase — the same call the webhook path makes.
+ *
+ * Kept in step with `normalizeRevenueCatEvent`: if only one of the two sources labelled a comp
+ * honestly, a reconcile would silently flip it back and the account would change shape depending on
+ * which path last touched it.
+ */
+function sourceForOriginPlatform(originPlatform: string): number {
+  return originPlatform === "promotional"
+    ? ENTITLEMENT_SOURCE.SERVER_GRANT
+    : ENTITLEMENT_SOURCE.STORE_PURCHASE;
 }
 
 /**
