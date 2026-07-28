@@ -18,8 +18,10 @@
 Introduce **display ads on the free tier only**, rendered as ordinary cards interleaved into the three
 record lists a pilot actually lives in — **squawks**, **maintenance tasks**, and **maintenance logs** —
 at a cadence of **one ad every 10 items**, with a single trailing ad for lists shorter than 10 items and
-**no ad at all when a list is empty**. SquawkIt Pro remains completely ad-free, and "Ad-free" becomes a
-line in the tier comparison table, giving the paywall a second, continuously visible argument.
+**no ad at all when a list is empty**. Volume is bounded by a hard **cap of 10 ad units per session** across
+all surfaces, and wide layouts render **thin** units — two side by side, or one centered — so a full-width
+slot never becomes a billboard. SquawkIt Pro remains completely ad-free, and "Ad-free" becomes a line in the
+tier comparison table, giving the paywall a second, continuously visible argument.
 
 Ads are a **revenue floor for users who will never subscribe**, not a replacement for the subscription.
 Every design decision below resolves in favor of the record, not the ad: ads never appear above
@@ -40,7 +42,7 @@ population at a per-user rate that is small but non-zero and, critically, **scal
 than with intent to pay**.
 
 There is a second effect worth stating plainly: an ad in the list is a standing, honest reminder that a paid
-tier exists. We expect ads to *raise* free→Pro conversion, not depress it — and §11 makes conversion a
+tier exists. We expect ads to *raise* free→Pro conversion, not depress it — and §12 makes conversion a
 tracked guardrail rather than an assumption.
 
 ---
@@ -49,6 +51,7 @@ tracked guardrail rather than an assumption.
 
 - Monetize the free tier with **in-list display ads** on squawks, maintenance tasks, and maintenance logs.
 - Keep the free tier's *function* fully intact — ads add a card, they never remove or gate a capability.
+- Hold total exposure to **10 ad units per session** and thin, card-sized creatives at every layout tier.
 - Make **"Ad-free"** a first-class line of the Pro value proposition, in the docs table and in the app.
 - Ship behind a **build-time capability gate** so the feature can land dark and be enabled per platform.
 - Enforce ad-free for Pro **reactively** — the moment entitlement resolves to Pro, ads disappear without a
@@ -59,12 +62,12 @@ tracked guardrail rather than an assumption.
 
 - **Ads on any paid tier.** Pro is ad-free, permanently and without qualification.
 - **Interstitials, pop-ups, rewarded ads, video, or app-open ads.** In-list display cards only.
-- **Ads on the web target** in v1 (see §7 — the Kotlin/JS host gets a no-op ad slot).
+- **Ads on the web target** in v1 (see §8 — the Kotlin/JS host gets a no-op ad slot).
 - **Ads anywhere outside the three record lists** — no ads on dashboards, detail sheets, forms, wizards,
   pickers, settings, export flows, the technician list, search results, or the AOG / critical-alert sections.
 - **Removing ads as a standalone one-time purchase.** Ad removal is a Pro benefit, not a separate SKU.
 - **Using logbook content for targeting.** Contextual/network targeting only; see §10.
-- **Server-side ad mediation or a house-ad system.** v1 uses a single network (§12 open question).
+- **Server-side ad mediation or a house-ad system.** v1 uses a single network (§14, Q1).
 
 ---
 
@@ -82,6 +85,8 @@ These are binding constraints, not aspirations. A change that violates one is a 
 | G6 | **Clearly labeled.** Every ad card carries a "Sponsored" label and is visually distinct from a record card. An ad must never be mistakable for a squawk, task, or log. |
 | G7 | **Never blocks an action.** No ad is modal, dismissable-only, or placed under a tap target. Scrolling past an ad is the only interaction required. |
 | G8 | **Status colors are reserved.** The ad card uses neutral surface/outline tokens only — never the amber/red status palette, which means "your aircraft needs attention" and nothing else. |
+| G9 | **Bounded volume.** At most **10 ad units per session**, globally across all surfaces, and no timed refresh (§6.7). The cadence is a ceiling on placement; the cap is a ceiling on exposure. |
+| G10 | **No billboards.** Ad height never exceeds the record card beside it. On wide layouts the slot uses its width for a second thin unit or centered padding — never for a taller, stretched creative (§7.1). |
 
 ---
 
@@ -161,15 +166,22 @@ function of the rendered item count, and `f(0) = 0`.**
   own `n`. Switching the toggle re-evaluates from scratch.
 - **Multi-column tiers** (`AdaptiveCardList` with `columns > 1`): the ad occupies a **full-width row
   spanning all columns**, inserted after the row containing the 10th item. Cadence stays per-item, not
-  per-row — a 3-column tier still gets one ad per 10 records.
-- **Wide log table** (`MaintenanceLogTable`, MEDIUM+): the ad renders as a **full-width band between table
-  rows**, matching the table's horizontal insets, after every 10th row. If the band cannot be made to look
-  deliberate in the table, the acceptable fallback is **no ads in the table view** — never a cramped ad
-  jammed into a data cell.
+  per-row — a 2-column tier still gets one ad per 10 records.
+- **Wide log table** (`MaintenanceLogTable`, MEDIUM+): **ads are shown here too.** The slot renders as a
+  full-width **band between table rows**, matching the table's horizontal insets, after every 10th row. The
+  band is chrome, not data: it carries the "Sponsored" label and never adopts the table's column rules,
+  zebra striping, or row height — a pilot scanning a column of dates must never have to parse an ad as a
+  row. An ad is never jammed into a data cell.
+
+Wide slots — grid rows and table bands alike — use the thin two-up / centered format in §7.1, which is what
+keeps a full-width slot from becoming a billboard.
 
 ### 6.6 Worked examples (test matrix)
 
-| Rendered items `n` | Ads | Ad positions (after item #) |
+Positions are the **slots** the cadence produces; the session cap in §6.7 decides how many of them actually
+fill, and §7.1 decides how many ad units live inside each one.
+
+| Rendered items `n` | Ad slots | Slot positions (after item #) |
 |---|---|---|
 | 0 | 0 | — (empty state, no ad) |
 | 1 | 1 | 1 (last card) |
@@ -181,6 +193,27 @@ function of the rendered item count, and `f(0) = 0`.**
 | 20 | 2 | 10, 20 (second is last card) |
 | 25 | 2 | 10, 20 |
 | 100 | 10 | 10, 20, … , 100 |
+
+### 6.7 Session cap — at most 10 ads per session
+
+The cadence decides *where* ads may appear; the cap decides *how many* actually do.
+
+**No more than 10 ad units are displayed per app session**, counted **globally across all three surfaces**,
+not per list. A pilot who scrolls a 400-entry logbook, switches to squawks, and comes back sees 10 ads, not
+60.
+
+| Rule | Definition |
+|---|---|
+| **What counts** | One **filled ad unit** counts as one against the cap, at the moment it is first displayed. A slot holding two side-by-side units (§7.1) counts as **two**. Unfilled slots, collapsed slots, and failed requests count as **zero**. |
+| **Session boundary** | A session starts on cold start or on returning to the foreground after **≥ 30 minutes** in the background — the same convention as the analytics session, so ad volume and session counts stay comparable. The counter resets to 0 at each boundary and lives in an app-scoped singleton, not in a screen. |
+| **At the cap** | Once 10 units are displayed, every remaining slot in the session **renders at zero height** — no request, no label, no gap. Slots already filled stay as they are; ads do not disappear from under the user. |
+| **Near the cap** | With exactly one unit of headroom left, a wide slot that would render two-up falls back to **one centered unit** (§7.1) rather than overshooting the cap or rendering a half-empty band. |
+| **Scroll churn** | A slot's fill is cached per slot key for the lifetime of the screen, so scrolling up and down past the same ad does **not** consume more of the cap. A slot destroyed by memory pressure (N5) and later refilled does count again — this is the one accepted source of over-count, and it is bounded by N5's live-view budget. |
+| **No refresh** | Ad units **never auto-refresh** on a timer. A displayed ad is a single impression for as long as it lives. Timed refresh would burn the cap in minutes and is out of scope, in v1 and after. |
+
+The cap is a **product guardrail, not a revenue dial**: 10 units per session is roughly what a pilot sees in
+a long working session with the app, and raising it is a decision to be argued from §12's retention
+guardrails, not tuned quietly.
 
 ---
 
@@ -194,9 +227,34 @@ function of the rendered item count, and `f(0) = 0`.**
 - **Upgrade affordance:** a low-emphasis footer link — **"Remove ads with SquawkIt Pro"** — navigating to
   the subscription screen. This is the ad card's only in-app tap target besides the ad creative itself, and
   it is what makes the ad an argument for Pro rather than only a nuisance.
-- **Format:** an inline adaptive display unit, height driven by the network's adaptive sizing, capped so a
-  single ad never exceeds **~30% of the viewport height** on a phone.
+- **Format:** an inline adaptive display unit — see §7.1 for how the unit(s) are laid out per layout tier.
 - **Unfilled:** zero height, no label, no footer — the row collapses entirely (G5).
+
+### 7.1 Keeping the aspect ratio honest on wide layouts
+
+A full-width slot on a tablet or desktop window is 700–1400 dp across. Stretching one display unit to fill
+it produces a billboard — the single most out-of-place thing that could appear in a maintenance record list.
+The slot therefore always hosts **thin** units, and uses the width for *count*, not for height.
+
+| Layout tier | Slot contents | Rationale |
+|---|---|---|
+| **COMPACT** (< 700 dp) | **One** inline adaptive unit, full card width. | The phone width is already a normal banner width; nothing to correct. |
+| **MEDIUM** (700–1039 dp) | **One thin unit, centered** in the band, neutral padding either side. | Not wide enough for two readable units; centering keeps the band from looking like a stretched banner. |
+| **EXPANDED / LARGE** (≥ 1040 dp) | **Two thin units side by side**, each half the band minus the grid gutter — aligned to the same gutter `AdaptiveCardList` uses at `cardColumns == 2`. | Two normal-width ads read as content in a grid; one stretched ad reads as a takeover. |
+
+Additional rules:
+
+- **Thin means thin.** A wide-layout slot is capped at **120 dp** tall and must never exceed the height of
+  the record card beside it. On COMPACT the cap is the smaller of the network's adaptive height and **30%
+  of viewport height**.
+- **Partial fill recenters.** If a two-up slot gets only one unit filled — no fill, or one unit of cap
+  headroom left (§6.7) — the filled unit renders **centered**, exactly as the MEDIUM case. A band is never
+  shown half-empty.
+- **No fill collapses.** Both units unfilled → the whole row is zero height (G5).
+- **The band is one slot.** "Sponsored" is labeled **once** per slot, not once per unit, and the "Remove ads
+  with SquawkIt Pro" link appears once, at the band's trailing edge.
+- **Two units, two impressions.** A two-up slot counts as two against the session cap and emits two
+  `ad_impression` events (§12), distinguished by a `unit_position` param.
 
 ---
 
@@ -304,6 +362,11 @@ holding.
 | F10 | Developer Options exposes a **Force ads** toggle in developer builds. |
 | F11 | The subscription comparison table (doc **and** app) lists "Ad-free experience" as a Pro benefit (§9). |
 | F12 | Ad load, impression, click, upsell-tap, and fill-failure are instrumented (§12). |
+| F13 | **At most 10 ad units are displayed per session**, counted globally across all three surfaces; beyond the cap every slot renders at zero height and issues no request (§6.7). |
+| F14 | The session counter resets on cold start and on foregrounding after ≥ 30 minutes in the background, and lives in an app-scoped singleton. |
+| F15 | Wide slots render **two thin units side by side** at EXPANDED/LARGE and **one thin centered unit** at MEDIUM; a partially filled two-up slot recenters its single filled unit (§7.1). |
+| F16 | Ads render in the wide log table as a full-width band between rows, visually distinct from data rows (§6.5). |
+| F17 | Ad units never auto-refresh on a timer. |
 
 ### Non-Functional
 
@@ -315,7 +378,9 @@ holding.
 | N4 | The ad SDK is not a dependency of any `model` or `datamanager` module — it lives behind an `expect`/`actual` UI seam in `feature/ads/viewing` (no-op `actual` on JS). |
 | N5 | Memory: at most a small bounded number of ad views are alive per screen; slots scrolled far off-screen release their ad view. |
 | N6 | No ad SDK initialization, network call, or consent prompt occurs for a Pro user or an ads-unsupported build (P6). |
-| N7 | Accessibility: the ad card is a single focus group announced as "Advertisement"; the upgrade link is separately focusable and labeled. |
+| N7 | Accessibility: the ad card is a single focus group announced as "Advertisement"; the upgrade link is separately focusable and labeled. A two-up band announces two units in reading order within that group. |
+| N8 | A slot's fill is cached per slot key for the life of the screen, so scroll churn triggers neither a new request nor a second impression (§6.7). |
+| N9 | Ad height is capped at 120 dp on MEDIUM and wider, and at the lesser of the adaptive height and 30% of viewport height on COMPACT (G10). |
 
 ---
 
@@ -325,13 +390,16 @@ Events, via the existing `AnalyticsManager.logEvent`:
 
 | Event | Params |
 |---|---|
-| `ad_slot_filled` | `surface` (squawks/tasks/logs), `slot_index` |
-| `ad_impression` | `surface`, `slot_index` |
-| `ad_click` | `surface`, `slot_index` |
+| `ad_slot_filled` | `surface` (squawks/tasks/logs), `slot_index`, `unit_position` (`single`/`left`/`right`) |
+| `ad_impression` | `surface`, `slot_index`, `unit_position`, `session_count` (1–10, this unit's ordinal in the session) |
+| `ad_click` | `surface`, `slot_index`, `unit_position` |
 | `ad_fill_failed` | `surface`, `reason` |
 | `ad_upsell_tapped` | `surface` — the "Remove ads with SquawkIt Pro" link |
+| `ad_session_cap_reached` | `surface` — emitted once per session when the 10th unit displays; tells us how often the cap actually binds |
 
-**Primary:** ad revenue per free DAU; fill rate; impressions per free session.
+**Primary:** ad revenue per free DAU; fill rate; impressions per free session (bounded at 10 by F13 — a
+distribution pinned at 10 means the cap is the binding constraint, which is a product conversation, not a
+config change).
 **Secondary:** `ad_upsell_tapped` → subscribe conversion — the ad card as a paywall entry point.
 **Guardrails (a regression here overrides revenue):**
 - Free→Pro conversion must not fall; the hypothesis is that it rises.
@@ -350,23 +418,33 @@ Events, via the existing `AnalyticsManager.logEvent`:
 3. **GA gating.** Ads GA **cannot precede subscription GA** — `isSubscriptionSupported` must be `true`
    first, or free users would see ads with no way to remove them (§8, property 2).
 4. **Staged enable** per platform: Android first, iOS after ATT flow validation, web not at all in v1.
-5. **Kill switch.** There is no remote config in the codebase today; the v1 kill switch is a build-time flag
-   flip plus an expedited release. If that proves too slow, a remote-config-backed gate is the first
-   follow-up (§14).
+5. **Kill switch — build-time, decided.** There is no remote config in the codebase today, and a build-time
+   flag flip plus an expedited release is **accepted for v1**. No remote-config work is scheduled by this
+   PRD. The exposure a slow kill switch buys is bounded by the guardrails that are already structural: ads
+   are free-tier only, capped at 10 units per session, and never modal.
 
 ---
 
-## 14. Open Questions
+## 14. Decisions & Open Questions
+
+### Decided
+
+| # | Decision |
+|---|---|
+| D1 | **Session cap: 10 ad units**, global across surfaces, no timed refresh (§6.7, F13). |
+| D2 | **Build-time kill switch is sufficient** for v1; no remote config (§13.5). |
+| D3 | **The wide log table gets ads** — a full-width band between rows, not an ads-free surface (§6.5, F16). |
+| D4 | **Wide slots use thin units** — two side by side at EXPANDED/LARGE, one centered at MEDIUM (§7.1, F15). |
+
+### Open
 
 | # | Question | Owner |
 |---|---|---|
 | Q1 | Ad network: AdMob direct vs. a mediation layer. AdMob is the default assumption for a KMP app targeting Android + iOS. | Eng/Product |
-| Q2 | Exact unit format and max height per layout tier (adaptive inline banner vs. medium rectangle). | Design |
-| Q3 | Does the wide log **table** get full-width ad bands, or is it ads-free (§6.5 fallback)? | Design |
-| Q4 | Web ads (AdSense) — a separate v2 decision, since the Kotlin/JS host has no AdMob path. | Product |
-| Q5 | Frequency capping across sessions — does a pilot who opens the squawks list 20 times a day see 20 fresh ads? | Product |
-| Q6 | Does an ad-supported free tier change the case for raising the free aircraft limit above 1? | Product |
-| Q7 | Remote kill switch: is a build-time flag acceptable for v1 (§13.5)? | Eng |
+| Q2 | Exact ad unit sizes backing §7.1's thin format — which network unit is requested for the two-up half-band vs. the COMPACT inline unit. The layout rules and the 120 dp cap are fixed; the unit ids are not. | Design/Eng |
+| Q3 | Web ads (AdSense) — a separate v2 decision, since the Kotlin/JS host has no AdMob path. | Product |
+| Q4 | Frequency capping *across* sessions — the 10-unit cap is per session; a pilot with eight sessions a day still sees up to 80. Is a daily cap needed? | Product |
+| Q5 | Does an ad-supported free tier change the case for raising the free aircraft limit above 1? | Product |
 
 ---
 
@@ -376,16 +454,23 @@ Follows the canonical feature module pattern in [AGENTS.md](../../AGENTS.md):
 
 ```
 feature/ads/
-  model/          ListRow, withAdSlots(), AdSurface enum — pure Kotlin, unit-tested against §6.6
-  datamanager/    AdsGate (wraps SubscriptionManager.showsAds() + AppCapability.isAdsSupported)
-  viewing/        AdSlotCard (common) + expect/actual AdView
+  model/          ListRow, withAdSlots(), AdSurface enum, AdSlotFormat (Single / TwoUp)
+                    — pure Kotlin, unit-tested against §6.6
+  datamanager/    AdsGate     (SubscriptionManager.showsAds() + AppCapability.isAdsSupported)
+                  AdSessionCounter (app-scoped single: 10-unit cap, 30-min background reset)
+  viewing/        AdSlotCard (common: label, band layout, upsell link) + expect/actual AdView
                     androidMain: Google Mobile Ads inline adaptive banner
                     iosMain:     GADBannerView + ATT/UMP
                     jsMain:      no-op (renders nothing)
 ```
 
 - `SubscriptionManager` gains `showsAds()`; `AppCapability` gains `isAdsSupported`.
-- Koin module registered in `core/di/CommonAppModules.kt`, per the module rules.
+- Koin module registered in `core/di/CommonAppModules.kt`, per the module rules. `AdSessionCounter` is a
+  Koin `single` — the cap is global, so exactly one instance may exist per app.
+- `AdSlotFormat` is resolved from `LocalLayoutTier` plus the counter's remaining headroom, so §7.1's
+  "recenter when only one unit is available" falls out of one function rather than being handled at each
+  call site.
 - `feature/ads/model` carries **no** feature or UI dependencies, so the three list surfaces can depend on it
   without pulling in an ad SDK; only `feature/ads/viewing` touches the SDK (N4).
-- Unit tests for `withAdSlots` cover every row of §6.6 plus grouped/toggled counter behavior.
+- Unit tests cover: every row of §6.6; grouped/toggled counter behavior; the session cap (reset boundaries,
+  two-up consuming two, headroom-of-one falling back to centered); and `AdSlotFormat` per layout tier.
