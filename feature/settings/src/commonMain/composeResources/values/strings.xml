@@ -7,7 +7,7 @@
   <string name="settings_sync_subtitle">Keep your records synced across devices</string>
   <string name="settings_export_subtitle">Export and share your logbook</string>
   <string name="settings_developer_options_subtitle">Advanced controls, synced across your devices</string>
-  <string name="settings_subscription">SquawkIt Pro</string>
+  <string name="settings_subscription">Subscription</string>
   <string name="settings_subscription_subtitle">Your plan, benefits, and storage</string>
   <string name="account_upgrade_login_cta">Log in</string>
   <string name="account_upgrade_login_subtitle">Connect your records to an account to sync and back them up</string>
@@ -28,6 +28,6 @@
   <string name="developer_options_force_subscription_title">Force subscription status</string>
   <string name="developer_options_force_subscription_subtitle">Make this account behave as the chosen tier, ignoring the real entitlement.</string>
   <string name="developer_options_force_off">Off</string>
-  <string name="developer_options_force_free">Free</string>
-  <string name="developer_options_force_pro">Pro</string>
+  <string name="developer_options_force_free">Core</string>
+  <string name="developer_options_force_pro">Heavy</string>
 </resources>
