@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+import { logger } from "firebase-functions/v2";
+
 import {
   ENTITLEMENT_SOURCE,
   SUBSCRIPTION_LIFECYCLE,
@@ -166,10 +168,15 @@ function safeManagementUrl(url: string | null | undefined): string {
   const trimmed = url.trim();
   if (trimmed.length === 0) return "";
   try {
-    return new URL(trimmed).protocol === "https:" ? trimmed : "";
+    if (new URL(trimmed).protocol === "https:") return trimmed;
   } catch {
-    return "";
+    // Falls through to the rejection log below — an unparseable URL is refused like any other.
   }
+  // Loud, because the two ways this line is reached are very different: a provider that changed its
+  // URL format (our bug, and every subscriber silently loses their Manage link), or a genuinely
+  // hostile value. Silently returning "" would make the first indistinguishable from "no URL".
+  logger.warn("Refused a non-https management_url from RevenueCat", { managementUrl: trimmed });
+  return "";
 }
 
 /**

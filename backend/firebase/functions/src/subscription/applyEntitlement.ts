@@ -69,7 +69,15 @@ export async function applyEntitlement(update: NormalizedEntitlement): Promise<A
   });
 
   if (result.applied) {
-    logger.info("Applied entitlement", { uid: update.uid, eventId: update.eventId, source: update.source });
+    logger.info("Applied entitlement", {
+      uid: update.uid,
+      eventId: update.eventId,
+      source: update.source,
+      // Distinguishes the three states of the management URL at the single writer: written with a
+      // value, deliberately cleared, or left untouched because the source could not know it (#363).
+      managementUrl:
+        update.managementUrl === undefined ? "(unchanged)" : update.managementUrl || "(cleared)",
+    });
   } else {
     logger.info("Skipped duplicate entitlement event", { uid: update.uid, eventId: update.eventId });
   }
