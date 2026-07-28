@@ -12,6 +12,11 @@ Weight & Balance.
 > `attachmentUploadEnabled` feature-lab flag. The **Logbook Export** feature shipped and grew a server-side
 > **email-delivery** capability (a Firebase Functions backend under `backend/`). Weight & Balance remains future work.
 
+> **Proposed pivot.** [`multi_domain_maintenance_PRD.html`](multi_domain_maintenance_PRD.html) proposes generalizing the
+> product from aircraft-only to **any maintainable asset** (boat, car, bicycle, 3D printer, shop equipment) via a
+> per-asset **template** that determines spec fields, component tree, usage meters, and terminology. Nothing in it has
+> shipped; this document still describes the aviation product as built.
+
 ## 2. Scope
 
 The application focuses on General Aviation (GA) aircraft management, specifically targeting:
