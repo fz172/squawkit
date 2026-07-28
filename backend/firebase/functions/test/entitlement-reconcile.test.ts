@@ -311,6 +311,68 @@ describe("normalizeSubscriber", () => {
     const result = normalizeSubscriber(UID, withSubscription({ store: "app_store" }), NOW);
     expect(result.originPlatform).toBe("app_store");
   });
+
+  /**
+   * The management URL (#363). The REST view is the ONLY source that carries it — webhooks do not —
+   * so everything the web app can offer for managing a subscription depends on these.
+   */
+  describe("management URL", () => {
+    const PLAY_URL = "https://play.google.com/store/account/subscriptions";
+
+    it("carries the provider's management_url", () => {
+      const result = normalizeSubscriber(UID, { ...activeSubscriber, management_url: PLAY_URL }, NOW);
+      expect(result.managementUrl).toBe(PLAY_URL);
+    });
+
+    it("resolves to empty rather than undefined when the provider reports none", () => {
+      // Empty, NOT undefined: the difference decides whether `applyEntitlement` clears a stale URL
+      // or preserves it, and the REST view is authoritative enough to clear. The Test Store exposes
+      // no management_url at all, which is exactly this case.
+      expect(normalizeSubscriber(UID, activeSubscriber, NOW).managementUrl).toBe("");
+      expect(
+        normalizeSubscriber(UID, { ...activeSubscriber, management_url: null }, NOW).managementUrl,
+      ).toBe("");
+      expect(
+        normalizeSubscriber(UID, { ...activeSubscriber, management_url: "   " }, NOW).managementUrl,
+      ).toBe("");
+    });
+
+    it("rejects any scheme other than https", () => {
+      // This value is persisted and then handed to a URI handler by the client — on web, straight
+      // into the browser. A `javascript:` URL reaching Firestore would be stored XSS aimed at our
+      // own subscribers, so the scheme is checked at the boundary it enters our storage.
+      for (const hostile of [
+        "javascript:alert(1)",
+        "data:text/html,<script>alert(1)</script>",
+        "http://play.google.com/store/account/subscriptions",
+        "not a url at all",
+      ]) {
+        const result = normalizeSubscriber(UID, { ...activeSubscriber, management_url: hostile }, NOW);
+        expect(result.managementUrl, hostile).toBe("");
+      }
+    });
+
+    it("still carries the URL for a lapsed subscriber", () => {
+      // A subscriber whose Pro has expired may still have a store page worth reaching — reactivating
+      // is done there. Dropping it on the lapsed path would take the link away at the moment it is
+      // most useful.
+      const result = normalizeSubscriber(UID, { ...lapsedSubscriber, management_url: PLAY_URL }, NOW);
+      expect(result.status).toBe(SUBSCRIPTION_STATUS.FREE);
+      expect(result.managementUrl).toBe(PLAY_URL);
+    });
+
+    it("survives a reconcile onto the entitlement doc", async () => {
+      await adminDb.doc(subscriptionDocPath(UID)).set(staleProDoc());
+
+      await runEntitlementReconcile(
+        options({
+          fetchSubscriberImpl: async () => ({ ...activeSubscriber, management_url: PLAY_URL }),
+        }),
+      );
+
+      expect((await docOf(UID))?.managementUrl).toBe(PLAY_URL);
+    });
+  });
 });
 
 /** The active subscriber with its single subscription overridden. */

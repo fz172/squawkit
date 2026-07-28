@@ -25,6 +25,7 @@ class SubscriptionDocWireTest {
       originPlatform = "ios", // default ""
       storageBytesUsed = 240_000_000, // default 0
       storageQuotaBytes = 5, // default 0
+      managementUrl = "https://play.google.com/store/account/subscriptions", // default ""
     ).toProto()
     val allDefaults = Subscription()
 
@@ -59,6 +60,7 @@ class SubscriptionDocWireTest {
       originPlatform = "ios",
       storageBytesUsed = 240_000_000,
       storageQuotaBytes = 0,
+      managementUrl = "https://apps.apple.com/account/subscriptions",
     ).toProto()
 
     assertThat(proto.status).isEqualTo(Subscription.Status.STATUS_PRO)
@@ -70,6 +72,7 @@ class SubscriptionDocWireTest {
     assertThat(proto.origin_platform).isEqualTo("ios")
     assertThat(proto.storage_bytes_used).isEqualTo(240_000_000)
     assertThat(proto.storage_quota_bytes).isEqualTo(0)
+    assertThat(proto.management_url).isEqualTo("https://apps.apple.com/account/subscriptions")
   }
 
   @Test

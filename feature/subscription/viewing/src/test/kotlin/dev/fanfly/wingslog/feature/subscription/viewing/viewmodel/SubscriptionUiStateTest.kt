@@ -220,6 +220,52 @@ class SubscriptionUiStateTest {
   }
 
   @Test
+  fun `the synced management url is surfaced so a store-less build can still link out`() {
+    // Web's only route to managing a subscription (#363): no billing SDK, so nothing local can
+    // derive this — it has to arrive on the entitlement.
+    val state = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(
+        origin_platform = "play_store",
+        management_url = "https://play.google.com/store/account/subscriptions",
+      ),
+      TimeZone.UTC,
+      store = null,
+    )
+    assertThat(state.canManage).isFalse()
+    assertThat(state.managementUrl).isEqualTo("https://play.google.com/store/account/subscriptions")
+  }
+
+  @Test
+  fun `an unset management url falls back to naming the store`() {
+    // Both "no reconcile has run yet" and "this store has no such page" land here, and both must
+    // leave the existing managed-elsewhere copy in place rather than an inert button.
+    val state = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(origin_platform = "play_store"),
+      TimeZone.UTC,
+      store = null,
+    )
+    assertThat(state.managementUrl).isNull()
+    assertThat(state.purchasePlatform).isEqualTo(PurchasePlatform.PLAY_STORE)
+  }
+
+  @Test
+  fun `a management url that is not https is refused`() {
+    // Second gate behind the server's own scheme check. This value came from a third party and is
+    // handed to a URI handler — on web, straight to the browser — so `javascript:` must never reach
+    // it, including from a doc written before the server validated.
+    for (hostile in listOf(
+      "javascript:alert(1)",
+      "data:text/html,<script>alert(1)</script>",
+      "http://play.google.com/store/account/subscriptions",
+      "",
+    )) {
+      assertThat(manageableUrlOrNull(hostile)).isNull()
+    }
+  }
+
+  @Test
   fun `a guest cannot subscribe`() = runTest {
     // A guest account cannot be recovered on another device, so letting one buy a subscription
     // would take the pilot's money and tie it to an identity they can lose.

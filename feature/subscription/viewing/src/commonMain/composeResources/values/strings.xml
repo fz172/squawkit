@@ -45,6 +45,11 @@
   <string name="subscription_manage">Manage subscription</string>
   <!-- Sits under an enabled Manage button: the store, not SquawkIt, owns plan changes. -->
   <string name="subscription_manage_caption">Plan changes and cancellation are handled by the store.</string>
+  <!--
+    Under a Manage button that leaves for the store's own page, rather than opening the in-app
+    Customer Center. Says "opens" because the pilot is about to leave the app — on web, in a new tab.
+  -->
+  <string name="subscription_manage_link_caption">Opens the store page where this subscription is billed.</string>
   <string name="subscription_renews">Renews</string>
   <!-- Replaces "Renews" once the subscription is set to end rather than renew. -->
   <string name="subscription_ends">Ends</string>

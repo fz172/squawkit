@@ -26,6 +26,8 @@ internal data class SubscriptionDocWire(
   val originPlatform: String = "",
   val storageBytesUsed: Long = 0L,
   val storageQuotaBytes: Long = 0L,
+  /** Store management deep link; "" until a reconcile has learned one. See the proto for why. */
+  val managementUrl: String = "",
 )
 
 internal fun SubscriptionDocWire.toProto(): Subscription = Subscription(
@@ -38,4 +40,5 @@ internal fun SubscriptionDocWire.toProto(): Subscription = Subscription(
   origin_platform = originPlatform,
   storage_bytes_used = storageBytesUsed,
   storage_quota_bytes = storageQuotaBytes,
+  management_url = managementUrl,
 )

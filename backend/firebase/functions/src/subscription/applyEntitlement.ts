@@ -57,6 +57,10 @@ export async function applyEntitlement(update: NormalizedEntitlement): Promise<A
         willRenew: update.willRenew,
         source: update.source,
         originPlatform: update.originPlatform,
+        // Omitted from the merge entirely when the source doesn't know it (#363). The webhook event
+        // carries no `management_url`, so writing `""` here would blank the link a reconcile had
+        // learned every time a renewal came through.
+        ...(update.managementUrl === undefined ? {} : { managementUrl: update.managementUrl }),
       },
       { merge: true },
     );

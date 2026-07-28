@@ -62,6 +62,17 @@ data class SubscriptionUiState(
    */
   val canManage: Boolean = false,
   /**
+   * The store's own management page for this subscription, when the server has learned one (#363).
+   *
+   * The fallback for every surface [canManage] excludes — above all web, where there is no billing
+   * SDK to open a Customer Center with. A link is strictly better than the "go find the device you
+   * bought it on" copy, so it wins whenever it is present.
+   *
+   * `null` covers both "no reconcile has run yet" and "this store exposes no such page" (the Test
+   * Store exposes none at all), and both correctly fall back to naming the store.
+   */
+  val managementUrl: String? = null,
+  /**
    * Signed in as a guest (anonymous Firebase account), which must not be allowed to subscribe.
    *
    * A guest account cannot be recovered on another device or after a reinstall. Letting one buy a
@@ -224,9 +235,20 @@ internal fun toSubscriptionUiState(
     isActivating = isActivating,
     purchasePlatform = purchasePlatform,
     canManage = canManageHere(purchasePlatform, store),
+    managementUrl = manageableUrlOrNull(subscription.management_url),
     isGuest = isGuest,
   )
 }
+
+/**
+ * The synced management URL, if it is one we are willing to open.
+ *
+ * The server already scheme-checks before persisting, so this is the second of two gates rather than
+ * the only one — kept because the value originates with a third party and ends up at a URI handler,
+ * and because a doc written by an older server predates that check. Cheap enough to be worth it.
+ */
+internal fun manageableUrlOrNull(url: String): String? =
+  url.trim().takeIf { it.startsWith("https://", ignoreCase = true) }
 
 private fun Long.toDisplayDateOrNull(timeZone: TimeZone): String? =
   if (this <= 0L) {
