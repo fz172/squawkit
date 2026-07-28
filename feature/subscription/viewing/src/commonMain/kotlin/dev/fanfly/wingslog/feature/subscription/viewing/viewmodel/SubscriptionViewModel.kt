@@ -74,6 +74,15 @@ data class SubscriptionUiState(
    */
   val managementUrl: String? = null,
   /**
+   * Whether [managementUrl] is our own per-store guess rather than the provider's deep link.
+   *
+   * Only the caption changes, but the distinction is the honest one: the provider's URL points at
+   * *this* subscription, while the derived one is the store's general subscriptions page and cannot
+   * promise more than that. Claiming otherwise would be a small lie told to the pilot least able to
+   * check it — the one already on the wrong platform.
+   */
+  val isManagementUrlDerived: Boolean = false,
+  /**
    * Pro was granted rather than bought, so there is nothing to manage anywhere.
    *
    * The page shows no manage affordance at all for these — not the Customer Center, not a link, and
@@ -296,6 +305,9 @@ internal fun toSubscriptionUiState(
 ): SubscriptionUiState {
   val purchasePlatform = purchasePlatformOf(subscription.origin_platform)
   val isComped = isCompedEntitlement(subscription)
+  // The provider's deep link first; our per-store page only as a downgrade. A comp gets neither.
+  val providerUrl = if (isComped) null else manageableUrlOrNull(subscription.management_url)
+  val derivedUrl = if (isComped) null else derivedManagementUrlFor(purchasePlatform)
   return SubscriptionUiState(
     isPro = status == Subscription.Status.STATUS_PRO,
     lifecycle = subscription.lifecycle,
@@ -309,7 +321,8 @@ internal fun toSubscriptionUiState(
     isActivating = isActivating,
     purchasePlatform = purchasePlatform,
     canManage = !isComped && canManageHere(purchasePlatform, store),
-    managementUrl = if (isComped) null else manageableUrlOrNull(subscription.management_url),
+    managementUrl = providerUrl ?: derivedUrl,
+    isManagementUrlDerived = providerUrl == null && derivedUrl != null,
     isComped = isComped,
     isGuest = isGuest,
   )
@@ -324,6 +337,34 @@ internal fun toSubscriptionUiState(
  */
 internal fun manageableUrlOrNull(url: String): String? =
   url.trim().takeIf { it.startsWith("https://", ignoreCase = true) }
+
+/**
+ * The store's own subscriptions page, used only when the provider reports no `management_url`.
+ *
+ * A deliberate downgrade, not a substitute. RevenueCat's URL deep-links to the individual
+ * subscription; these are the store's general "your subscriptions" pages, and the UI says so with a
+ * different caption. They are still worth offering, because every one of them works in a *browser* —
+ * a pilot on Android who bought on an iPhone can genuinely cancel from Apple's page here, which is
+ * strictly more than the previous answer of "go find the device you bought it on".
+ *
+ * Two platforms deliberately return `null` rather than a guess:
+ *
+ * - [PurchasePlatform.WEB] covers Stripe, RC Billing and Paddle, which have no common portal. Their
+ *   `management_url` is the only correct destination, and it is reliably present for them.
+ * - [PurchasePlatform.TEST_STORE] is simulated; it has no page at all.
+ *
+ * No Play `?sku=` parameter: that form needs the product id, which the entitlement does not carry.
+ * See the PR — adding it server-side to sharpen a fallback that real purchases never reach was not
+ * judged worth the wire change.
+ */
+internal fun derivedManagementUrlFor(platform: PurchasePlatform?): String? = when (platform) {
+  PurchasePlatform.PLAY_STORE -> "https://play.google.com/store/account/subscriptions"
+  // One Apple account page serves both storefronts, exactly as canManageHere assumes.
+  PurchasePlatform.APP_STORE, PurchasePlatform.MAC_APP_STORE ->
+    "https://apps.apple.com/account/subscriptions"
+  PurchasePlatform.AMAZON -> "https://www.amazon.com/gp/mas/your-account/myapps/yoursubscriptions"
+  PurchasePlatform.WEB, PurchasePlatform.TEST_STORE, null -> null
+}
 
 private fun Long.toDisplayDateOrNull(timeZone: TimeZone): String? =
   if (this <= 0L) {

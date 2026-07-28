@@ -314,17 +314,89 @@ class SubscriptionUiStateTest {
   }
 
   @Test
-  fun `an unset management url falls back to naming the store`() {
-    // Both "no reconcile has run yet" and "this store has no such page" land here, and both must
-    // leave the existing managed-elsewhere copy in place rather than an inert button.
+  fun `an unset management url falls back to the store's own subscriptions page`() {
+    // Not the provider's deep link, but a real destination that works in a browser — strictly more
+    // useful than telling the pilot to go find the device they bought it on (#361).
     val state = toSubscriptionUiState(
       Subscription.Status.STATUS_PRO,
       Subscription(origin_platform = "play_store"),
       TimeZone.UTC,
       store = null,
     )
-    assertThat(state.managementUrl).isNull()
+    assertThat(state.managementUrl).isEqualTo("https://play.google.com/store/account/subscriptions")
+    assertThat(state.isManagementUrlDerived).isTrue()
     assertThat(state.purchasePlatform).isEqualTo(PurchasePlatform.PLAY_STORE)
+  }
+
+  @Test
+  fun `the provider's url always wins over the derived one`() {
+    // The provider's deep-links to THIS subscription; ours only reaches the store's list.
+    val state = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(
+        origin_platform = "play_store",
+        management_url = "https://play.google.com/store/account/subscriptions?sku=squawkit_pro_v1",
+      ),
+      TimeZone.UTC,
+      store = null,
+    )
+    assertThat(state.managementUrl)
+      .isEqualTo("https://play.google.com/store/account/subscriptions?sku=squawkit_pro_v1")
+    assertThat(state.isManagementUrlDerived).isFalse()
+  }
+
+  @Test
+  fun `the derived fallback covers every store that has a page`() {
+    assertThat(derivedManagementUrlFor(PurchasePlatform.PLAY_STORE))
+      .isEqualTo("https://play.google.com/store/account/subscriptions")
+    // One Apple account page serves both storefronts, as canManageHere already assumes.
+    assertThat(derivedManagementUrlFor(PurchasePlatform.APP_STORE))
+      .isEqualTo("https://apps.apple.com/account/subscriptions")
+    assertThat(derivedManagementUrlFor(PurchasePlatform.MAC_APP_STORE))
+      .isEqualTo(derivedManagementUrlFor(PurchasePlatform.APP_STORE))
+    assertThat(derivedManagementUrlFor(PurchasePlatform.AMAZON))
+      .isEqualTo("https://www.amazon.com/gp/mas/your-account/myapps/yoursubscriptions")
+  }
+
+  @Test
+  fun `no fallback is invented where none is correct`() {
+    // WEB spans Stripe, RC Billing and Paddle, which share no portal — their management_url is the
+    // only right answer. TEST_STORE is simulated and has no page. An unrecognised store is unknown
+    // by definition. All three keep the honest "managed elsewhere" copy.
+    assertThat(derivedManagementUrlFor(PurchasePlatform.WEB)).isNull()
+    assertThat(derivedManagementUrlFor(PurchasePlatform.TEST_STORE)).isNull()
+    assertThat(derivedManagementUrlFor(null)).isNull()
+  }
+
+  @Test
+  fun `a test store purchase still shows the explanatory copy`() {
+    // The dogfood case, and the reason this is a fallback rather than a replacement.
+    val state = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(origin_platform = "test_store"),
+      TimeZone.UTC,
+      store = null,
+    )
+    assertThat(state.managementUrl).isNull()
+    assertThat(state.isManagementUrlDerived).isFalse()
+  }
+
+  @Test
+  fun `a comp gets no derived fallback even when it names a store`() {
+    // A grant should never carry a real storefront, but if one is ever written the comp rule has to
+    // win — otherwise a comped pilot is sent to Play to cancel something Play never sold them.
+    val state = toSubscriptionUiState(
+      Subscription.Status.STATUS_PRO,
+      Subscription(
+        source = Subscription.Source.SOURCE_SERVER_GRANT,
+        origin_platform = "play_store",
+      ),
+      TimeZone.UTC,
+      store = null,
+    )
+    assertThat(state.isComped).isTrue()
+    assertThat(state.managementUrl).isNull()
+    assertThat(state.isManagementUrlDerived).isFalse()
   }
 
   @Test
