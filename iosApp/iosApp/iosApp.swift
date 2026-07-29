@@ -10,15 +10,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
   func application(_ application: UIApplication,
                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-    // App Check must have a provider factory set BEFORE configure(), or every enforceAppCheck
-    // callable (redeem invite, revoke, upload session, export) is rejected as "unauthenticated".
-    // The debug provider prints a token to the console to register in the Firebase App Check console.
-    // The Simulator can never attest via App Attest / DeviceCheck, so use the debug provider there
-    // regardless of build config; a real release build falls through to the default App Attest.
-    #if targetEnvironment(simulator) || DEBUG
-    AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
-    #endif
-    FirebaseApp.configure()
     // Hand the attachment broker (Kotlin/Native, which can't link FirebaseAppCheck) a way to mint
     // App Check tokens for the streamBlob download header.
     MainEntry.shared.installAppCheckTokenProvider { onToken in
@@ -57,6 +48,21 @@ struct iosApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
     init() {
+        // Firebase must be configured here, not in the AppDelegate: SwiftUI runs the @main struct's
+        // init() *before* application(_:didFinishLaunchingWithOptions:), and doInitKoin() starts
+        // Koin's eager singletons — BillingIdentityCoordinator resolves FirebaseAuth at that point,
+        // which fatal-errors if no default FirebaseApp exists yet.
+        //
+        // App Check must have a provider factory set BEFORE configure(), or every enforceAppCheck
+        // callable (redeem invite, revoke, upload session, export) is rejected as "unauthenticated".
+        // The debug provider prints a token to the console to register in the Firebase App Check console.
+        // The Simulator can never attest via App Attest / DeviceCheck, so use the debug provider there
+        // regardless of build config; a real release build falls through to the default App Attest.
+        #if targetEnvironment(simulator) || DEBUG
+        AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
+        #endif
+        FirebaseApp.configure()
+
         #if DOGFOOD
         MainEntry.shared.doInitKoin(forceDeveloperBuild: true)
         #else
