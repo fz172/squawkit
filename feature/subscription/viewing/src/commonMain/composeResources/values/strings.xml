@@ -4,7 +4,7 @@
 
   <!-- Non-subscriber comparison view -->
   <string name="subscription_compare_header">Your all-access pass</string>
-  <string name="subscription_compare_subhead">Core is a complete two-aircraft logbook, backed up and synced. Heavy adds scale, attachments and collaboration.</string>
+  <string name="subscription_compare_subhead">Core is a complete logbook, backed up and synced. Heavy adds scale, attachments, collaboration and more.</string>
   <!-- Sets expectations before the store paywall opens: SquawkIt never shows a price itself. -->
   <string name="subscription_billing_note">Monthly and annual billing, price and payment method are chosen in the store.</string>
   <string name="subscription_cta_caption">Price shown at checkout. Cancel anytime.</string>
