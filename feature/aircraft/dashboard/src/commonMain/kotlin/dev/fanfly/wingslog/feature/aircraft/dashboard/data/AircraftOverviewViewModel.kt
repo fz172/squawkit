@@ -72,6 +72,21 @@ class AircraftOverviewViewModel(
 
   private var cachedLogs: List<MaintenanceLog> = emptyList()
 
+  /**
+   * Bumped when the screen resumes, to re-run due-status computation against a fresh clock.
+   *
+   * [dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager] compares due dates against
+   * `Clock.System`, so a card's status is a function of the stored data *and* the current time —
+   * but the store flows only re-emit when data changes. Without this, an app backgrounded overnight
+   * comes back still rendering yesterday's NORMAL for a card that is now DUE_SOON.
+   */
+  private val resumeTick = MutableStateFlow(0)
+
+  /** Call when the dashboard becomes visible again; see [resumeTick]. */
+  fun onResumed() {
+    resumeTick.value++
+  }
+
   init {
     loadAircraftAndStats()
   }
@@ -100,7 +115,14 @@ class AircraftOverviewViewModel(
       combine(
         fleetManager.loadAircraft(aircraftId).distinctUntilChanged(),
         logManager.observeLogs(aircraftId).distinctUntilChanged(),
-        taskDataManager.observeTasks(aircraftId).distinctUntilChanged(),
+        // The resume tick rides along with the tasks flow rather than occupying a combine slot of
+        // its own: `combine` tops out at five typed sources, and re-emitting the task list is
+        // exactly what re-runs computeNextDue below. distinctUntilChanged sits *upstream* of the
+        // tick, so a resume still gets through.
+        combine(
+          taskDataManager.observeTasks(aircraftId).distinctUntilChanged(),
+          resumeTick,
+        ) { tasks, _ -> tasks },
         logManager.observeMaintenanceOverview(aircraftId).distinctUntilChanged(),
         combine(
           squawkManager.observeSquawks(aircraftId).distinctUntilChanged(),
