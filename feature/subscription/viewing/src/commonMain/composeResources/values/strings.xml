@@ -4,7 +4,7 @@
 
   <!-- Non-subscriber comparison view -->
   <string name="subscription_compare_header">Your all-access pass</string>
-  <string name="subscription_compare_subhead">Core is a complete single-aircraft logbook, backed up and synced. Heavy adds scale, attachments and collaboration.</string>
+  <string name="subscription_compare_subhead">Core is a complete logbook, backed up and synced. Heavy adds scale, attachments, collaboration and more.</string>
   <!-- Sets expectations before the store paywall opens: SquawkIt never shows a price itself. -->
   <string name="subscription_billing_note">Monthly and annual billing, price and payment method are chosen in the store.</string>
   <string name="subscription_cta_caption">Price shown at checkout. Cancel anytime.</string>
@@ -18,7 +18,7 @@
   <string name="subscription_feature_attachments">Photo &amp; file attachments</string>
   <string name="subscription_feature_email">Email a copy of exports</string>
   <string name="subscription_feature_sharing">Share aircraft &amp; invite others</string>
-  <string name="subscription_aircraft_free">1</string>
+  <string name="subscription_aircraft_free">2</string>
   <!-- Announced in place of subscription_cell_unlimited, which is the glyph shown in its cell. -->
   <string name="subscription_aircraft_unlimited">Unlimited</string>
   <!-- Comparison table: the tier does not include this feature. An em dash, not a crossed box. -->
