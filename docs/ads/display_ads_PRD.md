@@ -17,8 +17,9 @@
 > doc.
 
 **Owner:** Product · **Status:** Proposed · **Date:** 2026-07-28
-**Revised:** 2026-07-29 — session cap 10 → 5 (D1); AdMob chosen for Android/iOS in v1 (D6); web
-scheduled as phase 2 on Ad Manager rather than dropped (D5, §8.2)
+**Revised:** 2026-07-29 — session cap 10 → 5 (D1); AdMob on Android/iOS in v1 (D6); web scheduled as
+phase 2 on Ad Manager rather than dropped (D5, §8.2); fixed `BANNER` sizes (D7); no daily cap (D8);
+free aircraft limit 1 → 2, implemented elsewhere (D9)
 **Related:** [Subscription PRD](../subscription/subscription_PRD.html) ·
 [Subscription Design](../subscription/subscription_design.html) ·
 [Product overview](../product/PRD.md)
@@ -36,9 +37,9 @@ centered — so a full-width slot never becomes a billboard. The paid tier (**He
 completely ad-free, and "Ad-free" becomes a line in the tier comparison table, giving the paywall a
 second, continuously visible argument.
 
-v1 ships on **Android and iOS via AdMob**; the web host renders a no-op slot and gets ads in
-**phase 2** on Google Ad Manager (§8.1, §8.2). Because every placement rule below is
-host-independent common code, phase 2 adds one platform `actual` and nothing else.
+v1 ships on **Android and iOS via AdMob**; the web host renders a no-op slot and gets ads in **phase
+2** on Google Ad Manager (§8.1, §8.2). Because every placement rule below is host-independent common
+code, phase 2 adds one platform `actual` and nothing else.
 
 Ads are a **revenue floor for users who will never subscribe**, not a replacement for the
 subscription. Every design decision below resolves in favor of the record, not the ad: ads never
@@ -275,8 +276,8 @@ argued from §12's retention guardrails, not tuned quietly.
 - **Upgrade affordance:** a low-emphasis footer link — **"Remove ads with Heavy"** — navigating to
   the subscription screen. This is the ad card's only in-app tap target besides the ad creative
   itself, and it is what makes the ad an argument for Pro rather than only a nuisance.
-- **Format:** an inline adaptive display unit — see §7.1 for how the unit(s) are laid out per layout
-  tier.
+- **Format:** a fixed-size display unit (`BANNER`, 320×50) — see §7.1 for how the unit(s) are laid
+  out per layout tier, and §7.2 for the size decision.
 - **Unfilled:** zero height, no label, no footer — the row collapses entirely (G5).
 
 ### 7.1 Keeping the aspect ratio honest on wide layouts
@@ -288,15 +289,47 @@ maintenance record list. The slot therefore always hosts **thin** units, and use
 
 | Layout tier | Slot contents | Rationale |
 |---|---|---|
-| **COMPACT** (< 700 dp) | **One** inline adaptive unit, full card width. | The phone width is already a normal banner width; nothing to correct. |
-| **MEDIUM** (700–1039 dp) | **One thin unit, centered** in the band, neutral padding either side. | Not wide enough for two readable units; centering keeps the band from looking like a stretched banner. |
-| **EXPANDED / LARGE** (≥ 1040 dp) | **Two thin units side by side**, each half the band minus the grid gutter — aligned to the same gutter `AdaptiveCardList` uses at `cardColumns == 2`. | Two normal-width ads read as content in a grid; one stretched ad reads as a takeover. |
+| **COMPACT** (< 700 dp) | **One** `BANNER` unit (320×50), centered in the card width. | The classic banner size, the deepest demand pool, and only 50 dp tall — no record card is shorter than that. |
+| **MEDIUM** (700–1039 dp) | **One unit, centered** in the band, neutral padding either side. | Not wide enough for two readable units; centering keeps the band from looking like a stretched banner. |
+| **EXPANDED / LARGE** (≥ 1040 dp) | **Two units side by side**, each centered in half the band minus the grid gutter — aligned to the same gutter `AdaptiveCardList` uses at `cardColumns == 2`. | Two normal-width ads read as content in a grid; one stretched ad reads as a takeover. |
+
+### 7.2 Ad unit sizes — fixed, not adaptive (D7)
+
+v1 requests **fixed** AdMob sizes rather than inline adaptive units:
+
+| Size | Dimensions | Where |
+|---|---|---|
+| `BANNER` | 320 × 50 dp | COMPACT, and the default everywhere |
+| `LARGE_BANNER` | 320 × 100 dp | Permitted **only** where the neighbouring record card is measurably taller than 100 dp (see the G10 note below) |
+
+Fixed sizes are chosen because they make §7.1's guarantees **structural rather than enforced**: a
+320 dp-wide creative physically cannot stretch into a billboard, and a known 50 dp height satisfies
+the 120 dp cap (N9) and G10 by construction, with no runtime clamping of a network-chosen height.
+The trade-off is accepted knowingly — adaptive units generally yield better because they request the
+best-fitting size, so §12's fill-rate and revenue numbers are the input to revisiting this, not a
+guess made now.
+
+Consequences worth stating, because they differ from the adaptive assumption this section previously
+carried:
+
+- **Units are centered, never stretched.** A fixed 320 dp unit in a ~500 dp half-band leaves neutral
+  padding either side. That is the intended look, not a layout bug — the padding is what stops the
+  band reading as a takeover.
+- **`MEDIUM`/`EXPANDED` do not get a wider creative.** Width buys *count* (§7.1), never size.
+- **⚠ `LARGE_BANNER` needs a measurement before use.** G10 says ad height never exceeds the record
+  card beside it, and record cards have **no fixed height** — `SquawkCard` is a `Card` + `Column`
+  sized by content, so a short squawk (title, chip, one-line description, date) lands in roughly the
+  90–110 dp range. `LARGE_BANNER` at exactly 100 dp therefore sits *at* that boundary and would
+  violate G10 next to a short card. **Ship `BANNER` first; adopt `LARGE_BANNER` only after measuring
+  real card heights on each surface at COMPACT.** If cards measure under ~110 dp, `LARGE_BANNER` is
+  out on phones regardless of its revenue advantage — G10 is a guardrail, not a preference.
 
 Additional rules:
 
-- **Thin means thin.** A wide-layout slot is capped at **120 dp** tall and must never exceed the
-  height of the record card beside it. On COMPACT the cap is the smaller of the network's adaptive
-  height and **30% of viewport height**.
+- **Thin means thin.** A slot is capped at **120 dp** tall and must never exceed the height of the
+  record card beside it. Both sizes above clear the numeric cap; only G10's card-relative comparison
+  can rule one out. The COMPACT "30% of viewport height" bound is now moot — a 50 dp unit never
+  approaches it — but stays in N9 as a backstop if adaptive units are ever revisited.
 - **Partial fill recenters.** If a two-up slot gets only one unit filled — no fill, or one unit of
   cap headroom left (§6.7) — the filled unit renders **centered**, exactly as the MEDIUM case. A
   band is never shown half-empty.
@@ -347,8 +380,8 @@ exists for a browser, this is a constraint rather than a preference.
 
 | Phase | Host | Ad product | Client seam |
 |---|---|---|---|
-| **v1** | **Android** | AdMob (Google Mobile Ads SDK), inline adaptive banner | `AdView` in `androidMain` |
-| **v1** | **iOS** | AdMob (`GADBannerView`), inline adaptive banner | `GADBannerView` in `iosMain`, plus ATT/UMP (§10, P3) |
+| **v1** | **Android** | AdMob (Google Mobile Ads SDK), fixed `BANNER` (§7.2) | `AdView` in `androidMain` |
+| **v1** | **iOS** | AdMob (`GADBannerView`), fixed `BANNER` (§7.2) | `GADBannerView` in `iosMain`, plus ATT/UMP (§10, P3) |
 | **v1** | **Web** | *None* — no-op slot, renders nothing | `jsMain` actual returns an empty composable |
 | **Phase 2** | **Web** | **Google Ad Manager** (GPT tag, not AdMob) | Ad Manager tag in `jsMain`; see §8.2 |
 
@@ -401,7 +434,7 @@ Ad-free becomes a listed Pro benefit. The canonical table in
 
 | Capability | Free | SquawkIt Pro |
 |---|---|---|
-| Aircraft | 1 | Unlimited |
+| Aircraft | 1 → **2** (D9, pending) | Unlimited |
 | Maintenance logs, tasks & squawks | ✓ | ✓ |
 | Export to this device (CSV / XLSX / PDF / ZIP) | ✓ | ✓ |
 | Photo & file attachments | — | ✓ |
@@ -411,12 +444,30 @@ Ad-free becomes a listed Pro benefit. The canonical table in
 | Share aircraft & invite others | — | ✓ |
 | Future premium features | — | ✓ |
 
-Row order mirrors the shipped HTML table; the new row is inserted after *Cloud backup & multi-device
-sync* and before *Share aircraft & invite others*. Mid-table rather than appended, deliberately:
-"Future premium features" is the table's closing catch-all line, and a concrete, shipped benefit
-should not sit below it. Column headers above are the doc's pre-rename copy; the in-app table's
-columns already read **Core** and **Heavy** (see the tier-naming note at the top), and this row
-inherits those headers unchanged.
+**The Aircraft row is shown mid-change and does not belong to this PRD.** D9 raises the free limit
+from 1 to 2, but that is a subscription-tier change, not an ads change — it must not ride along on
+the ads feature branch, and the row above still reads `1` everywhere it is implemented today. The
+number lives in five places, and all five move together:
+
+| # | Location | Today |
+|---|---|---|
+| 1 | `SubscriptionManagerImpl.FREE_AIRCRAFT_LIMIT` (`feature/subscription/datamanager`) | `1` — the **only** enforcement point |
+| 2 | `SubscriptionManagerImplTest` — asserts the limit equals `1` | `1` |
+| 3 | `SubscriptionUiStateTest` — fake `aircraftLimit()` returns `1` | `1` |
+| 4 | `subscription_aircraft_free` in `feature/subscription/viewing` `strings.xml` | `"1"` — the user-facing cell |
+| 5 | [`subscription_PRD.html`](../subscription/subscription_PRD.html) §3, mirrored by the table above | `1` |
+
+Worth recording while it is in front of us: **the limit is enforced client-side only.** No Cloud
+Function or Firestore rule checks aircraft count, so raising it is purely a client change — and,
+equally, the limit has never been server-authoritative. That is a pre-existing property, not
+something D9 introduces, but it belongs in whatever change implements D9.
+
+Row order mirrors the shipped HTML table; the *Ad-free* row is inserted after *Cloud backup &
+multi-device sync* and before *Share aircraft & invite others*. Mid-table rather than appended,
+deliberately: "Future premium features" is the table's closing catch-all line, and a concrete,
+shipped benefit should not sit below it. Column headers above are the doc's pre-rename copy; the
+in-app table's columns already read **Core** and **Heavy** (see the tier-naming note at the top),
+and this row inherits those headers unchanged.
 
 **In-app parity (ships with the feature, not before).** The same row is added to the
 `ComparisonTable` composable in `ProPaywallContent.kt`:
@@ -483,7 +534,7 @@ the pilot is holding.
 | N6 | No ad SDK initialization, network call, or consent prompt occurs for a Pro user or an ads-unsupported build (P6). |
 | N7 | Accessibility: the ad card is a single focus group announced as "Advertisement"; the upgrade link is separately focusable and labeled. A two-up band announces two units in reading order within that group. |
 | N8 | A slot's fill is cached per slot key for the life of the screen, so scroll churn triggers neither a new request nor a second impression (§6.7). |
-| N9 | Ad height is capped at 120 dp on MEDIUM and wider, and at the lesser of the adaptive height and 30% of viewport height on COMPACT (G10). |
+| N9 | Ad height is capped at 120 dp on MEDIUM and wider, and at the lesser of the unit height and 30% of viewport height on COMPACT (G10). With D7's fixed sizes both bounds are satisfied by construction (50 dp / 100 dp); the cap remains normative as a backstop if adaptive units are revisited (§7.2). |
 
 ---
 
@@ -544,15 +595,16 @@ not a config change; at an interval of 10 we should *expect* it to pin for engag
 | D4 | **Wide slots use thin units** — two side by side at EXPANDED/LARGE, one centered at MEDIUM (§7.1, F15). |
 | D5 | **Web carries ads — as phase 2, not v1** (decided 2026-07-29). The earlier "no web ads" non-goal is superseded: web is scheduled, not cancelled, with **Google Ad Manager** as the product since no browser AdMob SDK exists. v1 ships a no-op JS slot; phase 2 adds one `actual` (§8.2). |
 | D6 | **AdMob for Android and iOS in v1** (decided 2026-07-29). Ad Manager can serve all three hosts from one server and was considered, but its trafficking/line-item overhead would be paid on mobile now for a consolidation benefit that only lands once web ships. Client migration cost later is a class-name and ad-unit-id swap, so the option stays cheap to exercise (§8.1, §8.2 phase 3). Supersedes the original Q1 (ad network choice); the narrower mediation question survives as Q7. |
+| D7 | **Fixed ad sizes — `BANNER` (320×50), with `LARGE_BANNER` (320×100) permitted only where a measurement clears G10** (decided 2026-07-29, resolving Q2). Fixed rather than inline adaptive, so the no-billboard and height guarantees hold by construction instead of by runtime clamping; the yield trade-off is revisited from §12 data, not guessed. `LARGE_BANNER` is gated on Q8 because record cards are content-sized and may be shorter than 100 dp (§7.2). |
+| D8 | **No cross-session (daily) frequency cap** (decided 2026-07-29, resolving Q4). The 5-unit per-session cap is the only volume bound; a pilot with many sessions a day may see 5 per session with no daily ceiling. Rationale: sessions are already separated by ≥ 30 minutes of background time (§6.7), so a high daily count means genuinely repeated engagement rather than one long scroll being milked. §12's retention and rating guardrails are what would reopen this. |
+| D9 | **Free aircraft limit rises from 1 to 2** (decided 2026-07-29, resolving Q5). Ad revenue on the free tier makes a second aircraft affordable, and 2 covers the common owner-plus-partnership case that 1 excludes. **This is not an ads change and does not ship with this PRD** — see the note under §9 for the four places that carry the number. |
 
 ### Open
 
 | # | Question | Owner |
 |---|---|---|
-| Q2 | Exact AdMob ad unit sizes backing §7.1's thin format — which unit is requested for the two-up half-band vs. the COMPACT inline unit. The layout rules and the 120 dp cap are fixed; the unit ids are not. | Design/Eng |
-| Q4 | Frequency capping *across* sessions — the 5-unit cap is per session; a pilot with eight sessions a day still sees up to 40. Is a daily cap needed? | Product |
-| Q5 | Does an ad-supported free tier change the case for raising the free aircraft limit above 1? | Product |
 | Q7 | Whether AdMob mediation is worth adding on mobile once fill-rate data exists, or whether AdMob direct demand is sufficient. Deferred until §12 reports real fill rates. | Eng/Product |
+| Q8 | Measured record-card heights at COMPACT on all three surfaces, which decide whether `LARGE_BANNER` is usable at all under G10 (§7.2). Blocks nothing in v1 — `BANNER` ships regardless. | Design/Eng |
 
 **Phase 2 (web) open questions** — not blocking v1:
 
@@ -574,7 +626,7 @@ feature/ads/
   datamanager/    AdsGate     (SubscriptionManager.showsAds() + AppCapability.isAdsSupported)
                   AdSessionCounter (app-scoped single: 5-unit cap, 30-min background reset)
   viewing/        AdSlotCard (common: label, band layout, upsell link) + expect/actual AdView
-                    androidMain: Google Mobile Ads inline adaptive banner
+                    androidMain: Google Mobile Ads fixed BANNER (320x50, §7.2)
                     iosMain:     GADBannerView + ATT/UMP
                     jsMain:      v1:      no-op (renders nothing)
                                  phase 2: Ad Manager GPT tag (lazy, async, thin) + web CMP
