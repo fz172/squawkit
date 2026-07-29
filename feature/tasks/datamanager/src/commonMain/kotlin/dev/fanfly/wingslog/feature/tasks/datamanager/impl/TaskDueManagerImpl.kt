@@ -116,7 +116,7 @@ class TaskDueManagerImpl(
         timeRule != null -> {
           val baseDate = if (latestLog?.timestamp != null) {
             latestLog.timestamp!!.toLocalDate(timeZone)
-              .also { logger.d { "TimeRule base date:  Latest log date: $it" } }
+              .also { logger.d { "TimeRule base date: using latest log date: $it" } }
           } else {
             val creationDate = timeRule.creation_date
             if (creationDate != null && creationDate.getEpochSecond() > 0L) {

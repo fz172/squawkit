@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
@@ -180,6 +181,13 @@ fun AircraftSectionContent(
   val viewModel: AircraftOverviewViewModel =
     koinViewModel(key = aircraftId, parameters = { parametersOf(aircraftId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  // Due status depends on the wall clock, not just on stored data, so recompute it whenever the
+  // dashboard comes back into view — otherwise an app resumed the next day still shows yesterday's
+  // status. Common to all three hosts: UIKit foreground on iOS, document.visibilitychange on web.
+  LifecycleResumeEffect(aircraftId) {
+    viewModel.onResumed()
+    onPauseOrDispose { }
+  }
   val attachmentOpener: AttachmentOpener = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var taskSheetOpenError by remember(aircraftId) { mutableStateOf<String?>(null) }

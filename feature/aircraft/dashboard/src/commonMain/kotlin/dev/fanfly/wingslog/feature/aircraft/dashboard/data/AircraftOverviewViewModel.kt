@@ -72,6 +72,21 @@ class AircraftOverviewViewModel(
 
   private var cachedLogs: List<MaintenanceLog> = emptyList()
 
+  /**
+   * Bumped when the screen resumes, to re-run due-status computation against a fresh clock.
+   *
+   * [dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager] compares due dates against
+   * `Clock.System`, so a card's status is a function of the stored data *and* the current time —
+   * but the store flows only re-emit when data changes. Without this, an app backgrounded overnight
+   * comes back still rendering yesterday's NORMAL for a card that is now DUE_SOON.
+   */
+  private val resumeTick = MutableStateFlow(0)
+
+  /** Call when the dashboard becomes visible again; see [resumeTick]. */
+  fun onResumed() {
+    resumeTick.value++
+  }
+
   init {
     loadAircraftAndStats()
   }
@@ -91,13 +106,26 @@ class AircraftOverviewViewModel(
   private fun loadAircraftAndStats() {
     viewModelScope.launch {
       _uiState.update { AircraftOverviewUiState.Loading }
+      // Every collection shares one SQLDelight `entity` table, and SQLDelight notifies query
+      // listeners per *table*, so any write anywhere — adding a squawk, a sync writeback — re-runs
+      // and re-emits every observer here with identical content. Unfiltered, that re-ran
+      // computeNextDue for every task card several times per unrelated write. distinctUntilChanged
+      // drops the duplicates; the store still re-queries and re-decodes, which is a separate
+      // (larger) fix at the EntityStore level.
       combine(
-        fleetManager.loadAircraft(aircraftId),
-        logManager.observeLogs(aircraftId),
-        taskDataManager.observeTasks(aircraftId),
-        logManager.observeMaintenanceOverview(aircraftId),
+        fleetManager.loadAircraft(aircraftId).distinctUntilChanged(),
+        logManager.observeLogs(aircraftId).distinctUntilChanged(),
+        // The resume tick rides along with the tasks flow rather than occupying a combine slot of
+        // its own: `combine` tops out at five typed sources, and re-emitting the task list is
+        // exactly what re-runs computeNextDue below. distinctUntilChanged sits *upstream* of the
+        // tick, so a resume still gets through.
         combine(
-          squawkManager.observeSquawks(aircraftId),
+          taskDataManager.observeTasks(aircraftId).distinctUntilChanged(),
+          resumeTick,
+        ) { tasks, _ -> tasks },
+        logManager.observeMaintenanceOverview(aircraftId).distinctUntilChanged(),
+        combine(
+          squawkManager.observeSquawks(aircraftId).distinctUntilChanged(),
           combine(
             blobStatesFlow(),
             attachmentOpener.downloadingIds
@@ -111,11 +139,11 @@ class AircraftOverviewViewModel(
                 )
               }
             }
-          },
+          }.distinctUntilChanged(),
           // The caller's role on this aircraft, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
           // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
-          sharingManager.observeMyRole(aircraftId),
-          sharingManager.observeIsShared(aircraftId),
+          sharingManager.observeMyRole(aircraftId).distinctUntilChanged(),
+          sharingManager.observeIsShared(aircraftId).distinctUntilChanged(),
         ) { squawks, syncs, myRole, shared ->
           ShareContext(squawks, syncs, myRole, shared)
         }
