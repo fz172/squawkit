@@ -456,7 +456,7 @@ deferred. Five places carry the number and all five moved together:
 | 4 | `subscription_aircraft_free` in `feature/subscription/viewing` `strings.xml` | `"2"` — the user-facing cell |
 | 5 | [`subscription_PRD.html`](../subscription/subscription_PRD.html) — R3, the §3 table, pricing rows, personas, paywall trigger #1 | `2` |
 
-Two properties of the change worth recording here, since this PRD is what motivated it:
+Three properties of the change worth recording here, since this PRD is what motivated it:
 
 - **The limit is enforced client-side only.** No Cloud Function or Firestore rule checks aircraft
   count, so raising it was purely a client change — and equally, the limit has never been
@@ -469,6 +469,11 @@ Two properties of the change worth recording here, since this PRD is what motiva
   attachments, email export, sharing, and ad removal carry conversion for that persona instead. Both
   the trigger and the persona rows in `subscription_PRD.html` were updated to say so rather than
   left contradicting the new limit.
+- **User-facing prose deliberately omits the count.** The comparison subhead reads "Core is a
+  complete logbook, backed up and synced" — the number lives only in the Aircraft table cell
+  (`subscription_aircraft_free`). This is why the list above is five places and not more: keep the
+  count out of sentences and the next limit change stays a one-cell edit instead of a copy sweep.
+  Row 4 is the only user-visible occurrence, by design.
 
 Row order mirrors the shipped HTML table; the *Ad-free* row is inserted after *Cloud backup &
 multi-device sync* and before *Share aircraft & invite others*. Mid-table rather than appended,
