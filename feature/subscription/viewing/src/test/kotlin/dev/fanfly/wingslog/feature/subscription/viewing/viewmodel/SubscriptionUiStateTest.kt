@@ -564,6 +564,6 @@ class SubscriptionUiStateTest {
     override fun canUploadAttachments(): Flow<Boolean> = flowOf(false)
     override fun canEmailExports(): Flow<Boolean> = flowOf(false)
     override fun canHostShare(): Flow<Boolean> = flowOf(false)
-    override fun aircraftLimit(): Flow<Int?> = flowOf(1)
+    override fun aircraftLimit(): Flow<Int?> = flowOf(2)
   }
 }

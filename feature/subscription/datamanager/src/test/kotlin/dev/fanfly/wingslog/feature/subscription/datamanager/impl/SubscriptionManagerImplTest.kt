@@ -105,7 +105,7 @@ class SubscriptionManagerImplTest {
   }
 
   @Test
-  fun `capability on with an expired comp - gates closed and one aircraft`() = runTest {
+  fun `capability on with an expired comp - gates closed and the free aircraft limit`() = runTest {
     // A promo grant is ACTIVE with willRenew=false and an end date; once that date passes nothing
     // will renew it, so it must lapse to Free rather than entitle forever.
     entitle(proCompExpired)
@@ -116,13 +116,13 @@ class SubscriptionManagerImplTest {
   }
 
   @Test
-  fun `capability on with FREE - gates closed and one aircraft`() = runTest {
+  fun `capability on with FREE - gates closed and two aircraft`() = runTest {
     val m = manager(capability(subscription = true)) // default FREE stub
     assertThat(m.status().first()).isEqualTo(Subscription.Status.STATUS_FREE)
     assertThat(m.canUploadAttachments().first()).isFalse()
     assertThat(m.canEmailExports().first()).isFalse()
     assertThat(m.canHostShare().first()).isFalse()
-    assertThat(m.aircraftLimit().first()).isEqualTo(1)
+    assertThat(m.aircraftLimit().first()).isEqualTo(2)
   }
 
   @Test

@@ -96,7 +96,7 @@
       <span class="pill">Entitlement · Billing · Local-first · Sync</span>
     </div>
     <h1>Subscription <span class="muted">— SquawkIt Pro</span></h1>
-    <p class="lede">A paid tier layered on top of the free experience. Free is a genuinely useful single-aircraft logbook, backed up and synced across your devices at no cost; SquawkIt Pro unlocks an unlimited fleet, photo &amp; file attachments, email export, and aircraft sharing — plus future premium features as they ship. One subscription entitles the account on every platform it signs in on; payment and cancellation happen through each platform's native store.</p>
+    <p class="lede">A paid tier layered on top of the free experience. Free is a genuinely useful two-aircraft logbook, backed up and synced across your devices at no cost; SquawkIt Pro unlocks an unlimited fleet, photo &amp; file attachments, email export, and aircraft sharing — plus future premium features as they ship. One subscription entitles the account on every platform it signs in on; payment and cancellation happen through each platform's native store.</p>
   </div>
 
   <div class="page-shell">
@@ -125,7 +125,7 @@
       <h4>Goals</h4>
       <ul class="checks">
         <li>Introduce a single paid tier above free, billed <b>monthly</b>, modeled as an <b>extensible <code>SubscriptionStatus</code> enum</b> (not a boolean) so future tiers are additive.</li>
-        <li>Define a clear free tier — a useful <b>single-aircraft</b> logbook with <b>cloud backup &amp; sync free for everyone</b>; and put the following behind the paywall: <b>unlimited aircraft</b>, <b>attachments</b>, <b>email export</b>, and <b>aircraft sharing / inviting</b>.</li>
+        <li>Define a clear free tier — a useful <b>two-aircraft</b> logbook with <b>cloud backup &amp; sync free for everyone</b>; and put the following behind the paywall: <b>unlimited aircraft</b>, <b>attachments</b>, <b>email export</b>, and <b>aircraft sharing / inviting</b>.</li>
         <li>Make entitlement <b>account-scoped and cross-platform</b>: subscribe on one platform, get the benefits on all.</li>
         <li>Model <b>cancellation correctly</b> — access continues until the end of the paid period, then reverts to free.</li>
         <li>Design <b>free trials and promotions</b> into the model from day one (e.g. a 7-day free trial), leaning on platform-native offers where they exist.</li>
@@ -145,14 +145,14 @@
       </ul>
 
       <h2 id="tiers">3. Tiers &amp; What's Included</h2>
-      <p>The free tier is deliberately a complete, trustworthy logbook — a single aircraft, fully logged, <b>backed up and synced to every device</b> — not a crippled demo. SquawkIt Pro is about <i>scale and collaboration</i>: more aircraft, richer records (attachments), email export, and sharing. This table is also the literal content of the marketing/comparison view non-subscribers see (§8).</p>
+      <p>The free tier is deliberately a complete, trustworthy logbook — up to two aircraft, fully logged, <b>backed up and synced to every device</b> — not a crippled demo. SquawkIt Pro is about <i>scale and collaboration</i>: more aircraft, richer records (attachments), email export, and sharing. This table is also the literal content of the marketing/comparison view non-subscribers see (§8).</p>
       <table class="compare">
         <colgroup><col /><col /><col class="plus" /></colgroup>
         <thead>
           <tr><th>Capability</th><th class="col">Free</th><th class="col plus-cell">SquawkIt Pro</th></tr>
         </thead>
         <tbody>
-          <tr><td>Aircraft</td><td class="col">1</td><td class="plus-cell">Unlimited</td></tr>
+          <tr><td>Aircraft</td><td class="col">2</td><td class="plus-cell">Unlimited</td></tr>
           <tr><td>Maintenance logs, tasks &amp; squawks</td><td class="yes">✓</td><td class="plus-cell">✓</td></tr>
           <tr><td>Export to this device (CSV / XLSX / PDF / ZIP)</td><td class="yes">✓</td><td class="plus-cell">✓</td></tr>
           <tr><td>Photo &amp; file attachments</td><td class="no">—</td><td class="plus-cell">✓</td></tr>
@@ -180,8 +180,8 @@
       <h2 id="users">4. Users &amp; Use Cases</h2>
       <table>
         <tr><th>Persona</th><th>Situation</th><th>What the subscription does for them</th></tr>
-        <tr><td>Single-plane owner</td><td>Owns one aircraft; happy on free.</td><td>Uses SquawkIt free indefinitely for that one aircraft, on-device.</td></tr>
-        <tr><td>Fleet operator</td><td>Manages several aircraft.</td><td>Subscribes to log more than one aircraft at all.</td></tr>
+        <tr><td>One- or two-plane owner</td><td>Owns one or two aircraft; happy on free.</td><td>Uses SquawkIt free indefinitely for those aircraft, ad-supported. Since the free limit rose to 2 (<a href="../ads/display_ads_PRD.md">display ads</a> D9), this persona no longer converts on aircraft count — attachments, email export, sharing, and ad removal are the remaining paid arguments.</td></tr>
+        <tr><td>Fleet operator</td><td>Manages three or more aircraft.</td><td>Subscribes to log a 3rd aircraft at all, and for attachments, email export, and sharing.</td></tr>
         <tr><td>Committed owner-operator</td><td>Wants photos attached and exports emailed to their A&amp;P.</td><td>Subscribes once; attachments and email export unlock on phone, tablet, and web (their records were already backed up on free).</td></tr>
         <tr><td>Trial-curious pilot</td><td>Wants to try premium before paying.</td><td>Starts a 7-day free trial; is fully entitled during it; converts or reverts cleanly.</td></tr>
         <tr><td>Owner + mechanic pair</td><td>Owner wants their A&amp;P to see and update a shared aircraft.</td><td>Owner subscribes and invites; the mechanic accepts and collaborates without needing their own subscription.</td></tr>
@@ -220,7 +220,7 @@
       <table>
         <tr><th>Capability</th><th>Minimum status</th></tr>
         <tr><td>2nd+ aircraft, attachments, email export, hosting a shared aircraft</td><td><code>PRO</code></td></tr>
-        <tr><td>Everything else (single aircraft, logs/tasks/squawks, on-device export, <b>cloud backup &amp; sync</b>, accepting a shared aircraft)</td><td><code>FREE</code></td></tr>
+        <tr><td>Everything else (up to 2 aircraft, logs/tasks/squawks, on-device export, <b>cloud backup &amp; sync</b>, accepting a shared aircraft)</td><td><code>FREE</code></td></tr>
       </table>
 
       <h3>Lifecycle state resolves to a status</h3>
@@ -248,7 +248,7 @@
         <tr><th>#</th><th>Requirement</th><th>Priority</th></tr>
         <tr><td>R1</td><td>A single account-level entitlement record is the source of truth for subscription tier, written only by a trusted server component, synced to every signed-in device and cached locally (offline-tolerant).</td><td><span class="pill">P0</span></td></tr>
         <tr><td>R2</td><td>The app gates features on an ordered, extensible <code>SubscriptionStatus</code> enum (v1: <code>FREE</code>, <code>PRO</code>) via a per-feature <b>minimum tier</b>, not a boolean.</td><td><span class="pill">P0</span></td></tr>
-        <tr><td>R3</td><td>Free tier is limited to <b>1 aircraft</b>; creating a 2nd requires <code>PRO</code>. Attachments, email export, and hosting a shared aircraft all require <code>PRO</code>. Cloud backup &amp; sync are free for all signed-in accounts.</td><td><span class="pill">P0</span></td></tr>
+        <tr><td>R3</td><td>Free tier is limited to <b>2 aircraft</b>; creating a 3rd requires <code>PRO</code>. Attachments, email export, and hosting a shared aircraft all require <code>PRO</code>. Cloud backup &amp; sync are free for all signed-in accounts.</td><td><span class="pill">P0</span></td></tr>
         <tr><td>R4</td><td>Accepting an invite and viewing/contributing to an aircraft <b>shared with</b> the user does <i>not</i> require a subscription. Shared-in aircraft do not count against the free 1-aircraft limit.</td><td><span class="pill">P0</span></td></tr>
         <tr><td>R5</td><td>The two Feature Lab flags (<code>attachmentUploadEnabled</code>, <code>exportEmailDeliveryEnabled</code>) are removed from <code>FeatureFlags</code>, its proto, the Feature Lab UI, and all consumers, which repoint to the status gate.</td><td><span class="pill">P0</span></td></tr>
         <tr><td>R6</td><td>The subscription page shows a plain-language <b>tier comparison</b> to non-subscribers (the marketing surface) and a <b>status view</b> to subscribers ("member since", renewal/expiry, Manage).</td><td><span class="pill">P0</span></td></tr>
@@ -275,13 +275,13 @@
       <p>The default view for a free user is the plain-language comparison from §3 — what you get now vs. with SquawkIt Pro — with a clear CTA:</p>
       <div class="mock">
         <div class="row"><span class="k">Header</span><span class="v">Do more with SquawkIt Pro</span></div>
-        <div class="row"><span class="k">Free</span><span class="v">1 aircraft · backed up &amp; synced across devices</span></div>
+        <div class="row"><span class="k">Free</span><span class="v">2 aircraft · backed up &amp; synced across devices</span></div>
         <div class="row"><span class="k">SquawkIt Pro</span><span class="v">Unlimited aircraft · attachments · email export · sharing</span></div>
         <div class="row"><span class="k">Price</span><span class="v">$9.99 / month · 7-day free trial</span></div>
         <div class="row"><span class="k">Storage used</span><span class="v">0 MB <span class="muted">(attachments are a Pro feature)</span></span></div>
         <div class="row"><span class="k">CTA</span><span class="v"><span class="pill">Start free trial</span> <span class="muted">(purchase placeholder)</span></span></div>
       </div>
-      <p>The comparison must be scannable — a two-column checklist, not prose — and honest about what free already does well (single-aircraft logbook, on-device, full logs/tasks/squawks/export). The CTA is the <b>purchase placeholder</b> (R14) until billing lands.</p>
+      <p>The comparison must be scannable — a two-column checklist, not prose — and honest about what free already does well (two-aircraft logbook, on-device, full logs/tasks/squawks/export). The CTA is the <b>purchase placeholder</b> (R14) until billing lands.</p>
 
       <h3>Subscriber: status view</h3>
       <div class="mock">
@@ -303,7 +303,7 @@
 
       <div class="callout win">
         <strong>Honest, calm gating</strong>
-        Free is a real product, not a nag screen: one aircraft, fully logged, backed up and synced. Premium entry points are shown-and-locked (as promos), not hidden, so the value is legible. Cancellation never yanks access mid-period, and downgrade never deletes or freezes what someone logged — they keep editing everything they have; they just can't add <i>more</i>.
+        Free is a real product, not a nag screen: up to two aircraft, fully logged, backed up and synced. Premium entry points are shown-and-locked (as promos), not hidden, so the value is legible. Cancellation never yanks access mid-period, and downgrade never deletes or freezes what someone logged — they keep editing everything they have; they just can't add <i>more</i>.
       </div>
 
       <h3>Developer Options (dev builds only)</h3>
@@ -338,7 +338,7 @@
       <h3>Entry-point inventory</h3>
       <table>
         <tr><th>#</th><th>Capability</th><th>Entry point (real surface)</th><th>Free-tier treatment</th><th>Promo interaction</th><th>Trigger</th></tr>
-        <tr><td>1</td><td>Add 2nd+ aircraft</td><td>App-shell aircraft switcher <b>"+ Add aircraft"</b> (<code>onAddAircraft</code>, <code>AdaptiveShellRoute</code>)</td><td><b>Shown, locked</b> — only when already at the 1-aircraft limit</td><td>Intercept the tap → <code>ProUpsellSheet(add_aircraft)</code>. Do <b>not</b> open the AddAircraft form they can't submit.</td><td><code>add_aircraft</code></td></tr>
+        <tr><td>1</td><td>Add 3rd+ aircraft</td><td>App-shell aircraft switcher <b>"+ Add aircraft"</b> (<code>onAddAircraft</code>, <code>AdaptiveShellRoute</code>)</td><td><b>Shown, locked</b> — only when already at the 2-aircraft limit</td><td>Intercept the tap → <code>ProUpsellSheet(add_aircraft)</code>. Do <b>not</b> open the AddAircraft form they can't submit.</td><td><code>add_aircraft</code></td></tr>
         <tr><td>1b</td><td>(same)</td><td><b>Fleet empty state</b> "Add first aircraft" (<code>FleetEmptyState</code>)</td><td><b>Free — no lock</b> (0→1 is allowed)</td><td>— normal add flow —</td><td>—</td></tr>
         <tr><td>2</td><td>Attachment photo/file upload</td><td><code>AttachmentFormSection</code> picker sheet, in <b>Log / Squawk / Task</b> add <b>and</b> edit forms</td><td><b>Shown, locked</b> — Take Photo &amp; Choose File carry the lock; <b>Add Link stays free</b> (no storage cost, already ungated)</td><td>Tapping a locked option → <code>ProUpsellSheet(attachment_upload)</code>. Reword the <code>file_upload_coming_soon</code> caption to a subscribe CTA (R16).</td><td><code>attachment_upload</code></td></tr>
         <tr><td>3</td><td>Email a copy of export</td><td>Export selection delivery option (<code>ExportViewModel</code> / <code>ExportSelectionScreen</code>)</td><td><b>Change from hidden → shown, locked.</b> Today it's suppressed when off; make it a visible "Email me a copy — Pro" row. Export-to-device stays free.</td><td>Toggling the locked row → <code>ProUpsellSheet(email_export)</code>.</td><td><code>email_export</code></td></tr>
@@ -391,7 +391,7 @@
         <tr><td>Downgrade with attachments already uploaded</td><td>Existing attachments retained and still viewable per the storage lifecycle; new uploads route to a promo. Not deleted on downgrade.</td></tr>
         <tr><td>Downgrade while hosting a share</td><td>Backup &amp; sync continue (free). Existing members keep <b>read-only</b> access; no new invites until re-subscribing.</td></tr>
         <tr><td>Free registered account &amp; backup</td><td>Fully backed up and synced across devices, same as a subscriber — backup is free.</td></tr>
-        <tr><td>Shared-in aircraft &amp; the free limit</td><td>Aircraft shared <i>to</i> a free user don't count toward their 1-aircraft limit and remain accessible.</td></tr>
+        <tr><td>Shared-in aircraft &amp; the free limit</td><td>Aircraft shared <i>to</i> a free user don't count toward their 2-aircraft limit and remain accessible.</td></tr>
         <tr><td>Force subscription status on in a dev build</td><td>Local-only override; never affects the real server entitlement or another device.</td></tr>
         <tr><td>Refund / chargeback</td><td>Store notification revokes entitlement server-side; client resolves to <code>FREE</code> on next sync; data retained (read-only over limits).</td></tr>
       </table>
@@ -403,7 +403,7 @@
       <h2 id="scope">13. Scope &amp; Phasing</h2>
       <table>
         <tr><th>Phase</th><th>Includes</th></tr>
-        <tr><td><b>v1 (this PRD)</b></td><td>Entitlement model with <code>SubscriptionStatus</code> enum + server source of truth + sync/local cache; free-tier limits (1 aircraft) and PRO gates (attachments, email export, sharing/hosting) with backup &amp; sync free for all; re-gate off Feature Lab flags; downgrade-safe read-only behavior; tier comparison/marketing view + subscriber status view (Manage &amp; purchase <b>placeholders</b>); trial/promo lifecycle modeled; per-account storage-usage tracking (server-side) + display on the subscription page; Developer Options refactor with Force subscription status.</td></tr>
+        <tr><td><b>v1 (this PRD)</b></td><td>Entitlement model with <code>SubscriptionStatus</code> enum + server source of truth + sync/local cache; free-tier limits (2 aircraft) and PRO gates (attachments, email export, sharing/hosting) with backup &amp; sync free for all; re-gate off Feature Lab flags; downgrade-safe read-only behavior; tier comparison/marketing view + subscriber status view (Manage &amp; purchase <b>placeholders</b>); trial/promo lifecycle modeled; per-account storage-usage tracking (server-side) + display on the subscription page; Developer Options refactor with Force subscription status.</td></tr>
         <tr><td>Fast-follow (post billing decision)</td><td>Real purchase / paywall flow; platform-native Manage deep links; restore/refresh; the actual 7-day trial configured in stores; server webhook/receipt-validation pipeline hardened.</td></tr>
         <tr><td>Later</td><td>Additional tiers (<code>ENTERPRISE</code>, …) using the same enum + minimum-tier gating; annual plan; promo-code redemption UI; win-back / churn messaging; <b>per-tier storage quotas</b> enforced against the tracked usage (gate new uploads over the cap), shown as "used of limit".</td></tr>
       </table>

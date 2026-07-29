@@ -19,7 +19,7 @@
 **Owner:** Product · **Status:** Proposed · **Date:** 2026-07-28
 **Revised:** 2026-07-29 — session cap 10 → 5 (D1); AdMob on Android/iOS in v1 (D6); web scheduled as
 phase 2 on Ad Manager rather than dropped (D5, §8.2); fixed `BANNER` sizes (D7); no daily cap (D8);
-free aircraft limit 1 → 2, implemented elsewhere (D9)
+free aircraft limit 1 → 2, implemented in this change (D9)
 **Related:** [Subscription PRD](../subscription/subscription_PRD.html) ·
 [Subscription Design](../subscription/subscription_design.html) ·
 [Product overview](../product/PRD.md)
@@ -51,7 +51,7 @@ take a full screen.
 ## 2. Problem & Background
 
 The [Subscription PRD](../subscription/subscription_PRD.html) commits to a free tier that is
-*deliberately generous*: a complete single-aircraft logbook with cloud backup and multi-device sync
+*deliberately generous*: a complete two-aircraft logbook with cloud backup and multi-device sync
 free for every signed-in account. That is the right product call and it is also a permanent,
 uncapped cost — every free account consumes Firestore reads/writes, sync bandwidth, and Cloud
 Functions time indefinitely.
@@ -434,7 +434,7 @@ Ad-free becomes a listed Pro benefit. The canonical table in
 
 | Capability | Free | SquawkIt Pro |
 |---|---|---|
-| Aircraft | 1 → **2** (D9, pending) | Unlimited |
+| Aircraft | **2** | Unlimited |
 | Maintenance logs, tasks & squawks | ✓ | ✓ |
 | Export to this device (CSV / XLSX / PDF / ZIP) | ✓ | ✓ |
 | Photo & file attachments | — | ✓ |
@@ -444,23 +444,31 @@ Ad-free becomes a listed Pro benefit. The canonical table in
 | Share aircraft & invite others | — | ✓ |
 | Future premium features | — | ✓ |
 
-**The Aircraft row is shown mid-change and does not belong to this PRD.** D9 raises the free limit
-from 1 to 2, but that is a subscription-tier change, not an ads change — it must not ride along on
-the ads feature branch, and the row above still reads `1` everywhere it is implemented today. The
-number lives in five places, and all five move together:
+**The Aircraft row reads 2 because D9 shipped with this change.** Raising the free limit from 1 to 2
+is a subscription-tier change rather than an ads change, but it is implemented here rather than
+deferred. Five places carry the number and all five moved together:
 
-| # | Location | Today |
+| # | Location | Now |
 |---|---|---|
-| 1 | `SubscriptionManagerImpl.FREE_AIRCRAFT_LIMIT` (`feature/subscription/datamanager`) | `1` — the **only** enforcement point |
-| 2 | `SubscriptionManagerImplTest` — asserts the limit equals `1` | `1` |
-| 3 | `SubscriptionUiStateTest` — fake `aircraftLimit()` returns `1` | `1` |
-| 4 | `subscription_aircraft_free` in `feature/subscription/viewing` `strings.xml` | `"1"` — the user-facing cell |
-| 5 | [`subscription_PRD.html`](../subscription/subscription_PRD.html) §3, mirrored by the table above | `1` |
+| 1 | `SubscriptionManagerImpl.FREE_AIRCRAFT_LIMIT` (`feature/subscription/datamanager`) | `2` — the **only** enforcement point |
+| 2 | `SubscriptionManagerImplTest` — asserts the free limit | `2` |
+| 3 | `SubscriptionUiStateTest` — fake `aircraftLimit()` | `2` |
+| 4 | `subscription_aircraft_free` in `feature/subscription/viewing` `strings.xml` | `"2"` — the user-facing cell |
+| 5 | [`subscription_PRD.html`](../subscription/subscription_PRD.html) — R3, the §3 table, pricing rows, personas, paywall trigger #1 | `2` |
 
-Worth recording while it is in front of us: **the limit is enforced client-side only.** No Cloud
-Function or Firestore rule checks aircraft count, so raising it is purely a client change — and,
-equally, the limit has never been server-authoritative. That is a pre-existing property, not
-something D9 introduces, but it belongs in whatever change implements D9.
+Two properties of the change worth recording here, since this PRD is what motivated it:
+
+- **The limit is enforced client-side only.** No Cloud Function or Firestore rule checks aircraft
+  count, so raising it was purely a client change — and equally, the limit has never been
+  server-authoritative. Pre-existing, not introduced by D9, but it is now load-bearing for a number
+  that is one constant away from being wrong.
+- **It moves the primary conversion trigger.** The subscription PRD lists *"Add 2nd+ aircraft"* as
+  paywall trigger #1, and its Fleet-operator persona converted specifically to "log more than one
+  aircraft at all." At a limit of 2 that trigger becomes the **3rd** aircraft, so a two-plane owner
+  — owner plus a partnership share, a common GA pattern — never hits it. Ad revenue plus
+  attachments, email export, sharing, and ad removal carry conversion for that persona instead. Both
+  the trigger and the persona rows in `subscription_PRD.html` were updated to say so rather than
+  left contradicting the new limit.
 
 Row order mirrors the shipped HTML table; the *Ad-free* row is inserted after *Cloud backup &
 multi-device sync* and before *Share aircraft & invite others*. Mid-table rather than appended,
@@ -597,7 +605,7 @@ not a config change; at an interval of 10 we should *expect* it to pin for engag
 | D6 | **AdMob for Android and iOS in v1** (decided 2026-07-29). Ad Manager can serve all three hosts from one server and was considered, but its trafficking/line-item overhead would be paid on mobile now for a consolidation benefit that only lands once web ships. Client migration cost later is a class-name and ad-unit-id swap, so the option stays cheap to exercise (§8.1, §8.2 phase 3). Supersedes the original Q1 (ad network choice); the narrower mediation question survives as Q7. |
 | D7 | **Fixed ad sizes — `BANNER` (320×50), with `LARGE_BANNER` (320×100) permitted only where a measurement clears G10** (decided 2026-07-29, resolving Q2). Fixed rather than inline adaptive, so the no-billboard and height guarantees hold by construction instead of by runtime clamping; the yield trade-off is revisited from §12 data, not guessed. `LARGE_BANNER` is gated on Q8 because record cards are content-sized and may be shorter than 100 dp (§7.2). |
 | D8 | **No cross-session (daily) frequency cap** (decided 2026-07-29, resolving Q4). The 5-unit per-session cap is the only volume bound; a pilot with many sessions a day may see 5 per session with no daily ceiling. Rationale: sessions are already separated by ≥ 30 minutes of background time (§6.7), so a high daily count means genuinely repeated engagement rather than one long scroll being milked. §12's retention and rating guardrails are what would reopen this. |
-| D9 | **Free aircraft limit rises from 1 to 2** (decided 2026-07-29, resolving Q5). Ad revenue on the free tier makes a second aircraft affordable, and 2 covers the common owner-plus-partnership case that 1 excludes. **This is not an ads change and does not ship with this PRD** — see the note under §9 for the four places that carry the number. |
+| D9 | **Free aircraft limit rises from 1 to 2** (decided 2026-07-29, resolving Q5). Ad revenue on the free tier makes a second aircraft affordable, and 2 covers the common owner-plus-partnership case that 1 excludes. Not an ads change, but implemented alongside this PRD — see the §9 note for all five places carrying the number, the client-side-only enforcement, and the effect on paywall trigger #1. |
 
 ### Open
 
