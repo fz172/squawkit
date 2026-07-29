@@ -25,7 +25,7 @@ The app uses a **local-first architecture** (R1 — shipped, default path): a SQ
 ./gradlew :webApp:jsBrowserDevelopmentWebpack    # Build the web app development bundle
 ```
 
-For the iOS dogfood build, select the **iosAppDogfood** scheme in Xcode and run. See [Dogfood Builds](#dogfood-builds) below.
+For iOS, select the **iosAppDebug** scheme in Xcode and run (**iosAppRelease** for a tooling-off build). See [Dogfood Builds](#dogfood-builds) below.
 
 CI (`.github/workflows/ci.yml`) runs lint → assembleDebug → testDebugUnitTest on every push. iOS is **not** built on CI. CI requires `GOOGLE_SERVICES_JSON` secret to write `google-services.json` before building.
 
@@ -288,14 +288,15 @@ login, Apple sign-in) — one injectable singleton, constructed once per host vi
 
 ### iOS
 
+- Two build configurations only — **Debug** and **Release** — mirroring Android's build types, with
+  one shared scheme each (`iosAppDebug`, `iosAppRelease`).
 - `MainEntry.doInitKoin(forceDeveloperBuild:)` (`composeApp/src/iosMain/MainViewController.kt`) is
   the single entry point; `isDeveloperBuild` is `forceDeveloperBuild || Platform.isDebugBinary`.
-- `iosApp.swift`'s `#if DOGFOOD` only decides the `forceDeveloperBuild` argument (Swift can't see
-  `Platform.isDebugBinary` itself) — there's no more separate dogfood Kotlin entry point or wiring class.
-- The **Dogfood** Xcode build configuration still exists for signing/distribution purposes (sets
-  `SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG DOGFOOD"`, remaps `CONFIGURATION=Dogfood → Debug`
-  for the Compile Kotlin phase).
-- Build: open `iosApp/iosApp.xcodeproj`, select the **iosAppDogfood** scheme, and run.
+  `iosApp.swift` passes `false`, so Debug gets developer tooling via `Platform.isDebugBinary` and
+  Release does not. `forceDeveloperBuild` stays on the API for a tooling-on Release build if one is
+  ever needed (the iOS equivalent of Android's `-PdeveloperBuild=true`); there is no Swift compile
+  flag for it, because Swift can't see `Platform.isDebugBinary` itself.
+- Build: open `iosApp/iosApp.xcodeproj`, select the **iosAppDebug** scheme, and run.
 
 ### Web
 
