@@ -91,13 +91,19 @@ class AircraftOverviewViewModel(
   private fun loadAircraftAndStats() {
     viewModelScope.launch {
       _uiState.update { AircraftOverviewUiState.Loading }
+      // Every collection shares one SQLDelight `entity` table, and SQLDelight notifies query
+      // listeners per *table*, so any write anywhere — adding a squawk, a sync writeback — re-runs
+      // and re-emits every observer here with identical content. Unfiltered, that re-ran
+      // computeNextDue for every task card several times per unrelated write. distinctUntilChanged
+      // drops the duplicates; the store still re-queries and re-decodes, which is a separate
+      // (larger) fix at the EntityStore level.
       combine(
-        fleetManager.loadAircraft(aircraftId),
-        logManager.observeLogs(aircraftId),
-        taskDataManager.observeTasks(aircraftId),
-        logManager.observeMaintenanceOverview(aircraftId),
+        fleetManager.loadAircraft(aircraftId).distinctUntilChanged(),
+        logManager.observeLogs(aircraftId).distinctUntilChanged(),
+        taskDataManager.observeTasks(aircraftId).distinctUntilChanged(),
+        logManager.observeMaintenanceOverview(aircraftId).distinctUntilChanged(),
         combine(
-          squawkManager.observeSquawks(aircraftId),
+          squawkManager.observeSquawks(aircraftId).distinctUntilChanged(),
           combine(
             blobStatesFlow(),
             attachmentOpener.downloadingIds
@@ -111,11 +117,11 @@ class AircraftOverviewViewModel(
                 )
               }
             }
-          },
+          }.distinctUntilChanged(),
           // The caller's role on this aircraft, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
           // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
-          sharingManager.observeMyRole(aircraftId),
-          sharingManager.observeIsShared(aircraftId),
+          sharingManager.observeMyRole(aircraftId).distinctUntilChanged(),
+          sharingManager.observeIsShared(aircraftId).distinctUntilChanged(),
         ) { squawks, syncs, myRole, shared ->
           ShareContext(squawks, syncs, myRole, shared)
         }

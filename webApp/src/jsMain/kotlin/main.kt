@@ -1,5 +1,6 @@
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
+import dev.fanfly.wingslog.core.appinfo.configureLogging
 import dev.fanfly.wingslog.core.appinfo.createAppCapability
 import dev.fanfly.wingslog.core.di.commonAppModules
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
@@ -31,6 +32,11 @@ private val isWebDebugBuild: Boolean =
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+  // First of all: gate debug/verbose logging by build flavor (#276). Ahead of every other startup
+  // path — Firebase init, the email-link completion tab, the single-tab gate, and startKoin's eager
+  // singletons all log, and only the release build's INFO floor keeps their identifiers out.
+  configureLogging(isDeveloperBuild = isWebDebugBuild)
+
   // Firebase must be initialized before anything (below) touches auth. Done once here so every
   // startup path — the email-link completion tab and both single-tab-gate branches — shares the
   // same default app.
