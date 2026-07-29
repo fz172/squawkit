@@ -5,6 +5,15 @@ import FirebaseAppCheck
 import ComposeApp
 
 
+/// App Check provider factory for real builds — attests app integrity with a Secure Enclave key
+/// via `DCAppAttestService`. Firebase ships `AppAttestProvider` but no matching factory (unlike
+/// `AppCheckDebugProviderFactory` and `DeviceCheckProviderFactory`), so supply one.
+final class AppAttestProviderFactory: NSObject, AppCheckProviderFactory {
+  func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
+    AppAttestProvider(app: app)
+  }
+}
+
 class AppDelegate: NSObject, UIApplicationDelegate {
   private let googleSignInProvider = NativeGoogleSignInProvider()
 
@@ -55,11 +64,17 @@ struct iosApp: App {
         //
         // App Check must have a provider factory set BEFORE configure(), or every enforceAppCheck
         // callable (redeem invite, revoke, upload session, export) is rejected as "unauthenticated".
-        // The debug provider prints a token to the console to register in the Firebase App Check console.
-        // The Simulator can never attest via App Attest / DeviceCheck, so use the debug provider there
-        // regardless of build config; a real release build falls through to the default App Attest.
+        // There is no implicit default: with no factory set, FIRAppCheck refuses to instantiate at
+        // all (FIRAppCheck.m logs "without a provider factory" and returns nil), so both branches
+        // below have to be spelled out.
+        //
+        // The Simulator can never attest via App Attest / DeviceCheck, so use the debug provider
+        // there regardless of build config. It prints a token to the console that has to be
+        // registered in Firebase Console -> App Check -> Manage debug tokens, per install.
         #if targetEnvironment(simulator) || DEBUG
         AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
+        #else
+        AppCheck.setAppCheckProviderFactory(AppAttestProviderFactory())
         #endif
         FirebaseApp.configure()
 
