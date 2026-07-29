@@ -27,7 +27,7 @@ The canonical guidance for this repo lives in [AGENTS.md](AGENTS.md). Read it fi
 ./gradlew :webApp:jsBrowserDevelopmentWebpack        # Web dev bundle
 ```
 
-CI runs lint → `assembleDebug` → `testDebugUnitTest` and requires the `GOOGLE_SERVICES_JSON` secret. iOS is not built on CI; use the **iosAppDogfood** scheme in Xcode for the iOS dogfood build.
+CI runs lint → `assembleDebug` → `testDebugUnitTest` and requires the `GOOGLE_SERVICES_JSON` secret. iOS is not built on CI; the Xcode project has just two configurations, Debug and Release, with a shared scheme each (**iosAppDebug** / **iosAppRelease**).
 
 ## Before non-trivial changes
 

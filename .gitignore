@@ -21,6 +21,10 @@ kotlin-js-store/
 # Xcode
 **/xcuserdata/
 *.xcuserdata
+# Placeholders Xcode rewrites on open; the real prefs live in xcuserdata.
+# Shared schemes (xcshareddata/xcschemes/) stay tracked.
+**/xcshareddata/WorkspaceSettings.xcsettings
+**/xcshareddata/IDEWorkspaceChecks.plist
 
 # Claude Code
 .agents/

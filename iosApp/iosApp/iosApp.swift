@@ -63,11 +63,10 @@ struct iosApp: App {
         #endif
         FirebaseApp.configure()
 
-        #if DOGFOOD
-        MainEntry.shared.doInitKoin(forceDeveloperBuild: true)
-        #else
+        // Developer tooling turns itself on for a debug binary — doInitKoin ORs this argument with
+        // Kotlin's Platform.isDebugBinary, which Swift can't see. Debug and Release are the only two
+        // configurations, mirroring Android's debug/release build types.
         MainEntry.shared.doInitKoin(forceDeveloperBuild: false)
-        #endif
     }
 
     var body: some Scene {

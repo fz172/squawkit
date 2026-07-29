@@ -38,7 +38,8 @@ data class AppCapability(
  * [isDeveloperBuild] is true for anything that isn't the shipping release, computed differently
  * per host: Android from the `DEVELOPER_BUILD` BuildConfig field (`app/build.gradle.kts`, true for
  * `debug` and opt-in on `release` via `-PdeveloperBuild=true`); iOS from
- * `MainEntry.doInitKoin`'s `forceDeveloperBuild` param (set by `#if DOGFOOD` in `iosApp.swift`) OR
+ * `MainEntry.doInitKoin`'s `forceDeveloperBuild` param (`false` from `iosApp.swift` — the Debug
+ * configuration is covered by the debug-binary check below) OR
  * a debug binary; web from the webpack-injected `__WINGSLOG_DEBUG__` constant.
  */
 expect fun createAppCapability(isDeveloperBuild: Boolean): AppCapability
