@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Doc: Display Ads (Free Tier)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb; --surface: #ffffff; --surface-alt: #eef3f9;
+      --text: #122033; --muted: #53657d; --line: #d8e1ec;
+      --blue: #1f5fa8; --blue-soft: #dbe9fb;
+      --green: #156f4a; --green-soft: #d8f0e3;
+      --amber: #9a6200; --amber-soft: #fdeecb;
+      --red: #a33a32; --red-soft: #f7dedb;
+      --shadow: rgba(18, 32, 51, 0.08);
+      --mono: "SFMono-Regular", "JetBrains Mono", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.55; }
+    main { max-width: 1240px; margin: 0 auto; padding: 32px 20px 56px; }
+    .page-shell { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 28px; align-items: start; }
+    .doc-body { min-width: 0; }
+    h1, h2, h3, h4 { line-height: 1.2; margin: 0 0 12px; }
+    h1 { font-size: 2rem; }
+    h2 { margin-top: 38px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 1.35rem; }
+    h3 { margin-top: 24px; font-size: 1.08rem; }
+    h4 { margin-top: 18px; font-size: 0.95rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-alt); padding: 1px 6px; border-radius: 6px; }
+    pre { background: var(--text); color: #e7eef7; padding: 14px 16px; border-radius: 12px; overflow: auto; font-family: var(--mono); font-size: 0.83rem; line-height: 1.5; }
+    pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 16px 0; box-shadow: 0 1px 2px rgba(18,32,51,0.04); }
+    .hero { background: linear-gradient(180deg, var(--surface), var(--surface-alt)); border: 1px solid var(--line); border-radius: 20px; padding: 26px; margin-bottom: 24px; }
+    .hero h1 { margin-bottom: 8px; }
+    .lede { font-size: 1.1rem; color: var(--muted); margin: 0; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 0.82rem; font-weight: 600; margin: 0 6px 6px 0; }
+    .pill.green { background: var(--green-soft); color: var(--green); }
+    .pill.amber { background: var(--amber-soft); color: var(--amber); }
+    .pill.red { background: var(--red-soft); color: var(--red); }
+    .toc { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow: auto; background: rgba(255,255,255,0.9); backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px var(--shadow); }
+    .toc-title { margin: 0 0 10px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    .toc ol { margin: 0; padding-left: 18px; }
+    .toc li { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.92rem; }
+    th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
+    th { background: var(--surface-alt); font-weight: 600; }
+    .table-scroll { overflow-x: auto; }
+    .callout { border-radius: 14px; padding: 14px 18px; margin: 16px 0; border: 1px solid var(--line); }
+    .callout.note { background: var(--blue-soft); border-color: #bcd6f5; }
+    .callout.win { background: var(--green-soft); border-color: #aee0c6; }
+    .callout.warn { background: var(--amber-soft); border-color: #f0d79a; }
+    .callout.stop { background: var(--red-soft); border-color: #e9b6b0; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    ul.checks { list-style: none; padding-left: 0; }
+    ul.checks li { padding-left: 26px; position: relative; margin: 8px 0; }
+    ul.checks li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+    .phase { display: grid; grid-template-columns: 84px 1fr; gap: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin: 10px 0; }
+    .phase .tag { background: var(--surface-alt); padding: 12px 14px; font-weight: 700; color: var(--blue); border-right: 1px solid var(--line); }
+    .phase .body { padding: 12px 16px; }
+    .phase .body b.h { display:block; margin-bottom: 3px; }
+    @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="hero">
+    <div>
+      <span class="pill amber">Status: Proposed</span>
+      <span class="pill">Design Doc</span>
+      <span class="pill">AdMob · Compose · Consent</span>
+    </div>
+    <h1>Display Ads — Free Tier</h1>
+    <p class="lede">Engineering design for in-list display ads. Companion to the <a href="display_ads_PRD.md">PRD</a>: the pure placement core, the app-session cap and the foreground observer it needs, the entitlement gate, how three list surfaces with <em>two different</em> scroll mechanics take ad rows, the per-host SDK seam (including why iOS needs a Swift bridge rather than cinterop), and a phased build roadmap.</p>
+  </div>
+
+  <div class="page-shell">
+    <div class="doc-body">
+
+      <div class="callout note">
+        <strong>Implementation Status</strong>
+        Proposed. Nothing built — no <code>feature/ads</code> module, no SDK linked, no <code>isAdsSupported</code> flag. This note will track what actually ships. The PRD's decisions D1–D9 are settled inputs here and are not re-litigated; where this doc contradicts an <em>assumption</em> the PRD made about existing infrastructure, §3 and §5 say so explicitly.
+      </div>
+
+      <h2 id="overview">1. Overview &amp; Principles</h2>
+      <p>Four commitments shape the design:</p>
+      <ul>
+        <li><b>Placement is pure, testable Kotlin.</b> Cadence, the empty-list rule, slot positions, the session cap and the per-tier slot format are decided by code that imports no Compose and no ad SDK. The PRD's §6.6 test matrix becomes unit tests over <code>withAdSlots()</code>, not screenshot tests.</li>
+        <li><b>The ad product is behind one seam.</b> Only <code>feature/ads/viewing</code> touches an SDK, through a single <code>expect</code>/<code>actual</code> <code>AdView</code>. That is what lets AdMob serve mobile now and an Ad Manager tag serve web in phase 2 (PRD §8.2) without reopening this document.</li>
+        <li><b>Default-OFF, the mirror of the other gates.</b> <code>isSubscriptionSupported</code> is default-<em>open</em> (no paywall ⇒ everything available). Ads invert it: no subscription support, or no ads support, ⇒ <b>no ads</b>. A build where Heavy cannot be bought must never show ads a pilot cannot remove.</li>
+        <li><b>The record always wins.</b> Every guardrail G1–G10 that can be made structural is made structural — collapsed-by-default slots, fixed creative sizes, neutral tokens — rather than left to a reviewer to catch.</li>
+      </ul>
+
+      <div class="callout warn">
+        <strong>Three findings that change the plan</strong>
+        Tracing the PRD against the codebase turned up three assumptions that do not hold. Each has a section below and a line in the roadmap, because each is real work the PRD treated as free: <b>(A)</b> the three surfaces use two different list mechanics, and only one is lazy (§5); <b>(B)</b> there is no app-session or foreground-observer concept in the codebase to hang the 5-per-session cap on (§4); <b>(C)</b> iOS links SDKs via SPM in the Swift app, so <code>iosMain</code> cannot reference <code>GADBannerView</code> at all (§7.2).
+      </div>
+
+      <h2 id="modules">2. Module Layout</h2>
+      <p>One new canonical-layout feature module, plus small touch points. Follows <code>feature/tasks</code> as the reference (AGENTS.md), and the strict rule that <code>model</code> and <code>datamanager</code> carry no UI and no SDK.</p>
+      <pre><code>feature/ads/
+  model/          ListRow&lt;T&gt;, withAdSlots(), AdSurface, AdSlotFormat, AdUnitSize
+                    — pure Kotlin. No Compose, no SDK, no platform types.
+                    Unit-tested against PRD §6.6 + the cap matrix.
+  datamanager/    AdsGate           (showsAds(): Flow&lt;Boolean&gt;)
+                  AdSessionCounter  (app-scoped single: 5-unit cap, 30-min boundary)
+                  AdConsentManager  (expect/actual: UMP + ATT; no-op on JS)
+                  Koin module
+  sharedassets/   strings: "Sponsored", "Remove ads with Heavy", a11y labels
+                    — no feature deps (AGENTS.md)
+  viewing/        AdSlot()      common: band layout, label, upsell link, collapse
+                  expect AdView()
+                    androidMain: AdView (Google Mobile Ads), fixed BANNER
+                    iosMain:     UIKitView over a Swift-supplied factory (§7.2)
+                    jsMain:      no-op — renders nothing (v1)
+
+core/appinfo/     + AppCapability.isAdsSupported
+core/ui/adaptive/ + AdaptiveCardList span support (§5.2 — API change)
+core/lifecycle/   NEW MODULE — AppForegroundObserver (§4.2). No Compose,
+                    no UI: consumed by feature/ads/datamanager, which may
+                    not depend on UI (AGENTS.md).
+feature/shell/    + the Compose driver that pumps the observer (§4.2)
+feature/squawk/viewing/   SquawkTab takes ad rows
+feature/tasks/viewing/    ComplianceSection takes ad rows
+feature/logs/viewing/     MaintenanceLogListContent + MaintenanceLogTable
+feature/subscription/datamanager/  + SubscriptionManager.showsAds()
+feature/settings/         + Developer Options "Force ads" toggle
+core/di/          register adsModule in CommonAppModules.kt</code></pre>
+      <p><b>Dependency direction.</b> The three surface modules depend on <code>feature/ads/model</code> (pure, cheap) and <code>feature/ads/viewing</code> (for <code>AdSlot()</code>) — the same shape as their existing dependency on <code>attachment/viewing</code> for <code>AttachmentFormSection</code>. Nothing depends on an SDK transitively: the Android and iOS artifacts are declared only in <code>feature/ads/viewing</code>'s platform source sets.</p>
+
+      <h2 id="core">3. The Placement Core</h2>
+      <p>Everything normative in PRD §6 lives in <code>feature/ads/model</code> as pure functions over lists.</p>
+      <pre><code>sealed interface ListRow&lt;out T&gt; {
+  data class Item&lt;T&gt;(val value: T) : ListRow&lt;T&gt;
+  /** 0-based, stable for a given list size. The Lazy list key where one exists. */
+  data class Ad(val slotIndex: Int) : ListRow&lt;Nothing&gt;
+}
+
+enum class AdSurface { SQUAWKS, TASKS, LOGS }        // the analytics `surface` param
+enum class AdSlotFormat { SINGLE, TWO_UP }           // resolved from tier + headroom
+enum class AdUnitSize { BANNER, LARGE_BANNER }       // PRD D7 / §7.2
+
+fun &lt;T&gt; withAdSlots(items: List&lt;T&gt;, interval: Int = 10): List&lt;ListRow&lt;T&gt;&gt;</code></pre>
+      <p>Callers wrap only when ads are enabled; when disabled they render <code>items</code> directly, so the ad-free path allocates nothing (PRD §6.3).</p>
+
+      <h3>3.1 Slot positions are pure; fills are not</h3>
+      <p>This split is the single most important idea in the design, and PRD §6.6 depends on it being respected:</p>
+      <div class="table-scroll">
+      <table>
+        <tr><th></th><th>Decided by</th><th>Depends on</th><th>Testable as</th></tr>
+        <tr><td><b>Slot positions</b></td><td><code>withAdSlots()</code></td><td>rendered item count only</td><td>pure unit test, PRD §6.6 table</td></tr>
+        <tr><td><b>Slot format</b></td><td><code>AdSlotFormat.of(tier, headroom)</code></td><td>layout tier + remaining cap</td><td>pure unit test, per tier</td></tr>
+        <tr><td><b>Which slots fill</b></td><td><code>AdSessionCounter</code></td><td>session state, scroll history, network</td><td>counter unit tests + manual</td></tr>
+      </table>
+      </div>
+      <p>At a cadence of 10 with a cap of 5, a 100-item list produces ten slots of which at most five ever fill. A reviewer reading only the §6.6 table would reasonably implement ten fills; the doc says so and so does this one.</p>
+
+      <h3>3.2 Grouped and toggled lists</h3>
+      <p>Compliance's status groups share one continuous counter across the whole scroll, and a slot landing on a group boundary renders at the <b>end of the preceding group</b> (G1 — never between a header and its first card). Rather than teach <code>withAdSlots()</code> about groups, the caller flattens to a single <code>List&lt;Row&gt;</code> of headers-and-cards first, and a small <code>coalesceAcrossHeaders()</code> pass shifts any ad that landed immediately before a header back one position. Two pure functions, both unit-testable, neither aware of Compose.</p>
+      <p>Squawks' Open/Closed toggle is two independent lists with independent counters — falls out for free, since each sub-view calls <code>withAdSlots()</code> on its own filtered list.</p>
+
+      <h2 id="session">4. The Session Cap</h2>
+
+      <h3>4.1 AdSessionCounter</h3>
+      <p>An app-scoped Koin <code>single</code> — the cap is global across surfaces, so exactly one instance may exist. It is the only thing that decides whether a composed slot may request an ad.</p>
+      <pre><code>class AdSessionCounter(clock: Clock, foreground: AppForegroundObserver) {
+  /** Units displayed this session, 0..5. */
+  val displayed: StateFlow&lt;Int&gt;
+  val headroom: Int get() = CAP - displayed.value
+
+  /** Reserve n units (1 for SINGLE, 2 for TWO_UP). Returns what was granted: 0, 1 or 2. */
+  fun reserve(units: Int): Int
+
+  companion object { const val CAP = 5 }
+}</code></pre>
+      <p><code>reserve()</code> returning a <em>partial</em> grant is what implements PRD §7.1's "near the cap" rule without a special case at each call site: a <code>TWO_UP</code> slot asking for 2 with one unit of headroom gets 1, and <code>AdSlotFormat</code> resolution then centres the single unit exactly as the MEDIUM case.</p>
+      <p><b>Fill caching (N8).</b> A slot's grant is remembered per <code>slotIndex</code> for the lifetime of the screen, so scrolling past the same ad twice neither re-requests nor double-counts. Held in a <code>remember</code>-scoped map keyed by surface — deliberately <em>not</em> in the counter, which must stay screen-agnostic.</p>
+
+      <h3>4.2 The missing piece: there is no app session today <span class="pill red">Finding B</span></h3>
+      <p>PRD §6.7 defines the session boundary as "cold start, or foregrounding after ≥ 30 minutes in the background — the same convention as the analytics session." <b>No such convention exists in the codebase.</b> Specifically:</p>
+      <ul>
+        <li><code>AnalyticsManager</code> (<code>core/analytics</code>) exposes only <code>logScreenView</code>, <code>logEvent</code> and <code>setAnalyticsCollectionEnabled</code>. Firebase maintains its own session internally and does not surface a session id or boundary to the app.</li>
+        <li>There is no app-level foreground/background observer. The closest thing is <code>LifecycleResumeEffect</code> in <code>AircraftSectionContent</code> (added for the #373 due-status recompute) — that is <b>screen</b>-scoped, fires on tab switches, and would reset the ad cap far too often.</li>
+      </ul>
+      <p>So the design adds one, in a <b>new <code>core/lifecycle</code> module</b>. <code>androidx.lifecycle.compose</code> is already a dependency and <code>LifecycleResumeEffect</code> already works on all three hosts (the #373 comment confirms: UIKit foreground on iOS, <code>document.visibilitychange</code> on web), so the primitive exists — what is missing is an app-scoped owner of it.</p>
+
+      <h4>Why its own module, and not <code>core/ui</code></h4>
+      <p>Because its consumer may not depend on UI. <code>AdSessionCounter</code> lives in <code>feature/ads/datamanager</code>, and AGENTS.md is explicit that <code>datamanager</code> and <code>model</code> never depend on UI. A UI-module observer would force precisely that violation, in the one place it would be least visible — a transitive dependency rather than an import someone reviews. <code>core/lifecycle</code> also reads correctly to the next person: an app-session signal is not a UI concern, and future consumers (analytics, sync backoff) are not UI either.</p>
+      <p><b>The consequence is a two-part split.</b> <code>LifecycleResumeEffect</code> is a <em>Compose</em> API, so a non-UI module cannot use it. The observer is therefore a pure state machine, and something in the UI layer pumps it:</p>
+      <pre><code>// core/lifecycle — commonMain, no Compose, no expect/actual
+class AppForegroundObserver(private val clock: Clock) {
+  /** Emits at cold start and whenever the app foregrounds after ≥ [threshold] backgrounded. */
+  val sessionStarts: Flow&lt;Unit&gt;
+  fun onEnterForeground()
+  fun onEnterBackground()
+  companion object { val THRESHOLD = 30.minutes }
+}
+
+// feature/shell — the driver: the only Compose-aware part, ~5 lines at the shell root
+LifecycleResumeEffect(Unit) {
+  observer.onEnterForeground()
+  onPauseOrDispose { observer.onEnterBackground() }
+}</code></pre>
+      <p>This split is a win rather than a tax: the state machine is unit-testable with a fake clock and no Compose test harness, and the host-specific behaviour stays in the one primitive that already handles all three platforms. The alternative — per-host <code>expect</code>/<code>actual</code> actuals over <code>ProcessLifecycleOwner</code>, <code>NSNotificationCenter</code> and <code>visibilitychange</code> — is three times the code and three times the platform surface for the same signal.</p>
+      <div class="callout note">
+        <strong>Scope call</strong>
+        This is genuinely useful beyond ads — a real app-session signal is what the analytics design has wanted for its click/timing taxonomy, and #373's resume recompute is a screen-scoped stand-in for it. It is scoped here as <em>minimum viable for the cap</em> (one flow, one threshold) rather than as an analytics session-id feature, so ads are not blocked on a larger discussion. A dedicated module is what keeps the next consumer from having to dig it out of an ads feature.
+      </div>
+      <p><b>Deliberately not persisted.</b> The counter is in-memory. A process death resets it, which can over-count across a crash-restart — accepted for the same reason PRD §6.7 accepts the memory-pressure over-count: bounded, rare, and cheaper than a disk write on every impression.</p>
+
+      <h2 id="gate">5. Surfaces — Two List Mechanics <span class="pill red">Finding A</span></h2>
+      <p>The PRD describes all three surfaces in one voice and refers throughout to "the Lazy list key." In fact <b>only the logs list is lazy</b>, and the consequences are large enough that the two cases need different handling.</p>
+      <div class="table-scroll">
+      <table>
+        <tr><th>Surface</th><th>Container</th><th>Lazy?</th><th>Consequence for ads</th></tr>
+        <tr>
+          <td><b>Squawks</b><br><code>SquawkTab</code></td>
+          <td><code>AdaptiveCardList</code></td>
+          <td class="muted">No</td>
+          <td>Plain <code>Column</code>/<code>Row</code> inside an outer <code>verticalScroll</code>. <b>Every</b> card composes; nothing recycles; there are no keys.</td>
+        </tr>
+        <tr>
+          <td><b>Tasks</b><br><code>ComplianceSection</code></td>
+          <td><code>AdaptiveCardList</code></td>
+          <td class="muted">No</td>
+          <td>Same.</td>
+        </tr>
+        <tr>
+          <td><b>Logs</b><br><code>MaintenanceLogListContent</code></td>
+          <td><code>LazyColumn</code>, <code>key = { it.id }</code></td>
+          <td><b>Yes</b></td>
+          <td>Slots compose as they scroll into view; <code>Ad(slotIndex)</code> is a real key; off-screen views can be released.</td>
+        </tr>
+      </table>
+      </div>
+
+      <h3>5.1 What this means</h3>
+      <ul>
+        <li><b>N5 ("slots far off-screen release their ad view") is free on logs and impossible on squawks/tasks.</b> In a non-lazy list every composed ad view stays alive. This is not a blocker — the 5-unit cap bounds live views to five by construction, which is exactly the "small bounded number" N5 asks for. But the cap is now doing <em>memory</em> work, not just UX work, and lowering it later has a memory benefit while raising it has a memory cost. Recorded here so a future cap change is not made on UX grounds alone.</li>
+        <li><b>Cap consumption differs by surface.</b> Non-lazy: all slots compose at once, so the first five in list order win, deterministically. Lazy: only visible slots compose, so the cap is consumed <em>as the pilot scrolls</em>. Both are correct and neither is surprising in use, but a test asserting "slot 7 never fills" holds only on the non-lazy surfaces.</li>
+        <li><b>Stable keys matter only on logs.</b> Where they matter they are load-bearing: <code>Ad(slotIndex)</code> must not change identity as items load in, or Compose tears the slot down and re-requests, burning cap.</li>
+      </ul>
+
+      <h3>5.2 AdaptiveCardList needs a spanning row <span class="pill amber">API change</span></h3>
+      <p>Today the signature admits no ads at all:</p>
+      <pre><code>@Composable fun &lt;T&gt; AdaptiveCardList(
+  items: List&lt;T&gt;, columns: Int, modifier: Modifier, spacing: Dp,
+  itemContent: @Composable (T) -&gt; Unit,
+)   // chunks items into rows of `columns`; every cell weight(1f)</code></pre>
+      <p>PRD §6.5 requires the ad to occupy a <b>full-width row spanning all columns</b>, with cadence counted per item rather than per row. Chunking a <code>List&lt;ListRow&lt;T&gt;&gt;</code> through the existing function would place an ad in a single grid cell — the one thing §6.5 forbids. Two options considered:</p>
+      <div class="table-scroll">
+      <table>
+        <tr><th>Option</th><th>Shape</th><th>Verdict</th></tr>
+        <tr><td>Each surface composes its own rows</td><td>Callers stop using <code>AdaptiveCardList</code> and hand-roll the grid with ad rows</td><td class="muted">Rejected — duplicates the chunking and short-row padding logic in three places, and diverges over time.</td></tr>
+        <tr><td><b>Teach the component about spans</b></td><td>Overload taking <code>rows: List&lt;ListRow&lt;T&gt;&gt;</code>, chunking only <code>Item</code>s and emitting each <code>Ad</code> as a full-width row between chunks</td><td><b>Chosen.</b> One place owns grid mechanics; the ads knowledge is one <code>when</code> branch. <code>core/ui/adaptive</code> already depends on nothing feature-specific, and <code>ListRow</code> lives in <code>feature/ads/model</code> — so the overload takes a generic <code>sealed</code> shape or a simple <code>isSpanning: (T) -&gt; Boolean</code> predicate to avoid a core→feature dependency.</td></tr>
+      </table>
+      </div>
+      <p>The predicate form is preferred on layering grounds: <code>core/ui/adaptive</code> must not import <code>feature/ads/model</code>.</p>
+
+      <h3>5.3 Logs: the scroll-target bug the PRD flags as F8</h3>
+      <p>Concrete and worth quoting, because it is a correctness issue rather than a cosmetic one. <code>MaintenanceLogListContent</code> pins a target log by <em>item</em> index:</p>
+      <pre><code>snapshotFlow { currentLogs }.collect { logs -&gt;
+  val index = logs.indexOfFirst { it.id == scrollToLogId }
+  if (index &gt;= 0) logListState.scrollToItem(index)     // ← item index, not display index
+}</code></pre>
+      <p>With ads interleaved, <code>logs.indexOfFirst</code> and the <code>LazyColumn</code>'s index diverge by the number of ads above the target — so a pilot tapping "go to this log" lands on the wrong entry, and the error grows down the list. The fix is to resolve against the display list: <code>rows.indexOfFirst { it is ListRow.Item &amp;&amp; it.value.id == scrollToLogId }</code>. A regression test pins it with ads on and off.</p>
+
+      <h3>5.4 The wide log table</h3>
+      <p><code>MaintenanceLogTable</code> (MEDIUM+) renders ads as a full-width band between rows (PRD D3/F16), matching the table's horizontal insets but adopting none of its column rules, zebra striping or row height. Implementation note: the band is emitted by the same <code>AdSlot()</code> composable as the card surfaces, wrapped in a container that supplies the table's insets — no table-specific ad code.</p>
+
+      <h2 id="tiergate">6. The Gate</h2>
+      <p><code>SubscriptionManager</code> gains one method, alongside the existing <code>canUploadAttachments()</code> / <code>canEmailExports()</code> / <code>canHostShare()</code> / <code>aircraftLimit()</code>:</p>
+      <pre><code>/** True only for the free tier, on a build/platform where ads are supported. Default-OFF. */
+fun showsAds(): Flow&lt;Boolean&gt;</code></pre>
+      <p>The implementation is the inverse of the existing <code>gate()</code> helper, and the asymmetry is the whole point:</p>
+      <pre><code>override fun showsAds(): Flow&lt;Boolean&gt; =
+  // Default-CLOSED, unlike gate()/aircraftLimit(): no ads unless we can also sell removal.
+  if (!appCapability.isAdsSupported || !appCapability.isSubscriptionSupported) {
+    flowOf(false)
+  } else {
+    status().map { it &lt; Subscription.Status.STATUS_PRO }
+  }</code></pre>
+      <p>Reading the status enum rather than a boolean means any future paid tier is ad-free automatically. Being a <code>Flow</code> off the same entitlement stream makes PRD F5 fall out: a purchase resolves, <code>showsAds()</code> emits <code>false</code>, in-flight slots collapse without a restart; on expiry they return.</p>
+      <p><b><code>AppCapability.isAdsSupported</code></b> follows <code>isAircraftSharingSupported</code>/<code>isSubscriptionSupported</code>: a build-time flag in each host's <code>createAppCapability</code> actual — on in dev and dogfood, off in the shipping release until GA, and <code>false</code> on the JS host for all of v1. Its KDoc must state the inversion explicitly, since every neighbouring flag means the opposite: <b>off means no ads, not ads-for-everyone.</b></p>
+      <p><b>Guests and shared aircraft</b> need no special code. A guest is on the free tier and sees ads under the same rules — and sees none in practice at first, because their lists are empty (G3). Ads follow the viewer's own entitlement, so a free mechanic viewing a Heavy owner's shared aircraft sees ads; nothing consults the host's tier.</p>
+
+      <h2 id="platform">7. The Platform Seam</h2>
+      <p>One <code>expect</code> declaration, three actuals. <code>AdSlot()</code> in <code>commonMain</code> owns the label, the band layout, the upsell link, the collapse-when-unfilled behaviour and the analytics calls; <code>AdView()</code> owns nothing but the creative.</p>
+      <pre><code>// feature/ads/viewing/commonMain
+@Composable expect fun AdView(
+  size: AdUnitSize,
+  onFilled: () -&gt; Unit,
+  onFailed: (reason: String) -&gt; Unit,
+  onClicked: () -&gt; Unit,
+  modifier: Modifier = Modifier,
+)</code></pre>
+
+      <h3>7.1 Android</h3>
+      <p>Straightforward: add <code>com.google.android.gms:play-services-ads</code> to <code>gradle/libs.versions.toml</code> and to <code>feature/ads/viewing</code>'s <code>androidMain</code> only. The actual is an <code>AndroidView</code> wrapping <code>AdView</code> with a fixed <code>AdSize.BANNER</code>, an <code>AdListener</code> mapped onto the three callbacks, and <code>MobileAds.initialize()</code> called lazily on first <code>showsAds() == true</code> (P6) rather than at app start. The manifest needs the AdMob app id; a placeholder for dev keeps release keys out of the repo.</p>
+
+      <h3>7.2 iOS — SPM means a Swift bridge, not cinterop <span class="pill red">Finding C</span></h3>
+      <p>The PRD sketch says "<code>iosMain: GADBannerView + ATT/UMP</code>". That is not reachable as written. <code>iosApp</code> has <b>no Podfile</b>: dependencies come in as <code>XCRemoteSwiftPackageReference</code> (Swift Package Manager) — Firebase and GoogleSignIn both. Without the Kotlin CocoaPods plugin there is no cinterop, so <code>iosMain</code> cannot see <code>GADBannerView</code> at all.</p>
+      <p>The repo already has the answer, and it is a pattern rather than a workaround. <code>MainViewController.kt</code> exposes:</p>
+      <pre><code>/** …`FirebaseAppCheck` is linked there [Swift], not in Kotlin/Native. */
+fun installAppCheckTokenProvider(provider: (onToken: (String?) -&gt; Unit) -&gt; Unit) {
+  IosAppCheckBridge.install(provider)
+}</code></pre>
+      <p>Ads follow the same shape exactly:</p>
+      <ol>
+        <li>Add <code>googleads-mobile-sdk-ios</code> as an SPM package on the <code>iosApp</code> target.</li>
+        <li>Swift owns a small factory that builds a configured <code>GADBannerView</code> (unit id, size, delegate → callbacks) and returns it as a <code>UIView</code>.</li>
+        <li><code>MainEntry.installAdViewFactory { … }</code> hands that factory to <code>IosAdViewBridge</code> at startup, alongside the existing Google Sign-In and App Check installs.</li>
+        <li>The <code>iosMain</code> actual is a <code>UIKitView</code> over the bridge-supplied view. <b>If no factory was installed the actual renders nothing</b> — the same collapse path as an unfilled slot, so a misconfigured build degrades to ad-free rather than crashing.</li>
+      </ol>
+      <div class="callout warn">
+        <strong>Build-verification caveat</strong>
+        iOS is not built on CI, and #374 shipped its Swift branch explicitly "not compile-verified" because the Kotlin framework build phase fails before Swift compiles. The ads Swift bridge inherits that exposure: it must be built and run on a simulator locally before the iOS flag is flipped, and the roadmap makes that an explicit gate rather than an assumption.
+      </div>
+
+      <h3>7.3 Web</h3>
+      <p>v1: the <code>jsMain</code> actual renders nothing. It exists so the shared placement code compiles and so phase 2 is a drop-in (PRD W5). Phase 2 replaces it with a lazily-injected Ad Manager GPT tag; nothing else in this design changes.</p>
+
+      <h2 id="consent">8. Consent &amp; Privacy</h2>
+      <p><code>AdConsentManager</code> in <code>feature/ads/datamanager</code>, <code>expect</code>/<code>actual</code>, no-op on JS in v1:</p>
+      <pre><code>interface AdConsentManager {
+  /** Resolves consent before the first ad request. Never throws; failure ⇒ non-personalized. */
+  suspend fun ensureConsent(): AdConsentState   // PERSONALIZED | NON_PERSONALIZED | DENIED
+  /** Re-presents the CMP form from Settings, where the CMP requires it (P4). */
+  suspend fun presentPrivacyOptions()
+}</code></pre>
+      <ul>
+        <li><b>Ordering is a hard requirement.</b> No ad request is made before <code>ensureConsent()</code> resolves (P2). The gate chain is <code>showsAds()</code> → <code>ensureConsent()</code> → <code>MobileAds.initialize()</code> → first request, and every step is lazy: a Heavy user's app never starts an ad SDK, never calls a CMP, never sees an ATT prompt (P6/N6).</li>
+        <li><b>ATT timing.</b> iOS requests App Tracking Transparency at first ad-eligible list render, not at launch (P3). Declining is fully supported and yields non-personalized ads.</li>
+        <li><b>No logbook data, structurally.</b> <code>AdView</code>'s signature takes a size and three callbacks — there is no parameter through which a tail number, squawk text or uid could reach an ad request even by accident (P1). The absence of a targeting parameter is the enforcement mechanism.</li>
+        <li><b>Store disclosures</b> (Play Data Safety, App Store privacy labels) are updated before the first release with ads enabled (P5) — a release-checklist item in the roadmap, not code.</li>
+      </ul>
+
+      <h2 id="analytics">9. Analytics</h2>
+      <p>Through the existing <code>AnalyticsManager.logEvent(name, params: Map&lt;String, String&gt;)</code>. Note the params map is <code>String</code>-valued, so numeric fields are stringified at the call site; names must be GA4-legal (snake_case, ≤40 chars) as the interface KDoc warns, and are passed through unvalidated.</p>
+      <div class="table-scroll">
+      <table>
+        <tr><th>Event</th><th>Params</th><th>Emitted from</th></tr>
+        <tr><td><code>ad_slot_filled</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td><code>AdSlot</code> on <code>onFilled</code></td></tr>
+        <tr><td><code>ad_impression</code></td><td>+ <code>session_count</code> (1–5)</td><td><code>AdSlot</code>, once per unit, on first display</td></tr>
+        <tr><td><code>ad_click</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td><code>AdSlot</code> on <code>onClicked</code></td></tr>
+        <tr><td><code>ad_fill_failed</code></td><td><code>surface</code>, <code>reason</code></td><td><code>AdSlot</code> on <code>onFailed</code></td></tr>
+        <tr><td><code>ad_upsell_tapped</code></td><td><code>surface</code></td><td>the "Remove ads with Heavy" link</td></tr>
+        <tr><td><code>ad_session_cap_reached</code></td><td><code>surface</code></td><td><code>AdSessionCounter</code>, once per session at the 5th unit</td></tr>
+      </table>
+      </div>
+      <p>Because impressions and the cap are both owned by <code>AdSessionCounter</code>, <code>session_count</code> is the counter's own ordinal rather than a number reconstructed in the UI — the two can never disagree. Expect the impressions-per-session distribution to <em>pin</em> at 5 for engaged users (PRD §12): at interval 10 the cap binds early, so a pinned distribution is the design working, not a bug.</p>
+
+      <h2 id="wiring">10. DI, Developer Options &amp; Wiring</h2>
+      <ul>
+        <li><code>adsModule</code> registered in <code>core/di/CommonAppModules.kt</code> — the single list all three hosts share. <code>AdSessionCounter</code> is a <code>single</code>; the cap is global, so more than one instance is a bug.</li>
+        <li><code>AppForegroundObserver</code> is also a <code>single</code>, in its own <code>lifecycleModule</code> from <code>core/lifecycle</code> — registered in <code>CommonAppModules.kt</code> ahead of <code>adsModule</code>, since ads depend on it and not the reverse. Its Compose driver is installed once at the shell root, never per screen.</li>
+        <li><b>Developer Options → "Force ads"</b> (F10), in <code>feature/settings</code>'s <code>DeveloperOptionsScreen</code> beside the existing "Force subscription status", backed by a <code>DeveloperFlags</code> entry. Honoured only when <code>isDeveloperOptionsSupported</code>, exactly as the subscription override is. Lets placement be exercised on a Heavy account, and — with a companion "reset ad session" action — makes the cap testable without waiting 30 minutes.</li>
+        <li><b>No new nav routes.</b> Ads add no screens. The only navigation is the existing route to the subscription screen from the upsell link.</li>
+      </ul>
+
+      <h2 id="testing">11. Testing</h2>
+      <p>MockK + Truth + JUnit4 + <code>kotlinx-coroutines-test</code>, per the repo harness.</p>
+      <ul>
+        <li><b><code>withAdSlots()</code></b> — every row of PRD §6.6 (n = 0, 1, 7, 9, 10, 11, 19, 20, 25, 100), plus the group-coalescing pass and the toggled-sub-view independence.</li>
+        <li><b><code>AdSessionCounter</code></b> — cap at 5; <code>reserve(2)</code> with headroom 1 grants 1; boundary resets at cold start and after ≥30 min background but <em>not</em> on a short background; <code>ad_session_cap_reached</code> fires exactly once.</li>
+        <li><b><code>AdSlotFormat.of()</code></b> — SINGLE at COMPACT/MEDIUM, TWO_UP at EXPANDED/LARGE, and TWO_UP degrading to SINGLE at headroom 1.</li>
+        <li><b><code>showsAds()</code></b> — false when <code>isAdsSupported</code> is off; false when <code>isSubscriptionSupported</code> is off (the inversion — worth its own named test, since it is the opposite of every sibling gate); false for PRO; true for FREE with both flags on; reacts to a status change without re-subscription.</li>
+        <li><b>Logs scroll target</b> — <code>scrollToLogId</code> resolves to the same log with ads on and off, at several positions down a long list. This is the F8 regression test and the one most likely to catch a real user-visible bug.</li>
+        <li><b>Layering</b> — a test (or a Gradle configuration assertion) that <code>feature/ads/model</code> and <code>datamanager</code> have no SDK on their compile classpath. N4 is easy to violate later and invisible when violated.</li>
+      </ul>
+
+      <h2 id="roadmap">12. Build Roadmap</h2>
+      <p>Sequenced so each phase is shippable and independently verifiable, and so the risky, externally-blocked work is not in the critical path. P1–P3 are invisible to users; ads first appear in P5.</p>
+
+      <div class="phase"><div class="tag">P1</div><div class="body"><b class="h">Capability flag + module skeleton</b><code>AppCapability.isAdsSupported</code> across all host actuals (<code>createAppCapability</code>, <code>core/appinfo</code>) — on in dev/dogfood, off in release, <code>false</code> on JS — with KDoc stating the default-OFF inversion. Scaffold <code>feature/ads/{model,datamanager,sharedassets,viewing}</code> per the canonical layout, register <code>adsModule</code> in <code>CommonAppModules.kt</code>, and land the no-op <code>AdView</code> actual on all three hosts. <b>Done when</b> all hosts still build and nothing renders.</div></div>
+
+      <div class="phase"><div class="tag">P2</div><div class="body"><b class="h">Placement core (pure)</b><code>ListRow</code>, <code>withAdSlots()</code>, <code>AdSurface</code>, <code>AdSlotFormat.of()</code>, <code>AdUnitSize</code>, and the header-coalescing pass. Fully unit-tested against PRD §6.6 and the format matrix. <b>Done when</b> the §6.6 table is green and no other module has changed. No UI, no SDK, no gate.</div></div>
+
+      <div class="phase"><div class="tag">P3</div><div class="body"><b class="h">App session boundary + counter</b><b>Create the <code>core/lifecycle</code> module</b> — <code>settings.gradle.kts</code> <code>include(":core:lifecycle")</code> plus its <code>build.gradle.kts</code>, following <code>core/datetime</code> as the closest existing shape (small, no-UI, commonMain-only). Then <code>AppForegroundObserver</code> as a pure state machine, its <code>lifecycleModule</code>, and the ~5-line Compose driver at the shell root. Then <code>AdSessionCounter</code> with the 5-unit cap, partial <code>reserve()</code>, and the 30-minute boundary. Unit-tested with a fake clock — no Compose test harness needed for the state machine. <b>Done when</b> the counter resets correctly across simulated fore/background cycles on all three hosts, and a short background does <em>not</em> reset it. <span class="muted">Independent of every other phase — good first parallel workstream.</span></div></div>
+
+      <div class="phase"><div class="tag">P4</div><div class="body"><b class="h">The gate + Developer Options</b><code>SubscriptionManager.showsAds()</code> with the default-OFF inversion and its tests; <b>Force ads</b> and <b>reset ad session</b> in Developer Options. <b>Done when</b> a dev build can force ads on a Heavy account and reset the cap on demand — which is what makes P5–P7 testable at all, so it lands before any UI.</div></div>
+
+      <div class="phase"><div class="tag">P5</div><div class="body"><b class="h">The ad card + Android SDK</b><code>AdSlot()</code> in common (label, band, upsell link, collapse, analytics) and the Android <code>AdView</code> actual with fixed <code>BANNER</code>, lazy <code>MobileAds.initialize()</code>, and the manifest app id. Wire <b>one</b> surface — squawks — end to end. <b>Done when</b> a dev Android build shows a real test ad after item 10 of a squawk list, collapses when unfilled, and stops at 5 per session.</div></div>
+
+      <div class="phase"><div class="tag">P6</div><div class="body"><b class="h">AdaptiveCardList spans + tasks + logs</b>The spanning-row overload in <code>core/ui/adaptive</code> (§5.2, predicate form) and its tests. Wire tasks (with group coalescing) and logs (LazyColumn keys + the wide table band). <b>Includes the F8 fix and its regression test</b> — <code>scrollToLogId</code> resolved against the display list. <b>Done when</b> all three surfaces place ads per §6.6 and jump-to-log lands on the right entry with ads on.</div></div>
+
+      <div class="phase"><div class="tag">P7</div><div class="body"><b class="h">Consent + comparison-table row</b><code>AdConsentManager</code>: UMP on Android, UMP + ATT on iOS, no-op on JS; the Settings "Ad privacy settings" entry; the strict consent-before-request ordering. Add the <b>Ad-free experience</b> row to <code>ProPaywallContent.kt</code>'s <code>ComparisonTable</code> (PRD §9, F11), hidden when <code>isAdsSupported</code> is false. <b>Done when</b> an EEA-configured device shows the CMP before the first request and a declined ATT prompt still yields non-personalized ads.</div></div>
+
+      <div class="phase"><div class="tag">P8</div><div class="body"><b class="h">iOS bridge (Swift) — the risky one</b><code>googleads-mobile-sdk-ios</code> as an SPM package on <code>iosApp</code>; the Swift banner factory; <code>MainEntry.installAdViewFactory</code> + <code>IosAdViewBridge</code>; the <code>UIKitView</code> actual with the render-nothing fallback. <b>Must be built and run on a simulator locally</b> — CI does not build iOS, and #374 is the precedent for an unverified Swift branch shipping broken. <b>Done when</b> a simulator build shows a test ad and a build with no factory installed degrades to ad-free.</div></div>
+
+      <div class="phase"><div class="tag">P9</div><div class="body"><b class="h">GA</b>Store privacy disclosures (P5 of the PRD's privacy table). Flip <code>isAdsSupported</code> in the release build — <b>Android first, iOS after the P8 device validation</b> — and only once <code>isSubscriptionSupported</code> is already true (PRD §13.3: ads GA cannot precede subscription GA, or free users see ads they cannot remove). Watch the §12 guardrails for two releases.</div></div>
+
+      <div class="phase"><div class="tag">P10</div><div class="body"><b class="h">Phase 2 — web on Ad Manager</b>Out of v1 (PRD §8.2). Blocked on the W1 account approval, which is a business task with a long lead time and should be started during P1–P4 rather than after P9. Engineering is one <code>jsMain</code> actual plus a web CMP.</div></div>
+
+      <h3>12.1 Parallelism &amp; critical path</h3>
+      <p>P2 and P3 are independent of each other and of P1's SDK work — three people could take P2, P3 and P4 concurrently after P1. The critical path to a first real ad is <b>P1 → P4 → P5</b>; the critical path to GA runs through P8, which is the least verifiable phase and should not be left until last in practice even though it is numbered late. <b>W1's account application (P10) should start immediately</b>, since it is the only item whose duration we do not control.</p>
+
+      <h2 id="risks">13. Risks &amp; Open Questions</h2>
+      <div class="table-scroll">
+      <table>
+        <tr><th>Risk</th><th>Mitigation / status</th></tr>
+        <tr><td><b>iOS Swift bridge ships broken.</b> No iOS CI; #374's precedent is an unverified Swift branch that shipped a real defect.</td><td>P8 gates on a local simulator run; the actual degrades to rendering nothing rather than crashing when no factory is installed.</td></tr>
+        <tr><td><b>Non-lazy surfaces hold every ad view alive.</b></td><td>Bounded to 5 by the cap (§5.1). Documented so a future cap raise is weighed as a memory change too, not only a UX one.</td></tr>
+        <tr><td><b><code>AdaptiveCardList</code> is shared.</b> Squawks, tasks and the aircraft grid all use it; a spanning-row change touches all of them.</td><td>Additive overload with a predicate default that preserves today's behaviour; existing call sites unchanged.</td></tr>
+        <tr><td><b>Scroll jank on long lists</b> (N1).</td><td>Fixed 50 dp creatives, no timed refresh, at most 5 live views. Measure on a 200+ item logbook with ads on vs. off before GA.</td></tr>
+        <tr><td><b>Kill switch is a build-time flag</b> (PRD D2) — a bad ad experience needs an expedited release to stop.</td><td>Accepted for v1. Exposure is bounded structurally: free-tier only, ≤5 units/session, never modal.</td></tr>
+      </table>
+      </div>
+      <h3>Open</h3>
+      <ul>
+        <li><b>Q8 (PRD)</b> — measured record-card heights at COMPACT decide whether <code>LARGE_BANNER</code> is usable at all under G10. Blocks nothing; <code>BANNER</code> ships either way.</li>
+        <li><b>Q2 (PRD)</b> — the concrete AdMob unit ids per surface, and whether surfaces share one unit or get one each. Sharing is simpler; separate units give per-surface revenue reporting that <code>surface</code>-tagged analytics only partly replaces.</li>
+        <li><b><code>AppForegroundObserver</code> ownership</b> — scoped here as minimum-viable-for-ads in <code>core/lifecycle</code>. If the analytics taxonomy wants a real session id, this is the seam it should grow from; worth a follow-up issue so the two do not diverge into separate observers.</li>
+        <li><b>Q7 (PRD)</b> — AdMob mediation, deferred until §12 reports real fill rates.</li>
+      </ul>
+
+    </div>
+
+    <nav class="toc">
+      <p class="toc-title">On this page</p>
+      <ol>
+        <li><a href="#overview">Overview &amp; Principles</a></li>
+        <li><a href="#modules">Module Layout</a></li>
+        <li><a href="#core">The Placement Core</a></li>
+        <li><a href="#session">The Session Cap</a></li>
+        <li><a href="#gate">Surfaces — Two List Mechanics</a></li>
+        <li><a href="#tiergate">The Gate</a></li>
+        <li><a href="#platform">The Platform Seam</a></li>
+        <li><a href="#consent">Consent &amp; Privacy</a></li>
+        <li><a href="#analytics">Analytics</a></li>
+        <li><a href="#wiring">DI &amp; Wiring</a></li>
+        <li><a href="#testing">Testing</a></li>
+        <li><a href="#roadmap">Build Roadmap</a></li>
+        <li><a href="#risks">Risks &amp; Open Questions</a></li>
+      </ol>
+    </nav>
+  </div>
+</main>
+</body>
+</html>

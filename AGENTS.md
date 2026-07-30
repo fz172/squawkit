@@ -251,7 +251,7 @@ Feature PRDs and architecture design docs live in `docs/`, organized into **per-
 - `docs/search/` — `intelligentsearch.md`
 - `docs/account/` — `account_upgrade_PRD.html`, `account_upgrade_design.html`
 - `docs/subscription/` — `subscription_PRD.html`, `subscription_design.html` (SquawkIt Pro tiers, entitlement, gating)
-- `docs/ads/` — `display_ads_PRD.md` (free-tier in-list display ads; proposed, nothing shipped)
+- `docs/ads/` — `display_ads_PRD.md`, `ads_design.html` (free-tier in-list display ads; proposed, nothing shipped)
 - `docs/web/` — `web_target_expansion_plan.md`, `web_attachments_design.md`, `web_adaptive_layout_design.html`
 - `docs/cleanup/` — `codebase_cleanup_plan.md` (the 2026-07 structure/dedup/layering cleanup; phases 1–5 executed, kept as the record of what moved where and why)
 

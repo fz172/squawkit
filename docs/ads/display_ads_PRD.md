@@ -20,7 +20,8 @@
 **Revised:** 2026-07-29 — session cap 10 → 5 (D1); AdMob on Android/iOS in v1 (D6); web scheduled as
 phase 2 on Ad Manager rather than dropped (D5, §8.2); fixed `BANNER` sizes (D7); no daily cap (D8);
 free aircraft limit 1 → 2, implemented in this change (D9)
-**Related:** [Subscription PRD](../subscription/subscription_PRD.html) ·
+**Related:** [Ads Design Doc](ads_design.html) ·
+[Subscription PRD](../subscription/subscription_PRD.html) ·
 [Subscription Design](../subscription/subscription_design.html) ·
 [Product overview](../product/PRD.md)
 
