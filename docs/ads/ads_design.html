@@ -121,7 +121,10 @@
 
 core/appinfo/     + AppCapability.isAdsSupported
 core/ui/adaptive/ + AdaptiveCardList span support (§5.2 — API change)
-core/ui/          + AppForegroundObserver (§4.2 — new, app-scoped)
+core/lifecycle/   NEW MODULE — AppForegroundObserver (§4.2). No Compose,
+                    no UI: consumed by feature/ads/datamanager, which may
+                    not depend on UI (AGENTS.md).
+feature/shell/    + the Compose driver that pumps the observer (§4.2)
 feature/squawk/viewing/   SquawkTab takes ad rows
 feature/tasks/viewing/    ComplianceSection takes ad rows
 feature/logs/viewing/     MaintenanceLogListContent + MaintenanceLogTable
@@ -184,16 +187,29 @@ fun &lt;T&gt; withAdSlots(items: List&lt;T&gt;, interval: Int = 10): List&lt;Lis
         <li><code>AnalyticsManager</code> (<code>core/analytics</code>) exposes only <code>logScreenView</code>, <code>logEvent</code> and <code>setAnalyticsCollectionEnabled</code>. Firebase maintains its own session internally and does not surface a session id or boundary to the app.</li>
         <li>There is no app-level foreground/background observer. The closest thing is <code>LifecycleResumeEffect</code> in <code>AircraftSectionContent</code> (added for the #373 due-status recompute) — that is <b>screen</b>-scoped, fires on tab switches, and would reset the ad cap far too often.</li>
       </ul>
-      <p>So the design adds one. <code>androidx.lifecycle.compose</code> is already a dependency and <code>LifecycleResumeEffect</code> already works on all three hosts (the #373 comment confirms: UIKit foreground on iOS, <code>document.visibilitychange</code> on web), so the primitive exists — what is missing is an app-scoped owner of it:</p>
-      <pre><code>// core/ui — installed once, at the AdaptiveAppShell / AppEntry level
-class AppForegroundObserver(clock: Clock) {
-  /** Emits at cold start and whenever the app foregrounds after ≥ threshold in background. */
+      <p>So the design adds one, in a <b>new <code>core/lifecycle</code> module</b>. <code>androidx.lifecycle.compose</code> is already a dependency and <code>LifecycleResumeEffect</code> already works on all three hosts (the #373 comment confirms: UIKit foreground on iOS, <code>document.visibilitychange</code> on web), so the primitive exists — what is missing is an app-scoped owner of it.</p>
+
+      <h4>Why its own module, and not <code>core/ui</code></h4>
+      <p>Because its consumer may not depend on UI. <code>AdSessionCounter</code> lives in <code>feature/ads/datamanager</code>, and AGENTS.md is explicit that <code>datamanager</code> and <code>model</code> never depend on UI. A UI-module observer would force precisely that violation, in the one place it would be least visible — a transitive dependency rather than an import someone reviews. <code>core/lifecycle</code> also reads correctly to the next person: an app-session signal is not a UI concern, and future consumers (analytics, sync backoff) are not UI either.</p>
+      <p><b>The consequence is a two-part split.</b> <code>LifecycleResumeEffect</code> is a <em>Compose</em> API, so a non-UI module cannot use it. The observer is therefore a pure state machine, and something in the UI layer pumps it:</p>
+      <pre><code>// core/lifecycle — commonMain, no Compose, no expect/actual
+class AppForegroundObserver(private val clock: Clock) {
+  /** Emits at cold start and whenever the app foregrounds after ≥ [threshold] backgrounded. */
   val sessionStarts: Flow&lt;Unit&gt;
-  fun onEnterForeground(); fun onEnterBackground()
+  fun onEnterForeground()
+  fun onEnterBackground()
+  companion object { val THRESHOLD = 30.minutes }
+}
+
+// feature/shell — the driver: the only Compose-aware part, ~5 lines at the shell root
+LifecycleResumeEffect(Unit) {
+  observer.onEnterForeground()
+  onPauseOrDispose { observer.onEnterBackground() }
 }</code></pre>
+      <p>This split is a win rather than a tax: the state machine is unit-testable with a fake clock and no Compose test harness, and the host-specific behaviour stays in the one primitive that already handles all three platforms. The alternative — per-host <code>expect</code>/<code>actual</code> actuals over <code>ProcessLifecycleOwner</code>, <code>NSNotificationCenter</code> and <code>visibilitychange</code> — is three times the code and three times the platform surface for the same signal.</p>
       <div class="callout note">
         <strong>Scope call</strong>
-        This is genuinely useful beyond ads — a real app-session signal is what the analytics design has wanted for its click/timing taxonomy, and #373's resume recompute is a screen-scoped stand-in for it. It is scoped here as <em>minimum viable for the cap</em> (one flow, one threshold) rather than as an analytics session-id feature, so ads are not blocked on a larger discussion. It lands in <code>core/ui</code> rather than <code>feature/ads</code> precisely so the next consumer does not have to dig it out of an ads module.
+        This is genuinely useful beyond ads — a real app-session signal is what the analytics design has wanted for its click/timing taxonomy, and #373's resume recompute is a screen-scoped stand-in for it. It is scoped here as <em>minimum viable for the cap</em> (one flow, one threshold) rather than as an analytics session-id feature, so ads are not blocked on a larger discussion. A dedicated module is what keeps the next consumer from having to dig it out of an ads feature.
       </div>
       <p><b>Deliberately not persisted.</b> The counter is in-memory. A process death resets it, which can over-count across a crash-restart — accepted for the same reason PRD §6.7 accepts the memory-pressure over-count: bounded, rare, and cheaper than a disk write on every impression.</p>
 
@@ -342,7 +358,7 @@ fun installAppCheckTokenProvider(provider: (onToken: (String?) -&gt; Unit) -&gt;
       <h2 id="wiring">10. DI, Developer Options &amp; Wiring</h2>
       <ul>
         <li><code>adsModule</code> registered in <code>core/di/CommonAppModules.kt</code> — the single list all three hosts share. <code>AdSessionCounter</code> is a <code>single</code>; the cap is global, so more than one instance is a bug.</li>
-        <li><code>AppForegroundObserver</code> is also a <code>single</code>, installed once at the shell level (<code>AdaptiveAppShell</code>/<code>AppEntry</code>), not per screen.</li>
+        <li><code>AppForegroundObserver</code> is also a <code>single</code>, in its own <code>lifecycleModule</code> from <code>core/lifecycle</code> — registered in <code>CommonAppModules.kt</code> ahead of <code>adsModule</code>, since ads depend on it and not the reverse. Its Compose driver is installed once at the shell root, never per screen.</li>
         <li><b>Developer Options → "Force ads"</b> (F10), in <code>feature/settings</code>'s <code>DeveloperOptionsScreen</code> beside the existing "Force subscription status", backed by a <code>DeveloperFlags</code> entry. Honoured only when <code>isDeveloperOptionsSupported</code>, exactly as the subscription override is. Lets placement be exercised on a Heavy account, and — with a companion "reset ad session" action — makes the cap testable without waiting 30 minutes.</li>
         <li><b>No new nav routes.</b> Ads add no screens. The only navigation is the existing route to the subscription screen from the upsell link.</li>
       </ul>
@@ -365,7 +381,7 @@ fun installAppCheckTokenProvider(provider: (onToken: (String?) -&gt; Unit) -&gt;
 
       <div class="phase"><div class="tag">P2</div><div class="body"><b class="h">Placement core (pure)</b><code>ListRow</code>, <code>withAdSlots()</code>, <code>AdSurface</code>, <code>AdSlotFormat.of()</code>, <code>AdUnitSize</code>, and the header-coalescing pass. Fully unit-tested against PRD §6.6 and the format matrix. <b>Done when</b> the §6.6 table is green and no other module has changed. No UI, no SDK, no gate.</div></div>
 
-      <div class="phase"><div class="tag">P3</div><div class="body"><b class="h">App session boundary + counter</b><code>AppForegroundObserver</code> in <code>core/ui</code>, installed at the shell; <code>AdSessionCounter</code> with the 5-unit cap, partial <code>reserve()</code>, and the 30-minute boundary. Unit-tested with a fake clock. <b>Done when</b> the counter resets correctly across simulated fore/background cycles on all three hosts. <span class="muted">Independent of every other phase — good first parallel workstream.</span></div></div>
+      <div class="phase"><div class="tag">P3</div><div class="body"><b class="h">App session boundary + counter</b><b>Create the <code>core/lifecycle</code> module</b> — <code>settings.gradle.kts</code> <code>include(":core:lifecycle")</code> plus its <code>build.gradle.kts</code>, following <code>core/datetime</code> as the closest existing shape (small, no-UI, commonMain-only). Then <code>AppForegroundObserver</code> as a pure state machine, its <code>lifecycleModule</code>, and the ~5-line Compose driver at the shell root. Then <code>AdSessionCounter</code> with the 5-unit cap, partial <code>reserve()</code>, and the 30-minute boundary. Unit-tested with a fake clock — no Compose test harness needed for the state machine. <b>Done when</b> the counter resets correctly across simulated fore/background cycles on all three hosts, and a short background does <em>not</em> reset it. <span class="muted">Independent of every other phase — good first parallel workstream.</span></div></div>
 
       <div class="phase"><div class="tag">P4</div><div class="body"><b class="h">The gate + Developer Options</b><code>SubscriptionManager.showsAds()</code> with the default-OFF inversion and its tests; <b>Force ads</b> and <b>reset ad session</b> in Developer Options. <b>Done when</b> a dev build can force ads on a Heavy account and reset the cap on demand — which is what makes P5–P7 testable at all, so it lands before any UI.</div></div>
 
@@ -399,7 +415,7 @@ fun installAppCheckTokenProvider(provider: (onToken: (String?) -&gt; Unit) -&gt;
       <ul>
         <li><b>Q8 (PRD)</b> — measured record-card heights at COMPACT decide whether <code>LARGE_BANNER</code> is usable at all under G10. Blocks nothing; <code>BANNER</code> ships either way.</li>
         <li><b>Q2 (PRD)</b> — the concrete AdMob unit ids per surface, and whether surfaces share one unit or get one each. Sharing is simpler; separate units give per-surface revenue reporting that <code>surface</code>-tagged analytics only partly replaces.</li>
-        <li><b><code>AppForegroundObserver</code> ownership</b> — scoped here as minimum-viable-for-ads in <code>core/ui</code>. If the analytics taxonomy wants a real session id, this is the seam it should grow from; worth a follow-up issue so the two do not diverge into separate observers.</li>
+        <li><b><code>AppForegroundObserver</code> ownership</b> — scoped here as minimum-viable-for-ads in <code>core/lifecycle</code>. If the analytics taxonomy wants a real session id, this is the seam it should grow from; worth a follow-up issue so the two do not diverge into separate observers.</li>
         <li><b>Q7 (PRD)</b> — AdMob mediation, deferred until §12 reports real fill rates.</li>
       </ul>
 
