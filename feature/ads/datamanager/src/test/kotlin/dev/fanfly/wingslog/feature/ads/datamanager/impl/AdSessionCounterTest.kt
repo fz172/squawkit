@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.ads.datamanager
+package dev.fanfly.wingslog.feature.ads.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver

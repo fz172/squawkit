@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.ui.common.compose
+package dev.fanfly.wingslog.core.lifecycle.compose
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -7,6 +7,11 @@ import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
 /**
  * Drives [AppForegroundObserver] from Compose. The other half of the split described on that class:
  * it holds the state machine, this supplies the edges.
+ *
+ * Lives in `core:lifecycle:compose` rather than `core:lifecycle` so the parent module stays
+ * Compose-free. `feature/ads/datamanager` depends on the parent, and AGENTS.md forbids a
+ * `datamanager` depending on UI — Compose in the parent would make that violation transitive, which
+ * is the least visible way to break a layering rule.
  *
  * **Call this exactly once, from the app root** — `AppEntry()` on Android/iOS and `WebApp()` on the
  * web host — never from a screen or a navigation destination.

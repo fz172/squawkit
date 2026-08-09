@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.ads.datamanager.di
 
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
-import dev.fanfly.wingslog.feature.ads.datamanager.AdSessionCounter
+import dev.fanfly.wingslog.feature.ads.datamanager.impl.AdSessionCounter
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -19,5 +19,9 @@ val adsModule: Module = module {
   // `single`, not `factory`: the 5-unit cap is one budget shared by all three surfaces. A second
   // instance would be a second budget, silently multiplying a pilot's exposure. It resolves
   // AppForegroundObserver from `lifecycleModule`, registered ahead of this one.
+  //
+  // AdSessionCounter is `internal`, so this binding is only resolvable from inside this module —
+  // which is the intent. P4's AdsManager is the public face; nothing outside reaches the counter
+  // directly, and the UI asks the manager rather than doing its own budgeting.
   single { AdSessionCounter(foreground = get<AppForegroundObserver>()) }
 }

@@ -47,7 +47,6 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":core:datetime"))
-      api(project(":core:lifecycle"))
       api(project(":core:model"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui:adaptive"))
@@ -59,9 +58,6 @@ kotlin {
       api(libs.components.resources)
       api(libs.kotlinx.datetime)
       api(libs.compose.ui.tooling.preview)
-      // Drives AppForegroundObserver. Works on all three hosts: UIKit foreground on iOS,
-      // document.visibilitychange on web (same primitive #373 uses for the due-status recompute).
-      implementation(libs.jetbrains.lifecycle.runtime.compose)
     }
   }
 }

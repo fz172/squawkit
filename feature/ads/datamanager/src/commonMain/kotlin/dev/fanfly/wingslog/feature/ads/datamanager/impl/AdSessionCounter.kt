@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.ads.datamanager
+package dev.fanfly.wingslog.feature.ads.datamanager.impl
 
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * Not thread-safe, and does not need to be: reservations happen during Compose composition on the
  * main thread.
  */
-class AdSessionCounter(
+internal class AdSessionCounter(
   private val foreground: AppForegroundObserver,
 ) {
 

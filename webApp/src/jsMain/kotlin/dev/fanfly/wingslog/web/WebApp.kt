@@ -36,7 +36,7 @@ import kotlinx.browser.document
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.rememberResourceEnvironment
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
-import dev.fanfly.wingslog.core.ui.common.compose.AppForegroundEffect
+import dev.fanfly.wingslog.core.lifecycle.compose.AppForegroundEffect
 import org.koin.compose.koinInject
 import org.w3c.dom.HTMLElement
 import wingslog.core.sharedassets.generated.resources.app_name

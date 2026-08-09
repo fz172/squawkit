@@ -55,6 +55,7 @@ kotlin {
       implementation(project(":core:di"))
       implementation(project(":core:appinfo"))
       implementation(project(":core:nav"))
+      implementation(project(":core:lifecycle:compose"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:storage"))

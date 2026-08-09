@@ -19,7 +19,7 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
-import dev.fanfly.wingslog.core.ui.common.compose.AppForegroundEffect
+import dev.fanfly.wingslog.core.lifecycle.compose.AppForegroundEffect
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
