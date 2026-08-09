@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.core.storage.di.platformStorageModule
 import dev.fanfly.wingslog.core.storage.di.storageModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceStoreModule
+import dev.fanfly.wingslog.feature.ads.datamanager.di.adsModule
 import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
 import dev.fanfly.wingslog.feature.aircraft.update.di.aircraftUpdateModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
@@ -77,6 +78,8 @@ val commonAppModules: List<Module> = listOf(
   // RevenueCat on Android/iOS; the no-purchase binding on web (see PlatformBillingModule).
   platformBillingModule,
   subscriptionUiModule,
+  // Empty until P3/P4 bring the session counter and the gate; registered now so the wiring exists.
+  adsModule,
   technicianDataManagerModule,
   technicianManageModule,
   maintenanceDataManagerModule,

@@ -91,6 +91,11 @@ include(":feature:squawk:sharedassets")
 include(":feature:squawk:viewing")
 include(":feature:squawk:update")
 
+include(":feature:ads:model")
+include(":feature:ads:datamanager")
+include(":feature:ads:sharedassets")
+include(":feature:ads:viewing")
+
 include(":feature:shell")
 
 include(":feature:stresstest")

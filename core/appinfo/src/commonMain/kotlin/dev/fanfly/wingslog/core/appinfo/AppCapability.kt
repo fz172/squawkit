@@ -32,6 +32,21 @@ data class AppCapability(
    * as available and the Subscription entry/page is hidden. GA is flipping this to `true`.
    */
   val isSubscriptionSupported: Boolean,
+  /**
+   * Free-tier display ads (`docs/ads/ads_design.html` §6). The staged-rollout gate: on in dev +
+   * dogfood, off in the shipping release until GA, and `false` on the web host for all of v1.
+   *
+   * **Read this before changing it: the polarity is the opposite of every flag above.**
+   * [isSubscriptionSupported] and [isAircraftSharingSupported] are *default-open* — while they are
+   * false there is no paywall and every premium capability reads available. This flag is
+   * **default-closed**: while it is false, or while [isSubscriptionSupported] is false, there are
+   * **no ads at all**.
+   *
+   * The asymmetry is deliberate and load-bearing. A build that cannot sell Heavy has no way for a
+   * pilot to remove ads, so showing them would be indefensible — "off" here means *no ads*, never
+   * "ads for everyone". `SubscriptionManager.showsAds()` enforces both halves; see the design doc §6.
+   */
+  val isAdsSupported: Boolean,
 )
 
 /**

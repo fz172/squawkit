@@ -274,9 +274,11 @@ argued from §12's retention guardrails, not tuned quietly.
   (G6).
 - **Surface:** neutral `surfaceVariant`/`outlineVariant` treatment, no status colors (G8), no
   dynamic color (per `DESIGN.md`).
-- **Upgrade affordance:** a low-emphasis footer link — **"Remove ads with Heavy"** — navigating to
+- **Upgrade affordance:** a low-emphasis footer link — **"Subscribe to remove ads"** — navigating to
   the subscription screen. This is the ad card's only in-app tap target besides the ad creative
-  itself, and it is what makes the ad an argument for Pro rather than only a nuisance.
+  itself, and it is what makes the ad an argument for Pro rather than only a nuisance. The copy
+  names no tier deliberately: it survives a tier rename (the shipped names already moved once, in
+  #369) and leads with the benefit rather than the product.
 - **Format:** a fixed-size display unit (`BANNER`, 320×50) — see §7.1 for how the unit(s) are laid
   out per layout tier, and §7.2 for the size decision.
 - **Unfilled:** zero height, no label, no footer — the row collapses entirely (G5).
@@ -336,7 +338,7 @@ Additional rules:
   band is never shown half-empty.
 - **No fill collapses.** Both units unfilled → the whole row is zero height (G5).
 - **The band is one slot.** "Sponsored" is labeled **once** per slot, not once per unit, and the
-  "Remove ads with Heavy" link appears once, at the band's trailing edge.
+  "Subscribe to remove ads" link appears once, at the band's trailing edge.
 - **Two units, two impressions.** A two-up slot counts as two against the session cap and emits two
   `ad_impression` events (§12), distinguished by a `unit_position` param.
 
@@ -524,7 +526,7 @@ the pilot is holding.
 | F6 | Ads are gated behind `AppCapability.isAdsSupported` (off in the shipping release until GA), flipped per host so Android and iOS go GA independently; `false` on the Kotlin/JS host for all of v1 (§8.1). |
 | F18 | v1 renders ads on **Android and iOS via AdMob**. The Kotlin/JS host compiles the shared placement code and renders a no-op slot (§8.1). |
 | F19 | Placement, cadence, cap, and layout rules live entirely in common code, so adding the phase-2 web `actual` requires no change to any of them (§8.2, W5). |
-| F7 | Each ad card is labeled "Sponsored" and carries a "Remove ads with Heavy" link to the subscription screen. |
+| F7 | Each ad card is labeled "Sponsored" and carries a "Subscribe to remove ads" link to the subscription screen. |
 | F8 | Index-based list behaviors (notably logs jump-to-log / `scrollToLogId`) resolve against the **display** list so ads never shift a scroll target. |
 | F9 | An unfilled or failed ad slot renders at zero height and never leaves a gap or placeholder. |
 | F10 | Developer Options exposes a **Force ads** toggle in developer builds. |
@@ -562,7 +564,7 @@ Events, via the existing `AnalyticsManager.logEvent`:
 | `ad_impression` | `surface`, `slot_index`, `unit_position`, `session_count` (1–5, this unit's ordinal in the session) |
 | `ad_click` | `surface`, `slot_index`, `unit_position` |
 | `ad_fill_failed` | `surface`, `reason` |
-| `ad_upsell_tapped` | `surface` — the "Remove ads with Heavy" link |
+| `ad_upsell_tapped` | `surface` — the "Subscribe to remove ads" link |
 | `ad_session_cap_reached` | `surface` — emitted once per session when the 5th unit displays; tells us how often the cap actually binds |
 
 **Primary:** ad revenue per free DAU; fill rate; impressions per free session (bounded at 5 by F13 —
