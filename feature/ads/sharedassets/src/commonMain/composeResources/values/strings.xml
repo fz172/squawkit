@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!--
+    The "Sponsored" label required on every ad card by G6 — an ad must never be mistakable for a
+    squawk, task or log. Shown once per slot, not once per unit (PRD §7.1).
+  -->
+  <string name="ads_sponsored_label">Sponsored</string>
+  <!--
+    The ad card's low-emphasis footer link to the subscription screen. Uses the shipped tier name
+    "Heavy" (see the tier-naming note in the PRD), and is what makes the ad an argument for the paid
+    tier rather than only a nuisance.
+  -->
+  <string name="ads_remove_with_heavy">Remove ads with Heavy</string>
+  <!-- Announced for the ad card as a whole; the upgrade link is separately focusable (N7). -->
+  <string name="ads_a11y_advertisement">Advertisement</string>
+</resources>

@@ -41,7 +41,11 @@ class SubscriptionManagerImplTest {
     every { store.observe(any(), any()) } returns flowOf(null)
   }
 
-  private fun capability(subscription: Boolean, devBuild: Boolean = false) = AppCapability(
+  private fun capability(
+    subscription: Boolean,
+    devBuild: Boolean = false,
+    ads: Boolean = false,
+  ) = AppCapability(
     isDeveloperOptionsSupported = devBuild,
     isAircraftSharingSupported = false,
     isStressTestSupported = false,
@@ -49,6 +53,7 @@ class SubscriptionManagerImplTest {
     isAnonymousLoginSupported = false,
     isAppleSignInSupported = false,
     isSubscriptionSupported = subscription,
+    isAdsSupported = ads,
   )
 
   private fun manager(

@@ -10,4 +10,7 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isAppleSignInSupported = true,
   // Staged rollout: dev + dogfood only until GA. Off = no paywall (everything unlocked).
   isSubscriptionSupported = isDeveloperBuild,
+  // Staged rollout: dev + dogfood only until GA. Off = NO ads (the inverse of the gates above).
+  // GA here also waits on the P8 Swift-bridge validation, since iOS has no CI build.
+  isAdsSupported = isDeveloperBuild,
 )

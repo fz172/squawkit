@@ -109,6 +109,7 @@ class SettingsViewModelTest {
         isAnonymousLoginSupported = false,
         isAppleSignInSupported = false,
         isSubscriptionSupported = false,
+        isAdsSupported = false,
       ),
     )
 
@@ -135,6 +136,7 @@ class SettingsViewModelTest {
         isAnonymousLoginSupported = false,
         isAppleSignInSupported = false,
         isSubscriptionSupported = false,
+        isAdsSupported = false,
       ),
     )
 
@@ -161,6 +163,7 @@ class SettingsViewModelTest {
         isAnonymousLoginSupported = false,
         isAppleSignInSupported = false,
         isSubscriptionSupported = false,
+        isAdsSupported = false,
       ),
     )
 
@@ -188,6 +191,7 @@ class SettingsViewModelTest {
         isAnonymousLoginSupported = false,
         isAppleSignInSupported = false,
         isSubscriptionSupported = false,
+        isAdsSupported = false,
       ),
     )
 
@@ -215,6 +219,7 @@ class SettingsViewModelTest {
         isAnonymousLoginSupported = false,
         isAppleSignInSupported = false,
         isSubscriptionSupported = false,
+        isAdsSupported = false,
       ),
     )
 
