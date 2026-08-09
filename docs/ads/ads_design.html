@@ -161,7 +161,11 @@ fun &lt;T&gt; withAdSlots(items: List&lt;T&gt;, interval: Int = 10): List&lt;Lis
       <p>At a cadence of 10 with a cap of 5, a 100-item list produces ten slots of which at most five ever fill. A reviewer reading only the §6.6 table would reasonably implement ten fills; the doc says so and so does this one.</p>
 
       <h3>3.2 Grouped and toggled lists</h3>
-      <p>Compliance's status groups share one continuous counter across the whole scroll, and a slot landing on a group boundary renders at the <b>end of the preceding group</b> (G1 — never between a header and its first card). Rather than teach <code>withAdSlots()</code> about groups, the caller flattens to a single <code>List&lt;Row&gt;</code> of headers-and-cards first, and a small <code>coalesceAcrossHeaders()</code> pass shifts any ad that landed immediately before a header back one position. Two pure functions, both unit-testable, neither aware of Compose.</p>
+      <p>Compliance's status groups share one continuous counter across the whole scroll, and a slot landing on a group boundary renders at the <b>end of the preceding group</b> (G1 — never between a header and its first card). The caller flattens to a single list of headers-and-cards and calls <code>withAdSlotsGrouped(entries, isHeader = …)</code>, which counts only non-header entries toward the cadence.</p>
+      <div class="callout win">
+        <strong>Simplified during P2: no repair pass is needed</strong>
+        This section originally specified a second <code>coalesceAcrossHeaders()</code> function to shift any ad that landed against a header. Implementing it showed the pass is unnecessary, because <b>ads are only ever emitted immediately after a record</b>. That makes <code>[header, ad, …]</code> unconstructible, so G1 holds by construction rather than by repair — and G2 (never the first card) holds for the same reason, since row 0 is always an item. A boundary slot naturally lands as <code>[…lastRecordOfGroupA, ad, headerOfGroupB…]</code>, which is exactly what §6.5 asks for. One function instead of two, and one fewer place for the invariant to be broken later.
+      </div>
       <p>Squawks' Open/Closed toggle is two independent lists with independent counters — falls out for free, since each sub-view calls <code>withAdSlots()</code> on its own filtered list.</p>
 
       <h2 id="session">4. The Session Cap</h2>
