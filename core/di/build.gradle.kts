@@ -33,6 +33,7 @@ kotlin {
       implementation(project(":core:storage"))
       implementation(project(":core:ui:theme"))
       implementation(project(":feature:aircraft:dashboard"))
+      implementation(project(":core:lifecycle"))
       implementation(project(":feature:ads:datamanager"))
       implementation(project(":feature:aircraft:update"))
       implementation(project(":feature:attachment:datamanager"))

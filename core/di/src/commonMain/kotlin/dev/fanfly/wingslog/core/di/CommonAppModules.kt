@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.analytics.di.analyticsPreferenceStoreModule
 import dev.fanfly.wingslog.core.analytics.di.platformAnalyticsModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
+import dev.fanfly.wingslog.core.lifecycle.di.lifecycleModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
 import dev.fanfly.wingslog.core.storage.di.storageModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
@@ -78,7 +79,8 @@ val commonAppModules: List<Module> = listOf(
   // RevenueCat on Android/iOS; the no-purchase binding on web (see PlatformBillingModule).
   platformBillingModule,
   subscriptionUiModule,
-  // Empty until P3/P4 bring the session counter and the gate; registered now so the wiring exists.
+  // Ahead of adsModule: the ad session counter depends on the foreground observer, not the reverse.
+  lifecycleModule,
   adsModule,
   technicianDataManagerModule,
   technicianManageModule,

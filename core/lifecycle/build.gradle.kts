@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-  namespace = "dev.fanfly.wingslog.feature.ads.datamanager"
+  namespace = "dev.fanfly.wingslog.core.lifecycle"
   compileSdk = 37
 
   defaultConfig {
@@ -27,23 +27,19 @@ kotlin {
     }
   }
 
+  iosArm64()
+  iosSimulatorArm64()
+
   js(IR) {
     browser()
   }
 
-  iosArm64()
-  iosSimulatorArm64()
-
+  // No Compose, deliberately. The app-session signal is consumed by feature/ads/datamanager, and
+  // AGENTS.md forbids a datamanager depending on UI — which is why this is its own module rather
+  // than part of core/ui. The Compose-aware driver that pumps it lives in feature/shell.
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":feature:ads:model"))
-      // The app-session signal the 5-unit cap resets on. A non-UI module, deliberately: AGENTS.md
-      // forbids a datamanager depending on UI, which is why it is not in core/ui.
-      implementation(project(":core:lifecycle"))
       implementation(libs.kotlinx.coroutines.core)
-      // Declared directly rather than inherited from `core:storage`'s api(koin-core): ads never
-      // read or write the EntityStore, so depending on storage just to reach Koin would add a
-      // dependency the module has no other use for.
       implementation(libs.koin.core)
     }
   }
@@ -51,7 +47,6 @@ kotlin {
 
 dependencies {
   testImplementation(libs.junit)
-  testImplementation(libs.mockk)
   testImplementation(libs.truth)
   testImplementation(libs.kotlinx.coroutines.test)
 }
