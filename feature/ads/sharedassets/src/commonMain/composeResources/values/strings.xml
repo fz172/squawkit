@@ -6,11 +6,14 @@
   -->
   <string name="ads_sponsored_label">Sponsored</string>
   <!--
-    The ad card's low-emphasis footer link to the subscription screen. Uses the shipped tier name
-    "Heavy" (see the tier-naming note in the PRD), and is what makes the ad an argument for the paid
-    tier rather than only a nuisance.
+    The ad card's low-emphasis footer link to the subscription screen — what makes the ad an argument
+    for the paid tier rather than only a nuisance.
+
+    Deliberately names no tier: the copy outlives a tier rename (the shipped names have already moved
+    once, Free/Pro -> Core/Heavy in #369) and it leads with the benefit a pilot wants rather than the
+    product we want to sell.
   -->
-  <string name="ads_remove_with_heavy">Remove ads with Heavy</string>
+  <string name="ads_cta_remove_ads">Subscribe to remove ads</string>
   <!-- Announced for the ad card as a whole; the upgrade link is separately focusable (N7). -->
   <string name="ads_a11y_advertisement">Advertisement</string>
 </resources>

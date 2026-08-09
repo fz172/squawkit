@@ -111,7 +111,7 @@
                   AdSessionCounter  (app-scoped single: 5-unit cap, 30-min boundary)
                   AdConsentManager  (expect/actual: UMP + ATT; no-op on JS)
                   Koin module
-  sharedassets/   strings: "Sponsored", "Remove ads with Heavy", a11y labels
+  sharedassets/   strings: "Sponsored", "Subscribe to remove ads", a11y labels
                     — no feature deps (AGENTS.md)
   viewing/        AdSlot()      common: band layout, label, upsell link, collapse
                   expect AdView()
@@ -349,7 +349,7 @@ fun installAppCheckTokenProvider(provider: (onToken: (String?) -&gt; Unit) -&gt;
         <tr><td><code>ad_impression</code></td><td>+ <code>session_count</code> (1–5)</td><td><code>AdSlot</code>, once per unit, on first display</td></tr>
         <tr><td><code>ad_click</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td><code>AdSlot</code> on <code>onClicked</code></td></tr>
         <tr><td><code>ad_fill_failed</code></td><td><code>surface</code>, <code>reason</code></td><td><code>AdSlot</code> on <code>onFailed</code></td></tr>
-        <tr><td><code>ad_upsell_tapped</code></td><td><code>surface</code></td><td>the "Remove ads with Heavy" link</td></tr>
+        <tr><td><code>ad_upsell_tapped</code></td><td><code>surface</code></td><td>the "Subscribe to remove ads" link</td></tr>
         <tr><td><code>ad_session_cap_reached</code></td><td><code>surface</code></td><td><code>AdSessionCounter</code>, once per session at the 5th unit</td></tr>
       </table>
       </div>
