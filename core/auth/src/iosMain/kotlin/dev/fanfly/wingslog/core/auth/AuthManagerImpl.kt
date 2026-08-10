@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.auth
 import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.auth.FirebaseAuthUserCollisionException
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -85,12 +86,51 @@ class AuthManagerImpl(
   }
 
   /**
-   * Sign in with Apple, via the native `ASAuthorization` sheet presented by the Swift app. Wired in
-   * a follow-up; until then this reports a failure rather than silently doing nothing.
+   * Sign in with Apple, via the native `ASAuthorization` sheet presented by the Swift app.
+   *
+   * Apple returns the user's name only on the **first** authorization for this Apple ID, and
+   * Firebase never populates `displayName` from Apple — so capture it here on that one pass, or
+   * the ID token carries no `name` and Cloud Functions stamp share invites with a blank `hostName`
+   * (see [updateDisplayName]).
    */
   override suspend fun signInWithApple(): FirebaseUser? {
-    logger.w { "signInWithApple() not yet implemented on iOS" }
-    return null
+    val result = IosAppleSignInBridge.signIn()
+    if (result.cancelled) {
+      logger.d { "Sign in with Apple cancelled by user" }
+      return null
+    }
+    if (result.errorMessage != null) {
+      logger.w { "Sign in with Apple failed: ${result.errorMessage}" }
+      return null
+    }
+    val credential = result.toCredential() ?: run {
+      logger.w { "Sign in with Apple returned no identity token" }
+      return null
+    }
+
+    return try {
+      val signInResult = authProvider.signInWithCredential(credential)
+      val user = signInResult.user ?: authProvider.currentUser
+      if (user == null) {
+        logger.w { "Sign in with Apple completed without a Firebase user" }
+        return null
+      }
+      captureAppleName(user, result.fullName)
+      user
+    } catch (e: Exception) {
+      logger.e(e) { "Firebase sign-in with the Apple credential failed" }
+      null
+    }
+  }
+
+  /**
+   * Best-effort: writes Apple's first-authorization [fullName] to the auth profile, never
+   * overwriting a name the account already has.
+   */
+  private suspend fun captureAppleName(user: FirebaseUser, fullName: String?) {
+    val name = fullName?.takeIf { it.isNotBlank() } ?: return
+    if (!user.displayName.isNullOrBlank()) return
+    updateDisplayName(name)
   }
 
   /**
@@ -112,13 +152,40 @@ class AuthManagerImpl(
   }
 
   /**
-   * iOS upgrade uses Sign in with Apple. The native ASAuthorization flow (nonce + identity token →
-   * OAuthProvider.credential("apple.com", …) → linkWithCredential) is not wired yet; until then this
-   * reports a failure rather than silently doing nothing. Tracked in docs/account/account_upgrade_design.html.
+   * Links a Sign in with Apple credential to the current anonymous user, preserving the UID so
+   * every local row stays valid with zero migration. On a collision (that Apple ID already has a
+   * Firebase account) returns the credential so the caller can offer the merge path instead.
+   *
+   * Mirrors the Android/Google implementation; see docs/account/account_upgrade_design.html.
    */
   override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult {
-    logger.w { "upgradeAnonymousAccount() not yet implemented on iOS (pending Sign in with Apple)" }
-    return AccountUpgradeResult.Failed("Account upgrade is not available on iOS yet")
+    val current = authProvider.currentUser
+      ?: return AccountUpgradeResult.Failed("No signed-in user to upgrade")
+
+    val result = IosAppleSignInBridge.signIn()
+    if (result.cancelled) {
+      logger.d { "Account upgrade cancelled by user" }
+      return AccountUpgradeResult.Cancelled
+    }
+    if (result.errorMessage != null) {
+      logger.e { "Account upgrade: Apple authorization failed: ${result.errorMessage}" }
+      return AccountUpgradeResult.Failed(result.errorMessage)
+    }
+    val credential = result.toCredential()
+      ?: return AccountUpgradeResult.Failed("Could not read the Apple credential")
+
+    return try {
+      val linkResult = current.linkWithCredential(credential)
+      val user = linkResult.user ?: authProvider.currentUser ?: current
+      captureAppleName(user, result.fullName)
+      AccountUpgradeResult.Linked(user)
+    } catch (e: FirebaseAuthUserCollisionException) {
+      logger.i { "Apple account already in use; offering merge" }
+      AccountUpgradeResult.CredentialInUse(credential)
+    } catch (e: Exception) {
+      logger.e(e) { "Account upgrade: linking failed" }
+      AccountUpgradeResult.Failed(e.message ?: "Linking failed")
+    }
   }
 
   override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult {
@@ -126,6 +193,9 @@ class AuthManagerImpl(
       val result = authProvider.signInWithCredential(credential)
       val user = result.user ?: authProvider.currentUser
       ?: return AccountUpgradeResult.Failed("Sign-in returned no user")
+      if (user.isAnonymous) {
+        return AccountUpgradeResult.Failed("Sign-in did not switch to the permanent account")
+      }
       AccountUpgradeResult.Linked(user)
     } catch (e: Exception) {
       logger.e(e) { "Sign-in to existing account failed" }

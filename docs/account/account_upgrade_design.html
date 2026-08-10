@@ -263,12 +263,12 @@
       <h2 id="open">14. Open Questions</h2>
       <ul>
         <li>Should <code>reassign</code> live on the existing <code>DatabaseIntegrityChecker</code> or a new dedicated type? (Leaning new type for single responsibility.)</li>
-        <li>iOS Apple Sign In: implement natively per-screen, or via a shared expect/actual entry to keep the Compose layer platform-agnostic?</li>
+        <li><s>iOS Apple Sign In: implement natively per-screen, or via a shared expect/actual entry to keep the Compose layer platform-agnostic?</s> <b>Decided:</b> a native presenter behind a bridge object (<code>IosAppleSignInBridge</code>), like the existing Google one. Swift owns <code>ASAuthorizationController</code> and the nonce hashing and returns the identity token plus the raw nonce; Kotlin builds the <code>OAuthProvider.credential("apple.com", …)</code> and performs the sign-in or link. The split is forced by the merge path — it must hand a real <code>AuthCredential</code> to <code>signInToExistingAccount</code>, which a Swift-side sign-in could not produce.</li>
       </ul>
 
       <div class="callout note">
         <strong>Implementation Status</strong>
-        Built and shipping: <code>AuthManager</code>'s upgrade API, <code>AccountUpgradeViewModel</code> (clean + merge paths), <code>LocalAccountMigrator</code>, and the Settings entry point. The <b>launch-time reconciliation of §9 is not implemented</b> — if the app dies between <code>signInToExistingAccount</code> and <code>reassign</code>, the guest's rows stay under the orphan UID and are invisible to the signed-in account until a reassign runs. They are no longer <i>destroyed</i> in that window (issue #223), but nothing yet brings them back.
+        Built and shipping: <code>AuthManager</code>'s upgrade API, <code>AccountUpgradeViewModel</code> (clean + merge paths), <code>LocalAccountMigrator</code>, and the Settings entry point. <b>iOS Sign in with Apple is implemented but not yet verified</b> — the native bridge and the link/merge paths are in place, but they have not run on a device and still need the Apple provider enabled in the Firebase console (issue #398); iOS is not built on CI, so nothing here is compiler-checked either. The <b>launch-time reconciliation of §9 is not implemented</b> — if the app dies between <code>signInToExistingAccount</code> and <code>reassign</code>, the guest's rows stay under the orphan UID and are invisible to the signed-in account until a reassign runs. They are no longer <i>destroyed</i> in that window (issue #223), but nothing yet brings them back.
       </div>
 
     </div>

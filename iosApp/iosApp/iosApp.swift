@@ -16,6 +16,7 @@ final class AppAttestProviderFactory: NSObject, AppCheckProviderFactory {
 
 class AppDelegate: NSObject, UIApplicationDelegate {
   private let googleSignInProvider = NativeGoogleSignInProvider()
+  private let appleSignInProvider = NativeAppleSignInProvider()
 
   func application(_ application: UIApplication,
                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
@@ -29,6 +30,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     MainEntry.shared.startSyncEngine()
     MainEntry.shared.installGoogleSignInHandler { [weak self] in
       self?.googleSignInProvider.signIn()
+    }
+    MainEntry.shared.installAppleSignInHandler { [weak self] in
+      self?.appleSignInProvider.signIn()
     }
     // Register BGProcessingTask identifier "dev.fanfly.wingslog.blob-scan" with the OS.
     // Must be called before this method returns.
