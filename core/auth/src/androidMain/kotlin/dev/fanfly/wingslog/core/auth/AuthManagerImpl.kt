@@ -136,11 +136,31 @@ class AuthManagerImpl(
   }
 
   /**
-   * Links a Google credential to the current anonymous user, preserving the UID. On a collision
-   * (the Google account already has a Firebase account), returns the credential so the caller can
-   * offer the merge path instead.
+   * Links [provider] to the current anonymous user, preserving the UID. On a collision (the chosen
+   * account already exists), returns the credential so the caller can offer the merge path instead.
+   *
+   * Apple is not offered on Android (`AppCapability.isAppleSignInSupported` is false), and email
+   * cannot complete in one call — both are rejected here rather than silently doing something else.
    */
-  override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult {
+  override suspend fun upgradeAnonymousAccount(
+    provider: AuthProvider,
+  ): AccountUpgradeResult = when (provider) {
+    AuthProvider.Google -> upgradeWithGoogle()
+    AuthProvider.Apple -> AccountUpgradeResult.Failed(
+      "Sign in with Apple is not offered on Android"
+    )
+
+    AuthProvider.Email -> AccountUpgradeResult.Failed(
+      "Email upgrade completes through completeUpgradeWithEmailLink"
+    )
+  }
+
+  override suspend fun completeUpgradeWithEmailLink(
+    email: String,
+    link: String,
+  ): AccountUpgradeResult = emailLink.linkToCurrentUser(email, link)
+
+  private suspend fun upgradeWithGoogle(): AccountUpgradeResult {
     val current = authProvider.currentUser
       ?: return AccountUpgradeResult.Failed("No signed-in user to upgrade")
     val googleCredential = try {

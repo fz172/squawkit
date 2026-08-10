@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
@@ -36,7 +37,7 @@ class AccountUpgradeViewModel(
   private val _state = MutableStateFlow<UpgradeUiState>(UpgradeUiState.Idle)
   val state: StateFlow<UpgradeUiState> = _state.asStateFlow()
 
-  fun startUpgrade() {
+  fun startUpgrade(provider: AuthProvider) {
     if (_state.value == UpgradeUiState.Working) return
     // Capture the guest UID before provider sign-in can switch FirebaseAuth to an existing user.
     val guestUid = authManager.getCurrentUser()?.uid
@@ -46,23 +47,24 @@ class AccountUpgradeViewModel(
       // the guest is still the current user (before sign-in re-points the store) so the merge path
       // can carry it onto the account.
       val guestName = currentSelfName()
-      _state.value = when (val result = authManager.upgradeAnonymousAccount()) {
-        is AccountUpgradeResult.Linked -> finishLinkedAccount(result.user.uid)
-        is AccountUpgradeResult.CredentialInUse -> {
-          if (guestUid == null) {
-            UpgradeUiState.Error("No signed-in user to merge")
-          } else {
-            mergeExistingAccount(
-              guestUid = guestUid,
-              guestName = guestName,
-              credential = result.credential
-            )
+      _state.value =
+        when (val result = authManager.upgradeAnonymousAccount(provider)) {
+          is AccountUpgradeResult.Linked -> finishLinkedAccount(result.user.uid)
+          is AccountUpgradeResult.CredentialInUse -> {
+            if (guestUid == null) {
+              UpgradeUiState.Error("No signed-in user to merge")
+            } else {
+              mergeExistingAccount(
+                guestUid = guestUid,
+                guestName = guestName,
+                credential = result.credential
+              )
+            }
           }
-        }
 
-        is AccountUpgradeResult.Cancelled -> UpgradeUiState.Idle
-        is AccountUpgradeResult.Failed -> UpgradeUiState.Error(result.message)
-      }
+          is AccountUpgradeResult.Cancelled -> UpgradeUiState.Idle
+          is AccountUpgradeResult.Failed -> UpgradeUiState.Error(result.message)
+        }
     }
   }
 

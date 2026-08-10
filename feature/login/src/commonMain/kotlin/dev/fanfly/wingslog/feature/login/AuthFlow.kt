@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import dev.fanfly.wingslog.feature.login.onboarding.NameEntryScreen
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingActions

@@ -158,7 +158,25 @@ class AuthManagerImpl(
    *
    * Mirrors the Android/Google implementation; see docs/account/account_upgrade_design.html.
    */
-  override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult {
+  override suspend fun upgradeAnonymousAccount(
+    provider: AuthProvider,
+  ): AccountUpgradeResult = when (provider) {
+    AuthProvider.Apple -> upgradeWithApple()
+    AuthProvider.Google -> AccountUpgradeResult.Failed(
+      "Google account upgrade is not available on iOS yet"
+    )
+
+    AuthProvider.Email -> AccountUpgradeResult.Failed(
+      "Email upgrade completes through completeUpgradeWithEmailLink"
+    )
+  }
+
+  override suspend fun completeUpgradeWithEmailLink(
+    email: String,
+    link: String,
+  ): AccountUpgradeResult = emailLink.linkToCurrentUser(email, link)
+
+  private suspend fun upgradeWithApple(): AccountUpgradeResult {
     val current = authProvider.currentUser
       ?: return AccountUpgradeResult.Failed("No signed-in user to upgrade")
 

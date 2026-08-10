@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.appinfo.getAppVersion
+import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
@@ -259,7 +260,7 @@ fun SettingsContent(
               title = stringResource(SettingsRes.string.account_upgrade_login_cta),
               subtitle =
                 stringResource(SettingsRes.string.account_upgrade_login_subtitle),
-              onClick = { accountUpgradeViewModel.startUpgrade() },
+              onClick = { accountUpgradeViewModel.startUpgrade(AuthProvider.Google) },
             )
           }
         } else {
