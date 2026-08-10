@@ -1,0 +1,198 @@
+package dev.fanfly.wingslog.feature.ads.viewing
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
+import dev.fanfly.wingslog.feature.ads.model.AdLayoutTier
+import dev.fanfly.wingslog.feature.ads.model.AdSlotFormat
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
+import dev.fanfly.wingslog.feature.ads.model.AdUnitSize
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
+import wingslog.feature.ads.sharedassets.generated.resources.Res
+import wingslog.feature.ads.sharedassets.generated.resources.ads_a11y_advertisement
+import wingslog.feature.ads.sharedassets.generated.resources.ads_cta_remove_ads
+import wingslog.feature.ads.sharedassets.generated.resources.ads_sponsored_label
+
+/** `LayoutTier` lives in a Compose module; the placement core deliberately does not depend on it. */
+internal fun LayoutTier.toAdLayoutTier(): AdLayoutTier = when (this) {
+  LayoutTier.COMPACT -> AdLayoutTier.COMPACT
+  LayoutTier.MEDIUM -> AdLayoutTier.MEDIUM
+  // §7.1 treats these identically — both are wide enough for two thin units side by side.
+  LayoutTier.EXPANDED, LayoutTier.LARGE -> AdLayoutTier.WIDE
+}
+
+/**
+ * One ad slot, rendered as a card that sits *in* the record list rather than over it.
+ *
+ * Owns everything that makes an ad card an ad card — the "Sponsored" label (once per slot, not per
+ * unit), the band layout, the upgrade link, collapsing to zero height, and every analytics event.
+ * [AdView] owns nothing but the creative.
+ *
+ * **Budget is claimed once per slot and cached for the life of the composition** (N8). Scrolling
+ * past the same ad twice therefore neither re-requests nor double-counts — the reservation is keyed
+ * on the slot, not on how many times it happens to be composed. It is claimed at *request* time so
+ * two slots composing together cannot both spend the last unit; anything that fails to fill is
+ * released, since only filled units count against the cap.
+ *
+ * When no unit is granted the composable emits **nothing at all** — not an empty box, not a
+ * placeholder. A slot the pilot cannot see must not occupy a pixel or shift a record under their
+ * finger (G5).
+ */
+@Composable
+fun AdSlot(
+  surface: AdSurface,
+  slotIndex: Int,
+  onUpsellClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val adsManager: AdsManager = koinInject()
+  val appCapability: AppCapability = koinInject()
+  val analytics = LocalAnalytics.current
+  val adTier = LocalLayoutTier.current.toAdLayoutTier()
+
+  // Keyed on the slot alone: re-keying on tier would re-reserve on every rotation.
+  val granted = remember(surface, slotIndex) {
+    val desired = AdSlotFormat.of(adTier, adsManager.headroom()) ?: return@remember 0
+    adsManager.reserve(desired.unitCount)
+  }
+  if (granted == 0) return
+
+  // A partial grant renders centred, exactly as the MEDIUM case — never a half-empty band.
+  val format = if (granted >= AdSlotFormat.TWO_UP.unitCount) AdSlotFormat.TWO_UP else AdSlotFormat.SINGLE
+
+  var filled by remember(surface, slotIndex) { mutableStateOf(0) }
+  var failed by remember(surface, slotIndex) { mutableStateOf(0) }
+  // Every unit came back empty: collapse rather than show a labelled box around nothing.
+  if (failed >= granted) return
+
+  val advertisement = stringResource(Res.string.ads_a11y_advertisement)
+
+  Card(
+    modifier = modifier.fillMaxWidth(),
+    colors = CardDefaults.cardColors(
+      // Neutral only. The amber/red status palette means "your aircraft needs attention" (G8).
+      containerColor = MaterialTheme.colorScheme.surfaceVariant,
+    ),
+    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    shape = RoundedCornerShape(Spacing.cardCornerRadius),
+    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
+  ) {
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(Spacing.medium),
+      verticalArrangement = Arrangement.spacedBy(Spacing.small),
+    ) {
+      Text(
+        text = stringResource(Res.string.ads_sponsored_label),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          // One focus group announced as "Advertisement"; the upgrade link stays separately
+          // focusable below, outside this group (N7).
+          .clearAndSetSemantics { contentDescription = advertisement },
+        horizontalArrangement = Arrangement.spacedBy(Spacing.medium, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        repeat(granted) { unit ->
+          AdView(
+            size = AdUnitSize.BANNER,
+            surface = surface,
+            // Developer builds request test inventory: real impressions from development are
+            // invalid traffic, which AdMob suspends accounts for.
+            useTestAds = appCapability.isDeveloperOptionsSupported,
+            onFilled = {
+              filled++
+              val position = unitPosition(format, unit)
+              analytics.logEvent(
+                "ad_slot_filled",
+                mapOf(
+                  "surface" to surface.analyticsName,
+                  "slot_index" to slotIndex.toString(),
+                  "unit_position" to position,
+                ),
+              )
+              analytics.logEvent(
+                "ad_impression",
+                mapOf(
+                  "surface" to surface.analyticsName,
+                  "slot_index" to slotIndex.toString(),
+                  "unit_position" to position,
+                ),
+              )
+            },
+            onFailed = { reason ->
+              failed++
+              // Give the unit back: the PRD counts filled units only, so a run of no-fills must not
+              // quietly eat the session allowance.
+              adsManager.release(1)
+              analytics.logEvent(
+                "ad_fill_failed",
+                mapOf("surface" to surface.analyticsName, "reason" to reason),
+              )
+            },
+            onClicked = {
+              analytics.logEvent(
+                "ad_click",
+                mapOf(
+                  "surface" to surface.analyticsName,
+                  "slot_index" to slotIndex.toString(),
+                  "unit_position" to unitPosition(format, unit),
+                ),
+              )
+            },
+          )
+        }
+      }
+
+      TextButton(
+        onClick = {
+          analytics.logEvent("ad_upsell_tapped", mapOf("surface" to surface.analyticsName))
+          onUpsellClick()
+        },
+        modifier = Modifier.align(Alignment.End),
+      ) {
+        Text(
+          text = stringResource(Res.string.ads_cta_remove_ads),
+          style = MaterialTheme.typography.labelMedium,
+        )
+      }
+    }
+  }
+}
+
+/** The `unit_position` analytics param: `single`, or `left`/`right` within a two-up band. */
+private fun unitPosition(format: AdSlotFormat, unitIndex: Int): String = when {
+  format == AdSlotFormat.SINGLE -> "single"
+  unitIndex == 0 -> "left"
+  else -> "right"
+}

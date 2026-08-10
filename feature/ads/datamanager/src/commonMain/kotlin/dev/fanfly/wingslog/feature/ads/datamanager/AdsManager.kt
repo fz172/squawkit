@@ -35,6 +35,12 @@ interface AdsManager {
   fun reserve(units: Int): Int
 
   /**
+   * Gives back units claimed by [reserve] that never became a visible ad — a failed request, or a
+   * slot torn down before it filled. Only filled units count against the session cap.
+   */
+  fun release(units: Int)
+
+  /**
    * Emits once per session, when the final unit is displayed. Backs `ad_session_cap_reached`, which
    * tells us how often the cap actually binds.
    */

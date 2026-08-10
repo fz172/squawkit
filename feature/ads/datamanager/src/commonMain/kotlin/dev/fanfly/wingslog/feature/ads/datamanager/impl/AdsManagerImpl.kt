@@ -44,6 +44,8 @@ internal class AdsManagerImpl(
 
   override fun reserve(units: Int): Int = counter.reserve(units)
 
+  override fun release(units: Int) = counter.release(units)
+
   override val capReached: Flow<Unit> = counter.capReached
 
 }

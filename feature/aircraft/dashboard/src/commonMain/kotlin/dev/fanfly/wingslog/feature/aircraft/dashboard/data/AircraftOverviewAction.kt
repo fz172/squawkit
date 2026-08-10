@@ -27,6 +27,9 @@ sealed interface AircraftOverviewAction {
     AircraftOverviewAction
 
   data object DismissSquawkDetail : AircraftOverviewAction
+
+  /** The ad card's "Subscribe to remove ads" link. Navigates to the subscription screen. */
+  data object ShowSubscription : AircraftOverviewAction
   data class EditSquawkClick(val aircraftId: String, val squawkId: String) :
     AircraftOverviewAction
 }
