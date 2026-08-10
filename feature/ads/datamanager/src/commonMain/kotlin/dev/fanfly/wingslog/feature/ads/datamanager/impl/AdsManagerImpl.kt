@@ -37,7 +37,10 @@ internal class AdsManagerImpl(
   override fun showsAds(): Flow<Boolean> {
     if (!adsPossible) return flowOf(false)
     if (!devOverridesHonored) return subscriptionManager.showsAds()
-    return combine(subscriptionManager.showsAds(), forceAds) { byTier, forced -> byTier || forced }
+    return combine(
+      subscriptionManager.showsAds(),
+      forceAds
+    ) { byTier, forced -> byTier || forced }
   }
 
   override fun headroom(): Int = counter.headroom

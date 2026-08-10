@@ -59,7 +59,10 @@ actual fun AdView(
   val gmsSize = remember(size) { size.toGmsAdSize() }
 
   AndroidView(
-    modifier = modifier.size(width = size.widthDp.dp, height = size.heightDp.dp),
+    modifier = modifier.size(
+      width = size.widthDp.dp,
+      height = size.heightDp.dp
+    ),
     factory = { context ->
       if (adsInitialized.compareAndSet(false, true)) {
         MobileAds.initialize(context) {}
@@ -77,7 +80,10 @@ actual fun AdView(
 
           override fun onAdClicked() = currentClicked()
         }
-        loadAd(AdRequest.Builder().build())
+        loadAd(
+          AdRequest.Builder()
+            .build()
+        )
       }
     },
     // Release the native view when the slot leaves composition. The session cap already bounds live
@@ -113,4 +119,5 @@ private fun adUnitIdFor(surface: AdSurface, useTestAds: Boolean): String =
   }
 
 /** Google's public test banner unit. Serves a filled house ad, so it also exercises the filled path. */
-private const val GOOGLE_TEST_BANNER_UNIT = "ca-app-pub-3940256099942544/6300978111"
+private const val GOOGLE_TEST_BANNER_UNIT =
+  "ca-app-pub-3940256099942544/6300978111"
