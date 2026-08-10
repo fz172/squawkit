@@ -128,7 +128,7 @@ class AdsManagerImplTest {
     assertThat(m.showsAds().first()).isTrue()
   }
 
-  // ------------------------------------------------------------------- budget + reset
+  // ------------------------------------------------------------------------- budget
 
   @Test
   fun `budget calls delegate to the counter`() {
@@ -136,27 +136,5 @@ class AdsManagerImplTest {
     assertThat(m.headroom()).isEqualTo(AdSessionCounter.CAP)
     assertThat(m.reserve(2)).isEqualTo(2)
     assertThat(m.headroom()).isEqualTo(AdSessionCounter.CAP - 2)
-  }
-
-  @Test
-  fun `reset restores the budget in a developer build`() {
-    val m = manager(capability(devOptions = true), tierShowsAds = true)
-    repeat(AdSessionCounter.CAP) { m.reserve(1) }
-    assertThat(m.headroom()).isEqualTo(0)
-
-    m.resetSessionForDeveloper()
-
-    assertThat(m.headroom()).isEqualTo(AdSessionCounter.CAP)
-  }
-
-  @Test
-  fun `reset is refused in a release build`() {
-    // A release build must not be talkable into a fresh ad budget.
-    val m = manager(capability(devOptions = false), tierShowsAds = true)
-    repeat(AdSessionCounter.CAP) { m.reserve(1) }
-
-    m.resetSessionForDeveloper()
-
-    assertThat(m.headroom()).isEqualTo(0)
   }
 }

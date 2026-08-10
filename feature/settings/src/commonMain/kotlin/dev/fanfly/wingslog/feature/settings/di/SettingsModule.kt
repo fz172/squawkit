@@ -7,7 +7,6 @@ import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsViewModel
@@ -29,7 +28,7 @@ val settingsModule = module {
       get<AppCapability>(),
     )
   }
-  viewModel { DeveloperOptionsViewModel(get<DeveloperOptionsManager>(), get<AdsManager>()) }
+  viewModel { DeveloperOptionsViewModel(get<DeveloperOptionsManager>()) }
   viewModel {
     AccountUpgradeViewModel(
       authManager = get<AuthManager>(),

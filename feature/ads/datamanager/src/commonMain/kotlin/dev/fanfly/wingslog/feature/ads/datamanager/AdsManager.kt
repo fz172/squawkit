@@ -40,11 +40,4 @@ interface AdsManager {
    */
   val capReached: Flow<Unit>
 
-  /**
-   * Drops this session's spend so ads can be exercised again immediately.
-   *
-   * **Developer affordance only** — implementations must ignore it outside developer builds. It
-   * exists because the alternative way to test the cap is waiting 30 minutes in the background.
-   */
-  fun resetSessionForDeveloper()
 }

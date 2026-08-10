@@ -31,8 +31,5 @@
   <string name="developer_options_force_free">Core</string>
   <string name="developer_options_force_pro">Heavy</string>
   <string name="developer_options_force_ads_title">Force ads</string>
-  <string name="developer_options_force_ads_subtitle">Show display ads on any account, ignoring the tier. Placement, cadence and the 5-per-session cap all behave normally.</string>
-  <string name="developer_options_reset_ad_session_title">Reset ad session</string>
-  <string name="developer_options_reset_ad_session_subtitle">Clear this session's ad spend so the cap can be tested without waiting 30 minutes in the background.</string>
-  <string name="developer_options_reset_ad_session_action">Reset</string>
+  <string name="developer_options_force_ads_subtitle">Show display ads on any account, ignoring the tier. Everything else behaves normally, including the limit of 5 ads per session.</string>
 </resources>

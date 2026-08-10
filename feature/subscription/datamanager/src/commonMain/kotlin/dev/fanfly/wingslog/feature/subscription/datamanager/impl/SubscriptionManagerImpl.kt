@@ -53,10 +53,16 @@ class SubscriptionManagerImpl(
       }
     }
 
+  /**
+   * Read once: [AppCapability] is fixed at build time, so there is no value change to observe and no
+   * reason to re-evaluate it on every emission below.
+   */
+  private val devOverridesHonored = appCapability.isDeveloperOptionsSupported
+
   override fun status(): Flow<Subscription.Status> =
     combine(entitlement(), forceStatus) { subscription, forced ->
       // The forced tier wins, but only in a developer build — never in the shipping release.
-      if (appCapability.isDeveloperOptionsSupported && forced != null) {
+      if (devOverridesHonored && forced != null) {
         forced
       } else {
         subscription.effectiveStatusAt(clock.now().toEpochMilliseconds())

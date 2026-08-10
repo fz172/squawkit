@@ -19,6 +19,12 @@ internal class AdsManagerImpl(
   private val forceAds: Flow<Boolean>,
 ) : AdsManager {
 
+  // AppCapability is fixed at build time, so these are read once rather than re-evaluated on every
+  // emission. They are plain booleans by nature — there is no value change to observe.
+  private val adsPossible =
+    appCapability.isAdsSupported && appCapability.isSubscriptionSupported
+  private val devOverridesHonored = appCapability.isDeveloperOptionsSupported
+
   /**
    * **Force overrides the tier check, never the capability checks.**
    *
@@ -29,12 +35,9 @@ internal class AdsManagerImpl(
    * consulted.
    */
   override fun showsAds(): Flow<Boolean> {
-    if (!appCapability.isAdsSupported || !appCapability.isSubscriptionSupported) return flowOf(
-      false
-    )
-    return combine(subscriptionManager.showsAds(), forceAds) { byTier, forced ->
-      byTier || (forced && appCapability.isDeveloperOptionsSupported)
-    }
+    if (!adsPossible) return flowOf(false)
+    if (!devOverridesHonored) return subscriptionManager.showsAds()
+    return combine(subscriptionManager.showsAds(), forceAds) { byTier, forced -> byTier || forced }
   }
 
   override fun headroom(): Int = counter.headroom
@@ -43,9 +46,4 @@ internal class AdsManagerImpl(
 
   override val capReached: Flow<Unit> = counter.capReached
 
-  override fun resetSessionForDeveloper() {
-    // Ignored outside developer builds, so a release build cannot be talked into a fresh budget.
-    if (!appCapability.isDeveloperOptionsSupported) return
-    counter.resetSession()
-  }
 }

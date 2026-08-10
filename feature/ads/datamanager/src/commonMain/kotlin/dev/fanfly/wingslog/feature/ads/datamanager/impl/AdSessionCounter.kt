@@ -81,16 +81,6 @@ internal class AdSessionCounter(
     return granted
   }
 
-  /**
-   * Drops this session's spend without waiting for a real boundary.
-   *
-   * **Developer affordance only** — reached through [dev.fanfly.wingslog.feature.ads.datamanager
-   * .AdsManager.resetSessionForDeveloper], which refuses outside developer builds. Testing the cap
-   * otherwise means backgrounding the app for 30 minutes.
-   */
-  fun resetSession() {
-    _displayed.value = 0
-  }
 
   /**
    * Resets the budget when the app session has rolled over.
