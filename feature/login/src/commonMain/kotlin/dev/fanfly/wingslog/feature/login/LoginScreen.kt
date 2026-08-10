@@ -150,9 +150,8 @@ fun LoginScreen(
       }
     }
 
-    // Continue with Apple — hidden on Android (see AppCapability.isAppleSignInSupported). Backend
-    // (signInWithApple) is not wired yet; tapping is a no-op until the Apple provider is
-    // implemented per platform.
+    // Continue with Apple — hidden on Android (see AppCapability.isAppleSignInSupported), where
+    // Google is the platform's primary provider.
     if (appCapability.isAppleSignInSupported) {
       Spacer(Modifier.height(Spacing.medium))
 
@@ -169,23 +168,43 @@ fun LoginScreen(
           disabledContentColor = AppleButtonContent.copy(alpha = 0.4f),
         ),
         onClick = {
-          // TODO(apple-signin): wire AuthManager.signInWithApple() per platform.
+          scope.launch {
+            isSigningIn = true
+            try {
+              val credential = loginViewModel.loginWithApple()
+              if (credential != null) {
+                onLoginSuccess()
+              } else {
+                error = signInErrorMessage
+              }
+            } finally {
+              isSigningIn = false
+            }
+          }
         },
       ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-        ) {
-          Icon(
-            painter = painterResource(Res.drawable.ic_apple),
-            contentDescription = stringResource(Res.string.apple_logo),
+        if (isSigningIn) {
+          CircularProgressIndicator(
             modifier = Modifier.size(Spacing.xLarge),
-            tint = AppleButtonContent,
+            strokeWidth = 2.dp,
+            color = AppleButtonContent,
           )
-          Text(
-            text = stringResource(Res.string.sign_in_with_apple),
-            style = LoginButtonLabelStyle,
-          )
+        } else {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+          ) {
+            Icon(
+              painter = painterResource(Res.drawable.ic_apple),
+              contentDescription = stringResource(Res.string.apple_logo),
+              modifier = Modifier.size(Spacing.xLarge),
+              tint = AppleButtonContent,
+            )
+            Text(
+              text = stringResource(Res.string.sign_in_with_apple),
+              style = LoginButtonLabelStyle,
+            )
+          }
         }
       }
     }

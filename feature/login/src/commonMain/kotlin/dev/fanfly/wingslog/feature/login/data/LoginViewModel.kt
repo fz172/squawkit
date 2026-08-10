@@ -14,6 +14,8 @@ class LoginViewModel(
 
   suspend fun login() = authManager.signInWithGoogle()
 
+  suspend fun loginWithApple() = authManager.signInWithApple()
+
   suspend fun loginAnonymously() = authManager.signInAnonymously()
 
   /** Leg 1 — sends a sign-in link and, on success, stashes the address for completion. */

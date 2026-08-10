@@ -96,6 +96,16 @@ class AuthManagerImpl(
     return null
   }
 
+  /**
+   * Not offered on Android: the platform's primary provider is Google, and `AppCapability`'s
+   * `isAppleSignInSupported` is false here, so the button never renders. This guards the path in
+   * case it is ever invoked.
+   */
+  override suspend fun signInWithApple(): FirebaseUser? {
+    logger.w { "Apple sign-in is not offered on Android" }
+    return null
+  }
+
   private fun processCredential(credential: Credential): GoogleIdTokenCredential? {
     if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
       try {

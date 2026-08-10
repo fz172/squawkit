@@ -85,6 +85,15 @@ class AuthManagerImpl(
   }
 
   /**
+   * Sign in with Apple, via the native `ASAuthorization` sheet presented by the Swift app. Wired in
+   * a follow-up; until then this reports a failure rather than silently doing nothing.
+   */
+  override suspend fun signInWithApple(): FirebaseUser? {
+    logger.w { "signInWithApple() not yet implemented on iOS" }
+    return null
+  }
+
+  /**
    * Signs in anonymously using Firebase Authentication.
    * Does not interfere with [trySilentLogin] — if a user is already signed in
    * (including anonymously), this is a no-op and returns the current user.

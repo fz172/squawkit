@@ -78,6 +78,7 @@ class AdaptiveShellViewModelTest {
     override fun getCurrentUser(): FirebaseUser? = null
     override suspend fun trySilentLogin(): FirebaseUser? = null
     override suspend fun signInWithGoogle(): FirebaseUser? = null
+    override suspend fun signInWithApple(): FirebaseUser? = null
     override suspend fun signInAnonymously(): FirebaseUser? = null
     override suspend fun updateDisplayName(name: String) = Unit
     override suspend fun logOut() = Unit
