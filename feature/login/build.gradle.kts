@@ -73,4 +73,9 @@ dependencies {
   // GitLive firebase-auth-android pins its versions via the Firebase BOM, which
   // core:auth declares as `implementation` (not exposed transitively) — so declare it here too.
   implementation(platform(libs.firebase.bom))
+
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
+  testImplementation(libs.mockk)
+  testImplementation(libs.kotlinx.coroutines.test)
 }
