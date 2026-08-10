@@ -9,27 +9,27 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
+import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.model.ListRow
 import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
-import org.koin.compose.koinInject
-import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
-import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
-import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import wingslog.feature.tasks.sharedassets.generated.resources.due_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.history_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_tasks
@@ -82,9 +82,14 @@ fun ComplianceSection(
     // Due / History are independent lists with independent counters, exactly like squawks
     // Open / Closed — this is a toggle over flat lists, not the grouped list the PRD describes.
     val adsManager: AdsManager = koinInject()
-    val showAds by adsManager.showsAds().collectAsState(initial = false)
+    val showAds by adsManager.showsAds()
+      .collectAsState(initial = false)
     val rows = remember(displayList, showAds) {
-      if (showAds) withAdSlots(displayList) else displayList.map { ListRow.Item(it) }
+      if (showAds) withAdSlots(displayList) else displayList.map {
+        ListRow.Item(
+          it
+        )
+      }
     }
 
     if (displayList.isEmpty()) {

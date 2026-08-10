@@ -12,7 +12,10 @@ import org.junit.Test
 class AircraftOverviewGatingTest {
 
   private fun state(role: ShareRole?) =
-    AircraftOverviewUiState.Success(aircraft = Aircraft(id = "ac-1"), myRole = role)
+    AircraftOverviewUiState.Success(
+      aircraft = Aircraft(id = "ac-1"),
+      myRole = role
+    )
 
   @Test
   fun owner_canManage() {

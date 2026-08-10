@@ -97,7 +97,8 @@ class AdSlotsTest {
   @Test
   fun `slot indices are zero-based, sequential and stable for a given size`() {
     val rows = withAdSlots(records(100))
-    val slots = rows.filterIsInstance<ListRow.Ad>().map { it.slotIndex }
+    val slots = rows.filterIsInstance<ListRow.Ad>()
+      .map { it.slotIndex }
     assertThat(slots).isEqualTo((0..9).toList())
     // Stability is what the logs LazyColumn keys on; recomputing must not renumber.
     assertThat(withAdSlots(records(100)).filterIsInstance<ListRow.Ad>()).isEqualTo(
@@ -107,8 +108,12 @@ class AdSlotsTest {
 
   @Test
   fun `interval is configurable and validated`() {
-    assertThat(withAdSlots(records(6), interval = 3).adPositions()).isEqualTo(listOf(3, 6))
-    assertThat(withAdSlots(records(2), interval = 3).adPositions()).isEqualTo(listOf(2))
+    assertThat(withAdSlots(records(6), interval = 3).adPositions()).isEqualTo(
+      listOf(3, 6)
+    )
+    assertThat(withAdSlots(records(2), interval = 3).adPositions()).isEqualTo(
+      listOf(2)
+    )
     runCatching { withAdSlots(records(5), interval = 0) }
       .also { assertThat(it.isFailure).isTrue() }
   }
@@ -117,12 +122,13 @@ class AdSlotsTest {
 
   private data class Entry(val label: String, val isHeader: Boolean)
 
-  private fun grouped(vararg groups: Pair<String, Int>): List<Entry> = buildList {
-    groups.forEach { (name, count) ->
-      add(Entry(name, isHeader = true))
-      repeat(count) { add(Entry("$name-record-${it + 1}", isHeader = false)) }
+  private fun grouped(vararg groups: Pair<String, Int>): List<Entry> =
+    buildList {
+      groups.forEach { (name, count) ->
+        add(Entry(name, isHeader = true))
+        repeat(count) { add(Entry("$name-record-${it + 1}", isHeader = false)) }
+      }
     }
-  }
 
   private fun List<ListRow<Entry>>.groupedAdPositions(): List<Int> {
     var seen = 0
@@ -140,14 +146,26 @@ class AdSlotsTest {
   fun `grouped - the counter runs continuously across groups, headers excluded`() {
     // Three groups of 6 = 18 records. One continuous count means a slot after record 10 overall,
     // which falls inside the second group - not a slot per group, and headers never advance it.
-    val rows = withAdSlotsGrouped(grouped("overdue" to 6, "due-soon" to 6, "ok" to 6)) { it.isHeader }
+    val rows = withAdSlotsGrouped(
+      grouped(
+        "overdue" to 6,
+        "due-soon" to 6,
+        "ok" to 6
+      )
+    ) { it.isHeader }
     assertThat(rows.groupedAdPositions()).isEqualTo(listOf(10))
   }
 
   @Test
   fun `grouped - an ad never sits between a header and its first card`() {
     // G1. Every group boundary in a long grouped list, checked structurally.
-    val rows = withAdSlotsGrouped(grouped("a" to 10, "b" to 10, "c" to 10)) { it.isHeader }
+    val rows = withAdSlotsGrouped(
+      grouped(
+        "a" to 10,
+        "b" to 10,
+        "c" to 10
+      )
+    ) { it.isHeader }
     rows.forEachIndexed { index, row ->
       if (row is ListRow.Item && row.value.isHeader) {
         val next = rows.getOrNull(index + 1)
@@ -176,7 +194,8 @@ class AdSlotsTest {
 
   @Test
   fun `grouped - a short list puts its ad after the last record, not after a trailing header`() {
-    val entries = grouped("a" to 3) + Entry("trailing-empty-group", isHeader = true)
+    val entries =
+      grouped("a" to 3) + Entry("trailing-empty-group", isHeader = true)
     val rows = withAdSlotsGrouped(entries) { it.isHeader }
     val adIndex = rows.indexOfFirst { it is ListRow.Ad }
     assertThat((rows[adIndex - 1] as ListRow.Item).value.label).isEqualTo("a-record-3")

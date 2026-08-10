@@ -12,7 +12,11 @@ import kotlin.time.Instant
 class AppForegroundObserverTest {
 
   /** A hand-wound clock. The whole point of keeping this class Compose-free is being able to do this. */
-  private class FakeClock(private var current: Instant = Instant.fromEpochMilliseconds(0)) : Clock {
+  private class FakeClock(
+    private var current: Instant = Instant.fromEpochMilliseconds(
+      0
+    )
+  ) : Clock {
     override fun now(): Instant = current
     fun advance(by: Duration) {
       current += by

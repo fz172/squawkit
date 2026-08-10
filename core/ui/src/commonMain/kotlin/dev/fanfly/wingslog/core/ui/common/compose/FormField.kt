@@ -47,7 +47,8 @@ import wingslog.core.sharedassets.generated.resources.required
  */
 object FormKeyboard {
   /** Prose fields. Multiline-safe: leaves the Enter key inserting newlines. */
-  val Sentences = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+  val Sentences =
+    KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
 
   /** Single-line prose field that advances focus to the next field. */
   val SentencesNext = Sentences.copy(imeAction = ImeAction.Next)

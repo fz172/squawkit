@@ -15,13 +15,10 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
 import dev.fanfly.wingslog.feature.aircraft.update.di.aircraftUpdateModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOptionsModule
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportDataManagerModule
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportPlatformModule
 import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUiModule
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOptionsModule
-import dev.fanfly.wingslog.feature.subscription.datamanager.di.platformBillingModule
-import dev.fanfly.wingslog.feature.subscription.datamanager.di.subscriptionModule
-import dev.fanfly.wingslog.feature.subscription.viewing.di.subscriptionUiModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
 import dev.fanfly.wingslog.feature.fleet.picker.data.di.selectedAircraftStoreModule
 import dev.fanfly.wingslog.feature.login.di.loginModule
@@ -34,6 +31,9 @@ import dev.fanfly.wingslog.feature.sharing.update.di.sharingUiModule
 import dev.fanfly.wingslog.feature.shell.di.shellModule
 import dev.fanfly.wingslog.feature.squawk.datamanager.squawkModule
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.squawkUiModule
+import dev.fanfly.wingslog.feature.subscription.datamanager.di.platformBillingModule
+import dev.fanfly.wingslog.feature.subscription.datamanager.di.subscriptionModule
+import dev.fanfly.wingslog.feature.subscription.viewing.di.subscriptionUiModule
 import dev.fanfly.wingslog.feature.sync.data.blob.di.blobSchedulerModule
 import dev.fanfly.wingslog.feature.sync.data.di.syncModule
 import dev.fanfly.wingslog.feature.sync.logging.di.syncLoggingModule

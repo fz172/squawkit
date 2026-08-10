@@ -8,6 +8,7 @@ interface AuthManager {
   suspend fun trySilentLogin(): FirebaseUser?
   suspend fun signInWithGoogle(): FirebaseUser?
   suspend fun signInAnonymously(): FirebaseUser?
+
   /**
    * Writes [name] to the Firebase Auth profile, so the ID token carries it.
    *

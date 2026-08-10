@@ -206,35 +206,42 @@ class LocalAccountMigratorTest {
   }
 
   @Test
-  fun reassign_dropsGuestDeveloperOptions_notInheritedIntoTheAccount() = runTest {
-    // DeveloperOptions is a per-user singleton at the fixed id "main", like UserInfo. A guest's
-    // experimental toggles must not ride the merge into a real account: the guest's row is dropped,
-    // not moved (moving it would override the account's own device flags — and collide when the
-    // account already has a local copy).
-    db.schemaQueries.upsert(
-      collection = CollectionKind.DeveloperOptions,
-      scope_path = "/users/$FROM_UID/",
-      id = "main",
-      payload = byteArrayOf(1),
-      payload_schema = CollectionKind.DeveloperOptions.schemaName,
-      updated_at = 1_000L,
-      remote_updated_at = null,
-      dirty = false,
-      deleted = false,
-      writer_uid = null,
-    )
+  fun reassign_dropsGuestDeveloperOptions_notInheritedIntoTheAccount() =
+    runTest {
+      // DeveloperOptions is a per-user singleton at the fixed id "main", like UserInfo. A guest's
+      // experimental toggles must not ride the merge into a real account: the guest's row is dropped,
+      // not moved (moving it would override the account's own device flags — and collide when the
+      // account already has a local copy).
+      db.schemaQueries.upsert(
+        collection = CollectionKind.DeveloperOptions,
+        scope_path = "/users/$FROM_UID/",
+        id = "main",
+        payload = byteArrayOf(1),
+        payload_schema = CollectionKind.DeveloperOptions.schemaName,
+        updated_at = 1_000L,
+        remote_updated_at = null,
+        dirty = false,
+        deleted = false,
+        writer_uid = null,
+      )
 
-    migrator.reassign(FROM_UID, TO_UID)
+      migrator.reassign(FROM_UID, TO_UID)
 
-    assertThat(
-      db.schemaQueries.selectAll(CollectionKind.DeveloperOptions, "/users/$FROM_UID/")
-        .awaitAsList()
-    ).isEmpty()
-    assertThat(
-      db.schemaQueries.selectAll(CollectionKind.DeveloperOptions, "/users/$TO_UID/")
-        .awaitAsList()
-    ).isEmpty()
-  }
+      assertThat(
+        db.schemaQueries.selectAll(
+          CollectionKind.DeveloperOptions,
+          "/users/$FROM_UID/"
+        )
+          .awaitAsList()
+      ).isEmpty()
+      assertThat(
+        db.schemaQueries.selectAll(
+          CollectionKind.DeveloperOptions,
+          "/users/$TO_UID/"
+        )
+          .awaitAsList()
+      ).isEmpty()
+    }
 
   @Test
   fun reassign_dropsGuestUserInfo_evenWhenTheAccountHasNoneLocally() = runTest {
@@ -277,7 +284,10 @@ class LocalAccountMigratorTest {
       .awaitAsOneOrNull()
     assertThat(kept!!.remote_updated_at).isEqualTo(9_000L)
     assertThat(
-      db.schemaQueries.selectAll(CollectionKind.Aircraft, "/users/$FROM_UID/fleet")
+      db.schemaQueries.selectAll(
+        CollectionKind.Aircraft,
+        "/users/$FROM_UID/fleet"
+      )
         .awaitAsList()
     ).isEmpty()
   }

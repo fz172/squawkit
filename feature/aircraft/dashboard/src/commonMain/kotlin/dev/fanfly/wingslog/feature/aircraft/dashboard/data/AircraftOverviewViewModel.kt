@@ -6,7 +6,6 @@ import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.SquawkPriority
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
@@ -24,16 +23,14 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -59,7 +56,6 @@ class AircraftOverviewViewModel(
   private val sharingManager: SharingManager,
   private val aircraftScopeResolver: AircraftScopeResolver,
   private val auth: FirebaseAuth,
-  private val appCapability: AppCapability,
   private val aircraftId: String,
 ) : ViewModel() {
 
@@ -68,8 +64,6 @@ class AircraftOverviewViewModel(
   val uiState: StateFlow<AircraftOverviewUiState> = _uiState.asStateFlow()
 
   private val _events = Channel<AircraftOverviewEvent>()
-  val events = _events.receiveAsFlow()
-
   private var cachedLogs: List<MaintenanceLog> = emptyList()
 
   /**
@@ -98,10 +92,11 @@ class AircraftOverviewViewModel(
   // re-emits when the aircraft flips own ↔ shared. See docs/sharing §6.3 and P8.3 (#244).
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun blobStatesFlow(): Flow<Map<String, BlobSyncState>> =
-    aircraftScopeResolver.resolve(aircraftId).flatMapLatest { scope ->
-      if (scope == null) flowOf(emptyMap())
-      else attachmentManager.observeBlobStates(scope.toPath())
-    }
+    aircraftScopeResolver.resolve(aircraftId)
+      .flatMapLatest { scope ->
+        if (scope == null) flowOf(emptyMap())
+        else attachmentManager.observeBlobStates(scope.toPath())
+      }
 
   private fun loadAircraftAndStats() {
     viewModelScope.launch {
@@ -113,19 +108,24 @@ class AircraftOverviewViewModel(
       // drops the duplicates; the store still re-queries and re-decodes, which is a separate
       // (larger) fix at the EntityStore level.
       combine(
-        fleetManager.loadAircraft(aircraftId).distinctUntilChanged(),
-        logManager.observeLogs(aircraftId).distinctUntilChanged(),
+        fleetManager.loadAircraft(aircraftId)
+          .distinctUntilChanged(),
+        logManager.observeLogs(aircraftId)
+          .distinctUntilChanged(),
         // The resume tick rides along with the tasks flow rather than occupying a combine slot of
         // its own: `combine` tops out at five typed sources, and re-emitting the task list is
         // exactly what re-runs computeNextDue below. distinctUntilChanged sits *upstream* of the
         // tick, so a resume still gets through.
         combine(
-          taskDataManager.observeTasks(aircraftId).distinctUntilChanged(),
+          taskDataManager.observeTasks(aircraftId)
+            .distinctUntilChanged(),
           resumeTick,
         ) { tasks, _ -> tasks },
-        logManager.observeMaintenanceOverview(aircraftId).distinctUntilChanged(),
+        logManager.observeMaintenanceOverview(aircraftId)
+          .distinctUntilChanged(),
         combine(
-          squawkManager.observeSquawks(aircraftId).distinctUntilChanged(),
+          squawkManager.observeSquawks(aircraftId)
+            .distinctUntilChanged(),
           combine(
             blobStatesFlow(),
             attachmentOpener.downloadingIds
@@ -142,8 +142,10 @@ class AircraftOverviewViewModel(
           }.distinctUntilChanged(),
           // The caller's role on this aircraft, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
           // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
-          sharingManager.observeMyRole(aircraftId).distinctUntilChanged(),
-          sharingManager.observeIsShared(aircraftId).distinctUntilChanged(),
+          sharingManager.observeMyRole(aircraftId)
+            .distinctUntilChanged(),
+          sharingManager.observeIsShared(aircraftId)
+            .distinctUntilChanged(),
         ) { squawks, syncs, myRole, shared ->
           ShareContext(squawks, syncs, myRole, shared)
         }

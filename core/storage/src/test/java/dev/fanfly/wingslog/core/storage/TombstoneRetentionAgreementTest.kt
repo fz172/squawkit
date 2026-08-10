@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.core.storage
 
 import com.google.common.truth.Truth.assertThat
+import org.junit.Test
 import java.io.File
 import kotlin.time.ExperimentalTime
-import org.junit.Test
 
 /**
  * The client and the server must forget a tombstone at the same age.
@@ -21,10 +21,11 @@ class TombstoneRetentionAgreementTest {
 
   @Test
   fun clientRetentionMatchesTheServerSweep() {
-    val serverDays = requireNotNull(functionsEnv()["TOMBSTONE_RETENTION_DAYS"]?.toLongOrNull()) {
-      "TOMBSTONE_RETENTION_DAYS is missing from backend/firebase/functions/.env — the sweep " +
-        "requires it and refuses to deploy without it."
-    }
+    val serverDays =
+      requireNotNull(functionsEnv()["TOMBSTONE_RETENTION_DAYS"]?.toLongOrNull()) {
+        "TOMBSTONE_RETENTION_DAYS is missing from backend/firebase/functions/.env — the sweep " +
+          "requires it and refuses to deploy without it."
+      }
 
     assertThat(TombstoneGc.RETENTION.inWholeDays).isEqualTo(serverDays)
   }
@@ -33,7 +34,13 @@ class TombstoneRetentionAgreementTest {
     val env = generateSequence(File(".").absoluteFile) { it.parentFile }
       .map { File(it, "backend/firebase/functions/.env") }
       .firstOrNull { it.isFile }
-    requireNotNull(env) { "could not find backend/firebase/functions/.env above ${File(".").absolutePath}" }
+    requireNotNull(env) {
+      "could not find backend/firebase/functions/.env above ${
+        File(
+          "."
+        ).absolutePath
+      }"
+    }
 
     return env.readLines()
       .asSequence()
