@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.upgrade
+package dev.fanfly.wingslog.feature.login.upgrade
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -56,6 +56,8 @@ kotlin {
       implementation(project(":core:storage"))
       // The onboarding name step persists through the shared local-first technician manager.
       implementation(project(":feature:technician:datamanager"))
+      // SyncEngine: the account upgrade hydrates and resyncs after re-keying local data.
+      implementation(project(":feature:sync:data"))
 
       // Compose resources (this module owns its login strings + Google icon)
       implementation(libs.components.resources)

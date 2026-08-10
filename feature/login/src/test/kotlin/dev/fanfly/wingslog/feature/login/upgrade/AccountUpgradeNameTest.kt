@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.upgrade
+package dev.fanfly.wingslog.feature.login.upgrade
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.Technician

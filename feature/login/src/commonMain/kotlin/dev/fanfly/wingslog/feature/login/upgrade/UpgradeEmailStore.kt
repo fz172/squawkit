@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.settings.upgrade
+package dev.fanfly.wingslog.feature.login.upgrade
 
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock

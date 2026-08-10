@@ -36,12 +36,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.appinfo.getAppVersion
-import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
@@ -49,12 +50,9 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
-import dev.fanfly.wingslog.feature.settings.upgrade.AccountUpgradeViewModel
-import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeConfirmLinkDialog
-import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeEmailDialog
-import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeLinkSentDialog
-import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeProviderDialog
-import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeUiState
+import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
+import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.login.upgrade.UpgradeMessage
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.settings
@@ -105,25 +103,17 @@ fun SettingsContent(
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
   val appearanceMode by settingsViewModel.appearanceMode.collectAsStateWithLifecycle()
   val firebaseLoggingEnabled by settingsViewModel.firebaseLoggingEnabled.collectAsStateWithLifecycle()
-  val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
-
-  // With a sidebar, detail pages embed via the nested controller; otherwise they open full-screen
-  // off the root controller.
-  val hasSidebar = LocalLayoutTier.current.hasFullSidebar
-  val detailNav = if (hasSidebar) sectionNavController else navController
-
+  val scope = rememberCoroutineScope()
   val upgradeSuccessMessage =
     stringResource(SettingsRes.string.account_upgrade_success)
   val upgradeErrorMessage =
     stringResource(SettingsRes.string.account_upgrade_error)
 
-  // An email link that reopened the app is offered to the upgrade flow, which claims it only when
-  // this guest has an upgrade pending. Anything else is left for AuthFlow.
-  val pendingLink by EmailLinkDeepLinks.pendingLink.collectAsStateWithLifecycle()
-  LaunchedEffect(pendingLink) {
-    pendingLink?.let(accountUpgradeViewModel::onIncomingLink)
-  }
+  // With a sidebar, detail pages embed via the nested controller; otherwise they open full-screen
+  // off the root controller.
+  val hasSidebar = LocalLayoutTier.current.hasFullSidebar
+  val detailNav = if (hasSidebar) sectionNavController else navController
 
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {
@@ -131,25 +121,6 @@ fun SettingsContent(
         popUpTo(Screen.AdaptiveShell.route) { inclusive = true }
         launchSingleTop = true
       }
-    }
-  }
-
-  // Terminal upgrade states surface as a snackbar, then reset to Idle.
-  LaunchedEffect(upgradeState) {
-    when (upgradeState) {
-      is UpgradeUiState.Success -> {
-        // Linking didn't fire authStateChanged; pull the new photo / non-anonymous state in now.
-        settingsViewModel.refreshAccountState()
-        snackbarHostState.showSnackbar(upgradeSuccessMessage)
-        accountUpgradeViewModel.dismiss()
-      }
-
-      is UpgradeUiState.Error -> {
-        snackbarHostState.showSnackbar(upgradeErrorMessage)
-        accountUpgradeViewModel.dismiss()
-      }
-
-      else -> Unit
     }
   }
 
@@ -306,50 +277,26 @@ fun SettingsContent(
     )
   }
 
-  when (val state = upgradeState) {
-    is UpgradeUiState.ChoosingProvider -> UpgradeProviderDialog(
-      providers = state.providers,
-      onSelect = accountUpgradeViewModel::select,
-      onDismiss = accountUpgradeViewModel::cancel,
-    )
+  // Settings owns only the entry point; the experience itself lives in feature/login, next to the
+  // sign-in surfaces whose buttons and email-link plumbing it shares.
+  AccountUpgradeFlow(
+    viewModel = accountUpgradeViewModel,
+    onCompleted = {
+      // Linking didn't fire authStateChanged; pull the new non-anonymous state in now.
+      settingsViewModel.refreshAccountState()
+    },
+    onMessage = { message ->
+      scope.launch {
+        snackbarHostState.showSnackbar(
+          when (message) {
+            is UpgradeMessage.Success -> upgradeSuccessMessage
+            is UpgradeMessage.Failure -> upgradeErrorMessage
+          }
+        )
+      }
+    },
+  )
 
-    is UpgradeUiState.EnteringEmail -> UpgradeEmailDialog(
-      state = state,
-      onEmailChange = accountUpgradeViewModel::setEmail,
-      onSend = accountUpgradeViewModel::sendEmailLink,
-      onDismiss = accountUpgradeViewModel::cancel,
-    )
-
-    is UpgradeUiState.LinkSent -> UpgradeLinkSentDialog(
-      email = state.email,
-      onDismiss = accountUpgradeViewModel::cancel,
-    )
-
-    // Explicit confirmation, never automatic: linking binds the address to *this* device's guest
-    // data, so a link opened against the wrong session must not act on its own.
-    is UpgradeUiState.ConfirmLink -> UpgradeConfirmLinkDialog(
-      email = state.email,
-      onConfirm = accountUpgradeViewModel::confirmEmailLink,
-      onDismiss = accountUpgradeViewModel::cancel,
-    )
-
-    is UpgradeUiState.Working -> AlertDialog(
-      // Non-dismissable: provider sign-in / sync re-keying is in flight.
-      onDismissRequest = {},
-      confirmButton = {},
-      text = {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(Spacing.large),
-        ) {
-          CircularProgressIndicator(modifier = Modifier.size(Spacing.xLarge))
-          Text(stringResource(SettingsRes.string.account_upgrade_working))
-        }
-      },
-    )
-
-    else -> Unit
-  }
 }
 
 /**

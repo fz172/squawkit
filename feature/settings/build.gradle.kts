@@ -48,6 +48,8 @@ kotlin {
       implementation(libs.gitlive.firebase.auth)
       implementation(project(":core:nav"))
       implementation(project(":core:sharedassets"))
+      // The guest-upgrade experience lives in feature/login; Settings owns only its entry point.
+      implementation(project(":feature:login"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
