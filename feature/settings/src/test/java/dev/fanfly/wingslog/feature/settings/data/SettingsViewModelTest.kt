@@ -228,4 +228,58 @@ class SettingsViewModelTest {
 
     assertThat(viewModel.user.value.userStatus).isEqualTo(UserStatus.LOGGED_OUT)
   }
+
+  /**
+   * The Settings account row picks between "Log in" (start the upgrade) and "Log out" purely from
+   * this flag, and the only other writer — refreshAccountState() — runs after a *completed*
+   * upgrade. So a guest that starts at the `false` default can never reach the control that would
+   * change it: they are shown "Log out", which for a guest erases the only copy of their data.
+   */
+  @Test
+  fun init_readsAnonymousStateFromTheCurrentUser() = runTest(testDispatcher) {
+    val guest = mockk<FirebaseUser>()
+    every { guest.uid } returns TEST_USER_ID
+    every { guest.isAnonymous } returns true
+    every { authManager.getCurrentUser() } returns guest
+
+    viewModel = buildViewModel()
+
+    assertThat(viewModel.user.value.isAnonymous).isTrue()
+  }
+
+  @Test
+  fun init_leavesAnonymousFalseForAPermanentAccount() = runTest(testDispatcher) {
+    // setUp() already stubs a non-anonymous user.
+    viewModel = buildViewModel()
+
+    assertThat(viewModel.user.value.isAnonymous).isFalse()
+  }
+
+  @Test
+  fun init_leavesAnonymousFalseWhenThereIsNoUser() = runTest(testDispatcher) {
+    every { authManager.getCurrentUser() } returns null
+
+    viewModel = buildViewModel()
+
+    assertThat(viewModel.user.value.isAnonymous).isFalse()
+  }
+
+  private fun buildViewModel() = SettingsViewModel(
+    authManager,
+    attachmentManager,
+    dbChecker,
+    featureLabManager,
+    appearanceController,
+    analyticsPreferenceController,
+    AppCapability(
+      isDeveloperOptionsSupported = false,
+      isAircraftSharingSupported = true,
+      isStressTestSupported = false,
+      isCameraCaptureSupported = false,
+      isAnonymousLoginSupported = true,
+      isAppleSignInSupported = false,
+      isSubscriptionSupported = false,
+      isAdsSupported = false,
+    ),
+  )
 }

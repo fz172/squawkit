@@ -63,9 +63,18 @@ class SettingsViewModel(
     }
   }
 
+  /**
+   * Seeds the state a Settings entry starts from.
+   *
+   * [SettingsUiState.isAnonymous] has to be read here and not only in [refreshAccountState]: that
+   * one runs after a completed upgrade, and the upgrade entry point is itself gated on this flag,
+   * so leaving it at its `false` default made a guest look like a permanent account and hid the
+   * only control that could have corrected it.
+   */
   private fun loadUserProfile() {
     _user.value = SettingsUiState(
       userStatus = UserStatus.LOADING,
+      isAnonymous = authManager.getCurrentUser()?.isAnonymous == true,
       isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
       isSubscriptionSupported = appCapability.isSubscriptionSupported,
     )
