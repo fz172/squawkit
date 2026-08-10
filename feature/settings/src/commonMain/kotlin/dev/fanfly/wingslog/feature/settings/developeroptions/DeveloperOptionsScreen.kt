@@ -18,6 +18,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,11 +38,16 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.settings.generated.resources.Res
 import wingslog.feature.settings.generated.resources.developer_options
+import wingslog.feature.settings.generated.resources.developer_options_force_ads_subtitle
+import wingslog.feature.settings.generated.resources.developer_options_force_ads_title
 import wingslog.feature.settings.generated.resources.developer_options_force_free
 import wingslog.feature.settings.generated.resources.developer_options_force_off
 import wingslog.feature.settings.generated.resources.developer_options_force_pro
 import wingslog.feature.settings.generated.resources.developer_options_force_subscription_subtitle
 import wingslog.feature.settings.generated.resources.developer_options_force_subscription_title
+import wingslog.feature.settings.generated.resources.developer_options_reset_ad_session_action
+import wingslog.feature.settings.generated.resources.developer_options_reset_ad_session_subtitle
+import wingslog.feature.settings.generated.resources.developer_options_reset_ad_session_title
 import wingslog.feature.settings.generated.resources.developer_options_subtitle
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,6 +95,15 @@ fun DeveloperOptionsScreen(
           current = flags.forceSubscriptionStatus,
           onSelect = viewModel::setForceSubscriptionStatus,
         )
+        HorizontalDivider()
+
+        ForceAdsRow(
+          enabled = flags.forceAds,
+          onToggle = viewModel::setForceAds,
+        )
+        HorizontalDivider()
+
+        ResetAdSessionRow(onReset = viewModel::resetAdSession)
         HorizontalDivider()
 
         dogfoodContent()
@@ -147,6 +163,67 @@ private fun ForceSubscriptionRow(
           Text(label)
         }
       }
+    }
+  }
+}
+
+/**
+ * Shows display ads regardless of the account's tier, so placement can be exercised without a real
+ * free account. Overrides the tier check only — a build with no ad support stays ad-free.
+ */
+@Composable
+private fun ForceAdsRow(
+  enabled: Boolean,
+  onToggle: (Boolean) -> Unit,
+) {
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = Spacing.medium),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = stringResource(Res.string.developer_options_force_ads_title),
+        style = MaterialTheme.typography.bodyLarge,
+        fontWeight = FontWeight.Medium,
+      )
+      Text(
+        text = stringResource(Res.string.developer_options_force_ads_subtitle),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+    Switch(checked = enabled, onCheckedChange = onToggle)
+  }
+}
+
+/**
+ * Clears the session's ad spend. Not a persisted flag — it acts on the in-memory counter, which is
+ * why it is a button rather than a toggle.
+ */
+@Composable
+private fun ResetAdSessionRow(onReset: () -> Unit) {
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = Spacing.medium),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = stringResource(Res.string.developer_options_reset_ad_session_title),
+        style = MaterialTheme.typography.bodyLarge,
+        fontWeight = FontWeight.Medium,
+      )
+      Text(
+        text = stringResource(Res.string.developer_options_reset_ad_session_subtitle),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+    TextButton(onClick = onReset) {
+      Text(stringResource(Res.string.developer_options_reset_ad_session_action))
     }
   }
 }

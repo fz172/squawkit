@@ -59,6 +59,7 @@ kotlin {
       implementation(project(":feature:sync:sharedassets"))
       implementation(project(":feature:export:sharedassets"))
       implementation(project(":feature:technician:sharedassets"))
+      implementation(project(":feature:ads:datamanager"))
       implementation(project(":feature:developeroptions:datamanager"))
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":core:datetime"))

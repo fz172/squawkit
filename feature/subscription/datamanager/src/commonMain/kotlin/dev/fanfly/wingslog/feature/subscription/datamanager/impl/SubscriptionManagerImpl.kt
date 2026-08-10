@@ -77,6 +77,14 @@ class SubscriptionManagerImpl(
       status().map { if (it >= Subscription.Status.STATUS_PRO) null else FREE_AIRCRAFT_LIMIT }
     }
 
+  override fun showsAds(): Flow<Boolean> =
+    // Default-CLOSED — the mirror of gate() below. No ads unless we can also sell their removal.
+    if (!appCapability.isAdsSupported || !appCapability.isSubscriptionSupported) {
+      flowOf(false)
+    } else {
+      status().map { it < Subscription.Status.STATUS_PRO }
+    }
+
   private fun gate(minimum: Subscription.Status): Flow<Boolean> =
     // Default-open: while the subscription capability is off, every gate reads available.
     if (!appCapability.isSubscriptionSupported) {
