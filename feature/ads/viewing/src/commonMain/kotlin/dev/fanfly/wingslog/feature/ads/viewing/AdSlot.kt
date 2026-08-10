@@ -55,9 +55,16 @@ internal fun LayoutTier.toAdLayoutTier(): AdLayoutTier = when (this) {
  *
  * **Budget is claimed once per slot and cached for the life of the composition** (N8). Scrolling
  * past the same ad twice therefore neither re-requests nor double-counts — the reservation is keyed
- * on the slot, not on how many times it happens to be composed. It is claimed at *request* time so
- * two slots composing together cannot both spend the last unit; anything that fails to fill is
- * released, since only filled units count against the cap.
+ * on the slot, not on how many times it happens to be composed.
+ *
+ * It is claimed when the ad is *requested* rather than when it fills. This is not a limit on how
+ * many ads can be on screen at once — a wide band shows two units, and a session may show five.
+ * It matters only at the boundary: with one unit of budget left and two slots composing in the same
+ * frame, counting on fill would let both read "1 remaining", both request, and both display — six
+ * units against a cap of five. Claiming up front means the first slot takes the last unit and the
+ * second is granted nothing and renders nothing.
+ *
+ * A unit that then fails to fill is released, since only filled units count against the cap.
  *
  * When no unit is granted the composable emits **nothing at all** — not an empty box, not a
  * placeholder. A slot the pilot cannot see must not occupy a pixel or shift a record under their
