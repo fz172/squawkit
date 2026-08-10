@@ -52,6 +52,16 @@ import wingslog.feature.login.generated.resources.sign_in_with_apple
 import wingslog.feature.login.generated.resources.sign_in_with_email
 import wingslog.feature.login.generated.resources.sign_in_with_google
 
+/**
+ * Which sign-in request is awaiting a result, so only the pressed button spins while the rest are
+ * disabled. Null means idle.
+ *
+ * Not the list of login methods on offer — only those that suspend *here*. The email option
+ * navigates away to `EmailSignInScreen`, which owns the progress state for both legs of the link
+ * flow, so it never reaches an in-flight state on this screen.
+ */
+private enum class PendingSignIn { Google, Apple, Anonymous }
+
 @Composable
 fun LoginScreen(
   loginViewModel: LoginViewModel = koinViewModel(),
@@ -61,7 +71,7 @@ fun LoginScreen(
   val appCapability: AppCapability = koinInject()
   val scope = rememberCoroutineScope()
   var error by remember { mutableStateOf<String?>(null) }
-  var isSigningIn by remember { mutableStateOf(false) }
+  var signingIn by remember { mutableStateOf<PendingSignIn?>(null) }
   val signInErrorMessage = stringResource(Res.string.sign_in_error)
   val signInAnonymousErrorMessage =
     stringResource(Res.string.sign_in_anonymous_error)
@@ -101,7 +111,7 @@ fun LoginScreen(
       modifier = Modifier
         .fillMaxWidth()
         .height(54.dp),
-      enabled = !isSigningIn,
+      enabled = signingIn == null,
       shape = RoundedCornerShape(Spacing.buttonCornerRadius),
       colors = ButtonDefaults.buttonColors(
         containerColor = LoginOnBackground,
@@ -111,7 +121,7 @@ fun LoginScreen(
       ),
       onClick = {
         scope.launch {
-          isSigningIn = true
+          signingIn = PendingSignIn.Google
           try {
             val credential = loginViewModel.login()
             if (credential != null) {
@@ -120,12 +130,12 @@ fun LoginScreen(
               error = signInErrorMessage
             }
           } finally {
-            isSigningIn = false
+            signingIn = null
           }
         }
       },
     ) {
-      if (isSigningIn) {
+      if (signingIn == PendingSignIn.Google) {
         CircularProgressIndicator(
           modifier = Modifier.size(Spacing.xLarge),
           strokeWidth = 2.dp,
@@ -159,7 +169,7 @@ fun LoginScreen(
         modifier = Modifier
           .fillMaxWidth()
           .height(54.dp),
-        enabled = !isSigningIn,
+        enabled = signingIn == null,
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.buttonColors(
           containerColor = AppleButtonBackground,
@@ -169,7 +179,7 @@ fun LoginScreen(
         ),
         onClick = {
           scope.launch {
-            isSigningIn = true
+            signingIn = PendingSignIn.Apple
             try {
               val credential = loginViewModel.loginWithApple()
               if (credential != null) {
@@ -178,12 +188,12 @@ fun LoginScreen(
                 error = signInErrorMessage
               }
             } finally {
-              isSigningIn = false
+              signingIn = null
             }
           }
         },
       ) {
-        if (isSigningIn) {
+        if (signingIn == PendingSignIn.Apple) {
           CircularProgressIndicator(
             modifier = Modifier.size(Spacing.xLarge),
             strokeWidth = 2.dp,
@@ -217,7 +227,7 @@ fun LoginScreen(
       modifier = Modifier
         .fillMaxWidth()
         .height(54.dp),
-      enabled = !isSigningIn,
+      enabled = signingIn == null,
       shape = RoundedCornerShape(Spacing.buttonCornerRadius),
       colors = ButtonDefaults.outlinedButtonColors(
         contentColor = LoginOnBackground,
@@ -251,7 +261,7 @@ fun LoginScreen(
         modifier = Modifier
           .fillMaxWidth()
           .height(54.dp),
-        enabled = !isSigningIn,
+        enabled = signingIn == null,
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.outlinedButtonColors(
           contentColor = LoginOnBackgroundMuted,
@@ -262,7 +272,7 @@ fun LoginScreen(
         ),
         onClick = {
           scope.launch {
-            isSigningIn = true
+            signingIn = PendingSignIn.Anonymous
             try {
               val credential = loginViewModel.loginAnonymously()
               if (credential != null) {
@@ -271,7 +281,7 @@ fun LoginScreen(
                 error = signInAnonymousErrorMessage
               }
             } finally {
-              isSigningIn = false
+              signingIn = null
             }
           }
         },

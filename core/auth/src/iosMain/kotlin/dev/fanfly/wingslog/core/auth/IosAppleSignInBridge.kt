@@ -15,12 +15,14 @@ import kotlin.coroutines.suspendCoroutine
  * [fullName] is populated **only on the very first authorization** of this app for the Apple ID —
  * every later sign-in leaves it null, and Firebase never derives `displayName` from Apple. See
  * `AuthManagerImpl.signInWithApple`.
+ *
+ * Apple's `email` is deliberately not carried across: Firebase reads it from the identity token and
+ * populates `FirebaseUser.email` itself, so a second copy would only be a staler duplicate.
  */
 data class AppleSignInResult(
   val idToken: String? = null,
   val rawNonce: String? = null,
   val fullName: String? = null,
-  val email: String? = null,
   val errorMessage: String? = null,
   val cancelled: Boolean = false,
 )
@@ -49,7 +51,6 @@ object IosAppleSignInBridge {
     idToken: String?,
     rawNonce: String?,
     fullName: String?,
-    email: String?,
     errorMessage: String?,
     cancelled: Boolean,
   ) {
@@ -60,31 +61,31 @@ object IosAppleSignInBridge {
         idToken = idToken,
         rawNonce = rawNonce,
         fullName = fullName,
-        email = email,
         errorMessage = errorMessage,
         cancelled = cancelled,
       )
     )
   }
 
-  internal suspend fun signIn(): AppleSignInResult = suspendCoroutine { continuation ->
-    val signIn = signInHandler
-    if (signIn == null) {
-      continuation.resume(
-        AppleSignInResult(errorMessage = "Native Sign in with Apple provider is not configured")
-      )
-      return@suspendCoroutine
-    }
-    if (pendingCompletion != null) {
-      continuation.resume(
-        AppleSignInResult(errorMessage = "A Sign in with Apple request is already in progress")
-      )
-      return@suspendCoroutine
-    }
+  internal suspend fun signIn(): AppleSignInResult =
+    suspendCoroutine { continuation ->
+      val signIn = signInHandler
+      if (signIn == null) {
+        continuation.resume(
+          AppleSignInResult(errorMessage = "Native Sign in with Apple provider is not configured")
+        )
+        return@suspendCoroutine
+      }
+      if (pendingCompletion != null) {
+        continuation.resume(
+          AppleSignInResult(errorMessage = "A Sign in with Apple request is already in progress")
+        )
+        return@suspendCoroutine
+      }
 
-    pendingCompletion = continuation
-    signIn()
-  }
+      pendingCompletion = continuation
+      signIn()
+    }
 }
 
 /**

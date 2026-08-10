@@ -40,7 +40,6 @@ final class NativeAppleSignInProvider: NSObject {
         idToken: String? = nil,
         rawNonce: String? = nil,
         fullName: String? = nil,
-        email: String? = nil,
         errorMessage: String? = nil,
         cancelled: Bool = false
     ) {
@@ -49,7 +48,6 @@ final class NativeAppleSignInProvider: NSObject {
             idToken: idToken,
             rawNonce: rawNonce,
             fullName: fullName,
-            email: email,
             errorMessage: errorMessage,
             cancelled: cancelled
         )
@@ -117,11 +115,12 @@ extension NativeAppleSignInProvider: ASAuthorizationControllerDelegate {
             return formatted.isEmpty ? nil : formatted
         }
 
+        // `credential.email` is not forwarded: the `.email` scope is still requested so the address
+        // lands in the identity token, and Firebase populates `FirebaseUser.email` from there.
         complete(
             idToken: idToken,
             rawNonce: rawNonce,
-            fullName: fullName,
-            email: credential.email
+            fullName: fullName
         )
     }
 

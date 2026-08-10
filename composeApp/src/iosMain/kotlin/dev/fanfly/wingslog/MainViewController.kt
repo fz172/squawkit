@@ -64,7 +64,6 @@ object MainEntry {
     idToken: String?,
     rawNonce: String?,
     fullName: String?,
-    email: String?,
     errorMessage: String?,
     cancelled: Boolean,
   ) {
@@ -72,7 +71,6 @@ object MainEntry {
       idToken = idToken,
       rawNonce = rawNonce,
       fullName = fullName,
-      email = email,
       errorMessage = errorMessage,
       cancelled = cancelled,
     )
