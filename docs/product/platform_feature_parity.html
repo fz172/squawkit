@@ -238,6 +238,20 @@
                     </td>
                 </tr>
                 <tr>
+                    <td class="feature">Sign in with Apple</td>
+                    <td class="platform"><span class="design">By design</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">Android offers Google only, so the button is hidden there
+                        (<code>AppCapability.isAppleSignInSupported</code>). iOS presents the native
+                        <code>ASAuthorization</code> sheet from Swift and builds the credential in
+                        Kotlin; web uses the Firebase JS <code>OAuthProvider</code> popup. Apple
+                        returns the user's name only on the first authorization, so iOS captures it
+                        then — everywhere else the onboarding name step is what populates
+                        <code>token.name</code>.
+                    </td>
+                </tr>
+                <tr>
                     <td class="feature">Name entry and welcome onboarding</td>
                     <td class="platform"><span class="check">&#10003;</span></td>
                     <td class="platform"><span class="check">&#10003;</span></td>
