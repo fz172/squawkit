@@ -195,18 +195,30 @@ fun AircraftSectionContent(
   // after [onNavigateToSection] switches sections. It is cleared only while the Logs tab is OFF
   // screen (see below): toggling it back to null while LogsTab is mounted remounts that tab and drops
   // its list ViewModel and scroll position, which would bounce the list back to the top.
-  var pendingLogScrollTarget by remember(aircraftId) { mutableStateOf<String?>(null) }
+  var pendingLogScrollTarget by remember(aircraftId) {
+    mutableStateOf<String?>(
+      null
+    )
+  }
   LaunchedEffect(section) {
     if (section != ShellSection.LOGS) pendingLogScrollTarget = null
   }
   // Same pattern for jumping from a log's linked tasks/squawks to the item in its list: set on tap,
   // consumed by the Tasks/Squawks section (which switches to the right sub-view and scrolls to it),
   // cleared once that section is left.
-  var pendingTaskScrollTarget by remember(aircraftId) { mutableStateOf<String?>(null) }
+  var pendingTaskScrollTarget by remember(aircraftId) {
+    mutableStateOf<String?>(
+      null
+    )
+  }
   LaunchedEffect(section) {
     if (section != ShellSection.TASKS) pendingTaskScrollTarget = null
   }
-  var pendingSquawkScrollTarget by remember(aircraftId) { mutableStateOf<String?>(null) }
+  var pendingSquawkScrollTarget by remember(aircraftId) {
+    mutableStateOf<String?>(
+      null
+    )
+  }
   LaunchedEffect(section) {
     if (section != ShellSection.SQUAWKS) pendingSquawkScrollTarget = null
   }
@@ -270,6 +282,9 @@ fun AircraftSectionContent(
 
           is AircraftOverviewAction.ManageAccessClick ->
             navController.navigate(Screen.ManageAccess.createRoute(aircraftId))
+
+          AircraftOverviewAction.ShowSubscription ->
+            navController.navigate(Screen.Subscription.route)
 
           AircraftOverviewAction.BackClick -> Unit
 

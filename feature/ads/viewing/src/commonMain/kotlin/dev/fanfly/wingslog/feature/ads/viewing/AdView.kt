@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.ads.viewing
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.model.AdUnitSize
 
 /**
@@ -15,7 +16,12 @@ import dev.fanfly.wingslog.feature.ads.model.AdUnitSize
  *
  * Note what is *absent*: there is no targeting parameter. A tail number, squawk text or account id
  * cannot reach an ad request through this signature even by accident, which is how P1 of the PRD's
- * privacy table is enforced — structurally, rather than by review.
+ * privacy table is enforced — structurally, rather than by review. [surface] selects which inventory
+ * to request, not who to show it to.
+ *
+ * Each platform resolves [surface] to its own ad unit id, because **AdMob units are per-platform** —
+ * Android and iOS have separate app ids and separate unit ids for the same three surfaces, so a
+ * shared table in common code would be wrong rather than merely redundant.
  *
  * An implementation that cannot render (no SDK, no consent, no configured factory) **renders
  * nothing and invokes nothing**. It must never throw, and it must never report a failure it did not
@@ -28,6 +34,9 @@ import dev.fanfly.wingslog.feature.ads.model.AdUnitSize
 @Composable
 expect fun AdView(
   size: AdUnitSize,
+  surface: AdSurface,
+  /** Request Google's test units instead of the real ones. True in developer builds (see [AdSlot]). */
+  useTestAds: Boolean,
   onFilled: () -> Unit,
   onFailed: (reason: String) -> Unit,
   onClicked: () -> Unit,

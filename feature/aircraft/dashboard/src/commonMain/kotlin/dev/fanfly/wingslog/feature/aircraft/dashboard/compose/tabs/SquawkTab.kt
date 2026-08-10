@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,9 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlin.math.roundToInt
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
@@ -36,6 +34,11 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
+import dev.fanfly.wingslog.feature.ads.model.ListRow
+import dev.fanfly.wingslog.feature.ads.model.withAdSlots
+import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
@@ -44,6 +47,8 @@ import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -54,6 +59,7 @@ import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks_description
 import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
 import wingslog.feature.squawk.sharedassets.generated.resources.squawks
+import kotlin.math.roundToInt
 
 private val squawkOrder = compareByDescending<SquawkWithStatus> {
   it.squawk.priority
@@ -73,6 +79,7 @@ fun SquawkTab(
   var showClosed by rememberSaveable { mutableStateOf(false) }
   val analytics = LocalAnalytics.current
   val attachmentOpener: AttachmentOpener = koinInject()
+  val adsManager: AdsManager = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }
 
@@ -92,12 +99,15 @@ fun SquawkTab(
   var targetCardY by remember(scrollToSquawkId) { mutableStateOf<Float?>(null) }
   LaunchedEffect(scrollToSquawkId) {
     val id = scrollToSquawkId ?: return@LaunchedEffect
-    val target = state.squawks.find { it.squawk.id == id } ?: return@LaunchedEffect
+    val target =
+      state.squawks.find { it.squawk.id == id } ?: return@LaunchedEffect
     showClosed = target.status != SquawkStatus.OPEN
     // Wait until the target card lays out in the (possibly just-switched) sub-view, then scroll once.
-    val cardY = snapshotFlow { targetCardY }.filterNotNull().first()
+    val cardY = snapshotFlow { targetCardY }.filterNotNull()
+      .first()
     scrollState.animateScrollTo(
-      (scrollState.value + (cardY - contentTopY)).roundToInt().coerceAtLeast(0)
+      (scrollState.value + (cardY - contentTopY)).roundToInt()
+        .coerceAtLeast(0)
     )
   }
 
@@ -135,6 +145,17 @@ fun SquawkTab(
     )
 
     val displayList = if (showClosed) closedSquawks else openSquawks
+    // Each sub-view is its own list with its own counter — switching the toggle re-evaluates from
+    // scratch, which falls out of wrapping the filtered list rather than the union.
+    val showAds by adsManager.showsAds()
+      .collectAsState(initial = false)
+    val rows = remember(displayList, showAds) {
+      if (showAds) withAdSlots(displayList) else displayList.map {
+        ListRow.Item(
+          it
+        )
+      }
+    }
 
     if (displayList.isEmpty()) {
       if (!showClosed) {
@@ -153,22 +174,37 @@ fun SquawkTab(
       }
     } else {
       AdaptiveCardList(
-        items = displayList,
+        items = rows,
         columns = LocalLayoutTier.current.cardColumns,
         spacing = Spacing.medium,
-      ) { item ->
-        SquawkCard(
-          item = item,
-          onClick = { onAction(AircraftOverviewAction.ShowSquawkDetail(item)) },
-          modifier = Modifier.fillMaxWidth()
-            .then(
-              if (item.squawk.id == scrollToSquawkId) {
-                Modifier.onGloballyPositioned { targetCardY = it.positionInRoot().y }
-              } else {
-                Modifier
-              }
-            ),
-        )
+        // An ad is a full-width row, never one cell of the grid (design §5.2, PRD §6.5).
+        isSpanning = { it is ListRow.Ad },
+      ) { row ->
+        when (row) {
+          is ListRow.Ad -> AdSlot(
+            surface = AdSurface.SQUAWKS,
+            slotIndex = row.slotIndex,
+            onUpsellClick = { onAction(AircraftOverviewAction.ShowSubscription) },
+          )
+
+          is ListRow.Item -> {
+            val item = row.value
+            SquawkCard(
+              item = item,
+              onClick = { onAction(AircraftOverviewAction.ShowSquawkDetail(item)) },
+              modifier = Modifier.fillMaxWidth()
+                .then(
+                  if (item.squawk.id == scrollToSquawkId) {
+                    Modifier.onGloballyPositioned {
+                      targetCardY = it.positionInRoot().y
+                    }
+                  } else {
+                    Modifier
+                  }
+                ),
+            )
+          }
+        }
       }
     }
 

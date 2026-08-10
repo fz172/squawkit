@@ -83,6 +83,23 @@ internal class AdSessionCounter(
 
 
   /**
+   * Returns [units] previously claimed by [reserve] that never became a visible ad — a request that
+   * failed, or a slot torn down before it filled.
+   *
+   * The budget is claimed at *request* time so two slots composing together cannot both spend the
+   * last unit, but the PRD counts only **filled** units: "unfilled slots, collapsed slots, and
+   * failed requests count as zero." Without a refund a run of no-fills would silently consume a
+   * pilot's whole session allowance and then show them nothing.
+   *
+   * This is not a way to get extra ads: it only ever gives back what a caller already took, and the
+   * floor at zero means over-releasing cannot manufacture headroom.
+   */
+  fun release(units: Int) {
+    require(units > 0) { "Must release at least one unit, was $units" }
+    _displayed.value = (_displayed.value - units).coerceAtLeast(0)
+  }
+
+  /**
    * Resets the budget when the app session has rolled over.
    *
    * Polled here rather than collected from a flow, deliberately: the counter has no coroutine scope

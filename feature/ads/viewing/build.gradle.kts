@@ -35,14 +35,28 @@ kotlin {
   iosArm64()
   iosSimulatorArm64()
 
-  // This is the ONLY ads module permitted to reference an ad SDK (design N4). Nothing is declared
-  // yet: P1 ships no-op actuals on every host, Google Mobile Ads arrives in androidMain at P5, and
-  // iOS links via SPM in the Swift app rather than as a Gradle dependency at all (design §7.2).
+  // This is the ONLY ads module permitted to reference an ad SDK (design N4). Google Mobile Ads is
+  // declared in androidMain alone; iOS links via SPM in the Swift app rather than as a Gradle
+  // dependency at all (design §7.2), and jsMain stays a no-op until phase 2.
   sourceSets {
     commonMain.dependencies {
       implementation(project(":feature:ads:model"))
+      implementation(project(":feature:ads:datamanager"))
+      implementation(project(":feature:ads:sharedassets"))
+      implementation(project(":core:analytics"))
+      implementation(project(":core:appinfo"))
+      implementation(project(":core:ui"))
+      implementation(project(":core:ui:adaptive"))
+      implementation(project(":core:ui:theme"))
       implementation(libs.compose.runtime)
       implementation(libs.compose.ui)
+      implementation(libs.compose.foundation)
+      implementation(libs.material3)
+      implementation(libs.components.resources)
+      implementation(libs.koin.compose)
+    }
+    androidMain.dependencies {
+      implementation(libs.play.services.ads)
     }
   }
 }

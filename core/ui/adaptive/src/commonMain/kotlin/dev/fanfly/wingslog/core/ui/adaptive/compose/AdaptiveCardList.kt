@@ -25,6 +25,16 @@ fun <T> AdaptiveCardList(
   columns: Int,
   modifier: Modifier = Modifier,
   spacing: Dp = Spacing.medium,
+  /**
+   * Items answering `true` are laid out as their own **full-width row spanning every column**,
+   * instead of taking a single grid cell. Defaults to nothing spanning, so existing callers are
+   * unaffected.
+   *
+   * Added for interleaved ad slots, which must never sit in one cell of a grid — but deliberately a
+   * predicate rather than an ads-specific type, so `core:ui:adaptive` keeps knowing nothing about
+   * `feature:ads`.
+   */
+  isSpanning: (T) -> Boolean = { false },
   itemContent: @Composable (T) -> Unit,
 ) {
   Column(
@@ -34,6 +44,31 @@ fun <T> AdaptiveCardList(
     if (columns <= 1) {
       items.forEach { item ->
         Box(modifier = Modifier.fillMaxWidth()) { itemContent(item) }
+      }
+    } else if (items.any(isSpanning)) {
+      // Chunk only the non-spanning runs, emitting each spanning item as its own full-width row so
+      // the grid resumes cleanly underneath it.
+      var index = 0
+      while (index < items.size) {
+        val item = items[index]
+        if (isSpanning(item)) {
+          Box(modifier = Modifier.fillMaxWidth()) { itemContent(item) }
+          index++
+          continue
+        }
+        val run = ArrayList<T>(columns)
+        while (index < items.size && run.size < columns && !isSpanning(items[index])) {
+          run += items[index]
+          index++
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+          run.forEach { cell ->
+            Box(modifier = Modifier.weight(1f)) { itemContent(cell) }
+          }
+          repeat(columns - run.size) {
+            Spacer(modifier = Modifier.weight(1f))
+          }
+        }
       }
     } else {
       items.chunked(columns)

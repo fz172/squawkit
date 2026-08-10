@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.ads.viewing
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.model.AdUnitSize
 
 /**
@@ -19,6 +20,8 @@ import dev.fanfly.wingslog.feature.ads.model.AdUnitSize
 @Composable
 actual fun AdView(
   size: AdUnitSize,
+  surface: AdSurface,
+  useTestAds: Boolean,
   onFilled: () -> Unit,
   onFailed: (reason: String) -> Unit,
   onClicked: () -> Unit,
