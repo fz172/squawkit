@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.ads.datamanager.impl
 
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
+import dev.fanfly.wingslog.feature.ads.model.AdSlotKey
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -45,9 +46,11 @@ internal class AdsManagerImpl(
 
   override fun headroom(): Int = counter.headroom
 
-  override fun reserve(units: Int): Int = counter.reserve(units)
+  override fun reserve(key: AdSlotKey, units: Int): Int = counter.reserve(key, units)
 
-  override fun release(units: Int) = counter.release(units)
+  override fun release(key: AdSlotKey, units: Int) = counter.release(key, units)
+
+  override fun markImpressionLogged(key: AdSlotKey): Boolean = counter.markImpressionLogged(key)
 
   override val capReached: Flow<Unit> = counter.capReached
 

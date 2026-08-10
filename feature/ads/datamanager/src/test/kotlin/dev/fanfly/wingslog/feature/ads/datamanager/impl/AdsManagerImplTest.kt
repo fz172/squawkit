@@ -3,6 +3,8 @@ package dev.fanfly.wingslog.feature.ads.datamanager.impl
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.feature.ads.model.AdSlotKey
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import kotlinx.coroutines.flow.Flow
@@ -134,7 +136,26 @@ class AdsManagerImplTest {
   fun `budget calls delegate to the counter`() {
     val m = manager(capability(), tierShowsAds = true)
     assertThat(m.headroom()).isEqualTo(AdSessionCounter.CAP)
-    assertThat(m.reserve(2)).isEqualTo(2)
+    assertThat(m.reserve(AdSlotKey(AdSurface.SQUAWKS, 0), 2)).isEqualTo(2)
     assertThat(m.headroom()).isEqualTo(AdSessionCounter.CAP - 2)
+  }
+
+  @Test
+  fun `the same slot re-reserved keeps its grant without spending more`() {
+    val m = manager(capability(), tierShowsAds = true)
+    val key = AdSlotKey(AdSurface.LOGS, 0)
+
+    assertThat(m.reserve(key, 1)).isEqualTo(1)
+    assertThat(m.reserve(key, 1)).isEqualTo(1)
+    assertThat(m.headroom()).isEqualTo(AdSessionCounter.CAP - 1)
+  }
+
+  @Test
+  fun `impressions are marked once per slot`() {
+    val m = manager(capability(), tierShowsAds = true)
+    val key = AdSlotKey(AdSurface.TASKS, 2)
+
+    assertThat(m.markImpressionLogged(key)).isTrue()
+    assertThat(m.markImpressionLogged(key)).isFalse()
   }
 }

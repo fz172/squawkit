@@ -29,6 +29,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdLayoutTier
 import dev.fanfly.wingslog.feature.ads.model.AdSlotFormat
+import dev.fanfly.wingslog.feature.ads.model.AdSlotKey
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.model.AdUnitSize
 import org.jetbrains.compose.resources.stringResource
@@ -82,18 +83,21 @@ fun AdSlot(
   val analytics = LocalAnalytics.current
   val adTier = LocalLayoutTier.current.toAdLayoutTier()
 
-  // Keyed on the slot alone: re-keying on tier would re-reserve on every rotation.
-  val granted = remember(surface, slotIndex) {
+  val key = remember(surface, slotIndex) { AdSlotKey(surface, slotIndex) }
+  // The counter, not this composable, owns the grant: a slot disposed by scrolling or a tab switch
+  // comes back as a fresh composable, and reserve() is idempotent per key so it gets the same answer
+  // rather than paying again — or, at the cap, being refused an ad the pilot has already seen.
+  val granted = remember(key) {
     val desired = AdSlotFormat.of(adTier, adsManager.headroom()) ?: return@remember 0
-    adsManager.reserve(desired.unitCount)
+    adsManager.reserve(key, desired.unitCount)
   }
   if (granted == 0) return
 
   // A partial grant renders centred, exactly as the MEDIUM case — never a half-empty band.
   val format = if (granted >= AdSlotFormat.TWO_UP.unitCount) AdSlotFormat.TWO_UP else AdSlotFormat.SINGLE
 
-  var filled by remember(surface, slotIndex) { mutableStateOf(0) }
-  var failed by remember(surface, slotIndex) { mutableStateOf(0) }
+  var filled by remember(key) { mutableStateOf(0) }
+  var failed by remember(key) { mutableStateOf(0) }
   // Every unit came back empty: collapse rather than show a labelled box around nothing.
   if (failed >= granted) return
 
@@ -148,20 +152,24 @@ fun AdSlot(
                   "unit_position" to position,
                 ),
               )
-              analytics.logEvent(
-                "ad_impression",
-                mapOf(
-                  "surface" to surface.analyticsName,
-                  "slot_index" to slotIndex.toString(),
-                  "unit_position" to position,
-                ),
-              )
+              // Once per slot per session. A slot re-rendered because the pilot scrolled back is the
+              // same impression; counting it again would inflate the number §12 reads as revenue.
+              if (adsManager.markImpressionLogged(key)) {
+                analytics.logEvent(
+                  "ad_impression",
+                  mapOf(
+                    "surface" to surface.analyticsName,
+                    "slot_index" to slotIndex.toString(),
+                    "unit_position" to position,
+                  ),
+                )
+              }
             },
             onFailed = { reason ->
               failed++
               // Give the unit back: the PRD counts filled units only, so a run of no-fills must not
               // quietly eat the session allowance.
-              adsManager.release(1)
+              adsManager.release(key, 1)
               analytics.logEvent(
                 "ad_fill_failed",
                 mapOf("surface" to surface.analyticsName, "reason" to reason),
