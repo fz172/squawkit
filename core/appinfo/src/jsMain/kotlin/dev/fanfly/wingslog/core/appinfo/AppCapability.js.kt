@@ -7,11 +7,12 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isStressTestSupported = isDeveloperBuild,
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = false,
-  // Off until the Apple provider is configured in the Firebase console (Services ID + key + the
-  // `.well-known` domain verification for the custom authDomain). The web client code is in place;
-  // this flag is what makes the button appear, so flipping it early would ship a button that fails
-  // with `auth/operation-not-allowed`.
-  isAppleSignInSupported = false,
+  // On: the Apple provider is enabled in the Firebase console, backed by a Services ID whose return
+  // URL is `https://squawkit.fanfly.dev/__/auth/handler` — the custom `authDomain` this app
+  // initializes with, not the default `*.firebaseapp.com` (#398). This flag is what makes the button
+  // appear, so it stays in step with that console config: turn it off again if the provider is ever
+  // disabled, or the button fails with `auth/operation-not-allowed`.
+  isAppleSignInSupported = true,
   // Staged rollout: dev + dogfood only until GA. Off = no paywall (everything unlocked).
   isSubscriptionSupported = isDeveloperBuild,
   // Hard `false` for all of v1, not `isDeveloperBuild`: AdMob publishes no browser SDK, so the web
