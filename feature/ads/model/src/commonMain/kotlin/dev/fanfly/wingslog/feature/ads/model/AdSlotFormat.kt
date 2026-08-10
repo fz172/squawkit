@@ -42,20 +42,26 @@ enum class AdSlotFormat(val unitCount: Int) {
   companion object {
 
     /**
-     * Resolves the format for a slot from its layout tier and the session cap's remaining
-     * [headroom] (see `AdSessionCounter`, P3).
+     * How many units a slot at [tier] would *like*, before the session budget has its say.
      *
-     * Returns `null` when no unit may render at all — headroom exhausted — which the caller renders
-     * as **zero height**: no request, no label, no gap (G5).
-     *
-     * Folding headroom in here is what keeps §7.1's "near the cap" rule from becoming a special case
-     * at every call site: a WIDE slot that would render two-up but has only one unit of headroom
-     * left degrades to [SINGLE] and is centred, exactly as the MEDIUM case. A band is never shown
-     * half-empty, and the cap is never overshot.
+     * Deliberately no headroom parameter. An earlier version resolved the format from remaining
+     * headroom and returned null at zero — which meant a slot bailed out before asking the counter,
+     * and so a slot that already held a grant showed nothing once the cap was reached. Only
+     * `AdsManager.reserve` may decide what a slot renders, because only it knows what that slot was
+     * already given.
      */
-    fun of(tier: AdLayoutTier, headroom: Int): AdSlotFormat? = when {
-      headroom <= 0 -> null
-      tier == AdLayoutTier.WIDE && headroom >= TWO_UP.unitCount -> TWO_UP
+    fun desiredUnits(tier: AdLayoutTier): Int =
+      if (tier == AdLayoutTier.WIDE) TWO_UP.unitCount else SINGLE.unitCount
+
+    /**
+     * The format to render for a grant of [grantedUnits], as returned by `AdsManager.reserve`.
+     *
+     * A grant of one on a wide tier renders centred, exactly as the MEDIUM case — that is §7.1's
+     * "near the cap" rule falling out of the grant rather than being special-cased.
+     */
+    fun forGrant(grantedUnits: Int): AdSlotFormat? = when {
+      grantedUnits <= 0 -> null
+      grantedUnits >= TWO_UP.unitCount -> TWO_UP
       else -> SINGLE
     }
   }

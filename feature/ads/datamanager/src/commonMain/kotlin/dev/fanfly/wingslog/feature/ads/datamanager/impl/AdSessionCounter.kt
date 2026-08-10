@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.ads.datamanager.impl
 
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.feature.ads.model.AdSlotKey
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -37,6 +38,19 @@ internal class AdSessionCounter(
   private var observedSessionId = 0L
   private val _displayed = MutableStateFlow(0)
 
+  /**
+   * What each slot was granted this session.
+   *
+   * The grant belongs to the **slot**, not to the composable that happens to be showing it. A slot
+   * scrolled out of the lazy logs list, or on a tab the pilot leaves, is disposed and comes back as
+   * a fresh composable — so without this, revisiting a slot either spends the budget a second time
+   * or, once the cap is reached, is granted nothing and the ad the pilot already saw disappears.
+   */
+  private val grants = mutableMapOf<AdSlotKey, Int>()
+
+  /** Slots whose impression has already been counted, so revisiting one is not a second impression. */
+  private val impressionsLogged = mutableSetOf<AdSlotKey>()
+
   /** Units displayed so far this session, `0..`[CAP]. Resets at each session boundary. */
   val displayed: StateFlow<Int> = _displayed.asStateFlow()
 
@@ -69,16 +83,33 @@ internal class AdSessionCounter(
    * A grant of `0` means the slot renders at **zero height**: no request, no label, no gap. Ads
    * already displayed stay as they are — nothing disappears from under the user.
    */
-  fun reserve(units: Int): Int {
+  fun reserve(key: AdSlotKey, units: Int): Int {
     require(units > 0) { "Must reserve at least one unit, was $units" }
     syncSession()
+
+    // Idempotent per slot: a slot that already holds a grant keeps it, spending nothing further.
+    // This is what N8 means by caching the fill per slot key — scroll churn must cost no budget,
+    // and a slot the pilot scrolls back to must still be there even once the cap has been reached.
+    grants[key]?.let { return it }
 
     val granted = minOf(units, CAP - _displayed.value).coerceAtLeast(0)
     if (granted == 0) return 0
 
+    grants[key] = granted
     _displayed.value += granted
     if (_displayed.value >= CAP) _capReached.tryEmit(Unit)
     return granted
+  }
+
+  /**
+   * True the first time it is called for [key] in a session, false afterwards.
+   *
+   * Guards the impression event specifically: a slot revisited by scrolling is the *same* impression,
+   * so counting it again would inflate the number the whole §12 revenue picture rests on.
+   */
+  fun markImpressionLogged(key: AdSlotKey): Boolean {
+    syncSession()
+    return impressionsLogged.add(key)
   }
 
 
@@ -94,9 +125,18 @@ internal class AdSessionCounter(
    * This is not a way to get extra ads: it only ever gives back what a caller already took, and the
    * floor at zero means over-releasing cannot manufacture headroom.
    */
-  fun release(units: Int) {
+  fun release(key: AdSlotKey, units: Int) {
     require(units > 0) { "Must release at least one unit, was $units" }
-    _displayed.value = (_displayed.value - units).coerceAtLeast(0)
+    val held = grants[key] ?: return
+    val given = minOf(units, held)
+    if (given <= 0) return
+
+    // Forget the grant entirely once nothing is left, so a later composition may try again — a
+    // no-fill is usually the network, not the slot, and the pilot should not be permanently short
+    // an ad slot because one request happened to fail.
+    val remaining = held - given
+    if (remaining == 0) grants.remove(key) else grants[key] = remaining
+    _displayed.value = (_displayed.value - given).coerceAtLeast(0)
   }
 
   /**
@@ -112,6 +152,8 @@ internal class AdSessionCounter(
     if (current != observedSessionId) {
       observedSessionId = current
       _displayed.value = 0
+      grants.clear()
+      impressionsLogged.clear()
     }
   }
 
