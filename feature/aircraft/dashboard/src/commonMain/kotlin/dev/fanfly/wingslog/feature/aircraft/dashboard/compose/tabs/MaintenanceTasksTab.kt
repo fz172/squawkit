@@ -52,9 +52,11 @@ fun MaintenanceTasksTab(
     val inActive = state.activeTasks.any { it.card.id == id }
     if (!inHistory && !inActive) return@LaunchedEffect
     showComplied = inHistory
-    val cardY = snapshotFlow { targetCardY }.filterNotNull().first()
+    val cardY = snapshotFlow { targetCardY }.filterNotNull()
+      .first()
     scrollState.animateScrollTo(
-      (scrollState.value + (cardY - contentTopY)).roundToInt().coerceAtLeast(0)
+      (scrollState.value + (cardY - contentTopY)).roundToInt()
+        .coerceAtLeast(0)
     )
   }
 
@@ -79,6 +81,7 @@ fun MaintenanceTasksTab(
         analytics.logScreenView("shell/tasks/${if (it) "complied" else "active"}")
       },
       onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
+      onUpsellClick = { onAction(AircraftOverviewAction.ShowSubscription) },
       scrollTargetId = scrollToTaskId,
       onTargetPositioned = { targetCardY = it },
       showHeader = showHeader,

@@ -9,12 +9,21 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
+import dev.fanfly.wingslog.feature.ads.model.ListRow
+import dev.fanfly.wingslog.feature.ads.model.withAdSlots
+import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
+import org.koin.compose.koinInject
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -36,6 +45,8 @@ fun ComplianceSection(
   showComplied: Boolean,
   onToggleComplied: (Boolean) -> Unit,
   onCardClick: (MaintenanceTaskWithStatus) -> Unit = {},
+  /** The ad card's "Subscribe to remove ads" link. */
+  onUpsellClick: () -> Unit = {},
   /** Task to report the on-screen position of, so the tab can scroll it into view. */
   scrollTargetId: String? = null,
   onTargetPositioned: (Float) -> Unit = {},
@@ -68,6 +79,13 @@ fun ComplianceSection(
     )
 
     val displayList = if (showComplied) completedTasks else activeTasks
+    // Due / History are independent lists with independent counters, exactly like squawks
+    // Open / Closed — this is a toggle over flat lists, not the grouped list the PRD describes.
+    val adsManager: AdsManager = koinInject()
+    val showAds by adsManager.showsAds().collectAsState(initial = false)
+    val rows = remember(displayList, showAds) {
+      if (showAds) withAdSlots(displayList) else displayList.map { ListRow.Item(it) }
+    }
 
     if (displayList.isEmpty()) {
       if (!showComplied) {
@@ -86,22 +104,34 @@ fun ComplianceSection(
       }
     } else {
       AdaptiveCardList(
-        items = displayList,
+        items = rows,
         columns = LocalLayoutTier.current.cardColumns,
         spacing = Spacing.medium,
-      ) { item ->
-        TaskCardItem(
-          cardWithStatus = item,
-          onClick = { onCardClick(item) },
-          modifier = Modifier.fillMaxWidth()
-            .then(
-              if (item.card.id == scrollTargetId) {
-                Modifier.onGloballyPositioned { onTargetPositioned(it.positionInRoot().y) }
-              } else {
-                Modifier
-              }
-            ),
-        )
+        isSpanning = { it is ListRow.Ad },
+      ) { row ->
+        when (row) {
+          is ListRow.Ad -> AdSlot(
+            surface = AdSurface.TASKS,
+            slotIndex = row.slotIndex,
+            onUpsellClick = onUpsellClick,
+          )
+
+          is ListRow.Item -> {
+            val item = row.value
+            TaskCardItem(
+              cardWithStatus = item,
+              onClick = { onCardClick(item) },
+              modifier = Modifier.fillMaxWidth()
+                .then(
+                  if (item.card.id == scrollTargetId) {
+                    Modifier.onGloballyPositioned { onTargetPositioned(it.positionInRoot().y) }
+                  } else {
+                    Modifier
+                  }
+                ),
+            )
+          }
+        }
       }
     }
   }

@@ -15,7 +15,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.foundation.lazy.LazyColumn
+import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
+import dev.fanfly.wingslog.feature.ads.model.ListRow
+import dev.fanfly.wingslog.feature.ads.model.withAdSlots
+import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
+import org.koin.compose.koinInject
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -80,6 +88,7 @@ import wingslog.feature.logs.viewing.generated.resources.log_count_n_entries
 import wingslog.feature.logs.viewing.generated.resources.log_count_one_entry
 import wingslog.feature.logs.viewing.generated.resources.no_logs_match_filter
 import wingslog.feature.logs.viewing.generated.resources.search_logs
+import kotlin.time.Duration.Companion.milliseconds
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
@@ -107,6 +116,8 @@ fun MaintenanceLogListContent(
    * tab and drops its scroll position; it should be cleared only once the section is left.
    */
   scrollToLogId: String? = null,
+  /** The ad card's "Subscribe to remove ads" link. */
+  onUpsellClick: () -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   // Hoisted above the when(uiState) so it is one stable instance across Loading→Success flips and is
@@ -123,16 +134,30 @@ fun MaintenanceLogListContent(
   val currentLogs by rememberUpdatedState(
     (uiState as? MaintenanceLogListUiState.Success)?.logs.orEmpty()
   )
+  val adsManager: AdsManager = koinInject()
+  val showAds by adsManager.showsAds().collectAsState(initial = false)
+  // The display list, not the item list. Everything index-based below must agree with what the
+  // LazyColumn actually renders — see the scroll target immediately after.
+  val rows by remember {
+    derivedStateOf {
+      if (showAds) withAdSlots(currentLogs) else currentLogs.map { ListRow.Item(it) }
+    }
+  }
   LaunchedEffect(scrollToLogId) {
     if (scrollToLogId == null) return@LaunchedEffect
     coroutineScope {
       val pinning = launch {
-        snapshotFlow { currentLogs }.collect { logs ->
-          val index = logs.indexOfFirst { it.id == scrollToLogId }
+        // Resolve against the DISPLAY list. Using the item index would drift by the number of ads
+        // above the target once slots are interleaved, landing the pilot on the wrong log — and the
+        // error grows further down the list.
+        snapshotFlow { rows }.collect { displayRows ->
+          val index = displayRows.indexOfFirst {
+            it is ListRow.Item && it.value.id == scrollToLogId
+          }
           if (index >= 0) logListState.scrollToItem(index)
         }
       }
-      withTimeoutOrNull(8000) {
+      withTimeoutOrNull(8000.milliseconds) {
         logListState.interactionSource.interactions.first { it is DragInteraction.Start }
       }
       pinning.cancel()
@@ -298,8 +323,9 @@ fun MaintenanceLogListContent(
             } else if (LocalLayoutTier.current.hasSideNav) {
               // MEDIUM and wider: a real data table instead of cards.
               MaintenanceLogTable(
-                logs = uiState.logs,
+                rows = rows,
                 onLogClick = onLogClick,
+                onUpsellClick = onUpsellClick,
                 listState = logListState,
                 modifier = Modifier
                   // fill = false so the bordered table wraps its content height when there are
@@ -325,12 +351,29 @@ fun MaintenanceLogListContent(
                 verticalArrangement = Arrangement.spacedBy(Spacing.medium)
               ) {
                 items(
-                  uiState.logs,
-                  key = { it.id }) { log ->
-                  MaintenanceLogCard(
-                    log = log,
-                    onClick = { onLogClick(log) },
-                  )
+                  rows,
+                  // Stable keys matter here in a way they do not on the card surfaces: this is the
+                  // one lazy list, so an identity that changed as logs loaded in would tear the slot
+                  // down and re-request, burning cap on an ad nobody saw.
+                  key = { row ->
+                    when (row) {
+                      is ListRow.Ad -> "ad-${row.slotIndex}"
+                      is ListRow.Item -> row.value.id
+                    }
+                  },
+                ) { row ->
+                  when (row) {
+                    is ListRow.Ad -> AdSlot(
+                      surface = AdSurface.LOGS,
+                      slotIndex = row.slotIndex,
+                      onUpsellClick = onUpsellClick,
+                    )
+
+                    is ListRow.Item -> MaintenanceLogCard(
+                      log = row.value,
+                      onClick = { onLogClick(row.value) },
+                    )
+                  }
                 }
               }
             }
