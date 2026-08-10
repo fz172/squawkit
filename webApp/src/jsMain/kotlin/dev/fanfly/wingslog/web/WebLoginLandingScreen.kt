@@ -68,8 +68,21 @@ import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.privacy_notice
 import kotlin.math.roundToInt
 
-/** The sign-in providers offered on the landing page, used to track which request is in flight. */
-private enum class AuthProviderKind { Google, Apple }
+/**
+ * Which sign-in request is currently awaiting a result, so the pressed button shows a spinner while
+ * the others are disabled. Null means idle.
+ *
+ * This is not the list of login methods the page offers — it is only those that suspend *on this
+ * page*. The other two options never reach an in-flight state here:
+ *
+ * - **Email** does not sign in on this page. Its button navigates away to the shared
+ *   `EmailSignInScreen`, which owns its own progress state for both legs of the link flow.
+ * - **Anonymous** does not exist on web at all: `AppCapability.isAnonymousLoginSupported` is false
+ *   here and `AuthManagerImpl.signInAnonymously` refuses, because web requires a real account.
+ *
+ * Adding entries for them would create states that can never be set.
+ */
+private enum class PendingSignIn { Google, Apple }
 
 /**
  * The web-only SquawkIt sign-in / SEO landing page — a full marketing page (header, navy hero with
@@ -97,9 +110,7 @@ internal fun WebLoginLandingScreen(
   val scope = rememberCoroutineScope()
   val scrollState = rememberScrollState()
 
-  // Which provider is mid-request, so only the button that was pressed shows a spinner while both
-  // are disabled. Null means idle.
-  var signingIn by remember { mutableStateOf<AuthProviderKind?>(null) }
+  var signingIn by remember { mutableStateOf<PendingSignIn?>(null) }
   var error by remember { mutableStateOf<String?>(null) }
   val appCapability: AppCapability = koinInject()
 
@@ -109,14 +120,14 @@ internal fun WebLoginLandingScreen(
     if (credential != null) onLoginSuccess()
   }
 
-  val signIn = { provider: AuthProviderKind ->
+  val signIn = { provider: PendingSignIn ->
     scope.launch {
       signingIn = provider
       error = null
       try {
         val credential = when (provider) {
-          AuthProviderKind.Google -> loginViewModel.login()
-          AuthProviderKind.Apple -> loginViewModel.loginWithApple()
+          PendingSignIn.Google -> loginViewModel.login()
+          PendingSignIn.Apple -> loginViewModel.loginWithApple()
         }
         if (credential != null) onLoginSuccess() else error =
           "Sign-in failed. Please try again."
@@ -128,8 +139,8 @@ internal fun WebLoginLandingScreen(
     }
     Unit
   }
-  val signInWithGoogle = { signIn(AuthProviderKind.Google) }
-  val signInWithApple = { signIn(AuthProviderKind.Apple) }
+  val signInWithGoogle = { signIn(PendingSignIn.Google) }
+  val signInWithApple = { signIn(PendingSignIn.Apple) }
 
   // Section anchors for in-page navigation. Each section reports its top in root coordinates; the
   // scroll container reports its own top. Their difference is the scroll-invariant content offset
@@ -331,7 +342,7 @@ private fun Hero(
   colors: LandingColors,
   headline: FontFamily,
   stacked: Boolean,
-  signingIn: AuthProviderKind?,
+  signingIn: PendingSignIn?,
   error: String?,
   onGoogle: () -> Unit,
   showApple: Boolean,
@@ -514,7 +525,7 @@ private fun LoginCard(
   modifier: Modifier,
   colors: LandingColors,
   headline: FontFamily,
-  signingIn: AuthProviderKind?,
+  signingIn: PendingSignIn?,
   error: String?,
   onGoogle: () -> Unit,
   showApple: Boolean,
@@ -555,7 +566,7 @@ private fun LoginCard(
       contentColor = Color(0xFF1F1F1F),
       border = colors.outline,
       enabled = signingIn == null,
-      loading = signingIn == AuthProviderKind.Google,
+      loading = signingIn == PendingSignIn.Google,
       onClick = onGoogle,
       label = "Log in with Google",
       leading = {
@@ -575,7 +586,7 @@ private fun LoginCard(
         contentColor = Color.White,
         border = null,
         enabled = signingIn == null,
-        loading = signingIn == AuthProviderKind.Apple,
+        loading = signingIn == PendingSignIn.Apple,
         onClick = onApple,
         label = "Log in with Apple",
         leading = {

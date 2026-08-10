@@ -6,9 +6,6 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-/** Firebase's provider id for Sign in with Apple. */
-internal const val APPLE_PROVIDER_ID = "apple.com"
-
 /**
  * What the native `ASAuthorization` sheet hands back for one Sign in with Apple attempt.
  *

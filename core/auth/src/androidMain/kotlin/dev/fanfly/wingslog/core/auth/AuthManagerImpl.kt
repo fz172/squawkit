@@ -250,7 +250,6 @@ class AuthManagerImpl(
 
   companion object {
     private val logger = Logger.withTag("AuthManagerImpl")
-    private const val GOOGLE_PROVIDER_ID = "google.com"
     private const val WEB_CLIENT_ID =
       "811416892017-uul0d8vup8hie1o1172chid0q65k7vdi.apps.googleusercontent.com"
   }

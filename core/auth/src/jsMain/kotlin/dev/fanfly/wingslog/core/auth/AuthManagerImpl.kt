@@ -70,7 +70,7 @@ class AuthManagerImpl(
    */
   override suspend fun signInWithApple(): FirebaseUser? {
     return try {
-      val provider = OAuthProvider("apple.com")
+      val provider = OAuthProvider(APPLE_PROVIDER_ID)
       provider.addScope("email")
       provider.addScope("name")
       signInWithPopup(getAuth(), provider).await()
