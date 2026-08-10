@@ -56,15 +56,33 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.privacy_notice
 import kotlin.math.roundToInt
+
+/**
+ * Which sign-in request is currently awaiting a result, so the pressed button shows a spinner while
+ * the others are disabled. Null means idle.
+ *
+ * This is not the list of login methods the page offers — it is only those that suspend *on this
+ * page*. The other two options never reach an in-flight state here:
+ *
+ * - **Email** does not sign in on this page. Its button navigates away to the shared
+ *   `EmailSignInScreen`, which owns its own progress state for both legs of the link flow.
+ * - **Anonymous** does not exist on web at all: `AppCapability.isAnonymousLoginSupported` is false
+ *   here and `AuthManagerImpl.signInAnonymously` refuses, because web requires a real account.
+ *
+ * Adding entries for them would create states that can never be set.
+ */
+private enum class PendingSignIn { Google, Apple }
 
 /**
  * The web-only SquawkIt sign-in / SEO landing page — a full marketing page (header, navy hero with
@@ -92,8 +110,9 @@ internal fun WebLoginLandingScreen(
   val scope = rememberCoroutineScope()
   val scrollState = rememberScrollState()
 
-  var isSigningIn by remember { mutableStateOf(false) }
+  var signingIn by remember { mutableStateOf<PendingSignIn?>(null) }
   var error by remember { mutableStateOf<String?>(null) }
+  val appCapability: AppCapability = koinInject()
 
   // Returning, already-authenticated users skip straight through (mirrors LoginScreen).
   LaunchedEffect(Unit) {
@@ -101,22 +120,27 @@ internal fun WebLoginLandingScreen(
     if (credential != null) onLoginSuccess()
   }
 
-  val signInWithGoogle = {
+  val signIn = { provider: PendingSignIn ->
     scope.launch {
-      isSigningIn = true
+      signingIn = provider
       error = null
       try {
-        val credential = loginViewModel.login()
+        val credential = when (provider) {
+          PendingSignIn.Google -> loginViewModel.login()
+          PendingSignIn.Apple -> loginViewModel.loginWithApple()
+        }
         if (credential != null) onLoginSuccess() else error =
           "Sign-in failed. Please try again."
       } catch (t: Throwable) {
         error = "Sign-in failed. Please try again."
       } finally {
-        isSigningIn = false
+        signingIn = null
       }
     }
     Unit
   }
+  val signInWithGoogle = { signIn(PendingSignIn.Google) }
+  val signInWithApple = { signIn(PendingSignIn.Apple) }
 
   // Section anchors for in-page navigation. Each section reports its top in root coordinates; the
   // scroll container reports its own top. Their difference is the scroll-invariant content offset
@@ -173,9 +197,11 @@ internal fun WebLoginLandingScreen(
         colors = colors,
         headline = headline,
         stacked = heroStacked,
-        isSigningIn = isSigningIn,
+        signingIn = signingIn,
         error = error,
         onGoogle = signInWithGoogle,
+        showApple = appCapability.isAppleSignInSupported,
+        onApple = signInWithApple,
         onChooseEmail = onChooseEmail,
       )
 
@@ -316,9 +342,11 @@ private fun Hero(
   colors: LandingColors,
   headline: FontFamily,
   stacked: Boolean,
-  isSigningIn: Boolean,
+  signingIn: PendingSignIn?,
   error: String?,
   onGoogle: () -> Unit,
+  showApple: Boolean,
+  onApple: () -> Unit,
   onChooseEmail: () -> Unit,
 ) {
   Box(
@@ -361,9 +389,11 @@ private fun Hero(
             modifier = Modifier.widthIn(max = 460.dp),
             colors = colors,
             headline = headline,
-            isSigningIn = isSigningIn,
+            signingIn = signingIn,
             error = error,
             onGoogle = onGoogle,
+            showApple = showApple,
+            onApple = onApple,
             onChooseEmail = onChooseEmail,
           )
         }
@@ -381,9 +411,11 @@ private fun Hero(
               modifier = Modifier.fillMaxWidth(),
               colors = colors,
               headline = headline,
-              isSigningIn = isSigningIn,
+              signingIn = signingIn,
               error = error,
               onGoogle = onGoogle,
+              showApple = showApple,
+              onApple = onApple,
               onChooseEmail = onChooseEmail,
             )
           }
@@ -493,9 +525,11 @@ private fun LoginCard(
   modifier: Modifier,
   colors: LandingColors,
   headline: FontFamily,
-  isSigningIn: Boolean,
+  signingIn: PendingSignIn?,
   error: String?,
   onGoogle: () -> Unit,
+  showApple: Boolean,
+  onApple: () -> Unit,
   onChooseEmail: () -> Unit,
 ) {
   Column(
@@ -531,8 +565,8 @@ private fun LoginCard(
       container = Color.White,
       contentColor = Color(0xFF1F1F1F),
       border = colors.outline,
-      enabled = !isSigningIn,
-      loading = isSigningIn,
+      enabled = signingIn == null,
+      loading = signingIn == PendingSignIn.Google,
       onClick = onGoogle,
       label = "Log in with Google",
       leading = {
@@ -543,32 +577,35 @@ private fun LoginCard(
         )
       },
     )
-    Spacer(Modifier.height(12.dp))
-    AuthButton(
-      container = Color.Black,
-      contentColor = Color.White,
-      border = null,
-      enabled = !isSigningIn,
-      loading = false,
-      // Apple sign-in is shown on every platform but not yet wired (matches LoginScreen).
-      onClick = { /* TODO(apple-signin): wire AuthManager.signInWithApple() for web. */ },
-      label = "Log in with Apple",
-      leading = {
-        Icon(
-          imageVector = AppleLogo,
-          contentDescription = null,
-          modifier = Modifier.size(19.dp),
-          tint = Color.White
-        )
-      },
-    )
+    // Gated on AppCapability.isAppleSignInSupported, like the shared LoginScreen — the button stays
+    // hidden until the Apple provider is configured in the Firebase console.
+    if (showApple) {
+      Spacer(Modifier.height(12.dp))
+      AuthButton(
+        container = Color.Black,
+        contentColor = Color.White,
+        border = null,
+        enabled = signingIn == null,
+        loading = signingIn == PendingSignIn.Apple,
+        onClick = onApple,
+        label = "Log in with Apple",
+        leading = {
+          Icon(
+            imageVector = AppleLogo,
+            contentDescription = null,
+            modifier = Modifier.size(19.dp),
+            tint = Color.White
+          )
+        },
+      )
+    }
     Spacer(Modifier.height(12.dp))
     // Passwordless email link — navigates to the shared EmailSignInScreen, leaving the promo page.
     AuthButton(
       container = colors.card,
       contentColor = colors.heading,
       border = colors.outline,
-      enabled = !isSigningIn,
+      enabled = signingIn == null,
       loading = false,
       onClick = onChooseEmail,
       label = "Log in with email",

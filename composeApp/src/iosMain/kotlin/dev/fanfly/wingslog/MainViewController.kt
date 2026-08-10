@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog
 
 import androidx.compose.ui.window.ComposeUIViewController
+import dev.fanfly.wingslog.core.auth.IosAppleSignInBridge
 import dev.fanfly.wingslog.core.auth.IosGoogleSignInBridge
 import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.di.initKoin
@@ -32,6 +33,16 @@ object MainEntry {
   }
 
   /**
+   * Installs the Sign in with Apple presenter owned by the Swift app (`AuthenticationServices` and
+   * the nonce hashing live there, not in Kotlin/Native). Unlike the Google handler, Swift returns
+   * the credential material rather than completing the sign-in, so Kotlin can build an
+   * `AuthCredential` — the account-upgrade merge path needs one.
+   */
+  fun installAppleSignInHandler(handler: () -> Unit) {
+    IosAppleSignInBridge.install(handler)
+  }
+
+  /**
    * Installs the App Check token fetch owned by the Swift app (`FirebaseAppCheck` is linked there,
    * not in Kotlin/Native). [provider] is invoked with a callback that must be called with a fresh
    * App Check token (or null). Used by the attachment broker's `streamBlob` download header.
@@ -42,6 +53,27 @@ object MainEntry {
 
   fun completeGoogleSignIn(errorMessage: String?) {
     IosGoogleSignInBridge.complete(errorMessage)
+  }
+
+  /**
+   * Completes a pending Sign in with Apple. [rawNonce] is the un-hashed nonce whose SHA-256 was
+   * sent to Apple; Firebase re-hashes it to validate the identity token. [fullName] is non-null
+   * only on the user's first authorization of this app.
+   */
+  fun completeAppleSignIn(
+    idToken: String?,
+    rawNonce: String?,
+    fullName: String?,
+    errorMessage: String?,
+    cancelled: Boolean,
+  ) {
+    IosAppleSignInBridge.complete(
+      idToken = idToken,
+      rawNonce = rawNonce,
+      fullName = fullName,
+      errorMessage = errorMessage,
+      cancelled = cancelled,
+    )
   }
 
   /**

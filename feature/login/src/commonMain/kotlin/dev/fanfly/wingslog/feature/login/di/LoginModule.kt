@@ -25,5 +25,7 @@ val loginModule = module {
       get<DatabaseWriteLock>(),
     )
   }
-  single<OnboardingActions> { TechnicianOnboardingActions(get<TechnicianManager>()) }
+  single<OnboardingActions> {
+    TechnicianOnboardingActions(get<TechnicianManager>(), get<AuthManager>())
+  }
 }

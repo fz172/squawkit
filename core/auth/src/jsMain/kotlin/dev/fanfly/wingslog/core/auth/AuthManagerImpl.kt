@@ -54,6 +54,34 @@ class AuthManagerImpl(
   }
 
   /**
+   * Sign in with Apple, via the same popup path as [signInWithGoogle].
+   *
+   * The `name` and `email` scopes are requested because Apple returns the user's name **only on the
+   * very first authorization** of the app, and only when asked for — every later sign-in omits it.
+   *
+   * Even so, do not rely on `displayName` being set afterward: Apple sends the name alongside the
+   * authorization rather than inside the ID token, so it can arrive empty. The onboarding name step
+   * is what guarantees the auth profile (and therefore `token.name`, which Cloud Functions read for
+   * share-invite `hostName`) ends up populated — see `NameEntryScreen`.
+   *
+   * Requires the Apple provider to be enabled in the Firebase console, backed by a Services ID whose
+   * return URL is `https://squawkit.fanfly.dev/__/auth/handler` — the custom `authDomain` this app
+   * initializes with, not the default `*.firebaseapp.com`.
+   */
+  override suspend fun signInWithApple(): FirebaseUser? {
+    return try {
+      val provider = OAuthProvider(APPLE_PROVIDER_ID)
+      provider.addScope("email")
+      provider.addScope("name")
+      signInWithPopup(getAuth(), provider).await()
+      authProvider.currentUser
+    } catch (e: Throwable) {
+      logger.e(e) { "Apple sign-in failed" }
+      null
+    }
+  }
+
+  /**
    * Anonymous (guest) sign-in is not supported on web — web requires a real account. The login
    * screen hides the anonymous option here (see `feature/login` `isAnonymousLoginSupported`); this
    * guards the path in case it is ever invoked.

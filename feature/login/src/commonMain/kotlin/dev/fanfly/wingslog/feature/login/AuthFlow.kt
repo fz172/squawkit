@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.feature.login.onboarding.OnboardingActions
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingPreferences
 import dev.fanfly.wingslog.feature.login.onboarding.WelcomeScreen
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -90,12 +91,19 @@ fun AuthFlow(
   // leg 2 there (see webApp EmailLinkCompletionScreen); Firebase syncs the auth state across tabs, so
   // this tab receives the user here and moves into onboarding/app. Only a null -> user transition
   // triggers it, so a returning user resolved at startup still flows through silentLogin unchanged.
+  //
+  // Firebase reports the user the instant a credential is accepted, which can be *before* the
+  // provider call that started it has finished writing the profile — Sign in with Apple supplies
+  // the display name outside the credential, so it lands a round trip later. Reading displayName at
+  // that point would route a named user to name entry. So wait for any local sign-in to settle
+  // first; the `advanced` guard then makes this a no-op whenever the caller already advanced us.
   LaunchedEffect(Unit) {
     var sawSignedOut = false
     firebaseAuth.authStateChanged.collect { user ->
       if (user == null) {
         sawSignedOut = true
       } else if (sawSignedOut) {
+        loginViewModel.signInInFlight.first { !it }
         onLoginSuccess()
       }
     }

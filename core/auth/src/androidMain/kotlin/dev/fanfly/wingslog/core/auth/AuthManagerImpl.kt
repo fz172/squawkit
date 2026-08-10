@@ -96,6 +96,16 @@ class AuthManagerImpl(
     return null
   }
 
+  /**
+   * Not offered on Android: the platform's primary provider is Google, and `AppCapability`'s
+   * `isAppleSignInSupported` is false here, so the button never renders. This guards the path in
+   * case it is ever invoked.
+   */
+  override suspend fun signInWithApple(): FirebaseUser? {
+    logger.w { "Apple sign-in is not offered on Android" }
+    return null
+  }
+
   private fun processCredential(credential: Credential): GoogleIdTokenCredential? {
     if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
       try {
@@ -240,7 +250,6 @@ class AuthManagerImpl(
 
   companion object {
     private val logger = Logger.withTag("AuthManagerImpl")
-    private const val GOOGLE_PROVIDER_ID = "google.com"
     private const val WEB_CLIENT_ID =
       "811416892017-uul0d8vup8hie1o1172chid0q65k7vdi.apps.googleusercontent.com"
   }
