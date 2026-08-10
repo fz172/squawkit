@@ -33,4 +33,18 @@ interface SubscriptionManager {
 
   /** Max aircraft the account may own; `null` = unlimited. Enforced against the owned count. */
   fun aircraftLimit(): Flow<Int?>
+
+  /**
+   * Whether the free tier's display ads should be shown.
+   *
+   * **This one is default-CLOSED, unlike every gate above it.** The others are default-*open*: while
+   * `isSubscriptionSupported` is off there is no paywall, so they all read available. This reads
+   * `false` when either `isAdsSupported` or `isSubscriptionSupported` is off — because a build that
+   * cannot sell Heavy gives a pilot no way to remove ads, and showing them anyway would be
+   * indefensible.
+   *
+   * True only while the effective tier is below `PRO`. Comparing the status enum rather than a
+   * boolean means any future paid tier is ad-free automatically.
+   */
+  fun showsAds(): Flow<Boolean>
 }

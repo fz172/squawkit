@@ -53,12 +53,18 @@ class DeveloperOptionsManagerImpl(
   }
 }
 
+// Every field of DeveloperFlags must appear in BOTH directions here. The two types are independent —
+// adding a field to the data class alone compiles cleanly and then silently drops the value on write
+// and reads back the default, which looks exactly like a toggle that refuses to turn on.
+// DeveloperOptionsMappingTest round-trips them to keep that from happening again.
 internal fun DeveloperSettings.toDeveloperFlags() = DeveloperFlags(
   forceSubscriptionStatus = force_subscription_status.toSubscriptionStatusOrNull(),
+  forceAds = force_ads,
 )
 
 internal fun DeveloperFlags.toProto() = DeveloperSettings(
   force_subscription_status = forceSubscriptionStatus.toForceProto(),
+  force_ads = forceAds,
 )
 
 private fun DeveloperSettings.ForceSubscriptionStatus.toSubscriptionStatusOrNull(): Subscription.Status? =

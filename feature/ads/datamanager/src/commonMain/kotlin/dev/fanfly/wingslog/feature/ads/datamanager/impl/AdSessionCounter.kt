@@ -81,6 +81,7 @@ internal class AdSessionCounter(
     return granted
   }
 
+
   /**
    * Resets the budget when the app session has rolled over.
    *

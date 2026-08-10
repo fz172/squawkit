@@ -8,4 +8,11 @@ data class DeveloperFlags(
    * real entitlement applies). Honored only in developer builds — see SubscriptionManager.
    */
   val forceSubscriptionStatus: Subscription.Status? = null,
+  /**
+   * Developer force-override that shows display ads regardless of tier, so placement can be
+   * exercised without a real free account. Honored only in developer builds, and only where the
+   * build supports ads at all — it overrides the tier check, never the capability gate. See
+   * AdsManagerImpl.
+   */
+  val forceAds: Boolean = false,
 )

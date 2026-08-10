@@ -30,4 +30,6 @@
   <string name="developer_options_force_off">Off</string>
   <string name="developer_options_force_free">Core</string>
   <string name="developer_options_force_pro">Heavy</string>
+  <string name="developer_options_force_ads_title">Force ads</string>
+  <string name="developer_options_force_ads_subtitle">Show display ads on any account, ignoring the tier. Everything else behaves normally, including the limit of 5 ads per session.</string>
 </resources>

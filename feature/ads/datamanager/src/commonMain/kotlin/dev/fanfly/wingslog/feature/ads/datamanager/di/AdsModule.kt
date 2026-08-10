@@ -1,7 +1,13 @@
 package dev.fanfly.wingslog.feature.ads.datamanager.di
 
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.datamanager.impl.AdSessionCounter
+import dev.fanfly.wingslog.feature.ads.datamanager.impl.AdsManagerImpl
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import kotlinx.coroutines.flow.map
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -12,7 +18,6 @@ import org.koin.dsl.module
  *
  * Still to arrive:
  *
- * - `AdsGate` (P4) — reads `SubscriptionManager.showsAds()`, which is default-**closed**.
  * - `AdConsentManager` (P7) — `expect`/`actual`, no-op on web.
  */
 val adsModule: Module = module {
@@ -24,4 +29,16 @@ val adsModule: Module = module {
   // which is the intent. P4's AdsManager is the public face; nothing outside reaches the counter
   // directly, and the UI asks the manager rather than doing its own budgeting.
   single { AdSessionCounter(foreground = get<AppForegroundObserver>()) }
+
+  single<AdsManager> {
+    AdsManagerImpl(
+      subscriptionManager = get<SubscriptionManager>(),
+      counter = get<AdSessionCounter>(),
+      appCapability = get<AppCapability>(),
+      // Developer Options → Force ads. Same shape as the force-subscription override in
+      // subscriptionModule, so the two dev overrides are wired identically.
+      forceAds = get<DeveloperOptionsManager>().observe()
+        .map { it.forceAds },
+    )
+  }
 }

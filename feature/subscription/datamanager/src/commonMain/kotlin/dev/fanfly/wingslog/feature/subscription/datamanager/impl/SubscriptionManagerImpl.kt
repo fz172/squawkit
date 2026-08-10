@@ -53,10 +53,16 @@ class SubscriptionManagerImpl(
       }
     }
 
+  /**
+   * Read once: [AppCapability] is fixed at build time, so there is no value change to observe and no
+   * reason to re-evaluate it on every emission below.
+   */
+  private val devOverridesHonored = appCapability.isDeveloperOptionsSupported
+
   override fun status(): Flow<Subscription.Status> =
     combine(entitlement(), forceStatus) { subscription, forced ->
       // The forced tier wins, but only in a developer build — never in the shipping release.
-      if (appCapability.isDeveloperOptionsSupported && forced != null) {
+      if (devOverridesHonored && forced != null) {
         forced
       } else {
         subscription.effectiveStatusAt(clock.now().toEpochMilliseconds())
@@ -75,6 +81,14 @@ class SubscriptionManagerImpl(
       flowOf(null)
     } else {
       status().map { if (it >= Subscription.Status.STATUS_PRO) null else FREE_AIRCRAFT_LIMIT }
+    }
+
+  override fun showsAds(): Flow<Boolean> =
+    // Default-CLOSED — the mirror of gate() below. No ads unless we can also sell their removal.
+    if (!appCapability.isAdsSupported || !appCapability.isSubscriptionSupported) {
+      flowOf(false)
+    } else {
+      status().map { it < Subscription.Status.STATUS_PRO }
     }
 
   private fun gate(minimum: Subscription.Status): Flow<Boolean> =

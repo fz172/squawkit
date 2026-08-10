@@ -30,4 +30,12 @@ class DeveloperOptionsViewModel(
       developerOptionsManager.update(_flags.value.copy(forceSubscriptionStatus = status))
     }
   }
+
+  /** Show display ads regardless of tier, so placement can be exercised on any account. */
+  fun setForceAds(enabled: Boolean) {
+    viewModelScope.launch {
+      developerOptionsManager.update(_flags.value.copy(forceAds = enabled))
+    }
+  }
+
 }

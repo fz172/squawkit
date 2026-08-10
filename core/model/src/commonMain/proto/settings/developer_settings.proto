@@ -13,6 +13,12 @@ message DeveloperSettings {
   // entitlement applies); SubscriptionManager honors this only in developer builds.
   ForceSubscriptionStatus force_subscription_status = 8;
 
+  // Developer force-override that shows free-tier display ads regardless of the account's tier, so
+  // placement can be exercised without a real free account. AdsManager honors this only in developer
+  // builds, and only where the build supports ads at all — it overrides the tier check, never the
+  // capability gate.
+  bool force_ads = 9;
+
   enum ForceSubscriptionStatus {
     FORCE_SUBSCRIPTION_STATUS_UNSET = 0;
     FORCE_SUBSCRIPTION_STATUS_FREE = 1;
