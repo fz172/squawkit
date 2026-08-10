@@ -16,6 +16,10 @@ final class NativeAppleSignInProvider: NSObject {
     /// makes a captured token non-replayable. Kept only until the exchange completes.
     private var currentNonce: String?
 
+    /// The window the sheet is anchored to, resolved before the request starts. Held so
+    /// `presentationAnchor(for:)` can hand back a real window rather than building one.
+    private var currentAnchor: ASPresentationAnchor?
+
     nonisolated func signIn() {
         Task { @MainActor in
             self.startSignIn()
@@ -23,6 +27,15 @@ final class NativeAppleSignInProvider: NSObject {
     }
 
     private func startSignIn() {
+        // Resolve the anchor up front, the way NativeGoogleSignInProvider resolves its presenting
+        // view controller: with no window there is nothing to present on, and reporting that
+        // through the bridge is far better than starting a request that cannot be shown.
+        guard let anchor = Self.presentationAnchor() else {
+            complete(errorMessage: "No window is available to present Sign in with Apple")
+            return
+        }
+        currentAnchor = anchor
+
         let nonce = Self.randomNonceString()
         currentNonce = nonce
 
@@ -44,6 +57,7 @@ final class NativeAppleSignInProvider: NSObject {
         cancelled: Bool = false
     ) {
         currentNonce = nil
+        currentAnchor = nil
         MainEntry.shared.completeAppleSignIn(
             idToken: idToken,
             rawNonce: rawNonce,
@@ -143,10 +157,25 @@ extension NativeAppleSignInProvider: ASAuthorizationControllerDelegate {
 extension NativeAppleSignInProvider: ASAuthorizationControllerPresentationContextProviding {
 
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows)
-            .first(where: \.isKeyWindow)
-            ?? ASPresentationAnchor()
+        // startSignIn() resolves this before performRequests(), and the controller only asks once a
+        // request is in flight, so a nil here means the request was started some other way.
+        guard let anchor = currentAnchor else {
+            preconditionFailure("Sign in with Apple asked for an anchor with no request in flight")
+        }
+        return anchor
+    }
+
+    /// Prefers the key window of a foreground-active scene, then any key window, then any window at
+    /// all. Returns nil rather than constructing one: `ASPresentationAnchor` is a `UIWindow`, and a
+    /// freshly built window belongs to no scene, so it could never host the sheet anyway — the old
+    /// `?? ASPresentationAnchor()` fallback papered over a failure with something non-functional
+    /// (and, as of iOS 26, deprecated).
+    private static func presentationAnchor() -> ASPresentationAnchor? {
+        let windowScenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let activeScenes = windowScenes.filter { $0.activationState == .foregroundActive }
+
+        return activeScenes.flatMap(\.windows).first(where: \.isKeyWindow)
+            ?? windowScenes.flatMap(\.windows).first(where: \.isKeyWindow)
+            ?? windowScenes.flatMap(\.windows).first
     }
 }
