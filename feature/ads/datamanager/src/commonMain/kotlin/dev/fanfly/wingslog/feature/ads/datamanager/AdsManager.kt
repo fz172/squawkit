@@ -23,9 +23,6 @@ interface AdsManager {
    */
   fun showsAds(): Flow<Boolean>
 
-  /** Units still available this session, `0..5`. Feeds `AdSlotFormat.of()`. */
-  fun headroom(): Int
-
   /**
    * Claims up to [units] of this session's budget for the slot identified by [key], returning how many
    * were granted — `0`, `1`, or `2`. A partial grant is normal and expected: a two-up slot asking

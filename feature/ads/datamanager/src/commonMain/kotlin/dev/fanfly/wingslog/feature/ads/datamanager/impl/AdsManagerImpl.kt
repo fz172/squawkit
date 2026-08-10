@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.flowOf
 internal class AdsManagerImpl(
   private val subscriptionManager: SubscriptionManager,
   private val counter: AdSessionCounter,
-  private val appCapability: AppCapability,
+  appCapability: AppCapability,
   private val forceAds: Flow<Boolean>,
 ) : AdsManager {
 
@@ -44,13 +44,13 @@ internal class AdsManagerImpl(
     ) { byTier, forced -> byTier || forced }
   }
 
-  override fun headroom(): Int = counter.headroom
-
-  override fun reserve(key: AdSlotKey, units: Int): Int = counter.reserve(key, units)
+  override fun reserve(key: AdSlotKey, units: Int): Int =
+    counter.reserve(key, units)
 
   override fun release(key: AdSlotKey, units: Int) = counter.release(key, units)
 
-  override fun markImpressionLogged(key: AdSlotKey): Boolean = counter.markImpressionLogged(key)
+  override fun markImpressionLogged(key: AdSlotKey): Boolean =
+    counter.markImpressionLogged(key)
 
   override val capReached: Flow<Unit> = counter.capReached
 

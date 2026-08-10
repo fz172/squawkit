@@ -135,9 +135,10 @@ class AdsManagerImplTest {
   @Test
   fun `budget calls delegate to the counter`() {
     val m = manager(capability(), tierShowsAds = true)
-    assertThat(m.headroom()).isEqualTo(AdSessionCounter.CAP)
     assertThat(m.reserve(AdSlotKey(AdSurface.SQUAWKS, 0), 2)).isEqualTo(2)
-    assertThat(m.headroom()).isEqualTo(AdSessionCounter.CAP - 2)
+    // Distinct slots keep spending until the cap binds.
+    val rest = (1..AdSessionCounter.CAP).sumOf { m.reserve(AdSlotKey(AdSurface.SQUAWKS, it), 1) }
+    assertThat(rest).isEqualTo(AdSessionCounter.CAP - 2)
   }
 
   @Test
@@ -147,7 +148,9 @@ class AdsManagerImplTest {
 
     assertThat(m.reserve(key, 1)).isEqualTo(1)
     assertThat(m.reserve(key, 1)).isEqualTo(1)
-    assertThat(m.headroom()).isEqualTo(AdSessionCounter.CAP - 1)
+    // The rest of the budget is still available to other slots, so only one unit was spent.
+    val others = (1..AdSessionCounter.CAP).sumOf { m.reserve(AdSlotKey(AdSurface.LOGS, it), 1) }
+    assertThat(others).isEqualTo(AdSessionCounter.CAP - 1)
   }
 
   @Test

@@ -87,14 +87,14 @@ fun AdSlot(
   // The counter, not this composable, owns the grant: a slot disposed by scrolling or a tab switch
   // comes back as a fresh composable, and reserve() is idempotent per key so it gets the same answer
   // rather than paying again — or, at the cap, being refused an ad the pilot has already seen.
+  // reserve() is the only authority on what this slot may render, and it is asked unconditionally.
+  // Checking remaining headroom first was the bug: at the cap it answered "nothing available" and
+  // the slot returned before reserve() could hand back the grant it already held, so an ad the pilot
+  // had already seen vanished when they scrolled back to it.
   val granted = remember(key) {
-    val desired = AdSlotFormat.of(adTier, adsManager.headroom()) ?: return@remember 0
-    adsManager.reserve(key, desired.unitCount)
+    adsManager.reserve(key, AdSlotFormat.desiredUnits(adTier))
   }
-  if (granted == 0) return
-
-  // A partial grant renders centred, exactly as the MEDIUM case — never a half-empty band.
-  val format = if (granted >= AdSlotFormat.TWO_UP.unitCount) AdSlotFormat.TWO_UP else AdSlotFormat.SINGLE
+  val format = AdSlotFormat.forGrant(granted) ?: return
 
   var filled by remember(key) { mutableStateOf(0) }
   var failed by remember(key) { mutableStateOf(0) }
