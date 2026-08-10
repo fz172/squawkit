@@ -10,7 +10,11 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
+import dev.fanfly.wingslog.feature.ads.model.ListRow
+import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -56,8 +60,9 @@ private const val W_TECH = 1.1f
  */
 @Composable
 fun MaintenanceLogTable(
-  logs: List<MaintenanceLog>,
+  rows: List<ListRow<MaintenanceLog>>,
   onLogClick: (MaintenanceLog) -> Unit,
+  onUpsellClick: () -> Unit = {},
   listState: LazyListState = rememberLazyListState(),
   modifier: Modifier = Modifier,
 ) {
@@ -78,10 +83,34 @@ fun MaintenanceLogTable(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(bottom = Spacing.large),
       ) {
-        items(logs, key = { it.id }) { log ->
-          LogRow(
-            log = log,
-            onClick = { onLogClick(log) })
+        items(
+          rows,
+          key = { row ->
+            when (row) {
+              is ListRow.Ad -> "ad-${row.slotIndex}"
+              is ListRow.Item -> row.value.id
+            }
+          },
+        ) { row ->
+          when (row) {
+            // A band between rows, not a row. It keeps the table's horizontal insets but adopts
+            // none of its column rules, striping or row height — a pilot scanning a column of dates
+            // must never have to parse an ad as data (PRD §6.5, F16).
+            is ListRow.Ad -> AdSlot(
+              surface = AdSurface.LOGS,
+              slotIndex = row.slotIndex,
+              onUpsellClick = onUpsellClick,
+              modifier = Modifier.padding(
+                horizontal = Spacing.medium,
+                vertical = Spacing.small,
+              ),
+            )
+
+            is ListRow.Item -> LogRow(
+              log = row.value,
+              onClick = { onLogClick(row.value) },
+            )
+          }
           HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant.copy(
               alpha = 0.4f
