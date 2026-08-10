@@ -73,11 +73,15 @@ class AccountUpgradeNameTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
+  private val emailStore: UpgradeEmailStore = mockk(relaxed = true)
+
   private fun viewModel() = AccountUpgradeViewModel(
     authManager = authManager,
     migrator = migrator,
     technicianManager = technicianManager,
     syncEngine = syncEngine,
+    emailStore = emailStore,
+    appCapability = testAppCapability(isAppleSignInSupported = false),
   )
 
   @Test

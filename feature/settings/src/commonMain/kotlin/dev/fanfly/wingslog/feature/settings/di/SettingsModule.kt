@@ -10,7 +10,10 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsViewModel
+import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
+import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.settings.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeEmailStore
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import org.koin.core.module.dsl.viewModel
@@ -35,6 +38,9 @@ val settingsModule = module {
       migrator = get<LocalAccountMigrator>(),
       technicianManager = get<TechnicianManager>(),
       syncEngine = get<SyncEngine>(),
+      emailStore = get<UpgradeEmailStore>(),
+      appCapability = get<AppCapability>(),
     )
   }
+  single { UpgradeEmailStore(get<WingsLogDatabase>(), get<DatabaseWriteLock>()) }
 }

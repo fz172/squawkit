@@ -4,7 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AuthProvider
+import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
+import dev.fanfly.wingslog.core.auth.SendLinkResult
+import dev.fanfly.wingslog.core.auth.upgradeProvidersFor
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
@@ -32,10 +36,129 @@ class AccountUpgradeViewModel(
   private val migrator: LocalAccountMigrator,
   private val technicianManager: TechnicianManager,
   private val syncEngine: SyncEngine,
+  private val emailStore: UpgradeEmailStore,
+  private val appCapability: AppCapability,
 ) : ViewModel() {
 
   private val _state = MutableStateFlow<UpgradeUiState>(UpgradeUiState.Idle)
   val state: StateFlow<UpgradeUiState> = _state.asStateFlow()
+
+  /** Opens the picker. What it contains is derived from platform capability, not hardcoded. */
+  fun choose() {
+    if (_state.value == UpgradeUiState.Working) return
+    _state.value = UpgradeUiState.ChoosingProvider(
+      upgradeProvidersFor(appCapability.isAppleSignInSupported)
+    )
+  }
+
+  /** Picker selection. Email needs an address first; the other two can start immediately. */
+  fun select(provider: AuthProvider) {
+    when (provider) {
+      AuthProvider.Email -> _state.value = UpgradeUiState.EnteringEmail()
+      AuthProvider.Google, AuthProvider.Apple -> startUpgrade(provider)
+    }
+  }
+
+  /** Email field edits live in state so they survive a keyboard or rotation teardown. */
+  fun setEmail(value: String) {
+    val current = _state.value
+    if (current !is UpgradeUiState.EnteringEmail || current.sending) return
+    _state.value = current.copy(email = value, error = null)
+  }
+
+  /** Leg 1 — send the link, and remember the address for the confirmation step. */
+  fun sendEmailLink() {
+    val current = _state.value
+    if (current !is UpgradeUiState.EnteringEmail || current.sending) return
+    val guestUid = authManager.getCurrentUser()?.uid
+      ?: run {
+        _state.value = UpgradeUiState.Error("No signed-in user to upgrade")
+        return
+      }
+
+    _state.value = current.copy(sending = true, error = null)
+    viewModelScope.launch {
+      _state.value = when (val result = authManager.sendSignInLink(current.email)) {
+        is SendLinkResult.Sent -> {
+          emailStore.savePendingEmail(guestUid, result.email)
+          UpgradeUiState.LinkSent(result.email)
+        }
+
+        is SendLinkResult.InvalidEmail ->
+          current.copy(sending = false, error = "Enter a valid email address")
+
+        is SendLinkResult.Failed ->
+          current.copy(sending = false, error = result.message)
+      }
+    }
+  }
+
+  /**
+   * Offers an inbound email link to the upgrade flow. When it belongs to *this* guest's pending
+   * upgrade, the flow claims it and asks for confirmation; otherwise it is left untouched.
+   *
+   * Driven by the screen rather than collected here, mirroring how `AuthFlow` observes the same
+   * channel: `EmailLinkDeepLinks` is a process-wide singleton, so a ViewModel that subscribed on
+   * its own would keep consuming links for as long as its scope outlived the screen.
+   *
+   * Not claiming an unrecognised link is what keeps the two consumers from fighting: `AuthFlow`
+   * only runs when nobody is signed in, and a link issued for a different session must reach it
+   * rather than being applied to this device's data.
+   */
+  fun onIncomingLink(link: String) {
+    if (_state.value is UpgradeUiState.ConfirmLink) return
+    val user = authManager.getCurrentUser() ?: return
+    if (!user.isAnonymous) return
+    if (!authManager.isSignInWithEmailLink(link)) return
+
+    viewModelScope.launch {
+      val pending = emailStore.pendingEmail(user.uid) ?: return@launch
+      EmailLinkDeepLinks.consume()
+      _state.value = UpgradeUiState.ConfirmLink(email = pending, link = link)
+    }
+  }
+
+  /** Leg 2, once the user has confirmed. Links rather than signs in, preserving the guest UID. */
+  fun confirmEmailLink() {
+    val current = _state.value
+    if (current !is UpgradeUiState.ConfirmLink) return
+    val guestUid = authManager.getCurrentUser()?.uid
+      ?: run {
+        _state.value = UpgradeUiState.Error("No signed-in user to upgrade")
+        return
+      }
+
+    _state.value = UpgradeUiState.Working
+    viewModelScope.launch {
+      val guestName = currentSelfName()
+      val result = authManager.completeUpgradeWithEmailLink(current.email, current.link)
+      _state.value = when (result) {
+        is AccountUpgradeResult.Linked -> {
+          emailStore.clear(guestUid)
+          finishLinkedAccount(result.user.uid)
+        }
+
+        is AccountUpgradeResult.CredentialInUse -> {
+          emailStore.clear(guestUid)
+          mergeExistingAccount(
+            guestUid = guestUid,
+            guestName = guestName,
+            credential = result.credential,
+          )
+        }
+
+        is AccountUpgradeResult.Cancelled -> UpgradeUiState.Idle
+        is AccountUpgradeResult.Failed -> UpgradeUiState.Error(result.message)
+      }
+    }
+  }
+
+  /** Backs out of the picker or either email step, discarding any pending link. */
+  fun cancel() {
+    val guestUid = authManager.getCurrentUser()?.uid
+    _state.value = UpgradeUiState.Idle
+    if (guestUid != null) viewModelScope.launch { emailStore.clear(guestUid) }
+  }
 
   fun startUpgrade(provider: AuthProvider) {
     if (_state.value == UpgradeUiState.Working) return

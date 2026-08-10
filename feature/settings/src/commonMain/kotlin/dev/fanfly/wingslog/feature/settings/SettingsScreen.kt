@@ -41,7 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.appinfo.getAppVersion
-import dev.fanfly.wingslog.core.auth.AuthProvider
+import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
@@ -50,6 +50,10 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
 import dev.fanfly.wingslog.feature.settings.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeConfirmLinkDialog
+import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeEmailDialog
+import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeLinkSentDialog
+import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeProviderDialog
 import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeUiState
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -113,6 +117,13 @@ fun SettingsContent(
     stringResource(SettingsRes.string.account_upgrade_success)
   val upgradeErrorMessage =
     stringResource(SettingsRes.string.account_upgrade_error)
+
+  // An email link that reopened the app is offered to the upgrade flow, which claims it only when
+  // this guest has an upgrade pending. Anything else is left for AuthFlow.
+  val pendingLink by EmailLinkDeepLinks.pendingLink.collectAsStateWithLifecycle()
+  LaunchedEffect(pendingLink) {
+    pendingLink?.let(accountUpgradeViewModel::onIncomingLink)
+  }
 
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {
@@ -260,7 +271,7 @@ fun SettingsContent(
               title = stringResource(SettingsRes.string.account_upgrade_login_cta),
               subtitle =
                 stringResource(SettingsRes.string.account_upgrade_login_subtitle),
-              onClick = { accountUpgradeViewModel.startUpgrade(AuthProvider.Google) },
+              onClick = { accountUpgradeViewModel.choose() },
             )
           }
         } else {
@@ -295,7 +306,33 @@ fun SettingsContent(
     )
   }
 
-  when (upgradeState) {
+  when (val state = upgradeState) {
+    is UpgradeUiState.ChoosingProvider -> UpgradeProviderDialog(
+      providers = state.providers,
+      onSelect = accountUpgradeViewModel::select,
+      onDismiss = accountUpgradeViewModel::cancel,
+    )
+
+    is UpgradeUiState.EnteringEmail -> UpgradeEmailDialog(
+      state = state,
+      onEmailChange = accountUpgradeViewModel::setEmail,
+      onSend = accountUpgradeViewModel::sendEmailLink,
+      onDismiss = accountUpgradeViewModel::cancel,
+    )
+
+    is UpgradeUiState.LinkSent -> UpgradeLinkSentDialog(
+      email = state.email,
+      onDismiss = accountUpgradeViewModel::cancel,
+    )
+
+    // Explicit confirmation, never automatic: linking binds the address to *this* device's guest
+    // data, so a link opened against the wrong session must not act on its own.
+    is UpgradeUiState.ConfirmLink -> UpgradeConfirmLinkDialog(
+      email = state.email,
+      onConfirm = accountUpgradeViewModel::confirmEmailLink,
+      onDismiss = accountUpgradeViewModel::cancel,
+    )
+
     is UpgradeUiState.Working -> AlertDialog(
       // Non-dismissable: provider sign-in / sync re-keying is in flight.
       onDismissRequest = {},
