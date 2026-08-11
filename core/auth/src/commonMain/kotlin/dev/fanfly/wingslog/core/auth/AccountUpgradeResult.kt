@@ -18,6 +18,21 @@ sealed interface AccountUpgradeResult {
   data class CredentialInUse(val credential: AuthCredential) :
     AccountUpgradeResult
 
+  /**
+   * Same collision as [CredentialInUse], but the credential cannot be replayed, so merging needs a
+   * fresh authorization from [provider].
+   *
+   * Sign in with Apple is the case: its identity token is single-use and bound to the nonce it was
+   * issued for, so the token the failed link consumed is rejected with
+   * `ERROR_MISSING_OR_INVALID_NONCE`. Google's can back a second credential, which is why that path
+   * returns [CredentialInUse] instead.
+   *
+   * Kept distinct so the *caller* decides when to re-prompt: the user is told their account already
+   * exists before a second provider sheet appears, rather than being shown one twice with no
+   * explanation.
+   */
+  data class ReauthRequiredToMerge(val provider: AuthProvider) : AccountUpgradeResult
+
   /** The user dismissed the provider sheet. No change. */
   data object Cancelled : AccountUpgradeResult
 

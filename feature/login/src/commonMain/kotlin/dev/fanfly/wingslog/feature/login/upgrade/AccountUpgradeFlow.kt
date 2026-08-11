@@ -86,6 +86,13 @@ fun AccountUpgradeFlow(
       onDismiss = viewModel::cancel,
     )
 
+    is UpgradeUiState.ConfirmMerge -> UpgradeMergeSheet(
+      provider = current.provider,
+      needsReauthorization = current.needsReauthorization,
+      onConfirm = viewModel::confirmMerge,
+      onDismiss = viewModel::cancel,
+    )
+
     is UpgradeUiState.Working -> AlertDialog(
       // Non-dismissable: provider sign-in / sync re-keying is in flight.
       onDismissRequest = {},

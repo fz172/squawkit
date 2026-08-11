@@ -204,6 +204,17 @@ class AuthManagerImpl(
     }
   }
 
+  /**
+   * Not reached on Android: a Google credential can be replayed, so the collision path returns
+   * [AccountUpgradeResult.CredentialInUse] and the merge reuses it — no second account picker.
+   */
+  override suspend fun mergeIntoExistingAccount(
+    provider: AuthProvider,
+  ): AccountUpgradeResult {
+    logger.w { "mergeIntoExistingAccount($provider) is not used on Android" }
+    return AccountUpgradeResult.Failed("Re-authorization is not required on Android")
+  }
+
   override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult {
     return try {
       val result = authProvider.signInWithCredential(credential)

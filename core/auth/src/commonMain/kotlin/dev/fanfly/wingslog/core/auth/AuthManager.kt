@@ -79,4 +79,13 @@ interface AuthManager {
    * caller is responsible for re-keying local data to the new UID afterward.
    */
   suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult
+
+  /**
+   * Merge path for providers that answered [AccountUpgradeResult.ReauthRequiredToMerge]: runs a
+   * fresh authorization for [provider] and signs in to the existing account with it.
+   *
+   * Call only after the user has been told their account already exists — this presents a second
+   * provider sheet. Like [signInToExistingAccount], the caller re-keys local data afterward.
+   */
+  suspend fun mergeIntoExistingAccount(provider: AuthProvider): AccountUpgradeResult
 }

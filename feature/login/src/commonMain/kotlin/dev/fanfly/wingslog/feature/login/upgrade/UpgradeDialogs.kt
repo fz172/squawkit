@@ -182,6 +182,78 @@ private fun ProviderButton(
   }
 }
 
+/**
+ * The interstitial for a collision: this provider account already has SquawkIt records.
+ *
+ * A bottom sheet rather than a dialog so it reads as a continuation of the picker the user just
+ * used. Its real job on iOS is to give the second Apple sheet a reason — without it, that prompt
+ * looks like the first one silently failed.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun UpgradeMergeSheet(
+  provider: AuthProvider,
+  needsReauthorization: Boolean,
+  onConfirm: () -> Unit,
+  onDismiss: () -> Unit,
+) {
+  val name = when (provider) {
+    AuthProvider.Apple -> "Apple ID"
+    AuthProvider.Google -> "Google account"
+    AuthProvider.Email -> "email address"
+  }
+
+  ModalBottomSheet(onDismissRequest = onDismiss) {
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = Spacing.large)
+        .padding(bottom = Spacing.extraLarge),
+      verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+    ) {
+      Text(
+        text = "That $name already has an account",
+        style = MaterialTheme.typography.headlineSmall,
+      )
+      Text(
+        text = "Continuing moves the aircraft, logs, and records on this device into that " +
+          "account, alongside what it already has. Nothing is deleted.",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      if (needsReauthorization) {
+        Text(
+          text = "You'll be asked to confirm with $name once more — that second prompt is what " +
+            "signs you in to the existing account.",
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+
+      Spacer(Modifier.height(Spacing.small))
+
+      Button(
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(ProviderButtonHeight),
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+        onClick = onConfirm,
+      ) {
+        Text("Merge my records", style = LoginButtonLabelStyle)
+      }
+      OutlinedButton(
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(ProviderButtonHeight),
+        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+        onClick = onDismiss,
+      ) {
+        Text("Cancel", style = LoginButtonLabelStyle)
+      }
+    }
+  }
+}
+
 /** Address entry for an email-link upgrade. Field state lives in the ViewModel, not here. */
 @Composable
 internal fun UpgradeEmailDialog(

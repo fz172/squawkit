@@ -136,7 +136,16 @@ class AccountUpgradeNameTest {
       AccountUpgradeResult.Linked(permanentUser)
     coEvery { technicianManager.saveSelfName(any()) } returns Result.success(Unit)
 
-    viewModel().startUpgrade(AuthProvider.Google)
+    val vm = viewModel()
+    vm.startUpgrade(AuthProvider.Google)
+    advanceUntilIdle()
+
+    // A collision now stops to explain that the account already exists; nothing moves until the
+    // user accepts, so the merge is a decision rather than a surprise.
+    assertThat(vm.state.value).isInstanceOf(UpgradeUiState.ConfirmMerge::class.java)
+    coVerify(exactly = 0) { migrator.reassign(any(), any()) }
+
+    vm.confirmMerge()
     advanceUntilIdle()
 
     coVerify { migrator.reassign(fromUid = "guest-uid", toUid = UID) }

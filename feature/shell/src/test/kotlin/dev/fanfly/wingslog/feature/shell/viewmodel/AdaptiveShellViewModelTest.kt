@@ -101,6 +101,10 @@ class AdaptiveShellViewModelTest {
       link: String,
     ): AccountUpgradeResult = AccountUpgradeResult.Cancelled
 
+    override suspend fun mergeIntoExistingAccount(
+      provider: AuthProvider,
+    ): AccountUpgradeResult = AccountUpgradeResult.Cancelled
+
     override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult =
       AccountUpgradeResult.Cancelled
   }

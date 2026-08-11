@@ -44,6 +44,22 @@ class AccountUpgradeViewModel(
   private val _state = MutableStateFlow<UpgradeUiState>(UpgradeUiState.Idle)
   val state: StateFlow<UpgradeUiState> = _state.asStateFlow()
 
+  /**
+   * What a confirmed merge needs, parked while the user reads the explanation.
+   *
+   * Held here rather than in [UpgradeUiState] so an `AuthCredential` never reaches the UI layer.
+   * [credential] is null when the provider's one was single-use and has been spent — Apple — in
+   * which case confirming re-authorizes instead of replaying it.
+   */
+  private data class PendingMerge(
+    val provider: AuthProvider,
+    val guestUid: String,
+    val guestName: String?,
+    val credential: AuthCredential?,
+  )
+
+  private var pendingMerge: PendingMerge? = null
+
   /** Opens the picker. What it contains is derived from platform capability, not hardcoded. */
   fun choose() {
     if (_state.value == UpgradeUiState.Working) return
@@ -158,11 +174,12 @@ class AccountUpgradeViewModel(
 
         is AccountUpgradeResult.CredentialInUse -> {
           emailStore.clear(guestUid)
-          mergeExistingAccount(
-            guestUid = guestUid,
-            guestName = guestName,
-            credential = result.credential,
-          )
+          askToMerge(AuthProvider.Email, guestUid, guestName, result.credential)
+        }
+
+        is AccountUpgradeResult.ReauthRequiredToMerge -> {
+          emailStore.clear(guestUid)
+          askToMerge(result.provider, guestUid, guestName, credential = null)
         }
 
         is AccountUpgradeResult.Cancelled -> UpgradeUiState.Idle
@@ -184,6 +201,7 @@ class AccountUpgradeViewModel(
    */
   fun cancel() {
     val current = _state.value
+    pendingMerge = null
     _state.value = UpgradeUiState.Idle
     if (current is UpgradeUiState.LinkSent) return
 
@@ -204,17 +222,19 @@ class AccountUpgradeViewModel(
       _state.value =
         when (val result = authManager.upgradeAnonymousAccount(provider)) {
           is AccountUpgradeResult.Linked -> finishLinkedAccount(result.user.uid)
-          is AccountUpgradeResult.CredentialInUse -> {
+          is AccountUpgradeResult.CredentialInUse ->
             if (guestUid == null) {
               UpgradeUiState.Error("No signed-in user to merge")
             } else {
-              mergeExistingAccount(
-                guestUid = guestUid,
-                guestName = guestName,
-                credential = result.credential
-              )
+              askToMerge(provider, guestUid, guestName, result.credential)
             }
-          }
+
+          is AccountUpgradeResult.ReauthRequiredToMerge ->
+            if (guestUid == null) {
+              UpgradeUiState.Error("No signed-in user to merge")
+            } else {
+              askToMerge(result.provider, guestUid, guestName, credential = null)
+            }
 
           is AccountUpgradeResult.Cancelled -> UpgradeUiState.Idle
           is AccountUpgradeResult.Failed -> failed(result.message)
@@ -257,12 +277,49 @@ class AccountUpgradeViewModel(
     authManager.updateDisplayName(name)
   }
 
-  private suspend fun mergeExistingAccount(
+  /**
+   * Parks the merge and asks first.
+   *
+   * The user chose "upgrade", not "sign in to that other account" — and merging re-keys this
+   * device's records into an account that already has its own. Saying so before it happens also
+   * gives the second Apple sheet a reason to exist, instead of looking like the first one failed.
+   */
+  private fun askToMerge(
+    provider: AuthProvider,
     guestUid: String,
     guestName: String?,
-    credential: AuthCredential,
+    credential: AuthCredential?,
   ): UpgradeUiState {
-    return when (val result = authManager.signInToExistingAccount(credential)) {
+    pendingMerge = PendingMerge(provider, guestUid, guestName, credential)
+    return UpgradeUiState.ConfirmMerge(
+      provider = provider,
+      needsReauthorization = credential == null,
+    )
+  }
+
+  /** The user accepted the merge. Only now does a second provider sheet appear, if one is needed. */
+  fun confirmMerge() {
+    val pending = pendingMerge ?: return
+    if (_state.value !is UpgradeUiState.ConfirmMerge) return
+
+    _state.value = UpgradeUiState.Working
+    viewModelScope.launch {
+      val result = if (pending.credential != null) {
+        authManager.signInToExistingAccount(pending.credential)
+      } else {
+        authManager.mergeIntoExistingAccount(pending.provider)
+      }
+      _state.value = finishMerge(pending.guestUid, pending.guestName, result)
+      pendingMerge = null
+    }
+  }
+
+  private suspend fun finishMerge(
+    guestUid: String,
+    guestName: String?,
+    result: AccountUpgradeResult,
+  ): UpgradeUiState {
+    return when (result) {
       is AccountUpgradeResult.Linked -> {
         val accountUid = result.user.uid
         if (!awaitPermanentCurrentUser(accountUid)) {

@@ -171,6 +171,61 @@ class UpgradeProviderPickerTest {
     coVerify { emailStore.clear(GUEST_UID) }
   }
 
+  /**
+   * Apple's identity token is single-use, so merging needs a second sheet. That prompt must not
+   * appear until the user has been told why — otherwise it reads as the first attempt failing,
+   * which is exactly how it was reported.
+   */
+  @Test
+  fun appleCollision_explainsBeforeRePrompting() = runTest(dispatcher) {
+    coEvery { authManager.upgradeAnonymousAccount(AuthProvider.Apple) } returns
+      AccountUpgradeResult.ReauthRequiredToMerge(AuthProvider.Apple)
+    val vm = viewModel(isAppleSignInSupported = true)
+
+    vm.startUpgrade(AuthProvider.Apple)
+    advanceUntilIdle()
+
+    val state = vm.state.value as UpgradeUiState.ConfirmMerge
+    assertThat(state.provider).isEqualTo(AuthProvider.Apple)
+    assertThat(state.needsReauthorization).isTrue()
+    // The second Apple sheet is what mergeIntoExistingAccount presents — not yet.
+    coVerify(exactly = 0) { authManager.mergeIntoExistingAccount(any()) }
+  }
+
+  @Test
+  fun confirmingAnAppleMerge_reauthorizesRatherThanReplaying() = runTest(dispatcher) {
+    coEvery { authManager.upgradeAnonymousAccount(AuthProvider.Apple) } returns
+      AccountUpgradeResult.ReauthRequiredToMerge(AuthProvider.Apple)
+    coEvery { authManager.mergeIntoExistingAccount(AuthProvider.Apple) } returns
+      AccountUpgradeResult.Linked(guest)
+    val vm = viewModel(isAppleSignInSupported = true)
+    vm.startUpgrade(AuthProvider.Apple)
+    advanceUntilIdle()
+
+    vm.confirmMerge()
+    advanceUntilIdle()
+
+    coVerify { authManager.mergeIntoExistingAccount(AuthProvider.Apple) }
+    // Replaying the spent credential is what produced ERROR_MISSING_OR_INVALID_NONCE.
+    coVerify(exactly = 0) { authManager.signInToExistingAccount(any()) }
+  }
+
+  @Test
+  fun cancellingTheMerge_leavesTheGuestAlone() = runTest(dispatcher) {
+    coEvery { authManager.upgradeAnonymousAccount(AuthProvider.Apple) } returns
+      AccountUpgradeResult.ReauthRequiredToMerge(AuthProvider.Apple)
+    val vm = viewModel(isAppleSignInSupported = true)
+    vm.startUpgrade(AuthProvider.Apple)
+    advanceUntilIdle()
+
+    vm.cancel()
+    advanceUntilIdle()
+
+    assertThat(vm.state.value).isEqualTo(UpgradeUiState.Idle)
+    coVerify(exactly = 0) { authManager.mergeIntoExistingAccount(any()) }
+    coVerify(exactly = 0) { migrator.reassign(any(), any()) }
+  }
+
   @Test
   fun incomingLink_asksBeforeLinking() = runTest(dispatcher) {
     coEvery { emailStore.pendingEmail(GUEST_UID) } returns EMAIL

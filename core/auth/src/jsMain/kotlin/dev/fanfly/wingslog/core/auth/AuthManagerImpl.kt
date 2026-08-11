@@ -111,6 +111,13 @@ class AuthManagerImpl(
     return AccountUpgradeResult.Failed("Anonymous accounts are not supported on web")
   }
 
+  override suspend fun mergeIntoExistingAccount(
+    provider: AuthProvider,
+  ): AccountUpgradeResult {
+    logger.w { "mergeIntoExistingAccount() is not applicable on web (no anonymous users)" }
+    return AccountUpgradeResult.Failed("Anonymous accounts are not supported on web")
+  }
+
   override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult {
     return try {
       val result = authProvider.signInWithCredential(credential)

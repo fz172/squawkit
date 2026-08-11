@@ -41,6 +41,19 @@ sealed interface UpgradeUiState {
    */
   data class ConfirmLink(val email: String, val link: String) : UpgradeUiState
 
+  /**
+   * The chosen account already exists, so upgrading means merging into it. Asked before anything
+   * moves, because the user picked "upgrade", not "sign in to that other account".
+   *
+   * [needsReauthorization] is true when the provider's credential was single-use and has been spent
+   * (Apple), so confirming presents its sheet a second time. Saying that up front is the difference
+   * between a step and an apparent failure.
+   */
+  data class ConfirmMerge(
+    val provider: AuthProvider,
+    val needsReauthorization: Boolean,
+  ) : UpgradeUiState
+
   /** Provider sign-in or sync re-keying is running; show a blocking progress indicator. */
   data object Working : UpgradeUiState
 
