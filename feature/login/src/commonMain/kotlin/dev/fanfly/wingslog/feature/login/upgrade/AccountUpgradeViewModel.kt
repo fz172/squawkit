@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog.feature.login.upgrade
 
-import co.touchlab.kermit.Logger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.auth.SendLinkResult
@@ -79,18 +79,19 @@ class AccountUpgradeViewModel(
 
     _state.value = current.copy(sending = true, error = null)
     viewModelScope.launch {
-      _state.value = when (val result = authManager.sendSignInLink(current.email)) {
-        is SendLinkResult.Sent -> {
-          emailStore.savePendingEmail(guestUid, result.email)
-          UpgradeUiState.LinkSent(result.email)
+      _state.value =
+        when (val result = authManager.sendSignInLink(current.email)) {
+          is SendLinkResult.Sent -> {
+            emailStore.savePendingEmail(guestUid, result.email)
+            UpgradeUiState.LinkSent(result.email)
+          }
+
+          is SendLinkResult.InvalidEmail ->
+            current.copy(sending = false, error = "Enter a valid email address")
+
+          is SendLinkResult.Failed ->
+            current.copy(sending = false, error = result.message)
         }
-
-        is SendLinkResult.InvalidEmail ->
-          current.copy(sending = false, error = "Enter a valid email address")
-
-        is SendLinkResult.Failed ->
-          current.copy(sending = false, error = result.message)
-      }
     }
   }
 
@@ -147,7 +148,8 @@ class AccountUpgradeViewModel(
     _state.value = UpgradeUiState.Working
     viewModelScope.launch {
       val guestName = currentSelfName()
-      val result = authManager.completeUpgradeWithEmailLink(current.email, current.link)
+      val result =
+        authManager.completeUpgradeWithEmailLink(current.email, current.link)
       _state.value = when (result) {
         is AccountUpgradeResult.Linked -> {
           emailStore.clear(guestUid)
