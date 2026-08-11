@@ -119,7 +119,11 @@ internal fun ProMembershipContent(
     // No Customer Center here, but we know where the plan lives — either exactly, from the provider,
     // or at least which store's subscriptions page to open (#363, #361). Either beats telling the
     // pilot to go find another device.
-    managementUrl != null -> ManageElsewhereLink(managementUrl, state.isManagementUrlDerived)
+    managementUrl != null -> ManageElsewhereLink(
+      managementUrl,
+      state.isManagementUrlDerived
+    )
+
     else -> ManagedElsewhere(isPurchaseSupported = state.isPurchaseSupported)
   }
 }
@@ -560,6 +564,3 @@ private const val CARD_SURFACE_TINT = 0.06f
 private const val CARD_RULE_TINT = 0.16f
 private const val NOTICE_BORDER_TINT = 0.32f
 private const val NOTICE_SURFACE_TINT = 0.07f
-
-private const val LOCKED_STROKE_PX = 4f
-private const val LOCKED_DASH_PX = 10f

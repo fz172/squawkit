@@ -100,7 +100,7 @@ fun SubscriptionScreen(
     ) {
       Column(
         modifier = Modifier
-          .constrainedContentWidth(ContentWidth.Pane)
+          .constrainedContentWidth(ContentWidth.Reading)
           .fillMaxSize()
           .padding(Spacing.screenPadding)
           .verticalScroll(rememberScrollState()),

@@ -58,6 +58,7 @@ kotlin {
       implementation(project(":core:auth"))
       implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:sync:data"))
+      implementation(project(":feature:login"))
       implementation(project(":feature:sync:sharedassets"))
       implementation(project(":feature:export:sharedassets"))
       implementation(project(":feature:technician:sharedassets"))

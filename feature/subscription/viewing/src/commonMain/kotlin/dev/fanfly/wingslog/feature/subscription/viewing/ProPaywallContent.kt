@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.subscription.viewing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -69,7 +68,10 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_st
  * store's paywall does that, and saying so up front is what keeps the CTA honest.
  */
 @Composable
-internal fun ColumnScope.ProPaywallContent(state: SubscriptionUiState, onSubscribe: () -> Unit) {
+internal fun ProPaywallContent(
+  state: SubscriptionUiState,
+  onSubscribe: () -> Unit
+) {
   Text(
     text = stringResource(Res.string.subscription_compare_header),
     style = MaterialTheme.typography.headlineMedium,
@@ -126,7 +128,10 @@ internal fun ColumnScope.ProPaywallContent(state: SubscriptionUiState, onSubscri
       style = MaterialTheme.typography.bodyMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Text(text = state.storageBytesUsed.formatFileSize(), style = WingslogTypography.dataMedium)
+    Text(
+      text = state.storageBytesUsed.formatFileSize(),
+      style = WingslogTypography.dataMedium
+    )
   }
 }
 
@@ -140,7 +145,10 @@ internal fun ColumnScope.ProPaywallContent(state: SubscriptionUiState, onSubscri
 private fun BillingNote() {
   SubscriptionPanel {
     Row(
-      modifier = Modifier.padding(horizontal = Spacing.large, vertical = Spacing.medium),
+      modifier = Modifier.padding(
+        horizontal = Spacing.large,
+        vertical = Spacing.medium
+      ),
       horizontalArrangement = Arrangement.spacedBy(Spacing.small),
       verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -168,11 +176,31 @@ private fun ComparisonTable() {
       free = Cell.Label(stringResource(Res.string.subscription_aircraft_free)),
       pro = Cell.Unlimited,
     )
-    CompareRow(stringResource(Res.string.subscription_feature_records), Cell.Yes, Cell.Yes)
-    CompareRow(stringResource(Res.string.subscription_feature_export), Cell.Yes, Cell.Yes)
-    CompareRow(stringResource(Res.string.subscription_feature_backup), Cell.Yes, Cell.Yes)
-    CompareRow(stringResource(Res.string.subscription_feature_attachments), Cell.No, Cell.Yes)
-    CompareRow(stringResource(Res.string.subscription_feature_email), Cell.No, Cell.Yes)
+    CompareRow(
+      stringResource(Res.string.subscription_feature_records),
+      Cell.Yes,
+      Cell.Yes
+    )
+    CompareRow(
+      stringResource(Res.string.subscription_feature_export),
+      Cell.Yes,
+      Cell.Yes
+    )
+    CompareRow(
+      stringResource(Res.string.subscription_feature_backup),
+      Cell.Yes,
+      Cell.Yes
+    )
+    CompareRow(
+      stringResource(Res.string.subscription_feature_attachments),
+      Cell.No,
+      Cell.Yes
+    )
+    CompareRow(
+      stringResource(Res.string.subscription_feature_email),
+      Cell.No,
+      Cell.Yes
+    )
     CompareRow(
       label = stringResource(Res.string.subscription_feature_sharing),
       free = Cell.No,
@@ -235,7 +263,12 @@ private sealed interface Cell {
 }
 
 @Composable
-private fun CompareRow(label: String, free: Cell, pro: Cell, divider: Boolean = true) {
+private fun CompareRow(
+  label: String,
+  free: Cell,
+  pro: Cell,
+  divider: Boolean = true
+) {
   Row(
     modifier = Modifier
       .fillMaxWidth()
@@ -248,11 +281,19 @@ private fun CompareRow(label: String, free: Cell, pro: Cell, divider: Boolean = 
       style = MaterialTheme.typography.bodyMedium,
       modifier = Modifier.weight(1f),
     )
-    CellContent(cell = free, isPro = false, modifier = Modifier.width(FREE_COLUMN))
+    CellContent(
+      cell = free,
+      isPro = false,
+      modifier = Modifier.width(FREE_COLUMN)
+    )
     CellContent(cell = pro, isPro = true, modifier = Modifier.width(PRO_COLUMN))
   }
   if (divider) {
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = ROW_RULE_ALPHA))
+    HorizontalDivider(
+      color = MaterialTheme.colorScheme.outlineVariant.copy(
+        alpha = ROW_RULE_ALPHA
+      )
+    )
   }
 }
 
@@ -261,7 +302,11 @@ private fun CompareRow(label: String, free: Cell, pro: Cell, divider: Boolean = 
  *   one column down the table without a heavy vertical rule.
  */
 @Composable
-private fun CellContent(cell: Cell, isPro: Boolean, modifier: Modifier = Modifier) {
+private fun CellContent(
+  cell: Cell,
+  isPro: Boolean,
+  modifier: Modifier = Modifier
+) {
   val tint =
     if (isPro) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
   Box(
@@ -290,7 +335,11 @@ private fun CellContent(cell: Cell, isPro: Boolean, modifier: Modifier = Modifie
         color = MaterialTheme.colorScheme.outline,
       )
 
-      is Cell.Label -> Text(text = cell.text, style = WingslogTypography.dataSmall, color = tint)
+      is Cell.Label -> Text(
+        text = cell.text,
+        style = WingslogTypography.dataSmall,
+        color = tint
+      )
 
       Cell.Unlimited -> {
         val spoken = stringResource(Res.string.subscription_aircraft_unlimited)

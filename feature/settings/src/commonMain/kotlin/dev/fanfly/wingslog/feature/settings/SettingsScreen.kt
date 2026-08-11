@@ -4,7 +4,6 @@ package dev.fanfly.wingslog.feature.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -26,8 +24,6 @@ import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -46,9 +42,9 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
-import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.settings
@@ -156,29 +152,20 @@ fun SettingsContent(
           SettingsHeader()
         }
 
-        val accountAndSubscriptionRows = buildList<@Composable () -> Unit> {
-          // Shown only where the subscription capability is on (dev + dogfood today); hidden in the
-          // shipping release until GA, so no user sees a paywall entry before it exists.
-          if (user.isSubscriptionSupported) {
-            add {
-              SettingsRow(
-                icon = Icons.Default.Star,
-                title = stringResource(SettingsRes.string.settings_subscription),
-                subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
-                onClick = { detailNav.navigate(Screen.Subscription.route) },
-              )
-            }
-            add {
-              SettingsRow(
-                icon = Icons.Default.Engineering,
-                title = stringResource(TechnicianRes.string.manage_technicians),
-                subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
-                onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
-              )
-            }
+        val preferenceRows = buildList<@Composable () -> Unit> {
+          add {
+            AppearanceSettingRow(
+              mode = appearanceMode,
+              onModeChange = settingsViewModel::setAppearance,
+            )
+          }
+          add {
+            FirebaseLoggingSettingRow(
+              enabled = firebaseLoggingEnabled,
+              onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
+            )
           }
         }
-
         val dataAndLogsRows = buildList<@Composable () -> Unit> {
           add {
             SettingsRow(
@@ -190,6 +177,14 @@ fun SettingsContent(
           }
           add {
             SettingsRow(
+              icon = Icons.Default.Engineering,
+              title = stringResource(TechnicianRes.string.manage_technicians),
+              subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
+              onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
+            )
+          }
+          add {
+            SettingsRow(
               icon = Icons.Default.FileDownload,
               title = stringResource(ExportRes.string.feature_name_export_logs),
               subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
@@ -197,23 +192,7 @@ fun SettingsContent(
             )
           }
         }
-
-        val preferenceRows = buildList<@Composable () -> Unit> {
-
-          add {
-            AppearanceSettingRow(
-              mode = appearanceMode,
-              onModeChange = settingsViewModel::setAppearance,
-            )
-          }
-        }
         val advancedRows = buildList<@Composable () -> Unit> {
-          add {
-            FirebaseLoggingSettingRow(
-              enabled = firebaseLoggingEnabled,
-              onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
-            )
-          }
           // Developer Options is a developer surface: only on debug and dogfood-style builds, never in release.
           if (user.isDeveloperOptionsSupported) {
             add {
@@ -224,35 +203,45 @@ fun SettingsContent(
                 onClick = { detailNav.navigate(Screen.DeveloperOptions.route) },
               )
             }
+            // Shown only where the subscription capability is on (dev + dogfood today); hidden in the
+            // shipping release until GA, so no user sees a paywall entry before it exists.
+            if (user.isSubscriptionSupported) {
+              add {
+                SettingsRow(
+                  icon = Icons.Default.Star,
+                  title = stringResource(SettingsRes.string.settings_subscription),
+                  subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
+                  onClick = { detailNav.navigate(Screen.Subscription.route) },
+                )
+              }
+            }
+            // Guest shows "Log in" (runs the upgrade); real accounts show "Log out".
+            if (user.isAnonymous) {
+              add {
+                SettingsRow(
+                  icon = Icons.AutoMirrored.Filled.Login,
+                  title = stringResource(SettingsRes.string.account_upgrade_login_cta),
+                  subtitle =
+                    stringResource(SettingsRes.string.account_upgrade_login_subtitle),
+                  onClick = { accountUpgradeViewModel.choose() },
+                )
+              }
+            } else {
+              add {
+                SettingsRow(
+                  icon = Icons.AutoMirrored.Filled.Logout,
+                  title = stringResource(SettingsRes.string.sign_out),
+                  subtitle = stringResource(SettingsRes.string.settings_logout_subtitle),
+                  onClick = { settingsViewModel.logOut() },
+                  settingsLevel = SettingsLevel.DANGER,
+                )
+              }
+            }
           }
         }
-        SettingsRowGroup(rows = accountAndSubscriptionRows)
-        SettingsRowGroup(rows = dataAndLogsRows)
         SettingsRowGroup(preferenceRows)
+        SettingsRowGroup(rows = dataAndLogsRows)
         SettingsRowGroup(advancedRows)
-
-        // Guest shows "Log in" (runs the upgrade); real accounts show "Log out".
-        if (user.isAnonymous) {
-          SettingsCard {
-            SettingsRow(
-              icon = Icons.AutoMirrored.Filled.Login,
-              title = stringResource(SettingsRes.string.account_upgrade_login_cta),
-              subtitle =
-                stringResource(SettingsRes.string.account_upgrade_login_subtitle),
-              onClick = { accountUpgradeViewModel.choose() },
-            )
-          }
-        } else {
-          SettingsCard {
-            SettingsRow(
-              icon = Icons.AutoMirrored.Filled.Logout,
-              title = stringResource(SettingsRes.string.sign_out),
-              subtitle = stringResource(SettingsRes.string.settings_logout_subtitle),
-              onClick = { settingsViewModel.logOut() },
-              settingsLevel = SettingsLevel.DANGER,
-            )
-          }
-        }
 
         Spacer(modifier = Modifier.height(Spacing.columnGap))
 
