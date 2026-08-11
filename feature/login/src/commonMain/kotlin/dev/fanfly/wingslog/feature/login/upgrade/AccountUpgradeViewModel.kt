@@ -169,11 +169,24 @@ class AccountUpgradeViewModel(
     }
   }
 
-  /** Backs out of the picker or either email step, discarding any pending link. */
+  /**
+   * Backs out of the flow.
+   *
+   * Closing [UpgradeUiState.LinkSent] must **not** discard the stashed address: that dialog exists
+   * to tell the user to go and open the link, so leaving it is the expected next step, not a
+   * change of mind. Clearing there deleted the pending upgrade before the link could be used, and
+   * the returning link was then ignored for having nothing pending.
+   *
+   * Every other state is a real back-out — including [UpgradeUiState.ConfirmLink], where cancelling
+   * means "that isn't my address", so the stash should go.
+   */
   fun cancel() {
-    val guestUid = authManager.getCurrentUser()?.uid
+    val current = _state.value
     _state.value = UpgradeUiState.Idle
-    if (guestUid != null) viewModelScope.launch { emailStore.clear(guestUid) }
+    if (current is UpgradeUiState.LinkSent) return
+
+    val guestUid = authManager.getCurrentUser()?.uid ?: return
+    viewModelScope.launch { emailStore.clear(guestUid) }
   }
 
   fun startUpgrade(provider: AuthProvider) {

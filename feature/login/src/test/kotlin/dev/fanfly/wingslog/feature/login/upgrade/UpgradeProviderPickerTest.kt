@@ -137,6 +137,40 @@ class UpgradeProviderPickerTest {
     assertThat(state.sending).isFalse()
   }
 
+  /**
+   * Closing "check your email" is the user doing what it asked — leaving to open the link. Clearing
+   * the stash there deleted the pending upgrade before the link could be used, so the returning
+   * link was ignored for having nothing pending, and email upgrade never worked at all.
+   */
+  @Test
+  fun dismissingLinkSent_keepsThePendingUpgrade() = runTest(dispatcher) {
+    coEvery { authManager.sendSignInLink(EMAIL) } returns SendLinkResult.Sent(EMAIL)
+    val vm = viewModel().also { it.select(AuthProvider.Email) }
+    vm.setEmail(EMAIL)
+    vm.sendEmailLink()
+    advanceUntilIdle()
+
+    vm.cancel()
+    advanceUntilIdle()
+
+    assertThat(vm.state.value).isEqualTo(UpgradeUiState.Idle)
+    coVerify(exactly = 0) { emailStore.clear(any()) }
+  }
+
+  @Test
+  fun cancellingTheConfirmation_discardsTheStash() = runTest(dispatcher) {
+    coEvery { emailStore.pendingEmail(GUEST_UID) } returns EMAIL
+    val vm = viewModel()
+    vm.onIncomingLink(LINK)
+    advanceUntilIdle()
+
+    // "If that isn't your address, cancel and start again" — so the stash must not survive.
+    vm.cancel()
+    advanceUntilIdle()
+
+    coVerify { emailStore.clear(GUEST_UID) }
+  }
+
   @Test
   fun incomingLink_asksBeforeLinking() = runTest(dispatcher) {
     coEvery { emailStore.pendingEmail(GUEST_UID) } returns EMAIL
