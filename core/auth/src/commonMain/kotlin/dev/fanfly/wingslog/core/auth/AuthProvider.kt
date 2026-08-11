@@ -22,14 +22,18 @@ enum class AuthProvider {
 /**
  * The providers a guest on this platform can upgrade to, in the order they should be offered.
  *
- * Derived from capability flags rather than declared per platform, so it cannot drift from what the
- * login screen shows: Apple appears exactly where the Apple button does, and Google is offered
- * everywhere a guest session can exist at all. Android deliberately omits Apple — Google is the
- * platform's provider there (see `AppCapability.isAppleSignInSupported`).
+ * Derived from capability flags rather than declared per platform, so the picker only ever offers
+ * something that can actually succeed. Android omits Apple — Google is the platform's provider
+ * there — and iOS omits Google until its native provider can return a credential to link with,
+ * rather than showing a button that always fails.
+ *
+ * Email is offered everywhere a guest session exists: its link path is platform-agnostic.
  */
-fun upgradeProvidersFor(isAppleSignInSupported: Boolean): List<AuthProvider> =
-  buildList {
-    if (isAppleSignInSupported) add(AuthProvider.Apple)
-    add(AuthProvider.Google)
-    add(AuthProvider.Email)
-  }
+fun upgradeProvidersFor(
+  isAppleSignInSupported: Boolean,
+  isGoogleUpgradeSupported: Boolean,
+): List<AuthProvider> = buildList {
+  if (isAppleSignInSupported) add(AuthProvider.Apple)
+  if (isGoogleUpgradeSupported) add(AuthProvider.Google)
+  add(AuthProvider.Email)
+}

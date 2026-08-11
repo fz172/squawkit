@@ -15,8 +15,11 @@ import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.AuthCredential
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -45,6 +48,16 @@ class AccountUpgradeViewModel(
   val state: StateFlow<UpgradeUiState> = _state.asStateFlow()
 
   /**
+   * Emits once per completed upgrade, for hosts that show account-derived state.
+   *
+   * Not folded into [state]: the flow moves to Success and straight back to Idle, and a conflating
+   * StateFlow can drop the Success in between. Linking also never fires `authStateChanged`, so
+   * nothing else tells a screen its account just became permanent.
+   */
+  private val _completions = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  val completions: SharedFlow<Unit> = _completions.asSharedFlow()
+
+  /**
    * What a confirmed merge needs, parked while the user reads the explanation.
    *
    * Held here rather than in [UpgradeUiState] so an `AuthCredential` never reaches the UI layer.
@@ -64,7 +77,10 @@ class AccountUpgradeViewModel(
   fun choose() {
     if (_state.value == UpgradeUiState.Working) return
     _state.value = UpgradeUiState.ChoosingProvider(
-      upgradeProvidersFor(appCapability.isAppleSignInSupported)
+      upgradeProvidersFor(
+        isAppleSignInSupported = appCapability.isAppleSignInSupported,
+        isGoogleUpgradeSupported = appCapability.isGoogleUpgradeSupported,
+      )
     )
   }
 
@@ -103,10 +119,12 @@ class AccountUpgradeViewModel(
           }
 
           is SendLinkResult.InvalidEmail ->
-            current.copy(sending = false, error = "Enter a valid email address")
+            current.copy(sending = false, error = EmailEntryError.InvalidAddress)
 
-          is SendLinkResult.Failed ->
-            current.copy(sending = false, error = result.message)
+          is SendLinkResult.Failed -> {
+            logger.w { "Could not send the upgrade link: ${result.message}" }
+            current.copy(sending = false, error = EmailEntryError.SendFailed(result.message))
+          }
         }
     }
   }
@@ -262,6 +280,7 @@ class AccountUpgradeViewModel(
     technicianManager.ensureSelfProfile()
     pushSelfNameToAuthProfile()
     refreshLocalAccountData()
+    _completions.tryEmit(Unit)
     return UpgradeUiState.Success
   }
 
@@ -337,6 +356,7 @@ class AccountUpgradeViewModel(
           // Sign-in fired authStateChanged, but re-keying happened after; hydrate and nudge sync
           // so local reads include the permanent account's aircraft before the UI leaves Working.
           refreshLocalAccountData()
+          _completions.tryEmit(Unit)
           UpgradeUiState.Success
         }
       }

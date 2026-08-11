@@ -46,6 +46,29 @@ import wingslog.feature.login.generated.resources.ic_google_rd_na
 import wingslog.feature.login.generated.resources.sign_in_with_apple
 import wingslog.feature.login.generated.resources.sign_in_with_email
 import wingslog.feature.login.generated.resources.sign_in_with_google
+import wingslog.feature.login.generated.resources.upgrade_confirm_link_body
+import wingslog.feature.login.generated.resources.upgrade_confirm_link_confirm
+import wingslog.feature.login.generated.resources.upgrade_confirm_link_title
+import wingslog.feature.login.generated.resources.upgrade_email_body
+import wingslog.feature.login.generated.resources.upgrade_email_invalid
+import wingslog.feature.login.generated.resources.upgrade_email_label
+import wingslog.feature.login.generated.resources.upgrade_email_send
+import wingslog.feature.login.generated.resources.upgrade_email_send_failed
+import wingslog.feature.login.generated.resources.upgrade_email_title
+import wingslog.feature.login.generated.resources.upgrade_link_sent_body
+import wingslog.feature.login.generated.resources.upgrade_link_sent_title
+import wingslog.feature.login.generated.resources.upgrade_merge_body
+import wingslog.feature.login.generated.resources.upgrade_merge_confirm
+import wingslog.feature.login.generated.resources.upgrade_merge_reauth
+import wingslog.feature.login.generated.resources.upgrade_merge_title
+import wingslog.feature.login.generated.resources.upgrade_picker_body
+import wingslog.feature.login.generated.resources.upgrade_picker_title
+import wingslog.feature.login.generated.resources.upgrade_provider_apple
+import wingslog.feature.login.generated.resources.upgrade_provider_email
+import wingslog.feature.login.generated.resources.upgrade_provider_google
+import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.done
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /** Matches the login page's buttons: full width, 54dp, rounded, icon + label. */
 private val ProviderButtonHeight = 54.dp
@@ -74,12 +97,11 @@ internal fun UpgradeProviderSheet(
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
       Text(
-        text = "Keep your records",
+        text = stringResource(Res.string.upgrade_picker_title),
         style = MaterialTheme.typography.headlineSmall,
       )
       Text(
-        text = "Connect an account so your aircraft, logs, and records are backed up and " +
-          "available on your other devices.",
+        text = stringResource(Res.string.upgrade_picker_body),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -197,11 +219,13 @@ internal fun UpgradeMergeSheet(
   onConfirm: () -> Unit,
   onDismiss: () -> Unit,
 ) {
-  val name = when (provider) {
-    AuthProvider.Apple -> "Apple ID"
-    AuthProvider.Google -> "Google account"
-    AuthProvider.Email -> "email address"
-  }
+  val name = stringResource(
+    when (provider) {
+      AuthProvider.Apple -> Res.string.upgrade_provider_apple
+      AuthProvider.Google -> Res.string.upgrade_provider_google
+      AuthProvider.Email -> Res.string.upgrade_provider_email
+    }
+  )
 
   ModalBottomSheet(onDismissRequest = onDismiss) {
     Column(
@@ -212,19 +236,17 @@ internal fun UpgradeMergeSheet(
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
       Text(
-        text = "That $name already has an account",
+        text = stringResource(Res.string.upgrade_merge_title, name),
         style = MaterialTheme.typography.headlineSmall,
       )
       Text(
-        text = "Continuing moves the aircraft, logs, and records on this device into that " +
-          "account, alongside what it already has. Nothing is deleted.",
+        text = stringResource(Res.string.upgrade_merge_body),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
       if (needsReauthorization) {
         Text(
-          text = "You'll be asked to confirm with $name once more — that second prompt is what " +
-            "signs you in to the existing account.",
+          text = stringResource(Res.string.upgrade_merge_reauth, name),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -239,7 +261,10 @@ internal fun UpgradeMergeSheet(
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         onClick = onConfirm,
       ) {
-        Text("Merge my records", style = LoginButtonLabelStyle)
+        Text(
+          text = stringResource(Res.string.upgrade_merge_confirm),
+          style = LoginButtonLabelStyle,
+        )
       }
       OutlinedButton(
         modifier = Modifier
@@ -248,7 +273,10 @@ internal fun UpgradeMergeSheet(
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         onClick = onDismiss,
       ) {
-        Text("Cancel", style = LoginButtonLabelStyle)
+        Text(
+          text = stringResource(CoreRes.string.cancel),
+          style = LoginButtonLabelStyle,
+        )
       }
     }
   }
@@ -264,24 +292,33 @@ internal fun UpgradeEmailDialog(
 ) {
   AlertDialog(
     onDismissRequest = { if (!state.sending) onDismiss() },
-    title = { Text("Continue with email") },
+    title = { Text(stringResource(Res.string.upgrade_email_title)) },
     text = {
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-        Text("We'll email you a link. Open it on this device to finish connecting your account.")
+        Text(stringResource(Res.string.upgrade_email_body))
         OutlinedTextField(
           value = state.email,
           onValueChange = onEmailChange,
           singleLine = true,
           enabled = !state.sending,
           isError = state.error != null,
-          label = { Text("Email address") },
+          label = { Text(stringResource(Res.string.upgrade_email_label)) },
           keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
             capitalization = KeyboardCapitalization.None,
           ),
           modifier = Modifier.fillMaxWidth(),
         )
-        state.error?.let { Text(it) }
+        state.error?.let { error ->
+          Text(
+            stringResource(
+              when (error) {
+                is EmailEntryError.InvalidAddress -> Res.string.upgrade_email_invalid
+                is EmailEntryError.SendFailed -> Res.string.upgrade_email_send_failed
+              }
+            )
+          )
+        }
       }
     },
     confirmButton = {
@@ -292,12 +329,14 @@ internal fun UpgradeEmailDialog(
         if (state.sending) {
           CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
         } else {
-          Text("Send link")
+          Text(stringResource(Res.string.upgrade_email_send))
         }
       }
     },
     dismissButton = {
-      TextButton(onClick = onDismiss, enabled = !state.sending) { Text("Cancel") }
+      TextButton(onClick = onDismiss, enabled = !state.sending) {
+        Text(stringResource(CoreRes.string.cancel))
+      }
     },
   )
 }
@@ -307,14 +346,13 @@ internal fun UpgradeEmailDialog(
 internal fun UpgradeLinkSentDialog(email: String, onDismiss: () -> Unit) {
   AlertDialog(
     onDismissRequest = onDismiss,
-    title = { Text("Check your email") },
+    title = { Text(stringResource(Res.string.upgrade_link_sent_title)) },
     text = {
-      Text(
-        "We sent a link to $email. Open it on this device and we'll ask you to confirm before " +
-          "connecting your records."
-      )
+      Text(stringResource(Res.string.upgrade_link_sent_body, email))
     },
-    confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } },
+    confirmButton = {
+      TextButton(onClick = onDismiss) { Text(stringResource(CoreRes.string.done)) }
+    },
   )
 }
 
@@ -330,14 +368,17 @@ internal fun UpgradeConfirmLinkDialog(
 ) {
   AlertDialog(
     onDismissRequest = onDismiss,
-    title = { Text("Connect this account?") },
+    title = { Text(stringResource(Res.string.upgrade_confirm_link_title)) },
     text = {
-      Text(
-        "Your records on this device will be connected to $email and backed up. " +
-          "If that isn't your address, cancel and start again."
-      )
+      Text(stringResource(Res.string.upgrade_confirm_link_body, email))
     },
-    confirmButton = { TextButton(onClick = onConfirm) { Text("Connect") } },
-    dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    confirmButton = {
+      TextButton(onClick = onConfirm) {
+        Text(stringResource(Res.string.upgrade_confirm_link_confirm))
+      }
+    },
+    dismissButton = {
+      TextButton(onClick = onDismiss) { Text(stringResource(CoreRes.string.cancel)) }
+    },
   )
 }

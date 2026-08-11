@@ -36,4 +36,29 @@
   <!-- Onboarding: welcome -->
   <string name="onboarding_welcome_aboard">Welcome aboard</string>
   <string name="onboarding_welcome_tagline">Let's get your hangar set up.</string>
+  <!-- Guest -> permanent account upgrade -->
+  <string name="upgrade_picker_title">Keep your records</string>
+  <string name="upgrade_picker_body">Connect an account so your aircraft, logs, and records are backed up and available on your other devices.</string>
+  <string name="upgrade_email_title">Continue with email</string>
+  <string name="upgrade_email_body">We\'ll email you a link. Open it on this device to finish connecting your account.</string>
+  <string name="upgrade_email_label">Email address</string>
+  <string name="upgrade_email_invalid">Enter a valid email address</string>
+  <string name="upgrade_email_send">Send link</string>
+  <string name="upgrade_email_send_failed">Couldn\'t send the link. Please try again.</string>
+  <string name="upgrade_link_sent_title">Check your email</string>
+  <string name="upgrade_link_sent_body">We sent a link to %1$s. Open it on this device and we\'ll ask you to confirm before connecting your records.</string>
+  <string name="upgrade_confirm_link_title">Connect this account?</string>
+  <string name="upgrade_confirm_link_body">Your records on this device will be connected to %1$s and backed up. If that isn\'t your address, cancel and start again.</string>
+  <string name="upgrade_confirm_link_confirm">Connect</string>
+  <string name="upgrade_merge_title">That %1$s already has an account</string>
+  <string name="upgrade_merge_body">Continuing moves the aircraft, logs, and records on this device into that account, alongside what it already has. Nothing is deleted.</string>
+  <string name="upgrade_merge_reauth">You\'ll be asked to confirm with %1$s once more — that second prompt is what signs you in to the existing account.</string>
+  <string name="upgrade_merge_confirm">Merge my records</string>
+  <string name="upgrade_provider_apple">Apple ID</string>
+  <string name="upgrade_provider_google">Google account</string>
+  <string name="upgrade_provider_email">email address</string>
+  <!-- Moved from feature/settings with the flow; the shell shows these via AccountUpgradeFlow. -->
+  <string name="account_upgrade_working">Syncing your records…</string>
+  <string name="account_upgrade_success">Syncing complete</string>
+  <string name="account_upgrade_error">Couldn\'t complete sync. Please try again.</string>
 </resources>

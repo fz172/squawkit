@@ -14,7 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import wingslog.feature.login.generated.resources.Res
+import wingslog.feature.login.generated.resources.account_upgrade_error
+import wingslog.feature.login.generated.resources.account_upgrade_success
+import wingslog.feature.login.generated.resources.account_upgrade_working
 
 /**
  * The whole guest → permanent account experience: the provider sheet, the email legs, the
@@ -22,19 +27,26 @@ import org.koin.compose.viewmodel.koinViewModel
  *
  * Lives here rather than in feature/settings because it *is* a sign-in experience — it reuses the
  * login page's buttons, styles and strings, and shares the email-link plumbing with
- * [dev.fanfly.wingslog.feature.login.EmailSignInScreen]. Settings only owns the entry point: it
- * renders this and calls [AccountUpgradeViewModel.choose] from its account row.
+ * [dev.fanfly.wingslog.feature.login.EmailSignInScreen].
  *
- * [onCompleted] fires once an upgrade succeeds, so the host can refresh whatever it shows about the
- * account. [onMessage] carries user-facing success/failure text for the host's snackbar, keeping
- * this composable free of any particular chrome.
+ * Hosted by the shell, not by Settings: an email upgrade link reopens the app on whatever
+ * destination it starts at, so this has to stay mounted for the whole signed-in session or the link
+ * is never seen. Settings owns only the entry point — it calls [AccountUpgradeViewModel.choose]
+ * from its account row, on the same ViewModel instance the shell renders.
+ *
+ * [onMessage] receives already-resolved text so the host needs no string resources of its own, and
+ * this composable stays free of any particular chrome. Hosts that display account state should
+ * observe [AccountUpgradeViewModel.completions] rather than relying on a callback here — the flow
+ * outlives any one screen, so a success can land while that screen is not composed.
  */
 @Composable
 fun AccountUpgradeFlow(
   viewModel: AccountUpgradeViewModel = koinViewModel(),
-  onCompleted: () -> Unit,
-  onMessage: (UpgradeMessage) -> Unit,
+  onMessage: (String) -> Unit,
 ) {
+  val successMessage = stringResource(Res.string.account_upgrade_success)
+  val errorMessage = stringResource(Res.string.account_upgrade_error)
+
   val state by viewModel.state.collectAsStateWithLifecycle()
 
   // An email link that reopened the app is offered to the flow, which claims it only when this
@@ -45,15 +57,15 @@ fun AccountUpgradeFlow(
   }
 
   LaunchedEffect(state) {
-    when (val current = state) {
+    when (state) {
       is UpgradeUiState.Success -> {
-        onCompleted()
-        onMessage(UpgradeMessage.Success)
+        onMessage(successMessage)
         viewModel.dismiss()
       }
 
       is UpgradeUiState.Error -> {
-        onMessage(UpgradeMessage.Failure(current.message))
+        // The provider's own message is logged, not shown: it is Firebase's wording, not ours.
+        onMessage(errorMessage)
         viewModel.dismiss()
       }
 
@@ -103,17 +115,11 @@ fun AccountUpgradeFlow(
           horizontalArrangement = Arrangement.spacedBy(Spacing.large),
         ) {
           CircularProgressIndicator(modifier = Modifier.size(Spacing.xLarge))
-          Text("Syncing your records…")
+          Text(stringResource(Res.string.account_upgrade_working))
         }
       },
     )
 
     else -> Unit
   }
-}
-
-/** What the host should tell the user. Text for the failure case comes from the auth layer. */
-sealed interface UpgradeMessage {
-  data object Success : UpgradeMessage
-  data class Failure(val message: String) : UpgradeMessage
 }

@@ -25,7 +25,7 @@ sealed interface UpgradeUiState {
    */
   data class EnteringEmail(
     val email: String = "",
-    val error: String? = null,
+    val error: EmailEntryError? = null,
     val sending: Boolean = false,
   ) : UpgradeUiState
 
@@ -62,4 +62,16 @@ sealed interface UpgradeUiState {
 
   /** Something failed; [message] is safe to surface. The user can retry. */
   data class Error(val message: String) : UpgradeUiState
+}
+
+/**
+ * Why an address was rejected. A type rather than a message because the ViewModel cannot resolve
+ * string resources, and the text is user-facing — see AGENTS.md on strings living in `strings.xml`.
+ */
+sealed interface EmailEntryError {
+  /** Malformed address; the field is still editable and keeps what was typed. */
+  data object InvalidAddress : EmailEntryError
+
+  /** The provider refused to send. [reason] is its own wording — logged, not shown. */
+  data class SendFailed(val reason: String) : EmailEntryError
 }

@@ -31,7 +31,6 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
-import dev.fanfly.wingslog.feature.login.upgrade.UpgradeMessage
 import dev.fanfly.wingslog.feature.settings.SettingsContent
 import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
@@ -177,17 +176,7 @@ fun AdaptiveShellRoute(
   // section is showing. The flow ignores links that aren't for this guest's pending upgrade.
   AccountUpgradeFlow(
     viewModel = upgradeViewModel,
-    onCompleted = {},
-    onMessage = { message ->
-      scope.launch {
-        snackbarHostState.showSnackbar(
-          when (message) {
-            is UpgradeMessage.Success -> "Syncing complete"
-            is UpgradeMessage.Failure -> "Couldn't complete sync. Please try again."
-          }
-        )
-      }
-    },
+    onMessage = { message -> scope.launch { snackbarHostState.showSnackbar(message) } },
   )
 
   if (showAddAircraftUpsell) {

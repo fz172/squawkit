@@ -36,8 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -55,11 +53,8 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
-import wingslog.feature.settings.generated.resources.account_upgrade_error
 import wingslog.feature.settings.generated.resources.account_upgrade_login_cta
 import wingslog.feature.settings.generated.resources.account_upgrade_login_subtitle
-import wingslog.feature.settings.generated.resources.account_upgrade_success
-import wingslog.feature.settings.generated.resources.account_upgrade_working
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.developer_options
 import wingslog.feature.settings.generated.resources.settings_developer_options_subtitle
@@ -102,20 +97,20 @@ fun SettingsContent(
   val appearanceMode by settingsViewModel.appearanceMode.collectAsStateWithLifecycle()
   val firebaseLoggingEnabled by settingsViewModel.firebaseLoggingEnabled.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
-  val scope = rememberCoroutineScope()
-  val upgradeSuccessMessage =
-    stringResource(SettingsRes.string.account_upgrade_success)
-  val upgradeErrorMessage =
-    stringResource(SettingsRes.string.account_upgrade_error)
 
   // With a sidebar, detail pages embed via the nested controller; otherwise they open full-screen
   // off the root controller.
   val hasSidebar = LocalLayoutTier.current.hasFullSidebar
   val detailNav = if (hasSidebar) sectionNavController else navController
 
-  // The upgrade can complete while Settings is off-screen (the flow is hosted by the shell), and
-  // this ViewModel is retained across that — so re-read rather than trusting the init snapshot.
+  // The account row is chosen from isAnonymous, and linking never fires authStateChanged, so this
+  // ViewModel would otherwise keep serving a stale snapshot. Re-read on entry for an upgrade that
+  // finished while Settings was off-screen, and on each completion for one that finishes while it
+  // is open — the flow is hosted by the shell, so both happen.
   LaunchedEffect(Unit) { settingsViewModel.refreshAccountState() }
+  LaunchedEffect(accountUpgradeViewModel) {
+    accountUpgradeViewModel.completions.collect { settingsViewModel.refreshAccountState() }
+  }
 
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {

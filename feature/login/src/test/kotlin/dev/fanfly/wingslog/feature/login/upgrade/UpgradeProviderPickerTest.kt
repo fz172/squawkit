@@ -16,6 +16,8 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -26,13 +28,17 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-internal fun testAppCapability(isAppleSignInSupported: Boolean) = AppCapability(
+internal fun testAppCapability(
+  isAppleSignInSupported: Boolean,
+  isGoogleUpgradeSupported: Boolean = true,
+) = AppCapability(
   isDeveloperOptionsSupported = false,
   isAircraftSharingSupported = true,
   isStressTestSupported = false,
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = true,
   isAppleSignInSupported = isAppleSignInSupported,
+  isGoogleUpgradeSupported = isGoogleUpgradeSupported,
   isSubscriptionSupported = false,
   isAdsSupported = false,
 )
@@ -64,6 +70,11 @@ class UpgradeProviderPickerTest {
     every { isAnonymous } returns true
   }
 
+  private val permanent: FirebaseUser = mockk {
+    every { uid } returns GUEST_UID
+    every { isAnonymous } returns false
+  }
+
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
@@ -79,13 +90,16 @@ class UpgradeProviderPickerTest {
     Dispatchers.resetMain()
   }
 
-  private fun viewModel(isAppleSignInSupported: Boolean = false) = AccountUpgradeViewModel(
+  private fun viewModel(
+    isAppleSignInSupported: Boolean = false,
+    isGoogleUpgradeSupported: Boolean = true,
+  ) = AccountUpgradeViewModel(
     authManager = authManager,
     migrator = migrator,
     technicianManager = technicianManager,
     syncEngine = syncEngine,
     emailStore = emailStore,
-    appCapability = testAppCapability(isAppleSignInSupported),
+    appCapability = testAppCapability(isAppleSignInSupported, isGoogleUpgradeSupported),
   )
 
   @Test
@@ -99,6 +113,42 @@ class UpgradeProviderPickerTest {
     assertThat((withoutApple.state.value as UpgradeUiState.ChoosingProvider).providers)
       .containsExactly(AuthProvider.Google, AuthProvider.Email)
       .inOrder()
+  }
+
+  /**
+   * iOS can sign in with Google but cannot *link* it — its native provider completes the Firebase
+   * sign-in itself and never hands back a credential. Offering it would put a button in the picker
+   * that always fails, so the capability gates the option rather than the error message.
+   */
+  @Test
+  fun choose_omitsGoogleWhereItCannotLink() = runTest(dispatcher) {
+    val vm = viewModel(isAppleSignInSupported = true, isGoogleUpgradeSupported = false)
+
+    vm.choose()
+
+    assertThat((vm.state.value as UpgradeUiState.ChoosingProvider).providers)
+      .containsExactly(AuthProvider.Apple, AuthProvider.Email)
+      .inOrder()
+  }
+
+  /**
+   * Linking never fires authStateChanged, and the flow drops straight from Success back to Idle, so
+   * a host watching only [UpgradeUiState] can miss the transition and keep showing "Log in".
+   */
+  @Test
+  fun completions_emitOnceTheUpgradeSucceeds() = runTest(dispatcher) {
+    coEvery { authManager.upgradeAnonymousAccount(AuthProvider.Google) } returns
+      AccountUpgradeResult.Linked(permanent)
+    every { authManager.getCurrentUser() } returnsMany listOf(guest, permanent, permanent, permanent)
+    val vm = viewModel()
+    val seen = mutableListOf<Unit>()
+    val job = launch { vm.completions.toList(seen) }
+
+    vm.startUpgrade(AuthProvider.Google)
+    advanceUntilIdle()
+
+    assertThat(seen).hasSize(1)
+    job.cancel()
   }
 
   @Test
