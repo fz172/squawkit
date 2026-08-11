@@ -9,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
@@ -28,6 +29,9 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
+import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
+import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.login.upgrade.UpgradeMessage
 import dev.fanfly.wingslog.feature.settings.SettingsContent
 import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
@@ -35,6 +39,7 @@ import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.dismiss
 import wingslog.core.sharedassets.generated.resources.sync_changes_discarded
@@ -52,6 +57,10 @@ fun AdaptiveShellRoute(
   isStressTestSupported: Boolean,
 ) {
   val viewModel = koinViewModel<AdaptiveShellViewModel>()
+  // Hoisted to the shell, not to Settings: an email upgrade link reopens the app on whatever
+  // destination it starts at, so the flow has to be mounted for the link to be seen at all.
+  val upgradeViewModel = koinViewModel<AccountUpgradeViewModel>()
+  val scope = rememberCoroutineScope()
   val state by viewModel.uiState.collectAsState()
   val atAircraftLimit by viewModel.atAircraftLimit.collectAsState()
 
@@ -137,6 +146,7 @@ fun AdaptiveShellRoute(
       if (section == ShellSection.SETTINGS) {
         SettingsSection(
           rootNavController = navController,
+          upgradeViewModel = upgradeViewModel,
           isStressTestSupported = isStressTestSupported
         )
       } else {
@@ -160,6 +170,23 @@ fun AdaptiveShellRoute(
         aircraftId = aircraftId,
         navController = navController,
       )
+    },
+  )
+
+  // Always mounted while signed in, so an upgrade link that reopens the app is seen no matter which
+  // section is showing. The flow ignores links that aren't for this guest's pending upgrade.
+  AccountUpgradeFlow(
+    viewModel = upgradeViewModel,
+    onCompleted = {},
+    onMessage = { message ->
+      scope.launch {
+        snackbarHostState.showSnackbar(
+          when (message) {
+            is UpgradeMessage.Success -> "Syncing complete"
+            is UpgradeMessage.Failure -> "Couldn't complete sync. Please try again."
+          }
+        )
+      }
     },
   )
 
@@ -188,6 +215,7 @@ private const val SETTINGS_ROOT_ROUTE = "settings_root"
 private fun SettingsSection(
   rootNavController: NavController,
   isStressTestSupported: Boolean,
+  upgradeViewModel: AccountUpgradeViewModel,
 ) {
   if (LocalLayoutTier.current.hasFullSidebar) {
     val settingsNav: NavHostController = rememberNavController()
@@ -206,11 +234,15 @@ private fun SettingsSection(
         SettingsContent(
           navController = rootNavController,
           sectionNavController = settingsNav,
+          accountUpgradeViewModel = upgradeViewModel,
         )
       }
       settingsDetailRoutes(settingsNav, isStressTestSupported)
     }
   } else {
-    SettingsContent(navController = rootNavController)
+    SettingsContent(
+      navController = rootNavController,
+      accountUpgradeViewModel = upgradeViewModel,
+    )
   }
 }

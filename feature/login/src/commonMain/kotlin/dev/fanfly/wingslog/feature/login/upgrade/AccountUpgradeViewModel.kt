@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.login.upgrade
 
+import co.touchlab.kermit.Logger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
@@ -107,12 +108,27 @@ class AccountUpgradeViewModel(
    */
   fun onIncomingLink(link: String) {
     if (_state.value is UpgradeUiState.ConfirmLink) return
-    val user = authManager.getCurrentUser() ?: return
-    if (!user.isAnonymous) return
-    if (!authManager.isSignInWithEmailLink(link)) return
+    val user = authManager.getCurrentUser()
+    if (user == null) {
+      logger.d { "Ignoring inbound link: nobody signed in" }
+      return
+    }
+    if (!user.isAnonymous) {
+      logger.d { "Ignoring inbound link: current user is not a guest" }
+      return
+    }
+    // Never log the link itself — it carries the oobCode, which is a usable credential.
+    if (!authManager.isSignInWithEmailLink(link)) {
+      logger.d { "Ignoring inbound link: not a Firebase sign-in link" }
+      return
+    }
 
     viewModelScope.launch {
-      val pending = emailStore.pendingEmail(user.uid) ?: return@launch
+      val pending = emailStore.pendingEmail(user.uid)
+      if (pending == null) {
+        logger.d { "Ignoring inbound link: no upgrade pending for this guest session" }
+        return@launch
+      }
       EmailLinkDeepLinks.consume()
       _state.value = UpgradeUiState.ConfirmLink(email = pending, link = link)
     }
@@ -278,6 +294,7 @@ class AccountUpgradeViewModel(
   }
 
   companion object {
+    private val logger = Logger.withTag("AccountUpgradeViewModel")
     private const val CURRENT_USER_SWITCH_TIMEOUT_MS = 3_000L
     private const val CURRENT_USER_SWITCH_POLL_MS = 50L
   }

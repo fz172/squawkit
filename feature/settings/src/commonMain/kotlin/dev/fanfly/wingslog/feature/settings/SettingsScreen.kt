@@ -50,9 +50,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
-import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
-import dev.fanfly.wingslog.feature.login.upgrade.UpgradeMessage
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.settings
@@ -114,6 +112,10 @@ fun SettingsContent(
   // off the root controller.
   val hasSidebar = LocalLayoutTier.current.hasFullSidebar
   val detailNav = if (hasSidebar) sectionNavController else navController
+
+  // The upgrade can complete while Settings is off-screen (the flow is hosted by the shell), and
+  // this ViewModel is retained across that — so re-read rather than trusting the init snapshot.
+  LaunchedEffect(Unit) { settingsViewModel.refreshAccountState() }
 
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {
@@ -277,25 +279,6 @@ fun SettingsContent(
     )
   }
 
-  // Settings owns only the entry point; the experience itself lives in feature/login, next to the
-  // sign-in surfaces whose buttons and email-link plumbing it shares.
-  AccountUpgradeFlow(
-    viewModel = accountUpgradeViewModel,
-    onCompleted = {
-      // Linking didn't fire authStateChanged; pull the new non-anonymous state in now.
-      settingsViewModel.refreshAccountState()
-    },
-    onMessage = { message ->
-      scope.launch {
-        snackbarHostState.showSnackbar(
-          when (message) {
-            is UpgradeMessage.Success -> upgradeSuccessMessage
-            is UpgradeMessage.Failure -> upgradeErrorMessage
-          }
-        )
-      }
-    },
-  )
 
 }
 
