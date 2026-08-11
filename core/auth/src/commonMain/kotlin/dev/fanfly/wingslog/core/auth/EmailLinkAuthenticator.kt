@@ -86,6 +86,10 @@ class EmailLinkAuthenticator(
       AccountUpgradeResult.Linked(result.user ?: auth.currentUser ?: current)
     } catch (e: FirebaseAuthUserCollisionException) {
       logger.i { "Email address already in use; offering merge" }
+      // Returns the same credential rather than [AccountUpgradeResult.ReauthRequiredToMerge], which
+      // Sign in with Apple needs: an Apple identity token is spent by the failed link and cannot be
+      // replayed. An email-link credential can. Verified on device — a guest upgrading onto an
+      // address that already has an account merges with this credential, no second link required.
       AccountUpgradeResult.CredentialInUse(credential)
     } catch (e: Exception) {
       logger.e(e) { "Email-link account upgrade failed" }
