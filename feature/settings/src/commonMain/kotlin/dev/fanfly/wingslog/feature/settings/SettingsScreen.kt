@@ -22,8 +22,8 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -152,21 +152,25 @@ fun SettingsContent(
           SettingsHeader()
         }
 
-        val preferenceRows = buildList<@Composable () -> Unit> {
+        val generalRows = buildList<@Composable () -> Unit> {
           add {
             AppearanceSettingRow(
               mode = appearanceMode,
               onModeChange = settingsViewModel::setAppearance,
             )
           }
-          add {
-            FirebaseLoggingSettingRow(
-              enabled = firebaseLoggingEnabled,
-              onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
-            )
+          // Shown only where the subscription capability is on (dev + dogfood today); hidden in the
+          // shipping release until GA, so no user sees a paywall entry before it exists.
+          if (user.isSubscriptionSupported) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.WorkspacePremium,
+                title = stringResource(SettingsRes.string.settings_subscription),
+                subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
+                onClick = { detailNav.navigate(Screen.Subscription.route) },
+              )
+            }
           }
-        }
-        val dataAndLogsRows = buildList<@Composable () -> Unit> {
           add {
             SettingsRow(
               icon = Icons.Default.CloudSync,
@@ -175,6 +179,27 @@ fun SettingsContent(
               onClick = { detailNav.navigate(Screen.SyncSettings.route) },
             )
           }
+        }
+        val supportRows = buildList<@Composable () -> Unit> {
+          add {
+            FirebaseLoggingSettingRow(
+              enabled = firebaseLoggingEnabled,
+              onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
+            )
+          }
+          // Developer Options is a developer surface: only on debug and dogfood-style builds, never in release.
+          if (user.isDeveloperOptionsSupported) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.Tune,
+                title = stringResource(SettingsRes.string.developer_options),
+                subtitle = stringResource(SettingsRes.string.settings_developer_options_subtitle),
+                onClick = { detailNav.navigate(Screen.DeveloperOptions.route) },
+              )
+            }
+          }
+        }
+        val dataManagementRows = buildList<@Composable () -> Unit> {
           add {
             SettingsRow(
               icon = Icons.Default.Engineering,
@@ -192,56 +217,33 @@ fun SettingsContent(
             )
           }
         }
-        val advancedRows = buildList<@Composable () -> Unit> {
-          // Developer Options is a developer surface: only on debug and dogfood-style builds, never in release.
-          if (user.isDeveloperOptionsSupported) {
+        val accountRows = buildList<@Composable () -> Unit> {
+          // Guest shows "Log in" (runs the upgrade); real accounts show "Log out".
+          if (user.isAnonymous) {
             add {
               SettingsRow(
-                icon = Icons.Default.Tune,
-                title = stringResource(SettingsRes.string.developer_options),
-                subtitle = stringResource(SettingsRes.string.settings_developer_options_subtitle),
-                onClick = { detailNav.navigate(Screen.DeveloperOptions.route) },
+                icon = Icons.AutoMirrored.Filled.Login,
+                title = stringResource(SettingsRes.string.account_upgrade_login_cta),
+                subtitle =
+                  stringResource(SettingsRes.string.account_upgrade_login_subtitle),
+                onClick = { accountUpgradeViewModel.choose() },
               )
             }
-            // Shown only where the subscription capability is on (dev + dogfood today); hidden in the
-            // shipping release until GA, so no user sees a paywall entry before it exists.
-            if (user.isSubscriptionSupported) {
-              add {
-                SettingsRow(
-                  icon = Icons.Default.Star,
-                  title = stringResource(SettingsRes.string.settings_subscription),
-                  subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
-                  onClick = { detailNav.navigate(Screen.Subscription.route) },
-                )
-              }
-            }
-            // Guest shows "Log in" (runs the upgrade); real accounts show "Log out".
-            if (user.isAnonymous) {
-              add {
-                SettingsRow(
-                  icon = Icons.AutoMirrored.Filled.Login,
-                  title = stringResource(SettingsRes.string.account_upgrade_login_cta),
-                  subtitle =
-                    stringResource(SettingsRes.string.account_upgrade_login_subtitle),
-                  onClick = { accountUpgradeViewModel.choose() },
-                )
-              }
-            } else {
-              add {
-                SettingsRow(
-                  icon = Icons.AutoMirrored.Filled.Logout,
-                  title = stringResource(SettingsRes.string.sign_out),
-                  subtitle = stringResource(SettingsRes.string.settings_logout_subtitle),
-                  onClick = { settingsViewModel.logOut() },
-                  settingsLevel = SettingsLevel.DANGER,
-                )
-              }
+          } else {
+            add {
+              SettingsRow(
+                icon = Icons.AutoMirrored.Filled.Logout,
+                title = stringResource(SettingsRes.string.sign_out),
+                subtitle = stringResource(SettingsRes.string.settings_logout_subtitle),
+                onClick = { settingsViewModel.logOut() },
+              )
             }
           }
         }
-        SettingsRowGroup(preferenceRows)
-        SettingsRowGroup(rows = dataAndLogsRows)
-        SettingsRowGroup(advancedRows)
+        SettingsRowGroup(generalRows)
+        SettingsRowGroup(dataManagementRows)
+        SettingsRowGroup(supportRows)
+        SettingsRowGroup(accountRows)
 
         Spacer(modifier = Modifier.height(Spacing.columnGap))
 
