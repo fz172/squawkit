@@ -54,6 +54,8 @@ kotlin {
       implementation(project(":feature:fleet:viewing"))
       implementation(project(":feature:logs:update"))
       implementation(project(":feature:settings"))
+      // AccountUpgradeFlow is hosted here so an upgrade email link is seen on any destination.
+      implementation(project(":feature:login"))
       implementation(project(":feature:subscription:datamanager"))
       implementation(project(":feature:subscription:viewing"))
       implementation(project(":feature:sharing:update"))

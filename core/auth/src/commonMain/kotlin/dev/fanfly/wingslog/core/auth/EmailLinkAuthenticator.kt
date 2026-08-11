@@ -3,7 +3,9 @@ package dev.fanfly.wingslog.core.auth
 import co.touchlab.kermit.Logger
 import dev.gitlive.firebase.auth.ActionCodeSettings
 import dev.gitlive.firebase.auth.AndroidPackageName
+import dev.gitlive.firebase.auth.EmailAuthProvider
 import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.auth.FirebaseAuthUserCollisionException
 import dev.gitlive.firebase.auth.FirebaseUser
 
 /**
@@ -56,6 +58,42 @@ class EmailLinkAuthenticator(
     } catch (e: Exception) {
       logger.e(e) { "signInWithEmailLink failed" }
       null
+    }
+  }
+
+  /**
+   * Upgrade leg 2 — links [link]'s credential to the *current* user instead of signing in with it,
+   * so a guest keeps their anonymous UID and every local row keyed to it stays valid.
+   *
+   * [completeSignInLink] would replace the current user, orphaning that data; the distinction is
+   * the whole reason this method exists alongside it.
+   */
+  suspend fun linkToCurrentUser(
+    email: String,
+    link: String
+  ): AccountUpgradeResult {
+    val trimmed = email.trim()
+    if (trimmed.isEmpty()) return AccountUpgradeResult.Failed("No email address to link")
+    if (!isSignInWithEmailLink(link)) {
+      return AccountUpgradeResult.Failed("That link is not a sign-in link")
+    }
+    val current = auth.currentUser
+      ?: return AccountUpgradeResult.Failed("No signed-in user to upgrade")
+
+    val credential = EmailAuthProvider.credentialWithLink(trimmed, link)
+    return try {
+      val result = current.linkWithCredential(credential)
+      AccountUpgradeResult.Linked(result.user ?: auth.currentUser ?: current)
+    } catch (e: FirebaseAuthUserCollisionException) {
+      logger.i { "Email address already in use; offering merge" }
+      // Returns the same credential rather than [AccountUpgradeResult.ReauthRequiredToMerge], which
+      // Sign in with Apple needs: an Apple identity token is spent by the failed link and cannot be
+      // replayed. An email-link credential can. Verified on device — a guest upgrading onto an
+      // address that already has an account merges with this credential, no second link required.
+      AccountUpgradeResult.CredentialInUse(credential)
+    } catch (e: Exception) {
+      logger.e(e) { "Email-link account upgrade failed" }
+      AccountUpgradeResult.Failed(e.message ?: "Linking failed")
     }
   }
 

@@ -48,17 +48,13 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
-import dev.fanfly.wingslog.feature.settings.upgrade.AccountUpgradeViewModel
-import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeUiState
+import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
-import wingslog.feature.settings.generated.resources.account_upgrade_error
 import wingslog.feature.settings.generated.resources.account_upgrade_login_cta
 import wingslog.feature.settings.generated.resources.account_upgrade_login_subtitle
-import wingslog.feature.settings.generated.resources.account_upgrade_success
-import wingslog.feature.settings.generated.resources.account_upgrade_working
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.developer_options
 import wingslog.feature.settings.generated.resources.settings_developer_options_subtitle
@@ -100,7 +96,6 @@ fun SettingsContent(
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
   val appearanceMode by settingsViewModel.appearanceMode.collectAsStateWithLifecycle()
   val firebaseLoggingEnabled by settingsViewModel.firebaseLoggingEnabled.collectAsStateWithLifecycle()
-  val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
 
   // With a sidebar, detail pages embed via the nested controller; otherwise they open full-screen
@@ -108,10 +103,14 @@ fun SettingsContent(
   val hasSidebar = LocalLayoutTier.current.hasFullSidebar
   val detailNav = if (hasSidebar) sectionNavController else navController
 
-  val upgradeSuccessMessage =
-    stringResource(SettingsRes.string.account_upgrade_success)
-  val upgradeErrorMessage =
-    stringResource(SettingsRes.string.account_upgrade_error)
+  // The account row is chosen from isAnonymous, and linking never fires authStateChanged, so this
+  // ViewModel would otherwise keep serving a stale snapshot. Re-read on entry for an upgrade that
+  // finished while Settings was off-screen, and on each completion for one that finishes while it
+  // is open — the flow is hosted by the shell, so both happen.
+  LaunchedEffect(Unit) { settingsViewModel.refreshAccountState() }
+  LaunchedEffect(accountUpgradeViewModel) {
+    accountUpgradeViewModel.completions.collect { settingsViewModel.refreshAccountState() }
+  }
 
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {
@@ -119,25 +118,6 @@ fun SettingsContent(
         popUpTo(Screen.AdaptiveShell.route) { inclusive = true }
         launchSingleTop = true
       }
-    }
-  }
-
-  // Terminal upgrade states surface as a snackbar, then reset to Idle.
-  LaunchedEffect(upgradeState) {
-    when (upgradeState) {
-      is UpgradeUiState.Success -> {
-        // Linking didn't fire authStateChanged; pull the new photo / non-anonymous state in now.
-        settingsViewModel.refreshAccountState()
-        snackbarHostState.showSnackbar(upgradeSuccessMessage)
-        accountUpgradeViewModel.dismiss()
-      }
-
-      is UpgradeUiState.Error -> {
-        snackbarHostState.showSnackbar(upgradeErrorMessage)
-        accountUpgradeViewModel.dismiss()
-      }
-
-      else -> Unit
     }
   }
 
@@ -259,7 +239,7 @@ fun SettingsContent(
               title = stringResource(SettingsRes.string.account_upgrade_login_cta),
               subtitle =
                 stringResource(SettingsRes.string.account_upgrade_login_subtitle),
-              onClick = { accountUpgradeViewModel.startUpgrade() },
+              onClick = { accountUpgradeViewModel.choose() },
             )
           }
         } else {
@@ -294,24 +274,7 @@ fun SettingsContent(
     )
   }
 
-  when (upgradeState) {
-    is UpgradeUiState.Working -> AlertDialog(
-      // Non-dismissable: provider sign-in / sync re-keying is in flight.
-      onDismissRequest = {},
-      confirmButton = {},
-      text = {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(Spacing.large),
-        ) {
-          CircularProgressIndicator(modifier = Modifier.size(Spacing.xLarge))
-          Text(stringResource(SettingsRes.string.account_upgrade_working))
-        }
-      },
-    )
 
-    else -> Unit
-  }
 }
 
 /**

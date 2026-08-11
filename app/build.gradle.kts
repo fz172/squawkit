@@ -143,6 +143,8 @@ dependencies {
   implementation(project(":composeApp"))
   implementation(project(":feature:sync:data"))
   implementation(project(":feature:login"))
+  // EmailLinkDeepLinks: MainActivity hands the launch intent's URL to the shared auth channel.
+  implementation(project(":core:auth"))
   implementation(project(":feature:sharing:datamanager"))
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)

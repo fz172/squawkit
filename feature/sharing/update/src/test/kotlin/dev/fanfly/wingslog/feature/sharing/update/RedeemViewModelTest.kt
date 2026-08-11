@@ -283,6 +283,7 @@ private fun appCapability(sharing: Boolean) = AppCapability(
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = true,
   isAppleSignInSupported = false,
+  isGoogleUpgradeSupported = false,
   isSubscriptionSupported = false,
   isAdsSupported = false,
 )

@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedAircraftStore
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.auth.SendLinkResult
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -91,8 +92,18 @@ class AdaptiveShellViewModelTest {
       link: String
     ): FirebaseUser? = null
 
-    override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult =
-      AccountUpgradeResult.Cancelled
+    override suspend fun upgradeAnonymousAccount(
+      provider: AuthProvider,
+    ): AccountUpgradeResult = AccountUpgradeResult.Cancelled
+
+    override suspend fun completeUpgradeWithEmailLink(
+      email: String,
+      link: String,
+    ): AccountUpgradeResult = AccountUpgradeResult.Cancelled
+
+    override suspend fun mergeIntoExistingAccount(
+      provider: AuthProvider,
+    ): AccountUpgradeResult = AccountUpgradeResult.Cancelled
 
     override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult =
       AccountUpgradeResult.Cancelled

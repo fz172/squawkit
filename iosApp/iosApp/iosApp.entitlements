@@ -6,5 +6,25 @@
 	<array>
 		<string>Default</string>
 	</array>
+	<!--
+	  Both domains are needed, and firebaseapp.com is the one that matters for email sign-in.
+	  Firebase generates that link against the project's default auth domain, so what lands in the
+	  inbox is https://wingslog-9ca4e.firebaseapp.com/__/auth/links?link=... — the custom authDomain
+	  only appears later as the continueUrl. A Universal Link fires on the tapped URL's host, and a
+	  server-side redirect to the continue URL does not trigger a second hand-off, so claiming only
+	  squawkit.fanfly.dev left the link opening in the browser.
+
+	  squawkit.fanfly.dev stays for share invites (/share#...) and the continue URL.
+
+	  Firebase Auth provisions a matching apple-app-site-association on both hosts listing
+	  5NULUT3VRD.dev.fanfly.wingslog.iosApp for "/*". Its exclusions do not cover this path:
+	  "NOT /__/auth/action/" and "NOT /__/auth/handler/" both require a trailing slash, and
+	  "NOT /_/*" is a single underscore, so /__/auth/links falls through to "/*".
+	-->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:wingslog-9ca4e.firebaseapp.com</string>
+		<string>applinks:squawkit.fanfly.dev</string>
+	</array>
 </dict>
 </plist>

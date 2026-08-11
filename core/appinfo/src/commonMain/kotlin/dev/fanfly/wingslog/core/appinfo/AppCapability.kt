@@ -23,6 +23,14 @@ data class AppCapability(
   val isAnonymousLoginSupported: Boolean,
   val isAppleSignInSupported: Boolean,
   /**
+   * Whether a guest can attach their session to a Google account on this platform.
+   *
+   * Separate from Google *sign-in*, which works everywhere: linking needs a credential, and iOS's
+   * native provider signs in to Firebase itself rather than handing one back. Offering it there
+   * would put a button in the picker that can never succeed.
+   */
+  val isGoogleUpgradeSupported: Boolean,
+  /**
    * Subscriptions / SquawkIt Pro (subscription design §1). The staged-rollout gate, like
    * [isAircraftSharingSupported]: on in dev + dogfood, off in the shipping release until GA.
    *

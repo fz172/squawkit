@@ -5,7 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import dev.fanfly.wingslog.feature.login.EmailLinkDeepLinks
+import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 
 class MainActivity : ComponentActivity() {

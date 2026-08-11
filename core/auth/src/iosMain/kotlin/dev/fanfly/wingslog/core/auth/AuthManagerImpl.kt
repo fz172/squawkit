@@ -158,7 +158,25 @@ class AuthManagerImpl(
    *
    * Mirrors the Android/Google implementation; see docs/account/account_upgrade_design.html.
    */
-  override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult {
+  override suspend fun upgradeAnonymousAccount(
+    provider: AuthProvider,
+  ): AccountUpgradeResult = when (provider) {
+    AuthProvider.Apple -> upgradeWithApple()
+    AuthProvider.Google -> AccountUpgradeResult.Failed(
+      "Google account upgrade is not available on iOS yet"
+    )
+
+    AuthProvider.Email -> AccountUpgradeResult.Failed(
+      "Email upgrade completes through completeUpgradeWithEmailLink"
+    )
+  }
+
+  override suspend fun completeUpgradeWithEmailLink(
+    email: String,
+    link: String,
+  ): AccountUpgradeResult = emailLink.linkToCurrentUser(email, link)
+
+  private suspend fun upgradeWithApple(): AccountUpgradeResult {
     val current = authProvider.currentUser
       ?: return AccountUpgradeResult.Failed("No signed-in user to upgrade")
 
@@ -180,12 +198,45 @@ class AuthManagerImpl(
       captureAppleName(user, result.fullName)
       AccountUpgradeResult.Linked(user)
     } catch (e: FirebaseAuthUserCollisionException) {
-      logger.i { "Apple account already in use; offering merge" }
-      AccountUpgradeResult.CredentialInUse(credential)
+      logger.i { "Apple account already in use; merge needs a fresh authorization" }
+      AccountUpgradeResult.ReauthRequiredToMerge(AuthProvider.Apple)
     } catch (e: Exception) {
       logger.e(e) { "Account upgrade: linking failed" }
       AccountUpgradeResult.Failed(e.message ?: "Linking failed")
     }
+  }
+
+  /**
+   * Runs a *second* Apple authorization and signs in to the account that already owns this Apple ID.
+   *
+   * An Apple identity token is single-use and bound to the nonce it was issued for, so the one the
+   * failed `linkWithCredential` consumed cannot be replayed — Firebase rejects it with
+   * `ERROR_MISSING_OR_INVALID_NONCE` ("Duplicate credential received"). Google's ID token can back a
+   * second credential, which is why only this path needs a re-prompt.
+   *
+   * The caller shows the user why before this runs; the sheet itself is normally a Face ID
+   * confirmation, since the app is already authorized for the Apple ID.
+   */
+  override suspend fun mergeIntoExistingAccount(
+    provider: AuthProvider,
+  ): AccountUpgradeResult {
+    if (provider != AuthProvider.Apple) {
+      return AccountUpgradeResult.Failed("Only Sign in with Apple re-authorizes to merge on iOS")
+    }
+
+    val retry = IosAppleSignInBridge.signIn()
+    if (retry.cancelled) {
+      logger.d { "Merge cancelled at the second Apple authorization" }
+      return AccountUpgradeResult.Cancelled
+    }
+    if (retry.errorMessage != null) {
+      logger.e { "Merge: second Apple authorization failed: ${retry.errorMessage}" }
+      return AccountUpgradeResult.Failed(retry.errorMessage)
+    }
+    val fresh = retry.toCredential()
+      ?: return AccountUpgradeResult.Failed("Could not read the Apple credential")
+
+    return signInToExistingAccount(fresh)
   }
 
   override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult {

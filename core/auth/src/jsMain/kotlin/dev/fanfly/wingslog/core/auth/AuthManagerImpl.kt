@@ -92,10 +92,29 @@ class AuthManagerImpl(
   }
 
   /**
-   * No-op on web: anonymous users don't exist here, so there is nothing to upgrade.
+   * No-op on web for every provider: anonymous users don't exist here, so there is nothing to
+   * upgrade. The picker is never shown, since the Settings upgrade row is itself gated on being a
+   * guest.
    */
-  override suspend fun upgradeAnonymousAccount(): AccountUpgradeResult {
-    logger.w { "upgradeAnonymousAccount() is not applicable on web (no anonymous users)" }
+  override suspend fun upgradeAnonymousAccount(
+    provider: AuthProvider,
+  ): AccountUpgradeResult {
+    logger.w { "upgradeAnonymousAccount($provider) is not applicable on web (no anonymous users)" }
+    return AccountUpgradeResult.Failed("Anonymous accounts are not supported on web")
+  }
+
+  override suspend fun completeUpgradeWithEmailLink(
+    email: String,
+    link: String,
+  ): AccountUpgradeResult {
+    logger.w { "completeUpgradeWithEmailLink() is not applicable on web (no anonymous users)" }
+    return AccountUpgradeResult.Failed("Anonymous accounts are not supported on web")
+  }
+
+  override suspend fun mergeIntoExistingAccount(
+    provider: AuthProvider,
+  ): AccountUpgradeResult {
+    logger.w { "mergeIntoExistingAccount() is not applicable on web (no anonymous users)" }
     return AccountUpgradeResult.Failed("Anonymous accounts are not supported on web")
   }
 

@@ -1,9 +1,10 @@
-package dev.fanfly.wingslog.feature.settings.upgrade
+package dev.fanfly.wingslog.feature.login.upgrade
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
@@ -62,7 +63,7 @@ class AccountUpgradeNameTest {
   fun setUp() {
     Dispatchers.setMain(dispatcher)
     every { authManager.getCurrentUser() } returns permanentUser
-    coEvery { authManager.upgradeAnonymousAccount() } returns
+    coEvery { authManager.upgradeAnonymousAccount(any()) } returns
       AccountUpgradeResult.Linked(permanentUser)
     coEvery { technicianManager.ensureSelfProfile() } returns Result.success(Unit)
     every { technicianManager.observeSelf() } returns
@@ -72,16 +73,20 @@ class AccountUpgradeNameTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
+  private val emailStore: UpgradeEmailStore = mockk(relaxed = true)
+
   private fun viewModel() = AccountUpgradeViewModel(
     authManager = authManager,
     migrator = migrator,
     technicianManager = technicianManager,
     syncEngine = syncEngine,
+    emailStore = emailStore,
+    appCapability = testAppCapability(isAppleSignInSupported = false),
   )
 
   @Test
   fun upgrade_pushesTheInAppNameToTheAuthProfile_notTheOtherWayRound() = runTest(dispatcher) {
-    viewModel().startUpgrade()
+    viewModel().startUpgrade(AuthProvider.Google)
     advanceUntilIdle()
 
     // The token must carry the name the user chose, because that is what the invite's hostName is
@@ -94,7 +99,7 @@ class AccountUpgradeNameTest {
   fun upgrade_neverAsksToReplaceTheExistingName() = runTest(dispatcher) {
     // ensureSelfProfile has no replace flag any more; this pins that the upgrade path calls the
     // seed-only version, so a filled-in profile is left alone.
-    viewModel().startUpgrade()
+    viewModel().startUpgrade(AuthProvider.Google)
     advanceUntilIdle()
 
     coVerify(exactly = 1) { technicianManager.ensureSelfProfile() }
@@ -106,7 +111,7 @@ class AccountUpgradeNameTest {
     // profile from the account, and there is no in-app name to push back.
     every { technicianManager.observeSelf() } returns flowOf(Technician(id = "self-1", name = ""))
 
-    viewModel().startUpgrade()
+    viewModel().startUpgrade(AuthProvider.Google)
     advanceUntilIdle()
 
     coVerify(exactly = 0) { authManager.updateDisplayName(any()) }
@@ -125,13 +130,22 @@ class AccountUpgradeNameTest {
     // First call captures the guest UID; the rest satisfy awaitPermanentCurrentUser (now the account).
     val currentUsers = ArrayDeque(listOf(guest, permanentUser))
     every { authManager.getCurrentUser() } answers { currentUsers.removeFirstOrNull() ?: permanentUser }
-    coEvery { authManager.upgradeAnonymousAccount() } returns
+    coEvery { authManager.upgradeAnonymousAccount(any()) } returns
       AccountUpgradeResult.CredentialInUse(mockk())
     coEvery { authManager.signInToExistingAccount(any()) } returns
       AccountUpgradeResult.Linked(permanentUser)
     coEvery { technicianManager.saveSelfName(any()) } returns Result.success(Unit)
 
-    viewModel().startUpgrade()
+    val vm = viewModel()
+    vm.startUpgrade(AuthProvider.Google)
+    advanceUntilIdle()
+
+    // A collision now stops to explain that the account already exists; nothing moves until the
+    // user accepts, so the merge is a decision rather than a surprise.
+    assertThat(vm.state.value).isInstanceOf(UpgradeUiState.ConfirmMerge::class.java)
+    coVerify(exactly = 0) { migrator.reassign(any(), any()) }
+
+    vm.confirmMerge()
     advanceUntilIdle()
 
     coVerify { migrator.reassign(fromUid = "guest-uid", toUid = UID) }
@@ -150,12 +164,12 @@ class AccountUpgradeNameTest {
     }
     val currentUsers = ArrayDeque(listOf(guest, permanentUser))
     every { authManager.getCurrentUser() } answers { currentUsers.removeFirstOrNull() ?: permanentUser }
-    coEvery { authManager.upgradeAnonymousAccount() } returns
+    coEvery { authManager.upgradeAnonymousAccount(any()) } returns
       AccountUpgradeResult.CredentialInUse(mockk())
     coEvery { authManager.signInToExistingAccount(any()) } returns
       AccountUpgradeResult.Linked(permanentUser)
 
-    viewModel().startUpgrade()
+    viewModel().startUpgrade(AuthProvider.Google)
     advanceUntilIdle()
 
     coVerify(exactly = 0) { technicianManager.saveSelfName(any()) }

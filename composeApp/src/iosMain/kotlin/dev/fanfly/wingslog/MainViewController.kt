@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog
 
 import androidx.compose.ui.window.ComposeUIViewController
+import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.auth.IosAppleSignInBridge
 import dev.fanfly.wingslog.core.auth.IosGoogleSignInBridge
 import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.di.initKoin
-import dev.fanfly.wingslog.feature.login.EmailLinkDeepLinks
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.blob.IosAppCheckBridge
