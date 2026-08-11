@@ -84,7 +84,7 @@ class EmailLinkAuthenticator(
     return try {
       val result = current.linkWithCredential(credential)
       AccountUpgradeResult.Linked(result.user ?: auth.currentUser ?: current)
-    } catch (e: FirebaseAuthUserCollisionException) {
+    } catch (_: FirebaseAuthUserCollisionException) {
       logger.i { "Email address already in use; offering merge" }
       // Returns the same credential rather than [AccountUpgradeResult.ReauthRequiredToMerge], which
       // Sign in with Apple needs: an Apple identity token is spent by the failed link and cannot be

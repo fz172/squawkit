@@ -7,11 +7,6 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isStressTestSupported = isDeveloperBuild,
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = false,
-  // On: the Apple provider is enabled in the Firebase console, backed by a Services ID whose return
-  // URL is `https://squawkit.fanfly.dev/__/auth/handler` — the custom `authDomain` this app
-  // initializes with, not the default `*.firebaseapp.com` (#398). This flag is what makes the button
-  // appear, so it stays in step with that console config: turn it off again if the provider is ever
-  // disabled, or the button fails with `auth/operation-not-allowed`.
   isAppleSignInSupported = true,
   // Moot: web has no guest sessions to upgrade.
   isGoogleUpgradeSupported = false,

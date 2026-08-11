@@ -15,7 +15,7 @@ import co.touchlab.kermit.Severity
  * Call once per host at startup, **before `startKoin`**, so logging emitted while the graph is
  * being constructed is gated too. Every `Logger.withTag(...)` in the app is derived from the
  * default [Logger]'s config instance, so this applies to loggers already constructed as well as to
- * ones created afterwards.
+ * ones created afterward.
  *
  * This gates *emission*. It does not remove the log strings from the shipped binary.
  */
