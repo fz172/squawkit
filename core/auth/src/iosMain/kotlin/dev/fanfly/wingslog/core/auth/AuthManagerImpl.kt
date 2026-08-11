@@ -198,12 +198,42 @@ class AuthManagerImpl(
       captureAppleName(user, result.fullName)
       AccountUpgradeResult.Linked(user)
     } catch (e: FirebaseAuthUserCollisionException) {
-      logger.i { "Apple account already in use; offering merge" }
-      AccountUpgradeResult.CredentialInUse(credential)
+      logger.i { "Apple account already in use; re-authorizing for the merge path" }
+      freshCredentialForMerge()
     } catch (e: Exception) {
       logger.e(e) { "Account upgrade: linking failed" }
       AccountUpgradeResult.Failed(e.message ?: "Linking failed")
     }
+  }
+
+  /**
+   * Gets a *second* Apple authorization for the merge path.
+   *
+   * An Apple identity token is single-use and bound to the nonce it was issued for. The failed
+   * `linkWithCredential` above already spent this one, so handing the same credential to
+   * [signInToExistingAccount] fails with `ERROR_MISSING_OR_INVALID_NONCE` ("Duplicate credential
+   * received") rather than signing in.
+   *
+   * Google does not have this problem — its ID token can back a second credential — which is why
+   * the Android path can reuse what it already has and this one cannot.
+   *
+   * The user sees the Apple sheet again. That is unfortunate but honest: the second prompt is what
+   * actually authorizes the sign-in to the existing account. It is normally a Face ID confirmation,
+   * since the app is already authorized for this Apple ID.
+   */
+  private suspend fun freshCredentialForMerge(): AccountUpgradeResult {
+    val retry = IosAppleSignInBridge.signIn()
+    if (retry.cancelled) {
+      logger.d { "Merge cancelled at the second Apple authorization" }
+      return AccountUpgradeResult.Cancelled
+    }
+    if (retry.errorMessage != null) {
+      logger.e { "Merge: second Apple authorization failed: ${retry.errorMessage}" }
+      return AccountUpgradeResult.Failed(retry.errorMessage)
+    }
+    val fresh = retry.toCredential()
+      ?: return AccountUpgradeResult.Failed("Could not read the Apple credential")
+    return AccountUpgradeResult.CredentialInUse(fresh)
   }
 
   override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult {

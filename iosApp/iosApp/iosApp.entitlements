@@ -6,5 +6,16 @@
 	<array>
 		<string>Default</string>
 	</array>
+	<!--
+	  Without this the email sign-in link opens in the browser instead of the app: iOS only claims a
+	  domain the binary declares here. The matching apple-app-site-association is already served at
+	  https://squawkit.fanfly.dev/.well-known/apple-app-site-association (Firebase Auth provisions it
+	  for the registered iOS app) and lists 5NULUT3VRD.dev.fanfly.wingslog.iosApp for "/*", while
+	  excluding /__/auth/* so the OAuth handler keeps working in the browser where it belongs.
+	-->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:squawkit.fanfly.dev</string>
+	</array>
 </dict>
 </plist>

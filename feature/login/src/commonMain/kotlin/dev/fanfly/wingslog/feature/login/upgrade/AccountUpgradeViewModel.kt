@@ -164,7 +164,7 @@ class AccountUpgradeViewModel(
         }
 
         is AccountUpgradeResult.Cancelled -> UpgradeUiState.Idle
-        is AccountUpgradeResult.Failed -> UpgradeUiState.Error(result.message)
+        is AccountUpgradeResult.Failed -> failed(result.message)
       }
     }
   }
@@ -215,7 +215,7 @@ class AccountUpgradeViewModel(
           }
 
           is AccountUpgradeResult.Cancelled -> UpgradeUiState.Idle
-          is AccountUpgradeResult.Failed -> UpgradeUiState.Error(result.message)
+          is AccountUpgradeResult.Failed -> failed(result.message)
         }
     }
   }
@@ -282,7 +282,7 @@ class AccountUpgradeViewModel(
         }
       }
 
-      is AccountUpgradeResult.Failed -> UpgradeUiState.Error(result.message)
+      is AccountUpgradeResult.Failed -> failed(result.message)
       else -> UpgradeUiState.Error("Sign-in failed")
     }
   }
@@ -304,6 +304,16 @@ class AccountUpgradeViewModel(
   private suspend fun refreshLocalAccountData() {
     syncEngine.hydrateCurrentUserNow()
     syncEngine.resyncCurrentUser()
+  }
+
+  /**
+   * The UI shows generic copy for failures, so the provider's own message would otherwise be lost
+   * — and it is the only thing that says *why*. Logged at warn so a failure is diagnosable from a
+   * normal log capture rather than a stack trace.
+   */
+  private fun failed(message: String): UpgradeUiState.Error {
+    logger.w { "Account upgrade failed: $message" }
+    return UpgradeUiState.Error(message)
   }
 
   companion object {
