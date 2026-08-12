@@ -5,45 +5,6 @@ import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseAuthUserCollisionException
 import dev.gitlive.firebase.auth.FirebaseUser
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
-
-/**
- * Connects shared Compose login actions to the native sign-in presenter owned by the iOS app.
- *
- * The login screen disables its actions while a request is in flight, so a single pending
- * continuation is sufficient and also prevents multiple native account-pickers from appearing.
- */
-object IosGoogleSignInBridge {
-  private var signInHandler: (() -> Unit)? = null
-  private var pendingCompletion: Continuation<String?>? = null
-
-  fun install(signInHandler: () -> Unit) {
-    this.signInHandler = signInHandler
-  }
-
-  fun complete(errorMessage: String?) {
-    val completion = pendingCompletion ?: return
-    pendingCompletion = null
-    completion.resume(errorMessage)
-  }
-
-  internal suspend fun signIn(): String? = suspendCoroutine { continuation ->
-    val signIn = signInHandler
-    if (signIn == null) {
-      continuation.resume("Native Google Sign-In provider is not configured")
-      return@suspendCoroutine
-    }
-    if (pendingCompletion != null) {
-      continuation.resume("A Google Sign-In request is already in progress")
-      return@suspendCoroutine
-    }
-
-    pendingCompletion = continuation
-    signIn()
-  }
-}
 
 class AuthManagerImpl(
   private val authProvider: FirebaseAuth,
@@ -71,17 +32,37 @@ class AuthManagerImpl(
   override suspend fun trySilentLogin(): FirebaseUser? =
     authProvider.currentUser
 
+  /**
+   * Sign in with Google, via the native `GIDSignIn` sheet presented by the Swift app.
+   *
+   * Swift returns the tokens and the Firebase exchange happens here, the same shape as
+   * [signInWithApple] — see [IosGoogleSignInBridge] for why the sign-in is no longer done natively.
+   */
   override suspend fun signInWithGoogle(): FirebaseUser? {
-    val error = IosGoogleSignInBridge.signIn()
-    if (error != null) {
-      logger.w { "Google sign-in failed: $error" }
+    val result = IosGoogleSignInBridge.signIn()
+    if (result.cancelled) {
+      logger.d { "Google sign-in cancelled by user" }
+      return null
+    }
+    if (result.errorMessage != null) {
+      logger.w { "Google sign-in failed: ${result.errorMessage}" }
+      return null
+    }
+    val credential = result.toCredential() ?: run {
+      logger.w { "Google sign-in returned no usable token pair" }
       return null
     }
 
-    return authProvider.currentUser.also { user ->
-      if (user == null) {
-        logger.w { "Native Google sign-in completed without a Firebase user" }
+    return try {
+      val signInResult = authProvider.signInWithCredential(credential)
+      signInResult.user ?: authProvider.currentUser.also { user ->
+        if (user == null) {
+          logger.w { "Google sign-in completed without a Firebase user" }
+        }
       }
+    } catch (e: Exception) {
+      logger.e(e) { "Firebase sign-in with the Google credential failed" }
+      null
     }
   }
 
@@ -152,19 +133,17 @@ class AuthManagerImpl(
   }
 
   /**
-   * Links a Sign in with Apple credential to the current anonymous user, preserving the UID so
-   * every local row stays valid with zero migration. On a collision (that Apple ID already has a
-   * Firebase account) returns the credential so the caller can offer the merge path instead.
+   * Links the chosen provider's credential to the current anonymous user, preserving the UID so
+   * every local row stays valid with zero migration. On a collision (that account already exists)
+   * the caller is handed the merge path instead.
    *
-   * Mirrors the Android/Google implementation; see docs/account/account_upgrade_design.html.
+   * Mirrors the Android implementation; see docs/account/account_upgrade_design.html.
    */
   override suspend fun upgradeAnonymousAccount(
     provider: AuthProvider,
   ): AccountUpgradeResult = when (provider) {
     AuthProvider.Apple -> upgradeWithApple()
-    AuthProvider.Google -> AccountUpgradeResult.Failed(
-      "Google account upgrade is not available on iOS yet"
-    )
+    AuthProvider.Google -> upgradeWithGoogle()
 
     AuthProvider.Email -> AccountUpgradeResult.Failed(
       "Email upgrade completes through completeUpgradeWithEmailLink"
@@ -175,6 +154,42 @@ class AuthManagerImpl(
     email: String,
     link: String,
   ): AccountUpgradeResult = emailLink.linkToCurrentUser(email, link)
+
+  /**
+   * The Google half of [upgradeAnonymousAccount].
+   *
+   * Unlike [upgradeWithApple], the collision path returns [AccountUpgradeResult.CredentialInUse]
+   * rather than [AccountUpgradeResult.ReauthRequiredToMerge]: a Google ID token is not nonce-bound
+   * and single-use, so the same credential the failed link consumed can back the merge sign-in —
+   * no second account picker.
+   */
+  private suspend fun upgradeWithGoogle(): AccountUpgradeResult {
+    val current = authProvider.currentUser
+      ?: return AccountUpgradeResult.Failed("No signed-in user to upgrade")
+
+    val result = IosGoogleSignInBridge.signIn()
+    if (result.cancelled) {
+      logger.d { "Account upgrade cancelled by user" }
+      return AccountUpgradeResult.Cancelled
+    }
+    if (result.errorMessage != null) {
+      logger.e { "Account upgrade: Google authorization failed: ${result.errorMessage}" }
+      return AccountUpgradeResult.Failed(result.errorMessage)
+    }
+    val credential = result.toCredential()
+      ?: return AccountUpgradeResult.Failed("Could not read the Google credential")
+
+    return try {
+      val linkResult = current.linkWithCredential(credential)
+      AccountUpgradeResult.Linked(linkResult.user ?: authProvider.currentUser ?: current)
+    } catch (e: FirebaseAuthUserCollisionException) {
+      logger.i { "Google account already in use; offering merge" }
+      AccountUpgradeResult.CredentialInUse(credential)
+    } catch (e: Exception) {
+      logger.e(e) { "Account upgrade: linking failed" }
+      AccountUpgradeResult.Failed(e.message ?: "Linking failed")
+    }
+  }
 
   private suspend fun upgradeWithApple(): AccountUpgradeResult {
     val current = authProvider.currentUser

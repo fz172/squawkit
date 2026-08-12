@@ -8,8 +8,6 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isCameraCaptureSupported = true,
   isAnonymousLoginSupported = true,
   isAppleSignInSupported = false,
-  // Google is the platform provider here, and Credential Manager hands back a credential to link.
-  isGoogleUpgradeSupported = true,
   // Staged rollout: dev + dogfood only until GA. Off = no paywall (everything unlocked).
   isSubscriptionSupported = isDeveloperBuild,
   // Staged rollout: dev + dogfood only until GA. Off = NO ads (the inverse of the gates above).

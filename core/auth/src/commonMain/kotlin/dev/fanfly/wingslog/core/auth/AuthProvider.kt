@@ -24,16 +24,17 @@ enum class AuthProvider {
  *
  * Derived from capability flags rather than declared per platform, so the picker only ever offers
  * something that can actually succeed. Android omits Apple — Google is the platform's provider
- * there — and iOS omits Google until its native provider can return a credential to link with,
- * rather than showing a button that always fails.
+ * there.
  *
- * Email is offered everywhere a guest session exists: its link path is platform-agnostic.
+ * Google and Email are offered everywhere a guest session exists. Google used to be gated on its
+ * own `isGoogleUpgradeSupported` flag, because iOS's native provider signed in to Firebase itself
+ * and so could not hand back a credential to link; it now returns the token pair like the Apple
+ * one does (#415), and the flag is gone rather than pinned to `true`.
  */
 fun upgradeProvidersFor(
   isAppleSignInSupported: Boolean,
-  isGoogleUpgradeSupported: Boolean,
 ): List<AuthProvider> = buildList {
   if (isAppleSignInSupported) add(AuthProvider.Apple)
-  if (isGoogleUpgradeSupported) add(AuthProvider.Google)
+  add(AuthProvider.Google)
   add(AuthProvider.Email)
 }

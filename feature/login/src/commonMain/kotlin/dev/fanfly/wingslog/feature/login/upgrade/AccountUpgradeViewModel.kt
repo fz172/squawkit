@@ -79,7 +79,6 @@ class AccountUpgradeViewModel(
     _state.value = UpgradeUiState.ChoosingProvider(
       upgradeProvidersFor(
         isAppleSignInSupported = appCapability.isAppleSignInSupported,
-        isGoogleUpgradeSupported = appCapability.isGoogleUpgradeSupported,
       )
     )
   }

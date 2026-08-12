@@ -8,9 +8,6 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isCameraCaptureSupported = true,
   isAnonymousLoginSupported = true,
   isAppleSignInSupported = true,
-  // Off until NativeGoogleSignInProvider returns credential material instead of signing in
-  // Swift-side — until then the upgrade would fail, so the picker must not offer it.
-  isGoogleUpgradeSupported = false,
   // Staged rollout: dev + dogfood only until GA. Off = no paywall (everything unlocked).
   isSubscriptionSupported = isDeveloperBuild,
   // Staged rollout: dev + dogfood only until GA. Off = NO ads (the inverse of the gates above).
