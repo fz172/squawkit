@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
+import dev.fanfly.wingslog.feature.login.LoginButtonContent
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -573,7 +574,7 @@ private fun LoginCard(
         Image(
           imageVector = GoogleLogo,
           contentDescription = null,
-          modifier = Modifier.size(19.dp)
+          modifier = Modifier.size(AuthButtonIconSize)
         )
       },
     )
@@ -593,7 +594,7 @@ private fun LoginCard(
           Icon(
             imageVector = AppleLogo,
             contentDescription = null,
-            modifier = Modifier.size(19.dp),
+            modifier = Modifier.size(AuthButtonIconSize),
             tint = Color.White
           )
         },
@@ -613,7 +614,7 @@ private fun LoginCard(
         Icon(
           imageVector = IconMail,
           contentDescription = null,
-          modifier = Modifier.size(19.dp),
+          modifier = Modifier.size(AuthButtonIconSize),
           tint = colors.heading
         )
       },
@@ -646,6 +647,12 @@ private fun LoginCard(
   }
 }
 
+/**
+ * The provider mark in an [AuthButton]. A single value because the trailing spacer that balances it
+ * has to match: if they drift, the label stops being centred.
+ */
+private val AuthButtonIconSize = 19.dp
+
 @Composable
 private fun AuthButton(
   container: Color,
@@ -671,7 +678,8 @@ private fun AuthButton(
           shape
         ) else Modifier
       )
-      .clickable(enabled = enabled) { onClick() },
+      .clickable(enabled = enabled) { onClick() }
+      .padding(horizontal = 20.dp),
     horizontalArrangement = Arrangement.Center,
     verticalAlignment = Alignment.CenterVertically,
   ) {
@@ -682,15 +690,19 @@ private fun AuthButton(
         color = contentColor
       )
     } else {
-      leading()
-      Spacer(Modifier.width(11.dp))
-      Text(
-        text = label,
-        style = TextStyle(
+      // The same layout rule the native sign-in buttons use — icon pinned to the leading edge,
+      // label centred in what is left — rather than a second copy of it. Only the metrics differ
+      // here (this page's own icon size and label style); the alignment is not this page's to have
+      // an opinion about, and having one is what let it drift out of step in the first place.
+      LoginButtonContent(
+        label = label,
+        labelStyle = TextStyle(
           fontSize = 15.5.sp,
           fontWeight = FontWeight.SemiBold,
           color = contentColor
         ),
+        iconSize = AuthButtonIconSize,
+        icon = leading,
       )
     }
   }

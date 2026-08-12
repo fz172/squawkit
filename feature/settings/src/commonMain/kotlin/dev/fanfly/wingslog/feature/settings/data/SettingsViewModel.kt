@@ -92,6 +92,15 @@ class SettingsViewModel(
     )
   }
 
+  /**
+   * Signs out and removes this account's data from the device.
+   *
+   * **Only safe for a permanent account**, where the wipe is a local cache drop and the records
+   * come back on next login. A guest has no cloud copy, so the same call is an unrecoverable
+   * delete of everything they have entered — which is why Settings offers guests "Link to an
+   * account" rather than a log out (#413). Anything that ever calls this for a guest must put an
+   * explicit erase warning in front of it first.
+   */
   fun logOut() {
     val uid = authManager.getCurrentUser()?.uid
     viewModelScope.launch {

@@ -52,7 +52,6 @@ class SubscriptionManagerImplTest {
     isCameraCaptureSupported = false,
     isAnonymousLoginSupported = false,
     isAppleSignInSupported = false,
-    isGoogleUpgradeSupported = false,
     isSubscriptionSupported = subscription,
     isAdsSupported = ads,
   )

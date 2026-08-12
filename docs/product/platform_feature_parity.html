@@ -234,7 +234,9 @@
                     <td class="platform"><span class="check">&#10003;</span></td>
                     <td class="platform"><span class="check">&#10003;</span></td>
                     <td class="note">Native provider bridge on iOS; browser popup integration on
-                        web.
+                        web. The iOS bridge hands the ID and access tokens back to Kotlin, which
+                        builds the Firebase credential — the same shape as the Apple bridge, so the
+                        guest upgrade can link rather than sign in (#415).
                     </td>
                 </tr>
                 <tr>
@@ -271,7 +273,10 @@
                     </td>
                     <td class="platform"><span class="check">&#10003;</span></td>
                     <td class="platform"><span class="design">N/A</span></td>
-                    <td class="note">iOS links via Sign in with Apple, verified manually on device.
+                    <td class="note">The picker offers Google, Apple (where the platform offers it),
+                        and a passwordless email link. iOS links via either provider, verified
+                        manually on device — its native Google presenter returns the token pair
+                        rather than signing in, which is what makes linking possible there (#415).
                         Web has no guest session to upgrade.
                     </td>
                 </tr>
@@ -491,9 +496,6 @@
             </li>
             <li><strong>Web export:</strong> add JS targets and browser download/delivery UX for
                 export generation and history.
-            </li>
-            <li><strong>iOS guest upgrade:</strong> wire the permanent-account linking provider for
-                anonymous mobile users.
             </li>
             <li><strong>Web integrity recovery UI:</strong> expose the local database recovery path
                 currently present in the mobile app shell.

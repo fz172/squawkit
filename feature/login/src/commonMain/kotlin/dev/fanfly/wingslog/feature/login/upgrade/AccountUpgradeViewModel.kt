@@ -79,7 +79,6 @@ class AccountUpgradeViewModel(
     _state.value = UpgradeUiState.ChoosingProvider(
       upgradeProvidersFor(
         isAppleSignInSupported = appCapability.isAppleSignInSupported,
-        isGoogleUpgradeSupported = appCapability.isGoogleUpgradeSupported,
       )
     )
   }
@@ -237,8 +236,10 @@ class AccountUpgradeViewModel(
       // the guest is still the current user (before sign-in re-points the store) so the merge path
       // can carry it onto the account.
       val guestName = currentSelfName()
+      val result = authManager.upgradeAnonymousAccount(provider)
+      logger.i { "Guest upgrade with $provider: ${result.outcome()}" }
       _state.value =
-        when (val result = authManager.upgradeAnonymousAccount(provider)) {
+        when (result) {
           is AccountUpgradeResult.Linked -> finishLinkedAccount(result.user.uid)
           is AccountUpgradeResult.CredentialInUse ->
             if (guestUid == null) {
@@ -269,6 +270,10 @@ class AccountUpgradeViewModel(
 
   private suspend fun finishLinkedAccount(accountUid: String): UpgradeUiState {
     if (!awaitPermanentCurrentUser(accountUid)) {
+      // The provider accepted the credential but FirebaseAuth never settled on a permanent current
+      // user within the timeout. Worth a log line of its own: the account may well exist by now, so
+      // the next attempt collides and offers a merge, which reads as a different bug entirely.
+      logger.w { "Upgrade linked, but the current user never became permanent" }
       return UpgradeUiState.Error("Sign-in did not switch to the permanent account")
     }
 
@@ -328,6 +333,7 @@ class AccountUpgradeViewModel(
       } else {
         authManager.mergeIntoExistingAccount(pending.provider)
       }
+      logger.i { "Merge into the existing ${pending.provider} account: ${result.outcome()}" }
       _state.value = finishMerge(pending.guestUid, pending.guestName, result)
       pendingMerge = null
     }
@@ -393,6 +399,22 @@ class AccountUpgradeViewModel(
   private fun failed(message: String): UpgradeUiState.Error {
     logger.w { "Account upgrade failed: $message" }
     return UpgradeUiState.Error(message)
+  }
+
+  /**
+   * The outcome, named, for the log.
+   *
+   * An upgrade that worked used to log nothing at all, so a console capture of a run that went
+   * wrong was indistinguishable from one where the flow never started — which is exactly the
+   * position the first #415 device report left us in. Names the branch only: no uid, no email, no
+   * credential, nothing that identifies an account across the trust boundary.
+   */
+  private fun AccountUpgradeResult.outcome(): String = when (this) {
+    is AccountUpgradeResult.Linked -> "linked"
+    is AccountUpgradeResult.CredentialInUse -> "already in use, offering merge"
+    is AccountUpgradeResult.ReauthRequiredToMerge -> "already in use, merge needs re-authorization"
+    is AccountUpgradeResult.Cancelled -> "cancelled by the user"
+    is AccountUpgradeResult.Failed -> "failed"
   }
 
   companion object {

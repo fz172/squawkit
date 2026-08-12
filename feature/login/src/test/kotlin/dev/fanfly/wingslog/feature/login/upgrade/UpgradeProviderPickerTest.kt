@@ -30,7 +30,6 @@ import org.junit.Test
 
 internal fun testAppCapability(
   isAppleSignInSupported: Boolean,
-  isGoogleUpgradeSupported: Boolean = true,
 ) = AppCapability(
   isDeveloperOptionsSupported = false,
   isAircraftSharingSupported = true,
@@ -38,7 +37,6 @@ internal fun testAppCapability(
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = true,
   isAppleSignInSupported = isAppleSignInSupported,
-  isGoogleUpgradeSupported = isGoogleUpgradeSupported,
   isSubscriptionSupported = false,
   isAdsSupported = false,
 )
@@ -92,23 +90,27 @@ class UpgradeProviderPickerTest {
 
   private fun viewModel(
     isAppleSignInSupported: Boolean = false,
-    isGoogleUpgradeSupported: Boolean = true,
   ) = AccountUpgradeViewModel(
     authManager = authManager,
     migrator = migrator,
     technicianManager = technicianManager,
     syncEngine = syncEngine,
     emailStore = emailStore,
-    appCapability = testAppCapability(isAppleSignInSupported, isGoogleUpgradeSupported),
+    appCapability = testAppCapability(isAppleSignInSupported),
   )
 
+  /**
+   * The order is asserted, not just the membership: the picker offers the same choice as the
+   * full-screen login page, which lists Google, then Apple, then email. Having the two disagree is
+   * what made the sheet feel like a different screen rather than the same one in a different place.
+   */
   @Test
   fun choose_offersAppleOnlyWhereTheAppleButtonIsOffered() = runTest(dispatcher) {
     val withApple = viewModel(isAppleSignInSupported = true).also { it.choose() }
     val withoutApple = viewModel(isAppleSignInSupported = false).also { it.choose() }
 
     assertThat((withApple.state.value as UpgradeUiState.ChoosingProvider).providers)
-      .containsExactly(AuthProvider.Apple, AuthProvider.Google, AuthProvider.Email)
+      .containsExactly(AuthProvider.Google, AuthProvider.Apple, AuthProvider.Email)
       .inOrder()
     assertThat((withoutApple.state.value as UpgradeUiState.ChoosingProvider).providers)
       .containsExactly(AuthProvider.Google, AuthProvider.Email)
@@ -116,19 +118,19 @@ class UpgradeProviderPickerTest {
   }
 
   /**
-   * iOS can sign in with Google but cannot *link* it — its native provider completes the Firebase
-   * sign-in itself and never hands back a credential. Offering it would put a button in the picker
-   * that always fails, so the capability gates the option rather than the error message.
+   * Google is offered on every platform that has guests (#415). It used to be dropped on iOS,
+   * because the native provider signed in to Firebase itself and so could not hand back a
+   * credential to link; it now returns the token pair like the Apple one does, and the
+   * `isGoogleUpgradeSupported` gate is gone. Apple's presence is the only thing that varies.
    */
   @Test
-  fun choose_omitsGoogleWhereItCannotLink() = runTest(dispatcher) {
-    val vm = viewModel(isAppleSignInSupported = true, isGoogleUpgradeSupported = false)
+  fun choose_alwaysOffersGoogle() = runTest(dispatcher) {
+    for (withApple in listOf(true, false)) {
+      val vm = viewModel(isAppleSignInSupported = withApple).also { it.choose() }
 
-    vm.choose()
-
-    assertThat((vm.state.value as UpgradeUiState.ChoosingProvider).providers)
-      .containsExactly(AuthProvider.Apple, AuthProvider.Email)
-      .inOrder()
+      assertThat((vm.state.value as UpgradeUiState.ChoosingProvider).providers)
+        .contains(AuthProvider.Google)
+    }
   }
 
   /**

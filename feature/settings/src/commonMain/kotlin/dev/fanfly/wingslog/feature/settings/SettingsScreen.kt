@@ -49,8 +49,8 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
-import wingslog.feature.settings.generated.resources.account_upgrade_login_cta
-import wingslog.feature.settings.generated.resources.account_upgrade_login_subtitle
+import wingslog.feature.settings.generated.resources.account_upgrade_link_cta
+import wingslog.feature.settings.generated.resources.account_upgrade_link_subtitle
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.developer_options
 import wingslog.feature.settings.generated.resources.settings_developer_options_subtitle
@@ -218,14 +218,21 @@ fun SettingsContent(
           }
         }
         val accountRows = buildList<@Composable () -> Unit> {
-          // Guest shows "Log in" (runs the upgrade); real accounts show "Log out".
+          // Guest shows "Link to an account" (runs the upgrade); real accounts show "Log out".
+          //
+          // The branch is load-bearing, not cosmetic: a guest has no cloud copy, so logOut()'s wipe
+          // would destroy every aircraft, log, task, squawk, and attachment unrecoverably — and
+          // "Sign out of your account on this device" says the opposite of what that does. Guests
+          // are offered the way *in* instead, which is also the only thing that makes their data
+          // recoverable. Keep it that way: a guest sign-out needs an explicit erase warning ahead of
+          // it, never this row (#413).
           if (user.isAnonymous) {
             add {
               SettingsRow(
                 icon = Icons.AutoMirrored.Filled.Login,
-                title = stringResource(SettingsRes.string.account_upgrade_login_cta),
+                title = stringResource(SettingsRes.string.account_upgrade_link_cta),
                 subtitle =
-                  stringResource(SettingsRes.string.account_upgrade_login_subtitle),
+                  stringResource(SettingsRes.string.account_upgrade_link_subtitle),
                 onClick = { accountUpgradeViewModel.choose() },
               )
             }
