@@ -573,7 +573,7 @@ private fun LoginCard(
         Image(
           imageVector = GoogleLogo,
           contentDescription = null,
-          modifier = Modifier.size(19.dp)
+          modifier = Modifier.size(AuthButtonIconSize)
         )
       },
     )
@@ -593,7 +593,7 @@ private fun LoginCard(
           Icon(
             imageVector = AppleLogo,
             contentDescription = null,
-            modifier = Modifier.size(19.dp),
+            modifier = Modifier.size(AuthButtonIconSize),
             tint = Color.White
           )
         },
@@ -613,7 +613,7 @@ private fun LoginCard(
         Icon(
           imageVector = IconMail,
           contentDescription = null,
-          modifier = Modifier.size(19.dp),
+          modifier = Modifier.size(AuthButtonIconSize),
           tint = colors.heading
         )
       },
@@ -646,6 +646,12 @@ private fun LoginCard(
   }
 }
 
+/**
+ * The provider mark in an [AuthButton]. A single value because the trailing spacer that balances it
+ * has to match: if they drift, the label stops being centred.
+ */
+private val AuthButtonIconSize = 19.dp
+
 @Composable
 private fun AuthButton(
   container: Color,
@@ -671,7 +677,8 @@ private fun AuthButton(
           shape
         ) else Modifier
       )
-      .clickable(enabled = enabled) { onClick() },
+      .clickable(enabled = enabled) { onClick() }
+      .padding(horizontal = 20.dp),
     horizontalArrangement = Arrangement.Center,
     verticalAlignment = Alignment.CenterVertically,
   ) {
@@ -682,8 +689,13 @@ private fun AuthButton(
         color = contentColor
       )
     } else {
+      // Icon pinned to the leading edge, label centred in what is left, balanced by a spacer the
+      // icon's width. Centring the whole row instead put the icon at a different x in every button,
+      // because its position then depended on how long the label was — the buttons read as ragged.
+      // Same fix as LoginCommon.LoginButtonContent on the shared surfaces; this page cannot reuse
+      // that one, since it is a bespoke Row-as-button with its own metrics rather than a Material
+      // Button.
       leading()
-      Spacer(Modifier.width(11.dp))
       Text(
         text = label,
         style = TextStyle(
@@ -691,7 +703,13 @@ private fun AuthButton(
           fontWeight = FontWeight.SemiBold,
           color = contentColor
         ),
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        modifier = Modifier
+          .weight(1f)
+          .padding(horizontal = 11.dp),
       )
+      Spacer(Modifier.size(AuthButtonIconSize))
     }
   }
 }
