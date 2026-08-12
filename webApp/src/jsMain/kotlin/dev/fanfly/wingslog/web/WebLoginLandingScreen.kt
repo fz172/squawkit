@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
+import dev.fanfly.wingslog.feature.login.LoginButtonContent
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -689,27 +690,20 @@ private fun AuthButton(
         color = contentColor
       )
     } else {
-      // Icon pinned to the leading edge, label centred in what is left, balanced by a spacer the
-      // icon's width. Centring the whole row instead put the icon at a different x in every button,
-      // because its position then depended on how long the label was — the buttons read as ragged.
-      // Same fix as LoginCommon.LoginButtonContent on the shared surfaces; this page cannot reuse
-      // that one, since it is a bespoke Row-as-button with its own metrics rather than a Material
-      // Button.
-      leading()
-      Text(
-        text = label,
-        style = TextStyle(
+      // The same layout rule the native sign-in buttons use — icon pinned to the leading edge,
+      // label centred in what is left — rather than a second copy of it. Only the metrics differ
+      // here (this page's own icon size and label style); the alignment is not this page's to have
+      // an opinion about, and having one is what let it drift out of step in the first place.
+      LoginButtonContent(
+        label = label,
+        labelStyle = TextStyle(
           fontSize = 15.5.sp,
           fontWeight = FontWeight.SemiBold,
           color = contentColor
         ),
-        textAlign = TextAlign.Center,
-        maxLines = 1,
-        modifier = Modifier
-          .weight(1f)
-          .padding(horizontal = 11.dp),
+        iconSize = AuthButtonIconSize,
+        icon = leading,
       )
-      Spacer(Modifier.size(AuthButtonIconSize))
     }
   }
 }

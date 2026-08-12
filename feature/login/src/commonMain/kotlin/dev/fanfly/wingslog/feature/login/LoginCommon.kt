@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -79,16 +80,25 @@ internal val LoginButtonHeight = 54.dp
 /**
  * The inside of a sign-in button: leading icon, then the label.
  *
- * Shared because the alignment is the whole point. Each button used to wrap its own centred
- * `Row`, which put the icon at a different x in every button — the icon's position depended on the
- * label's width, so a column of them read as ragged. Here the icon is pinned to the leading edge
- * and the label is centred in what is left, balanced by a spacer the icon's width so the label
- * still sits in the middle of the button rather than off to the right.
+ * Shared because the alignment is the whole point. Each button used to wrap its own centred `Row`,
+ * which put the icon at a different x in every button — the icon's position depended on the label's
+ * width, so a column of them read as ragged. Here the icon is pinned to the leading edge and the
+ * label is centred in what is left, balanced by a spacer the icon's width so the label still sits in
+ * the middle of the button rather than off to the right.
+ *
+ * Public, not internal, because the web host's landing page has its own sign-in buttons and had the
+ * same defect. It cannot share the *button* — that page is a bespoke `Row`-as-button with its own
+ * corner radius, colours and metrics — but this is the layout rule those buttons disagreed on, and
+ * there is no reason for two copies of it.
+ *
+ * [iconSize] must match what [icon] actually renders: it sizes the trailing spacer, and if the two
+ * disagree the label stops being centred, which is the bug this exists to prevent.
  */
 @Composable
-internal fun LoginButtonContent(
+fun LoginButtonContent(
   label: String,
   labelStyle: TextStyle = LoginButtonLabelStyle,
+  iconSize: Dp = Spacing.xLarge,
   icon: @Composable () -> Unit,
 ) {
   Row(
@@ -105,7 +115,7 @@ internal fun LoginButtonContent(
         .weight(1f)
         .padding(horizontal = Spacing.small),
     )
-    Spacer(Modifier.size(Spacing.xLarge))
+    Spacer(Modifier.size(iconSize))
   }
 }
 
