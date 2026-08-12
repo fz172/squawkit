@@ -1,8 +1,6 @@
 package dev.fanfly.wingslog.feature.login
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -110,7 +107,7 @@ fun LoginScreen(
     Button(
       modifier = Modifier
         .fillMaxWidth()
-        .height(54.dp),
+        .height(LoginButtonHeight),
       enabled = signingIn == null,
       shape = RoundedCornerShape(Spacing.buttonCornerRadius),
       colors = ButtonDefaults.buttonColors(
@@ -142,19 +139,12 @@ fun LoginScreen(
           color = LoginBackground,
         )
       } else {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-        ) {
+        LoginButtonContent(label = stringResource(Res.string.sign_in_with_google)) {
           Icon(
             painter = painterResource(Res.drawable.ic_google_rd_na),
             contentDescription = stringResource(Res.string.google_logo),
             modifier = Modifier.size(Spacing.xLarge),
             tint = Color.Unspecified,
-          )
-          Text(
-            text = stringResource(Res.string.sign_in_with_google),
-            style = LoginButtonLabelStyle,
           )
         }
       }
@@ -168,7 +158,7 @@ fun LoginScreen(
       Button(
         modifier = Modifier
           .fillMaxWidth()
-          .height(54.dp),
+          .height(LoginButtonHeight),
         enabled = signingIn == null,
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.buttonColors(
@@ -200,19 +190,12 @@ fun LoginScreen(
             color = AppleButtonContent,
           )
         } else {
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-          ) {
+          LoginButtonContent(label = stringResource(Res.string.sign_in_with_apple)) {
             Icon(
               painter = painterResource(Res.drawable.ic_apple),
               contentDescription = stringResource(Res.string.apple_logo),
               modifier = Modifier.size(Spacing.xLarge),
               tint = AppleButtonContent,
-            )
-            Text(
-              text = stringResource(Res.string.sign_in_with_apple),
-              style = LoginButtonLabelStyle,
             )
           }
         }
@@ -226,7 +209,7 @@ fun LoginScreen(
     OutlinedButton(
       modifier = Modifier
         .fillMaxWidth()
-        .height(54.dp),
+        .height(LoginButtonHeight),
       enabled = signingIn == null,
       shape = RoundedCornerShape(Spacing.buttonCornerRadius),
       colors = ButtonDefaults.outlinedButtonColors(
@@ -238,18 +221,11 @@ fun LoginScreen(
       ),
       onClick = onChooseEmail,
     ) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-      ) {
+      LoginButtonContent(label = stringResource(Res.string.sign_in_with_email)) {
         Icon(
           imageVector = Icons.Filled.Email,
           contentDescription = null,
           modifier = Modifier.size(Spacing.xLarge),
-        )
-        Text(
-          text = stringResource(Res.string.sign_in_with_email),
-          style = LoginButtonLabelStyle,
         )
       }
     }
@@ -260,7 +236,7 @@ fun LoginScreen(
       OutlinedButton(
         modifier = Modifier
           .fillMaxWidth()
-          .height(54.dp),
+          .height(LoginButtonHeight),
         enabled = signingIn == null,
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.outlinedButtonColors(
@@ -286,18 +262,14 @@ fun LoginScreen(
           }
         },
       ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+        LoginButtonContent(
+          label = stringResource(Res.string.continue_without_account),
+          labelStyle = LoginSecondaryLabelStyle,
         ) {
           Icon(
             imageVector = Icons.Filled.Person,
             contentDescription = null,
             modifier = Modifier.size(Spacing.xLarge),
-          )
-          Text(
-            text = stringResource(Res.string.continue_without_account),
-            style = LoginSecondaryLabelStyle,
           )
         }
       }

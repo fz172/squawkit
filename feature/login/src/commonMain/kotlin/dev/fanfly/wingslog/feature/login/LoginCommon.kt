@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +36,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -70,6 +72,42 @@ internal val LoginButtonLabelStyle = TextStyle(
 )
 internal val LoginSecondaryLabelStyle = TextStyle(fontSize = 15.sp)
 internal val LoginErrorStyle = TextStyle(fontSize = 13.sp)
+
+/** Every sign-in button, on the login page and in the upgrade sheet, is this tall. */
+internal val LoginButtonHeight = 54.dp
+
+/**
+ * The inside of a sign-in button: leading icon, then the label.
+ *
+ * Shared because the alignment is the whole point. Each button used to wrap its own centred
+ * `Row`, which put the icon at a different x in every button — the icon's position depended on the
+ * label's width, so a column of them read as ragged. Here the icon is pinned to the leading edge
+ * and the label is centred in what is left, balanced by a spacer the icon's width so the label
+ * still sits in the middle of the button rather than off to the right.
+ */
+@Composable
+internal fun LoginButtonContent(
+  label: String,
+  labelStyle: TextStyle = LoginButtonLabelStyle,
+  icon: @Composable () -> Unit,
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    icon()
+    Text(
+      text = label,
+      style = labelStyle,
+      textAlign = TextAlign.Center,
+      maxLines = 1,
+      modifier = Modifier
+        .weight(1f)
+        .padding(horizontal = Spacing.small),
+    )
+    Spacer(Modifier.size(Spacing.xLarge))
+  }
+}
 
 /**
  * The navy backdrop + soft radial glow + content column shared by every sign-in screen. [content]

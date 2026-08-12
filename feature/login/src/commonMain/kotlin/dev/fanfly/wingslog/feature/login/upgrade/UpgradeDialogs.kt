@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.login.upgrade
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,7 +24,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -35,6 +33,8 @@ import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.login.AppleButtonBackground
 import dev.fanfly.wingslog.feature.login.AppleButtonContent
+import dev.fanfly.wingslog.feature.login.LoginButtonContent
+import dev.fanfly.wingslog.feature.login.LoginButtonHeight
 import dev.fanfly.wingslog.feature.login.LoginButtonLabelStyle
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -69,9 +69,6 @@ import wingslog.feature.login.generated.resources.upgrade_provider_google
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-
-/** Matches the login page's buttons: full width, 54dp, rounded, icon + label. */
-private val ProviderButtonHeight = 54.dp
 
 /**
  * The provider picker, as a bottom sheet. [providers] comes from `upgradeProvidersFor`, so this
@@ -147,22 +144,15 @@ internal fun UpgradeProviderSheet(
           AuthProvider.Email -> OutlinedButton(
             modifier = Modifier
               .fillMaxWidth()
-              .height(ProviderButtonHeight),
+              .height(LoginButtonHeight),
             shape = RoundedCornerShape(Spacing.buttonCornerRadius),
             onClick = { onSelect(AuthProvider.Email) },
           ) {
-            Row(
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-            ) {
+            LoginButtonContent(label = stringResource(Res.string.sign_in_with_email)) {
               Icon(
                 imageVector = Icons.Filled.Email,
                 contentDescription = null,
                 modifier = Modifier.size(Spacing.xLarge),
-              )
-              Text(
-                text = stringResource(Res.string.sign_in_with_email),
-                style = LoginButtonLabelStyle,
               )
             }
           }
@@ -184,7 +174,7 @@ private fun ProviderButton(
   Button(
     modifier = Modifier
       .fillMaxWidth()
-      .height(ProviderButtonHeight),
+      .height(LoginButtonHeight),
     shape = RoundedCornerShape(Spacing.buttonCornerRadius),
     colors = ButtonDefaults.buttonColors(
       containerColor = container,
@@ -194,13 +184,7 @@ private fun ProviderButton(
     ),
     onClick = onClick,
   ) {
-    Row(
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-    ) {
-      icon(content)
-      Text(text = label, style = LoginButtonLabelStyle)
-    }
+    LoginButtonContent(label = label) { icon(content) }
   }
 }
 
@@ -257,7 +241,7 @@ internal fun UpgradeMergeSheet(
       Button(
         modifier = Modifier
           .fillMaxWidth()
-          .height(ProviderButtonHeight),
+          .height(LoginButtonHeight),
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         onClick = onConfirm,
       ) {
@@ -269,7 +253,7 @@ internal fun UpgradeMergeSheet(
       OutlinedButton(
         modifier = Modifier
           .fillMaxWidth()
-          .height(ProviderButtonHeight),
+          .height(LoginButtonHeight),
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         onClick = onDismiss,
       ) {

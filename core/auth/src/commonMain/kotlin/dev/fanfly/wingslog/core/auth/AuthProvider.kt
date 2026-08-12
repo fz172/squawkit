@@ -30,11 +30,15 @@ enum class AuthProvider {
  * own `isGoogleUpgradeSupported` flag, because iOS's native provider signed in to Firebase itself
  * and so could not hand back a credential to link; it now returns the token pair like the Apple
  * one does (#415), and the flag is gone rather than pinned to `true`.
+ *
+ * **The order matches the full-screen login page** (Google, Apple, then email) and must keep
+ * matching it. The picker is the same choice offered in a different place, so a guest who has seen
+ * the login screen should find the buttons where they left them.
  */
 fun upgradeProvidersFor(
   isAppleSignInSupported: Boolean,
 ): List<AuthProvider> = buildList {
-  if (isAppleSignInSupported) add(AuthProvider.Apple)
   add(AuthProvider.Google)
+  if (isAppleSignInSupported) add(AuthProvider.Apple)
   add(AuthProvider.Email)
 }

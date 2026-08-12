@@ -99,13 +99,18 @@ class UpgradeProviderPickerTest {
     appCapability = testAppCapability(isAppleSignInSupported),
   )
 
+  /**
+   * The order is asserted, not just the membership: the picker offers the same choice as the
+   * full-screen login page, which lists Google, then Apple, then email. Having the two disagree is
+   * what made the sheet feel like a different screen rather than the same one in a different place.
+   */
   @Test
   fun choose_offersAppleOnlyWhereTheAppleButtonIsOffered() = runTest(dispatcher) {
     val withApple = viewModel(isAppleSignInSupported = true).also { it.choose() }
     val withoutApple = viewModel(isAppleSignInSupported = false).also { it.choose() }
 
     assertThat((withApple.state.value as UpgradeUiState.ChoosingProvider).providers)
-      .containsExactly(AuthProvider.Apple, AuthProvider.Google, AuthProvider.Email)
+      .containsExactly(AuthProvider.Google, AuthProvider.Apple, AuthProvider.Email)
       .inOrder()
     assertThat((withoutApple.state.value as UpgradeUiState.ChoosingProvider).providers)
       .containsExactly(AuthProvider.Google, AuthProvider.Email)
